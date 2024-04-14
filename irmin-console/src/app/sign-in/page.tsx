@@ -1,5 +1,5 @@
 import SignInSection from "@/components/signInSection";
 
-export default function Home() {
+export default function SignInPage() {
   return <SignInSection />;
 }
