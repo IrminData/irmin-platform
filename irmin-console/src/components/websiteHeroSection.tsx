@@ -1,4 +1,4 @@
-export default function WebsiteHero() {
+export default function WebsiteHeroSection() {
   return (
     <>
       <section className="overflow-hidden">
