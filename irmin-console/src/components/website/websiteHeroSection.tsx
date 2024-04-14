@@ -83,7 +83,7 @@ export default function WebsiteHeroSection() {
                 fill="currentColor"
               />
             </svg>
-            <div className="relative overflow-hidden rounded-7xl">
+            <div className="relative overflow-hidden rounded-xl">
               <Image
                 src="/flex-ui-assets/images/headers/placeholder-video2.png"
                 alt="Video placeholder image"
