@@ -1,3 +1,6 @@
+import Link from "next/link";
+import Image from "next/image";
+
 export default function WebsiteHeroSection() {
   return (
     <>
@@ -14,68 +17,73 @@ export default function WebsiteHeroSection() {
               <div className="fixed top-0 left-0 bottom-0 w-4/6 max-w-xs bg-white">
                 <nav className="relative p-6 h-full overflow-y-auto">
                   <div className="flex flex-col justify-between h-full">
-                    <a className="inline-block" href="#">
-                      <img
+                    <Link className="inline-block" href="#">
+                      <Image
                         className="h-8"
-                        src="flex-ui-assets/logos/flex-ui-green.svg"
+                        src="/flex-ui-assets/logos/flex-ui-green.svg"
                         alt=""
+                        width={95}
+                        height={32}
                       />
-                    </a>
+                    </Link>
                     <ul className="py-6">
                       <li>
-                        <a
+                        <Link
                           className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md"
                           href="#"
                         >
                           Product
-                        </a>
+                        </Link>
                       </li>
                       <li>
-                        <a
+                        <Link
                           className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md"
                           href="#"
                         >
                           Features
-                        </a>
+                        </Link>
                       </li>
                       <li>
-                        <a
+                        <Link
                           className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md"
                           href="#"
                         >
                           Pricing
-                        </a>
+                        </Link>
                       </li>
                       <li>
-                        <a
+                        <Link
                           className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md"
                           href="#"
                         >
                           Resources
-                        </a>
+                        </Link>
                       </li>
                     </ul>
                     <div className="flex flex-wrap">
                       <div className="w-full mb-2">
-                        <a
+                        <Link
                           className="inline-block py-2 px-4 w-full text-sm leading-5 text-coolGray-500 hover:text-coolGray-900 bg-transparent font-medium text-center rounded-md"
                           href="#"
                         >
                           Log In
-                        </a>
+                        </Link>
                       </div>
                       <div className="w-full">
-                        <a
+                        <Link
                           className="inline-block py-2 px-4 w-full text-sm leading-5 text-white bg-green-500 hover:bg-green-600 font-medium text-center focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded-md"
                           href="#"
                         >
                           Sign Up
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </div>
                 </nav>
-                <a className="navbar-close absolute top-5 p-4 right-3" href="#">
+                <Link
+                  className="navbar-close absolute top-5 p-4 right-3"
+                  href="#"
+                >
                   <svg
                     width={12}
                     height={12}
@@ -88,7 +96,7 @@ export default function WebsiteHeroSection() {
                       fill="#556987"
                     />
                   </svg>
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -110,20 +118,20 @@ export default function WebsiteHeroSection() {
                 </p>
                 <div className="flex flex-wrap justify-center">
                   <div className="w-full md:w-auto py-1 md:py-0 md:mr-4">
-                    <a
+                    <Link
                       className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-green-50 font-medium text-center bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 border border-green-500 rounded-md shadow-sm"
                       href="#"
                     >
                       Get started for free
-                    </a>
+                    </Link>
                   </div>
                   <div className="w-full md:w-auto py-1 md:py-0">
-                    <a
+                    <Link
                       className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-coolGray-800 font-medium text-center bg-white hover:bg-coolGray-100 focus:ring-2 focus:ring-coolGray-200 focus:ring-opacity-50 border border-coolGray-200 rounded-md shadow-sm"
                       href="#"
                     >
                       Schedule a live demo
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -132,15 +140,19 @@ export default function WebsiteHeroSection() {
         </div>
         <div className="container px-4 py-20 md:pb-32 mx-auto -mt-32 md:-mt-72">
           <div className="relative mx-auto max-w-max">
-            <img
+            <Image
               className="absolute z-20 -left-8 -top-8 w-28 md:w-auto"
-              src="flex-ui-assets/elements/wave-green.svg"
-              alt=""
+              src="/flex-ui-assets/elements/wave-green.svg"
+              alt="Green wave"
+              width={180}
+              height={81}
             />
-            <img
+            <Image
               className="absolute -right-8 -bottom-8 w-28 md:w-auto"
-              src="flex-ui-assets/elements/wave-yellow.svg"
-              alt=""
+              src="/flex-ui-assets/elements/wave-yellow.svg"
+              alt="Yellow wave"
+              width={180}
+              height={81}
             />
             <svg
               className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 cursor-pointer text-green-500 hover:text-green-600"
@@ -158,7 +170,12 @@ export default function WebsiteHeroSection() {
               />
             </svg>
             <div className="relative overflow-hidden rounded-7xl">
-              <img src="flex-ui-assets/images/headers/placeholder-video2.png" />
+              <Image
+                src="/flex-ui-assets/images/headers/placeholder-video2.png"
+                alt="Video placeholder image"
+                width={944}
+                height={531}
+              />
               <video
                 className="absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 min-h-full min-w-full max-w-none"
                 poster="flex-ui-assets/images/testimonials/video-frame.jpeg"

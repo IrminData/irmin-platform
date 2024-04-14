@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function WebsiteContentSection() {
   return (
     <section
@@ -111,27 +113,40 @@ export default function WebsiteContentSection() {
       </div>
       <div className="md:absolute md:top-28 lg:top-1/2 md:-right-96 xl:-right-80 md:-mr-56 lg:-mr-20 xl:-mr-0 md:transform lg:-translate-y-1/2 px-4 mb-16 md:mb-0">
         <div className="relative max-w-max">
-          <img
+          <Image
             className="absolute p-7 -mt-1 left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-10/12 z-20"
-            src="flex-ui-assets/elements/dashboard.png"
-            alt=""
+            src="/flex-ui-assets/elements/dashboard.png"
+            alt="Dashboard screenshot"
+            width={731}
+            height={470}
           />
-          <img
+          <Image
             className="relative z-10"
-            src="flex-ui-assets/elements/applications/macbook.png"
-            alt=""
+            src="/flex-ui-assets/elements/applications/macbook.png"
+            alt="Macbook frame"
+            width={945}
+            height={525}
           />
-          <img
+          <Image
             className="absolute -top-24 right-0 md:mt-px md:right-96 md:mr-52 lg:mr-16 xl:-mr-20 w-28 md:w-auto text-blue-500"
-            src="flex-ui-assets/elements/dots2-blue.svg"
+            src="/flex-ui-assets/elements/dots2-blue.svg"
+            alt="Blue dots"
+            width={100}
+            height={100}
           />
-          <img
+          <Image
             className="absolute -bottom-24 left-0 md:left-auto md:mt-px md:right-96 md:mr-52 lg:mr-16 xl:-mr-20 w-28 md:w-auto text-red-500"
-            src="flex-ui-assets/elements/dots2-red.svg"
+            src="/flex-ui-assets/elements/dots2-red.svg"
+            alt="Red dots"
+            width={100}
+            height={100}
           />
-          <img
+          <Image
             className="absolute left-0 top-1/2 transform -translate-y-1/2 w-28 md:w-auto text-yellow-400"
-            src="flex-ui-assets/elements/circle2-yellow.svg"
+            src="/flex-ui-assets/elements/circle2-yellow.svg"
+            alt="Yellow circle"
+            width={100}
+            height={100}
           />
         </div>
       </div>

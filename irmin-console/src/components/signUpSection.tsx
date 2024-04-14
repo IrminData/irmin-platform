@@ -1,3 +1,6 @@
+import Link from "next/link";
+import Image from "next/image";
+
 export default function SignUpSection() {
   return (
     <>
@@ -12,9 +15,15 @@ export default function SignUpSection() {
           <div className="w-full md:w-1/2 md:pr-4">
             <div className="max-w-sm mx-auto">
               <div className="mb-6 text-center">
-                <a className="inline-block mb-6" href="#">
-                  <img className="h-16" src="/irmin-logo.svg" alt="" />
-                </a>
+                <Link className="inline-block mb-6" href="#">
+                  <Image
+                    className="h-16"
+                    src="/irmin-logo.svg"
+                    alt="Irmin logo"
+                    width={400}
+                    height={100}
+                  />
+                </Link>
                 <h3 className="mb-4 text-2xl md:text-3xl font-bold">
                   Join the data hub
                 </h3>
@@ -82,9 +91,9 @@ export default function SignUpSection() {
                         className="form-checkbox appearance-none"
                         type="checkbox"
                       />
-                      <img
+                      <Image
                         className="absolute top-1/2 transform -translate-y-1/2 left-0"
-                        src="flex-ui-assets/elements/sign-up/checkbox-icon.svg"
+                        src="/flex-ui-assets/elements/sign-up/checkbox-icon.svg"
                         alt=""
                       />
                       <span className="ml-7 text-xs text-coolGray-800 font-medium">
@@ -93,30 +102,30 @@ export default function SignUpSection() {
                     </label>
                   </div>
                   <div className="w-full md:w-auto mt-1">
-                    <a
+                    <Link
                       className="inline-block text-xs font-medium text-green-500 hover:text-green-600"
                       href="#"
                     >
                       Forgot your password?
-                    </a>
+                    </Link>
                   </div>
                 </div>
-                <a
+                <Link
                   className="inline-block py-3 px-7 mb-4 w-full text-base text-green-50 font-medium text-center leading-6 bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded-md shadow-sm"
                   href="#"
                 >
                   Sign Up
-                </a>
+                </Link>
                 <p className="text-center">
                   <span className="text-xs font-medium">
                     Already have an account?
                   </span>
-                  <a
+                  <Link
                     className="inline-block text-xs font-medium text-green-500 hover:text-green-600 hover:underline"
                     href="#"
                   >
                     Sign In
-                  </a>
+                  </Link>
                 </p>
               </form>
             </div>
@@ -129,14 +138,14 @@ export default function SignUpSection() {
                 Quotes
               </span>
               <div className="relative mb-16">
-                <img
+                <Image
                   className="absolute -top-10 left-0 2xl:-left-12"
-                  src="flex-ui-assets/elements/sign-up/quotes-top.svg"
+                  src="/flex-ui-assets/elements/sign-up/quotes-top.svg"
                   alt=""
                 />
-                <img
+                <Image
                   className="absolute -bottom-16 right-0"
-                  src="flex-ui-assets/elements/sign-up/quotes-bottom.svg"
+                  src="/flex-ui-assets/elements/sign-up/quotes-bottom.svg"
                   alt=""
                 />
                 <h3 className="relative text-2xl md:text-3xl leading-tight font-medium text-coolGray-800">
@@ -145,9 +154,9 @@ export default function SignUpSection() {
                 </h3>
               </div>
               <div className="relative text-center">
-                <img
+                <Image
                   className="w-24 h-24 mb-6 mx-auto rounded-full"
-                  src="flex-ui-assets/images/sign-up/avatar-men-sign-up.png"
+                  src="/flex-ui-assets/images/sign-up/avatar-men-sign-up.png"
                   alt=""
                 />
                 <h4 className="mb-2 text-lg text-coolGray-800 font-semibold">
@@ -157,15 +166,15 @@ export default function SignUpSection() {
                   CEO &amp; Founder at Flex.co
                 </span>
                 <div className="flex items-center justify-center">
-                  <a
+                  <Link
                     className="w-3 h-3 mr-3 bg-coolGray-100 rounded-full"
                     href="#"
                   />
-                  <a
+                  <Link
                     className="w-3 h-3 mr-3 bg-green-500 rounded-full"
                     href="#"
                   />
-                  <a
+                  <Link
                     className="w-3 h-3 bg-coolGray-100 rounded-full"
                     href="#"
                   />

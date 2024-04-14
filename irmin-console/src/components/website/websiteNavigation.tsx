@@ -1,63 +1,72 @@
+import Link from "next/link";
+import Image from "next/image";
+
 export default function WebsiteNavigation() {
   return (
     <div className="container px-4 mx-auto">
       <nav className="flex justify-between p-6 px-4">
         <div className="flex justify-between items-center w-full">
           <div className="w-1/2 xl:w-1/3">
-            <a className="block max-w-max" href="#">
-              <img className="h-8" src="/irmin-logo.svg" alt="IRMIN" />
-            </a>
+            <Link className="block max-w-max" href="#">
+              <Image
+                className="h-8"
+                src="/irmin-logo.svg"
+                alt="Irmin logo"
+                width={400}
+                height={100}
+              />
+            </Link>
           </div>
           <div className="w-1/2 xl:w-1/3">
             <ul className="hidden xl:flex xl:justify-center">
               <li className="mr-12">
-                <a
+                <Link
                   className="text-coolGray-500 hover:text-coolGray-900 font-medium"
                   href="#"
                 >
                   Product
-                </a>
+                </Link>
               </li>
               <li className="mr-12">
-                <a
+                <Link
                   className="text-coolGray-500 hover:text-coolGray-900 font-medium"
                   href="#"
                 >
                   Features
-                </a>
+                </Link>
               </li>
               <li className="mr-12">
-                <a
+                <Link
                   className="text-coolGray-500 hover:text-coolGray-900 font-medium"
                   href="#"
                 >
                   Resources
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   className="text-coolGray-500 hover:text-coolGray-900 font-medium"
                   href="#"
                 >
                   Pricing
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
           <div className="w-1/2 xl:w-1/3">
             <div className="hidden xl:flex items-center justify-end">
-              <a
+              <Link
                 className="inline-block py-2 px-4 mr-2 leading-5 text-coolGray-500 hover:text-coolGray-900 bg-transparent font-medium rounded-md"
                 href="#"
               >
                 Log In
-              </a>
-              <a
+              </Link>
+              <Link
                 className="inline-block py-2 px-4 text-sm leading-5 text-green-50 bg-green-500 hover:bg-green-600 font-medium focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded-md"
                 href="#"
               >
                 Sign Up
-              </a>
+              </Link>
             </div>
           </div>
         </div>

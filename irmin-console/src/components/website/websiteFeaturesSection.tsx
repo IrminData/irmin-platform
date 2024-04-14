@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function WebsiteFeaturesSection() {
   return (
     <>
@@ -108,19 +110,25 @@ export default function WebsiteFeaturesSection() {
             </div>
             <div className="w-full md:w-1/2 px-4">
               <div className="relative mx-auto md:mr-0 max-w-max">
-                <img
+                <Image
                   className="absolute z-10 -left-8 -top-8 w-28 md:w-auto text-yellow-400"
-                  src="flex-ui-assets/elements/circle3-yellow.svg"
-                  alt=""
+                  src="/flex-ui-assets/elements/circle3-yellow.svg"
+                  alt="Yellow circle"
+                  width={129}
+                  height={129}
                 />
-                <img
+                <Image
                   className="absolute z-10 -right-7 -bottom-8 w-28 md:w-auto text-blue-500"
-                  src="flex-ui-assets/elements/dots3-blue.svg"
-                  alt=""
+                  src="/flex-ui-assets/elements/dots3-blue.svg"
+                  alt="Blue dots"
+                  width={148}
+                  height={90}
                 />
-                <img
-                  src="../flex-ui-assets/images/features/stock2.png"
-                  alt=""
+                <Image
+                  src="/flex-ui-assets/images/features/stock2.png"
+                  alt="Stock image"
+                  width={540}
+                  height={540}
                 />
               </div>
             </div>

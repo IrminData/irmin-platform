@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function WebsiteTestimonialsSection() {
   return (
     <>
@@ -28,10 +30,12 @@ export default function WebsiteTestimonialsSection() {
             </div>
             <div className="w-full lg:w-2/6 px-4 mb-12 lg:mb-0">
               <div className="flex items-center">
-                <img
+                <Image
                   className="w-20 md:w-24 h-20 md:h-24 mr-6 rounded-full"
-                  src="flex-ui-assets/images/testimonials/avatar1.png"
-                  alt=""
+                  src="/flex-ui-assets/images/testimonials/avatar1.png"
+                  alt="Testimonial avatar"
+                  width={88}
+                  height={88}
                 />
                 <div>
                   <h3 className="mb-2 text-xl md:text-2xl font-semibold">
@@ -45,15 +49,19 @@ export default function WebsiteTestimonialsSection() {
             </div>
             <div className="w-full lg:w-2/6 px-4 mb-12 lg:mb-0">
               <div className="relative pt-12 pb-6 sm:p-6">
-                <img
+                <Image
                   className="absolute top-0 left-0"
-                  src="flex-ui-assets/elements/testimonials/quote-top-green.svg"
-                  alt=""
+                  src="/flex-ui-assets/elements/testimonials/quote-top-green.svg"
+                  alt="Green quote top"
+                  width={142}
+                  height={98}
                 />
-                <img
+                <Image
                   className="absolute bottom-0 right-0"
-                  src="flex-ui-assets/elements/testimonials/quote-down-green.svg"
-                  alt=""
+                  src="/flex-ui-assets/elements/testimonials/quote-down-green.svg"
+                  alt="Green quote down"
+                  width={142}
+                  height={98}
                 />
                 <div className="relative">
                   <h2 className="text-2xl font-semibold tracking-tighter">

@@ -1,3 +1,6 @@
+import Link from "next/link";
+import Image from "next/image";
+
 export default function WebsiteFooter() {
   return (
     <>
@@ -11,9 +14,15 @@ export default function WebsiteFooter() {
         <div className="container px-4 mx-auto">
           <div className="flex flex-wrap pt-24 pb-12 -mx-4">
             <div className="w-full md:w-1/2 lg:w-4/12 px-4 mb-16 lg:mb-0">
-              <a className="inline-block mb-4" href="#">
-                <img className="h-8" src="/irmin-logo-light.svg" alt="" />
-              </a>
+              <Link className="inline-block mb-4" href="#">
+                <Image
+                  className="h-8"
+                  src="/irmin-logo-light.svg"
+                  alt="Irmin light color logo"
+                  width={100}
+                  height={25}
+                />
+              </Link>
               <p className="text-base md:text-lg text-coolGray-400 font-medium lg:w-64">
                 Launch your own Software As A Service Application with Flex
                 Solutions.
@@ -23,44 +32,44 @@ export default function WebsiteFooter() {
               <h3 className="mb-5 text-lg font-bold text-white">Product</h3>
               <ul>
                 <li className="mb-4">
-                  <a
+                  <Link
                     className="inline-block text-coolGray-400 hover:text-coolGray-500 font-medium"
                     href="#"
                   >
                     Features
-                  </a>
+                  </Link>
                 </li>
                 <li className="mb-4">
-                  <a
+                  <Link
                     className="inline-block text-coolGray-400 hover:text-coolGray-500 font-medium"
                     href="#"
                   >
                     Solutions
-                  </a>
+                  </Link>
                 </li>
                 <li className="mb-4">
-                  <a
+                  <Link
                     className="inline-block text-coolGray-400 hover:text-coolGray-500 font-medium"
                     href="#"
                   >
                     Pricing
-                  </a>
+                  </Link>
                 </li>
                 <li className="mb-4">
-                  <a
+                  <Link
                     className="inline-block text-coolGray-400 hover:text-coolGray-500 font-medium"
                     href="#"
                   >
                     Tutorials
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
+                  <Link
                     className="inline-block text-coolGray-400 hover:text-coolGray-500 font-medium"
                     href="#"
                   >
                     Updates
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -68,44 +77,44 @@ export default function WebsiteFooter() {
               <h3 className="mb-5 text-lg font-bold text-white">Remaining</h3>
               <ul>
                 <li className="mb-4">
-                  <a
+                  <Link
                     className="inline-block text-coolGray-400 hover:text-coolGray-500 font-medium"
                     href="#"
                   >
                     Blog
-                  </a>
+                  </Link>
                 </li>
                 <li className="mb-4">
-                  <a
+                  <Link
                     className="inline-block text-coolGray-400 hover:text-coolGray-500 font-medium"
                     href="#"
                   >
                     Newsletter
-                  </a>
+                  </Link>
                 </li>
                 <li className="mb-4">
-                  <a
+                  <Link
                     className="inline-block text-coolGray-400 hover:text-coolGray-500 font-medium"
                     href="#"
                   >
                     Help Centre
-                  </a>
+                  </Link>
                 </li>
                 <li className="mb-4">
-                  <a
+                  <Link
                     className="inline-block text-coolGray-400 hover:text-coolGray-500 font-medium"
                     href="#"
                   >
                     Careers
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
+                  <Link
                     className="inline-block text-coolGray-400 hover:text-coolGray-500 font-medium"
                     href="#"
                   >
                     Support
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -119,12 +128,12 @@ export default function WebsiteFooter() {
                   />
                 </div>
                 <div className="w-full lg:w-auto py-1 lg:py-0">
-                  <a
+                  <Link
                     className="inline-block py-4 px-5 w-full leading-4 text-green-50 font-medium text-center bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded-md shadow-sm"
                     href="#"
                   >
                     Subscribe
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>

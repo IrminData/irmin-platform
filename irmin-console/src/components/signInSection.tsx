@@ -1,3 +1,6 @@
+import Link from "next/link";
+import Image from "next/image";
+
 export default function SignInSection() {
   return (
     <>
@@ -11,9 +14,15 @@ export default function SignInSection() {
         <div className="container px-4 mx-auto">
           <div className="max-w-sm mx-auto">
             <div className="mb-6 text-center">
-              <a className="inline-block mb-6" href="#">
-                <img className="h-16" src="/irmin-logo.svg" alt="" />
-              </a>
+              <Link className="inline-block mb-6" href="#">
+                <Image
+                  className="h-16"
+                  src="/irmin-logo.svg"
+                  alt="IRMIN logo"
+                  width={400}
+                  height={100}
+                />
+              </Link>
               <h3 className="mb-4 text-2xl md:text-3xl font-bold">
                 Sign in to your account
               </h3>
@@ -55,9 +64,9 @@ export default function SignInSection() {
                       className="form-checkbox appearance-none"
                       type="checkbox"
                     />
-                    <img
+                    <Image
                       className="absolute top-1/2 transform -translate-y-1/2 left-0"
-                      src="flex-ui-assets/elements/sign-up/checkbox-icon.svg"
+                      src="/flex-ui-assets/elements/sign-up/checkbox-icon.svg"
                       alt=""
                     />
                     <span className="ml-7 text-xs text-coolGray-800 font-medium">
@@ -66,30 +75,30 @@ export default function SignInSection() {
                   </label>
                 </div>
                 <div className="w-full md:w-auto mt-1">
-                  <a
+                  <Link
                     className="inline-block text-xs font-medium text-green-500 hover:text-green-600"
                     href="#"
                   >
                     Forgot your password?
-                  </a>
+                  </Link>
                 </div>
               </div>
-              <a
+              <Link
                 className="inline-block py-3 px-7 mb-6 w-full text-base text-green-50 font-medium text-center leading-6 bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded-md shadow-sm"
                 href="#"
               >
                 Sign In
-              </a>
+              </Link>
               <p className="text-center">
                 <span className="text-xs font-medium">
                   Don’t have an account?
                 </span>
-                <a
+                <Link
                   className="inline-block text-xs font-medium text-green-500 hover:text-green-600 hover:underline"
                   href="#"
                 >
                   Sign up
-                </a>
+                </Link>
               </p>
             </form>
           </div>
