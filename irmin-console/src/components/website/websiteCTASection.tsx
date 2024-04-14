@@ -58,7 +58,7 @@ export default function WebsiteCTASection() {
               <div className="flex flex-wrap items-center">
                 <div className="w-1/2 pr-4">
                   <Link
-                    className="inline-block py-4 px-4 w-full text-base md:text-lg leading-4 text-white font-light text-center bg-midnight_green-500 border border-midnight_green-500 rounded-md shadow-sm hover:bg-midnight_green-600 hover:border-midnight_green-600 transition-colors duration-200 ease-in-out"
+                    className="inline-block py-4 px-4 w-full text-base md:text-lg leading-4 text-white font-light text-center bg-midnight_green-500 border border-midnight_green-500 rounded-full shadow-sm hover:bg-midnight_green-600 hover:border-midnight_green-600 transition-colors duration-200 ease-in-out"
                     href="/sign-up"
                   >
                     Get started for free
@@ -66,7 +66,7 @@ export default function WebsiteCTASection() {
                 </div>
                 <div className="w-1/2">
                   <Link
-                    className="inline-block py-4 px-4 w-full text-base md:text-lg leading-4 text-rich_black-500 font-light text-center bg-white border border-rich_black-200 rounded-md shadow-sm hover:bg-rich_black-900 transition-colors duration-200 ease-in-out"
+                    className="inline-block py-4 px-4 w-full text-base md:text-lg leading-4 text-rich_black-500 font-light text-center bg-white border border-rich_black-200 rounded-full shadow-sm hover:bg-rich_black-900 transition-colors duration-200 ease-in-out"
                     href="#"
                   >
                     Schedule a live demo

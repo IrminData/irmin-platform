@@ -60,7 +60,7 @@ export default function WebsiteNavigation() {
               <div className="w-1/3">
                 <div className="hidden xl:flex items-center justify-end">
                   <Link
-                    className="inline-block py-2 px-4 mr-2 leading-5 text-rich_black-500 hover:text-rich_black-600 bg-transparent font-light rounded-md"
+                    className="inline-block py-2 px-4 mr-2 leading-5 text-rich_black-500 hover:text-rich_black-600 bg-transparent font-light rounded-full"
                     href="/sign-in"
                   >
                     Sign In
@@ -117,7 +117,7 @@ export default function WebsiteNavigation() {
                   <ul className="py-6">
                     <li>
                       <Link
-                        className="block py-3 px-4 text-rich_black-500 hover:text-rich_black-600 font-light hover:bg-rich_black-50 rounded-md"
+                        className="block py-3 px-4 text-rich_black-500 hover:text-rich_black-600 font-light hover:bg-rich_black-50 rounded-full"
                         href="/product"
                       >
                         Product
@@ -125,7 +125,7 @@ export default function WebsiteNavigation() {
                     </li>
                     <li>
                       <Link
-                        className="block py-3 px-4 text-rich_black-500 hover:text-rich_black-600 font-light hover:bg-rich_black-50 rounded-md"
+                        className="block py-3 px-4 text-rich_black-500 hover:text-rich_black-600 font-light hover:bg-rich_black-50 rounded-full"
                         href="/features"
                       >
                         Features
@@ -133,7 +133,7 @@ export default function WebsiteNavigation() {
                     </li>
                     <li>
                       <Link
-                        className="block py-3 px-4 text-rich_black-500 hover:text-rich_black-600 font-light hover:bg-rich_black-50 rounded-md"
+                        className="block py-3 px-4 text-rich_black-500 hover:text-rich_black-600 font-light hover:bg-rich_black-50 rounded-full"
                         href="/pricing"
                       >
                         Pricing
@@ -141,7 +141,7 @@ export default function WebsiteNavigation() {
                     </li>
                     <li>
                       <Link
-                        className="block py-3 px-4 text-rich_black-500 hover:text-rich_black-600 font-light hover:bg-rich_black-50 rounded-md"
+                        className="block py-3 px-4 text-rich_black-500 hover:text-rich_black-600 font-light hover:bg-rich_black-50 rounded-full"
                         href="/resources"
                       >
                         Resources
@@ -151,7 +151,7 @@ export default function WebsiteNavigation() {
                   <div className="flex flex-wrap">
                     <div className="w-full mb-2">
                       <Link
-                        className="inline-block py-2 px-4 w-full text-sm leading-5 text-rich_black-500 hover:text-rich_black-600 bg-transparent font-light text-center rounded-md"
+                        className="inline-block py-2 px-4 w-full text-sm leading-5 text-rich_black-500 hover:text-rich_black-600 bg-transparent font-light text-center rounded-full"
                         href="/sign-in"
                       >
                         Sign In
@@ -159,7 +159,7 @@ export default function WebsiteNavigation() {
                     </div>
                     <div className="w-full">
                       <Link
-                        className="inline-block py-2 px-4 w-full text-sm leading-5 text-white bg-midnight_green hover:bg-midnight_green-600 font-light text-center focus:ring-2 focus:midnight_green focus:ring-opacity-50 rounded-md"
+                        className="inline-block py-2 px-4 w-full text-sm leading-5 text-white bg-midnight_green hover:bg-midnight_green-600 font-light text-center focus:ring-2 focus:midnight_green focus:ring-opacity-50 rounded-full"
                         href="/sign-up"
                       >
                         Sign Up

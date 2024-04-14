@@ -39,7 +39,7 @@ export default function SignInSection() {
                   Email
                 </label>
                 <input
-                  className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-lg shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
+                  className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                   type="email"
                   placeholder="name@acme.corp"
                 />
@@ -52,7 +52,7 @@ export default function SignInSection() {
                   Password
                 </label>
                 <input
-                  className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-lg shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
+                  className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                   type="password"
                   placeholder="************"
                 />
@@ -85,7 +85,7 @@ export default function SignInSection() {
                   </Link>
                 </div>
               </div>
-              <button className="inline-block py-3 px-7 mb-6 w-full text-base text-rich_black font-medium text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-md shadow-sm">
+              <button className="inline-block py-3 px-7 mb-6 w-full text-base text-rich_black font-medium text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm">
                 Sign In
               </button>
               <p className="text-center">

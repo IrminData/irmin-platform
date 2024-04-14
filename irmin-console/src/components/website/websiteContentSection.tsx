@@ -24,7 +24,7 @@ export default function WebsiteContentSection() {
           </p>
           <div className="flex flex-wrap mb-10 text-center md:text-left">
             <div className="w-full md:w-auto mb-6 md:mb-0 md:pr-6 pt-2">
-              <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-lg">
+              <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-full">
                 <svg
                   width={21}
                   height={21}
@@ -53,7 +53,7 @@ export default function WebsiteContentSection() {
           </div>
           <div className="flex flex-wrap mb-10 text-center md:text-left">
             <div className="w-full md:w-auto mb-6 md:mb-0 md:pr-6 pt-2">
-              <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-lg">
+              <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-full">
                 <svg
                   width={21}
                   height={21}
@@ -82,7 +82,7 @@ export default function WebsiteContentSection() {
           </div>
           <div className="flex flex-wrap text-center md:text-left">
             <div className="w-full md:w-auto mb-6 md:mb-0 md:pr-6 pt-2">
-              <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-lg">
+              <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-full">
                 <svg
                   width={21}
                   height={21}

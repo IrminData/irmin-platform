@@ -26,9 +26,9 @@ export default function WebsiteFeaturesSection() {
           </div>
           <div className="flex flex-wrap lg:items-center -mx-4">
             <div className="w-full md:w-1/2 px-4 mb-8 md:mb-0">
-              <div className="flex flex-wrap p-8 text-center md:text-left hover:bg-white rounded-md hover:shadow-xl transition duration-200">
+              <div className="flex flex-wrap p-8 text-center md:text-left hover:bg-white rounded-full hover:shadow-xl transition duration-200">
                 <div className="w-full md:w-auto mb-6 md:mb-0 md:pr-6">
-                  <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-lg">
+                  <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-full">
                     <svg
                       width={21}
                       height={21}
@@ -53,9 +53,9 @@ export default function WebsiteFeaturesSection() {
                   </p>
                 </div>
               </div>
-              <div className="flex flex-wrap p-8 text-center md:text-left hover:bg-white rounded-md hover:shadow-xl transition duration-200">
+              <div className="flex flex-wrap p-8 text-center md:text-left hover:bg-white rounded-full hover:shadow-xl transition duration-200">
                 <div className="w-full md:w-auto mb-6 md:mb-0 md:pr-6">
-                  <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-lg">
+                  <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-full">
                     <svg
                       width={21}
                       height={21}
@@ -80,9 +80,9 @@ export default function WebsiteFeaturesSection() {
                   </p>
                 </div>
               </div>
-              <div className="flex flex-wrap p-8 text-center md:text-left hover:bg-white rounded-md hover:shadow-xl transition duration-200">
+              <div className="flex flex-wrap p-8 text-center md:text-left hover:bg-white rounded-full hover:shadow-xl transition duration-200">
                 <div className="w-full md:w-auto mb-6 md:mb-0 md:pr-6">
-                  <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-lg">
+                  <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-full">
                     <svg
                       width={21}
                       height={21}

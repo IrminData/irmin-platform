@@ -118,13 +118,13 @@ export default function WebsiteFooter() {
               <div className="flex flex-wrap">
                 <div className="w-full lg:flex-1 py-1 lg:py-0 lg:mr-3">
                   <input
-                    className="px-3 w-full h-12 text-rich_black-600 outline-none placeholder-rich_black-500 border border-rich_black-200 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-lg shadow-xsm"
+                    className="px-3 w-full h-12 text-rich_black-600 outline-none placeholder-rich_black-500 border border-rich_black-200 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-xsm"
                     placeholder="Your email"
                   />
                 </div>
                 <div className="w-full lg:w-auto py-1 lg:py-0">
                   <Link
-                    className="inline-block py-4 px-5 w-full leading-4 text-ash_gray-50 font-light text-center bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-md shadow-sm"
+                    className="inline-block py-4 px-5 w-full leading-4 text-white text-center bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
                     href="#"
                   >
                     Subscribe
