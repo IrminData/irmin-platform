@@ -1,10 +1,13 @@
+import Link from "next/link";
+import Image from "next/image";
+
 export default function WebsiteCareersSection() {
   return (
     <>
       <section
         className="py-24 md:pb-32 bg-white"
         style={{
-          backgroundImage: 'url("flex-ui-assets/elements/pattern-white.svg")',
+          backgroundImage: 'url("/flex-ui-assets/elements/pattern-white.svg")',
           backgroundPosition: "center",
         }}
       >
@@ -25,10 +28,12 @@ export default function WebsiteCareersSection() {
             <div className="flex flex-wrap items-center justify-center mb-14 -mx-3">
               <div className="w-full md:w-1/3 px-3 mb-3 md:mb-0">
                 <div className="relative">
-                  <img
+                  <Image
                     className="absolute top-1/2 left-4 transform -translate-y-1/2"
-                    src="flex-ui-assets/elements/blog/search.svg"
-                    alt=""
+                    src="/flex-ui-assets/elements/blog/search.svg"
+                    alt="search icon"
+                    width={24}
+                    height={24}
                   />
                   <input
                     className="w-full h-full py-3 pl-12 pr-4 text-coolGray-500 leading-tight placeholder-coolGray-500 focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 border border-coolGray-200 rounded-full shadow-xsm"
@@ -136,12 +141,12 @@ export default function WebsiteCareersSection() {
               </div>
             </div>
             <div className="w-full md:w-auto">
-              <a
+              <Link
                 className="inline-block py-3 px-7 w-full md:w-auto text-lg leading-8 text-white font-medium text-center bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
                 href="#"
               >
                 View Job
-              </a>
+              </Link>
             </div>
           </div>
           <div className="flex flex-wrap items-center py-7 rounded-full">
@@ -191,12 +196,12 @@ export default function WebsiteCareersSection() {
               </div>
             </div>
             <div className="w-full md:w-auto">
-              <a
+              <Link
                 className="inline-block py-3 px-7 w-full md:w-auto text-lg leading-8 text-white font-medium text-center bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
                 href="#"
               >
                 View Job
-              </a>
+              </Link>
             </div>
           </div>
           <div className="flex flex-wrap items-center py-7 bg-coolGray-50 rounded-full">
@@ -246,12 +251,12 @@ export default function WebsiteCareersSection() {
               </div>
             </div>
             <div className="w-full md:w-auto">
-              <a
+              <Link
                 className="inline-block py-3 px-7 w-full md:w-auto text-lg leading-8 text-white font-medium text-center bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
                 href="#"
               >
                 View Job
-              </a>
+              </Link>
             </div>
           </div>
           <div className="flex flex-wrap items-center py-7 rounded-full">
@@ -301,12 +306,12 @@ export default function WebsiteCareersSection() {
               </div>
             </div>
             <div className="w-full md:w-auto">
-              <a
+              <Link
                 className="inline-block py-3 px-7 w-full md:w-auto text-lg leading-8 text-white font-medium text-center bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
                 href="#"
               >
                 View Job
-              </a>
+              </Link>
             </div>
           </div>
           <div className="flex flex-wrap items-center py-7 bg-coolGray-50 rounded-full">
@@ -356,12 +361,12 @@ export default function WebsiteCareersSection() {
               </div>
             </div>
             <div className="w-full md:w-auto">
-              <a
+              <Link
                 className="inline-block py-3 px-7 w-full md:w-auto text-lg leading-8 text-white font-medium text-center bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
                 href="#"
               >
                 View Job
-              </a>
+              </Link>
             </div>
           </div>
           <div className="flex flex-wrap items-center py-7 rounded-full">
@@ -411,12 +416,12 @@ export default function WebsiteCareersSection() {
               </div>
             </div>
             <div className="w-full md:w-auto">
-              <a
+              <Link
                 className="inline-block py-3 px-7 w-full md:w-auto text-lg leading-8 text-white font-medium text-center bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
                 href="#"
               >
                 View Job
-              </a>
+              </Link>
             </div>
           </div>
           <div className="flex flex-wrap items-center py-7 bg-coolGray-50 rounded-full">
@@ -466,12 +471,12 @@ export default function WebsiteCareersSection() {
               </div>
             </div>
             <div className="w-full md:w-auto">
-              <a
+              <Link
                 className="inline-block py-3 px-7 w-full md:w-auto text-lg leading-8 text-white font-medium text-center bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
                 href="#"
               >
                 View Job
-              </a>
+              </Link>
             </div>
           </div>
         </div>

@@ -1,10 +1,13 @@
+import Link from "next/link";
+import Image from "next/image";
+
 export default function WebsiteTeamSection() {
   return (
     <>
       <section
         className="py-24 bg-white"
         style={{
-          backgroundImage: 'url("flex-ui-assets/elements/pattern-white.svg")',
+          backgroundImage: 'url("/flex-ui-assets/elements/pattern-white.svg")',
           backgroundPosition: "center",
         }}
       >
@@ -18,7 +21,7 @@ export default function WebsiteTeamSection() {
                 <h3 className="mb-4 text-4xl md:text-5xl font-bold tracking-tighter">
                   Meet our team
                 </h3>
-                <p className="text-lg md:text-xl text-coolGray-500 font-medium">
+                <p className="text-lg md:text-xl text-coolGray-500 font-light">
                   Highly professional and capable of running your business
                   across all digital channels.
                 </p>
@@ -27,20 +30,20 @@ export default function WebsiteTeamSection() {
             <div className="w-full md:w-auto px-4">
               <div className="flex flex-wrap justify-center">
                 <div className="w-full md:w-auto py-1 md:py-0 md:mr-4">
-                  <a
+                  <Link
                     className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-white font-medium text-center bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 border border-ash_gray-500 rounded-full shadow-sm"
                     href="#"
                   >
                     Open Positions
-                  </a>
+                  </Link>
                 </div>
                 <div className="w-full md:w-auto py-1 md:py-0">
-                  <a
+                  <Link
                     className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-coolGray-800 font-medium text-center bg-white hover:bg-coolGray-100 focus:ring-2 focus:ring-coolGray-200 focus:ring-opacity-50 border border-coolGray-200 rounded-full shadow-sm"
                     href="#"
                   >
                     About Us
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -48,10 +51,12 @@ export default function WebsiteTeamSection() {
           <div className="flex flex-wrap -mx-4">
             <div className="w-full md:w-1/2 lg:w-1/3 px-4 mb-12">
               <div className="max-w-max mx-auto">
-                <img
+                <Image
                   className="block mb-8"
-                  src="flex-ui-assets/images/teams/photo-employee1.png"
-                  alt=""
+                  src="/flex-ui-assets/images/teams/photo-employee1.png"
+                  alt="Employee photo"
+                  width={359}
+                  height={384}
                 />
                 <h3 className="mb-2 text-3xl md:text-4xl leading-tight font-semibold">
                   Macauley Herring
@@ -63,10 +68,12 @@ export default function WebsiteTeamSection() {
             </div>
             <div className="w-full md:w-1/2 lg:w-1/3 px-4 mb-12">
               <div className="max-w-max mx-auto">
-                <img
+                <Image
                   className="block mb-8"
-                  src="flex-ui-assets/images/teams/photo-employee6.png"
-                  alt=""
+                  src="/flex-ui-assets/images/teams/photo-employee6.png"
+                  alt="Employee photo"
+                  width={359}
+                  height={384}
                 />
                 <h3 className="mb-2 text-3xl md:text-4xl leading-tight font-semibold">
                   Ivan Mathews
@@ -78,10 +85,12 @@ export default function WebsiteTeamSection() {
             </div>
             <div className="w-full md:w-1/2 lg:w-1/3 px-4 mb-12">
               <div className="max-w-max mx-auto">
-                <img
+                <Image
                   className="block mb-8"
-                  src="flex-ui-assets/images/teams/photo-employee5.png"
-                  alt=""
+                  src="/flex-ui-assets/images/teams/photo-employee5.png"
+                  alt="Employee photo"
+                  width={359}
+                  height={384}
                 />
                 <h3 className="mb-2 text-3xl md:text-4xl leading-tight font-semibold">
                   Elen Benitez
@@ -93,10 +102,12 @@ export default function WebsiteTeamSection() {
             </div>
             <div className="w-full md:w-1/2 lg:w-1/3 px-4 mb-12 lg:mb-0">
               <div className="max-w-max mx-auto">
-                <img
+                <Image
                   className="block mb-8"
-                  src="flex-ui-assets/images/teams/photo-employee4.png"
-                  alt=""
+                  src="/flex-ui-assets/images/teams/photo-employee4.png"
+                  alt="Employee photo"
+                  width={359}
+                  height={384}
                 />
                 <h3 className="mb-2 text-3xl md:text-4xl leading-tight font-semibold">
                   Macauley Herring
@@ -108,10 +119,12 @@ export default function WebsiteTeamSection() {
             </div>
             <div className="w-full md:w-1/2 lg:w-1/3 px-4 mb-12 md:mb-0">
               <div className="max-w-max mx-auto">
-                <img
+                <Image
                   className="block mb-8"
-                  src="flex-ui-assets/images/teams/photo-employee3.png"
-                  alt=""
+                  src="/flex-ui-assets/images/teams/photo-employee3.png"
+                  alt="Employee photo"
+                  width={359}
+                  height={384}
                 />
                 <h3 className="mb-2 text-3xl md:text-4xl leading-tight font-semibold">
                   Alya Levine
@@ -123,10 +136,12 @@ export default function WebsiteTeamSection() {
             </div>
             <div className="w-full md:w-1/2 lg:w-1/3 px-4">
               <div className="max-w-max mx-auto">
-                <img
+                <Image
                   className="block mb-8"
-                  src="flex-ui-assets/images/teams/photo-employee2.png"
-                  alt=""
+                  src="/flex-ui-assets/images/teams/photo-employee2.png"
+                  alt="Employee photo"
+                  width={359}
+                  height={384}
                 />
                 <h3 className="mb-2 text-3xl md:text-4xl leading-tight font-semibold">
                   Rose Hernandez
