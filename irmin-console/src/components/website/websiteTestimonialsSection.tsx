@@ -13,7 +13,7 @@ export default function WebsiteTestimonialsSection() {
         <div className="container px-4 mx-auto">
           <div className="flex flex-wrap items-center justify-center lg:justify-between -mx-4">
             <div className="w-auto px-4 order-last lg:order-first">
-              <button className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-coolGray-50 hover:bg-coolGray-100">
+              <button className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-rich_black-50 hover:bg-rich_black-100">
                 <svg
                   width={12}
                   height={14}
@@ -41,7 +41,7 @@ export default function WebsiteTestimonialsSection() {
                   <h3 className="mb-2 text-xl md:text-2xl font-semibold">
                     Darren Dunlap
                   </h3>
-                  <span className="text-lg text-coolGray-500 font-medium">
+                  <span className="text-lg text-rich_black-500 font-light">
                     CEO &amp; Founder at Flex.co
                   </span>
                 </div>
@@ -72,7 +72,7 @@ export default function WebsiteTestimonialsSection() {
               </div>
             </div>
             <div className="w-auto px-4 order-last">
-              <button className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-coolGray-50 hover:bg-coolGray-100">
+              <button className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-rich_black-50 hover:bg-rich_black-100">
                 <svg
                   width={12}
                   height={14}

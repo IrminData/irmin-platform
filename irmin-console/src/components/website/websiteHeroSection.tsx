@@ -12,105 +12,19 @@ export default function WebsiteHeroSection() {
             backgroundPosition: "center",
           }}
         >
-          <div className="bg-transparent">
-            <div className="navbar-menu hidden fixed top-0 left-0 z-50 w-full h-full bg-coolGray-900 bg-opacity-50">
-              <div className="fixed top-0 left-0 bottom-0 w-4/6 max-w-xs bg-white">
-                <nav className="relative p-6 h-full overflow-y-auto">
-                  <div className="flex flex-col justify-between h-full">
-                    <Link className="inline-block" href="#">
-                      <Image
-                        className="h-8"
-                        src="/flex-ui-assets/logos/flex-ui-green.svg"
-                        alt=""
-                        width={95}
-                        height={32}
-                      />
-                    </Link>
-                    <ul className="py-6">
-                      <li>
-                        <Link
-                          className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md"
-                          href="#"
-                        >
-                          Product
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md"
-                          href="#"
-                        >
-                          Features
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md"
-                          href="#"
-                        >
-                          Pricing
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md"
-                          href="#"
-                        >
-                          Resources
-                        </Link>
-                      </li>
-                    </ul>
-                    <div className="flex flex-wrap">
-                      <div className="w-full mb-2">
-                        <Link
-                          className="inline-block py-2 px-4 w-full text-sm leading-5 text-coolGray-500 hover:text-coolGray-900 bg-transparent font-medium text-center rounded-md"
-                          href="#"
-                        >
-                          Log In
-                        </Link>
-                      </div>
-                      <div className="w-full">
-                        <Link
-                          className="inline-block py-2 px-4 w-full text-sm leading-5 text-white bg-green-500 hover:bg-green-600 font-medium text-center focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded-md"
-                          href="#"
-                        >
-                          Sign Up
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </nav>
-                <Link
-                  className="navbar-close absolute top-5 p-4 right-3"
-                  href="#"
-                >
-                  <svg
-                    width={12}
-                    height={12}
-                    viewBox="0 0 12 12"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M6.94004 6L11.14 1.80667C11.2656 1.68113 11.3361 1.51087 11.3361 1.33333C11.3361 1.1558 11.2656 0.985537 11.14 0.860002C11.0145 0.734466 10.8442 0.66394 10.6667 0.66394C10.4892 0.66394 10.3189 0.734466 10.1934 0.860002L6.00004 5.06L1.80671 0.860002C1.68117 0.734466 1.51091 0.663941 1.33337 0.663941C1.15584 0.663941 0.985576 0.734466 0.860041 0.860002C0.734505 0.985537 0.66398 1.1558 0.66398 1.33333C0.66398 1.51087 0.734505 1.68113 0.860041 1.80667L5.06004 6L0.860041 10.1933C0.797555 10.2553 0.747959 10.329 0.714113 10.4103C0.680267 10.4915 0.662842 10.5787 0.662842 10.6667C0.662842 10.7547 0.680267 10.8418 0.714113 10.9231C0.747959 11.0043 0.797555 11.078 0.860041 11.14C0.922016 11.2025 0.99575 11.2521 1.07699 11.2859C1.15823 11.3198 1.24537 11.3372 1.33337 11.3372C1.42138 11.3372 1.50852 11.3198 1.58976 11.2859C1.671 11.2521 1.74473 11.2025 1.80671 11.14L6.00004 6.94L10.1934 11.14C10.2554 11.2025 10.3291 11.2521 10.4103 11.2859C10.4916 11.3198 10.5787 11.3372 10.6667 11.3372C10.7547 11.3372 10.8419 11.3198 10.9231 11.2859C11.0043 11.2521 11.0781 11.2025 11.14 11.14C11.2025 11.078 11.2521 11.0043 11.286 10.9231C11.3198 10.8418 11.3372 10.7547 11.3372 10.6667C11.3372 10.5787 11.3198 10.4915 11.286 10.4103C11.2521 10.329 11.2025 10.2553 11.14 10.1933L6.94004 6Z"
-                      fill="#556987"
-                    />
-                  </svg>
-                </Link>
-              </div>
-            </div>
-          </div>
           <div className="pt-12 pb-28 md:pb-72">
             <div className="container px-4 mx-auto">
               <div className="mx-auto text-center max-w-3xl">
-                <span className="inline-block py-px px-2 mb-6 text-xs leading-5 text-white bg-green-500 uppercase rounded-9xl">
-                  Header
+                <span className="inline-block py-px px-2 mb-4 text-xs leading-5 text-white bg-midnight_green font-light uppercase rounded-full shadow-sm">
+                  Data hub
                 </span>
                 <h1 className="mb-6 text-3xl md:text-5xl lg:text-6xl leading-tight font-bold tracking-tighter">
-                  AI-powered ETL platform with integrated data marketplace for
+                  AI-powered <span className="text-ash_gray">ETL platform</span>{" "}
+                  with integrated{" "}
+                  <span className="text-ash_gray">data marketplace</span> for
                   analysts.
                 </h1>
-                <p className="mb-8 mx-auto text-lg md:text-xl text-coolGray-500 font-medium max-w-3xl">
+                <p className="mb-8 mx-auto text-lg md:text-xl text-rich_black-500 font-light max-w-3xl">
                   Streamline your data integration effortlessly with advanced
                   ETL, SQL transformations, and an AI Assistant. Enhance
                   decision-making using our rich data marketplace for access to
@@ -119,15 +33,15 @@ export default function WebsiteHeroSection() {
                 <div className="flex flex-wrap justify-center">
                   <div className="w-full md:w-auto py-1 md:py-0 md:mr-4">
                     <Link
-                      className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-green-50 font-medium text-center bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 border border-green-500 rounded-md shadow-sm"
-                      href="#"
+                      className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-white font-light text-center bg-midnight_green-500 border border-midnight_green-500 rounded-md shadow-sm hover:bg-midnight_green-600 hover:border-midnight_green-600 transition-colors duration-200 ease-in-out"
+                      href="/sign-up"
                     >
                       Get started for free
                     </Link>
                   </div>
                   <div className="w-full md:w-auto py-1 md:py-0">
                     <Link
-                      className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-coolGray-800 font-medium text-center bg-white hover:bg-coolGray-100 focus:ring-2 focus:ring-coolGray-200 focus:ring-opacity-50 border border-coolGray-200 rounded-md shadow-sm"
+                      className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-rich_black-500 font-light text-center bg-white border border-rich_black-200 rounded-md shadow-sm hover:bg-rich_black-900 transition-colors duration-200 ease-in-out"
                       href="#"
                     >
                       Schedule a live demo
@@ -155,7 +69,7 @@ export default function WebsiteHeroSection() {
               height={81}
             />
             <svg
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 cursor-pointer text-green-500 hover:text-green-600"
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 cursor-pointer text-ash_gray-500 hover:text-ash_gray-600"
               width={64}
               height={64}
               viewBox="0 0 64 64"

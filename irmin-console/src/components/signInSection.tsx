@@ -26,33 +26,33 @@ export default function SignInSection() {
               <h3 className="mb-4 text-2xl md:text-3xl font-bold">
                 Sign in to your account
               </h3>
-              <p className="text-lg text-coolGray-500 font-medium">
+              <p className="text-lg text-rich_black-500 font-light">
                 Welcome back to the home of your data
               </p>
             </div>
             <form action="">
               <div className="mb-6">
                 <label
-                  className="block mb-2 text-coolGray-800 font-medium"
+                  className="block mb-2 text-rich_black-500 font-light"
                   htmlFor=""
                 >
                   Email
                 </label>
                 <input
-                  className="appearance-none block w-full p-3 leading-5 text-coolGray-900 border border-coolGray-200 rounded-lg shadow-md placeholder-coolGray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                  className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-lg shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                   type="email"
                   placeholder="name@acme.corp"
                 />
               </div>
               <div className="mb-4">
                 <label
-                  className="block mb-2 text-coolGray-800 font-medium"
+                  className="block mb-2 text-rich_black-500 font-light"
                   htmlFor=""
                 >
                   Password
                 </label>
                 <input
-                  className="appearance-none block w-full p-3 leading-5 text-coolGray-900 border border-coolGray-200 rounded-lg shadow-md placeholder-coolGray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                  className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-lg shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                   type="password"
                   placeholder="************"
                 />
@@ -67,35 +67,34 @@ export default function SignInSection() {
                     <Image
                       className="absolute top-1/2 transform -translate-y-1/2 left-0"
                       src="/flex-ui-assets/elements/sign-up/checkbox-icon.svg"
-                      alt=""
+                      alt="Checkbox icon"
+                      width={20}
+                      height={20}
                     />
-                    <span className="ml-7 text-xs text-coolGray-800 font-medium">
+                    <span className="ml-7 text-xs text-rich_black-500 font-light">
                       Remember me
                     </span>
                   </label>
                 </div>
                 <div className="w-full md:w-auto mt-1">
                   <Link
-                    className="inline-block text-xs font-medium text-green-500 hover:text-green-600"
+                    className="inline-block text-xs font-light text-ash_gray-500 hover:text-ash_gray-600"
                     href="#"
                   >
                     Forgot your password?
                   </Link>
                 </div>
               </div>
-              <Link
-                className="inline-block py-3 px-7 mb-6 w-full text-base text-green-50 font-medium text-center leading-6 bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded-md shadow-sm"
-                href="#"
-              >
+              <button className="inline-block py-3 px-7 mb-6 w-full text-base text-rich_black font-medium text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-md shadow-sm">
                 Sign In
-              </Link>
+              </button>
               <p className="text-center">
-                <span className="text-xs font-medium">
-                  Don’t have an account?
+                <span className="text-xs font-light">
+                  Don’t have an account?{" "}
                 </span>
                 <Link
-                  className="inline-block text-xs font-medium text-green-500 hover:text-green-600 hover:underline"
-                  href="#"
+                  className="inline-block text-xs font-light text-ash_gray-500 hover:text-ash_gray-600 hover:underline"
+                  href="/sign-up"
                 >
                   Sign up
                 </Link>

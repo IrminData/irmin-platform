@@ -12,13 +12,13 @@ export default function WebsiteFeaturesSection() {
       >
         <div className="container px-4 mx-auto">
           <div className="md:max-w-4xl mb-16 md:mb-20">
-            <span className="inline-block py-px px-2 mb-4 text-xs leading-5 text-green-500 bg-green-100 font-medium uppercase rounded-full shadow-sm">
+            <span className="inline-block py-px px-2 mb-4 text-xs leading-5 text-white bg-midnight_green font-light uppercase rounded-full shadow-sm">
               Features
             </span>
             <h1 className="mb-4 text-3xl md:text-4xl leading-tight font-bold tracking-tighter">
               Gain more insight into how people use your
             </h1>
-            <p className="text-lg md:text-xl text-coolGray-500 font-medium">
+            <p className="text-lg md:text-xl text-rich_black-500 font-light">
               With our integrated CRM, project management, collaboration and
               invoicing capabilities, you can manage every aspect of your
               business in one secure platform.
@@ -28,7 +28,7 @@ export default function WebsiteFeaturesSection() {
             <div className="w-full md:w-1/2 px-4 mb-8 md:mb-0">
               <div className="flex flex-wrap p-8 text-center md:text-left hover:bg-white rounded-md hover:shadow-xl transition duration-200">
                 <div className="w-full md:w-auto mb-6 md:mb-0 md:pr-6">
-                  <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-green-500 rounded-lg">
+                  <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-lg">
                     <svg
                       width={21}
                       height={21}
@@ -44,10 +44,10 @@ export default function WebsiteFeaturesSection() {
                   </div>
                 </div>
                 <div className="w-full md:flex-1 md:pt-3">
-                  <h3 className="mb-4 text-xl md:text-2xl leading-tight text-coolGray-900 font-bold">
+                  <h3 className="mb-4 text-xl md:text-2xl leading-tight text-rich_black-600 font-bold">
                     Measure your performance
                   </h3>
-                  <p className="text-coolGray-500 font-medium">
+                  <p className="text-rich_black-500 font-light">
                     Stay connected with your team and make quick decisions
                     wherever you are.
                   </p>
@@ -55,7 +55,7 @@ export default function WebsiteFeaturesSection() {
               </div>
               <div className="flex flex-wrap p-8 text-center md:text-left hover:bg-white rounded-md hover:shadow-xl transition duration-200">
                 <div className="w-full md:w-auto mb-6 md:mb-0 md:pr-6">
-                  <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-green-500 rounded-lg">
+                  <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-lg">
                     <svg
                       width={21}
                       height={21}
@@ -71,10 +71,10 @@ export default function WebsiteFeaturesSection() {
                   </div>
                 </div>
                 <div className="w-full md:flex-1 md:pt-3">
-                  <h3 className="mb-4 text-xl md:text-2xl leading-tight text-coolGray-900 font-bold">
+                  <h3 className="mb-4 text-xl md:text-2xl leading-tight text-rich_black-600 font-bold">
                     Build your website
                   </h3>
-                  <p className="text-coolGray-500 font-medium">
+                  <p className="text-rich_black-500 font-light">
                     A tool that lets you build a dream website even if you know
                     nothing about web design or programming.
                   </p>
@@ -82,7 +82,7 @@ export default function WebsiteFeaturesSection() {
               </div>
               <div className="flex flex-wrap p-8 text-center md:text-left hover:bg-white rounded-md hover:shadow-xl transition duration-200">
                 <div className="w-full md:w-auto mb-6 md:mb-0 md:pr-6">
-                  <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-green-500 rounded-lg">
+                  <div className="inline-flex h-14 w-14 mx-auto items-center justify-center text-white bg-ash_gray-500 rounded-lg">
                     <svg
                       width={21}
                       height={21}
@@ -98,10 +98,10 @@ export default function WebsiteFeaturesSection() {
                   </div>
                 </div>
                 <div className="w-full md:flex-1 md:pt-3">
-                  <h3 className="mb-4 text-xl md:text-2xl leading-tight text-coolGray-900 font-bold">
+                  <h3 className="mb-4 text-xl md:text-2xl leading-tight text-rich_black-600 font-bold">
                     Connect multiple apps
                   </h3>
-                  <p className="text-coolGray-500 font-medium">
+                  <p className="text-rich_black-500 font-light">
                     The first business platform to bring together all of your
                     products from one place.
                   </p>

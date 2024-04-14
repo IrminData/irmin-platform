@@ -13,8 +13,8 @@ export default function WebsiteCTASection() {
       <div className="container px-4 mx-auto">
         <div className="flex flex-wrap -mx-4">
           <div className="w-full md:w-1/2 px-4 mb-20 lg:mb-0">
-            <div className="max-w-md mx-auto">
-              <h2 className="mb-8 text-4xl md:text-5xl font-heading font-bold text-coolGray-900 md:leading-15">
+            <div className="max-w-md">
+              <h2 className="mb-8 text-4xl md:text-5xl font-heading font-bold text-rich_black md:leading-15">
                 Join 6,000+ companies growing with Irmin
               </h2>
               <ul className="mb-8">
@@ -26,7 +26,7 @@ export default function WebsiteCTASection() {
                     width={26}
                     height={26}
                   />
-                  <span className="text-lg md:text-xl font-heading text-coolGray-500">
+                  <span className="text-lg md:text-xl font-heading text-rich_black-500">
                     Mauris pellentesque congue libero nec
                   </span>
                 </li>
@@ -38,7 +38,7 @@ export default function WebsiteCTASection() {
                     width={26}
                     height={26}
                   />
-                  <span className="text-lg md:text-xl font-heading text-coolGray-500">
+                  <span className="text-lg md:text-xl font-heading text-rich_black-500">
                     Suspendisse mollis tincidunt
                   </span>
                 </li>
@@ -50,24 +50,28 @@ export default function WebsiteCTASection() {
                     width={26}
                     height={26}
                   />
-                  <span className="text-lg md:text-xl font-heading text-coolGray-500">
+                  <span className="text-lg md:text-xl font-heading text-rich_black-500">
                     Praesent varius justo vel justo pulvinar
                   </span>
                 </li>
               </ul>
               <div className="flex flex-wrap items-center">
-                <Link
-                  className="inline-flex items-center justify-center px-7 py-3 h-14 w-full mb-2 md:mb-0 md:mr-4 md:w-auto text-lg leading-7 text-coolGray-800 bg-white hover:bg-coolGray-100 font-medium focus:ring-2 focus:ring-coolGray-200 focus:ring-opacity-50 border-coolGray-200 border border-coolGray-100 rounded-md shadow-sm"
-                  href="#"
-                >
-                  Learn More
-                </Link>
-                <Link
-                  className="inline-flex items-center justify-center px-7 py-3 h-14 w-full md:w-auto text-lg leading-7 text-green-50 bg-green-500 hover:bg-green-600 font-medium focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 border border-transparent rounded-md shadow-sm"
-                  href="#"
-                >
-                  Get Started
-                </Link>
+                <div className="w-1/2 pr-4">
+                  <Link
+                    className="inline-block py-4 px-4 w-full text-base md:text-lg leading-4 text-white font-light text-center bg-midnight_green-500 border border-midnight_green-500 rounded-md shadow-sm hover:bg-midnight_green-600 hover:border-midnight_green-600 transition-colors duration-200 ease-in-out"
+                    href="/sign-up"
+                  >
+                    Get started for free
+                  </Link>
+                </div>
+                <div className="w-1/2">
+                  <Link
+                    className="inline-block py-4 px-4 w-full text-base md:text-lg leading-4 text-rich_black-500 font-light text-center bg-white border border-rich_black-200 rounded-md shadow-sm hover:bg-rich_black-900 transition-colors duration-200 ease-in-out"
+                    href="#"
+                  >
+                    Schedule a live demo
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

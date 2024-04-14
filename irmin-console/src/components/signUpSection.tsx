@@ -27,59 +27,59 @@ export default function SignUpSection() {
                 <h3 className="mb-4 text-2xl md:text-3xl font-bold">
                   Join the data hub
                 </h3>
-                <p className="text-lg text-coolGray-500 font-medium">
+                <p className="text-lg text-rich_black-500 font-light">
                   Give your data a better home
                 </p>
               </div>
               <form action="">
                 <div className="mb-6">
                   <label
-                    className="block mb-2 text-coolGray-800 font-medium"
+                    className="block mb-2 text-rich_black-500 font-light"
                     htmlFor=""
                   >
                     Name *
                   </label>
                   <input
-                    className="appearance-none block w-full p-3 leading-5 text-coolGray-900 border border-coolGray-200 rounded-lg shadow-md placeholder-coolGray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                    className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-lg shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                     type="name"
                     placeholder="Patryk"
                   />
                 </div>
                 <div className="mb-6">
                   <label
-                    className="block mb-2 text-coolGray-800 font-medium"
+                    className="block mb-2 text-rich_black-500 font-light"
                     htmlFor="company"
                   >
                     Company *
                   </label>
                   <input
-                    className="appearance-none block w-full p-3 leading-5 text-coolGray-900 border border-coolGray-200 rounded-lg shadow-md placeholder-coolGray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                    className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-lg shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                     type="company"
                     placeholder="Acme Inc."
                   />
                 </div>
                 <div className="mb-6">
                   <label
-                    className="block mb-2 text-coolGray-800 font-medium"
+                    className="block mb-2 text-rich_black-500 font-light"
                     htmlFor=""
                   >
                     Email*
                   </label>
                   <input
-                    className="appearance-none block w-full p-3 leading-5 text-coolGray-900 border border-coolGray-200 rounded-lg shadow-md placeholder-coolGray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                    className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-lg shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                     type="name"
                     placeholder="name@acme.corp"
                   />
                 </div>
                 <div className="mb-4">
                   <label
-                    className="block mb-2 text-coolGray-800 font-medium"
+                    className="block mb-2 text-rich_black-500 font-light"
                     htmlFor=""
                   >
                     Password*
                   </label>
                   <input
-                    className="appearance-none block w-full p-3 leading-5 text-coolGray-900 border border-coolGray-200 rounded-lg shadow-md placeholder-coolGray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                    className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-lg shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                     type="password"
                     placeholder="************"
                   />
@@ -94,35 +94,34 @@ export default function SignUpSection() {
                       <Image
                         className="absolute top-1/2 transform -translate-y-1/2 left-0"
                         src="/flex-ui-assets/elements/sign-up/checkbox-icon.svg"
-                        alt=""
+                        alt="Checkbox icon"
+                        width={20}
+                        height={20}
                       />
-                      <span className="ml-7 text-xs text-coolGray-800 font-medium">
+                      <span className="ml-7 text-xs text-rich_black-500 font-light">
                         Remember me
                       </span>
                     </label>
                   </div>
                   <div className="w-full md:w-auto mt-1">
                     <Link
-                      className="inline-block text-xs font-medium text-green-500 hover:text-green-600"
+                      className="inline-block text-xs font-light text-ash_gray-500 hover:text-ash_gray-600"
                       href="#"
                     >
                       Forgot your password?
                     </Link>
                   </div>
                 </div>
-                <Link
-                  className="inline-block py-3 px-7 mb-4 w-full text-base text-green-50 font-medium text-center leading-6 bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded-md shadow-sm"
-                  href="#"
-                >
+                <button className="inline-block py-3 px-7 mb-6 w-full text-base text-rich_black font-medium text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-md shadow-sm">
                   Sign Up
-                </Link>
+                </button>
                 <p className="text-center">
-                  <span className="text-xs font-medium">
-                    Already have an account?
+                  <span className="text-xs font-light">
+                    Already have an account?{" "}
                   </span>
                   <Link
-                    className="inline-block text-xs font-medium text-green-500 hover:text-green-600 hover:underline"
-                    href="#"
+                    className="inline-block text-xs font-light text-ash_gray-500 hover:text-ash_gray-600 hover:underline"
+                    href="/sign-in"
                   >
                     Sign In
                   </Link>
@@ -132,23 +131,27 @@ export default function SignUpSection() {
           </div>
         </div>
         <div className="md:absolute md:top-0 md:right-0 md:w-1/2 md:h-full md:pl-4">
-          <div className="flex items-center justify-center h-full px-8 py-14 bg-coolGray-50">
+          <div className="flex items-center justify-center h-full px-8 py-14 bg-rich_black-50">
             <div className="md:max-w-xl mx-auto text-center">
-              <span className="relative z-10 inline-block py-px px-2 mb-4 text-xs leading-5 text-green-500 bg-green-100 font-medium uppercase rounded-full shadow-sm">
+              <span className="relative z-10 inline-block py-px px-2 mb-4 text-xs leading-5 text-ash_gray-500 bg-ash_gray-100 font-light uppercase rounded-full shadow-sm">
                 Quotes
               </span>
               <div className="relative mb-16">
                 <Image
                   className="absolute -top-10 left-0 2xl:-left-12"
                   src="/flex-ui-assets/elements/sign-up/quotes-top.svg"
-                  alt=""
+                  alt="Quotes top"
+                  width={142}
+                  height={98}
                 />
                 <Image
                   className="absolute -bottom-16 right-0"
                   src="/flex-ui-assets/elements/sign-up/quotes-bottom.svg"
-                  alt=""
+                  alt="Quotes bottom"
+                  width={142}
+                  height={98}
                 />
-                <h3 className="relative text-2xl md:text-3xl leading-tight font-medium text-coolGray-800">
+                <h3 className="relative text-2xl md:text-3xl leading-tight font-light text-rich_black-500">
                   Love the simplicity of the service and the prompt customer
                   support. We can’t imagine working without it.
                 </h3>
@@ -157,25 +160,27 @@ export default function SignUpSection() {
                 <Image
                   className="w-24 h-24 mb-6 mx-auto rounded-full"
                   src="/flex-ui-assets/images/sign-up/avatar-men-sign-up.png"
-                  alt=""
+                  alt="John Doe's avatar"
+                  width={88}
+                  height={88}
                 />
-                <h4 className="mb-2 text-lg text-coolGray-800 font-semibold">
+                <h4 className="mb-2 text-lg text-rich_black-500 font-semibold">
                   John Doe
                 </h4>
-                <span className="block mb-8 text-lg text-coolGray-400">
+                <span className="block mb-8 text-lg text-rich_black-400">
                   CEO &amp; Founder at Flex.co
                 </span>
                 <div className="flex items-center justify-center">
                   <Link
-                    className="w-3 h-3 mr-3 bg-coolGray-100 rounded-full"
+                    className="w-3 h-3 mr-3 bg-rich_black-100 rounded-full"
                     href="#"
                   />
                   <Link
-                    className="w-3 h-3 mr-3 bg-green-500 rounded-full"
+                    className="w-3 h-3 mr-3 bg-ash_gray-500 rounded-full"
                     href="#"
                   />
                   <Link
-                    className="w-3 h-3 bg-coolGray-100 rounded-full"
+                    className="w-3 h-3 bg-rich_black-100 rounded-full"
                     href="#"
                   />
                 </div>

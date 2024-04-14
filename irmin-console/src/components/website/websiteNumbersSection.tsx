@@ -9,46 +9,46 @@ export default function WebsiteNumbersSection() {
     >
       <div className="container px-4 mx-auto">
         <div className="text-center">
-          <span className="inline-block py-px px-2 mb-4 text-xs leading-5 text-green-500 bg-green-100 font-medium uppercase rounded-9xl">
+          <span className="inline-block py-px px-2 mb-4 text-xs leading-5 text-white bg-midnight_green font-light uppercase rounded-full">
             Numbers
           </span>
-          <h3 className="mb-4 text-4xl md:text-5xl text-coolGray-900 font-bold tracking-tighter">
+          <h3 className="mb-4 text-4xl md:text-5xl text-rich_black font-bold tracking-tighter">
             We believe in the power of data
           </h3>
-          <p className="mb-16 xl:mb-24 mx-auto text-lg md:text-xl text-coolGray-500 font-medium max-w-4xl">
+          <p className="mb-16 xl:mb-24 mx-auto text-lg md:text-xl text-rich_black font-light max-w-4xl">
             Flex is the only business platform that lets you run your business
             on one platform, seamlessly across all digital channels.
           </p>
           <div className="flex flex-wrap justify-center -mx-4">
             <div className="w-full md:w-1/3 lg:w-1/4 px-4 mb-8 lg:mb-0">
-              <h2 className="mb-2 text-4xl md:text-5xl text-coolGray-900 font-bold tracking-tighter">
+              <h2 className="mb-2 text-4xl md:text-5xl text-rich_black-600 font-bold tracking-tighter">
                 235.000
               </h2>
-              <p className="text-lg md:text-xl text-coolGray-500 font-medium">
+              <p className="text-lg md:text-xl text-rich_black-500 font-light">
                 Projects completed
               </p>
             </div>
             <div className="w-full md:w-1/3 lg:w-1/4 px-4 mb-8 lg:mb-0">
-              <h2 className="mb-2 text-4xl md:text-5xl text-coolGray-900 font-bold tracking-tighter">
+              <h2 className="mb-2 text-4xl md:text-5xl text-rich_black-600 font-bold tracking-tighter">
                 $10m
               </h2>
-              <p className="text-lg md:text-xl text-coolGray-500 font-medium">
+              <p className="text-lg md:text-xl text-rich_black-500 font-light">
                 APR
               </p>
             </div>
             <div className="w-full md:w-1/3 lg:w-1/4 px-4 mb-8 lg:mb-0">
-              <h2 className="mb-2 text-4xl md:text-5xl text-coolGray-900 font-bold tracking-tighter">
+              <h2 className="mb-2 text-4xl md:text-5xl text-rich_black-600 font-bold tracking-tighter">
                 +50.000
               </h2>
-              <p className="text-lg md:text-xl text-coolGray-500 font-medium">
+              <p className="text-lg md:text-xl text-rich_black-500 font-light">
                 Hours Saved Annually
               </p>
             </div>
             <div className="w-full md:w-1/3 lg:w-1/4 px-4">
-              <h2 className="mb-2 text-4xl md:text-5xl text-coolGray-900 font-bold tracking-tighter">
+              <h2 className="mb-2 text-4xl md:text-5xl text-rich_black-600 font-bold tracking-tighter">
                 3.500
               </h2>
-              <p className="text-lg md:text-xl text-coolGray-500 font-medium">
+              <p className="text-lg md:text-xl text-rich_black-500 font-light">
                 Unique Users
               </p>
             </div>
