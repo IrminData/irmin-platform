@@ -26,33 +26,33 @@ export default function SignInSection() {
               <h3 className="mb-4 text-2xl md:text-3xl font-bold">
                 Sign in to your account
               </h3>
-              <p className="text-lg text-rich_black-500 font-light">
+              <p className="text-lg text-rich_black font-light">
                 Welcome back to the home of your data
               </p>
             </div>
             <form action="">
               <div className="mb-6">
                 <label
-                  className="block mb-2 text-rich_black-500 font-light"
+                  className="block mb-2 text-rich_black font-light"
                   htmlFor=""
                 >
                   Email
                 </label>
                 <input
-                  className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
+                  className="appearance-none block w-full p-3 leading-5 text-rich_black border border-rich_black rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                   type="email"
                   placeholder="name@acme.corp"
                 />
               </div>
               <div className="mb-4">
                 <label
-                  className="block mb-2 text-rich_black-500 font-light"
+                  className="block mb-2 text-rich_black font-light"
                   htmlFor=""
                 >
                   Password
                 </label>
                 <input
-                  className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
+                  className="appearance-none block w-full p-3 leading-5 text-rich_black border border-rich_black rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                   type="password"
                   placeholder="************"
                 />
@@ -71,7 +71,7 @@ export default function SignInSection() {
                       width={20}
                       height={20}
                     />
-                    <span className="ml-7 text-xs text-rich_black-500 font-light">
+                    <span className="ml-7 text-xs text-rich_black font-light">
                       Remember me
                     </span>
                   </label>
@@ -85,7 +85,7 @@ export default function SignInSection() {
                   </Link>
                 </div>
               </div>
-              <button className="inline-block py-3 px-7 mb-6 w-full text-base text-rich_black font-medium text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm">
+              <button className="inline-block py-3 px-7 mb-6 w-full text-base text-white font-medium text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm">
                 Sign In
               </button>
               <p className="text-center">

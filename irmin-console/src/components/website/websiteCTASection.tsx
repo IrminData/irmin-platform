@@ -26,7 +26,7 @@ export default function WebsiteCTASection() {
                     width={26}
                     height={26}
                   />
-                  <span className="text-lg md:text-xl font-heading text-rich_black-500">
+                  <span className="text-lg md:text-xl font-heading text-rich_black">
                     Mauris pellentesque congue libero nec
                   </span>
                 </li>
@@ -38,7 +38,7 @@ export default function WebsiteCTASection() {
                     width={26}
                     height={26}
                   />
-                  <span className="text-lg md:text-xl font-heading text-rich_black-500">
+                  <span className="text-lg md:text-xl font-heading text-rich_black">
                     Suspendisse mollis tincidunt
                   </span>
                 </li>
@@ -50,7 +50,7 @@ export default function WebsiteCTASection() {
                     width={26}
                     height={26}
                   />
-                  <span className="text-lg md:text-xl font-heading text-rich_black-500">
+                  <span className="text-lg md:text-xl font-heading text-rich_black">
                     Praesent varius justo vel justo pulvinar
                   </span>
                 </li>
@@ -66,7 +66,7 @@ export default function WebsiteCTASection() {
                 </div>
                 <div className="w-1/2">
                   <Link
-                    className="inline-block py-4 px-4 w-full text-base md:text-lg leading-4 text-rich_black-500 font-light text-center bg-white border border-rich_black-200 rounded-full shadow-sm hover:bg-rich_black-900 transition-colors duration-200 ease-in-out"
+                    className="inline-block py-4 px-4 w-full text-base md:text-lg leading-4 text-rich_black font-light text-center bg-white border border-rich_black rounded-full shadow-sm hover:bg-rich_black transition-colors duration-200 ease-in-out"
                     href="#"
                   >
                     Schedule a live demo

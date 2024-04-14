@@ -118,7 +118,7 @@ export default function WebsiteFooter() {
               <div className="flex flex-wrap">
                 <div className="w-full lg:flex-1 py-1 lg:py-0 lg:mr-3">
                   <input
-                    className="px-3 w-full h-12 text-rich_black-600 outline-none placeholder-rich_black-500 border border-rich_black-200 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-xsm"
+                    className="px-3 w-full h-12 text-rich_black outline-none placeholder-rich_black border border-rich_black focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-xsm"
                     placeholder="Your email"
                   />
                 </div>

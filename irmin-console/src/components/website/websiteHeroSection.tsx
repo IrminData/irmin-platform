@@ -24,7 +24,7 @@ export default function WebsiteHeroSection() {
                   <span className="text-ash_gray">data marketplace</span> for
                   analysts.
                 </h1>
-                <p className="mb-8 mx-auto text-lg md:text-xl text-rich_black-500 font-light max-w-3xl">
+                <p className="mb-8 mx-auto text-lg md:text-xl text-rich_black font-light max-w-3xl">
                   Streamline your data integration effortlessly with advanced
                   ETL, SQL transformations, and an AI Assistant. Enhance
                   decision-making using our rich data marketplace for access to
@@ -41,7 +41,7 @@ export default function WebsiteHeroSection() {
                   </div>
                   <div className="w-full md:w-auto py-1 md:py-0">
                     <Link
-                      className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-rich_black-500 font-light text-center bg-white border border-rich_black-200 rounded-full shadow-sm hover:bg-rich_black-900 transition-colors duration-200 ease-in-out"
+                      className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-rich_black font-light text-center bg-white border border-rich_black rounded-full shadow-sm hover:bg-rich_black transition-colors duration-200 ease-in-out"
                       href="#"
                     >
                       Schedule a live demo

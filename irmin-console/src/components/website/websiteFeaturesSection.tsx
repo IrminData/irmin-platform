@@ -18,7 +18,7 @@ export default function WebsiteFeaturesSection() {
             <h1 className="mb-4 text-3xl md:text-4xl leading-tight font-bold tracking-tighter">
               Gain more insight into how people use your
             </h1>
-            <p className="text-lg md:text-xl text-rich_black-500 font-light">
+            <p className="text-lg md:text-xl text-rich_black font-light">
               With our integrated CRM, project management, collaboration and
               invoicing capabilities, you can manage every aspect of your
               business in one secure platform.
@@ -44,10 +44,10 @@ export default function WebsiteFeaturesSection() {
                   </div>
                 </div>
                 <div className="w-full md:flex-1 md:pt-3">
-                  <h3 className="mb-4 text-xl md:text-2xl leading-tight text-rich_black-600 font-bold">
+                  <h3 className="mb-4 text-xl md:text-2xl leading-tight text-rich_black font-bold">
                     Measure your performance
                   </h3>
-                  <p className="text-rich_black-500 font-light">
+                  <p className="text-rich_black font-light">
                     Stay connected with your team and make quick decisions
                     wherever you are.
                   </p>
@@ -71,10 +71,10 @@ export default function WebsiteFeaturesSection() {
                   </div>
                 </div>
                 <div className="w-full md:flex-1 md:pt-3">
-                  <h3 className="mb-4 text-xl md:text-2xl leading-tight text-rich_black-600 font-bold">
+                  <h3 className="mb-4 text-xl md:text-2xl leading-tight text-rich_black font-bold">
                     Build your website
                   </h3>
-                  <p className="text-rich_black-500 font-light">
+                  <p className="text-rich_black font-light">
                     A tool that lets you build a dream website even if you know
                     nothing about web design or programming.
                   </p>
@@ -98,10 +98,10 @@ export default function WebsiteFeaturesSection() {
                   </div>
                 </div>
                 <div className="w-full md:flex-1 md:pt-3">
-                  <h3 className="mb-4 text-xl md:text-2xl leading-tight text-rich_black-600 font-bold">
+                  <h3 className="mb-4 text-xl md:text-2xl leading-tight text-rich_black font-bold">
                     Connect multiple apps
                   </h3>
-                  <p className="text-rich_black-500 font-light">
+                  <p className="text-rich_black font-light">
                     The first business platform to bring together all of your
                     products from one place.
                   </p>

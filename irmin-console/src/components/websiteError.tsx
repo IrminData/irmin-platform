@@ -35,13 +35,13 @@ export default function WebsiteError() {
                 <h2 className="mb-4 text-4xl md:text-5xl leading-tight font-bold tracking-tighter">
                   Oh no! Error 404
                 </h2>
-                <p className="mb-6 text-lg md:text-xl text-coolGray-500">
+                <p className="mb-6 text-lg md:text-xl text-rich_black">
                   Something went wrong, so this page is broken.
                 </p>
                 <div className="flex flex-wrap">
                   <div className="w-full lg:w-auto py-1 lg:py-0 lg:mr-6">
                     <Link
-                      className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-white font-medium text-center bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 border border-ash_gray-500 rounded-md shadow-sm"
+                      className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-white font-medium text-center bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 border border-ash_gray-500 rounded-full shadow-sm"
                       href="/"
                     >
                       Go back to Homepage
@@ -49,7 +49,7 @@ export default function WebsiteError() {
                   </div>
                   <div className="w-full lg:w-auto py-1 lg:py-0">
                     <Link
-                      className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-coolGray-800 font-medium text-center bg-white hover:bg-coolGray-100 focus:ring-2 focus:ring-coolGray-200 focus:ring-opacity-50 border border-coolGray-200 rounded-md shadow-sm"
+                      className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-rich_black font-medium text-center bg-white  focus:ring-rich_black focus:ring-opacity-50 border border-rich_black rounded-full shadow-sm"
                       href="#"
                     >
                       Try Again

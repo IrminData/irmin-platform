@@ -27,59 +27,59 @@ export default function SignUpSection() {
                 <h3 className="mb-4 text-2xl md:text-3xl font-bold">
                   Join the data hub
                 </h3>
-                <p className="text-lg text-rich_black-500 font-light">
+                <p className="text-lg text-rich_black font-light">
                   Give your data a better home
                 </p>
               </div>
               <form action="">
                 <div className="mb-6">
                   <label
-                    className="block mb-2 text-rich_black-500 font-light"
+                    className="block mb-2 text-rich_black font-light"
                     htmlFor=""
                   >
                     Name *
                   </label>
                   <input
-                    className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
+                    className="appearance-none block w-full p-3 leading-5 text-rich_black border border-rich_black rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                     type="name"
                     placeholder="Patryk"
                   />
                 </div>
                 <div className="mb-6">
                   <label
-                    className="block mb-2 text-rich_black-500 font-light"
+                    className="block mb-2 text-rich_black font-light"
                     htmlFor="company"
                   >
                     Company *
                   </label>
                   <input
-                    className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
+                    className="appearance-none block w-full p-3 leading-5 text-rich_black border border-rich_black rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                     type="company"
                     placeholder="Acme Inc."
                   />
                 </div>
                 <div className="mb-6">
                   <label
-                    className="block mb-2 text-rich_black-500 font-light"
+                    className="block mb-2 text-rich_black font-light"
                     htmlFor=""
                   >
                     Email*
                   </label>
                   <input
-                    className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
+                    className="appearance-none block w-full p-3 leading-5 text-rich_black border border-rich_black rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                     type="name"
                     placeholder="name@acme.corp"
                   />
                 </div>
                 <div className="mb-4">
                   <label
-                    className="block mb-2 text-rich_black-500 font-light"
+                    className="block mb-2 text-rich_black font-light"
                     htmlFor=""
                   >
                     Password*
                   </label>
                   <input
-                    className="appearance-none block w-full p-3 leading-5 text-rich_black-600 border border-rich_black-200 rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
+                    className="appearance-none block w-full p-3 leading-5 text-rich_black border border-rich_black rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                     type="password"
                     placeholder="************"
                   />
@@ -98,7 +98,7 @@ export default function SignUpSection() {
                         width={20}
                         height={20}
                       />
-                      <span className="ml-7 text-xs text-rich_black-500 font-light">
+                      <span className="ml-7 text-xs text-rich_black font-light">
                         Remember me
                       </span>
                     </label>
@@ -112,7 +112,7 @@ export default function SignUpSection() {
                     </Link>
                   </div>
                 </div>
-                <button className="inline-block py-3 px-7 mb-6 w-full text-base text-rich_black font-medium text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm">
+                <button className="inline-block py-3 px-7 mb-6 w-full text-base text-white font-medium text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm">
                   Sign Up
                 </button>
                 <p className="text-center">
@@ -151,7 +151,7 @@ export default function SignUpSection() {
                   width={142}
                   height={98}
                 />
-                <h3 className="relative text-2xl md:text-3xl leading-tight font-light text-rich_black-500">
+                <h3 className="relative text-2xl md:text-3xl leading-tight font-light text-rich_black">
                   Love the simplicity of the service and the prompt customer
                   support. We can’t imagine working without it.
                 </h3>
@@ -164,10 +164,10 @@ export default function SignUpSection() {
                   width={88}
                   height={88}
                 />
-                <h4 className="mb-2 text-lg text-rich_black-500 font-semibold">
+                <h4 className="mb-2 text-lg text-rich_black font-semibold">
                   John Doe
                 </h4>
-                <span className="block mb-8 text-lg text-rich_black-400">
+                <span className="block mb-8 text-lg text-rich_black">
                   CEO &amp; Founder at Flex.co
                 </span>
                 <div className="flex items-center justify-center">

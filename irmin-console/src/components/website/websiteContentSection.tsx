@@ -44,7 +44,7 @@ export default function WebsiteContentSection() {
                 <h3 className="mb-4 text-xl md:text-2xl leading-tight text-rich_black font-bold">
                   Measure your performance
                 </h3>
-                <p className="text-rich_black-500 font-light">
+                <p className="text-rich_black font-light">
                   Stay connected with your team and make quick decisions
                   wherever you are.
                 </p>
@@ -73,7 +73,7 @@ export default function WebsiteContentSection() {
                 <h3 className="mb-4 text-xl md:text-2xl leading-tight text-rich_black font-bold">
                   Build your website
                 </h3>
-                <p className="text-rich_black-500 font-light">
+                <p className="text-rich_black font-light">
                   A tool that lets you build a dream website even if you know
                   nothing about web design or programming.
                 </p>
@@ -102,7 +102,7 @@ export default function WebsiteContentSection() {
                 <h3 className="mb-4 text-xl md:text-2xl leading-tight text-rich_black font-bold">
                   Connect multiple apps
                 </h3>
-                <p className="text-rich_black-500 font-light">
+                <p className="text-rich_black font-light">
                   The first business platform to bring together all of your
                   products from one place.
                 </p>

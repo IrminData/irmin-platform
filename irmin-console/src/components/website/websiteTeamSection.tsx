@@ -21,7 +21,7 @@ export default function WebsiteTeamSection() {
                 <h3 className="mb-4 text-4xl md:text-5xl font-bold tracking-tighter">
                   Meet our team
                 </h3>
-                <p className="text-lg md:text-xl text-coolGray-500 font-light">
+                <p className="text-lg md:text-xl text-rich_black font-light">
                   Highly professional and capable of running your business
                   across all digital channels.
                 </p>
@@ -39,7 +39,7 @@ export default function WebsiteTeamSection() {
                 </div>
                 <div className="w-full md:w-auto py-1 md:py-0">
                   <Link
-                    className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-coolGray-800 font-medium text-center bg-white hover:bg-coolGray-100 focus:ring-2 focus:ring-coolGray-200 focus:ring-opacity-50 border border-coolGray-200 rounded-full shadow-sm"
+                    className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-rich_black font-medium text-center bg-white hover:bg-rich_black-100 focus:ring-2 focus:ring-rich_black focus:ring-opacity-50 border border-rich_black rounded-full shadow-sm"
                     href="#"
                   >
                     About Us

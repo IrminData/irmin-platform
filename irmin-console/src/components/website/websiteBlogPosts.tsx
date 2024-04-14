@@ -17,10 +17,10 @@ export default function WebsiteBlogPosts() {
             <span className="inline-block py-px px-2 mb-4 text-xs leading-5 text-ash_gray-500 bg-ash_gray-100 font-medium uppercase rounded-full shadow-sm">
               Blog
             </span>
-            <h3 className="mb-4 text-3xl md:text-5xl leading-tight text-darkCoolGray-900 font-bold tracking-tighter">
+            <h3 className="mb-4 text-3xl md:text-5xl leading-tight text-rich_black font-bold tracking-tighter">
               Our mission is to make knowledge and news accessible for everyone.
             </h3>
-            <p className="mb-10 text-lg md:text-xl text-coolGray-500 font-medium">
+            <p className="mb-10 text-lg md:text-xl text-rich_black font-medium">
               With our integrated CRM, project management, collaboration and
               invoicing capabilities, you can manage your business in one secure
               platform.
@@ -34,7 +34,7 @@ export default function WebsiteBlogPosts() {
                 height={24}
               />
               <input
-                className="w-full py-3 pl-12 pr-4 text-coolGray-900 leading-tight placeholder-coolGray-500 border border-coolGray-200 rounded-lg shadow-xsm focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
+                className="w-full py-3 pl-12 pr-4 text-rich_black leading-tight placeholder-rich_black border border-rich_black rounded-lg shadow-xsm focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
                 type="text"
                 placeholder="Search"
               />
@@ -43,7 +43,7 @@ export default function WebsiteBlogPosts() {
           <ul className="flex flex-wrap mb-8 -mx-2 text-center">
             <li className="w-full md:w-auto px-2">
               <Link
-                className="inline-block w-full py-2 px-4 mb-4 md:mb-0 text-sm text-coolGray-400 hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
+                className="inline-block w-full py-2 px-4 mb-4 md:mb-0 text-sm text-rich_black hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
                 href="#"
               >
                 All Categories
@@ -51,7 +51,7 @@ export default function WebsiteBlogPosts() {
             </li>
             <li className="w-full md:w-auto px-2">
               <Link
-                className="inline-block w-full py-2 px-4 mb-4 md:mb-0 text-sm text-coolGray-400 hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
+                className="inline-block w-full py-2 px-4 mb-4 md:mb-0 text-sm text-rich_black hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
                 href="#"
               >
                 Technology
@@ -59,7 +59,7 @@ export default function WebsiteBlogPosts() {
             </li>
             <li className="w-full md:w-auto px-2">
               <Link
-                className="inline-block w-full py-2 px-4 mb-4 md:mb-0 text-sm text-coolGray-400 hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
+                className="inline-block w-full py-2 px-4 mb-4 md:mb-0 text-sm text-rich_black hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
                 href="#"
               >
                 Development
@@ -67,7 +67,7 @@ export default function WebsiteBlogPosts() {
             </li>
             <li className="w-full md:w-auto px-2">
               <Link
-                className="inline-block w-full py-2 px-4 mb-4 md:mb-0 text-sm text-coolGray-400 hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
+                className="inline-block w-full py-2 px-4 mb-4 md:mb-0 text-sm text-rich_black hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
                 href="#"
               >
                 Marketing
@@ -75,7 +75,7 @@ export default function WebsiteBlogPosts() {
             </li>
             <li className="w-full md:w-auto px-2">
               <Link
-                className="inline-block w-full py-2 px-4 text-sm text-coolGray-400 hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
+                className="inline-block w-full py-2 px-4 text-sm text-rich_black hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
                 href="#"
               >
                 Start-up
@@ -101,17 +101,17 @@ export default function WebsiteBlogPosts() {
                   Technology
                 </Link>
               </div>
-              <p className="mb-2 text-coolGray-500 font-medium">
+              <p className="mb-2 text-rich_black font-medium">
                 John Doe • 19 Jan 2022
               </p>
               <Link
-                className="inline-block mb-4 text-2xl leading-tight text-coolGray-800 hover:text-coolGray-900 font-bold hover:underline"
+                className="inline-block mb-4 text-2xl leading-tight text-rich_black hover:text-rich_black font-bold hover:underline"
                 href="#"
               >
                 A small business is only as good as its tools and it is totally
                 true.
               </Link>
-              <p className="mb-4 text-base md:text-lg text-coolGray-400 font-light">
+              <p className="mb-4 text-base md:text-lg text-rich_black font-light">
                 We've all experienced the chaos of multiple spreadsheets,
                 tracking and insight tools, and scrambling for the right data at
                 the right time.
@@ -153,17 +153,17 @@ export default function WebsiteBlogPosts() {
                   Development
                 </Link>
               </div>
-              <p className="mb-2 text-coolGray-500 font-medium">
+              <p className="mb-2 text-rich_black font-medium">
                 John Doe • 19 Jan 2022
               </p>
               <Link
-                className="inline-block mb-4 text-2xl leading-tight text-coolGray-800 hover:text-coolGray-900 font-bold hover:underline"
+                className="inline-block mb-4 text-2xl leading-tight text-rich_black hover:text-rich_black font-bold hover:underline"
                 href="#"
               >
                 A small business is only as good as its tools and it is totally
                 true.
               </Link>
-              <p className="mb-4 text-base md:text-lg text-coolGray-400 font-light">
+              <p className="mb-4 text-base md:text-lg text-rich_black font-light">
                 We've all experienced the chaos of multiple spreadsheets,
                 tracking and insight tools, and scrambling for the right data at
                 the right time.
@@ -205,17 +205,17 @@ export default function WebsiteBlogPosts() {
                   Marketing
                 </Link>
               </div>
-              <p className="mb-2 text-coolGray-500 font-medium">
+              <p className="mb-2 text-rich_black font-medium">
                 John Doe • 19 Jan 2022
               </p>
               <Link
-                className="inline-block mb-4 text-2xl leading-tight text-coolGray-800 hover:text-coolGray-900 font-bold hover:underline"
+                className="inline-block mb-4 text-2xl leading-tight text-rich_black hover:text-rich_black font-bold hover:underline"
                 href="#"
               >
                 A small business is only as good as its tools and it is totally
                 true.
               </Link>
-              <p className="mb-4 text-base md:text-lg text-coolGray-400 font-light">
+              <p className="mb-4 text-base md:text-lg text-rich_black font-light">
                 We've all experienced the chaos of multiple spreadsheets,
                 tracking and insight tools, and scrambling for the right data at
                 the right time.
@@ -257,17 +257,17 @@ export default function WebsiteBlogPosts() {
                   Start-up
                 </Link>
               </div>
-              <p className="mb-2 text-coolGray-500 font-medium">
+              <p className="mb-2 text-rich_black font-medium">
                 John Doe • 19 Jan 2022
               </p>
               <Link
-                className="inline-block mb-4 text-2xl leading-tight text-coolGray-800 hover:text-coolGray-900 font-bold hover:underline"
+                className="inline-block mb-4 text-2xl leading-tight text-rich_black hover:text-rich_black font-bold hover:underline"
                 href="#"
               >
                 A small business is only as good as its tools and it is totally
                 true.
               </Link>
-              <p className="mb-4 text-base md:text-lg text-coolGray-400 font-light">
+              <p className="mb-4 text-base md:text-lg text-rich_black font-light">
                 We've all experienced the chaos of multiple spreadsheets,
                 tracking and insight tools, and scrambling for the right data at
                 the right time.
@@ -309,17 +309,17 @@ export default function WebsiteBlogPosts() {
                   Article
                 </Link>
               </div>
-              <p className="mb-2 text-coolGray-500 font-medium">
+              <p className="mb-2 text-rich_black font-medium">
                 John Doe • 19 Jan 2022
               </p>
               <Link
-                className="inline-block mb-4 text-2xl leading-tight text-coolGray-800 hover:text-coolGray-900 font-bold hover:underline"
+                className="inline-block mb-4 text-2xl leading-tight text-rich_black hover:text-rich_black font-bold hover:underline"
                 href="#"
               >
                 A small business is only as good as its tools and it is totally
                 true.
               </Link>
-              <p className="mb-4 text-base md:text-lg text-coolGray-400 font-light">
+              <p className="mb-4 text-base md:text-lg text-rich_black font-light">
                 We've all experienced the chaos of multiple spreadsheets,
                 tracking and insight tools, and scrambling for the right data at
                 the right time.
@@ -361,17 +361,17 @@ export default function WebsiteBlogPosts() {
                   Podcast
                 </Link>
               </div>
-              <p className="mb-2 text-coolGray-500 font-medium">
+              <p className="mb-2 text-rich_black font-medium">
                 John Doe • 19 Jan 2022
               </p>
               <Link
-                className="inline-block mb-4 text-2xl leading-tight text-coolGray-800 hover:text-coolGray-900 font-bold hover:underline"
+                className="inline-block mb-4 text-2xl leading-tight text-rich_black hover:text-rich_black font-bold hover:underline"
                 href="#"
               >
                 A small business is only as good as its tools and it is totally
                 true.
               </Link>
-              <p className="mb-4 text-base md:text-lg text-coolGray-400 font-light">
+              <p className="mb-4 text-base md:text-lg text-rich_black font-light">
                 We've all experienced the chaos of multiple spreadsheets,
                 tracking and insight tools, and scrambling for the right data at
                 the right time.

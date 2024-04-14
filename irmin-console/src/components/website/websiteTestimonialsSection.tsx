@@ -41,7 +41,7 @@ export default function WebsiteTestimonialsSection() {
                   <h3 className="mb-2 text-xl md:text-2xl font-semibold">
                     Darren Dunlap
                   </h3>
-                  <span className="text-lg text-rich_black-500 font-light">
+                  <span className="text-lg text-rich_black font-light">
                     CEO &amp; Founder at Flex.co
                   </span>
                 </div>

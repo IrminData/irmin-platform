@@ -19,7 +19,7 @@ export default function WebsiteCareersSection() {
             <h3 className="mb-4 text-3xl md:text-4xl leading-tight font-bold tracking-tighter">
               Join our team
             </h3>
-            <p className="text-lg md:text-xl text-coolGray-500 font-medium">
+            <p className="text-lg md:text-xl text-rich_black font-medium">
               Our philosophy is simple — hire a team of diverse, passionate
               people and foster a culture that empowers you to do you best work.
             </p>
@@ -36,14 +36,14 @@ export default function WebsiteCareersSection() {
                     height={24}
                   />
                   <input
-                    className="w-full h-full py-3 pl-12 pr-4 text-coolGray-500 leading-tight placeholder-coolGray-500 focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 border border-coolGray-200 rounded-full shadow-xsm"
+                    className="w-full h-full py-3 pl-12 pr-4 text-rich_black leading-tight placeholder-rich_black focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 border border-rich_black rounded-full shadow-xsm"
                     type="text"
                     placeholder="Search"
                   />
                 </div>
               </div>
               <div className="w-full md:w-1/3 px-3 mb-3 md:mb-0">
-                <div className="relative bg-white border border-coolGray-200 rounded-full shadow-md">
+                <div className="relative bg-white border border-rich_black rounded-full shadow-md">
                   <svg
                     className="absolute top-1/2 transform -translate-y-1/2 right-0 mr-5"
                     width={12}
@@ -58,7 +58,7 @@ export default function WebsiteCareersSection() {
                     />
                   </svg>
                   <select
-                    className="px-4 py-3 w-full appearance-none outline-none border-0 bg-transparent hover:cursor-pointer leading-6 text-coolGray-500 focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full"
+                    className="px-4 py-3 w-full appearance-none outline-none border-0 bg-transparent hover:cursor-pointer leading-6 text-rich_black focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full"
                     name=""
                   >
                     <option value={1}>Location</option>
@@ -68,7 +68,7 @@ export default function WebsiteCareersSection() {
                 </div>
               </div>
               <div className="w-full md:w-1/3 px-3">
-                <div className="relative bg-white border border-coolGray-200 rounded-full shadow-md">
+                <div className="relative bg-white border border-rich_black rounded-full shadow-md">
                   <svg
                     className="absolute top-1/2 transform -translate-y-1/2 right-0 mr-5"
                     width={12}
@@ -83,7 +83,7 @@ export default function WebsiteCareersSection() {
                     />
                   </svg>
                   <select
-                    className="px-4 py-3 w-full appearance-none outline-none border-0 bg-transparent hover:cursor-pointer leading-6 text-coolGray-500 focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full"
+                    className="px-4 py-3 w-full appearance-none outline-none border-0 bg-transparent hover:cursor-pointer leading-6 text-rich_black focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full"
                     name=""
                   >
                     <option value={1}>Type</option>
@@ -94,7 +94,7 @@ export default function WebsiteCareersSection() {
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center py-7 bg-coolGray-50 rounded-full">
+          <div className="flex flex-wrap items-center py-7 bg-rich_black-50 rounded-full">
             <div className="w-full md:w-auto mr-auto mb-6 md:mb-0">
               <h3 className="text-lg md:text-xl font-semibold">
                 Front-end Developer
@@ -104,7 +104,7 @@ export default function WebsiteCareersSection() {
               <div className="flex flex-wrap">
                 <div className="inline-flex w-full lg:w-auto mb-2 lg:mb-0 lg:mr-10 items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -116,13 +116,13 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Remote friendly
                   </span>
                 </div>
                 <div className="inline-flex w-full lg:w-auto items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -134,7 +134,7 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Full-time
                   </span>
                 </div>
@@ -159,7 +159,7 @@ export default function WebsiteCareersSection() {
               <div className="flex flex-wrap">
                 <div className="inline-flex w-full lg:w-auto mb-2 lg:mb-0 lg:mr-10 items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -171,13 +171,13 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Remote friendly
                   </span>
                 </div>
                 <div className="inline-flex w-full lg:w-auto items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -189,7 +189,7 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Full-time
                   </span>
                 </div>
@@ -204,7 +204,7 @@ export default function WebsiteCareersSection() {
               </Link>
             </div>
           </div>
-          <div className="flex flex-wrap items-center py-7 bg-coolGray-50 rounded-full">
+          <div className="flex flex-wrap items-center py-7 bg-rich_black-50 rounded-full">
             <div className="w-full md:w-auto mr-auto mb-6 md:mb-0">
               <h3 className="text-lg md:text-xl font-semibold">
                 UI/UX Designer
@@ -214,7 +214,7 @@ export default function WebsiteCareersSection() {
               <div className="flex flex-wrap">
                 <div className="inline-flex w-full lg:w-auto mb-2 lg:mb-0 lg:mr-10 items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -226,13 +226,13 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Remote friendly
                   </span>
                 </div>
                 <div className="inline-flex w-full lg:w-auto items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -244,7 +244,7 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Full-time
                   </span>
                 </div>
@@ -269,7 +269,7 @@ export default function WebsiteCareersSection() {
               <div className="flex flex-wrap">
                 <div className="inline-flex w-full lg:w-auto mb-2 lg:mb-0 lg:mr-10 items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -281,13 +281,13 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Remote friendly
                   </span>
                 </div>
                 <div className="inline-flex w-full lg:w-auto items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -299,7 +299,7 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Full-time
                   </span>
                 </div>
@@ -314,7 +314,7 @@ export default function WebsiteCareersSection() {
               </Link>
             </div>
           </div>
-          <div className="flex flex-wrap items-center py-7 bg-coolGray-50 rounded-full">
+          <div className="flex flex-wrap items-center py-7 bg-rich_black-50 rounded-full">
             <div className="w-full md:w-auto mr-auto mb-6 md:mb-0">
               <h3 className="text-lg md:text-xl font-semibold">
                 Project Manager
@@ -324,7 +324,7 @@ export default function WebsiteCareersSection() {
               <div className="flex flex-wrap">
                 <div className="inline-flex w-full lg:w-auto mb-2 lg:mb-0 lg:mr-10 items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -336,13 +336,13 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Remote friendly
                   </span>
                 </div>
                 <div className="inline-flex w-full lg:w-auto items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -354,7 +354,7 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Full-time
                   </span>
                 </div>
@@ -379,7 +379,7 @@ export default function WebsiteCareersSection() {
               <div className="flex flex-wrap">
                 <div className="inline-flex w-full lg:w-auto mb-2 lg:mb-0 lg:mr-10 items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -391,13 +391,13 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Remote friendly
                   </span>
                 </div>
                 <div className="inline-flex w-full lg:w-auto items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -409,7 +409,7 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Full-time
                   </span>
                 </div>
@@ -424,7 +424,7 @@ export default function WebsiteCareersSection() {
               </Link>
             </div>
           </div>
-          <div className="flex flex-wrap items-center py-7 bg-coolGray-50 rounded-full">
+          <div className="flex flex-wrap items-center py-7 bg-rich_black-50 rounded-full">
             <div className="w-full md:w-auto mr-auto mb-6 md:mb-0">
               <h3 className="text-lg md:text-xl font-semibold">
                 Back-end Developer
@@ -434,7 +434,7 @@ export default function WebsiteCareersSection() {
               <div className="flex flex-wrap">
                 <div className="inline-flex w-full lg:w-auto mb-2 lg:mb-0 lg:mr-10 items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -446,13 +446,13 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Remote friendly
                   </span>
                 </div>
                 <div className="inline-flex w-full lg:w-auto items-center">
                   <svg
-                    className="text-coolGray-300"
+                    className="text-rich_black"
                     width={24}
                     height={24}
                     viewBox="0 0 24 24"
@@ -464,7 +464,7 @@ export default function WebsiteCareersSection() {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="ml-2 font-medium text-coolGray-500">
+                  <span className="ml-2 font-medium text-rich_black">
                     Full-time
                   </span>
                 </div>
