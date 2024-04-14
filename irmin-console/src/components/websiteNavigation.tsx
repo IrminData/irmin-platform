@@ -1,6 +1,6 @@
 export default function WebsiteNavigation() {
   return (
-    <>
+    <div className="container px-4 mx-auto">
       <nav className="flex justify-between p-6 px-4">
         <div className="flex justify-between items-center w-full">
           <div className="w-1/2 xl:w-1/3">
@@ -84,6 +84,6 @@ export default function WebsiteNavigation() {
           </svg>
         </button>
       </nav>
-    </>
+    </div>
   );
 }
