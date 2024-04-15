@@ -397,7 +397,7 @@ export default function WebsiteBlogPosts() {
             </div>
           </div>
           <Link
-            className="flex items-center justify-center py-2 px-4 mx-auto text-sm leading-5 text-ash_gray-50 font-medium bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:max-w-max rounded-md"
+            className="flex items-center justify-center py-2 px-4 mx-auto text-sm leading-5 text-green-50 font-medium bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:max-w-max rounded-md"
             href="#"
           >
             <span className="mr-3">View more</span>

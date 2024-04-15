@@ -117,7 +117,7 @@ export default function WebsiteNavigation() {
                   <ul className="py-6">
                     <li>
                       <Link
-                        className="block py-3 px-4 text-rich_black hover:text-rich_black font-light hover:bg-rich_black-50 rounded-full"
+                        className="block py-3 px-4 text-rich_black hover:text-rich_black font-light hover:bg-green-50 rounded-full"
                         href="/product"
                       >
                         Product
@@ -125,7 +125,7 @@ export default function WebsiteNavigation() {
                     </li>
                     <li>
                       <Link
-                        className="block py-3 px-4 text-rich_black hover:text-rich_black font-light hover:bg-rich_black-50 rounded-full"
+                        className="block py-3 px-4 text-rich_black hover:text-rich_black font-light hover:bg-green-50 rounded-full"
                         href="/features"
                       >
                         Features
@@ -133,7 +133,7 @@ export default function WebsiteNavigation() {
                     </li>
                     <li>
                       <Link
-                        className="block py-3 px-4 text-rich_black hover:text-rich_black font-light hover:bg-rich_black-50 rounded-full"
+                        className="block py-3 px-4 text-rich_black hover:text-rich_black font-light hover:bg-green-50 rounded-full"
                         href="/pricing"
                       >
                         Pricing
@@ -141,7 +141,7 @@ export default function WebsiteNavigation() {
                     </li>
                     <li>
                       <Link
-                        className="block py-3 px-4 text-rich_black hover:text-rich_black font-light hover:bg-rich_black-50 rounded-full"
+                        className="block py-3 px-4 text-rich_black hover:text-rich_black font-light hover:bg-green-50 rounded-full"
                         href="/resources"
                       >
                         Resources
