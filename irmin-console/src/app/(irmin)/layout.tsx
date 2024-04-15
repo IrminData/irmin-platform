@@ -1,3 +1,4 @@
+import DashboardNavigation from "@/components/dashboardNavigation";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -10,5 +11,9 @@ export default function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return children;
+  return (
+    <>
+      <DashboardNavigation>{children}</DashboardNavigation>
+    </>
+  );
 }
