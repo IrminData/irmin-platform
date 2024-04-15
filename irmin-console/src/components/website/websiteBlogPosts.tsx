@@ -44,7 +44,7 @@ export default function WebsiteBlogPosts() {
             <li className="w-full md:w-auto px-2">
               <Link
                 className="inline-block w-full py-2 px-4 mb-4 md:mb-0 text-sm text-rich_black hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
-                href="#"
+                href="/blog/slug"
               >
                 All Categories
               </Link>
@@ -52,7 +52,7 @@ export default function WebsiteBlogPosts() {
             <li className="w-full md:w-auto px-2">
               <Link
                 className="inline-block w-full py-2 px-4 mb-4 md:mb-0 text-sm text-rich_black hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
-                href="#"
+                href="/blog/slug"
               >
                 Technology
               </Link>
@@ -60,7 +60,7 @@ export default function WebsiteBlogPosts() {
             <li className="w-full md:w-auto px-2">
               <Link
                 className="inline-block w-full py-2 px-4 mb-4 md:mb-0 text-sm text-rich_black hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
-                href="#"
+                href="/blog/slug"
               >
                 Development
               </Link>
@@ -68,7 +68,7 @@ export default function WebsiteBlogPosts() {
             <li className="w-full md:w-auto px-2">
               <Link
                 className="inline-block w-full py-2 px-4 mb-4 md:mb-0 text-sm text-rich_black hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
-                href="#"
+                href="/blog/slug"
               >
                 Marketing
               </Link>
@@ -76,7 +76,7 @@ export default function WebsiteBlogPosts() {
             <li className="w-full md:w-auto px-2">
               <Link
                 className="inline-block w-full py-2 px-4 text-sm text-rich_black hover:text-ash_gray-500 hover:bg-ash_gray-200 font-bold rounded-md hover:shadow-sm"
-                href="#"
+                href="/blog/slug"
               >
                 Start-up
               </Link>
@@ -84,7 +84,10 @@ export default function WebsiteBlogPosts() {
           </ul>
           <div className="flex flex-wrap -mx-4 mb-12 md:mb-20">
             <div className="w-full md:w-1/2 px-4 mb-8">
-              <Link className="block mb-6 overflow-hidden rounded-md" href="#">
+              <Link
+                className="block mb-6 overflow-hidden rounded-md"
+                href="/blog/slug"
+              >
                 <Image
                   className="w-full"
                   src="/flex-ui-assets/images/blog/effect.jpg"
@@ -96,7 +99,7 @@ export default function WebsiteBlogPosts() {
               <div className="mb-4">
                 <Link
                   className="inline-block py-1 px-3 text-xs leading-5 text-white hover:text-ash_gray-600 font-medium uppercase bg-ash_gray-100 hover:bg-ash_gray-200 rounded-full shadow-sm"
-                  href="#"
+                  href="/blog/slug"
                 >
                   Technology
                 </Link>
@@ -106,7 +109,7 @@ export default function WebsiteBlogPosts() {
               </p>
               <Link
                 className="inline-block mb-4 text-2xl leading-tight text-rich_black hover:text-rich_black font-bold hover:underline"
-                href="#"
+                href="/blog/slug"
               >
                 A small business is only as good as its tools and it is totally
                 true.
@@ -118,7 +121,7 @@ export default function WebsiteBlogPosts() {
               </p>
               <Link
                 className="inline-flex items-center text-base md:text-lg text-ash_gray-500 hover:text-ash_gray-600 font-semibold"
-                href="#"
+                href="/blog/slug"
               >
                 <span className="mr-3">Read Post</span>
                 <svg
@@ -136,7 +139,10 @@ export default function WebsiteBlogPosts() {
               </Link>
             </div>
             <div className="w-full md:w-1/2 px-4 mb-8">
-              <Link className="block mb-6 overflow-hidden rounded-md" href="#">
+              <Link
+                className="block mb-6 overflow-hidden rounded-md"
+                href="/blog/slug"
+              >
                 <Image
                   className="w-full"
                   src="/flex-ui-assets/images/blog/work.jpg"
@@ -148,7 +154,7 @@ export default function WebsiteBlogPosts() {
               <div className="mb-4">
                 <Link
                   className="inline-block py-1 px-3 text-xs leading-5 text-white hover:text-ash_gray-600 font-medium uppercase bg-ash_gray-100 hover:bg-ash_gray-200 rounded-full shadow-sm"
-                  href="#"
+                  href="/blog/slug"
                 >
                   Development
                 </Link>
@@ -158,7 +164,7 @@ export default function WebsiteBlogPosts() {
               </p>
               <Link
                 className="inline-block mb-4 text-2xl leading-tight text-rich_black hover:text-rich_black font-bold hover:underline"
-                href="#"
+                href="/blog/slug"
               >
                 A small business is only as good as its tools and it is totally
                 true.
@@ -170,7 +176,7 @@ export default function WebsiteBlogPosts() {
               </p>
               <Link
                 className="inline-flex items-center text-base md:text-lg text-ash_gray-500 hover:text-ash_gray-600 font-semibold"
-                href="#"
+                href="/blog/slug"
               >
                 <span className="mr-3">Read Post</span>
                 <svg
@@ -188,7 +194,10 @@ export default function WebsiteBlogPosts() {
               </Link>
             </div>
             <div className="w-full md:w-1/2 px-4 mb-8">
-              <Link className="block mb-6 overflow-hidden rounded-md" href="#">
+              <Link
+                className="block mb-6 overflow-hidden rounded-md"
+                href="/blog/slug"
+              >
                 <Image
                   className="w-full"
                   src="/flex-ui-assets/images/blog/work2.jpg"
@@ -200,7 +209,7 @@ export default function WebsiteBlogPosts() {
               <div className="mb-4">
                 <Link
                   className="inline-block py-1 px-3 text-xs leading-5 text-white hover:text-ash_gray-600 font-medium uppercase bg-ash_gray-100 hover:bg-ash_gray-200 rounded-full shadow-sm"
-                  href="#"
+                  href="/blog/slug"
                 >
                   Marketing
                 </Link>
@@ -210,7 +219,7 @@ export default function WebsiteBlogPosts() {
               </p>
               <Link
                 className="inline-block mb-4 text-2xl leading-tight text-rich_black hover:text-rich_black font-bold hover:underline"
-                href="#"
+                href="/blog/slug"
               >
                 A small business is only as good as its tools and it is totally
                 true.
@@ -222,7 +231,7 @@ export default function WebsiteBlogPosts() {
               </p>
               <Link
                 className="inline-flex items-center text-base md:text-lg text-ash_gray-500 hover:text-ash_gray-600 font-semibold"
-                href="#"
+                href="/blog/slug"
               >
                 <span className="mr-3">Read Post</span>
                 <svg
@@ -240,7 +249,10 @@ export default function WebsiteBlogPosts() {
               </Link>
             </div>
             <div className="w-full md:w-1/2 px-4 mb-8">
-              <Link className="block mb-6 overflow-hidden rounded-md" href="#">
+              <Link
+                className="block mb-6 overflow-hidden rounded-md"
+                href="/blog/slug"
+              >
                 <Image
                   className="w-full"
                   src="/flex-ui-assets/images/blog/effect2.jpg"
@@ -252,7 +264,7 @@ export default function WebsiteBlogPosts() {
               <div className="mb-4">
                 <Link
                   className="inline-block py-1 px-3 text-xs leading-5 text-white hover:text-ash_gray-600 font-medium uppercase bg-ash_gray-100 hover:bg-ash_gray-200 rounded-full shadow-sm"
-                  href="#"
+                  href="/blog/slug"
                 >
                   Start-up
                 </Link>
@@ -262,7 +274,7 @@ export default function WebsiteBlogPosts() {
               </p>
               <Link
                 className="inline-block mb-4 text-2xl leading-tight text-rich_black hover:text-rich_black font-bold hover:underline"
-                href="#"
+                href="/blog/slug"
               >
                 A small business is only as good as its tools and it is totally
                 true.
@@ -274,7 +286,7 @@ export default function WebsiteBlogPosts() {
               </p>
               <Link
                 className="inline-flex items-center text-base md:text-lg text-ash_gray-500 hover:text-ash_gray-600 font-semibold"
-                href="#"
+                href="/blog/slug"
               >
                 <span className="mr-3">Read Post</span>
                 <svg
@@ -292,7 +304,10 @@ export default function WebsiteBlogPosts() {
               </Link>
             </div>
             <div className="w-full md:w-1/2 px-4 mb-8 md:mb-0">
-              <Link className="block mb-6 overflow-hidden rounded-md" href="#">
+              <Link
+                className="block mb-6 overflow-hidden rounded-md"
+                href="/blog/slug"
+              >
                 <Image
                   className="w-full"
                   src="/flex-ui-assets/images/blog/learn.jpg"
@@ -304,7 +319,7 @@ export default function WebsiteBlogPosts() {
               <div className="mb-4">
                 <Link
                   className="inline-block py-1 px-3 text-xs leading-5 text-white hover:text-ash_gray-600 font-medium uppercase bg-ash_gray-100 hover:bg-ash_gray-200 rounded-full shadow-sm"
-                  href="#"
+                  href="/blog/slug"
                 >
                   Article
                 </Link>
@@ -314,7 +329,7 @@ export default function WebsiteBlogPosts() {
               </p>
               <Link
                 className="inline-block mb-4 text-2xl leading-tight text-rich_black hover:text-rich_black font-bold hover:underline"
-                href="#"
+                href="/blog/slug"
               >
                 A small business is only as good as its tools and it is totally
                 true.
@@ -326,7 +341,7 @@ export default function WebsiteBlogPosts() {
               </p>
               <Link
                 className="inline-flex items-center text-base md:text-lg text-ash_gray-500 hover:text-ash_gray-600 font-semibold"
-                href="#"
+                href="/blog/slug"
               >
                 <span className="mr-3">Read Post</span>
                 <svg
@@ -344,7 +359,10 @@ export default function WebsiteBlogPosts() {
               </Link>
             </div>
             <div className="w-full md:w-1/2 px-4">
-              <Link className="block mb-6 overflow-hidden rounded-md" href="#">
+              <Link
+                className="block mb-6 overflow-hidden rounded-md"
+                href="/blog/slug"
+              >
                 <Image
                   className="w-full"
                   src="/flex-ui-assets/images/blog/macbook.jpg"
@@ -356,7 +374,7 @@ export default function WebsiteBlogPosts() {
               <div className="mb-4">
                 <Link
                   className="inline-block py-1 px-3 text-xs leading-5 text-white hover:text-ash_gray-600 font-medium uppercase bg-ash_gray-100 hover:bg-ash_gray-200 rounded-full shadow-sm"
-                  href="#"
+                  href="/blog/slug"
                 >
                   Podcast
                 </Link>
@@ -366,7 +384,7 @@ export default function WebsiteBlogPosts() {
               </p>
               <Link
                 className="inline-block mb-4 text-2xl leading-tight text-rich_black hover:text-rich_black font-bold hover:underline"
-                href="#"
+                href="/blog/slug"
               >
                 A small business is only as good as its tools and it is totally
                 true.
@@ -378,7 +396,7 @@ export default function WebsiteBlogPosts() {
               </p>
               <Link
                 className="inline-flex items-center text-base md:text-lg text-ash_gray-500 hover:text-ash_gray-600 font-semibold"
-                href="#"
+                href="/blog/slug"
               >
                 <span className="mr-3">Read Post</span>
                 <svg
@@ -398,7 +416,7 @@ export default function WebsiteBlogPosts() {
           </div>
           <Link
             className="flex items-center justify-center py-2 px-4 mx-auto text-sm leading-5 text-green-50 font-medium bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:max-w-max rounded-md"
-            href="#"
+            href="/blog/slug"
           >
             <span className="mr-3">View more</span>
             <svg

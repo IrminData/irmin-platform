@@ -47,12 +47,36 @@ export default function WebsiteNavigation() {
                       Resources
                     </Link>
                   </li>
-                  <li>
+                  <li className="mr-12">
                     <Link
                       className="text-rich_black hover:text-rich_black font-light"
                       href="/pricing"
                     >
                       Pricing
+                    </Link>
+                  </li>
+                  <li className="mr-12">
+                    <Link
+                      className="text-rich_black hover:text-rich_black font-light"
+                      href="/team"
+                    >
+                      Team
+                    </Link>
+                  </li>
+                  <li className="mr-12">
+                    <Link
+                      className="text-rich_black hover:text-rich_black font-light"
+                      href="/blog"
+                    >
+                      Blog
+                    </Link>
+                  </li>
+                  <li className="mr-12">
+                    <Link
+                      className="text-rich_black hover:text-rich_black font-light"
+                      href="/contact"
+                    >
+                      Contact us
                     </Link>
                   </li>
                 </ul>
