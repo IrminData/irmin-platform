@@ -94,7 +94,7 @@ export default function WebsiteCareersSection() {
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center py-7 bg-green-50 rounded-full">
+          <div className="flex flex-wrap items-center py-7 bg-green-50 rounded-lg -mx-4 px-4">
             <div className="w-full md:w-auto mr-auto mb-6 md:mb-0">
               <h3 className="text-lg md:text-xl font-semibold">
                 Front-end Developer
@@ -149,7 +149,7 @@ export default function WebsiteCareersSection() {
               </Link>
             </div>
           </div>
-          <div className="flex flex-wrap items-center py-7 rounded-full">
+          <div className="flex flex-wrap items-center py-7 rounded-lg -mx-4 px-4">
             <div className="w-full md:w-auto mr-auto mb-6 md:mb-0">
               <h3 className="text-lg md:text-xl font-semibold">
                 Back-end Developer
@@ -204,7 +204,7 @@ export default function WebsiteCareersSection() {
               </Link>
             </div>
           </div>
-          <div className="flex flex-wrap items-center py-7 bg-green-50 rounded-full">
+          <div className="flex flex-wrap items-center py-7 bg-green-50 rounded-lg -mx-4 px-4">
             <div className="w-full md:w-auto mr-auto mb-6 md:mb-0">
               <h3 className="text-lg md:text-xl font-semibold">
                 UI/UX Designer
@@ -259,7 +259,7 @@ export default function WebsiteCareersSection() {
               </Link>
             </div>
           </div>
-          <div className="flex flex-wrap items-center py-7 rounded-full">
+          <div className="flex flex-wrap items-center py-7 rounded-lg -mx-4 px-4">
             <div className="w-full md:w-auto mr-auto mb-6 md:mb-0">
               <h3 className="text-lg md:text-xl font-semibold">
                 Product Designer
@@ -314,7 +314,7 @@ export default function WebsiteCareersSection() {
               </Link>
             </div>
           </div>
-          <div className="flex flex-wrap items-center py-7 bg-green-50 rounded-full">
+          <div className="flex flex-wrap items-center py-7 bg-green-50 rounded-lg -mx-4 px-4">
             <div className="w-full md:w-auto mr-auto mb-6 md:mb-0">
               <h3 className="text-lg md:text-xl font-semibold">
                 Project Manager
@@ -369,7 +369,7 @@ export default function WebsiteCareersSection() {
               </Link>
             </div>
           </div>
-          <div className="flex flex-wrap items-center py-7 rounded-full">
+          <div className="flex flex-wrap items-center py-7 rounded-lg -mx-4 px-4">
             <div className="w-full md:w-auto mr-auto mb-6 md:mb-0">
               <h3 className="text-lg md:text-xl font-semibold">
                 Front-end Developer
@@ -424,7 +424,7 @@ export default function WebsiteCareersSection() {
               </Link>
             </div>
           </div>
-          <div className="flex flex-wrap items-center py-7 bg-green-50 rounded-full">
+          <div className="flex flex-wrap items-center py-7 bg-green-50 rounded-lg -mx-4 px-4">
             <div className="w-full md:w-auto mr-auto mb-6 md:mb-0">
               <h3 className="text-lg md:text-xl font-semibold">
                 Back-end Developer

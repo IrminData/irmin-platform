@@ -241,7 +241,7 @@ export default function WebsiteContactSection() {
               </div>
             </div>
             <div className="w-full lg:w-1/2 px-4">
-              <div className="px-4 py-8 md:p-10 bg-green-50 rounded-full">
+              <div className="px-4 py-8 md:p-10 bg-green-50 rounded-xl">
                 <form>
                   <div className="mb-6">
                     <label
