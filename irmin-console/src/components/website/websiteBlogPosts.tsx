@@ -14,7 +14,7 @@ export default function WebsiteBlogPosts() {
       >
         <div className="container px-4 mx-auto">
           <div className="md:max-w-5xl mx-auto mb-8 md:mb-16 text-center">
-            <span className="inline-block py-px px-2 mb-4 text-xs leading-5 text-ash_gray-500 bg-ash_gray-100 font-medium uppercase rounded-full shadow-sm">
+            <span className="inline-block py-px px-2 mb-4 text-xs leading-5 text-white bg-ash_gray font-medium uppercase rounded-full shadow-sm">
               Blog
             </span>
             <h3 className="mb-4 text-3xl md:text-5xl leading-tight text-rich_black font-bold tracking-tighter">
