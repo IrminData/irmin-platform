@@ -7,45 +7,7 @@ export default function DashboardNavigation({
   return (
     <>
       <section className="overflow-hidden min-h-full">
-        <div className="relative z-50 flex items-center justify-between xl:hidden bg-rich_black px-8 py-5 -mx-3">
-          <div className="w-auto px-3">
-            <a className="block max-w-max" href="/">
-              <Image
-                className="h-8"
-                src="/irmin-logo-light.svg"
-                alt="Irmin logo"
-                width={150}
-                height={50}
-              />
-            </a>
-          </div>
-          <div className="w-auto px-3">
-            <button className="navbar-burger self-center ml-auto block xl:hidden">
-              <svg
-                width={35}
-                height={35}
-                viewBox="0 0 32 32"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <rect
-                  className="text-white"
-                  width={32}
-                  height={32}
-                  rx={6}
-                  fill="currentColor"
-                />
-                <path
-                  className="text-white"
-                  d="M7 12H25C25.2652 12 25.5196 11.8946 25.7071 11.7071C25.8946 11.5196 26 11.2652 26 11C26 10.7348 25.8946 10.4804 25.7071 10.2929C25.5196 10.1054 25.2652 10 25 10H7C6.73478 10 6.48043 10.1054 6.29289 10.2929C6.10536 10.4804 6 10.7348 6 11C6 11.2652 6.10536 11.5196 6.29289 11.7071C6.48043 11.8946 6.73478 12 7 12ZM25 15H7C6.73478 15 6.48043 15.1054 6.29289 15.2929C6.10536 15.4804 6 15.7348 6 16C6 16.2652 6.10536 16.5196 6.29289 16.7071C6.48043 16.8946 6.73478 17 7 17H25C25.2652 17 25.5196 16.8946 25.7071 16.7071C25.8946 16.5196 26 16.2652 26 16C26 15.7348 25.8946 15.4804 25.7071 15.2929C25.5196 15.1054 25.2652 15 25 15ZM25 20H7C6.73478 20 6.48043 20.1054 6.29289 20.2929C6.10536 20.4804 6 20.7348 6 21C6 21.2652 6.10536 21.5196 6.29289 21.7071C6.48043 21.8946 6.73478 22 7 22H25C25.2652 22 25.5196 21.8946 25.7071 21.7071C25.8946 21.5196 26 21.2652 26 21C26 20.7348 25.8946 20.4804 25.7071 20.2929C25.5196 20.1054 25.2652 20 25 20Z"
-                  fill="currentColor"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div className="navbar-menu z-50 fixed top-0  flex xl:flex flex-col justify-between bg-rich_black max-w-xs w-9/12 h-full overflow-y-auto">
-          <div className="navbar-backdrop fixed xl:hidden inset-0 bg-rich_black opacity-60" />
+        <div className="navbar-menu z-50 fixed top-0 flex xl:flex flex-col justify-between bg-rich_black max-w-xs w-9/12 h-full overflow-y-auto">
           <div className="relative bg-rich_black">
             <div className="fixed -left-4 p-8 pl-12 max-w-xs w-9/12 z-50 bg-rich_black">
               <a className="block max-w-max" href="/">
@@ -65,7 +27,7 @@ export default function DashboardNavigation({
               <ul className="px-4 mb-8">
                 <li>
                   <a
-                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-green-500 hover:bg-rich_black rounded-md"
+                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                     href="#"
                   >
                     <div className="flex items-center">
@@ -82,7 +44,7 @@ export default function DashboardNavigation({
                           fill="currentColor"
                         />
                       </svg>
-                      <p className="text-white font-medium text-base">
+                      <p className="text-white font-light text-base">
                         Dashboard
                       </p>
                     </div>
@@ -106,7 +68,7 @@ export default function DashboardNavigation({
                     href="#"
                   >
                     <div className="flex items-center">
-                      <p className="text-white font-medium text-base">
+                      <p className="text-white font-light text-base">
                         Overview
                       </p>
                     </div>
@@ -118,7 +80,7 @@ export default function DashboardNavigation({
                     href="#"
                   >
                     <div className="flex items-center">
-                      <p className="text-white font-medium text-base">
+                      <p className="text-white font-light text-base">
                         Notifications
                       </p>
                     </div>
@@ -130,13 +92,13 @@ export default function DashboardNavigation({
                     href="#"
                   >
                     <div className="flex items-center">
-                      <p className="text-white font-medium text-base">Budget</p>
+                      <p className="text-white font-light text-base">Budget</p>
                     </div>
                   </a>
                 </li>
                 <li>
                   <a
-                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-green-500 hover:bg-rich_black rounded-md"
+                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                     href="#"
                   >
                     <div className="flex items-center">
@@ -153,7 +115,7 @@ export default function DashboardNavigation({
                           fill="currentColor"
                         />
                       </svg>
-                      <p className="text-white font-medium text-base">
+                      <p className="text-white font-light text-base">
                         Projects
                       </p>
                     </div>
@@ -161,7 +123,7 @@ export default function DashboardNavigation({
                 </li>
                 <li>
                   <a
-                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-green-500 hover:bg-rich_black rounded-md"
+                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                     href="#"
                   >
                     <div className="flex items-center">
@@ -178,13 +140,13 @@ export default function DashboardNavigation({
                           fill="currentColor"
                         />
                       </svg>
-                      <p className="text-white font-medium text-base">Tasks</p>
+                      <p className="text-white font-light text-base">Tasks</p>
                     </div>
                   </a>
                 </li>
                 <li>
                   <a
-                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-green-500 hover:bg-rich_black rounded-md"
+                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                     href="#"
                   >
                     <div className="flex items-center">
@@ -201,7 +163,7 @@ export default function DashboardNavigation({
                           fill="currentColor"
                         />
                       </svg>
-                      <p className="text-white font-medium text-base">
+                      <p className="text-white font-light text-base">
                         Products
                       </p>
                     </div>
@@ -214,7 +176,7 @@ export default function DashboardNavigation({
               <ul className="px-4 pb-8">
                 <li>
                   <a
-                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-green-500 hover:bg-rich_black rounded-md"
+                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                     href="#"
                   >
                     <div className="flex items-center">
@@ -231,7 +193,7 @@ export default function DashboardNavigation({
                           fill="currentColor"
                         />
                       </svg>
-                      <p className="text-white font-medium text-base">
+                      <p className="text-white font-light text-base">
                         Community
                       </p>
                     </div>
@@ -239,7 +201,7 @@ export default function DashboardNavigation({
                 </li>
                 <li>
                   <a
-                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-green-500 hover:bg-rich_black rounded-md"
+                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                     href="#"
                   >
                     <div className="flex items-center">
@@ -256,7 +218,7 @@ export default function DashboardNavigation({
                           fill="currentColor"
                         />
                       </svg>
-                      <p className="text-white font-medium text-base">
+                      <p className="text-white font-light text-base">
                         Calendar
                       </p>
                     </div>
@@ -264,7 +226,7 @@ export default function DashboardNavigation({
                 </li>
                 <li>
                   <a
-                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-green-500 hover:bg-rich_black rounded-md"
+                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                     href="#"
                   >
                     <div className="flex items-center">
@@ -281,7 +243,7 @@ export default function DashboardNavigation({
                           fill="currentColor"
                         />
                       </svg>
-                      <p className="text-white font-medium text-base">Pages</p>
+                      <p className="text-white font-light text-base">Pages</p>
                     </div>
                     <svg
                       width={12}
@@ -299,7 +261,7 @@ export default function DashboardNavigation({
                 </li>
                 <li>
                   <a
-                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-green-500 hover:bg-rich_black rounded-md"
+                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                     href="#"
                   >
                     <div className="flex items-center">
@@ -316,7 +278,7 @@ export default function DashboardNavigation({
                           fill="currentColor"
                         />
                       </svg>
-                      <p className="text-white font-medium text-base">
+                      <p className="text-white font-light text-base">
                         Analytics
                       </p>
                     </div>
@@ -333,7 +295,7 @@ export default function DashboardNavigation({
             <ul className="p-4">
               <li>
                 <a
-                  className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-green-500 hover:bg-rich_black rounded-md"
+                  className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                   href="#"
                 >
                   <div className="flex items-center">
@@ -350,13 +312,13 @@ export default function DashboardNavigation({
                         fill="currentColor"
                       />
                     </svg>
-                    <p className="text-white font-medium text-base">Accounts</p>
+                    <p className="text-white font-light text-base">Accounts</p>
                   </div>
                 </a>
               </li>
               <li>
                 <a
-                  className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-green-500 hover:bg-rich_black rounded-md"
+                  className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                   href="#"
                 >
                   <div className="flex items-center">
@@ -373,13 +335,13 @@ export default function DashboardNavigation({
                         fill="currentColor"
                       />
                     </svg>
-                    <p className="text-white font-medium text-base">Settings</p>
+                    <p className="text-white font-light text-base">Settings</p>
                   </div>
                 </a>
               </li>
               <li>
                 <a
-                  className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-green-500 hover:bg-rich_black rounded-md"
+                  className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                   href="#"
                 >
                   <div className="flex items-center">
@@ -396,40 +358,25 @@ export default function DashboardNavigation({
                         fill="currentColor"
                       />
                     </svg>
-                    <p className="text-white font-medium text-base">Sign out</p>
+                    <p className="text-white font-light text-base">Sign out</p>
                   </div>
                 </a>
               </li>
             </ul>
           </div>
         </div>
-        <div className="xl:ml-80">
+        <div
+          className="xl:ml-80 fixed w-100 z-50"
+          style={{ width: "calc(100%-20em)" }}
+        >
           <div className="py-5 px-8 bg-white border-b border-rich_black">
             <div className="flex flex-wrap items-center justify-between -m-2">
-              <div className="w-auto p-2">
-                <a
-                  className="block max-w-max text-white hover:text-ash_gray"
-                  href="#"
-                >
-                  <svg
-                    width={24}
-                    height={24}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M5 8H19C19.2652 8 19.5196 7.89464 19.7071 7.70711C19.8946 7.51957 20 7.26522 20 7C20 6.73478 19.8946 6.48043 19.7071 6.29289C19.5196 6.10536 19.2652 6 19 6H5C4.73478 6 4.48043 6.10536 4.29289 6.29289C4.10536 6.48043 4 6.73478 4 7C4 7.26522 4.10536 7.51957 4.29289 7.70711C4.48043 7.89464 4.73478 8 5 8ZM21 11H3C2.73478 11 2.48043 11.1054 2.29289 11.2929C2.10536 11.4804 2 11.7348 2 12C2 12.2652 2.10536 12.5196 2.29289 12.7071C2.48043 12.8946 2.73478 13 3 13H21C21.2652 13 21.5196 12.8946 21.7071 12.7071C21.8946 12.5196 22 12.2652 22 12C22 11.7348 21.8946 11.4804 21.7071 11.2929C21.5196 11.1054 21.2652 11 21 11ZM19 16H5C4.73478 16 4.48043 16.1054 4.29289 16.2929C4.10536 16.4804 4 16.7348 4 17C4 17.2652 4.10536 17.5196 4.29289 17.7071C4.48043 17.8946 4.73478 18 5 18H19C19.2652 18 19.5196 17.8946 19.7071 17.7071C19.8946 17.5196 20 17.2652 20 17C20 16.7348 19.8946 16.4804 19.7071 16.2929C19.5196 16.1054 19.2652 16 19 16Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </a>
-              </div>
+              <div className="w-auto p-2"></div>
               <div className="w-auto p-2">
                 <div className="flex flex-wrap items-center -m-3">
                   <div className="w-auto p-3">
                     <form className="w-96 mx-auto">
-                      <label className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">
+                      <label className="mb-2 text-sm font-light text-gray-900 sr-only dark:text-white">
                         Search
                       </label>
                       <div className="relative">
@@ -459,7 +406,7 @@ export default function DashboardNavigation({
                         />
                         <button
                           type="submit"
-                          className="text-white absolute end-2.5 bottom-2.5 bg-ash_gray hover:bg-ash_gray-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                          className="text-white absolute end-2.5 bottom-2.5 bg-ash_gray hover:bg-ash_gray-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-light rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                         >
                           Search
                         </button>
@@ -518,7 +465,7 @@ export default function DashboardNavigation({
                             <h2 className="text-sm font-semibold text-rich_black">
                               John Doe
                             </h2>
-                            <p className="text-sm font-medium text-rich_black">
+                            <p className="text-sm font-light text-rich_black">
                               johndoe@flex.co
                             </p>
                           </div>
@@ -549,10 +496,13 @@ export default function DashboardNavigation({
               </div>
             </div>
           </div>
-          <div>
-            {/* Dashboard content */}
-            {children}
-          </div>
+        </div>
+        <div
+          className="xl:ml-80 fixed w-100 min-h-100 overflow-y-scroll pt-[100px] px-4"
+          style={{ width: "calc(100%-20em)" }}
+        >
+          {/* Dashboard content */}
+          {children}
         </div>
       </section>
     </>
