@@ -1,3 +1,6 @@
+"use client";
+
+import DashboardTitleAndSelector from "@/components/dashboardTitleAndSelector";
 import BarChart from "@/components/widgets/barChart";
 import LineChart from "@/components/widgets/lineChart";
 import ScrollableTable from "@/components/widgets/scrollableTable";
@@ -5,6 +8,12 @@ import ScrollableTable from "@/components/widgets/scrollableTable";
 export default function DashboardHome() {
   return (
     <>
+      <DashboardTitleAndSelector
+        title="Dashboards"
+        options={["Dashboard 1", "Dashboard 2", "Create New"]}
+        selected={"Dashboard 1"}
+        onSelectionChange={(value) => console.log("Selection changed", value)}
+      />
       <div className="grid grid-cols-2 gap-4">
         <ScrollableTable
           title="Monthly Sales"
