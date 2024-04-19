@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 
@@ -85,7 +87,13 @@ export default function SignInSection() {
                   </Link>
                 </div>
               </div>
-              <button className="inline-block py-3 px-7 mb-6 w-full text-base text-white font-medium text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm">
+              <button
+                className="inline-block py-3 px-7 mb-6 w-full text-base text-white font-medium text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = "/app/upcharge/dashboards";
+                }}
+              >
                 Sign In
               </button>
               <p className="text-center">
