@@ -60,7 +60,7 @@ export default function DashboardNavigation({
               <div className="absolute right-8 top-5">
                 <Link
                   className="block max-w-max text-ash_gray hover:text-ash_gray-800"
-                  href="/irmin/inbox"
+                  href="/app/inbox"
                 >
                   <svg
                     width={24}
@@ -112,7 +112,7 @@ export default function DashboardNavigation({
                 <li>
                   <Link
                     className={`p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md`}
-                    href="/irmin/upcharge/dashboards"
+                    href="/app/upcharge/dashboards"
                   >
                     <div className="flex items-center">
                       <RxDashboard className="mr-2 text-xl" />
@@ -123,7 +123,7 @@ export default function DashboardNavigation({
                 <li>
                   <Link
                     className={`p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md`}
-                    href="/irmin/upcharge/datasets"
+                    href="/app/upcharge/datasets"
                   >
                     <div className="flex items-center">
                       <CiDatabase className="mr-2 text-xl" />
@@ -134,7 +134,7 @@ export default function DashboardNavigation({
                 <li>
                   <Link
                     className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
-                    href="/irmin/upcharge/editor"
+                    href="/app/upcharge/editor"
                   >
                     <div className="flex items-center">
                       <AiOutlineConsoleSql className="mr-2 text-xl" />
@@ -144,12 +144,8 @@ export default function DashboardNavigation({
                 </li>
                 <li>
                   <Link
-                    className={`p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md ${
-                      isActive("/dashboard/data-sources")
-                        ? "bg-ash_gray text-white"
-                        : ""
-                    }`}
-                    href="/irmin/upcharge/data-sources"
+                    className={`p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md`}
+                    href="/app/upcharge/data-sources"
                   >
                     <div className="flex items-center">
                       <TbDatabaseImport className="mr-2 text-xl" />
@@ -160,7 +156,7 @@ export default function DashboardNavigation({
                 <li>
                   <Link
                     className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
-                    href="/irmin/upcharge/reverse-etl"
+                    href="/app/upcharge/reverse-etl"
                   >
                     <div className="flex items-center">
                       <TbDatabaseExport className="mr-2 text-xl" />
@@ -171,7 +167,7 @@ export default function DashboardNavigation({
                 <li>
                   <Link
                     className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
-                    href="/irmin/upcharge/settings"
+                    href="/app/upcharge/settings"
                   >
                     <div className="flex items-center">
                       <TbSettings className="mr-2 text-xl" />
@@ -182,7 +178,7 @@ export default function DashboardNavigation({
                 <li>
                   <Link
                     className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
-                    href="/irmin/upcharge/data-marketplace"
+                    href="/app/upcharge/data-marketplace"
                   >
                     <div className="flex items-center">
                       <PiStorefront className="mr-2 text-xl" />
@@ -202,7 +198,7 @@ export default function DashboardNavigation({
               <li>
                 <Link
                   className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
-                  href="/irmin/settings"
+                  href="/app/settings"
                 >
                   <div className="flex items-center">
                     <svg
