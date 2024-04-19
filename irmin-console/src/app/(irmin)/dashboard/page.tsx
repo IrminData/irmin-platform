@@ -1,3 +1,4 @@
+import LineChart from "@/components/widgets/lineChart";
 import ScrollableTable from "@/components/widgets/scrollableTable";
 
 export default function DashboardHome() {
@@ -20,24 +21,6 @@ export default function DashboardHome() {
             { month: "2020-12-01", total_sales: 5168 },
             { month: "2021-01-01", total_sales: 7661 },
             { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
           ]}
         />
         <ScrollableTable
@@ -61,92 +44,22 @@ export default function DashboardHome() {
             { month: "2021-01-01", total_sales: 7661 },
             { month: "2020-12-01", total_sales: 5168 },
             { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
           ]}
         />
-        <ScrollableTable
+        <LineChart
           title="Monthly Sales"
-          columns={[
-            { header: "Month", accessor: "month" },
-            { header: "Total Sales", accessor: "total_sales" },
-          ]}
-          data={[
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-          ]}
-        />
-        <ScrollableTable
-          title="Monthly Sales"
-          columns={[
-            { header: "Month", accessor: "month" },
-            { header: "Total Sales", accessor: "total_sales" },
-          ]}
-          data={[
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-            { month: "2021-01-01", total_sales: 7661 },
-            { month: "2020-12-01", total_sales: 5168 },
-          ]}
+          data={{
+            labels: ["January", "February", "March", "April"],
+            datasets: [
+              {
+                label: "Sales",
+                data: [65, 59, 80, 81],
+                fill: false,
+                backgroundColor: "#aec3b0",
+                borderColor: "#aec3b0",
+              },
+            ],
+          }}
         />
       </div>
     </>
