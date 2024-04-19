@@ -1,3 +1,4 @@
+import BarChart from "@/components/widgets/barChart";
 import LineChart from "@/components/widgets/lineChart";
 import ScrollableTable from "@/components/widgets/scrollableTable";
 
@@ -55,6 +56,20 @@ export default function DashboardHome() {
                 label: "Sales",
                 data: [65, 59, 80, 81],
                 fill: false,
+                backgroundColor: "#aec3b0",
+                borderColor: "#aec3b0",
+              },
+            ],
+          }}
+        />
+        <BarChart
+          title="Monthly Sales"
+          data={{
+            labels: ["January", "February", "March", "April"],
+            datasets: [
+              {
+                label: "Sales",
+                data: [65, 59, 80, 81],
                 backgroundColor: "#aec3b0",
                 borderColor: "#aec3b0",
               },
