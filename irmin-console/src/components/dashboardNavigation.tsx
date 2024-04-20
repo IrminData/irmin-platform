@@ -10,12 +10,15 @@ import { AiOutlineConsoleSql } from "react-icons/ai";
 import { TbDatabaseImport, TbDatabaseExport, TbSettings } from "react-icons/tb";
 import { PiStorefront } from "react-icons/pi";
 
+import AIAssistantPopup from "./AIAssistantPopup";
+
 export default function DashboardNavigation({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(true);
   return (
     <>
+      <AIAssistantPopup />
       <section className="min-h-full">
         <div className="fixed top-4 left-4 z-50 block md:hidden">
           <button
