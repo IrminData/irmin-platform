@@ -1,0 +1,116 @@
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
+
+export default function SignInSection() {
+  return (
+    <>
+      <section
+        className="py-24 md:py-32 bg-white"
+        style={{
+          backgroundImage: 'url("/flex-ui-assets/elements/pattern-white.svg")',
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="container px-4 mx-auto">
+          <div className="max-w-sm mx-auto">
+            <div className="mb-6 text-center">
+              <Link className="inline-block mb-6" href="#">
+                <Image
+                  className="h-16"
+                  src="/irmin-logo.svg"
+                  alt="IRMIN logo"
+                  width={400}
+                  height={100}
+                />
+              </Link>
+              <h3 className="mb-4 text-2xl md:text-3xl font-bold">
+                Sign in to your account
+              </h3>
+              <p className="text-lg text-rich_black font-light">
+                Welcome back to the home of your data
+              </p>
+            </div>
+            <form action="">
+              <div className="mb-6">
+                <label
+                  className="block mb-2 text-rich_black font-light"
+                  htmlFor=""
+                >
+                  Email
+                </label>
+                <input
+                  className="appearance-none block w-full p-3 leading-5 text-rich_black border border-rich_black rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
+                  type="email"
+                  placeholder="name@acme.corp"
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  className="block mb-2 text-rich_black font-light"
+                  htmlFor=""
+                >
+                  Password
+                </label>
+                <input
+                  className="appearance-none block w-full p-3 leading-5 text-rich_black border border-rich_black rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
+                  type="password"
+                  placeholder="************"
+                />
+              </div>
+              <div className="flex flex-wrap items-center justify-between mb-6">
+                <div className="w-full md:w-1/2">
+                  <label className="relative inline-flex items-center">
+                    <input
+                      className="form-checkbox appearance-none"
+                      type="checkbox"
+                    />
+                    <Image
+                      className="absolute top-1/2 transform -translate-y-1/2 left-0"
+                      src="/flex-ui-assets/elements/sign-up/checkbox-icon.svg"
+                      alt="Checkbox icon"
+                      width={20}
+                      height={20}
+                    />
+                    <span className="ml-7 text-xs text-rich_black font-light">
+                      Remember me
+                    </span>
+                  </label>
+                </div>
+                <div className="w-full md:w-auto mt-1">
+                  <Link
+                    className="inline-block text-xs font-light text-ash_gray-500 hover:text-ash_gray-600"
+                    href="#"
+                  >
+                    Forgot your password?
+                  </Link>
+                </div>
+              </div>
+              <button
+                className="inline-block py-3 px-7 mb-6 w-full text-base text-white font-medium text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = "/app/upcharge/dashboards";
+                }}
+              >
+                Sign In
+              </button>
+              <p className="text-center">
+                <span className="text-xs font-light">
+                  Don’t have an account?{" "}
+                </span>
+                <Link
+                  className="inline-block text-xs font-light text-ash_gray-500 hover:text-ash_gray-600 hover:underline"
+                  href="/sign-up"
+                >
+                  Sign up
+                </Link>
+              </p>
+            </form>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
