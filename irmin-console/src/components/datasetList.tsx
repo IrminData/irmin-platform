@@ -1,0 +1,133 @@
+import React from "react";
+
+interface DataSet {
+  name: string;
+  sourceWorkspace: string;
+  status: "private" | "public" | "connected";
+}
+
+interface DataSetListProps {
+  dataSets: DataSet[];
+}
+
+const DataSetList: React.FC<DataSetListProps> = ({ dataSets }) => {
+  return (
+    <div className="py-8">
+      <div className="overflow-x-auto">
+        <table className="w-full text-base text-left text-rich_black font-light">
+          <thead className="text-md uppercase border-b-4 border-ash_gray">
+            <tr>
+              <th scope="col" className="px-6 py-3  font-medium">
+                Name
+              </th>
+              <th scope="col" className="px-6 py-3  font-medium">
+                Status
+              </th>
+              <th scope="col" className="px-6 py-3  font-medium text-right">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {dataSets.map((dataset, index) => (
+              <tr key={index} className="shadow">
+                <td className="px-6 py-4 text-lg">
+                  {dataset.name}
+                  <br />
+                  <span className="text-sm text-ash_gray">
+                    Source: {dataset.sourceWorkspace}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  {dataset.status === "private" ? (
+                    <span className="block py-2 px-2 max-w-36 text-base text-white text-center leading-6 bg-midnight_green rounded-full shadow-sm">
+                      Private
+                    </span>
+                  ) : dataset.status === "public" ? (
+                    <span className="block py-2 px-2 max-w-36 text-base text-white text-center leading-6 bg-ash_gray rounded-full shadow-sm">
+                      Public
+                    </span>
+                  ) : (
+                    <span className="block py-2 px-2 max-w-36 text-base text-rich_black text-center leading-6 bg-beige rounded-full shadow-sm">
+                      Connected
+                    </span>
+                  )}
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <div className="flex space-x-2 float-right">
+                    <a
+                      href="#"
+                      className="text-ash_gray hover:underline py-3 px-1"
+                    >
+                      Logs
+                    </a>
+                    {(dataset.status === "private" ||
+                      dataset.status === "public") && (
+                      <>
+                        <a
+                          href="#"
+                          className="text-ash_gray hover:underline py-3 px-1"
+                        >
+                          Edit
+                        </a>
+                        <a
+                          href="#"
+                          className="text-ash_gray hover:underline py-3 px-1"
+                        >
+                          Remove
+                        </a>
+                      </>
+                    )}
+                    {dataset.status === "connected" && (
+                      <>
+                        <a
+                          href="#"
+                          className="text-ash_gray hover:underline py-3 px-1"
+                        >
+                          View listing
+                        </a>
+                        <a
+                          href="#"
+                          className="text-ash_gray hover:underline py-3 px-1"
+                        >
+                          Disconnect
+                        </a>
+                      </>
+                    )}
+
+                    <div className="pl-2">
+                      <a
+                        className="block py-2 px-5 mb-2 text-base w-44 text-white text-center leading-6 bg-midnight_green hover:bg-midnight_green-600 focus:ring-2 focus:ring-midnight_green-500 focus:ring-opacity-50 rounded-full shadow-sm"
+                        href="#"
+                      >
+                        View data
+                      </a>
+                      {dataset.status === "private" && (
+                        <a
+                          className="block py-2 px-5 mb-2 text-base w-44 text-white text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
+                          href="#"
+                        >
+                          Publish dataset
+                        </a>
+                      )}
+                      {dataset.status === "public" && (
+                        <a
+                          className="block py-2 px-5 mb-2 text-base w-44 text-white text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
+                          href="#"
+                        >
+                          View listing
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default DataSetList;
