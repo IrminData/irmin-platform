@@ -1,3 +1,9 @@
+import AppTitle from "@/components/appTitle";
+
 export default function IrminAccountSettings() {
-  return <></>;
+  return (
+    <>
+      <AppTitle title="Personal Settings" />
+    </>
+  );
 }
