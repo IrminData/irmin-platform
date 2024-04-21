@@ -126,11 +126,11 @@ export default function DashboardNavigation({
                 <li>
                   <Link
                     className={`p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md`}
-                    href="/app/upcharge/datasets"
+                    href="/app/upcharge/data-sets"
                   >
                     <div className="flex items-center">
                       <CiDatabase className="mr-2 text-xl" />
-                      <p className="font-light text-base">Datasets</p>
+                      <p className="font-light text-base">Data Sets</p>
                     </div>
                   </Link>
                 </li>

@@ -1,10 +1,10 @@
 import AppTitle from "@/components/appTitle";
-import DataSetList from "@/components/datasetList";
+import DataSetList from "@/components/dataSetList";
 
-export default function DatasetsPage() {
+export default function DataSetsPage() {
   return (
     <>
-      <AppTitle title="Datasets" />
+      <AppTitle title="Data Sets" />
       <DataSetList
         dataSets={[
           {
