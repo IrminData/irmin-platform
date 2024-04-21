@@ -65,6 +65,41 @@ export default function AIAssistantPopup() {
               </div>
             ))}
           </div>
+          {messages.filter((a) => a.sender === "user").length === 0 && (
+            <>
+              <p>Suggestions:</p>
+              <div className="flex items-end mr-2">
+                <button
+                  onClick={() =>
+                    setNewMessage("How to connect a new data source?")
+                  }
+                  className={`w-full p-2 rounded-lg my-1 font-light bg-gray-100 cursor-pointer hover:bg-gray-200 transition-all`}
+                >
+                  {"How to connect a new data source?"}
+                </button>
+              </div>
+              <div className="flex items-end mr-2">
+                <button
+                  onClick={() =>
+                    setNewMessage("Which sources do my sales mostly come from?")
+                  }
+                  className={`w-full p-2 rounded-lg my-1 font-light bg-gray-100 cursor-pointer hover:bg-gray-200 transition-all`}
+                >
+                  {"Which sources do my sales mostly come from?"}
+                </button>
+              </div>
+              <div className="flex items-end mr-2">
+                <button
+                  onClick={() =>
+                    setNewMessage("Which ad campaigns are the most profitable?")
+                  }
+                  className={`w-full p-2 rounded-lg my-1 font-light bg-gray-100 cursor-pointer hover:bg-gray-200 transition-all`}
+                >
+                  {"Which ad campaigns are the most profitable?"}
+                </button>
+              </div>
+            </>
+          )}
           <form
             onSubmit={(e) => {
               e.preventDefault();
