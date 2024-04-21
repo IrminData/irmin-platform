@@ -44,7 +44,7 @@ export default function AIAssistantPopup() {
   return (
     <>
       {open && (
-        <div className="chatWindow fixed z-10 bottom-20 md:bottom-10 right-5 md:right-28 bg-white rounded-lg shadow-lg p-4 w-11/12 md:w-1/3 lg:w-2/5 xl:w-1/4">
+        <div className="chatWindow fixed z-10 bottom-20 md:bottom-10 right-5 md:right-28 bg-white rounded-xl rounded-br-none shadow-lg p-4 w-11/12 md:w-1/3 lg:w-2/5 xl:w-1/4">
           <div className="overflow-y-auto h-96 mb-4">
             {messages.map((message) => (
               <div
