@@ -45,7 +45,7 @@ export default function DashboardNavigation({
           </button>
         </div>
         <div
-          className={`z-40 fixed top-0 flex flex-col justify-between bg-rich_black w-full md:w-1/4 xl:w-1/5 h-full overflow-y-scroll ${
+          className={`z-40 fixed top-0 flex flex-col justify-between bg-rich_black w-full md:w-2/5 xl:w-1/5 h-full overflow-y-scroll ${
             isMenuOpen ? "block" : "hidden md:block"
           }`}
         >
@@ -256,7 +256,7 @@ export default function DashboardNavigation({
           </div>
         </div>
         <div
-          className={`w-screen md:ml-[25%] xl:ml-[20%] md:w-3/4 xl:w-4/5 fixed z-40 ${
+          className={`w-screen md:ml-[40%] xl:ml-[20%] md:w-3/5 xl:w-4/5 fixed z-40 ${
             isMenuOpen ? "hidden md:block" : ""
           }`}
         >
@@ -307,7 +307,7 @@ export default function DashboardNavigation({
           </div>
         </div>
       </section>
-      <div className="md:ml-[25%] xl:ml-[20%] md:w-3/4 xl:w-4/5 w-100 min-h-full pt-[100px] px-4">
+      <div className="md:ml-[40%] xl:ml-[20%] md:w-3/5 xl:w-4/5 w-100 min-h-full pt-[100px] px-4">
         {/* Dashboard content */}
         {children}
       </div>
