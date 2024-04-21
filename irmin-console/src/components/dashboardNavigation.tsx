@@ -15,7 +15,7 @@ import AIAssistantPopup from "./AIAssistantPopup";
 export default function DashboardNavigation({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(true);
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   return (
     <>
       <AIAssistantPopup />
