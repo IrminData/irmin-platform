@@ -1,4 +1,4 @@
-import PersonalDashboardNavigation from "@/components/personalDashboardNavigation";
+import DashboardNavigation from "@/components/dashboardNavigation";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export default function PersonalDashboardLayout({
 }>) {
   return (
     <>
-      <PersonalDashboardNavigation>{children}</PersonalDashboardNavigation>
+      <DashboardNavigation>{children}</DashboardNavigation>
     </>
   );
 }
