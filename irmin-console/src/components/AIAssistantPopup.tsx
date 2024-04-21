@@ -12,7 +12,13 @@ interface Message {
 
 export default function AIAssistantPopup() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 0,
+      text: "Hi! My name is Haz and I’m here to help you with your data. Ask me anything!",
+      sender: "assistant",
+    },
+  ]);
   const [newMessage, setNewMessage] = useState("");
 
   const handleSendMessage = () => {
@@ -38,20 +44,20 @@ export default function AIAssistantPopup() {
   return (
     <>
       {open && (
-        <div className="chatWindow fixed z-10 bottom-10 right-28 bg-white rounded-lg shadow-lg p-4 w-11/12 md:w-1/3 lg:w-1/4">
+        <div className="chatWindow fixed z-10 bottom-20 md:bottom-10 right-5 md:right-28 bg-white rounded-lg shadow-lg p-4 w-11/12 md:w-1/3 lg:w-2/5 xl:w-1/4">
           <div className="overflow-y-auto h-96 mb-4">
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex items-end ${
-                  message.sender === "user" ? "justify-end" : "justify-start"
+                  message.sender === "user" ? "justify-start" : "justify-end"
                 }`}
               >
                 <div
-                  className={`max-w-xs p-2 rounded-lg my-1 ${
+                  className={`max-w-xs p-2 rounded-lg my-1 font-light ${
                     message.sender === "user"
-                      ? "bg-ash_gray rounded-br-none"
-                      : "bg-ash_gray-200 rounded-bl-none"
+                      ? "bg-beige rounded-bl-none"
+                      : "bg-ash_gray rounded-br-none"
                   }`}
                 >
                   {message.text}
@@ -73,7 +79,6 @@ export default function AIAssistantPopup() {
               className="h-32 w-full appearance-none block p-3 leading-5 text-rich_black border rounded-lg shadow-md bg-ash_gray-900 mr-2"
               placeholder="Write your message here..."
             />
-            {/* Send button visible on mobile only */}
             <button
               type="submit"
               className="bg-ash_gray-400 hover:bg-ash_gray-500 text-white rounded-full p-3 md:hidden"
