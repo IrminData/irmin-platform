@@ -43,25 +43,25 @@ const DataSetList: React.FC<DataSetListProps> = ({ dataSets }) => {
             </tr>
           </thead>
           <tbody>
-            {dataSets.map((dataset, index) => (
+            {dataSets.map((dataSet, index) => (
               <>
                 <tr
                   key={index}
-                  className={openRows[dataset.id] ? "" : "shadow"}
+                  className={openRows[dataSet.id] ? "" : "shadow"}
                 >
                   <td className="px-6 py-4 text-lg">
-                    {dataset.name}
+                    {dataSet.name}
                     <br />
                     <span className="text-sm text-ash_gray">
-                      Source: {dataset.sourceWorkspace}
+                      Source: {dataSet.sourceWorkspace}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    {dataset.status === "private" ? (
+                    {dataSet.status === "private" ? (
                       <span className="block py-2 px-2 max-w-36 text-base text-white text-center leading-6 bg-midnight_green rounded-full shadow-sm">
                         Private
                       </span>
-                    ) : dataset.status === "public" ? (
+                    ) : dataSet.status === "public" ? (
                       <span className="block py-2 px-2 max-w-36 text-base text-white text-center leading-6 bg-ash_gray rounded-full shadow-sm">
                         Public
                       </span>
@@ -79,8 +79,8 @@ const DataSetList: React.FC<DataSetListProps> = ({ dataSets }) => {
                       >
                         Logs
                       </a>
-                      {(dataset.status === "private" ||
-                        dataset.status === "public") && (
+                      {(dataSet.status === "private" ||
+                        dataSet.status === "public") && (
                         <>
                           <a
                             href="#"
@@ -96,7 +96,7 @@ const DataSetList: React.FC<DataSetListProps> = ({ dataSets }) => {
                           </a>
                         </>
                       )}
-                      {dataset.status === "connected" && (
+                      {dataSet.status === "connected" && (
                         <>
                           <a
                             href="#"
@@ -120,15 +120,15 @@ const DataSetList: React.FC<DataSetListProps> = ({ dataSets }) => {
                         >
                           View data
                         </a>
-                        {dataset.status === "private" && (
+                        {dataSet.status === "private" && (
                           <a
                             className="block py-2 px-5 mb-2 text-base w-44 text-white text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
                             href="#"
                           >
-                            Publish dataset
+                            Publish dataSet
                           </a>
                         )}
-                        {dataset.status === "public" && (
+                        {dataSet.status === "public" && (
                           <a
                             className="block py-2 px-5 mb-2 text-base w-44 text-white text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
                             href="#"
@@ -138,10 +138,10 @@ const DataSetList: React.FC<DataSetListProps> = ({ dataSets }) => {
                         )}
                       </div>
                       <button
-                        onClick={() => toggleRow(dataset.id)}
+                        onClick={() => toggleRow(dataSet.id)}
                         className="text-ash_gray hover:text-ash_gray-800 focus:outline-none"
                       >
-                        {openRows[dataset.id] ? (
+                        {openRows[dataSet.id] ? (
                           <IoChevronUpOutline className="w-10 h-10" />
                         ) : (
                           <IoChevronDownOutline className="w-10 h-10" />
@@ -150,17 +150,16 @@ const DataSetList: React.FC<DataSetListProps> = ({ dataSets }) => {
                     </div>
                   </td>
                 </tr>
-                {openRows[dataset.id] && (
+                {openRows[dataSet.id] && (
                   <tr className="shadow">
                     <td colSpan={3} className="px-20 py-4">
                       <ul>
-                        {dataset.parts.map((part, index) => (
+                        {dataSet.parts.map((part, index) => (
                           <li
                             key={index}
                             className="py-3 border-b border-color-ash_gray"
                           >
                             {part}
-                            
                           </li>
                         ))}
                       </ul>

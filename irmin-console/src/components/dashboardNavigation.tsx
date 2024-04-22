@@ -10,12 +10,15 @@ import { AiOutlineConsoleSql } from "react-icons/ai";
 import { TbDatabaseImport, TbDatabaseExport, TbSettings } from "react-icons/tb";
 import { PiStorefront } from "react-icons/pi";
 
+import AIAssistantPopup from "./AIAssistantPopup";
+
 export default function DashboardNavigation({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(true);
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   return (
     <>
+      <AIAssistantPopup />
       <section className="min-h-full">
         <div className="fixed top-4 left-4 z-50 block md:hidden">
           <button
@@ -42,7 +45,7 @@ export default function DashboardNavigation({
           </button>
         </div>
         <div
-          className={`z-40 fixed top-0 flex flex-col justify-between bg-rich_black w-full md:w-1/4 xl:w-1/5 h-full overflow-y-scroll ${
+          className={`z-40 fixed top-0 flex flex-col justify-between bg-rich_black w-full md:w-2/5 xl:w-1/5 h-full overflow-y-scroll ${
             isMenuOpen ? "block" : "hidden md:block"
           }`}
         >
@@ -123,11 +126,11 @@ export default function DashboardNavigation({
                 <li>
                   <Link
                     className={`p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md`}
-                    href="/app/upcharge/datasets"
+                    href="/app/upcharge/data-sets"
                   >
                     <div className="flex items-center">
                       <CiDatabase className="mr-2 text-xl" />
-                      <p className="font-light text-base">Datasets</p>
+                      <p className="font-light text-base">Data Sets</p>
                     </div>
                   </Link>
                 </li>
@@ -253,7 +256,7 @@ export default function DashboardNavigation({
           </div>
         </div>
         <div
-          className={`w-screen md:ml-[25%] xl:ml-[20%] md:w-3/4 xl:w-4/5 fixed z-40 ${
+          className={`w-screen md:ml-[40%] xl:ml-[20%] md:w-3/5 xl:w-4/5 fixed z-40 ${
             isMenuOpen ? "hidden md:block" : ""
           }`}
         >
@@ -304,7 +307,7 @@ export default function DashboardNavigation({
           </div>
         </div>
       </section>
-      <div className="md:ml-[25%] xl:ml-[20%] md:w-3/4 xl:w-4/5 w-100 min-h-full pt-[100px] px-4">
+      <div className="md:ml-[40%] xl:ml-[20%] md:w-3/5 xl:w-4/5 w-100 min-h-full pt-[100px] px-4">
         {/* Dashboard content */}
         {children}
       </div>
