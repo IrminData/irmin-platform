@@ -1,7 +1,10 @@
 "use client";
+
 import React, { useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
+import { IoClose, IoSave } from "react-icons/io5";
+import SQLEditorNew from "./sqlEditorNew";
 
 const SqlEditor = () => {
   const [tabs, setTabs] = useState<Array<{ name: string; content: string }>>([
@@ -19,49 +22,107 @@ const SqlEditor = () => {
   ]);
   const [activeTab, setActiveTab] = useState<number>(0);
 
+  // Function to update the content of a tab
   const updateTabContent = (index: number, content: string) => {
     const newTabs = [...tabs];
     newTabs[index] = { ...newTabs[index], content };
     setTabs(newTabs);
   };
 
+  // Function to add a new tab
   const addNewTab = () => {
-    const newTabName = `Query ${tabs.length + 1}`;
+    const newTabName = `Draft`;
     setTabs([...tabs, { name: newTabName, content: "" }]);
     setActiveTab(tabs.length);
   };
 
+  // Function to select a tab
   const selectTab = (index: number) => {
     setActiveTab(index);
   };
 
+  // Function to close a tab
+  const closeTab = (index: number) => {
+    // Create a new array that filters out the tab at the given index
+    const newTabs = tabs.filter((_, tabIndex) => tabIndex !== index);
+    setTabs(newTabs);
+
+    // Adjust the activeTab index
+    setActiveTab((prevActiveTab) => {
+      // If the closing tab is to the left of the active tab, or is the active tab itself,
+      // shift the activeTab index left. Otherwise, leave it as is.
+      if (
+        index < prevActiveTab ||
+        (index === prevActiveTab && prevActiveTab === tabs.length - 1)
+      ) {
+        return Math.max(prevActiveTab - 1, 0);
+      }
+      return prevActiveTab;
+    });
+  };
+
+  // Function to save the content of a tab as a .sql file
+  const saveTabAsFile = (index: number) => {
+    const tab = tabs[index];
+    console.log("Save tab as file", tab.name, tab.content);
+  };
+
   return (
     <div className="sqlEditor">
-      <div className="flex mb-2">
-        {tabs.map((tab, index) => (
+      <div className="flex mb-2 justify-between">
+        <div className="w-3/4 flex overflow-x-auto">
+          {tabs.map((tab, index) => (
+            <div
+              key={index}
+              className={`flex items-center ${
+                activeTab === index ? "border-b-2 border-ash_gray" : ""
+              } `}
+            >
+              <button
+                onClick={() => selectTab(index)}
+                className={`min-w-40 px-4 py-2 focus:outline-none`}
+              >
+                {tab.name}
+              </button>
+              <button
+                onClick={() => closeTab(index)}
+                className={`px-2 py-2 focus:outline-none`}
+              >
+                <IoClose />
+              </button>
+            </div>
+          ))}
+          {tabs.length > 0 && (
+            <button
+              onClick={addNewTab}
+              className="px-4 py-2 focus:outline-none"
+            >
+              +
+            </button>
+          )}
+        </div>
+        <div className="p-2 pr-8">
           <button
-            key={index}
-            onClick={() => selectTab(index)}
-            className={`px-4 py-2 ${
-              activeTab === index ? "border-b-2 border-ash_gray" : ""
-            } focus:outline-none`}
+            onClick={() => saveTabAsFile(activeTab)}
+            className="px-4 py-2 focus:outline-none bg-ash_gray text-white hover:bg-ash_gray-800 rounded-md transition-all"
           >
-            {tab.name}
+            <IoSave className="mr-2 inline-block" /> Save file
           </button>
-        ))}
-        <button onClick={addNewTab} className="px-4 py-2 focus:outline-none">
-          +
-        </button>
+        </div>
       </div>
-      <CodeMirror
-        value={tabs[activeTab].content}
-        height="300px"
-        extensions={[sql()]}
-        placeholder="Write your SQL query here..."
-        onChange={(value, viewUpdate) => {
-          updateTabContent(activeTab, value);
-        }}
-      />
+      {tabs.length > 0 ? (
+        <CodeMirror
+          value={tabs[activeTab].content ?? ""}
+          height="300px"
+          extensions={[sql()]}
+          placeholder="Write your SQL query here..."
+          onChange={(value, viewUpdate) => {
+            updateTabContent(activeTab, value);
+          }}
+        />
+      ) : (
+        <SQLEditorNew addNewTab={addNewTab} />
+      )}
     </div>
   );
 };
