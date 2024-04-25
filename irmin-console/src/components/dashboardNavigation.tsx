@@ -307,7 +307,7 @@ export default function DashboardNavigation({
           </div>
         </div>
       </section>
-      <div className="md:ml-[40%] xl:ml-[20%] md:w-3/5 xl:w-4/5 w-100 min-h-full pt-[100px] px-4">
+      <div className="md:ml-[40%] xl:ml-[20%] md:w-3/5 xl:w-4/5 w-100 min-h-full pt-[94px] px-4">
         {/* Dashboard content */}
         {children}
       </div>
