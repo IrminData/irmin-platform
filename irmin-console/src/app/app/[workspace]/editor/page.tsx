@@ -1,3 +1,5 @@
+"use client";
+
 import FileNavigator from "@/components/fileNavigator";
 
 export default function EditorPage() {
@@ -5,12 +7,12 @@ export default function EditorPage() {
     <>
       <div className="grid grid-cols-4">
         <div
-          className="editor-sidebar col-span-1 h-screen overflow-y-scroll bg-gray-50 -ml-4 p-3"
+          className="editor-sidebar col-span-1 h-screen overflow-y-scroll bg-gray-50 -ml-4"
           style={{
             height: "calc(100vh - 94px)",
           }}
         >
-          <form className="w-full">
+          <form className="w-full  p-3">
             <div className="relative">
               <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                 <svg
@@ -32,13 +34,13 @@ export default function EditorPage() {
               <input
                 type="search"
                 id="default-search"
-                className="block w-full p-4 ps-7 text-xs text-gray-900 border border-gray-300 rounded-full bg-gray-50"
+                className="block w-full p-2 ps-7 text-xs text-gray-900 border border-gray-300 rounded-full bg-gray-50"
                 placeholder="Search for files and folders"
                 required
               />
               <button
                 type="submit"
-                className="text-white absolute end-1.5 bottom-2.5 text-xs bg-ash_gray hover:bg-ash_gray-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-light rounded-full px-4 py-2"
+                className="text-white absolute end-1.5 bottom-1.5 text-xs bg-ash_gray hover:bg-ash_gray-800 font-light rounded-full px-2 py-1"
               >
                 Search
               </button>
@@ -46,6 +48,9 @@ export default function EditorPage() {
           </form>
           <br />
           <FileNavigator
+            onOpenFile={(name) => {
+              console.log("Open file", name);
+            }}
             items={[
               {
                 name: "ecommerce",
