@@ -1,9 +1,21 @@
 "use client";
 import React, { useState } from "react";
+import CodeMirror from "@uiw/react-codemirror";
+import { sql } from "@codemirror/lang-sql";
 
 const SqlEditor = () => {
   const [tabs, setTabs] = useState<Array<{ name: string; content: string }>>([
-    { name: "Query 1", content: "" },
+    {
+      name: "Query 1",
+      content: `
+      SELECT ProductID, OrderQty, SUM(LineTotal) AS Total
+      FROM Sales.SalesOrderDetail
+      WHERE UnitPrice < $5.00
+      GROUP BY ProductID, OrderQty
+      ORDER BY ProductID, OrderQty
+      OPTION (HASH GROUP, FAST 10);
+      `,
+    },
   ]);
   const [activeTab, setActiveTab] = useState<number>(0);
 
@@ -24,14 +36,14 @@ const SqlEditor = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="sqlEditor">
       <div className="flex mb-2">
         {tabs.map((tab, index) => (
           <button
             key={index}
             onClick={() => selectTab(index)}
             className={`px-4 py-2 ${
-              activeTab === index ? "border-b-2 border-blue-500" : ""
+              activeTab === index ? "border-b-2 border-ash_gray" : ""
             } focus:outline-none`}
           >
             {tab.name}
@@ -41,7 +53,15 @@ const SqlEditor = () => {
           +
         </button>
       </div>
-      {/** TODO: Codemirror */}
+      <CodeMirror
+        value={tabs[activeTab].content}
+        height="300px"
+        extensions={[sql()]}
+        placeholder="Write your SQL query here..."
+        onChange={(value, viewUpdate) => {
+          updateTabContent(activeTab, value);
+        }}
+      />
     </div>
   );
 };
