@@ -1,5 +1,6 @@
 "use client";
 
+import SqlEditor from "@/components/sqlEditor";
 import FileNavigator from "@/components/fileNavigator";
 
 export default function EditorPage() {
@@ -99,7 +100,9 @@ export default function EditorPage() {
             ]}
           />
         </div>
-        <div className="editor bg-white col-span-3 -mr-4"></div>
+        <div className="editor bg-white col-span-3 -mr-4">
+          <SqlEditor />
+        </div>
       </div>
     </>
   );
