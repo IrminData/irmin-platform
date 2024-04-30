@@ -1,10 +1,12 @@
 import AppTitle from "@/components/appTitle";
 import DataSourceList from "@/components/dataSourceList";
+import AddNewDataSource from "@/components/addNewDataSource";
 
 export default function DataSourcesPage() {
   return (
     <>
       <AppTitle title="Data sources" />
+      <AddNewDataSource />
       <DataSourceList
         dataSources={[
           {
