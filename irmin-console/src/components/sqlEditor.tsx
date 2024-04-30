@@ -16,14 +16,12 @@ const SqlEditor = ({
   const [tabs, setTabs] = useState<Array<{ name: string; content: string }>>([
     {
       name: "Query 1",
-      content: `
-      SELECT ProductID, OrderQty, SUM(LineTotal) AS Total
-      FROM Sales.SalesOrderDetail
-      WHERE UnitPrice < $5.00
-      GROUP BY ProductID, OrderQty
-      ORDER BY ProductID, OrderQty
-      OPTION (HASH GROUP, FAST 10);
-      `,
+      content: `SELECT ProductID, OrderQty, SUM(LineTotal) AS Total
+FROM Sales.SalesOrderDetail
+WHERE UnitPrice < $5.00
+GROUP BY ProductID, OrderQty
+ORDER BY ProductID, OrderQty
+OPTION (HASH GROUP, FAST 10);`,
     },
   ]);
   const [activeTab, setActiveTab] = useState<number>(0);

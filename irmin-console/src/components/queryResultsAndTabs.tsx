@@ -31,7 +31,7 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
       const offsetTop = rect.top + window.scrollY; // Distance from the top of the document to the element
       const windowHeight = window.innerHeight; // Height of the viewport
       const maxHeight = windowHeight - offsetTop; // Remaining height below the element
-      setTableMaxHeight(`${maxHeight}px`);
+      setTableMaxHeight(`${maxHeight - 20}px`);
     }
   };
 
@@ -95,9 +95,11 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
       )}
 
       {activeTab === "documentation" && (
-        <div>
-          {/* Placeholder for Documentation content */}
-          <p>Documentation content goes here...</p>
+        <div style={{ height: tableMaxHeight }} className="overflow-auto">
+          <textarea
+            className="h-full w-full focus:outline-none p-2"
+            placeholder="Start typing your documentation and notes here..."
+          />
         </div>
       )}
 
@@ -105,8 +107,8 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
       {activeTab === "queryResults" && (
         <div
           ref={tableRef}
-          style={{ maxHeight: tableMaxHeight, overflowY: "auto" }}
-          className="overflow-x-auto"
+          style={{ maxHeight: tableMaxHeight }}
+          className="overflow-auto"
         >
           {/* Action Buttons */}
           <div className="flex justify-between px-4 py-2 text-sm border">
@@ -127,7 +129,7 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
           </div>
           {/* Table */}
           <div className="overflow-auto">
-            <DataTable columns={columns} data={data} pagination />
+            <DataTable columns={columns} data={data} />
           </div>
         </div>
       )}
