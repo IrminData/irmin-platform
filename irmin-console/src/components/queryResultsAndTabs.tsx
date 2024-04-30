@@ -9,6 +9,11 @@ import {
 } from "react-icons/ai";
 import { MdPlayArrow } from "react-icons/md";
 
+import BarChart from "@/components/widgets/barChart";
+import LineChart from "@/components/widgets/lineChart";
+import ScrollableTable from "@/components/widgets/scrollableTable";
+import VisualisationCreationForm from "./visualisationCreationForm";
+
 type DataTableProps = {
   editorHeight: string;
   data: any[];
@@ -87,52 +92,111 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
         </div>
       </div>
 
-      {activeTab === "visualization" && (
-        <div>
-          {/* Placeholder for Visualization content */}
-          <p>Visualization content goes here...</p>
-        </div>
-      )}
-
-      {activeTab === "documentation" && (
-        <div style={{ height: tableMaxHeight }} className="overflow-auto">
-          <textarea
-            className="h-full w-full focus:outline-none p-2"
-            placeholder="Start typing your documentation and notes here..."
-          />
-        </div>
-      )}
-
-      {/* Table (for the Query Results tab) */}
-      {activeTab === "queryResults" && (
-        <div
-          ref={tableRef}
-          style={{ maxHeight: tableMaxHeight }}
-          className="overflow-auto"
-        >
-          {/* Action Buttons */}
-          <div className="flex justify-between px-4 py-2 text-sm border">
+      <div ref={tableRef}>
+        {activeTab === "visualization" && (
+          <div
+            className="grid grid-cols-2 px-2 py-0 overflow-auto"
+            style={{ maxHeight: tableMaxHeight }}
+          >
             <div>
-              <p className="inline font-bold">{"Unsaved draft (2)"}</p>
-              <p className="inline font-light ml-4">
-                {"99 rows returned in 1.5s"}
-              </p>
+              <h3 className="font-medium p-4">Existing visualisations</h3>
+              <div className="overflow-auto">
+                <ScrollableTable
+                  title="Monthly Sales"
+                  columns={[
+                    { header: "Month", accessor: "month" },
+                    { header: "Total Sales", accessor: "total_sales" },
+                  ]}
+                  data={[
+                    { month: "2020-12-01", total_sales: 5168 },
+                    { month: "2021-01-01", total_sales: 7661 },
+                    { month: "2020-12-01", total_sales: 5168 },
+                    { month: "2021-01-01", total_sales: 7661 },
+                    { month: "2020-12-01", total_sales: 5168 },
+                    { month: "2021-01-01", total_sales: 7661 },
+                    { month: "2020-12-01", total_sales: 5168 },
+                    { month: "2021-01-01", total_sales: 7661 },
+                    { month: "2020-12-01", total_sales: 5168 },
+                    { month: "2021-01-01", total_sales: 7661 },
+                    { month: "2020-12-01", total_sales: 5168 },
+                    { month: "2021-01-01", total_sales: 7661 },
+                    { month: "2020-12-01", total_sales: 5168 },
+                    { month: "2021-01-01", total_sales: 7661 },
+                  ]}
+                />
+                <LineChart
+                  title="Monthly Sales"
+                  data={{
+                    labels: ["January", "February", "March", "April"],
+                    datasets: [
+                      {
+                        label: "Sales",
+                        data: [65, 59, 80, 81],
+                        fill: false,
+                        backgroundColor: "#aec3b0",
+                        borderColor: "#aec3b0",
+                      },
+                    ],
+                  }}
+                />
+                <BarChart
+                  title="Monthly Sales"
+                  data={{
+                    labels: ["January", "February", "March", "April"],
+                    datasets: [
+                      {
+                        label: "Sales",
+                        data: [65, 59, 80, 81],
+                        backgroundColor: "#aec3b0",
+                        borderColor: "#aec3b0",
+                      },
+                    ],
+                  }}
+                />
+              </div>
             </div>
             <div>
-              <button className="text-gray hover:underline">
-                <AiOutlineDownload className="inline" /> export table (.csv)
-              </button>
-              <button className="text-gray ml-4 hover:underline">
-                <AiOutlineHistory className="inline" /> execution history (2)
-              </button>
+              <h3 className="font-medium p-4">Add new visualisation</h3>
+              <VisualisationCreationForm />
             </div>
           </div>
-          {/* Table */}
-          <div className="overflow-auto">
-            <DataTable columns={columns} data={data} />
+        )}
+
+        {activeTab === "documentation" && (
+          <div style={{ height: tableMaxHeight }} className="overflow-auto">
+            <textarea
+              className="h-full w-full focus:outline-none p-2"
+              placeholder="Start typing your documentation and notes here..."
+            />
           </div>
-        </div>
-      )}
+        )}
+
+        {activeTab === "queryResults" && (
+          <div style={{ maxHeight: tableMaxHeight }} className="overflow-auto">
+            {/* Action Buttons */}
+            <div className="flex justify-between px-4 py-2 text-sm border">
+              <div>
+                <p className="inline font-bold">{"Unsaved draft (2)"}</p>
+                <p className="inline font-light ml-4">
+                  {"99 rows returned in 1.5s"}
+                </p>
+              </div>
+              <div>
+                <button className="text-gray hover:underline">
+                  <AiOutlineDownload className="inline" /> export table (.csv)
+                </button>
+                <button className="text-gray ml-4 hover:underline">
+                  <AiOutlineHistory className="inline" /> execution history (2)
+                </button>
+              </div>
+            </div>
+            {/* Table */}
+            <div className="overflow-auto">
+              <DataTable columns={columns} data={data} />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

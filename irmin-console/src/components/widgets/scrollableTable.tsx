@@ -13,8 +13,8 @@ interface TableProps {
 
 const ScrollableTable: React.FC<TableProps> = ({ title, columns, data }) => {
   return (
-    <div className="py-8 px-4">
-      <h2 className="text-2xl font-semibold leading-tight">{title}</h2>
+    <div className="p-4">
+      <h2 className="text-xl font-semibold leading-tight">{title}</h2>
       <div className="mt-6">
         <div className="align-middle inline-block min-w-full shadow rounded-lg overflow-hidden overflow-y-scroll border-b border-gray-200 max-h-80">
           <table className="min-w-full">

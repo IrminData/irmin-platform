@@ -40,8 +40,8 @@ interface ChartProps {
 
 const LineChart: React.FC<ChartProps> = ({ title, data }) => {
   return (
-    <div className="p-8">
-      <h2 className="text-2xl font-semibold leading-tight mb-6">{title}</h2>
+    <div className="p-4">
+      <h2 className="text-xl font-semibold leading-tight mb-6">{title}</h2>
       <div className="shadow rounded-lg overflow-hidden overflow-y-scroll px-2 pb-2">
         <Line
           data={data}
