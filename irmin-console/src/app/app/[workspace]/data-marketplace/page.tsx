@@ -3,62 +3,7 @@
 import React, { useState } from "react";
 import AppTitle from "@/components/appTitle";
 import MarketplaceFilters from "@/components/marketplaceFilters";
-
-const DatasetCard = ({
-  dataset,
-}: {
-  dataset: {
-    id: number;
-    name: string;
-    source: string;
-    price: number;
-    connected: boolean;
-  };
-}) => {
-  return (
-    <div className="border rounded shadow hover:shadow-lg transition duration-300 p-4">
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-gray-800 font-medium">{dataset.name}</span>
-        {dataset.connected ? (
-          <span className="text-green-500">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </span>
-        ) : null}
-      </div>
-      <div className="mb-4 text-sm text-gray-600">Source: {dataset.source}</div>
-      <div className="flex justify-between items-center">
-        <span
-          className={`text-${
-            dataset.connected ? "green" : "gray"
-          }-700 font-semibold`}
-        >
-          ${dataset.price}/month
-        </span>
-        <button
-          className="bg-ash_gray hover:bg-ash_gray-700 text-white py-2 px-4 rounded"
-          onClick={() => {
-            /* function to handle connect */
-          }}
-        >
-          {dataset.connected ? "Connected" : "Connect"}
-        </button>
-      </div>
-    </div>
-  );
-};
+import MarketplaceListingCard from "@/components/marketplaceListingCard";
 
 export default function DataMarketplacePage() {
   const [selectedIndustry, setSelectedIndustry] = useState("");
@@ -291,7 +236,7 @@ export default function DataMarketplacePage() {
               {filteredDatasets
                 .filter((d) => d.connected)
                 .map((dataset) => (
-                  <DatasetCard key={dataset.id} dataset={dataset} />
+                  <MarketplaceListingCard key={dataset.id} dataset={dataset} />
                 ))}
             </div>
           </div>
@@ -303,7 +248,7 @@ export default function DataMarketplacePage() {
               {filteredDatasets
                 .filter((d) => !d.connected)
                 .map((dataset) => (
-                  <DatasetCard key={dataset.id} dataset={dataset} />
+                  <MarketplaceListingCard key={dataset.id} dataset={dataset} />
                 ))}
             </div>
           </div>
