@@ -26,6 +26,9 @@ OPTION (HASH GROUP, FAST 10);`,
   ]);
   const [activeTab, setActiveTab] = useState<number>(0);
 
+  // Reference to the editor div
+  const editorRef = useRef<HTMLDivElement>(null);
+
   // This callback uses `useCallback` hook to memoize the function so that it doesn't get
   // recreated on every render unless `setEditorHeight` changes, which should be never.
   const handleMouseMove = useCallback(
@@ -39,9 +42,6 @@ OPTION (HASH GROUP, FAST 10);`,
     },
     [setEditorHeight]
   );
-
-  // Reference to the editor div
-  const editorRef = useRef<HTMLDivElement>(null);
 
   const handleMouseUp = useCallback(() => {
     // Remove the event listeners when the mouse button is released
@@ -145,7 +145,7 @@ OPTION (HASH GROUP, FAST 10);`,
           </button>
         </div>
       </div>
-      <div style={{ minHeight: editorHeight }}>
+      <div style={{ minHeight: editorHeight }} ref={editorRef}>
         {tabs.length > 0 ? (
           <>
             <CodeMirror
