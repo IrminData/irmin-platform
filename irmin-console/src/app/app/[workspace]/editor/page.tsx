@@ -2,6 +2,7 @@
 
 import SqlEditor from "@/components/sqlEditor";
 import FileNavigator from "@/components/fileNavigator";
+import QueryResultsAndTabs from "@/components/queryResultsAndTabs";
 
 export default function EditorPage() {
   return (
@@ -100,8 +101,60 @@ export default function EditorPage() {
             ]}
           />
         </div>
-        <div className="editor bg-white col-span-3 -mr-4">
+        <div className="bg-white col-span-3 -mr-4">
           <SqlEditor />
+          <QueryResultsAndTabs
+            columns={[
+              {
+                Header: "ID",
+                accessor: "id",
+              },
+              {
+                Header: "First Name",
+                accessor: "firstName",
+              },
+              {
+                Header: "Last Name",
+                accessor: "lastName",
+              },
+              {
+                Header: "Email",
+                accessor: "email",
+              },
+              {
+                Header: "Phone",
+                accessor: "phone",
+              },
+              {
+                Header: "Updated At",
+                accessor: "updatedAt",
+              },
+              {
+                Header: "Created At",
+                accessor: "createdAt",
+              },
+            ]}
+            data={[
+              {
+                id: "4877967652099",
+                firstName: "Hewett",
+                lastName: "Ardron",
+                email: "hewett@example.com",
+                phone: "748-763-0466",
+                updatedAt: "2021-09-01T00:00:00Z",
+                createdAt: "2021-08-01T00:00:00Z",
+              },
+              {
+                id: "43137452640249",
+                firstName: "Nata",
+                lastName: "Kivits",
+                email: "n.kivits@example.com",
+                phone: "265-841-9808",
+                updatedAt: "2021-11-01T00:00:00Z",
+                createdAt: "2021-11-01T00:00:00Z",
+              },
+            ]}
+          />
         </div>
       </div>
     </>

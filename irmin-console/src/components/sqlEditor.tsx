@@ -113,7 +113,7 @@ const SqlEditor = () => {
       {tabs.length > 0 ? (
         <CodeMirror
           value={tabs[activeTab].content ?? ""}
-          height="300px"
+          height="400px"
           extensions={[sql()]}
           placeholder="Write your SQL query here..."
           onChange={(value, viewUpdate) => {
