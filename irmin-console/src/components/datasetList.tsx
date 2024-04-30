@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import React, { useState } from "react";
 import { IoChevronDownOutline, IoChevronUpOutline } from "react-icons/io5";
 
@@ -26,18 +27,27 @@ const DataSetList: React.FC<DataSetListProps> = ({ dataSets }) => {
   };
 
   return (
-    <div className="py-8">
+    <div className="pb-8">
       <div className="overflow-x-auto">
-        <table className="w-full text-base text-left text-rich_black font-light">
+        <table className="w-full text-left text-rich_black font-light">
           <thead className="text-md uppercase border-b-4 border-ash_gray">
             <tr>
-              <th scope="col" className="px-6 py-3  font-medium">
+              <th
+                scope="col"
+                className="px-4 py-2 font-medium text-xs xl:text-sm"
+              >
                 Name
               </th>
-              <th scope="col" className="px-6 py-3  font-medium">
+              <th
+                scope="col"
+                className="px-4 py-2 font-medium text-xs xl:text-sm"
+              >
                 Status
               </th>
-              <th scope="col" className="px-6 py-3  font-medium text-right">
+              <th
+                scope="col"
+                className="px-4 py-2 font-medium text-right text-xs xl:text-sm"
+              >
                 Actions
               </th>
             </tr>
@@ -49,92 +59,92 @@ const DataSetList: React.FC<DataSetListProps> = ({ dataSets }) => {
                   key={index}
                   className={openRows[dataSet.id] ? "" : "shadow"}
                 >
-                  <td className="px-6 py-4 text-lg">
+                  <td className="px-4 py-2 text-sm xl:text-md min-w-44">
                     {dataSet.name}
                     <br />
-                    <span className="text-sm text-ash_gray">
+                    <span className="text-xs xl:text-sm text-ash_gray">
                       Source: {dataSet.sourceWorkspace}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-2">
                     {dataSet.status === "private" ? (
-                      <span className="block py-2 px-2 max-w-36 text-base text-white text-center leading-6 bg-midnight_green rounded-full shadow-sm">
+                      <span className="block py-1 px-1 max-w-36 text-xs xl:text-base text-white text-center leading-6 bg-midnight_green rounded-full shadow-sm">
                         Private
                       </span>
                     ) : dataSet.status === "public" ? (
-                      <span className="block py-2 px-2 max-w-36 text-base text-white text-center leading-6 bg-ash_gray rounded-full shadow-sm">
+                      <span className="block py-1 px-1 max-w-36 text-xs xl:text-base text-white text-center leading-6 bg-ash_gray rounded-full shadow-sm">
                         Public
                       </span>
                     ) : (
-                      <span className="block py-2 px-2 max-w-36 text-base text-rich_black text-center leading-6 bg-beige rounded-full shadow-sm">
+                      <span className="block py-1 px-1 max-w-36 text-xs xl:text-base text-rich_black text-center leading-6 bg-beige rounded-full shadow-sm">
                         Connected
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex space-x-2 float-right">
-                      <a
+                  <td className="px-4 py-2 text-right">
+                    <div className="flex space-x-2 float-right text-xs xl:text-base">
+                      <Link
                         href="#"
                         className="text-ash_gray hover:underline py-3 px-1"
                       >
                         Logs
-                      </a>
+                      </Link>
                       {(dataSet.status === "private" ||
                         dataSet.status === "public") && (
                         <>
-                          <a
+                          <Link
                             href="#"
                             className="text-ash_gray hover:underline py-3 px-1"
                           >
                             Edit
-                          </a>
-                          <a
+                          </Link>
+                          <Link
                             href="#"
                             className="text-ash_gray hover:underline py-3 px-1"
                           >
                             Remove
-                          </a>
+                          </Link>
                         </>
                       )}
                       {dataSet.status === "connected" && (
                         <>
-                          <a
+                          <Link
                             href="#"
                             className="text-ash_gray hover:underline py-3 px-1"
                           >
                             View listing
-                          </a>
-                          <a
+                          </Link>
+                          <Link
                             href="#"
                             className="text-ash_gray hover:underline py-3 px-1"
                           >
                             Disconnect
-                          </a>
+                          </Link>
                         </>
                       )}
 
                       <div className="pl-2">
-                        <a
-                          className="block py-2 px-5 mb-2 text-base w-44 text-white text-center leading-6 bg-midnight_green hover:bg-midnight_green-600 focus:ring-2 focus:ring-midnight_green-500 focus:ring-opacity-50 rounded-full shadow-sm"
+                        <Link
+                          className="block py-2 px-5 mb-2 w-44 text-white text-center leading-6 bg-midnight_green hover:bg-midnight_green-600 focus:ring-2 focus:ring-midnight_green-500 focus:ring-opacity-50 rounded-full shadow-sm"
                           href="#"
                         >
                           View data
-                        </a>
+                        </Link>
                         {dataSet.status === "private" && (
-                          <a
-                            className="block py-2 px-5 mb-2 text-base w-44 text-white text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
+                          <Link
+                            className="block py-2 px-5 mb-2 w-44 text-white text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
                             href="#"
                           >
-                            Publish dataSet
-                          </a>
+                            Publish data set
+                          </Link>
                         )}
                         {dataSet.status === "public" && (
-                          <a
-                            className="block py-2 px-5 mb-2 text-base w-44 text-white text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
+                          <Link
+                            className="block py-2 px-5 mb-2 w-44 text-white text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
                             href="#"
                           >
                             View listing
-                          </a>
+                          </Link>
                         )}
                       </div>
                       <button
@@ -142,9 +152,9 @@ const DataSetList: React.FC<DataSetListProps> = ({ dataSets }) => {
                         className="text-ash_gray hover:text-ash_gray-800 focus:outline-none"
                       >
                         {openRows[dataSet.id] ? (
-                          <IoChevronUpOutline className="w-10 h-10" />
+                          <IoChevronUpOutline className="w-5 h-5 xl:w-10 xl:h-10" />
                         ) : (
-                          <IoChevronDownOutline className="w-10 h-10" />
+                          <IoChevronDownOutline className="w-5 h-5 xl:w-10 xl:h-10" />
                         )}
                       </button>
                     </div>
@@ -157,7 +167,7 @@ const DataSetList: React.FC<DataSetListProps> = ({ dataSets }) => {
                         {dataSet.parts.map((part, index) => (
                           <li
                             key={index}
-                            className="py-3 border-b border-color-ash_gray"
+                            className="py-3 border-b border-color-ash_gray text-xs xl:text-base"
                           >
                             {part}
                           </li>

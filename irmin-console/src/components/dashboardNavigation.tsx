@@ -51,7 +51,11 @@ export default function DashboardNavigation({
         >
           <div className="relative mt-24 md:mt-4">
             <div className="p-4 w-full z-40">
-              <Link className="block max-w-max" href="/">
+              <Link
+                className="block max-w-max"
+                href="/"
+                onClick={() => setIsMenuOpen(false)}
+              >
                 <Image
                   className="h-8"
                   src="/irmin-logo-light.svg"
@@ -116,6 +120,7 @@ export default function DashboardNavigation({
                   <Link
                     className={`p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md`}
                     href="/app/upcharge/dashboards"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     <div className="flex items-center">
                       <RxDashboard className="mr-2 text-xl" />
@@ -127,6 +132,7 @@ export default function DashboardNavigation({
                   <Link
                     className={`p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md`}
                     href="/app/upcharge/data-sets"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     <div className="flex items-center">
                       <CiDatabase className="mr-2 text-xl" />
@@ -138,6 +144,7 @@ export default function DashboardNavigation({
                   <Link
                     className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                     href="/app/upcharge/editor"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     <div className="flex items-center">
                       <AiOutlineConsoleSql className="mr-2 text-xl" />
@@ -149,6 +156,7 @@ export default function DashboardNavigation({
                   <Link
                     className={`p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md`}
                     href="/app/upcharge/data-sources"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     <div className="flex items-center">
                       <TbDatabaseImport className="mr-2 text-xl" />
@@ -160,6 +168,7 @@ export default function DashboardNavigation({
                   <Link
                     className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                     href="/app/upcharge/reverse-etl"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     <div className="flex items-center">
                       <TbDatabaseExport className="mr-2 text-xl" />
@@ -171,6 +180,7 @@ export default function DashboardNavigation({
                   <Link
                     className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                     href="/app/upcharge/settings"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     <div className="flex items-center">
                       <TbSettings className="mr-2 text-xl" />
@@ -182,6 +192,7 @@ export default function DashboardNavigation({
                   <Link
                     className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                     href="/app/upcharge/data-marketplace"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     <div className="flex items-center">
                       <PiStorefront className="mr-2 text-xl" />
@@ -202,6 +213,7 @@ export default function DashboardNavigation({
                 <Link
                   className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                   href="/app/settings"
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   <div className="flex items-center">
                     <svg
@@ -225,6 +237,7 @@ export default function DashboardNavigation({
                 <Link
                   className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
                   href="/"
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   <div className="flex items-center">
                     <svg
@@ -248,6 +261,7 @@ export default function DashboardNavigation({
                 <Link
                   className="text-center text-ash_gray hover:text-ash_gray-800"
                   href="/contact"
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   <p className="font-light text-xs">Contact support</p>
                 </Link>
@@ -260,7 +274,7 @@ export default function DashboardNavigation({
             isMenuOpen ? "hidden md:block" : ""
           }`}
         >
-          <div className="py-5 px-8 bg-white shadow-md">
+          <div className="py-5 px-4 bg-white shadow-md">
             <div className="flex flex-wrap items-center justify-between -m-2">
               <div className="w-auto p-2"></div>
               <div className="w-auto p-2">

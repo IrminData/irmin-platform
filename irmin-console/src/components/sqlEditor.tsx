@@ -105,11 +105,11 @@ OPTION (HASH GROUP, FAST 10);`,
   return (
     <div className="sqlEditor">
       <div className="flex mb-2 justify-between">
-        <div className="w-3/4 flex overflow-x-auto">
+        <div className="w-1/2 xl:w-3/4 flex overflow-x-auto">
           {tabs.map((tab, index) => (
             <div
               key={index}
-              className={`flex items-center ${
+              className={`flex items-center h-fit ${
                 activeTab === index ? "border-b-2 border-ash_gray" : ""
               } `}
             >
@@ -130,7 +130,7 @@ OPTION (HASH GROUP, FAST 10);`,
           {tabs.length > 0 && (
             <button
               onClick={addNewTab}
-              className="px-4 py-2 focus:outline-none"
+              className="px-4 py-2 focus:outline-none h-fit"
             >
               +
             </button>

@@ -57,7 +57,7 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
               activeTab === "queryResults"
                 ? "border-ash_gray"
                 : "border-transparent"
-            } focus:outline-none`}
+            } focus:outline-none text-sm lg:text-md`}
           >
             Query Results
           </button>
@@ -67,7 +67,7 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
               activeTab === "visualization"
                 ? "border-ash_gray"
                 : "border-transparent"
-            } focus:outline-none`}
+            } focus:outline-none text-sm lg:text-md`}
           >
             Visualization
           </button>
@@ -77,16 +77,16 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
               activeTab === "documentation"
                 ? "border-ash_gray"
                 : "border-transparent"
-            } focus:outline-none`}
+            } focus:outline-none text-sm lg:text-md`}
           >
             Documentation
           </button>
         </div>
-        <div>
-          <button className="text-gray-800 py-2 px-4 border border-ash_gray rounded shadow focus:outline-none transition-all hover:bg-ash_gray hover:text-white">
+        <div className="text-right">
+          <button className="text-gray-800 py-2 px-4 text-sm lg:text-md border border-ash_gray rounded shadow my-1 focus:outline-none transition-all hover:bg-ash_gray hover:text-white">
             <AiOutlineSave className="inline" /> Save to dataset
           </button>
-          <button className="text-gray-800 py-2 px-4 border border-ash_gray rounded shadow ml-2 focus:outline-none transition-all hover:bg-ash_gray hover:text-white">
+          <button className="text-gray-800 py-2 px-4 text-sm lg:text-md border border-ash_gray rounded shadow my-1 lg:ml-2 focus:outline-none transition-all hover:bg-ash_gray hover:text-white">
             <MdPlayArrow className="inline" /> Run script
           </button>
         </div>
@@ -181,7 +181,7 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
                   {"99 rows returned in 1.5s"}
                 </p>
               </div>
-              <div>
+              <div className="text-right">
                 <button className="text-gray hover:underline">
                   <AiOutlineDownload className="inline" /> export table (.csv)
                 </button>
