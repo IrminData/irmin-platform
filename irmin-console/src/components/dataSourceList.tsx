@@ -160,7 +160,7 @@ const DataSourceList: React.FC<DataSourceListProps> = ({
                         {dataSource.parts.map((part, index) => (
                           <li
                             key={index}
-                            className="py-2 border-b border-color-ash_gray text-xs xl:text-base"
+                            className="py-2 border-b border-color-ash_gray text-xs"
                           >
                             {part}
                           </li>

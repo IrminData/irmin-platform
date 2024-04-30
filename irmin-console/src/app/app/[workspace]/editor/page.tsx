@@ -7,6 +7,7 @@ import FileNavigator from "@/components/fileNavigator";
 import QueryResultsAndTabs from "@/components/queryResultsAndTabs";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 import DataSourceList from "@/components/dataSourceList";
+import DataSetList from "@/components/dataSetList";
 
 export default function EditorPage() {
   const [editorHeight, setEditorHeight] = useState("400px");
@@ -16,8 +17,8 @@ export default function EditorPage() {
       <div className="flex">
         <div
           className={`editor-sidebar overflow-y-scroll bg-gray-50 -ml-4 inline-block ${
-            !sidebarOpen ? "w-10" : "absolute z-10 w-80"
-          } xl:w-80`}
+            !sidebarOpen ? "w-10" : "absolute z-10 w-96"
+          } xl:w-96`}
           style={{
             height: "calc(100vh - 94px)",
           }}
@@ -32,8 +33,8 @@ export default function EditorPage() {
               <IoChevronForward className="mr-2 inline-block w-full" />
             )}
           </button>
-          <div className={`${!sidebarOpen ? "hidden" : "block w-80"} xl:block`}>
-            <form className="w-full  p-3">
+          <div className={`${!sidebarOpen ? "hidden" : "block w-96"} xl:block`}>
+            <form className="w-full p-3">
               <div className="relative">
                 <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                   <svg
@@ -121,7 +122,7 @@ export default function EditorPage() {
             />
             <br />
             <div className="p-2 border-t max-h-80 overflow-auto">
-              <h3>Data sources</h3>
+              <h3 className="px-4">Data sources</h3>
               <DataSourceList
                 inSidebar={true}
                 dataSources={[
@@ -190,7 +191,77 @@ export default function EditorPage() {
             </div>
             <br />
             <div className="p-2 border-t max-h-80 overflow-auto">
-              <h3>Data sets</h3>
+              <h3 className="px-4">Data sets</h3>
+              <DataSetList
+                inSidebar={true}
+                dataSets={[
+                  {
+                    id: 0,
+                    name: "UpCharge rents, users and venues",
+                    sourceWorkspace: "UpCharge",
+                    status: "private",
+                    parts: [
+                      "UpCharge venues with revenue, type, average rent cost and amount of daily rentals",
+                      "Venue performance by venue type",
+                      "Venue sales by partner",
+                      "All rentals with Stripe invoices",
+                    ],
+                  },
+                  {
+                    id: 1,
+                    name: "UpCharge locations",
+                    sourceWorkspace: "UpCharge",
+                    status: "public",
+                    parts: ["UpCharge venues"],
+                  },
+                  {
+                    id: 2,
+                    name: "Restaurants in Finland",
+                    sourceWorkspace: "TripAdvisor",
+                    status: "connected",
+                    parts: [
+                      "Helsinki",
+                      "Espoo",
+                      "Vantaa",
+                      "Tampere",
+                      "Turku",
+                      "Oulu",
+                      "Rovaniemi",
+                      "Kuopio",
+                      "Jyväskylä",
+                      "Lahti",
+                      "Pori",
+                      "Vaasa",
+                      "Kotka",
+                      "Joensuu",
+                      "Lappeenranta",
+                      "Hämeenlinna",
+                      "Porvoo",
+                      "Mikkeli",
+                      "Hyvinkää",
+                      "Nurmijärvi",
+                      "Järvenpää",
+                      "Kerava",
+                      "Kajaani",
+                      "Salo",
+                      "Kouvola",
+                      "Kokkola",
+                      "Lohja",
+                      "Riihimäki",
+                      "Seinäjoki",
+                      "Vihti",
+                      "Savonlinna",
+                      "Imatra",
+                      "Kangasala",
+                      "Varkaus",
+                      "Kemi",
+                      "Iisalmi",
+                      "Raisio",
+                      "Raahe",
+                    ],
+                  },
+                ]}
+              />
             </div>
           </div>
         </div>
