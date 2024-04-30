@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useTable } from "react-table";
+import DataTable from "react-data-table-component";
 import {
   AiOutlineSave,
   AiOutlineHistory,
@@ -21,8 +21,6 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
   columns,
 }) => {
   const [activeTab, setActiveTab] = useState("queryResults");
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
-    useTable({ columns, data });
 
   const tableRef = useRef<HTMLDivElement>(null);
   const [tableMaxHeight, setTableMaxHeight] = useState("0px");
@@ -128,49 +126,8 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
             </div>
           </div>
           {/* Table */}
-          <div className="overflow-x-auto">
-            <table
-              {...getTableProps()}
-              className="min-w-full divide-y divide-gray-200"
-            >
-              <thead className="bg-gray-50">
-                {headerGroups.map((headerGroup) => (
-                  <tr {...headerGroup.getHeaderGroupProps()}>
-                    {headerGroup.headers.map((column) => (
-                      <th
-                        {...column.getHeaderProps()}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        {column.render("Header")}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody
-                {...getTableBodyProps()}
-                className="bg-white divide-y divide-gray-200 overflow-y-scroll"
-              >
-                {rows.map((row, idx) => {
-                  prepareRow(row);
-                  return (
-                    <tr {...row.getRowProps()} key={`row-${idx}`}>
-                      {row.cells.map((cell, key) => {
-                        return (
-                          <td
-                            {...cell.getCellProps()}
-                            key={`cell-${idx}-${key}`}
-                            className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
-                          >
-                            {cell.render("Cell")}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="overflow-auto">
+            <DataTable columns={columns} data={data} pagination />
           </div>
         </div>
       )}
