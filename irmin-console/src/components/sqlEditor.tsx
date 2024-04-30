@@ -6,7 +6,13 @@ import { sql } from "@codemirror/lang-sql";
 import { IoClose, IoSave } from "react-icons/io5";
 import SQLEditorNew from "./sqlEditorNew";
 
-const SqlEditor = () => {
+const SqlEditor = ({
+  editorHeight,
+  setEditorHeight,
+}: {
+  editorHeight: string;
+  setEditorHeight: (a: string) => void;
+}) => {
   const [tabs, setTabs] = useState<Array<{ name: string; content: string }>>([
     {
       name: "Query 1",
@@ -21,8 +27,6 @@ const SqlEditor = () => {
     },
   ]);
   const [activeTab, setActiveTab] = useState<number>(0);
-
-  const [editorHeight, setEditorHeight] = useState("400px");
 
   // This callback uses `useCallback` hook to memoize the function so that it doesn't get
   // recreated on every render unless `setEditorHeight` changes, which should be never.
@@ -143,26 +147,28 @@ const SqlEditor = () => {
           </button>
         </div>
       </div>
-      {tabs.length > 0 ? (
-        <>
-          <CodeMirror
-            value={tabs[activeTab].content ?? ""}
-            height={editorHeight}
-            extensions={[sql()]}
-            placeholder="Write your SQL query here..."
-            onChange={(value, viewUpdate) => {
-              updateTabContent(activeTab, value);
-            }}
-          />
-          {/* The resizer element */}
-          <div
-            className="resizer cursor-ns-resize h-2 bg-gray-200"
-            onMouseDown={handleMouseDown}
-          ></div>
-        </>
-      ) : (
-        <SQLEditorNew addNewTab={addNewTab} />
-      )}
+      <div style={{ minHeight: editorHeight }}>
+        {tabs.length > 0 ? (
+          <>
+            <CodeMirror
+              value={tabs[activeTab].content ?? ""}
+              height={editorHeight}
+              extensions={[sql()]}
+              placeholder="Write your SQL query here..."
+              onChange={(value, viewUpdate) => {
+                updateTabContent(activeTab, value);
+              }}
+            />
+            {/* The resizer element */}
+            <div
+              className="resizer cursor-ns-resize h-1 bg-gray-200"
+              onMouseDown={handleMouseDown}
+            ></div>
+          </>
+        ) : (
+          <SQLEditorNew addNewTab={addNewTab} />
+        )}
+      </div>
     </div>
   );
 };

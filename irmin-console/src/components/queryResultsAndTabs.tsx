@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTable } from "react-table";
 import {
   AiOutlineSave,
@@ -10,14 +10,38 @@ import {
 import { MdPlayArrow } from "react-icons/md";
 
 type DataTableProps = {
+  editorHeight: string;
   data: any[];
   columns: any[];
 };
 
-const QueryResultsAndTabs: React.FC<DataTableProps> = ({ data, columns }) => {
+const QueryResultsAndTabs: React.FC<DataTableProps> = ({
+  editorHeight,
+  data,
+  columns,
+}) => {
   const [activeTab, setActiveTab] = useState("queryResults");
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
     useTable({ columns, data });
+
+  const tableRef = useRef<HTMLDivElement>(null);
+  const [tableMaxHeight, setTableMaxHeight] = useState("0px");
+
+  const updateTableHeight = () => {
+    const rect = tableRef.current?.getBoundingClientRect();
+    if (rect) {
+      const offsetTop = rect.top + window.scrollY; // Distance from the top of the document to the element
+      const windowHeight = window.innerHeight; // Height of the viewport
+      const maxHeight = windowHeight - offsetTop; // Remaining height below the element
+      setTableMaxHeight(`${maxHeight}px`);
+    }
+  };
+
+  useEffect(() => {
+    updateTableHeight(); // Update on mount
+    window.addEventListener("resize", updateTableHeight); // Update on window resize
+    return () => window.removeEventListener("resize", updateTableHeight); // Cleanup on unmount
+  }, [editorHeight]);
 
   return (
     <div>
@@ -81,7 +105,11 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({ data, columns }) => {
 
       {/* Table (for the Query Results tab) */}
       {activeTab === "queryResults" && (
-        <>
+        <div
+          ref={tableRef}
+          style={{ maxHeight: tableMaxHeight, overflowY: "auto" }}
+          className="overflow-x-auto"
+        >
           {/* Action Buttons */}
           <div className="flex justify-between px-4 py-2 text-sm border">
             <div>
@@ -121,16 +149,17 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({ data, columns }) => {
               </thead>
               <tbody
                 {...getTableBodyProps()}
-                className="bg-white divide-y divide-gray-200"
+                className="bg-white divide-y divide-gray-200 overflow-y-scroll"
               >
-                {rows.map((row) => {
+                {rows.map((row, idx) => {
                   prepareRow(row);
                   return (
-                    <tr {...row.getRowProps()}>
-                      {row.cells.map((cell) => {
+                    <tr {...row.getRowProps()} key={`row-${idx}`}>
+                      {row.cells.map((cell, key) => {
                         return (
                           <td
                             {...cell.getCellProps()}
+                            key={`cell-${idx}-${key}`}
                             className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
                           >
                             {cell.render("Cell")}
@@ -143,7 +172,7 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({ data, columns }) => {
               </tbody>
             </table>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
