@@ -149,12 +149,12 @@ const DataSetList: React.FC<DataSetListProps> = ({ dataSets }) => {
                       </div>
                       <button
                         onClick={() => toggleRow(dataSet.id)}
-                        className="text-ash_gray hover:text-ash_gray-800 focus:outline-none"
+                        className="text-ash_gray hover:text-ash_gray-800 focus:outline-none inline float-right mt-4 ml-4"
                       >
                         {openRows[dataSet.id] ? (
-                          <IoChevronUpOutline className="w-5 h-5 xl:w-10 xl:h-10" />
+                          <IoChevronUpOutline className="w-5 h-5" />
                         ) : (
-                          <IoChevronDownOutline className="w-5 h-5 xl:w-10 xl:h-10" />
+                          <IoChevronDownOutline className="w-5 h-5" />
                         )}
                       </button>
                     </div>
@@ -162,12 +162,12 @@ const DataSetList: React.FC<DataSetListProps> = ({ dataSets }) => {
                 </tr>
                 {openRows[dataSet.id] && (
                   <tr className="shadow">
-                    <td colSpan={3} className="px-20 py-4">
+                    <td colSpan={3} className="px-10 py-2">
                       <ul>
                         {dataSet.parts.map((part, index) => (
                           <li
                             key={index}
-                            className="py-3 border-b border-color-ash_gray text-xs xl:text-base"
+                            className="py-2 border-b border-color-ash_gray text-xs xl:text-base"
                           >
                             {part}
                           </li>
