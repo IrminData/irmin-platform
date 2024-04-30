@@ -61,10 +61,7 @@ const DataSetList: React.FC<DataSetListProps> = ({
           <tbody>
             {dataSets.map((dataSet, index) => (
               <>
-                <tr
-                  key={index}
-                  className={openRows[dataSet.id] ? "" : "shadow"}
-                >
+                <tr key={index}>
                   <td className="px-4 py-2 text-sm xl:text-md min-w-44">
                     {dataSet.name}
                     <br />

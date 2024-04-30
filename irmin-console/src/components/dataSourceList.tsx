@@ -70,10 +70,7 @@ const DataSourceList: React.FC<DataSourceListProps> = ({
           <tbody>
             {dataSources.map((dataSource, index) => (
               <>
-                <tr
-                  key={index}
-                  className={openRows[dataSource.id] ? "" : "shadow"}
-                >
+                <tr key={index}>
                   <td className="px-4 py-2 text-sm xl:text-md min-w-44">
                     {dataSource.name}
                     <br />

@@ -4,7 +4,7 @@ import DataSetList from "@/components/dataSetList";
 export default function DataSetsPage() {
   return (
     <>
-      <AppTitle title="Data Sets" />
+      <AppTitle title="Data sets" />
       <DataSetList
         dataSets={[
           {
