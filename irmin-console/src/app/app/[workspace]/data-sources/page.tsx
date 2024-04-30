@@ -14,6 +14,13 @@ export default function DataSourcesPage() {
             nextSync: "in 3 hours",
             nextSyncTimestamp: new Date(),
             status: "running",
+            parts: [
+              "audience_overview",
+              "traffic_sources",
+              "content_overview",
+              "events",
+              "ecommerce",
+            ],
           },
           {
             id: 1,
@@ -22,6 +29,13 @@ export default function DataSourcesPage() {
             nextSync: "in 8 hours",
             nextSyncTimestamp: new Date(),
             status: "errors",
+            parts: [
+              "ad_units",
+              "ad_units_performance",
+              "ad_units_performance_by_country",
+              "ad_units_performance_by_device",
+              "ad_units_performance_by_ad_size",
+            ],
           },
           {
             id: 2,
@@ -30,6 +44,7 @@ export default function DataSourcesPage() {
             nextSync: "in 10 minutes",
             nextSyncTimestamp: new Date(),
             status: "stopped",
+            parts: ["users", "orders", "products", "categories", "reviews"],
           },
           {
             id: 3,
@@ -38,6 +53,13 @@ export default function DataSourcesPage() {
             nextSync: "in 30 minutes",
             nextSyncTimestamp: new Date(),
             status: "running",
+            parts: [
+              "ad_units",
+              "ad_units_performance",
+              "ad_units_performance_by_country",
+              "ad_units_performance_by_device",
+              "ad_units_performance_by_ad_size",
+            ],
           },
         ]}
       />
