@@ -136,10 +136,10 @@ OPTION (HASH GROUP, FAST 10);`,
             </button>
           )}
         </div>
-        <div className="p-2 pr-8">
+        <div className="p-2 pr-2 xl:pr-8">
           <button
             onClick={() => saveTabAsFile(activeTab)}
-            className="px-4 py-2 focus:outline-none bg-ash_gray text-white hover:bg-ash_gray-800 rounded-md transition-all"
+            className="px-2 py-2 focus:outline-none bg-ash_gray text-white hover:bg-ash_gray-800 rounded-md transition-all text-xs xl:text-base"
           >
             <IoSave className="mr-2 inline-block" /> Save file
           </button>
