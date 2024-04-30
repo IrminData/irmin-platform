@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { IoClose, IoSave } from "react-icons/io5";
@@ -21,6 +21,39 @@ const SqlEditor = () => {
     },
   ]);
   const [activeTab, setActiveTab] = useState<number>(0);
+
+  const [editorHeight, setEditorHeight] = useState("400px");
+
+  // This callback uses `useCallback` hook to memoize the function so that it doesn't get
+  // recreated on every render unless `setEditorHeight` changes, which should be never.
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      // Calculate and update the height of the editor
+      const offsetTop =
+        typeof editorRef?.current?.offsetTop === "number"
+          ? editorRef.current.offsetTop
+          : 0;
+      setEditorHeight(`${e.clientY - offsetTop}px`);
+    },
+    [setEditorHeight]
+  );
+
+  // Reference to the editor div
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseUp = useCallback(() => {
+    // Remove the event listeners when the mouse button is released
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
+  }, [handleMouseMove]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Add mousemove and mouseup listeners to the document
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    // Prevent default action (e.g., text selection)
+    e.preventDefault();
+  };
 
   // Function to update the content of a tab
   const updateTabContent = (index: number, content: string) => {
@@ -111,15 +144,22 @@ const SqlEditor = () => {
         </div>
       </div>
       {tabs.length > 0 ? (
-        <CodeMirror
-          value={tabs[activeTab].content ?? ""}
-          height="400px"
-          extensions={[sql()]}
-          placeholder="Write your SQL query here..."
-          onChange={(value, viewUpdate) => {
-            updateTabContent(activeTab, value);
-          }}
-        />
+        <>
+          <CodeMirror
+            value={tabs[activeTab].content ?? ""}
+            height={editorHeight}
+            extensions={[sql()]}
+            placeholder="Write your SQL query here..."
+            onChange={(value, viewUpdate) => {
+              updateTabContent(activeTab, value);
+            }}
+          />
+          {/* The resizer element */}
+          <div
+            className="resizer cursor-ns-resize h-2 bg-gray-200"
+            onMouseDown={handleMouseDown}
+          ></div>
+        </>
       ) : (
         <SQLEditorNew addNewTab={addNewTab} />
       )}
