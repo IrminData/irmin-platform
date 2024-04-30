@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { IoClose } from "react-icons/io5";
 
 export default function MarketplaceListingCard({
   dataset,
@@ -10,6 +11,7 @@ export default function MarketplaceListingCard({
     price: number;
     connected: boolean;
     industry: string;
+    description: string;
   };
 }) {
   const [showDetails, setShowDetails] = useState(false);
@@ -63,25 +65,46 @@ export default function MarketplaceListingCard({
           </button>
         </div>
       </div>
+
       {showDetails && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50 p-20">
-          <div className="bg-white p-6 rounded shadow-lg w-full xl:w-1/2">
-            <h2 className="text-lg font-semibold mb-4">{dataset.name}</h2>
-            <p className="text-gray-700 mb-2">
-              <strong>Source:</strong> {dataset.source}
-            </p>
-            <p className="text-gray-700 mb-2">
-              <strong>Price:</strong> ${dataset.price}/month
-            </p>
-            <p className="text-gray-700 mb-2">
-              <strong>Industry:</strong> {dataset.industry}
-            </p>
-            <button
-              className="bg-ash_gray hover:bg-ash_gray-600 text-white py-2 px-4 rounded"
-              onClick={() => setShowDetails(false)}
-            >
-              Close
-            </button>
+          <div className="bg-white p-6 rounded shadow-lg w-full md:w-3/4 lg:w-1/2">
+            <div className="flex justify-between items-center border-b pb-3 mb-4">
+              <h2 className="text-xl font-semibold">
+                {dataset.name} - Details
+              </h2>
+              <button
+                className="text-gray-800 hover:text-gray-600"
+                onClick={() => setShowDetails(false)}
+              >
+                <IoClose />
+              </button>
+            </div>
+            <div className="flex flex-col space-y-2">
+              {/* Description */}
+              <p className="py-4 border-b">{dataset.description ?? ""}</p>
+              {/* Details */}
+              <div className="flex justify-between">
+                <span className="font-medium">Source:</span>
+                <span>{dataset.source}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Price:</span>
+                <span>${dataset.price}/month</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Industry:</span>
+                <span>{dataset.industry}</span>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                className="bg-ash_gray hover:bg-ash_gray-600 text-white py-2 px-4 rounded"
+                onClick={() => setShowDetails(false)}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

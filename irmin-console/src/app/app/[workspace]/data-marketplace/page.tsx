@@ -18,6 +18,8 @@ export default function DataMarketplacePage() {
       price: 120,
       connected: true,
       industry: "Food & Beverage",
+      description:
+        "A list of all restaurants in Finland with ratings and reviews",
     },
     {
       id: 2,
@@ -26,6 +28,7 @@ export default function DataMarketplacePage() {
       price: 200,
       connected: false,
       industry: "Government",
+      description: "Population data for all municipalities in Finland",
     },
     {
       id: 3,
@@ -34,6 +37,7 @@ export default function DataMarketplacePage() {
       price: 50,
       connected: true,
       industry: "Utilities",
+      description: "Real-time weather data for all cities in Finland",
     },
     {
       id: 4,
@@ -42,6 +46,7 @@ export default function DataMarketplacePage() {
       price: 100,
       connected: false,
       industry: "Transportation",
+      description: "Real-time traffic data for all highways in Finland",
     },
     {
       id: 5,
@@ -50,6 +55,7 @@ export default function DataMarketplacePage() {
       price: 150,
       connected: false,
       industry: "Real Estate",
+      description: "Real-time housing data for all cities in Finland",
     },
     {
       id: 6,
@@ -58,6 +64,7 @@ export default function DataMarketplacePage() {
       price: 80,
       connected: true,
       industry: "Government",
+      description: "Election results for all municipalities in Finland",
     },
     {
       id: 7,
@@ -66,6 +73,7 @@ export default function DataMarketplacePage() {
       price: 0,
       connected: true,
       industry: "Healthcare",
+      description: "Real-time Covid-19 data for all cities in Finland",
     },
     {
       id: 8,
@@ -74,6 +82,8 @@ export default function DataMarketplacePage() {
       price: 100,
       connected: false,
       industry: "Utilities",
+      description:
+        "Real-time energy consumption data for all cities in Finland",
     },
     {
       id: 9,
@@ -82,6 +92,7 @@ export default function DataMarketplacePage() {
       price: 50,
       connected: false,
       industry: "Social Media",
+      description: "Real-time social media data for all cities in Finland",
     },
     {
       id: 10,
@@ -90,6 +101,7 @@ export default function DataMarketplacePage() {
       price: 200,
       connected: false,
       industry: "Financial Services",
+      description: "Real-time stock data for all companies in Finland",
     },
     {
       id: 11,
@@ -98,6 +110,7 @@ export default function DataMarketplacePage() {
       price: 80,
       connected: true,
       industry: "Travel & Tourism",
+      description: "A list of all tourist attractions in Finland",
     },
     {
       id: 12,
@@ -106,6 +119,7 @@ export default function DataMarketplacePage() {
       price: 70,
       connected: true,
       industry: "Environmental",
+      description: "Real-time air quality data for all cities in Finland",
     },
     {
       id: 13,
@@ -114,6 +128,7 @@ export default function DataMarketplacePage() {
       price: 120,
       connected: false,
       industry: "Labour Market",
+      description: "Employment statistics for all municipalities in Finland",
     },
     {
       id: 14,
@@ -122,6 +137,7 @@ export default function DataMarketplacePage() {
       price: 90,
       connected: true,
       industry: "Retail",
+      description: "Retail sales data for all cities in Finland",
     },
     {
       id: 15,
@@ -130,6 +146,7 @@ export default function DataMarketplacePage() {
       price: 100,
       connected: false,
       industry: "Travel & Tourism",
+      description: "Tourism accommodation statistics for all cities in Finland",
     },
     {
       id: 16,
@@ -138,6 +155,7 @@ export default function DataMarketplacePage() {
       price: 150,
       connected: true,
       industry: "Education",
+      description: "Education data for all schools in Finland",
     },
     {
       id: 17,
@@ -146,6 +164,7 @@ export default function DataMarketplacePage() {
       price: 60,
       connected: false,
       industry: "Law Enforcement",
+      description: "Crime statistics for all cities in Finland",
     },
     {
       id: 18,
@@ -154,6 +173,7 @@ export default function DataMarketplacePage() {
       price: 110,
       connected: true,
       industry: "Agriculture",
+      description: "Agricultural production data for all cities in Finland",
     },
     {
       id: 19,
@@ -162,6 +182,7 @@ export default function DataMarketplacePage() {
       price: 80,
       connected: false,
       industry: "Telecommunications",
+      description: "Telecommunications data for all cities in Finland",
     },
     {
       id: 20,
@@ -170,6 +191,7 @@ export default function DataMarketplacePage() {
       price: 95,
       connected: true,
       industry: "Travel & Tourism",
+      description: "Tourism expenditure statistics for all cities in Finland",
     },
   ];
 
