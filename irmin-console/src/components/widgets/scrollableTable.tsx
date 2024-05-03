@@ -1,4 +1,5 @@
 import React from "react";
+import { IoSettings } from "react-icons/io5";
 
 interface Column {
   header: string;
@@ -14,7 +15,17 @@ interface TableProps {
 const ScrollableTable: React.FC<TableProps> = ({ title, columns, data }) => {
   return (
     <div className="p-4">
-      <h2 className="text-xl font-semibold leading-tight">{title}</h2>
+      <div className="flex justify-between items-center px-6 py-4 border-b h-14">
+        <h2 className="text-xl font-semibold leading-tight">{title}</h2>
+        <button
+          className="text-gray-200 hover:text-ash_gray-600 transition duration-300"
+          onClick={() => {
+            // TODO: Implement settings modal
+          }}
+        >
+          <IoSettings size={20} />
+        </button>
+      </div>
       <div className="mt-6">
         <div className="align-middle inline-block min-w-full shadow rounded-lg overflow-hidden overflow-y-scroll border-b border-gray-200 max-h-80">
           <table className="min-w-full">

@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { IoSettings } from "react-icons/io5";
 
 // Register the components required for the chart
 ChartJS.register(
@@ -38,7 +39,17 @@ interface ChartProps {
 const BarChart: React.FC<ChartProps> = ({ title, data }) => {
   return (
     <div className="p-4">
-      <h2 className="text-xl font-semibold leading-tight mb-6">{title}</h2>
+      <div className="flex justify-between items-center px-6 py-4 border-b h-14">
+        <h2 className="text-xl font-semibold leading-tight">{title}</h2>
+        <button
+          className="text-gray-200 hover:text-ash_gray-600 transition duration-300"
+          onClick={() => {
+            // TODO: Implement settings modal
+          }}
+        >
+          <IoSettings size={20} />
+        </button>
+      </div>
       <div className="shadow rounded-lg overflow-hidden overflow-y-scroll px-2 pb-2">
         <Bar
           data={data}
