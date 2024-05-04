@@ -62,14 +62,14 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
             Query Results
           </button>
           <button
-            onClick={() => setActiveTab("visualization")}
+            onClick={() => setActiveTab("visualisation")}
             className={`px-4 py-2 border-b-2 ${
-              activeTab === "visualization"
+              activeTab === "visualisation"
                 ? "border-ash_gray"
                 : "border-transparent"
             } focus:outline-none text-sm lg:text-md`}
           >
-            Visualization
+            Visualisation
           </button>
           <button
             onClick={() => setActiveTab("documentation")}
@@ -93,7 +93,7 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
       </div>
 
       <div ref={tableRef}>
-        {activeTab === "visualization" && (
+        {activeTab === "visualisation" && (
           <div
             className="grid grid-cols-2 px-2 py-0 overflow-auto"
             style={{ maxHeight: tableMaxHeight }}
