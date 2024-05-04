@@ -1,6 +1,9 @@
+"use client";
+
 import React, { useState } from "react";
+
 import { AiFillGoogleCircle } from "react-icons/ai";
-import { FiDatabase, FiBarChart2, FiLayers, FiFileText } from "react-icons/fi";
+import { FiDatabase, FiLayers, FiFileText } from "react-icons/fi";
 import {
   SiGoogleanalytics,
   SiFacebook,
@@ -11,59 +14,54 @@ import {
   SiWoocommerce,
 } from "react-icons/si";
 
-const connectors = [
-  { name: "SFTP", icon: FiFileText },
-  { name: "FTP", icon: FiFileText },
-  { name: "S3", icon: FiFileText },
-  { name: "Azure Blob Storage", icon: FiFileText },
-  { name: "PostgreSQL", icon: FiDatabase },
-  { name: "MySQL database", icon: FiDatabase },
-  { name: "PostgreSQL database", icon: FiBarChart2 },
-  { name: "MongoDB database", icon: FiLayers },
-  { name: "Google Analytics", icon: SiGoogleanalytics },
-  { name: "Facebook Ads", icon: SiFacebook },
-  { name: "Google AdSense", icon: SiGoogleads },
-  { name: "Google Search Console", icon: SiGooglesearchconsole },
-  { name: "Stripe", icon: SiStripe },
-  { name: "Shopify", icon: SiShopify },
-  { name: "WooCommerce", icon: SiWoocommerce },
-  { name: "Google Sheets", icon: AiFillGoogleCircle },
-  { name: "Google Drive", icon: AiFillGoogleCircle },
-  { name: "Google Cloud Storage", icon: AiFillGoogleCircle },
-  { name: "Google Cloud SQL", icon: AiFillGoogleCircle },
-  { name: "Google Cloud BigQuery", icon: AiFillGoogleCircle },
-  { name: "Google Cloud Firestore", icon: AiFillGoogleCircle },
-];
+import { SelectConnector } from "./dataSourceSetup/selectConnector";
+import DefineConnectionDetails from "./dataSourceSetup/defineConnectionDetails";
+import DefineConnectionSettings from "./dataSourceSetup/defineConnectionSettings";
+import DefineSync from "./dataSourceSetup/defineSync";
 
-const StepIndicator = ({
-  step,
-  isCurrent,
-}: {
-  step: string;
-  isCurrent: boolean;
-}) => (
-  <div
-    className={`w-1/5 px-2 py-1 text-center ${
-      isCurrent ? "text-blue-500 font-bold" : "text-gray-400"
-    }`}
-  >
-    {step}
-  </div>
-);
+export interface connectionDataType {
+  connectionID: null | number;
+  name: string;
+  connector: null | number;
+  connectionDetails: any;
+  settings: any;
+  cron: string;
+}
+
+const connectors = [
+  { name: "SFTP", icon: FiFileText, id: 1 },
+  { name: "FTP", icon: FiFileText, id: 2 },
+  { name: "S3", icon: FiFileText, id: 3 },
+  { name: "PostgreSQL", icon: FiDatabase, id: 4 },
+  { name: "MySQL database", icon: FiDatabase, id: 5 },
+  { name: "MongoDB database", icon: FiLayers, id: 6 },
+  { name: "Facebook Ads", icon: SiFacebook, id: 7 },
+  { name: "Google Analytics", icon: SiGoogleanalytics, id: 8 },
+  { name: "Google AdSense", icon: SiGoogleads, id: 9 },
+  { name: "Google Search Console", icon: SiGooglesearchconsole, id: 10 },
+  { name: "Stripe", icon: SiStripe, id: 11 },
+  { name: "Shopify", icon: SiShopify, id: 12 },
+  { name: "WooCommerce", icon: SiWoocommerce, id: 13 },
+  { name: "Google Drive", icon: AiFillGoogleCircle, id: 14 },
+  { name: "Google Cloud Storage", icon: AiFillGoogleCircle, id: 15 },
+  { name: "Google Cloud BigQuery", icon: AiFillGoogleCircle, id: 16 },
+];
 
 export default function DataSourceSetupView() {
   const [currentStep, setCurrentStep] = useState(1);
-
-  const handleConnectorClick = (connectorName: string) => {
-    console.log("Connector selected:", connectorName);
-    // Transition to the next step or handle the connector selection
-  };
+  const [connectionData, setConnectionData] = useState<connectionDataType>({
+    connectionID: null,
+    name: "",
+    connector: null,
+    connectionDetails: {},
+    settings: {},
+    cron: "1 0 * JAN *",
+  });
 
   const steps = [
     "Select a connector",
     "Establish connection",
     "Connection settings",
-    "Data to sync",
     "Configure sync",
   ];
 
@@ -72,21 +70,20 @@ export default function DataSourceSetupView() {
       <div className="flex justify-between items-center px-6 py-4 border-b h-14">
         <h3 className="text-xl font-semibold">Setup a data source</h3>
       </div>
-      <div className="space-x-1 flex items-center p-4">
+      <div className="space-x-1 flex items-center px-6 py-4 justify-between">
         {steps.map((step, index) => (
-          <React.Fragment key={step}>
+          <div
+            className={`flex items-center ${
+              index === steps.length - 1 ? "" : "mr-0"
+            }`}
+            key={step}
+          >
             <div
-              className={`flex items-center ${
-                index === steps.length - 1 ? "" : "mr-0"
+              className={`text-sm w-6 h-6 rounded-full text-white flex items-center justify-center mr-2 ${
+                currentStep >= index + 1 ? "bg-ash_gray-500" : "bg-gray-300"
               }`}
             >
-              <div
-                className={`text-sm w-6 h-6 rounded-full text-white flex items-center justify-center ${
-                  currentStep >= index + 1 ? "bg-ash_gray-500" : "bg-gray-300"
-                }`}
-              >
-                {index + 1}
-              </div>
+              {index + 1}
             </div>
             <span
               className={`text-xs ${
@@ -95,29 +92,40 @@ export default function DataSourceSetupView() {
             >
               {step}
             </span>
-          </React.Fragment>
+          </div>
         ))}
       </div>
-      <div className="grid grid-cols-4 gap-4 p-6">
-        {connectors.map((connector, index) => (
-          <button
-            key={index}
-            className="flex flex-col items-center justify-center border p-4 rounded-lg hover:shadow-lg transition duration-300"
-            onClick={() => handleConnectorClick(connector.name)}
-          >
-            <connector.icon className="text-4xl mb-2" />
-            <span className="text-sm">{connector.name}</span>
-          </button>
-        ))}
-      </div>
-      <div className="flex justify-between items-center px-6 py-4 border-t">
-        <button className="bg-ash_gray-500 text-white py-2 px-4 rounded hover:bg-ash_gray-600 transition duration-300">
-          Add custom connector
-        </button>
-        <button className="text-ash_gray-500 hover:underline">
-          Contact support
-        </button>
-      </div>
+      {currentStep === 1 && (
+        <SelectConnector
+          connectors={connectors}
+          setConnectionData={setConnectionData}
+          setCurrentStep={setCurrentStep}
+        />
+      )}
+      {currentStep === 2 && (
+        <DefineConnectionDetails
+          connectors={connectors}
+          connectionData={connectionData}
+          setConnectionData={setConnectionData}
+          setCurrentStep={setCurrentStep}
+        />
+      )}
+      {currentStep === 3 && (
+        <DefineConnectionSettings
+          connectors={connectors}
+          connectionData={connectionData}
+          setConnectionData={setConnectionData}
+          setCurrentStep={setCurrentStep}
+        />
+      )}
+      {currentStep === 4 && (
+        <DefineSync
+          connectors={connectors}
+          connectionData={connectionData}
+          setConnectionData={setConnectionData}
+          setCurrentStep={setCurrentStep}
+        />
+      )}
     </div>
   );
 }
