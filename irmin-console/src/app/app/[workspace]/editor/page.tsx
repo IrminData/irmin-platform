@@ -122,7 +122,7 @@ export default function EditorPage() {
             />
             <br />
             <div className="p-2 border-t max-h-80 overflow-auto">
-              <h3 className="px-4">Data sources</h3>
+              <h3 className="px-4">Connections</h3>
               <DataSourceList
                 inSidebar={true}
                 dataSources={[

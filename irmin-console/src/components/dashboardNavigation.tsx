@@ -160,7 +160,7 @@ export default function DashboardNavigation({
                   >
                     <div className="flex items-center">
                       <TbDatabaseImport className="mr-2 text-xl" />
-                      <p className="font-light text-base">Data Sources</p>
+                      <p className="font-light text-base">Connections</p>
                     </div>
                   </Link>
                 </li>

@@ -36,7 +36,7 @@ const ScriptEditorNew = ({ addNewTab }: { addNewTab: () => void }) => {
         >
           <div className="flex items-center">
             <TbDatabaseImport className="mr-2 text-xl" />
-            <p className="font-light text-base">Setup new data Source</p>
+            <p className="font-light text-base">Setup new connection</p>
           </div>
         </Link>
       </div>

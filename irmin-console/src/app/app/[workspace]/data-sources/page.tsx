@@ -5,7 +5,7 @@ import AddNewDataSource from "@/components/addNewDataSource";
 export default function DataSourcesPage() {
   return (
     <>
-      <AppTitle title="Data sources" />
+      <AppTitle title="Connections" />
       <AddNewDataSource />
       <DataSourceList
         dataSources={[

@@ -72,7 +72,7 @@ export default function DataSourceSetupView({
   return (
     <div className="overflow-y-scroll max-h-screen pt-28">
       <div className="flex justify-between items-center px-6 py-4 border-b h-14">
-        <h3 className="text-xl font-semibold">Setup a data source</h3>
+        <h3 className="text-xl font-semibold">Setup a connection</h3>
       </div>
       <div className="space-x-1 flex items-center px-6 py-4 justify-between">
         {steps.map((step, index) => (
