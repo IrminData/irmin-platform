@@ -279,8 +279,8 @@ export default function DashboardNavigation({
               <div className="w-auto p-2"></div>
               <div className="w-auto p-2">
                 <div className="flex flex-wrap items-center -m-3">
-                  <div className="w-auto p-3">
-                    <form className="w-64 lg:w-96 mx-auto">
+                  <div className="w-auto p-3 flex justify-end lg:w-[700px]">
+                    <form className="w-64 lg:w-96 focus-within:w-full transition-all">
                       <div className="relative">
                         <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                           <svg
@@ -302,13 +302,13 @@ export default function DashboardNavigation({
                         <input
                           type="search"
                           id="default-search"
-                          className="block w-full p-4 ps-10 text-xs md:text-sm text-gray-900 border border-gray-300 rounded-full bg-gray-50"
+                          className="block w-full p-4 ps-10 text-xs md:text-sm text-gray-900 border border-gray-300 rounded-full bg-gray-50 focus:outline-none"
                           placeholder="Search Data, Insights, Connectors..."
                           required
                         />
                         <button
                           type="submit"
-                          className="text-white absolute end-1.5 bottom-2.5 text-xs md:text-sm bg-ash_gray hover:bg-ash_gray-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-light rounded-full px-4 py-2"
+                          className="text-white absolute end-1.5 bottom-2.5 text-xs md:text-sm bg-ash_gray hover:bg-ash_gray-800 focus:ring-4 focus:outline-none font-light rounded-full px-4 py-2"
                         >
                           Search
                         </button>
