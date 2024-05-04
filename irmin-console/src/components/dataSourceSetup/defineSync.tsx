@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Cron from "react-cron-generator";
 import { connectionDataType } from "../dataSourceSetupView";
+import "@/app/cron-builder.css";
 
 export default function DefineSync({
   connectors,
