@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useRef } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
+import { python } from "@codemirror/lang-python";
 import { IoClose, IoSave } from "react-icons/io5";
 import ScriptEditorNew from "./scriptEditorNew";
 
@@ -13,15 +14,23 @@ const ScriptEditor = ({
   editorHeight: string;
   setEditorHeight: (a: string) => void;
 }) => {
-  const [tabs, setTabs] = useState<Array<{ name: string; content: string }>>([
+  const [activeLanguage, setActiveLanguage] = useState<"sql" | "python">("sql");
+  const [tabs, setTabs] = useState<
+    Array<{
+      name: string;
+      content: string;
+      changed: boolean;
+      type: "sql" | "python";
+    }>
+  >([
     {
       name: "Query 1",
-      content: `SELECT ProductID, OrderQty, SUM(LineTotal) AS Total
-FROM Sales.SalesOrderDetail
-WHERE UnitPrice < $5.00
-GROUP BY ProductID, OrderQty
-ORDER BY ProductID, OrderQty
-OPTION (HASH GROUP, FAST 10);`,
+      changed: false,
+      type: activeLanguage,
+      content:
+        activeLanguage === "sql"
+          ? `SELECT ProductID, OrderQty, SUM(LineTotal) AS Total\FROM Sales.SalesOrderDetail\nWHERE UnitPrice < $5.00\nGROUP BY ProductID, OrderQty\nORDER BY ProductID, OrderQty\nOPTION (HASH GROUP, FAST 10);`
+          : `import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt`,
     },
   ]);
   const [activeTab, setActiveTab] = useState<number>(0);
@@ -60,19 +69,23 @@ OPTION (HASH GROUP, FAST 10);`,
   // Function to update the content of a tab
   const updateTabContent = (index: number, content: string) => {
     const newTabs = [...tabs];
-    newTabs[index] = { ...newTabs[index], content };
+    newTabs[index] = { ...newTabs[index], content, changed: true };
     setTabs(newTabs);
   };
 
   // Function to add a new tab
   const addNewTab = () => {
     const newTabName = `Draft`;
-    setTabs([...tabs, { name: newTabName, content: "" }]);
+    setTabs([
+      ...tabs,
+      { name: newTabName, content: "", changed: false, type: activeLanguage },
+    ]);
     setActiveTab(tabs.length);
   };
 
   // Function to select a tab
   const selectTab = (index: number) => {
+    setActiveLanguage(tabs[index].type);
     setActiveTab(index);
   };
 
@@ -104,7 +117,7 @@ OPTION (HASH GROUP, FAST 10);`,
 
   return (
     <div className="sqlEditor">
-      <div className="flex mb-2 justify-between">
+      <div className="flex mb-2 justify-between algin-center">
         <div className="w-1/2 xl:w-3/4 flex overflow-x-auto">
           {tabs.map((tab, index) => (
             <div
@@ -136,7 +149,31 @@ OPTION (HASH GROUP, FAST 10);`,
             </button>
           )}
         </div>
-        <div className="p-2 pr-2 xl:pr-8">
+        <div className="p-2">
+          <select
+            className="px-2 py-2 focus:outline-none border-ash_gray text-midnight_green hover:bg-ash_gray-800 rounded-md transition-all text-xs xl:text-base"
+            onChange={(e) => {
+              // If current tab has not been changed then set the value of the active tab to correspond with current language setting
+              if (!tabs[activeTab].changed) {
+                const newTabs = [...tabs];
+                newTabs[activeTab] = {
+                  ...newTabs[activeTab],
+                  type: e.target.value as "sql" | "python",
+                  content:
+                    e.target.value === "sql"
+                      ? `SELECT ProductID, OrderQty, SUM(LineTotal) AS Total\FROM Sales.SalesOrderDetail\nWHERE UnitPrice < $5.00\nGROUP BY ProductID, OrderQty\nORDER BY ProductID, OrderQty\nOPTION (HASH GROUP, FAST 10);`
+                      : `import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt`,
+                };
+                setTabs(newTabs);
+              }
+              setActiveLanguage(e.target.value as "sql" | "python");
+            }}
+          >
+            <option value={"sql"}>SQL</option>
+            <option value={"python"}>Python</option>
+          </select>
+        </div>
+        <div className="p-2 xl:pr-8">
           <button
             onClick={() => saveTabAsFile(activeTab)}
             className="px-2 py-2 focus:outline-none bg-ash_gray text-white hover:bg-ash_gray-800 rounded-md transition-all text-xs xl:text-base"
@@ -148,15 +185,27 @@ OPTION (HASH GROUP, FAST 10);`,
       <div style={{ minHeight: editorHeight }} ref={editorRef}>
         {tabs.length > 0 ? (
           <>
-            <CodeMirror
-              value={tabs[activeTab].content ?? ""}
-              height={editorHeight}
-              extensions={[sql()]}
-              placeholder="Write your SQL query here..."
-              onChange={(value, viewUpdate) => {
-                updateTabContent(activeTab, value);
-              }}
-            />
+            {activeLanguage === "sql" ? (
+              <CodeMirror
+                value={tabs[activeTab].content ?? ""}
+                height={editorHeight}
+                extensions={[sql()]}
+                placeholder="Write your SQL query here..."
+                onChange={(value, viewUpdate) => {
+                  updateTabContent(activeTab, value);
+                }}
+              />
+            ) : (
+              <CodeMirror
+                value={tabs[activeTab].content ?? ""}
+                height={editorHeight}
+                extensions={[python()]}
+                placeholder="Write your Python script here..."
+                onChange={(value, viewUpdate) => {
+                  updateTabContent(activeTab, value);
+                }}
+              />
+            )}
             {/* The resizer element */}
             <div
               className="resizer cursor-ns-resize h-1 bg-gray-200"

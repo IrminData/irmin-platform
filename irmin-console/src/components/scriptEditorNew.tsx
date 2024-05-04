@@ -14,17 +14,18 @@ const ScriptEditorNew = ({ addNewTab }: { addNewTab: () => void }) => {
           onClick={addNewTab}
         >
           <FiDatabase size={24} />
-          <h2 className="font-bold text-lg">Create an SQL model</h2>
+          <h2 className="font-bold text-lg">Create a new script</h2>
           <p>Start exploring your data by jumping into the code editor</p>
         </button>
 
         {/* Card 2 */}
         <button className="border rounded-lg p-6 w-96 text-center flex flex-col items-center space-y-4 hover:opacity-40 transition-all cursor-pointer">
           <FiUser size={24} />
-          <h2 className="font-bold text-lg">
-            Meet Haz, Your SQL Query Expert!
-          </h2>
-          <p>Haz, your AI assistant, is here to lend a hand with SQL queries</p>
+          <h2 className="font-bold text-lg">Meet Haz, Your Data Expert!</h2>
+          <p>
+            Haz, your AI assistant, is here to lend a hand with SQL queries,
+            scripts and more!
+          </p>
         </button>
       </div>
 
