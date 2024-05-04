@@ -10,11 +10,13 @@ export default function DefineSync({
   connectionData,
   setConnectionData,
   setCurrentStep,
+  setIsOpen,
 }: {
   connectors: { name: string; icon: any; id: number }[];
   connectionData: connectionDataType;
   setConnectionData: React.Dispatch<React.SetStateAction<connectionDataType>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const [cronValue, setCronValue] = useState(connectionData.cron);
 
@@ -32,6 +34,7 @@ export default function DefineSync({
       ...prev,
       cron: cronValue,
     }));
+    setIsOpen(false);
     alert("Connection setup done!");
   };
 

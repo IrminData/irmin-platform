@@ -32,7 +32,7 @@ export default function AddNewDataSource() {
               </button>
             </div>
             <div className="absolute top-0 right-0 w-2/5 h-full bg-white">
-              <DataSourceSetupView />
+              <DataSourceSetupView setIsOpen={setIsOpen} />
             </div>
           </div>
         </div>

@@ -47,7 +47,11 @@ const connectors = [
   { name: "Google Cloud BigQuery", icon: AiFillGoogleCircle, id: 16 },
 ];
 
-export default function DataSourceSetupView() {
+export default function DataSourceSetupView({
+  setIsOpen,
+}: {
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   const [currentStep, setCurrentStep] = useState(1);
   const [connectionData, setConnectionData] = useState<connectionDataType>({
     connectionID: null,
@@ -124,6 +128,7 @@ export default function DataSourceSetupView() {
           connectionData={connectionData}
           setConnectionData={setConnectionData}
           setCurrentStep={setCurrentStep}
+          setIsOpen={setIsOpen}
         />
       )}
     </div>
