@@ -3,7 +3,7 @@ import React from "react";
 import { FiDatabase, FiUser } from "react-icons/fi";
 import { TbDatabaseImport } from "react-icons/tb";
 
-const SQLEditorNew = ({ addNewTab }: { addNewTab: () => void }) => {
+const ScriptEditorNew = ({ addNewTab }: { addNewTab: () => void }) => {
   return (
     <div className="flex flex-col items-center justify-center">
       {/* Cards Container */}
@@ -43,4 +43,4 @@ const SQLEditorNew = ({ addNewTab }: { addNewTab: () => void }) => {
   );
 };
 
-export default SQLEditorNew;
+export default ScriptEditorNew;

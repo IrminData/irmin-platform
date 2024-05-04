@@ -4,9 +4,9 @@ import React, { useState, useCallback, useRef } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { IoClose, IoSave } from "react-icons/io5";
-import SQLEditorNew from "./sqlEditorNew";
+import ScriptEditorNew from "./scriptEditorNew";
 
-const SqlEditor = ({
+const ScriptEditor = ({
   editorHeight,
   setEditorHeight,
 }: {
@@ -164,11 +164,11 @@ OPTION (HASH GROUP, FAST 10);`,
             ></div>
           </>
         ) : (
-          <SQLEditorNew addNewTab={addNewTab} />
+          <ScriptEditorNew addNewTab={addNewTab} />
         )}
       </div>
     </div>
   );
 };
 
-export default SqlEditor;
+export default ScriptEditor;

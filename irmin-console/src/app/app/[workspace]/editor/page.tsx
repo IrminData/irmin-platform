@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 
-import SqlEditor from "@/components/sqlEditor";
+import ScriptEditor from "@/components/scriptEditor";
 import FileNavigator from "@/components/fileNavigator";
 import QueryResultsAndTabs from "@/components/queryResultsAndTabs";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
@@ -266,7 +266,7 @@ export default function EditorPage() {
           </div>
         </div>
         <div className="bg-white -mr-4 inline-block w-full overflow-auto">
-          <SqlEditor
+          <ScriptEditor
             editorHeight={editorHeight}
             setEditorHeight={setEditorHeight}
           />
