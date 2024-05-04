@@ -48,7 +48,7 @@ export default function DefineSync({
       </div>
       <div className="mb-6">
         <label className="block mb-2 text-rich_black font-light" htmlFor="">
-          Sync interval (Quartz cron expression)
+          Sync interval (cron expression)
         </label>
         <input
           className="appearance-none block w-full p-3 leading-5 text-rich_black border border-rich_black rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
