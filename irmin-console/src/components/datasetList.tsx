@@ -122,7 +122,7 @@ const DataSetList: React.FC<DataSetListProps> = ({
                               className="block py-2 px-5 mb-2 w-44 text-white text-center leading-6 bg-midnight_green hover:bg-midnight_green-600 focus:ring-2 focus:ring-midnight_green-500 focus:ring-opacity-50 rounded-full shadow-sm"
                               href={`data-sets/viewer/${dataSet.id}`}
                             >
-                              View data
+                              View data set
                             </Link>
                             {dataSet.status === "private" && (
                               <Link
