@@ -295,6 +295,31 @@ export default function EditorPage() {
                 title: "Ghostbusters",
                 year: "1984",
               },
+              {
+                id: 3,
+                title: "The Shining",
+                year: "1980",
+              },
+              {
+                id: 4,
+                title: "The Conjuring",
+                year: "2013",
+              },
+              {
+                id: 5,
+                title: "The Thing",
+                year: "1982",
+              },
+              {
+                id: 6,
+                title: "The Others",
+                year: "2001",
+              },
+              {
+                id: 7,
+                title: "Coraline",
+                year: "2009",
+              },
             ]}
           />
         </div>

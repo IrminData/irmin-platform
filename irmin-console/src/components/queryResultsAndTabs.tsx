@@ -18,12 +18,14 @@ type DataTableProps = {
   editorHeight: string;
   data: any[];
   columns: any[];
+  isDataset?: boolean;
 };
 
 const QueryResultsAndTabs: React.FC<DataTableProps> = ({
   editorHeight,
   data,
   columns,
+  isDataset = false,
 }) => {
   const [activeTab, setActiveTab] = useState("queryResults");
 
@@ -82,14 +84,16 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
             Documentation
           </button>
         </div>
-        <div className="text-right">
-          <button className="text-gray-800 py-2 px-4 text-sm lg:text-md border border-ash_gray rounded shadow my-1 focus:outline-none transition-all hover:bg-ash_gray hover:text-white">
-            <AiOutlineSave className="inline" /> Save to dataset
-          </button>
-          <button className="text-gray-800 py-2 px-4 text-sm lg:text-md border border-ash_gray rounded shadow my-1 lg:ml-2 focus:outline-none transition-all hover:bg-ash_gray hover:text-white">
-            <MdPlayArrow className="inline" /> Run script
-          </button>
-        </div>
+        {!isDataset && (
+          <div className="text-right">
+            <button className="text-gray-800 py-2 px-4 text-sm lg:text-md border border-ash_gray rounded shadow my-1 focus:outline-none transition-all hover:bg-ash_gray hover:text-white">
+              <AiOutlineSave className="inline" /> Save dataset
+            </button>
+            <button className="text-gray-800 py-2 px-4 text-sm lg:text-md border border-ash_gray rounded shadow my-1 lg:ml-2 focus:outline-none transition-all hover:bg-ash_gray hover:text-white">
+              <MdPlayArrow className="inline" /> Run script
+            </button>
+          </div>
+        )}
       </div>
 
       <div ref={tableRef}>
@@ -185,9 +189,12 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
                 <button className="text-gray hover:underline">
                   <AiOutlineDownload className="inline" /> export table (.csv)
                 </button>
-                <button className="text-gray ml-4 hover:underline">
-                  <AiOutlineHistory className="inline" /> execution history (2)
-                </button>
+                {!isDataset && (
+                  <button className="text-gray ml-4 hover:underline">
+                    <AiOutlineHistory className="inline" /> execution history
+                    (2)
+                  </button>
+                )}
               </div>
             </div>
             {/* Table */}

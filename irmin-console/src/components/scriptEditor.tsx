@@ -10,9 +10,11 @@ import ScriptEditorNew from "./scriptEditorNew";
 const ScriptEditor = ({
   editorHeight,
   setEditorHeight,
+  hideTabs = false,
 }: {
   editorHeight: string;
   setEditorHeight: (a: string) => void;
+  hideTabs?: boolean;
 }) => {
   const [activeLanguage, setActiveLanguage] = useState<"sql" | "python">("sql");
   const [tabs, setTabs] = useState<
@@ -117,71 +119,74 @@ const ScriptEditor = ({
 
   return (
     <div className="sqlEditor">
-      <div className="flex mb-2 justify-between algin-center">
-        <div className="w-1/2 xl:w-3/4 flex overflow-x-auto">
-          {tabs.map((tab, index) => (
-            <div
-              key={index}
-              className={`flex items-center h-fit ${
-                activeTab === index ? "border-b-2 border-ash_gray" : ""
-              } `}
+      {!hideTabs && (
+        <div className="flex mb-2 justify-between algin-center">
+          <div className="w-1/2 xl:w-3/4 flex overflow-x-auto">
+            {tabs.map((tab, index) => (
+              <div
+                key={index}
+                className={`flex items-center h-fit ${
+                  activeTab === index ? "border-b-2 border-ash_gray" : ""
+                } `}
+              >
+                <button
+                  onClick={() => selectTab(index)}
+                  className={`min-w-40 px-4 py-2 focus:outline-none`}
+                >
+                  {tab.name}
+                </button>
+                <button
+                  onClick={() => closeTab(index)}
+                  className={`px-2 py-2 focus:outline-none`}
+                >
+                  <IoClose />
+                </button>
+              </div>
+            ))}
+            {tabs.length > 0 && (
+              <button
+                onClick={addNewTab}
+                className="px-4 py-2 focus:outline-none h-fit"
+              >
+                +
+              </button>
+            )}
+          </div>
+          <div className="p-2">
+            <select
+              className="px-2 py-2 focus:outline-none border-ash_gray text-midnight_green hover:bg-ash_gray-800 rounded-md transition-all text-xs xl:text-base"
+              onChange={(e) => {
+                // If current tab has not been changed then set the value of the active tab to correspond with current language setting
+                if (!tabs[activeTab].changed) {
+                  const newTabs = [...tabs];
+                  newTabs[activeTab] = {
+                    ...newTabs[activeTab],
+                    type: e.target.value as "sql" | "python",
+                    content:
+                      e.target.value === "sql"
+                        ? `SELECT ProductID, OrderQty, SUM(LineTotal) AS Total\FROM Sales.SalesOrderDetail\nWHERE UnitPrice < $5.00\nGROUP BY ProductID, OrderQty\nORDER BY ProductID, OrderQty\nOPTION (HASH GROUP, FAST 10);`
+                        : `import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt`,
+                  };
+                  setTabs(newTabs);
+                }
+                setActiveLanguage(e.target.value as "sql" | "python");
+              }}
             >
-              <button
-                onClick={() => selectTab(index)}
-                className={`min-w-40 px-4 py-2 focus:outline-none`}
-              >
-                {tab.name}
-              </button>
-              <button
-                onClick={() => closeTab(index)}
-                className={`px-2 py-2 focus:outline-none`}
-              >
-                <IoClose />
-              </button>
-            </div>
-          ))}
-          {tabs.length > 0 && (
+              <option value={"sql"}>SQL</option>
+              <option value={"python"}>Python</option>
+            </select>
+          </div>
+          <div className="p-2 xl:pr-8">
             <button
-              onClick={addNewTab}
-              className="px-4 py-2 focus:outline-none h-fit"
+              onClick={() => saveTabAsFile(activeTab)}
+              className="px-2 py-2 focus:outline-none bg-ash_gray text-white hover:bg-ash_gray-800 rounded-md transition-all text-xs xl:text-base"
             >
-              +
+              <IoSave className="mr-2 inline-block" /> Save file
             </button>
-          )}
+          </div>
         </div>
-        <div className="p-2">
-          <select
-            className="px-2 py-2 focus:outline-none border-ash_gray text-midnight_green hover:bg-ash_gray-800 rounded-md transition-all text-xs xl:text-base"
-            onChange={(e) => {
-              // If current tab has not been changed then set the value of the active tab to correspond with current language setting
-              if (!tabs[activeTab].changed) {
-                const newTabs = [...tabs];
-                newTabs[activeTab] = {
-                  ...newTabs[activeTab],
-                  type: e.target.value as "sql" | "python",
-                  content:
-                    e.target.value === "sql"
-                      ? `SELECT ProductID, OrderQty, SUM(LineTotal) AS Total\FROM Sales.SalesOrderDetail\nWHERE UnitPrice < $5.00\nGROUP BY ProductID, OrderQty\nORDER BY ProductID, OrderQty\nOPTION (HASH GROUP, FAST 10);`
-                      : `import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt`,
-                };
-                setTabs(newTabs);
-              }
-              setActiveLanguage(e.target.value as "sql" | "python");
-            }}
-          >
-            <option value={"sql"}>SQL</option>
-            <option value={"python"}>Python</option>
-          </select>
-        </div>
-        <div className="p-2 xl:pr-8">
-          <button
-            onClick={() => saveTabAsFile(activeTab)}
-            className="px-2 py-2 focus:outline-none bg-ash_gray text-white hover:bg-ash_gray-800 rounded-md transition-all text-xs xl:text-base"
-          >
-            <IoSave className="mr-2 inline-block" /> Save file
-          </button>
-        </div>
-      </div>
+      )}
+
       <div style={{ minHeight: editorHeight }} ref={editorRef}>
         {tabs.length > 0 ? (
           <>

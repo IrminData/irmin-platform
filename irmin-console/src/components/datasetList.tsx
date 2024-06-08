@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState } from "react";
-import { IoChevronDownOutline, IoChevronUpOutline } from "react-icons/io5";
+import React from "react";
 
 interface DataSet {
   id: number;
   name: string;
   sourceWorkspace: string;
   status: "private" | "public" | "connected";
-  parts: string[];
 }
 
 interface DataSetListProps {
@@ -21,15 +19,6 @@ const DataSetList: React.FC<DataSetListProps> = ({
   dataSets,
   inSidebar = false,
 }) => {
-  const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
-
-  const toggleRow = (id: number) => {
-    setOpenRows((prevOpenRows) => ({
-      ...prevOpenRows,
-      [id]: !prevOpenRows[id],
-    }));
-  };
-
   return (
     <div className="pb-8">
       <div className="overflow-x-auto">
@@ -131,7 +120,7 @@ const DataSetList: React.FC<DataSetListProps> = ({
                           <div className="pl-2">
                             <Link
                               className="block py-2 px-5 mb-2 w-44 text-white text-center leading-6 bg-midnight_green hover:bg-midnight_green-600 focus:ring-2 focus:ring-midnight_green-500 focus:ring-opacity-50 rounded-full shadow-sm"
-                              href="#"
+                              href={`data-sets/viewer/${dataSet.id}`}
                             >
                               View data
                             </Link>
@@ -152,52 +141,13 @@ const DataSetList: React.FC<DataSetListProps> = ({
                               </Link>
                             )}
                           </div>
-                          <button
-                            onClick={() => toggleRow(dataSet.id)}
-                            className="text-ash_gray hover:text-ash_gray-800 focus:outline-none inline float-right mt-4 ml-4"
-                          >
-                            {openRows[dataSet.id] ? (
-                              <IoChevronUpOutline className="w-5 h-5" />
-                            ) : (
-                              <IoChevronDownOutline className="w-5 h-5" />
-                            )}
-                          </button>
                         </div>
                       </td>
                     </>
                   ) : (
-                    <>
-                      <td className="px-4 py-2 text-right text-xs xl:text-base">
-                        <button
-                          onClick={() => toggleRow(dataSet.id)}
-                          className="text-ash_gray hover:text-ash_gray-800 focus:outline-none inline float-right mt-4 ml-4"
-                        >
-                          {openRows[dataSet.id] ? (
-                            <IoChevronUpOutline className="w-5 h-5" />
-                          ) : (
-                            <IoChevronDownOutline className="w-5 h-5" />
-                          )}
-                        </button>
-                      </td>
-                    </>
+                    <></>
                   )}
                 </tr>
-                {openRows[dataSet.id] && (
-                  <tr className="shadow">
-                    <td colSpan={3} className="px-10 py-2">
-                      <ul>
-                        {dataSet.parts.map((part, index) => (
-                          <li
-                            key={index}
-                            className="py-2 border-b border-color-ash_gray text-xs"
-                          >
-                            {part}
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
-                  </tr>
-                )}
               </>
             ))}
           </tbody>
