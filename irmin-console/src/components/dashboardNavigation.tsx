@@ -14,6 +14,8 @@ import {
   TbBell,
   TbLogout,
   TbSearch,
+  TbChevronRight,
+  TbChevronLeft,
 } from "react-icons/tb";
 import { PiStorefront } from "react-icons/pi";
 
@@ -23,6 +25,8 @@ export default function DashboardNavigation({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isMenuFolded, setIsMenuFolded] = React.useState(false);
+
   return (
     <>
       <AIAssistantPopup />
@@ -52,17 +56,13 @@ export default function DashboardNavigation({
           </button>
         </div>
         <div
-          className={`z-40 fixed top-0 flex flex-col justify-between bg-rich_black w-full md:w-2/5 xl:w-1/5 h-full overflow-y-scroll ${
+          className={`z-40 fixed top-0 flex flex-col justify-between bg-rich_black h-full overflow-y-scroll transition-all duration-300 ${
             isMenuOpen ? "block" : "hidden md:block"
-          }`}
+          } ${isMenuFolded ? "w-20" : "w-full md:w-2/5 xl:w-1/5"}`}
         >
           <div className="relative mt-24 md:mt-4">
-            <div className="p-4 w-full z-40">
-              <Link
-                className="block max-w-max"
-                href="/"
-                onClick={() => setIsMenuOpen(false)}
-              >
+            <div className="p-4 w-full z-40 flex justify-between items-center">
+              <div className="block max-w-max">
                 <Image
                   className="h-8"
                   src="/irmin-logo-light.svg"
@@ -70,8 +70,22 @@ export default function DashboardNavigation({
                   width={170}
                   height={100}
                 />
-              </Link>
-              <div className="absolute right-8 top-5">
+              </div>
+              <button
+                className={`hidden md:block text-ash_gray absolute ${
+                  !isMenuFolded ? "right-2 top-5" : "-right-1 top-5"
+                }`}
+                onClick={() => setIsMenuFolded(!isMenuFolded)}
+              >
+                {isMenuFolded ? (
+                  <TbChevronRight className="text-2xl" />
+                ) : (
+                  <TbChevronLeft className="text-2xl" />
+                )}
+              </button>
+              <div
+                className={`absolute right-9 top-5 ${isMenuFolded && "hidden"}`}
+              >
                 <Link
                   className="block max-w-max text-ash_gray hover:text-ash_gray-800"
                   href="/app/inbox"
@@ -80,7 +94,7 @@ export default function DashboardNavigation({
                 </Link>
               </div>
             </div>
-            <div className="mt-8 px-5">
+            <div className={`mt-8 px-5 ${isMenuFolded ? "hidden" : "block"}`}>
               <div className="flex flex-wrap items-center">
                 <div className="flex flex-wrap">
                   <div className="w-auto p-2">
@@ -107,8 +121,12 @@ export default function DashboardNavigation({
                 </select>
               </div>
             </div>
-            <div className="mt-6">
-              <p className="px-8 mb-2 text-xs font-medium text-ash_gray uppercase">
+            <div className={`mt-6`}>
+              <p
+                className={`px-8 mb-2 text-xs font-medium text-ash_gray uppercase ${
+                  isMenuFolded ? "hidden" : "block"
+                }`}
+              >
                 Workspace
               </p>
               <ul className="px-4 mb-8">
@@ -120,7 +138,13 @@ export default function DashboardNavigation({
                   >
                     <div className="flex items-center">
                       <RxDashboard className="mr-2 text-xl" />
-                      <p className="font-light text-base">Dashboards</p>
+                      <p
+                        className={`font-light text-base  ${
+                          isMenuFolded ? "hidden" : "block"
+                        }`}
+                      >
+                        Dashboards
+                      </p>
                     </div>
                   </Link>
                 </li>
@@ -132,7 +156,13 @@ export default function DashboardNavigation({
                   >
                     <div className="flex items-center">
                       <CiDatabase className="mr-2 text-xl" />
-                      <p className="font-light text-base">Data Sets</p>
+                      <p
+                        className={`font-light text-base  ${
+                          isMenuFolded ? "hidden" : "block"
+                        }`}
+                      >
+                        Data Sets
+                      </p>
                     </div>
                   </Link>
                 </li>
@@ -144,7 +174,13 @@ export default function DashboardNavigation({
                   >
                     <div className="flex items-center">
                       <AiOutlineConsoleSql className="mr-2 text-xl" />
-                      <p className="font-light text-base">Editor</p>
+                      <p
+                        className={`font-light text-base  ${
+                          isMenuFolded ? "hidden" : "block"
+                        }`}
+                      >
+                        Editor
+                      </p>
                     </div>
                   </Link>
                 </li>
@@ -156,7 +192,13 @@ export default function DashboardNavigation({
                   >
                     <div className="flex items-center">
                       <TbDatabaseImport className="mr-2 text-xl" />
-                      <p className="font-light text-base">Connections</p>
+                      <p
+                        className={`font-light text-base  ${
+                          isMenuFolded ? "hidden" : "block"
+                        }`}
+                      >
+                        Connections
+                      </p>
                     </div>
                   </Link>
                 </li>
@@ -168,7 +210,13 @@ export default function DashboardNavigation({
                   >
                     <div className="flex items-center">
                       <TbDatabaseExport className="mr-2 text-xl" />
-                      <p className="font-light text-base">Reverse ETL</p>
+                      <p
+                        className={`font-light text-base  ${
+                          isMenuFolded ? "hidden" : "block"
+                        }`}
+                      >
+                        Reverse ETL
+                      </p>
                     </div>
                   </Link>
                 </li>
@@ -180,7 +228,13 @@ export default function DashboardNavigation({
                   >
                     <div className="flex items-center">
                       <TbSettings className="mr-2 text-xl" />
-                      <p className="font-light text-base">Workspace settings</p>
+                      <p
+                        className={`font-light text-base  ${
+                          isMenuFolded ? "hidden" : "block"
+                        }`}
+                      >
+                        Workspace settings
+                      </p>
                     </div>
                   </Link>
                 </li>
@@ -192,7 +246,13 @@ export default function DashboardNavigation({
                   >
                     <div className="flex items-center">
                       <PiStorefront className="mr-2 text-xl" />
-                      <p className="font-light text-base">Data marketplace</p>
+                      <p
+                        className={`font-light text-base  ${
+                          isMenuFolded ? "hidden" : "block"
+                        }`}
+                      >
+                        Data marketplace
+                      </p>
                     </div>
                   </Link>
                 </li>
@@ -201,7 +261,11 @@ export default function DashboardNavigation({
           </div>
           <div className="relative flex-1" />
           <div className="relative">
-            <p className="px-8 text-xs font-medium text-ash_gray uppercase">
+            <p
+              className={`px-8 text-xs font-medium text-ash_gray uppercase ${
+                isMenuFolded ? "hidden" : "block"
+              }`}
+            >
               Settings
             </p>
             <ul className="p-4">
@@ -213,7 +277,13 @@ export default function DashboardNavigation({
                 >
                   <div className="flex items-center">
                     <TbSettings className="mr-2 text-xl" />
-                    <p className="font-light text-base">Settings</p>
+                    <p
+                      className={`font-light text-base  ${
+                        isMenuFolded ? "hidden" : "block"
+                      }`}
+                    >
+                      Settings
+                    </p>
                   </div>
                 </Link>
               </li>
@@ -225,11 +295,17 @@ export default function DashboardNavigation({
                 >
                   <div className="flex items-center">
                     <TbLogout className="mr-2 text-xl" />
-                    <p className="font-light text-base">Sign out</p>
+                    <p
+                      className={`font-light text-base  ${
+                        isMenuFolded ? "hidden" : "block"
+                      }`}
+                    >
+                      Sign out
+                    </p>
                   </div>
                 </Link>
               </li>
-              <li className="mt-4">
+              <li className={`mt-4 ${isMenuFolded && "hidden"}`}>
                 <Link
                   className="text-center text-ash_gray hover:text-ash_gray-800"
                   href="/contact"
@@ -242,8 +318,12 @@ export default function DashboardNavigation({
           </div>
         </div>
         <div
-          className={`w-screen md:ml-[40%] xl:ml-[20%] md:w-3/5 xl:w-4/5 fixed z-40 ${
+          className={`w-screen fixed z-40 ${
             isMenuOpen ? "hidden md:block" : ""
+          } ${
+            isMenuFolded
+              ? "md:ml-[80px] md:w-[calc(100%-80px)]"
+              : "md:ml-[40%] xl:ml-[20%] md:w-[3/5] xl:w-4/5"
           }`}
         >
           <div className="py-5 px-4 bg-white shadow-md">
@@ -279,7 +359,13 @@ export default function DashboardNavigation({
           </div>
         </div>
       </section>
-      <div className="md:ml-[40%] xl:ml-[20%] md:w-3/5 xl:w-4/5 w-100 min-h-full pt-[94px] px-4">
+      <div
+        className={`min-h-full pt-[94px] px-4 ${
+          isMenuFolded
+            ? "md:ml-[80px] md:w-[calc(100%-80px)]"
+            : "md:ml-[40%] xl:ml-[20%] md:w-3/5 xl:w-4/5"
+        }`}
+      >
         {/* Dashboard content */}
         {children}
       </div>
