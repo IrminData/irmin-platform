@@ -8,6 +8,7 @@ import QueryResultsAndTabs from "@/components/queryResultsAndTabs";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 import DataSourceList from "@/components/dataSourceList";
 import DataSetList from "@/components/dataSetList";
+import { TbSearch } from "react-icons/tb";
 
 export default function EditorPage() {
   const [editorHeight, setEditorHeight] = useState("400px");
@@ -37,21 +38,7 @@ export default function EditorPage() {
             <form className="w-full p-3">
               <div className="relative">
                 <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                  <svg
-                    className="w-3 h-3 text-gray-500"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-                    />
-                  </svg>
+                  <TbSearch className="w-4 h-4 text-gray-500" />
                 </div>
                 <input
                   type="search"
@@ -200,65 +187,18 @@ export default function EditorPage() {
                     name: "UpCharge rents, users and venues",
                     sourceWorkspace: "UpCharge",
                     status: "private",
-                    parts: [
-                      "UpCharge venues with revenue, type, average rent cost and amount of daily rentals",
-                      "Venue performance by venue type",
-                      "Venue sales by partner",
-                      "All rentals with Stripe invoices",
-                    ],
                   },
                   {
                     id: 1,
                     name: "UpCharge locations",
                     sourceWorkspace: "UpCharge",
                     status: "public",
-                    parts: ["UpCharge venues"],
                   },
                   {
                     id: 2,
                     name: "Restaurants in Finland",
                     sourceWorkspace: "TripAdvisor",
                     status: "connected",
-                    parts: [
-                      "Helsinki",
-                      "Espoo",
-                      "Vantaa",
-                      "Tampere",
-                      "Turku",
-                      "Oulu",
-                      "Rovaniemi",
-                      "Kuopio",
-                      "Jyväskylä",
-                      "Lahti",
-                      "Pori",
-                      "Vaasa",
-                      "Kotka",
-                      "Joensuu",
-                      "Lappeenranta",
-                      "Hämeenlinna",
-                      "Porvoo",
-                      "Mikkeli",
-                      "Hyvinkää",
-                      "Nurmijärvi",
-                      "Järvenpää",
-                      "Kerava",
-                      "Kajaani",
-                      "Salo",
-                      "Kouvola",
-                      "Kokkola",
-                      "Lohja",
-                      "Riihimäki",
-                      "Seinäjoki",
-                      "Vihti",
-                      "Savonlinna",
-                      "Imatra",
-                      "Kangasala",
-                      "Varkaus",
-                      "Kemi",
-                      "Iisalmi",
-                      "Raisio",
-                      "Raahe",
-                    ],
                   },
                 ]}
               />

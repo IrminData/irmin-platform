@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { IoClose } from "react-icons/io5";
+import { TbCheck } from "react-icons/tb";
 
 export default function MarketplaceListingCard({
   dataset,
@@ -22,20 +23,7 @@ export default function MarketplaceListingCard({
         <span className="text-gray-800 font-medium">{dataset.name}</span>
         {dataset.connected ? (
           <span className="text-ash_gray">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
+            <TbCheck className="text-2xl" />
           </span>
         ) : null}
       </div>
