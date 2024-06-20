@@ -10,12 +10,12 @@ interface DataSet {
   status: 'private' | 'public' | 'connected';
 }
 
-interface DataSetListProps {
+interface DatasetTableProps {
   dataSets: DataSet[];
   inSidebar?: boolean;
 }
 
-const DataSetList: React.FC<DataSetListProps> = ({
+const DatasetTable: React.FC<DatasetTableProps> = ({
   dataSets,
   inSidebar = false,
 }) => {
@@ -157,4 +157,4 @@ const DataSetList: React.FC<DataSetListProps> = ({
   );
 };
 
-export default DataSetList;
+export default DatasetTable;

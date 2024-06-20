@@ -6,8 +6,8 @@ import ScriptEditor from '@/components/scriptEditor';
 import FileNavigator from '@/components/fileNavigator';
 import QueryResultsAndTabs from '@/components/queryResultsAndTabs';
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
-import DataSourceList from '@/components/dataSourceList';
-import DataSetList from '@/components/dataSetList';
+import DataSourceTable from '@/components/datasourceTable';
+import DatasetTable from '@/components/datasetTable';
 import { TbSearch } from 'react-icons/tb';
 
 export default function EditorPage() {
@@ -110,7 +110,7 @@ export default function EditorPage() {
             <br />
             <div className='max-h-80 overflow-auto border-t p-2'>
               <h3 className='px-4'>Connections</h3>
-              <DataSourceList
+              <DataSourceTable
                 inSidebar={true}
                 dataSources={[
                   {
@@ -179,7 +179,7 @@ export default function EditorPage() {
             <br />
             <div className='max-h-80 overflow-auto border-t p-2'>
               <h3 className='px-4'>Data sets</h3>
-              <DataSetList
+              <DatasetTable
                 inSidebar={true}
                 dataSets={[
                   {

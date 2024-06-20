@@ -14,12 +14,12 @@ interface DataSource {
   parts: string[];
 }
 
-interface DataSourceListProps {
+interface DataSourceTableProps {
   dataSources: DataSource[];
   inSidebar?: boolean;
 }
 
-const DataSourceList: React.FC<DataSourceListProps> = ({
+const DataSourceTable: React.FC<DataSourceTableProps> = ({
   dataSources,
   inSidebar = false,
 }) => {
@@ -175,4 +175,4 @@ const DataSourceList: React.FC<DataSourceListProps> = ({
   );
 };
 
-export default DataSourceList;
+export default DataSourceTable;

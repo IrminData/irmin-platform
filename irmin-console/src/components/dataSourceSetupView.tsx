@@ -14,10 +14,10 @@ import {
   SiWoocommerce,
 } from 'react-icons/si';
 
-import { SelectConnector } from './dataSourceSetup/selectConnector';
-import DefineConnectionDetails from './dataSourceSetup/defineConnectionDetails';
-import DefineConnectionSettings from './dataSourceSetup/defineConnectionSettings';
-import DefineSync from './dataSourceSetup/defineSync';
+import { SelectConnector } from './data-source-setup/selectConnector';
+import DefineConnectionDetails from './data-source-setup/defineConnectionDetails';
+import DefineConnectionSettings from './data-source-setup/defineConnectionSettings';
+import DefineSync from './data-source-setup/defineSync';
 
 export interface connectionDataType {
   connectionID: null | number;

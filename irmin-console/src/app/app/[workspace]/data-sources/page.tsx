@@ -1,5 +1,5 @@
 import AppTitle from '@/components/appTitle';
-import DataSourceList from '@/components/dataSourceList';
+import DataSourceTable from '@/components/datasourceTable';
 import AddNewDataSource from '@/components/addNewDataSource';
 
 export default function DataSourcesPage() {
@@ -7,7 +7,7 @@ export default function DataSourcesPage() {
     <>
       <AppTitle title='Connections' />
       <AddNewDataSource />
-      <DataSourceList
+      <DataSourceTable
         dataSources={[
           {
             id: 0,
