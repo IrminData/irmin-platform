@@ -15,7 +15,7 @@ const ProfileContext = createContext<{
 
 const fetchProfileData = async (): Promise<UserProfileAPIResponse> => {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL ?? ''}/api/v1/account/profile`,
+    `${process.env.NEXT_PUBLIC_API_URL ?? ''}/v1/account/profile`,
     {
       credentials: 'include',
       headers: {

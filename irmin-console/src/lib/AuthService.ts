@@ -56,7 +56,7 @@ class AuthService {
   ): Promise<UserProfileAPIResponse> {
     try {
       const response = await this.fetchWithCredentials(
-        `${api_base}/api/v1/login`,
+        `${api_base}/v1/login`,
         {
           method: 'POST',
           body: JSON.stringify({ email, password }),
@@ -77,7 +77,7 @@ class AuthService {
   async logout(): Promise<UserProfileAPIResponse> {
     try {
       const response = await this.fetchWithCredentials(
-        `${api_base}/api/v1/logout`,
+        `${api_base}/v1/logout`,
         {
           method: 'POST',
         }
@@ -110,7 +110,7 @@ class AuthService {
   ): Promise<UserProfileAPIResponse> {
     try {
       const response = await this.fetchWithCredentials(
-        `${api_base}/api/v1/register`,
+        `${api_base}/v1/register`,
         {
           method: 'POST',
           body: JSON.stringify({

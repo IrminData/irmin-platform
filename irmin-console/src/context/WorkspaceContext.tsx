@@ -17,7 +17,7 @@ const WorkspaceContext = createContext<{
 
 const fetchWorkspacesData = async (): Promise<WorkspaceAPIResponse> => {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL ?? ''}/api/v1/workspaces`,
+    `${process.env.NEXT_PUBLIC_API_URL ?? ''}/v1/workspaces`,
     {
       credentials: 'include',
       headers: {

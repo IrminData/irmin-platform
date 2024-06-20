@@ -50,7 +50,7 @@ class WorkspaceService {
   async getWorkspaces(): Promise<Workspace[]> {
     try {
       const response = await this.fetchWithCredentials(
-        `${api_base}/api/v1/workspaces`,
+        `${api_base}/v1/workspaces`,
         {
           method: 'GET',
           headers: {
@@ -75,7 +75,7 @@ class WorkspaceService {
   async getWorkspace(workspaceSlug: string): Promise<Workspace | null> {
     try {
       const response = await this.fetchWithCredentials(
-        `${api_base}/api/v1/workspaces/${workspaceSlug}`,
+        `${api_base}/v1/workspaces/${workspaceSlug}`,
         {
           method: 'GET',
           headers: {
@@ -102,7 +102,7 @@ class WorkspaceService {
       formData.append('name', name);
 
       const response = await this.fetchWithCredentials(
-        `${api_base}/api/v1/workspaces`,
+        `${api_base}/v1/workspaces`,
         {
           method: 'POST',
           body: formData,
@@ -131,7 +131,7 @@ class WorkspaceService {
       formData.append('name', workspace.name);
 
       const response = await this.fetchWithCredentials(
-        `${api_base}/api/v1/workspaces/${workspaceSlug}`,
+        `${api_base}/v1/workspaces/${workspaceSlug}`,
         {
           method: 'PATCH',
           body: formData,
@@ -156,7 +156,7 @@ class WorkspaceService {
   async deleteWorkspace(workspaceSlug: string): Promise<WorkspaceAPIResponse> {
     try {
       const response = await this.fetchWithCredentials(
-        `${api_base}/api/v1/workspaces/${workspaceSlug}`,
+        `${api_base}/v1/workspaces/${workspaceSlug}`,
         {
           method: 'DELETE',
         }
@@ -179,7 +179,7 @@ class WorkspaceService {
       const formData = new FormData();
       formData.append('workspace', workspaceSlug);
       const response = await this.fetchWithCredentials(
-        `${api_base}/api/v1/workspaces/switch`,
+        `${api_base}/v1/workspaces/switch`,
         {
           method: 'POST',
           body: formData,
