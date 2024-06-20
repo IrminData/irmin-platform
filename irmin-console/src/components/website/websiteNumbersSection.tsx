@@ -1,54 +1,54 @@
 export default function WebsiteNumbersSection() {
   return (
     <section
-      className="py-20 xl:pt-24 xl:pb-32 bg-white"
+      className='bg-white py-20 xl:pb-32 xl:pt-24'
       style={{
-        backgroundImage: 'url("flex-ui-assets/elements/pattern-white.svg")',
-        backgroundPosition: "center",
+        backgroundImage: 'url("ui-assets/elements/pattern-white.svg")',
+        backgroundPosition: 'center',
       }}
     >
-      <div className="container px-4 mx-auto">
-        <div className="text-center">
-          <span className="inline-block py-px px-2 mb-4 text-xs leading-5 text-white bg-midnight_green font-light uppercase rounded-full">
+      <div className='container mx-auto px-4'>
+        <div className='text-center'>
+          <span className='mb-4 inline-block rounded-full bg-midnight_green px-2 py-px text-xs font-light uppercase leading-5 text-white'>
             Numbers
           </span>
-          <h3 className="mb-4 text-4xl md:text-5xl text-rich_black font-bold tracking-tighter">
+          <h3 className='mb-4 text-4xl font-bold tracking-tighter text-rich_black md:text-5xl'>
             We believe in the power of data
           </h3>
-          <p className="mb-16 xl:mb-24 mx-auto text-lg md:text-xl text-rich_black font-light max-w-4xl">
+          <p className='mx-auto mb-16 max-w-4xl text-lg font-light text-rich_black md:text-xl xl:mb-24'>
             Flex is the only business platform that lets you run your business
             on one platform, seamlessly across all digital channels.
           </p>
-          <div className="flex flex-wrap justify-center -mx-4">
-            <div className="w-full md:w-1/3 lg:w-1/4 px-4 mb-8 lg:mb-0">
-              <h2 className="mb-2 text-4xl md:text-5xl text-rich_black font-bold tracking-tighter">
+          <div className='-mx-4 flex flex-wrap justify-center'>
+            <div className='mb-8 w-full px-4 md:w-1/3 lg:mb-0 lg:w-1/4'>
+              <h2 className='mb-2 text-4xl font-bold tracking-tighter text-rich_black md:text-5xl'>
                 235.000
               </h2>
-              <p className="text-lg md:text-xl text-rich_black font-light">
+              <p className='text-lg font-light text-rich_black md:text-xl'>
                 Projects completed
               </p>
             </div>
-            <div className="w-full md:w-1/3 lg:w-1/4 px-4 mb-8 lg:mb-0">
-              <h2 className="mb-2 text-4xl md:text-5xl text-rich_black font-bold tracking-tighter">
+            <div className='mb-8 w-full px-4 md:w-1/3 lg:mb-0 lg:w-1/4'>
+              <h2 className='mb-2 text-4xl font-bold tracking-tighter text-rich_black md:text-5xl'>
                 $10m
               </h2>
-              <p className="text-lg md:text-xl text-rich_black font-light">
+              <p className='text-lg font-light text-rich_black md:text-xl'>
                 APR
               </p>
             </div>
-            <div className="w-full md:w-1/3 lg:w-1/4 px-4 mb-8 lg:mb-0">
-              <h2 className="mb-2 text-4xl md:text-5xl text-rich_black font-bold tracking-tighter">
+            <div className='mb-8 w-full px-4 md:w-1/3 lg:mb-0 lg:w-1/4'>
+              <h2 className='mb-2 text-4xl font-bold tracking-tighter text-rich_black md:text-5xl'>
                 +50.000
               </h2>
-              <p className="text-lg md:text-xl text-rich_black font-light">
+              <p className='text-lg font-light text-rich_black md:text-xl'>
                 Hours Saved Annually
               </p>
             </div>
-            <div className="w-full md:w-1/3 lg:w-1/4 px-4">
-              <h2 className="mb-2 text-4xl md:text-5xl text-rich_black font-bold tracking-tighter">
+            <div className='w-full px-4 md:w-1/3 lg:w-1/4'>
+              <h2 className='mb-2 text-4xl font-bold tracking-tighter text-rich_black md:text-5xl'>
                 3.500
               </h2>
-              <p className="text-lg md:text-xl text-rich_black font-light">
+              <p className='text-lg font-light text-rich_black md:text-xl'>
                 Unique Users
               </p>
             </div>

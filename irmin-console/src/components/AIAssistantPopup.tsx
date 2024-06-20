@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import React, { useState, KeyboardEvent } from "react";
-import Image from "next/image";
-import { AiOutlineSend } from "react-icons/ai";
+import React, { useState, KeyboardEvent } from 'react';
+import Image from 'next/image';
+import { AiOutlineSend } from 'react-icons/ai';
 
 interface Message {
   id: number;
   text: string;
-  sender: "user" | "assistant";
+  sender: 'user' | 'assistant';
 }
 
 export default function AIAssistantPopup() {
@@ -15,11 +15,11 @@ export default function AIAssistantPopup() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 0,
-      text: "Hi! My name is Haz and I’m here to help you with your data. Ask me anything!",
-      sender: "assistant",
+      text: 'Hi! My name is Haz and I’m here to help you with your data. Ask me anything!',
+      sender: 'assistant',
     },
   ]);
-  const [newMessage, setNewMessage] = useState("");
+  const [newMessage, setNewMessage] = useState('');
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
@@ -27,15 +27,15 @@ export default function AIAssistantPopup() {
     const newMsg: Message = {
       id: messages.length,
       text: newMessage,
-      sender: "user",
+      sender: 'user',
     };
 
     setMessages([...messages, newMsg]);
-    setNewMessage(""); // Clear input after sending
+    setNewMessage(''); // Clear input after sending
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       handleSendMessage();
     }
@@ -44,20 +44,20 @@ export default function AIAssistantPopup() {
   return (
     <>
       {open && (
-        <div className="chatWindow fixed z-10 bottom-20 md:bottom-10 right-5 md:right-28 bg-white rounded-xl rounded-br-none shadow-lg p-4 w-11/12 md:w-1/3 lg:w-2/5 xl:w-1/4">
-          <div className="overflow-y-auto h-96 mb-4">
+        <div className='chatWindow fixed bottom-20 right-5 z-10 w-11/12 rounded-xl rounded-br-none bg-white p-4 shadow-lg md:bottom-10 md:right-28 md:w-1/3 lg:w-2/5 xl:w-1/4'>
+          <div className='mb-4 h-96 overflow-y-auto'>
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex items-end ${
-                  message.sender === "user" ? "justify-start" : "justify-end"
+                  message.sender === 'user' ? 'justify-start' : 'justify-end'
                 }`}
               >
                 <div
-                  className={`max-w-xs p-2 rounded-lg my-1 font-light ${
-                    message.sender === "user"
-                      ? "bg-beige rounded-bl-none"
-                      : "bg-ash_gray rounded-br-none"
+                  className={`my-1 max-w-xs rounded-lg p-2 font-light ${
+                    message.sender === 'user'
+                      ? 'rounded-bl-none bg-beige'
+                      : 'rounded-br-none bg-ash_gray'
                   }`}
                 >
                   {message.text}
@@ -65,37 +65,37 @@ export default function AIAssistantPopup() {
               </div>
             ))}
           </div>
-          {messages.filter((a) => a.sender === "user").length === 0 && (
+          {messages.filter((a) => a.sender === 'user').length === 0 && (
             <>
               <p>Suggestions:</p>
-              <div className="flex items-end mr-2">
+              <div className='mr-2 flex items-end'>
                 <button
                   onClick={() =>
-                    setNewMessage("How to connect a new data source?")
+                    setNewMessage('How to connect a new data source?')
                   }
-                  className={`w-full p-2 rounded-lg my-1 font-light bg-gray-100 cursor-pointer hover:bg-gray-200 transition-all`}
+                  className={`my-1 w-full cursor-pointer rounded-lg bg-gray-100 p-2 font-light transition-all hover:bg-gray-200`}
                 >
-                  {"How to connect a new data source?"}
+                  {'How to connect a new data source?'}
                 </button>
               </div>
-              <div className="flex items-end mr-2">
+              <div className='mr-2 flex items-end'>
                 <button
                   onClick={() =>
-                    setNewMessage("Which sources do my sales mostly come from?")
+                    setNewMessage('Which sources do my sales mostly come from?')
                   }
-                  className={`w-full p-2 rounded-lg my-1 font-light bg-gray-100 cursor-pointer hover:bg-gray-200 transition-all`}
+                  className={`my-1 w-full cursor-pointer rounded-lg bg-gray-100 p-2 font-light transition-all hover:bg-gray-200`}
                 >
-                  {"Which sources do my sales mostly come from?"}
+                  {'Which sources do my sales mostly come from?'}
                 </button>
               </div>
-              <div className="flex items-end mr-2">
+              <div className='mr-2 flex items-end'>
                 <button
                   onClick={() =>
-                    setNewMessage("Which ad campaigns are the most profitable?")
+                    setNewMessage('Which ad campaigns are the most profitable?')
                   }
-                  className={`w-full p-2 rounded-lg my-1 font-light bg-gray-100 cursor-pointer hover:bg-gray-200 transition-all`}
+                  className={`my-1 w-full cursor-pointer rounded-lg bg-gray-100 p-2 font-light transition-all hover:bg-gray-200`}
                 >
-                  {"Which ad campaigns are the most profitable?"}
+                  {'Which ad campaigns are the most profitable?'}
                 </button>
               </div>
             </>
@@ -105,34 +105,34 @@ export default function AIAssistantPopup() {
               e.preventDefault();
               handleSendMessage();
             }}
-            className="flex"
+            className='flex'
           >
             <textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="h-32 w-full appearance-none block p-3 leading-5 text-rich_black border rounded-lg shadow-md bg-ash_gray-900 mr-2"
-              placeholder="Write your message here..."
+              className='mr-2 block h-32 w-full appearance-none rounded-lg border bg-ash_gray-900 p-3 leading-5 text-rich_black shadow-md'
+              placeholder='Write your message here...'
             />
             <button
-              type="submit"
-              className="bg-ash_gray-400 hover:bg-ash_gray-500 text-white rounded-full p-3 md:hidden"
+              type='submit'
+              className='rounded-full bg-ash_gray-400 p-3 text-white hover:bg-ash_gray-500 md:hidden'
             >
-              <AiOutlineSend className="w-4 h-4" />
+              <AiOutlineSend className='h-4 w-4' />
             </button>
           </form>
         </div>
       )}
-      <div className="fixed z-10 bottom-10 right-5">
+      <div className='fixed bottom-10 right-5 z-10'>
         <button
-          className="bg-ash_gray rounded-full shadow-lg text-center p-3 hover:bg-ash_gray-600 transition-all cursor-pointer"
+          className='cursor-pointer rounded-full bg-ash_gray p-3 text-center shadow-lg transition-all hover:bg-ash_gray-600'
           onClick={() => setOpen(!open)}
         >
           <Image
-            src={"/bot.png"} // Make sure this image is in your public directory
+            src={'/bot.png'} // Make sure this image is in your public directory
             width={50}
             height={50}
-            alt="Toggle AI assistant"
+            alt='Toggle AI assistant'
           />
         </button>
       </div>

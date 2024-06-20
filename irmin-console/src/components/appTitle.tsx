@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface AppTitleProps {
   title: string;
@@ -6,8 +6,8 @@ interface AppTitleProps {
 
 const AppTitle: React.FC<AppTitleProps> = ({ title }) => {
   return (
-    <div className="flex items-center justify-between p-4">
-      <h1 className="text-3xl font-bold text-gray-800">{title}</h1>
+    <div className='flex items-center justify-between p-4'>
+      <h1 className='text-3xl font-bold text-gray-800'>{title}</h1>
     </div>
   );
 };

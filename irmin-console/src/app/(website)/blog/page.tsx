@@ -1,4 +1,4 @@
-import WebsiteBlogPosts from "@/components/website/websiteBlogPosts";
+import WebsiteBlogPosts from '@/components/website/websiteBlogPosts';
 
 export default function Blog() {
   return (

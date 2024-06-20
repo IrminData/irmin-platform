@@ -1,131 +1,145 @@
-import Link from "next/link";
-import Image from "next/image";
+import Link from 'next/link';
+import Image from 'next/image';
 
 export default function WebsiteFooter() {
   return (
     <>
-      <section className="bg-rich_black">
-        <div className="container mx-auto">
-          <div className="flex flex-wrap pt-24 pb-12">
-            <div className="w-full md:w-1/2 lg:w-4/12 px-4 mb-16 lg:mb-0">
-              <Link className="inline-block mb-4" href="#">
+      <section className='bg-rich_black'>
+        <div className='container mx-auto'>
+          <div className='flex flex-wrap pb-12 pt-24'>
+            <div className='mb-16 w-full px-4 md:w-1/2 lg:mb-0 lg:w-4/12'>
+              <Link className='mb-4 inline-block' href='#'>
                 <Image
-                  className="h-8"
-                  src="/irmin-logo-light.svg"
-                  alt="Irmin light color logo"
+                  className='h-8'
+                  src='/irmin-logo-light.svg'
+                  alt='Irmin light color logo'
                   width={100}
                   height={25}
                 />
               </Link>
-              <p className="text-base text-ash_gray font-light lg:w-64">
-                A better home for your data. Irmin is a ETL and data management
+              <p className='text-base font-light text-ash_gray lg:w-64'>
+                A better home for your data. Irmin is an ETL and data management
                 platform that helps you to collect, clean, and transform your
                 data.
               </p>
+              <div className='mt-10 flex flex-row'>
+                <Link
+                  className='mr-4 inline-block text-xs font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                  href='/legal/privacy-policy'
+                >
+                  Privacy Policy
+                </Link>
+                <Link
+                  className='mr-4 inline-block text-xs font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                  href='/legal/terms-of-use'
+                >
+                  Terms of Use
+                </Link>
+              </div>
             </div>
-            <div className="w-full md:w-1/4 lg:w-2/12 px-4 mb-16 lg:mb-0">
-              <h3 className="mb-5 text-lg font-bold text-white">Product</h3>
+            <div className='mb-16 w-full px-4 md:w-1/4 lg:mb-0 lg:w-2/12'>
+              <h3 className='mb-5 text-lg font-bold text-white'>Product</h3>
               <ul>
-                <li className="mb-4">
+                <li className='mb-4'>
                   <Link
-                    className="inline-block text-base text-ash_gray font-light hover:text-white transition-colors duration-200"
-                    href="#"
+                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                    href='#'
                   >
                     Features
                   </Link>
                 </li>
-                <li className="mb-4">
+                <li className='mb-4'>
                   <Link
-                    className="inline-block text-base text-ash_gray font-light hover:text-white transition-colors duration-200"
-                    href="#"
+                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                    href='#'
                   >
                     Solutions
                   </Link>
                 </li>
-                <li className="mb-4">
+                <li className='mb-4'>
                   <Link
-                    className="inline-block text-base text-ash_gray font-light hover:text-white transition-colors duration-200"
-                    href="#"
+                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                    href='#'
                   >
                     Pricing
                   </Link>
                 </li>
-                <li className="mb-4">
+                <li className='mb-4'>
                   <Link
-                    className="inline-block text-base text-ash_gray font-light hover:text-white transition-colors duration-200"
-                    href="#"
+                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                    href='#'
                   >
                     Tutorials
                   </Link>
                 </li>
                 <li>
                   <Link
-                    className="inline-block text-base text-ash_gray font-light hover:text-white transition-colors duration-200"
-                    href="#"
+                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                    href='#'
                   >
                     Updates
                   </Link>
                 </li>
               </ul>
             </div>
-            <div className="w-full md:w-1/4 lg:w-2/12 px-4 mb-16 lg:mb-0">
-              <h3 className="mb-5 text-lg font-bold text-white">Company</h3>
+            <div className='mb-16 w-full px-4 md:w-1/4 lg:mb-0 lg:w-2/12'>
+              <h3 className='mb-5 text-lg font-bold text-white'>Company</h3>
               <ul>
-                <li className="mb-4">
+                <li className='mb-4'>
                   <Link
-                    className="inline-block text-base text-ash_gray font-light hover:text-white transition-colors duration-200"
-                    href="#"
+                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                    href='#'
                   >
                     Blog
                   </Link>
                 </li>
-                <li className="mb-4">
+                <li className='mb-4'>
                   <Link
-                    className="inline-block text-base text-ash_gray font-light hover:text-white transition-colors duration-200"
-                    href="#"
+                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                    href='#'
                   >
                     Newsletter
                   </Link>
                 </li>
-                <li className="mb-4">
+                <li className='mb-4'>
                   <Link
-                    className="inline-block text-base text-ash_gray font-light hover:text-white transition-colors duration-200"
-                    href="#"
+                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                    href='#'
                   >
                     Help Centre
                   </Link>
                 </li>
-                <li className="mb-4">
+                <li className='mb-4'>
                   <Link
-                    className="inline-block text-base text-ash_gray font-light hover:text-white transition-colors duration-200"
-                    href="#"
+                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                    href='#'
                   >
                     Careers
                   </Link>
                 </li>
-                <li>
+                <li className='mb-4'>
                   <Link
-                    className="inline-block text-base text-ash_gray font-light hover:text-white transition-colors duration-200"
-                    href="#"
+                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                    href='#'
                   >
                     Support
                   </Link>
                 </li>
               </ul>
             </div>
-            <div className="w-full md:w-1/3 lg:w-4/12 px-4">
-              <h3 className="mb-5 text-lg font-bold text-white">Newsletter</h3>
-              <div className="flex flex-wrap">
-                <div className="w-full lg:flex-1 py-1 lg:py-0 lg:mr-3">
+            <div className='w-full px-4 md:w-1/3 lg:w-4/12'>
+              <h3 className='mb-5 text-lg font-bold text-white'>Newsletter</h3>
+              <div className='flex flex-wrap'>
+                <div className='w-full py-1 lg:mr-3 lg:flex-1 lg:py-0'>
                   <input
-                    className="px-3 w-full h-12 text-rich_black outline-none placeholder-rich_black border border-rich_black focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-xsm"
-                    placeholder="Your email"
+                    className='shadow-xsm h-12 w-full rounded-full border border-rich_black px-3 text-rich_black placeholder-rich_black outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                    placeholder='Your email'
                   />
                 </div>
-                <div className="w-full lg:w-auto py-1 lg:py-0">
+                <div className='w-full py-1 lg:w-auto lg:py-0'>
                   <Link
-                    className="inline-block py-4 px-5 w-full leading-4 text-white text-center bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
-                    href="#"
+                    className='inline-block w-full rounded-full bg-ash_gray-500 px-5 py-4 text-center leading-4 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                    href='#'
                   >
                     Subscribe
                   </Link>
@@ -133,10 +147,10 @@ export default function WebsiteFooter() {
               </div>
             </div>
           </div>
+          <p className='py-10 text-center text-sm font-light text-ash_gray md:pb-16'>
+            &copy; {new Date().getFullYear()} Irmin. All rights reserved.
+          </p>
         </div>
-        <p className="py-10 md:pb-16 text-sm text-ash_gray font-light text-center">
-          © 2024 Irmin. All rights reserved.
-        </p>
       </section>
     </>
   );

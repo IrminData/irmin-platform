@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import React, { useEffect, useRef, useState } from "react";
-import DataTable from "react-data-table-component";
+import React, { useEffect, useRef, useState } from 'react';
+import DataTable from 'react-data-table-component';
 import {
   AiOutlineSave,
   AiOutlineHistory,
   AiOutlineDownload,
-} from "react-icons/ai";
-import { MdPlayArrow } from "react-icons/md";
+} from 'react-icons/ai';
+import { MdPlayArrow } from 'react-icons/md';
 
-import BarChart from "@/components/widgets/barChart";
-import LineChart from "@/components/widgets/lineChart";
-import ScrollableTable from "@/components/widgets/scrollableTable";
-import VisualisationCreationForm from "./visualisationCreationForm";
+import BarChart from '@/components/widgets/barChart';
+import LineChart from '@/components/widgets/lineChart';
+import ScrollableTable from '@/components/widgets/scrollableTable';
+import VisualisationCreationForm from './visualisationCreationForm';
 
 type DataTableProps = {
   editorHeight: string;
@@ -27,10 +27,10 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
   columns,
   isDataset = false,
 }) => {
-  const [activeTab, setActiveTab] = useState("queryResults");
+  const [activeTab, setActiveTab] = useState('queryResults');
 
   const tableRef = useRef<HTMLDivElement>(null);
-  const [tableMaxHeight, setTableMaxHeight] = useState("0px");
+  const [tableMaxHeight, setTableMaxHeight] = useState('0px');
 
   const updateTableHeight = () => {
     const rect = tableRef.current?.getBoundingClientRect();
@@ -44,115 +44,115 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
 
   useEffect(() => {
     updateTableHeight(); // Update on mount
-    window.addEventListener("resize", updateTableHeight); // Update on window resize
-    return () => window.removeEventListener("resize", updateTableHeight); // Cleanup on unmount
+    window.addEventListener('resize', updateTableHeight); // Update on window resize
+    return () => window.removeEventListener('resize', updateTableHeight); // Cleanup on unmount
   }, [editorHeight]);
 
   return (
     <div>
       {/* Tab Buttons */}
-      <div className="flex mb-4 justify-between px-4 pt-2">
+      <div className='mb-4 flex justify-between px-4 pt-2'>
         <div>
           <button
-            onClick={() => setActiveTab("queryResults")}
-            className={`px-4 py-2 border-b-2 ${
-              activeTab === "queryResults"
-                ? "border-ash_gray"
-                : "border-transparent"
-            } focus:outline-none text-sm lg:text-md`}
+            onClick={() => setActiveTab('queryResults')}
+            className={`border-b-2 px-4 py-2 ${
+              activeTab === 'queryResults'
+                ? 'border-ash_gray'
+                : 'border-transparent'
+            } lg:text-md text-sm focus:outline-none`}
           >
             Query Results
           </button>
           <button
-            onClick={() => setActiveTab("visualisation")}
-            className={`px-4 py-2 border-b-2 ${
-              activeTab === "visualisation"
-                ? "border-ash_gray"
-                : "border-transparent"
-            } focus:outline-none text-sm lg:text-md`}
+            onClick={() => setActiveTab('visualisation')}
+            className={`border-b-2 px-4 py-2 ${
+              activeTab === 'visualisation'
+                ? 'border-ash_gray'
+                : 'border-transparent'
+            } lg:text-md text-sm focus:outline-none`}
           >
             Visualisation
           </button>
           <button
-            onClick={() => setActiveTab("documentation")}
-            className={`px-4 py-2 border-b-2 ${
-              activeTab === "documentation"
-                ? "border-ash_gray"
-                : "border-transparent"
-            } focus:outline-none text-sm lg:text-md`}
+            onClick={() => setActiveTab('documentation')}
+            className={`border-b-2 px-4 py-2 ${
+              activeTab === 'documentation'
+                ? 'border-ash_gray'
+                : 'border-transparent'
+            } lg:text-md text-sm focus:outline-none`}
           >
             Documentation
           </button>
         </div>
         {!isDataset && (
-          <div className="text-right">
-            <button className="text-gray-800 py-2 px-4 text-sm lg:text-md border border-ash_gray rounded shadow my-1 focus:outline-none transition-all hover:bg-ash_gray hover:text-white">
-              <AiOutlineSave className="inline" /> Save dataset
+          <div className='text-right'>
+            <button className='lg:text-md my-1 rounded border border-ash_gray px-4 py-2 text-sm text-gray-800 shadow transition-all hover:bg-ash_gray hover:text-white focus:outline-none'>
+              <AiOutlineSave className='inline' /> Save dataset
             </button>
-            <button className="text-gray-800 py-2 px-4 text-sm lg:text-md border border-ash_gray rounded shadow my-1 lg:ml-2 focus:outline-none transition-all hover:bg-ash_gray hover:text-white">
-              <MdPlayArrow className="inline" /> Run script
+            <button className='lg:text-md my-1 rounded border border-ash_gray px-4 py-2 text-sm text-gray-800 shadow transition-all hover:bg-ash_gray hover:text-white focus:outline-none lg:ml-2'>
+              <MdPlayArrow className='inline' /> Run script
             </button>
           </div>
         )}
       </div>
 
       <div ref={tableRef}>
-        {activeTab === "visualisation" && (
+        {activeTab === 'visualisation' && (
           <div
-            className="grid grid-cols-2 px-2 py-0 overflow-auto"
+            className='grid grid-cols-2 overflow-auto px-2 py-0'
             style={{ maxHeight: tableMaxHeight }}
           >
             <div>
-              <h3 className="font-medium p-4">Existing visualisations</h3>
-              <div className="overflow-auto">
+              <h3 className='p-4 font-medium'>Existing visualisations</h3>
+              <div className='overflow-auto'>
                 <ScrollableTable
-                  title="Monthly Sales"
+                  title='Monthly Sales'
                   columns={[
-                    { header: "Month", accessor: "month" },
-                    { header: "Total Sales", accessor: "total_sales" },
+                    { header: 'Month', accessor: 'month' },
+                    { header: 'Total Sales', accessor: 'total_sales' },
                   ]}
                   data={[
-                    { month: "2020-12-01", total_sales: 5168 },
-                    { month: "2021-01-01", total_sales: 7661 },
-                    { month: "2020-12-01", total_sales: 5168 },
-                    { month: "2021-01-01", total_sales: 7661 },
-                    { month: "2020-12-01", total_sales: 5168 },
-                    { month: "2021-01-01", total_sales: 7661 },
-                    { month: "2020-12-01", total_sales: 5168 },
-                    { month: "2021-01-01", total_sales: 7661 },
-                    { month: "2020-12-01", total_sales: 5168 },
-                    { month: "2021-01-01", total_sales: 7661 },
-                    { month: "2020-12-01", total_sales: 5168 },
-                    { month: "2021-01-01", total_sales: 7661 },
-                    { month: "2020-12-01", total_sales: 5168 },
-                    { month: "2021-01-01", total_sales: 7661 },
+                    { month: '2020-12-01', total_sales: 5168 },
+                    { month: '2021-01-01', total_sales: 7661 },
+                    { month: '2020-12-01', total_sales: 5168 },
+                    { month: '2021-01-01', total_sales: 7661 },
+                    { month: '2020-12-01', total_sales: 5168 },
+                    { month: '2021-01-01', total_sales: 7661 },
+                    { month: '2020-12-01', total_sales: 5168 },
+                    { month: '2021-01-01', total_sales: 7661 },
+                    { month: '2020-12-01', total_sales: 5168 },
+                    { month: '2021-01-01', total_sales: 7661 },
+                    { month: '2020-12-01', total_sales: 5168 },
+                    { month: '2021-01-01', total_sales: 7661 },
+                    { month: '2020-12-01', total_sales: 5168 },
+                    { month: '2021-01-01', total_sales: 7661 },
                   ]}
                 />
                 <LineChart
-                  title="Monthly Sales"
+                  title='Monthly Sales'
                   data={{
-                    labels: ["January", "February", "March", "April"],
+                    labels: ['January', 'February', 'March', 'April'],
                     datasets: [
                       {
-                        label: "Sales",
+                        label: 'Sales',
                         data: [65, 59, 80, 81],
                         fill: false,
-                        backgroundColor: "#aec3b0",
-                        borderColor: "#aec3b0",
+                        backgroundColor: '#aec3b0',
+                        borderColor: '#aec3b0',
                       },
                     ],
                   }}
                 />
                 <BarChart
-                  title="Monthly Sales"
+                  title='Monthly Sales'
                   data={{
-                    labels: ["January", "February", "March", "April"],
+                    labels: ['January', 'February', 'March', 'April'],
                     datasets: [
                       {
-                        label: "Sales",
+                        label: 'Sales',
                         data: [65, 59, 80, 81],
-                        backgroundColor: "#aec3b0",
-                        borderColor: "#aec3b0",
+                        backgroundColor: '#aec3b0',
+                        borderColor: '#aec3b0',
                       },
                     ],
                   }}
@@ -160,45 +160,45 @@ const QueryResultsAndTabs: React.FC<DataTableProps> = ({
               </div>
             </div>
             <div>
-              <h3 className="font-medium p-4">Add new visualisation</h3>
+              <h3 className='p-4 font-medium'>Add new visualisation</h3>
               <VisualisationCreationForm />
             </div>
           </div>
         )}
 
-        {activeTab === "documentation" && (
-          <div style={{ height: tableMaxHeight }} className="overflow-auto">
+        {activeTab === 'documentation' && (
+          <div style={{ height: tableMaxHeight }} className='overflow-auto'>
             <textarea
-              className="h-full w-full focus:outline-none p-2"
-              placeholder="Start typing your documentation and notes here..."
+              className='h-full w-full p-2 focus:outline-none'
+              placeholder='Start typing your documentation and notes here...'
             />
           </div>
         )}
 
-        {activeTab === "queryResults" && (
-          <div style={{ maxHeight: tableMaxHeight }} className="overflow-auto">
+        {activeTab === 'queryResults' && (
+          <div style={{ maxHeight: tableMaxHeight }} className='overflow-auto'>
             {/* Action Buttons */}
-            <div className="flex justify-between px-4 py-2 text-sm border">
+            <div className='flex justify-between border px-4 py-2 text-sm'>
               <div>
-                <p className="inline font-bold">{"Unsaved draft (2)"}</p>
-                <p className="inline font-light ml-4">
-                  {"99 rows returned in 1.5s"}
+                <p className='inline font-bold'>{'Unsaved draft (2)'}</p>
+                <p className='ml-4 inline font-light'>
+                  {'99 rows returned in 1.5s'}
                 </p>
               </div>
-              <div className="text-right">
-                <button className="text-gray hover:underline">
-                  <AiOutlineDownload className="inline" /> export table (.csv)
+              <div className='text-right'>
+                <button className='text-gray hover:underline'>
+                  <AiOutlineDownload className='inline' /> export table (.csv)
                 </button>
                 {!isDataset && (
-                  <button className="text-gray ml-4 hover:underline">
-                    <AiOutlineHistory className="inline" /> execution history
+                  <button className='text-gray ml-4 hover:underline'>
+                    <AiOutlineHistory className='inline' /> execution history
                     (2)
                   </button>
                 )}
               </div>
             </div>
             {/* Table */}
-            <div className="overflow-auto">
+            <div className='overflow-auto'>
               <DataTable columns={columns} data={data} />
             </div>
           </div>

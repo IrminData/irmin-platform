@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Cron from "react-cron-generator";
-import { connectionDataType } from "../dataSourceSetupView";
-import "@/app/cron-builder.css";
+import { useState } from 'react';
+import Cron from 'react-cron-generator';
+import { connectionDataType } from '../dataSourceSetupView';
+import '@/app/cron-builder.css';
 
 export default function DefineSync({
   connectors,
@@ -35,27 +35,27 @@ export default function DefineSync({
       cron: cronValue,
     }));
     setIsOpen(false);
-    alert("Connection setup done!");
+    alert('Connection setup done!');
   };
 
   return (
-    <div className="p-6">
-      <div className="flex mb-8 ">
-        <connector.icon className="text-4xl mr-4 text-air_force_blue" />
-        <span className="text-xl mt-1 text-air_force_blue">
+    <div className='p-6'>
+      <div className='mb-8 flex'>
+        <connector.icon className='mr-4 text-4xl text-air_force_blue' />
+        <span className='mt-1 text-xl text-air_force_blue'>
           {connector.name}
         </span>
       </div>
-      <div className="mb-6">
-        <label className="block mb-2 text-rich_black font-light" htmlFor="">
+      <div className='mb-6'>
+        <label className='mb-2 block font-light text-rich_black' htmlFor=''>
           Sync interval (cron expression)
         </label>
         <input
-          className="appearance-none block w-full p-3 leading-5 text-rich_black border border-rich_black rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
+          className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
           value={cronValue}
         />
       </div>
-      <div className="py-4">
+      <div className='py-4'>
         <Cron
           value={cronValue}
           onChange={setCronValue}
@@ -64,13 +64,13 @@ export default function DefineSync({
         />
       </div>
       <button
-        className="inline-block py-3 px-7 mb-6 w-full text-base text-white font-medium text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
+        className='mb-6 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
         onClick={continueSetup}
       >
         Start sync
       </button>
       <button
-        className="text-sm w-full text-center font-light text-ash_gray-500 hover:text-ash_gray-600 hover:underline"
+        className='w-full text-center text-sm font-light text-ash_gray-500 hover:text-ash_gray-600 hover:underline'
         onClick={(e) => {
           e.preventDefault();
           setCurrentStep(2);

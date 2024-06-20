@@ -43,7 +43,7 @@
 .well-small input {
   width: auto !important;
 }
-.cron_builder_bordering input[type="radio"] {
+.cron_builder_bordering input[type='radio'] {
   margin-top: 0px;
   vertical-align: middle;
 }

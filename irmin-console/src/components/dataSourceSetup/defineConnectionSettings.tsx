@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useRef } from "react";
-import { connectionDataType } from "../dataSourceSetupView";
+import { useRef } from 'react';
+import { connectionDataType } from '../dataSourceSetupView';
 
 export default function DefineConnectionSettings({
   connectors,
@@ -43,34 +43,34 @@ export default function DefineConnectionSettings({
   };
 
   return (
-    <div className="p-6">
-      <div className="flex mb-8 ">
-        <connector.icon className="text-4xl mr-4 text-air_force_blue" />
-        <span className="text-xl mt-1 text-air_force_blue">
+    <div className='p-6'>
+      <div className='mb-8 flex'>
+        <connector.icon className='mr-4 text-4xl text-air_force_blue' />
+        <span className='mt-1 text-xl text-air_force_blue'>
           {connector.name}
         </span>
       </div>
 
-      <form action="" ref={formRef}>
-        <div className="mb-6">
-          <label className="block mb-2 text-rich_black font-light" htmlFor="">
+      <form action='' ref={formRef}>
+        <div className='mb-6'>
+          <label className='mb-2 block font-light text-rich_black' htmlFor=''>
             Account *
           </label>
           <input
-            className="appearance-none block w-full p-3 leading-5 text-rich_black border border-rich_black rounded-full shadow-md placeholder-ash_gray focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50"
-            type="account"
-            placeholder="Account"
+            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+            type='account'
+            placeholder='Account'
             required
           />
         </div>
         <button
-          className="inline-block py-3 px-7 mb-6 w-full text-base text-white font-medium text-center leading-6 bg-ash_gray-500 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 rounded-full shadow-sm"
+          className='mb-6 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
           onClick={continueSetup}
         >
           Continue
         </button>
         <button
-          className="text-sm w-full text-center font-light text-ash_gray-500 hover:text-ash_gray-600 hover:underline"
+          className='w-full text-center text-sm font-light text-ash_gray-500 hover:text-ash_gray-600 hover:underline'
           onClick={(e) => {
             e.preventDefault();
             setCurrentStep(2);

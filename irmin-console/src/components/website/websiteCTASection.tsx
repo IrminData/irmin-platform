@@ -1,73 +1,73 @@
-import Link from "next/link";
-import Image from "next/image";
+import Link from 'next/link';
+import Image from 'next/image';
 
 export default function WebsiteCTASection() {
   return (
     <section
-      className="py-24 bg-white overflow-hidden"
+      className='overflow-hidden bg-white py-24'
       style={{
-        backgroundImage: 'url("flex-ui-assets/elements/pattern-white.svg")',
-        backgroundPosition: "center",
+        backgroundImage: 'url("ui-assets/elements/pattern-white.svg")',
+        backgroundPosition: 'center',
       }}
     >
-      <div className="container px-4 mx-auto">
-        <div className="flex flex-wrap -mx-4">
-          <div className="w-full md:w-1/2 px-4 mb-20 lg:mb-0">
-            <div className="max-w-md">
-              <h2 className="mb-8 text-4xl md:text-5xl font-heading font-bold text-rich_black md:leading-15">
+      <div className='container mx-auto px-4'>
+        <div className='-mx-4 flex flex-wrap'>
+          <div className='mb-20 w-full px-4 md:w-1/2 lg:mb-0'>
+            <div className='max-w-md'>
+              <h2 className='font-heading md:leading-15 mb-8 text-4xl font-bold text-rich_black md:text-5xl'>
                 Join 6,000+ companies growing with Irmin
               </h2>
-              <ul className="mb-8">
-                <li className="flex items-center mb-4">
+              <ul className='mb-8'>
+                <li className='mb-4 flex items-center'>
                   <Image
-                    className="mr-3"
-                    src="/flex-ui-assets/elements/cta/checkbox-green.svg"
-                    alt="Green checkbox"
+                    className='mr-3'
+                    src='/ui-assets/elements/checkbox-green.svg'
+                    alt='Green checkbox'
                     width={26}
                     height={26}
                   />
-                  <span className="text-lg md:text-xl font-heading text-rich_black">
+                  <span className='font-heading text-lg text-rich_black md:text-xl'>
                     Mauris pellentesque congue libero nec
                   </span>
                 </li>
-                <li className="flex items-center mb-4">
+                <li className='mb-4 flex items-center'>
                   <Image
-                    className="mr-3"
-                    src="/flex-ui-assets/elements/cta/checkbox-green.svg"
-                    alt="Green checkbox"
+                    className='mr-3'
+                    src='/ui-assets/elements/checkbox-green.svg'
+                    alt='Green checkbox'
                     width={26}
                     height={26}
                   />
-                  <span className="text-lg md:text-xl font-heading text-rich_black">
+                  <span className='font-heading text-lg text-rich_black md:text-xl'>
                     Suspendisse mollis tincidunt
                   </span>
                 </li>
-                <li className="flex items-center">
+                <li className='flex items-center'>
                   <Image
-                    className="mr-3"
-                    src="/flex-ui-assets/elements/cta/checkbox-green.svg"
-                    alt="Green checkbox"
+                    className='mr-3'
+                    src='/ui-assets/elements/checkbox-green.svg'
+                    alt='Green checkbox'
                     width={26}
                     height={26}
                   />
-                  <span className="text-lg md:text-xl font-heading text-rich_black">
+                  <span className='font-heading text-lg text-rich_black md:text-xl'>
                     Praesent varius justo vel justo pulvinar
                   </span>
                 </li>
               </ul>
-              <div className="flex flex-wrap items-center">
-                <div className="w-1/2 pr-4">
+              <div className='flex flex-wrap items-center'>
+                <div className='w-1/2 pr-4'>
                   <Link
-                    className="inline-block py-4 px-4 w-full text-base md:text-lg leading-4 text-white font-light text-center bg-midnight_green-500 border border-midnight_green-500 rounded-full shadow-sm hover:bg-midnight_green-600 hover:border-midnight_green-600 transition-colors duration-200 ease-in-out"
-                    href="/sign-up"
+                    className='inline-block w-full rounded-full border border-midnight_green-500 bg-midnight_green-500 px-4 py-4 text-center text-base font-light leading-4 text-white shadow-sm transition-colors duration-200 ease-in-out hover:border-midnight_green-600 hover:bg-midnight_green-600 md:text-lg'
+                    href='/sign-up'
                   >
                     Get started for free
                   </Link>
                 </div>
-                <div className="w-1/2">
+                <div className='w-1/2'>
                   <Link
-                    className="inline-block py-4 px-4 w-full text-base md:text-lg leading-4 text-rich_black font-light text-center bg-white border border-rich_black rounded-full shadow-sm hover:bg-rich_black transition-colors duration-200 ease-in-out"
-                    href="#"
+                    className='text-cente inline-block w-full rounded-full border border-ash_gray px-4 py-4 text-base font-light leading-4 text-ash_gray shadow-sm transition-colors duration-200 ease-in-out hover:bg-gray-50 md:text-lg'
+                    href='#'
                   >
                     Schedule a live demo
                   </Link>
@@ -75,26 +75,26 @@ export default function WebsiteCTASection() {
               </div>
             </div>
           </div>
-          <div className="w-full md:w-1/2 px-4">
-            <div className="relative max-w-max mx-auto">
+          <div className='w-full px-4 md:w-1/2'>
+            <div className='relative mx-auto max-w-max'>
               <Image
-                className="absolute top-0 right-0 -mt-6 lg:-mt-12 -mr-6 lg:-mr-12 w-20 lg:w-auto z-10"
-                src="/flex-ui-assets/elements/circle3-yellow.svg"
-                alt="Yellow circle"
+                className='absolute right-0 top-0 z-10 -mr-6 -mt-6 w-20 lg:-mr-12 lg:-mt-12 lg:w-auto'
+                src='/ui-assets/elements/circle3-yellow.svg'
+                alt='Yellow circle'
                 width={129}
                 height={129}
               />
               <Image
-                className="absolute bottom-0 left-0 -mb-6 lg:-mb-10-ml-6 lg:-ml-12 w-20 lg:w-auto"
-                src="/flex-ui-assets/elements/dots3-blue.svg"
-                alt="Blue dots"
+                className='lg:-mb-10-ml-6 absolute bottom-0 left-0 -mb-6 w-20 lg:-ml-12 lg:w-auto'
+                src='/ui-assets/elements/dots3-blue.svg'
+                alt='Blue dots'
                 width={129}
                 height={129}
               />
               <Image
-                className="relative"
-                src="/flex-ui-assets/elements/cta/photo-laptop-ph.png"
-                alt="Stock photo"
+                className='relative'
+                src='/ui-assets/elements/photo-laptop-ph.png'
+                alt='Stock photo'
                 width={554}
                 height={415}
               />

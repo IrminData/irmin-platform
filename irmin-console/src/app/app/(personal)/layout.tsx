@@ -1,9 +1,9 @@
-import DashboardNavigation from "@/components/dashboardNavigation";
-import type { Metadata } from "next";
+import DashboardNavigation from '@/components/dashboardNavigation';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Irmin",
-  description: "A better home for your data",
+  title: 'Irmin',
+  description: 'A better home for your data',
 };
 
 export default function PersonalDashboardLayout({

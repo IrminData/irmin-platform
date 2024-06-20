@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   FiFolder,
   FiFileText,
   FiChevronDown,
   FiChevronRight,
   FiPlus,
-} from "react-icons/fi";
+} from 'react-icons/fi';
 
 type FileItemProps = {
   name: string;
-  type: "file" | "folder";
+  type: 'file' | 'folder';
   children?: FileItemProps[];
 };
 
@@ -34,7 +34,7 @@ const FileNavigator: React.FC<FileNavigatorProps> = ({
     x: number;
     y: number;
     itemName: string;
-  }>({ visible: false, x: 0, y: 0, itemName: "" });
+  }>({ visible: false, x: 0, y: 0, itemName: '' });
 
   const toggleFolder = (name: string) => {
     setOpenFolders((prev) => ({
@@ -58,7 +58,7 @@ const FileNavigator: React.FC<FileNavigatorProps> = ({
       ...prev,
       visible: false,
     }));
-    if (item.type === "file") {
+    if (item.type === 'file') {
       onOpenFile(item.name);
     } else {
       toggleFolder(item.name);
@@ -77,27 +77,27 @@ const FileNavigator: React.FC<FileNavigatorProps> = ({
     return items.map((item) => (
       <div
         key={item.name}
-        className="my-1"
+        className='my-1'
         onContextMenu={(e) => handleContextMenu(e, item.name)}
       >
         <div
-          className={`flex items-center cursor-pointer hover:bg-gray-100 p-1 rounded-md`}
+          className={`flex cursor-pointer items-center rounded-md p-1 hover:bg-gray-100`}
           onClick={(e) => handleClick(e, item)}
         >
-          {item.type === "folder" ? (
+          {item.type === 'folder' ? (
             openFolders[item.name] ? (
-              <FiChevronDown className="inline-block" />
+              <FiChevronDown className='inline-block' />
             ) : (
-              <FiChevronRight className="inline-block" />
+              <FiChevronRight className='inline-block' />
             )
           ) : null}
-          <span className="ml-2">
-            {item.type === "folder" ? <FiFolder /> : <FiFileText />}
+          <span className='ml-2'>
+            {item.type === 'folder' ? <FiFolder /> : <FiFileText />}
           </span>
-          <span className="ml-2">{item.name}</span>
+          <span className='ml-2'>{item.name}</span>
         </div>
-        {item.type === "folder" && openFolders[item.name] && (
-          <div className="pl-6">{renderItems(item.children ?? [])}</div>
+        {item.type === 'folder' && openFolders[item.name] && (
+          <div className='pl-6'>{renderItems(item.children ?? [])}</div>
         )}
       </div>
     ));
@@ -105,34 +105,34 @@ const FileNavigator: React.FC<FileNavigatorProps> = ({
 
   return (
     <>
-      <div className="px-3">
-        <button className="text-center hover:underline transition-all mb-2">
-          <FiPlus className="inline-block mr-2 -mt-1 text-ash_gray" /> Create
+      <div className='px-3'>
+        <button className='mb-2 text-center transition-all hover:underline'>
+          <FiPlus className='-mt-1 mr-2 inline-block text-ash_gray' /> Create
           new file or folder
         </button>
       </div>
-      <div className="fileNavigator px-3" onClick={handleClickOutside}>
+      <div className='fileNavigator px-3' onClick={handleClickOutside}>
         {renderItems(items)}
       </div>
       {contextMenu.visible && (
         <ul
-          className="absolute bg-white shadow rounded p-2"
+          className='absolute rounded bg-white p-2 shadow'
           style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
         >
           <li
-            className="cursor-pointer hover:bg-gray-100 p-1"
+            className='cursor-pointer p-1 hover:bg-gray-100'
             onClick={() => onOpenFile(contextMenu.itemName)}
           >
             Open
           </li>
           <li
-            className="cursor-pointer hover:bg-gray-100 p-1"
+            className='cursor-pointer p-1 hover:bg-gray-100'
             onClick={() => onDeleteFile && onDeleteFile(contextMenu.itemName)}
           >
             Delete
           </li>
           <li
-            className="cursor-pointer hover:bg-gray-100 p-1"
+            className='cursor-pointer p-1 hover:bg-gray-100'
             onClick={() => onRenameFile && onRenameFile(contextMenu.itemName)}
           >
             Rename

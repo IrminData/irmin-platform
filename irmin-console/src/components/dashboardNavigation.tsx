@@ -1,12 +1,13 @@
-"use client";
-import React from "react";
+'use client';
+import React from 'react';
 
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-import { RxDashboard } from "react-icons/rx";
-import { CiDatabase } from "react-icons/ci";
-import { AiOutlineConsoleSql } from "react-icons/ai";
+import { RxDashboard } from 'react-icons/rx';
+import { CiDatabase } from 'react-icons/ci';
+import { AiOutlineConsoleSql } from 'react-icons/ai';
 import {
   TbDatabaseImport,
   TbDatabaseExport,
@@ -16,131 +17,189 @@ import {
   TbSearch,
   TbChevronRight,
   TbChevronLeft,
-} from "react-icons/tb";
-import { PiStorefront } from "react-icons/pi";
+} from 'react-icons/tb';
+import { PiStorefront } from 'react-icons/pi';
+import { useProfile } from '@/context/ProfileContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
+import AuthService from '@/lib/AuthService';
+import WorkspaceService from '@/lib/WorkspaceService';
 
-import AIAssistantPopup from "./AIAssistantPopup";
+import AIAssistantPopup from './AIAssistantPopup';
 
 export default function DashboardNavigation({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const profile = useProfile();
+  const workspace = useWorkspace();
+  const router = useRouter();
+
+  const auth = AuthService.getInstance();
+  const workspaceService = WorkspaceService.getInstance();
+
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isMenuFolded, setIsMenuFolded] = React.useState(false);
+  const [processingWorkspaceSwitch, setProcessingWorkspaceSwitch] =
+    React.useState(false);
 
+  if (!profile.profile) {
+    return <></>;
+  }
+  if (!workspace.currentWorkspace) {
+    router.push('/app');
+    return <></>;
+  }
+
+  const workspaceSlug = workspace.currentWorkspace.slug;
   return (
     <>
       <AIAssistantPopup />
-      <section className="min-h-full">
-        <div className="fixed top-4 left-4 z-50 block md:hidden">
+      <section className='min-h-full'>
+        <div className='fixed left-4 top-4 z-50 block md:hidden'>
           <button
-            className="w-14 h-14 relative focus:outline-none bg-ash_gray rounded-full"
+            className='relative h-14 w-14 rounded-full bg-ash_gray focus:outline-none'
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <div className="block w-5 absolute left-6 top-1/2   transform  -translate-x-1/2 -translate-y-1/2">
+            <div className='absolute left-6 top-1/2 block w-5 -translate-x-1/2 -translate-y-1/2 transform'>
               <span
-                className={`block absolute h-0.5 w-7 text-white bg-current transform transition duration-500 ease-in-out ${
-                  isMenuOpen ? "rotate-45" : "-translate-y-1.5"
+                className={`absolute block h-0.5 w-7 transform bg-current text-white transition duration-500 ease-in-out ${
+                  isMenuOpen ? 'rotate-45' : '-translate-y-1.5'
                 }`}
               ></span>
               <span
-                className={`block absolute h-0.5 w-5 text-white bg-current transform transition duration-500 ease-in-out ${
-                  isMenuOpen ? "opacity-0" : ""
+                className={`absolute block h-0.5 w-5 transform bg-current text-white transition duration-500 ease-in-out ${
+                  isMenuOpen ? 'opacity-0' : ''
                 }`}
               ></span>
               <span
-                className={`block absolute h-0.5 w-7 text-white bg-current transform  transition duration-500 ease-in-out ${
-                  isMenuOpen ? "-rotate-45" : "translate-y-1.5"
+                className={`absolute block h-0.5 w-7 transform bg-current text-white transition duration-500 ease-in-out ${
+                  isMenuOpen ? '-rotate-45' : 'translate-y-1.5'
                 }`}
               ></span>
             </div>
           </button>
         </div>
         <div
-          className={`z-40 fixed top-0 flex flex-col justify-between bg-rich_black h-full overflow-y-scroll transition-all duration-300 ${
-            isMenuOpen ? "block" : "hidden md:block"
-          } ${isMenuFolded ? "w-20" : "w-full md:w-2/5 xl:w-1/5"}`}
+          className={`fixed top-0 z-40 flex h-full flex-col justify-between overflow-y-scroll bg-rich_black transition-all duration-300 ${
+            isMenuOpen ? 'block' : 'hidden md:block'
+          } ${isMenuFolded ? 'w-20' : 'w-full md:w-2/5 xl:w-1/5'}`}
         >
-          <div className="relative mt-24 md:mt-4">
-            <div className="p-4 w-full z-40 flex justify-between items-center">
-              <div className="block max-w-max">
+          <div className='relative mt-24 md:mt-4'>
+            <div className='z-40 flex w-full items-center justify-between p-4'>
+              <div className='block max-w-max'>
                 <Image
-                  className="h-8"
-                  src="/irmin-logo-light.svg"
-                  alt="Irmin logo"
+                  className='h-8'
+                  src='/irmin-logo-light.svg'
+                  alt='Irmin logo'
                   width={170}
                   height={100}
                 />
               </div>
               <button
-                className={`hidden md:block text-ash_gray absolute ${
-                  !isMenuFolded ? "right-2 top-5" : "-right-1 top-5"
+                className={`absolute hidden text-ash_gray md:block ${
+                  !isMenuFolded ? 'right-2 top-5' : '-right-1 top-5'
                 }`}
                 onClick={() => setIsMenuFolded(!isMenuFolded)}
               >
                 {isMenuFolded ? (
-                  <TbChevronRight className="text-2xl" />
+                  <TbChevronRight className='text-2xl' />
                 ) : (
-                  <TbChevronLeft className="text-2xl" />
+                  <TbChevronLeft className='text-2xl' />
                 )}
               </button>
               <div
-                className={`absolute right-9 top-5 ${isMenuFolded && "hidden"}`}
+                className={`absolute right-9 top-5 ${isMenuFolded && 'hidden'}`}
               >
                 <Link
-                  className="block max-w-max text-ash_gray hover:text-ash_gray-800"
-                  href="/app/inbox"
+                  className='block max-w-max text-ash_gray hover:text-ash_gray-800'
+                  href='/app/inbox'
                 >
-                  <TbBell className="text-2xl" />
+                  <TbBell className='text-2xl' />
                 </Link>
               </div>
             </div>
-            <div className={`mt-8 px-5 ${isMenuFolded ? "hidden" : "block"}`}>
-              <div className="flex flex-wrap items-center">
-                <div className="flex flex-wrap">
-                  <div className="w-auto p-2">
-                    <img
-                      src="/flex-ui-assets/images/dashboard/navigations/avatar.png"
-                      alt="John Doe"
+            <div className={`mt-8 px-5 ${isMenuFolded ? 'hidden' : 'block'}`}>
+              <div className='flex flex-wrap items-center'>
+                <div className='flex flex-wrap'>
+                  <div className='w-auto p-2'>
+                    <Image
+                      src='/ui-assets/images/dashboard/navigations/avatar.png'
+                      alt={profile.profile.name ?? ''}
+                      width={40}
+                      height={40}
+                      className='rounded-full'
+                      objectFit='cover'
                     />
                   </div>
-                  <div className="w-auto p-2">
-                    <h2 className="text-sm font-semibold text-ash_gray">
-                      John Doe
+                  <div className='w-auto p-2'>
+                    <h2 className='text-sm font-semibold text-ash_gray'>
+                      {profile.profile.name ?? ''}
                     </h2>
-                    <p className="text-sm font-light text-ash_gray">
-                      johndoe@flex.co
+                    <p className='text-sm font-light text-ash_gray'>
+                      {profile.profile.email ?? ''}
                     </p>
                   </div>
                 </div>
               </div>
-              <div className="block mt-4 w-full px-4 py-4 text-sm text-gray-900 border border-gray-300 rounded-full bg-gray-50 ">
-                <select className="w-full">
-                  <option>UpCharge Oy</option>
-                  <option>Tecci Oy</option>
-                  <option>Create new workspace</option>
+              <div className='mt-4 block w-full rounded-full border border-gray-300 bg-gray-50 px-4 py-4 text-sm text-gray-900'>
+                <select
+                  className='w-full bg-gray-50'
+                  defaultValue={workspace.currentWorkspace.id}
+                  disabled={processingWorkspaceSwitch}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    if (e.target.value === 'create-new') {
+                      router.push('/app');
+                      return;
+                    }
+                    const workspaceID = parseInt(e.target.value);
+                    const newWorkspace = workspace.workspaces?.find(
+                      (w) => w.id === workspaceID
+                    );
+                    if (newWorkspace) {
+                      setProcessingWorkspaceSwitch(true);
+                      workspaceService
+                        .switchWorkspace(newWorkspace.slug)
+                        .then(() => {
+                          workspace.setCurrentWorkspace(newWorkspace);
+                          router.push(`/app/${newWorkspace.slug}/dashboards`);
+                        })
+                        .finally(() => {
+                          setProcessingWorkspaceSwitch(false);
+                        });
+                    }
+                  }}
+                >
+                  {workspace.workspaces?.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.name}
+                    </option>
+                  ))}
+                  <option key={'create-new'} value={'create-new'}>
+                    Create new workspace
+                  </option>
                 </select>
               </div>
             </div>
             <div className={`mt-6`}>
               <p
-                className={`px-8 mb-2 text-xs font-medium text-ash_gray uppercase ${
-                  isMenuFolded ? "hidden" : "block"
+                className={`mb-2 px-8 text-xs font-medium uppercase text-ash_gray ${
+                  isMenuFolded ? 'hidden' : 'block'
                 }`}
               >
                 Workspace
               </p>
-              <ul className="px-4 mb-8">
+              <ul className='mb-8 px-4'>
                 <li>
                   <Link
-                    className={`p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md`}
-                    href="/app/upcharge/dashboards"
+                    className={`flex items-center justify-between rounded-md p-3 py-4 text-ash_gray hover:bg-rich_black hover:text-ash_gray-800`}
+                    href={`/app/${workspaceSlug}/dashboards`}
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div className="flex items-center">
-                      <RxDashboard className="mr-2 text-xl" />
+                    <div className='flex items-center'>
+                      <RxDashboard className='mr-2 text-xl' />
                       <p
-                        className={`font-light text-base  ${
-                          isMenuFolded ? "hidden" : "block"
+                        className={`text-base font-light ${
+                          isMenuFolded ? 'hidden' : 'block'
                         }`}
                       >
                         Dashboards
@@ -150,15 +209,15 @@ export default function DashboardNavigation({
                 </li>
                 <li>
                   <Link
-                    className={`p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md`}
-                    href="/app/upcharge/data-sets"
+                    className={`flex items-center justify-between rounded-md p-3 py-4 text-ash_gray hover:bg-rich_black hover:text-ash_gray-800`}
+                    href={`/app/${workspaceSlug}/data-sets`}
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div className="flex items-center">
-                      <CiDatabase className="mr-2 text-xl" />
+                    <div className='flex items-center'>
+                      <CiDatabase className='mr-2 text-xl' />
                       <p
-                        className={`font-light text-base  ${
-                          isMenuFolded ? "hidden" : "block"
+                        className={`text-base font-light ${
+                          isMenuFolded ? 'hidden' : 'block'
                         }`}
                       >
                         Data Sets
@@ -168,15 +227,15 @@ export default function DashboardNavigation({
                 </li>
                 <li>
                   <Link
-                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
-                    href="/app/upcharge/editor"
+                    className='flex items-center justify-between rounded-md p-3 py-4 text-ash_gray hover:bg-rich_black hover:text-ash_gray-800'
+                    href={`/app/${workspaceSlug}/editor`}
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div className="flex items-center">
-                      <AiOutlineConsoleSql className="mr-2 text-xl" />
+                    <div className='flex items-center'>
+                      <AiOutlineConsoleSql className='mr-2 text-xl' />
                       <p
-                        className={`font-light text-base  ${
-                          isMenuFolded ? "hidden" : "block"
+                        className={`text-base font-light ${
+                          isMenuFolded ? 'hidden' : 'block'
                         }`}
                       >
                         Editor
@@ -186,15 +245,15 @@ export default function DashboardNavigation({
                 </li>
                 <li>
                   <Link
-                    className={`p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md`}
-                    href="/app/upcharge/data-sources"
+                    className={`flex items-center justify-between rounded-md p-3 py-4 text-ash_gray hover:bg-rich_black hover:text-ash_gray-800`}
+                    href={`/app/${workspaceSlug}/data-sources`}
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div className="flex items-center">
-                      <TbDatabaseImport className="mr-2 text-xl" />
+                    <div className='flex items-center'>
+                      <TbDatabaseImport className='mr-2 text-xl' />
                       <p
-                        className={`font-light text-base  ${
-                          isMenuFolded ? "hidden" : "block"
+                        className={`text-base font-light ${
+                          isMenuFolded ? 'hidden' : 'block'
                         }`}
                       >
                         Connections
@@ -204,15 +263,15 @@ export default function DashboardNavigation({
                 </li>
                 <li>
                   <Link
-                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
-                    href="/app/upcharge/reverse-etl"
+                    className='flex items-center justify-between rounded-md p-3 py-4 text-ash_gray hover:bg-rich_black hover:text-ash_gray-800'
+                    href={`/app/${workspaceSlug}/reverse-etl`}
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div className="flex items-center">
-                      <TbDatabaseExport className="mr-2 text-xl" />
+                    <div className='flex items-center'>
+                      <TbDatabaseExport className='mr-2 text-xl' />
                       <p
-                        className={`font-light text-base  ${
-                          isMenuFolded ? "hidden" : "block"
+                        className={`text-base font-light ${
+                          isMenuFolded ? 'hidden' : 'block'
                         }`}
                       >
                         Reverse ETL
@@ -222,15 +281,15 @@ export default function DashboardNavigation({
                 </li>
                 <li>
                   <Link
-                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
-                    href="/app/upcharge/settings"
+                    className='flex items-center justify-between rounded-md p-3 py-4 text-ash_gray hover:bg-rich_black hover:text-ash_gray-800'
+                    href={`/app/${workspaceSlug}/settings`}
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div className="flex items-center">
-                      <TbSettings className="mr-2 text-xl" />
+                    <div className='flex items-center'>
+                      <TbSettings className='mr-2 text-xl' />
                       <p
-                        className={`font-light text-base  ${
-                          isMenuFolded ? "hidden" : "block"
+                        className={`text-base font-light ${
+                          isMenuFolded ? 'hidden' : 'block'
                         }`}
                       >
                         Workspace settings
@@ -240,15 +299,15 @@ export default function DashboardNavigation({
                 </li>
                 <li>
                   <Link
-                    className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
-                    href="/app/upcharge/data-marketplace"
+                    className='flex items-center justify-between rounded-md p-3 py-4 text-ash_gray hover:bg-rich_black hover:text-ash_gray-800'
+                    href={`/app/${workspaceSlug}/data-marketplace`}
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div className="flex items-center">
-                      <PiStorefront className="mr-2 text-xl" />
+                    <div className='flex items-center'>
+                      <PiStorefront className='mr-2 text-xl' />
                       <p
-                        className={`font-light text-base  ${
-                          isMenuFolded ? "hidden" : "block"
+                        className={`text-base font-light ${
+                          isMenuFolded ? 'hidden' : 'block'
                         }`}
                       >
                         Data marketplace
@@ -259,27 +318,27 @@ export default function DashboardNavigation({
               </ul>
             </div>
           </div>
-          <div className="relative flex-1" />
-          <div className="relative">
+          <div className='relative flex-1' />
+          <div className='relative'>
             <p
-              className={`px-8 text-xs font-medium text-ash_gray uppercase ${
-                isMenuFolded ? "hidden" : "block"
+              className={`px-8 text-xs font-medium uppercase text-ash_gray ${
+                isMenuFolded ? 'hidden' : 'block'
               }`}
             >
               Settings
             </p>
-            <ul className="p-4">
+            <ul className='p-4'>
               <li>
                 <Link
-                  className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
-                  href="/app/settings"
+                  className='flex items-center justify-between rounded-md p-3 py-4 text-ash_gray hover:bg-rich_black hover:text-ash_gray-800'
+                  href='/app/settings'
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <div className="flex items-center">
-                    <TbSettings className="mr-2 text-xl" />
+                  <div className='flex items-center'>
+                    <TbSettings className='mr-2 text-xl' />
                     <p
-                      className={`font-light text-base  ${
-                        isMenuFolded ? "hidden" : "block"
+                      className={`text-base font-light ${
+                        isMenuFolded ? 'hidden' : 'block'
                       }`}
                     >
                       Settings
@@ -288,65 +347,89 @@ export default function DashboardNavigation({
                 </Link>
               </li>
               <li>
-                <Link
-                  className="p-3 py-4 flex items-center justify-between text-ash_gray hover:text-ash_gray-800 hover:bg-rich_black rounded-md"
-                  href="/"
-                  onClick={() => setIsMenuOpen(false)}
+                <button
+                  className='flex items-center justify-between rounded-md p-3 py-4 text-ash_gray hover:bg-rich_black hover:text-ash_gray-800'
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    auth.logout().then(() => {
+                      profile.fetchProfile();
+                      router.push('/sign-in');
+                    });
+                  }}
                 >
-                  <div className="flex items-center">
-                    <TbLogout className="mr-2 text-xl" />
+                  <div className='flex items-center'>
+                    <TbLogout className='mr-2 text-xl' />
                     <p
-                      className={`font-light text-base  ${
-                        isMenuFolded ? "hidden" : "block"
+                      className={`text-base font-light ${
+                        isMenuFolded ? 'hidden' : 'block'
                       }`}
                     >
                       Sign out
                     </p>
                   </div>
-                </Link>
+                </button>
               </li>
-              <li className={`mt-4 ${isMenuFolded && "hidden"}`}>
-                <Link
-                  className="text-center text-ash_gray hover:text-ash_gray-800"
-                  href="/contact"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <p className="font-light text-xs">Contact support</p>
-                </Link>
+              <li className={`mt-4 ${isMenuFolded && 'hidden'}`}>
+                <div className='flex flex-col'>
+                  <Link
+                    className='mb-4 text-center text-xs font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                    href='/contact'
+                    target='_blank'
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Contact support
+                  </Link>
+                  <Link
+                    className='mb-4 text-center text-xs font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                    href='/legal/privacy-policy'
+                    target='_blank'
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Privacy Policy
+                  </Link>
+                  <Link
+                    className='mb-4 text-center text-xs font-light text-ash_gray transition-colors duration-200 hover:text-white'
+                    href='/legal/terms-of-use'
+                    target='_blank'
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Terms of Use
+                  </Link>
+                </div>
               </li>
             </ul>
           </div>
         </div>
         <div
-          className={`w-screen fixed z-40 ${
-            isMenuOpen ? "hidden md:block" : ""
+          className={`fixed z-40 w-screen ${
+            isMenuOpen ? 'hidden md:block' : ''
           } ${
             isMenuFolded
-              ? "md:ml-[80px] md:w-[calc(100%-80px)]"
-              : "md:ml-[40%] xl:ml-[20%] md:w-[3/5] xl:w-4/5"
+              ? 'md:ml-[80px] md:w-[calc(100%-80px)]'
+              : 'md:ml-[40%] md:w-[3/5] xl:ml-[20%] xl:w-4/5'
           }`}
         >
-          <div className="py-5 px-4 bg-white shadow-md">
-            <div className="flex flex-wrap items-center justify-between -m-2">
-              <div className="w-auto p-2"></div>
-              <div className="w-auto p-2">
-                <div className="flex flex-wrap items-center -m-3">
-                  <div className="w-auto p-3 flex justify-end lg:w-[700px]">
-                    <form className="w-64 lg:w-96 focus-within:w-full transition-all">
-                      <div className="relative">
-                        <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                          <TbSearch className="text-gray-500" />
+          <div className='bg-white px-4 py-5 shadow-md'>
+            <div className='-m-2 flex flex-wrap items-center justify-between'>
+              <div className='w-auto p-2'></div>
+              <div className='w-auto p-2'>
+                <div className='-m-3 flex flex-wrap items-center'>
+                  <div className='flex w-auto justify-end p-3 lg:w-[700px]'>
+                    <form className='w-64 transition-all focus-within:w-full lg:w-96'>
+                      <div className='relative'>
+                        <div className='pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3'>
+                          <TbSearch className='text-gray-500' />
                         </div>
                         <input
-                          type="search"
-                          id="default-search"
-                          className="block w-full p-4 ps-10 text-xs md:text-sm text-gray-900 border border-gray-300 rounded-full bg-gray-50 focus:outline-none"
-                          placeholder="Search Data, Insights, Connectors..."
+                          type='search'
+                          id='default-search'
+                          className='block w-full rounded-full border border-gray-300 bg-gray-50 p-4 ps-10 text-xs text-gray-900 focus:outline-none md:text-sm'
+                          placeholder='Search Data, Insights, Connectors...'
                           required
                         />
                         <button
-                          type="submit"
-                          className="text-white absolute end-1.5 bottom-2.5 text-xs md:text-sm bg-ash_gray hover:bg-ash_gray-800 focus:ring-4 focus:outline-none font-light rounded-full px-4 py-2"
+                          type='submit'
+                          className='absolute bottom-2.5 end-1.5 rounded-full bg-ash_gray px-4 py-2 text-xs font-light text-white hover:bg-ash_gray-800 focus:outline-none focus:ring-4 md:text-sm'
                         >
                           Search
                         </button>
@@ -360,10 +443,10 @@ export default function DashboardNavigation({
         </div>
       </section>
       <div
-        className={`min-h-full pt-[94px] px-4 ${
+        className={`min-h-full px-4 pt-[94px] ${
           isMenuFolded
-            ? "md:ml-[80px] md:w-[calc(100%-80px)]"
-            : "md:ml-[40%] xl:ml-[20%] md:w-3/5 xl:w-4/5"
+            ? 'md:ml-[80px] md:w-[calc(100%-80px)]'
+            : 'md:ml-[40%] md:w-3/5 xl:ml-[20%] xl:w-4/5'
         }`}
       >
         {/* Dashboard content */}

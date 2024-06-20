@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import React, { useState, useCallback, useRef } from "react";
-import CodeMirror from "@uiw/react-codemirror";
-import { sql } from "@codemirror/lang-sql";
-import { python } from "@codemirror/lang-python";
-import { IoClose, IoSave } from "react-icons/io5";
-import ScriptEditorNew from "./scriptEditorNew";
+import React, { useState, useCallback, useRef } from 'react';
+import CodeMirror from '@uiw/react-codemirror';
+import { sql } from '@codemirror/lang-sql';
+import { python } from '@codemirror/lang-python';
+import { IoClose, IoSave } from 'react-icons/io5';
+import ScriptEditorNew from './scriptEditorNew';
 
 const ScriptEditor = ({
   editorHeight,
@@ -16,21 +16,21 @@ const ScriptEditor = ({
   setEditorHeight: (a: string) => void;
   hideTabs?: boolean;
 }) => {
-  const [activeLanguage, setActiveLanguage] = useState<"sql" | "python">("sql");
+  const [activeLanguage, setActiveLanguage] = useState<'sql' | 'python'>('sql');
   const [tabs, setTabs] = useState<
     Array<{
       name: string;
       content: string;
       changed: boolean;
-      type: "sql" | "python";
+      type: 'sql' | 'python';
     }>
   >([
     {
-      name: "Query 1",
+      name: 'Query 1',
       changed: false,
       type: activeLanguage,
       content:
-        activeLanguage === "sql"
+        activeLanguage === 'sql'
           ? `SELECT ProductID, OrderQty, SUM(LineTotal) AS Total\FROM Sales.SalesOrderDetail\nWHERE UnitPrice < $5.00\nGROUP BY ProductID, OrderQty\nORDER BY ProductID, OrderQty\nOPTION (HASH GROUP, FAST 10);`
           : `import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt`,
     },
@@ -46,7 +46,7 @@ const ScriptEditor = ({
     (e: MouseEvent) => {
       // Calculate and update the height of the editor
       const offsetTop =
-        typeof editorRef?.current?.offsetTop === "number"
+        typeof editorRef?.current?.offsetTop === 'number'
           ? editorRef.current.offsetTop
           : 0;
       setEditorHeight(`${e.clientY - offsetTop}px`);
@@ -56,14 +56,14 @@ const ScriptEditor = ({
 
   const handleMouseUp = useCallback(() => {
     // Remove the event listeners when the mouse button is released
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", handleMouseUp);
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
   }, [handleMouseMove]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     // Add mousemove and mouseup listeners to the document
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
     // Prevent default action (e.g., text selection)
     e.preventDefault();
   };
@@ -80,7 +80,7 @@ const ScriptEditor = ({
     const newTabName = `Draft`;
     setTabs([
       ...tabs,
-      { name: newTabName, content: "", changed: false, type: activeLanguage },
+      { name: newTabName, content: '', changed: false, type: activeLanguage },
     ]);
     setActiveTab(tabs.length);
   };
@@ -114,19 +114,19 @@ const ScriptEditor = ({
   // Function to save the content of a tab as a .sql file
   const saveTabAsFile = (index: number) => {
     const tab = tabs[index];
-    console.log("Save tab as file", tab.name, tab.content);
+    console.log('Save tab as file', tab.name, tab.content);
   };
 
   return (
-    <div className="sqlEditor">
+    <div className='sqlEditor'>
       {!hideTabs && (
-        <div className="flex mb-2 justify-between algin-center">
-          <div className="w-1/2 xl:w-3/4 flex overflow-x-auto">
+        <div className='algin-center mb-2 flex justify-between'>
+          <div className='flex w-1/2 overflow-x-auto xl:w-3/4'>
             {tabs.map((tab, index) => (
               <div
                 key={index}
-                className={`flex items-center h-fit ${
-                  activeTab === index ? "border-b-2 border-ash_gray" : ""
+                className={`flex h-fit items-center ${
+                  activeTab === index ? 'border-b-2 border-ash_gray' : ''
                 } `}
               >
                 <button
@@ -146,42 +146,42 @@ const ScriptEditor = ({
             {tabs.length > 0 && (
               <button
                 onClick={addNewTab}
-                className="px-4 py-2 focus:outline-none h-fit"
+                className='h-fit px-4 py-2 focus:outline-none'
               >
                 +
               </button>
             )}
           </div>
-          <div className="p-2">
+          <div className='p-2'>
             <select
-              className="px-2 py-2 focus:outline-none border-ash_gray text-midnight_green hover:bg-ash_gray-800 rounded-md transition-all text-xs xl:text-base"
+              className='rounded-md border-ash_gray px-2 py-2 text-xs text-midnight_green transition-all hover:bg-ash_gray-800 focus:outline-none xl:text-base'
               onChange={(e) => {
                 // If current tab has not been changed then set the value of the active tab to correspond with current language setting
                 if (!tabs[activeTab].changed) {
                   const newTabs = [...tabs];
                   newTabs[activeTab] = {
                     ...newTabs[activeTab],
-                    type: e.target.value as "sql" | "python",
+                    type: e.target.value as 'sql' | 'python',
                     content:
-                      e.target.value === "sql"
+                      e.target.value === 'sql'
                         ? `SELECT ProductID, OrderQty, SUM(LineTotal) AS Total\FROM Sales.SalesOrderDetail\nWHERE UnitPrice < $5.00\nGROUP BY ProductID, OrderQty\nORDER BY ProductID, OrderQty\nOPTION (HASH GROUP, FAST 10);`
                         : `import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt`,
                   };
                   setTabs(newTabs);
                 }
-                setActiveLanguage(e.target.value as "sql" | "python");
+                setActiveLanguage(e.target.value as 'sql' | 'python');
               }}
             >
-              <option value={"sql"}>SQL</option>
-              <option value={"python"}>Python</option>
+              <option value={'sql'}>SQL</option>
+              <option value={'python'}>Python</option>
             </select>
           </div>
-          <div className="p-2 xl:pr-8">
+          <div className='p-2 xl:pr-8'>
             <button
               onClick={() => saveTabAsFile(activeTab)}
-              className="px-2 py-2 focus:outline-none bg-ash_gray text-white hover:bg-ash_gray-800 rounded-md transition-all text-xs xl:text-base"
+              className='rounded-md bg-ash_gray px-2 py-2 text-xs text-white transition-all hover:bg-ash_gray-800 focus:outline-none xl:text-base'
             >
-              <IoSave className="mr-2 inline-block" /> Save file
+              <IoSave className='mr-2 inline-block' /> Save file
             </button>
           </div>
         </div>
@@ -190,22 +190,22 @@ const ScriptEditor = ({
       <div style={{ minHeight: editorHeight }} ref={editorRef}>
         {tabs.length > 0 ? (
           <>
-            {activeLanguage === "sql" ? (
+            {activeLanguage === 'sql' ? (
               <CodeMirror
-                value={tabs[activeTab].content ?? ""}
+                value={tabs[activeTab].content ?? ''}
                 height={editorHeight}
                 extensions={[sql()]}
-                placeholder="Write your SQL query here..."
+                placeholder='Write your SQL query here...'
                 onChange={(value, viewUpdate) => {
                   updateTabContent(activeTab, value);
                 }}
               />
             ) : (
               <CodeMirror
-                value={tabs[activeTab].content ?? ""}
+                value={tabs[activeTab].content ?? ''}
                 height={editorHeight}
                 extensions={[python()]}
-                placeholder="Write your Python script here..."
+                placeholder='Write your Python script here...'
                 onChange={(value, viewUpdate) => {
                   updateTabContent(activeTab, value);
                 }}
@@ -213,7 +213,7 @@ const ScriptEditor = ({
             )}
             {/* The resizer element */}
             <div
-              className="resizer cursor-ns-resize h-1 bg-gray-200"
+              className='resizer h-1 cursor-ns-resize bg-gray-200'
               onMouseDown={handleMouseDown}
             ></div>
           </>

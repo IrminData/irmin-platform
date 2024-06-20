@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import React, { useState } from "react";
-import { IoChevronDownOutline, IoChevronUpOutline } from "react-icons/io5";
+import Link from 'next/link';
+import React, { useState } from 'react';
+import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5';
 
 interface DataSource {
   id: number;
@@ -10,7 +10,7 @@ interface DataSource {
   connector: string;
   nextSync: string;
   nextSyncTimestamp: Date;
-  status: "running" | "errors" | "stopped";
+  status: 'running' | 'errors' | 'stopped';
   parts: string[];
 }
 
@@ -33,33 +33,33 @@ const DataSourceList: React.FC<DataSourceListProps> = ({
   };
 
   return (
-    <div className="pb-8">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-rich_black font-light">
+    <div className='pb-8'>
+      <div className='overflow-x-auto'>
+        <table className='w-full text-left font-light text-rich_black'>
           {!inSidebar && (
-            <thead className="text-md uppercase border-b-4 border-ash_gray">
+            <thead className='text-md border-b-4 border-ash_gray uppercase'>
               <tr>
                 <th
-                  scope="col"
-                  className="px-4 py-2 font-medium text-xs xl:text-sm"
+                  scope='col'
+                  className='px-4 py-2 text-xs font-medium xl:text-sm'
                 >
                   Name
                 </th>
                 <th
-                  scope="col"
-                  className="px-4 py-2 font-medium text-xs xl:text-sm"
+                  scope='col'
+                  className='px-4 py-2 text-xs font-medium xl:text-sm'
                 >
                   Next sync
                 </th>
                 <th
-                  scope="col"
-                  className="px-4 py-2 font-medium text-xs xl:text-sm"
+                  scope='col'
+                  className='px-4 py-2 text-xs font-medium xl:text-sm'
                 >
                   Status
                 </th>
                 <th
-                  scope="col"
-                  className="px-4 py-2 font-medium text-xs xl:text-sm text-right"
+                  scope='col'
+                  className='px-4 py-2 text-right text-xs font-medium xl:text-sm'
                 >
                   Actions
                 </th>
@@ -71,93 +71,93 @@ const DataSourceList: React.FC<DataSourceListProps> = ({
             {dataSources.map((dataSource, index) => (
               <>
                 <tr key={index}>
-                  <td className="px-4 py-2 text-sm xl:text-md min-w-44">
+                  <td className='xl:text-md min-w-44 px-4 py-2 text-sm'>
                     {dataSource.name}
                     <br />
-                    <span className="text-xs text-ash_gray">
+                    <span className='text-xs text-ash_gray'>
                       {dataSource.connector}
                     </span>
                   </td>
                   {!inSidebar ? (
                     <>
-                      <td className="px-4 py-2 text-xs xl:text-base min-w-44">
+                      <td className='min-w-44 px-4 py-2 text-xs xl:text-base'>
                         {dataSource.nextSync}
                         <br />
-                        <span className="text-ash_gray">
+                        <span className='text-ash_gray'>
                           {dataSource.nextSyncTimestamp.toUTCString()}
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-xs xl:text-base">
-                        {dataSource.status === "errors" ? (
-                          <span className="block py-1 px-1 max-w-36 text-white text-center leading-6 bg-midnight_green rounded-full shadow-sm">
+                      <td className='px-4 py-2 text-xs xl:text-base'>
+                        {dataSource.status === 'errors' ? (
+                          <span className='block max-w-36 rounded-full bg-midnight_green px-1 py-1 text-center leading-6 text-white shadow-sm'>
                             Errors
                           </span>
-                        ) : dataSource.status === "running" ? (
-                          <span className="block py-1 px-1 max-w-36 text-white text-center leading-6 bg-ash_gray rounded-full shadow-sm">
+                        ) : dataSource.status === 'running' ? (
+                          <span className='block max-w-36 rounded-full bg-ash_gray px-1 py-1 text-center leading-6 text-white shadow-sm'>
                             Running
                           </span>
                         ) : (
-                          <span className="block py-1 px-1 max-w-36 text-rich_black text-center leading-6 bg-beige rounded-full shadow-sm">
+                          <span className='block max-w-36 rounded-full bg-beige px-1 py-1 text-center leading-6 text-rich_black shadow-sm'>
                             Stopped
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-2 text-right text-xs xl:text-base">
-                        <div className="inline-flex space-x-2">
+                      <td className='px-4 py-2 text-right text-xs xl:text-base'>
+                        <div className='inline-flex space-x-2'>
                           <Link
-                            href="#"
-                            className="text-ash_gray hover:underline py-3 px-1"
+                            href='#'
+                            className='px-1 py-3 text-ash_gray hover:underline'
                           >
                             Logs
                           </Link>
                           <Link
-                            href="#"
-                            className="text-ash_gray hover:underline py-3 px-1"
+                            href='#'
+                            className='px-1 py-3 text-ash_gray hover:underline'
                           >
                             Edit
                           </Link>
                           <Link
-                            href="#"
-                            className="text-ash_gray hover:underline py-3 px-1"
+                            href='#'
+                            className='px-1 py-3 text-ash_gray hover:underline'
                           >
                             Remove
                           </Link>
                         </div>
                         <button
                           onClick={() => toggleRow(dataSource.id)}
-                          className="text-ash_gray hover:text-ash_gray-800 focus:outline-none inline float-right mt-4 ml-4"
+                          className='float-right ml-4 mt-4 inline text-ash_gray hover:text-ash_gray-800 focus:outline-none'
                         >
                           {openRows[dataSource.id] ? (
-                            <IoChevronUpOutline className="w-5 h-5" />
+                            <IoChevronUpOutline className='h-5 w-5' />
                           ) : (
-                            <IoChevronDownOutline className="w-5 h-5" />
+                            <IoChevronDownOutline className='h-5 w-5' />
                           )}
                         </button>
                       </td>
                     </>
                   ) : (
-                    <td className="px-4 py-2 text-right text-xs xl:text-base">
+                    <td className='px-4 py-2 text-right text-xs xl:text-base'>
                       <button
                         onClick={() => toggleRow(dataSource.id)}
-                        className="text-ash_gray hover:text-ash_gray-800 focus:outline-none inline float-right mt-4 ml-4"
+                        className='float-right ml-4 mt-4 inline text-ash_gray hover:text-ash_gray-800 focus:outline-none'
                       >
                         {openRows[dataSource.id] ? (
-                          <IoChevronUpOutline className="w-5 h-5" />
+                          <IoChevronUpOutline className='h-5 w-5' />
                         ) : (
-                          <IoChevronDownOutline className="w-5 h-5" />
+                          <IoChevronDownOutline className='h-5 w-5' />
                         )}
                       </button>
                     </td>
                   )}
                 </tr>
                 {openRows[dataSource.id] && (
-                  <tr className="shadow">
-                    <td colSpan={3} className="px-10 py-2">
+                  <tr className='shadow'>
+                    <td colSpan={3} className='px-10 py-2'>
                       <ul>
                         {dataSource.parts.map((part, index) => (
                           <li
                             key={index}
-                            className="py-2 border-b border-color-ash_gray text-xs"
+                            className='border-color-ash_gray border-b py-2 text-xs'
                           >
                             {part}
                           </li>

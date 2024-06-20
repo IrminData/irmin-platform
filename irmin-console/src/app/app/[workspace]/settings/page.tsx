@@ -1,9 +1,9 @@
-import AppTitle from "@/components/appTitle";
+import AppTitle from '@/components/appTitle';
 
 export default function OrgSettingsPage() {
   return (
     <>
-      <AppTitle title="Workspace settings" />
+      <AppTitle title='Workspace settings' />
     </>
   );
 }

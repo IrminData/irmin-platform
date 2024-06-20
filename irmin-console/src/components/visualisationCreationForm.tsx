@@ -1,52 +1,52 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { BsTable, BsBarChart, BsGraphUp, BsSpeedometer } from "react-icons/bs";
+import React, { useState } from 'react';
+import { BsTable, BsBarChart, BsGraphUp, BsSpeedometer } from 'react-icons/bs';
 
 const VisualisationCreationForm = () => {
-  const [visualisationName, setVisualisationName] = useState("");
-  const [dashboard, setDashboard] = useState("");
-  const [visualisation, setVisualisation] = useState("Table");
+  const [visualisationName, setVisualisationName] = useState('');
+  const [dashboard, setDashboard] = useState('');
+  const [visualisation, setVisualisation] = useState('Table');
 
   // Visualisation options
   const visualisationOptions = [
-    { label: "Table", icon: BsTable },
-    { label: "Bar", icon: BsBarChart },
-    { label: "Line", icon: BsGraphUp },
-    { label: "Metric", icon: BsSpeedometer },
+    { label: 'Table', icon: BsTable },
+    { label: 'Bar', icon: BsBarChart },
+    { label: 'Line', icon: BsGraphUp },
+    { label: 'Metric', icon: BsSpeedometer },
   ];
 
   return (
-    <div className="p-4 space-y-4">
+    <div className='space-y-4 p-4'>
       <div>
         <label
-          htmlFor="tileName"
-          className="block text-sm font-medium text-gray-700"
+          htmlFor='tileName'
+          className='block text-sm font-medium text-gray-700'
         >
           Visualisation Name
         </label>
         <input
-          type="text"
-          id="visualisationName"
+          type='text'
+          id='visualisationName'
           value={visualisationName}
           onChange={(e) => setVisualisationName(e.target.value)}
-          placeholder="monthly sales"
-          className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          placeholder='monthly sales'
+          className='mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm'
         />
       </div>
 
       <div>
         <label
-          htmlFor="dashboard"
-          className="block text-sm font-medium text-gray-700"
+          htmlFor='dashboard'
+          className='block text-sm font-medium text-gray-700'
         >
           Save to dashboard
         </label>
         <select
-          id="dashboard"
+          id='dashboard'
           value={dashboard}
           onChange={(e) => setDashboard(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          className='mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm'
         >
           <option>Select dashboard (optional)</option>
           <option>Dashboard 1</option>
@@ -56,17 +56,17 @@ const VisualisationCreationForm = () => {
 
       <div>
         <label
-          htmlFor="visualisation"
-          className="block text-sm font-medium text-gray-700"
+          htmlFor='visualisation'
+          className='block text-sm font-medium text-gray-700'
         >
           Visualisation type
         </label>
-        <div className="relative mt-1">
+        <div className='relative mt-1'>
           <select
-            id="visualisation"
+            id='visualisation'
             value={visualisation}
             onChange={(e) => setVisualisation(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className='mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm'
           >
             {visualisationOptions.map((option) => (
               <option key={option.label} value={option.label}>
@@ -77,7 +77,7 @@ const VisualisationCreationForm = () => {
         </div>
       </div>
       <div>
-        <button className="px-4 py-2 w-full focus:outline-none bg-ash_gray text-white hover:bg-ash_gray-800 rounded-md transition-all">
+        <button className='w-full rounded-md bg-ash_gray px-4 py-2 text-white transition-all hover:bg-ash_gray-800 focus:outline-none'>
           Create visualisation
         </button>
       </div>
