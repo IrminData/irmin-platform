@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import AppTitle from '@/components/appTitle';
-import MarketplaceFilters from '@/components/marketplaceFilters';
-import MarketplaceListingCard from '@/components/marketplaceListingCard';
+import DataMarketplaceFilters from '@/components/marketplace/dataMarketplaceFilters';
+import DataMarketplaceListingCard from '@/components/marketplace/dataMarketplaceListingCard';
 
-export default function DataMarketplacePage() {
+export default function DataMarketplace() {
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [search, setSearch] = useState('');
 
@@ -245,7 +245,7 @@ export default function DataMarketplacePage() {
           />
         </div>
         <div className='mb-8'>
-          <MarketplaceFilters
+          <DataMarketplaceFilters
             industries={industries}
             selectedIndustry={selectedIndustry}
             onSelectIndustry={setSelectedIndustry}
@@ -258,7 +258,10 @@ export default function DataMarketplacePage() {
               {filteredDatasets
                 .filter((d) => d.connected)
                 .map((dataset) => (
-                  <MarketplaceListingCard key={dataset.id} dataset={dataset} />
+                  <DataMarketplaceListingCard
+                    key={dataset.id}
+                    dataset={dataset}
+                  />
                 ))}
             </div>
           </div>
@@ -270,7 +273,10 @@ export default function DataMarketplacePage() {
               {filteredDatasets
                 .filter((d) => !d.connected)
                 .map((dataset) => (
-                  <MarketplaceListingCard key={dataset.id} dataset={dataset} />
+                  <DataMarketplaceListingCard
+                    key={dataset.id}
+                    dataset={dataset}
+                  />
                 ))}
             </div>
           </div>

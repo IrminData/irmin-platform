@@ -1,6 +1,6 @@
 import React from 'react';
 
-const MarketplaceFilters = ({
+const DataMarketplaceFilters = ({
   industries,
   selectedIndustry,
   onSelectIndustry,
@@ -33,4 +33,4 @@ const MarketplaceFilters = ({
   );
 };
 
-export default MarketplaceFilters;
+export default DataMarketplaceFilters;

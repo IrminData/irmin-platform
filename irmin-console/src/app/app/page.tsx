@@ -47,7 +47,6 @@ const ManageWorkspaces: React.FC = () => {
   };
 
   const handleSelectWorkspace = async (workspace: Workspace) => {
-    setLoading(true);
     setError(null);
     setSuccess(null);
     try {
@@ -56,8 +55,6 @@ const ManageWorkspaces: React.FC = () => {
       router.push(`/app/${workspace.slug}/dashboards`);
     } catch (error: any) {
       setError(error?.message ?? 'Switching workspace failed');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -107,6 +104,7 @@ const ManageWorkspaces: React.FC = () => {
                 <button
                   className='mb-6 inline-block w-full cursor-pointer rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm transition-all hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
                   type='submit'
+                  aria-label='Create Workspace'
                   disabled={loading}
                 >
                   {loading ? 'Creating...' : 'Create Workspace'}
@@ -123,16 +121,17 @@ const ManageWorkspaces: React.FC = () => {
                 workspaces.length > 0 ? (
                   workspaces.map((workspace) => (
                     <div key={workspace.id} className='mb-4'>
-                      <button
-                        className='w-full cursor-pointer rounded-full border border-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-ash_gray shadow-sm transition-all hover:bg-gray-50 focus:ring-2'
+                      <div
+                        className='w-full cursor-pointer rounded-full border border-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-ash_gray shadow-sm transition-all hover:bg-gray-100 focus:ring-2'
                         onClick={(e) => {
                           e.preventDefault();
                           console.log('Selected workspace', workspace);
                           handleSelectWorkspace(workspace);
                         }}
+                        aria-label={`Go to ${workspace.name}`}
                       >
                         {workspace.name}
-                      </button>
+                      </div>
                     </div>
                   ))
                 ) : (

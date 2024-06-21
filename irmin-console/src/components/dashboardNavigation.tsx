@@ -306,7 +306,7 @@ export default function DashboardNavigation({
                 <li>
                   <Link
                     className='flex items-center justify-between rounded-md p-3 py-4 text-ash_gray hover:bg-rich_black hover:text-ash_gray-800'
-                    href={`/app/${workspaceSlug}/data-marketplace`}
+                    href={`/app/${workspaceSlug}/marketplace`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <div className='flex items-center'>
@@ -316,7 +316,7 @@ export default function DashboardNavigation({
                           isMenuFolded ? 'hidden' : 'block'
                         }`}
                       >
-                        Data marketplace
+                        Marketplace
                       </p>
                     </div>
                   </Link>
