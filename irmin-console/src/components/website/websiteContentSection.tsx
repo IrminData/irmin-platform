@@ -5,7 +5,7 @@ export default function WebsiteContentSection() {
     <section
       className='relative overflow-hidden bg-white py-24'
       style={{
-        backgroundImage: 'url("ui-assets/elements/pattern-white.svg")',
+        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
         backgroundPosition: 'center',
       }}
     >

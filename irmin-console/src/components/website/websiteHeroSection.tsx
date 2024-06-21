@@ -8,7 +8,7 @@ export default function WebsiteHeroSection() {
         <div
           className='relative overflow-hidden bg-white'
           style={{
-            backgroundImage: 'url("ui-assets/elements/pattern-white.svg")',
+            backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
             backgroundPosition: 'center',
           }}
         >
@@ -92,7 +92,7 @@ export default function WebsiteHeroSection() {
               />
               <video
                 className='absolute left-1/2 top-1/2 min-h-full min-w-full max-w-none -translate-x-1/2 -translate-y-1/2 transform'
-                poster='ui-assets/images/testimonials/video-frame.jpeg'
+                poster='/ui-assets/images/testimonials/video-frame.jpeg'
               >
                 <source
                   src='https://static.shuffle.dev/files/video-placeholder.mp4'

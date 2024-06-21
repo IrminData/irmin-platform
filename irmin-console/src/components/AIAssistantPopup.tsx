@@ -3,6 +3,8 @@
 import React, { useState, KeyboardEvent } from 'react';
 import Image from 'next/image';
 import { AiOutlineSend } from 'react-icons/ai';
+import { IoClose } from 'react-icons/io5';
+import { RiRobot2Line } from 'react-icons/ri';
 
 interface Message {
   id: number;
@@ -15,7 +17,7 @@ export default function AIAssistantPopup() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 0,
-      text: 'Hi! My name is Haz and I’m here to help you with your data. Ask me anything!',
+      text: 'Hi! My name is Haz and I am here to help you with your data. Ask me anything!',
       sender: 'assistant',
     },
   ]);
@@ -44,7 +46,7 @@ export default function AIAssistantPopup() {
   return (
     <>
       {open && (
-        <div className='chatWindow fixed bottom-20 right-5 z-10 w-11/12 rounded-xl rounded-br-none bg-white p-4 shadow-lg md:bottom-10 md:right-28 md:w-1/3 lg:w-2/5 xl:w-1/4'>
+        <div className='chatWindow fixed bottom-20 right-3 z-10 w-11/12 rounded-xl rounded-br-none border-t-2 bg-white p-4 shadow-lg md:bottom-10 md:right-28 md:w-1/3 lg:w-2/5 xl:w-1/4'>
           <div className='mb-4 h-96 overflow-y-auto'>
             {messages.map((message) => (
               <div
@@ -57,7 +59,7 @@ export default function AIAssistantPopup() {
                   className={`my-1 max-w-xs rounded-lg p-2 font-light ${
                     message.sender === 'user'
                       ? 'rounded-bl-none bg-beige'
-                      : 'rounded-br-none bg-ash_gray'
+                      : 'rounded-br-none bg-ash_gray-800'
                   }`}
                 >
                   {message.text}
@@ -125,15 +127,15 @@ export default function AIAssistantPopup() {
       )}
       <div className='fixed bottom-10 right-5 z-10'>
         <button
-          className='cursor-pointer rounded-full bg-ash_gray p-3 text-center shadow-lg transition-all hover:bg-ash_gray-600'
+          className='cursor-pointer rounded-full bg-midnight_green p-5 text-center shadow-lg transition-all hover:bg-midnight_green-600'
           onClick={() => setOpen(!open)}
+          aria-label='Toggle AI Assistant'
         >
-          <Image
-            src={'/bot.png'} // Make sure this image is in your public directory
-            width={50}
-            height={50}
-            alt='Toggle AI assistant'
-          />
+          {open ? (
+            <IoClose className='text-[25px] text-white' />
+          ) : (
+            <RiRobot2Line className='text-[25px] text-white' />
+          )}
         </button>
       </div>
     </>

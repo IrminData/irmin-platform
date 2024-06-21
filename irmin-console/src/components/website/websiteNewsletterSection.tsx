@@ -7,7 +7,7 @@ export default function WebsiteNewsletterSection() {
       <section
         className='relative bg-white py-24'
         style={{
-          backgroundImage: 'url("ui-assets/elements/pattern-white.svg")',
+          backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
           backgroundPosition: 'center',
         }}
       >

@@ -86,13 +86,15 @@ export default function DashboardNavigation({
           <div className='relative mt-24 md:mt-4'>
             <div className='z-40 flex w-full items-center justify-between p-4'>
               <div className='block max-w-max'>
-                <Image
-                  className='h-8'
-                  src='/irmin-logo-light.svg'
-                  alt='Irmin logo'
-                  width={170}
-                  height={100}
-                />
+                <Link href='/'>
+                  <Image
+                    className='h-8'
+                    src='/irmin-logo-light.svg'
+                    alt='Irmin logo'
+                    width={170}
+                    height={100}
+                  />
+                </Link>
               </div>
               <button
                 className={`absolute hidden text-ash_gray md:block ${
@@ -118,26 +120,30 @@ export default function DashboardNavigation({
               </div>
             </div>
             <div className={`mt-8 px-5 ${isMenuFolded ? 'hidden' : 'block'}`}>
-              <div className='flex flex-wrap items-center'>
-                <div className='flex flex-wrap'>
-                  <div className='w-auto p-2'>
+              <div className='flex flex-wrap'>
+                <div className='w-auto p-2'>
+                  <Link href='/app/profile'>
                     <Image
-                      src='/ui-assets/images/dashboard/navigations/avatar.png'
+                      src='/ui-assets/elements/avatar.webp'
                       alt={profile.profile.name ?? ''}
-                      width={40}
-                      height={40}
+                      width={50}
+                      height={50}
                       className='rounded-full'
-                      objectFit='cover'
                     />
-                  </div>
-                  <div className='w-auto p-2'>
-                    <h2 className='text-sm font-semibold text-ash_gray'>
+                  </Link>
+                </div>
+                <div className='w-auto p-2'>
+                  <Link href='/app/profile'>
+                    <h2 className='mb-1 text-sm font-semibold text-ash_gray'>
                       {profile.profile.name ?? ''}
                     </h2>
-                    <p className='text-sm font-light text-ash_gray'>
+                    <p className='mb-1 text-sm font-light text-ash_gray'>
                       {profile.profile.email ?? ''}
                     </p>
-                  </div>
+                    <p className='text-xs font-light text-ash_gray'>
+                      {profile.profile.company ?? ''}
+                    </p>
+                  </Link>
                 </div>
               </div>
               <div className='mt-4 block w-full rounded-full border border-gray-300 bg-gray-50 px-4 py-4 text-sm text-gray-900'>
@@ -331,7 +337,7 @@ export default function DashboardNavigation({
               <li>
                 <Link
                   className='flex items-center justify-between rounded-md p-3 py-4 text-ash_gray hover:bg-rich_black hover:text-ash_gray-800'
-                  href='/app/settings'
+                  href='/app/profile'
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <div className='flex items-center'>
@@ -341,7 +347,7 @@ export default function DashboardNavigation({
                         isMenuFolded ? 'hidden' : 'block'
                       }`}
                     >
-                      Settings
+                      My Profile
                     </p>
                   </div>
                 </Link>

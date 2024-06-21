@@ -6,7 +6,7 @@ export default function WebsiteContactSection() {
       <section
         className='bg-white py-20'
         style={{
-          backgroundImage: 'url("ui-assets/elements/pattern-white.svg")',
+          backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
           backgroundPosition: 'center',
         }}
       >

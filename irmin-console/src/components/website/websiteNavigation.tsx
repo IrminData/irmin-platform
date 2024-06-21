@@ -90,22 +90,25 @@ export default function WebsiteNavigation() {
                     <>
                       <div className='hidden items-center justify-end xl:flex'>
                         <div className='w-auto p-2'>
-                          <Image
-                            src='/ui-assets/images/dashboard/navigations/avatar.png'
-                            alt={profile.profile.name ?? ''}
-                            width={40}
-                            height={40}
-                            className='rounded-full'
-                            objectFit='cover'
-                          />
+                          <Link href='/app/profile'>
+                            <Image
+                              src='/ui-assets/elements/avatar.webp'
+                              alt={profile.profile.name ?? ''}
+                              width={50}
+                              height={50}
+                              className='rounded-full'
+                            />
+                          </Link>
                         </div>
-                        <div className='w-auto p-2'>
-                          <h2 className='text-sm font-semibold text-rich_black'>
-                            {profile.profile.name ?? ''}
-                          </h2>
-                          <p className='text-sm font-light text-rich_black'>
-                            {profile.profile.email ?? ''}
-                          </p>
+                        <div className='mr-4 w-auto p-2'>
+                          <Link href='/app/profile'>
+                            <h2 className='text-sm font-semibold text-rich_black'>
+                              {profile.profile.name ?? ''}
+                            </h2>
+                            <p className='text-sm font-light text-rich_black'>
+                              {profile.profile.email ?? ''}
+                            </p>
+                          </Link>
                         </div>
                         <Link
                           className='inline-block rounded-full border border-ash_gray px-4 py-2 text-sm font-light leading-5 text-ash_gray transition-colors duration-200 hover:bg-gray-50'
@@ -219,22 +222,25 @@ export default function WebsiteNavigation() {
                           Go to app
                         </Link>
                         <div className='w-auto p-2'>
-                          <Image
-                            src='/ui-assets/images/dashboard/navigations/avatar.png'
-                            alt={profile.profile.name ?? ''}
-                            width={40}
-                            height={40}
-                            className='rounded-full'
-                            objectFit='cover'
-                          />
+                          <Link href='/app/profile'>
+                            <Image
+                              src='/ui-assets/elements/avatar.webp'
+                              alt={profile.profile.name ?? ''}
+                              width={50}
+                              height={50}
+                              className='rounded-full'
+                            />
+                          </Link>
                         </div>
-                        <div className='w-auto p-2'>
-                          <h2 className='text-sm font-semibold text-rich_black'>
-                            {profile.profile.name ?? ''}
-                          </h2>
-                          <p className='text-sm font-light text-rich_black'>
-                            {profile.profile.email ?? ''}
-                          </p>
+                        <div className='mr-4 w-auto p-2'>
+                          <Link href='/app/profile'>
+                            <h2 className='text-sm font-semibold text-rich_black'>
+                              {profile.profile.name ?? ''}
+                            </h2>
+                            <p className='text-sm font-light text-rich_black'>
+                              {profile.profile.email ?? ''}
+                            </p>
+                          </Link>
                         </div>
                       </div>
                     ) : (

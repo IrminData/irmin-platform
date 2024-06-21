@@ -7,7 +7,7 @@ export default function WebsiteError() {
       <section
         className='relative bg-white'
         style={{
-          backgroundImage: 'url("ui-assets/elements/pattern-white.svg")',
+          backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
           backgroundPosition: 'center',
         }}
       >

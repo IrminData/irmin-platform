@@ -3,7 +3,7 @@ export default function WebsiteNumbersSection() {
     <section
       className='bg-white py-20 xl:pb-32 xl:pt-24'
       style={{
-        backgroundImage: 'url("ui-assets/elements/pattern-white.svg")',
+        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
         backgroundPosition: 'center',
       }}
     >

@@ -6,7 +6,7 @@ export default function WebsiteCTASection() {
     <section
       className='overflow-hidden bg-white py-24'
       style={{
-        backgroundImage: 'url("ui-assets/elements/pattern-white.svg")',
+        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
         backgroundPosition: 'center',
       }}
     >

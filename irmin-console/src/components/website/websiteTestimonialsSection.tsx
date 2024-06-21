@@ -6,7 +6,7 @@ export default function WebsiteTestimonialsSection() {
       <section
         className='bg-white py-24 md:pb-28'
         style={{
-          backgroundImage: 'url("ui-assets/elements/pattern-white.svg")',
+          backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
           backgroundPosition: 'center',
         }}
       >

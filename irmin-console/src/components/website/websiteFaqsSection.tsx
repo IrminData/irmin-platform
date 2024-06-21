@@ -7,7 +7,7 @@ export default function WebsiteFaqsSection() {
       <section
         className='bg-white pt-24'
         style={{
-          backgroundImage: 'url("ui-assets/elements/pattern-white.svg")',
+          backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
           backgroundPosition: 'center',
         }}
       >
@@ -143,7 +143,7 @@ export default function WebsiteFaqsSection() {
           <div
             className='relative -mb-40 overflow-hidden rounded-xl bg-rich_black px-4 py-16 md:px-8 lg:px-16'
             style={{
-              backgroundImage: 'url("ui-assets/elements/pattern-dark.svg")',
+              backgroundImage: 'url("/ui-assets/elements/pattern-dark.svg")',
               backgroundPosition: 'center',
             }}
           >
