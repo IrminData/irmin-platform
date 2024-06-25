@@ -36,7 +36,7 @@ export default function WebsiteCareersSection() {
                     height={24}
                   />
                   <input
-                    className='shadow-xsm h-full w-full rounded-full border border-rich_black py-3 pl-12 pr-4 leading-tight text-rich_black placeholder-rich_black focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                    className='shadow-xsm h-full w-full rounded-full border border-rich_black py-3 pl-12 pr-4 leading-tight text-rich_black placeholder-rich_black focus:outline-none'
                     type='text'
                     placeholder='Search'
                   />
@@ -58,7 +58,7 @@ export default function WebsiteCareersSection() {
                     />
                   </svg>
                   <select
-                    className='w-full appearance-none rounded-full border-0 bg-transparent px-4 py-3 leading-6 text-rich_black outline-none hover:cursor-pointer focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                    className='w-full appearance-none rounded-full border-0 bg-transparent px-4 py-3 leading-6 text-rich_black outline-none hover:cursor-pointer focus:outline-none'
                     name=''
                   >
                     <option value={1}>Location</option>
@@ -83,7 +83,7 @@ export default function WebsiteCareersSection() {
                     />
                   </svg>
                   <select
-                    className='w-full appearance-none rounded-full border-0 bg-transparent px-4 py-3 leading-6 text-rich_black outline-none hover:cursor-pointer focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                    className='w-full appearance-none rounded-full border-0 bg-transparent px-4 py-3 leading-6 text-rich_black outline-none hover:cursor-pointer focus:outline-none'
                     name=''
                   >
                     <option value={1}>Type</option>
@@ -142,7 +142,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:w-auto'
+                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
                 href='#'
               >
                 View Job
@@ -197,7 +197,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:w-auto'
+                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
                 href='#'
               >
                 View Job
@@ -252,7 +252,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:w-auto'
+                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
                 href='#'
               >
                 View Job
@@ -307,7 +307,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:w-auto'
+                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
                 href='#'
               >
                 View Job
@@ -362,7 +362,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:w-auto'
+                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
                 href='#'
               >
                 View Job
@@ -417,7 +417,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:w-auto'
+                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
                 href='#'
               >
                 View Job
@@ -472,7 +472,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:w-auto'
+                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
                 href='#'
               >
                 View Job

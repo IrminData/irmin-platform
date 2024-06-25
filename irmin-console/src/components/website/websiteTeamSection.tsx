@@ -31,7 +31,7 @@ export default function WebsiteTeamSection() {
               <div className='flex flex-wrap justify-center'>
                 <div className='w-full py-1 md:mr-4 md:w-auto md:py-0'>
                   <Link
-                    className='inline-block w-full rounded-full border border-ash_gray-500 bg-ash_gray-500 px-7 py-5 text-center text-base font-medium leading-4 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:text-lg'
+                    className='inline-block w-full rounded-full border border-ash_gray-500 bg-ash_gray-500 px-7 py-5 text-center text-base font-medium leading-4 text-white shadow-sm hover:bg-ash_gray-600 md:text-lg'
                     href='#'
                   >
                     Open Positions
@@ -39,7 +39,7 @@ export default function WebsiteTeamSection() {
                 </div>
                 <div className='w-full py-1 md:w-auto md:py-0'>
                   <Link
-                    className='inline-block w-full rounded-full border border-rich_black bg-white px-7 py-5 text-center text-base font-medium leading-4 text-rich_black shadow-sm hover:bg-rich_black-100 focus:ring-2 focus:ring-rich_black focus:ring-opacity-50 md:text-lg'
+                    className='inline-block w-full rounded-full border border-rich_black bg-white px-7 py-5 text-center text-base font-medium leading-4 text-rich_black shadow-sm hover:bg-rich_black-100 focus:outline-none md:text-lg'
                     href='#'
                   >
                     About Us

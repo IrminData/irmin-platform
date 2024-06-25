@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { connectionDataType } from '../dataSourceSetupView';
+import { connectionDataType } from '@/components/data-source-setup/dataSourceSetupView';
 
 export default function DefineConnectionDetails({
   connectors,
@@ -55,7 +55,7 @@ export default function DefineConnectionDetails({
             Connection name *
           </label>
           <input
-            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
             type='name'
             placeholder='Connection name'
             required
@@ -66,7 +66,7 @@ export default function DefineConnectionDetails({
             Host *
           </label>
           <input
-            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
             type='host'
             placeholder='Host'
             required
@@ -77,7 +77,7 @@ export default function DefineConnectionDetails({
             Port *
           </label>
           <input
-            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
             type='port'
             placeholder='Port'
             required
@@ -88,7 +88,7 @@ export default function DefineConnectionDetails({
             Database *
           </label>
           <input
-            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
             type='database'
             placeholder='Database'
             required
@@ -99,7 +99,7 @@ export default function DefineConnectionDetails({
             Username *
           </label>
           <input
-            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
             type='username'
             placeholder='Username'
             required
@@ -110,14 +110,14 @@ export default function DefineConnectionDetails({
             Password *
           </label>
           <input
-            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
             type='password'
             placeholder='Password'
             required
           />
         </div>
         <button
-          className='mb-6 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+          className='mb-6 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm hover:bg-ash_gray-600'
           onClick={continueAndTestConnection}
         >
           Continue & test connection

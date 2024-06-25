@@ -33,7 +33,7 @@ export default function WebsiteHeroSection() {
                 <div className='flex flex-wrap justify-center'>
                   <div className='w-full py-1 md:mr-4 md:w-auto md:py-0'>
                     <Link
-                      className='inline-block w-full rounded-full border border-midnight_green-500 bg-midnight_green-500 px-7 py-5 text-center text-base font-light leading-4 text-white shadow-sm transition-colors duration-200 ease-in-out hover:border-midnight_green-600 hover:bg-midnight_green-600 md:text-lg'
+                      className='inline-block w-full rounded-full border border-midnight_green bg-midnight_green px-7 py-5 text-center text-base font-light leading-4 text-white shadow-sm transition-colors duration-200 ease-in-out hover:border-midnight_green-600 hover:bg-midnight_green-600 md:text-lg'
                       href='/sign-up'
                     >
                       Get started for free

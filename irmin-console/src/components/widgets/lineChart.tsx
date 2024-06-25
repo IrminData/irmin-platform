@@ -13,6 +13,7 @@ import {
   Legend,
 } from 'chart.js';
 import { IoSettings } from 'react-icons/io5';
+import { Visualisation } from '@/types/DataSet';
 
 // Register the components required for the chart
 ChartJS.register(
@@ -25,25 +26,14 @@ ChartJS.register(
   Legend
 );
 
-interface ChartProps {
-  title: string;
-  data: {
-    labels: string[]; // x-axis labels e.g., ['January', 'February', 'March', ...]
-    datasets: Array<{
-      label: string; // Name of the dataset
-      data: number[]; // Data points for the dataset
-      fill: boolean; // Whether to fill the area under the line
-      backgroundColor: string; // Color for the dataset
-      borderColor: string; // Border color of the line
-    }>;
-  };
-}
-
-const LineChart: React.FC<ChartProps> = ({ title, data }) => {
+const LineChart = ({ visualisation }: { visualisation: Visualisation }) => {
+  if (visualisation.type !== 'line') return <></>;
   return (
     <div className='p-4'>
       <div className='flex h-14 items-center justify-between border-b px-6 py-4'>
-        <h2 className='text-xl font-semibold leading-tight'>{title}</h2>
+        <h2 className='text-xl font-semibold leading-tight'>
+          {visualisation.title}
+        </h2>
         <button
           className='text-gray-200 transition duration-300 hover:text-ash_gray-600'
           onClick={() => {
@@ -55,7 +45,7 @@ const LineChart: React.FC<ChartProps> = ({ title, data }) => {
       </div>
       <div className='overflow-hidden overflow-y-scroll rounded-lg px-2 pb-2 shadow'>
         <Line
-          data={data}
+          data={visualisation.data}
           options={{
             scales: {
               y: {

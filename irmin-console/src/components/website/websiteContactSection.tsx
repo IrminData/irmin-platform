@@ -28,13 +28,13 @@ export default function WebsiteContactSection() {
             <div className='w-full lg:w-auto'>
               <div className='-mb-2 flex flex-wrap items-center justify-center md:justify-start'>
                 <Link
-                  className='mb-2 inline-block w-full rounded-full border border-transparent bg-ash_gray-500 px-6 py-4 text-center text-lg font-light leading-6 text-green-50 shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:mb-0 md:mr-5 md:w-auto'
+                  className='mb-2 inline-block w-full rounded-full border border-transparent bg-ash_gray-500 px-6 py-4 text-center text-lg font-light leading-6 text-green-50 shadow-sm hover:bg-ash_gray-600 md:mb-0 md:mr-5 md:w-auto'
                   href='#'
                 >
                   Open Positions
                 </Link>
                 <Link
-                  className='inline-block w-full rounded-full border border-rich_black bg-white px-6 py-4 text-center text-lg font-light leading-6 text-rich_black shadow-sm hover:border-rich_black focus:ring-2 focus:ring-rich_black focus:ring-opacity-50 md:w-auto'
+                  className='inline-block w-full rounded-full border border-rich_black bg-white px-6 py-4 text-center text-lg font-light leading-6 text-rich_black shadow-sm hover:border-rich_black focus:outline-none md:w-auto'
                   href='#'
                 >
                   About Us
@@ -251,7 +251,7 @@ export default function WebsiteContactSection() {
                       Email
                     </label>
                     <input
-                      className='block w-full appearance-none rounded-full border border-rich_black px-3 py-2 leading-6 text-rich_black shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                      className='block w-full appearance-none rounded-full border border-rich_black px-3 py-2 leading-6 text-rich_black shadow-md focus:outline-none'
                       type='email'
                       placeholder='hello@irmin.co'
                     />
@@ -264,12 +264,12 @@ export default function WebsiteContactSection() {
                       Message
                     </label>
                     <textarea
-                      className='focus:shadow-outline block h-32 w-full resize-none appearance-none rounded-lg border border-rich_black px-3 py-2 leading-6 text-rich_black placeholder-rich_black shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:h-52'
+                      className='block h-32 w-full resize-none appearance-none rounded-lg border border-rich_black px-3 py-2 leading-6 text-rich_black placeholder-rich_black shadow-md focus:outline-none md:h-52'
                       placeholder='Your message...'
                       defaultValue={''}
                     />
                   </div>
-                  <button className='block w-full rounded-full bg-ash_gray-500 px-6 py-4 text-center text-lg font-light leading-6 text-green-50 shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'>
+                  <button className='block w-full rounded-full bg-ash_gray-500 px-6 py-4 text-center text-lg font-light leading-6 text-green-50 shadow-sm hover:bg-ash_gray-600'>
                     Send
                   </button>
                 </form>

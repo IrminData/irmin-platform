@@ -100,7 +100,7 @@ const SignUpSection: React.FC = () => {
                   Name *
                 </label>
                 <input
-                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
                   type='text'
                   id='name'
                   placeholder='Patryk'
@@ -117,7 +117,7 @@ const SignUpSection: React.FC = () => {
                   Company *
                 </label>
                 <input
-                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
                   type='text'
                   id='company'
                   placeholder='Acme Inc.'
@@ -134,7 +134,7 @@ const SignUpSection: React.FC = () => {
                   Email *
                 </label>
                 <input
-                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
                   type='email'
                   id='email'
                   placeholder='name@acme.corp'
@@ -151,7 +151,7 @@ const SignUpSection: React.FC = () => {
                   Confirm Email *
                 </label>
                 <input
-                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
                   type='email'
                   id='emailConfirmation'
                   placeholder='name@acme.corp'
@@ -168,7 +168,7 @@ const SignUpSection: React.FC = () => {
                   Password *
                 </label>
                 <input
-                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
                   type='password'
                   id='password'
                   placeholder='enter a strong password'
@@ -185,7 +185,7 @@ const SignUpSection: React.FC = () => {
                   Confirm Password *
                 </label>
                 <input
-                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
                   type='password'
                   id='passwordConfirmation'
                   placeholder='same password as above'
@@ -194,8 +194,8 @@ const SignUpSection: React.FC = () => {
                   required
                 />
               </div>
-              {error && <p className='mb-4 text-red-500'>{error}</p>}
-              {success && <p className='mb-4 text-green-500'>{success}</p>}
+              {error && <p className='mb-4 text-red-800'>{error}</p>}
+              {success && <p className='mb-4 text-ash_gray'>{success}</p>}
               <div className='mb-6 flex flex-wrap items-center justify-between'>
                 <div className='w-full md:w-1/2'>
                   <label className='relative inline-flex items-center'>
@@ -226,7 +226,7 @@ const SignUpSection: React.FC = () => {
                 </div>
               </div>
               <button
-                className='mb-6 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                className='mb-6 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm hover:bg-ash_gray-600'
                 type='submit'
                 disabled={loading}
               >

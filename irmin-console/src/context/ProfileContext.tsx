@@ -7,13 +7,15 @@ const ProfileContext = createContext<{
   profile: User | null;
   isLoading: boolean;
   fetchProfile: () => void;
+  setProfile: (profile: User) => void;
 }>({
   profile: null,
   isLoading: true,
   fetchProfile: () => {},
+  setProfile: () => {},
 });
 
-const fetchProfileData = async (): Promise<UserProfileAPIResponse> => {
+export const fetchProfileData = async (): Promise<UserProfileAPIResponse> => {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL ?? ''}/v1/account/profile`,
     {
@@ -42,8 +44,22 @@ export const ProfileProvider = ({
 
   // Fetch the profile data
   const fetchProfile = async () => {
-    setIsLoading(true);
+    const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
+    if (offlineMode) {
+      setProfile({
+        id: 0,
+        name: 'Offline User',
+        company: 'Offline Inc.',
+        email: 'work.offline@finnair.com',
+        email_verified_at: null,
+        created_at: new Date().toDateString(),
+        updated_at: new Date().toDateString(),
+      });
+      setIsLoading(false);
+      return;
+    }
     try {
+      setIsLoading(true);
       const data = await fetchProfileData();
       setProfile(data.data);
     } catch (error) {
@@ -64,6 +80,7 @@ export const ProfileProvider = ({
         profile,
         isLoading,
         fetchProfile,
+        setProfile,
       }}
     >
       {children}

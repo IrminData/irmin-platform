@@ -255,7 +255,7 @@ export default function WebsiteNavigation() {
                         </div>
                         <div className='w-full'>
                           <Link
-                            className='focus:midnight_green inline-block w-full rounded-full bg-midnight_green px-4 py-2 text-center text-sm font-light leading-5 text-white hover:bg-midnight_green-600 focus:ring-2 focus:ring-opacity-50'
+                            className='inline-block w-full rounded-full bg-midnight_green px-4 py-2 text-center text-sm font-light leading-5 text-white hover:bg-midnight_green-600 focus:outline-none'
                             href='/sign-up'
                           >
                             Sign Up

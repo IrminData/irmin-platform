@@ -66,7 +66,7 @@ export default function WebsitePricingSection() {
                     </span>
                   </div>
                   <Link
-                    className='mb-8 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-4 text-center text-base font-light leading-6 text-green-50 shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:text-lg'
+                    className='mb-8 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-4 text-center text-base font-light leading-6 text-green-50 shadow-sm hover:bg-ash_gray-600 md:text-lg'
                     href='#'
                   >
                     Get Started Now
@@ -137,7 +137,7 @@ export default function WebsitePricingSection() {
                     </span>
                   </div>
                   <Link
-                    className='mb-8 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-4 text-center text-base font-light leading-6 text-green-50 shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:text-lg'
+                    className='mb-8 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-4 text-center text-base font-light leading-6 text-green-50 shadow-sm hover:bg-ash_gray-600 md:text-lg'
                     href='#'
                   >
                     Get Started Now
@@ -218,7 +218,7 @@ export default function WebsitePricingSection() {
                     </span>
                   </div>
                   <Link
-                    className='mb-8 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-4 text-center text-base font-light leading-6 text-green-50 shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:text-lg'
+                    className='mb-8 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-4 text-center text-base font-light leading-6 text-green-50 shadow-sm hover:bg-ash_gray-600 md:text-lg'
                     href='#'
                   >
                     Get Started Now

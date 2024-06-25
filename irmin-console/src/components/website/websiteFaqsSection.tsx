@@ -155,7 +155,7 @@ export default function WebsiteFaqsSection() {
                 Flex is a Small SaaS Business. Flex isn’t a traditional company.
               </p>
               <Link
-                className='mb-2 inline-flex h-14 w-full items-center justify-center rounded-full border border-transparent bg-ash_gray-500 px-7 py-3 text-lg font-light leading-7 text-green-50 shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:mb-0 md:mr-4 md:w-auto'
+                className='mb-2 inline-flex h-14 w-full items-center justify-center rounded-full border border-transparent bg-ash_gray-500 px-7 py-3 text-lg font-light leading-7 text-green-50 shadow-sm hover:bg-ash_gray-600 md:mb-0 md:mr-4 md:w-auto'
                 href='/contact'
               >
                 Get in touch

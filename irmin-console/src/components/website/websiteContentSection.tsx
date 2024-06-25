@@ -135,7 +135,7 @@ export default function WebsiteContentSection() {
             height={100}
           />
           <Image
-            className='absolute -bottom-24 left-0 w-28 text-red-500 md:left-auto md:right-96 md:mr-52 md:mt-px md:w-auto lg:mr-16 xl:-mr-20'
+            className='absolute -bottom-24 left-0 w-28 text-red-800 md:left-auto md:right-96 md:mr-52 md:mt-px md:w-auto lg:mr-16 xl:-mr-20'
             src='/ui-assets/elements/dots2-red.svg'
             alt='Red dots'
             width={100}

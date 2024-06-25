@@ -151,27 +151,37 @@ export default function DashboardNavigation({
                   className='w-full bg-gray-50'
                   defaultValue={workspace.currentWorkspace.id}
                   disabled={processingWorkspaceSwitch}
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     e.preventDefault();
-                    if (e.target.value === 'create-new') {
-                      router.push('/app');
-                      return;
-                    }
-                    const workspaceID = parseInt(e.target.value);
-                    const newWorkspace = workspace.workspaces?.find(
-                      (w) => w.id === workspaceID
-                    );
-                    if (newWorkspace) {
-                      setProcessingWorkspaceSwitch(true);
-                      workspaceService
-                        .switchWorkspace(newWorkspace.slug)
-                        .then(() => {
-                          workspace.setCurrentWorkspace(newWorkspace);
-                          router.push(`/app/${newWorkspace.slug}/dashboards`);
-                        })
-                        .finally(() => {
+                    try {
+                      if (e.target.value === 'create-new') {
+                        router.push('/app');
+                        return;
+                      }
+                      const workspaceID = parseInt(e.target.value);
+                      const newWorkspace = workspace.workspaces?.find(
+                        (w) => w.id === workspaceID
+                      );
+                      if (newWorkspace) {
+                        setProcessingWorkspaceSwitch(true);
+
+                        const switchingToWorkspace =
+                          await workspaceService.switchWorkspace(
+                            newWorkspace.slug
+                          );
+                        if (switchingToWorkspace) {
+                          workspace.setCurrentWorkspace(switchingToWorkspace);
+                          router.push(
+                            `/app/${switchingToWorkspace.slug}/dashboards`
+                          );
                           setProcessingWorkspaceSwitch(false);
-                        });
+                        } else {
+                          console.error('Failed to switch workspace');
+                          setProcessingWorkspaceSwitch(false);
+                        }
+                      }
+                    } catch (error) {
+                      console.log(error);
                     }
                   }}
                 >
@@ -435,7 +445,7 @@ export default function DashboardNavigation({
                         />
                         <button
                           type='submit'
-                          className='absolute bottom-2.5 end-1.5 rounded-full bg-ash_gray px-4 py-2 text-xs font-light text-white hover:bg-ash_gray-800 focus:outline-none focus:ring-4 md:text-sm'
+                          className='absolute bottom-2.5 end-1.5 rounded-full bg-ash_gray px-4 py-2 text-xs font-light text-white hover:bg-ash_gray-800 focus:outline-none md:text-sm'
                         >
                           Search
                         </button>
@@ -449,7 +459,7 @@ export default function DashboardNavigation({
         </div>
       </section>
       <div
-        className={`min-h-full px-4 pt-[94px] ${
+        className={`relative min-h-full px-4 pt-[94px] ${
           isMenuFolded
             ? 'md:ml-[80px] md:w-[calc(100%-80px)]'
             : 'md:ml-[40%] md:w-3/5 xl:ml-[20%] xl:w-4/5'

@@ -37,14 +37,14 @@ export default function WebsiteNewsletterSection() {
               <div className='mb-1 flex flex-wrap'>
                 <div className='mb-3 w-full md:mb-0 md:mr-6 md:flex-1'>
                   <input
-                    className='shadow-xsm w-full rounded-full border border-rich_black px-4 py-3 leading-tight text-rich_black placeholder-rich_black focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                    className='shadow-xsm w-full rounded-full border border-rich_black px-4 py-3 leading-tight text-rich_black placeholder-rich_black focus:outline-none'
                     type='text'
                     placeholder='Enter your email'
                   />
                 </div>
                 <div className='w-full md:w-auto'>
                   <Link
-                    className='inline-block w-full rounded-full border border-transparent bg-ash_gray-500 px-5 py-3 text-center font-light leading-5 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                    className='inline-block w-full rounded-full border border-transparent bg-ash_gray-500 px-5 py-3 text-center font-light leading-5 text-white shadow-sm hover:bg-ash_gray-600'
                     href='#'
                   >
                     Subscribe

@@ -7,7 +7,7 @@ import Image from 'next/image';
 import WorkspaceService from '@/lib/WorkspaceService';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { Workspace } from '@/types/Workspace';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import LoadingSpinner from '@/components/misc/LoadingSpinner';
 
 const ManageWorkspaces: React.FC = () => {
   const router = useRouter();
@@ -50,9 +50,15 @@ const ManageWorkspaces: React.FC = () => {
     setError(null);
     setSuccess(null);
     try {
-      setCurrentWorkspace(workspace);
-      await workspaceService.switchWorkspace(workspace.slug);
-      router.push(`/app/${workspace.slug}/dashboards`);
+      const newWorkspace = await workspaceService.switchWorkspace(
+        workspace.slug
+      );
+      if (newWorkspace) {
+        setCurrentWorkspace(newWorkspace);
+        router.push(`/app/${newWorkspace.slug}/dashboards`);
+      } else {
+        throw new Error('Switching workspace failed');
+      }
     } catch (error: any) {
       setError(error?.message ?? 'Switching workspace failed');
     }
@@ -90,7 +96,7 @@ const ManageWorkspaces: React.FC = () => {
                     New workspace name *
                   </label>
                   <input
-                    className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                    className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
                     type='text'
                     id='newWorkspaceName'
                     placeholder='Workspace Name'
@@ -99,10 +105,10 @@ const ManageWorkspaces: React.FC = () => {
                     required
                   />
                 </div>
-                {error && <p className='mb-4 text-red-500'>{error}</p>}
-                {success && <p className='mb-4 text-green-500'>{success}</p>}
+                {error && <p className='mb-4 text-red-800'>{error}</p>}
+                {success && <p className='mb-4 text-ash_gray'>{success}</p>}
                 <button
-                  className='mb-6 inline-block w-full cursor-pointer rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm transition-all hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                  className='mb-6 inline-block w-full cursor-pointer rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm transition-all hover:bg-ash_gray-600'
                   type='submit'
                   aria-label='Create Workspace'
                   disabled={loading}
@@ -122,10 +128,9 @@ const ManageWorkspaces: React.FC = () => {
                   workspaces.map((workspace) => (
                     <div key={workspace.id} className='mb-4'>
                       <div
-                        className='w-full cursor-pointer rounded-full border border-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-ash_gray shadow-sm transition-all hover:bg-gray-100 focus:ring-2'
+                        className='w-full cursor-pointer rounded-full border border-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-ash_gray shadow-sm transition-all hover:bg-gray-100 focus:outline-none'
                         onClick={(e) => {
                           e.preventDefault();
-                          console.log('Selected workspace', workspace);
                           handleSelectWorkspace(workspace);
                         }}
                         aria-label={`Go to ${workspace.name}`}

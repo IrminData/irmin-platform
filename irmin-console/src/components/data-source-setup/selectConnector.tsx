@@ -1,6 +1,6 @@
 'use client';
 
-import { connectionDataType } from '../dataSourceSetupView';
+import { connectionDataType } from '@/components/data-source-setup/dataSourceSetupView';
 
 export function SelectConnector({
   connectors,

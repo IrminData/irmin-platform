@@ -1,6 +1,6 @@
 import AppTitle from '@/components/appTitle';
-import DataSourceTable from '@/components/datasourceTable';
-import AddNewDataSource from '@/components/addNewDataSource';
+import DataSourceTable from '@/components/tables/datasourceTable';
+import AddNewDataSource from '@/components/data-source-setup/addNewDataSource';
 
 export default function DataSourcesPage() {
   return (

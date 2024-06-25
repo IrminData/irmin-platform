@@ -34,7 +34,7 @@ export default function WebsiteBlogPosts() {
                 height={24}
               />
               <input
-                className='shadow-xsm w-full rounded-lg border border-rich_black py-3 pl-12 pr-4 leading-tight text-rich_black placeholder-rich_black focus:outline-none focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50'
+                className='shadow-xsm w-full rounded-lg border border-rich_black py-3 pl-12 pr-4 leading-tight text-rich_black placeholder-rich_black focus:outline-none'
                 type='text'
                 placeholder='Search'
               />
@@ -415,7 +415,7 @@ export default function WebsiteBlogPosts() {
             </div>
           </div>
           <Link
-            className='mx-auto flex items-center justify-center rounded-md bg-ash_gray-500 px-4 py-2 text-sm font-medium leading-5 text-green-50 hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:max-w-max'
+            className='mx-auto flex items-center justify-center rounded-md bg-ash_gray-500 px-4 py-2 text-sm font-medium leading-5 text-green-50 hover:bg-ash_gray-600 md:max-w-max'
             href='/blog/slug'
           >
             <span className='mr-3'>View more</span>

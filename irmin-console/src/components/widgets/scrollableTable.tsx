@@ -1,22 +1,19 @@
 import React from 'react';
 import { IoSettings } from 'react-icons/io5';
+import { Visualisation } from '@/types/DataSet';
 
-interface Column {
-  header: string;
-  accessor: string; // Matches with keys in data
-}
-
-interface TableProps {
-  title: string;
-  columns: Column[];
-  data: Record<string, any>[];
-}
-
-const ScrollableTable: React.FC<TableProps> = ({ title, columns, data }) => {
+const ScrollableTable = ({
+  visualisation,
+}: {
+  visualisation: Visualisation;
+}) => {
+  if (visualisation.type !== 'table') return <></>;
   return (
     <div className='p-4'>
       <div className='flex h-14 items-center justify-between border-b px-6 py-4'>
-        <h2 className='text-xl font-semibold leading-tight'>{title}</h2>
+        <h2 className='text-xl font-semibold leading-tight'>
+          {visualisation.title}
+        </h2>
         <button
           className='text-gray-200 transition duration-300 hover:text-ash_gray-600'
           onClick={() => {
@@ -31,28 +28,38 @@ const ScrollableTable: React.FC<TableProps> = ({ title, columns, data }) => {
           <table className='min-w-full'>
             <thead className='sticky top-0 bg-ash_gray'>
               <tr>
-                {columns.map((column, index) => (
+                {visualisation.data.datasets[0].label && (
+                  <td className='whitespace-no-wrap border-b border-gray-200 px-6 py-4'>
+                    {' '}
+                  </td>
+                )}
+                {visualisation.data.labels.map((column, index) => (
                   <th
                     key={index}
                     className='border-b border-gray-200 px-6 py-3 text-left text-xs font-medium uppercase leading-4 tracking-wider text-white'
                   >
-                    {column.header}
+                    {column}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody className='max-h-80 bg-white'>
-              {data.map((row, rowIndex) => (
+              {visualisation.data.datasets.map((row, rowIndex) => (
                 <tr
                   key={rowIndex}
                   className='h-12 text-sm leading-5 text-gray-900'
                 >
-                  {columns.map((col, colIndex) => (
+                  {row.label && (
+                    <td className='whitespace-no-wrap border-b border-gray-200 px-6 py-4'>
+                      {row.label}
+                    </td>
+                  )}
+                  {row.data.map((col, colIndex) => (
                     <td
                       key={colIndex}
                       className='whitespace-no-wrap border-b border-gray-200 px-6 py-4'
                     >
-                      {row[col.accessor]}
+                      {typeof col === 'number' ? col.toFixed(2) : col}
                     </td>
                   ))}
                 </tr>

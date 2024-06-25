@@ -1,18 +1,47 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-import ScriptEditor from '@/components/scriptEditor';
+import ScriptEditorWithOptions from '@/components/script-editor/scriptEditorWithOptions';
 import FileNavigator from '@/components/fileNavigator';
 import QueryResultsAndTabs from '@/components/queryResultsAndTabs';
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
-import DataSourceTable from '@/components/datasourceTable';
-import DatasetTable from '@/components/datasetTable';
+import DataSourceTable from '@/components/tables/datasourceTable';
+import DatasetTable from '@/components/tables/datasetTable';
 import { TbSearch } from 'react-icons/tb';
+import { DataSetService } from '@/lib/DataSetService';
+import { DataSet } from '@/types/DataSet';
+import LoadingSpinner from '@/components/misc/LoadingSpinner';
+import TableSkeleton from '@/components/tables/tableSkeleton';
 
 export default function EditorPage() {
+  const dataService = DataSetService.getInstance();
   const [editorHeight, setEditorHeight] = useState('400px');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [dataSets, setDataSets] = useState<DataSet[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        let fetchedDataSets = await dataService.getAllDataSets();
+        if (!fetchedDataSets || fetchedDataSets.length === 0) {
+          fetchedDataSets = await dataService.fetchAllDataSets();
+        }
+        if (fetchedDataSets) setDataSets(fetchedDataSets);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [dataService]);
+
+  const dataSet = dataSets[0] ?? null;
   return (
     <>
       <div className='flex'>
@@ -179,89 +208,29 @@ export default function EditorPage() {
             <br />
             <div className='max-h-80 overflow-auto border-t p-2'>
               <h3 className='px-4'>Data sets</h3>
-              <DatasetTable
-                inSidebar={true}
-                dataSets={[
-                  {
-                    id: 0,
-                    name: 'UpCharge rents, users and venues',
-                    sourceWorkspace: 'UpCharge',
-                    status: 'private',
-                  },
-                  {
-                    id: 1,
-                    name: 'UpCharge locations',
-                    sourceWorkspace: 'UpCharge',
-                    status: 'public',
-                  },
-                  {
-                    id: 2,
-                    name: 'Restaurants in Finland',
-                    sourceWorkspace: 'TripAdvisor',
-                    status: 'connected',
-                  },
-                ]}
-              />
+              {loading ? (
+                <TableSkeleton />
+              ) : (
+                <DatasetTable inSidebar={true} dataSets={dataSets} />
+              )}
             </div>
           </div>
         </div>
         <div className='-mr-4 inline-block w-full overflow-auto bg-white'>
-          <ScriptEditor
-            editorHeight={editorHeight}
-            setEditorHeight={setEditorHeight}
-          />
-          <QueryResultsAndTabs
-            editorHeight={editorHeight}
-            columns={[
-              {
-                name: 'Title',
-                selector: (row: any) => row.title,
-                sortable: true,
-              },
-              {
-                name: 'Year',
-                selector: (row: any) => row.year,
-                sortable: true,
-              },
-            ]}
-            data={[
-              {
-                id: 1,
-                title: 'Beetlejuice',
-                year: '1988',
-              },
-              {
-                id: 2,
-                title: 'Ghostbusters',
-                year: '1984',
-              },
-              {
-                id: 3,
-                title: 'The Shining',
-                year: '1980',
-              },
-              {
-                id: 4,
-                title: 'The Conjuring',
-                year: '2013',
-              },
-              {
-                id: 5,
-                title: 'The Thing',
-                year: '1982',
-              },
-              {
-                id: 6,
-                title: 'The Others',
-                year: '2001',
-              },
-              {
-                id: 7,
-                title: 'Coraline',
-                year: '2009',
-              },
-            ]}
-          />
+          {dataSet ? (
+            <>
+              <ScriptEditorWithOptions
+                editorHeight={editorHeight}
+                setEditorHeight={setEditorHeight}
+              />
+              <QueryResultsAndTabs
+                editorHeight={editorHeight}
+                dataSet={dataSet}
+              />
+            </>
+          ) : (
+            <LoadingSpinner />
+          )}
         </div>
       </div>
     </>

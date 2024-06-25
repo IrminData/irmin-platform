@@ -2,19 +2,22 @@
 
 import React, { useState } from 'react';
 import AppTitle from '@/components/appTitle';
+import { useProfile, fetchProfileData } from '@/context/ProfileContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
+import AuthService from '@/lib/AuthService';
+import LoadingSpinner from '@/components/misc/LoadingSpinner';
 
 export default function UserProfileSettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'general':
-        return <GeneralSettings openModal={() => setIsModalOpen(true)} />;
+        return <GeneralSettings />;
       case 'change-password':
         return <ChangePasswordSettings />;
       default:
-        return <GeneralSettings openModal={() => setIsModalOpen(true)} />;
+        return <GeneralSettings />;
     }
   };
 
@@ -46,22 +49,42 @@ export default function UserProfileSettingsPage() {
         </div>
         <div>{renderTabContent()}</div>
       </div>
-
-      {isModalOpen && (
-        <ConfirmationModal closeModal={() => setIsModalOpen(false)} />
-      )}
     </>
   );
 }
 
-const GeneralSettings: React.FC<{ openModal: () => void }> = ({
-  openModal,
-}) => {
-  const handleSaveChanges = (event: React.FormEvent) => {
+const GeneralSettings: React.FC = () => {
+  const { profile, setProfile } = useProfile();
+  const { irminAlert } = useWorkspace();
+  const authService = AuthService.getInstance();
+
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSaveChanges = async (event: React.FormEvent) => {
     event.preventDefault();
-    // Handle saving changes
-    console.log('Changes saved.');
+    // Get form values
+    const form = event.target as HTMLFormElement;
+    const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+    const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+    const company = (form.elements.namedItem('company') as HTMLInputElement)
+      .value;
+
+    try {
+      // Call the API to update the profile
+      await authService.updateProfile(name, company, email);
+      // Update the profile context
+      const data = await fetchProfileData();
+      setProfile(data.data);
+      // Reset error and show success message
+      setError(null);
+      irminAlert('success', 'Profile updated successfully.');
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      setError(error.message ?? 'An error occurred.');
+    }
   };
+
+  if (!profile) return <LoadingSpinner />;
 
   return (
     <div>
@@ -73,6 +96,8 @@ const GeneralSettings: React.FC<{ openModal: () => void }> = ({
             type='text'
             className='mt-2 w-full rounded border p-2'
             placeholder='Enter your name'
+            defaultValue={profile.name}
+            name='name'
           />
         </div>
         <div className='mb-4'>
@@ -81,6 +106,8 @@ const GeneralSettings: React.FC<{ openModal: () => void }> = ({
             type='email'
             className='mt-2 w-full rounded border p-2'
             placeholder='Enter your email'
+            defaultValue={profile.email}
+            name='email'
           />
         </div>
         <div className='mb-4'>
@@ -89,6 +116,8 @@ const GeneralSettings: React.FC<{ openModal: () => void }> = ({
             type='text'
             className='mt-2 w-full rounded border p-2'
             placeholder='Enter your company name'
+            defaultValue={profile.company ?? ''}
+            name='company'
           />
         </div>
         <button
@@ -97,20 +126,8 @@ const GeneralSettings: React.FC<{ openModal: () => void }> = ({
         >
           Save Changes
         </button>
+        {error && <p className='mt-2 text-red-500'>{error}</p>}
       </form>
-      <div className='mt-8'>
-        <h3 className='text-xl font-normal text-red-800'>Danger Zone</h3>
-        <p className='mt-2 text-gray-700'>
-          Deleting your account will remove all data associated with it. This
-          action is irreversible.
-        </p>
-        <button
-          onClick={openModal}
-          className='mt-4 cursor-pointer rounded border border-red-800 px-4 py-2 text-red-800 transition-all hover:bg-red-600 hover:text-white'
-        >
-          Delete Account
-        </button>
-      </div>
     </div>
   );
 };
@@ -157,42 +174,6 @@ const ChangePasswordSettings: React.FC = () => {
           Change Password
         </button>
       </form>
-    </div>
-  );
-};
-
-const ConfirmationModal: React.FC<{ closeModal: () => void }> = ({
-  closeModal,
-}) => {
-  const handleDelete = () => {
-    // Handle the deletion of the account
-    console.log('Account deleted.');
-    closeModal();
-  };
-
-  return (
-    <div className='fixed inset-0 flex items-center justify-center bg-gray-600 bg-opacity-50'>
-      <div className='rounded-lg bg-white p-8 shadow-lg'>
-        <h2 className='mb-4 text-2xl font-semibold'>Confirm Deletion</h2>
-        <p className='mb-4'>
-          Are you sure you want to delete your account? This action cannot be
-          undone and will remove all data associated with your account.
-        </p>
-        <div className='flex justify-end'>
-          <button
-            onClick={closeModal}
-            className='mr-4 rounded bg-gray-300 px-4 py-2 text-gray-700'
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleDelete}
-            className='rounded bg-red-500 px-4 py-2 text-white'
-          >
-            Delete
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import WebsiteError from '@/components/websiteError';
+import WebsiteError from '@/components/misc/websiteError';
 
 function NotFoundPage() {
   return (

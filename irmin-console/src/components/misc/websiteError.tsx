@@ -41,7 +41,7 @@ export default function WebsiteError() {
                 <div className='flex flex-wrap'>
                   <div className='w-full py-1 lg:mr-6 lg:w-auto lg:py-0'>
                     <Link
-                      className='inline-block w-full rounded-full border border-ash_gray-500 bg-ash_gray-500 px-7 py-5 text-center text-base font-medium leading-4 text-white shadow-sm hover:bg-ash_gray-600 focus:ring-2 focus:ring-ash_gray-500 focus:ring-opacity-50 md:text-lg'
+                      className='inline-block w-full rounded-full border border-ash_gray-500 bg-ash_gray-500 px-7 py-5 text-center text-base font-medium leading-4 text-white shadow-sm hover:bg-ash_gray-600 md:text-lg'
                       href='/'
                     >
                       Go back to Homepage
@@ -49,7 +49,7 @@ export default function WebsiteError() {
                   </div>
                   <div className='w-full py-1 lg:w-auto lg:py-0'>
                     <Link
-                      className='inline-block w-full rounded-full border border-rich_black bg-white px-7 py-5 text-center text-base font-medium leading-4 text-rich_black shadow-sm focus:ring-rich_black focus:ring-opacity-50 md:text-lg'
+                      className='inline-block w-full rounded-full border border-rich_black bg-white px-7 py-5 text-center text-base font-medium leading-4 text-rich_black shadow-sm focus:outline-none md:text-lg'
                       href='#'
                     >
                       Try Again

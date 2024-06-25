@@ -58,7 +58,7 @@ export default function WebsiteCTASection() {
               <div className='flex flex-wrap items-center'>
                 <div className='w-1/2 pr-4'>
                   <Link
-                    className='inline-block w-full rounded-full border border-midnight_green-500 bg-midnight_green-500 px-4 py-4 text-center text-base font-light leading-4 text-white shadow-sm transition-colors duration-200 ease-in-out hover:border-midnight_green-600 hover:bg-midnight_green-600 md:text-lg'
+                    className='inline-block w-full rounded-full border border-midnight_green bg-midnight_green px-4 py-4 text-center text-base font-light leading-4 text-white shadow-sm transition-colors duration-200 ease-in-out hover:border-midnight_green-600 hover:bg-midnight_green-600 md:text-lg'
                     href='/sign-up'
                   >
                     Get started for free
