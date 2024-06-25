@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { IoAdd, IoClose } from 'react-icons/io5';
-import DataSourceSetupView from './dataSourceSetupView';
+import DataSourceSetupView from '@/components/data-source-setup/dataSourceSetupView';
 
 export default function AddNewDataSource() {
   const [isOpen, setIsOpen] = useState(false);

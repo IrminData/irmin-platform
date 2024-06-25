@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { connectionDataType } from '../dataSourceSetupView';
+import { connectionDataType } from '@/components/data-source-setup/dataSourceSetupView';
 
 export default function DefineConnectionSettings({
   connectors,

@@ -1,4 +1,3 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import { faker } from '@faker-js/faker';
 import { DataRow, DataSet, Visualisation, Column } from '@/types/DataSet';
 
@@ -120,8 +119,9 @@ const createFakeDataSet = (id: number): DataSet => {
   };
 };
 
-export async function GET(req: NextApiRequest) {
-  const { id } = req.query;
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get('id');
   const dataSetId = parseInt(id as string, 10);
 
   if (isNaN(dataSetId)) {

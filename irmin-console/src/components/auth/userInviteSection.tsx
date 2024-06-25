@@ -2,10 +2,18 @@
 
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import AuthService from '@/lib/AuthService';
+import LoadingSpinner from '../misc/LoadingSpinner';
 
 const UserInviteSection: React.FC = () => {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <UserInvite />
+    </Suspense>
+  );
+};
+const UserInvite: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteId = parseInt(searchParams.get('invite') || '-1', 10);
