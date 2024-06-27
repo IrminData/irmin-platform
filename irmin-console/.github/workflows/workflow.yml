@@ -1,0 +1,36 @@
+name: Workflow
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - development
+permissions:
+  contents: write
+jobs:
+  workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Setup Yarn
+        run: |
+          corepack enable
+          corepack prepare yarn@2.4.2 --activate
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Prettier
+        run: yarn prettier --write .
+      - name: ESLint
+        run: yarn eslint .
+      - name: Apply formatting
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Apply formatting
+          skip_fetch: true
+      - name: Build
+        run: yarn build
