@@ -18,11 +18,10 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
       - name: Setup Yarn
-        run: |
-          corepack enable
-          corepack prepare yarn@2.4.2 --activate
-      - name: Install dependencies
-        run: yarn install --immutable
+        uses: threeal/setup-yarn-action@v2.0.0
+        with:
+          version: latest
+          cache: false
       - name: Prettier
         run: yarn prettier --write .
       - name: ESLint
