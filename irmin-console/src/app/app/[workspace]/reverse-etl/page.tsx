@@ -26,6 +26,7 @@ export default function ReverseETLPage() {
         title='Create a new Reverse ETL sync'
       >
         <ReverseETLSetupView
+          isOpen={isOpen}
           setIsOpen={setIsOpen}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}

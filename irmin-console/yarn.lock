@@ -2929,15 +2929,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cronstrue@npm:^2.12.0":
-  version: 2.50.0
-  resolution: "cronstrue@npm:2.50.0"
-  bin:
-    cronstrue: bin/cli.js
-  checksum: 10c0/9fec217cfc83a53842c04cab1103ffb077a33837ea0f03f8a0968fe548509134b6667303ee7188d00b555fb53ad82fef5b6cd0c1886f3ec34b74625b61c6c3d7
-  languageName: node
-  linkType: hard
-
 "cross-spawn@npm:^7.0.0, cross-spawn@npm:^7.0.2":
   version: 7.0.3
   resolution: "cross-spawn@npm:7.0.3"
@@ -4387,7 +4378,6 @@ __metadata:
     prettier-plugin-tailwindcss: "npm:^0.6.5"
     react: "npm:^18"
     react-chartjs-2: "npm:^5.2.0"
-    react-cron-generator: "npm:^2.0.11"
     react-data-table-component: "npm:^7.6.2"
     react-dom: "npm:^18"
     react-icons: "npm:^5.1.0"
@@ -6387,18 +6377,6 @@ __metadata:
     chart.js: ^4.1.1
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
   checksum: 10c0/437e443a268b7eebab3f1a6f0f5d936e58caf650fca55f568a612a46c563d22af683a64185eac8005aa644e4960a5a72cc1075a2574b89ec46c7653aaf4025e2
-  languageName: node
-  linkType: hard
-
-"react-cron-generator@npm:^2.0.11":
-  version: 2.0.12
-  resolution: "react-cron-generator@npm:2.0.12"
-  dependencies:
-    cronstrue: "npm:^2.12.0"
-  peerDependencies:
-    react: ">=16.8.0"
-    react-dom: ">=16.8.0"
-  checksum: 10c0/f2051cbc0c2033723a01d157c7fd4e60ba31ad0e1e2e3d16e20391b8c309a0eacb9bd14827a9754f1a1cd78654171d2f0a6601e9e95c382cde2a75a013cb0e96
   languageName: node
   linkType: hard
 

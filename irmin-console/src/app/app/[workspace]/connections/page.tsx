@@ -27,6 +27,7 @@ export default function ConnectionsPage() {
         title='Create a new connection'
       >
         <ConnectionSetupView
+          isOpen={isOpen}
           setIsOpen={setIsOpen}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}

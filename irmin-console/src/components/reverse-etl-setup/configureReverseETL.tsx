@@ -1,8 +1,6 @@
 'use client';
 
 import React from 'react';
-import Cron from 'react-cron-generator';
-import '@/app/cron-builder.css';
 
 export default function ConfigureReverseETL({
   reverseETLData,
@@ -46,20 +44,13 @@ export default function ConfigureReverseETL({
         </label>
         <input
           className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
-          value={reverseETLData.cron}
-        />
-      </div>
-      <div className='py-4'>
-        <Cron
-          value={reverseETLData.cron}
+          defaultValue={reverseETLData.cron}
           onChange={(e) => {
             setReverseETLData((prevData: any) => ({
               ...prevData,
-              cron: e,
+              cron: e.target.value,
             }));
           }}
-          showResultText={true}
-          showResultCron={false}
         />
       </div>
       {/* Add more configuration settings as needed */}

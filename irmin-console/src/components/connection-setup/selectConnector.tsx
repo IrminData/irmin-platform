@@ -3,6 +3,8 @@
 import Image from 'next/image';
 import { connectionDataType } from '@/components/connection-setup/connectionSetupView';
 import { Connector } from '@/types/Connector';
+import { usePopup } from '@/context/PopupContext';
+import Link from 'next/link';
 
 export function SelectConnector({
   connectors,
@@ -13,22 +15,24 @@ export function SelectConnector({
   setConnectionData: React.Dispatch<React.SetStateAction<connectionDataType>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
-  const handleConnectorClick = (connectorID: number) => {
+  const { irminAlert } = usePopup();
+
+  const handleConnectorClick = (connector: Connector) => {
     setConnectionData((prev) => ({
       ...prev,
-      connectorID: connectorID,
+      connector: connector,
     }));
     setCurrentStep(2);
   };
 
   return (
-    <>
+    <div className='flex h-[70vh] flex-col justify-between'>
       <div className='grid grid-cols-3 gap-4 p-6'>
         {connectors.map((connector, index) => (
           <button
             key={index}
             className='flex flex-col items-center justify-center rounded-lg border p-4 transition duration-300 hover:shadow-lg'
-            onClick={() => handleConnectorClick(connector.id)}
+            onClick={() => handleConnectorClick(connector)}
           >
             <Image
               src={connector.logo}
@@ -41,14 +45,27 @@ export function SelectConnector({
           </button>
         ))}
       </div>
-      <div className='flex items-center justify-between border-t px-6 py-4'>
-        <button className='rounded bg-ash_gray-500 px-4 py-2 text-white transition duration-300 hover:bg-ash_gray-600'>
+      <div className='flex-grow'></div>
+      <div className='mt-auto flex items-center justify-between border-t px-6 py-4'>
+        <button
+          onClick={() => {
+            irminAlert(
+              'info',
+              'This feature is not available yet. To build and use custom connectors, please contact support.'
+            );
+          }}
+          className='rounded bg-ash_gray-500 px-4 py-2 text-white transition duration-300 hover:bg-ash_gray-600'
+        >
           Add custom connector
         </button>
-        <button className='text-ash_gray-500 hover:underline'>
+        <Link
+          className='text-ash_gray-500 hover:underline'
+          href='/contact'
+          target='_blank'
+        >
           Contact support
-        </button>
+        </Link>
       </div>
-    </>
+    </div>
   );
 }

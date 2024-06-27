@@ -1,56 +1,106 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
-import Cron from 'react-cron-generator';
+import { useState, useCallback } from 'react';
 import { connectionDataType } from '@/components/connection-setup/connectionSetupView';
-import '@/app/cron-builder.css';
-import { Connector } from '@/types/Connector';
+import { usePopup } from '@/context/PopupContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
+import ConnectionService from '@/lib/ConnectionService';
 
 export default function DefineSync({
-  connectors,
   connectionData,
   setConnectionData,
   setCurrentStep,
   setIsOpen,
 }: {
-  connectors: Connector[];
   connectionData: connectionDataType;
   setConnectionData: React.Dispatch<React.SetStateAction<connectionDataType>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
+  const connectionService = ConnectionService.getInstance();
+
+  const { irminAlert } = usePopup();
+  const { currentWorkspace } = useWorkspace();
+
   const [cronValue, setCronValue] = useState(connectionData.cron);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const connector = connectors.find(
-    (connector) => connector.id === connectionData.connectorID
+  const startSync = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      // Prevent if already loading
+      if (isLoading) return;
+      setIsLoading(true);
+      // Save the cron value to the connection data
+      setConnectionData((prev: connectionDataType) => ({
+        ...prev,
+        cron: cronValue,
+      }));
+      // Validate all required fields are filled
+      if (
+        !currentWorkspace ||
+        !connectionData.name ||
+        !connectionData.cron ||
+        !connectionData.connector ||
+        !connectionData.connectionDetails ||
+        !connectionData.connectionSettings
+      ) {
+        irminAlert(
+          'error',
+          'Fields required for creating a connection are missing'
+        );
+        setIsLoading(false); // Ensure loading state is reset
+        return;
+      }
+      try {
+        // Start the sync
+        const res = await connectionService.createConnection(
+          currentWorkspace.slug,
+          connectionData.connector.id,
+          connectionData.name,
+          connectionData.cron,
+          connectionData.connectionDetails,
+          connectionData.connectionSettings
+        );
+        // Inform that sync has started
+        irminAlert(
+          'success',
+          res.metadata?.message ?? 'Sync has started successfully'
+        );
+        setIsOpen(false);
+      } catch (error: any) {
+        console.error('Failed to start the sync', error);
+        irminAlert('error', error.message ?? 'Failed to start the sync');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      isLoading,
+      cronValue,
+      currentWorkspace,
+      connectionData,
+      connectionService,
+      irminAlert,
+      setIsOpen,
+      setIsLoading,
+      setConnectionData,
+    ]
   );
-  if (!connector) {
-    setCurrentStep(1);
-    return <></>;
-  }
-
-  const continueSetup = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setConnectionData((prev: connectionDataType) => ({
-      ...prev,
-      cron: cronValue,
-    }));
-    setIsOpen(false);
-  };
 
   return (
     <div className='p-6'>
       <div className='mb-8 flex'>
         <Image
-          src={connector.logo}
-          alt={connector.name}
+          src={connectionData?.connector?.logo ?? '/public/irmin-logo.svg'}
+          alt={connectionData.connector?.name ?? 'Connector'}
           className='mb-2 h-[40px]'
           width={40}
           height={40}
         />
         <span className='mt-1 text-xl text-air_force_blue'>
-          {connector.name}
+          {connectionData.connector?.name ?? 'Connector'}
         </span>
       </div>
       <div className='mb-6'>
@@ -59,20 +109,15 @@ export default function DefineSync({
         </label>
         <input
           className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
-          value={cronValue}
-        />
-      </div>
-      <div className='py-4'>
-        <Cron
-          value={cronValue}
-          onChange={setCronValue}
-          showResultText={true}
-          showResultCron={false}
+          defaultValue={cronValue}
+          onChange={(e) => {
+            setCronValue(e.target.value);
+          }}
         />
       </div>
       <button
         className='mb-6 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm hover:bg-ash_gray-600'
-        onClick={continueSetup}
+        onClick={startSync}
       >
         Start sync
       </button>
@@ -80,7 +125,7 @@ export default function DefineSync({
         className='w-full text-center text-sm font-light text-ash_gray-500 hover:text-ash_gray-600 hover:underline'
         onClick={(e) => {
           e.preventDefault();
-          setCurrentStep(2);
+          setCurrentStep(3);
         }}
       >
         Go back

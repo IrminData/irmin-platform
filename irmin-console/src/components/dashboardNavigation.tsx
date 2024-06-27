@@ -78,7 +78,7 @@ export default function DashboardNavigation({
         <div
           className={`fixed left-0 right-0 z-40 ${
             isMenuOpen ? 'hidden md:block' : ''
-          } ${isMenuFolded ? 'md:left-[80px]' : 'md:left-[40%] lg:left-[20%] 2xl:left-[17%]'}`}
+          } ${isMenuFolded ? 'md:left-[80px]' : 'md:left-[40%] lg:left-[20%]'}`}
         >
           <div className='bg-white px-4 py-4 pl-[80px] shadow-md md:pl-4'>
             <div className='flex w-full justify-end'>
@@ -109,7 +109,7 @@ export default function DashboardNavigation({
         <div
           className={`fixed top-0 z-40 overflow-y-scroll bg-rich_black transition-all duration-300 ${
             isMenuOpen ? 'block' : 'hidden md:block'
-          } ${isMenuFolded ? 'w-20' : 'w-full md:w-2/5 lg:w-1/5 2xl:w-1/6'}`}
+          } ${isMenuFolded ? 'w-20' : 'w-full md:w-2/5 lg:w-1/5'}`}
         >
           <div className={`flex h-screen w-full flex-col justify-between`}>
             <div className='mt-24 md:mt-4'>
@@ -512,7 +512,7 @@ export default function DashboardNavigation({
         className={`relative min-h-screen overflow-scroll bg-white pt-[94px] md:px-4 ${
           isMenuFolded
             ? 'md:ml-[80px] md:w-[calc(100%-80px)]'
-            : 'md:ml-[40%] md:w-3/5 lg:ml-[20%] lg:w-4/5 2xl:ml-[17%] 2xl:w-5/6'
+            : 'md:ml-[40%] md:w-3/5 lg:ml-[20%] lg:w-4/5'
         }`}
       >
         {/* Dashboard content */}

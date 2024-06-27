@@ -7,39 +7,59 @@ import DefineConnectionDetails from '@/components/connection-setup/defineConnect
 import DefineConnectionSettings from '@/components/connection-setup/defineConnectionSettings';
 import DefineSync from '@/components/connection-setup/defineSync';
 import ConnectionService from '@/lib/ConnectionService';
-import { Connector } from '@/types/Connector';
+import {
+  ConnectionDetailsAndSettings,
+  ConnectionDetailsAndSettingsFields,
+  Connector,
+} from '@/types/Connector';
 import { usePopup } from '@/context/PopupContext';
+import LoadingSpinner from '../misc/LoadingSpinner';
 
 export interface connectionDataType {
-  connectionID: null | number;
   name: string;
-  connectorID: null | number;
-  connectionDetails: any | null;
-  settings: any | null;
   cron: string;
+  connector: null | Connector;
+  connectionDetailsFields: null | ConnectionDetailsAndSettingsFields;
+  connectionSettingsFields: null | ConnectionDetailsAndSettingsFields;
+  connectionDetails: null | ConnectionDetailsAndSettings;
+  connectionSettings: null | ConnectionDetailsAndSettings;
 }
 
+const initialConnectionData: connectionDataType = {
+  name: '',
+  cron: '0 0 * * *',
+  connector: null,
+  connectionDetailsFields: null,
+  connectionSettingsFields: null,
+  connectionDetails: null,
+  connectionSettings: null,
+};
+
 const ConnectionSetupView = ({
+  isOpen,
   setIsOpen,
   currentStep,
   setCurrentStep,
 }: {
+  isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   currentStep: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) => {
   const { irminAlert } = usePopup();
   const connectionService = ConnectionService.getInstance();
-  const [connectionData, setConnectionData] = useState<connectionDataType>({
-    connectionID: null,
-    name: '',
-    connectorID: null,
-    connectionDetails: null,
-    settings: null,
-    cron: '1 0 * JAN *',
-  });
+  const [connectionData, setConnectionData] = useState<connectionDataType>(
+    initialConnectionData
+  );
   const [connectors, setConnectors] = useState<Connector[]>([]);
 
+  // Reset connection data when modal is closed
+  useEffect(() => {
+    setCurrentStep(1);
+    setConnectionData(initialConnectionData);
+  }, [isOpen, setCurrentStep, setConnectionData]);
+
+  // Fetch all available connectors
   useEffect(() => {
     connectionService
       .fetchAllConnectors()
@@ -52,36 +72,37 @@ const ConnectionSetupView = ({
       });
   }, [connectionService, irminAlert]);
 
-  if (connectors.length === 0) return <></>;
-
+  if (
+    connectors.length === 0 ||
+    (currentStep > 1 && !connectionData.connector)
+  ) {
+    return <LoadingSpinner />;
+  }
   return (
     <>
-      {currentStep === 1 && (
+      {currentStep === 1 && connectors.length > 0 && (
         <SelectConnector
           connectors={connectors}
           setConnectionData={setConnectionData}
           setCurrentStep={setCurrentStep}
         />
       )}
-      {currentStep === 2 && (
+      {currentStep === 2 && connectionData.connector && (
         <DefineConnectionDetails
-          connectors={connectors}
           connectionData={connectionData}
           setConnectionData={setConnectionData}
           setCurrentStep={setCurrentStep}
         />
       )}
-      {currentStep === 3 && (
+      {currentStep === 3 && connectionData.connector && (
         <DefineConnectionSettings
-          connectors={connectors}
           connectionData={connectionData}
           setConnectionData={setConnectionData}
           setCurrentStep={setCurrentStep}
         />
       )}
-      {currentStep === 4 && (
+      {currentStep === 4 && connectionData.connector && (
         <DefineSync
-          connectors={connectors}
           connectionData={connectionData}
           setConnectionData={setConnectionData}
           setCurrentStep={setCurrentStep}

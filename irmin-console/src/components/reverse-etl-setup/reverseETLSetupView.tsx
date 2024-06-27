@@ -29,10 +29,12 @@ const existingDataSets = [
 ];
 
 export default function ReverseETLSetupView({
+  isOpen,
   setIsOpen,
   currentStep,
   setCurrentStep,
 }: {
+  isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   currentStep: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
