@@ -26,7 +26,7 @@ ChartJS.register(
 
 const BarChart = ({ visualisation }: { visualisation: Visualisation }) => {
   return (
-    <div className='p-4'>
+    <div className='rounded border-t-2 border-ash_gray p-4 shadow-lg'>
       <div className='flex h-14 items-center justify-between border-b px-6 py-4'>
         <h2 className='text-xl font-semibold leading-tight'>
           {visualisation.title}
@@ -40,7 +40,7 @@ const BarChart = ({ visualisation }: { visualisation: Visualisation }) => {
           <IoSettings size={20} />
         </button>
       </div>
-      <div className='overflow-hidden overflow-y-scroll rounded-lg px-2 pb-2 shadow'>
+      <div className='overflow-hidden overflow-y-scroll px-2 pb-2'>
         <Bar
           data={visualisation.data}
           options={{

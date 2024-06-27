@@ -38,3 +38,9 @@ next-env.d.ts
 .DS_Store
 .env
 certificates
+
+# JetBrains IDEs
+.idea
+
+# NPM
+package-lock.json

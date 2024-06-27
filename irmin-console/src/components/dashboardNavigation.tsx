@@ -53,7 +53,7 @@ export default function DashboardNavigation({
   return (
     <>
       <AIAssistantPopup />
-      <section className='min-h-full'>
+      <section id='dashboard-navigation'>
         <div className='fixed left-4 top-4 z-50 block md:hidden'>
           <button
             className='relative h-14 w-14 rounded-full bg-ash_gray focus:outline-none'
@@ -417,49 +417,38 @@ export default function DashboardNavigation({
           </div>
         </div>
         <div
-          className={`fixed z-40 w-screen ${
+          className={`fixed left-0 right-0 z-40 ${
             isMenuOpen ? 'hidden md:block' : ''
-          } ${
-            isMenuFolded
-              ? 'md:ml-[80px] md:w-[calc(100%-80px)]'
-              : 'md:ml-[40%] md:w-[3/5] xl:ml-[20%] xl:w-4/5'
-          }`}
+          } ${isMenuFolded ? 'md:left-[80px]' : 'md:left-[40%] xl:left-[20%]'}`}
         >
-          <div className='bg-white px-4 py-5 shadow-md'>
-            <div className='-m-2 flex flex-wrap items-center justify-between'>
-              <div className='w-auto p-2'></div>
-              <div className='w-auto p-2'>
-                <div className='-m-3 flex flex-wrap items-center'>
-                  <div className='flex w-auto justify-end p-3 lg:w-[700px]'>
-                    <form className='w-64 transition-all focus-within:w-full lg:w-96'>
-                      <div className='relative'>
-                        <div className='pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3'>
-                          <TbSearch className='text-gray-500' />
-                        </div>
-                        <input
-                          type='search'
-                          id='default-search'
-                          className='block w-full rounded-full border border-gray-300 bg-gray-50 p-4 ps-10 text-xs text-gray-900 focus:outline-none md:text-sm'
-                          placeholder='Search Data, Insights, Connectors...'
-                          required
-                        />
-                        <button
-                          type='submit'
-                          className='absolute bottom-2.5 end-1.5 rounded-full bg-ash_gray px-4 py-2 text-xs font-light text-white hover:bg-ash_gray-800 focus:outline-none md:text-sm'
-                        >
-                          Search
-                        </button>
-                      </div>
-                    </form>
+          <div className='bg-white px-4 py-4 pl-[80px] shadow-md md:pl-4'>
+            <div className='flex w-full justify-end'>
+              <form className='w-64 transition-all focus-within:w-full lg:w-96'>
+                <div className='relative'>
+                  <div className='pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3'>
+                    <TbSearch className='text-gray-500' />
                   </div>
+                  <input
+                    type='search'
+                    id='default-search'
+                    className='block w-full rounded-full border border-gray-300 bg-gray-50 p-4 ps-10 text-xs text-gray-900 focus:outline-none md:text-sm'
+                    placeholder='Search Data, Insights, Connectors...'
+                    required
+                  />
+                  <button
+                    type='submit'
+                    className='absolute bottom-2.5 end-1.5 rounded-full bg-ash_gray px-4 py-2 text-xs font-light text-white hover:bg-ash_gray-400 focus:outline-none md:text-sm'
+                  >
+                    Search
+                  </button>
                 </div>
-              </div>
+              </form>
             </div>
           </div>
         </div>
       </section>
       <div
-        className={`relative min-h-full px-4 pt-[94px] ${
+        className={`relative min-h-screen overflow-scroll pt-[94px] md:px-4 ${
           isMenuFolded
             ? 'md:ml-[80px] md:w-[calc(100%-80px)]'
             : 'md:ml-[40%] md:w-3/5 xl:ml-[20%] xl:w-4/5'

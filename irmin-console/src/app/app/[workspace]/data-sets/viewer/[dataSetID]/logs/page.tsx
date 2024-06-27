@@ -1,54 +1,79 @@
 'use client';
 
-import React from 'react';
-import { IoChevronBack } from 'react-icons/io5';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { IoChevronBack } from 'react-icons/io5';
 import { useWorkspace } from '@/context/WorkspaceContext';
+import { DataSetService } from '@/lib/DataSetService';
+import { DataSet } from '@/types/DataSet';
+import LoadingSpinner from '@/components/misc/LoadingSpinner';
 
 export default function DataSetLogs() {
+  const { dataSetID } = useParams();
   const { currentWorkspace } = useWorkspace();
-  if (!currentWorkspace) return <></>;
+  const dataService = DataSetService.getInstance();
 
-  const dataSet = {
-    id: 0,
-    name: 'UpCharge rents, users and venues',
-    sourceWorkspace: 'UpCharge',
-    status: 'private',
-  };
+  const [dataSet, setDataSet] = useState<DataSet | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      let dataSet = await dataService.getDataSetById(Number(dataSetID));
+      if (!dataSet) {
+        dataSet = await dataService.fetchDataSetById(Number(dataSetID));
+      }
+      if (dataSet) setDataSet(dataSet);
+    };
+
+    fetchData();
+  }, [dataSetID, dataService]);
+
+  if (!currentWorkspace) return <></>;
+  if (!dataSet) return <LoadingSpinner />;
   return (
     <>
-      <div className='flex justify-between px-2'>
+      <div className='flex justify-between overflow-x-scroll border-b-2 border-ash_gray px-0'>
         <div className='xl:text-md flex justify-between px-4 py-2 text-sm'>
           <div className='pr-4'>
             <Link href={`/app/${currentWorkspace.slug}/data-sets`} title='Back'>
               <IoChevronBack size={40} className='text-midnight_green' />
             </Link>
           </div>
-          <div className='xl:text-md min-w-44 px-4 py-0 pr-10 text-base'>
+          <div className='xl:text-md min-w-64 px-4 py-0 pr-5 text-base md:min-w-44 md:pr-10'>
             {dataSet.name}
             <br />
-            <span className='text-xs text-midnight_green'>
-              Source: {dataSet.sourceWorkspace}
-            </span>
+            {dataSet.status === 'connected' ? (
+              <span className='text-xs text-midnight_green'>
+                Source: {dataSet.sourceWorkspace}
+              </span>
+            ) : dataSet.source === 'connection' ? (
+              <span className='text-xs text-midnight_green'>
+                Source connection: {dataSet.sourceConnection}
+              </span>
+            ) : (
+              <span className='text-xs text-midnight_green'>
+                File: {dataSet.scriptFile}
+              </span>
+            )}
           </div>
-          <div className='pr-10 pt-2'>
+          <div className='pr-5 pt-2 md:pr-10'>
             {dataSet.status === 'private' ? (
-              <span className='block max-w-36 rounded-full bg-air_force_blue-300 px-4 py-1 text-center text-xs leading-6 text-white shadow-sm xl:text-base'>
+              <span className='inline-block max-w-36 rounded-full bg-air_force_blue-300 px-4 py-1 text-center text-xs leading-6 text-white shadow-sm xl:text-base'>
                 Private
               </span>
             ) : dataSet.status === 'public' ? (
-              <span className='block max-w-36 rounded-full bg-air_force_blue-600 px-4 py-1 text-center text-xs leading-6 text-white shadow-sm xl:text-base'>
+              <span className='inline-block max-w-36 rounded-full bg-air_force_blue-600 px-4 py-1 text-center text-xs leading-6 text-white shadow-sm xl:text-base'>
                 Public
               </span>
             ) : (
-              <span className='block max-w-36 rounded-full bg-air_force_blue px-4 py-1 text-center text-xs leading-6 text-white shadow-sm xl:text-base'>
+              <span className='inline-block max-w-36 rounded-full bg-air_force_blue px-4 py-1 text-center text-xs leading-6 text-white shadow-sm xl:text-base'>
                 Connected
               </span>
             )}
           </div>
         </div>
-        <div className='px-4 py-2 text-right'>
-          <div className='flex justify-end space-x-2 align-middle text-xs xl:text-base'>
+        <div className='min-w-56 px-2 py-2 text-right md:px-4'>
+          <div className='flex justify-end space-x-2 align-middle text-xs xl:text-sm'>
             {(dataSet.status === 'private' || dataSet.status === 'public') && (
               <Link
                 href={`/app/${currentWorkspace.slug}/data-sets/viewer/${dataSet.id}/settings`}
@@ -87,7 +112,7 @@ export default function DataSetLogs() {
 
             <div className='pl-2'>
               <Link
-                className='mb-2 block w-20 rounded-full bg-midnight_green px-4 py-2 text-center leading-6 text-white shadow-sm hover:bg-midnight_green-600 focus:outline-none'
+                className='mb-2 block w-20 rounded-full bg-ash_gray px-4 py-2 text-center leading-6 text-white shadow-sm hover:bg-ash_gray-400 focus:outline-none'
                 href={`/app/${currentWorkspace.slug}/data-sets/viewer/${dataSet.id}`}
               >
                 View

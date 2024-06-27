@@ -92,12 +92,12 @@ const QueryResultsAndTabs: React.FC<{
       <div ref={tableRef}>
         {activeTab === 'visualisation' && (
           <div
-            className='grid grid-cols-2 overflow-auto px-2 py-0'
+            className='grid grid-cols-2 px-2 py-0'
             style={{ maxHeight: tableMaxHeight }}
           >
             <div>
               <h3 className='p-4 font-medium'>Existing visualisations</h3>
-              <div className='overflow-auto'>
+              <div className='flex flex-col gap-10'>
                 {dataSet.visualisations.map((visualisation) => {
                   switch (visualisation.type) {
                     case 'table':
@@ -119,12 +119,6 @@ const QueryResultsAndTabs: React.FC<{
                         <BarChart
                           key={`visualisation-${visualisation.id}-${visualisation.type}`}
                           visualisation={visualisation}
-                        />
-                      );
-                    default:
-                      return (
-                        <div
-                          key={`visualisation-${visualisation.id}-${visualisation.type}`}
                         />
                       );
                   }

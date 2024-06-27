@@ -9,7 +9,7 @@ export default function AddNewDataSource() {
     <>
       <div className='fixed right-10 top-28 z-10'>
         <button
-          className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-ash_gray text-white transition-all hover:opacity-50'
+          className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-ash_gray text-white transition-all hover:bg-ash_gray-600'
           onClick={() => setIsOpen(true)}
         >
           <IoAdd size={30} />
@@ -23,15 +23,15 @@ export default function AddNewDataSource() {
           }}
         >
           <div className='relative h-full w-full'>
-            <div className='absolute right-10 top-28 z-10'>
+            <div className='absolute right-10 top-[44px] z-10'>
               <button
-                className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-ash_gray text-white transition-all hover:opacity-50'
+                className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-ash_gray text-white transition-all hover:bg-ash_gray-600'
                 onClick={() => setIsOpen(false)}
               >
                 <IoClose size={30} />
               </button>
             </div>
-            <div className='absolute right-0 top-0 h-full w-2/5 bg-white'>
+            <div className='absolute right-0 top-0 h-full w-full bg-white md:w-3/4 lg:w-1/2 xl:w-2/5'>
               <DataSourceSetupView setIsOpen={setIsOpen} />
             </div>
           </div>

@@ -1,11 +1,10 @@
 import { User } from './UserProfile';
-import { IrminAPIResponse } from './IrminAPIResponse';
 
 export interface Workspace {
   id: number;
   name: string;
   slug: string;
-  owner?: User;
+  owner_id: number;
 }
 
 export interface WorkspaceUser {
@@ -18,7 +17,7 @@ export interface WorkspaceUser {
   updated_at: string;
   inviteId: boolean | number;
   workspace: Workspace;
-  roles: number[];
+  roles: IrminRole[];
 }
 
 export interface WorkspaceInviteUser {
@@ -27,19 +26,15 @@ export interface WorkspaceInviteUser {
   email: string;
   created_at: string;
   updated_at: string;
-  deleted_at: any;
-  user: any;
+  deleted_at: string;
+  user: User;
   workspace: Workspace;
-  role: WorkspaceInviteRole;
+  role: IrminRole;
 }
 
-export interface WorkspaceInviteRole {
+export interface IrminRole {
   id: number;
   name: string;
   label: string;
   description: string;
-}
-
-export interface WorkspaceAPIResponse extends IrminAPIResponse {
-  data: Workspace | Workspace[];
 }

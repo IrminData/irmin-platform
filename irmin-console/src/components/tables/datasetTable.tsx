@@ -75,7 +75,7 @@ const DatasetTable = ({
                       )}
                     </td>
                     <td className='px-4 py-2 text-right'>
-                      <div className='flex justify-end space-x-2 align-middle text-xs xl:text-base'>
+                      <div className='flex justify-end space-x-2 align-middle text-xs xl:text-sm'>
                         <Link href={`data-sets/viewer/${dataSet.id}/logs`}>
                           <button className='px-2 pt-2 text-midnight_green hover:underline'>
                             Logs
@@ -120,7 +120,7 @@ const DatasetTable = ({
 
                         <div className='pl-2'>
                           <Link
-                            className='mb-2 block w-20 rounded-full bg-midnight_green px-4 py-2 text-center leading-6 text-white shadow-sm hover:bg-midnight_green-600 focus:outline-none'
+                            className='mb-2 block w-20 rounded-full bg-ash_gray px-4 py-2 text-center leading-6 text-white shadow-sm hover:bg-ash_gray-400 focus:outline-none'
                             href={`data-sets/viewer/${dataSet.id}`}
                           >
                             View

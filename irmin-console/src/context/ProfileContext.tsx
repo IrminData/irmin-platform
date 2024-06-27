@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, UserProfileAPIResponse } from '@/types/UserProfile';
+import { User } from '@/types/UserProfile';
+import { UserProfileAPIResponse } from '@/types/IrminAPIResponse';
 
 const ProfileContext = createContext<{
   profile: User | null;

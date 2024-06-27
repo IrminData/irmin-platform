@@ -32,14 +32,14 @@ export default function DataSetEditor() {
   if (!dataSet) return <LoadingSpinner />;
   return (
     <>
-      <div className='flex justify-between px-2'>
+      <div className='flex justify-between overflow-x-scroll border-b-2 border-ash_gray px-0'>
         <div className='xl:text-md flex justify-between px-4 py-2 text-sm'>
           <div className='pr-4'>
             <Link href={'..'} title='Back'>
               <IoChevronBack size={40} className='text-midnight_green' />
             </Link>
           </div>
-          <div className='xl:text-md min-w-44 px-4 py-0 pr-10 text-base'>
+          <div className='xl:text-md min-w-64 px-4 py-0 pr-5 text-base md:min-w-44 md:pr-10'>
             {dataSet.name}
             <br />
             {dataSet.status === 'connected' ? (
@@ -60,7 +60,7 @@ export default function DataSetEditor() {
               Refresh schedule: {dataSet.refreshSchedule}
             </span>
           </div>
-          <div className='pr-10 pt-2'>
+          <div className='pr-5 pt-2 md:pr-10'>
             {dataSet.status === 'private' ? (
               <span className='inline-block max-w-36 rounded-full bg-air_force_blue-300 px-4 py-1 text-center text-xs leading-6 text-white shadow-sm xl:text-base'>
                 Private
@@ -76,8 +76,8 @@ export default function DataSetEditor() {
             )}
           </div>
         </div>
-        <div className='px-4 py-2 text-right'>
-          <div className='flex justify-end space-x-2 align-middle text-xs xl:text-base'>
+        <div className='px-2 py-2 text-right md:px-4'>
+          <div className='flex justify-end space-x-2 align-middle text-xs xl:text-sm'>
             <Link href={`${dataSet.id}/logs`}>
               <button className='px-2 pt-2 text-midnight_green hover:underline'>
                 Logs

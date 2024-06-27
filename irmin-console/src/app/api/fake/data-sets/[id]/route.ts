@@ -119,10 +119,8 @@ const createFakeDataSet = (id: number): DataSet => {
   };
 };
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get('id');
-  const dataSetId = parseInt(id as string, 10);
+export async function GET(_: Request, { params }: { params: { id: string } }) {
+  const dataSetId = parseInt(params.id as string);
 
   if (isNaN(dataSetId)) {
     return new Response(JSON.stringify({ error: 'Invalid dataset ID' }), {

@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 import AppTitle from '@/components/appTitle';
 import { useProfile, fetchProfileData } from '@/context/ProfileContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
 import AuthService from '@/lib/AuthService';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
+import { usePopup } from '@/context/PopupContext';
 
 export default function UserProfileSettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
@@ -24,7 +24,7 @@ export default function UserProfileSettingsPage() {
   return (
     <>
       <AppTitle title='Profile settings' />
-      <div className='max-w-2xl rounded-lg border-t-2 border-ash_gray bg-white p-8 shadow-md'>
+      <div className='max-w-2xl rounded-lg border-b-2 border-t-2 border-ash_gray bg-white p-8 shadow-md'>
         <div className='mb-6 flex border-b'>
           <button
             className={`px-4 py-2 text-lg font-normal ${
@@ -55,7 +55,7 @@ export default function UserProfileSettingsPage() {
 
 const GeneralSettings: React.FC = () => {
   const { profile, setProfile } = useProfile();
-  const { irminAlert } = useWorkspace();
+  const { irminAlert } = usePopup();
   const authService = AuthService.getInstance();
 
   const [error, setError] = useState<string | null>(null);

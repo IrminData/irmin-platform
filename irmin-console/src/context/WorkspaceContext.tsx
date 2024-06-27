@@ -1,55 +1,31 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { Workspace, WorkspaceAPIResponse } from '@/types/Workspace';
-import Alert from '@/components/misc/Alert';
-import ConfirmPopup from '@/components/misc/ConfirmPopup';
+import { IrminRole, Workspace } from '@/types/Workspace';
+import WorkspaceService from '@/lib/WorkspaceService';
 
 const WorkspaceContext = createContext<{
   workspaces: Workspace[] | null;
   currentWorkspace: Workspace | null;
+  irminRoles: IrminRole[];
   setCurrentWorkspace: (workspace: Workspace | null) => void;
   fetchWorkspaces: () => void;
-  irminAlert: (type: 'success' | 'error' | 'info', message: string) => void;
-  irminConfirm: (
-    type: 'success' | 'error' | 'info',
-    message: string,
-    onConfirm: () => void,
-    onCancel: () => void
-  ) => void;
 }>({
   workspaces: null,
   currentWorkspace: null,
+  irminRoles: [],
   setCurrentWorkspace: () => {},
   fetchWorkspaces: () => {},
-  irminAlert: () => {},
-  irminConfirm: () => {},
 });
-
-const fetchWorkspacesData = async (): Promise<WorkspaceAPIResponse> => {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL ?? ''}/v1/workspaces`,
-    {
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch workspaces');
-  }
-
-  return response.json();
-};
 
 export const WorkspaceProvider = ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
+  const [initialLoadingDone, setInitialLoadingDone] = useState(false);
+  const workspaceService = WorkspaceService.getInstance();
+  const [irminRoles, setIrminRoles] = useState<IrminRole[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[] | null>(null);
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(
     null
@@ -63,15 +39,16 @@ export const WorkspaceProvider = ({
         id: 0,
         name: 'Offline workspace',
         slug: 'offline-workspace',
+        owner_id: 0,
       };
       setWorkspaces([offlineWorkspace]);
       setCurrentWorkspace(offlineWorkspace);
       return;
     }
     try {
-      const data = await fetchWorkspacesData();
-      if (Array.isArray(data.data)) {
-        setWorkspaces(data.data);
+      const data = await workspaceService.getWorkspaces();
+      if (Array.isArray(data)) {
+        setWorkspaces(data);
       } else {
         setWorkspaces(null);
       }
@@ -81,84 +58,65 @@ export const WorkspaceProvider = ({
     }
   };
 
+  // Fetch the roles data
+  const fetchRoles = async () => {
+    try {
+      const data = await workspaceService.getIrminRoles();
+      setIrminRoles(data);
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      setIrminRoles([]);
+    }
+  };
+
+  // Perform initial data fetching
   useEffect(() => {
     fetchWorkspaces();
-  }, []);
+    fetchRoles();
+    const currentWorkspaceSlug = localStorage.getItem('currentWorkspaceSlug');
+    if (currentWorkspaceSlug && !initialLoadingDone) {
+      workspaceService
+        .switchWorkspace(currentWorkspaceSlug)
+        .then((newWorkspace) => {
+          setCurrentWorkspace(newWorkspace);
+        })
+        .catch((error) => {
+          console.error(
+            'Error performing initial switch to workspace:',
+            'Workspace slug: ' + currentWorkspaceSlug,
+            error
+          );
+          localStorage.removeItem('currentWorkspaceSlug');
+        })
+        .finally(() => {
+          setInitialLoadingDone(true);
+        });
+    } else {
+      setInitialLoadingDone(true);
+    }
+  }, [workspaceService, initialLoadingDone]);
 
-  // Handle alerts
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [alertType, setAlertType] = useState<
-    'success' | 'error' | 'info' | null
-  >(null);
-  const irminAlert = (type: 'success' | 'error' | 'info', message: string) => {
-    setAlertType(type);
-    setAlertMessage(message);
-    setTimeout(() => {
-      setAlertType(null);
-      setAlertMessage(null);
-    }, 5000);
+  const handleSetCurrentWorkspace = (workspace: Workspace | null) => {
+    if (workspace) {
+      localStorage.setItem('currentWorkspaceSlug', workspace.slug.toString());
+    } else {
+      localStorage.removeItem('currentWorkspaceSlug');
+    }
+    setCurrentWorkspace(workspace);
   };
 
-  // Handle confirmations
-  const [confirmMessage, setConfirmMessage] = useState<string | null>(null);
-  const [confirmType, setConfirmType] = useState<
-    'success' | 'error' | 'info' | null
-  >(null);
-  const [confirmSuccess, setConfirmSuccess] = useState<(() => void) | null>(
-    null
-  );
-  const [confirmCancel, setConfirmCancel] = useState<(() => void) | null>(null);
-  const irminConfirm = (
-    type: 'success' | 'error' | 'info',
-    message: string,
-    confirmSuccess: () => void,
-    confirmCancel: () => void
-  ) => {
-    setConfirmType(type);
-    setConfirmMessage(message);
-    setConfirmSuccess(confirmSuccess);
-    setConfirmCancel(confirmCancel);
-    setTimeout(() => {
-      setConfirmType(null);
-      setConfirmMessage(null);
-      setConfirmSuccess(null);
-      setConfirmCancel(null);
-    }, 10000);
-  };
-
+  if (!initialLoadingDone) return <></>;
   return (
     <WorkspaceContext.Provider
       value={{
         workspaces,
         currentWorkspace,
-        setCurrentWorkspace,
+        irminRoles,
+        setCurrentWorkspace: handleSetCurrentWorkspace,
         fetchWorkspaces,
-        irminAlert: irminAlert,
-        irminConfirm: irminConfirm,
       }}
     >
       {children}
-      {alertMessage && alertType && (
-        <Alert
-          type={alertType}
-          message={alertMessage}
-          onClose={() => setAlertMessage(null)}
-        />
-      )}
-      {confirmMessage && confirmType && confirmSuccess && confirmCancel && (
-        <ConfirmPopup
-          type={confirmType}
-          message={confirmMessage}
-          onConfirm={() => {
-            confirmSuccess();
-            setConfirmMessage(null);
-          }}
-          onCancel={() => {
-            confirmCancel();
-            setConfirmMessage(null);
-          }}
-        />
-      )}
     </WorkspaceContext.Provider>
   );
 };

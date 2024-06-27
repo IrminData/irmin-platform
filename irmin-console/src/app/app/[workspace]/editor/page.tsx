@@ -78,7 +78,7 @@ export default function EditorPage() {
                 />
                 <button
                   type='submit'
-                  className='absolute bottom-1.5 end-1.5 rounded-full bg-ash_gray px-2 py-1 text-xs font-light text-white hover:bg-ash_gray-800'
+                  className='absolute bottom-1.5 end-1.5 rounded-full bg-ash_gray px-2 py-1 text-xs font-light text-white hover:bg-ash_gray-400'
                 >
                   Search
                 </button>

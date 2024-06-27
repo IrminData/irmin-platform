@@ -1,9 +1,9 @@
 import {
-  Workspace,
+  IrminAPIResponse,
   WorkspaceAPIResponse,
-  WorkspaceInviteUser,
-  WorkspaceUser,
-} from '@/types/Workspace';
+  WorkspacesAPIResponse,
+} from '@/types/IrminAPIResponse';
+import { Workspace, IrminRole, WorkspaceUser } from '@/types/Workspace';
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
@@ -29,7 +29,7 @@ class WorkspaceService {
   private async fetchWithCredentials(
     url: string,
     options: RequestInit
-  ): Promise<WorkspaceAPIResponse> {
+  ): Promise<WorkspaceAPIResponse | WorkspacesAPIResponse> {
     const response = await fetch(url, {
       ...options,
       credentials: 'include',
@@ -61,10 +61,11 @@ class WorkspaceService {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            Accept: 'application/json',
           },
         }
       );
-      if (!response.data || typeof response.data === 'object') return [];
+      if (!response.data || !Array.isArray(response.data)) return [];
       return response.data;
     } catch (error) {
       console.error('Fetch workspaces error:', error);
@@ -121,15 +122,34 @@ class WorkspaceService {
   }
 
   /**
+   * Fetch all available Irmin roles
+   * @returns {Promise<IrminRole[]>} A promise that resolves to an array of roles
+   */
+  async getIrminRoles(): Promise<IrminRole[]> {
+    try {
+      const response = await this.fetchWithCredentials(`${api_base}/v1/roles`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response.data as any as IrminRole[];
+    } catch (error) {
+      console.error('Fetch irmin roles error:', error);
+      return [];
+    }
+  }
+
+  /**
    * Fetch the role of a user in a workspace
    * @param {string} workspaceSlug - The slug of the workspace
    * @param {number} workspaceUser - The ID of the user in the workspace
-   * @returns {Promise<any[] | null>} A promise that resolves to an array of roles or null if user is not found in the workspace
+   * @returns {Promise<IrminRole[] | null>} A promise that resolves to an array of roles or null if user is not found in the workspace
    */
   async getWorkspaceUserRole(
     workspaceSlug: string,
     workspaceUser: number
-  ): Promise<any[] | null> {
+  ): Promise<IrminRole[] | null> {
     try {
       const response = await this.fetchWithCredentials(
         `${api_base}/v1/workspaces/${workspaceSlug}/users/${workspaceUser}/roles`,
@@ -140,136 +160,10 @@ class WorkspaceService {
           },
         }
       );
-      return response.data as any[];
+      return response.data as any as IrminRole[];
     } catch (error) {
       console.error('Fetch workspace user role error:', error);
       return null;
-    }
-  }
-
-  /**
-   * Invite a user to a workspace
-   * @param {string} workspaceSlug - The slug of the workspace
-   * @param {string} email - The email of the user to invite
-   * @param {string} name - The name of the user to invite
-   * @param {number} role - The role of the user to invite
-   * @returns {Promise<any>} A promise that resolves to the response from the API
-   */
-  async inviteUserToWorkspace(
-    workspaceSlug: string,
-    email: string,
-    name: string,
-    role: number
-  ): Promise<any> {
-    try {
-      const formData = new FormData();
-
-      formData.append('email', email);
-      formData.append('name', name);
-      formData.append('role_id', role.toString());
-      formData.append('workspace', workspaceSlug);
-
-      const response = await this.fetchWithCredentials(
-        `${api_base}/v1/invites`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
-
-      return response;
-    } catch (error) {
-      console.error('Invite user to workspace error:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Resend an invite to a user
-   * @param {number} workspaceId - The ID of the workspace
-   * @param {number} inviteId - The ID of the invite to resend the invite to
-   * @param {string} email - The email of the user to resend the invite to
-   * @param {string} name - The name of the user to resend the invite to
-   * @param {string} company - The company of the user to resend the invite to
-   * @returns {Promise<any>} A promise that resolves to the response from the API
-   */
-  async resendUserInvite(
-    inviteId: number,
-    email: string,
-    name: string,
-    company: string
-  ): Promise<any> {
-    try {
-      const formData = new FormData();
-
-      formData.append('email', email);
-      formData.append('name', name);
-      formData.append('company', company);
-      formData.append('inviteId', inviteId.toString());
-
-      const response = await this.fetchWithCredentials(
-        `${api_base}/v1/invites/resend`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
-
-      return response;
-    } catch (error) {
-      console.error('Invite user to workspace error:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Cancel a user invite to a workspace
-   * @param inviteId - The ID of the invite to cancel the invite for
-   * @returns - A promise that resolves to the response from the API
-   */
-  async cancelUserInvite(inviteId: number): Promise<any> {
-    try {
-      const formData = new FormData();
-      formData.append('invite', inviteId.toString());
-
-      const response = await this.fetchWithCredentials(
-        `${api_base}/v1/invites`,
-        {
-          method: 'DELETE',
-          body: formData,
-        }
-      );
-
-      return response;
-    } catch (error) {
-      console.error('Cancel user invite error:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get all invites for a workspace
-   * @param {string} workspaceSlug - The slug of the workspace
-   * @returns {Promise<WorkspaceInviteUser[]>} A promise that resolves to an array of WorkspaceInviteUser objects
-   */
-  async getWorkspaceInvites(
-    workspaceSlug: string
-  ): Promise<WorkspaceInviteUser[]> {
-    try {
-      const response: any = await this.fetchWithCredentials(
-        `${api_base}/v1/workspaces/${workspaceSlug}/invites`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const invites = response?.data ?? [];
-      return invites as WorkspaceInviteUser[];
-    } catch (error) {
-      console.error('Fetch workspace invites error:', error);
-      throw error;
     }
   }
 
@@ -278,20 +172,22 @@ class WorkspaceService {
    * @param {string}
    * @param {string} workspaceSlug - The slug of the workspace
    * @param {number} userId - The ID of the user to change the role of
-   * @param {number} newRoleId - The new role ID
-   * @param {number} currentRoleId - The current role ID
+   * @param {IrminRole} newRoleId - The new role
+   * @param {IrminRole | null} currentRoleId - The current role or null if user has no role
    * @returns {Promise<any>} A promise that resolves to the response from the API
    */
   async changeUserWorkspaceRole(
     workspaceSlug: string,
     userId: number,
-    newRoleId: number,
-    currentRoleId: number
+    newRole: IrminRole,
+    currentRole: IrminRole | null
   ): Promise<any> {
     try {
       const formData = new FormData();
-      formData.append('roles[]', newRoleId.toString());
-      formData.append('roles[]', currentRoleId.toString());
+      formData.append('roles[]', newRole.id.toString());
+      if (currentRole) {
+        formData.append('roles[]', currentRole.id.toString());
+      }
 
       const response = await this.fetchWithCredentials(
         `${api_base}/v1/workspaces/${workspaceSlug}/users/${userId}/roles`,
@@ -313,17 +209,17 @@ class WorkspaceService {
    * @param {string}
    * @param {string} workspaceSlug - The slug of the workspace
    * @param {number} userId - The ID of the user to remove
-   * @param {number} currentRole - The role of the user to remove
+   * @param {IrminRole} currentRole - The role of the user to remove
    * @returns {Promise<any>} A promise that resolves to the response from the API
    */
   async removeUserFromWorkspace(
     workspaceSlug: string,
     userId: number,
-    currentRole: number
+    currentRole: IrminRole
   ): Promise<any> {
     try {
       const formData = new FormData();
-      formData.append('roles[]', currentRole.toString());
+      formData.append('roles[]', currentRole.id.toString());
 
       const response = await this.fetchWithCredentials(
         `${api_base}/v1/workspaces/${workspaceSlug}/users/${userId}/roles`,
@@ -345,12 +241,12 @@ class WorkspaceService {
    * @param {string}
    * @param {string} workspaceSlug - The slug of the workspace
    * @param {number} userId - The ID of the user to transfer the ownership to
-   * @returns {Promise<any>} A promise that resolves to the response from the API
+   * @returns {Promise<IrminAPIResponse>} A promise that resolves to the response from the API
    */
   async transferWorkspaceOwnership(
     workspaceSlug: string,
     userId: number
-  ): Promise<any> {
+  ): Promise<IrminAPIResponse> {
     try {
       const formData = new FormData();
       formData.append('user_id', userId.toString());
@@ -380,13 +276,13 @@ class WorkspaceService {
       const formData = new FormData();
       formData.append('name', name);
 
-      const response = await this.fetchWithCredentials(
+      const response = (await this.fetchWithCredentials(
         `${api_base}/v1/workspaces`,
         {
           method: 'POST',
           body: formData,
         }
-      );
+      )) as WorkspaceAPIResponse;
 
       return response;
     } catch (error) {
@@ -399,12 +295,12 @@ class WorkspaceService {
    * Update a workspace
    * @param {string} workspaceSlug - The slug of the workspace to update
    * @param {Workspace} workspace - The workspace object with updated values
-   * @returns {Promise<WorkspaceAPIResponse>} A promise that resolves to a WorkspaceAPIResponse object
+   * @returns {Promise<IrminAPIResponse>} A promise that resolves to a IrminAPIResponse object
    */
   async updateWorkspace(
     workspaceSlug: string,
     workspace: Workspace
-  ): Promise<WorkspaceAPIResponse> {
+  ): Promise<IrminAPIResponse> {
     try {
       const formData = new FormData();
       formData.append('name', workspace.name);
@@ -418,7 +314,7 @@ class WorkspaceService {
         }
       );
 
-      return response;
+      return response as IrminAPIResponse;
     } catch (error) {
       console.error('Update workspace error:', error);
       throw error;
@@ -428,9 +324,9 @@ class WorkspaceService {
   /**
    * Delete a workspace
    * @param {string} workspaceSlug - The slug of the workspace to delete
-   * @returns {Promise<WorkspaceAPIResponse>} A promise that resolves to a WorkspaceAPIResponse object
+   * @returns {Promise<IrminAPIResponse>} A promise that resolves to a IrminAPIResponse object
    */
-  async deleteWorkspace(workspaceSlug: string): Promise<WorkspaceAPIResponse> {
+  async deleteWorkspace(workspaceSlug: string): Promise<IrminAPIResponse> {
     try {
       const formData = new FormData();
       formData.append('workspace', workspaceSlug);
@@ -443,7 +339,7 @@ class WorkspaceService {
         }
       );
 
-      return response;
+      return response as IrminAPIResponse;
     } catch (error) {
       console.error('Delete workspace error:', error);
       throw error;
@@ -453,7 +349,7 @@ class WorkspaceService {
   /**
    * Switch to a workspace
    * @param {string} workspaceSlug - The slug of the workspace to switch to
-   * @returns {Promise<Workspace | null>} A promise that resolves to a Workspace object or null
+   * @returns {Promise<Workspace | null>} A promise that resolves to a Workspace object or null
    * */
   async switchWorkspace(workspaceSlug: string): Promise<Workspace | null> {
     const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -463,13 +359,11 @@ class WorkspaceService {
     try {
       const formData = new FormData();
       formData.append('workspace', workspaceSlug);
-      const response = await this.fetchWithCredentials(
-        `${api_base}/v1/workspaces/switch`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
+
+      await this.fetchWithCredentials(`${api_base}/v1/workspaces/switch`, {
+        method: 'POST',
+        body: formData,
+      });
 
       const newWorkspace = await this.getWorkspace(workspaceSlug);
 

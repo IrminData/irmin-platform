@@ -70,7 +70,7 @@ export default function DataSourceSetupView({
   ];
 
   return (
-    <div className='max-h-screen overflow-y-scroll pt-28'>
+    <div className='max-h-screen overflow-y-scroll pt-[38px]'>
       <div className='flex h-14 items-center justify-between border-b px-6 py-4'>
         <h3 className='text-xl font-semibold'>Setup a connection</h3>
       </div>

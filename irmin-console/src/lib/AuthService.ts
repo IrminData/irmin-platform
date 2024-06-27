@@ -1,4 +1,4 @@
-import { UserProfileAPIResponse } from '@/types/UserProfile';
+import { UserProfileAPIResponse } from '@/types/IrminAPIResponse';
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
@@ -160,63 +160,55 @@ class AuthService {
   }
 
   /**
-   * Accept the invite to a workspace by a new user
-   * @param inviteId - The ID of the invite to accept
-   * @param company - The company of the user to accept the invite for
-   * @param password - The password of the user to accept the invite for
-   * @param passwordConfirmation  - The password confirmation of the user to accept the invite for
-   * @returns - A promise that resolves to the response from the API
+   * Accept the invite to the workspace.
+   * @param invite - The invite's ID.
+   * @param password - The user's password. Only required if you are inviting a user that doesn't already have an account.
+   * @param password_confirmation - The user's password. Only required if you are inviting a user that doesn't already have an account.
+   * @param company - The user's company. Only required if you are inviting a user that doesn't already have an account.
+   * @returns - A promise that resolves to the response from the API. Set this if the invited user does not have an account.
    */
   async acceptUserInvite(
-    inviteId: number,
-    company: string,
-    password: string,
-    passwordConfirmation: string
+    invite: number,
+    password: string | null,
+    password_confirmation: string | null,
+    company: string | null
   ): Promise<any> {
     try {
       const formData = new FormData();
-      formData.append('invite', inviteId.toString());
-      formData.append('company', company);
-      formData.append('password', password);
-      formData.append('password_confirmation', passwordConfirmation);
+      formData.append('invite', invite.toString());
+      formData.append('company', company ?? '');
+      formData.append('password', password ?? '');
+      formData.append('password_confirmation', password_confirmation ?? '');
 
-      const response = await this.fetchWithCredentials(
-        `${api_base}/v1/invites/accept`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
-
-      return response;
+      return await this.fetchWithCredentials(`${api_base}/v1/invite/accept`, {
+        method: 'POST',
+        body: formData,
+      });
     } catch (error) {
       console.error('Accept user invite error:', error);
+
       throw error;
     }
   }
 
   /**
-   * Decline the invite to a workspace by a new user
-   * @param inviteId - The ID of the invite to decline
-   * @returns - A promise that resolves to the response from the API
+   * Decline the invite to the workspace.
+   * @param invite - The ID of the invite to decline
+   * @returns - A promise that resolves to the response from the API.
    */
-  async declineUserInvite(inviteId: number): Promise<any> {
+  async declineUserInvite(invite: number): Promise<any> {
     try {
       const formData = new FormData();
-      formData.append('invite', inviteId.toString());
+      formData.append('invite', invite.toString());
       formData.append('_method', 'DELETE');
 
-      const response = await this.fetchWithCredentials(
-        `${api_base}/v1/invites/decline`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
-
-      return response;
+      return await this.fetchWithCredentials(`${api_base}/v1/invite/decline`, {
+        method: 'POST',
+        body: formData,
+      });
     } catch (error) {
       console.error('Decline user invite error:', error);
+
       throw error;
     }
   }

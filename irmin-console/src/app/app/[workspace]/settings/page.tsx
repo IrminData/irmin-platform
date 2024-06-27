@@ -9,6 +9,8 @@ import WorkspaceUsersAndPermissions from '@/components/workspaceUsersAndPermissi
 import WorkspaceService from '@/lib/WorkspaceService';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { Workspace } from '@/types/Workspace';
+import { usePopup } from '@/context/PopupContext';
+import Modal from '@/components/misc/Modal';
 
 export default function WorkspaceSettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
@@ -30,7 +32,7 @@ export default function WorkspaceSettingsPage() {
   return (
     <>
       <AppTitle title='Workspace settings' />
-      <div className='max-w-2xl rounded-lg border-t-2 border-ash_gray bg-white p-8 shadow-md'>
+      <div className='max-w-2xl rounded-lg border-b-2 border-t-2 border-ash_gray bg-white p-8 shadow-md'>
         <div className='mb-6 flex border-b'>
           <button
             className={`px-4 py-2 text-lg font-normal ${
@@ -79,8 +81,9 @@ const GeneralSettings: React.FC<{ openModal: () => void }> = ({
   openModal,
 }) => {
   const router = useRouter();
-  const { currentWorkspace, fetchWorkspaces, setCurrentWorkspace, irminAlert } =
+  const { currentWorkspace, fetchWorkspaces, setCurrentWorkspace } =
     useWorkspace();
+  const { irminAlert } = usePopup();
 
   const [workspaceName, setWorkspaceName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -105,9 +108,6 @@ const GeneralSettings: React.FC<{ openModal: () => void }> = ({
       // Fetch the updated workspace data
       fetchWorkspaces();
       irminAlert('success', 'Workspace updated successfully!');
-      // Go to app page
-      setCurrentWorkspace(null);
-      router.push('/app');
     } catch (error: any) {
       console.error('Failed to update workspace:', error);
       irminAlert(
@@ -177,29 +177,26 @@ const DeleteWorkspaceConfirmationModal: React.FC<{
   };
 
   return (
-    <div className='absolute inset-0 flex h-screen items-center justify-center bg-gray-600 bg-opacity-50'>
-      <div className='max-w-lg rounded-lg bg-white p-8 shadow-lg'>
-        <h2 className='mb-4 text-2xl font-semibold'>Confirm Deletion</h2>
-        <p className='mb-4'>
-          Are you sure you want to delete this workspace? This action cannot be
-          undone and will remove all data associated with this workspace.
-        </p>
-        <div className='flex justify-end'>
-          <button
-            onClick={closeModal}
-            className='mr-4 rounded bg-gray-300 px-4 py-2 text-gray-700 transition-all hover:bg-gray-500'
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleDelete}
-            className='rounded bg-red-800 px-4 py-2 text-white transition-all hover:bg-red-500'
-          >
-            Delete
-          </button>
-        </div>
+    <Modal isOpen={true} title='Confirm Deletion' onClose={closeModal}>
+      <p className='mb-4'>
+        Are you sure you want to delete this workspace? This action cannot be
+        undone and will remove all data associated with this workspace.
+      </p>
+      <div className='flex justify-end'>
+        <button
+          onClick={closeModal}
+          className='mr-4 rounded bg-gray-300 px-4 py-2 text-gray-700 transition-all hover:bg-gray-500'
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleDelete}
+          className='rounded bg-red-800 px-4 py-2 text-white transition-all hover:bg-red-500'
+        >
+          Delete
+        </button>
       </div>
-    </div>
+    </Modal>
   );
 };
 

@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  IoCheckbox,
-  IoClose,
-  IoInformationCircleOutline,
-} from 'react-icons/io5';
+import { IoClose } from 'react-icons/io5';
 
 const ConfirmPopup = ({
   type,
@@ -19,10 +15,10 @@ const ConfirmPopup = ({
   return (
     <div
       id='confirm'
-      className={`fixed top-[94px] z-20 flex w-screen justify-center p-4 align-middle`}
+      className='absolute bottom-[20px] z-50 flex w-screen animate-slideInUp justify-center p-4 align-middle'
     >
       <div
-        className={`flex max-w-md flex-col items-start justify-between rounded-lg border-2 bg-ash_gray-900 p-4 shadow-md ${
+        className={`flex w-[400px] max-w-[90vw] flex-col items-start justify-between rounded-lg border-2 bg-gray-50 p-4 shadow-md ${
           type === 'success' ? 'border-green-500 text-green-700' : ''
         } ${type === 'error' ? 'border-red-500 text-red-700' : ''} ${
           type === 'info' ? 'border-blue-500 text-blue-700' : ''
@@ -49,7 +45,7 @@ const ConfirmPopup = ({
           <button
             onClick={onConfirm}
             className={`rounded px-4 py-2 text-white transition-all ${
-              type === 'success' ? 'bg-green-700 hover:bg-ash_gray' : ''
+              type === 'success' ? 'bg-green-700 hover:bg-green-800' : ''
             } ${type === 'error' ? 'bg-red-500 hover:bg-red-600' : ''} ${
               type === 'info' ? 'bg-blue-500 hover:bg-blue-600' : ''
             }`}
