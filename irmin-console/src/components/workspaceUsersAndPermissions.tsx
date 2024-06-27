@@ -11,7 +11,8 @@ import { usePopup } from '@/context/PopupContext';
 import Modal from './misc/Modal';
 
 const WorkspaceUsersAndPermissions: React.FC = () => {
-  const { currentWorkspace, irminRoles } = useWorkspace();
+  const { currentWorkspace, irminRoles, refetchCurrentWorkspace } =
+    useWorkspace();
   const { irminAlert, irminConfirm } = usePopup();
   const workspaceService = WorkspaceService.getInstance();
   const inviteService = InviteService.getInstance();
@@ -90,7 +91,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     }
     try {
       // Invite user
-      await inviteService.inviteUserToWorkspace(
+      const res = await inviteService.inviteUserToWorkspace(
         currentWorkspace.slug,
         inviteName,
         inviteEmail,
@@ -102,7 +103,10 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
       setInviteName('');
       setIsInviteModalOpen(false);
       // Inform that invite has been sent
-      irminAlert('success', 'Invite has been sent successfully');
+      irminAlert(
+        'success',
+        res.metadata?.message ?? 'Invite sent successfully'
+      );
     } catch (error: any) {
       console.error('Error inviting user:', error);
       setInviteError(error.message ?? 'Error inviting user');
@@ -115,11 +119,14 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
       const invitedUser = users.find((user) => user.email === email);
       if (!invitedUser) return;
       // Resend invite
-      await inviteService.resendUserInvite(
+      const res = await inviteService.resendUserInvite(
         typeof invitedUser.inviteId === 'number' ? invitedUser.inviteId : 1
       );
       // Inform that invite has been resent
-      irminAlert('success', 'Invite resent');
+      irminAlert(
+        'success',
+        res.metadata?.message ?? 'Invite resent successfully'
+      );
     } catch (error: any) {
       console.error('Error resending invite:', error);
       irminAlert('error', error.message ?? 'Error resending invite');
@@ -132,11 +139,15 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
       const invitedUser = users.find((user) => user.email === email);
       if (!invitedUser) return;
       // Cancel invite
-      await inviteService.cancelUserInvite(
+      const res = await inviteService.cancelUserInvite(
         typeof invitedUser.inviteId === 'number' ? invitedUser.inviteId : 1
       );
       // Remove user from the list
       setUsers(users.filter((user) => user.email !== email));
+      irminAlert(
+        'success',
+        res.metadata?.message ?? 'Invite canceled successfully'
+      );
     } catch (error: any) {
       console.error('Error canceling invite:', error);
       irminAlert('error', error.message ?? 'Error canceling invite');
@@ -153,13 +164,18 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
         if (!currentWorkspace) return;
         try {
           // Remove user from workspace
-          await workspaceService.removeUserFromWorkspace(
+          const res = await workspaceService.removeUserFromWorkspace(
             currentWorkspace.slug,
             id,
             role
           );
           // Remove user from the list
           setUsers(users.filter((user) => user.id !== id));
+          irminAlert(
+            'success',
+            res.metadata?.message ??
+              'User removed successfully from the workspace'
+          );
         } catch (error: any) {
           console.error('Error changing user role:', error);
           irminAlert('error', error.message ?? 'Error removing user');
@@ -171,28 +187,26 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     );
   };
 
-  const handleTransferOwnership = (id: number) => {
+  const handleTransferOwnership = async (id: number) => {
     // Confirm transfer
     irminConfirm(
       'info',
       'Are you sure you want to transfer ownership?',
-      () => {
+      async () => {
         // Transfer confirmed
         if (!currentWorkspace) return;
         try {
           // Transfer ownership
-          workspaceService.transferWorkspaceOwnership(
+          const res = await workspaceService.transferWorkspaceOwnership(
             currentWorkspace.slug,
             id
           );
-          // Update the local state of workspace users
-          setUsers(
-            users.map((user) => {
-              if (user.id === id) return { ...user, roles: [] };
-              if (user.roles.length === 0)
-                return { ...user, roles: [irminRoles[0]] };
-              return user;
-            })
+          // Refetch the workspace
+          await refetchCurrentWorkspace();
+          // Inform that ownership has been transferred
+          irminAlert(
+            'success',
+            res.metadata?.message ?? 'Ownership transfered successfully'
           );
         } catch (error: any) {
           console.error('Error transferring ownership:', error);
@@ -213,7 +227,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     if (!currentWorkspace) return;
     try {
       // Change user role
-      await workspaceService.changeUserWorkspaceRole(
+      const res = await workspaceService.changeUserWorkspaceRole(
         currentWorkspace.slug,
         id,
         newRole,
@@ -232,6 +246,46 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
         return user;
       });
       setUsers(newUsers);
+      irminAlert(
+        'success',
+        res.metadata?.message ?? 'User role changed successfully'
+      );
+    } catch (error: any) {
+      console.error('Error changing user role:', error);
+      irminAlert('error', error.message ?? 'Error changing user role');
+    }
+  };
+
+  const handleChangeInviteRole = async (
+    inviteId: number,
+    newRole: IrminRole
+  ) => {
+    if (!currentWorkspace) return;
+    try {
+      // Change invite role
+      const res = await inviteService.changeUserInviteRole(
+        currentWorkspace.slug,
+        inviteId,
+        newRole
+      );
+      // Update the local state of workspace users
+      const newUsers = users.map((user) => {
+        if (user.inviteId === inviteId) {
+          return {
+            ...user,
+            roles: [
+              irminRoles.find((a) => a.id === newRole.id) ?? irminRoles[0],
+            ],
+          };
+        }
+        return user;
+      });
+      setUsers(newUsers);
+      // Inform that invite role has been changed
+      irminAlert(
+        'success',
+        res.metadata?.message ?? 'Invite role changed successfully'
+      );
     } catch (error: any) {
       console.error('Error changing user role:', error);
       irminAlert('error', error.message ?? 'Error changing user role');
@@ -279,22 +333,32 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                   <p className='text-xs text-gray-700'>Owner</p>
                 ) : (
                   <select
-                    value={user.roles.length === 0 ? -1 : user.roles[0].id}
-                    onChange={(e) =>
-                      handleChangeRole(
-                        user.id,
-                        user.roles[0] ?? null,
-                        irminRoles.find(
-                          (role) => role.id === parseInt(e.target.value)
-                        )!
-                      )
+                    value={
+                      user.roles.length === 0 ? 'no-role' : user.roles[0].id
                     }
+                    onChange={(e) => {
+                      const desiredRole = irminRoles.find(
+                        (role) => role.id === parseInt(e.target.value)
+                      )!;
+                      if (!desiredRole || e.target.value === 'no-role') {
+                        irminAlert('error', 'Invalid role');
+                        return;
+                      }
+                      if (typeof user.inviteId === 'number') {
+                        // Change role of an invited user
+                        handleChangeInviteRole(user.inviteId, desiredRole);
+                      } else {
+                        // Change role of a regular user
+                        handleChangeRole(
+                          user.id,
+                          user.roles[0] ?? null,
+                          desiredRole
+                        );
+                      }
+                    }}
                     className='rounded border p-1 text-xs text-gray-700'
-                    disabled={typeof user.inviteId === 'number'}
                   >
-                    <option disabled value={-1}>
-                      No role
-                    </option>
+                    <option value={'no-role'}>No role</option>
                     {irminRoles.map((role) => (
                       <option key={role.id} value={role.id}>
                         {role.label}
@@ -305,7 +369,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
               </td>
               <td className='border-b px-4 py-2 text-right'>
                 {user.roles.length !== 0 && !user.inviteId && (
-                  <>
+                  <div className='flex flex-row justify-end align-middle'>
                     <button
                       className='mr-2 rounded px-3 py-1 text-xs text-gray-800 transition-all hover:text-gray-500 hover:underline'
                       onClick={() => handleTransferOwnership(user.id)}
@@ -313,15 +377,15 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                       Transfer ownership
                     </button>
                     <button
-                      className='rounded px-3 py-1 text-gray-800 transition-all hover:bg-gray-500 hover:text-white'
+                      className='rounded px-3 py-1 text-lg text-gray-800 transition-all hover:bg-gray-500 hover:text-white'
                       onClick={() => handleRemoveUser(user.id, user.roles[0])}
                     >
                       <IoExit />
                     </button>
-                  </>
+                  </div>
                 )}
                 {user.inviteId && (
-                  <>
+                  <div className='flex flex-row justify-end align-middle'>
                     <button
                       className='rounded px-3 py-1 text-xs text-gray-800 transition-all hover:text-gray-500 hover:underline'
                       onClick={() => handleResend(user.email)}
@@ -329,12 +393,12 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                       Resend invite
                     </button>
                     <button
-                      className='rounded px-3 py-1 text-gray-800 transition-all hover:bg-gray-500 hover:text-white'
+                      className='rounded px-3 py-1 text-lg text-gray-800 transition-all hover:bg-gray-500 hover:text-white'
                       onClick={() => handleCancelInvite(user.email)}
                     >
                       <IoExit />
                     </button>
-                  </>
+                  </div>
                 )}
               </td>
             </tr>

@@ -6,7 +6,7 @@ import ScriptEditorWithOptions from '@/components/script-editor/scriptEditorWith
 import FileNavigator from '@/components/fileNavigator';
 import QueryResultsAndTabs from '@/components/queryResultsAndTabs';
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
-import DataSourceTable from '@/components/tables/datasourceTable';
+import ConnectionTable from '@/components/tables/connectionTable';
 import DatasetTable from '@/components/tables/datasetTable';
 import { TbSearch } from 'react-icons/tb';
 import { DataSetService } from '@/lib/DataSetService';
@@ -139,7 +139,7 @@ export default function EditorPage() {
             <br />
             <div className='max-h-80 overflow-auto border-t p-2'>
               <h3 className='px-4'>Connections</h3>
-              <DataSourceTable
+              <ConnectionTable
                 inSidebar={true}
                 dataSources={[
                   {

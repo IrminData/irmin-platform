@@ -84,10 +84,20 @@ const config: Config = {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
+        slideIn: {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
+        slideOut: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         slideInUp: 'slideInUp 0.2s ease-out',
         fadeIn: 'fadeIn 0.2s ease-in-out',
+        slideIn: 'slideIn 0.2s ease-out forwards',
+        slideOut: 'slideOut 0.2s ease-out forwards',
       },
     },
   },

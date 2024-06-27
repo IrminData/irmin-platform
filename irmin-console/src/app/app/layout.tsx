@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { WorkspaceProvider } from '@/context/WorkspaceContext';
+import { PopupProvider } from '@/context/PopupContext';
+import DashboardNavigation from '@/components/dashboardNavigation';
 
 export const metadata: Metadata = {
-  title: 'Irmin',
+  title: 'Irmin App',
   description: 'A better home for your data',
 };
 
@@ -14,7 +16,11 @@ export default function AppLayout({
 }>) {
   return (
     <ProtectedRoute>
-      <WorkspaceProvider>{children}</WorkspaceProvider>
+      <WorkspaceProvider>
+        <PopupProvider>
+          <DashboardNavigation>{children}</DashboardNavigation>
+        </PopupProvider>
+      </WorkspaceProvider>
     </ProtectedRoute>
   );
 }

@@ -3,6 +3,7 @@
 import { createContext, useContext, useState } from 'react';
 import Alert from '@/components/misc/Alert';
 import ConfirmPopup from '@/components/misc/ConfirmPopup';
+import NotificationPopup from '@/components/notifications/NotificationPopup';
 
 const PopupContext = createContext<{
   irminAlert: (type: 'success' | 'error' | 'info', message: string) => void;
@@ -12,9 +13,15 @@ const PopupContext = createContext<{
     onConfirm: () => void,
     onCancel: () => void
   ) => void;
+  toggleNotificationsPopup: (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => void;
 }>({
   irminAlert: () => {},
   irminConfirm: () => {},
+  toggleNotificationsPopup: (
+    _: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {},
 });
 
 export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
@@ -59,11 +66,25 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     }, 10000);
   };
 
+  // Handle notifications
+  const [notificationsPopupOpen, setNotificationsPopupOpen] = useState(false);
+  const [notificationsClickPosition, setNotificationsClickPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const toggleNotificationsPopup = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
+    setNotificationsClickPosition({ x: e.clientX, y: e.clientY });
+    setNotificationsPopupOpen(!notificationsPopupOpen);
+  };
+
   return (
     <PopupContext.Provider
       value={{
         irminAlert: irminAlert,
         irminConfirm: irminConfirm,
+        toggleNotificationsPopup,
       }}
     >
       {children}
@@ -86,6 +107,11 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
             confirmCancel();
             setConfirmMessage(null);
           }}
+        />
+      )}
+      {notificationsPopupOpen && (
+        <NotificationPopup
+          notificationsClickPosition={notificationsClickPosition}
         />
       )}
     </PopupContext.Provider>

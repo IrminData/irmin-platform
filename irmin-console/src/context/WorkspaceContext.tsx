@@ -1,6 +1,12 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { IrminRole, Workspace } from '@/types/Workspace';
 import WorkspaceService from '@/lib/WorkspaceService';
 
@@ -10,12 +16,14 @@ const WorkspaceContext = createContext<{
   irminRoles: IrminRole[];
   setCurrentWorkspace: (workspace: Workspace | null) => void;
   fetchWorkspaces: () => void;
+  refetchCurrentWorkspace: () => void;
 }>({
   workspaces: null,
   currentWorkspace: null,
   irminRoles: [],
   setCurrentWorkspace: () => {},
   fetchWorkspaces: () => {},
+  refetchCurrentWorkspace: () => {},
 });
 
 export const WorkspaceProvider = ({
@@ -32,10 +40,10 @@ export const WorkspaceProvider = ({
   );
 
   // Fetch the workspaces data
-  const fetchWorkspaces = async () => {
+  const fetchWorkspaces = useCallback(async () => {
     const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
     if (offlineMode) {
-      const offlineWorkspace: Workspace = {
+      const offlineWorkspace = {
         id: 0,
         name: 'Offline workspace',
         slug: 'offline-workspace',
@@ -56,10 +64,45 @@ export const WorkspaceProvider = ({
       console.error('Error fetching workspaces:', error);
       setWorkspaces(null);
     }
-  };
+  }, [workspaceService]);
+
+  // Refetch current workspace
+  const refetchCurrentWorkspace = useCallback(async () => {
+    const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
+    if (offlineMode) return;
+    try {
+      const currentWorkspaceSlug = currentWorkspace?.slug;
+      if (!currentWorkspaceSlug) return;
+      workspaceService
+        .switchWorkspace(currentWorkspaceSlug)
+        .then((newWorkspace) => {
+          if (!newWorkspace) return;
+          setCurrentWorkspace(newWorkspace);
+          setWorkspaces((prevWorkspaces) => {
+            if (!prevWorkspaces) return [];
+            return prevWorkspaces.map((workspace) => {
+              if (workspace.slug === newWorkspace.slug) {
+                return newWorkspace;
+              }
+              return workspace;
+            });
+          });
+        })
+        .catch((error) => {
+          console.error(
+            'Error refetching current workspace:',
+            currentWorkspaceSlug,
+            error
+          );
+        });
+    } catch (error) {
+      console.error('Error fetching workspaces:', error);
+      setWorkspaces(null);
+    }
+  }, [workspaceService, currentWorkspace]);
 
   // Fetch the roles data
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     try {
       const data = await workspaceService.getIrminRoles();
       setIrminRoles(data);
@@ -67,7 +110,7 @@ export const WorkspaceProvider = ({
       console.error('Error fetching roles:', error);
       setIrminRoles([]);
     }
-  };
+  }, [workspaceService]);
 
   // Perform initial data fetching
   useEffect(() => {
@@ -94,7 +137,7 @@ export const WorkspaceProvider = ({
     } else {
       setInitialLoadingDone(true);
     }
-  }, [workspaceService, initialLoadingDone]);
+  }, [fetchWorkspaces, fetchRoles, workspaceService, initialLoadingDone]);
 
   const handleSetCurrentWorkspace = (workspace: Workspace | null) => {
     if (workspace) {
@@ -114,6 +157,7 @@ export const WorkspaceProvider = ({
         irminRoles,
         setCurrentWorkspace: handleSetCurrentWorkspace,
         fetchWorkspaces,
+        refetchCurrentWorkspace,
       }}
     >
       {children}

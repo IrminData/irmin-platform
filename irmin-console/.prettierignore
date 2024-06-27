@@ -1,0 +1,22 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Next.js
+/.next
+out
+
+# Production
+/build
+
+# Miscellaneous
+.DS_Store
+*.log
+*.lock
+
+# Environment Variables
+.env
+
+# Yarn
+.yarn/*

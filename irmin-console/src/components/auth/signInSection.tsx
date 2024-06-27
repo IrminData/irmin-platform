@@ -44,7 +44,7 @@ const SignInSection: React.FC = () => {
 
   return (
     <section
-      className='bg-white py-24 md:py-32'
+      className='relative bg-white py-16 md:py-28'
       style={{
         backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
         backgroundPosition: 'center',

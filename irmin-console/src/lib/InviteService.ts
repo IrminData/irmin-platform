@@ -1,5 +1,5 @@
 import { IrminAPIResponse } from '@/types/IrminAPIResponse';
-import { WorkspaceInviteUser } from '@/types/Workspace';
+import { IrminRole, WorkspaceInviteUser } from '@/types/Workspace';
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
@@ -109,13 +109,44 @@ class InviteService {
     try {
       const formData = new FormData();
       formData.append('invite', invite.toString());
+      formData.append('_method', 'DELETE');
 
       return await this.fetchWithCredentials(`${api_base}/v1/invite/cancel`, {
-        method: 'DELETE',
+        method: 'POST',
         body: formData,
       });
     } catch (error) {
       console.error('Cancel invite error:', error);
+
+      throw error;
+    }
+  }
+
+  /**
+   * Change the invited user's role in the workspace.
+   * @param workspaceSlug - The workspace's slug.
+   * @param invite- The invite's ID.
+   * @param role - The user's role.
+   * @returns {Promise<IrminAPIResponse>} A promise that resolves to the response from the API.
+   */
+  async changeUserInviteRole(
+    workspaceSlug: string,
+    invite: number,
+    role: IrminRole
+  ): Promise<IrminAPIResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('workspace', workspaceSlug);
+      formData.append('invite', invite.toString());
+      formData.append('role', role.id.toString());
+      formData.append('_method', 'PATCH');
+
+      return await this.fetchWithCredentials(`${api_base}/v1/invite/update`, {
+        method: 'POST',
+        body: formData,
+      });
+    } catch (error) {
+      console.error('Change invite role error:', error);
 
       throw error;
     }

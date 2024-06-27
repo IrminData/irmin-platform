@@ -1,12 +1,36 @@
+'use client';
+
 import AppTitle from '@/components/appTitle';
 import ReverseETLTable from '@/components/tables/reverseETLTable';
-import AddNewReverseETLProcess from '@/components/reverse-etl-setup/addNewReverseETLProcess';
+import ReverseETLSetupView from '@/components/reverse-etl-setup/reverseETLSetupView';
+import SideModal from '@/components/misc/SideModal';
+import { useState } from 'react';
 
 export default function ReverseETLPage() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const steps = [
+    'Select source data set',
+    'Select destination connection',
+    'Configure Reverse ETL',
+  ];
+
   return (
     <>
       <AppTitle title='Reverse ETL syncs' />
-      <AddNewReverseETLProcess />
+      <SideModal
+        isOpen={isOpen}
+        setIsOpen={setIsOpen}
+        currentStep={currentStep}
+        steps={steps}
+        title='Create a new Reverse ETL sync'
+      >
+        <ReverseETLSetupView
+          setIsOpen={setIsOpen}
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+        />
+      </SideModal>
       <ReverseETLTable
         processes={[
           {

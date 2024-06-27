@@ -10,26 +10,39 @@ jobs:
   workflow:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          ref: ${{ github.head_ref }}
-      - name: Setup Yarn
-        uses: threeal/setup-yarn-action@v2.0.0
-        with:
-          version: latest
-          cache: false
+          node-version: 20
+      - name: Install Dependencies
+        run: yarn install --immutable
       - name: Prettier
-        run: yarn prettier --write .
+        run: yarn format:fix
       - name: ESLint
-        run: yarn eslint .
+        run: yarn lint
       - name: Apply formatting
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Apply formatting
           skip_fetch: true
       - name: Build
-        run: yarn build
+        run: |
+          yarn build | tee build-log.txt
+      - name: Check Build Status
+        run: |
+          if grep -q "error" build-log.txt; then
+            echo "Build failed. Please fix the build errors and try again."
+            exit 1
+          fi
+      - name: PR Comment (Success)
+        if: success()
+        run: |
+          echo "Build succeeded. PR is allowed to be created."
+          # You can use GitHub API to post a comment on the PR here if you want.
+      - name: PR Comment (Failure)
+        if: failure()
+        run: |
+          echo "Build failed. Please fix the build errors and try again."
+          # You can use GitHub API to post a comment on the PR here if you want.

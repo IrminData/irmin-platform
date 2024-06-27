@@ -30,10 +30,13 @@ const existingDataSets = [
 
 export default function ReverseETLSetupView({
   setIsOpen,
+  currentStep,
+  setCurrentStep,
 }: {
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  currentStep: number;
+  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
-  const [currentStep, setCurrentStep] = useState(1);
   const [reverseETLData, setReverseETLData] = useState<ReverseETLDataType>({
     connectionID: null,
     name: '',
@@ -41,42 +44,8 @@ export default function ReverseETLSetupView({
     cron: '1 0 * JAN *',
   });
 
-  const steps = [
-    'Select source data set',
-    'Select destination connection',
-    'Configure Reverse ETL',
-  ];
-
   return (
-    <div className='max-h-screen overflow-y-scroll pt-[38px]'>
-      <div className='flex h-14 items-center justify-between border-b px-6 py-4'>
-        <h3 className='text-xl font-semibold'>Setup a reverse ETL Process</h3>
-      </div>
-      <div className='flex items-center space-x-4 px-6 py-4'>
-        {steps.map((step, index) => (
-          <div
-            className={`flex items-center ${
-              index === steps.length - 1 ? '' : 'mr-0'
-            }`}
-            key={step}
-          >
-            <div
-              className={`mr-2 flex h-6 w-6 items-center justify-center rounded-full text-sm text-white ${
-                currentStep >= index + 1 ? 'bg-ash_gray-500' : 'bg-gray-300'
-              }`}
-            >
-              {index + 1}
-            </div>
-            <span
-              className={`text-xs ${
-                currentStep >= index + 1 ? 'text-ash_gray-500' : 'text-gray-500'
-              }`}
-            >
-              {step}
-            </span>
-          </div>
-        ))}
-      </div>
+    <>
       {currentStep === 1 && (
         <SelectSourceDataSet
           dataSets={existingDataSets}
@@ -99,6 +68,6 @@ export default function ReverseETLSetupView({
           setIsOpen={setIsOpen}
         />
       )}
-    </div>
+    </>
   );
 }
