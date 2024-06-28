@@ -2,6 +2,7 @@ import {
   IrminAPIResponse,
   WorkspaceAPIResponse,
   WorkspacesAPIResponse,
+  ConnectionsAPIResponse,
 } from '@/types/IrminAPIResponse';
 import { Workspace, IrminRole, WorkspaceUser } from '@/types/Workspace';
 
@@ -370,6 +371,31 @@ class WorkspaceService {
       return newWorkspace;
     } catch (error) {
       console.error('Switch workspace error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch all connections for a workspace
+   * @param {string} workspaceSlug - The slug of the workspace
+   * @returns {Promise<ConnectionsAPIResponse>} A promise that resolves to a ConnectionsAPIResponse object
+   */
+  async fetchConnectionsForWorkspace(
+    workspaceSlug: string
+  ): Promise<ConnectionsAPIResponse> {
+    try {
+      const response = await this.fetchWithCredentials(
+        `${api_base}/v1/workspaces/${workspaceSlug}/connections`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return response as any as ConnectionsAPIResponse;
+    } catch (error) {
+      console.error('Fetch workspace connections error:', error);
       throw error;
     }
   }

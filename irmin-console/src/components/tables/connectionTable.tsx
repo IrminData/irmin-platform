@@ -1,27 +1,16 @@
 'use client';
 
-import Link from 'next/link';
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5';
+import { ConnectionWithAdditionalData } from '@/types/Connection';
 
-interface DataSource {
-  id: number;
-  name: string;
-  connector: string;
-  nextSync: string;
-  nextSyncTimestamp: Date;
-  status: 'running' | 'errors' | 'stopped';
-  parts: string[];
-}
-
-interface ConnectionTableProps {
-  dataSources: DataSource[];
-  inSidebar?: boolean;
-}
-
-const ConnectionTable: React.FC<ConnectionTableProps> = ({
-  dataSources,
+const ConnectionTable = ({
+  connections,
   inSidebar = false,
+}: {
+  connections: ConnectionWithAdditionalData[];
+  inSidebar?: boolean;
 }) => {
   const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
 
@@ -31,6 +20,14 @@ const ConnectionTable: React.FC<ConnectionTableProps> = ({
       [id]: !prevOpenRows[id],
     }));
   };
+
+  if (!connections.length) {
+    return (
+      <div className='text-center text-lg text-rich_black'>
+        No connections found
+      </div>
+    );
+  }
 
   return (
     <div className='pb-8'>
@@ -68,36 +65,36 @@ const ConnectionTable: React.FC<ConnectionTableProps> = ({
           )}
 
           <tbody>
-            {dataSources.map((dataSource, index) => (
+            {connections.map((connection, index) => (
               <>
                 <tr
-                  key={dataSource.id}
+                  key={connection.id}
                   className={`${
                     index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                   } cursor-pointer transition-all hover:bg-gray-200`}
                 >
                   <td className='xl:text-md min-w-44 px-4 py-2 text-base'>
-                    {dataSource.name}
+                    {connection.name}
                     <br />
                     <span className='text-xs text-midnight_green'>
-                      {dataSource.connector}
+                      {connection.connector}
                     </span>
                   </td>
                   {!inSidebar && (
                     <>
                       <td className='min-w-44 px-4 py-2 text-xs xl:text-base'>
-                        {dataSource.nextSync}
+                        {connection.nextSync}
                         <br />
                         <span className='text-xs text-midnight_green'>
-                          {dataSource.nextSyncTimestamp.toUTCString()}
+                          {connection.nextSyncTimestamp.toUTCString()}
                         </span>
                       </td>
                       <td className='px-4 py-2 text-xs xl:text-base'>
-                        {dataSource.status === 'errors' ? (
+                        {connection.status === 'errors' ? (
                           <span className='block max-w-36 rounded-full bg-midnight_green px-2 py-1 text-center leading-6 text-white shadow-sm'>
                             Errors
                           </span>
-                        ) : dataSource.status === 'running' ? (
+                        ) : connection.status === 'running' ? (
                           <span className='block max-w-36 rounded-full bg-air_force_blue-600 px-2 py-1 text-center leading-6 text-white shadow-sm'>
                             Running
                           </span>
@@ -128,10 +125,10 @@ const ConnectionTable: React.FC<ConnectionTableProps> = ({
                             Remove
                           </Link>
                           <button
-                            onClick={() => toggleRow(dataSource.id)}
+                            onClick={() => toggleRow(connection.id)}
                             className='ml-2 mt-1 text-midnight_green hover:text-ash_gray focus:outline-none'
                           >
-                            {openRows[dataSource.id] ? (
+                            {openRows[connection.id] ? (
                               <IoChevronUpOutline className='h-5 w-5' />
                             ) : (
                               <IoChevronDownOutline className='h-5 w-5' />
@@ -142,11 +139,11 @@ const ConnectionTable: React.FC<ConnectionTableProps> = ({
                     </>
                   )}
                 </tr>
-                {openRows[dataSource.id] && (
+                {openRows[connection.id] && (
                   <tr className='bg-gray-100 shadow-inner'>
                     <td colSpan={4} className='px-10 py-2'>
                       <ul>
-                        {dataSource.parts.map((part, index) => (
+                        {connection.parts.map((part, index) => (
                           <li
                             key={index}
                             className='border-color-ash_gray border-b py-2 text-xs'

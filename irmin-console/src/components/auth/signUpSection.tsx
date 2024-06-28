@@ -50,9 +50,7 @@ const SignUpSection: React.FC = () => {
         setSuccess(response.metadata.message);
         await fetchProfile();
         // Redirect to dashboard or another page on successful login
-        setTimeout(() => {
-          router.push('/app');
-        }, 300);
+        router.push('/app');
       } else {
         throw new Error(response.message || 'Registration failed');
       }

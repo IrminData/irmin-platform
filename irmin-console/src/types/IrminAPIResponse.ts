@@ -1,6 +1,7 @@
 import { Connector, ConnectionDetailsAndSettingsFields } from './Connector';
 import { User } from './UserProfile';
 import { Workspace } from './Workspace';
+import { Connection } from './Connection';
 
 export interface IrminAPIResponse {
   metadata?: {
@@ -54,4 +55,11 @@ export interface ConnectionTestAPIResponse extends IrminAPIResponse {
   data: {
     connected: boolean;
   };
+}
+
+/**
+ * Connection API Response Interfaces
+ */
+export interface ConnectionsAPIResponse extends IrminAPIResponse {
+  data: Connection[];
 }
