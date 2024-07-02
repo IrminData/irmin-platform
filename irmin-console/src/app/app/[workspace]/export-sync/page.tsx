@@ -3,37 +3,37 @@
 import { useState } from 'react';
 
 import AppTitle from '@/components/appTitle';
+import ExportSetupView from '@/components/export-sync-setup/exportSetupView';
 import SideModal from '@/components/misc/SideModal';
-import ReverseETLSetupView from '@/components/reverse-etl-setup/reverseETLSetupView';
-import ReverseETLTable from '@/components/tables/reverseETLTable';
+import ExportTable from '@/components/tables/exportTable';
 
-export default function ReverseETLPage() {
+export default function ExportSyncPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const steps = [
     'Select source data set',
     'Select destination connection',
-    'Configure Reverse ETL',
+    'Configure Export',
   ];
 
   return (
     <>
-      <AppTitle title='Reverse ETL syncs' />
+      <AppTitle title='Export syncs' />
       <SideModal
         isOpen={isOpen}
         setIsOpen={setIsOpen}
         currentStep={currentStep}
         steps={steps}
-        title='Create a new Reverse ETL sync'
+        title='Create a new Export sync'
       >
-        <ReverseETLSetupView
+        <ExportSetupView
           isOpen={isOpen}
           setIsOpen={setIsOpen}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}
         />
       </SideModal>
-      <ReverseETLTable
+      <ExportTable
         processes={[
           {
             id: 1,

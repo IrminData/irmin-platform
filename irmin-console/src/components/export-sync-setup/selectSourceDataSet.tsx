@@ -2,19 +2,19 @@
 
 import React from 'react';
 
-import { ReverseETLDataType } from '@/components/reverse-etl-setup/reverseETLSetupView';
+import { ExportDataType } from '@/components/export-sync-setup/exportSetupView';
 
 export default function SelectSourceDataSet({
   dataSets,
-  setReverseETLData,
+  setExportData,
   setCurrentStep,
 }: {
   dataSets: { id: number; name: string }[];
-  setReverseETLData: React.Dispatch<React.SetStateAction<ReverseETLDataType>>;
+  setExportData: React.Dispatch<React.SetStateAction<ExportDataType>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const handleSelect = (id: number) => {
-    setReverseETLData((prevData) => ({
+    setExportData((prevData) => ({
       ...prevData,
       connectionID: id,
     }));

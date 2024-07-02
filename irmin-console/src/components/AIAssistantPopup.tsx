@@ -115,23 +115,24 @@ export default function AIAssistantPopup() {
               e.preventDefault();
               handleSendMessage();
             }}
-            className='flex'
+            className='relative flex w-full items-end'
           >
             <textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              className='mr-2 block h-32 w-full appearance-none rounded-lg border bg-gray-50 p-3 leading-5 text-irmin_black shadow-md'
+              className='block h-32 w-full appearance-none rounded-lg border bg-gray-50 p-3 leading-5 text-irmin_black shadow-md'
               placeholder='Write your message here...'
             />
             <Button
               type='submit'
-              variant='solid'
+              variant='icon'
               colorScheme='primary'
               ariaLabel='Send your message to Haz'
               onClick={handleSendMessage}
+              className='absolute right-2'
             >
-              <AiOutlineSend className='h-4 w-4' />
+              <AiOutlineSend className='h-6 w-6' />
             </Button>
           </form>
         </div>
@@ -142,7 +143,7 @@ export default function AIAssistantPopup() {
           type='submit'
           variant='solid'
           colorScheme='tertiary'
-          className='rounded-full p-5'
+          className='rounded-full'
           onClick={() => setOpen(!open)}
         >
           {open ? (

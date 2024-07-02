@@ -114,7 +114,7 @@ const ScriptEditorWithOptions = ({
         </div>
         <div className='p-2'>
           <select
-            className='rounded-md border-irmin_green px-2 py-2 text-xs text-irmin_blue transition-all hover:bg-irmin_green-800 focus:outline-none xl:text-base'
+            className='rounded-lg border-irmin_green px-2 py-2 text-xs text-irmin_blue transition-all hover:bg-irmin_green-800 focus:outline-none xl:text-base'
             onChange={(e) => {
               if (!tabs[activeTab].changed) {
                 const newTabs = [...tabs];

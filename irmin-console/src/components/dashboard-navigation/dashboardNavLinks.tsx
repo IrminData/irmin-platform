@@ -75,8 +75,8 @@ export const useDashboardNavLinks = (): {
       icon: <TbDatabaseImport />,
     },
     {
-      title: 'Reverse ETL',
-      href: `/app/${workspaceSlug}/reverse-etl`,
+      title: 'Export syncs',
+      href: `/app/${workspaceSlug}/export-sync`,
       icon: <TbDatabaseExport />,
     },
     {

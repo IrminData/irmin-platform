@@ -61,7 +61,7 @@ export default function WebsiteCareersSection() {
                     />
                   </svg>
                   <select
-                    className='w-full appearance-none rounded-full border-0 bg-transparent px-4 py-3 leading-6 text-irmin_black outline-none hover:cursor-pointer focus:outline-none'
+                    className='w-full appearance-none rounded-lg border-0 bg-transparent px-4 py-3 leading-6 text-irmin_black outline-none hover:cursor-pointer focus:outline-none'
                     name=''
                   >
                     <option value={1}>Location</option>

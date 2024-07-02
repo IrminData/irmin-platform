@@ -42,7 +42,7 @@ const Input: React.FC<InputProps> = ({
   required = false,
 }) => {
   const baseClasses =
-    'relative inline-flex items-center justify-center rounded-full transition-all focus:outline-none';
+    'relative inline-flex items-center justify-center rounded-lg transition-all focus:outline-none';
   const variantClasses = {
     solid: {
       primary:

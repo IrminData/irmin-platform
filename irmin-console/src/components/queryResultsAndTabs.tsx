@@ -49,52 +49,69 @@ const QueryResultsAndTabs: React.FC<{
   return (
     <div>
       {/* Tab Buttons */}
-      <div className='mb-4 flex justify-between px-4 pt-2'>
-        <div>
-          <Button
-            onClick={() => setActiveTab('queryResults')}
-            size='sm'
-            className={`border-b-2 ${
-              activeTab === 'queryResults'
-                ? 'border-irmin_green'
-                : 'border-transparent'
-            }`}
-            ariaLabel='Go to Query Results tab'
-          >
-            Query Results
-          </Button>
-          <Button
-            onClick={() => setActiveTab('visualisation')}
-            size='sm'
-            className={`border-b-2 ${
-              activeTab === 'documentation'
-                ? 'border-irmin_green'
-                : 'border-transparent'
-            }`}
-            ariaLabel='Go to Visualisation tab'
-          >
-            Visualisation
-          </Button>
-          <Button
-            onClick={() => setActiveTab('documentation')}
-            size='sm'
-            className={`border-b-2 ${
-              activeTab === 'documentation'
-                ? 'border-irmin_green'
-                : 'border-transparent'
-            }`}
-            ariaLabel='Go to Documentation tab'
-          >
-            Documentation
-          </Button>
-        </div>
-        <div className='text-right'>
+      <div className='scrollbar-hide mb-4 flex w-full justify-start gap-6 overflow-y-scroll px-2 pt-2 md:gap-4 xl:mx-4'>
+        <Button
+          onClick={() => setActiveTab('queryResults')}
+          size='sm'
+          className={`rounded-none border-b-2 ${
+            activeTab === 'queryResults'
+              ? 'border-irmin_green'
+              : 'border-transparent'
+          }`}
+          ariaLabel='Go to Query Results tab'
+        >
+          Query Results
+        </Button>
+        <Button
+          onClick={() => setActiveTab('visualisation')}
+          size='sm'
+          className={`rounded-none border-b-2 ${
+            activeTab === 'visualisation'
+              ? 'border-irmin_green'
+              : 'border-transparent'
+          }`}
+          ariaLabel='Go to Visualisation tab'
+        >
+          Visualisation
+        </Button>
+        <Button
+          onClick={() => setActiveTab('documentation')}
+          size='sm'
+          className={`rounded-none border-b-2 ${
+            activeTab === 'documentation'
+              ? 'border-irmin_green'
+              : 'border-transparent'
+          }`}
+          ariaLabel='Go to Documentation tab'
+        >
+          Documentation
+        </Button>
+        <div className='flex-end flex gap-2 text-right'>
+          {activeTab === 'documentation' && (
+            <Button
+              onClick={() =>
+                setDocumentationTab(
+                  documentationTab === 'mdx' ? 'plain' : 'mdx'
+                )
+              }
+              variant='link'
+              colorScheme={'gray'}
+              size='sm'
+              ariaLabel='Switch between plain text and markdown editor'
+              className='w-[120px]'
+            >
+              {documentationTab === 'mdx'
+                ? 'Switch to plain text'
+                : 'Switch to markdown editor'}
+            </Button>
+          )}
           <Button
             icon={<AiOutlineSave />}
             colorScheme='secondary'
             variant='outline'
             ariaLabel='Save the Data Set'
             size='sm'
+            className='w-[120px]'
           >
             Save
           </Button>
@@ -105,6 +122,7 @@ const QueryResultsAndTabs: React.FC<{
               variant='outline'
               ariaLabel='Run the script'
               size='sm'
+              className='w-[120px]'
             >
               Run script
             </Button>
@@ -157,24 +175,6 @@ const QueryResultsAndTabs: React.FC<{
 
         {activeTab === 'documentation' && (
           <div style={{ height: tableMaxHeight }} className='overflow-auto'>
-            {/* Documentation Editor */}
-            <div className='pr-4 text-right'>
-              <Button
-                onClick={() =>
-                  setDocumentationTab(
-                    documentationTab === 'mdx' ? 'plain' : 'mdx'
-                  )
-                }
-                variant='link'
-                colorScheme={'gray'}
-                size='sm'
-                ariaLabel='Switch between plain text and markdown editor'
-              >
-                {documentationTab === 'mdx'
-                  ? 'Switch to plain text'
-                  : 'Switch to markdown editor'}
-              </Button>
-            </div>
             {documentationTab === 'plain' && (
               <textarea
                 className='h-full w-full p-2 focus:outline-none'

@@ -32,7 +32,7 @@ function DashboardTitleAndSelector({
         <select
           value={selected}
           onChange={(e) => onSelectionChange(e.target.value)}
-          className='block w-full appearance-none rounded-full border border-gray-300 bg-white px-4 py-2 pr-8 leading-tight text-gray-700 focus:outline-none'
+          className='block w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2 pr-8 leading-tight text-gray-700 focus:outline-none'
         >
           {options.map((option, index) => (
             <option key={index} value={option}>

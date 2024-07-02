@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -23,15 +23,7 @@ export default function DataSetViewerLayout({
 }>) {
   return (
     <>
-      <Suspense
-        fallback={
-          <div className='w-full px-4'>
-            <LoadingSkeleton className='my-0 h-10 w-full' />
-          </div>
-        }
-      >
-        <DataSetToolbar />
-      </Suspense>
+      <DataSetToolbar />
       <div className='w-full overflow-auto'>{children}</div>
     </>
   );
@@ -52,6 +44,13 @@ function DataSetToolbar() {
     fetchData();
   }, [dataSetID, setDataSet, dataSet, dataSetService]);
 
+  if (!dataSet) {
+    return (
+      <div className='w-full px-4'>
+        <LoadingSkeleton className='my-0 h-10 w-full' />
+      </div>
+    );
+  }
   const actions = [
     {
       label: 'View',

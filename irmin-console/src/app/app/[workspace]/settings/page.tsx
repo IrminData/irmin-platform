@@ -180,12 +180,18 @@ const GeneralSettings = () => {
 };
 
 const BillingSettings: React.FC = () => (
-  <div className='pb-4'>
+  <div className='px-4 pb-4'>
     <h2 className='mb-4 text-2xl font-normal'>Billing Settings</h2>
-    <p className='font-normal text-gray-700'>
+    <p className='mb-4 font-normal text-gray-700'>
       You can currently only manage billing by contacting our team.
     </p>
-    <Button href={'/contact'} size='md' colorScheme='primary' variant='solid'>
+    <Button
+      href={'/contact'}
+      size='sm'
+      colorScheme='primary'
+      variant='outline'
+      className='w-48'
+    >
       Contact Us
     </Button>
   </div>

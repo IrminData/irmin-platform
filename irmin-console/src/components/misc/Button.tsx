@@ -43,7 +43,7 @@ const Button: React.FC<ButtonProps> = ({
   const router = useRouter();
 
   const baseClasses =
-    'inline-flex items-center justify-center rounded-full transition-all focus:outline-none';
+    'inline-flex items-center justify-center rounded-lg transition-all focus:outline-none';
   const variantClasses = {
     solid: {
       primary: 'bg-irmin_green-500 text-white hover:bg-irmin_green-400 shadow',

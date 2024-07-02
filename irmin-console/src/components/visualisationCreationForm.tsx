@@ -53,7 +53,7 @@ const VisualisationCreationForm = () => {
           id='dashboard'
           value={dashboard}
           onChange={(e) => setDashboard(e.target.value)}
-          className='mt-2 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none sm:text-sm'
+          className='mt-2 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none sm:text-sm'
         >
           <option>Select dashboard (optional)</option>
           <option>Dashboard 1</option>
@@ -73,7 +73,7 @@ const VisualisationCreationForm = () => {
             id='visualisation'
             value={visualisation}
             onChange={(e) => setVisualisation(e.target.value)}
-            className='mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none sm:text-sm'
+            className='mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none sm:text-sm'
           >
             {visualisationOptions.map((option) => (
               <option key={option.label} value={option.label}>

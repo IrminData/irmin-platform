@@ -45,16 +45,13 @@ const TableListRow: React.FC<TableListRowProps> = ({
         className={`flex w-fit min-w-full flex-row justify-start gap-4 text-pretty px-4 py-4 text-xs transition-all ${!disableHover && 'hover:bg-gray-200'} md:text-sm xl:text-base`}
       >
         {cells.map((cell, index) => (
-          <div
-            key={index}
-            className='w-fit min-w-40 overflow-hidden lg:min-w-60'
-          >
+          <div key={index} className='w-fit overflow-hidden'>
             {cell}
           </div>
         ))}
         {!inSidebar && (
-          <div className='ml-auto w-fit min-w-40 text-right md:min-w-60 lg:min-w-80'>
-            <div className='flex justify-end space-x-2'>
+          <div className='ml-4 w-fit text-right'>
+            <div className='flex items-center justify-end space-x-2'>
               {sortedActions.map((action, index) => (
                 <Button
                   size={'sm'}
@@ -64,6 +61,7 @@ const TableListRow: React.FC<TableListRowProps> = ({
                   ariaLabel={action.label}
                   href={action.href}
                   onClick={action.onClick}
+                  className={`w-max ${action.primary ? 'min-w-24 py-2' : ''}`}
                 >
                   {action.label}
                 </Button>

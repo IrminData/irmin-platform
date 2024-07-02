@@ -6,7 +6,7 @@ import StatusElement from '@/components/tables/elements/statusElement';
 import TableList from '@/components/tables/elements/tableList';
 import TableListRow from '@/components/tables/elements/tableListRow';
 
-interface ReverseETLProcess {
+interface ExportProcess {
   id: number;
   name: string;
   source: string;
@@ -15,19 +15,19 @@ interface ReverseETLProcess {
   details: string[];
 }
 
-interface ReverseETLTableProps {
-  processes: ReverseETLProcess[];
+interface ExportTableProps {
+  processes: ExportProcess[];
   inSidebar?: boolean;
 }
 
-const ReverseETLTable: React.FC<ReverseETLTableProps> = ({
+const ExportTable: React.FC<ExportTableProps> = ({
   processes,
   inSidebar = false,
 }) => {
   if (!processes || processes.length === 0) {
     return (
       <div className='px-4 py-12 text-center text-xl text-irmin_black'>
-        No Reverse ETL processes found for this workspace
+        No Export processes found for this workspace
       </div>
     );
   }
@@ -39,12 +39,12 @@ const ReverseETLTable: React.FC<ReverseETLTableProps> = ({
     >
       {processes.map((process, processIndex) => (
         <TableListRow
-          key={`reverse-etl-${process.id}-${processIndex}`}
+          key={`export-sync-${process.id}-${processIndex}`}
           details={
             <ul>
               {process.details.map((detail, index) => (
                 <li
-                  key={`reverse-etl-${process.id}-${processIndex}-details-${index}`}
+                  key={`export-sync-${process.id}-${processIndex}-details-${index}`}
                   className='border-color-irmin_green border-b py-2 text-xs md:text-sm xl:text-base'
                 >
                   {detail}
@@ -86,4 +86,4 @@ const ReverseETLTable: React.FC<ReverseETLTableProps> = ({
   );
 };
 
-export default ReverseETLTable;
+export default ExportTable;

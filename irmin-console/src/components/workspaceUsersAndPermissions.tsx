@@ -397,7 +397,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                         );
                       }
                     }}
-                    className='rounded border p-1 text-xs text-gray-700'
+                    className='rounded-lg border p-1 text-xs text-gray-700'
                   >
                     <option value={'no-role'}>No role</option>
                     {irminRoles.map((role, i) => (
@@ -499,7 +499,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
           <div className='mb-4'>
             <label className='block text-gray-700'>Role</label>
             <select
-              className='mt-2 w-full rounded border p-2'
+              className='mt-2 w-full rounded-lg border p-2'
               value={inviteRole ?? irminRoles[0].id}
               onChange={(e) => setInviteRole(parseInt(e.target.value))}
             >

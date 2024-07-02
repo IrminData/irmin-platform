@@ -2,30 +2,30 @@
 
 import React from 'react';
 
+import { ExportDataType } from '@/components/export-sync-setup/exportSetupView';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
-import { ReverseETLDataType } from '@/components/reverse-etl-setup/reverseETLSetupView';
 
-export default function ConfigureReverseETL({
-  reverseETLData,
-  setReverseETLData,
+export default function ConfigureExport({
+  exportData,
+  setExportData,
   setCurrentStep,
   setIsOpen,
 }: {
-  reverseETLData: ReverseETLDataType;
-  setReverseETLData: React.Dispatch<React.SetStateAction<ReverseETLDataType>>;
+  exportData: ExportDataType;
+  setExportData: React.Dispatch<React.SetStateAction<ExportDataType>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const handleSave = () => {
-    // Save the reverse ETL configuration
-    console.log('Saving Reverse ETL Configuration:', reverseETLData);
+    // Save the export configuration
+    console.log('Saving Export Configuration:', exportData);
     setIsOpen(false);
   };
 
   return (
     <div className='px-6 py-4'>
-      <h4 className='mb-4 text-lg font-semibold'>Configure Reverse ETL</h4>
+      <h4 className='mb-4 text-lg font-semibold'>Configure Export</h4>
       <div className='mb-4'>
         <label className='block text-sm font-medium text-gray-700'>
           Process Name (unique)
@@ -34,10 +34,10 @@ export default function ConfigureReverseETL({
           variant='outline'
           colorScheme='black'
           className='mt-2 w-full'
-          placeholder='Enter a name for the reverse ETL process'
-          defaultValue={reverseETLData.name}
+          placeholder='Enter a name for the export process'
+          defaultValue={exportData.name}
           onChange={(e) =>
-            setReverseETLData((prevData) => ({
+            setExportData((prevData) => ({
               ...prevData,
               name: e.target.value,
             }))
@@ -53,9 +53,9 @@ export default function ConfigureReverseETL({
           colorScheme='black'
           className='mt-2 w-full'
           placeholder='Enter cron expression (e.g. 0 0 * * *) or leave empty for manual sync'
-          defaultValue={reverseETLData.cron}
+          defaultValue={exportData.cron}
           onChange={(e) => {
-            setReverseETLData((prevData) => ({
+            setExportData((prevData) => ({
               ...prevData,
               cron: e.target.value,
             }));
@@ -69,7 +69,7 @@ export default function ConfigureReverseETL({
           colorScheme='primary'
           size='md'
           className='mb-6 inline-block w-full'
-          ariaLabel='Start reverse ETL sync'
+          ariaLabel='Start export sync'
           onClick={handleSave}
         >
           Start sync

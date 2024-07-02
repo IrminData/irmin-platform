@@ -85,6 +85,20 @@ export default function WebsiteFooter() {
                 platform that helps you to collect, clean, and transform your
                 data.
               </p>
+              <div className='hidden flex-row items-center justify-start gap-4 py-4 lg:flex'>
+                <Link
+                  className='inline-block text-xs font-light text-irmin_green transition-colors duration-200 hover:underline'
+                  href='/legal/privacy-policy'
+                >
+                  Privacy Policy
+                </Link>
+                <Link
+                  className='inline-block text-xs font-light text-irmin_green transition-colors duration-200 hover:underline'
+                  href='/legal/terms-of-use'
+                >
+                  Terms of Use
+                </Link>
+              </div>
             </div>
             <div className='flex flex-1 flex-wrap items-center justify-center gap-8'>
               {footerLinks.map((section, idx) => (
@@ -117,7 +131,7 @@ export default function WebsiteFooter() {
               </div>
             </div>
           </div>
-          <div className='flex flex-row items-center justify-center gap-4 py-2'>
+          <div className='flex flex-row items-center justify-center gap-4 py-2 lg:hidden'>
             <Link
               className='inline-block text-xs font-light text-irmin_green transition-colors duration-200 hover:underline'
               href='/legal/privacy-policy'

@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 
-import ConfigureReverseETL from '@/components/reverse-etl-setup/configureReverseETL';
-import SelectSourceDataSet from '@/components/reverse-etl-setup/selectSourceDataSet';
+import ConfigureExport from '@/components/export-sync-setup/configureExport';
+import SelectSourceDataSet from '@/components/export-sync-setup/selectSourceDataSet';
 
 import { ConnectionDetailsAndSettings } from '@/types/Connector';
 
 import SelectDestinationConnection from './selectDestinationConnection';
 
-export interface ReverseETLDataType {
+export interface ExportDataType {
   connectionID: null | number;
   name: string;
   settings: ConnectionDetailsAndSettings;
@@ -32,7 +32,7 @@ const existingDataSets = [
   { id: 4, name: 'Salesforce' },
 ];
 
-export default function ReverseETLSetupView({
+export default function ExportSetupView({
   setIsOpen,
   currentStep,
   setCurrentStep,
@@ -42,7 +42,7 @@ export default function ReverseETLSetupView({
   currentStep: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
-  const [reverseETLData, setReverseETLData] = useState<ReverseETLDataType>({
+  const [exportData, setExportData] = useState<ExportDataType>({
     connectionID: null,
     name: '',
     settings: {},
@@ -54,21 +54,21 @@ export default function ReverseETLSetupView({
       {currentStep === 1 && (
         <SelectSourceDataSet
           dataSets={existingDataSets}
-          setReverseETLData={setReverseETLData}
+          setExportData={setExportData}
           setCurrentStep={setCurrentStep}
         />
       )}
       {currentStep === 2 && (
         <SelectDestinationConnection
           connections={existingConnections}
-          setReverseETLData={setReverseETLData}
+          setExportData={setExportData}
           setCurrentStep={setCurrentStep}
         />
       )}
       {currentStep === 3 && (
-        <ConfigureReverseETL
-          reverseETLData={reverseETLData}
-          setReverseETLData={setReverseETLData}
+        <ConfigureExport
+          exportData={exportData}
+          setExportData={setExportData}
           setCurrentStep={setCurrentStep}
           setIsOpen={setIsOpen}
         />

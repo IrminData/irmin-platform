@@ -19,9 +19,9 @@ export default function DashboardNavWorkspaceSwitcher({
   const { workspace: workspaceSlug } = useParams();
 
   return (
-    <div className='mt-4 block w-full rounded-full border border-gray-300 bg-gray-50 px-4 py-4 text-sm text-gray-900'>
+    <div className='mt-4 block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-4 text-sm text-gray-900'>
       <select
-        className='w-full bg-gray-50'
+        className='w-full rounded-lg bg-gray-50'
         value={
           workspaceSlug && currentWorkspace?.id
             ? currentWorkspace.id
