@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {
   IoCheckbox,
   IoClose,
@@ -40,10 +41,11 @@ const Alert = ({
           <p className='pb-4 font-medium'>{message}</p>
         </div>
         <button
+          className='ml-4 transition-all hover:opacity-50'
           onClick={onClose}
-          className='ml-4 align-top text-2xl leading-none text-gray-700 hover:text-gray-900'
+          aria-label='Close alert popup'
         >
-          <IoClose />
+          <IoClose size={24} />
         </button>
       </div>
     </div>

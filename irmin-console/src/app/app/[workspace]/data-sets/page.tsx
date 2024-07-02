@@ -1,42 +1,31 @@
-'use client';
+import { Suspense } from 'react';
 
-import { useState, useEffect } from 'react';
+import { DataSetService } from '@/lib/api/DataSetService';
+
 import AppTitle from '@/components/appTitle';
 import DatasetTable from '@/components/tables/datasetTable';
-import { DataSetService } from '@/lib/DataSetService';
-import { DataSet } from '@/types/DataSet';
-import LoadingSpinner from '@/components/misc/LoadingSpinner';
 import TableSkeleton from '@/components/tables/tableSkeleton';
 
-export default function DataSetsPage() {
-  const dataService = DataSetService.getInstance();
-  const [dataSets, setDataSets] = useState<DataSet[]>([]);
+import { DataSet } from '@/types/DataSet';
 
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        let fetchedDataSets = await dataService.getAllDataSets();
-        if (!fetchedDataSets || fetchedDataSets.length === 0) {
-          fetchedDataSets = await dataService.fetchAllDataSets();
-        }
-        if (fetchedDataSets) setDataSets(fetchedDataSets);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [dataService]);
-
-  if (loading) return <LoadingSpinner />;
+export default async function DataSetsPage() {
   return (
     <>
       <AppTitle title='Data sets' />
-      {loading ? <TableSkeleton /> : <DatasetTable dataSets={dataSets} />}
+      <Suspense fallback={<TableSkeleton />}>
+        <DataSetsPageContent />
+      </Suspense>
     </>
   );
+}
+
+async function DataSetsPageContent() {
+  const dataService = DataSetService.getInstance();
+
+  let dataSets: DataSet[] = await dataService.getAllDataSets();
+  if (!dataSets || dataSets.length === 0) {
+    dataSets = await dataService.fetchAllDataSets();
+  }
+
+  return <DatasetTable dataSets={dataSets} />;
 }

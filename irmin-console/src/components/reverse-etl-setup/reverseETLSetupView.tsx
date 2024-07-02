@@ -1,14 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import SelectSourceDataSet from '@/components/reverse-etl-setup/selectSourceDataSet';
+
 import ConfigureReverseETL from '@/components/reverse-etl-setup/configureReverseETL';
+import SelectSourceDataSet from '@/components/reverse-etl-setup/selectSourceDataSet';
+
+import { ConnectionDetailsAndSettings } from '@/types/Connector';
+
 import SelectDestinationConnection from './selectDestinationConnection';
 
 export interface ReverseETLDataType {
   connectionID: null | number;
   name: string;
-  settings: any;
+  settings: ConnectionDetailsAndSettings;
   cron: string;
 }
 
@@ -29,7 +33,6 @@ const existingDataSets = [
 ];
 
 export default function ReverseETLSetupView({
-  isOpen,
   setIsOpen,
   currentStep,
   setCurrentStep,

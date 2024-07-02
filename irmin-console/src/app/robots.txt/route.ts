@@ -1,5 +1,6 @@
 export async function GET() {
-  const BASE_URL = process.env.BASE_URL ?? 'https://irmin.dev';
+  const NEXT_PUBLIC_BASE_URL =
+    process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
   let txt = `
     # *
     User-agent: *
@@ -9,7 +10,7 @@ export async function GET() {
     Disallow: /app/
     
     # Sitemaps
-    Sitemap: ${BASE_URL}/sitemap.xml
+    Sitemap: ${NEXT_PUBLIC_BASE_URL}/sitemap.xml
     `;
 
   const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'true';

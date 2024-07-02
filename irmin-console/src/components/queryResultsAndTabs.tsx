@@ -1,16 +1,21 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+
 import DataTable from 'react-data-table-component';
-import { AiOutlineSave, AiOutlineDownload } from 'react-icons/ai';
+
+import { AiOutlineDownload, AiOutlineSave } from 'react-icons/ai';
 import { MdPlayArrow } from 'react-icons/md';
 
+import MDXEditor from '@/components/mdx-editor/MDXEditor';
+import Button from '@/components/misc/Button';
 import BarChart from '@/components/widgets/barChart';
 import LineChart from '@/components/widgets/lineChart';
 import ScrollableTable from '@/components/widgets/scrollableTable';
-import MDXEditor from '@/components/mdx-editor/MDXEditor';
+
+import { DataRow, DataSet } from '@/types/DataSet';
+
 import VisualisationCreationForm from './visualisationCreationForm';
-import { DataSet } from '@/types/DataSet';
 
 const QueryResultsAndTabs: React.FC<{
   editorHeight: string;
@@ -46,45 +51,63 @@ const QueryResultsAndTabs: React.FC<{
       {/* Tab Buttons */}
       <div className='mb-4 flex justify-between px-4 pt-2'>
         <div>
-          <button
+          <Button
             onClick={() => setActiveTab('queryResults')}
-            className={`border-b-2 px-4 py-2 ${
+            size='sm'
+            className={`border-b-2 ${
               activeTab === 'queryResults'
-                ? 'border-ash_gray'
+                ? 'border-irmin_green'
                 : 'border-transparent'
-            } lg:text-md text-sm focus:outline-none`}
+            }`}
+            ariaLabel='Go to Query Results tab'
           >
             Query Results
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setActiveTab('visualisation')}
-            className={`border-b-2 px-4 py-2 ${
-              activeTab === 'visualisation'
-                ? 'border-ash_gray'
+            size='sm'
+            className={`border-b-2 ${
+              activeTab === 'documentation'
+                ? 'border-irmin_green'
                 : 'border-transparent'
-            } lg:text-md text-sm focus:outline-none`}
+            }`}
+            ariaLabel='Go to Visualisation tab'
           >
             Visualisation
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setActiveTab('documentation')}
-            className={`border-b-2 px-4 py-2 ${
+            size='sm'
+            className={`border-b-2 ${
               activeTab === 'documentation'
-                ? 'border-ash_gray'
+                ? 'border-irmin_green'
                 : 'border-transparent'
-            } lg:text-md text-sm focus:outline-none`}
+            }`}
+            ariaLabel='Go to Documentation tab'
           >
             Documentation
-          </button>
+          </Button>
         </div>
         <div className='text-right'>
-          <button className='lg:text-md my-1 rounded border px-4 py-2 text-sm text-gray-800 shadow transition-all hover:bg-gray-200 focus:outline-none'>
-            <AiOutlineSave className='inline' /> Save
-          </button>
+          <Button
+            icon={<AiOutlineSave />}
+            colorScheme='secondary'
+            variant='outline'
+            ariaLabel='Save the Data Set'
+            size='sm'
+          >
+            Save
+          </Button>
           {dataSet.source !== 'connection' && (
-            <button className='lg:text-md my-1 rounded border px-4 py-2 text-sm text-gray-800 shadow transition-all hover:bg-gray-200 focus:outline-none lg:ml-2'>
-              <MdPlayArrow className='inline' /> Run script
-            </button>
+            <Button
+              icon={<MdPlayArrow />}
+              colorScheme='secondary'
+              variant='outline'
+              ariaLabel='Run the script'
+              size='sm'
+            >
+              Run script
+            </Button>
           )}
         </div>
       </div>
@@ -136,27 +159,30 @@ const QueryResultsAndTabs: React.FC<{
           <div style={{ height: tableMaxHeight }} className='overflow-auto'>
             {/* Documentation Editor */}
             <div className='pr-4 text-right'>
-              <button
+              <Button
                 onClick={() =>
                   setDocumentationTab(
                     documentationTab === 'mdx' ? 'plain' : 'mdx'
                   )
                 }
-                className='text-gray text-xs hover:underline'
+                variant='link'
+                colorScheme={'gray'}
+                size='sm'
+                ariaLabel='Switch between plain text and markdown editor'
               >
                 {documentationTab === 'mdx'
                   ? 'Switch to plain text'
                   : 'Switch to markdown editor'}
-              </button>
+              </Button>
             </div>
             {documentationTab === 'plain' && (
               <textarea
                 className='h-full w-full p-2 focus:outline-none'
                 placeholder='Start typing your documentation and notes here...'
-                value={dataSet.documentation ?? ''}
+                defaultValue={dataSet.documentation ?? ''}
                 onChange={(e) => {
+                  e.preventDefault();
                   // TODO: Update the dataset documentation
-                  console.log(e.target.value);
                 }}
               />
             )}
@@ -183,9 +209,14 @@ const QueryResultsAndTabs: React.FC<{
                 {`${dataSet.data.length} rows returned in 1.5s`}
               </p>
               <div className='text-right'>
-                <button className='text-gray hover:underline'>
-                  <AiOutlineDownload className='inline' /> export table (.csv)
-                </button>
+                <Button
+                  icon={<AiOutlineDownload />}
+                  colorScheme='secondary'
+                  variant='link'
+                  ariaLabel='Export the table as a CSV file'
+                >
+                  export table (.csv)
+                </Button>
               </div>
             </div>
             {/* Table */}
@@ -193,7 +224,7 @@ const QueryResultsAndTabs: React.FC<{
               <DataTable
                 columns={dataSet.columns.map((column) => ({
                   name: column.name,
-                  selector: (row: any) => row[column.selector],
+                  selector: (row: DataRow) => row[column.selector],
                   sortable: true,
                 }))}
                 data={dataSet.data}

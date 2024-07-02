@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+
 import { IoClose } from 'react-icons/io5';
 import { TbCheck } from 'react-icons/tb';
+
+import Button from '@/components/misc/Button';
 
 export default function DataMarketplaceListingCard({
   dataset,
@@ -18,11 +21,11 @@ export default function DataMarketplaceListingCard({
   const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <div className='rounded border p-4 shadow transition duration-300 hover:shadow-lg'>
+    <div className='rounded-lg border bg-white p-4 shadow transition duration-300 hover:shadow-lg'>
       <div className='mb-2 flex items-center justify-between'>
         <span className='font-medium text-gray-800'>{dataset.name}</span>
         {dataset.connected ? (
-          <span className='text-ash_gray'>
+          <span className='text-irmin_green'>
             <TbCheck className='text-2xl' />
           </span>
         ) : null}
@@ -30,28 +33,36 @@ export default function DataMarketplaceListingCard({
       <div className='mb-4 text-sm text-gray-600'>Source: {dataset.source}</div>
       <div className='flex items-center justify-between'>
         <span className={`font-lighter text-gray-600`}>
-          ${dataset.price}/month
+          {dataset.price} € /month
         </span>
         <div>
-          <button
-            className='mr-4 rounded text-ash_gray hover:text-ash_gray-700'
+          <Button
+            variant='link'
+            colorScheme='primary'
+            size='sm'
+            className='mr-4'
             onClick={() => setShowDetails(true)}
+            ariaLabel={`View details of ${dataset.name}`}
           >
             Details
-          </button>
+          </Button>
           {dataset.connected ? (
-            <span className='inline-block rounded bg-ash_gray px-2 py-1 text-xs font-semibold text-white'>
+            <span className='inline-block rounded bg-irmin_green px-2 py-1 text-xs font-semibold text-white'>
               Connected
             </span>
           ) : (
-            <button
-              className='rounded bg-ash_gray px-4 py-2 text-white hover:bg-ash_gray-700'
+            <Button
+              variant='solid'
+              colorScheme='primary'
+              size='sm'
+              ariaLabel={`Connect to ${dataset.name}`}
               onClick={() => {
-                /* function to handle connect */
+                /* TODO: function to handle connect */
+                console.log('Connect to', dataset.name);
               }}
             >
               Connect
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -63,12 +74,14 @@ export default function DataMarketplaceListingCard({
               <h2 className='text-xl font-semibold'>
                 {dataset.name} - Details
               </h2>
-              <button
-                className='text-gray-800 hover:text-gray-600'
+              <Button
+                variant='icon'
+                colorScheme='black'
                 onClick={() => setShowDetails(false)}
+                ariaLabel='Close details popup'
               >
                 <IoClose />
-              </button>
+              </Button>
             </div>
             <div className='flex flex-col space-y-2'>
               {/* Description */}
@@ -88,12 +101,14 @@ export default function DataMarketplaceListingCard({
               </div>
             </div>
             <div className='mt-4 flex justify-end'>
-              <button
-                className='rounded bg-ash_gray px-4 py-2 text-white hover:bg-ash_gray-600'
+              <Button
+                variant='solid'
+                colorScheme='primary'
                 onClick={() => setShowDetails(false)}
+                ariaLabel='Close details popup'
               >
-                Close
-              </button>
+                <IoClose />
+              </Button>
             </div>
           </div>
         </div>

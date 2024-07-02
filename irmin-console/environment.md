@@ -4,11 +4,11 @@ This document explains the various environment properties used in the applicatio
 
 ## Environment Properties
 
-### 1. BASE_URL
+### 1. NEXT_PUBLIC_BASE_URL
 
 - **Description**: The base URL of the application.
 - **Purpose**: Used to construct absolute URLs for routing within the application.
-- **Example**: `BASE_URL=https://irmin.dev`
+- **Example**: `NEXT_PUBLIC_BASE_URL=https://irmin.dev`
 - **Where to get it**: This is the primary domain where your application is hosted. You can get this from your domain provider or hosting service.
 
 ### 2. REQUIRE_ENV_AUTH
@@ -44,7 +44,7 @@ This document explains the various environment properties used in the applicatio
 Here is an example of how the environment variables should be set in your `.env` file:
 
 ```dotenv
-BASE_URL=https://irmin.dev
+NEXT_PUBLIC_BASE_URL=https://irmin.dev
 REQUIRE_ENV_AUTH=true
 ENV_PASSWORD=devpassword
 NEXT_PUBLIC_API_URL=https://api.irmin.dev

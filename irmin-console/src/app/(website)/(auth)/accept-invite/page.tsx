@@ -1,5 +1,5 @@
 import UserInviteSection from '@/components/auth/userInviteSection';
 
-export default function SignUpPage() {
+export default function AcceptInvitePage() {
   return <UserInviteSection />;
 }

@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
+
 import {
-  FiFolder,
-  FiFileText,
   FiChevronDown,
   FiChevronRight,
+  FiFileText,
+  FiFolder,
   FiPlus,
 } from 'react-icons/fi';
+
+import Button from '@/components/misc/Button';
 
 type FileItemProps = {
   name: string;
@@ -17,9 +20,9 @@ type FileItemProps = {
 
 type FileNavigatorProps = {
   items: FileItemProps[];
-  onOpenFile: (name: string) => void; // Callback function when a file is opened
-  onDeleteFile?: (name: string) => void; // Callback function when a file is deleted
-  onRenameFile?: (name: string) => void; // Callback function when a file is renamed
+  onOpenFile: (_name: string) => void; // Callback function when a file is opened
+  onDeleteFile?: (_name: string) => void; // Callback function when a file is deleted
+  onRenameFile?: (_name: string) => void; // Callback function when a file is renamed
 };
 
 const FileNavigator: React.FC<FileNavigatorProps> = ({
@@ -106,10 +109,16 @@ const FileNavigator: React.FC<FileNavigatorProps> = ({
   return (
     <>
       <div className='px-3'>
-        <button className='mb-2 text-center transition-all hover:underline'>
-          <FiPlus className='-mt-1 mr-2 inline-block text-ash_gray' /> Create
-          new file or folder
-        </button>
+        <Button
+          className='mb-2'
+          variant='link'
+          colorScheme='primary'
+          size='sm'
+          icon={<FiPlus className='-mt-1 mr-2 inline-block text-irmin_green' />}
+          ariaLabel='Create new file or folder'
+        >
+          Create new file or folder
+        </Button>
       </div>
       <div className='fileNavigator px-3' onClick={handleClickOutside}>
         {renderItems(items)}

@@ -1,14 +1,10 @@
 import React from 'react';
 
-const LoadingSkeleton = ({
-  width,
-  height,
-}: {
-  width: string;
-  height: string;
-}) => {
+const LoadingSkeleton = ({ className }: { className?: string }) => {
   return (
-    <div className='animate-pulse bg-gray-200' style={{ width, height }}></div>
+    <div
+      className={`my-4 h-32 w-full animate-pulse rounded-lg bg-gray-300 opacity-10 ${className ?? ''}`}
+    ></div>
   );
 };
 

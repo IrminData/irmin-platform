@@ -1,4 +1,7 @@
-import { UserProfileAPIResponse } from '@/types/IrminAPIResponse';
+import {
+  IrminAPIResponse,
+  UserProfileAPIResponse,
+} from '@/types/IrminAPIResponse';
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
@@ -132,6 +135,33 @@ class AuthService {
     }
   }
 
+  /**
+   * Get the user's profile information
+   * @returns {Promise<UserProfileAPIResponse>} A promise that resolves to a UserProfileAPIResponse object
+   * @throws {Error} An error if the request fails or the response is not OK, for example if not logged in
+   */
+  async getProfile(): Promise<UserProfileAPIResponse> {
+    try {
+      const response = await this.fetchWithCredentials(
+        `${api_base}/v1/account/profile`,
+        {
+          method: 'GET',
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error('Get profile error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update the user's profile information
+   * @param {string} name - The user's name
+   * @param {string} company - The user's company
+   * @param {string} email - The user's email address
+   * @returns {Promise<UserProfileAPIResponse>} A promise that resolves to a UserProfileAPIResponse object
+   */
   async updateProfile(
     name: string,
     company: string,
@@ -172,7 +202,7 @@ class AuthService {
     password: string | null,
     password_confirmation: string | null,
     company: string | null
-  ): Promise<any> {
+  ): Promise<IrminAPIResponse> {
     try {
       const formData = new FormData();
       formData.append('invite', invite.toString());
@@ -196,7 +226,7 @@ class AuthService {
    * @param invite - The ID of the invite to decline
    * @returns - A promise that resolves to the response from the API.
    */
-  async declineUserInvite(invite: number): Promise<any> {
+  async declineUserInvite(invite: number): Promise<IrminAPIResponse> {
     try {
       const formData = new FormData();
       formData.append('invite', invite.toString());

@@ -1,10 +1,15 @@
 'use client';
 
+import React, { Suspense, useState } from 'react';
+
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useState, Suspense } from 'react';
-import AuthService from '@/lib/AuthService';
-import LoadingSpinner from '../misc/LoadingSpinner';
+
+import AuthService from '@/lib/api/AuthService';
+
+import Button from '@/components/misc/Button';
+import Input from '@/components/misc/Input';
+import LoadingSpinner from '@/components/misc/LoadingSpinner';
 
 const UserInviteSection: React.FC = () => {
   return (
@@ -42,14 +47,12 @@ const UserInvite: React.FC = () => {
       if (response.metadata?.message) {
         setSuccess(response.metadata.message);
         // Redirect to dashboard or another page on successful accept
-        setTimeout(() => {
-          router.push('/app');
-        }, 300);
+        router.push('/app');
       } else {
         throw new Error(response.message || 'Accepting invite failed');
       }
-    } catch (error: any) {
-      setError(error?.message ?? 'Accepting invite failed');
+    } catch (error) {
+      setError((error as Error)?.message ?? 'Accepting invite failed');
     } finally {
       setLoading(false);
     }
@@ -66,14 +69,12 @@ const UserInvite: React.FC = () => {
       if (response.metadata?.message) {
         setSuccess(response.metadata.message);
         // Redirect to homepage or another page on successful decline
-        setTimeout(() => {
-          router.push('/');
-        }, 300);
+        router.push('/');
       } else {
         throw new Error(response.message || 'Declining invite failed');
       }
-    } catch (error: any) {
-      setError(error?.message ?? 'Declining invite failed');
+    } catch (error) {
+      setError((error as Error)?.message ?? 'Declining invite failed');
     } finally {
       setLoading(false);
     }
@@ -82,14 +83,14 @@ const UserInvite: React.FC = () => {
   if (!inviteId || inviteId === -1) {
     return (
       <section className='relative bg-white pt-16 md:py-32'>
-        <div className='container mx-auto mb-16 px-4 md:mb-0'>
-          <div className='w-full md:w-1/2 md:pr-4'>
+        <div className='container mx-auto mb-16 max-w-7xl px-4 md:mb-0'>
+          <div className='w-full md:pr-4'>
             <div className='mx-auto max-w-sm'>
               <div className='mb-6 text-center'>
                 <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
                   Invalid Invitation
                 </h3>
-                <p className='text-lg font-light text-rich_black'>
+                <p className='text-lg font-light text-irmin_black'>
                   The invitation link is invalid or expired.
                 </p>
               </div>
@@ -102,19 +103,19 @@ const UserInvite: React.FC = () => {
 
   return (
     <section className='relative bg-white pt-16 md:py-32'>
-      <div className='container mx-auto mb-16 px-4 md:mb-0'>
+      <div className='container mx-auto mb-16 max-w-7xl px-4 md:mb-0'>
         <div className='w-full md:w-1/2 md:pr-4'>
           <div className='mx-auto max-w-sm'>
             <div className='mb-6 text-center'>
               <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
                 You&apos;ve been invited!
               </h3>
-              <p className='text-lg font-light text-rich_black'>
+              <p className='text-lg font-light text-irmin_black'>
                 Accept or decline the invitation to join the workspace.
               </p>
             </div>
             {error && <p className='mb-4 text-red-800'>{error}</p>}
-            {success && <p className='mb-4 text-ash_gray'>{success}</p>}
+            {success && <p className='mb-4 text-irmin_green'>{success}</p>}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -123,76 +124,94 @@ const UserInvite: React.FC = () => {
             >
               <div className='mb-6'>
                 <label
-                  className='mb-2 block font-light text-rich_black'
+                  className='mb-2 block font-light text-irmin_black'
                   htmlFor='company'
                 >
                   Company *
                 </label>
-                <input
-                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
+                <Input
+                  variant='outline'
+                  colorScheme='black'
+                  size='md'
+                  required
+                  className='w-full'
+                  ariaLabel='Insert your company namehere'
                   type='text'
                   id='company'
                   placeholder='Acme Inc.'
-                  value={company}
+                  defaultValue={company}
                   onChange={(e) => setCompany(e.target.value)}
-                  required
                 />
               </div>
               <div className='mb-4'>
                 <label
-                  className='mb-2 block font-light text-rich_black'
+                  className='mb-2 block font-light text-irmin_black'
                   htmlFor='password'
                 >
                   Password *
                 </label>
-                <input
-                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
+                <Input
+                  variant='outline'
+                  colorScheme='black'
+                  size='md'
+                  required
+                  className='w-full'
+                  ariaLabel='Insert your password here'
                   type='password'
                   id='password'
                   placeholder='enter a strong password'
-                  value={password}
+                  defaultValue={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
                 />
               </div>
               <div className='mb-4'>
                 <label
-                  className='mb-2 block font-light text-rich_black'
+                  className='mb-2 block font-light text-irmin_black'
                   htmlFor='passwordConfirmation'
                 >
                   Confirm Password *
                 </label>
-                <input
-                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
+                <Input
+                  variant='outline'
+                  colorScheme='black'
+                  size='md'
+                  required
+                  className='w-full'
+                  ariaLabel='Repeat your password here'
                   type='password'
                   id='passwordConfirmation'
                   placeholder='same password as above'
-                  value={passwordConfirmation}
+                  defaultValue={passwordConfirmation}
                   onChange={(e) => setPasswordConfirmation(e.target.value)}
-                  required
                 />
               </div>
-              <button
-                className='hover:bg-ash-gray-600focus:outline-none hover:text-gray_200 mb-6 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm transition-all hover:bg-ash_gray-700'
-                type='submit'
+              <Button
+                className='mb-6 w-full'
+                variant='solid'
+                size='md'
                 disabled={loading}
+                loading={loading}
+                type='submit'
               >
-                {loading ? 'Accepting Invite...' : 'Accept Invite'}
-              </button>
+                Accept Invite
+              </Button>
             </form>
-            <button
-              className='focus:none mb-6 inline-block w-full rounded-full border-2 border-red-400 px-7 py-3 text-center text-base font-medium leading-6 text-red-400 shadow-sm transition-all hover:border-red-200 hover:text-red-200 focus:outline-none'
+            <Button
+              className='w-full'
+              variant='outline'
+              colorScheme='secondary'
+              size='md'
               onClick={handleDeclineInvite}
               disabled={loading}
             >
-              {loading ? 'Declining Invite...' : 'Decline Invite'}
-            </button>
+              Decline Invite
+            </Button>
           </div>
         </div>
         <div className='md:absolute md:right-0 md:top-0 md:h-full md:w-1/2 md:pl-4'>
-          <div className='bg-rich_black-50 flex h-full items-center justify-center px-8 py-14'>
+          <div className='bg-irmin_black-50 flex h-full items-center justify-center px-8 py-14'>
             <div className='mx-auto text-center md:max-w-xl'>
-              <span className='relative z-10 mb-4 inline-block rounded-full bg-ash_gray-100 px-2 py-px text-xs font-light uppercase leading-5 text-ash_gray-500 shadow-sm'>
+              <span className='relative z-10 mb-4 inline-block rounded-full bg-irmin_green-100 px-2 py-px text-xs font-light uppercase leading-5 text-irmin_green-500 shadow-sm'>
                 Quotes
               </span>
               <div className='relative mb-16'>
@@ -210,7 +229,7 @@ const UserInvite: React.FC = () => {
                   width={142}
                   height={98}
                 />
-                <h3 className='relative text-2xl font-light leading-tight text-rich_black md:text-3xl'>
+                <h3 className='relative text-2xl font-light leading-tight text-irmin_black md:text-3xl'>
                   Love the simplicity of the service and the prompt customer
                   support. We can&apos;t imagine working without it.
                 </h3>
@@ -223,16 +242,16 @@ const UserInvite: React.FC = () => {
                   width={88}
                   height={88}
                 />
-                <h4 className='mb-2 text-lg font-semibold text-rich_black'>
+                <h4 className='mb-2 text-lg font-semibold text-irmin_black'>
                   John Doe
                 </h4>
-                <span className='mb-8 block text-lg text-rich_black'>
+                <span className='mb-8 block text-lg text-irmin_black'>
                   CEO &amp; Founder at Acme Inc.
                 </span>
                 <div className='flex items-center justify-center'>
-                  <button className='mr-3 h-3 w-3 rounded-full bg-rich_black-100' />
-                  <button className='mr-3 h-3 w-3 rounded-full bg-ash_gray-500' />
-                  <button className='h-3 w-3 rounded-full bg-rich_black-100' />
+                  <span className='mr-3 h-3 w-3 rounded-full bg-irmin_black-100' />
+                  <span className='mr-3 h-3 w-3 rounded-full bg-irmin_green-500' />
+                  <span className='h-3 w-3 rounded-full bg-irmin_black-100' />
                 </div>
               </div>
             </div>

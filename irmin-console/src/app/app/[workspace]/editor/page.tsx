@@ -1,19 +1,23 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import ScriptEditorWithOptions from '@/components/script-editor/scriptEditorWithOptions';
-import FileNavigator from '@/components/fileNavigator';
-import QueryResultsAndTabs from '@/components/queryResultsAndTabs';
+import { DataSetService } from '@/lib/api/DataSetService';
+
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
+import { TbSearch } from 'react-icons/tb';
+
+import FileNavigator from '@/components/fileNavigator';
+import LoadingSpinner from '@/components/misc/LoadingSpinner';
+import QueryResultsAndTabs from '@/components/queryResultsAndTabs';
+import ScriptEditorWithOptions from '@/components/script-editor/scriptEditorWithOptions';
 import ConnectionTable from '@/components/tables/connectionTable';
 import DatasetTable from '@/components/tables/datasetTable';
-import { TbSearch } from 'react-icons/tb';
-import { DataSetService } from '@/lib/DataSetService';
-import { DataSet } from '@/types/DataSet';
-import LoadingSpinner from '@/components/misc/LoadingSpinner';
 import TableSkeleton from '@/components/tables/tableSkeleton';
-import { useWorkspace } from '@/context/WorkspaceContext';
+
+import { useWorkspace } from '@/context/workspace';
+
+import { DataSet } from '@/types/DataSet';
 
 export default function EditorPage() {
   const dataService = DataSetService.getInstance();
@@ -49,7 +53,7 @@ export default function EditorPage() {
     <>
       <div className='flex'>
         <div
-          className={`editor-sidebar -ml-4 inline-block overflow-y-scroll bg-gray-50 ${
+          className={`editor-sidebarinline-block overflow-y-scroll bg-gray-50 ${
             !sidebarOpen ? 'w-10' : 'absolute z-10 w-96'
           } xl:w-96`}
           style={{
@@ -81,7 +85,7 @@ export default function EditorPage() {
                 />
                 <button
                   type='submit'
-                  className='absolute bottom-1.5 end-1.5 rounded-full bg-ash_gray px-2 py-1 text-xs font-light text-white hover:bg-ash_gray-400'
+                  className='absolute bottom-1.5 end-1.5 rounded-full bg-irmin_green px-2 py-1 text-xs font-light text-white hover:bg-irmin_green-400'
                 >
                   Search
                 </button>
@@ -162,7 +166,7 @@ export default function EditorPage() {
             </div>
           </div>
         </div>
-        <div className='-mr-4 inline-block w-full overflow-auto bg-white'>
+        <div className='inline-block w-full overflow-auto bg-white'>
           {dataSet ? (
             <>
               <ScriptEditorWithOptions

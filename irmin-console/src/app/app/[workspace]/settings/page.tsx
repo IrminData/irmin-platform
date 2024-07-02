@@ -1,87 +1,44 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import WorkspaceService from '@/lib/api/WorkspaceService';
 
 import AppTitle from '@/components/appTitle';
+import Button from '@/components/misc/Button';
+import Input from '@/components/misc/Input';
+import SettingsTabs from '@/components/tabs/settingsTabs';
 import WorkspaceUsersAndPermissions from '@/components/workspaceUsersAndPermissions';
-import WorkspaceService from '@/lib/WorkspaceService';
-import { useWorkspace } from '@/context/WorkspaceContext';
-import { Workspace } from '@/types/Workspace';
+
 import { usePopup } from '@/context/PopupContext';
-import Modal from '@/components/misc/Modal';
+import { useWorkspace } from '@/context/workspace';
+
+import { Workspace } from '@/types/Workspace';
 
 export default function WorkspaceSettingsPage() {
-  const [activeTab, setActiveTab] = useState('general');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'general':
-        return <GeneralSettings openModal={() => setIsModalOpen(true)} />;
-      case 'users-permissions':
-        return <WorkspaceUsersAndPermissions />;
-      case 'billing':
-        return <BillingSettings />;
-      default:
-        return <GeneralSettings openModal={() => setIsModalOpen(true)} />;
-    }
-  };
-
   return (
     <>
       <AppTitle title='Workspace settings' />
-      <div className='max-w-2xl rounded-lg border-b-2 border-t-2 border-ash_gray bg-white p-8 shadow-md'>
-        <div className='mb-6 flex border-b'>
-          <button
-            className={`px-4 py-2 text-lg font-normal ${
-              activeTab === 'general'
-                ? 'border-b-2 border-ash_gray text-ash_gray'
-                : 'text-gray-500'
-            }`}
-            onClick={() => setActiveTab('general')}
-          >
-            General
-          </button>
-          <button
-            className={`ml-6 px-4 py-2 text-lg font-normal ${
-              activeTab === 'users-permissions'
-                ? 'border-b-2 border-ash_gray text-ash_gray'
-                : 'text-gray-500'
-            }`}
-            onClick={() => setActiveTab('users-permissions')}
-          >
-            Users & Permissions
-          </button>
-          <button
-            className={`ml-6 px-4 py-2 text-lg font-normal ${
-              activeTab === 'billing'
-                ? 'border-b-2 border-ash_gray text-ash_gray'
-                : 'text-gray-500'
-            }`}
-            onClick={() => setActiveTab('billing')}
-          >
-            Billing
-          </button>
-        </div>
-        <div>{renderTabContent()}</div>
-      </div>
-
-      {isModalOpen && (
-        <DeleteWorkspaceConfirmationModal
-          closeModal={() => setIsModalOpen(false)}
-        />
-      )}
+      <SettingsTabs
+        tabs={[
+          {
+            name: 'General',
+            content: <GeneralSettings />,
+          },
+          {
+            name: 'Users',
+            content: <WorkspaceUsersAndPermissions />,
+          },
+          { name: 'Billing', content: <BillingSettings /> },
+        ]}
+      />
     </>
   );
 }
 
-const GeneralSettings: React.FC<{ openModal: () => void }> = ({
-  openModal,
-}) => {
-  const router = useRouter();
-  const { currentWorkspace, fetchWorkspaces, setCurrentWorkspace } =
+const GeneralSettings = () => {
+  const { irminModal } = usePopup();
+  const { currentWorkspace, fetchWorkspaces, deleteCurrentWorkspace } =
     useWorkspace();
   const { irminAlert } = usePopup();
 
@@ -95,51 +52,112 @@ const GeneralSettings: React.FC<{ openModal: () => void }> = ({
     }
   }, [currentWorkspace]);
 
-  if (!currentWorkspace) return <></>;
+  const handleUpdateWorkspace = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!currentWorkspace) return;
+      setIsLoading(true);
+      try {
+        // Call the API to update the workspace
+        await workspaceService.updateWorkspace(currentWorkspace.slug, {
+          name: workspaceName,
+        } as Workspace);
+        // Fetch the updated workspace data
+        await fetchWorkspaces();
+        // Show success message
+        irminAlert('success', 'Workspace updated successfully!');
+      } catch (error) {
+        console.error('Failed to update workspace:', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ??
+            'Failed to update workspace. Please try again.'
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      workspaceService,
+      currentWorkspace,
+      workspaceName,
+      fetchWorkspaces,
+      irminAlert,
+    ]
+  );
 
-  const handleUpdateWorkspace = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const confirmDeletion = useCallback(() => {
+    if (!currentWorkspace) return;
 
-    try {
-      await workspaceService.updateWorkspace(currentWorkspace.slug, {
-        name: workspaceName,
-      } as Workspace);
-      // Fetch the updated workspace data
-      fetchWorkspaces();
-      irminAlert('success', 'Workspace updated successfully!');
-    } catch (error: any) {
-      console.error('Failed to update workspace:', error);
-      irminAlert(
-        'error',
-        error.message ?? 'Failed to update workspace. Please try again.'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const handleDelete = async () => {
+      try {
+        await deleteCurrentWorkspace();
+        irminAlert('success', 'Workspace deleted successfully');
+      } catch (error) {
+        console.error('Failed to delete workspace:', error);
+        const errorMessage = (error as Error)?.message ?? '';
+        irminAlert('error', 'Failed to delete workspace: ' + errorMessage);
+      }
+    };
+
+    irminModal.show(
+      'Confirm Deletion',
+      <div>
+        <p className='mb-4'>
+          Are you sure you want to delete this workspace? This action cannot be
+          undone and will remove all data associated with this workspace.
+        </p>
+        <div className='flex justify-end'>
+          <Button
+            onClick={() => {
+              irminModal.close();
+            }}
+            className='mr-4 rounded bg-gray-300 px-4 py-2 text-gray-700 transition-all hover:bg-gray-500'
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => handleDelete()}
+            className='rounded bg-red-800 px-4 py-2 text-white transition-all hover:bg-red-500'
+          >
+            Delete
+          </Button>
+        </div>
+      </div>,
+      () => {}
+    );
+  }, [currentWorkspace, irminModal, deleteCurrentWorkspace, irminAlert]);
 
   return (
-    <div>
+    <div className='px-4'>
       <h2 className='mb-4 text-2xl font-normal'>General Settings</h2>
       <form onSubmit={handleUpdateWorkspace}>
-        <div className='mb-4'>
-          <label className='block text-gray-700'>Workspace Name</label>
-          <input
+        <div>
+          <label className='mb-4 block text-gray-700'>Workspace Name</label>
+          <Input
+            variant='outline'
+            colorScheme='black'
+            size='md'
+            required
+            className='w-full'
+            ariaLabel='Your workspace name'
             type='text'
-            value={workspaceName}
+            defaultValue={workspaceName}
             onChange={(e) => setWorkspaceName(e.target.value)}
-            className='mt-2 w-full rounded border p-2'
             placeholder='Enter workspace name'
           />
         </div>
-        <button
+        <Button
+          className='mt-4 w-full'
           type='submit'
-          className='cursor-pointer rounded bg-ash_gray px-4 py-2 text-white transition-all hover:bg-ash_gray-800'
+          size='md'
+          colorScheme='primary'
+          variant='solid'
           disabled={isLoading}
+          loading={isLoading}
         >
-          {isLoading ? 'Saving...' : 'Save Changes'}
-        </button>
+          Save Changes
+        </Button>
       </form>
       <div className='mt-8'>
         <h3 className='text-xl font-normal text-red-800'>Danger Zone</h3>
@@ -147,56 +165,17 @@ const GeneralSettings: React.FC<{ openModal: () => void }> = ({
           Deleting your workspace will remove all data associated with it. This
           action is irreversible.
         </p>
-        <button
-          onClick={openModal}
-          className='mt-4 cursor-pointer rounded border border-red-800 px-4 py-2 text-red-800 transition-all hover:bg-red-600 hover:text-white'
+        <Button
+          className='mt-4'
+          onClick={confirmDeletion}
+          size='sm'
+          colorScheme='secondary'
+          variant='outline'
         >
           Delete Workspace
-        </button>
+        </Button>
       </div>
     </div>
-  );
-};
-const DeleteWorkspaceConfirmationModal: React.FC<{
-  closeModal: () => void;
-}> = ({ closeModal }) => {
-  const { currentWorkspace, fetchWorkspaces, setCurrentWorkspace } =
-    useWorkspace();
-  const workspaceService = WorkspaceService.getInstance();
-  const router = useRouter();
-  if (!currentWorkspace) return <></>;
-  const handleDelete = async () => {
-    closeModal();
-    // Handle the deletion of the workspace
-    await workspaceService.deleteWorkspace(currentWorkspace.slug);
-    // Remove from workspace context
-    fetchWorkspaces();
-    setCurrentWorkspace(null);
-    // Redirect to the app page
-    router.push('/app');
-  };
-
-  return (
-    <Modal isOpen={true} title='Confirm Deletion' onClose={closeModal}>
-      <p className='mb-4'>
-        Are you sure you want to delete this workspace? This action cannot be
-        undone and will remove all data associated with this workspace.
-      </p>
-      <div className='flex justify-end'>
-        <button
-          onClick={closeModal}
-          className='mr-4 rounded bg-gray-300 px-4 py-2 text-gray-700 transition-all hover:bg-gray-500'
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleDelete}
-          className='rounded bg-red-800 px-4 py-2 text-white transition-all hover:bg-red-500'
-        >
-          Delete
-        </button>
-      </div>
-    </Modal>
   );
 };
 
@@ -206,10 +185,8 @@ const BillingSettings: React.FC = () => (
     <p className='font-normal text-gray-700'>
       You can currently only manage billing by contacting our team.
     </p>
-    <Link href={'/contact'}>
-      <p className='mt-4 cursor-pointer rounded bg-ash_gray px-4 py-2 text-white transition-all hover:bg-ash_gray-800'>
-        Contact Us
-      </p>
-    </Link>
+    <Button href={'/contact'} size='md' colorScheme='primary' variant='solid'>
+      Contact Us
+    </Button>
   </div>
 );

@@ -3,6 +3,7 @@ export type LoginResponse = {
 };
 
 const appPassword = process.env.ENV_PASSWORD ?? 'oiDeNuDEvenTICYc';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://localhost:3000';
 
 const signIn = `
 <!DOCTYPE html>
@@ -32,7 +33,7 @@ body {
   margin-bottom: 1rem;
 }
 </style>
-<form action="/api/verify-dev-access" method="post">
+<form action="${baseUrl}/api/verify-dev-access" method="post">
 <div class="signInDev">
 <label for="password">Enter password to access this environment</label>
 <input type="password" name="password" id="password" placeholder="Password">
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
 
   // Set the cookie
   const expires = new Date(Date.now() + 60 * 60 * 24 * 12 * 365 * 100);
-  const setCookieHeader = `authorizedDev=true; Expires=${expires.toUTCString()}; Path=/; HttpOnly`;
+  const setCookieHeader = `authorizedDev=${appPassword}; Expires=${expires.toUTCString()}; Path=/; HttpOnly`;
 
   // Redirect to the home page
   const headers = new Headers();

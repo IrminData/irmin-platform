@@ -1,5 +1,8 @@
 import React from 'react';
+
 import { IoClose } from 'react-icons/io5';
+
+import Button from '@/components/misc/Button';
 
 const ConfirmPopup = ({
   type,
@@ -29,29 +32,40 @@ const ConfirmPopup = ({
             <p className='pb-4 font-medium'>{message}</p>
           </div>
           <button
+            className='ml-4 transition-all hover:opacity-50'
             onClick={onCancel}
-            className='ml-4 text-2xl leading-none text-gray-700 hover:text-gray-900'
+            aria-label='Close confirmation popup'
           >
-            <IoClose />
+            <IoClose size={24} />
           </button>
         </div>
-        <div className='mt-4 flex justify-end space-x-4'>
-          <button
+        <div className='mt-4 flex justify-end gap-2'>
+          <Button
+            variant='outline'
+            colorScheme='gray'
             onClick={onCancel}
-            className='rounded bg-gray-300 px-4 py-2 text-gray-700 transition-all hover:bg-gray-400'
+            ariaLabel='Cancel confirmation'
+            size='sm'
+            className='w-1/2'
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant='solid'
+            colorScheme={
+              type === 'success'
+                ? 'primary'
+                : type === 'error'
+                  ? 'secondary'
+                  : 'tertiary'
+            }
             onClick={onConfirm}
-            className={`rounded px-4 py-2 text-white transition-all ${
-              type === 'success' ? 'bg-green-700 hover:bg-green-800' : ''
-            } ${type === 'error' ? 'bg-red-500 hover:bg-red-600' : ''} ${
-              type === 'info' ? 'bg-blue-500 hover:bg-blue-600' : ''
-            }`}
+            ariaLabel='Confirm'
+            size='sm'
+            className='w-1/2'
           >
             Confirm
-          </button>
+          </Button>
         </div>
       </div>
     </div>

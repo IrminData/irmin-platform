@@ -1,13 +1,76 @@
-import Link from 'next/link';
+'use client';
+
+import React from 'react';
+
 import Image from 'next/image';
+import Link from 'next/link';
+
+import Button from '@/components/misc/Button';
+import Input from '@/components/misc/Input';
+
+interface FooterLink {
+  href: string;
+  label: string;
+}
+interface FooterLinkSection {
+  title: string;
+  links: FooterLink[];
+}
+
+const footerLinks: FooterLinkSection[] = [
+  {
+    title: 'Product',
+    links: [
+      { href: '#', label: 'Features' },
+      { href: '#', label: 'Solutions' },
+      { href: '#', label: 'Pricing' },
+      { href: '#', label: 'Tutorials' },
+      { href: '#', label: 'Updates' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { href: '#', label: 'Blog' },
+      { href: '#', label: 'Newsletter' },
+      { href: '#', label: 'Help Centre' },
+      { href: '#', label: 'Careers' },
+      { href: '#', label: 'Support' },
+    ],
+  },
+];
+
+const FooterLinkSection = ({
+  section,
+  linkKey,
+}: {
+  section: FooterLinkSection;
+  linkKey: string;
+}) => (
+  <div className='w-full sm:w-1/4 md:w-1/2 lg:w-1/3 xl:w-1/4' id={linkKey}>
+    <h3 className='mb-5 text-lg font-bold text-white'>{section.title}</h3>
+    <ul>
+      {section.links.map((link, idx) => (
+        <li className='mb-4' key={`${linkKey}-footer-link-${idx}`}>
+          <Link
+            className='inline-block text-base font-light text-irmin_green transition-colors duration-200 hover:text-white hover:underline'
+            href={link.href}
+          >
+            {link.label}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
 
 export default function WebsiteFooter() {
   return (
     <>
-      <section className='bg-rich_black'>
-        <div className='container mx-auto'>
-          <div className='flex flex-wrap pb-12 pt-24'>
-            <div className='mb-16 w-full px-4 md:w-1/2 lg:mb-0 lg:w-4/12'>
+      <section className='bg-irmin_black'>
+        <div className='container mx-auto max-w-7xl text-center md:text-left'>
+          <div className='flex flex-col justify-start gap-8 px-2 py-8 text-sm md:flex-row md:justify-between md:gap-3 md:py-24 lg:text-base'>
+            <div className='justify-start'>
               <Link className='mb-4 inline-block' href='#'>
                 <Image
                   className='h-8'
@@ -17,137 +80,58 @@ export default function WebsiteFooter() {
                   height={25}
                 />
               </Link>
-              <p className='text-base font-light text-ash_gray lg:w-64'>
+              <p className='mx-auto w-full max-w-64 text-center font-light text-irmin_green md:mx-0 md:text-left'>
                 A better home for your data. Irmin is an ETL and data management
                 platform that helps you to collect, clean, and transform your
                 data.
               </p>
-              <div className='mt-10 flex flex-row'>
-                <Link
-                  className='mr-4 inline-block text-xs font-light text-ash_gray transition-colors duration-200 hover:text-white'
-                  href='/legal/privacy-policy'
-                >
-                  Privacy Policy
-                </Link>
-                <Link
-                  className='mr-4 inline-block text-xs font-light text-ash_gray transition-colors duration-200 hover:text-white'
-                  href='/legal/terms-of-use'
-                >
-                  Terms of Use
-                </Link>
-              </div>
             </div>
-            <div className='mb-16 w-full px-4 md:w-1/4 lg:mb-0 lg:w-2/12'>
-              <h3 className='mb-5 text-lg font-bold text-white'>Product</h3>
-              <ul>
-                <li className='mb-4'>
-                  <Link
-                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
-                    href='#'
-                  >
-                    Features
-                  </Link>
-                </li>
-                <li className='mb-4'>
-                  <Link
-                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
-                    href='#'
-                  >
-                    Solutions
-                  </Link>
-                </li>
-                <li className='mb-4'>
-                  <Link
-                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
-                    href='#'
-                  >
-                    Pricing
-                  </Link>
-                </li>
-                <li className='mb-4'>
-                  <Link
-                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
-                    href='#'
-                  >
-                    Tutorials
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
-                    href='#'
-                  >
-                    Updates
-                  </Link>
-                </li>
-              </ul>
+            <div className='flex flex-1 flex-wrap items-center justify-center gap-8'>
+              {footerLinks.map((section, idx) => (
+                <FooterLinkSection
+                  key={`website-footer-link-section-${idx}`}
+                  linkKey={`website-footer-link-section-${idx}`}
+                  section={section}
+                />
+              ))}
             </div>
-            <div className='mb-16 w-full px-4 md:w-1/4 lg:mb-0 lg:w-2/12'>
-              <h3 className='mb-5 text-lg font-bold text-white'>Company</h3>
-              <ul>
-                <li className='mb-4'>
-                  <Link
-                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
-                    href='#'
-                  >
-                    Blog
-                  </Link>
-                </li>
-                <li className='mb-4'>
-                  <Link
-                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
-                    href='#'
-                  >
-                    Newsletter
-                  </Link>
-                </li>
-                <li className='mb-4'>
-                  <Link
-                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
-                    href='#'
-                  >
-                    Help Centre
-                  </Link>
-                </li>
-                <li className='mb-4'>
-                  <Link
-                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
-                    href='#'
-                  >
-                    Careers
-                  </Link>
-                </li>
-                <li className='mb-4'>
-                  <Link
-                    className='inline-block text-base font-light text-ash_gray transition-colors duration-200 hover:text-white'
-                    href='#'
-                  >
-                    Support
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div className='w-full px-4 md:w-1/3 lg:w-4/12'>
+            <div className='justify-end'>
               <h3 className='mb-5 text-lg font-bold text-white'>Newsletter</h3>
-              <div className='flex flex-wrap'>
-                <div className='w-full py-1 lg:mr-3 lg:flex-1 lg:py-0'>
-                  <input
-                    className='shadow-xsm h-12 w-full rounded-full border border-rich_black px-3 text-rich_black placeholder-rich_black outline-none'
-                    placeholder='Your email'
-                  />
-                </div>
-                <div className='w-full py-1 lg:w-auto lg:py-0'>
-                  <Link
-                    className='inline-block w-full rounded-full bg-ash_gray-500 px-5 py-4 text-center leading-4 text-white shadow-sm hover:bg-ash_gray-600'
-                    href='#'
-                  >
-                    Subscribe
-                  </Link>
-                </div>
+              <div className='mx-auto flex max-w-sm flex-row justify-stretch gap-1 align-middle md:mx-0'>
+                <Input
+                  size='sm'
+                  colorScheme='primary'
+                  variant='solid'
+                  placeholder='Your email'
+                  type='email'
+                  className='h-12 w-full min-w-64'
+                />
+                <Button
+                  size='sm'
+                  className='inline-block h-12 w-full justify-end'
+                  colorScheme='primary'
+                  variant='solid'
+                >
+                  Subscribe
+                </Button>
               </div>
             </div>
           </div>
-          <p className='py-10 text-center text-sm font-light text-ash_gray md:pb-16'>
+          <div className='flex flex-row items-center justify-center gap-4 py-2'>
+            <Link
+              className='inline-block text-xs font-light text-irmin_green transition-colors duration-200 hover:underline'
+              href='/legal/privacy-policy'
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              className='inline-block text-xs font-light text-irmin_green transition-colors duration-200 hover:underline'
+              href='/legal/terms-of-use'
+            >
+              Terms of Use
+            </Link>
+          </div>
+          <p className='py-2 text-center text-sm font-light text-irmin_green'>
             &copy; {new Date().getFullYear()} Irmin. All rights reserved.
           </p>
         </div>

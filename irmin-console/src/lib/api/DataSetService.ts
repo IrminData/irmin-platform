@@ -2,7 +2,8 @@ import { DataSet } from '@/types/DataSet';
 
 export class DataSetService {
   private static instance: DataSetService;
-  private baseUrl: string = '';
+  private baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL ?? 'https://localhost:3000';
   private dataSets: DataSet[] = [];
 
   private constructor() {}
@@ -22,6 +23,7 @@ export class DataSetService {
    */
   async fetchAllDataSets(): Promise<DataSet[]> {
     try {
+      // Fetch the datasets from the API
       const response = await fetch(`${this.baseUrl}/api/fake/data-sets`);
       if (!response.ok) {
         throw new Error(`Error fetching datasets: ${response.statusText}`);
@@ -43,6 +45,10 @@ export class DataSetService {
    */
   async fetchDataSetById(id: number): Promise<DataSet | undefined> {
     try {
+      // Check if the dataset is already stored in the dataSets array
+      const stored = this.getDataSetById(id);
+      if (stored) return stored;
+      // Fetch the dataset from the API
       const response = await fetch(`${this.baseUrl}/api/fake/data-sets/${id}`);
       if (!response.ok) {
         throw new Error(
@@ -50,6 +56,7 @@ export class DataSetService {
         );
       }
       const dataSet: DataSet = await response.json();
+      this.dataSets = [...this.dataSets, dataSet];
       return dataSet;
     } catch (error) {
       console.error(error);

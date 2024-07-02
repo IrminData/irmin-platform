@@ -1,10 +1,12 @@
 import {
+  ConnectionsAPIResponse,
   IrminAPIResponse,
   WorkspaceAPIResponse,
+  WorkspaceRoleAPIResponse,
   WorkspacesAPIResponse,
-  ConnectionsAPIResponse,
+  WorkspaceUserAPIResponse,
 } from '@/types/IrminAPIResponse';
-import { Workspace, IrminRole, WorkspaceUser } from '@/types/Workspace';
+import { IrminRole, Workspace, WorkspaceUser } from '@/types/Workspace';
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
@@ -30,7 +32,13 @@ class WorkspaceService {
   private async fetchWithCredentials(
     url: string,
     options: RequestInit
-  ): Promise<WorkspaceAPIResponse | WorkspacesAPIResponse> {
+  ): Promise<
+    | WorkspaceAPIResponse
+    | WorkspacesAPIResponse
+    | WorkspaceUserAPIResponse
+    | WorkspaceRoleAPIResponse
+    | ConnectionsAPIResponse
+  > {
     const response = await fetch(url, {
       ...options,
       credentials: 'include',
@@ -67,7 +75,7 @@ class WorkspaceService {
         }
       );
       if (!response.data || !Array.isArray(response.data)) return [];
-      return response.data;
+      return response.data as Workspace[];
     } catch (error) {
       console.error('Fetch workspaces error:', error);
       throw error;
@@ -115,7 +123,7 @@ class WorkspaceService {
           },
         }
       );
-      return response.data as any as WorkspaceUser[];
+      return response.data as WorkspaceUser[];
     } catch (error) {
       console.error('Fetch workspace users error:', error);
       throw error;
@@ -134,7 +142,7 @@ class WorkspaceService {
           'Content-Type': 'application/json',
         },
       });
-      return response.data as any as IrminRole[];
+      return response.data as IrminRole[];
     } catch (error) {
       console.error('Fetch irmin roles error:', error);
       return [];
@@ -161,7 +169,7 @@ class WorkspaceService {
           },
         }
       );
-      return response.data as any as IrminRole[];
+      return response.data as IrminRole[];
     } catch (error) {
       console.error('Fetch workspace user role error:', error);
       return null;
@@ -175,14 +183,14 @@ class WorkspaceService {
    * @param {number} userId - The ID of the user to change the role of
    * @param {IrminRole} newRoleId - The new role
    * @param {IrminRole | null} currentRoleId - The current role or null if user has no role
-   * @returns {Promise<any>} A promise that resolves to the response from the API
+   * @returns {Promise<IrminAPIResponse>} A promise that resolves to the response from the API
    */
   async changeUserWorkspaceRole(
     workspaceSlug: string,
     userId: number,
     newRole: IrminRole,
     currentRole: IrminRole | null
-  ): Promise<any> {
+  ): Promise<IrminAPIResponse> {
     try {
       const formData = new FormData();
       formData.append('roles[]', newRole.id.toString());
@@ -211,13 +219,13 @@ class WorkspaceService {
    * @param {string} workspaceSlug - The slug of the workspace
    * @param {number} userId - The ID of the user to remove
    * @param {IrminRole} currentRole - The role of the user to remove
-   * @returns {Promise<any>} A promise that resolves to the response from the API
+   * @returns {Promise<IrminAPIResponse>} A promise that resolves to the response from the API
    */
   async removeUserFromWorkspace(
     workspaceSlug: string,
     userId: number,
     currentRole: IrminRole
-  ): Promise<any> {
+  ): Promise<IrminAPIResponse> {
     try {
       const formData = new FormData();
       formData.append('roles[]', currentRole.id.toString());
@@ -355,7 +363,7 @@ class WorkspaceService {
   async switchWorkspace(workspaceSlug: string): Promise<Workspace | null> {
     const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
     if (offlineMode) {
-      return true as any;
+      return null;
     }
     try {
       const formData = new FormData();
@@ -393,7 +401,7 @@ class WorkspaceService {
           },
         }
       );
-      return response as any as ConnectionsAPIResponse;
+      return response as ConnectionsAPIResponse;
     } catch (error) {
       console.error('Fetch workspace connections error:', error);
       throw error;

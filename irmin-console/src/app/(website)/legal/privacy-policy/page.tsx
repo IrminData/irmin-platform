@@ -1,4 +1,5 @@
 import React from 'react';
+
 import Link from 'next/link';
 
 const PrivacyPolicy: React.FC = () => {
@@ -69,7 +70,7 @@ const PrivacyPolicy: React.FC = () => {
           periodically for any changes.
         </p>
         <p className='mt-6'>
-          <Link href='/' className='text-ash_gray hover:underline'>
+          <Link href='/' className='text-irmin_green hover:underline'>
             Back to Home
           </Link>
         </p>

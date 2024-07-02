@@ -1,18 +1,24 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { IoExit } from 'react-icons/io5';
-import WorkspaceService from '@/lib/WorkspaceService';
-import { useWorkspace } from '@/context/WorkspaceContext';
-import { IrminRole, Workspace, WorkspaceUser } from '@/types/Workspace';
-import LoadingSpinner from './misc/LoadingSpinner';
-import InviteService from '@/lib/InviteService';
+
+import InviteService from '@/lib/api/InviteService';
+import WorkspaceService from '@/lib/api/WorkspaceService';
+
+import { IoExit, IoKey, IoMailOpenOutline } from 'react-icons/io5';
+
+import Button from '@/components/misc/Button';
+import Input from '@/components/misc/Input';
+import LoadingSpinner from '@/components/misc/LoadingSpinner';
+import Modal from '@/components/misc/Modal';
+
 import { usePopup } from '@/context/PopupContext';
-import Modal from './misc/Modal';
+import { useWorkspace } from '@/context/workspace';
+
+import { IrminRole, Workspace, WorkspaceUser } from '@/types/Workspace';
 
 const WorkspaceUsersAndPermissions: React.FC = () => {
-  const { currentWorkspace, irminRoles, refetchCurrentWorkspace } =
-    useWorkspace();
+  const { currentWorkspace, irminRoles, switchToWorkspace } = useWorkspace();
   const { irminAlert, irminConfirm } = usePopup();
   const workspaceService = WorkspaceService.getInstance();
   const inviteService = InviteService.getInstance();
@@ -61,7 +67,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
             inviteId: user.id,
             workspace: currentWorkspace,
             roles: [
-              irminRoles.find((role) => role.name === user.name) ??
+              irminRoles.find((role) => role.name === user.role.name) ??
                 irminRoles[0],
             ],
           };
@@ -107,9 +113,9 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
         'success',
         res.metadata?.message ?? 'Invite sent successfully'
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error inviting user:', error);
-      setInviteError(error.message ?? 'Error inviting user');
+      setInviteError((error as Error)?.message ?? 'Error inviting user');
     }
   };
 
@@ -127,9 +133,12 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
         'success',
         res.metadata?.message ?? 'Invite resent successfully'
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error resending invite:', error);
-      irminAlert('error', error.message ?? 'Error resending invite');
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Error resending invite'
+      );
     }
   };
 
@@ -148,9 +157,12 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
         'success',
         res.metadata?.message ?? 'Invite canceled successfully'
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error canceling invite:', error);
-      irminAlert('error', error.message ?? 'Error canceling invite');
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Error canceling invite'
+      );
     }
   };
 
@@ -176,9 +188,12 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
             res.metadata?.message ??
               'User removed successfully from the workspace'
           );
-        } catch (error: any) {
+        } catch (error) {
           console.error('Error changing user role:', error);
-          irminAlert('error', error.message ?? 'Error removing user');
+          irminAlert(
+            'error',
+            (error as Error)?.message ?? 'Error removing user'
+          );
         }
       },
       () => {
@@ -201,16 +216,19 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
             currentWorkspace.slug,
             id
           );
-          // Refetch the workspace
-          await refetchCurrentWorkspace();
+          // Refetch the current workspace
+          switchToWorkspace(currentWorkspace.slug);
           // Inform that ownership has been transferred
           irminAlert(
             'success',
             res.metadata?.message ?? 'Ownership transfered successfully'
           );
-        } catch (error: any) {
+        } catch (error) {
           console.error('Error transferring ownership:', error);
-          irminAlert('error', error.message ?? 'Error transferring ownership');
+          irminAlert(
+            'error',
+            (error as Error)?.message ?? 'Error transferring ownership'
+          );
         }
       },
       () => {
@@ -250,9 +268,12 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
         'success',
         res.metadata?.message ?? 'User role changed successfully'
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error changing user role:', error);
-      irminAlert('error', error.message ?? 'Error changing user role');
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Error changing user role'
+      );
     }
   };
 
@@ -286,43 +307,63 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
         'success',
         res.metadata?.message ?? 'Invite role changed successfully'
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error changing user role:', error);
-      irminAlert('error', error.message ?? 'Error changing user role');
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Error changing user role'
+      );
     }
   };
 
   if (!currentWorkspace || users.length === 0) return <LoadingSpinner />;
-
   return (
-    <div>
-      <div className='flex flex-row justify-between'>
-        <h2 className='mb-4 text-2xl font-normal'>Users & Permissions</h2>
-        <button
-          className='mb-4 cursor-pointer rounded bg-ash_gray px-4 py-2 text-white transition-all hover:bg-ash_gray-800'
+    <div className=''>
+      <div className='mb-4 flex flex-row items-center justify-between px-4'>
+        <h2 className='text-base md:text-xl xl:text-2xl'>
+          Users & Permissions
+        </h2>
+        <Button
+          size='sm'
+          variant='solid'
+          colorScheme='primary'
           onClick={() => setIsInviteModalOpen(true)}
         >
           Invite User
-        </button>
+        </Button>
       </div>
       <table className='min-w-full bg-white'>
         <thead>
           <tr>
-            <th className='border-b px-4 py-2 text-left font-normal'>Name</th>
-            <th className='border-b px-4 py-2 text-left font-normal'>Email</th>
-            <th className='border-b px-4 py-2 text-left font-normal'>Role</th>
-            <th className='border-b px-4 py-2 text-right font-normal'>
-              Actions
+            <th className='border-b px-4 py-2 text-left text-xs font-normal text-irmin_black md:text-sm'>
+              Name
+            </th>
+            <th className='hidden border-b px-4 py-2 text-left text-xs font-normal text-irmin_black md:text-sm lg:table-cell'>
+              Email
+            </th>
+            <th className='border-b px-4 py-2 text-left text-xs font-normal text-irmin_black md:text-sm'>
+              Role
+            </th>
+            <th className='border-b px-4 py-2 text-center text-xs font-normal text-irmin_black md:text-right md:text-sm'>
+              {/* Actions */}
             </th>
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
+          {users.map((user, idx) => (
+            <tr key={`workspace-user-${user.id}-${idx}`}>
               <td className='border-b px-4 py-2 text-xs text-gray-700'>
                 {user.name}
+                <span className='block text-[8px] leading-[8px] text-gray-400 lg:hidden'>
+                  {user.email}
+                </span>
+                {user.inviteId && (
+                  <span className='block text-[8px] leading-[8px] text-gray-400 lg:hidden'>
+                    Invited
+                  </span>
+                )}
               </td>
-              <td className='border-b px-4 py-2 text-xs text-gray-700'>
+              <td className='hidden border-b px-4 py-2 text-xs text-gray-700 lg:table-cell'>
                 {user.email}
                 {user.inviteId && (
                   <span className='ml-2 text-xs text-gray-400'>Invited</span>
@@ -359,8 +400,11 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                     className='rounded border p-1 text-xs text-gray-700'
                   >
                     <option value={'no-role'}>No role</option>
-                    {irminRoles.map((role) => (
-                      <option key={role.id} value={role.id}>
+                    {irminRoles.map((role, i) => (
+                      <option
+                        key={`role-option-${role.id}-${i}`}
+                        value={role.id}
+                      >
                         {role.label}
                       </option>
                     ))}
@@ -369,35 +413,51 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
               </td>
               <td className='border-b px-4 py-2 text-right'>
                 {user.roles.length !== 0 && !user.inviteId && (
-                  <div className='flex flex-row justify-end align-middle'>
-                    <button
-                      className='mr-2 rounded px-3 py-1 text-xs text-gray-800 transition-all hover:text-gray-500 hover:underline'
+                  <div className='flex flex-row justify-end gap-2 align-middle'>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      colorScheme='gray'
+                      aria-label='Transfer ownership to user'
                       onClick={() => handleTransferOwnership(user.id)}
+                      icon={<IoKey size={24} />}
                     >
                       Transfer ownership
-                    </button>
-                    <button
-                      className='rounded px-3 py-1 text-lg text-gray-800 transition-all hover:bg-gray-500 hover:text-white'
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      colorScheme='gray'
+                      aria-label='Remove user from workspace'
                       onClick={() => handleRemoveUser(user.id, user.roles[0])}
+                      icon={<IoExit size={24} />}
                     >
-                      <IoExit />
-                    </button>
+                      Remove from workspace
+                    </Button>
                   </div>
                 )}
                 {user.inviteId && (
-                  <div className='flex flex-row justify-end align-middle'>
-                    <button
-                      className='rounded px-3 py-1 text-xs text-gray-800 transition-all hover:text-gray-500 hover:underline'
+                  <div className='flex flex-row justify-end gap-2 align-middle'>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      colorScheme='gray'
+                      aria-label='Resend invite'
+                      icon={<IoMailOpenOutline size={24} />}
                       onClick={() => handleResend(user.email)}
                     >
                       Resend invite
-                    </button>
-                    <button
-                      className='rounded px-3 py-1 text-lg text-gray-800 transition-all hover:bg-gray-500 hover:text-white'
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      colorScheme='gray'
+                      aria-label='Cancel invite'
+                      icon={<IoExit size={24} />}
                       onClick={() => handleCancelInvite(user.email)}
                     >
-                      <IoExit />
-                    </button>
+                      Cancel invite
+                    </Button>
                   </div>
                 )}
               </td>
@@ -414,21 +474,25 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
         >
           <div className='mb-4'>
             <label className='block text-gray-700'>Name</label>
-            <input
+            <Input
+              variant='solid'
+              colorScheme='black'
+              className='mt-2 w-full'
               type='text'
-              className='mt-2 w-full rounded border p-2'
               placeholder='John Doe'
-              value={inviteName}
+              defaultValue={inviteName}
               onChange={(e) => setInviteName(e.target.value)}
             />
           </div>
           <div className='mb-4'>
             <label className='block text-gray-700'>Email</label>
-            <input
+            <Input
+              variant='solid'
+              colorScheme='black'
+              className='mt-2 w-full'
               type='email'
-              className='mt-2 w-full rounded border p-2'
               placeholder='johndoe@example.com'
-              value={inviteEmail}
+              defaultValue={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
             />
           </div>
@@ -446,19 +510,27 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
               ))}
             </select>
           </div>
-          <div className='flex justify-end'>
-            <button
+          <div className='flex justify-end gap-2'>
+            <Button
+              size='md'
+              variant='outline'
+              colorScheme='gray'
+              ariaLabel='Close the modal window'
               onClick={() => setIsInviteModalOpen(false)}
-              className='mr-4 cursor-pointer rounded bg-gray-300 px-4 py-2 text-gray-700 transition-all hover:bg-gray-400'
+              className='w-1/2'
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              size='md'
+              variant='solid'
+              colorScheme='primary'
+              ariaLabel='Send an invite to the user'
               onClick={handleInvite}
-              className='cursor-pointer rounded bg-ash_gray px-4 py-2 text-white transition-all hover:bg-ash_gray-400'
+              className='w-1/2'
             >
               Invite
-            </button>
+            </Button>
           </div>
           {inviteError && inviteError.length > 0 && (
             <p className='mt-4 text-red-800'>{inviteError}</p>

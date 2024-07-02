@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+
 import AppTitle from '@/components/appTitle';
-import ConnectionTable from '@/components/tables/connectionTable';
 import ConnectionSetupView from '@/components/connection-setup/connectionSetupView';
 import SideModal from '@/components/misc/SideModal';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import ConnectionTable from '@/components/tables/connectionTable';
 import TableSkeleton from '@/components/tables/tableSkeleton';
+
+import { useWorkspace } from '@/context/workspace';
 
 export default function ConnectionsPage() {
   const { connections } = useWorkspace();

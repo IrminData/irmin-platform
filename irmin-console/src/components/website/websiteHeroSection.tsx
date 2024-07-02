@@ -1,5 +1,6 @@
-import Link from 'next/link';
 import Image from 'next/image';
+
+import Button from '@/components/misc/Button';
 
 export default function WebsiteHeroSection() {
   return (
@@ -12,19 +13,17 @@ export default function WebsiteHeroSection() {
             backgroundPosition: 'center',
           }}
         >
-          <div className='pb-28 pt-12 md:pb-72'>
-            <div className='container mx-auto px-4'>
+          <div className='pb-28 pt-12 md:pb-72 lg:pt-32'>
+            <div className='container mx-auto max-w-7xl px-4'>
               <div className='mx-auto max-w-3xl text-center'>
-                <span className='mb-4 inline-block rounded-full bg-midnight_green px-2 py-px text-xs font-light uppercase leading-5 text-white shadow-sm'>
-                  Data hub
-                </span>
                 <h1 className='mb-6 text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:text-6xl'>
-                  AI-powered <span className='text-ash_gray'>ETL platform</span>{' '}
-                  with integrated{' '}
-                  <span className='text-ash_gray'>data marketplace</span> for
+                  AI-powered{' '}
+                  <span className='text-irmin_green'>ETL platform</span> with
+                  integrated{' '}
+                  <span className='text-irmin_green'>data marketplace</span> for
                   analysts.
                 </h1>
-                <p className='mx-auto mb-8 max-w-3xl text-lg font-light text-rich_black md:text-xl'>
+                <p className='mx-auto mb-8 max-w-3xl text-lg font-light text-irmin_black md:text-xl'>
                   Streamline your data integration effortlessly with advanced
                   ETL, SQL transformations, and an AI Assistant. Enhance
                   decision-making using our rich data marketplace for access to
@@ -32,27 +31,35 @@ export default function WebsiteHeroSection() {
                 </p>
                 <div className='flex flex-wrap justify-center'>
                   <div className='w-full py-1 md:mr-4 md:w-auto md:py-0'>
-                    <Link
-                      className='inline-block w-full rounded-full border border-midnight_green bg-midnight_green px-7 py-5 text-center text-base font-light leading-4 text-white shadow-sm transition-colors duration-200 ease-in-out hover:border-midnight_green-600 hover:bg-midnight_green-600 md:text-lg'
+                    <Button
+                      size='lg'
+                      variant='solid'
+                      colorScheme='secondary'
+                      className='w-full'
+                      ariaLabel='Get started for free'
                       href='/sign-up'
                     >
                       Get started for free
-                    </Link>
+                    </Button>
                   </div>
                   <div className='w-full py-1 md:w-auto md:py-0'>
-                    <Link
-                      className='text-cente inline-block w-full rounded-full border border-ash_gray px-4 py-4 text-base font-light leading-4 text-ash_gray shadow-sm transition-colors duration-200 ease-in-out hover:bg-gray-50 md:text-lg'
+                    <Button
+                      size='lg'
+                      variant='outline'
+                      colorScheme='primary'
+                      className='w-full'
+                      ariaLabel='Schedule a live demo'
                       href='#'
                     >
                       Schedule a live demo
-                    </Link>
+                    </Button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className='container mx-auto -mt-32 px-4 py-20 md:-mt-72 md:pb-32'>
+        <div className='container mx-auto -mt-32 max-w-7xl px-4 py-20 md:-mt-72 md:pb-32'>
           <div className='relative mx-auto max-w-max'>
             <Image
               className='absolute -left-8 -top-8 z-20 w-28 md:w-auto'
@@ -69,7 +76,7 @@ export default function WebsiteHeroSection() {
               height={81}
             />
             <svg
-              className='absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 transform cursor-pointer text-ash_gray-500 hover:text-ash_gray-600'
+              className='absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 transform cursor-pointer text-irmin_green-500 hover:text-irmin_green-600'
               width={64}
               height={64}
               viewBox='0 0 64 64'

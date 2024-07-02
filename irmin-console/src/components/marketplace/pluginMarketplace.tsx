@@ -1,16 +1,28 @@
 'use client';
 
 import React, { useState } from 'react';
+
 import AppTitle from '@/components/appTitle';
 import PluginMarketplaceFilters from '@/components/marketplace/pluginMarketplaceFilters';
 import PluginMarketplaceListingCard from '@/components/marketplace/pluginMarketplaceListingCard';
+import Input from '@/components/misc/Input';
+
+export interface MarketplacePlugin {
+  id: number;
+  name: string;
+  provider: string;
+  price: number;
+  category: string;
+  description?: string;
+  connected: boolean;
+}
 
 export default function PluginMarketplace() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [search, setSearch] = useState('');
 
   // Hypothetical plugins data, you would fetch this from an API in a real app
-  const plugins = [
+  const plugins: MarketplacePlugin[] = [
     {
       id: 1,
       name: 'Google Analytics',
@@ -96,13 +108,16 @@ export default function PluginMarketplace() {
   return (
     <>
       <AppTitle title='Plugins & Extensions' />
-      <div className='p-4'>
-        <div className='mb-8'>
-          <input
-            className='w-full rounded border p-2'
-            type='search'
+      <div className='p-4 pb-24'>
+        <div className='mb-4'>
+          <Input
+            size='md'
+            variant='outline'
+            colorScheme='gray'
+            className='w-full'
+            type='text'
             placeholder='Search for plugins and extensions'
-            value={search}
+            defaultValue={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>

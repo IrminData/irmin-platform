@@ -1,5 +1,7 @@
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+
+import Button from '@/components/misc/Button';
 
 export default function WebsiteBlogPost() {
   return (
@@ -11,24 +13,24 @@ export default function WebsiteBlogPost() {
           backgroundPosition: 'center top',
         }}
       >
-        <div className='container mx-auto px-4'>
+        <div className='container mx-auto max-w-7xl px-4'>
           <div className='mx-auto mb-12 text-center md:max-w-2xl'>
             <div className='flex items-center justify-center'>
-              <p className='inline-block font-medium text-ash_gray-500'>
+              <p className='inline-block font-medium text-irmin_green-500'>
                 John Doe
               </p>
-              <span className='mx-1 text-ash_gray-500'>•</span>
-              <p className='inline-block font-medium text-ash_gray-500'>
+              <span className='mx-1 text-irmin_green-500'>•</span>
+              <p className='inline-block font-medium text-irmin_green-500'>
                 19 Jan 2022
               </p>
             </div>
-            <h2 className='mb-4 text-3xl font-bold leading-tight tracking-tighter text-rich_black md:text-5xl'>
+            <h2 className='mb-4 text-3xl font-bold leading-tight tracking-tighter text-irmin_black md:text-5xl'>
               Lorem ipsum dolor sit amet
             </h2>
-            <p className='mb-6 text-lg font-medium text-rich_black md:text-xl'>
+            <p className='mb-6 text-lg font-medium text-irmin_black md:text-xl'>
               Lorem ipsum dolor sit amet, consectetur adipiscing elit.
             </p>
-            <div className='inline-block rounded-full bg-ash_gray-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-ash_gray-500 shadow-sm'>
+            <div className='inline-block rounded-full bg-irmin_green-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-irmin_green-500 shadow-sm'>
               Technology
             </div>
           </div>
@@ -41,35 +43,35 @@ export default function WebsiteBlogPost() {
             />
           </div>
           <div className='mx-auto md:max-w-3xl'>
-            <p className='mb-8 border-b border-rich_black pb-10 text-lg font-medium text-rich_black md:text-xl'>
+            <p className='mb-8 border-b border-irmin_black pb-10 text-lg font-medium text-irmin_black md:text-xl'>
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
               ullamcorper mattis lorem non. Ultrices praesent amet ipsum justo
               massa. Eu dolor aliquet risus gravida nunc at feugiat consequat
               purus. Non massa enim vitae duis mattis. Vel in ultricies vel
               fringilla.
             </p>
-            <h3 className='mb-4 text-2xl font-semibold text-rich_black md:text-3xl'>
+            <h3 className='mb-4 text-2xl font-semibold text-irmin_black md:text-3xl'>
               Header 1
             </h3>
-            <p className='mb-4 text-base text-rich_black md:text-lg'>
+            <p className='mb-4 text-base text-irmin_black md:text-lg'>
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
               ullamcorper mattis lorem non. Ultrices praesent amet ipsum justo
               massa. Eu dolor aliquet risus gravida nunc at feugiat consequat
               purus. Non massa enim vitae duis mattis. Vel in ultricies vel
               fringilla.
             </p>
-            <div className='mb-6 border-l-2 border-ash_gray-500 p-6'>
-              <p className='mb-4 text-xl font-medium leading-tight text-rich_black md:text-2xl'>
+            <div className='mb-6 border-l-2 border-irmin_green-500 p-6'>
+              <p className='mb-4 text-xl font-medium leading-tight text-irmin_black md:text-2xl'>
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
                 ullamcorper mattis lorem non. Ultrices praesent amet ipsum justo
                 massa. Eu dolor aliquet risus gravida nunc at feugiat consequat
                 purus.
               </p>
-              <span className='text-base font-medium text-rich_black md:text-lg'>
+              <span className='text-base font-medium text-irmin_black md:text-lg'>
                 — John Doe, CEO &amp; Founder
               </span>
             </div>
-            <p className='mb-6 text-base text-rich_black md:text-lg'>
+            <p className='mb-6 text-base text-irmin_black md:text-lg'>
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
               ullamcorper mattis lorem non. Ultrices praesent amet ipsum justo
               massa. Eu dolor aliquet risus gravida nunc at feugiat consequat
@@ -84,24 +86,24 @@ export default function WebsiteBlogPost() {
                 height={600}
               />
             </div>
-            <p className='mb-8 text-base font-medium text-rich_black md:text-lg'>
+            <p className='mb-8 text-base font-medium text-irmin_black md:text-lg'>
               <span>Non massa enim vitae duis mattis. Vel in</span>
-              <Link className='underline hover:text-rich_black' href='#'>
+              <Link className='underline hover:text-irmin_black' href='#'>
                 ultricies
               </Link>
               <span>vel fringilla.</span>
             </p>
-            <h3 className='mb-4 text-2xl font-semibold text-rich_black md:text-3xl'>
+            <h3 className='mb-4 text-2xl font-semibold text-irmin_black md:text-3xl'>
               Header 1
             </h3>
-            <p className='mb-14 text-base text-rich_black md:text-lg'>
+            <p className='mb-14 text-base text-irmin_black md:text-lg'>
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
               ullamcorper mattis lorem non. Ultrices praesent amet ipsum justo
               massa. Eu dolor aliquet risus gravida nunc at feugiat consequat
               purus. Non massa enim vitae duis mattis. Vel in ultricies vel
               fringilla.
             </p>
-            <p className='mb-4 text-base text-rich_black md:text-lg'>
+            <p className='mb-4 text-base text-irmin_black md:text-lg'>
               Sagittis et eu at elementum, quis in. Proin praesent volutpat
               egestas sociis sit lorem nunc nunc sit. Eget diam curabitur mi ac.
               Auctor rutrum lacus malesuada massa ornare et. Vulputate
@@ -109,7 +111,7 @@ export default function WebsiteBlogPost() {
               sit dignissim massa erat cursus vulputate gravida id. Sed quis
               auctor vulputate hac elementum gravida cursus dis.
             </p>
-            <ol className='mb-14 list-inside list-decimal text-base text-rich_black md:px-5 md:text-lg'>
+            <ol className='mb-14 list-inside list-decimal text-base text-irmin_black md:px-5 md:text-lg'>
               <li>Lectus id duis vitae porttitor enim gravida morbi.</li>
               <li>
                 Eu turpis posuere semper feugiat volutpat elit, ultrices
@@ -120,7 +122,7 @@ export default function WebsiteBlogPost() {
                 purus.
               </li>
             </ol>
-            <p className='mb-10 border-b border-rich_black pb-10 text-base text-rich_black md:text-lg'>
+            <p className='mb-10 border-b border-irmin_black pb-10 text-base text-irmin_black md:text-lg'>
               <span>
                 Vestibulum placerat magna nulla, sit amet venenatis sapien
                 consequat ut. Cras pulvinar, lorem tristique pharetra finibus,
@@ -130,7 +132,7 @@ export default function WebsiteBlogPost() {
                 vitae, egestas scelerisque enim.
               </span>
               <Link
-                className='text-ash_gray-500 underline hover:text-ash_gray-600'
+                className='text-irmin_green-500 underline hover:text-irmin_green-600'
                 href='#'
               >
                 Vivamus id pharetra massa
@@ -143,9 +145,11 @@ export default function WebsiteBlogPost() {
               </span>
             </p>
             <div className='flex items-center justify-center'>
-              <Link
-                className='mr-4 inline-flex items-center justify-center rounded-md border border-rich_black bg-white px-4 py-2 text-rich_black shadow-md transition duration-200 hover:border-rich_black hover:bg-rich_black-100 hover:text-rich_black'
-                href='#'
+              <Button
+                variant='solid'
+                colorScheme='black'
+                className='mr-4'
+                ariaLabel='Copy Link'
               >
                 <svg
                   width={20}
@@ -159,14 +163,11 @@ export default function WebsiteBlogPost() {
                     fill='currentColor'
                   />
                 </svg>
-                <span className='ml-2 text-sm font-medium text-rich_black hover:text-rich_black'>
+                <span className='ml-2 text-sm font-medium text-irmin_black hover:text-irmin_black'>
                   Copy Link
                 </span>
-              </Link>
-              <Link
-                className='mr-2 inline-flex h-9 w-9 items-center justify-center rounded-md border border-rich_black bg-white text-rich_black shadow-md transition duration-200 hover:bg-rich_black-100 hover:text-rich_black'
-                href='#'
-              >
+              </Button>
+              <Button variant='icon' colorScheme='black' className='mr-2'>
                 <svg
                   width={10}
                   height={18}
@@ -179,11 +180,8 @@ export default function WebsiteBlogPost() {
                     fill='currentColor'
                   />
                 </svg>
-              </Link>
-              <Link
-                className='mr-2 inline-flex h-9 w-9 items-center justify-center rounded-md border border-rich_black bg-white text-rich_black shadow-md transition duration-200 hover:bg-rich_black-100 hover:text-rich_black'
-                href='#'
-              >
+              </Button>
+              <Button variant='icon' colorScheme='black' className='mr-2'>
                 <svg
                   width={18}
                   height={14}
@@ -196,11 +194,8 @@ export default function WebsiteBlogPost() {
                     fill='currentColor'
                   />
                 </svg>
-              </Link>
-              <Link
-                className='inline-flex h-9 w-9 items-center justify-center rounded-md border border-rich_black bg-white text-rich_black shadow-md transition duration-200 hover:bg-rich_black-100 hover:text-rich_black'
-                href='#'
-              >
+              </Button>
+              <Button variant='icon' colorScheme='black' className='mr-2'>
                 <svg
                   width={18}
                   height={18}
@@ -213,7 +208,7 @@ export default function WebsiteBlogPost() {
                     fill='currentColor'
                   />
                 </svg>
-              </Link>
+              </Button>
             </div>
           </div>
         </div>

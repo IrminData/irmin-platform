@@ -1,7 +1,8 @@
 import React, { useCallback, useRef } from 'react';
-import CodeMirror from '@uiw/react-codemirror';
-import { sql } from '@codemirror/lang-sql';
+
 import { python } from '@codemirror/lang-python';
+import { sql } from '@codemirror/lang-sql';
+import CodeMirror from '@uiw/react-codemirror';
 
 const ScriptEditor = ({
   content,
@@ -12,7 +13,7 @@ const ScriptEditor = ({
   content: string;
   language: 'sql' | 'python';
   editorHeight: string;
-  setEditorHeight: (height: string) => void;
+  setEditorHeight: (_height: string) => void;
 }) => {
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +40,7 @@ const ScriptEditor = ({
     <div style={{ minHeight: editorHeight }} ref={editorRef}>
       {language === 'sql' ? (
         <CodeMirror
-          value={content}
+          defaultValue={content}
           height={editorHeight}
           extensions={[sql()]}
           placeholder='Write your SQL query here...'
@@ -47,7 +48,7 @@ const ScriptEditor = ({
         />
       ) : (
         <CodeMirror
-          value={content}
+          defaultValue={content}
           height={editorHeight}
           extensions={[python()]}
           placeholder='Write your Python script here...'

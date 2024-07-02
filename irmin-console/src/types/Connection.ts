@@ -2,7 +2,7 @@ export interface ConnectionAdditionalData {
   connector: string;
   nextSync: string;
   nextSyncTimestamp: Date;
-  status: 'running' | 'errors' | 'stopped';
+  status: 'error' | 'warning' | 'running' | 'paused' | 'default';
   parts: string[];
 }
 export interface Connection {

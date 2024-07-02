@@ -1,5 +1,6 @@
-import Link from 'next/link';
 import Image from 'next/image';
+
+import Button from '@/components/misc/Button';
 
 export default function WebsiteCTASection() {
   return (
@@ -10,11 +11,11 @@ export default function WebsiteCTASection() {
         backgroundPosition: 'center',
       }}
     >
-      <div className='container mx-auto px-4'>
+      <div className='container mx-auto max-w-7xl px-4'>
         <div className='-mx-4 flex flex-wrap'>
           <div className='mb-20 w-full px-4 md:w-1/2 lg:mb-0'>
             <div className='max-w-md'>
-              <h2 className='font-heading md:leading-15 mb-8 text-4xl font-bold text-rich_black md:text-5xl'>
+              <h2 className='font-heading md:leading-15 mb-8 text-4xl font-bold text-irmin_black md:text-5xl'>
                 Join 6,000+ companies growing with Irmin
               </h2>
               <ul className='mb-8'>
@@ -26,7 +27,7 @@ export default function WebsiteCTASection() {
                     width={26}
                     height={26}
                   />
-                  <span className='font-heading text-lg text-rich_black md:text-xl'>
+                  <span className='font-heading text-lg text-irmin_black md:text-xl'>
                     Mauris pellentesque congue libero nec
                   </span>
                 </li>
@@ -38,7 +39,7 @@ export default function WebsiteCTASection() {
                     width={26}
                     height={26}
                   />
-                  <span className='font-heading text-lg text-rich_black md:text-xl'>
+                  <span className='font-heading text-lg text-irmin_black md:text-xl'>
                     Suspendisse mollis tincidunt
                   </span>
                 </li>
@@ -50,27 +51,33 @@ export default function WebsiteCTASection() {
                     width={26}
                     height={26}
                   />
-                  <span className='font-heading text-lg text-rich_black md:text-xl'>
+                  <span className='font-heading text-lg text-irmin_black md:text-xl'>
                     Praesent varius justo vel justo pulvinar
                   </span>
                 </li>
               </ul>
               <div className='flex flex-wrap items-center'>
                 <div className='w-1/2 pr-4'>
-                  <Link
-                    className='inline-block w-full rounded-full border border-midnight_green bg-midnight_green px-4 py-4 text-center text-base font-light leading-4 text-white shadow-sm transition-colors duration-200 ease-in-out hover:border-midnight_green-600 hover:bg-midnight_green-600 md:text-lg'
+                  <Button
+                    size='lg'
+                    variant='solid'
+                    colorScheme='secondary'
+                    className='inline-block w-full rounded-full border'
                     href='/sign-up'
                   >
                     Get started for free
-                  </Link>
+                  </Button>
                 </div>
                 <div className='w-1/2'>
-                  <Link
-                    className='text-cente inline-block w-full rounded-full border border-ash_gray px-4 py-4 text-base font-light leading-4 text-ash_gray shadow-sm transition-colors duration-200 ease-in-out hover:bg-gray-50 md:text-lg'
+                  <Button
+                    size='lg'
+                    variant='outline'
+                    colorScheme='primary'
+                    className='inline-block w-full'
                     href='#'
                   >
                     Schedule a live demo
-                  </Link>
+                  </Button>
                 </div>
               </div>
             </div>

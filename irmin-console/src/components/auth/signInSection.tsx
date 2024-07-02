@@ -1,10 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
-import AuthService from '@/lib/AuthService';
+
+import AuthService from '@/lib/api/AuthService';
+
+import Button from '@/components/misc/Button';
+import Input from '@/components/misc/Input';
+
 import { useProfile } from '@/context/ProfileContext';
 
 const SignInSection: React.FC = () => {
@@ -33,8 +37,8 @@ const SignInSection: React.FC = () => {
       } else {
         throw new Error(response.message || 'Login failed');
       }
-    } catch (error: any) {
-      setError(error?.message ?? 'Login failed');
+    } catch (error) {
+      setError((error as Error)?.message ?? 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -48,62 +52,61 @@ const SignInSection: React.FC = () => {
         backgroundPosition: 'center',
       }}
     >
-      <div className='container mx-auto px-4'>
+      <div className='container mx-auto max-w-7xl px-4'>
         <div className='mx-auto max-w-sm'>
           <div className='mb-6 text-center'>
-            <Link className='mb-6 inline-block' href='#'>
-              <Image
-                className='h-16'
-                src='/irmin-logo.svg'
-                alt='IRMIN logo'
-                width={400}
-                height={100}
-              />
-            </Link>
             <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
               Sign in to your account
             </h3>
-            <p className='text-lg font-light text-rich_black'>
+            <p className='text-lg font-light text-irmin_black'>
               Welcome back to the home of your data
             </p>
           </div>
           <form onSubmit={handleSubmit}>
             <div className='mb-6'>
               <label
-                className='mb-2 block font-light text-rich_black'
+                className='mb-2 block font-light text-irmin_black'
                 htmlFor='email'
               >
                 Email
               </label>
-              <input
-                className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
+              <Input
+                variant='outline'
+                colorScheme='black'
+                size='md'
                 type='email'
                 id='email'
                 placeholder='name@acme.corp'
-                value={email}
+                defaultValue={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                ariaLabel='Insert your email address here'
+                className='w-full'
               />
             </div>
             <div className='mb-4'>
               <label
-                className='mb-2 block font-light text-rich_black'
+                className='mb-2 block font-light text-irmin_black'
                 htmlFor='password'
               >
                 Password
               </label>
-              <input
-                className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
+              <Input
+                variant='outline'
+                colorScheme='black'
+                size='md'
+                required
+                className='w-full'
+                ariaLabel='Insert your password here'
                 type='password'
                 id='password'
                 placeholder='your super secret password'
-                value={password}
+                defaultValue={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
               />
             </div>
             {error && <p className='mb-4 text-red-800'>{error}</p>}
-            {success && <p className='mb-4 text-ash_gray'>{success}</p>}
+            {success && <p className='mb-4 text-irmin_green'>{success}</p>}
             <div className='mb-6 flex flex-wrap items-center justify-between'>
               <div className='w-full md:w-1/2'>
                 <label className='relative inline-flex items-center'>
@@ -113,37 +116,34 @@ const SignInSection: React.FC = () => {
                     name='remember-me'
                     defaultChecked
                   />
-                  <span className='ml-2 text-xs font-light text-rich_black'>
+                  <span className='ml-2 text-xs font-light text-irmin_black'>
                     Remember me
                   </span>
                 </label>
               </div>
               <div className='mt-1 w-full md:w-auto'>
-                <Link
-                  className='inline-block text-xs font-light text-ash_gray-500 hover:text-ash_gray-600'
-                  href='/forgot-password'
-                >
+                <Button variant='link' href='/forgot-password' size='sm'>
                   Forgot your password?
-                </Link>
+                </Button>
               </div>
             </div>
-            <button
-              className='mb-6 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm hover:bg-ash_gray-600'
-              type='submit'
+            <Button
+              className='mb-6 w-full'
+              variant='solid'
+              size='md'
               disabled={loading}
+              loading={loading}
+              type='submit'
             >
-              {loading ? 'Signing In...' : 'Sign In'}
-            </button>
+              Sign In
+            </Button>
             <p className='text-center'>
               <span className='text-xs font-light'>
-                Don’t have an account?{' '}
+                Don&apos;t have an account?{' '}
               </span>
-              <Link
-                className='inline-block text-xs font-light text-ash_gray-500 hover:text-ash_gray-600 hover:underline'
-                href='/sign-up'
-              >
+              <Button variant='link' href='/sign-up' size='sm'>
                 Sign up
-              </Link>
+              </Button>
             </p>
           </form>
         </div>

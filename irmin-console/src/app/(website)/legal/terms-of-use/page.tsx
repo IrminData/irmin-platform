@@ -1,4 +1,5 @@
 import React from 'react';
+
 import Link from 'next/link';
 
 const TermsOfUse: React.FC = () => {
@@ -66,7 +67,7 @@ const TermsOfUse: React.FC = () => {
           terms will mean you accept those changes.
         </p>
         <p className='mt-6'>
-          <Link href='/' className='text-ash_gray hover:underline'>
+          <Link href='/' className='text-irmin_green hover:underline'>
             Back to Home
           </Link>
         </p>

@@ -1,7 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import React, { useRef, useState } from 'react';
+
 import Link from 'next/link';
+
+import { useBreakpoint } from '@/lib/utils';
+
 import { IoTriangle } from 'react-icons/io5';
+
+import Button from '@/components/misc/Button';
+
+import { useWorkspace } from '@/context/workspace';
 
 interface IrminNotification {
   id: number;
@@ -100,17 +107,26 @@ const NotificationPopup = ({
     setNotifications([]);
   };
 
+  const { isMd: isDesktop } = useBreakpoint('md');
+
   return (
     <div
       id='notification-popup'
       className={`fixed z-50`}
-      style={{
-        top: (notificationsClickPosition?.y ?? 0) + 30,
-        left: (notificationsClickPosition?.x ?? 0) - 20,
-      }}
+      style={
+        isDesktop
+          ? {
+              top: (notificationsClickPosition?.y ?? 0) + 30,
+              left: (notificationsClickPosition?.x ?? 0) - 20,
+            }
+          : {
+              top: (notificationsClickPosition?.y ?? 0) + 30,
+              left: (notificationsClickPosition?.x ?? 0) - 220,
+            }
+      }
     >
       <div className='max-h-[320px] w-64 overflow-y-scroll rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5'>
-        <div className='absolute -top-[16px] left-[22px] z-50 -translate-x-1/2 transform text-white'>
+        <div className='absolute -top-[16px] left-auto right-[16px] z-50 -translate-x-1/2 transform text-white md:left-[22px] md:right-auto'>
           <IoTriangle size={20} />
         </div>
         <div className='sticky top-0 z-10 bg-white py-2 shadow-sm'>
@@ -118,13 +134,15 @@ const NotificationPopup = ({
             className={`px-4 ${isScrolled ? 'pt-2' : 'pt-0'} transition-all`}
           >
             <div className='flex items-center justify-between'>
-              <div className='text-lg font-bold'>Notifications</div>
-              <button
+              <div className='text-base font-semibold'>Notifications</div>
+              <Button
                 onClick={clearNotifications}
-                className='text-xs text-ash_gray hover:underline'
+                variant='link'
+                colorScheme='primary'
+                size='sm'
               >
                 Clear All
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -143,7 +161,7 @@ const NotificationPopup = ({
                   key={`notification-${index}-${notification.id}`}
                 >
                   <div
-                    className={`border-b px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 ${notification.type === 'info' ? 'border-ash_gray' : ''} ${notification.type === 'warning' ? 'border-yellow-500' : ''} ${notification.type === 'error' ? 'border-red-500' : ''} ${notification.type === 'success' ? 'border-green-500' : ''} `}
+                    className={`border-b px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 ${notification.type === 'info' ? 'border-irmin_green' : ''} ${notification.type === 'warning' ? 'border-yellow-500' : ''} ${notification.type === 'error' ? 'border-red-500' : ''} ${notification.type === 'success' ? 'border-green-500' : ''} `}
                   >
                     <div className='flex justify-between'>
                       <div className='font-normal'>{notification.title}</div>

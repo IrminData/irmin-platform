@@ -9,22 +9,22 @@ export default function WebsiteContentSection() {
         backgroundPosition: 'center',
       }}
     >
-      <div className='container mx-auto mb-16 px-4 md:mb-0'>
+      <div className='container mx-auto mb-16 max-w-7xl px-4 md:mb-0'>
         <div className='max-w-md md:w-1/2'>
-          <span className='mb-4 inline-block rounded-full bg-midnight_green px-2 py-px text-xs font-light leading-5 text-white shadow-sm'>
+          <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-light leading-5 text-white shadow-sm'>
             Application
           </span>
-          <h3 className='mb-6 text-4xl font-bold leading-tight tracking-tighter text-rich_black md:text-5xl'>
+          <h3 className='mb-6 text-4xl font-bold leading-tight tracking-tighter text-irmin_black md:text-5xl'>
             Great work starts with your app
           </h3>
-          <p className='mb-12 text-lg font-light text-rich_black md:text-xl'>
+          <p className='mb-12 text-lg font-light text-irmin_black md:text-xl'>
             With our integrated CRM, project management, collaboration and
             invoicing capabilities, you can manage every aspect of your business
             in one secure platform.
           </p>
           <div className='mb-10 flex flex-wrap text-center md:text-left'>
             <div className='mb-6 w-full pt-2 md:mb-0 md:w-auto md:pr-6'>
-              <div className='mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-ash_gray-500 text-white'>
+              <div className='mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-irmin_green-500 text-white'>
                 <svg
                   width={21}
                   height={21}
@@ -41,10 +41,10 @@ export default function WebsiteContentSection() {
             </div>
             <div className='w-full md:flex-1 md:pt-3'>
               <div className='md:max-w-sm'>
-                <h3 className='mb-4 text-xl font-bold leading-tight text-rich_black md:text-2xl'>
+                <h3 className='mb-4 text-xl font-bold leading-tight text-irmin_black md:text-2xl'>
                   Measure your performance
                 </h3>
-                <p className='font-light text-rich_black'>
+                <p className='font-light text-irmin_black'>
                   Stay connected with your team and make quick decisions
                   wherever you are.
                 </p>
@@ -53,7 +53,7 @@ export default function WebsiteContentSection() {
           </div>
           <div className='mb-10 flex flex-wrap text-center md:text-left'>
             <div className='mb-6 w-full pt-2 md:mb-0 md:w-auto md:pr-6'>
-              <div className='mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-ash_gray-500 text-white'>
+              <div className='mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-irmin_green-500 text-white'>
                 <svg
                   width={21}
                   height={21}
@@ -70,10 +70,10 @@ export default function WebsiteContentSection() {
             </div>
             <div className='w-full md:flex-1 md:pt-3'>
               <div className='md:max-w-sm'>
-                <h3 className='mb-4 text-xl font-bold leading-tight text-rich_black md:text-2xl'>
+                <h3 className='mb-4 text-xl font-bold leading-tight text-irmin_black md:text-2xl'>
                   Build your website
                 </h3>
-                <p className='font-light text-rich_black'>
+                <p className='font-light text-irmin_black'>
                   A tool that lets you build a dream website even if you know
                   nothing about web design or programming.
                 </p>
@@ -82,7 +82,7 @@ export default function WebsiteContentSection() {
           </div>
           <div className='flex flex-wrap text-center md:text-left'>
             <div className='mb-6 w-full pt-2 md:mb-0 md:w-auto md:pr-6'>
-              <div className='mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-ash_gray-500 text-white'>
+              <div className='mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-irmin_green-500 text-white'>
                 <svg
                   width={21}
                   height={21}
@@ -99,10 +99,10 @@ export default function WebsiteContentSection() {
             </div>
             <div className='w-full md:flex-1 md:pt-3'>
               <div className='md:max-w-sm'>
-                <h3 className='mb-4 text-xl font-bold leading-tight text-rich_black md:text-2xl'>
+                <h3 className='mb-4 text-xl font-bold leading-tight text-irmin_black md:text-2xl'>
                   Connect multiple apps
                 </h3>
-                <p className='font-light text-rich_black'>
+                <p className='font-light text-irmin_black'>
                   The first business platform to bring together all of your
                   products from one place.
                 </p>

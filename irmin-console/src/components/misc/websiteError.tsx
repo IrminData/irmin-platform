@@ -1,7 +1,16 @@
-import Link from 'next/link';
 import Image from 'next/image';
 
-export default function WebsiteError() {
+import Button from '@/components/misc/Button';
+
+export default function WebsiteError({
+  pageNotFound,
+  error,
+  reset,
+}: {
+  pageNotFound?: boolean;
+  error?: Error & { digest?: string };
+  reset?: () => void;
+}) {
   return (
     <>
       <section
@@ -29,32 +38,43 @@ export default function WebsiteError() {
           <div className='flex flex-wrap py-16 md:py-40 lg:py-72'>
             <div className='ml-auto w-full text-center md:w-1/2 md:text-left'>
               <div className='md:max-w-xl'>
-                <span className='mb-4 inline-block rounded-full bg-ash_gray px-2 py-px text-xs font-medium leading-5 text-white shadow-sm'>
-                  Error 404
+                <span className='mb-4 inline-block rounded-full bg-irmin_green px-2 py-px text-xs font-medium leading-5 text-white shadow-sm'>
+                  Error {pageNotFound ? '404' : '500'}
                 </span>
                 <h2 className='mb-4 text-4xl font-bold leading-tight tracking-tighter md:text-5xl'>
-                  Oh no! Error 404
+                  Oh no!{' '}
+                  {pageNotFound ? 'Page not found' : 'Something went wrong'}
                 </h2>
-                <p className='mb-6 text-lg text-rich_black md:text-xl'>
-                  Something went wrong, so this page is broken.
+                <p className='mb-6 text-lg text-irmin_black md:text-xl'>
+                  {error?.message}
                 </p>
                 <div className='flex flex-wrap'>
                   <div className='w-full py-1 lg:mr-6 lg:w-auto lg:py-0'>
-                    <Link
-                      className='inline-block w-full rounded-full border border-ash_gray-500 bg-ash_gray-500 px-7 py-5 text-center text-base font-medium leading-4 text-white shadow-sm hover:bg-ash_gray-600 md:text-lg'
+                    <Button
+                      variant='solid'
+                      colorScheme='primary'
+                      ariaLabel='Go back to Homepage'
+                      size='md'
+                      className='inline-block w-full'
                       href='/'
                     >
                       Go back to Homepage
-                    </Link>
+                    </Button>
                   </div>
-                  <div className='w-full py-1 lg:w-auto lg:py-0'>
-                    <Link
-                      className='inline-block w-full rounded-full border border-rich_black bg-white px-7 py-5 text-center text-base font-medium leading-4 text-rich_black shadow-sm focus:outline-none md:text-lg'
-                      href='#'
-                    >
-                      Try Again
-                    </Link>
-                  </div>
+                  {!pageNotFound && reset && (
+                    <div className='w-full py-1 lg:w-auto lg:py-0'>
+                      <Button
+                        variant='outline'
+                        colorScheme='secondary'
+                        ariaLabel='Try Again'
+                        size='md'
+                        className='inline-block w-full'
+                        onClick={reset}
+                      >
+                        Try Again
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

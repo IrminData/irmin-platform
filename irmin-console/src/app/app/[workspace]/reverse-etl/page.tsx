@@ -1,10 +1,11 @@
 'use client';
 
-import AppTitle from '@/components/appTitle';
-import ReverseETLTable from '@/components/tables/reverseETLTable';
-import ReverseETLSetupView from '@/components/reverse-etl-setup/reverseETLSetupView';
-import SideModal from '@/components/misc/SideModal';
 import { useState } from 'react';
+
+import AppTitle from '@/components/appTitle';
+import SideModal from '@/components/misc/SideModal';
+import ReverseETLSetupView from '@/components/reverse-etl-setup/reverseETLSetupView';
+import ReverseETLTable from '@/components/tables/reverseETLTable';
 
 export default function ReverseETLPage() {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,7 +40,7 @@ export default function ReverseETLPage() {
             name: 'Customer Data Sync',
             source: 'Salesforce',
             destination: 'BigQuery',
-            status: 'active',
+            status: 'running',
             details: [
               'Syncing customer data from Salesforce to BigQuery.',
               'Last sync: 2024-06-20 10:00 UTC',
@@ -51,7 +52,7 @@ export default function ReverseETLPage() {
             name: 'Order Data Sync',
             source: 'UpCharge rents, users and venues',
             destination: 'Snowflake',
-            status: 'inactive',
+            status: 'paused',
             details: [
               'Syncing order data from Shopify to Snowflake.',
               'Last sync: 2024-06-19 08:00 UTC',
@@ -63,7 +64,7 @@ export default function ReverseETLPage() {
             name: 'Loaction Data Sync',
             source: 'UpCharge locations',
             destination: 'Redshift',
-            status: 'failed',
+            status: 'error',
             details: [
               'Syncing marketing data from HubSpot to Redshift.',
               'Last sync: 2024-06-18 07:00 UTC',
@@ -75,7 +76,7 @@ export default function ReverseETLPage() {
             name: 'CRM leed sync',
             source: 'Restaurants in Finland',
             destination: 'PostgreSQL',
-            status: 'active',
+            status: 'warning',
             details: [
               'Syncing product data from Magento to PostgreSQL.',
               'Last sync: 2024-06-20 12:00 UTC',

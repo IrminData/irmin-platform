@@ -3,12 +3,13 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(req: NextRequest) {
   const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'true';
+  const appPassword = process.env.ENV_PASSWORD ?? 'oiDeNuDEvenTICYc';
   if (requireAuth === 'true') {
     // Get the cookies from the request
     const { cookies } = req;
     const authorizedDev = cookies.get('authorizedDev');
     // Check if the user is authorized
-    if (!authorizedDev || authorizedDev.value !== 'true') {
+    if (!authorizedDev || authorizedDev.value !== appPassword) {
       // Redirect to the sign-in page if not authorized
       return NextResponse.redirect(new URL('/api/verify-dev-access', req.url));
     }

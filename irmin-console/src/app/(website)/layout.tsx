@@ -1,7 +1,7 @@
-import WebsiteNavigation from '@/components/website/websiteNavigation';
-import WebsiteFooter from '@/components/website/websiteFooter';
-
 import type { Metadata } from 'next';
+
+import WebsiteFooter from '@/components/website/websiteFooter';
+import WebsiteNavigation from '@/components/website/websiteNavigation';
 
 export const metadata: Metadata = {
   title: 'Irmin',

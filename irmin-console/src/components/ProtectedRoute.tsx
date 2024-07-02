@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useEffect } from 'react';
+
 import { useRouter } from 'next/navigation';
+
 import { useProfile } from '@/context/ProfileContext';
-import LoadingSpinner from './misc/LoadingSpinner';
+
+import LoadingSkeleton from './misc/LoadingSkeleton';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -18,10 +21,14 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   }, [isLoading, profile, router]);
 
   if (isLoading || !profile) {
-    return <LoadingSpinner />;
+    return (
+      <div className='px-4'>
+        <LoadingSkeleton className='h-96 w-full' />
+      </div>
+    );
   }
 
-  return <>{children}</>;
+  return children;
 };
 
 export default ProtectedRoute;

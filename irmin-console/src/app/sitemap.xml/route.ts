@@ -1,5 +1,6 @@
 export async function GET() {
-  const BASE_URL = process.env.BASE_URL ?? 'https://irmin.dev';
+  const NEXT_PUBLIC_BASE_URL =
+    process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
   const staticPaths = [
     '/',
@@ -17,7 +18,7 @@ export async function GET() {
     .map((path) => {
       return `
       <url>
-        <loc>${BASE_URL}${path}</loc>
+        <loc>${NEXT_PUBLIC_BASE_URL}${path}</loc>
         <changefreq>daily</changefreq>
         <priority>0.7</priority>
       </url>

@@ -1,13 +1,28 @@
-import React from 'react';
+import React, { ComponentPropsWithoutRef } from 'react';
+
+import Image from 'next/image';
 
 interface AppTitleProps {
   title: string;
+  props?: ComponentPropsWithoutRef<'div'>;
 }
 
-const AppTitle: React.FC<AppTitleProps> = ({ title }) => {
+const AppTitle: React.FC<AppTitleProps> = ({ title, props }) => {
+  const _props = { ...props };
+  delete _props.className;
   return (
-    <div className='flex items-center justify-between p-4'>
-      <h1 className='text-3xl font-bold text-gray-800'>{title}</h1>
+    <div
+      className={`px-4 pb-6 pt-4 text-lg font-semibold text-irmin_black md:pb-8 md:pt-12 md:text-3xl ${props?.className ?? ''}`}
+      {..._props}
+    >
+      <Image
+        src='/irmin-logo.svg'
+        alt='Irmin'
+        width={120}
+        height={120}
+        className={`h-14 md:hidden ${props?.className ?? ''}`}
+      />
+      <h1 className={`${props?.className ?? ''}`}>{title}</h1>
     </div>
   );
 };

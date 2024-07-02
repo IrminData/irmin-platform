@@ -1,22 +1,33 @@
 import React from 'react';
+
+import Image from 'next/image';
+
 import { TbChevronDown } from 'react-icons/tb';
 
-interface DashboardTitleAndSelectorProps {
-  title: string;
-  options: string[];
-  selected: string;
-  onSelectionChange: (selection: string) => void;
-}
-
-const DashboardTitleAndSelector: React.FC<DashboardTitleAndSelectorProps> = ({
+function DashboardTitleAndSelector({
   title,
   options,
   selected,
   onSelectionChange,
-}) => {
+}: {
+  title: string;
+  options: string[];
+  selected: string;
+  onSelectionChange: (_selection: string) => void;
+}) {
   return (
-    <div className='flex items-center justify-between p-4'>
-      <h1 className='text-3xl font-bold text-gray-800'>{title}</h1>
+    <div className='flex items-center justify-between p-4 align-top'>
+      <div className={`text-lg font-bold text-gray-800 md:text-3xl`}>
+        <Image
+          src='/irmin-logo.svg'
+          alt='Irmin'
+          width={120}
+          height={120}
+          className={`h-14 md:hidden`}
+        />
+        <h1>{title}</h1>
+      </div>
+
       <div className='relative'>
         <select
           value={selected}
@@ -35,6 +46,6 @@ const DashboardTitleAndSelector: React.FC<DashboardTitleAndSelectorProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export default DashboardTitleAndSelector;

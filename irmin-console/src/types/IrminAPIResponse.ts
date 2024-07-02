@@ -1,7 +1,12 @@
-import { Connector, ConnectionDetailsAndSettingsFields } from './Connector';
-import { User } from './UserProfile';
-import { Workspace } from './Workspace';
 import { Connection } from './Connection';
+import { ConnectionDetailsAndSettingsFields, Connector } from './Connector';
+import { User } from './UserProfile';
+import {
+  IrminRole,
+  Workspace,
+  WorkspaceInviteUser,
+  WorkspaceUser,
+} from './Workspace';
 
 export interface IrminAPIResponse {
   metadata?: {
@@ -11,6 +16,7 @@ export interface IrminAPIResponse {
   errors?: {
     [key: string]: string[];
   };
+  data?: unknown[] | unknown;
 }
 
 /**
@@ -22,6 +28,15 @@ export interface WorkspaceAPIResponse extends IrminAPIResponse {
 
 export interface WorkspacesAPIResponse extends IrminAPIResponse {
   data: Workspace[];
+}
+export interface WorkspaceUserAPIResponse extends IrminAPIResponse {
+  data: WorkspaceUser[];
+}
+export interface WorkspaceRoleAPIResponse extends IrminAPIResponse {
+  data: IrminRole[];
+}
+export interface WorkspaceInviteUsersAPIResponse extends IrminAPIResponse {
+  data: WorkspaceInviteUser[];
 }
 
 /**

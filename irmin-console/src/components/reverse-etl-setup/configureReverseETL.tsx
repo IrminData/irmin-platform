@@ -2,14 +2,18 @@
 
 import React from 'react';
 
+import Button from '@/components/misc/Button';
+import Input from '@/components/misc/Input';
+import { ReverseETLDataType } from '@/components/reverse-etl-setup/reverseETLSetupView';
+
 export default function ConfigureReverseETL({
   reverseETLData,
   setReverseETLData,
   setCurrentStep,
   setIsOpen,
 }: {
-  reverseETLData: any;
-  setReverseETLData: React.Dispatch<React.SetStateAction<any>>;
+  reverseETLData: ReverseETLDataType;
+  setReverseETLData: React.Dispatch<React.SetStateAction<ReverseETLDataType>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
@@ -24,29 +28,34 @@ export default function ConfigureReverseETL({
       <h4 className='mb-4 text-lg font-semibold'>Configure Reverse ETL</h4>
       <div className='mb-4'>
         <label className='block text-sm font-medium text-gray-700'>
-          Process Name
+          Process Name (unique)
         </label>
-        <input
-          type='text'
-          value={reverseETLData.name}
+        <Input
+          variant='outline'
+          colorScheme='black'
+          className='mt-2 w-full'
+          placeholder='Enter a name for the reverse ETL process'
+          defaultValue={reverseETLData.name}
           onChange={(e) =>
-            setReverseETLData((prevData: any) => ({
+            setReverseETLData((prevData) => ({
               ...prevData,
               name: e.target.value,
             }))
           }
-          className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:outline-none sm:text-sm'
         />
       </div>
       <div className='mb-6'>
-        <label className='mb-2 block font-light text-rich_black' htmlFor=''>
-          Sync interval (cron expression)
+        <label className='mb-2 block font-light text-irmin_black' htmlFor=''>
+          Sync interval (cron expression or leave empty for manual sync)
         </label>
-        <input
-          className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
+        <Input
+          variant='outline'
+          colorScheme='black'
+          className='mt-2 w-full'
+          placeholder='Enter cron expression (e.g. 0 0 * * *) or leave empty for manual sync'
           defaultValue={reverseETLData.cron}
           onChange={(e) => {
-            setReverseETLData((prevData: any) => ({
+            setReverseETLData((prevData) => ({
               ...prevData,
               cron: e.target.value,
             }));
@@ -55,21 +64,29 @@ export default function ConfigureReverseETL({
       </div>
       {/* Add more configuration settings as needed */}
       <div className='mt-4 flex justify-end'>
-        <button
-          className='mb-6 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm hover:bg-ash_gray-600'
+        <Button
+          variant='solid'
+          colorScheme='primary'
+          size='md'
+          className='mb-6 inline-block w-full'
+          ariaLabel='Start reverse ETL sync'
           onClick={handleSave}
         >
           Start sync
-        </button>
-        <button
-          className='w-full text-center text-sm font-light text-ash_gray-500 hover:text-ash_gray-600 hover:underline'
+        </Button>
+        <Button
+          variant='link'
+          colorScheme='primary'
+          size='sm'
+          className='inline-block w-full'
+          ariaLabel='Go back'
           onClick={(e) => {
             e.preventDefault();
-            setCurrentStep(2);
+            setCurrentStep((prevStep) => prevStep - 1);
           }}
         >
           Go back
-        </button>
+        </Button>
       </div>
     </div>
   );

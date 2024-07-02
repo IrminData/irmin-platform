@@ -45,7 +45,7 @@ To configure the environment variables for the project, create a `.env` file in 
 Example `.env` file:
 
 ```dotenv
-BASE_URL=https://irmin.dev
+NEXT_PUBLIC_BASE_URL=https://irmin.dev
 REQUIRE_ENV_AUTH=true
 ENV_PASSWORD=devpassword
 NEXT_PUBLIC_API_URL=https://api.irmin.dev

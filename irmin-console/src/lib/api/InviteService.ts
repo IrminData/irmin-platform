@@ -1,4 +1,7 @@
-import { IrminAPIResponse } from '@/types/IrminAPIResponse';
+import {
+  IrminAPIResponse,
+  WorkspaceInviteUsersAPIResponse,
+} from '@/types/IrminAPIResponse';
 import { IrminRole, WorkspaceInviteUser } from '@/types/Workspace';
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;
@@ -25,7 +28,7 @@ class InviteService {
   private async fetchWithCredentials(
     url: string,
     options: RequestInit
-  ): Promise<IrminAPIResponse> {
+  ): Promise<IrminAPIResponse | WorkspaceInviteUsersAPIResponse> {
     const response = await fetch(url, {
       ...options,
       credentials: 'include',
@@ -159,7 +162,7 @@ class InviteService {
    */
   async getInvites(workspace: string): Promise<WorkspaceInviteUser[]> {
     try {
-      const response: any = await this.fetchWithCredentials(
+      const response = await this.fetchWithCredentials(
         `${api_base}/v1/invites?workspace=${workspace}`,
         {
           method: 'GET',
@@ -169,9 +172,11 @@ class InviteService {
         }
       );
 
-      const invites = response?.data ?? [];
+      if (!response || !response.data || !Array.isArray(response.data)) {
+        return [];
+      }
 
-      return invites as WorkspaceInviteUser[];
+      return response.data as WorkspaceInviteUser[];
     } catch (error) {
       console.error('Invites error:', error);
       throw error;

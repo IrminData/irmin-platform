@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { IoClose, IoSave } from 'react-icons/io5';
+
+import { IoAdd, IoClose, IoSave } from 'react-icons/io5';
+
+import Button from '@/components/misc/Button';
 import ScriptEditor from '@/components/script-editor/scriptEditor';
 import ScriptEditorNew from '@/components/script-editor/scriptEditorNew';
 
@@ -32,12 +35,6 @@ const ScriptEditorWithOptions = ({
     },
   ]);
   const [activeTab, setActiveTab] = useState<number>(0);
-
-  const updateTabContent = (index: number, content: string) => {
-    const newTabs = [...tabs];
-    newTabs[index] = { ...newTabs[index], content, changed: true };
-    setTabs(newTabs);
-  };
 
   const addNewTab = () => {
     const newTabName = `Draft`;
@@ -81,35 +78,43 @@ const ScriptEditorWithOptions = ({
             <div
               key={index}
               className={`flex h-fit items-center ${
-                activeTab === index ? 'border-b-2 border-ash_gray' : ''
+                activeTab === index ? 'border-b-2 border-irmin_green' : ''
               } `}
             >
-              <button
+              <Button
+                variant='link'
+                colorScheme='black'
+                className={`min-w-40 px-4 py-2`}
                 onClick={() => selectTab(index)}
-                className={`min-w-40 px-4 py-2 focus:outline-none`}
+                ariaLabel={`Select tab ${tab.name}`}
               >
                 {tab.name}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant='icon'
+                colorScheme='black'
+                className={`border-none px-2 py-2`}
                 onClick={() => closeTab(index)}
-                className={`px-2 py-2 focus:outline-none`}
+                ariaLabel={`Close tab ${tab.name}`}
               >
                 <IoClose />
-              </button>
+              </Button>
             </div>
           ))}
           {tabs.length > 0 && (
-            <button
+            <Button
+              variant='icon'
+              colorScheme='black'
               onClick={addNewTab}
-              className='h-fit px-4 py-2 focus:outline-none'
+              ariaLabel='Add new tab'
             >
-              +
-            </button>
+              <IoAdd />
+            </Button>
           )}
         </div>
         <div className='p-2'>
           <select
-            className='rounded-md border-ash_gray px-2 py-2 text-xs text-midnight_green transition-all hover:bg-ash_gray-800 focus:outline-none xl:text-base'
+            className='rounded-md border-irmin_green px-2 py-2 text-xs text-irmin_blue transition-all hover:bg-irmin_green-800 focus:outline-none xl:text-base'
             onChange={(e) => {
               if (!tabs[activeTab].changed) {
                 const newTabs = [...tabs];
@@ -131,12 +136,15 @@ const ScriptEditorWithOptions = ({
           </select>
         </div>
         <div className='p-2 xl:pr-8'>
-          <button
+          <Button
+            size='md'
+            variant='solid'
+            colorScheme='primary'
             onClick={() => saveTabAsFile(activeTab)}
-            className='rounded-md bg-ash_gray px-2 py-2 text-xs text-white transition-all hover:bg-ash_gray-800 focus:outline-none xl:text-base'
+            ariaLabel={`Save tab ${tabs[activeTab].name} as file`}
           >
             <IoSave className='mr-2 inline-block' /> Save file
-          </button>
+          </Button>
         </div>
       </div>
 

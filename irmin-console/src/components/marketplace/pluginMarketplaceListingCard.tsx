@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
+
 import { IoClose } from 'react-icons/io5';
 import { TbCheck } from 'react-icons/tb';
 
-const PluginMarketplaceListingCard: React.FC<{ plugin: any }> = ({
+import { MarketplacePlugin } from '@/components/marketplace/pluginMarketplace';
+import Button from '@/components/misc/Button';
+
+const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
   plugin,
 }) => {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <div className='rounded border p-4 shadow transition duration-300 hover:shadow-lg'>
+    <div className='rounded-lg border bg-white p-4 shadow transition duration-300 hover:shadow-lg'>
       <div className='mb-2 flex items-center justify-between'>
         <span className='font-medium text-gray-800'>{plugin.name}</span>
         {plugin.connected ? (
-          <span className='text-ash_gray'>
+          <span className='text-irmin_green'>
             <TbCheck className='text-2xl' />
           </span>
         ) : null}
@@ -21,27 +25,35 @@ const PluginMarketplaceListingCard: React.FC<{ plugin: any }> = ({
         Provider: {plugin.provider}
       </div>
       <div className='flex items-center justify-between'>
-        <span className={`font-lighter text-gray-600`}>${plugin.price}</span>
+        <span className={`font-lighter text-gray-600`}>{plugin.price} €</span>
         <div>
-          <button
-            className='mr-4 rounded text-ash_gray hover:text-ash_gray-700'
+          <Button
+            variant='link'
+            colorScheme='primary'
+            size='sm'
+            className='mr-4'
             onClick={() => setShowDetails(true)}
+            ariaLabel={`View details of ${plugin.name}`}
           >
             Details
-          </button>
+          </Button>
           {plugin.connected ? (
-            <span className='inline-block rounded bg-ash_gray px-2 py-1 text-xs font-semibold text-white'>
+            <span className='inline-block rounded bg-irmin_green px-2 py-1 text-xs font-semibold text-white'>
               Connected
             </span>
           ) : (
-            <button
-              className='rounded bg-ash_gray px-4 py-2 text-white hover:bg-ash_gray-700'
+            <Button
+              variant='solid'
+              colorScheme='primary'
+              size='sm'
+              ariaLabel={`Connect to ${plugin.name}`}
               onClick={() => {
-                /* function to handle connect */
+                /* TODO: function to handle connect */
+                console.log('Connect to', plugin.name);
               }}
             >
               Connect
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -51,12 +63,14 @@ const PluginMarketplaceListingCard: React.FC<{ plugin: any }> = ({
           <div className='w-full rounded bg-white p-6 shadow-lg md:w-3/4 lg:w-1/2'>
             <div className='mb-4 flex items-center justify-between border-b pb-3'>
               <h2 className='text-xl font-semibold'>{plugin.name} - Details</h2>
-              <button
-                className='text-gray-800 hover:text-gray-600'
+              <Button
+                variant='icon'
+                colorScheme='black'
                 onClick={() => setShowDetails(false)}
+                ariaLabel='Close details popup'
               >
                 <IoClose />
-              </button>
+              </Button>
             </div>
             <div className='flex flex-col space-y-2'>
               {/* Description */}
@@ -76,12 +90,14 @@ const PluginMarketplaceListingCard: React.FC<{ plugin: any }> = ({
               </div>
             </div>
             <div className='mt-4 flex justify-end'>
-              <button
-                className='rounded bg-ash_gray px-4 py-2 text-white hover:bg-ash_gray-600'
+              <Button
+                variant='solid'
+                colorScheme='primary'
                 onClick={() => setShowDetails(false)}
+                ariaLabel='Close details popup'
               >
-                Close
-              </button>
+                Close the details popup
+              </Button>
             </div>
           </div>
         </div>

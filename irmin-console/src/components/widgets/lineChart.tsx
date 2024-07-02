@@ -1,18 +1,23 @@
 'use client';
 
 import React from 'react';
-import { Line } from 'react-chartjs-2';
+
 import {
-  Chart as ChartJS,
   CategoryScale,
+  Chart as ChartJS,
+  Legend,
   LinearScale,
-  PointElement,
   LineElement,
+  PointElement,
   Title,
   Tooltip,
-  Legend,
 } from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
 import { IoSettings } from 'react-icons/io5';
+
+import Button from '@/components/misc/Button';
+
 import { Visualisation } from '@/types/DataSet';
 
 // Register the components required for the chart
@@ -29,21 +34,22 @@ ChartJS.register(
 const LineChart = ({ visualisation }: { visualisation: Visualisation }) => {
   if (visualisation.type !== 'line') return <></>;
   return (
-    <div className='rounded border-t-2 border-ash_gray p-4 shadow-lg'>
+    <div className='rounded border-t-2 border-irmin_green bg-white p-2 shadow-lg md:p-4'>
       <div className='flex h-14 items-center justify-between border-b px-6 py-4'>
         <h2 className='text-xl font-semibold leading-tight'>
           {visualisation.title}
         </h2>
-        <button
-          className='text-gray-200 transition duration-300 hover:text-ash_gray-600'
+        <Button
+          variant='icon'
+          colorScheme='primary'
           onClick={() => {
             // TODO: Implement settings modal
           }}
         >
-          <IoSettings size={20} />
-        </button>
+          <IoSettings size={18} />
+        </Button>
       </div>
-      <div className='overflow-hidden overflow-y-scroll px-2 pb-2'>
+      <div className='min-w-full max-w-[calc(100vw-4px)] overflow-scroll align-middle'>
         <Line
           data={visualisation.data}
           options={{

@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+
 import { IoAdd, IoClose } from 'react-icons/io5';
+
+import Button from '@/components/misc/Button';
 
 export default function SideModal({
   setIsOpen,
@@ -9,7 +12,7 @@ export default function SideModal({
   children,
   title,
 }: {
-  setIsOpen: (isOpen: boolean) => void;
+  setIsOpen: (_isOpen: boolean) => void;
   isOpen: boolean;
   steps: string[];
   currentStep: number;
@@ -34,14 +37,18 @@ export default function SideModal({
 
   return (
     <>
-      <div className='fixed right-10 top-28 z-10'>
-        <button
-          className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-ash_gray text-white transition-all hover:bg-ash_gray-600'
-          onClick={() => setIsOpen(true)}
-        >
+      <button
+        className='group absolute right-2 top-28 flex cursor-pointer items-center justify-center transition-all lg:right-5 lg:top-40'
+        onClick={() => setIsOpen(true)}
+        aria-label={title}
+      >
+        <p className='-mr-3 flex items-center justify-center rounded-l-full bg-white py-2 pl-2 pr-4 text-xs text-irmin_green shadow transition-all group-hover:text-sm group-hover:text-irmin_green-400'>
+          {title}
+        </p>
+        <p className='flex h-12 w-12 items-center justify-center rounded-full bg-irmin_green text-white transition-all group-hover:bg-irmin_green-400'>
           <IoAdd size={30} />
-        </button>
-      </div>
+        </p>
+      </button>
       {(isRealOpen || isAnimating) && (
         <div className='fixed inset-0 z-50 flex items-center justify-center'>
           <div className='relative h-full w-full'>
@@ -54,12 +61,14 @@ export default function SideModal({
             >
               <div className='flex h-full flex-col justify-start'>
                 <div className='z-10 flex w-full justify-end pr-4 pt-[44px]'>
-                  <button
-                    className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-ash_gray text-white transition-all hover:bg-ash_gray-600'
+                  <Button
+                    variant='icon'
+                    colorScheme='primary'
                     onClick={() => setIsOpen(false)}
+                    ariaLabel='Close modal'
                   >
                     <IoClose size={30} />
-                  </button>
+                  </Button>
                 </div>
                 <div className='flex h-14 items-center justify-between border-b px-6 py-4'>
                   <h3 className='text-xl font-semibold'>{title}</h3>
@@ -75,7 +84,7 @@ export default function SideModal({
                       <div
                         className={`lg-4 mr-2 flex h-6 w-6 items-center justify-center rounded-full text-sm text-white lg:mb-0 ${
                           currentStep >= index + 1
-                            ? 'bg-ash_gray-500'
+                            ? 'bg-irmin_green-500'
                             : 'bg-gray-300'
                         }`}
                       >
@@ -84,7 +93,7 @@ export default function SideModal({
                       <span
                         className={`text-xs ${
                           currentStep >= index + 1
-                            ? 'text-ash_gray-500'
+                            ? 'text-irmin_green-500'
                             : 'text-gray-500'
                         }`}
                       >

@@ -1,27 +1,39 @@
 'use client';
 
 import { createContext, useContext, useState } from 'react';
+
 import Alert from '@/components/misc/Alert';
 import ConfirmPopup from '@/components/misc/ConfirmPopup';
+import Modal from '@/components/misc/Modal';
 import NotificationPopup from '@/components/notifications/NotificationPopup';
 
 const PopupContext = createContext<{
-  irminAlert: (type: 'success' | 'error' | 'info', message: string) => void;
+  irminAlert: (_type: 'success' | 'error' | 'info', _message: string) => void;
   irminConfirm: (
-    type: 'success' | 'error' | 'info',
-    message: string,
-    onConfirm: () => void,
-    onCancel: () => void
+    _type: 'success' | 'error' | 'info',
+    _message: string,
+    _onConfirm: () => void,
+    _onCancel: () => void
   ) => void;
   toggleNotificationsPopup: (
-    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+    _e: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => void;
+  irminModal: {
+    show: (
+      _title: string,
+      _content: React.ReactNode,
+      _onClose: () => void
+    ) => void;
+    close: () => void;
+  };
 }>({
   irminAlert: () => {},
   irminConfirm: () => {},
-  toggleNotificationsPopup: (
-    _: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => {},
+  toggleNotificationsPopup: () => {},
+  irminModal: {
+    show: () => {},
+    close: () => {},
+  },
 });
 
 export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
@@ -36,7 +48,7 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     setTimeout(() => {
       setAlertType(null);
       setAlertMessage(null);
-    }, 5000);
+    }, 10000);
   };
 
   // Handle confirmations
@@ -58,12 +70,6 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     setConfirmMessage(message);
     setConfirmSuccess(confirmSuccess);
     setConfirmCancel(confirmCancel);
-    setTimeout(() => {
-      setConfirmType(null);
-      setConfirmMessage(null);
-      setConfirmSuccess(null);
-      setConfirmCancel(null);
-    }, 10000);
   };
 
   // Handle notifications
@@ -79,12 +85,40 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     setNotificationsPopupOpen(!notificationsPopupOpen);
   };
 
+  // Handle modal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalContent, setModalContent] = useState<React.ReactNode | null>(
+    null
+  );
+  const [modalOnClose, setModalOnClose] = useState<() => void>(() => {});
+  const showIrminModal = (
+    title: string,
+    content: React.ReactNode,
+    onClose: () => void
+  ) => {
+    setModalTitle(title);
+    setModalContent(content);
+    setModalOnClose(onClose);
+    setModalOpen(true);
+  };
+  const closeModal = () => {
+    setModalOpen(false);
+    if (modalOnClose) {
+      modalOnClose();
+    }
+  };
+
   return (
     <PopupContext.Provider
       value={{
         irminAlert: irminAlert,
         irminConfirm: irminConfirm,
         toggleNotificationsPopup,
+        irminModal: {
+          show: showIrminModal,
+          close: closeModal,
+        },
       }}
     >
       {children}
@@ -113,6 +147,20 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
         <NotificationPopup
           notificationsClickPosition={notificationsClickPosition}
         />
+      )}
+      {modalOpen && (
+        <Modal
+          isOpen={modalOpen}
+          title={modalTitle}
+          onClose={() => {
+            setModalOpen(false);
+            if (modalOnClose) {
+              modalOnClose();
+            }
+          }}
+        >
+          {modalContent}
+        </Modal>
       )}
     </PopupContext.Provider>
   );

@@ -1,5 +1,7 @@
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+
+import Input from '@/components/misc/Input';
 
 export default function WebsiteCareersSection() {
   return (
@@ -11,15 +13,15 @@ export default function WebsiteCareersSection() {
           backgroundPosition: 'center',
         }}
       >
-        <div className='container mx-auto px-4'>
+        <div className='container mx-auto max-w-7xl px-4'>
           <div className='mx-auto mb-8 max-w-4xl text-center'>
-            <span className='mb-4 inline-block rounded-full bg-ash_gray px-2 py-px text-xs font-medium uppercase leading-5 text-white shadow-sm'>
+            <span className='mb-4 inline-block rounded-full bg-irmin_green px-2 py-px text-xs font-medium uppercase leading-5 text-white shadow-sm'>
               We are hiring
             </span>
             <h3 className='mb-4 text-3xl font-bold leading-tight tracking-tighter md:text-4xl'>
               Join our team
             </h3>
-            <p className='text-lg font-medium text-rich_black md:text-xl'>
+            <p className='text-lg font-medium text-irmin_black md:text-xl'>
               Our philosophy is simple — hire a team of diverse, passionate
               people and foster a culture that empowers you to do you best work.
             </p>
@@ -35,15 +37,16 @@ export default function WebsiteCareersSection() {
                     width={24}
                     height={24}
                   />
-                  <input
-                    className='shadow-xsm h-full w-full rounded-full border border-rich_black py-3 pl-12 pr-4 leading-tight text-rich_black placeholder-rich_black focus:outline-none'
+                  <Input
+                    variant='outline'
+                    colorScheme='black'
                     type='text'
                     placeholder='Search'
                   />
                 </div>
               </div>
               <div className='mb-3 w-full px-3 md:mb-0 md:w-1/3'>
-                <div className='relative rounded-full border border-rich_black bg-white shadow-md'>
+                <div className='relative rounded-full border border-irmin_black bg-white shadow-md'>
                   <svg
                     className='absolute right-0 top-1/2 mr-5 -translate-y-1/2 transform'
                     width={12}
@@ -58,7 +61,7 @@ export default function WebsiteCareersSection() {
                     />
                   </svg>
                   <select
-                    className='w-full appearance-none rounded-full border-0 bg-transparent px-4 py-3 leading-6 text-rich_black outline-none hover:cursor-pointer focus:outline-none'
+                    className='w-full appearance-none rounded-full border-0 bg-transparent px-4 py-3 leading-6 text-irmin_black outline-none hover:cursor-pointer focus:outline-none'
                     name=''
                   >
                     <option value={1}>Location</option>
@@ -68,7 +71,7 @@ export default function WebsiteCareersSection() {
                 </div>
               </div>
               <div className='w-full px-3 md:w-1/3'>
-                <div className='relative rounded-full border border-rich_black bg-white shadow-md'>
+                <div className='relative rounded-full border border-irmin_black bg-white shadow-md'>
                   <svg
                     className='absolute right-0 top-1/2 mr-5 -translate-y-1/2 transform'
                     width={12}
@@ -83,7 +86,7 @@ export default function WebsiteCareersSection() {
                     />
                   </svg>
                   <select
-                    className='w-full appearance-none rounded-full border-0 bg-transparent px-4 py-3 leading-6 text-rich_black outline-none hover:cursor-pointer focus:outline-none'
+                    className='w-full appearance-none rounded-full border-0 bg-transparent px-4 py-3 leading-6 text-irmin_black outline-none hover:cursor-pointer focus:outline-none'
                     name=''
                   >
                     <option value={1}>Type</option>
@@ -104,7 +107,7 @@ export default function WebsiteCareersSection() {
               <div className='flex flex-wrap'>
                 <div className='mb-2 inline-flex w-full items-center lg:mb-0 lg:mr-10 lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -116,13 +119,13 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Remote friendly
                   </span>
                 </div>
                 <div className='inline-flex w-full items-center lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -134,7 +137,7 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Full-time
                   </span>
                 </div>
@@ -142,7 +145,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
+                className='inline-block w-full rounded-full bg-irmin_green-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-irmin_green-600 md:w-auto'
                 href='#'
               >
                 View Job
@@ -159,7 +162,7 @@ export default function WebsiteCareersSection() {
               <div className='flex flex-wrap'>
                 <div className='mb-2 inline-flex w-full items-center lg:mb-0 lg:mr-10 lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -171,13 +174,13 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Remote friendly
                   </span>
                 </div>
                 <div className='inline-flex w-full items-center lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -189,7 +192,7 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Full-time
                   </span>
                 </div>
@@ -197,7 +200,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
+                className='inline-block w-full rounded-full bg-irmin_green-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-irmin_green-600 md:w-auto'
                 href='#'
               >
                 View Job
@@ -214,7 +217,7 @@ export default function WebsiteCareersSection() {
               <div className='flex flex-wrap'>
                 <div className='mb-2 inline-flex w-full items-center lg:mb-0 lg:mr-10 lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -226,13 +229,13 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Remote friendly
                   </span>
                 </div>
                 <div className='inline-flex w-full items-center lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -244,7 +247,7 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Full-time
                   </span>
                 </div>
@@ -252,7 +255,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
+                className='inline-block w-full rounded-full bg-irmin_green-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-irmin_green-600 md:w-auto'
                 href='#'
               >
                 View Job
@@ -269,7 +272,7 @@ export default function WebsiteCareersSection() {
               <div className='flex flex-wrap'>
                 <div className='mb-2 inline-flex w-full items-center lg:mb-0 lg:mr-10 lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -281,13 +284,13 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Remote friendly
                   </span>
                 </div>
                 <div className='inline-flex w-full items-center lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -299,7 +302,7 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Full-time
                   </span>
                 </div>
@@ -307,7 +310,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
+                className='inline-block w-full rounded-full bg-irmin_green-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-irmin_green-600 md:w-auto'
                 href='#'
               >
                 View Job
@@ -324,7 +327,7 @@ export default function WebsiteCareersSection() {
               <div className='flex flex-wrap'>
                 <div className='mb-2 inline-flex w-full items-center lg:mb-0 lg:mr-10 lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -336,13 +339,13 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Remote friendly
                   </span>
                 </div>
                 <div className='inline-flex w-full items-center lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -354,7 +357,7 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Full-time
                   </span>
                 </div>
@@ -362,7 +365,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
+                className='inline-block w-full rounded-full bg-irmin_green-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-irmin_green-600 md:w-auto'
                 href='#'
               >
                 View Job
@@ -379,7 +382,7 @@ export default function WebsiteCareersSection() {
               <div className='flex flex-wrap'>
                 <div className='mb-2 inline-flex w-full items-center lg:mb-0 lg:mr-10 lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -391,13 +394,13 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Remote friendly
                   </span>
                 </div>
                 <div className='inline-flex w-full items-center lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -409,7 +412,7 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Full-time
                   </span>
                 </div>
@@ -417,7 +420,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
+                className='inline-block w-full rounded-full bg-irmin_green-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-irmin_green-600 md:w-auto'
                 href='#'
               >
                 View Job
@@ -434,7 +437,7 @@ export default function WebsiteCareersSection() {
               <div className='flex flex-wrap'>
                 <div className='mb-2 inline-flex w-full items-center lg:mb-0 lg:mr-10 lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -446,13 +449,13 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Remote friendly
                   </span>
                 </div>
                 <div className='inline-flex w-full items-center lg:w-auto'>
                   <svg
-                    className='text-rich_black'
+                    className='text-irmin_black'
                     width={24}
                     height={24}
                     viewBox='0 0 24 24'
@@ -464,7 +467,7 @@ export default function WebsiteCareersSection() {
                       fill='currentColor'
                     />
                   </svg>
-                  <span className='ml-2 font-medium text-rich_black'>
+                  <span className='ml-2 font-medium text-irmin_black'>
                     Full-time
                   </span>
                 </div>
@@ -472,7 +475,7 @@ export default function WebsiteCareersSection() {
             </div>
             <div className='w-full md:w-auto'>
               <Link
-                className='inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-ash_gray-600 md:w-auto'
+                className='inline-block w-full rounded-full bg-irmin_green-500 px-7 py-3 text-center text-lg font-medium leading-8 text-white shadow-sm hover:bg-irmin_green-600 md:w-auto'
                 href='#'
               >
                 View Job

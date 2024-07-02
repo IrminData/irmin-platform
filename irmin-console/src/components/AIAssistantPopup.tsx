@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, KeyboardEvent } from 'react';
-import Image from 'next/image';
+import React, { KeyboardEvent, useState } from 'react';
+
 import { AiOutlineSend } from 'react-icons/ai';
 import { IoClose } from 'react-icons/io5';
 import { RiRobot2Line } from 'react-icons/ri';
+
+import Button from '@/components/misc/Button';
 
 interface Message {
   id: number;
@@ -46,8 +48,8 @@ export default function AIAssistantPopup() {
   return (
     <>
       {open && (
-        <div className='chatWindow fixed bottom-20 right-3 z-10 w-11/12 rounded-xl rounded-br-none border-t-2 bg-white p-4 shadow-lg md:bottom-10 md:right-28 md:w-1/3 lg:w-2/5 xl:w-1/4'>
-          <div className='mb-4 h-96 overflow-y-auto'>
+        <div className='chatWindow fixed bottom-8 right-2 z-10 max-h-[70vh] w-11/12 rounded-xl rounded-br-none border-t-2 bg-white p-4 shadow-lg md:bottom-6 md:right-16 md:w-1/3 lg:bottom-10 lg:right-24 lg:w-2/5 xl:w-1/4'>
+          <div className='mb-4 h-2/3 max-h-[calc(70vh-200px)] overflow-y-auto'>
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -58,8 +60,8 @@ export default function AIAssistantPopup() {
                 <div
                   className={`my-1 max-w-xs rounded-lg p-2 font-light ${
                     message.sender === 'user'
-                      ? 'rounded-bl-none bg-beige'
-                      : 'rounded-br-none bg-ash_gray-800'
+                      ? 'rounded-bl-none bg-irmin_light_green'
+                      : 'rounded-br-none bg-irmin_green-300'
                   }`}
                 >
                   {message.text}
@@ -69,36 +71,42 @@ export default function AIAssistantPopup() {
           </div>
           {messages.filter((a) => a.sender === 'user').length === 0 && (
             <>
-              <p>Suggestions:</p>
-              <div className='mr-2 flex items-end'>
-                <button
+              <p className='text-xs text-gray-600'>Suggestions:</p>
+              <div className='my-1 mr-2 flex items-end'>
+                <Button
+                  size='sm'
+                  className='w-full rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-50'
                   onClick={() =>
                     setNewMessage('How to connect a new data source?')
                   }
-                  className={`my-1 w-full cursor-pointer rounded-lg bg-gray-100 p-2 font-light transition-all hover:bg-gray-200`}
+                  ariaLabel='Ask Haz: How to connect a new data source?'
                 >
                   {'How to connect a new data source?'}
-                </button>
+                </Button>
               </div>
-              <div className='mr-2 flex items-end'>
-                <button
+              <div className='my-1 mr-2 flex items-end'>
+                <Button
+                  size='sm'
+                  className='w-full rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-50'
                   onClick={() =>
                     setNewMessage('Which sources do my sales mostly come from?')
                   }
-                  className={`my-1 w-full cursor-pointer rounded-lg bg-gray-100 p-2 font-light transition-all hover:bg-gray-200`}
+                  ariaLabel='Ask Haz: Which sources do my sales mostly come from?'
                 >
                   {'Which sources do my sales mostly come from?'}
-                </button>
+                </Button>
               </div>
-              <div className='mr-2 flex items-end'>
-                <button
+              <div className='my-1 mr-2 flex items-end'>
+                <Button
+                  size='sm'
+                  className='w-full rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-50'
                   onClick={() =>
                     setNewMessage('Which ad campaigns are the most profitable?')
                   }
-                  className={`my-1 w-full cursor-pointer rounded-lg bg-gray-100 p-2 font-light transition-all hover:bg-gray-200`}
+                  ariaLabel='Ask Haz: Which ad campaigns are the most profitable?'
                 >
                   {'Which ad campaigns are the most profitable?'}
-                </button>
+                </Button>
               </div>
             </>
           )}
@@ -113,30 +121,36 @@ export default function AIAssistantPopup() {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              className='mr-2 block h-32 w-full appearance-none rounded-lg border bg-ash_gray-900 p-3 leading-5 text-rich_black shadow-md'
+              className='mr-2 block h-32 w-full appearance-none rounded-lg border bg-gray-50 p-3 leading-5 text-irmin_black shadow-md'
               placeholder='Write your message here...'
             />
-            <button
+            <Button
               type='submit'
-              className='rounded-full bg-ash_gray-400 p-3 text-white hover:bg-ash_gray-500 md:hidden'
+              variant='solid'
+              colorScheme='primary'
+              ariaLabel='Send your message to Haz'
+              onClick={handleSendMessage}
             >
               <AiOutlineSend className='h-4 w-4' />
-            </button>
+            </Button>
           </form>
         </div>
       )}
       <div className='fixed bottom-10 right-5 z-10'>
-        <button
-          className='cursor-pointer rounded-full bg-midnight_green p-5 text-center shadow-lg transition-all hover:bg-midnight_green-600'
+        <Button
+          ariaLabel='Toggle AI Assistant'
+          type='submit'
+          variant='solid'
+          colorScheme='tertiary'
+          className='rounded-full p-5'
           onClick={() => setOpen(!open)}
-          aria-label='Toggle AI Assistant'
         >
           {open ? (
             <IoClose className='text-[25px] text-white' />
           ) : (
             <RiRobot2Line className='text-[25px] text-white' />
           )}
-        </button>
+        </Button>
       </div>
     </>
   );

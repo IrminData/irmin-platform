@@ -10,10 +10,10 @@ export default function WebsiteTestimonialsSection() {
           backgroundPosition: 'center',
         }}
       >
-        <div className='container mx-auto px-4'>
+        <div className='container mx-auto max-w-7xl px-4'>
           <div className='-mx-4 flex flex-wrap items-center justify-center lg:justify-between'>
             <div className='order-last w-auto px-4 lg:order-first'>
-              <button className='inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-50 hover:bg-rich_black-100'>
+              <button className='inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-50 hover:bg-irmin_black-100'>
                 <svg
                   width={12}
                   height={14}
@@ -41,7 +41,7 @@ export default function WebsiteTestimonialsSection() {
                   <h3 className='mb-2 text-xl font-semibold md:text-2xl'>
                     Darren Dunlap
                   </h3>
-                  <span className='text-lg font-light text-rich_black'>
+                  <span className='text-lg font-light text-irmin_black'>
                     CEO &amp; Founder at Acme Inc.
                   </span>
                 </div>
@@ -72,7 +72,7 @@ export default function WebsiteTestimonialsSection() {
               </div>
             </div>
             <div className='order-last w-auto px-4'>
-              <button className='inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-50 hover:bg-rich_black-100'>
+              <button className='inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-50 hover:bg-irmin_black-100'>
                 <svg
                   width={12}
                   height={14}

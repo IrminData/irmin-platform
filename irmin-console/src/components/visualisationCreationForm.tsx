@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BsTable, BsBarChart, BsGraphUp, BsSpeedometer } from 'react-icons/bs';
+
+import { BsBarChart, BsGraphUp, BsSpeedometer, BsTable } from 'react-icons/bs';
+
+import Button from '@/components/misc/Button';
+import Input from '@/components/misc/Input';
 
 const VisualisationCreationForm = () => {
   const [visualisationName, setVisualisationName] = useState('');
@@ -23,15 +27,18 @@ const VisualisationCreationForm = () => {
           htmlFor='tileName'
           className='block text-sm font-medium text-gray-700'
         >
-          Visualisation Name
+          Visualisation name
         </label>
-        <input
+        <Input
+          variant='solid'
+          colorScheme='black'
           type='text'
           id='visualisationName'
-          value={visualisationName}
+          defaultValue={visualisationName}
           onChange={(e) => setVisualisationName(e.target.value)}
-          placeholder='monthly sales'
-          className='mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none sm:text-sm'
+          placeholder='eg. monthly sales chart'
+          ariaLabel='Visualisation name'
+          className='mt-2 block w-full'
         />
       </div>
 
@@ -46,7 +53,7 @@ const VisualisationCreationForm = () => {
           id='dashboard'
           value={dashboard}
           onChange={(e) => setDashboard(e.target.value)}
-          className='mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none sm:text-sm'
+          className='mt-2 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none sm:text-sm'
         >
           <option>Select dashboard (optional)</option>
           <option>Dashboard 1</option>
@@ -76,11 +83,14 @@ const VisualisationCreationForm = () => {
           </select>
         </div>
       </div>
-      <div>
-        <button className='w-full rounded-md bg-ash_gray px-4 py-2 text-white transition-all hover:bg-ash_gray-800 focus:outline-none'>
-          Create visualisation
-        </button>
-      </div>
+      <Button
+        size='md'
+        colorScheme='primary'
+        variant='solid'
+        ariaLabel='Create a visualisation'
+      >
+        Create visualisation
+      </Button>
     </div>
   );
 };

@@ -1,19 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { SelectConnector } from '@/components/connection-setup/selectConnector';
+import ConnectionService from '@/lib/api/ConnectionService';
+
 import DefineConnectionDetails from '@/components/connection-setup/defineConnectionDetails';
 import DefineConnectionSettings from '@/components/connection-setup/defineConnectionSettings';
 import DefineSync from '@/components/connection-setup/defineSync';
-import ConnectionService from '@/lib/ConnectionService';
+import { SelectConnector } from '@/components/connection-setup/selectConnector';
+import LoadingSpinner from '@/components/misc/LoadingSpinner';
+
+import { usePopup } from '@/context/PopupContext';
+
 import {
   ConnectionDetailsAndSettings,
   ConnectionDetailsAndSettingsFields,
   Connector,
 } from '@/types/Connector';
-import { usePopup } from '@/context/PopupContext';
-import LoadingSpinner from '../misc/LoadingSpinner';
 
 export interface connectionDataType {
   name: string;

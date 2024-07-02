@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { DataRow, DataSet, Visualisation, Column } from '@/types/DataSet';
+
+import { Column, DataRow, DataSet, Visualisation } from '@/types/DataSet';
 
 // Helper functions (same as in the previous route)
 const generateRandomDataRow = (columns: Column[]): DataRow => {

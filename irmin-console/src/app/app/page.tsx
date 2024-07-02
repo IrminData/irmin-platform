@@ -1,15 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import WorkspaceService from '@/lib/WorkspaceService';
-import { useWorkspace } from '@/context/WorkspaceContext';
-import { Workspace } from '@/types/Workspace';
+
+import WorkspaceService from '@/lib/api/WorkspaceService';
+
+import AppTitle from '@/components/appTitle';
+import Button from '@/components/misc/Button';
+import Input from '@/components/misc/Input';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
+import WorkspaceCard from '@/components/workspaceCard';
+
+import { useWorkspace } from '@/context/workspace';
 
 const ManageWorkspaces: React.FC = () => {
-  const router = useRouter();
-  const { workspaces, setCurrentWorkspace, fetchWorkspaces } = useWorkspace();
+  const { workspaces, fetchWorkspaces, workspaceLoading } = useWorkspace();
   const workspaceService = WorkspaceService.getInstance();
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -37,105 +41,112 @@ const ManageWorkspaces: React.FC = () => {
       } else {
         throw new Error(response.message || 'Creation failed');
       }
-    } catch (error: any) {
-      setError(error?.message ?? 'Creation failed');
+    } catch (error) {
+      setError((error as Error)?.message ?? 'Creation failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSelectWorkspace = async (workspace: Workspace) => {
-    setError(null);
-    setSuccess(null);
-    try {
-      const newWorkspace = await workspaceService.switchWorkspace(
-        workspace.slug
-      );
-      if (newWorkspace) {
-        setCurrentWorkspace(newWorkspace);
-        router.push(`/app/${newWorkspace.slug}/dashboards`);
-      } else {
-        throw new Error('Switching workspace failed');
-      }
-    } catch (error: any) {
-      setError(error?.message ?? 'Switching workspace failed');
-    }
-  };
-
   return (
-    <div className='container mx-auto px-4 py-12 md:py-24'>
-      {workspaces && workspaces.length > 0 && (
-        <>
-          <div className='mx-auto max-w-sm'>
-            <p className='mb-4 block text-center font-light text-rich_black'>
-              Select an existing workspace
+    <>
+      <AppTitle
+        title='Manage your workspaces'
+        props={{
+          className: 'text-center mx-auto',
+        }}
+      />
+      <div className='container mx-auto px-4 pb-28 pt-4'>
+        {!workspaces && (
+          <>
+            <p className='text-center text-lg font-light text-irmin_black'>
+              Loading workspaces...
             </p>
-            {workspaces ? (
-              workspaces.length > 0 ? (
-                workspaces.map((workspace) => (
-                  <div key={workspace.id} className='mb-4'>
-                    <div
-                      className='w-full cursor-pointer rounded-full border border-gray-500 px-7 py-3 text-base font-medium leading-6 text-gray-500 shadow-sm transition-all hover:border-ash_gray hover:text-ash_gray focus:outline-none'
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleSelectWorkspace(workspace);
-                      }}
-                      aria-label={`Go to ${workspace.name}`}
-                    >
-                      {workspace.name}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className='text-lg font-light text-rich_black'>
-                  No workspaces available.
-                </p>
-              )
-            ) : (
-              <>
-                <p className='text-lg font-light text-rich_black'>
-                  Loading workspaces...
-                </p>
-                <LoadingSpinner />
-              </>
-            )}
+            <LoadingSpinner />
+          </>
+        )}
+        {workspaces && (
+          <div className='mx-auto max-w-sm'>
+            <p className='mb-4 block text-center font-normal text-gray-400'>
+              Create a workspace
+            </p>
+            <form
+              onSubmit={handleCreateWorkspace}
+              className={`${workspaceLoading && 'blur-sm'}`}
+            >
+              <Input
+                variant='solid'
+                colorScheme='secondary'
+                size='md'
+                type='text'
+                id='newWorkspaceName'
+                placeholder='Workspace Name'
+                onChange={(e) => setNewWorkspaceName(e.target.value ?? '')}
+                required
+                ariaLabel='Workspace Name'
+                className='mb-6 w-full'
+              />
+              {error && <p className='mb-4 text-red-800'>{error}</p>}
+              {success && <p className='mb-4 text-irmin_green'>{success}</p>}
+              <Button
+                variant='outline'
+                colorScheme='secondary'
+                className='mb-6 w-full'
+                type='submit'
+                ariaLabel='Create Workspace'
+                disabled={loading || workspaceLoading}
+                loading={loading}
+              >
+                Create a workspace
+              </Button>
+            </form>
           </div>
-
-          <hr className='mx-auto my-12 max-w-sm border-gray-200 shadow-sm' />
-        </>
-      )}
-
-      <div className='mx-auto max-w-sm'>
-        <p className='mb-4 block text-center font-light text-rich_black'>
-          {workspaces && workspaces.length > 0
-            ? 'Or create a new workspace'
-            : 'Create a workspace'}
-        </p>
-        <form onSubmit={handleCreateWorkspace}>
-          <div className='mb-6'>
-            <input
-              className='block w-full appearance-none rounded-full border border-ash_gray p-3 leading-5 text-rich_black placeholder-gray-400 shadow-md focus:outline-none'
-              type='text'
-              id='newWorkspaceName'
-              placeholder='Workspace Name'
-              value={newWorkspaceName}
-              onChange={(e) => setNewWorkspaceName(e.target.value ?? '')}
-              required
-            />
-          </div>
-          {error && <p className='mb-4 text-red-800'>{error}</p>}
-          {success && <p className='mb-4 text-ash_gray'>{success}</p>}
-          <button
-            className='mb-6 inline-block w-full cursor-pointer rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm transition-all hover:bg-ash_gray-600'
-            type='submit'
-            aria-label='Create Workspace'
-            disabled={loading}
-          >
-            {loading ? 'Creating...' : 'Create Workspace'}
-          </button>
-        </form>
+        )}
+        <hr className='mx-auto my-4 max-w-sm border-gray-200 shadow-sm' />
+        {workspaces && workspaces.length > 0 && (
+          <>
+            <p className='mb-4 block text-center font-normal text-gray-400'>
+              Or select an existing workspace
+            </p>
+            <div
+              className={`grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-3 lg:grid-cols-3 xl:grid-cols-4 xl:gap-4 ${workspaceLoading && 'blur-sm'}`}
+            >
+              {workspaces.map((workspace, idx) => (
+                <WorkspaceCard
+                  key={`select-workspace-card-${idx}`}
+                  workspace={workspace}
+                  description='Marketing, engineering, sales, and customer success teams collaborate here to drive growth.'
+                  users={[
+                    {
+                      name: 'John Doe',
+                      avatar: '/ui-assets/images/blog/avatar.png',
+                    },
+                    {
+                      name: 'Jane Doe',
+                      avatar: '/ui-assets/images/blog/avatar.png',
+                    },
+                    {
+                      name: 'John Smith',
+                      avatar: '/ui-assets/images/blog/avatar.png',
+                    },
+                    {
+                      name: 'Haz Johnson',
+                      avatar: '/ui-assets/images/blog/avatar.png',
+                    },
+                    {
+                      name: 'Tim Borovkov',
+                      avatar: '/ui-assets/images/blog/avatar.png',
+                    },
+                  ]}
+                  connectionCount={Math.floor(Math.random() * 30)}
+                  dataSetCount={Math.floor(Math.random() * 30)}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
-    </div>
+    </>
   );
 };
 

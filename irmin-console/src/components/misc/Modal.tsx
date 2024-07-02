@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { IoClose } from 'react-icons/io5';
 
 const Modal = ({
@@ -16,14 +17,15 @@ const Modal = ({
 
   return (
     <div className='fixed inset-0 flex animate-fadeIn items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm'>
-      <div className='relative w-[500px] max-w-[90vw] rounded-lg border-2 border-ash_gray bg-gray-50 p-8 shadow-lg'>
-        <div className='mb-4 flex flex-row justify-between'>
-          <h2 className='text-2xl font-normal'>{title}</h2>
+      <div className='relative w-[500px] max-w-[90vw] rounded-lg border-2 border-irmin_green bg-gray-50 p-8 shadow-lg'>
+        <div className='align-center mb-4 flex flex-row justify-between'>
+          <h2 className='text-lg font-normal'>{title}</h2>
           <button
+            className='ml-4 transition-all hover:opacity-50'
             onClick={onClose}
-            className='text-2xl leading-none text-gray-700 hover:text-gray-900'
+            aria-label='Close modal'
           >
-            <IoClose />
+            <IoClose size={24} />
           </button>
         </div>
         {children}

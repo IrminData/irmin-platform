@@ -1,12 +1,19 @@
 'use client';
 
+import { useCallback, useEffect, useRef, useState } from 'react';
+
 import Image from 'next/image';
-import { useEffect, useCallback, useRef, useState } from 'react';
+
+import ConnectionService from '@/lib/api/ConnectionService';
+
 import { connectionDataType } from '@/components/connection-setup/connectionSetupView';
-import ConnectionService from '@/lib/ConnectionService';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import Button from '@/components/misc/Button';
+import Input from '@/components/misc/Input';
+import LoadingSpinner from '@/components/misc/LoadingSpinner';
+
 import { usePopup } from '@/context/PopupContext';
-import LoadingSpinner from '../misc/LoadingSpinner';
+import { useWorkspace } from '@/context/workspace';
+
 import { ConnectionDetailsAndSettings } from '@/types/Connector';
 
 export default function DefineConnectionDetails({
@@ -48,11 +55,11 @@ export default function DefineConnectionDetails({
         connectionDetailsFields: response.data,
       }));
       setInitialLoadingDone(true);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Fetch connection details error:', error);
       irminAlert(
         'error',
-        error.message ?? 'Failed to fetch connection details'
+        (error as Error)?.message ?? 'Failed to fetch connection details'
       );
     }
   }, [
@@ -138,9 +145,12 @@ export default function DefineConnectionDetails({
         } else {
           irminAlert('error', 'Connection failed');
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error('Test connection error:', error);
-        irminAlert('error', error.message ?? 'Failed to test connection');
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to test connection'
+        );
       } finally {
         setLoading(false);
       }
@@ -166,25 +176,27 @@ export default function DefineConnectionDetails({
     <div className='p-6'>
       <div className='mb-8 flex'>
         <Image
-          src={connectionData?.connector?.logo ?? '/public/irmin-logo.svg'}
+          src={connectionData?.connector?.logo ?? '/irmin-logo.svg'}
           alt={connectionData.connector?.name ?? 'Connector'}
           className='mb-2 h-[40px]'
           width={40}
           height={40}
         />
-        <span className='mt-1 text-xl text-air_force_blue'>
+        <span className='mt-1 text-xl text-irmin_teal'>
           {connectionData.connector?.name ?? 'Connector'}
         </span>
       </div>
 
       <form ref={formRef}>
         <div className='mb-6'>
-          <label className='mb-2 block font-light text-rich_black' htmlFor=''>
+          <label className='mb-2 block font-light text-irmin_black' htmlFor=''>
             Connection name *
           </label>
-          <input
-            className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
-            type='irmin_connection_name'
+          <Input
+            variant='outline'
+            colorScheme='black'
+            className='mt-2 w-full'
+            name='irmin_connection_name'
             placeholder='Connection name'
             required
           />
@@ -196,37 +208,44 @@ export default function DefineConnectionDetails({
               key={`connection-details-field-${key.toLowerCase()}-${idx}`}
               className='mb-6'
             >
-              <label className='mb-2 block font-light text-rich_black'>
+              <label className='mb-2 block font-light text-irmin_black'>
                 {key} *
               </label>
               {value === 'password' ? (
-                <input
-                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
+                <Input
+                  variant='outline'
+                  colorScheme='black'
+                  className='mt-2 w-full'
                   type='password'
                   placeholder={key}
                   name={key.toLowerCase()}
                   required
                 />
               ) : value === 'number' || value === 'integer' ? (
-                <input
-                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
+                <Input
+                  variant='outline'
+                  colorScheme='black'
+                  className='mt-2 w-full'
                   type={'number'}
                   placeholder={key}
                   name={key.toLowerCase()}
                   required
                 />
               ) : value === 'float' ? (
-                <input
-                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
+                <Input
+                  variant='outline'
+                  colorScheme='black'
+                  className='mt-2 w-full'
                   type={'number'}
-                  step='0.001'
                   placeholder={key}
                   name={key.toLowerCase()}
                   required
                 />
               ) : (
-                <input
-                  className='block w-full appearance-none rounded-full border border-rich_black p-3 leading-5 text-rich_black placeholder-gray-200 shadow-md focus:outline-none'
+                <Input
+                  variant='outline'
+                  colorScheme='black'
+                  className='mt-2 w-full'
                   type={value}
                   placeholder={key}
                   name={key.toLowerCase()}
@@ -237,21 +256,27 @@ export default function DefineConnectionDetails({
           )
         )}
 
-        <button
-          className='mb-6 inline-block w-full rounded-full bg-ash_gray-500 px-7 py-3 text-center text-base font-medium leading-6 text-white shadow-sm hover:bg-ash_gray-600'
+        <Button
+          className='mb-6 inline-block w-full'
+          variant='solid'
+          colorScheme='primary'
+          size='md'
           onClick={continueAndTestConnection}
         >
           Continue & test connection
-        </button>
-        <button
-          className='w-full text-center text-sm font-light text-ash_gray-500 hover:text-ash_gray-600 hover:underline'
+        </Button>
+        <Button
+          className='mb-6 inline-block w-full'
+          variant='link'
+          colorScheme='primary'
+          size='sm'
           onClick={(e) => {
             e.preventDefault();
-            setCurrentStep(1);
+            setCurrentStep((currentStep) => currentStep - 1);
           }}
         >
           Go back
-        </button>
+        </Button>
       </form>
     </div>
   );

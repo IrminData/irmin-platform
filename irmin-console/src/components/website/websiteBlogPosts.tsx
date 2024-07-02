@@ -1,5 +1,7 @@
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+
+import Input from '@/components/misc/Input';
 
 export default function WebsiteBlogPosts() {
   return (
@@ -12,15 +14,15 @@ export default function WebsiteBlogPosts() {
           backgroundPosition: 'left top',
         }}
       >
-        <div className='container mx-auto px-4'>
+        <div className='container mx-auto max-w-7xl px-4'>
           <div className='mx-auto mb-8 text-center md:mb-16 md:max-w-5xl'>
-            <span className='mb-4 inline-block rounded-full bg-ash_gray px-2 py-px text-xs font-medium uppercase leading-5 text-white shadow-sm'>
+            <span className='mb-4 inline-block rounded-full bg-irmin_green px-2 py-px text-xs font-medium uppercase leading-5 text-white shadow-sm'>
               Blog
             </span>
-            <h3 className='mb-4 text-3xl font-bold leading-tight tracking-tighter text-rich_black md:text-5xl'>
+            <h3 className='mb-4 text-3xl font-bold leading-tight tracking-tighter text-irmin_black md:text-5xl'>
               Our mission is to make knowledge and news accessible for everyone.
             </h3>
-            <p className='mb-10 text-lg font-medium text-rich_black md:text-xl'>
+            <p className='mb-10 text-lg font-medium text-irmin_black md:text-xl'>
               With our integrated CRM, project management, collaboration and
               invoicing capabilities, you can manage your business in one secure
               platform.
@@ -33,8 +35,9 @@ export default function WebsiteBlogPosts() {
                 width={24}
                 height={24}
               />
-              <input
-                className='shadow-xsm w-full rounded-lg border border-rich_black py-3 pl-12 pr-4 leading-tight text-rich_black placeholder-rich_black focus:outline-none'
+              <Input
+                variant='outline'
+                colorScheme='black'
                 type='text'
                 placeholder='Search'
               />
@@ -43,7 +46,7 @@ export default function WebsiteBlogPosts() {
           <ul className='-mx-2 mb-8 flex flex-wrap text-center'>
             <li className='w-full px-2 md:w-auto'>
               <Link
-                className='mb-4 inline-block w-full rounded-md px-4 py-2 text-sm font-bold text-rich_black hover:bg-ash_gray-200 hover:text-ash_gray-500 hover:shadow-sm md:mb-0'
+                className='mb-4 inline-block w-full rounded-md px-4 py-2 text-sm font-bold text-irmin_black hover:bg-irmin_green-200 hover:text-irmin_green-500 hover:shadow-sm md:mb-0'
                 href='/blog/slug'
               >
                 All Categories
@@ -51,7 +54,7 @@ export default function WebsiteBlogPosts() {
             </li>
             <li className='w-full px-2 md:w-auto'>
               <Link
-                className='mb-4 inline-block w-full rounded-md px-4 py-2 text-sm font-bold text-rich_black hover:bg-ash_gray-200 hover:text-ash_gray-500 hover:shadow-sm md:mb-0'
+                className='mb-4 inline-block w-full rounded-md px-4 py-2 text-sm font-bold text-irmin_black hover:bg-irmin_green-200 hover:text-irmin_green-500 hover:shadow-sm md:mb-0'
                 href='/blog/slug'
               >
                 Technology
@@ -59,7 +62,7 @@ export default function WebsiteBlogPosts() {
             </li>
             <li className='w-full px-2 md:w-auto'>
               <Link
-                className='mb-4 inline-block w-full rounded-md px-4 py-2 text-sm font-bold text-rich_black hover:bg-ash_gray-200 hover:text-ash_gray-500 hover:shadow-sm md:mb-0'
+                className='mb-4 inline-block w-full rounded-md px-4 py-2 text-sm font-bold text-irmin_black hover:bg-irmin_green-200 hover:text-irmin_green-500 hover:shadow-sm md:mb-0'
                 href='/blog/slug'
               >
                 Development
@@ -67,7 +70,7 @@ export default function WebsiteBlogPosts() {
             </li>
             <li className='w-full px-2 md:w-auto'>
               <Link
-                className='mb-4 inline-block w-full rounded-md px-4 py-2 text-sm font-bold text-rich_black hover:bg-ash_gray-200 hover:text-ash_gray-500 hover:shadow-sm md:mb-0'
+                className='mb-4 inline-block w-full rounded-md px-4 py-2 text-sm font-bold text-irmin_black hover:bg-irmin_green-200 hover:text-irmin_green-500 hover:shadow-sm md:mb-0'
                 href='/blog/slug'
               >
                 Marketing
@@ -75,7 +78,7 @@ export default function WebsiteBlogPosts() {
             </li>
             <li className='w-full px-2 md:w-auto'>
               <Link
-                className='inline-block w-full rounded-md px-4 py-2 text-sm font-bold text-rich_black hover:bg-ash_gray-200 hover:text-ash_gray-500 hover:shadow-sm'
+                className='inline-block w-full rounded-md px-4 py-2 text-sm font-bold text-irmin_black hover:bg-irmin_green-200 hover:text-irmin_green-500 hover:shadow-sm'
                 href='/blog/slug'
               >
                 Start-up
@@ -98,29 +101,29 @@ export default function WebsiteBlogPosts() {
               </Link>
               <div className='mb-4'>
                 <Link
-                  className='inline-block rounded-full bg-ash_gray-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-white shadow-sm hover:bg-ash_gray-200 hover:text-ash_gray-600'
+                  className='inline-block rounded-full bg-irmin_green-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-white shadow-sm hover:bg-irmin_green-200 hover:text-irmin_green-600'
                   href='/blog/slug'
                 >
                   Technology
                 </Link>
               </div>
-              <p className='mb-2 font-medium text-rich_black'>
+              <p className='mb-2 font-medium text-irmin_black'>
                 John Doe • 19 Jan 2022
               </p>
               <Link
-                className='mb-4 inline-block text-2xl font-bold leading-tight text-rich_black hover:text-rich_black hover:underline'
+                className='mb-4 inline-block text-2xl font-bold leading-tight text-irmin_black hover:text-irmin_black hover:underline'
                 href='/blog/slug'
               >
                 A small business is only as good as its tools and it is totally
                 true.
               </Link>
-              <p className='mb-4 text-base font-light text-rich_black md:text-lg'>
+              <p className='mb-4 text-base font-light text-irmin_black md:text-lg'>
                 We&apos;ve all experienced the chaos of multiple spreadsheets,
                 tracking and insight tools, and scrambling for the right data at
                 the right time.
               </p>
               <Link
-                className='inline-flex items-center text-base font-semibold text-ash_gray-500 hover:text-ash_gray-600 md:text-lg'
+                className='inline-flex items-center text-base font-semibold text-irmin_green-500 hover:text-irmin_green-600 md:text-lg'
                 href='/blog/slug'
               >
                 <span className='mr-3'>Read Post</span>
@@ -153,29 +156,29 @@ export default function WebsiteBlogPosts() {
               </Link>
               <div className='mb-4'>
                 <Link
-                  className='inline-block rounded-full bg-ash_gray-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-white shadow-sm hover:bg-ash_gray-200 hover:text-ash_gray-600'
+                  className='inline-block rounded-full bg-irmin_green-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-white shadow-sm hover:bg-irmin_green-200 hover:text-irmin_green-600'
                   href='/blog/slug'
                 >
                   Development
                 </Link>
               </div>
-              <p className='mb-2 font-medium text-rich_black'>
+              <p className='mb-2 font-medium text-irmin_black'>
                 John Doe • 19 Jan 2022
               </p>
               <Link
-                className='mb-4 inline-block text-2xl font-bold leading-tight text-rich_black hover:text-rich_black hover:underline'
+                className='mb-4 inline-block text-2xl font-bold leading-tight text-irmin_black hover:text-irmin_black hover:underline'
                 href='/blog/slug'
               >
                 A small business is only as good as its tools and it is totally
                 true.
               </Link>
-              <p className='mb-4 text-base font-light text-rich_black md:text-lg'>
+              <p className='mb-4 text-base font-light text-irmin_black md:text-lg'>
                 We&apos;ve all experienced the chaos of multiple spreadsheets,
                 tracking and insight tools, and scrambling for the right data at
                 the right time.
               </p>
               <Link
-                className='inline-flex items-center text-base font-semibold text-ash_gray-500 hover:text-ash_gray-600 md:text-lg'
+                className='inline-flex items-center text-base font-semibold text-irmin_green-500 hover:text-irmin_green-600 md:text-lg'
                 href='/blog/slug'
               >
                 <span className='mr-3'>Read Post</span>
@@ -208,29 +211,29 @@ export default function WebsiteBlogPosts() {
               </Link>
               <div className='mb-4'>
                 <Link
-                  className='inline-block rounded-full bg-ash_gray-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-white shadow-sm hover:bg-ash_gray-200 hover:text-ash_gray-600'
+                  className='inline-block rounded-full bg-irmin_green-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-white shadow-sm hover:bg-irmin_green-200 hover:text-irmin_green-600'
                   href='/blog/slug'
                 >
                   Marketing
                 </Link>
               </div>
-              <p className='mb-2 font-medium text-rich_black'>
+              <p className='mb-2 font-medium text-irmin_black'>
                 John Doe • 19 Jan 2022
               </p>
               <Link
-                className='mb-4 inline-block text-2xl font-bold leading-tight text-rich_black hover:text-rich_black hover:underline'
+                className='mb-4 inline-block text-2xl font-bold leading-tight text-irmin_black hover:text-irmin_black hover:underline'
                 href='/blog/slug'
               >
                 A small business is only as good as its tools and it is totally
                 true.
               </Link>
-              <p className='mb-4 text-base font-light text-rich_black md:text-lg'>
+              <p className='mb-4 text-base font-light text-irmin_black md:text-lg'>
                 We&apos;ve all experienced the chaos of multiple spreadsheets,
                 tracking and insight tools, and scrambling for the right data at
                 the right time.
               </p>
               <Link
-                className='inline-flex items-center text-base font-semibold text-ash_gray-500 hover:text-ash_gray-600 md:text-lg'
+                className='inline-flex items-center text-base font-semibold text-irmin_green-500 hover:text-irmin_green-600 md:text-lg'
                 href='/blog/slug'
               >
                 <span className='mr-3'>Read Post</span>
@@ -263,29 +266,29 @@ export default function WebsiteBlogPosts() {
               </Link>
               <div className='mb-4'>
                 <Link
-                  className='inline-block rounded-full bg-ash_gray-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-white shadow-sm hover:bg-ash_gray-200 hover:text-ash_gray-600'
+                  className='inline-block rounded-full bg-irmin_green-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-white shadow-sm hover:bg-irmin_green-200 hover:text-irmin_green-600'
                   href='/blog/slug'
                 >
                   Start-up
                 </Link>
               </div>
-              <p className='mb-2 font-medium text-rich_black'>
+              <p className='mb-2 font-medium text-irmin_black'>
                 John Doe • 19 Jan 2022
               </p>
               <Link
-                className='mb-4 inline-block text-2xl font-bold leading-tight text-rich_black hover:text-rich_black hover:underline'
+                className='mb-4 inline-block text-2xl font-bold leading-tight text-irmin_black hover:text-irmin_black hover:underline'
                 href='/blog/slug'
               >
                 A small business is only as good as its tools and it is totally
                 true.
               </Link>
-              <p className='mb-4 text-base font-light text-rich_black md:text-lg'>
+              <p className='mb-4 text-base font-light text-irmin_black md:text-lg'>
                 We&apos;ve all experienced the chaos of multiple spreadsheets,
                 tracking and insight tools, and scrambling for the right data at
                 the right time.
               </p>
               <Link
-                className='inline-flex items-center text-base font-semibold text-ash_gray-500 hover:text-ash_gray-600 md:text-lg'
+                className='inline-flex items-center text-base font-semibold text-irmin_green-500 hover:text-irmin_green-600 md:text-lg'
                 href='/blog/slug'
               >
                 <span className='mr-3'>Read Post</span>
@@ -318,29 +321,29 @@ export default function WebsiteBlogPosts() {
               </Link>
               <div className='mb-4'>
                 <Link
-                  className='inline-block rounded-full bg-ash_gray-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-white shadow-sm hover:bg-ash_gray-200 hover:text-ash_gray-600'
+                  className='inline-block rounded-full bg-irmin_green-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-white shadow-sm hover:bg-irmin_green-200 hover:text-irmin_green-600'
                   href='/blog/slug'
                 >
                   Article
                 </Link>
               </div>
-              <p className='mb-2 font-medium text-rich_black'>
+              <p className='mb-2 font-medium text-irmin_black'>
                 John Doe • 19 Jan 2022
               </p>
               <Link
-                className='mb-4 inline-block text-2xl font-bold leading-tight text-rich_black hover:text-rich_black hover:underline'
+                className='mb-4 inline-block text-2xl font-bold leading-tight text-irmin_black hover:text-irmin_black hover:underline'
                 href='/blog/slug'
               >
                 A small business is only as good as its tools and it is totally
                 true.
               </Link>
-              <p className='mb-4 text-base font-light text-rich_black md:text-lg'>
+              <p className='mb-4 text-base font-light text-irmin_black md:text-lg'>
                 We&apos;ve all experienced the chaos of multiple spreadsheets,
                 tracking and insight tools, and scrambling for the right data at
                 the right time.
               </p>
               <Link
-                className='inline-flex items-center text-base font-semibold text-ash_gray-500 hover:text-ash_gray-600 md:text-lg'
+                className='inline-flex items-center text-base font-semibold text-irmin_green-500 hover:text-irmin_green-600 md:text-lg'
                 href='/blog/slug'
               >
                 <span className='mr-3'>Read Post</span>
@@ -373,29 +376,29 @@ export default function WebsiteBlogPosts() {
               </Link>
               <div className='mb-4'>
                 <Link
-                  className='inline-block rounded-full bg-ash_gray-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-white shadow-sm hover:bg-ash_gray-200 hover:text-ash_gray-600'
+                  className='inline-block rounded-full bg-irmin_green-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-white shadow-sm hover:bg-irmin_green-200 hover:text-irmin_green-600'
                   href='/blog/slug'
                 >
                   Podcast
                 </Link>
               </div>
-              <p className='mb-2 font-medium text-rich_black'>
+              <p className='mb-2 font-medium text-irmin_black'>
                 John Doe • 19 Jan 2022
               </p>
               <Link
-                className='mb-4 inline-block text-2xl font-bold leading-tight text-rich_black hover:text-rich_black hover:underline'
+                className='mb-4 inline-block text-2xl font-bold leading-tight text-irmin_black hover:text-irmin_black hover:underline'
                 href='/blog/slug'
               >
                 A small business is only as good as its tools and it is totally
                 true.
               </Link>
-              <p className='mb-4 text-base font-light text-rich_black md:text-lg'>
+              <p className='mb-4 text-base font-light text-irmin_black md:text-lg'>
                 We&apos;ve all experienced the chaos of multiple spreadsheets,
                 tracking and insight tools, and scrambling for the right data at
                 the right time.
               </p>
               <Link
-                className='inline-flex items-center text-base font-semibold text-ash_gray-500 hover:text-ash_gray-600 md:text-lg'
+                className='inline-flex items-center text-base font-semibold text-irmin_green-500 hover:text-irmin_green-600 md:text-lg'
                 href='/blog/slug'
               >
                 <span className='mr-3'>Read Post</span>
@@ -415,12 +418,12 @@ export default function WebsiteBlogPosts() {
             </div>
           </div>
           <Link
-            className='mx-auto flex items-center justify-center rounded-md bg-ash_gray-500 px-4 py-2 text-sm font-medium leading-5 text-green-50 hover:bg-ash_gray-600 md:max-w-max'
+            className='mx-auto flex items-center justify-center rounded-md bg-irmin_green-500 px-4 py-2 text-sm font-medium leading-5 text-green-50 hover:bg-irmin_green-600 md:max-w-max'
             href='/blog/slug'
           >
             <span className='mr-3'>View more</span>
             <svg
-              className='text-ash_gray-50'
+              className='text-irmin_green-50'
               width={12}
               height={10}
               viewBox='0 0 12 10'

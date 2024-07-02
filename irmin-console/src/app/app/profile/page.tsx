@@ -1,54 +1,28 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
+
+import AuthService from '@/lib/api/AuthService';
+
 import AppTitle from '@/components/appTitle';
-import { useProfile, fetchProfileData } from '@/context/ProfileContext';
-import AuthService from '@/lib/AuthService';
-import LoadingSpinner from '@/components/misc/LoadingSpinner';
+import Button from '@/components/misc/Button';
+import Input from '@/components/misc/Input';
+import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
+import SettingsTabs from '@/components/tabs/settingsTabs';
+
 import { usePopup } from '@/context/PopupContext';
+import { useProfile } from '@/context/ProfileContext';
 
 export default function UserProfileSettingsPage() {
-  const [activeTab, setActiveTab] = useState('general');
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'general':
-        return <GeneralSettings />;
-      case 'change-password':
-        return <ChangePasswordSettings />;
-      default:
-        return <GeneralSettings />;
-    }
-  };
-
   return (
     <>
       <AppTitle title='Profile settings' />
-      <div className='max-w-2xl rounded-lg border-b-2 border-t-2 border-ash_gray bg-white p-8 shadow-md'>
-        <div className='mb-6 flex border-b'>
-          <button
-            className={`px-4 py-2 text-lg font-normal ${
-              activeTab === 'general'
-                ? 'border-b-2 border-ash_gray text-ash_gray'
-                : 'text-gray-500'
-            }`}
-            onClick={() => setActiveTab('general')}
-          >
-            General
-          </button>
-          <button
-            className={`ml-6 px-4 py-2 text-lg font-normal ${
-              activeTab === 'change-password'
-                ? 'border-b-2 border-ash_gray text-ash_gray'
-                : 'text-gray-500'
-            }`}
-            onClick={() => setActiveTab('change-password')}
-          >
-            Change Password
-          </button>
-        </div>
-        <div>{renderTabContent()}</div>
-      </div>
+      <SettingsTabs
+        tabs={[
+          { name: 'General', content: <GeneralSettings /> },
+          { name: 'Change password', content: <ChangePasswordSettings /> },
+        ]}
+      />
     </>
   );
 }
@@ -59,73 +33,98 @@ const GeneralSettings: React.FC = () => {
   const authService = AuthService.getInstance();
 
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSaveChanges = async (event: React.FormEvent) => {
-    event.preventDefault();
-    // Get form values
-    const form = event.target as HTMLFormElement;
-    const name = (form.elements.namedItem('name') as HTMLInputElement).value;
-    const email = (form.elements.namedItem('email') as HTMLInputElement).value;
-    const company = (form.elements.namedItem('company') as HTMLInputElement)
-      .value;
+  const handleSaveChanges = useCallback(
+    async (event: React.FormEvent) => {
+      event.preventDefault();
+      setIsLoading(true);
+      // Get form values
+      const form = event.target as HTMLFormElement;
+      const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+      const email = (form.elements.namedItem('email') as HTMLInputElement)
+        .value;
+      const company = (form.elements.namedItem('company') as HTMLInputElement)
+        .value;
 
-    try {
-      // Call the API to update the profile
-      await authService.updateProfile(name, company, email);
-      // Update the profile context
-      const data = await fetchProfileData();
-      setProfile(data.data);
-      // Reset error and show success message
-      setError(null);
-      irminAlert('success', 'Profile updated successfully.');
-    } catch (error: any) {
-      console.error('Error updating profile:', error);
-      setError(error.message ?? 'An error occurred.');
-    }
-  };
+      try {
+        // Call the API to update the profile
+        await authService.updateProfile(name, company, email);
+        // Update the profile context
+        const data = await authService.getProfile();
+        setProfile(data.data);
+        // Reset error and show success message
+        setError(null);
+        irminAlert('success', 'Profile updated successfully.');
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        setError((error as Error)?.message ?? 'An error occurred.');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [authService, setProfile, setError, irminAlert]
+  );
 
-  if (!profile) return <LoadingSpinner />;
+  if (!profile) return <LoadingSkeleton className='h-52 w-full' />;
 
   return (
-    <div>
-      <h2 className='mb-4 text-2xl font-normal'>General Settings</h2>
-      <form onSubmit={handleSaveChanges}>
+    <div className='px-4'>
+      <h2 className='mb-4 text-xl font-normal md:text-2xl'>General Settings</h2>
+      <form onSubmit={handleSaveChanges} className='text-sm md:text-base'>
         <div className='mb-4'>
-          <label className='block text-gray-700'>Name</label>
-          <input
+          <label className='block text-sm text-gray-700 md:text-base'>
+            Name
+          </label>
+          <Input
+            variant='outline'
+            colorScheme='primary'
             type='text'
-            className='mt-2 w-full rounded border p-2'
+            className='mt-2 w-full'
             placeholder='Enter your name'
             defaultValue={profile.name}
             name='name'
           />
         </div>
         <div className='mb-4'>
-          <label className='block text-gray-700'>Email</label>
-          <input
-            type='email'
-            className='mt-2 w-full rounded border p-2'
+          <label className='block text-sm text-gray-700 md:text-base'>
+            Email
+          </label>
+          <Input
+            variant='outline'
+            colorScheme='primary'
+            type='text'
+            className='mt-2 w-full'
             placeholder='Enter your email'
             defaultValue={profile.email}
             name='email'
           />
         </div>
         <div className='mb-4'>
-          <label className='block text-gray-700'>Company</label>
-          <input
+          <label className='block text-sm text-gray-700 md:text-base'>
+            Company
+          </label>
+          <Input
+            variant='outline'
+            colorScheme='primary'
             type='text'
-            className='mt-2 w-full rounded border p-2'
+            className='mt-2 w-full'
             placeholder='Enter your company name'
             defaultValue={profile.company ?? ''}
             name='company'
           />
         </div>
-        <button
+        <Button
+          className='mt-4 w-full'
           type='submit'
-          className='cursor-pointer rounded bg-ash_gray px-4 py-2 text-white transition-all hover:bg-ash_gray-800'
+          size='md'
+          colorScheme='primary'
+          variant='solid'
+          disabled={isLoading}
+          loading={isLoading}
         >
           Save Changes
-        </button>
+        </Button>
         {error && <p className='mt-2 text-red-500'>{error}</p>}
       </form>
     </div>
@@ -133,46 +132,56 @@ const GeneralSettings: React.FC = () => {
 };
 
 const ChangePasswordSettings: React.FC = () => {
-  const handleChangePassword = (event: React.FormEvent) => {
+  const handleChangePassword = useCallback((event: React.FormEvent) => {
     event.preventDefault();
-    // Handle changing password
+    // TODO: Handle changing password
     console.log('Password changed.');
-  };
+  }, []);
 
   return (
-    <div>
-      <h2 className='mb-4 text-2xl font-normal'>Change Password</h2>
-      <form onSubmit={handleChangePassword}>
+    <div className='px-4'>
+      <h2 className='mb-4 text-xl font-normal md:text-2xl'>Change Password</h2>
+      <form onSubmit={handleChangePassword} className='text-sm md:text-base'>
         <div className='mb-4'>
           <label className='block text-gray-700'>Current Password</label>
-          <input
+          <Input
+            variant='outline'
+            colorScheme='primary'
             type='password'
-            className='mt-2 w-full rounded border p-2'
+            className='mt-2 w-full'
             placeholder='Enter your current password'
           />
         </div>
         <div className='mb-4'>
           <label className='block text-gray-700'>New Password</label>
-          <input
+          <Input
+            variant='outline'
+            colorScheme='primary'
             type='password'
-            className='mt-2 w-full rounded border p-2'
+            className='mt-2 w-full'
             placeholder='Enter your new password'
           />
         </div>
         <div className='mb-4'>
           <label className='block text-gray-700'>Confirm New Password</label>
-          <input
+          <Input
+            variant='outline'
+            colorScheme='primary'
             type='password'
-            className='mt-2 w-full rounded border p-2'
+            className='mt-2 w-full'
             placeholder='Confirm your new password'
           />
         </div>
-        <button
+
+        <Button
+          className='mt-4 w-full'
           type='submit'
-          className='cursor-pointer rounded bg-ash_gray px-4 py-2 text-white transition-all hover:bg-ash_gray-800'
+          size='md'
+          colorScheme='primary'
+          variant='solid'
         >
-          Change Password
-        </button>
+          Save Changes
+        </Button>
       </form>
     </div>
   );

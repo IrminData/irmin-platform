@@ -1,11 +1,5 @@
 import WebsiteError from '@/components/misc/websiteError';
 
-function NotFoundPage() {
-  return (
-    <>
-      <WebsiteError />
-    </>
-  );
+export default function NotFoundPage() {
+  return <WebsiteError pageNotFound={true} />;
 }
-
-export default NotFoundPage;

@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
+
+import DashboardNavigation from '@/components/dashboard-navigation/dashboardNavigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { WorkspaceProvider } from '@/context/WorkspaceContext';
+
 import { PopupProvider } from '@/context/PopupContext';
-import DashboardNavigation from '@/components/dashboardNavigation';
+import { WorkspaceProvider } from '@/context/workspace';
 
 export const metadata: Metadata = {
   title: 'Irmin App',
@@ -15,12 +17,12 @@ export default function AppLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ProtectedRoute>
+    <PopupProvider>
       <WorkspaceProvider>
-        <PopupProvider>
-          <DashboardNavigation>{children}</DashboardNavigation>
-        </PopupProvider>
+        <DashboardNavigation>
+          <ProtectedRoute>{children}</ProtectedRoute>
+        </DashboardNavigation>
       </WorkspaceProvider>
-    </ProtectedRoute>
+    </PopupProvider>
   );
 }

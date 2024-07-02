@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+
 import AppTitle from '@/components/appTitle';
 import DataMarketplaceFilters from '@/components/marketplace/dataMarketplaceFilters';
 import DataMarketplaceListingCard from '@/components/marketplace/dataMarketplaceListingCard';
+import Input from '@/components/misc/Input';
 
 export default function DataMarketplace() {
   const [selectedIndustry, setSelectedIndustry] = useState('');
@@ -234,13 +236,16 @@ export default function DataMarketplace() {
   return (
     <>
       <AppTitle title='Data Marketplace' />
-      <div className='p-4'>
-        <div className='mb-8'>
-          <input
-            className='w-full rounded border p-2'
-            type='search'
+      <div className='p-4 pb-24'>
+        <div className='mb-4'>
+          <Input
+            size='md'
+            variant='outline'
+            colorScheme='gray'
+            className='w-full'
+            type='text'
             placeholder='Search for public datasets you would like to connect and use'
-            value={search}
+            defaultValue={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>

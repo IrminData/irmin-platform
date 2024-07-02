@@ -1,5 +1,8 @@
 import Link from 'next/link';
 
+import Button from '@/components/misc/Button';
+import Input from '@/components/misc/Input';
+
 export default function WebsiteContactSection() {
   return (
     <>
@@ -10,35 +13,41 @@ export default function WebsiteContactSection() {
           backgroundPosition: 'center',
         }}
       >
-        <div className='container mx-auto px-4'>
+        <div className='container mx-auto max-w-7xl px-4'>
           <div className='lg:mb-18 mb-24 flex flex-wrap items-center justify-between'>
             <div className='mb-10 w-full lg:mb-0 lg:w-1/2'>
-              <span className='mb-4 inline-block rounded-full bg-midnight_green px-2 py-px text-xs font-light uppercase leading-5 text-white shadow-sm'>
+              <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-light uppercase leading-5 text-white shadow-sm'>
                 Contact
               </span>
-              <h3 className='mb-4 text-4xl font-bold leading-tight tracking-tighter text-rich_black md:text-5xl'>
+              <h3 className='mb-4 text-4xl font-bold leading-tight tracking-tighter text-irmin_black md:text-5xl'>
                 Let&apos;s stay connected
               </h3>
-              <p className='text-lg font-light text-rich_black md:text-xl'>
+              <p className='text-lg font-light text-irmin_black md:text-xl'>
                 It&apos;s never been easier to get in touch with Flex. Call us,
                 use our live chat widget or email and we&apos;ll get back to you
                 as soon as possible!
               </p>
             </div>
             <div className='w-full lg:w-auto'>
-              <div className='-mb-2 flex flex-wrap items-center justify-center md:justify-start'>
-                <Link
-                  className='mb-2 inline-block w-full rounded-full border border-transparent bg-ash_gray-500 px-6 py-4 text-center text-lg font-light leading-6 text-green-50 shadow-sm hover:bg-ash_gray-600 md:mb-0 md:mr-5 md:w-auto'
+              <div className='-mb-2 flex flex-wrap items-center justify-center gap-4 md:justify-start'>
+                <Button
+                  variant='outline'
+                  colorScheme='primary'
+                  size='md'
                   href='#'
+                  className='w-full'
                 >
                   Open Positions
-                </Link>
-                <Link
-                  className='inline-block w-full rounded-full border border-rich_black bg-white px-6 py-4 text-center text-lg font-light leading-6 text-rich_black shadow-sm hover:border-rich_black focus:outline-none md:w-auto'
+                </Button>
+                <Button
+                  variant='outline'
+                  colorScheme='secondary'
+                  className='w-full'
+                  size='md'
                   href='#'
                 >
                   About Us
-                </Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -47,8 +56,8 @@ export default function WebsiteContactSection() {
               <div className='-mx-4 flex flex-wrap'>
                 <div className='mb-10 w-full px-4 md:w-1/2'>
                   <div className='mx-auto max-w-xs'>
-                    <h3 className='mb-4 text-2xl font-bold leading-9 text-rich_black md:text-3xl'>
-                      <div className='mb-6 mr-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-ash_gray-500'>
+                    <h3 className='mb-4 text-2xl font-bold leading-9 text-irmin_black md:text-3xl'>
+                      <div className='mb-6 mr-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-irmin_green-500'>
                         <svg
                           className='h-6 text-white'
                           width={24}
@@ -66,7 +75,7 @@ export default function WebsiteContactSection() {
                       Email
                     </h3>
                     <Link
-                      className='text-lg font-light text-rich_black hover:text-rich_black md:text-xl'
+                      className='text-lg font-light text-irmin_black hover:text-irmin_black md:text-xl'
                       href='mailto:#'
                     >
                       hello@irmin.co
@@ -75,8 +84,8 @@ export default function WebsiteContactSection() {
                 </div>
                 <div className='mb-10 w-full px-4 md:w-1/2'>
                   <div className='mx-auto max-w-xs'>
-                    <h3 className='mb-4 text-2xl font-bold leading-9 text-rich_black md:text-3xl'>
-                      <div className='mb-6 mr-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-ash_gray-500'>
+                    <h3 className='mb-4 text-2xl font-bold leading-9 text-irmin_black md:text-3xl'>
+                      <div className='mb-6 mr-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-irmin_green-500'>
                         <svg
                           className='h-6 text-white'
                           width={24}
@@ -93,15 +102,15 @@ export default function WebsiteContactSection() {
                       </div>
                       Phone
                     </h3>
-                    <p className='text-lg font-light text-rich_black md:text-xl'>
+                    <p className='text-lg font-light text-irmin_black md:text-xl'>
                       + 7-843-672-431
                     </p>
                   </div>
                 </div>
                 <div className='mb-10 w-full px-4 md:mb-0 md:w-1/2'>
                   <div className='mx-auto max-w-xs'>
-                    <h3 className='mb-4 text-2xl font-bold leading-9 text-rich_black md:text-3xl'>
-                      <div className='mb-6 mr-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-ash_gray-500'>
+                    <h3 className='mb-4 text-2xl font-bold leading-9 text-irmin_black md:text-3xl'>
+                      <div className='mb-6 mr-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-irmin_green-500'>
                         <svg
                           className='h-6 text-white'
                           width={24}
@@ -118,18 +127,18 @@ export default function WebsiteContactSection() {
                       </div>
                       Office
                     </h3>
-                    <p className='text-lg font-light text-rich_black md:text-xl'>
+                    <p className='text-lg font-light text-irmin_black md:text-xl'>
                       1686, Geraldine Lane
                     </p>
-                    <p className='text-lg font-light text-rich_black md:text-xl'>
+                    <p className='text-lg font-light text-irmin_black md:text-xl'>
                       New York, NY 10013
                     </p>
                   </div>
                 </div>
                 <div className='w-full px-4 md:w-1/2'>
                   <div className='mx-auto max-w-xs'>
-                    <h3 className='mb-9 text-2xl font-bold leading-9 text-rich_black md:text-3xl'>
-                      <div className='mb-6 mr-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-ash_gray-500'>
+                    <h3 className='mb-9 text-2xl font-bold leading-9 text-irmin_black md:text-3xl'>
+                      <div className='mb-6 mr-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-irmin_green-500'>
                         <svg
                           className='h-6 text-white'
                           width={24}
@@ -147,7 +156,7 @@ export default function WebsiteContactSection() {
                       Socials
                     </h3>
                     <Link
-                      className='mr-8 inline-block text-ash_gray-500 hover:text-ash_gray-600'
+                      className='mr-8 inline-block text-irmin_green-500 hover:text-irmin_green-600'
                       href='#'
                     >
                       <svg
@@ -166,7 +175,7 @@ export default function WebsiteContactSection() {
                       </svg>
                     </Link>
                     <Link
-                      className='mr-8 inline-block text-ash_gray-500 hover:text-ash_gray-600'
+                      className='mr-8 inline-block text-irmin_green-500 hover:text-irmin_green-600'
                       href='#'
                     >
                       <svg
@@ -185,7 +194,7 @@ export default function WebsiteContactSection() {
                       </svg>
                     </Link>
                     <Link
-                      className='mr-8 inline-block text-ash_gray-500 hover:text-ash_gray-600'
+                      className='mr-8 inline-block text-irmin_green-500 hover:text-irmin_green-600'
                       href='#'
                     >
                       <svg
@@ -220,7 +229,7 @@ export default function WebsiteContactSection() {
                       </svg>
                     </Link>
                     <Link
-                      className='inline-block text-ash_gray-500 hover:text-ash_gray-600'
+                      className='inline-block text-irmin_green-500 hover:text-irmin_green-600'
                       href='#'
                     >
                       <svg
@@ -245,33 +254,39 @@ export default function WebsiteContactSection() {
                 <form>
                   <div className='mb-6'>
                     <label
-                      className='mb-2 block font-light leading-6 text-rich_black'
+                      className='mb-2 block font-light leading-6 text-irmin_black'
                       htmlFor=''
                     >
                       Email
                     </label>
-                    <input
-                      className='block w-full appearance-none rounded-full border border-rich_black px-3 py-2 leading-6 text-rich_black shadow-md focus:outline-none'
+                    <Input
+                      variant='outline'
+                      colorScheme='black'
                       type='email'
                       placeholder='hello@irmin.co'
                     />
                   </div>
                   <div className='mb-6'>
                     <label
-                      className='mb-2 block font-light leading-6 text-rich_black'
+                      className='mb-2 block font-light leading-6 text-irmin_black'
                       htmlFor=''
                     >
                       Message
                     </label>
                     <textarea
-                      className='block h-32 w-full resize-none appearance-none rounded-lg border border-rich_black px-3 py-2 leading-6 text-rich_black placeholder-rich_black shadow-md focus:outline-none md:h-52'
+                      className='block h-32 w-full resize-none appearance-none rounded-lg border border-irmin_black px-3 py-2 leading-6 text-irmin_black placeholder-irmin_black shadow-md focus:outline-none md:h-52'
                       placeholder='Your message...'
                       defaultValue={''}
                     />
                   </div>
-                  <button className='block w-full rounded-full bg-ash_gray-500 px-6 py-4 text-center text-lg font-light leading-6 text-green-50 shadow-sm hover:bg-ash_gray-600'>
+                  <Button
+                    size='md'
+                    className='w-full'
+                    colorScheme='primary'
+                    variant='solid'
+                  >
                     Send
-                  </button>
+                  </Button>
                 </form>
               </div>
             </div>

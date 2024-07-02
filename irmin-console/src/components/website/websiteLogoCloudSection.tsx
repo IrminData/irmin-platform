@@ -2,8 +2,8 @@ import Image from 'next/image';
 
 export default function WebsiteLogoCloudSection() {
   return (
-    <section className='bg-rich_black py-12'>
-      <div className='container mx-auto px-4'>
+    <section className='bg-irmin_black py-12'>
+      <div className='container mx-auto max-w-7xl px-4'>
         <h3 className='mb-8 text-center font-light leading-6 text-white'>
           Trusted by the top companies
         </h3>

@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import { faker } from '@faker-js/faker';
-import { DataRow, DataSet, Visualisation, Column } from '@/types/DataSet';
+
+import { Column, DataRow, DataSet, Visualisation } from '@/types/DataSet';
 
 const generateRandomDataRow = (columns: Column[]): DataRow => {
   const row: DataRow = {};

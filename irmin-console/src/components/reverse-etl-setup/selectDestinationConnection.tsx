@@ -2,17 +2,19 @@
 
 import React from 'react';
 
+import { ReverseETLDataType } from '@/components/reverse-etl-setup/reverseETLSetupView';
+
 export default function SelectDestinationConnection({
   connections,
   setReverseETLData,
   setCurrentStep,
 }: {
   connections: { id: number; name: string }[];
-  setReverseETLData: React.Dispatch<React.SetStateAction<any>>;
+  setReverseETLData: React.Dispatch<React.SetStateAction<ReverseETLDataType>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const handleConnectionSelect = (id: number) => {
-    setReverseETLData((prevData: any) => ({
+    setReverseETLData((prevData) => ({
       ...prevData,
       connectionID: id,
     }));

@@ -4,6 +4,7 @@ import DashboardTitleAndSelector from '@/components/dashboardTitleAndSelector';
 import BarChart from '@/components/widgets/barChart';
 import LineChart from '@/components/widgets/lineChart';
 import ScrollableTable from '@/components/widgets/scrollableTable';
+
 import { Visualisation } from '@/types/DataSet';
 
 export default function DashboardHome() {
@@ -126,9 +127,9 @@ export default function DashboardHome() {
     },
   ];
   return (
-    <>
+    <div className='px-0 lg:px-4'>
       <DashboardTitleAndSelector
-        title='Dashboards'
+        title='Dashboard 1'
         options={['Dashboard 1', 'Dashboard 2', 'Create New']}
         selected={'Dashboard 1'}
         onSelectionChange={(value) => console.log('Selection changed', value)}
@@ -160,6 +161,6 @@ export default function DashboardHome() {
           }
         })}
       </div>
-    </>
+    </div>
   );
 }
