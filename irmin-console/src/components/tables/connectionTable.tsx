@@ -2,9 +2,8 @@
 
 import React from 'react';
 
+import List, { GridRow } from '@/components/tables/elements/list';
 import StatusElement from '@/components/tables/elements/statusElement';
-import TableList from '@/components/tables/elements/tableList';
-import TableListRow from '@/components/tables/elements/tableListRow';
 
 import { ConnectionWithAdditionalData } from '@/types/Connection';
 
@@ -23,46 +22,35 @@ const ConnectionTable = ({
     );
   }
 
-  return (
-    <TableList headers={['Name', 'Next sync', 'Status']} inSidebar={inSidebar}>
-      {connections.map((connection, connectionIndex) => (
-        <TableListRow
-          key={`connection-${connection.id}-${connectionIndex}`}
-          details={
-            <ul>
-              {connection.parts.map((part, index) => (
-                <li
-                  key={`connection-${connection.id}-${connectionIndex}-details-${index}`}
-                  className='border-color-irmin_green border-b py-2 text-xs md:text-sm xl:text-base'
-                >
-                  {part}
-                </li>
-              ))}
-            </ul>
-          }
-          actions={[
-            {
-              label: 'View',
-              primary: true,
-              href: `#`,
-            },
-            {
-              label: 'Logs',
-              primary: false,
-              href: `#`,
-            },
-            {
-              label: 'Edit',
-              primary: false,
-              href: `#`,
-            },
-            {
-              label: 'Remove',
-              primary: false,
-              href: `#`,
-            },
-          ]}
-          inSidebar={inSidebar}
+  const rows: GridRow[] = connections.map((connection, connectionIndex) => {
+    const actions = [
+      {
+        label: 'View',
+        primary: true,
+        href: `#`,
+      },
+      {
+        label: 'Logs',
+        primary: false,
+        href: `#`,
+      },
+      {
+        label: 'Edit',
+        primary: false,
+        href: `#`,
+      },
+      {
+        label: 'Remove',
+        primary: false,
+        href: `#`,
+      },
+    ];
+
+    return {
+      columns: [
+        <div
+          className='align-center flex flex-row justify-between'
+          key={`connection-${connection.id}-${connectionIndex}-name-and-status`}
         >
           <div>
             {connection.name}
@@ -71,20 +59,43 @@ const ConnectionTable = ({
               {connection.connector}
             </span>
           </div>
-          <div>
-            {connection.nextSync}
-            <br />
-            <span className='text-xs text-irmin_blue'>
-              {connection.nextSyncTimestamp.toUTCString()}
-            </span>
-          </div>
           <StatusElement
             runStatus={connection.status}
             statusLabel={connection.status}
           />
-        </TableListRow>
-      ))}
-    </TableList>
+        </div>,
+        <div key={`connection-${connection.id}-${connectionIndex}-nextSync`}>
+          {connection.nextSync}
+          <br />
+          <span className='text-xs text-irmin_blue'>
+            {connection.nextSyncTimestamp.toUTCString()}
+          </span>
+        </div>,
+      ],
+      details: (
+        <ul>
+          {connection.parts.map((part, index) => (
+            <li
+              key={`connection-${connection.id}-${connectionIndex}-details-${index}`}
+              className='border-color-irmin_green border-b py-2 text-xs md:text-sm xl:text-base'
+            >
+              {part}
+            </li>
+          ))}
+        </ul>
+      ),
+      actions,
+    };
+  });
+
+  return (
+    <div className='pb-28'>
+      <List
+        headers={['Name', 'Next sync', 'Actions']}
+        rows={rows}
+        hideHeaders={inSidebar}
+      />
+    </div>
   );
 };
 

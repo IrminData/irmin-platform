@@ -118,10 +118,10 @@ The backend is a Laravel application. API documentation can be found in Postman.
 
 When creating a new branch, please adhere to the following naming conventions:
 
-- For new features: `person-feat-(featurename)`
-  - Example: `alice-feat-user-authentication`
-- For bug fixes: `person-fix-(bugfix)`
-  - Example: `bob-fix-login-error`
+- For new features: `person/feat-(featurename)`
+  - Example: `alice/feat-user-authentication`
+- For bug fixes: `person/fix-(bugfix)`
+  - Example: `bob/fix-login-error`
 
 **Important**: Never push to `development` directly or especially to `production`! Always create a pull request for any changes you want to merge.
 

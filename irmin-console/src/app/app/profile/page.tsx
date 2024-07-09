@@ -71,7 +71,7 @@ const GeneralSettings: React.FC = () => {
   return (
     <div className='px-4'>
       <h2 className='mb-4 text-xl font-normal md:text-2xl'>General Settings</h2>
-      <form onSubmit={handleSaveChanges} className='text-sm md:text-base'>
+      <form onSubmit={handleSaveChanges} className='pb-8 text-sm md:text-base'>
         <div className='mb-4'>
           <label className='block text-sm text-gray-700 md:text-base'>
             Name

@@ -97,7 +97,7 @@ export default function DashboardNavigation({
                 <div className='block max-w-max'>
                   <Link href='/'>
                     <Image
-                      className={isMenuFolded ? 'h-[10px]' : 'h-[24px]'}
+                      className={isMenuFolded ? 'h-[6px]' : 'h-[24px]'}
                       src='/irmin-logo-light.svg'
                       alt='Irmin logo'
                       width={100}
@@ -109,7 +109,7 @@ export default function DashboardNavigation({
                   className={`absolute hidden text-irmin_green md:block ${
                     !isMenuFolded
                       ? 'right-2 top-[16px] md:top-[32px]'
-                      : '-right-[7px]'
+                      : '-right-[5px]'
                   }`}
                   onClick={() => setIsMenuFolded(!isMenuFolded)}
                 >

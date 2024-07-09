@@ -2,9 +2,8 @@
 
 import React from 'react';
 
+import List, { GridRow } from '@/components/tables/elements/list';
 import StatusElement from '@/components/tables/elements/statusElement';
-import TableList from '@/components/tables/elements/tableList';
-import TableListRow from '@/components/tables/elements/tableListRow';
 
 interface ExportProcess {
   id: number;
@@ -32,57 +31,68 @@ const ExportTable: React.FC<ExportTableProps> = ({
     );
   }
 
-  return (
-    <TableList
-      headers={['Name', 'Status', 'Source & Destination']}
-      inSidebar={inSidebar}
-    >
-      {processes.map((process, processIndex) => (
-        <TableListRow
-          key={`export-sync-${process.id}-${processIndex}`}
-          details={
-            <ul>
-              {process.details.map((detail, index) => (
-                <li
-                  key={`export-sync-${process.id}-${processIndex}-details-${index}`}
-                  className='border-color-irmin_green border-b py-2 text-xs md:text-sm xl:text-base'
-                >
-                  {detail}
-                </li>
-              ))}
-            </ul>
-          }
-          actions={[
-            {
-              label: 'Logs',
-              primary: false,
-              href: `#`,
-            },
-            {
-              label: 'Edit',
-              primary: false,
-              href: `#`,
-            },
-            {
-              label: 'Remove',
-              primary: false,
-              href: `#`,
-            },
-          ]}
-          inSidebar={inSidebar}
+  const rows: GridRow[] = processes.map((process, processIndex) => {
+    const actions = [
+      {
+        label: 'Logs',
+        primary: false,
+        href: `#`,
+      },
+      {
+        label: 'Edit',
+        primary: false,
+        href: `#`,
+      },
+      {
+        label: 'Remove',
+        primary: false,
+        href: `#`,
+      },
+    ];
+
+    return {
+      columns: [
+        <div
+          className='align-center flex flex-row justify-between'
+          key={`export-sync-${process.id}-${processIndex}-name-and-status`}
         >
           <div>{process.name}</div>
           <StatusElement
             runStatus={process.status}
             statusLabel={process.status}
           />
-          <div>
-            Source: {process.source} <br />
-            Destination: {process.destination}
-          </div>
-        </TableListRow>
-      ))}
-    </TableList>
+        </div>,
+        <div
+          key={`export-sync-${process.id}-${processIndex}-source-and-destination`}
+        >
+          Source: {process.source} <br />
+          Destination: {process.destination}
+        </div>,
+      ],
+      details: (
+        <ul>
+          {process.details.map((detail, index) => (
+            <li
+              key={`export-sync-${process.id}-${processIndex}-details-${index}`}
+              className='border-color-irmin_green border-b py-2 text-xs md:text-sm xl:text-base'
+            >
+              {detail}
+            </li>
+          ))}
+        </ul>
+      ),
+      actions,
+    };
+  });
+
+  return (
+    <div className='pb-28'>
+      <List
+        headers={['Name', 'Source & Destination', 'Actions']}
+        rows={rows}
+        hideHeaders={inSidebar}
+      />
+    </div>
   );
 };
 

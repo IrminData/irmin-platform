@@ -4,9 +4,8 @@ import React from 'react';
 
 import { useParams } from 'next/navigation';
 
+import List, { GridRow } from '@/components/tables/elements/list';
 import StatusElement from '@/components/tables/elements/statusElement';
-import TableList from '@/components/tables/elements/tableList';
-import TableListRow from '@/components/tables/elements/tableListRow';
 
 import { DataSet } from '@/types/DataSet';
 
@@ -27,63 +26,66 @@ const DatasetTable = ({
     );
   }
 
-  return (
-    <TableList headers={['Name', 'Status']} inSidebar={inSidebar}>
-      {dataSets.map((dataSet, index) => {
-        const actions = [
-          {
-            label: 'View',
-            primary: true,
-            href: `/app/${workspace}/data-sets/viewer/${dataSet.id}`,
-          },
-          {
-            label: 'Logs',
-            primary: false,
-            href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/logs`,
-          },
-        ];
-        if (dataSet.status === 'connected') {
-          actions.push(
-            {
-              label: 'View info',
-              primary: false,
-              href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
-            },
-            {
-              label: 'Disconnect',
-              primary: false,
-              href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
-            }
-          );
-        } else {
-          actions.push({
-            label: 'Edit',
-            primary: false,
-            href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
-          });
+  const rows: GridRow[] = dataSets.map((dataSet, index) => {
+    const actions = [
+      {
+        label: 'View',
+        primary: true,
+        href: `/app/${workspace}/data-sets/viewer/${dataSet.id}`,
+      },
+      {
+        label: 'Logs',
+        primary: false,
+        href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/logs`,
+      },
+    ];
+    if (dataSet.status === 'connected') {
+      actions.push(
+        {
+          label: 'View info',
+          primary: false,
+          href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
+        },
+        {
+          label: 'Disconnect',
+          primary: false,
+          href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
         }
+      );
+    } else {
+      actions.push({
+        label: 'Edit',
+        primary: false,
+        href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
+      });
+    }
+    return {
+      columns: [
+        <div key={`dataset-${index}-name`}>
+          {dataSet.name}
+          <br />
+          <span className='text-xs text-irmin_blue'>
+            Source: {dataSet.sourceWorkspace}
+          </span>
+        </div>,
+        <StatusElement
+          key={`dataset-${index}-status`}
+          accessStatus={dataSet.status}
+          statusLabel={dataSet.status}
+        />,
+      ],
+      actions,
+    };
+  });
 
-        return (
-          <TableListRow
-            key={`data-set-${dataSet.id}-${index}`}
-            actions={actions}
-            inSidebar={inSidebar}
-          >
-            <div>
-              {dataSet.name}
-              <br />
-              <span className='text-xs text-irmin_blue'>
-                Source: {dataSet.sourceWorkspace}
-              </span>
-            </div>
-            <StatusElement
-              accessStatus={dataSet.status}
-              statusLabel={dataSet.status}
-            />
-          </TableListRow>
-        );
-      })}
-    </TableList>
+  return (
+    <div className='pb-28'>
+      <List
+        headers={['Name', 'Status', 'Actions']}
+        rows={rows}
+        hideHeaders={inSidebar}
+      />
+    </div>
   );
 };
 

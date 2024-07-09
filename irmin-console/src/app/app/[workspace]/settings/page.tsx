@@ -131,49 +131,51 @@ const GeneralSettings = () => {
   return (
     <div className='px-4'>
       <h2 className='mb-4 text-2xl font-normal'>General Settings</h2>
-      <form onSubmit={handleUpdateWorkspace}>
-        <div>
-          <label className='mb-4 block text-gray-700'>Workspace Name</label>
-          <Input
-            variant='outline'
-            colorScheme='black'
+      <div className='pb-8'>
+        <form onSubmit={handleUpdateWorkspace}>
+          <div>
+            <label className='mb-4 block text-gray-700'>Workspace Name</label>
+            <Input
+              variant='outline'
+              colorScheme='black'
+              size='md'
+              required
+              className='w-full'
+              ariaLabel='Your workspace name'
+              type='text'
+              defaultValue={workspaceName}
+              onChange={(e) => setWorkspaceName(e.target.value)}
+              placeholder='Enter workspace name'
+            />
+          </div>
+          <Button
+            className='mt-4 w-full'
+            type='submit'
             size='md'
-            required
-            className='w-full'
-            ariaLabel='Your workspace name'
-            type='text'
-            defaultValue={workspaceName}
-            onChange={(e) => setWorkspaceName(e.target.value)}
-            placeholder='Enter workspace name'
-          />
+            colorScheme='primary'
+            variant='solid'
+            disabled={isLoading}
+            loading={isLoading}
+          >
+            Save Changes
+          </Button>
+        </form>
+        <div className='mt-8'>
+          <h3 className='text-xl font-normal text-red-800'>Danger Zone</h3>
+          <p className='mt-2 text-gray-700'>
+            Deleting your workspace will remove all data associated with it.
+            This action is irreversible.
+          </p>
+          <Button
+            className='mt-4'
+            onClick={confirmDeletion}
+            size='sm'
+            colorScheme='secondary'
+            variant='outline'
+          >
+            Delete Workspace
+          </Button>
         </div>
-        <Button
-          className='mt-4 w-full'
-          type='submit'
-          size='md'
-          colorScheme='primary'
-          variant='solid'
-          disabled={isLoading}
-          loading={isLoading}
-        >
-          Save Changes
-        </Button>
-      </form>
-      <div className='mt-8'>
-        <h3 className='text-xl font-normal text-red-800'>Danger Zone</h3>
-        <p className='mt-2 text-gray-700'>
-          Deleting your workspace will remove all data associated with it. This
-          action is irreversible.
-        </p>
-        <Button
-          className='mt-4'
-          onClick={confirmDeletion}
-          size='sm'
-          colorScheme='secondary'
-          variant='outline'
-        >
-          Delete Workspace
-        </Button>
       </div>
     </div>
   );
