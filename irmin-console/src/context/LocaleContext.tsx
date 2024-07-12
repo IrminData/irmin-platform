@@ -55,7 +55,7 @@ export function LocaleProvider({ children }: LocaleProviderProps) {
       setLocale(lang);
       setCookie('locale', lang, 365);
     }
-  }, [lang]);
+  }, [lang, locale]);
 
   if (!dict) {
     return <></>;

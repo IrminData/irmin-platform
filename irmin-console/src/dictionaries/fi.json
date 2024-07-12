@@ -124,12 +124,13 @@
     "dataSets": "Tietojoukot"
   },
   "connection": {
+    "connection": "Yhteys",
     "connections": "Yhteydet",
     "selectConnector": "Valitse liitin",
     "establishConnection": "Perusta yhteys",
     "configureSettings": "Määritä asetukset",
     "configureSync": "Määritä synkronointi",
-    "createNewConnection": "Luo uusi yhteys",
+    "createNew": "Luo uusi yhteys",
     "create": {
       "select": "Valitse",
       "connector": "Yhdistin",
