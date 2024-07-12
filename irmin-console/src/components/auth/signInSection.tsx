@@ -9,9 +9,11 @@ import AuthService from '@/lib/api/AuthService';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 
+import { useLocale } from '@/context/LocaleContext';
 import { useProfile } from '@/context/ProfileContext';
 
 const SignInSection: React.FC = () => {
+  const { dict, locale } = useLocale();
   const { fetchProfile } = useProfile();
   const router = useRouter();
 
@@ -26,7 +28,7 @@ const SignInSection: React.FC = () => {
     setLoading(true);
     setError(null);
     setSuccess(null);
-    const authService = AuthService.getInstance();
+    const authService = AuthService.getInstance(locale);
     try {
       const response = await authService.login(email, password);
       if (response.metadata?.message) {
@@ -56,10 +58,10 @@ const SignInSection: React.FC = () => {
         <div className='mx-auto max-w-sm'>
           <div className='mb-6 text-center'>
             <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
-              Sign in to your account
+              {dict.auth.signIn.title}
             </h3>
             <p className='text-lg font-light text-irmin_black'>
-              Welcome back to the home of your data
+              {dict.auth.signIn.subtitle}
             </p>
           </div>
           <form onSubmit={handleSubmit}>
@@ -68,7 +70,7 @@ const SignInSection: React.FC = () => {
                 className='mb-2 block font-light text-irmin_black'
                 htmlFor='email'
               >
-                Email
+                {dict.auth.signIn.email}
               </label>
               <Input
                 variant='outline'
@@ -76,11 +78,11 @@ const SignInSection: React.FC = () => {
                 size='md'
                 type='email'
                 id='email'
-                placeholder='name@acme.corp'
+                placeholder={dict.auth.signIn.emailPlaceholder}
                 defaultValue={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                ariaLabel='Insert your email address here'
+                ariaLabel={dict.auth.signIn.email}
                 className='w-full'
               />
             </div>
@@ -89,7 +91,7 @@ const SignInSection: React.FC = () => {
                 className='mb-2 block font-light text-irmin_black'
                 htmlFor='password'
               >
-                Password
+                {dict.auth.signIn.password}
               </label>
               <Input
                 variant='outline'
@@ -97,10 +99,10 @@ const SignInSection: React.FC = () => {
                 size='md'
                 required
                 className='w-full'
-                ariaLabel='Insert your password here'
+                ariaLabel={dict.auth.signIn.password}
                 type='password'
                 id='password'
-                placeholder='your super secret password'
+                placeholder={dict.auth.signIn.passwordPlaceholder}
                 defaultValue={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -117,13 +119,13 @@ const SignInSection: React.FC = () => {
                     defaultChecked
                   />
                   <span className='ml-2 text-xs font-light text-irmin_black'>
-                    Remember me
+                    {dict.auth.signIn.rememberMe}
                   </span>
                 </label>
               </div>
               <div className='mt-1 w-full md:w-auto'>
                 <Button variant='link' href='/forgot-password' size='sm'>
-                  Forgot your password?
+                  {dict.auth.signIn.forgotPassword}
                 </Button>
               </div>
             </div>
@@ -135,14 +137,14 @@ const SignInSection: React.FC = () => {
               loading={loading}
               type='submit'
             >
-              Sign In
+              {dict.auth.signIn.signIn}
             </Button>
             <p className='text-center'>
               <span className='text-xs font-light'>
-                Don&apos;t have an account?{' '}
+                {dict.auth.signIn.dontHaveAccount}{' '}
               </span>
               <Button variant='link' href='/sign-up' size='sm'>
-                Sign up
+                {dict.auth.signIn.signUp}
               </Button>
             </p>
           </form>

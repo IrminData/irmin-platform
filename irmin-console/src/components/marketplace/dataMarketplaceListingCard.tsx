@@ -5,6 +5,8 @@ import { TbCheck } from 'react-icons/tb';
 
 import Button from '@/components/misc/Button';
 
+import { useLocale } from '@/context/LocaleContext';
+
 export default function DataMarketplaceListingCard({
   dataset,
 }: {
@@ -18,6 +20,7 @@ export default function DataMarketplaceListingCard({
     description: string;
   };
 }) {
+  const { dict } = useLocale();
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -30,10 +33,12 @@ export default function DataMarketplaceListingCard({
           </span>
         ) : null}
       </div>
-      <div className='mb-4 text-sm text-gray-600'>Source: {dataset.source}</div>
+      <div className='mb-4 text-sm text-gray-600'>
+        {dict.marketplace.source}: {dataset.source}
+      </div>
       <div className='flex items-center justify-between'>
         <span className={`font-lighter text-gray-600`}>
-          {dataset.price} € /month
+          {dataset.price} € {dict.marketplace.pricePostfix}
         </span>
         <div>
           <Button
@@ -44,11 +49,11 @@ export default function DataMarketplaceListingCard({
             onClick={() => setShowDetails(true)}
             ariaLabel={`View details of ${dataset.name}`}
           >
-            Details
+            {dict.marketplace.details}
           </Button>
           {dataset.connected ? (
             <span className='inline-block rounded bg-irmin_green px-2 py-1 text-xs font-semibold text-white'>
-              Connected
+              {dict.marketplace.connected}
             </span>
           ) : (
             <Button
@@ -61,7 +66,7 @@ export default function DataMarketplaceListingCard({
                 console.log('Connect to', dataset.name);
               }}
             >
-              Connect
+              {dict.marketplace.connect}
             </Button>
           )}
         </div>
@@ -72,7 +77,7 @@ export default function DataMarketplaceListingCard({
           <div className='w-full rounded bg-white p-6 shadow-lg md:w-3/4 lg:w-1/2'>
             <div className='mb-4 flex items-center justify-between border-b pb-3'>
               <h2 className='text-xl font-semibold'>
-                {dataset.name} - Details
+                {dataset.name} - {dict.marketplace.details}
               </h2>
               <Button
                 variant='icon'
@@ -88,15 +93,19 @@ export default function DataMarketplaceListingCard({
               <p className='border-b py-4'>{dataset.description ?? ''}</p>
               {/* Details */}
               <div className='flex justify-between'>
-                <span className='font-medium'>Source:</span>
+                <span className='font-medium'>{dict.marketplace.source}:</span>
                 <span>{dataset.source}</span>
               </div>
               <div className='flex justify-between'>
-                <span className='font-medium'>Price:</span>
-                <span>${dataset.price}/month</span>
+                <span className='font-medium'>{dict.marketplace.price}:</span>
+                <span>
+                  {dataset.price} € {dict.marketplace.pricePostfix}
+                </span>
               </div>
               <div className='flex justify-between'>
-                <span className='font-medium'>Industry:</span>
+                <span className='font-medium'>
+                  {dict.marketplace.industry}:
+                </span>
                 <span>{dataset.industry}</span>
               </div>
             </div>

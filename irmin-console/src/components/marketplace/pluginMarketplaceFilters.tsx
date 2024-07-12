@@ -2,15 +2,20 @@ import React from 'react';
 
 import Button from '@/components/misc/Button';
 
+import { useLocale } from '@/context/LocaleContext';
+
 const PluginMarketplaceFilters: React.FC<{
   categories: string[];
   selectedCategory: string;
   onSelectCategory: (_category: string) => void;
 }> = ({ categories, selectedCategory, onSelectCategory }) => {
+  const { dict } = useLocale();
   return (
     <div className='my-8'>
       <div className='mb-4'>
-        <span className='text-lg font-semibold'>Categories</span>
+        <span className='text-lg font-semibold'>
+          {dict.marketplace.categories}
+        </span>
         <div className='mt-2 flex flex-wrap gap-2'>
           {categories.map((category, idx) => (
             <Button

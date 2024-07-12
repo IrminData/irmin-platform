@@ -11,6 +11,7 @@ import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
 
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
@@ -25,9 +26,10 @@ export default function DefineConnectionSettings({
   setConnectionData: React.Dispatch<React.SetStateAction<connectionDataType>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
+  const { locale, dict } = useLocale();
   const { currentWorkspace } = useWorkspace();
   const { irminAlert } = usePopup();
-  const connectionService = ConnectionService.getInstance();
+  const connectionService = ConnectionService.getInstance(locale);
 
   const [loading, setLoading] = useState(false);
   const [initialLoadingDone, setInitialLoadingDone] = useState(false);
@@ -252,7 +254,7 @@ export default function DefineConnectionSettings({
           size='md'
           onClick={continueCreateConnection}
         >
-          Continue
+          {dict.connection.create.continue}
         </Button>
         <Button
           className='mb-6 inline-block w-full'
@@ -264,7 +266,7 @@ export default function DefineConnectionSettings({
             setCurrentStep((currentStep) => currentStep - 1);
           }}
         >
-          Go back
+          {dict.connection.create.goBack}
         </Button>
       </form>
     </div>

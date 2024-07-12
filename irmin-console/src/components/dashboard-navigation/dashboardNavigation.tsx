@@ -15,9 +15,12 @@ import DashboardNavProfile from '@/components/dashboard-navigation/dashboardNavP
 import DashboardNavWorkspaceSwitcher from '@/components/dashboard-navigation/dashboardNavWorkspaceSwitcher';
 import NotificationButton from '@/components/notifications/NotificationButton';
 
+import { useLocale } from '@/context/LocaleContext';
+
 export default function DashboardNavigation({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const { dict } = useLocale();
   const { workspace: workspaceSlug } = useParams();
 
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -71,14 +74,14 @@ export default function DashboardNavigation({
                     type='search'
                     id='default-search'
                     className='block w-full rounded-full border border-gray-300 bg-gray-50 p-4 ps-10 text-xs text-gray-900 focus:outline-none md:text-sm'
-                    placeholder='Search Data, Insights, Connectors...'
+                    placeholder={dict.dashboardNavigation.searchPlaceholder}
                     required
                   />
                   <button
                     type='submit'
                     className='absolute bottom-0 right-0 top-0 rounded-full border border-gray-300 bg-gray-50 px-4 py-2 text-xs font-light text-gray-900 transition-all hover:bg-gray-100 focus:outline-none md:text-sm'
                   >
-                    Search
+                    {dict.dashboardNavigation.search}
                   </button>
                 </div>
               </form>
@@ -136,7 +139,7 @@ export default function DashboardNavigation({
                       isMenuFolded ? 'hidden' : 'block'
                     }`}
                   >
-                    Irmin App
+                    {dict.dashboardNavigation.irminApp}
                   </p>
                   <ul className='mb-8 px-4'>
                     {links.noWorkspace.map((link, index) => (
@@ -157,7 +160,7 @@ export default function DashboardNavigation({
                       isMenuFolded ? 'hidden' : 'block'
                     }`}
                   >
-                    Workspace
+                    {dict.dashboardNavigation.workspace}
                   </p>
                   <ul className='mb-8 px-4'>
                     {links.hasWorkspace.map((link, index) => (
@@ -179,7 +182,7 @@ export default function DashboardNavigation({
                   isMenuFolded ? 'hidden' : 'block'
                 }`}
               >
-                Settings
+                {dict.dashboardNavigation.settings}
               </p>
               <ul className='p-4'>
                 {links.settings.map((link, index) => (

@@ -6,9 +6,12 @@ import { TbCheck } from 'react-icons/tb';
 import { MarketplacePlugin } from '@/components/marketplace/pluginMarketplace';
 import Button from '@/components/misc/Button';
 
+import { useLocale } from '@/context/LocaleContext';
+
 const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
   plugin,
 }) => {
+  const { dict } = useLocale();
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -22,7 +25,7 @@ const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
         ) : null}
       </div>
       <div className='mb-4 text-sm text-gray-600'>
-        Provider: {plugin.provider}
+        {dict.marketplace.provider}: {plugin.provider}
       </div>
       <div className='flex items-center justify-between'>
         <span className={`font-lighter text-gray-600`}>{plugin.price} €</span>
@@ -35,11 +38,11 @@ const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
             onClick={() => setShowDetails(true)}
             ariaLabel={`View details of ${plugin.name}`}
           >
-            Details
+            {dict.marketplace.details}
           </Button>
           {plugin.connected ? (
             <span className='inline-block rounded bg-irmin_green px-2 py-1 text-xs font-semibold text-white'>
-              Connected
+              {dict.marketplace.connected}
             </span>
           ) : (
             <Button
@@ -52,7 +55,7 @@ const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
                 console.log('Connect to', plugin.name);
               }}
             >
-              Connect
+              {dict.marketplace.connect}
             </Button>
           )}
         </div>
@@ -62,7 +65,9 @@ const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-gray-800 bg-opacity-50 p-20'>
           <div className='w-full rounded bg-white p-6 shadow-lg md:w-3/4 lg:w-1/2'>
             <div className='mb-4 flex items-center justify-between border-b pb-3'>
-              <h2 className='text-xl font-semibold'>{plugin.name} - Details</h2>
+              <h2 className='text-xl font-semibold'>
+                {plugin.name} - {dict.marketplace.details}
+              </h2>
               <Button
                 variant='icon'
                 colorScheme='black'
@@ -77,15 +82,19 @@ const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
               <p className='border-b py-4'>{plugin.description ?? ''}</p>
               {/* Details */}
               <div className='flex justify-between'>
-                <span className='font-medium'>Provider:</span>
+                <span className='font-medium'>
+                  {dict.marketplace.provider}:
+                </span>
                 <span>{plugin.provider}</span>
               </div>
               <div className='flex justify-between'>
-                <span className='font-medium'>Price:</span>
-                <span>${plugin.price}</span>
+                <span className='font-medium'>{dict.marketplace.price}:</span>
+                <span>{plugin.price} €</span>
               </div>
               <div className='flex justify-between'>
-                <span className='font-medium'>Category:</span>
+                <span className='font-medium'>
+                  {dict.marketplace.category}:
+                </span>
                 <span>{plugin.category}</span>
               </div>
             </div>
@@ -96,7 +105,7 @@ const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
                 onClick={() => setShowDetails(false)}
                 ariaLabel='Close details popup'
               >
-                Close the details popup
+                {dict.marketplace.closeThePopup}
               </Button>
             </div>
           </div>

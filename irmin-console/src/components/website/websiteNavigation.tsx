@@ -10,6 +10,7 @@ import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 import Button from '@/components/misc/Button';
 
+import { useLocale } from '@/context/LocaleContext';
 import { useProfile } from '@/context/ProfileContext';
 
 interface WebsiteNavLink {
@@ -50,12 +51,15 @@ const navLinks: WebsiteNavLink[] = [
   },
   { href: '/pricing', label: 'Pricing', subpages: [] },
   {
-    href: '/team',
-    label: 'Team',
-    subpages: [{ href: '#', label: 'Join our team 😎' }],
+    href: '#',
+    label: 'Irmin',
+    subpages: [
+      { href: '#', label: 'About us 📊' },
+      { href: '#', label: 'Join our team 😎' },
+      { href: '/blog', label: 'Blog ☕️' },
+      { href: '/contact', label: 'Contact us ✉️' },
+    ],
   },
-  { href: '/blog', label: 'Blog', subpages: [] },
-  { href: '/contact', label: 'Contact us', subpages: [] },
 ];
 
 const NavLink = ({
@@ -147,6 +151,7 @@ const MobileNavLink = ({
 };
 
 export default function WebsiteNavigation() {
+  const { dict } = useLocale();
   const profile = useProfile();
   const [navbarOpen, setNavbarOpen] = React.useState(false);
   const [animate, setAnimate] = React.useState('');
@@ -225,10 +230,9 @@ export default function WebsiteNavigation() {
                         variant='solid'
                         colorScheme='secondary'
                         className='w-32 lg:w-36'
-                        ariaLabel='Go to Irmin app'
                         href='/app'
                       >
-                        Go to app
+                        {dict.website.navigation.goToApp}
                       </Button>
                     </>
                   ) : (
@@ -237,23 +241,21 @@ export default function WebsiteNavigation() {
                         size='sm'
                         variant='link'
                         colorScheme='secondary'
-                        className='w-16 md:w-24'
-                        ariaLabel='Sign In with your Irmin account'
+                        className='w-20 md:w-32'
                         href='/sign-in'
                         onClick={closeMenu}
                       >
-                        Sign In
+                        {dict.auth.signIn.signIn}
                       </Button>
                       <Button
                         size='sm'
                         variant='solid'
                         colorScheme='secondary'
-                        className='w-16 md:w-24'
-                        ariaLabel='Create a new Irmin account'
+                        className='w-20 md:w-32'
                         href='/sign-up'
                         onClick={closeMenu}
                       >
-                        Sign Up
+                        {dict.auth.signIn.signUp}
                       </Button>
                     </>
                   ))}
@@ -340,7 +342,6 @@ export default function WebsiteNavigation() {
                       />
                     ))}
                   </ul>
-                  <div className='flex-grow'></div>
                   <div className='pb-20 pt-4'>
                     {!profile.isLoading &&
                       (profile.profile ? (
@@ -351,33 +352,30 @@ export default function WebsiteNavigation() {
                           variant='outline'
                           className='w-full'
                           onClick={closeMenu}
-                          ariaLabel='Go to Irmin app'
                         >
-                          Go to app
+                          {dict.website.navigation.goToApp}
                         </Button>
                       ) : (
-                        <div className='flex w-full flex-wrap items-center justify-stretch gap-2'>
+                        <div className='flex w-full flex-col items-center justify-stretch gap-2'>
                           <Button
                             size='lg'
                             variant='link'
                             colorScheme='secondary'
-                            className='inline-block'
                             href='/sign-in'
                             onClick={closeMenu}
-                            ariaLabel='Sign In with your Irmin account'
+                            className='w-full'
                           >
-                            Sign In
+                            {dict.auth.signIn.signIn}
                           </Button>
                           <Button
                             size='lg'
                             variant='solid'
                             colorScheme='secondary'
-                            className='inline-block'
                             href='/sign-up'
                             onClick={closeMenu}
-                            ariaLabel='Create a new Irmin account'
+                            className='w-full'
                           >
-                            Sign Up
+                            {dict.auth.signIn.signUp}
                           </Button>
                         </div>
                       ))}

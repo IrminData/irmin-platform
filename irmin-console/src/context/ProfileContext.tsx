@@ -11,6 +11,8 @@ import {
 import AuthService from '@/lib/api/AuthService';
 import { offlineUser } from '@/lib/offlineObjects';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { User } from '@/types/UserProfile';
 
 const ProfileContext = createContext<{
@@ -30,7 +32,8 @@ export const ProfileProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const auth = AuthService.getInstance();
+  const { locale } = useLocale();
+  const auth = AuthService.getInstance(locale);
   const [profile, setProfile] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

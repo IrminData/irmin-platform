@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
 
+import { useLocale } from '@/context/LocaleContext';
+
 interface ButtonProps {
   variant?: 'solid' | 'outline' | 'icon' | 'link';
   colorScheme?: 'primary' | 'secondary' | 'tertiary' | 'gray' | 'black';
@@ -40,6 +42,7 @@ const Button: React.FC<ButtonProps> = ({
   ariaLabel,
   type = 'button',
 }) => {
+  const { dict } = useLocale();
   const router = useRouter();
 
   const baseClasses =
@@ -114,7 +117,7 @@ const Button: React.FC<ButtonProps> = ({
         {loading ? (
           <>
             <div className='mr-2 inline h-4 w-4 animate-spin rounded-full border-2 border-t-2 border-irmin_green-200 border-t-irmin_green'></div>
-            <span>Loading...</span>
+            <span>{dict.misc.loading}</span>
           </>
         ) : (
           <>
@@ -137,7 +140,7 @@ const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <>
           <div className='mr-2 inline h-4 w-4 animate-spin rounded-full border-2 border-t-2 border-irmin_green-200 border-t-irmin_green'></div>
-          <span>Loading...</span>
+          <span>{dict.misc.loading}</span>
         </>
       ) : (
         <>

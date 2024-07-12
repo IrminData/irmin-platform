@@ -23,15 +23,15 @@ import { IrminRole, Workspace } from '@/types/Workspace';
  * @param setWorkspaceLoading - Function to update the workspace loading state.
  */
 export const useFetchWorkspaces = (
-  workspaces: Workspace[] | null,
   setWorkspaces: React.Dispatch<React.SetStateAction<Workspace[] | null>>,
   setCurrentWorkspace: React.Dispatch<React.SetStateAction<Workspace | null>>,
   workspaceLoading: boolean,
-  setWorkspaceLoading: React.Dispatch<React.SetStateAction<boolean>>
+  setWorkspaceLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  locale: string
 ) =>
   useCallback(async () => {
     // Get the workspace service
-    const workspaceService = WorkspaceService.getInstance();
+    const workspaceService = WorkspaceService.getInstance(locale);
     // Prevent multiple simultaneous fetches
     if (workspaceLoading) return;
     // Handle offline mode
@@ -57,6 +57,7 @@ export const useFetchWorkspaces = (
     setWorkspaces,
     workspaceLoading,
     setWorkspaceLoading,
+    locale,
   ]);
 
 /**
@@ -67,13 +68,14 @@ export const useFetchWorkspaces = (
  */
 export const useFetchRoles = (
   irminRoles: IrminRole[],
-  setIrminRoles: React.Dispatch<React.SetStateAction<IrminRole[]>>
+  setIrminRoles: React.Dispatch<React.SetStateAction<IrminRole[]>>,
+  locale: string
 ) =>
   useCallback(async () => {
     // Check if the roles are already fetched
     if (irminRoles.length > 0) return;
     // Get the workspace service
-    const workspaceService = WorkspaceService.getInstance();
+    const workspaceService = WorkspaceService.getInstance(locale);
     // Get the offline mode from the environment variable
     const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
     if (offlineMode) {
@@ -89,7 +91,7 @@ export const useFetchRoles = (
       setIrminRoles([]);
       throw error;
     }
-  }, [irminRoles, setIrminRoles]);
+  }, [irminRoles, setIrminRoles, locale]);
 
 /**
  * Hook to fetch the list of connections for the current workspace.
@@ -105,7 +107,8 @@ export const useFetchConnections = (
   connectionsLoading: boolean,
   setConnectionsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   connectionsFetchedFor: string | null,
-  setConnectionsFetchedFor: React.Dispatch<React.SetStateAction<string | null>>
+  setConnectionsFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
+  locale: string
 ) =>
   useCallback(
     async (forceFetch?: boolean) => {
@@ -116,7 +119,7 @@ export const useFetchConnections = (
       }
       setConnectionsFetchedFor(currentWorkspace?.slug ?? null);
       // Get the workspace service
-      const workspaceService = WorkspaceService.getInstance();
+      const workspaceService = WorkspaceService.getInstance(locale);
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {
         setConnections([]);
@@ -164,6 +167,7 @@ export const useFetchConnections = (
       setConnectionsLoading,
       connectionsFetchedFor,
       setConnectionsFetchedFor,
+      locale,
     ]
   );
 
@@ -182,9 +186,10 @@ export const useSwitchWorkspace = (
   setCurrentWorkspace: React.Dispatch<React.SetStateAction<Workspace | null>>,
   workspaceLoading: boolean,
   setWorkspaceLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  fetchWorkspaces: () => void
+  fetchWorkspaces: () => void,
+  locale: string
 ) => {
-  const workspaceService = WorkspaceService.getInstance();
+  const workspaceService = WorkspaceService.getInstance(locale);
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
@@ -216,7 +221,10 @@ export const useSwitchWorkspace = (
           // Clear the current workspace
           setCurrentWorkspace(null);
           // Make sure the user is not on a workspace page eg. /app/{workspace-slug}/*
-          if (pathname.includes('/app/')) {
+          if (
+            pathname.includes('/app/') &&
+            !pathname.includes('/app/profile')
+          ) {
             router.push('/app');
           }
           // Refetch workspace list
@@ -226,7 +234,6 @@ export const useSwitchWorkspace = (
           const newWorkspace =
             await workspaceService.switchWorkspace(workspaceSlug);
           if (newWorkspace) {
-            localStorage.setItem('currentWorkspaceSlug', workspaceSlug);
             setCurrentWorkspace(newWorkspace);
             // If router not already on a workspace page, redirect to the dashboards page
             if (!pathname.includes(`/app/${workspaceSlug}`)) {
@@ -268,9 +275,10 @@ export const useDeleteCurrentWorkspace = (
     _workspaceSlug: string | null,
     _disableAlerts?: boolean
   ) => void,
-  fetchWorkspaces: () => void
+  fetchWorkspaces: () => void,
+  locale: string
 ) => {
-  const workspaceService = WorkspaceService.getInstance();
+  const workspaceService = WorkspaceService.getInstance(locale);
   return useCallback(async () => {
     if (!currentWorkspace) return;
     await workspaceService.deleteWorkspace(currentWorkspace.slug);

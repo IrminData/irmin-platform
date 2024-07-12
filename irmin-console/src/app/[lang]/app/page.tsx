@@ -10,11 +10,13 @@ import Input from '@/components/misc/Input';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
 import WorkspaceCard from '@/components/workspaceCard';
 
+import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 const ManageWorkspaces: React.FC = () => {
+  const { locale } = useLocale();
   const { workspaces, fetchWorkspaces, workspaceLoading } = useWorkspace();
-  const workspaceService = WorkspaceService.getInstance();
+  const workspaceService = WorkspaceService.getInstance(locale);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);

@@ -10,11 +10,14 @@ import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
 import QueryResultsAndTabs from '@/components/queryResultsAndTabs';
 import ScriptEditor from '@/components/script-editor/scriptEditor';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { DataSet } from '@/types/DataSet';
 
 export default function DataSetEditorPage() {
+  const { locale, dict } = useLocale();
   const { dataSetID } = useParams();
-  const dataSetService = DataSetService.getInstance();
+  const dataSetService = DataSetService.getInstance(locale);
   const [editorHeight, setEditorHeight] = useState('400px');
 
   const [dataSet, setDataSet] = useState<DataSet | undefined>(undefined);
@@ -37,18 +40,17 @@ export default function DataSetEditorPage() {
   }
   return (
     <div className='w-full overflow-auto bg-white'>
-      {(dataSet?.source === 'sql' || dataSet?.source === 'python') &&
-      dataSet?.sourceScript ? (
+      {dataSet?.source !== 'connection' && dataSet?.sourceScript ? (
         <ScriptEditor
           content={dataSet.sourceScript}
-          language={dataSet.source === 'sql' ? 'sql' : 'python'}
+          language={dataSet.source}
           editorHeight={editorHeight}
           setEditorHeight={setEditorHeight}
         />
       ) : (
         <div className='p-4'>
           <span className='text-lg text-irmin_blue'>
-            Connection: {dataSet?.sourceConnection}
+            {dict.connection.connection}: {dataSet?.sourceConnection}
           </span>
         </div>
       )}

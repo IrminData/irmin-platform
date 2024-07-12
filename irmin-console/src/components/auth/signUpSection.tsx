@@ -11,9 +11,11 @@ import AuthService from '@/lib/api/AuthService';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 
+import { useLocale } from '@/context/LocaleContext';
 import { useProfile } from '@/context/ProfileContext';
 
 const SignUpSection: React.FC = () => {
+  const { dict, locale } = useLocale();
   const { fetchProfile } = useProfile();
   const router = useRouter();
 
@@ -37,12 +39,12 @@ const SignUpSection: React.FC = () => {
       document.querySelector('input[name="accept-terms"]') as HTMLInputElement
     ).checked;
     if (!acceptTerms) {
-      setError('Please accept the terms of use and privacy policy');
+      setError(dict.auth.accept.error);
       setLoading(false);
       return;
     }
     // Register user
-    const authService = AuthService.getInstance();
+    const authService = AuthService.getInstance(locale);
     try {
       const response = await authService.register(
         name,
@@ -80,10 +82,10 @@ const SignUpSection: React.FC = () => {
           <div className='mx-auto max-w-sm'>
             <div className='mb-6 text-center'>
               <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
-                Create an account
+                {dict.auth.signUp.title}
               </h3>
               <p className='text-lg font-light text-irmin_black'>
-                Give your data a better home
+                {dict.auth.signUp.subtitle}
               </p>
             </div>
             <form onSubmit={handleSubmit}>
@@ -92,7 +94,7 @@ const SignUpSection: React.FC = () => {
                   className='mb-2 block font-light text-irmin_black'
                   htmlFor='name'
                 >
-                  Name *
+                  {dict.auth.signUp.name} *
                 </label>
                 <Input
                   variant='outline'
@@ -100,10 +102,10 @@ const SignUpSection: React.FC = () => {
                   size='md'
                   required
                   className='w-full'
-                  ariaLabel='Insert your full name here'
+                  ariaLabel={dict.auth.signUp.name}
                   type='text'
                   id='name'
-                  placeholder='John Doe'
+                  placeholder={dict.auth.signUp.namePlaceholder}
                   defaultValue={name}
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -113,7 +115,7 @@ const SignUpSection: React.FC = () => {
                   className='mb-2 block font-light text-irmin_black'
                   htmlFor='company'
                 >
-                  Company *
+                  {dict.auth.signUp.company} *
                 </label>
                 <Input
                   variant='outline'
@@ -121,10 +123,10 @@ const SignUpSection: React.FC = () => {
                   size='md'
                   required
                   className='w-full'
-                  ariaLabel='Insert your company name here'
+                  ariaLabel={dict.auth.signUp.company}
                   type='text'
                   id='company'
-                  placeholder='Acme Inc.'
+                  placeholder={dict.auth.signUp.companyPlaceholder}
                   defaultValue={company}
                   onChange={(e) => setCompany(e.target.value)}
                 />
@@ -134,7 +136,7 @@ const SignUpSection: React.FC = () => {
                   className='mb-2 block font-light text-irmin_black'
                   htmlFor='email'
                 >
-                  Email *
+                  {dict.auth.signUp.email} *
                 </label>
                 <Input
                   variant='outline'
@@ -142,10 +144,10 @@ const SignUpSection: React.FC = () => {
                   size='md'
                   required
                   className='w-full'
-                  ariaLabel='Insert your email here'
+                  ariaLabel={dict.auth.signUp.email}
                   type='email'
                   id='email'
-                  placeholder='name@acme.corp'
+                  placeholder={dict.auth.signUp.emailPlaceholder}
                   defaultValue={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -155,7 +157,7 @@ const SignUpSection: React.FC = () => {
                   className='mb-2 block font-light text-irmin_black'
                   htmlFor='emailConfirmation'
                 >
-                  Confirm Email *
+                  {dict.auth.signUp.confirmEmail} *
                 </label>
                 <Input
                   variant='outline'
@@ -163,10 +165,10 @@ const SignUpSection: React.FC = () => {
                   size='md'
                   required
                   className='w-full'
-                  ariaLabel='Repeat your email here'
+                  ariaLabel={dict.auth.signUp.confirmEmail}
                   type='email'
                   id='emailConfirmation'
-                  placeholder='name@acme.corp'
+                  placeholder={dict.auth.signUp.emailPlaceholder}
                   defaultValue={emailConfirmation}
                   onChange={(e) => setEmailConfirmation(e.target.value)}
                 />
@@ -176,7 +178,7 @@ const SignUpSection: React.FC = () => {
                   className='mb-2 block font-light text-irmin_black'
                   htmlFor='password'
                 >
-                  Password *
+                  {dict.auth.signUp.password} *
                 </label>
                 <Input
                   variant='outline'
@@ -184,10 +186,10 @@ const SignUpSection: React.FC = () => {
                   size='md'
                   required
                   className='w-full'
-                  ariaLabel='Insert your password here'
+                  ariaLabel={dict.auth.signUp.password}
                   type='password'
                   id='password'
-                  placeholder='enter a strong password'
+                  placeholder={dict.auth.signUp.passwordPlaceholder}
                   defaultValue={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -197,7 +199,7 @@ const SignUpSection: React.FC = () => {
                   className='mb-2 block font-light text-irmin_black'
                   htmlFor='passwordConfirmation'
                 >
-                  Confirm Password *
+                  {dict.auth.signUp.confirmPassword} *
                 </label>
                 <Input
                   variant='outline'
@@ -205,10 +207,10 @@ const SignUpSection: React.FC = () => {
                   size='md'
                   required
                   className='w-full'
-                  ariaLabel='Repeat your password here'
+                  ariaLabel={dict.auth.signUp.confirmPassword}
                   type='password'
                   id='passwordConfirmation'
-                  placeholder='same password as above'
+                  placeholder={dict.auth.signUp.passwordPlaceholder}
                   defaultValue={passwordConfirmation}
                   onChange={(e) => setPasswordConfirmation(e.target.value)}
                 />
@@ -224,21 +226,21 @@ const SignUpSection: React.FC = () => {
                       type='checkbox'
                     />
                     <span className='ml-2 text-xs font-light text-irmin_black'>
-                      Accept our{' '}
+                      {dict.auth.accept.accept}{' '}
                       <Link
                         className='text-irmin_green-500 hover:text-irmin_green-600'
                         href='/legal/terms-of-use'
                         target='_blank'
                       >
-                        terms of use
+                        {dict.auth.accept.terms}
                       </Link>{' '}
-                      and{' '}
+                      {dict.auth.accept.and}{' '}
                       <Link
                         className='text-irmin_green-500 hover:text-irmin_green-600'
                         href='/legal/privacy-policy'
                         target='_blank'
                       >
-                        privacy policy
+                        {dict.auth.accept.privacy}
                       </Link>
                     </span>
                   </label>
@@ -252,14 +254,14 @@ const SignUpSection: React.FC = () => {
                 loading={loading}
                 type='submit'
               >
-                Sign Up
+                {dict.auth.signUp.signUp}
               </Button>
               <p className='text-center'>
                 <span className='text-xs font-light'>
-                  Already have an account?{' '}
+                  {dict.auth.signUp.alreadyHaveAccount}{' '}
                 </span>
                 <Button variant='link' href='/sign-in' size='sm'>
-                  Sign In
+                  {dict.auth.signUp.signIn}
                 </Button>
               </p>
             </form>

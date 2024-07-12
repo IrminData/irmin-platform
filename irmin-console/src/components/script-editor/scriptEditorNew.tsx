@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { FiDatabase, FiUser } from 'react-icons/fi';
 import { TbDatabaseImport } from 'react-icons/tb';
 
+import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 const ScriptEditorNew = ({ addNewTab }: { addNewTab: () => void }) => {
+  const { dict } = useLocale();
   const workspace = useWorkspace();
   if (!workspace.currentWorkspace) {
     return <></>;
@@ -24,18 +26,15 @@ const ScriptEditorNew = ({ addNewTab }: { addNewTab: () => void }) => {
           onClick={addNewTab}
         >
           <FiDatabase size={24} />
-          <h2 className='text-lg font-bold'>Create a new script</h2>
-          <p>Start exploring your data by jumping into the code editor</p>
+          <h2 className='text-lg font-bold'>{dict.editor.createNewScript}</h2>
+          <p>{dict.editor.startExploringData}</p>
         </div>
 
         {/* Card 2 */}
         <div className='flex w-96 cursor-pointer flex-col items-center space-y-4 rounded-lg border p-6 text-center transition-all hover:opacity-40'>
           <FiUser size={24} />
-          <h2 className='text-lg font-bold'>Meet Haz, Your Data Expert!</h2>
-          <p>
-            Haz, your AI assistant, is here to lend a hand with SQL queries,
-            scripts and more!
-          </p>
+          <h2 className='text-lg font-bold'>{dict.editor.hazAITitle}</h2>
+          <p>{dict.editor.hazAISubtitle}</p>
         </div>
       </div>
 
@@ -46,7 +45,7 @@ const ScriptEditorNew = ({ addNewTab }: { addNewTab: () => void }) => {
         >
           <div className='flex items-center'>
             <TbDatabaseImport className='mr-2 text-xl' />
-            <p className='text-base font-light'>Setup new connection</p>
+            <p className='text-base font-light'>{dict.editor.hazAISubtitle}</p>
           </div>
         </Link>
       </div>

@@ -11,6 +11,7 @@ import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
 
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
@@ -25,9 +26,10 @@ export default function DefineConnectionDetails({
   setConnectionData: React.Dispatch<React.SetStateAction<connectionDataType>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
+  const { locale, dict } = useLocale();
   const { currentWorkspace } = useWorkspace();
   const { irminAlert } = usePopup();
-  const connectionService = ConnectionService.getInstance();
+  const connectionService = ConnectionService.getInstance(locale);
   const [loading, setLoading] = useState(false);
   const [initialLoadingDone, setInitialLoadingDone] = useState(false);
 
@@ -140,10 +142,10 @@ export default function DefineConnectionDetails({
         );
         if (res.data.connected) {
           // Proceed to the next step
-          irminAlert('success', 'Connection successful');
+          irminAlert('success', dict.connection.create.success);
           setCurrentStep(3);
         } else {
-          irminAlert('error', 'Connection failed');
+          irminAlert('error', dict.connection.create.failed);
         }
       } catch (error) {
         console.error('Test connection error:', error);
@@ -165,6 +167,7 @@ export default function DefineConnectionDetails({
       setCurrentStep,
       connectionService,
       irminAlert,
+      dict,
     ]
   );
 
@@ -190,14 +193,14 @@ export default function DefineConnectionDetails({
       <form ref={formRef}>
         <div className='mb-6'>
           <label className='mb-2 block font-light text-irmin_black' htmlFor=''>
-            Connection name *
+            {dict.connection.create.connectionName} *
           </label>
           <Input
             variant='outline'
             colorScheme='black'
             className='mt-2 w-full'
             name='irmin_connection_name'
-            placeholder='Connection name'
+            placeholder={dict.connection.create.connectionName}
             required
           />
         </div>
@@ -263,7 +266,7 @@ export default function DefineConnectionDetails({
           size='md'
           onClick={continueAndTestConnection}
         >
-          Continue & test connection
+          {dict.connection.create.continueAndTest}
         </Button>
         <Button
           className='mb-6 inline-block w-full'
@@ -275,7 +278,7 @@ export default function DefineConnectionDetails({
             setCurrentStep((currentStep) => currentStep - 1);
           }}
         >
-          Go back
+          {dict.connection.create.goBack}
         </Button>
       </form>
     </div>

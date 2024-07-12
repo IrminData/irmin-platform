@@ -10,15 +10,24 @@ const api_base = process.env.NEXT_PUBLIC_API_URL;
 
 class ConnectionService {
   private static instance: ConnectionService;
+  private locale: string = 'en';
 
-  private constructor() {}
+  private constructor(locale: string) {
+    this.locale = locale;
+  }
 
-  // Get the singleton instance of the ConnectionService class
-  public static getInstance(): ConnectionService {
+  public static getInstance(locale: string): ConnectionService {
     if (!ConnectionService.instance) {
-      ConnectionService.instance = new ConnectionService();
+      ConnectionService.instance = new ConnectionService(locale);
+    } else {
+      // Update the locale if the instance already exists
+      ConnectionService.instance.setLocale(locale);
     }
     return ConnectionService.instance;
+  }
+
+  public setLocale(locale: string) {
+    this.locale = locale;
   }
 
   /**
@@ -36,7 +45,7 @@ class ConnectionService {
       credentials: 'include', // Include credentials with every request
       headers: {
         Accept: 'application/json',
-        'Accept-Language': navigator.language ?? 'en',
+        'Accept-Language': this.locale,
         Referer: window.location.origin,
         ...options.headers,
       },

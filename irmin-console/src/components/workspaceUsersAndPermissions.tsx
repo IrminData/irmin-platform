@@ -12,16 +12,18 @@ import Input from '@/components/misc/Input';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
 import Modal from '@/components/misc/Modal';
 
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
 import { IrminRole, Workspace, WorkspaceUser } from '@/types/Workspace';
 
 const WorkspaceUsersAndPermissions: React.FC = () => {
+  const { locale, dict } = useLocale();
   const { currentWorkspace, irminRoles, switchToWorkspace } = useWorkspace();
   const { irminAlert, irminConfirm } = usePopup();
-  const workspaceService = WorkspaceService.getInstance();
-  const inviteService = InviteService.getInstance();
+  const workspaceService = WorkspaceService.getInstance(locale);
+  const inviteService = InviteService.getInstance(locale);
   const [users, setUsers] = useState<WorkspaceUser[]>([]);
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -170,7 +172,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     // Confirm removal
     irminConfirm(
       'info',
-      'Are you sure you want to remove this user?',
+      dict.usersPermissions.removeUserConfirmation,
       async () => {
         // Removal confirmed
         if (!currentWorkspace) return;
@@ -206,7 +208,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     // Confirm transfer
     irminConfirm(
       'info',
-      'Are you sure you want to transfer ownership?',
+      dict.usersPermissions.transferOwnershipConfirmation,
       async () => {
         // Transfer confirmed
         if (!currentWorkspace) return;
@@ -321,7 +323,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     <div className=''>
       <div className='mb-4 flex flex-row items-center justify-between px-4'>
         <h2 className='text-base md:text-xl xl:text-2xl'>
-          Users & Permissions
+          {dict.usersPermissions.usersAndPermissions}
         </h2>
         <Button
           size='sm'
@@ -329,20 +331,20 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
           colorScheme='primary'
           onClick={() => setIsInviteModalOpen(true)}
         >
-          Invite User
+          {dict.usersPermissions.inviteUser}
         </Button>
       </div>
       <table className='min-w-full bg-white'>
         <thead>
           <tr>
             <th className='border-b px-4 py-2 text-left text-xs font-normal text-irmin_black md:text-sm'>
-              Name
+              {dict.usersPermissions.name}
             </th>
             <th className='hidden border-b px-4 py-2 text-left text-xs font-normal text-irmin_black md:text-sm lg:table-cell'>
-              Email
+              {dict.usersPermissions.email}
             </th>
             <th className='border-b px-4 py-2 text-left text-xs font-normal text-irmin_black md:text-sm'>
-              Role
+              {dict.usersPermissions.role}
             </th>
             <th className='border-b px-4 py-2 text-center text-xs font-normal text-irmin_black md:text-right md:text-sm'>
               {/* Actions */}
@@ -359,19 +361,23 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                 </span>
                 {user.inviteId && (
                   <span className='block text-[8px] leading-[8px] text-gray-400 lg:hidden'>
-                    Invited
+                    {dict.usersPermissions.invited}
                   </span>
                 )}
               </td>
               <td className='hidden border-b px-4 py-2 text-xs text-gray-700 lg:table-cell'>
                 {user.email}
                 {user.inviteId && (
-                  <span className='ml-2 text-xs text-gray-400'>Invited</span>
+                  <span className='ml-2 text-xs text-gray-400'>
+                    {dict.usersPermissions.invited}
+                  </span>
                 )}
               </td>
               <td className='border-b px-4 py-2'>
                 {currentWorkspace.owner_id === user.id ? (
-                  <p className='text-xs text-gray-700'>Owner</p>
+                  <p className='text-xs text-gray-700'>
+                    {dict.usersPermissions.owner}
+                  </p>
                 ) : (
                   <select
                     value={
@@ -399,7 +405,9 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                     }}
                     className='rounded-lg border p-1 text-xs text-gray-700'
                   >
-                    <option value={'no-role'}>No role</option>
+                    <option value={'no-role'}>
+                      {dict.usersPermissions.noRole}
+                    </option>
                     {irminRoles.map((role, i) => (
                       <option
                         key={`role-option-${role.id}-${i}`}
@@ -422,7 +430,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                       onClick={() => handleTransferOwnership(user.id)}
                       icon={<IoKey size={24} />}
                     >
-                      Transfer ownership
+                      {dict.usersPermissions.transferOwnership}
                     </Button>
                     <Button
                       size='sm'
@@ -432,7 +440,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                       onClick={() => handleRemoveUser(user.id, user.roles[0])}
                       icon={<IoExit size={24} />}
                     >
-                      Remove from workspace
+                      {dict.usersPermissions.removeFromWorkspace}
                     </Button>
                   </div>
                 )}
@@ -446,7 +454,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                       icon={<IoMailOpenOutline size={24} />}
                       onClick={() => handleResend(user.email)}
                     >
-                      Resend invite
+                      {dict.usersPermissions.resendInvite}
                     </Button>
                     <Button
                       size='sm'
@@ -456,7 +464,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                       icon={<IoExit size={24} />}
                       onClick={() => handleCancelInvite(user.email)}
                     >
-                      Cancel invite
+                      {dict.usersPermissions.cancelInvite}
                     </Button>
                   </div>
                 )}
@@ -473,7 +481,9 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
           onClose={() => setIsInviteModalOpen(false)}
         >
           <div className='mb-4'>
-            <label className='block text-gray-700'>Name</label>
+            <label className='block text-gray-700'>
+              {dict.usersPermissions.name}
+            </label>
             <Input
               variant='solid'
               colorScheme='black'
@@ -485,7 +495,9 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
             />
           </div>
           <div className='mb-4'>
-            <label className='block text-gray-700'>Email</label>
+            <label className='block text-gray-700'>
+              {dict.usersPermissions.email}
+            </label>
             <Input
               variant='solid'
               colorScheme='black'
@@ -497,7 +509,9 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
             />
           </div>
           <div className='mb-4'>
-            <label className='block text-gray-700'>Role</label>
+            <label className='block text-gray-700'>
+              {dict.usersPermissions.role}
+            </label>
             <select
               className='mt-2 w-full rounded-lg border p-2'
               value={inviteRole ?? irminRoles[0].id}
@@ -519,7 +533,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
               onClick={() => setIsInviteModalOpen(false)}
               className='w-1/2'
             >
-              Cancel
+              {dict.usersPermissions.cancel}
             </Button>
             <Button
               size='md'
@@ -529,7 +543,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
               onClick={handleInvite}
               className='w-1/2'
             >
-              Invite
+              {dict.usersPermissions.invite}
             </Button>
           </div>
           {inviteError && inviteError.length > 0 && (

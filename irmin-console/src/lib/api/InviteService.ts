@@ -8,15 +8,24 @@ const api_base = process.env.NEXT_PUBLIC_API_URL;
 
 class InviteService {
   private static instance: InviteService;
+  private locale: string = 'en';
 
-  private constructor() {}
+  private constructor(locale: string) {
+    this.locale = locale;
+  }
 
-  // Get the singleton instance of the WorkspaceService class
-  public static getInstance(): InviteService {
+  public static getInstance(locale: string): InviteService {
     if (!InviteService.instance) {
-      InviteService.instance = new InviteService();
+      InviteService.instance = new InviteService(locale);
+    } else {
+      // Update the locale if the instance already exists
+      InviteService.instance.setLocale(locale);
     }
     return InviteService.instance;
+  }
+
+  public setLocale(locale: string) {
+    this.locale = locale;
   }
 
   /**
@@ -34,7 +43,7 @@ class InviteService {
       credentials: 'include',
       headers: {
         Accept: 'application/json',
-        'Accept-Language': navigator.language ?? 'en',
+        'Accept-Language': this.locale,
         Referer: window.location.origin,
         ...options.headers,
       },

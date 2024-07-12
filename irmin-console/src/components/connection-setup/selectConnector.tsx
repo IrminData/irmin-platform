@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { connectionDataType } from '@/components/connection-setup/connectionSetupView';
 import Button from '@/components/misc/Button';
 
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { Connector } from '@/types/Connector';
@@ -18,6 +19,7 @@ export function SelectConnector({
   setConnectionData: React.Dispatch<React.SetStateAction<connectionDataType>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
+  const { dict } = useLocale();
   const { irminAlert } = usePopup();
 
   const handleConnectorClick = (connector: Connector) => {
@@ -36,7 +38,7 @@ export function SelectConnector({
             className='flex flex-col items-center justify-center rounded-lg border p-4 transition duration-300 hover:shadow-lg'
             key={`connector-choice-${index}`}
             onClick={() => handleConnectorClick(connector)}
-            ariaLabel={`Select ${connector.name} connector`}
+            ariaLabel={`${dict.connection.create.select} ${connector.name} ${dict.connection.create.connector}`}
           >
             <>
               <Image
@@ -65,7 +67,7 @@ export function SelectConnector({
           }}
           ariaLabel='Add custom connector'
         >
-          Add custom connector
+          {dict.connection.create.addCustomConnector}
         </Button>
         <Button
           variant='link'
@@ -75,7 +77,7 @@ export function SelectConnector({
           target='_blank'
           ariaLabel='Go to support page'
         >
-          Contact support
+          {dict.connection.create.contactSupport}
         </Button>
       </div>
     </div>

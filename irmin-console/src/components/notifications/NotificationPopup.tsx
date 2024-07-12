@@ -8,6 +8,7 @@ import { IoTriangle } from 'react-icons/io5';
 
 import Button from '@/components/misc/Button';
 
+import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 interface IrminNotification {
@@ -25,6 +26,7 @@ const NotificationPopup = ({
 }: {
   notificationsClickPosition: { x: number; y: number } | null;
 }) => {
+  const { dict } = useLocale();
   const { currentWorkspace } = useWorkspace();
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -134,14 +136,16 @@ const NotificationPopup = ({
             className={`px-4 ${isScrolled ? 'pt-2' : 'pt-0'} transition-all`}
           >
             <div className='flex items-center justify-between'>
-              <div className='text-base font-semibold'>Notifications</div>
+              <div className='text-base font-semibold'>
+                {dict.dashboardNavigation.notifications.notifications}
+              </div>
               <Button
                 onClick={clearNotifications}
                 variant='link'
                 colorScheme='primary'
                 size='sm'
               >
-                Clear All
+                {dict.dashboardNavigation.notifications.clearAll}
               </Button>
             </div>
           </div>
@@ -175,7 +179,7 @@ const NotificationPopup = ({
               ))
           ) : (
             <div className='px-4 py-2 text-sm text-gray-700'>
-              No notifications
+              {dict.dashboardNavigation.notifications.noNotifications}
             </div>
           )}
         </div>

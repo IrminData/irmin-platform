@@ -12,15 +12,24 @@ const api_base = process.env.NEXT_PUBLIC_API_URL;
 
 class WorkspaceService {
   private static instance: WorkspaceService;
+  private locale: string = 'en';
 
-  private constructor() {}
+  private constructor(locale: string) {
+    this.locale = locale;
+  }
 
-  // Get the singleton instance of the WorkspaceService class
-  public static getInstance(): WorkspaceService {
+  public static getInstance(locale: string): WorkspaceService {
     if (!WorkspaceService.instance) {
-      WorkspaceService.instance = new WorkspaceService();
+      WorkspaceService.instance = new WorkspaceService(locale);
+    } else {
+      // Update the locale if the instance already exists
+      WorkspaceService.instance.setLocale(locale);
     }
     return WorkspaceService.instance;
+  }
+
+  public setLocale(locale: string) {
+    this.locale = locale;
   }
 
   /**
@@ -44,7 +53,7 @@ class WorkspaceService {
       credentials: 'include',
       headers: {
         Accept: 'application/json',
-        'Accept-Language': navigator.language ?? 'en',
+        'Accept-Language': this.locale,
         Referer: window.location.origin,
         ...options.headers,
       },

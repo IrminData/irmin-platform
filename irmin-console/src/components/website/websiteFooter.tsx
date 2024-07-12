@@ -5,8 +5,11 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
+
+import { useLocale } from '@/context/LocaleContext';
 
 interface FooterLink {
   href: string;
@@ -65,6 +68,7 @@ const FooterLinkSection = ({
 );
 
 export default function WebsiteFooter() {
+  const { dict } = useLocale();
   return (
     <>
       <section className='bg-irmin_black'>
@@ -81,22 +85,23 @@ export default function WebsiteFooter() {
                 />
               </Link>
               <p className='mx-auto w-full max-w-64 text-center font-light text-irmin_green md:mx-0 md:text-left'>
-                A better home for your data. Irmin is an ETL and data management
-                platform that helps you to collect, clean, and transform your
-                data.
+                {dict.website.footer.description}
               </p>
+              <LanguageSwitcher
+                className={`my-4 -ml-1 block w-full overflow-hidden text-nowrap rounded bg-transparent p-0 text-xs font-light text-irmin_green transition-all lg:text-sm xl:text-base`}
+              />
               <div className='hidden flex-row items-center justify-start gap-4 py-4 lg:flex'>
                 <Link
                   className='inline-block text-xs font-light text-irmin_green transition-colors duration-200 hover:underline'
                   href='/legal/privacy-policy'
                 >
-                  Privacy Policy
+                  {dict.website.footer.privacy}
                 </Link>
                 <Link
                   className='inline-block text-xs font-light text-irmin_green transition-colors duration-200 hover:underline'
                   href='/legal/terms-of-use'
                 >
-                  Terms of Use
+                  {dict.website.footer.terms}
                 </Link>
               </div>
             </div>
@@ -110,13 +115,18 @@ export default function WebsiteFooter() {
               ))}
             </div>
             <div className='justify-end'>
-              <h3 className='mb-5 text-lg font-bold text-white'>Newsletter</h3>
+              <h3 className='mb-3 text-lg font-bold text-white'>
+                {dict.website.footer.newsletter.title}
+              </h3>
+              <p className='mb-5 max-w-sm text-irmin_green'>
+                {dict.website.footer.newsletter.subtitle}
+              </p>
               <div className='mx-auto flex max-w-sm flex-row justify-stretch gap-1 align-middle md:mx-0'>
                 <Input
                   size='sm'
                   colorScheme='primary'
                   variant='solid'
-                  placeholder='Your email'
+                  placeholder={dict.website.footer.newsletter.email}
                   type='email'
                   className='h-12 w-full min-w-64'
                 />
@@ -126,7 +136,7 @@ export default function WebsiteFooter() {
                   colorScheme='primary'
                   variant='solid'
                 >
-                  Subscribe
+                  {dict.website.footer.newsletter.subscribe}
                 </Button>
               </div>
             </div>
@@ -136,17 +146,18 @@ export default function WebsiteFooter() {
               className='inline-block text-xs font-light text-irmin_green transition-colors duration-200 hover:underline'
               href='/legal/privacy-policy'
             >
-              Privacy Policy
+              {dict.website.footer.privacy}
             </Link>
             <Link
               className='inline-block text-xs font-light text-irmin_green transition-colors duration-200 hover:underline'
               href='/legal/terms-of-use'
             >
-              Terms of Use
+              {dict.website.footer.terms}
             </Link>
           </div>
           <p className='py-2 text-center text-sm font-light text-irmin_green'>
-            &copy; {new Date().getFullYear()} Irmin. All rights reserved.
+            &copy; {new Date().getFullYear()} Irmin.{' '}
+            {dict.website.footer.allRightsReserved}
           </p>
         </div>
       </section>

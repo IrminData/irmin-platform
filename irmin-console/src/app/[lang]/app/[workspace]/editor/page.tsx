@@ -15,12 +15,14 @@ import ConnectionTable from '@/components/tables/connectionTable';
 import DatasetTable from '@/components/tables/datasetTable';
 import TableSkeleton from '@/components/tables/tableSkeleton';
 
+import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 import { DataSet } from '@/types/DataSet';
 
 export default function EditorPage() {
-  const dataService = DataSetService.getInstance();
+  const { locale, dict } = useLocale();
+  const dataService = DataSetService.getInstance(locale);
   const { connections } = useWorkspace();
 
   const [editorHeight, setEditorHeight] = useState('400px');
@@ -80,14 +82,14 @@ export default function EditorPage() {
                   type='search'
                   id='default-search'
                   className='block w-full rounded-full border border-gray-300 bg-gray-50 p-2 ps-7 text-xs text-gray-900'
-                  placeholder='Search for files and folders'
+                  placeholder={dict.fileNavigator.searchPlaceholder}
                   required
                 />
                 <button
                   type='submit'
                   className='absolute bottom-1.5 end-1.5 rounded-full bg-irmin_green px-2 py-1 text-xs font-light text-white hover:bg-irmin_green-400'
                 >
-                  Search
+                  {dict.fileNavigator.search}
                 </button>
               </div>
             </form>
@@ -145,7 +147,7 @@ export default function EditorPage() {
             />
             <br />
             <div className='max-h-80 overflow-auto border-t p-2'>
-              <h3 className='px-4'>Connections</h3>
+              <h3 className='px-4'>{dict.fileNavigator.connections}</h3>
               {connections.isLoading ? (
                 <TableSkeleton />
               ) : (
@@ -157,7 +159,7 @@ export default function EditorPage() {
             </div>
             <br />
             <div className='max-h-80 overflow-auto border-t p-2'>
-              <h3 className='px-4'>Data sets</h3>
+              <h3 className='px-4'>{dict.fileNavigator.dataSets}</h3>
               {loading ? (
                 <TableSkeleton />
               ) : (

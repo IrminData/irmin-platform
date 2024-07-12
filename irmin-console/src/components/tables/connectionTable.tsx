@@ -5,6 +5,8 @@ import React from 'react';
 import List, { GridRow } from '@/components/tables/elements/list';
 import StatusElement from '@/components/tables/elements/statusElement';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { ConnectionWithAdditionalData } from '@/types/Connection';
 
 const ConnectionTable = ({
@@ -14,10 +16,12 @@ const ConnectionTable = ({
   connections: ConnectionWithAdditionalData[];
   inSidebar?: boolean;
 }) => {
+  const { dict } = useLocale();
+
   if (!connections || connections.length === 0) {
     return (
       <div className='px-4 py-12 text-center text-xl text-irmin_black'>
-        No connections found for this workspace
+        {dict.list.connection.noConnectionsFound}
       </div>
     );
   }
@@ -25,22 +29,22 @@ const ConnectionTable = ({
   const rows: GridRow[] = connections.map((connection, connectionIndex) => {
     const actions = [
       {
-        label: 'View',
+        label: dict.list.connection.view,
         primary: true,
         href: `#`,
       },
       {
-        label: 'Logs',
+        label: dict.list.connection.logs,
         primary: false,
         href: `#`,
       },
       {
-        label: 'Edit',
+        label: dict.list.connection.edit,
         primary: false,
         href: `#`,
       },
       {
-        label: 'Remove',
+        label: dict.list.connection.remove,
         primary: false,
         href: `#`,
       },
@@ -91,7 +95,11 @@ const ConnectionTable = ({
   return (
     <div className='pb-28'>
       <List
-        headers={['Name', 'Next sync', 'Actions']}
+        headers={[
+          dict.list.connection.name,
+          dict.list.connection.nextSync,
+          dict.list.connection.actions,
+        ]}
         rows={rows}
         hideHeaders={inSidebar}
       />

@@ -2,6 +2,8 @@ import React from 'react';
 
 import Button from '@/components/misc/Button';
 
+import { useLocale } from '@/context/LocaleContext';
+
 const DataMarketplaceFilters = ({
   industries,
   selectedIndustry,
@@ -11,10 +13,13 @@ const DataMarketplaceFilters = ({
   selectedIndustry: string;
   onSelectIndustry: (_industry: string) => void;
 }) => {
+  const { dict } = useLocale();
   return (
     <div className='my-8'>
       <div className='mb-4'>
-        <span className='text-lg font-semibold'>Industries</span>
+        <span className='text-lg font-semibold'>
+          {dict.marketplace.industries}
+        </span>
         <div className='mt-2 flex flex-wrap gap-2'>
           {industries.map((industry, idx) => (
             <Button

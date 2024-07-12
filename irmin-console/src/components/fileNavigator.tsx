@@ -12,6 +12,8 @@ import {
 
 import Button from '@/components/misc/Button';
 
+import { useLocale } from '@/context/LocaleContext';
+
 type FileItemProps = {
   name: string;
   type: 'file' | 'folder';
@@ -31,6 +33,8 @@ const FileNavigator: React.FC<FileNavigatorProps> = ({
   onDeleteFile,
   onRenameFile,
 }) => {
+  const { dict } = useLocale();
+
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
@@ -115,9 +119,8 @@ const FileNavigator: React.FC<FileNavigatorProps> = ({
           colorScheme='primary'
           size='sm'
           icon={<FiPlus className='-mt-1 mr-2 inline-block text-irmin_green' />}
-          ariaLabel='Create new file or folder'
         >
-          Create new file or folder
+          {dict.fileNavigator.createNewFileOrFolder}
         </Button>
       </div>
       <div className='fileNavigator px-3' onClick={handleClickOutside}>
@@ -132,19 +135,19 @@ const FileNavigator: React.FC<FileNavigatorProps> = ({
             className='cursor-pointer p-1 hover:bg-gray-100'
             onClick={() => onOpenFile(contextMenu.itemName)}
           >
-            Open
+            {dict.fileNavigator.open}
           </li>
           <li
             className='cursor-pointer p-1 hover:bg-gray-100'
             onClick={() => onDeleteFile && onDeleteFile(contextMenu.itemName)}
           >
-            Delete
+            {dict.fileNavigator.delete}
           </li>
           <li
             className='cursor-pointer p-1 hover:bg-gray-100'
             onClick={() => onRenameFile && onRenameFile(contextMenu.itemName)}
           >
-            Rename
+            {dict.fileNavigator.rename}
           </li>
         </ul>
       )}

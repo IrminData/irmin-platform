@@ -13,6 +13,8 @@ import BarChart from '@/components/widgets/barChart';
 import LineChart from '@/components/widgets/lineChart';
 import ScrollableTable from '@/components/widgets/scrollableTable';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { DataRow, DataSet } from '@/types/DataSet';
 
 import VisualisationCreationForm from './visualisationCreationForm';
@@ -21,6 +23,8 @@ const QueryResultsAndTabs: React.FC<{
   editorHeight: string;
   dataSet: DataSet;
 }> = ({ editorHeight, dataSet }) => {
+  const { dict } = useLocale();
+
   const [activeTab, setActiveTab] = useState('queryResults');
 
   const tableRef = useRef<HTMLDivElement>(null);
@@ -58,9 +62,8 @@ const QueryResultsAndTabs: React.FC<{
               ? 'border-irmin_green'
               : 'border-transparent'
           }`}
-          ariaLabel='Go to Query Results tab'
         >
-          Query Results
+          {dict.queryResults.queryResults}
         </Button>
         <Button
           onClick={() => setActiveTab('visualisation')}
@@ -70,9 +73,8 @@ const QueryResultsAndTabs: React.FC<{
               ? 'border-irmin_green'
               : 'border-transparent'
           }`}
-          ariaLabel='Go to Visualisation tab'
         >
-          Visualisation
+          {dict.queryResults.visualisation}
         </Button>
         <Button
           onClick={() => setActiveTab('documentation')}
@@ -82,9 +84,8 @@ const QueryResultsAndTabs: React.FC<{
               ? 'border-irmin_green'
               : 'border-transparent'
           }`}
-          ariaLabel='Go to Documentation tab'
         >
-          Documentation
+          {dict.queryResults.visualisation}
         </Button>
         <div className='flex-end flex gap-2 text-right'>
           {activeTab === 'documentation' && (
@@ -97,34 +98,31 @@ const QueryResultsAndTabs: React.FC<{
               variant='link'
               colorScheme={'gray'}
               size='sm'
-              ariaLabel='Switch between plain text and markdown editor'
               className='w-[120px]'
             >
               {documentationTab === 'mdx'
-                ? 'Switch to plain text'
-                : 'Switch to markdown editor'}
+                ? dict.queryResults.switchToPlainText
+                : dict.queryResults.switchToMarkdownEditor}
             </Button>
           )}
           <Button
             icon={<AiOutlineSave />}
             colorScheme='secondary'
             variant='outline'
-            ariaLabel='Save the Data Set'
             size='sm'
             className='w-[120px]'
           >
-            Save
+            {dict.queryResults.save}
           </Button>
           {dataSet.source !== 'connection' && (
             <Button
               icon={<MdPlayArrow />}
               colorScheme='secondary'
               variant='outline'
-              ariaLabel='Run the script'
               size='sm'
               className='w-[120px]'
             >
-              Run script
+              {dict.queryResults.runScript}
             </Button>
           )}
         </div>
@@ -137,7 +135,9 @@ const QueryResultsAndTabs: React.FC<{
             style={{ maxHeight: tableMaxHeight }}
           >
             <div>
-              <h3 className='p-4 font-medium'>Existing visualisations</h3>
+              <h3 className='p-4 font-medium'>
+                {dict.queryResults.existingVisualisations}
+              </h3>
               <div className='flex flex-col gap-10'>
                 {dataSet.visualisations.map((visualisation) => {
                   switch (visualisation.type) {
@@ -167,7 +167,9 @@ const QueryResultsAndTabs: React.FC<{
               </div>
             </div>
             <div>
-              <h3 className='p-4 font-medium'>Add new visualisation</h3>
+              <h3 className='p-4 font-medium'>
+                {dict.queryResults.addNewVisualisation}
+              </h3>
               <VisualisationCreationForm />
             </div>
           </div>
@@ -178,7 +180,7 @@ const QueryResultsAndTabs: React.FC<{
             {documentationTab === 'plain' && (
               <textarea
                 className='h-full w-full p-2 focus:outline-none'
-                placeholder='Start typing your documentation and notes here...'
+                placeholder={dict.queryResults.startTypingDocumentation}
                 defaultValue={dataSet.documentation ?? ''}
                 onChange={(e) => {
                   e.preventDefault();
@@ -190,7 +192,7 @@ const QueryResultsAndTabs: React.FC<{
               <MDXEditor
                 className='h-full w-full focus:outline-none'
                 contentEditableClassName='h-full w-full p-2 focus:outline-none'
-                placeholder='Start typing your documentation and notes here...'
+                placeholder={dict.queryResults.startTypingDocumentation}
                 markdown={dataSet.documentation ?? ''}
                 onChange={(markdown) => {
                   // TODO: Update the dataset documentation
@@ -213,9 +215,8 @@ const QueryResultsAndTabs: React.FC<{
                   icon={<AiOutlineDownload />}
                   colorScheme='secondary'
                   variant='link'
-                  ariaLabel='Export the table as a CSV file'
                 >
-                  export table (.csv)
+                  {dict.queryResults.exportTable}
                 </Button>
               </div>
             </div>

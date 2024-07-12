@@ -29,7 +29,7 @@ export interface DataSet {
   refreshSchedule: string;
   sourceWorkspace: string;
   status: 'private' | 'public' | 'connected';
-  source: 'sql' | 'python' | 'connection';
+  source: 'sql' | 'python' | 'js' | 'connection';
   sourceScript: string | null;
   scriptFile: string | null;
   sourceConnection: string | null;

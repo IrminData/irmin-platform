@@ -13,6 +13,8 @@ import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
 import List from '@/components/tables/elements/list';
 import StatusElement from '@/components/tables/elements/statusElement';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { DataSet } from '@/types/DataSet';
 
 export default function DataSetViewerLayout({
@@ -29,8 +31,9 @@ export default function DataSetViewerLayout({
 }
 
 function DataSetToolbar() {
+  const { locale } = useLocale();
   const { dataSetID, workspace } = useParams();
-  const dataSetService = DataSetService.getInstance();
+  const dataSetService = DataSetService.getInstance(locale);
 
   const [dataSet, setDataSet] = useState<DataSet | undefined>(undefined);
   useEffect(() => {

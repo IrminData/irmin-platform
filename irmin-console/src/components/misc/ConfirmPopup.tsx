@@ -1,8 +1,12 @@
+'use client';
+
 import React from 'react';
 
 import { IoClose } from 'react-icons/io5';
 
 import Button from '@/components/misc/Button';
+
+import { useLocale } from '@/context/LocaleContext';
 
 const ConfirmPopup = ({
   type,
@@ -15,6 +19,7 @@ const ConfirmPopup = ({
   onConfirm: () => void;
   onCancel: () => void;
 }) => {
+  const { dict } = useLocale();
   return (
     <div
       id='confirm'
@@ -48,7 +53,7 @@ const ConfirmPopup = ({
             size='sm'
             className='w-1/2'
           >
-            Cancel
+            {dict.misc.cancel}
           </Button>
           <Button
             variant='solid'
@@ -64,7 +69,7 @@ const ConfirmPopup = ({
             size='sm'
             className='w-1/2'
           >
-            Confirm
+            {dict.misc.confirm}
           </Button>
         </div>
       </div>

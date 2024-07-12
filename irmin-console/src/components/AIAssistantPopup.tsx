@@ -8,6 +8,8 @@ import { RiRobot2Line } from 'react-icons/ri';
 
 import Button from '@/components/misc/Button';
 
+import { useLocale } from '@/context/LocaleContext';
+
 interface Message {
   id: number;
   text: string;
@@ -15,11 +17,13 @@ interface Message {
 }
 
 export default function AIAssistantPopup() {
+  const { dict } = useLocale();
+
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 0,
-      text: 'Hi! My name is Haz and I am here to help you with your data. Ask me anything!',
+      text: dict.haz.greeting,
       sender: 'assistant',
     },
   ]);
@@ -71,41 +75,32 @@ export default function AIAssistantPopup() {
           </div>
           {messages.filter((a) => a.sender === 'user').length === 0 && (
             <>
-              <p className='text-xs text-gray-600'>Suggestions:</p>
+              <p className='text-xs text-gray-600'>{dict.haz.suggestions}:</p>
               <div className='my-1 mr-2 flex items-end'>
                 <Button
                   size='sm'
                   className='w-full rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-50'
-                  onClick={() =>
-                    setNewMessage('How to connect a new data source?')
-                  }
-                  ariaLabel='Ask Haz: How to connect a new data source?'
+                  onClick={() => setNewMessage(dict.haz.howToConnectDataSource)}
                 >
-                  {'How to connect a new data source?'}
+                  {dict.haz.howToConnectDataSource}
                 </Button>
               </div>
               <div className='my-1 mr-2 flex items-end'>
                 <Button
                   size='sm'
                   className='w-full rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-50'
-                  onClick={() =>
-                    setNewMessage('Which sources do my sales mostly come from?')
-                  }
-                  ariaLabel='Ask Haz: Which sources do my sales mostly come from?'
+                  onClick={() => setNewMessage(dict.haz.salesSources)}
                 >
-                  {'Which sources do my sales mostly come from?'}
+                  {dict.haz.salesSources}
                 </Button>
               </div>
               <div className='my-1 mr-2 flex items-end'>
                 <Button
                   size='sm'
                   className='w-full rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-50'
-                  onClick={() =>
-                    setNewMessage('Which ad campaigns are the most profitable?')
-                  }
-                  ariaLabel='Ask Haz: Which ad campaigns are the most profitable?'
+                  onClick={() => setNewMessage(dict.haz.profitableAdCampaigns)}
                 >
-                  {'Which ad campaigns are the most profitable?'}
+                  {dict.haz.profitableAdCampaigns}
                 </Button>
               </div>
             </>
@@ -122,7 +117,7 @@ export default function AIAssistantPopup() {
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               className='block h-32 w-full appearance-none rounded-lg border bg-gray-50 p-3 leading-5 text-irmin_black shadow-md'
-              placeholder='Write your message here...'
+              placeholder={dict.haz.writeYourMessage}
             />
             <Button
               type='submit'

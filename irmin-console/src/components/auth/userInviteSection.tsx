@@ -11,6 +11,8 @@ import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
 
+import { useLocale } from '@/context/LocaleContext';
+
 const UserInviteSection: React.FC = () => {
   return (
     <Suspense fallback={<LoadingSpinner />}>
@@ -19,6 +21,7 @@ const UserInviteSection: React.FC = () => {
   );
 };
 const UserInvite: React.FC = () => {
+  const { dict, locale } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteId = parseInt(searchParams.get('invite') || '-1', 10);
@@ -30,12 +33,12 @@ const UserInvite: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const authService = AuthService.getInstance(locale);
+
   const handleAcceptInvite = async () => {
     setLoading(true);
     setError(null);
     setSuccess(null);
-
-    const authService = AuthService.getInstance();
 
     try {
       const response = await authService.acceptUserInvite(
@@ -63,7 +66,6 @@ const UserInvite: React.FC = () => {
     setError(null);
     setSuccess(null);
 
-    const authService = AuthService.getInstance();
     try {
       const response = await authService.declineUserInvite(inviteId);
       if (response.metadata?.message) {
@@ -88,10 +90,10 @@ const UserInvite: React.FC = () => {
             <div className='mx-auto max-w-sm'>
               <div className='mb-6 text-center'>
                 <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
-                  Invalid Invitation
+                  {dict.auth.invite.invalid}
                 </h3>
                 <p className='text-lg font-light text-irmin_black'>
-                  The invitation link is invalid or expired.
+                  {dict.auth.invite.invalidMessage}
                 </p>
               </div>
             </div>
@@ -108,10 +110,10 @@ const UserInvite: React.FC = () => {
           <div className='mx-auto max-w-sm'>
             <div className='mb-6 text-center'>
               <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
-                You&apos;ve been invited!
+                {dict.auth.invite.title}
               </h3>
               <p className='text-lg font-light text-irmin_black'>
-                Accept or decline the invitation to join the workspace.
+                {dict.auth.invite.subtitle}
               </p>
             </div>
             {error && <p className='mb-4 text-red-800'>{error}</p>}
@@ -127,7 +129,7 @@ const UserInvite: React.FC = () => {
                   className='mb-2 block font-light text-irmin_black'
                   htmlFor='company'
                 >
-                  Company *
+                  {dict.auth.invite.company}*
                 </label>
                 <Input
                   variant='outline'
@@ -138,7 +140,7 @@ const UserInvite: React.FC = () => {
                   ariaLabel='Insert your company namehere'
                   type='text'
                   id='company'
-                  placeholder='Acme Inc.'
+                  placeholder={dict.auth.invite.companyPlaceholder}
                   defaultValue={company}
                   onChange={(e) => setCompany(e.target.value)}
                 />
@@ -148,7 +150,7 @@ const UserInvite: React.FC = () => {
                   className='mb-2 block font-light text-irmin_black'
                   htmlFor='password'
                 >
-                  Password *
+                  {dict.auth.invite.password} *
                 </label>
                 <Input
                   variant='outline'
@@ -159,7 +161,7 @@ const UserInvite: React.FC = () => {
                   ariaLabel='Insert your password here'
                   type='password'
                   id='password'
-                  placeholder='enter a strong password'
+                  placeholder={dict.auth.invite.passwordPlaceholder}
                   defaultValue={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -169,7 +171,7 @@ const UserInvite: React.FC = () => {
                   className='mb-2 block font-light text-irmin_black'
                   htmlFor='passwordConfirmation'
                 >
-                  Confirm Password *
+                  {dict.auth.invite.confirmPassword} *
                 </label>
                 <Input
                   variant='outline'
@@ -180,7 +182,7 @@ const UserInvite: React.FC = () => {
                   ariaLabel='Repeat your password here'
                   type='password'
                   id='passwordConfirmation'
-                  placeholder='same password as above'
+                  placeholder={dict.auth.invite.confirmPasswordPlaceholder}
                   defaultValue={passwordConfirmation}
                   onChange={(e) => setPasswordConfirmation(e.target.value)}
                 />
@@ -193,7 +195,7 @@ const UserInvite: React.FC = () => {
                 loading={loading}
                 type='submit'
               >
-                Accept Invite
+                {dict.auth.invite.accept} *
               </Button>
             </form>
             <Button
@@ -204,7 +206,7 @@ const UserInvite: React.FC = () => {
               onClick={handleDeclineInvite}
               disabled={loading}
             >
-              Decline Invite
+              {dict.auth.invite.decline} *
             </Button>
           </div>
         </div>

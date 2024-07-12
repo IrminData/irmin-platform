@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { useParams } from 'next/navigation';
 
+import { useLocale } from '@/context/LocaleContext';
 import {
   useDeleteCurrentWorkspace,
   useFetchConnections,
@@ -21,6 +22,7 @@ export const WorkspaceProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const { locale } = useLocale();
   const params = useParams();
 
   // Workspaces
@@ -45,18 +47,18 @@ export const WorkspaceProvider = ({
    * It will be run during the initialisation to load all available workspaces.
    */
   const fetchWorkspaces = useFetchWorkspaces(
-    workspaces,
     setWorkspaces,
     setCurrentWorkspace,
     workspaceLoading,
-    setWorkspaceLoading
+    setWorkspaceLoading,
+    locale
   );
 
   /**
    * Hook to fetch the list of roles.
    * It will be run during the initialisation to load all available roles.
    */
-  const fetchRoles = useFetchRoles(irminRoles, setIrminRoles);
+  const fetchRoles = useFetchRoles(irminRoles, setIrminRoles, locale);
 
   /**
    * Hook to fetch the list of connections for the current workspace.
@@ -68,7 +70,8 @@ export const WorkspaceProvider = ({
     connectionsLoading,
     setConnectionsLoading,
     connectionsFetchedFor,
-    setConnectionsFetchedFor
+    setConnectionsFetchedFor,
+    locale
   );
 
   /**
@@ -82,7 +85,8 @@ export const WorkspaceProvider = ({
     setCurrentWorkspace,
     workspaceLoading,
     setWorkspaceLoading,
-    fetchWorkspaces
+    fetchWorkspaces,
+    locale
   );
 
   /**
@@ -92,7 +96,8 @@ export const WorkspaceProvider = ({
   const deleteCurrentWorkspace = useDeleteCurrentWorkspace(
     currentWorkspace,
     switchToWorkspace,
-    fetchWorkspaces
+    fetchWorkspaces,
+    locale
   );
 
   /**
@@ -125,6 +130,8 @@ export const WorkspaceProvider = ({
             'currentWorkspaceSlug'
           );
           if (currentWorkspaceSlug && currentWorkspaceSlug.length > 0) {
+            // Remove the workspace slug from localStorage
+            localStorage.removeItem('currentWorkspaceSlug');
             // Switch to the cached workspace
             await switchToWorkspace(currentWorkspaceSlug);
           } else {

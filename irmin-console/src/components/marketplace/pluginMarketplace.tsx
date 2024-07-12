@@ -7,6 +7,8 @@ import PluginMarketplaceFilters from '@/components/marketplace/pluginMarketplace
 import PluginMarketplaceListingCard from '@/components/marketplace/pluginMarketplaceListingCard';
 import Input from '@/components/misc/Input';
 
+import { useLocale } from '@/context/LocaleContext';
+
 export interface MarketplacePlugin {
   id: number;
   name: string;
@@ -18,6 +20,7 @@ export interface MarketplacePlugin {
 }
 
 export default function PluginMarketplace() {
+  const { dict } = useLocale();
   const [selectedCategory, setSelectedCategory] = useState('');
   const [search, setSearch] = useState('');
 
@@ -81,7 +84,7 @@ export default function PluginMarketplace() {
 
   // Hypothetical categories, you would fetch this from an API in a real app
   const categories = [
-    'All',
+    dict.marketplace.all,
     'Analytics',
     'CRM',
     'Payments',
@@ -95,7 +98,7 @@ export default function PluginMarketplace() {
     .filter(
       (plugin) =>
         selectedCategory === '' ||
-        selectedCategory === 'All' ||
+        selectedCategory === dict.marketplace.all ||
         plugin.category === selectedCategory
     )
     .filter(
@@ -107,7 +110,7 @@ export default function PluginMarketplace() {
 
   return (
     <>
-      <AppTitle title='Plugins & Extensions' />
+      <AppTitle title={dict.marketplace.pluginMarketplace} />
       <div className='p-4 pb-24'>
         <div className='mb-4'>
           <Input
@@ -116,7 +119,7 @@ export default function PluginMarketplace() {
             colorScheme='gray'
             className='w-full'
             type='text'
-            placeholder='Search for plugins and extensions'
+            placeholder={dict.marketplace.searchPlugins}
             defaultValue={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -130,7 +133,9 @@ export default function PluginMarketplace() {
         </div>
         {filteredPlugins.filter((p) => p.connected).length > 0 && (
           <div>
-            <h2 className='my-4 text-xl font-semibold'>Active Plugins</h2>
+            <h2 className='my-4 text-xl font-semibold'>
+              {dict.marketplace.activePlugins}
+            </h2>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
               {filteredPlugins
                 .filter((p) => p.connected)
@@ -145,7 +150,9 @@ export default function PluginMarketplace() {
         )}
         {filteredPlugins.filter((p) => !p.connected).length > 0 && (
           <div>
-            <h2 className='my-4 text-xl font-semibold'>Browse Plugins</h2>
+            <h2 className='my-4 text-xl font-semibold'>
+              {dict.marketplace.browsePlugins}
+            </h2>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
               {filteredPlugins
                 .filter((p) => !p.connected)
@@ -159,7 +166,9 @@ export default function PluginMarketplace() {
           </div>
         )}
         {filteredPlugins.length === 0 && (
-          <div className='mt-8 text-center text-gray-400'>No plugins found</div>
+          <div className='mt-8 text-center text-gray-400'>
+            {dict.marketplace.pluginsNotFound}
+          </div>
         )}
       </div>
     </>

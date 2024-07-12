@@ -8,6 +8,8 @@ import Button from '@/components/misc/Button';
 import ScriptEditor from '@/components/script-editor/scriptEditor';
 import ScriptEditorNew from '@/components/script-editor/scriptEditorNew';
 
+import { useLocale } from '@/context/LocaleContext';
+
 const ScriptEditorWithOptions = ({
   editorHeight,
   setEditorHeight,
@@ -15,13 +17,16 @@ const ScriptEditorWithOptions = ({
   editorHeight: string;
   setEditorHeight: React.Dispatch<React.SetStateAction<string>>;
 }) => {
-  const [activeLanguage, setActiveLanguage] = useState<'sql' | 'python'>('sql');
+  const { dict } = useLocale();
+  const [activeLanguage, setActiveLanguage] = useState<'sql' | 'js' | 'python'>(
+    'sql'
+  );
   const [tabs, setTabs] = useState<
     Array<{
       name: string;
       content: string;
       changed: boolean;
-      type: 'sql' | 'python';
+      type: 'sql' | 'js' | 'python';
     }>
   >([
     {
@@ -31,7 +36,9 @@ const ScriptEditorWithOptions = ({
       content:
         activeLanguage === 'sql'
           ? `SELECT ProductID, OrderQty, SUM(LineTotal) AS Total\nFROM Sales.SalesOrderDetail\nWHERE UnitPrice < $5.00\nGROUP BY ProductID, OrderQty\nORDER BY ProductID, OrderQty\nOPTION (HASH GROUP, FAST 10);`
-          : `import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt`,
+          : activeLanguage === 'js'
+            ? `console.log('Hello, World!')`
+            : `import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt`,
     },
   ]);
   const [activeTab, setActiveTab] = useState<number>(0);
@@ -120,7 +127,7 @@ const ScriptEditorWithOptions = ({
                 const newTabs = [...tabs];
                 newTabs[activeTab] = {
                   ...newTabs[activeTab],
-                  type: e.target.value as 'sql' | 'python',
+                  type: e.target.value as 'sql' | 'python' | 'js',
                   content:
                     e.target.value === 'sql'
                       ? `SELECT ProductID, OrderQty, SUM(LineTotal) AS Total\nFROM Sales.SalesOrderDetail\nWHERE UnitPrice < $5.00\nGROUP BY ProductID, OrderQty\nORDER BY ProductID, OrderQty\nOPTION (HASH GROUP, FAST 10);`
@@ -132,6 +139,7 @@ const ScriptEditorWithOptions = ({
             }}
           >
             <option value={'sql'}>SQL</option>
+            <option value={'js'}>JavaScript</option>
             <option value={'python'}>Python</option>
           </select>
         </div>
@@ -141,9 +149,8 @@ const ScriptEditorWithOptions = ({
             variant='solid'
             colorScheme='primary'
             onClick={() => saveTabAsFile(activeTab)}
-            ariaLabel={`Save tab ${tabs[activeTab].name} as file`}
           >
-            <IoSave className='mr-2 inline-block' /> Save file
+            <IoSave className='mr-2 inline-block' /> {dict.editor.saveFile}
           </Button>
         </div>
       </div>

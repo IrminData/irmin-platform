@@ -1,19 +1,29 @@
 import { DataSet } from '@/types/DataSet';
 
 export class DataSetService {
-  private static instance: DataSetService;
   private baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL ?? 'https://localhost:3000';
   private dataSets: DataSet[] = [];
 
-  private constructor() {}
+  private static instance: DataSetService;
+  private locale: string = 'en';
 
-  // Get the singleton instance of the DataSetService class
-  public static getInstance(): DataSetService {
+  private constructor(locale: string) {
+    this.locale = locale;
+  }
+
+  public static getInstance(locale: string): DataSetService {
     if (!DataSetService.instance) {
-      DataSetService.instance = new DataSetService();
+      DataSetService.instance = new DataSetService(locale);
+    } else {
+      // Update the locale if the instance already exists
+      DataSetService.instance.setLocale(locale);
     }
     return DataSetService.instance;
+  }
+
+  public setLocale(locale: string) {
+    this.locale = locale;
   }
 
   /**
@@ -24,7 +34,12 @@ export class DataSetService {
   async fetchAllDataSets(): Promise<DataSet[]> {
     try {
       // Fetch the datasets from the API
-      const response = await fetch(`${this.baseUrl}/api/fake/data-sets`);
+      const response = await fetch(`${this.baseUrl}/api/fake/data-sets`, {
+        headers: {
+          Accept: 'application/json',
+          'Accept-Language': this.locale,
+        },
+      });
       if (!response.ok) {
         throw new Error(`Error fetching datasets: ${response.statusText}`);
       }
@@ -49,7 +64,12 @@ export class DataSetService {
       const stored = this.getDataSetById(id);
       if (stored) return stored;
       // Fetch the dataset from the API
-      const response = await fetch(`${this.baseUrl}/api/fake/data-sets/${id}`);
+      const response = await fetch(`${this.baseUrl}/api/fake/data-sets/${id}`, {
+        headers: {
+          Accept: 'application/json',
+          'Accept-Language': this.locale,
+        },
+      });
       if (!response.ok) {
         throw new Error(
           `Error fetching dataset with ID ${id}: ${response.statusText}`

@@ -1,0 +1,335 @@
+{
+  "misc": {
+    "loading": "Loading...",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "error": "Error",
+    "ohNo": "Oh no!",
+    "pageNotFound": "Page not found",
+    "somethingWentWrong": "Something went wrong",
+    "weEncounteredError": "We encountered an error",
+    "tryAgainOrContactSupport": "Please try again or contact support",
+    "goBackHome": "Go back to the home page",
+    "goBackApp": "Go back to Irmin App",
+    "tryAgain": "Try again"
+  },
+  "auth": {
+    "signIn": {
+      "signIn": "Sign in",
+      "signUp": "Sign up",
+      "title": "Sign in to your account",
+      "subtitle": "Welcome back to the home of your data",
+      "dontHaveAccount": "Don't have an account?",
+      "forgotPassword": "Forgot your password?",
+      "rememberMe": "Remember me",
+      "email": "Email",
+      "emailPlaceholder": "name@acme.corp",
+      "password": "Password",
+      "passwordPlaceholder": "Your super secret password"
+    },
+    "signUp": {
+      "signIn": "Sign in",
+      "signUp": "Sign up",
+      "title": "Create your account",
+      "subtitle": "Give your data a better home",
+      "alreadyHaveAccount": "Already have an account?",
+      "name": "Name",
+      "namePlaceholder": "John Doe",
+      "company": "Company",
+      "companyPlaceholder": "Acme Corp",
+      "email": "Email",
+      "emailPlaceholder": "name@acme.corp",
+      "confirmEmail": "Confirm email",
+      "confirmEmailPlaceholder": "name@acme.corp",
+      "password": "Password",
+      "passwordPlaceholder": "Your super secret password",
+      "confirmPassword": "Confirm password",
+      "confirmPasswordPlaceholder": "same as above"
+    },
+    "invite": {
+      "invalid": "Invalid invitation",
+      "invalidMessage": "The invitation you are trying to use is invalid or has expired.",
+      "title": "You have been invited",
+      "subtitle": "Accept or decline the invitation to join the workspace.",
+      "company": "Company",
+      "companyPlaceholder": "Acme Corp",
+      "password": "Password",
+      "passwordPlaceholder": "Your super secret password",
+      "confirmPassword": "Confirm password",
+      "confirmPasswordPlaceholder": "same as above",
+      "accept": "Accept invitation",
+      "decline": "Decline invitation"
+    },
+    "accept": {
+      "accept": "I accept",
+      "terms": "the terms and conditions",
+      "and": "and",
+      "privacy": "the privacy policy",
+      "error": "You must accept the terms and conditions and the privacy policy to continue."
+    }
+  },
+  "website": {
+    "navigation": {
+      "goToApp": "Go to app"
+    },
+    "footer": {
+      "description": "A better home for your data. Irmin is an ETL and data management platform that helps you to collect, clean, and transform your data.",
+      "newsletter": {
+        "title": "Subscribe to our newsletter",
+        "subtitle": "Stay up to date with the latest news and updates from Irmin.",
+        "email": "Email",
+        "subscribe": "Subscribe"
+      },
+      "terms": "Terms and conditions",
+      "privacy": "Privacy policy",
+      "allRightsReserved": "All rights reserved."
+    }
+  },
+  "dashboardNavigation": {
+    "search": "Search",
+    "searchPlaceholder": "Search for data and more",
+    "irminApp": "Irmin App",
+    "workspace": "Workspace",
+    "settings": "Settings",
+    "notifications": {
+      "toggle": "Toggle notifications popup",
+      "notifications": "Notifications",
+      "clearAll": "Clear all",
+      "noNotifications": "No notifications"
+    },
+    "links": {
+      "dashboards": "Dashboards",
+      "dataSets": "Data sets",
+      "editor": "Editor",
+      "connections": "Connections",
+      "exportSyncs": "Export syncs",
+      "workspaceSettings": "Workspace settings",
+      "marketplace": "Marketplace",
+      "workspaces": "Workspaces",
+      "goToWebsite": "Go to website",
+      "myProfile": "My Profile",
+      "signOut": "Sign out",
+      "contactSupport": "Contact Support",
+      "privacyPolicy": "Privacy Policy",
+      "termsOfUse": "Terms of Use"
+    }
+  },
+  "workspaceSwitcher": {
+    "selectWorkspace": "Select a workspace",
+    "createNewWorkspace": "Create new workspace",
+    "switchedTo": "Switched to",
+    "failedToSwitch": "Failed to switch workspace",
+    "workspace": "Workspace",
+    "connections": "Connections",
+    "dataSets": "Data Sets"
+  },
+  "connection": {
+    "connection": "Connection",
+    "connections": "Connections",
+    "selectConnector": "Select a connector",
+    "establishConnection": "Establish connection",
+    "configureSettings": "Configure settings",
+    "configureSync": "Configure sync",
+    "createNew": "Create a new connection",
+    "create": {
+      "select": "Select",
+      "connector": "Connector",
+      "connectionName": "Connection name",
+      "addCustomConnector": "Add custom connector",
+      "syncIntervalLabel": "Sync interval (cron expression) or leave empty for manual sync",
+      "syncIntervalPlaceholder": "Enter cron expression (e.g. 0 0 * * *) or leave empty for manual sync",
+      "continueAndTest": "Continue & test connection",
+      "startSync": "Start sync",
+      "continue": "Continue",
+      "goBack": "Go back",
+      "success": "Connection successful",
+      "failed": "Connection failed",
+      "contactSupport": "Contact support"
+    }
+  },
+  "export": {
+    "selectSourceDataSet": "Select source data set",
+    "selectDestinationConnection": "Select destination connection",
+    "configureExport": "Configure Export",
+    "exportSyncs": "Export syncs",
+    "createNewExportSync": "Create a new Export sync",
+    "create": {
+      "title": "Configure export",
+      "processName": "Process name",
+      "processNamePlaceholder": "Enter a name for the export process",
+      "syncIntervalLabel": "Sync interval (cron expression) or leave empty for manual sync",
+      "syncIntervalPlaceholder": "Enter cron expression (e.g. 0 0 * * *) or leave empty for manual sync",
+      "startSync": "Start sync",
+      "goBack": "Go back"
+    }
+  },
+  "marketplace": {
+    "all": "All",
+    "industries": "Industries",
+    "categories": "Categories",
+    "dataMarketplace": "Data Marketplace",
+    "pluginMarketplace": "Plugins & Extensions",
+    "searchDataSets": "Search for public datasets you would like to connect and use",
+    "searchPlugins": "Search for plugins and extensions",
+    "activePlugins": "Active plugins",
+    "browsePlugins": "Browse plugins",
+    "activeDataSets": "Active data sets",
+    "browseDataSets": "Browse data sets",
+    "pluginsNotFound": "No plugins found",
+    "dataSetsNotFound": "No data sets found",
+    "source": "Source",
+    "details": "Details",
+    "connect": "Connect",
+    "connected": "Connected",
+    "price": "Price",
+    "industry": "Industry",
+    "provider": "Provider",
+    "category": "Category",
+    "pricePostfix": "/month",
+    "closeThePopup": "Close the details popup",
+    "myListings": "My Listings"
+  },
+  "editor": {
+    "writeYourSQL": "Write your SQL query here...",
+    "writeYourJS": "Write your JavaScript script here...",
+    "writeYourPython": "Write your Python script here...",
+    "createNewScript": "Create a new script",
+    "startExploringData": "Start exploring your data by jumping into the code editor",
+    "hazAITitle": "Meet Haz, Your Data Expert!",
+    "hazAISubtitle": "Haz, your AI assistant, is here to lend a hand with SQL queries, scripts and more!",
+    "setupNewConnection": "Setup new connection",
+    "saveFile": "Save file"
+  },
+  "list": {
+    "connection": {
+      "noConnectionsFound": "No connections found for this workspace",
+      "name": "Name",
+      "nextSync": "Next sync",
+      "actions": "Actions",
+      "view": "View",
+      "logs": "Logs",
+      "edit": "Edit",
+      "remove": "Remove"
+    },
+    "dataSets": {
+      "noDataSetsFound": "No data sets found for this workspace",
+      "view": "View",
+      "logs": "Logs",
+      "viewInfo": "View info",
+      "disconnect": "Disconnect",
+      "edit": "Edit",
+      "source": "Source",
+      "name": "Name",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "export": {
+      "noExportProcessesFound": "No Export processes found for this workspace",
+      "logs": "Logs",
+      "edit": "Edit",
+      "remove": "Remove",
+      "source": "Source",
+      "destination": "Destination",
+      "name": "Name",
+      "sourceAndDestination": "Source & Destination",
+      "actions": "Actions"
+    }
+  },
+  "haz": {
+    "greeting": "Hi! My name is Haz and I am here to help you with your data. Ask me anything!",
+    "suggestions": "Suggestions",
+    "howToConnectDataSource": "How to connect a new data source?",
+    "salesSources": "Which sources do my sales mostly come from?",
+    "profitableAdCampaigns": "Which ad campaigns are the most profitable?",
+    "writeYourMessage": "Write your message here..."
+  },
+  "fileNavigator": {
+    "search": "Search",
+    "searchPlaceholder": "Search for files and folders",
+    "createNewFileOrFolder": "Create new file or folder",
+    "open": "Open",
+    "delete": "Delete",
+    "rename": "Rename",
+    "connections": "Connections",
+    "dataSets": "Data sets"
+  },
+  "queryResults": {
+    "queryResults": "Query Results",
+    "visualisation": "Visualisation",
+    "documentation": "Documentation",
+    "switchToPlainText": "Switch to plain text",
+    "switchToMarkdownEditor": "Switch to markdown editor",
+    "save": "Save",
+    "runScript": "Run script",
+    "existingVisualisations": "Existing visualisations",
+    "addNewVisualisation": "Add new visualisation",
+    "startTypingDocumentation": "Start typing your documentation and notes here...",
+    "exportTable": "export table (.csv)"
+  },
+  "visualisation": {
+    "create": {
+      "table": "Table",
+      "bar": "Bar",
+      "line": "Line",
+      "metric": "Metric",
+      "visualisationName": "Visualisation name",
+      "saveToDashboard": "Save to dashboard",
+      "selectDashboard": "Select dashboard",
+      "visualisationType": "Visualisation type",
+      "createVisualisation": "Create visualisation"
+    }
+  },
+  "usersPermissions": {
+    "removeUserConfirmation": "Are you sure you want to remove this user?",
+    "transferOwnershipConfirmation": "Are you sure you want to transfer ownership?",
+    "usersAndPermissions": "Users & Permissions",
+    "inviteUser": "Invite a User",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "invited": "Invited",
+    "owner": "Owner",
+    "noRole": "No role",
+    "transferOwnership": "Transfer ownership",
+    "removeFromWorkspace": "Remove from workspace",
+    "resendInvite": "Resend invite",
+    "cancelInvite": "Cancel invite",
+    "invite": "Invite",
+    "cancel": "Cancel"
+  },
+  "profile": {
+    "profileSettings": "Profile Settings",
+    "profileUpdatedSuccessfully": "Profile updated successfully.",
+    "general": "General",
+    "generalSettings": "General Settings",
+    "name": "Name",
+    "email": "Email",
+    "company": "Company",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "saveChanges": "Save Changes"
+  },
+  "workspace": {
+    "workspaceSettings": "Workspace settings",
+    "general": "General",
+    "users": "Users",
+    "billing": "Billing",
+    "workspaceUpdatedSuccessfully": "Workspace updated successfully!",
+    "workspaceDeletedSuccessfully": "Workspace deleted successfully!",
+    "confirmDeletion": "Confirm Deletion",
+    "deletionWarning": "Are you sure you want to delete this workspace? This action cannot be undone and will remove all data associated with this workspace.",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "generalSettings": "General Settings",
+    "workspaceName": "Workspace Name",
+    "saveChanges": "Save Changes",
+    "dangerZone": "Danger Zone",
+    "deletionNote": "Deleting your workspace will remove all data associated with it. This action is irreversible.",
+    "deleteWorkspace": "Delete Workspace",
+    "billingSettings": "Billing Settings",
+    "billingNote": "You can currently only manage billing by contacting our team.",
+    "contactUs": "Contact Us"
+  }
+}

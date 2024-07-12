@@ -10,6 +10,7 @@ import { connectionDataType } from '@/components/connection-setup/connectionSetu
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
@@ -24,7 +25,8 @@ export default function DefineSync({
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const connectionService = ConnectionService.getInstance();
+  const { locale, dict } = useLocale();
+  const connectionService = ConnectionService.getInstance(locale);
 
   const { irminAlert } = usePopup();
   const { currentWorkspace } = useWorkspace();
@@ -114,13 +116,13 @@ export default function DefineSync({
       </div>
       <div className='mb-6'>
         <label className='mb-2 block font-light text-irmin_black' htmlFor=''>
-          Sync interval (cron expression) or leave empty for manual sync
+          {dict.connection.create.syncIntervalLabel}
         </label>
         <Input
           variant='outline'
           colorScheme='black'
           className='mt-2 w-full'
-          placeholder='Enter cron expression (e.g. 0 0 * * *) or leave empty for manual sync'
+          placeholder={dict.connection.create.syncIntervalPlaceholder}
           defaultValue={cronValue}
           onChange={(e) => {
             setCronValue(e.target.value);
@@ -134,7 +136,7 @@ export default function DefineSync({
         size='md'
         onClick={startSync}
       >
-        Start sync
+        {dict.connection.create.startSync}
       </Button>
       <Button
         className='mb-6 inline-block w-full'
@@ -146,7 +148,7 @@ export default function DefineSync({
           setCurrentStep((currentStep) => currentStep - 1);
         }}
       >
-        Go back
+        {dict.connection.create.goBack}
       </Button>
     </div>
   );

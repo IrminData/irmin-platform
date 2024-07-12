@@ -4,6 +4,7 @@ import React from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
@@ -12,6 +13,7 @@ export default function DashboardNavWorkspaceSwitcher({
 }: {
   setIsMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
+  const { dict } = useLocale();
   const { currentWorkspace, workspaces, switchToWorkspace, workspaceLoading } =
     useWorkspace();
   const router = useRouter();
@@ -41,25 +43,34 @@ export default function DashboardNavWorkspaceSwitcher({
             const newWorkspace = workspaces?.find((w) => w.id === workspaceID);
             if (newWorkspace) {
               if (workspaceLoading) return;
+              localStorage.setItem('currentWorkspaceSlug', newWorkspace.slug);
               await switchToWorkspace(newWorkspace.slug);
-              irminAlert('success', `Switched to ${newWorkspace.name}`);
+              irminAlert(
+                'success',
+                `${dict.workspaceSwitcher.switchedTo} ${newWorkspace.name}`
+              );
               setIsMenuOpen(false);
             }
           } catch (error) {
             console.error('Failed to switch workspace: ', error);
             const errorMessage = (error as Error)?.message ?? '';
-            irminAlert('error', 'Failed to switch workspace: ' + errorMessage);
+            irminAlert(
+              'error',
+              `${dict.workspaceSwitcher.failedToSwitch}: ` + errorMessage
+            );
           }
         }}
       >
-        <option value={'select-workspace'}>Select workspace</option>
+        <option value={'select-workspace'}>
+          {dict.workspaceSwitcher.selectWorkspace}
+        </option>
         {workspaces?.map((w) => (
           <option key={w.id} value={w.id}>
             {w.name}
           </option>
         ))}
         <option key={'create-new'} value={'create-new'}>
-          Create new workspace
+          {dict.workspaceSwitcher.createNewWorkspace}
         </option>
       </select>
     </div>

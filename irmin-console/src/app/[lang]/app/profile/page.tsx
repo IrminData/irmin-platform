@@ -5,22 +5,28 @@ import React, { useCallback, useState } from 'react';
 import AuthService from '@/lib/api/AuthService';
 
 import AppTitle from '@/components/appTitle';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
 import SettingsTabs from '@/components/tabs/settingsTabs';
 
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useProfile } from '@/context/ProfileContext';
 
 export default function UserProfileSettingsPage() {
+  const { dict } = useLocale();
   return (
     <>
-      <AppTitle title='Profile settings' />
+      <AppTitle title={dict.profile.profileSettings} />
       <SettingsTabs
         tabs={[
-          { name: 'General', content: <GeneralSettings /> },
-          { name: 'Change password', content: <ChangePasswordSettings /> },
+          { name: dict.profile.general, content: <GeneralSettings /> },
+          {
+            name: dict.profile.changePassword,
+            content: <ChangePasswordSettings />,
+          },
         ]}
       />
     </>
@@ -28,9 +34,10 @@ export default function UserProfileSettingsPage() {
 }
 
 const GeneralSettings: React.FC = () => {
+  const { locale, dict } = useLocale();
   const { profile, setProfile } = useProfile();
   const { irminAlert } = usePopup();
-  const authService = AuthService.getInstance();
+  const authService = AuthService.getInstance(locale);
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -55,7 +62,7 @@ const GeneralSettings: React.FC = () => {
         setProfile(data.data);
         // Reset error and show success message
         setError(null);
-        irminAlert('success', 'Profile updated successfully.');
+        irminAlert('success', dict.profile.profileUpdatedSuccessfully);
       } catch (error) {
         console.error('Error updating profile:', error);
         setError((error as Error)?.message ?? 'An error occurred.');
@@ -63,53 +70,55 @@ const GeneralSettings: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [authService, setProfile, setError, irminAlert]
+    [authService, setProfile, setError, irminAlert, dict]
   );
 
   if (!profile) return <LoadingSkeleton className='h-52 w-full' />;
 
   return (
     <div className='px-4'>
-      <h2 className='mb-4 text-xl font-normal md:text-2xl'>General Settings</h2>
+      <h2 className='mb-4 text-xl font-normal md:text-2xl'>
+        {dict.profile.generalSettings}
+      </h2>
+      <LanguageSwitcher
+        className={`my-4 block overflow-hidden text-nowrap rounded border border-irmin_green bg-white px-4 py-2 text-xs font-light text-irmin_black shadow-sm transition-all lg:text-sm xl:text-base`}
+      />
       <form onSubmit={handleSaveChanges} className='pb-8 text-sm md:text-base'>
         <div className='mb-4'>
           <label className='block text-sm text-gray-700 md:text-base'>
-            Name
+            {dict.profile.name}
           </label>
           <Input
             variant='outline'
             colorScheme='primary'
             type='text'
             className='mt-2 w-full'
-            placeholder='Enter your name'
             defaultValue={profile.name}
             name='name'
           />
         </div>
         <div className='mb-4'>
           <label className='block text-sm text-gray-700 md:text-base'>
-            Email
+            {dict.profile.email}
           </label>
           <Input
             variant='outline'
             colorScheme='primary'
             type='text'
             className='mt-2 w-full'
-            placeholder='Enter your email'
             defaultValue={profile.email}
             name='email'
           />
         </div>
         <div className='mb-4'>
           <label className='block text-sm text-gray-700 md:text-base'>
-            Company
+            {dict.profile.company}
           </label>
           <Input
             variant='outline'
             colorScheme='primary'
             type='text'
             className='mt-2 w-full'
-            placeholder='Enter your company name'
             defaultValue={profile.company ?? ''}
             name='company'
           />
@@ -123,7 +132,7 @@ const GeneralSettings: React.FC = () => {
           disabled={isLoading}
           loading={isLoading}
         >
-          Save Changes
+          {dict.profile.saveChanges}
         </Button>
         {error && <p className='mt-2 text-red-500'>{error}</p>}
       </form>
@@ -132,6 +141,8 @@ const GeneralSettings: React.FC = () => {
 };
 
 const ChangePasswordSettings: React.FC = () => {
+  const { dict } = useLocale();
+
   const handleChangePassword = useCallback((event: React.FormEvent) => {
     event.preventDefault();
     // TODO: Handle changing password
@@ -140,36 +151,41 @@ const ChangePasswordSettings: React.FC = () => {
 
   return (
     <div className='px-4'>
-      <h2 className='mb-4 text-xl font-normal md:text-2xl'>Change Password</h2>
+      <h2 className='mb-4 text-xl font-normal md:text-2xl'>
+        {dict.profile.changePassword}
+      </h2>
       <form onSubmit={handleChangePassword} className='text-sm md:text-base'>
         <div className='mb-4'>
-          <label className='block text-gray-700'>Current Password</label>
+          <label className='block text-gray-700'>
+            {dict.profile.currentPassword}
+          </label>
           <Input
             variant='outline'
             colorScheme='primary'
             type='password'
             className='mt-2 w-full'
-            placeholder='Enter your current password'
           />
         </div>
         <div className='mb-4'>
-          <label className='block text-gray-700'>New Password</label>
+          <label className='block text-gray-700'>
+            {dict.profile.newPassword}
+          </label>
           <Input
             variant='outline'
             colorScheme='primary'
             type='password'
             className='mt-2 w-full'
-            placeholder='Enter your new password'
           />
         </div>
         <div className='mb-4'>
-          <label className='block text-gray-700'>Confirm New Password</label>
+          <label className='block text-gray-700'>
+            {dict.profile.confirmNewPassword}
+          </label>
           <Input
             variant='outline'
             colorScheme='primary'
             type='password'
             className='mt-2 w-full'
-            placeholder='Confirm your new password'
           />
         </div>
 
@@ -180,7 +196,7 @@ const ChangePasswordSettings: React.FC = () => {
           colorScheme='primary'
           variant='solid'
         >
-          Save Changes
+          {dict.profile.saveChanges}
         </Button>
       </form>
     </div>

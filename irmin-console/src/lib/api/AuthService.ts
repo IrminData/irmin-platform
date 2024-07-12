@@ -7,15 +7,24 @@ const api_base = process.env.NEXT_PUBLIC_API_URL;
 
 class AuthService {
   private static instance: AuthService;
+  private locale: string = 'en';
 
-  private constructor() {}
+  private constructor(locale: string) {
+    this.locale = locale;
+  }
 
-  // Get the singleton instance of the AuthService class
-  public static getInstance(): AuthService {
+  public static getInstance(locale: string): AuthService {
     if (!AuthService.instance) {
-      AuthService.instance = new AuthService();
+      AuthService.instance = new AuthService(locale);
+    } else {
+      // Update the locale if the instance already exists
+      AuthService.instance.setLocale(locale);
     }
     return AuthService.instance;
+  }
+
+  public setLocale(locale: string) {
+    this.locale = locale;
   }
 
   /**
@@ -33,7 +42,7 @@ class AuthService {
       credentials: 'include', // Include credentials with every request
       headers: {
         Accept: 'application/json',
-        'Accept-Language': navigator.language ?? 'en',
+        'Accept-Language': this.locale,
         Referer: window.location.origin,
         ...options.headers,
       },

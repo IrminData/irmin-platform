@@ -10,6 +10,7 @@ import DefineSync from '@/components/connection-setup/defineSync';
 import { SelectConnector } from '@/components/connection-setup/selectConnector';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
 
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import {
@@ -49,8 +50,9 @@ const ConnectionSetupView = ({
   currentStep: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) => {
+  const { locale } = useLocale();
   const { irminAlert } = usePopup();
-  const connectionService = ConnectionService.getInstance();
+  const connectionService = ConnectionService.getInstance(locale);
   const [connectionData, setConnectionData] = useState<connectionDataType>(
     initialConnectionData
   );

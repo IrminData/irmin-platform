@@ -7,24 +7,28 @@ import ExportSetupView from '@/components/export-sync-setup/exportSetupView';
 import SideModal from '@/components/misc/SideModal';
 import ExportTable from '@/components/tables/exportTable';
 
+import { useLocale } from '@/context/LocaleContext';
+
 export default function ExportSyncPage() {
+  const { dict } = useLocale();
+
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const steps = [
-    'Select source data set',
-    'Select destination connection',
-    'Configure Export',
+    dict.export.selectSourceDataSet,
+    dict.export.selectDestinationConnection,
+    dict.export.configureExport,
   ];
 
   return (
     <>
-      <AppTitle title='Export syncs' />
+      <AppTitle title={dict.export.exportSyncs} />
       <SideModal
         isOpen={isOpen}
         setIsOpen={setIsOpen}
         currentStep={currentStep}
         steps={steps}
-        title='Create a new Export sync'
+        title={dict.export.createNewExportSync}
       >
         <ExportSetupView
           isOpen={isOpen}

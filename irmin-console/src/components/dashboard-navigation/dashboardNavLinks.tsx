@@ -18,6 +18,7 @@ import {
   TbSettings,
 } from 'react-icons/tb';
 
+import { useLocale } from '@/context/LocaleContext';
 import { useProfile } from '@/context/ProfileContext';
 
 export interface DashboardNavLinkType {
@@ -35,11 +36,12 @@ export const useDashboardNavLinks = (): {
   settings: DashboardNavLinkType[];
   bottom: DashboardNavLinkType[];
 } => {
+  const { locale, dict } = useLocale();
   const profile = useProfile();
   const router = useRouter();
   const { workspace: workspaceSlug } = useParams();
   const pathname = usePathname();
-  const auth = AuthService.getInstance();
+  const auth = AuthService.getInstance(locale);
 
   const isActiveLink = (href: string) => {
     if (href === '/app' || !href.includes('/app')) return pathname === href;
@@ -55,38 +57,38 @@ export const useDashboardNavLinks = (): {
 
   const workspaceLinks = [
     {
-      title: 'Dashboards',
-      href: `/app/${workspaceSlug}/dashboards`,
+      title: dict.dashboardNavigation.links.dashboards,
+      href: `/${locale}/app/${workspaceSlug}/dashboards`,
       icon: <RxDashboard />,
     },
     {
-      title: 'Data sets',
-      href: `/app/${workspaceSlug}/data-sets`,
+      title: dict.dashboardNavigation.links.dataSets,
+      href: `/${locale}/app/${workspaceSlug}/data-sets`,
       icon: <CiDatabase />,
     },
     {
-      title: 'Editor',
-      href: `/app/${workspaceSlug}/editor`,
+      title: dict.dashboardNavigation.links.editor,
+      href: `/${locale}/app/${workspaceSlug}/editor`,
       icon: <AiOutlineConsoleSql />,
     },
     {
-      title: 'Connections',
-      href: `/app/${workspaceSlug}/connections`,
+      title: dict.dashboardNavigation.links.connections,
+      href: `/${locale}/app/${workspaceSlug}/connections`,
       icon: <TbDatabaseImport />,
     },
     {
-      title: 'Export syncs',
-      href: `/app/${workspaceSlug}/export-sync`,
+      title: dict.dashboardNavigation.links.exportSyncs,
+      href: `/${locale}/app/${workspaceSlug}/export-sync`,
       icon: <TbDatabaseExport />,
     },
     {
-      title: 'Workspace settings',
-      href: `/app/${workspaceSlug}/settings`,
+      title: dict.dashboardNavigation.links.workspaceSettings,
+      href: `/${locale}/app/${workspaceSlug}/settings`,
       icon: <TbSettings />,
     },
     {
-      title: 'Marketplace',
-      href: `/app/${workspaceSlug}/marketplace`,
+      title: dict.dashboardNavigation.links.marketplace,
+      href: `/${locale}/app/${workspaceSlug}/marketplace`,
       icon: <PiStorefront />,
     },
   ].map((link) => ({
@@ -96,12 +98,12 @@ export const useDashboardNavLinks = (): {
 
   const noWorkspaceLinks = [
     {
-      title: 'Workspaces',
+      title: dict.dashboardNavigation.links.workspaces,
       href: `/app`,
       icon: <RxDashboard />,
     },
     {
-      title: 'Go to website',
+      title: dict.dashboardNavigation.links.goToWebsite,
       href: '/',
       icon: <IoChevronBackCircleOutline />,
     },
@@ -112,13 +114,13 @@ export const useDashboardNavLinks = (): {
 
   const settingsLinks = [
     {
-      title: 'My Profile',
-      href: `/app/profile`,
+      title: dict.dashboardNavigation.links.myProfile,
+      href: `/${locale}/app/profile`,
       icon: <TbSettings />,
-      active: isActiveLink(`/app/profile`),
+      active: isActiveLink(`/${locale}/app/profile`),
     },
     {
-      title: 'Sign out',
+      title: dict.dashboardNavigation.links.signOut,
       action: handleSignOut,
       icon: <TbLogout />,
       active: false,
@@ -127,24 +129,24 @@ export const useDashboardNavLinks = (): {
 
   const bottomLinks = [
     {
-      title: 'Contact Support',
-      href: '/contact',
+      title: dict.dashboardNavigation.links.contactSupport,
+      href: `/${locale}/contact`,
       props: {
         target: '_blank',
       },
       active: false,
     },
     {
-      title: 'Privacy Policy',
-      href: '/legal/privacy-policy',
+      title: dict.dashboardNavigation.links.privacyPolicy,
+      href: `/${locale}/legal/privacy-policy`,
       props: {
         target: '_blank',
       },
       active: false,
     },
     {
-      title: 'Terms of Use',
-      href: '/legal/terms-of-use',
+      title: dict.dashboardNavigation.links.termsOfUse,
+      href: `/${locale}/legal/terms-of-use`,
       props: {
         target: '_blank',
       },

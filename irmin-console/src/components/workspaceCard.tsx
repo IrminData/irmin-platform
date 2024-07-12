@@ -6,6 +6,7 @@ import Image from 'next/image';
 
 import { GoDatabase, GoSync } from 'react-icons/go';
 
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
@@ -27,6 +28,8 @@ const WorkspaceCard = ({
   connectionCount: number;
   dataSetCount: number;
 }) => {
+  const { dict } = useLocale();
+
   const { irminAlert } = usePopup();
   const { switchToWorkspace, workspaceLoading } = useWorkspace();
 
@@ -38,20 +41,27 @@ const WorkspaceCard = ({
         e.preventDefault();
         if (workspaceLoading) return;
         try {
+          localStorage.setItem('currentWorkspaceSlug', workspace.slug);
           await switchToWorkspace(workspace.slug);
-          irminAlert('success', `Switched to ${workspace.name}`);
+          irminAlert(
+            'success',
+            `${dict.workspaceSwitcher.switchedTo}: ${workspace.name}`
+          );
         } catch (error) {
           console.error('Failed to switch workspace: ', error);
           const errorMessage = (error as Error)?.message ?? '';
-          irminAlert('error', 'Failed to switch workspace: ' + errorMessage);
+          irminAlert(
+            'error',
+            `${dict.workspaceSwitcher.failedToSwitch}: ` + errorMessage
+          );
         }
       }}
-      aria-label={`Go to ${workspace.name}`}
+      aria-label={`Go to ${workspace.name} workspace`}
     >
       <div className='overflow-hidden rounded-xl bg-white shadow'>
         <div className='p-2 text-xs lg:p-4 lg:text-base xl:p-8'>
           <span className='md:text-normal text-xs font-semibold uppercase tracking-wide text-irmin_green'>
-            Workspace
+            {dict.workspaceSwitcher.workspace}
           </span>
           <h3 className='mt-1 block text-lg font-medium leading-tight text-irmin_black md:text-xl'>
             {workspace.name}
@@ -85,7 +95,9 @@ const WorkspaceCard = ({
                   <span className='text-sm font-semibold text-irmin_blue'>
                     {connectionCount}
                   </span>
-                  <span className='text-xs text-gray-400'>Connections</span>
+                  <span className='text-xs text-gray-400'>
+                    {dict.workspaceSwitcher.connections}
+                  </span>
                 </div>
               </div>
               <div className='flex items-center'>
@@ -94,7 +106,9 @@ const WorkspaceCard = ({
                   <span className='text-sm font-semibold text-irmin_blue'>
                     {dataSetCount}
                   </span>
-                  <span className='text-xs text-gray-400'>Data Sets</span>
+                  <span className='text-xs text-gray-400'>
+                    {dict.workspaceSwitcher.dataSets}
+                  </span>
                 </div>
               </div>
             </div>

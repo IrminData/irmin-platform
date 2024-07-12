@@ -1,8 +1,11 @@
 import React, { useCallback, useRef } from 'react';
 
+import { javascript } from '@codemirror/lang-javascript';
 import { python } from '@codemirror/lang-python';
 import { sql } from '@codemirror/lang-sql';
 import CodeMirror from '@uiw/react-codemirror';
+
+import { useLocale } from '@/context/LocaleContext';
 
 const ScriptEditor = ({
   content,
@@ -11,10 +14,11 @@ const ScriptEditor = ({
   setEditorHeight,
 }: {
   content: string;
-  language: 'sql' | 'python';
+  language: 'sql' | 'js' | 'python';
   editorHeight: string;
   setEditorHeight: (_height: string) => void;
 }) => {
+  const { dict } = useLocale();
   const editorRef = useRef<HTMLDivElement>(null);
 
   const handleMouseMove = useCallback(
@@ -43,7 +47,15 @@ const ScriptEditor = ({
           defaultValue={content}
           height={editorHeight}
           extensions={[sql()]}
-          placeholder='Write your SQL query here...'
+          placeholder={dict.editor.writeYourSQL}
+          onChange={(value) => setEditorHeight(value)}
+        />
+      ) : language === 'js' ? (
+        <CodeMirror
+          defaultValue={content}
+          height={editorHeight}
+          extensions={[javascript()]}
+          placeholder={dict.editor.writeYourJS}
           onChange={(value) => setEditorHeight(value)}
         />
       ) : (
@@ -51,7 +63,7 @@ const ScriptEditor = ({
           defaultValue={content}
           height={editorHeight}
           extensions={[python()]}
-          placeholder='Write your Python script here...'
+          placeholder={dict.editor.writeYourPython}
           onChange={(value) => setEditorHeight(value)}
         />
       )}

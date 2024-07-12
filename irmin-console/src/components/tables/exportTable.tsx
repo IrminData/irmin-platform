@@ -5,6 +5,8 @@ import React from 'react';
 import List, { GridRow } from '@/components/tables/elements/list';
 import StatusElement from '@/components/tables/elements/statusElement';
 
+import { useLocale } from '@/context/LocaleContext';
+
 interface ExportProcess {
   id: number;
   name: string;
@@ -23,10 +25,12 @@ const ExportTable: React.FC<ExportTableProps> = ({
   processes,
   inSidebar = false,
 }) => {
+  const { dict } = useLocale();
+
   if (!processes || processes.length === 0) {
     return (
       <div className='px-4 py-12 text-center text-xl text-irmin_black'>
-        No Export processes found for this workspace
+        {dict.list.export.noExportProcessesFound}
       </div>
     );
   }
@@ -34,17 +38,17 @@ const ExportTable: React.FC<ExportTableProps> = ({
   const rows: GridRow[] = processes.map((process, processIndex) => {
     const actions = [
       {
-        label: 'Logs',
+        label: dict.list.export.logs,
         primary: false,
         href: `#`,
       },
       {
-        label: 'Edit',
+        label: dict.list.export.edit,
         primary: false,
         href: `#`,
       },
       {
-        label: 'Remove',
+        label: dict.list.export.remove,
         primary: false,
         href: `#`,
       },
@@ -65,8 +69,8 @@ const ExportTable: React.FC<ExportTableProps> = ({
         <div
           key={`export-sync-${process.id}-${processIndex}-source-and-destination`}
         >
-          Source: {process.source} <br />
-          Destination: {process.destination}
+          {dict.list.export.source}: {process.source} <br />
+          {dict.list.export.destination}: {process.destination}
         </div>,
       ],
       details: (
@@ -88,7 +92,11 @@ const ExportTable: React.FC<ExportTableProps> = ({
   return (
     <div className='pb-28'>
       <List
-        headers={['Name', 'Source & Destination', 'Actions']}
+        headers={[
+          dict.list.export.name,
+          dict.list.export.sourceAndDestination,
+          dict.list.export.actions,
+        ]}
         rows={rows}
         hideHeaders={inSidebar}
       />

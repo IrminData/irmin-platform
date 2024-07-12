@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { Inter } from 'next/font/google';
 
+import { LocaleProvider } from '@/context/LocaleContext';
 import { ProfileProvider } from '@/context/ProfileContext';
 
 import './globals.css';
@@ -21,7 +22,9 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body className={inter.className}>
-        <ProfileProvider>{children}</ProfileProvider>
+        <LocaleProvider>
+          <ProfileProvider>{children}</ProfileProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

@@ -6,6 +6,8 @@ import { ExportDataType } from '@/components/export-sync-setup/exportSetupView';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 
+import { useLocale } from '@/context/LocaleContext';
+
 export default function ConfigureExport({
   exportData,
   setExportData,
@@ -17,6 +19,7 @@ export default function ConfigureExport({
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
+  const { dict } = useLocale();
   const handleSave = () => {
     // Save the export configuration
     console.log('Saving Export Configuration:', exportData);
@@ -25,16 +28,16 @@ export default function ConfigureExport({
 
   return (
     <div className='px-6 py-4'>
-      <h4 className='mb-4 text-lg font-semibold'>Configure Export</h4>
+      <h4 className='mb-4 text-lg font-semibold'>{dict.export.create.title}</h4>
       <div className='mb-4'>
         <label className='block text-sm font-medium text-gray-700'>
-          Process Name (unique)
+          {dict.export.create.processName}
         </label>
         <Input
           variant='outline'
           colorScheme='black'
           className='mt-2 w-full'
-          placeholder='Enter a name for the export process'
+          placeholder={dict.export.create.processNamePlaceholder}
           defaultValue={exportData.name}
           onChange={(e) =>
             setExportData((prevData) => ({
@@ -46,13 +49,13 @@ export default function ConfigureExport({
       </div>
       <div className='mb-6'>
         <label className='mb-2 block font-light text-irmin_black' htmlFor=''>
-          Sync interval (cron expression or leave empty for manual sync)
+          {dict.export.create.syncIntervalLabel}
         </label>
         <Input
           variant='outline'
           colorScheme='black'
           className='mt-2 w-full'
-          placeholder='Enter cron expression (e.g. 0 0 * * *) or leave empty for manual sync'
+          placeholder={dict.export.create.syncIntervalPlaceholder}
           defaultValue={exportData.cron}
           onChange={(e) => {
             setExportData((prevData) => ({
@@ -72,7 +75,7 @@ export default function ConfigureExport({
           ariaLabel='Start export sync'
           onClick={handleSave}
         >
-          Start sync
+          {dict.export.create.startSync}
         </Button>
         <Button
           variant='link'
@@ -85,7 +88,7 @@ export default function ConfigureExport({
             setCurrentStep((prevStep) => prevStep - 1);
           }}
         >
-          Go back
+          {dict.export.create.goBack}
         </Button>
       </div>
     </div>

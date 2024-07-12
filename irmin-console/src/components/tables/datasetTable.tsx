@@ -7,6 +7,8 @@ import { useParams } from 'next/navigation';
 import List, { GridRow } from '@/components/tables/elements/list';
 import StatusElement from '@/components/tables/elements/statusElement';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { DataSet } from '@/types/DataSet';
 
 const DatasetTable = ({
@@ -16,12 +18,13 @@ const DatasetTable = ({
   dataSets: DataSet[];
   inSidebar?: boolean;
 }) => {
+  const { dict } = useLocale();
   const { workspace } = useParams();
 
   if (!dataSets || dataSets.length === 0) {
     return (
       <div className='px-4 py-12 text-center text-xl text-irmin_black'>
-        No data sets found for this workspace
+        {dict.list.dataSets.noDataSetsFound}
       </div>
     );
   }
@@ -29,12 +32,12 @@ const DatasetTable = ({
   const rows: GridRow[] = dataSets.map((dataSet, index) => {
     const actions = [
       {
-        label: 'View',
+        label: dict.list.dataSets.view,
         primary: true,
         href: `/app/${workspace}/data-sets/viewer/${dataSet.id}`,
       },
       {
-        label: 'Logs',
+        label: dict.list.dataSets.logs,
         primary: false,
         href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/logs`,
       },
@@ -42,19 +45,19 @@ const DatasetTable = ({
     if (dataSet.status === 'connected') {
       actions.push(
         {
-          label: 'View info',
+          label: dict.list.dataSets.viewInfo,
           primary: false,
           href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
         },
         {
-          label: 'Disconnect',
+          label: dict.list.dataSets.disconnect,
           primary: false,
           href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
         }
       );
     } else {
       actions.push({
-        label: 'Edit',
+        label: dict.list.dataSets.edit,
         primary: false,
         href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
       });
@@ -65,7 +68,7 @@ const DatasetTable = ({
           {dataSet.name}
           <br />
           <span className='text-xs text-irmin_blue'>
-            Source: {dataSet.sourceWorkspace}
+            {dict.list.dataSets.source}: {dataSet.sourceWorkspace}
           </span>
         </div>,
         <StatusElement
@@ -81,7 +84,11 @@ const DatasetTable = ({
   return (
     <div className='pb-28'>
       <List
-        headers={['Name', 'Status', 'Actions']}
+        headers={[
+          dict.list.dataSets.name,
+          dict.list.dataSets.status,
+          dict.list.dataSets.actions,
+        ]}
         rows={rows}
         hideHeaders={inSidebar}
       />
