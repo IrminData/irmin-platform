@@ -19,13 +19,13 @@ import { DataRow, DataSet } from '@/types/DataSet';
 
 import VisualisationCreationForm from './visualisationCreationForm';
 
-const QueryResultsAndTabs: React.FC<{
+const ActionResultsAndTabs: React.FC<{
   editorHeight: string;
   dataSet: DataSet;
 }> = ({ editorHeight, dataSet }) => {
   const { dict } = useLocale();
 
-  const [activeTab, setActiveTab] = useState('queryResults');
+  const [activeTab, setActiveTab] = useState('actionResults');
 
   const tableRef = useRef<HTMLDivElement>(null);
   const [tableMaxHeight, setTableMaxHeight] = useState('0px');
@@ -51,19 +51,19 @@ const QueryResultsAndTabs: React.FC<{
   }, [editorHeight]);
 
   return (
-    <div>
+    <>
       {/* Tab Buttons */}
-      <div className='scrollbar-hide mb-4 flex w-full justify-start gap-6 overflow-y-scroll px-2 pt-2 md:gap-4 xl:mx-4'>
+      <div className='scrollbar-hide mb-4 flex w-full justify-start gap-6 overflow-y-scroll px-2 pt-2 md:gap-4'>
         <Button
-          onClick={() => setActiveTab('queryResults')}
+          onClick={() => setActiveTab('actionResults')}
           size='sm'
           className={`rounded-none border-b-2 ${
-            activeTab === 'queryResults'
+            activeTab === 'actionResults'
               ? 'border-irmin_green'
               : 'border-transparent'
           }`}
         >
-          {dict.queryResults.queryResults}
+          {dict.actionResults.actionResults}
         </Button>
         <Button
           onClick={() => setActiveTab('visualisation')}
@@ -74,7 +74,7 @@ const QueryResultsAndTabs: React.FC<{
               : 'border-transparent'
           }`}
         >
-          {dict.queryResults.visualisation}
+          {dict.actionResults.visualisation}
         </Button>
         <Button
           onClick={() => setActiveTab('documentation')}
@@ -85,9 +85,9 @@ const QueryResultsAndTabs: React.FC<{
               : 'border-transparent'
           }`}
         >
-          {dict.queryResults.visualisation}
+          {dict.actionResults.visualisation}
         </Button>
-        <div className='flex-end flex gap-2 text-right'>
+        <div className='ml-auto flex gap-2 text-right'>
           {activeTab === 'documentation' && (
             <Button
               onClick={() =>
@@ -101,8 +101,8 @@ const QueryResultsAndTabs: React.FC<{
               className='w-[120px]'
             >
               {documentationTab === 'mdx'
-                ? dict.queryResults.switchToPlainText
-                : dict.queryResults.switchToMarkdownEditor}
+                ? dict.actionResults.switchToPlainText
+                : dict.actionResults.switchToMarkdownEditor}
             </Button>
           )}
           <Button
@@ -112,7 +112,7 @@ const QueryResultsAndTabs: React.FC<{
             size='sm'
             className='w-[120px]'
           >
-            {dict.queryResults.save}
+            {dict.actionResults.save}
           </Button>
           {dataSet.source !== 'connection' && (
             <Button
@@ -122,7 +122,7 @@ const QueryResultsAndTabs: React.FC<{
               size='sm'
               className='w-[120px]'
             >
-              {dict.queryResults.runScript}
+              {dict.actionResults.run}
             </Button>
           )}
         </div>
@@ -136,7 +136,7 @@ const QueryResultsAndTabs: React.FC<{
           >
             <div>
               <h3 className='p-4 font-medium'>
-                {dict.queryResults.existingVisualisations}
+                {dict.actionResults.existingVisualisations}
               </h3>
               <div className='flex flex-col gap-10'>
                 {dataSet.visualisations.map((visualisation) => {
@@ -168,7 +168,7 @@ const QueryResultsAndTabs: React.FC<{
             </div>
             <div>
               <h3 className='p-4 font-medium'>
-                {dict.queryResults.addNewVisualisation}
+                {dict.actionResults.addNewVisualisation}
               </h3>
               <VisualisationCreationForm />
             </div>
@@ -180,7 +180,7 @@ const QueryResultsAndTabs: React.FC<{
             {documentationTab === 'plain' && (
               <textarea
                 className='h-full w-full p-2 focus:outline-none'
-                placeholder={dict.queryResults.startTypingDocumentation}
+                placeholder={dict.actionResults.startTypingDocumentation}
                 defaultValue={dataSet.documentation ?? ''}
                 onChange={(e) => {
                   e.preventDefault();
@@ -192,7 +192,7 @@ const QueryResultsAndTabs: React.FC<{
               <MDXEditor
                 className='h-full w-full focus:outline-none'
                 contentEditableClassName='h-full w-full p-2 focus:outline-none'
-                placeholder={dict.queryResults.startTypingDocumentation}
+                placeholder={dict.actionResults.startTypingDocumentation}
                 markdown={dataSet.documentation ?? ''}
                 onChange={(markdown) => {
                   // TODO: Update the dataset documentation
@@ -203,20 +203,21 @@ const QueryResultsAndTabs: React.FC<{
           </div>
         )}
 
-        {activeTab === 'queryResults' && (
+        {activeTab === 'actionResults' && (
           <div style={{ maxHeight: tableMaxHeight }} className='overflow-auto'>
             {/* Action Buttons */}
-            <div className='flex justify-between border px-4 py-2 text-sm'>
-              <p className='ml-0 inline font-normal'>
+            <div className='flex items-center justify-between border px-4 py-2 text-sm'>
+              <p className='ml-0 inline text-xs'>
                 {`${dataSet.data.length} rows returned in 1.5s`}
               </p>
-              <div className='text-right'>
+              <div className='ml-auto'>
                 <Button
                   icon={<AiOutlineDownload />}
                   colorScheme='secondary'
                   variant='link'
+                  size='sm'
                 >
-                  {dict.queryResults.exportTable}
+                  {dict.actionResults.exportTable}
                 </Button>
               </div>
             </div>
@@ -234,8 +235,8 @@ const QueryResultsAndTabs: React.FC<{
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 };
 
-export default QueryResultsAndTabs;
+export default ActionResultsAndTabs;

@@ -6,9 +6,9 @@ import { useParams } from 'next/navigation';
 
 import { DataSetService } from '@/lib/api/DataSetService';
 
+import ActionEditor from '@/components/action-editor/actionEditor';
+import ActionResultsAndTabs from '@/components/actionResultsAndTabs';
 import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
-import QueryResultsAndTabs from '@/components/queryResultsAndTabs';
-import ScriptEditor from '@/components/script-editor/scriptEditor';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -41,7 +41,7 @@ export default function DataSetEditorPage() {
   return (
     <div className='w-full overflow-auto bg-white'>
       {dataSet?.source !== 'connection' && dataSet?.sourceScript ? (
-        <ScriptEditor
+        <ActionEditor
           content={dataSet.sourceScript}
           language={dataSet.source}
           editorHeight={editorHeight}
@@ -55,7 +55,7 @@ export default function DataSetEditorPage() {
         </div>
       )}
       {dataSet && (
-        <QueryResultsAndTabs editorHeight={editorHeight} dataSet={dataSet} />
+        <ActionResultsAndTabs editorHeight={editorHeight} dataSet={dataSet} />
       )}
     </div>
   );

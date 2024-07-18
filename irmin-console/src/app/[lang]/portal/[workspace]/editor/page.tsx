@@ -7,10 +7,10 @@ import { DataSetService } from '@/lib/api/DataSetService';
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
+import ActionEditorWithOptions from '@/components/action-editor/actionEditorWithOptions';
+import ActionResultsAndTabs from '@/components/actionResultsAndTabs';
 import FileNavigator from '@/components/fileNavigator';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
-import QueryResultsAndTabs from '@/components/queryResultsAndTabs';
-import ScriptEditorWithOptions from '@/components/script-editor/scriptEditorWithOptions';
 import ConnectionTable from '@/components/tables/connectionTable';
 import DatasetTable from '@/components/tables/datasetTable';
 import TableSkeleton from '@/components/tables/tableSkeleton';
@@ -171,11 +171,11 @@ export default function EditorPage() {
         <div className='inline-block w-full overflow-auto bg-white'>
           {dataSet ? (
             <>
-              <ScriptEditorWithOptions
+              <ActionEditorWithOptions
                 editorHeight={editorHeight}
                 setEditorHeight={setEditorHeight}
               />
-              <QueryResultsAndTabs
+              <ActionResultsAndTabs
                 editorHeight={editorHeight}
                 dataSet={dataSet}
               />

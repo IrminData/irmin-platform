@@ -283,14 +283,14 @@
     "connections": "Connections",
     "dataSets": "Data sets"
   },
-  "queryResults": {
-    "queryResults": "Query Results",
+  "actionResults": {
+    "actionResults": "Action Results",
     "visualisation": "Visualisation",
     "documentation": "Documentation",
     "switchToPlainText": "Switch to plain text",
     "switchToMarkdownEditor": "Switch to markdown editor",
-    "save": "Save",
-    "runScript": "Run script",
+    "save": "Save action",
+    "run": "Run action",
     "existingVisualisations": "Existing visualisations",
     "addNewVisualisation": "Add new visualisation",
     "startTypingDocumentation": "Start typing your documentation and notes here...",

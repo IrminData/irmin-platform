@@ -7,7 +7,7 @@ import CodeMirror from '@uiw/react-codemirror';
 
 import { useLocale } from '@/context/LocaleContext';
 
-const ScriptEditor = ({
+const ActionEditor = ({
   content,
   language,
   editorHeight,
@@ -75,4 +75,4 @@ const ScriptEditor = ({
   );
 };
 
-export default ScriptEditor;
+export default ActionEditor;

@@ -20,7 +20,7 @@ const ConnectionTable = ({
 
   if (!connections || connections.length === 0) {
     return (
-      <div className='px-4 py-12 text-center text-xl text-irmin_black'>
+      <div className='px-4 py-12 text-center text-sm text-irmin_black'>
         {dict.list.connection.noConnectionsFound}
       </div>
     );

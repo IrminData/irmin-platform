@@ -4,9 +4,9 @@ import React, { useState } from 'react';
 
 import { IoAdd, IoClose, IoSave } from 'react-icons/io5';
 
+import ActionEditor from '@/components/action-editor/actionEditor';
+import ScriptEditorNew from '@/components/action-editor/actionEditorNew';
 import Button from '@/components/misc/Button';
-import ScriptEditor from '@/components/script-editor/scriptEditor';
-import ScriptEditorNew from '@/components/script-editor/scriptEditorNew';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -30,7 +30,7 @@ const ScriptEditorWithOptions = ({
     }>
   >([
     {
-      name: 'Query 1',
+      name: 'Action 1',
       changed: false,
       type: activeLanguage,
       content:
@@ -79,8 +79,8 @@ const ScriptEditorWithOptions = ({
 
   return (
     <div className='sqlEditor'>
-      <div className='algin-center mb-2 flex justify-between'>
-        <div className='flex w-1/2 overflow-x-auto xl:w-3/4'>
+      <div className='mb-2 flex items-center justify-between gap-1 pr-2 md:pr-8'>
+        <div className='flex w-1/2 items-center overflow-x-auto xl:w-3/4'>
           {tabs.map((tab, index) => (
             <div
               key={index}
@@ -89,18 +89,20 @@ const ScriptEditorWithOptions = ({
               } `}
             >
               <Button
+                size='sm'
                 variant='link'
                 colorScheme='black'
-                className={`min-w-40 px-4 py-2`}
+                className={`min-w-28 px-2 py-1`}
                 onClick={() => selectTab(index)}
                 ariaLabel={`Select tab ${tab.name}`}
               >
                 {tab.name}
               </Button>
               <Button
+                size='sm'
                 variant='icon'
                 colorScheme='black'
-                className={`border-none px-2 py-2`}
+                className={`border-none px-1 py-1`}
                 onClick={() => closeTab(index)}
                 ariaLabel={`Close tab ${tab.name}`}
               >
@@ -111,6 +113,8 @@ const ScriptEditorWithOptions = ({
           {tabs.length > 0 && (
             <Button
               variant='icon'
+              size='sm'
+              className={`border-none px-1 py-1`}
               colorScheme='black'
               onClick={addNewTab}
               ariaLabel='Add new tab'
@@ -119,44 +123,40 @@ const ScriptEditorWithOptions = ({
             </Button>
           )}
         </div>
-        <div className='p-2'>
-          <select
-            className='rounded-lg border-irmin_green px-2 py-2 text-xs text-irmin_blue transition-all hover:bg-irmin_green-800 focus:outline-none xl:text-base'
-            onChange={(e) => {
-              if (!tabs[activeTab].changed) {
-                const newTabs = [...tabs];
-                newTabs[activeTab] = {
-                  ...newTabs[activeTab],
-                  type: e.target.value as 'sql' | 'python' | 'js',
-                  content:
-                    e.target.value === 'sql'
-                      ? `SELECT ProductID, OrderQty, SUM(LineTotal) AS Total\nFROM Sales.SalesOrderDetail\nWHERE UnitPrice < $5.00\nGROUP BY ProductID, OrderQty\nORDER BY ProductID, OrderQty\nOPTION (HASH GROUP, FAST 10);`
-                      : `import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt`,
-                };
-                setTabs(newTabs);
-              }
-              setActiveLanguage(e.target.value as 'sql' | 'python');
-            }}
-          >
-            <option value={'sql'}>SQL</option>
-            <option value={'js'}>JavaScript</option>
-            <option value={'python'}>Python</option>
-          </select>
-        </div>
-        <div className='p-2 xl:pr-8'>
-          <Button
-            size='md'
-            variant='solid'
-            colorScheme='primary'
-            onClick={() => saveTabAsFile(activeTab)}
-          >
-            <IoSave className='mr-2 inline-block' /> {dict.editor.saveFile}
-          </Button>
-        </div>
+        <select
+          className='rounded-lg border-irmin_green px-2 py-2 text-xs text-irmin_blue transition-all focus:outline-none xl:text-base'
+          onChange={(e) => {
+            if (!tabs[activeTab].changed) {
+              const newTabs = [...tabs];
+              newTabs[activeTab] = {
+                ...newTabs[activeTab],
+                type: e.target.value as 'sql' | 'python' | 'js',
+                content:
+                  e.target.value === 'sql'
+                    ? `SELECT ProductID, OrderQty, SUM(LineTotal) AS Total\nFROM Sales.SalesOrderDetail\nWHERE UnitPrice < $5.00\nGROUP BY ProductID, OrderQty\nORDER BY ProductID, OrderQty\nOPTION (HASH GROUP, FAST 10);`
+                    : `import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt`,
+              };
+              setTabs(newTabs);
+            }
+            setActiveLanguage(e.target.value as 'sql' | 'python');
+          }}
+        >
+          <option value={'sql'}>SQL</option>
+          <option value={'js'}>JavaScript</option>
+          <option value={'python'}>Python</option>
+        </select>
+        <Button
+          size='sm'
+          variant='solid'
+          colorScheme='primary'
+          onClick={() => saveTabAsFile(activeTab)}
+        >
+          <IoSave className='mr-2 inline-block' /> {dict.editor.saveFile}
+        </Button>
       </div>
 
       {tabs.length > 0 ? (
-        <ScriptEditor
+        <ActionEditor
           content={tabs[activeTab].content}
           language={tabs[activeTab].type}
           editorHeight={editorHeight}

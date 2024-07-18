@@ -1,3 +1,5 @@
+'use client';
+
 import { Suspense } from 'react';
 
 import { DataSetService } from '@/lib/api/DataSetService';
@@ -10,21 +12,19 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { DataSet } from '@/types/DataSet';
 
-export default async function DataSetsPage() {
-  const { dict } = useLocale();
+export default function DataSetsPage() {
+  const { dict, locale } = useLocale();
   return (
     <>
       <PortalTitle title={dict.dashboardNavigation.links.dataSets} />
       <Suspense fallback={<TableSkeleton />}>
-        <DataSetsPageContent />
+        <DataSetsPageContent locale={locale} />
       </Suspense>
     </>
   );
 }
 
-async function DataSetsPageContent() {
-  const { locale } = useLocale();
-
+async function DataSetsPageContent({ locale }: { locale: string }) {
   const dataService = DataSetService.getInstance(locale);
 
   let dataSets: DataSet[] = await dataService.getAllDataSets();

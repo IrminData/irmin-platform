@@ -283,14 +283,14 @@
     "connections": "Yhteydet",
     "dataSets": "Tietojoukot"
   },
-  "queryResults": {
-    "queryResults": "Kyselyn tulokset",
+  "actionResults": {
+    "actionResults": "Toiminnon tulokset",
     "visualisation": "Visualisointi",
     "documentation": "Dokumentaatio",
     "switchToPlainText": "Vaihda pelkkään tekstiin",
     "switchToMarkdownEditor": "Vaihda Markdown-editoriin",
-    "save": "Tallenna",
-    "runScript": "Suorita skripti",
+    "save": "Tallenna toiminto",
+    "run": "Suorita toiminto",
     "existingVisualisations": "Olemassa olevat visualisoinnit",
     "addNewVisualisation": "Lisää uusi visualisointi",
     "startTypingDocumentation": "Aloita dokumentaation ja muistiinpanojen kirjoittaminen tähän...",
