@@ -1,19 +1,85 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
 import Image from 'next/image';
 
-export default function WebsiteTestimonialsSection() {
+import WordPress from '@/lib/wordpress';
+
+import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
+
+import { TestimonialSection } from '@/types/Wordpress';
+
+export default function WebsiteTestimonialsSection({
+  section,
+}: {
+  section: TestimonialSection;
+}) {
+  const wordpress = WordPress.getInstance();
+  const [testimonials, setTestimonials] = useState<
+    {
+      name: string;
+      title: string;
+      text: string;
+      avatar: string;
+    }[]
+  >([]);
+
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+
+  const handlePrevious = () => {
+    setCurrentTestimonial((prevTestimonial) =>
+      prevTestimonial === 0 ? testimonials.length - 1 : prevTestimonial - 1
+    );
+  };
+
+  const handleNext = () => {
+    setCurrentTestimonial((prevTestimonial) =>
+      prevTestimonial === testimonials.length - 1 ? 0 : prevTestimonial + 1
+    );
+  };
+
+  useEffect(() => {
+    if (!section.testimonials) return;
+    if (testimonials.length > 0) return;
+    (async () => {
+      const newTestimonials = [];
+      for (let i = 0; i < section.testimonials.length; i++) {
+        const testimonial = section.testimonials[i];
+        const image =
+          typeof testimonial.image === 'number'
+            ? await wordpress
+                .getMediaByID(testimonial.image)
+                .then((media) => media?.source_url)
+            : testimonial.image;
+        newTestimonials.push({
+          name: testimonial.name,
+          title: testimonial.title,
+          text: testimonial.quote,
+          avatar: image ?? '',
+        });
+      }
+      setTestimonials(newTestimonials);
+    })();
+  }, [section, testimonials, wordpress]);
+
   return (
-    <>
-      <section
-        className='bg-white py-24 md:pb-28'
-        style={{
-          backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className='container mx-auto max-w-7xl px-4'>
+    <section
+      id='testimonials-section'
+      className='bg-white py-12'
+      style={{
+        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+        backgroundPosition: 'center',
+      }}
+    >
+      <div className='container mx-auto max-w-7xl px-4'>
+        {testimonials.length > 0 ? (
           <div className='-mx-4 flex flex-wrap items-center justify-center lg:justify-between'>
             <div className='order-last w-auto px-4 lg:order-first'>
-              <button className='inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-50 hover:bg-irmin_black-100'>
+              <button
+                className='inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-50 hover:bg-irmin_black-100'
+                onClick={handlePrevious}
+              >
                 <svg
                   width={12}
                   height={14}
@@ -32,17 +98,17 @@ export default function WebsiteTestimonialsSection() {
               <div className='flex items-center'>
                 <Image
                   className='mr-6 h-20 w-20 rounded-full md:h-24 md:w-24'
-                  src='/ui-assets/images/testimonials/avatar1.png'
+                  src={testimonials[currentTestimonial].avatar}
                   alt='Testimonial avatar'
                   width={88}
                   height={88}
                 />
                 <div>
                   <h3 className='mb-2 text-xl font-semibold md:text-2xl'>
-                    Darren Dunlap
+                    {testimonials[currentTestimonial].name}
                   </h3>
                   <span className='text-lg font-light text-irmin_black'>
-                    CEO &amp; Founder at Acme Inc.
+                    {testimonials[currentTestimonial].title}
                   </span>
                 </div>
               </div>
@@ -63,16 +129,18 @@ export default function WebsiteTestimonialsSection() {
                   width={142}
                   height={98}
                 />
-                <div className='relative'>
+                <div className='relative flex min-h-[112px] items-center'>
                   <h2 className='text-2xl font-semibold tracking-tighter'>
-                    The best solution for anyone who wants to work a flexible
-                    schedule but still earn a full-time income.
+                    {testimonials[currentTestimonial].text}
                   </h2>
                 </div>
               </div>
             </div>
             <div className='order-last w-auto px-4'>
-              <button className='inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-50 hover:bg-irmin_black-100'>
+              <button
+                className='inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-50 hover:bg-irmin_black-100'
+                onClick={handleNext}
+              >
                 <svg
                   width={12}
                   height={14}
@@ -88,8 +156,10 @@ export default function WebsiteTestimonialsSection() {
               </button>
             </div>
           </div>
-        </div>
-      </section>
-    </>
+        ) : (
+          <LoadingSkeleton />
+        )}
+      </div>
+    </section>
   );
 }

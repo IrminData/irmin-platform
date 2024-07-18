@@ -7,7 +7,7 @@ export async function GET() {
     Allow: /
     Disallow: /api/
     Disallow: /_next/
-    Disallow: /app/
+    Disallow: /portal/
     
     # Sitemaps
     Sitemap: ${NEXT_PUBLIC_BASE_URL}/sitemap.xml

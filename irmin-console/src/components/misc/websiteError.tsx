@@ -55,25 +55,25 @@ export default function WebsiteError({
                 <p className='mb-6 text-lg text-irmin_black md:text-xl'>
                   {error?.message}
                 </p>
-                <div className='flex flex-wrap'>
-                  <div className='w-full py-1 lg:mr-6 lg:w-auto lg:py-0'>
+                <div className='flex flex-wrap gap-2'>
+                  <div className='w-[calc(50%-4px)]'>
                     <Button
                       variant='solid'
                       colorScheme='primary'
                       size='md'
-                      className='inline-block w-full'
+                      className='w-full'
                       href='/'
                     >
                       {dict.misc.goBackHome}
                     </Button>
                   </div>
                   {!pageNotFound && reset && (
-                    <div className='w-full py-1 lg:w-auto lg:py-0'>
+                    <div className='w-[calc(50%-4px)]'>
                       <Button
                         variant='outline'
                         colorScheme='secondary'
                         size='md'
-                        className='inline-block w-full'
+                        className='w-full'
                         onClick={reset}
                       >
                         {dict.misc.tryAgain}

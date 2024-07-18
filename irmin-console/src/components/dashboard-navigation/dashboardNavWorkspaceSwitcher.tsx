@@ -35,7 +35,7 @@ export default function DashboardNavWorkspaceSwitcher({
             e.preventDefault();
             const value = e.target.value;
             if (value === 'create-new' || value === 'select-workspace') {
-              router.push('/app');
+              router.push('/portal');
               setIsMenuOpen(false);
               return;
             }

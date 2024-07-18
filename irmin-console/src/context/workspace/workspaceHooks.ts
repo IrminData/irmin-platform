@@ -220,12 +220,12 @@ export const useSwitchWorkspace = (
           localStorage.removeItem('currentWorkspaceSlug');
           // Clear the current workspace
           setCurrentWorkspace(null);
-          // Make sure the user is not on a workspace page eg. /app/{workspace-slug}/*
+          // Make sure the user is not on a workspace page eg. /portal/{workspace-slug}/*
           if (
-            pathname.includes('/app/') &&
-            !pathname.includes('/app/profile')
+            pathname.includes('/portal/') &&
+            !pathname.includes('/portal/profile')
           ) {
-            router.push('/app');
+            router.push('/portal');
           }
           // Refetch workspace list
           await fetchWorkspaces();
@@ -236,8 +236,8 @@ export const useSwitchWorkspace = (
           if (newWorkspace) {
             setCurrentWorkspace(newWorkspace);
             // If router not already on a workspace page, redirect to the dashboards page
-            if (!pathname.includes(`/app/${workspaceSlug}`)) {
-              router.push(`/app/${workspaceSlug}/dashboards`);
+            if (!pathname.includes(`/portal/${workspaceSlug}`)) {
+              router.push(`/portal/${workspaceSlug}/dashboards`);
             }
           } else {
             throw new Error('Switching workspace failed');

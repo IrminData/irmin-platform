@@ -1,4 +1,51 @@
 {
+  "website": {
+    "navigation": {
+      "goToPortal": "Sovellukseen"
+    },
+    "footer": {
+      "description": "Parempi koti tiedoillesi. Irmin on ETL- ja tietojenhallinta-alusta, joka auttaa sinua keräämään, puhdistamaan ja muuntamaan tietojasi.",
+      "newsletter": {
+        "title": "Tilaa uutiskirjeemme",
+        "subtitle": "Pysy ajan tasalla Irminin viimeisimmistä uutisista ja päivityksistä.",
+        "email": "Sähköposti",
+        "subscribe": "Tilaa"
+      },
+      "terms": "Käyttöehdot",
+      "privacy": "Tietosuojakäytäntö",
+      "allRightsReserved": "Kaikki oikeudet pidätetään."
+    },
+    "sections": {
+      "careers": {
+        "viewJob": "Katso työpaikka",
+        "search": "Etsi",
+        "allLocations": "Kaikki sijainnit",
+        "allTypes": "Kaikki tyypit"
+      },
+      "contact": {
+        "email": "Sähköposti",
+        "message": "Viesti",
+        "messagePlaceholder": "Kirjoita viestisi tähän...",
+        "send": "Lähetä"
+      },
+      "newsletter": {
+        "email": "Kirjoita sähköpostiosoitteesi...",
+        "subscribe": "Tilaa",
+        "privacy_notice": "Välitämme yksityisyydestäsi. Lue meidän",
+        "privacy": "Yksityisyydensuojaseloste"
+      },
+      "pricing": {
+        "billedMonthly": "Kuukausittain",
+        "billedAnnually": "Vuosittain",
+        "month": "kk",
+        "year": "v"
+      },
+      "articles": {
+        "allArticles": "Kaikki artikkelit",
+        "search": "Etsi"
+      }
+    }
+  },
   "misc": {
     "loading": "Ladataan...",
     "cancel": "Peruuta",
@@ -10,7 +57,7 @@
     "weEncounteredError": "Kohtasimme virheen",
     "tryAgainOrContactSupport": "Yritä uudelleen tai ota yhteyttä tukeen",
     "goBackHome": "Mene takaisin kotisivulle",
-    "goBackApp": "Palaa Irmin-sovellukseen",
+    "goBackPortal": "Palaa Irmin-sovellukseen",
     "tryAgain": "Yritä uudelleen"
   },
   "auth": {
@@ -68,27 +115,10 @@
       "error": "Sinun on hyväksyttävä käyttöehdot ja tietosuojaseloste jatkaaksesi."
     }
   },
-  "website": {
-    "navigation": {
-      "goToApp": "Sovellukseen"
-    },
-    "footer": {
-      "description": "Parempi koti tiedoillesi. Irmin on ETL- ja tietojenhallinta-alusta, joka auttaa sinua keräämään, puhdistamaan ja muuntamaan tietojasi.",
-      "newsletter": {
-        "title": "Tilaa uutiskirjeemme",
-        "subtitle": "Pysy ajan tasalla Irminin viimeisimmistä uutisista ja päivityksistä.",
-        "email": "Sähköposti",
-        "subscribe": "Tilaa"
-      },
-      "terms": "Käyttöehdot",
-      "privacy": "Tietosuojakäytäntö",
-      "allRightsReserved": "Kaikki oikeudet pidätetään."
-    }
-  },
   "dashboardNavigation": {
     "search": "Hae",
     "searchPlaceholder": "Etsi tietoja ja muuta",
-    "irminApp": "Irmin-sovellus",
+    "irminPortal": "Irmin-sovellus",
     "workspace": "Työtila",
     "settings": "Asetukset",
     "notifications": {

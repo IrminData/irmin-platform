@@ -34,12 +34,12 @@ const DatasetTable = ({
       {
         label: dict.list.dataSets.view,
         primary: true,
-        href: `/app/${workspace}/data-sets/viewer/${dataSet.id}`,
+        href: `/portal/${workspace}/data-sets/viewer/${dataSet.id}`,
       },
       {
         label: dict.list.dataSets.logs,
         primary: false,
-        href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/logs`,
+        href: `/portal/${workspace}/data-sets/viewer/${dataSet.id}/logs`,
       },
     ];
     if (dataSet.status === 'connected') {
@@ -47,19 +47,19 @@ const DatasetTable = ({
         {
           label: dict.list.dataSets.viewInfo,
           primary: false,
-          href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
+          href: `/portal/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
         },
         {
           label: dict.list.dataSets.disconnect,
           primary: false,
-          href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
+          href: `/portal/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
         }
       );
     } else {
       actions.push({
         label: dict.list.dataSets.edit,
         primary: false,
-        href: `/app/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
+        href: `/portal/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
       });
     }
     return {

@@ -35,7 +35,7 @@ const SignInSection: React.FC = () => {
         setSuccess(response.metadata.message);
         await fetchProfile();
         // Redirect to dashboard or another page on successful login
-        router.push('/app');
+        router.push('/portal');
       } else {
         throw new Error(response.message || 'Login failed');
       }

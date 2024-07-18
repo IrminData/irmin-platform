@@ -5,9 +5,9 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { useProfile } from '@/context/ProfileContext';
+import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
 
-import LoadingSkeleton from '../misc/LoadingSkeleton';
+import { useProfile } from '@/context/ProfileContext';
 
 export default function DashboardNavProfile({
   setIsMenuOpen,
@@ -24,7 +24,7 @@ export default function DashboardNavProfile({
     <div className='flex flex-wrap'>
       <div className='w-auto p-2'>
         <Link
-          href='/app/profile'
+          href='/portal/profile'
           onClick={() => {
             setIsMenuOpen(false);
           }}
@@ -39,7 +39,7 @@ export default function DashboardNavProfile({
         </Link>
       </div>
       <div className='w-auto overflow-hidden p-2'>
-        <Link href='/app/profile'>
+        <Link href='/portal/profile'>
           <h2 className='mb-1 text-xs font-semibold text-irmin_green md:text-sm xl:text-base'>
             {profile.profile.name ?? ''}
           </h2>

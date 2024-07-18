@@ -41,7 +41,7 @@ const ScriptEditorNew = ({ addNewTab }: { addNewTab: () => void }) => {
       <div className='flex w-full items-center justify-center border-t p-4'>
         <Link
           className={`flex w-96 cursor-pointer items-center justify-between rounded-lg border p-6 transition-all hover:opacity-40`}
-          href={`/app/${workspaceSlug}/connections`}
+          href={`/portal/${workspaceSlug}/connections`}
         >
           <div className='flex items-center'>
             <TbDatabaseImport className='mr-2 text-xl' />

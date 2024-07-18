@@ -139,7 +139,7 @@ export default function DashboardNavigation({
                       isMenuFolded ? 'hidden' : 'block'
                     }`}
                   >
-                    {dict.dashboardNavigation.irminApp}
+                    {dict.dashboardNavigation.irminPortal}
                   </p>
                   <ul className='mb-8 px-4'>
                     {links.noWorkspace.map((link, index) => (

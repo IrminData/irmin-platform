@@ -1,166 +1,30 @@
-'use client';
+import {
+  FooterLinkSection as FooterLinkSectionType,
+  transformMenuToFooterLinks,
+} from '@/lib/menuUtils';
+import WordPress from '@/lib/wordpress';
 
-import React from 'react';
+import WebsiteFooterContent from '@/components/website/websiteFooterContent';
 
-import Image from 'next/image';
-import Link from 'next/link';
+export default async function WebsiteFooter() {
+  const wordpress = WordPress.getInstance();
+  const footerLinksEN: FooterLinkSectionType[] = [];
+  const footerLinksFI: FooterLinkSectionType[] = [];
 
-import LanguageSwitcher from '@/components/LanguageSwitcher';
-import Button from '@/components/misc/Button';
-import Input from '@/components/misc/Input';
+  const menuEN = await wordpress.getMenu('footer-menu-en');
+  if (menuEN) {
+    footerLinksEN.push(...transformMenuToFooterLinks(menuEN));
+  }
 
-import { useLocale } from '@/context/LocaleContext';
+  const menuFI = await wordpress.getMenu('footer-menu-fi');
+  if (menuFI) {
+    footerLinksFI.push(...transformMenuToFooterLinks(menuFI));
+  }
 
-interface FooterLink {
-  href: string;
-  label: string;
-}
-interface FooterLinkSection {
-  title: string;
-  links: FooterLink[];
-}
-
-const footerLinks: FooterLinkSection[] = [
-  {
-    title: 'Product',
-    links: [
-      { href: '#', label: 'Features' },
-      { href: '#', label: 'Solutions' },
-      { href: '#', label: 'Pricing' },
-      { href: '#', label: 'Tutorials' },
-      { href: '#', label: 'Updates' },
-    ],
-  },
-  {
-    title: 'Company',
-    links: [
-      { href: '#', label: 'Blog' },
-      { href: '#', label: 'Newsletter' },
-      { href: '#', label: 'Help Centre' },
-      { href: '#', label: 'Careers' },
-      { href: '#', label: 'Support' },
-    ],
-  },
-];
-
-const FooterLinkSection = ({
-  section,
-  linkKey,
-}: {
-  section: FooterLinkSection;
-  linkKey: string;
-}) => (
-  <div className='w-full sm:w-1/4 md:w-1/2 lg:w-1/3 xl:w-1/4' id={linkKey}>
-    <h3 className='mb-5 text-lg font-bold text-white'>{section.title}</h3>
-    <ul>
-      {section.links.map((link, idx) => (
-        <li className='mb-4' key={`${linkKey}-footer-link-${idx}`}>
-          <Link
-            className='inline-block text-base font-light text-irmin_green transition-colors duration-200 hover:text-white hover:underline'
-            href={link.href}
-          >
-            {link.label}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  </div>
-);
-
-export default function WebsiteFooter() {
-  const { dict } = useLocale();
   return (
-    <>
-      <section className='bg-irmin_black'>
-        <div className='container mx-auto max-w-7xl text-center md:text-left'>
-          <div className='flex flex-col justify-start gap-8 px-2 py-8 text-sm md:flex-row md:justify-between md:gap-3 md:py-24 lg:text-base'>
-            <div className='justify-start'>
-              <Link className='mb-4 inline-block' href='#'>
-                <Image
-                  className='h-8'
-                  src='/irmin-logo-light.svg'
-                  alt='Irmin light color logo'
-                  width={100}
-                  height={25}
-                />
-              </Link>
-              <p className='mx-auto w-full max-w-64 text-center font-light text-irmin_green md:mx-0 md:text-left'>
-                {dict.website.footer.description}
-              </p>
-              <LanguageSwitcher
-                className={`my-4 -ml-1 block w-full overflow-hidden text-nowrap rounded bg-transparent p-0 text-xs font-light text-irmin_green transition-all lg:text-sm xl:text-base`}
-              />
-              <div className='hidden flex-row items-center justify-start gap-4 py-4 lg:flex'>
-                <Link
-                  className='inline-block text-xs font-light text-irmin_green transition-colors duration-200 hover:underline'
-                  href='/legal/privacy-policy'
-                >
-                  {dict.website.footer.privacy}
-                </Link>
-                <Link
-                  className='inline-block text-xs font-light text-irmin_green transition-colors duration-200 hover:underline'
-                  href='/legal/terms-of-use'
-                >
-                  {dict.website.footer.terms}
-                </Link>
-              </div>
-            </div>
-            <div className='flex flex-1 flex-wrap items-center justify-center gap-8'>
-              {footerLinks.map((section, idx) => (
-                <FooterLinkSection
-                  key={`website-footer-link-section-${idx}`}
-                  linkKey={`website-footer-link-section-${idx}`}
-                  section={section}
-                />
-              ))}
-            </div>
-            <div className='justify-end'>
-              <h3 className='mb-3 text-lg font-bold text-white'>
-                {dict.website.footer.newsletter.title}
-              </h3>
-              <p className='mb-5 max-w-sm text-irmin_green'>
-                {dict.website.footer.newsletter.subtitle}
-              </p>
-              <div className='mx-auto flex max-w-sm flex-row justify-stretch gap-1 align-middle md:mx-0'>
-                <Input
-                  size='sm'
-                  colorScheme='primary'
-                  variant='solid'
-                  placeholder={dict.website.footer.newsletter.email}
-                  type='email'
-                  className='h-12 w-full min-w-64'
-                />
-                <Button
-                  size='sm'
-                  className='inline-block h-12 w-full justify-end'
-                  colorScheme='primary'
-                  variant='solid'
-                >
-                  {dict.website.footer.newsletter.subscribe}
-                </Button>
-              </div>
-            </div>
-          </div>
-          <div className='flex flex-row items-center justify-center gap-4 py-2 lg:hidden'>
-            <Link
-              className='inline-block text-xs font-light text-irmin_green transition-colors duration-200 hover:underline'
-              href='/legal/privacy-policy'
-            >
-              {dict.website.footer.privacy}
-            </Link>
-            <Link
-              className='inline-block text-xs font-light text-irmin_green transition-colors duration-200 hover:underline'
-              href='/legal/terms-of-use'
-            >
-              {dict.website.footer.terms}
-            </Link>
-          </div>
-          <p className='py-2 text-center text-sm font-light text-irmin_green'>
-            &copy; {new Date().getFullYear()} Irmin.{' '}
-            {dict.website.footer.allRightsReserved}
-          </p>
-        </div>
-      </section>
-    </>
+    <WebsiteFooterContent
+      footerLinksEN={footerLinksEN}
+      footerLinksFI={footerLinksFI}
+    />
   );
 }

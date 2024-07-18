@@ -1,11 +1,30 @@
 import Image from 'next/image';
 
+import { getURL } from '@/lib/linkUtil';
+import WordPress from '@/lib/wordpress';
+
 import Button from '@/components/misc/Button';
 
-export default function WebsiteCTASection() {
+import { CTASection } from '@/types/Wordpress';
+
+export default async function WebsiteCTASection({
+  section,
+}: {
+  section: CTASection;
+}) {
+  const wordpress = WordPress.getInstance();
+
+  const image =
+    typeof section.image === 'number'
+      ? await wordpress
+          .getMediaByID(section.image)
+          .then((media) => media?.source_url)
+      : section.image;
+
   return (
     <section
-      className='overflow-hidden bg-white py-24'
+      id='cta-section'
+      className='overflow-hidden bg-white py-12'
       style={{
         backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
         backgroundPosition: 'center',
@@ -14,71 +33,44 @@ export default function WebsiteCTASection() {
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='-mx-4 flex flex-wrap'>
           <div className='mb-20 w-full px-4 md:w-1/2 lg:mb-0'>
-            <div className='max-w-md'>
+            <div className='max-w-lg'>
               <h2 className='font-heading md:leading-15 mb-8 text-4xl font-bold text-irmin_black md:text-5xl'>
-                Join 6,000+ companies growing with Irmin
+                {section.title}
               </h2>
               <ul className='mb-8'>
-                <li className='mb-4 flex items-center'>
-                  <Image
-                    className='mr-3'
-                    src='/ui-assets/elements/checkbox-green.svg'
-                    alt='Green checkbox'
-                    width={26}
-                    height={26}
-                  />
-                  <span className='font-heading text-lg text-irmin_black md:text-xl'>
-                    Mauris pellentesque congue libero nec
-                  </span>
-                </li>
-                <li className='mb-4 flex items-center'>
-                  <Image
-                    className='mr-3'
-                    src='/ui-assets/elements/checkbox-green.svg'
-                    alt='Green checkbox'
-                    width={26}
-                    height={26}
-                  />
-                  <span className='font-heading text-lg text-irmin_black md:text-xl'>
-                    Suspendisse mollis tincidunt
-                  </span>
-                </li>
-                <li className='flex items-center'>
-                  <Image
-                    className='mr-3'
-                    src='/ui-assets/elements/checkbox-green.svg'
-                    alt='Green checkbox'
-                    width={26}
-                    height={26}
-                  />
-                  <span className='font-heading text-lg text-irmin_black md:text-xl'>
-                    Praesent varius justo vel justo pulvinar
-                  </span>
-                </li>
+                {section.bullet_points.map((bullet, index) => (
+                  <li
+                    className='mb-4 flex items-center'
+                    key={`bullet-point-${index}`}
+                  >
+                    <Image
+                      className='mr-3'
+                      src='/ui-assets/elements/checkbox-green.svg'
+                      alt='Green checkbox'
+                      width={26}
+                      height={26}
+                    />
+                    <span className='font-heading text-lg text-irmin_black md:text-xl'>
+                      {bullet.title}
+                    </span>
+                  </li>
+                ))}
               </ul>
-              <div className='flex flex-wrap items-center'>
-                <div className='w-1/2 pr-4'>
-                  <Button
-                    size='lg'
-                    variant='solid'
-                    colorScheme='secondary'
-                    className='inline-block w-full rounded-full border'
-                    href='/sign-up'
-                  >
-                    Get started for free
-                  </Button>
-                </div>
-                <div className='w-1/2'>
-                  <Button
-                    size='lg'
-                    variant='outline'
-                    colorScheme='primary'
-                    className='inline-block w-full'
-                    href='#'
-                  >
-                    Schedule a live demo
-                  </Button>
-                </div>
+              <div className='flex w-full flex-row items-center gap-2'>
+                {section.buttons.map((button, index) => (
+                  <div className='w-1/2' key={`button-${index}`}>
+                    <Button
+                      size='lg'
+                      variant={button.variant}
+                      colorScheme={button.color_scheme}
+                      className={`w-full`}
+                      ariaLabel={button.text}
+                      href={getURL(button.link)}
+                    >
+                      {button.text}
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -100,8 +92,8 @@ export default function WebsiteCTASection() {
               />
               <Image
                 className='relative'
-                src='/ui-assets/elements/photo-laptop-ph.png'
-                alt='Stock photo'
+                src={image ?? ''}
+                alt={section.title}
                 width={554}
                 height={415}
               />

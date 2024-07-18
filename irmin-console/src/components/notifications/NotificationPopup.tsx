@@ -161,7 +161,7 @@ const NotificationPopup = ({
               })
               .map((notification, index) => (
                 <Link
-                  href={`/app/${notification.relatedWorkspace}/${notification.page}`}
+                  href={`/portal/${notification.relatedWorkspace}/${notification.page}`}
                   key={`notification-${index}-${notification.id}`}
                 >
                   <div

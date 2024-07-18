@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 
-import AppTitle from '@/components/appTitle';
 import PluginMarketplaceFilters from '@/components/marketplace/pluginMarketplaceFilters';
 import PluginMarketplaceListingCard from '@/components/marketplace/pluginMarketplaceListingCard';
 import Input from '@/components/misc/Input';
+import PortalTitle from '@/components/portalTitle';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -110,7 +110,7 @@ export default function PluginMarketplace() {
 
   return (
     <>
-      <AppTitle title={dict.marketplace.pluginMarketplace} />
+      <PortalTitle title={dict.marketplace.pluginMarketplace} />
       <div className='p-4 pb-24'>
         <div className='mb-4'>
           <Input

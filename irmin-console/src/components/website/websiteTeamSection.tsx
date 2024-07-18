@@ -1,159 +1,111 @@
 import Image from 'next/image';
-import Link from 'next/link';
 
-export default function WebsiteTeamSection() {
+import { getURL } from '@/lib/linkUtil';
+import WordPress from '@/lib/wordpress';
+
+import Button from '@/components/misc/Button';
+
+import { TeamSection } from '@/types/Wordpress';
+
+export default async function WebsiteTeamSection({
+  section,
+}: {
+  section: TeamSection;
+}) {
+  const wordpress = WordPress.getInstance();
+
+  const people: {
+    profile: string;
+    name: string;
+    title: string;
+    description: string;
+  }[] = [];
+
+  for (let i = 0; i < section.people.length; i++) {
+    const person = section.people[i];
+    const image =
+      typeof person.profile === 'number'
+        ? await wordpress
+            .getMediaByID(person.profile)
+            .then((media) => media?.source_url)
+        : person.profile;
+    people.push({
+      ...person,
+      profile: image ?? '',
+    });
+  }
   return (
-    <>
-      <section
-        className='bg-white py-24'
-        style={{
-          backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className='container mx-auto max-w-7xl px-4'>
-          <div className='-mx-4 mb-16 flex flex-wrap items-center justify-between'>
-            <div className='mb-8 w-full px-4 md:mb-0 md:w-1/2'>
-              <div className='max-w-md'>
-                <span className='mb-4 inline-block rounded-full bg-irmin_green px-2 py-px text-xs font-medium uppercase leading-5 text-white'>
-                  Team
-                </span>
-                <h3 className='mb-4 text-4xl font-bold tracking-tighter md:text-5xl'>
-                  Meet our team
-                </h3>
-                <p className='text-lg font-light text-irmin_black md:text-xl'>
-                  Highly professional and capable of running your business
-                  across all digital channels.
-                </p>
-              </div>
-            </div>
-            <div className='w-full px-4 md:w-auto'>
-              <div className='flex flex-wrap justify-center'>
-                <div className='w-full py-1 md:mr-4 md:w-auto md:py-0'>
-                  <Link
-                    className='inline-block w-full rounded-full border border-irmin_green-500 bg-irmin_green-500 px-7 py-5 text-center text-base font-medium leading-4 text-white shadow-sm hover:bg-irmin_green-600 md:text-lg'
-                    href='#'
-                  >
-                    Open Positions
-                  </Link>
-                </div>
-                <div className='w-full py-1 md:w-auto md:py-0'>
-                  <Link
-                    className='inline-block w-full rounded-full border border-irmin_black bg-white px-7 py-5 text-center text-base font-medium leading-4 text-irmin_black shadow-sm hover:bg-irmin_black-100 focus:outline-none md:text-lg'
-                    href='#'
-                  >
-                    About Us
-                  </Link>
-                </div>
-              </div>
+    <section
+      id='team-section'
+      className='bg-white py-12'
+      style={{
+        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+        backgroundPosition: 'center',
+      }}
+    >
+      <div className='container mx-auto max-w-7xl px-4'>
+        <div className='-mx-4 mb-16 flex flex-wrap items-center justify-between'>
+          <div className='mb-8 w-full px-4 md:mb-0 md:w-1/2'>
+            <div className='max-w-md'>
+              <span className='mb-4 inline-block rounded-full bg-irmin_green px-2 py-px text-xs font-medium uppercase leading-5 text-white'>
+                {section.subtitle}
+              </span>
+              <h3 className='mb-4 text-4xl font-bold tracking-tighter md:text-5xl'>
+                {section.title}
+              </h3>
+              <p className='text-sm font-light text-irmin_black md:text-base'>
+                {section.description}
+              </p>
             </div>
           </div>
-          <div className='-mx-4 flex flex-wrap'>
-            <div className='mb-12 w-full px-4 md:w-1/2 lg:w-1/3'>
-              <div className='mx-auto max-w-max'>
-                <Image
-                  className='mb-8 block'
-                  src='/ui-assets/images/teams/photo-employee1.png'
-                  alt='Employee photo'
-                  width={359}
-                  height={384}
-                />
-                <h3 className='mb-2 text-3xl font-semibold leading-tight md:text-4xl'>
-                  Macauley Herring
-                </h3>
-                <span className='text-lg font-medium text-irmin_green-500'>
-                  CEO &amp; Founder
-                </span>
-              </div>
-            </div>
-            <div className='mb-12 w-full px-4 md:w-1/2 lg:w-1/3'>
-              <div className='mx-auto max-w-max'>
-                <Image
-                  className='mb-8 block'
-                  src='/ui-assets/images/teams/photo-employee6.png'
-                  alt='Employee photo'
-                  width={359}
-                  height={384}
-                />
-                <h3 className='mb-2 text-3xl font-semibold leading-tight md:text-4xl'>
-                  Ivan Mathews
-                </h3>
-                <span className='text-lg font-medium text-irmin_green-500'>
-                  CTO
-                </span>
-              </div>
-            </div>
-            <div className='mb-12 w-full px-4 md:w-1/2 lg:w-1/3'>
-              <div className='mx-auto max-w-max'>
-                <Image
-                  className='mb-8 block'
-                  src='/ui-assets/images/teams/photo-employee5.png'
-                  alt='Employee photo'
-                  width={359}
-                  height={384}
-                />
-                <h3 className='mb-2 text-3xl font-semibold leading-tight md:text-4xl'>
-                  Elen Benitez
-                </h3>
-                <span className='text-lg font-medium text-irmin_green-500'>
-                  CPO
-                </span>
-              </div>
-            </div>
-            <div className='mb-12 w-full px-4 md:w-1/2 lg:mb-0 lg:w-1/3'>
-              <div className='mx-auto max-w-max'>
-                <Image
-                  className='mb-8 block'
-                  src='/ui-assets/images/teams/photo-employee4.png'
-                  alt='Employee photo'
-                  width={359}
-                  height={384}
-                />
-                <h3 className='mb-2 text-3xl font-semibold leading-tight md:text-4xl'>
-                  Macauley Herring
-                </h3>
-                <span className='text-lg font-medium text-irmin_green-500'>
-                  Customer Success
-                </span>
-              </div>
-            </div>
-            <div className='mb-12 w-full px-4 md:mb-0 md:w-1/2 lg:w-1/3'>
-              <div className='mx-auto max-w-max'>
-                <Image
-                  className='mb-8 block'
-                  src='/ui-assets/images/teams/photo-employee3.png'
-                  alt='Employee photo'
-                  width={359}
-                  height={384}
-                />
-                <h3 className='mb-2 text-3xl font-semibold leading-tight md:text-4xl'>
-                  Alya Levine
-                </h3>
-                <span className='text-lg font-medium text-irmin_green-500'>
-                  Backend Developer
-                </span>
-              </div>
-            </div>
-            <div className='w-full px-4 md:w-1/2 lg:w-1/3'>
-              <div className='mx-auto max-w-max'>
-                <Image
-                  className='mb-8 block'
-                  src='/ui-assets/images/teams/photo-employee2.png'
-                  alt='Employee photo'
-                  width={359}
-                  height={384}
-                />
-                <h3 className='mb-2 text-3xl font-semibold leading-tight md:text-4xl'>
-                  Rose Hernandez
-                </h3>
-                <span className='text-lg font-medium text-irmin_green-500'>
-                  iOS Developer
-                </span>
-              </div>
+          <div className='w-full px-4 md:w-auto'>
+            <div className='flex flex-wrap justify-center gap-4'>
+              {section.buttons.map((button, index) => (
+                <Button
+                  key={`button-${index}`}
+                  className='inline-block w-full rounded-full border border-irmin_green-500 bg-irmin_green-500 px-7 py-5 text-center text-base font-medium leading-4 text-white shadow-sm hover:bg-irmin_green-600 md:text-lg'
+                  size='lg'
+                  variant={button.variant}
+                  colorScheme={button.color_scheme}
+                  ariaLabel={button.text}
+                  href={getURL(button.link)}
+                >
+                  {button.text}
+                </Button>
+              ))}
             </div>
           </div>
         </div>
-      </section>
-    </>
+        <div className='-mx-4 flex flex-wrap'>
+          {people.map((person, index) => (
+            <div
+              className='mb-12 w-full px-4 md:w-1/2 lg:w-1/3'
+              key={`person-${index}`}
+            >
+              <div className='mx-auto max-w-max'>
+                <Image
+                  className='mb-8 block'
+                  src={person.profile}
+                  alt={person.name}
+                  width={359}
+                  height={384}
+                />
+                <h3 className='mb-2 text-3xl font-semibold leading-tight md:text-4xl'>
+                  {person.name}
+                </h3>
+                <span className='text-lg font-medium text-irmin_green-500'>
+                  {person.title}
+                </span>
+                {person.description.length > 0 && (
+                  <p className='mt-2 text-base text-irmin_black'>
+                    {person.description}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

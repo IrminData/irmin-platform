@@ -27,8 +27,13 @@ function DashboardError({
         </p>
         <div className='flex justify-center'>
           <div className='mx-2'>
-            <Button variant='solid' colorScheme='primary' size='md' href='/app'>
-              {dict.misc.goBackApp}
+            <Button
+              variant='solid'
+              colorScheme='primary'
+              size='md'
+              href='/portal'
+            >
+              {dict.misc.goBackPortal}
             </Button>
           </div>
           <div className='mx-2'>

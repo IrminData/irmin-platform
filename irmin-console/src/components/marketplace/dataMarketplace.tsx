@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 
-import AppTitle from '@/components/appTitle';
 import DataMarketplaceFilters from '@/components/marketplace/dataMarketplaceFilters';
 import DataMarketplaceListingCard from '@/components/marketplace/dataMarketplaceListingCard';
 import Input from '@/components/misc/Input';
+import PortalTitle from '@/components/portalTitle';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -238,7 +238,7 @@ export default function DataMarketplace() {
 
   return (
     <>
-      <AppTitle title={dict.marketplace.dataMarketplace} />
+      <PortalTitle title={dict.marketplace.dataMarketplace} />
       <div className='p-4 pb-24'>
         <div className='mb-4'>
           <Input

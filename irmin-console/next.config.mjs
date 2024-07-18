@@ -9,6 +9,16 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: '**.irmin.co',
+        port: '',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.irmin.app',
+        port: '',
+      },
+      {
+        protocol: 'https',
         hostname: '**.postgresql.org',
         port: '',
       },

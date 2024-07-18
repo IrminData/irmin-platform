@@ -1,4 +1,51 @@
 {
+  "website": {
+    "navigation": {
+      "goToPortal": "Go to portal"
+    },
+    "footer": {
+      "description": "A better home for your data. Irmin is an ETL and data management platform that helps you to collect, clean, and transform your data.",
+      "newsletter": {
+        "title": "Subscribe to our newsletter",
+        "subtitle": "Stay up to date with the latest news and updates from Irmin.",
+        "email": "Email",
+        "subscribe": "Subscribe"
+      },
+      "terms": "Terms and conditions",
+      "privacy": "Privacy policy",
+      "allRightsReserved": "All rights reserved."
+    },
+    "sections": {
+      "careers": {
+        "viewJob": "View job",
+        "search": "Search",
+        "allLocations": "All locations",
+        "allTypes": "All types"
+      },
+      "contact": {
+        "email": "Email",
+        "message": "Message",
+        "messagePlaceholder": "Write your message here...",
+        "send": "Send"
+      },
+      "newsletter": {
+        "email": "Enter your email",
+        "subscribe": "Subscribe",
+        "privacy_notice": "We care for your data. Read our",
+        "privacy": "Privacy policy"
+      },
+      "pricing": {
+        "billedMonthly": "Billed monthly",
+        "billedAnnually": "Billed annually",
+        "month": "mo",
+        "year": "yr"
+      },
+      "articles": {
+        "allArticles": "All articles",
+        "search": "Search"
+      }
+    }
+  },
   "misc": {
     "loading": "Loading...",
     "cancel": "Cancel",
@@ -10,7 +57,7 @@
     "weEncounteredError": "We encountered an error",
     "tryAgainOrContactSupport": "Please try again or contact support",
     "goBackHome": "Go back to the home page",
-    "goBackApp": "Go back to Irmin App",
+    "goBackPortal": "Go back to Irmin Portal",
     "tryAgain": "Try again"
   },
   "auth": {
@@ -68,27 +115,10 @@
       "error": "You must accept the terms and conditions and the privacy policy to continue."
     }
   },
-  "website": {
-    "navigation": {
-      "goToApp": "Go to app"
-    },
-    "footer": {
-      "description": "A better home for your data. Irmin is an ETL and data management platform that helps you to collect, clean, and transform your data.",
-      "newsletter": {
-        "title": "Subscribe to our newsletter",
-        "subtitle": "Stay up to date with the latest news and updates from Irmin.",
-        "email": "Email",
-        "subscribe": "Subscribe"
-      },
-      "terms": "Terms and conditions",
-      "privacy": "Privacy policy",
-      "allRightsReserved": "All rights reserved."
-    }
-  },
   "dashboardNavigation": {
     "search": "Search",
     "searchPlaceholder": "Search for data and more",
-    "irminApp": "Irmin App",
+    "irminPortal": "Irmin Portal",
     "workspace": "Workspace",
     "settings": "Settings",
     "notifications": {

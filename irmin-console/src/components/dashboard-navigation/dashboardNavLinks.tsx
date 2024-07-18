@@ -44,7 +44,8 @@ export const useDashboardNavLinks = (): {
   const auth = AuthService.getInstance(locale);
 
   const isActiveLink = (href: string) => {
-    if (href === '/app' || !href.includes('/app')) return pathname === href;
+    if (href === '/portal' || !href.includes('/portal'))
+      return pathname === href;
     return pathname.startsWith(href);
   };
 
@@ -58,37 +59,37 @@ export const useDashboardNavLinks = (): {
   const workspaceLinks = [
     {
       title: dict.dashboardNavigation.links.dashboards,
-      href: `/${locale}/app/${workspaceSlug}/dashboards`,
+      href: `/${locale}/portal/${workspaceSlug}/dashboards`,
       icon: <RxDashboard />,
     },
     {
       title: dict.dashboardNavigation.links.dataSets,
-      href: `/${locale}/app/${workspaceSlug}/data-sets`,
+      href: `/${locale}/portal/${workspaceSlug}/data-sets`,
       icon: <CiDatabase />,
     },
     {
       title: dict.dashboardNavigation.links.editor,
-      href: `/${locale}/app/${workspaceSlug}/editor`,
+      href: `/${locale}/portal/${workspaceSlug}/editor`,
       icon: <AiOutlineConsoleSql />,
     },
     {
       title: dict.dashboardNavigation.links.connections,
-      href: `/${locale}/app/${workspaceSlug}/connections`,
+      href: `/${locale}/portal/${workspaceSlug}/connections`,
       icon: <TbDatabaseImport />,
     },
     {
       title: dict.dashboardNavigation.links.exportSyncs,
-      href: `/${locale}/app/${workspaceSlug}/export-sync`,
+      href: `/${locale}/portal/${workspaceSlug}/export-sync`,
       icon: <TbDatabaseExport />,
     },
     {
       title: dict.dashboardNavigation.links.workspaceSettings,
-      href: `/${locale}/app/${workspaceSlug}/settings`,
+      href: `/${locale}/portal/${workspaceSlug}/settings`,
       icon: <TbSettings />,
     },
     {
       title: dict.dashboardNavigation.links.marketplace,
-      href: `/${locale}/app/${workspaceSlug}/marketplace`,
+      href: `/${locale}/portal/${workspaceSlug}/marketplace`,
       icon: <PiStorefront />,
     },
   ].map((link) => ({
@@ -99,7 +100,7 @@ export const useDashboardNavLinks = (): {
   const noWorkspaceLinks = [
     {
       title: dict.dashboardNavigation.links.workspaces,
-      href: `/app`,
+      href: `/portal`,
       icon: <RxDashboard />,
     },
     {
@@ -115,9 +116,9 @@ export const useDashboardNavLinks = (): {
   const settingsLinks = [
     {
       title: dict.dashboardNavigation.links.myProfile,
-      href: `/${locale}/app/profile`,
+      href: `/${locale}/portal/profile`,
       icon: <TbSettings />,
-      active: isActiveLink(`/${locale}/app/profile`),
+      active: isActiveLink(`/${locale}/portal/profile`),
     },
     {
       title: dict.dashboardNavigation.links.signOut,

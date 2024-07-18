@@ -50,7 +50,7 @@ const UserInvite: React.FC = () => {
       if (response.metadata?.message) {
         setSuccess(response.metadata.message);
         // Redirect to dashboard or another page on successful accept
-        router.push('/app');
+        router.push('/portal');
       } else {
         throw new Error(response.message || 'Accepting invite failed');
       }
