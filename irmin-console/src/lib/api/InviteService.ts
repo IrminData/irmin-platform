@@ -59,14 +59,12 @@ class InviteService {
 
   /**
    * Invite the user to the workspace.
-   * @param {string} workspace - The workspace's slug.
    * @param {string} name - The user's name.
    * @param {string} email - The user's email.
    * @param {number} role - The user's role.
    * @returns {Promise<IrminAPIResponse>} A promise that resolves to the response from the API.
    */
   async inviteUserToWorkspace(
-    workspace: string,
     name: string,
     email: string,
     role: number
@@ -77,9 +75,8 @@ class InviteService {
       formData.append('name', name);
       formData.append('email', email);
       formData.append('role', role.toString());
-      formData.append('workspace', workspace);
 
-      return await this.fetchWithCredentials(`${api_base}/v1/invite/create`, {
+      return await this.fetchWithCredentials(`${api_base}/v1/invites/create`, {
         method: 'POST',
         body: formData,
       });
@@ -101,7 +98,7 @@ class InviteService {
 
       formData.append('invite', invite.toString());
 
-      return await this.fetchWithCredentials(`${api_base}/v1/invite/resend`, {
+      return await this.fetchWithCredentials(`${api_base}/v1/invites/resend`, {
         method: 'POST',
         body: formData,
       });
@@ -123,7 +120,7 @@ class InviteService {
       formData.append('invite', invite.toString());
       formData.append('_method', 'DELETE');
 
-      return await this.fetchWithCredentials(`${api_base}/v1/invite/cancel`, {
+      return await this.fetchWithCredentials(`${api_base}/v1/invites/cancel`, {
         method: 'POST',
         body: formData,
       });
@@ -136,24 +133,21 @@ class InviteService {
 
   /**
    * Change the invited user's role in the workspace.
-   * @param workspaceSlug - The workspace's slug.
    * @param invite- The invite's ID.
    * @param role - The user's role.
    * @returns {Promise<IrminAPIResponse>} A promise that resolves to the response from the API.
    */
   async changeUserInviteRole(
-    workspaceSlug: string,
     invite: number,
     role: IrminRole
   ): Promise<IrminAPIResponse> {
     try {
       const formData = new FormData();
-      formData.append('workspace', workspaceSlug);
       formData.append('invite', invite.toString());
       formData.append('role', role.id.toString());
       formData.append('_method', 'PATCH');
 
-      return await this.fetchWithCredentials(`${api_base}/v1/invite/update`, {
+      return await this.fetchWithCredentials(`${api_base}/v1/invites/update`, {
         method: 'POST',
         body: formData,
       });
@@ -165,11 +159,13 @@ class InviteService {
   }
 
   /**
-   * Get a list of invites sent by a user or workspace.
-   * @param {string} workspace - The workspace's slug.
+   * Get a list of invites to the workspace
+   * @param workspace - The workspace's slug
    * @returns {Promise<WorkspaceInviteUser[]>} A promise that resolves to an array of WorkspaceInviteUser objects.
    */
-  async getInvites(workspace: string): Promise<WorkspaceInviteUser[]> {
+  async getInvitesByWorkspace(
+    workspace: string
+  ): Promise<WorkspaceInviteUser[]> {
     try {
       const response = await this.fetchWithCredentials(
         `${api_base}/v1/invites?workspace=${workspace}`,
@@ -188,6 +184,88 @@ class InviteService {
       return response.data as WorkspaceInviteUser[];
     } catch (error) {
       console.error('Invites error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a list of invites for the user
+   * @param user - The user's ID
+   * @returns {Promise<WorkspaceInviteUser[]>} A promise that resolves to an array of WorkspaceInviteUser objects.
+   */
+  async getInvitesByUser(user: number): Promise<WorkspaceInviteUser[]> {
+    try {
+      const response = await this.fetchWithCredentials(
+        `${api_base}/v1/invites?user=${user}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response || !response.data || !Array.isArray(response.data)) {
+        return [];
+      }
+
+      return response.data as WorkspaceInviteUser[];
+    } catch (error) {
+      console.error('Invites error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Accept the invite to the workspace.
+   * @param invite - The invite's ID.
+   * @param password - The user's password.
+   * @param password_confirmation - The user's password.
+   * @param company - The user's company.
+   * @returns - A promise that resolves to the response from the API. Set this if the invited user does not have an account.
+   */
+  async acceptUserInvite(
+    invite: number,
+    password: string | null,
+    password_confirmation: string | null,
+    company: string | null
+  ): Promise<IrminAPIResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('invite', invite.toString());
+      formData.append('company', company ?? '');
+      formData.append('password', password ?? '');
+      formData.append('password_confirmation', password_confirmation ?? '');
+
+      return await this.fetchWithCredentials(`${api_base}/v1/invites/accept`, {
+        method: 'POST',
+        body: formData,
+      });
+    } catch (error) {
+      console.error('Accept user invite error:', error);
+
+      throw error;
+    }
+  }
+
+  /**
+   * Decline the invite to the workspace.
+   * @param invite - The ID of the invite to decline
+   * @returns - A promise that resolves to the response from the API.
+   */
+  async declineUserInvite(invite: number): Promise<IrminAPIResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('invite', invite.toString());
+      formData.append('_method', 'DELETE');
+
+      return await this.fetchWithCredentials(`${api_base}/v1/invites/decline`, {
+        method: 'POST',
+        body: formData,
+      });
+    } catch (error) {
+      console.error('Decline user invite error:', error);
+
       throw error;
     }
   }

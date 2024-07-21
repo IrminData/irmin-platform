@@ -37,12 +37,9 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
       if (!currentWorkspace) return;
       try {
         // Fetch workspace users and their roles
-        const workspaceUsers = await workspaceService.getWorkspaceUsers(
-          currentWorkspace.slug
-        );
+        const workspaceUsers = await workspaceService.getWorkspaceUsers();
         for (const user of workspaceUsers) {
-          const userRoles = await workspaceService.getWorkspaceUserRole(
-            currentWorkspace.slug,
+          const userRoles = await workspaceService.getWorkspaceUserRoles(
             user.id
           );
           if (userRoles) {
@@ -54,7 +51,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
           }
         }
         // Also fetch users that have been invited but not yet accepted
-        const invitedUsers = await inviteService.getInvites(
+        const invitedUsers = await inviteService.getInvitesByWorkspace(
           currentWorkspace.slug
         );
         for (const user of invitedUsers) {
@@ -100,7 +97,6 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     try {
       // Invite user
       const res = await inviteService.inviteUserToWorkspace(
-        currentWorkspace.slug,
         inviteName,
         inviteEmail,
         inviteRole
@@ -168,21 +164,16 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     }
   };
 
-  const handleRemoveUser = async (id: number, role: IrminRole) => {
+  const handleRemoveUser = async (id: number) => {
     // Confirm removal
     irminConfirm(
       'info',
       dict.usersPermissions.removeUserConfirmation,
       async () => {
         // Removal confirmed
-        if (!currentWorkspace) return;
         try {
           // Remove user from workspace
-          const res = await workspaceService.removeUserFromWorkspace(
-            currentWorkspace.slug,
-            id,
-            role
-          );
+          const res = await workspaceService.removeUserFromWorkspace(id);
           // Remove user from the list
           setUsers(users.filter((user) => user.id !== id));
           irminAlert(
@@ -214,10 +205,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
         if (!currentWorkspace) return;
         try {
           // Transfer ownership
-          const res = await workspaceService.transferWorkspaceOwnership(
-            currentWorkspace.slug,
-            id
-          );
+          const res = await workspaceService.transferWorkspaceOwnership(id);
           // Refetch the current workspace
           switchToWorkspace(currentWorkspace.slug);
           // Inform that ownership has been transferred
@@ -244,11 +232,9 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     oldRole: IrminRole | null,
     newRole: IrminRole
   ) => {
-    if (!currentWorkspace) return;
     try {
       // Change user role
       const res = await workspaceService.changeUserWorkspaceRole(
-        currentWorkspace.slug,
         id,
         newRole,
         oldRole
@@ -283,14 +269,9 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     inviteId: number,
     newRole: IrminRole
   ) => {
-    if (!currentWorkspace) return;
     try {
       // Change invite role
-      const res = await inviteService.changeUserInviteRole(
-        currentWorkspace.slug,
-        inviteId,
-        newRole
-      );
+      const res = await inviteService.changeUserInviteRole(inviteId, newRole);
       // Update the local state of workspace users
       const newUsers = users.map((user) => {
         if (user.inviteId === inviteId) {
@@ -437,7 +418,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                       variant='outline'
                       colorScheme='gray'
                       aria-label='Remove user from workspace'
-                      onClick={() => handleRemoveUser(user.id, user.roles[0])}
+                      onClick={() => handleRemoveUser(user.id)}
                       icon={<IoExit size={24} />}
                     >
                       {dict.usersPermissions.removeFromWorkspace}

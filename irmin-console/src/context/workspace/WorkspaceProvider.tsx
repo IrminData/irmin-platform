@@ -94,7 +94,6 @@ export const WorkspaceProvider = ({
    * switches to the default workspace, and fetches the updated list of workspaces.
    */
   const deleteCurrentWorkspace = useDeleteCurrentWorkspace(
-    currentWorkspace,
     switchToWorkspace,
     fetchWorkspaces,
     locale

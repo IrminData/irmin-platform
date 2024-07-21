@@ -21,6 +21,7 @@ import { IrminRole, Workspace } from '@/types/Workspace';
  * @param setCurrentWorkspace - Function to update the current workspace state.
  * @param workspaceLoading - Loading state to prevent multiple simultaneous fetches.
  * @param setWorkspaceLoading - Function to update the workspace loading state.
+ * @param locale - The current locale.
  */
 export const useFetchWorkspaces = (
   setWorkspaces: React.Dispatch<React.SetStateAction<Workspace[] | null>>,
@@ -65,6 +66,7 @@ export const useFetchWorkspaces = (
  * It will fetch from the API if not in offline mode.
  * @param irminRoles - The current roles state.
  * @param setIrminRoles - Function to update the roles state.
+ * @param locale - The current locale.
  */
 export const useFetchRoles = (
   irminRoles: IrminRole[],
@@ -98,6 +100,11 @@ export const useFetchRoles = (
  * It will fetch from the API if not in offline mode.
  * @param currentWorkspace - The current workspace to fetch connections for.
  * @param setConnections - Function to update the connections state.
+ * @param connectionsLoading - Loading state to prevent multiple simultaneous fetches.
+ * @param setConnectionsLoading - Function to update the connections loading state.
+ * @param connectionsFetchedFor - The slug of the workspace the connections are fetched for.
+ * @param setConnectionsFetchedFor - Function to update the connections fetched for state.
+ * @param locale - The current locale.
  */
 export const useFetchConnections = (
   currentWorkspace: Workspace | null,
@@ -137,9 +144,7 @@ export const useFetchConnections = (
         if (connectionsLoading) return;
         setConnectionsLoading(true);
         // Fetch the connections for the current workspace
-        const res = await workspaceService.fetchConnectionsForWorkspace(
-          currentWorkspace.slug
-        );
+        const res = await workspaceService.fetchConnectionsForWorkspace();
         // Set the connections
         const newConnections: ConnectionWithAdditionalData[] = res.data.map(
           (conn) => {
@@ -180,6 +185,7 @@ export const useFetchConnections = (
  * @param workspaceLoading - Loading state to prevent multiple simultaneous switches.
  * @param setWorkspaceLoading - Function to update the workspace loading state.
  * @param fetchWorkspaces - Function to fetch the list of workspaces.
+ * @param locale - The current locale.
  */
 export const useSwitchWorkspace = (
   currentWorkspace: Workspace | null,
@@ -265,12 +271,11 @@ export const useSwitchWorkspace = (
  * Hook to delete a workspace.
  * It deletes the workspace using the workspace service, updates the list of workspaces,
  * and resets the current workspace to null.
- * @param currentWorkspace - The current workspace to delete.
  * @param switchToWorkspace - Function to switch to a workspace.
  * @param fetchWorkspaces - Function to fetch the list of workspaces.
+ * @param locale - The current locale.
  */
 export const useDeleteCurrentWorkspace = (
-  currentWorkspace: Workspace | null,
   switchToWorkspace: (
     _workspaceSlug: string | null,
     _disableAlerts?: boolean
@@ -280,9 +285,8 @@ export const useDeleteCurrentWorkspace = (
 ) => {
   const workspaceService = WorkspaceService.getInstance(locale);
   return useCallback(async () => {
-    if (!currentWorkspace) return;
-    await workspaceService.deleteWorkspace(currentWorkspace.slug);
+    await workspaceService.deleteWorkspace();
     await switchToWorkspace(null, true);
     await fetchWorkspaces();
-  }, [currentWorkspace, switchToWorkspace, fetchWorkspaces, workspaceService]);
+  }, [switchToWorkspace, fetchWorkspaces, workspaceService]);
 };

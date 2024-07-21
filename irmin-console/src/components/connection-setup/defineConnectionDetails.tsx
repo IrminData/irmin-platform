@@ -13,7 +13,6 @@ import LoadingSpinner from '@/components/misc/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
 
 import { ConnectionDetailsAndSettings } from '@/types/Connector';
 
@@ -27,7 +26,6 @@ export default function DefineConnectionDetails({
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const { locale, dict } = useLocale();
-  const { currentWorkspace } = useWorkspace();
   const { irminAlert } = usePopup();
   const connectionService = ConnectionService.getInstance(locale);
   const [loading, setLoading] = useState(false);
@@ -39,7 +37,6 @@ export default function DefineConnectionDetails({
     if (
       loading ||
       !connectionData.connector ||
-      !currentWorkspace ||
       connectionData.connectionDetailsFields ||
       initialLoadingDone
     )
@@ -49,7 +46,6 @@ export default function DefineConnectionDetails({
 
     try {
       const response = await connectionService.fetchNewConnectionDetails(
-        currentWorkspace.slug,
         connectionData.connector.id
       );
       setConnectionData((prev: connectionDataType) => ({
@@ -66,7 +62,6 @@ export default function DefineConnectionDetails({
     }
   }, [
     connectionService,
-    currentWorkspace,
     connectionData.connector,
     irminAlert,
     loading,
@@ -86,7 +81,6 @@ export default function DefineConnectionDetails({
       // Validate form and continue
       if (
         !connectionData.connectionDetailsFields ||
-        !currentWorkspace?.slug ||
         !connectionData.connector ||
         !formRef.current
       )
@@ -136,7 +130,6 @@ export default function DefineConnectionDetails({
 
         // Test the connection
         const res = await connectionService.testConnectionWithDetails(
-          currentWorkspace.slug,
           connectionData.connector.id,
           data
         );
@@ -161,7 +154,6 @@ export default function DefineConnectionDetails({
       connectionData.connectionDetailsFields,
       connectionData.connector,
       formRef,
-      currentWorkspace?.slug,
       setLoading,
       setConnectionData,
       setCurrentStep,

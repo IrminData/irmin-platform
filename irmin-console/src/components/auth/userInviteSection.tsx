@@ -5,7 +5,7 @@ import React, { Suspense, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import AuthService from '@/lib/api/AuthService';
+import InviteService from '@/lib/api/InviteService';
 
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
@@ -33,7 +33,7 @@ const UserInvite: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const authService = AuthService.getInstance(locale);
+  const inviteService = InviteService.getInstance(locale);
 
   const handleAcceptInvite = async () => {
     setLoading(true);
@@ -41,7 +41,7 @@ const UserInvite: React.FC = () => {
     setSuccess(null);
 
     try {
-      const response = await authService.acceptUserInvite(
+      const response = await inviteService.acceptUserInvite(
         inviteId,
         company,
         password,
@@ -67,7 +67,7 @@ const UserInvite: React.FC = () => {
     setSuccess(null);
 
     try {
-      const response = await authService.declineUserInvite(inviteId);
+      const response = await inviteService.declineUserInvite(inviteId);
       if (response.metadata?.message) {
         setSuccess(response.metadata.message);
         // Redirect to homepage or another page on successful decline

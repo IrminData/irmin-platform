@@ -82,11 +82,11 @@ const GeneralSettings = () => {
     },
     [
       workspaceService,
-      currentWorkspace,
       workspaceName,
       fetchWorkspaces,
       irminAlert,
       dict,
+      currentWorkspace,
     ]
   );
 

@@ -84,12 +84,11 @@ class ConnectionService {
    * @returns {Promise<ConnectionDetailsAndSettingsAPIResponse>} A promise that resolves to a ConnectionDetailsAndSettings object
    * */
   async fetchNewConnectionDetails(
-    workspaceSlug: string,
     connectorID: number
   ): Promise<ConnectionDetailsAndSettingsAPIResponse> {
     try {
       const response = await this.fetchWithCredentials(
-        `${api_base}/v1/workspaces/${workspaceSlug}/connections/new/details?connector=${connectorID}`,
+        `${api_base}/v1/connections/create/details?connector=${connectorID}`,
         {
           method: 'GET',
           headers: {
@@ -106,13 +105,11 @@ class ConnectionService {
 
   /**
    * Test a connection with the provided connection details
-   * @param {string} workspaceSlug - The slug of the workspace
    * @param {number} connectorID - The ID of the connector
    * @param {ConnectionDetailsAndSettings} connectionDetails - The connection details to test
    * @returns {Promise<ConnectionTestAPIResponse>} A promise that resolves to a ConnectionTestAPIResponse object
    * */
   async testConnectionWithDetails(
-    workspaceSlug: string,
     connectorID: number,
     connectionDetails: ConnectionDetailsAndSettings
   ): Promise<ConnectionTestAPIResponse> {
@@ -124,7 +121,7 @@ class ConnectionService {
       });
 
       // Construct the full URL with query parameters
-      const url = `${api_base}/v1/workspaces/${workspaceSlug}/connections/new/test-connection?${params.toString()}`;
+      const url = `${api_base}/v1/connections/create/test-connection?${params.toString()}`;
 
       // Make the request
       const response = await this.fetchWithCredentials(url, {
@@ -147,7 +144,6 @@ class ConnectionService {
    * @returns {Promise<ConnectionDetailsAndSettingsAPIResponse>} A promise that resolves to a ConnectionDetailsAndSettings object
    * */
   async fetchNewConnectionSettings(
-    workspaceSlug: string,
     connectorID: number,
     connectionDetails: ConnectionDetailsAndSettings
   ): Promise<ConnectionDetailsAndSettingsAPIResponse> {
@@ -159,7 +155,7 @@ class ConnectionService {
       });
 
       // Construct the full URL with query parameters
-      const url = `${api_base}/v1/workspaces/${workspaceSlug}/connections/new/settings?${params.toString()}`;
+      const url = `${api_base}/v1/connections/create/settings?${params.toString()}`;
 
       // Make the request
       const response = await this.fetchWithCredentials(url, {
@@ -177,7 +173,6 @@ class ConnectionService {
 
   /**
    * Create a new connection and start sync with the provided details and settings for a workspace
-   * @param {string} workspaceSlug - The slug of the workspace
    * @param {number} connectorID - The ID of the connector
    * @param {string} connectionName - The name of the connection
    * @param {string} connectionCron - The cron syntax for the connection
@@ -186,7 +181,6 @@ class ConnectionService {
    * @returns {Promise<IrminAPIResponse>} A promise that resolves to a IrminAPIResponse object
    */
   async createConnection(
-    workspaceSlug: string,
     connectorID: number,
     connectionName: string,
     connectionCron: string,
@@ -196,25 +190,19 @@ class ConnectionService {
     try {
       const formData = new FormData();
 
-      formData.append('connector_id', connectorID.toString());
-      formData.append('connectionName', connectionName);
+      formData.append('connector', connectorID.toString());
+      formData.append('name', connectionName);
       formData.append('cron_syntax', connectionCron);
 
       Object.keys(connectionDetails).forEach((key) => {
-        formData.append(
-          `connectionDetails[${key}]`,
-          connectionDetails[key] as string
-        );
+        formData.append(`details[${key}]`, connectionDetails[key] as string);
       });
       Object.keys(connectionSettings).forEach((key) => {
-        formData.append(
-          `connectionSettings[${key}]`,
-          connectionSettings[key] as string
-        );
+        formData.append(`settings[${key}]`, connectionSettings[key] as string);
       });
 
       const res = await this.fetchWithCredentials(
-        `${api_base}/v1/workspaces/${workspaceSlug}/connections/new`,
+        `${api_base}/v1/connections/create`,
         {
           method: 'POST',
           body: formData,

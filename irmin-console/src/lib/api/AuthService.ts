@@ -1,7 +1,4 @@
-import {
-  IrminAPIResponse,
-  UserProfileAPIResponse,
-} from '@/types/IrminAPIResponse';
+import { UserProfileAPIResponse } from '@/types/IrminAPIResponse';
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
@@ -194,60 +191,6 @@ class AuthService {
       return response;
     } catch (error) {
       console.error('Update profile error:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Accept the invite to the workspace.
-   * @param invite - The invite's ID.
-   * @param password - The user's password. Only required if you are inviting a user that doesn't already have an account.
-   * @param password_confirmation - The user's password. Only required if you are inviting a user that doesn't already have an account.
-   * @param company - The user's company. Only required if you are inviting a user that doesn't already have an account.
-   * @returns - A promise that resolves to the response from the API. Set this if the invited user does not have an account.
-   */
-  async acceptUserInvite(
-    invite: number,
-    password: string | null,
-    password_confirmation: string | null,
-    company: string | null
-  ): Promise<IrminAPIResponse> {
-    try {
-      const formData = new FormData();
-      formData.append('invite', invite.toString());
-      formData.append('company', company ?? '');
-      formData.append('password', password ?? '');
-      formData.append('password_confirmation', password_confirmation ?? '');
-
-      return await this.fetchWithCredentials(`${api_base}/v1/invite/accept`, {
-        method: 'POST',
-        body: formData,
-      });
-    } catch (error) {
-      console.error('Accept user invite error:', error);
-
-      throw error;
-    }
-  }
-
-  /**
-   * Decline the invite to the workspace.
-   * @param invite - The ID of the invite to decline
-   * @returns - A promise that resolves to the response from the API.
-   */
-  async declineUserInvite(invite: number): Promise<IrminAPIResponse> {
-    try {
-      const formData = new FormData();
-      formData.append('invite', invite.toString());
-      formData.append('_method', 'DELETE');
-
-      return await this.fetchWithCredentials(`${api_base}/v1/invite/decline`, {
-        method: 'POST',
-        body: formData,
-      });
-    } catch (error) {
-      console.error('Decline user invite error:', error);
-
       throw error;
     }
   }

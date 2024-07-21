@@ -13,7 +13,6 @@ import LoadingSpinner from '@/components/misc/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
 
 import { ConnectionDetailsAndSettings } from '@/types/Connector';
 
@@ -27,7 +26,6 @@ export default function DefineConnectionSettings({
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const { locale, dict } = useLocale();
-  const { currentWorkspace } = useWorkspace();
   const { irminAlert } = usePopup();
   const connectionService = ConnectionService.getInstance(locale);
 
@@ -39,7 +37,6 @@ export default function DefineConnectionSettings({
   const fetchConnectionSettings = useCallback(async () => {
     if (
       loading ||
-      !currentWorkspace ||
       !connectionData.connector ||
       !connectionData.connectionDetails ||
       connectionData.connectionSettingsFields ||
@@ -51,7 +48,6 @@ export default function DefineConnectionSettings({
 
     try {
       const response = await connectionService.fetchNewConnectionSettings(
-        currentWorkspace.slug,
         connectionData.connector.id,
         connectionData.connectionDetails
       );
@@ -88,7 +84,6 @@ export default function DefineConnectionSettings({
     }
   }, [
     connectionService,
-    currentWorkspace,
     connectionData.connector,
     connectionData.connectionDetails,
     irminAlert,
@@ -110,7 +105,6 @@ export default function DefineConnectionSettings({
       // Validate form and continue
       if (
         !connectionData.connectionSettingsFields ||
-        !currentWorkspace?.slug ||
         !connectionData.connector ||
         !formRef.current
       )
@@ -163,7 +157,6 @@ export default function DefineConnectionSettings({
     },
     [
       connectionData.connectionSettingsFields,
-      currentWorkspace?.slug,
       connectionData.connector,
       formRef,
       setLoading,

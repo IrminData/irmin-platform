@@ -12,7 +12,6 @@ import Input from '@/components/misc/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
 
 export default function DefineSync({
   connectionData,
@@ -29,7 +28,6 @@ export default function DefineSync({
   const connectionService = ConnectionService.getInstance(locale);
 
   const { irminAlert } = usePopup();
-  const { currentWorkspace } = useWorkspace();
 
   const [cronValue, setCronValue] = useState(connectionData.cron);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +45,6 @@ export default function DefineSync({
       }));
       // Validate all required fields are filled
       if (
-        !currentWorkspace ||
         !connectionData.name ||
         !connectionData.cron ||
         !connectionData.connector ||
@@ -64,7 +61,6 @@ export default function DefineSync({
       try {
         // Start the sync
         const res = await connectionService.createConnection(
-          currentWorkspace.slug,
           connectionData.connector.id,
           connectionData.name,
           connectionData.cron,
@@ -90,7 +86,6 @@ export default function DefineSync({
     [
       isLoading,
       cronValue,
-      currentWorkspace,
       connectionData,
       connectionService,
       irminAlert,
