@@ -17,6 +17,8 @@ export default function WebsiteBlogPost({
   image: string;
 }) {
   const { locale } = useLocale();
+  const wpURL =
+    process.env.NEXT_PUBLIC_WORDPRESS_URL ?? 'https://cms.irmin.dev';
   return (
     <section
       id='post-post-section'
@@ -29,15 +31,15 @@ export default function WebsiteBlogPost({
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='mx-auto mb-12 text-center md:max-w-2xl'>
           <div className='flex items-center justify-center'>
-            <p className='inline-block font-medium text-irmin_green-500'>
+            <p className='inline-block font-medium text-irmin_teal'>
               {post.yoast_head_json?.twitter_misc?.['Written by'] ?? 'Irmin'}
             </p>
-            <span className='mx-1 text-irmin_green-500'>•</span>
-            <p className='inline-block font-medium text-irmin_green-500'>
+            <span className='mx-1 text-irmin_teal-500'>•</span>
+            <p className='inline-block font-medium text-irmin_teal'>
               {new Date(post.date).toLocaleDateString(locale)}
             </p>
-            <span className='mx-1 text-irmin_green-500'>•</span>
-            <p className='inline-block font-medium text-irmin_green-500'>
+            <span className='mx-1 text-irmin_teal-500'>•</span>
+            <p className='inline-block font-medium text-irmin_teal'>
               {post.yoast_head_json?.twitter_misc?.['Estimated reading time'] ??
                 '5 min read'}
             </p>
@@ -48,7 +50,7 @@ export default function WebsiteBlogPost({
           {categories.map((category, idx) => (
             <div
               key={`category-${idx}`}
-              className='mr-2 inline-block rounded-full bg-irmin_green-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-irmin_green-500 shadow-sm'
+              className='mr-2 inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium uppercase leading-5 text-irmin_green-600 shadow-sm'
             >
               {category.name}
             </div>
@@ -68,6 +70,16 @@ export default function WebsiteBlogPost({
             className={'editor-styles-wrapper'}
           />
         </div>
+        <div
+          dangerouslySetInnerHTML={{
+            __html: `
+          <link
+            rel='stylesheet'
+            href='${wpURL}/wp-content/uploads/2024/07/wordpress.css'
+          />
+          `,
+          }}
+        />
       </div>
     </section>
   );

@@ -59,6 +59,7 @@ const GeneralSettings: React.FC = () => {
         await authService.updateProfile(name, company, email);
         // Update the profile context
         const data = await authService.getProfile();
+        if (!data) throw new Error('User not logged in.');
         setProfile(data.data);
         // Reset error and show success message
         setError(null);

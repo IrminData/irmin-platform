@@ -131,11 +131,10 @@ class AuthService {
 
   /**
    * Get the user's profile information
-   * @returns {Promise<ProfileAPIResponse>}
-   * @throws {Error} An error if the request fails or the response is not OK, for example if not logged in
+   * @returns {Promise<ProfileAPIResponse | null>} - Returns the user's profile information or null if the user is not logged in
    * {@link https://api.irmin.dev/docs#account-GETv1-account-profile Irmin API docs}
    */
-  async getProfile(): Promise<ProfileAPIResponse> {
+  async getProfile(): Promise<ProfileAPIResponse | null> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleProfile };
     try {
       const response = (await fetchWithCredentials(
@@ -147,6 +146,13 @@ class AuthService {
       )) as ProfileAPIResponse;
       return response;
     } catch (error) {
+      // Check if the error is due to not being logged in
+      if ((error as { message: string }).message === 'Unauthenticated.') {
+        // If the user isn't logged in, log a message and return null
+        console.log("User isn't logged in");
+        return null;
+      }
+      // If not, log and throw the error
       console.error('Get profile error:', error);
       throw error;
     }

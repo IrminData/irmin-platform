@@ -41,7 +41,11 @@ export const ProfileProvider = ({
     try {
       setIsLoading(true);
       const data = await auth.getProfile();
-      setProfile(data.data);
+      if (data) {
+        setProfile(data.data);
+      } else {
+        setProfile(null);
+      }
     } catch (error) {
       setProfile(null);
     } finally {

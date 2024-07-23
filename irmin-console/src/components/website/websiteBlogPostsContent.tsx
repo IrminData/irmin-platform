@@ -131,7 +131,7 @@ export default function WebsiteBlogPostsContent({
                 {article.categories.map((category, idx) => (
                   <span
                     key={`article-cat-${idx}`}
-                    className='mr-2 inline-block rounded-full bg-irmin_green px-3 py-1 text-xs uppercase leading-5 text-white shadow-sm'
+                    className='mr-2 inline-block rounded-full bg-gray-100 px-3 py-1 text-xs uppercase leading-5 text-irmin_green-600 shadow-sm'
                   >
                     {category.name}
                   </span>
