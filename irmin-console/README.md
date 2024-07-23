@@ -1,14 +1,14 @@
 # Irmin Frontend
 
-Welcome to the Irmin Frontend repository! This repository contains the code for Irmin frontend, built using Next.js, TypeScript and Tailwind. To function correctly, this project requires the [Irmin API](https://github.com/IrminData/irmin-api) to be running.
+This repository contains the code for Irmin frontend, built using Next.js, TypeScript and Tailwind. To function correctly, this project requires the [Irmin API](https://github.com/IrminData/irmin-api) to be running.
 
 The strucure of Irmin can be found on Excalidraw: [Irmin Structure](https://excalidraw.com/#json=ZV3vKpXoNWZPcHqx2Rrc6,9cjm0aKRo43MvHZRYJyS1Q)
 
 For project management and tickets we use Basecamp. If you need access to Basecamp, please contact us.
 
 For feature requests, bug reports, or any other issues, please create a new issue on Github. 
-[Irmin frontend issues](https://github.com/IrminData/irmin-frontend/issues)
-[Irmin API issues](https://github.com/IrminData/irmin-api/issues)
+- [Irmin frontend issues](https://github.com/IrminData/irmin-frontend/issues)
+- [Irmin API issues](https://github.com/IrminData/irmin-api/issues)
 
 If you would like to contribute to the project, please follow the guidelines in this README.
 
@@ -17,8 +17,6 @@ If you would like to contribute to the project, please follow the guidelines in 
 - [Getting Started](#getting-started)
   - [How to contribute?](#how-to-contribute)
   - [Prerequisites](#prerequisites)
-  - [Cloning the Repository](#cloning-the-repository)
-  - [Installing Dependencies](#installing-dependencies)
 - [Environment Configuration](#environment-configuration)
 - [Running the Project](#running-the-project)
   - [Development](#development)
@@ -30,7 +28,7 @@ If you would like to contribute to the project, please follow the guidelines in 
 - [TypeScript and Types](#typescript-and-types)
 - [Static data](#static-data)
   - [Offline mode](#offline-mode)
-- [The Irmin API](#the-irmin-api)
+- [Irmin API](#irmin-api)
 - [API Services](#api-services)
 - [Contexts](#contexts)
 - [Internationalisation](#internationalisation)
@@ -58,24 +56,7 @@ Don't forget to follow the branch naming rules and the guidelines in this README
 Before you start, ensure you have the following installed on your machine:
 
 - Node.js (v20.x or later)
-- Yarn (v2.x or later)
-
-### Cloning the Repository
-
-Clone the repository to your local machine:
-
-```bash
-git clone https://github.com/IrminData/irmin-frontend.git
-cd irmin-frontend
-```
-
-### Installing Dependencies
-
-Install the necessary dependencies using Yarn:
-
-```bash
-yarn install
-```
+- Yarn (v2.x or later), see [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration from Yarn v1 to Yarn v2
 
 ## Environment Configuration
 
@@ -98,12 +79,6 @@ NEXT_PUBLIC_ENVIRONMENT_TYPE=development
 ### Development
 
 To start the development server, run:
-
-```bash
-yarn dev
-```
-
-For development with HTTPS:
 
 ```bash
 yarn dev-ssl
@@ -194,7 +169,7 @@ When offline mode is enabled something is always returned for API requests in AP
 
 Note! It is not meant for anything but local use.
 
-## The Irmin API
+## Irmin API
 
 The backend is a Laravel application. API documentation can be found in Postman. Please refer to the Postman documentation for detailed API information.
 
