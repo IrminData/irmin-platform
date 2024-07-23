@@ -24,14 +24,20 @@ export default function WorkspaceSettingsPage() {
       <SettingsTabs
         tabs={[
           {
+            slug: 'general',
             name: dict.workspace.general,
             content: <GeneralSettings />,
           },
           {
+            slug: 'users',
             name: dict.workspace.users,
             content: <WorkspaceUsersAndPermissions />,
           },
-          { name: dict.workspace.billing, content: <BillingSettings /> },
+          {
+            slug: 'billing',
+            name: dict.workspace.billing,
+            content: <BillingSettings />,
+          },
         ]}
       />
     </>

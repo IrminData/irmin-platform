@@ -22,8 +22,13 @@ export default function UserProfileSettingsPage() {
       <PortalTitle title={dict.profile.profileSettings} />
       <SettingsTabs
         tabs={[
-          { name: dict.profile.general, content: <GeneralSettings /> },
           {
+            slug: 'general',
+            name: dict.profile.general,
+            content: <GeneralSettings />,
+          },
+          {
+            slug: 'change-password',
             name: dict.profile.changePassword,
             content: <ChangePasswordSettings />,
           },

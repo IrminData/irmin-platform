@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 
-import { useParams, usePathname, useRouter } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 
 import { Dictionary, getDictionary } from '@/dictionaries';
 import { setCookie } from '@/lib/utils/cookieUtils';
@@ -24,7 +24,6 @@ const LocaleContext = createContext<{
 });
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
   const { lang } = useParams() as { lang: string };
   const [locale, setLocale] = useState<string>(lang ?? 'en');
@@ -41,7 +40,10 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const switchLocale = (newLocale: string) => {
     setLocale(newLocale);
     setCookie('locale', newLocale, 365);
-    router.push(`/${newLocale}${pathname.substring(3)}`);
+    // Remove the current workspace from the local storage and state
+    localStorage.removeItem('currentWorkspaceSlug');
+    // Redirect to the new locale
+    window.open(`/${newLocale}${pathname.substring(3)}`, '_self');
   };
 
   useEffect(() => {

@@ -1,5 +1,7 @@
 'use client';
 
+import { languages } from '@/dictionaries';
+
 import { useLocale } from '@/context/LocaleContext';
 
 export default function LanguageSwitcher({
@@ -8,11 +10,6 @@ export default function LanguageSwitcher({
   className?: string;
 }) {
   const { locale, switchLocale } = useLocale();
-
-  const languages = [
-    { code: 'en', name: 'English' },
-    { code: 'fi', name: 'Suomi' },
-  ];
 
   return (
     <select

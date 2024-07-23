@@ -8,14 +8,15 @@ export default function SettingsTabs({
   tabs,
 }: {
   tabs: {
-    name: string;
+    slug: string; // Always the same, no matter the language
+    name: string; // Differs based on the language
     content: React.ReactNode;
   }[];
 }) {
-  const [activeTab, setActiveTab] = useState(tabs[0].name ?? '');
+  const [activeTab, setActiveTab] = useState(tabs[0].slug ?? '');
 
   const renderTabContent = useCallback(() => {
-    return tabs.find((tab) => tab.name === activeTab)?.content;
+    return tabs.find((tab) => tab.slug === activeTab)?.content;
   }, [tabs, activeTab]);
 
   if (tabs.length === 0) return <></>;
@@ -26,12 +27,12 @@ export default function SettingsTabs({
           {tabs.map((tab, idx) => (
             <Button
               key={`settings-tab-${idx}`}
-              className={`rounded-none border-irmin_green hover:no-underline hover:opacity-70 ${activeTab === tab.name ? 'border-b-2' : 'border-0'}`}
+              className={`rounded-none border-irmin_green hover:no-underline hover:opacity-70 ${activeTab === tab.slug ? 'border-b-2' : 'border-0'}`}
               ariaLabel={`Switch to ${tab.name} tab`}
               size='sm'
               variant='link'
               colorScheme={activeTab === tab.name ? 'primary' : 'gray'}
-              onClick={() => setActiveTab(tab.name)}
+              onClick={() => setActiveTab(tab.slug)}
             >
               {tab.name}
             </Button>
