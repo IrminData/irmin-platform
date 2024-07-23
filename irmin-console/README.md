@@ -40,16 +40,32 @@ If you would like to contribute to the project, please follow the guidelines in 
 
 ### How to contribute?
 
+The most important is thing is don't forget to follow the branch naming rules and the guidelines in this README.
+
+#### Internal Contributors (Irmin Team)
+
+Contribute to the project by following these steps:
+
+1. Create a new branch from `development`
+2. Make your changes
+3. Push your changes to the branch
+4. Run the tests and try to build. Ensure they pass and the build is successful.
+5. Create a pull request to `development`
+6. Wait for a review from another team member
+7. Merge the pull request after the review has been approved
+8. Delete the branch after merging
+
+#### External Contributors
+
 To contribute to the project, follow these steps:
 
 1. Fork the repository
 2. Create a new branch
 3. Make your changes
 4. Push your changes to your fork
-5. Create a pull request
-6. Wait for the review
-
-Don't forget to follow the branch naming rules and the guidelines in this README. If you have any questions, feel free to ask our team.
+5. Run the tests and try to build. Ensure they pass and the build is successful.
+6. Create a pull request
+7. Wait for a review from our team member
 
 ### Prerequisites
 
