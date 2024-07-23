@@ -6,7 +6,7 @@ import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
 
 import { Invite } from '@/types/api/Invite';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
-import { IrminRole } from '@/types/api/IrminRole';
+import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
@@ -43,14 +43,14 @@ class InviteService {
    * Invite the user to the workspace.
    * @param {string} name - The user's name.
    * @param {string} email - The user's email.
-   * @param {number} role - The user's role.
+   * @param {IrminRoleNames} role - The user's role slug.
    * @returns {Promise<IrminAPIResponse>}
    * {@link https://api.irmin.dev/docs#invites-POSTv1-invites-create Irmin API docs}
    */
   async inviteUserToWorkspace(
     name: string,
     email: string,
-    role: number
+    role: IrminRoleNames
   ): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
     try {
@@ -58,7 +58,7 @@ class InviteService {
 
       formData.append('name', name);
       formData.append('email', email);
-      formData.append('role', role.toString());
+      formData.append('role', role);
 
       const response = await fetchWithCredentials(
         `${api_base}/v1/invites/create`,
@@ -146,7 +146,7 @@ class InviteService {
     try {
       const formData = new FormData();
       formData.append('invite', invite.toString());
-      formData.append('role', role.id.toString());
+      formData.append('role', role.name);
       formData.append('_method', 'PATCH');
 
       const response = await fetchWithCredentials(

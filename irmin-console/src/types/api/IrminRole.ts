@@ -1,6 +1,6 @@
 export interface IrminRole {
-  id: number;
-  name: string;
-  label: string;
-  description: string;
+  description: string; // Human-readable description
+  label: string; // Human-readable name
+  name: IrminRoleNames; // Has been reffered to as 'slug' in internal communication
 }
+export type IrminRoleNames = 'admin' | 'editor' | 'billing' | 'viewer';

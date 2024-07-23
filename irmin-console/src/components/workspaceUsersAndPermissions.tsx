@@ -17,7 +17,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { IrminRole } from '@/types/api/IrminRole';
+import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
 import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
 
 type WorkspaceUsersAndPermissionsUser = {
@@ -37,7 +37,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
   const [inviteError, setInviteError] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
-  const [inviteRole, setInviteRole] = useState<number | null>(null);
+  const [inviteRole, setInviteRole] = useState<IrminRoleNames | null>(null);
 
   const fetchWorkspaceUsersAndRoles = useCallback(
     async (currentWorkspace: Workspace | null) => {
@@ -88,7 +88,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
   }, [fetchWorkspaceUsersAndRoles, currentWorkspace]);
 
   useEffect(() => {
-    setInviteRole(irminRoles[0].id);
+    setInviteRole(irminRoles[0].name);
   }, [irminRoles]);
 
   const handleInvite = async () => {
@@ -244,7 +244,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
           return {
             ...user,
             roles: [
-              irminRoles.find((a) => a.id === newRole.id) ?? irminRoles[0],
+              irminRoles.find((a) => a.name === newRole.name) ?? irminRoles[0],
             ],
           };
         }
@@ -277,7 +277,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
           return {
             ...user,
             roles: [
-              irminRoles.find((a) => a.id === newRole.id) ?? irminRoles[0],
+              irminRoles.find((a) => a.name === newRole.name) ?? irminRoles[0],
             ],
           };
         }
@@ -320,7 +320,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
             <th className='border-b px-4 py-2 text-left text-xs font-normal text-irmin_black md:text-sm'>
               {dict.usersPermissions.name}
             </th>
-            <th className='hidden border-b px-4 py-2 text-left text-xs font-normal text-irmin_black md:text-sm lg:table-cell'>
+            <th className='hidden border-b px-4 py-2 text-left text-sm font-normal text-irmin_black md:table-cell'>
               {dict.usersPermissions.email}
             </th>
             <th className='border-b px-4 py-2 text-left text-xs font-normal text-irmin_black md:text-sm'>
@@ -334,18 +334,20 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
         <tbody>
           {users.map((user, idx) => (
             <tr key={`workspace-user-${user.id}-${idx}`}>
-              <td className='border-b px-4 py-2 text-xs text-gray-700'>
+              <td className='border-b px-4 py-2 text-sm text-gray-700'>
                 {user.name}
-                <span className='block text-[8px] leading-[8px] text-gray-400 lg:hidden'>
+                {/* Only for mobile screens */}
+                <span className='block text-xs text-gray-400 md:hidden'>
                   {user.email}
                 </span>
                 {user.inviteId && (
-                  <span className='block text-[8px] leading-[8px] text-gray-400 lg:hidden'>
+                  <span className='block text-xs text-gray-400 md:hidden'>
                     {dict.usersPermissions.invited}
                   </span>
                 )}
               </td>
-              <td className='hidden border-b px-4 py-2 text-xs text-gray-700 lg:table-cell'>
+              {/* Only for larger screens */}
+              <td className='hidden border-b px-4 py-2 text-sm text-gray-700 md:table-cell'>
                 {user.email}
                 {user.inviteId && (
                   <span className='ml-2 text-xs text-gray-400'>
@@ -355,7 +357,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
               </td>
               <td className='border-b px-4 py-2'>
                 {currentWorkspace.owner_id === user.id ? (
-                  <p className='text-xs text-gray-700'>
+                  <p className='text-sm text-gray-700'>
                     {dict.usersPermissions.owner}
                   </p>
                 ) : (
@@ -363,11 +365,11 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                     value={
                       !user.roles || user.roles.length === 0
                         ? 'no-role'
-                        : user.roles[0].id
+                        : user.roles[0].name
                     }
                     onChange={(e) => {
                       const desiredRole = irminRoles.find(
-                        (role) => role.id === parseInt(e.target.value)
+                        (role) => role.name === e.target.value
                       )!;
                       if (!desiredRole || e.target.value === 'no-role') {
                         irminAlert('error', 'Invalid role');
@@ -387,15 +389,15 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                         );
                       }
                     }}
-                    className='rounded-lg border p-1 text-xs text-gray-700'
+                    className='rounded-lg border p-1 text-sm text-gray-700'
                   >
                     <option value={'no-role'}>
                       {dict.usersPermissions.noRole}
                     </option>
                     {irminRoles.map((role, i) => (
                       <option
-                        key={`role-option-${role.id}-${i}`}
-                        value={role.id}
+                        key={`role-option-${role.name}-${i}`}
+                        value={role.name}
                       >
                         {role.label}
                       </option>
@@ -403,56 +405,60 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                   </select>
                 )}
               </td>
-              <td className='border-b px-4 py-2 text-right'>
-                {user.roles && user.roles.length > 0 && !user.inviteId && (
-                  <div className='flex flex-row justify-end gap-2 align-middle'>
-                    <Button
-                      size='sm'
-                      variant='outline'
-                      colorScheme='gray'
-                      aria-label='Transfer ownership to user'
-                      onClick={() => handleTransferOwnership(user.id)}
-                      icon={<IoKey size={24} />}
-                    >
-                      {dict.usersPermissions.transferOwnership}
-                    </Button>
-                    <Button
-                      size='sm'
-                      variant='outline'
-                      colorScheme='gray'
-                      aria-label='Remove user from workspace'
-                      onClick={() => handleRemoveUser(user.id)}
-                      icon={<IoExit size={24} />}
-                    >
-                      {dict.usersPermissions.removeFromWorkspace}
-                    </Button>
-                  </div>
-                )}
-                {user.inviteId && (
-                  <div className='flex flex-row justify-end gap-2 align-middle'>
-                    <Button
-                      size='sm'
-                      variant='outline'
-                      colorScheme='gray'
-                      aria-label='Resend invite'
-                      icon={<IoMailOpenOutline size={24} />}
-                      onClick={() => handleResend(user.email)}
-                    >
-                      {dict.usersPermissions.resendInvite}
-                    </Button>
-                    <Button
-                      size='sm'
-                      variant='outline'
-                      colorScheme='gray'
-                      aria-label='Cancel invite'
-                      icon={<IoExit size={24} />}
-                      onClick={() => handleCancelInvite(user.email)}
-                    >
-                      {dict.usersPermissions.cancelInvite}
-                    </Button>
-                  </div>
-                )}
-              </td>
+              {currentWorkspace.owner_id !== user.id ? (
+                <td className='border-b px-4 py-2 text-right'>
+                  {user.roles && user.roles.length > 0 && !user.inviteId && (
+                    <div className='flex flex-row justify-end gap-2 align-middle'>
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        colorScheme='gray'
+                        aria-label='Transfer ownership to user'
+                        onClick={() => handleTransferOwnership(user.id)}
+                        icon={<IoKey size={24} />}
+                      >
+                        {dict.usersPermissions.transferOwnership}
+                      </Button>
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        colorScheme='gray'
+                        aria-label='Remove user from workspace'
+                        onClick={() => handleRemoveUser(user.id)}
+                        icon={<IoExit size={24} />}
+                      >
+                        {dict.usersPermissions.removeFromWorkspace}
+                      </Button>
+                    </div>
+                  )}
+                  {user.inviteId && (
+                    <div className='flex flex-row justify-end gap-2 align-middle'>
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        colorScheme='gray'
+                        aria-label='Resend invite'
+                        icon={<IoMailOpenOutline size={24} />}
+                        onClick={() => handleResend(user.email)}
+                      >
+                        {dict.usersPermissions.resendInvite}
+                      </Button>
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        colorScheme='gray'
+                        aria-label='Cancel invite'
+                        icon={<IoExit size={24} />}
+                        onClick={() => handleCancelInvite(user.email)}
+                      >
+                        {dict.usersPermissions.cancelInvite}
+                      </Button>
+                    </div>
+                  )}
+                </td>
+              ) : (
+                <td className='border-b px-4 py-2 text-right'></td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -498,11 +504,11 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
             </label>
             <select
               className='mt-2 w-full rounded-lg border p-2'
-              value={inviteRole ?? irminRoles[0].id}
-              onChange={(e) => setInviteRole(parseInt(e.target.value))}
+              value={inviteRole ?? irminRoles[0]?.name ?? null}
+              onChange={(e) => setInviteRole(e.target.value as IrminRoleNames)}
             >
               {irminRoles.map((role) => (
-                <option key={role.id} value={role.id}>
+                <option key={role.name} value={role.name}>
                   {role.label}
                 </option>
               ))}

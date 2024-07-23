@@ -154,9 +154,9 @@ class UserAndRoleService {
       const formData = new FormData();
       formData.append('_method', 'PATCH');
       formData.append('user', user.toString());
-      formData.append('roles[]', newRole.id.toString());
+      formData.append('roles[]', newRole.name);
       if (currentRole) {
-        formData.append('roles[]', currentRole.id.toString());
+        formData.append('roles[]', currentRole.name);
       }
 
       const response = await fetchWithCredentials(

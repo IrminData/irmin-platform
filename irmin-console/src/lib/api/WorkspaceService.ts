@@ -61,7 +61,6 @@ class WorkspaceService {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Accept: 'application/json',
           },
         },
         this.locale

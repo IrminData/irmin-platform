@@ -156,10 +156,9 @@ export const exampleBucket: Bucket = {
 // IrminRole types
 
 export const exampleRole: IrminRole = {
-  id: 1,
-  name: 'example-role',
-  label: 'example Role',
-  description: 'Set to everyone if example mode is enabled',
+  name: 'admin',
+  label: 'Admin',
+  description: 'Can do everything',
 };
 
 // Profile types

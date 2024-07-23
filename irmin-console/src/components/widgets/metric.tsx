@@ -26,9 +26,15 @@ const Metric = ({ widget }: { widget: Widget }) => {
           <IoSettings size={18} />
         </Button>
       </div>
-      <div className='flex flex-col items-center justify-center py-6'>
-        <span className='text-4xl font-bold'>{widgetData.currentValue}</span>
-        <span className='text-lg text-gray-500'>{widgetData.label}</span>
+      <div className='flex h-full min-h-48 w-full items-center justify-center'>
+        <div>
+          <h3 className='mb-4 text-center text-3xl font-bold text-irmin_black lg:text-7xl'>
+            {widgetData.currentValue}
+          </h3>
+          <p className='text-center text-lg text-gray-500 lg:text-2xl'>
+            {widgetData.label}
+          </p>
+        </div>
       </div>
     </div>
   );

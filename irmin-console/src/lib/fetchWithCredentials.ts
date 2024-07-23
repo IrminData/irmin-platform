@@ -13,25 +13,21 @@ export const fetchWithCredentials = async (
   options: RequestInit,
   locale?: string
 ): Promise<IrminAPIResponse> => {
-  try {
-    const response = await fetch(url, {
-      ...options,
-      credentials: 'include', // Include credentials with every request
-      headers: {
-        Accept: 'application/json',
-        'Accept-Language': locale ?? 'en',
-        Referer: window.location.origin,
-        ...options.headers,
-      },
-    });
+  const response = await fetch(url, {
+    ...options,
+    credentials: 'include', // Include credentials with every request
+    headers: {
+      Accept: 'application/json',
+      'Accept-Language': locale ?? 'en', // Irmin API returns localized messages based on the Accept-Language header
+      Referer: window.location.origin,
+      ...options.headers,
+    },
+  });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Request failed');
-    }
-
-    return response.json();
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Request failed');
   }
+
+  return response.json();
 };
