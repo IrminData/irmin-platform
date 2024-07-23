@@ -6,7 +6,6 @@ import Image from 'next/image';
 
 import ConnectionService from '@/lib/api/ConnectionService';
 
-import { connectionDataType } from '@/components/connection-setup/connectionSetupView';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
@@ -14,15 +13,16 @@ import LoadingSpinner from '@/components/misc/LoadingSpinner';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { ConnectionDetailsAndSettings } from '@/types/Connector';
+import { ConnectionDetailsAndSettings } from '@/types/api/Connector';
+import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 
 export default function DefineConnectionSettings({
   connectionData,
   setConnectionData,
   setCurrentStep,
 }: {
-  connectionData: connectionDataType;
-  setConnectionData: React.Dispatch<React.SetStateAction<connectionDataType>>;
+  connectionData: ConnectionSetup;
+  setConnectionData: React.Dispatch<React.SetStateAction<ConnectionSetup>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const { locale, dict } = useLocale();
@@ -56,7 +56,7 @@ export default function DefineConnectionSettings({
         !response.data.settings
       ) {
         // Settings are not required
-        setConnectionData((prev: connectionDataType) => ({
+        setConnectionData((prev: ConnectionSetup) => ({
           ...prev,
           connectionSettingsFields: {
             settings: 'text',
@@ -69,7 +69,7 @@ export default function DefineConnectionSettings({
         setCurrentStep(4);
       } else {
         // Settings are required
-        setConnectionData((prev: connectionDataType) => ({
+        setConnectionData((prev: ConnectionSetup) => ({
           ...prev,
           connectionSettingsFields: response.data,
         }));
@@ -138,7 +138,7 @@ export default function DefineConnectionSettings({
         });
 
         // Update the connection data state
-        setConnectionData((prev: connectionDataType) => ({
+        setConnectionData((prev: ConnectionSetup) => ({
           ...prev,
           connectionSettings: data,
         }));

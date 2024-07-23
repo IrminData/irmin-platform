@@ -2,7 +2,11 @@ import { notFound } from 'next/navigation';
 
 import WordPress from '@/lib/wordpress';
 
-import { ArticlesSection } from '@/types/Wordpress';
+import {
+  WebsiteArticle,
+  WebsiteArticleCategory,
+} from '@/types/website/WebsiteContent';
+import { ArticlesSection } from '@/types/website/Wordpress';
 
 import WebsiteBlogPostsContent from './websiteBlogPostsContent';
 
@@ -22,29 +26,10 @@ export default async function WebsiteBlogPosts({
     return notFound();
   }
 
-  const articles: {
-    title: string;
-    excerpt: string;
-    date: string;
-    misc?: {
-      'Written by': string;
-      'Estimated reading time': string;
-    };
-    slug: string;
-    url: string;
-    image: string;
-    categories: {
-      name: string;
-      slug: string;
-      id: number;
-    }[];
-  }[] = [];
+  const articles: WebsiteArticle[] = [];
+  const allCategories: WebsiteArticleCategory[] = [];
+
   const allCategoryIDs: number[] = [];
-  const allCategories: {
-    name: string;
-    slug: string;
-    id: number;
-  }[] = [];
 
   for (let i = 0; i < posts.length; i++) {
     const post = posts[i];
@@ -83,7 +68,11 @@ export default async function WebsiteBlogPosts({
 
     articles.push({
       title: post.title.rendered,
-      excerpt: post.yoast_head_json.og_description.replace('[&hellip;]', '...'),
+      excerpt: (
+        post.yoast_head_json.og_description ??
+        post.yoast_head_json.description ??
+        ''
+      ).replace('[&hellip;]', '...'),
       date: post.date,
       misc: post.yoast_head_json.twitter_misc,
       slug: post.slug,

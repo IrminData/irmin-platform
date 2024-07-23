@@ -9,13 +9,15 @@ import PortalTitle from '@/components/portalTitle';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { MarketplaceDataset } from '@/types/internal/Marketplace';
+
 export default function DataMarketplace() {
   const { dict } = useLocale();
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [search, setSearch] = useState('');
 
-  // Hypothetical dataset info, you would fetch this from an API in a real app
-  const datasets = [
+  // TODO: Implement real data fetching
+  const datasets: MarketplaceDataset[] = [
     {
       id: 1,
       name: 'Restaurants in Finland',
@@ -200,26 +202,13 @@ export default function DataMarketplace() {
     },
   ];
 
-  // Hypothetical industries and departments, you would fetch this from an API in a real app
-  const industries = [
-    dict.marketplace.all,
-    'Food & Beverage',
-    'Government',
-    'Utilities',
-    'Transportation',
-    'Real Estate',
-    'Healthcare',
-    'Social Media',
-    'Financial Services',
-    'Travel & Tourism',
-    'Environmental',
-    'Labour Market',
-    'Retail',
-    'Education',
-    'Law Enforcement',
-    'Agriculture',
-    'Telecommunications',
-  ];
+  // Get unique industries from datasets
+  const industries: string[] = [dict.marketplace.all];
+  datasets.forEach((dataset) => {
+    if (!industries.includes(dataset.industry)) {
+      industries.push(dataset.industry);
+    }
+  });
 
   // Filter datasets based on selected industry and department
   const filteredDatasets = datasets
@@ -247,7 +236,7 @@ export default function DataMarketplace() {
             colorScheme='gray'
             className='w-full'
             type='text'
-            placeholder={dict.marketplace.searchDataSets}
+            placeholder={dict.marketplace.searchDatasets}
             defaultValue={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -262,7 +251,7 @@ export default function DataMarketplace() {
         {filteredDatasets.filter((d) => d.connected).length > 0 && (
           <div>
             <h2 className='my-4 text-xl font-semibold'>
-              {dict.marketplace.activeDataSets}
+              {dict.marketplace.activeDatasets}
             </h2>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
               {filteredDatasets
@@ -279,7 +268,7 @@ export default function DataMarketplace() {
         {filteredDatasets.filter((d) => !d.connected).length > 0 && (
           <div>
             <h2 className='my-4 text-xl font-semibold'>
-              {dict.marketplace.browseDataSets}
+              {dict.marketplace.browseDatasets}
             </h2>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
               {filteredDatasets
@@ -295,7 +284,7 @@ export default function DataMarketplace() {
         )}
         {filteredDatasets.length === 0 && (
           <div className='mt-8 text-center text-gray-400'>
-            {dict.marketplace.dataSetsNotFound}
+            {dict.marketplace.datasetsNotFound}
           </div>
         )}
       </div>

@@ -8,7 +8,7 @@ import Input from '@/components/misc/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { NewsletterSection } from '@/types/Wordpress';
+import { NewsletterSection } from '@/types/website/Wordpress';
 
 export default function WebsiteNewsletterSection({
   section,

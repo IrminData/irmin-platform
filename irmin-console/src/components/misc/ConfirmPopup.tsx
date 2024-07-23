@@ -23,7 +23,7 @@ const ConfirmPopup = ({
   return (
     <div
       id='confirm'
-      className='absolute bottom-[20px] z-50 flex w-screen animate-slideInUp justify-center p-4 align-middle'
+      className='fixed bottom-[20px] z-50 flex w-screen animate-slideInUp justify-center p-4 align-middle'
     >
       <div
         className={`flex w-[400px] max-w-[90vw] flex-col items-start justify-between rounded-lg border-2 bg-gray-50 p-4 shadow-md ${

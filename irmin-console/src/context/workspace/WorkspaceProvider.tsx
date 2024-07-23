@@ -7,15 +7,26 @@ import { useParams } from 'next/navigation';
 import { useLocale } from '@/context/LocaleContext';
 import {
   useDeleteCurrentWorkspace,
+  useFetchActions,
   useFetchConnections,
+  useFetchDashboards,
+  useFetchDatasets,
+  useFetchExports,
   useFetchRoles,
   useFetchWorkspaces,
   useSwitchWorkspace,
   WorkspaceContext,
 } from '@/context/workspace';
 
-import { ConnectionWithAdditionalData } from '@/types/Connection';
-import { IrminRole, Workspace } from '@/types/Workspace';
+import { Dashboard } from '@/types/api/Dashboard';
+import { Dataset } from '@/types/api/Dataset';
+import { IrminRole } from '@/types/api/IrminRole';
+import {
+  ActionWorkflow,
+  ConnectionWorkflow,
+  ExportWorkflow,
+} from '@/types/api/Workflow';
+import { Workspace } from '@/types/api/Workspace';
 
 export const WorkspaceProvider = ({
   children,
@@ -25,20 +36,48 @@ export const WorkspaceProvider = ({
   const { locale } = useLocale();
   const params = useParams();
 
-  // Workspaces
+  // Users and Roles
   const [irminRoles, setIrminRoles] = useState<IrminRole[]>([]);
-  const [workspaces, setWorkspaces] = useState<Workspace[] | null>(null);
+
+  // Workspaces
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(
     null
   );
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
 
   // Connections
-  const [connections, setConnections] = useState<
-    ConnectionWithAdditionalData[]
-  >([]);
+  const [connections, setConnections] = useState<ConnectionWorkflow[]>([]);
   const [connectionsLoading, setConnectionsLoading] = useState(false);
   const [connectionsFetchedFor, setConnectionsFetchedFor] = useState<
+    string | null
+  >(null);
+
+  // Exports
+  const [exports, setExports] = useState<ExportWorkflow[]>([]);
+  const [exportsLoading, setExportsLoading] = useState(false);
+  const [exportsFetchedFor, setExportsFetchedFor] = useState<string | null>(
+    null
+  );
+
+  // Actions
+  const [actions, setActions] = useState<ActionWorkflow[]>([]);
+  const [actionsLoading, setActionsLoading] = useState(false);
+  const [actionsFetchedFor, setActionsFetchedFor] = useState<string | null>(
+    null
+  );
+
+  // Datasets
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [datasetsLoading, setDatasetsLoading] = useState(false);
+  const [datasetsFetchedFor, setDatasetsFetchedFor] = useState<string | null>(
+    null
+  );
+
+  // Dashboards
+  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
+  const [dashboardsLoading, setDashboardsLoading] = useState(false);
+  const [dashboardsFetchedFor, setDashboardsFetchedFor] = useState<
     string | null
   >(null);
 
@@ -48,7 +87,6 @@ export const WorkspaceProvider = ({
    */
   const fetchWorkspaces = useFetchWorkspaces(
     setWorkspaces,
-    setCurrentWorkspace,
     workspaceLoading,
     setWorkspaceLoading,
     locale
@@ -58,7 +96,7 @@ export const WorkspaceProvider = ({
    * Hook to fetch the list of roles.
    * It will be run during the initialisation to load all available roles.
    */
-  const fetchRoles = useFetchRoles(irminRoles, setIrminRoles, locale);
+  const fetchRoles = useFetchRoles(setIrminRoles, locale);
 
   /**
    * Hook to fetch the list of connections for the current workspace.
@@ -71,6 +109,62 @@ export const WorkspaceProvider = ({
     setConnectionsLoading,
     connectionsFetchedFor,
     setConnectionsFetchedFor,
+    locale
+  );
+
+  /**
+   * Hook to fetch the list of exports for the current workspace.
+   * It will be run whenever the current workspace changes to update the exports.
+   */
+  const fetchExports = useFetchExports(
+    currentWorkspace,
+    setExports,
+    exportsLoading,
+    setExportsLoading,
+    exportsFetchedFor,
+    setExportsFetchedFor,
+    locale
+  );
+
+  /**
+   * Hook to fetch the list of actions for the current workspace.
+   * It will be run whenever the current workspace changes to update the actions.
+   */
+  const fetchActions = useFetchActions(
+    currentWorkspace,
+    setActions,
+    actionsLoading,
+    setActionsLoading,
+    actionsFetchedFor,
+    setActionsFetchedFor,
+    locale
+  );
+
+  /**
+   * Hook to fetch the list of datasets for the current workspace.
+   * It will be run whenever the current workspace changes to update the datasets.
+   */
+  const fetchDatasets = useFetchDatasets(
+    currentWorkspace,
+    setDatasets,
+    datasetsLoading,
+    setDatasetsLoading,
+    datasetsFetchedFor,
+    setDatasetsFetchedFor,
+    locale
+  );
+
+  /**
+   * Hook to fetch the list of dashboards for the current workspace.
+   * It will be run whenever the current workspace changes to update the dashboards.
+   */
+  const fetchDashboards = useFetchDashboards(
+    currentWorkspace,
+    setDashboards,
+    dashboardsLoading,
+    setDashboardsLoading,
+    dashboardsFetchedFor,
+    setDashboardsFetchedFor,
     locale
   );
 
@@ -151,11 +245,22 @@ export const WorkspaceProvider = ({
   }, [fetchWorkspaces, fetchRoles, switchToWorkspace, params]);
 
   /**
-   * useEffect hook to fetch connections whenever the current workspace changes.
+   * useEffect hook to fetch workflows and datasets whenever the current workspace changes.
    */
   useEffect(() => {
+    fetchDashboards();
     fetchConnections();
-  }, [fetchConnections, currentWorkspace]);
+    fetchActions();
+    fetchExports();
+    fetchDatasets();
+  }, [
+    fetchDashboards,
+    fetchConnections,
+    fetchActions,
+    fetchExports,
+    fetchDatasets,
+    currentWorkspace,
+  ]);
 
   return (
     <WorkspaceContext.Provider
@@ -167,10 +272,30 @@ export const WorkspaceProvider = ({
         deleteCurrentWorkspace: deleteCurrentWorkspace,
         fetchWorkspaces,
         irminRoles,
+        dashboards: {
+          dashboards,
+          isLoading: dashboardsLoading,
+          fetchDashboards,
+        },
         connections: {
           connections,
           isLoading: connectionsLoading,
           fetchConnections,
+        },
+        exports: {
+          exports,
+          isLoading: exportsLoading,
+          fetchExports,
+        },
+        actions: {
+          actions,
+          isLoading: actionsLoading,
+          fetchActions,
+        },
+        datasets: {
+          datasets,
+          isLoading: datasetsLoading,
+          fetchDatasets,
         },
       }}
     >

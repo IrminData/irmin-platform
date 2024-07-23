@@ -1,6 +1,18 @@
-import { UserProfileAPIResponse } from '@/types/IrminAPIResponse';
+import {
+  exampleAPIResponse,
+  exampleProfile,
+} from '@/lib/exampleObjects/apiObjects';
+import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
 
+import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import { Profile } from '@/types/api/Profile';
+
+const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const api_base = process.env.NEXT_PUBLIC_API_URL;
+
+interface ProfileAPIResponse extends IrminAPIResponse {
+  data: Profile;
+}
 
 class AuthService {
   private static instance: AuthService;
@@ -25,52 +37,26 @@ class AuthService {
   }
 
   /**
-   * Fetch data from the API with credentials
-   * @param {string} url - The URL to fetch data from
-   * @param {RequestInit} options - The fetch options
-   * @returns {Promise<WorkspaceAPIResponse>} A promise that resolves to a WorkspaceAPIResponse object
-   * */
-  private async fetchWithCredentials(
-    url: string,
-    options: RequestInit
-  ): Promise<UserProfileAPIResponse> {
-    const response = await fetch(url, {
-      ...options,
-      credentials: 'include', // Include credentials with every request
-      headers: {
-        Accept: 'application/json',
-        'Accept-Language': this.locale,
-        Referer: window.location.origin,
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Request failed');
-    }
-
-    return response.json();
-  }
-
-  /**
    * Login a user
    * @param {string} email - The user's email address
    * @param {string} password - The user's password
-   * @returns {Promise<UserProfileAPIResponse>} A promise that resolves to a UserProfileAPIResponse object
-   * */
-  async login(
-    email: string,
-    password: string
-  ): Promise<UserProfileAPIResponse> {
+   * @returns {Promise<IrminAPIResponse>}
+   * {@link https://api.irmin.dev/docs#authentication-POSTv1-login Irmin API docs}
+   */
+  async login(email: string, password: string): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
     try {
       const formData = new FormData();
       formData.append('email', email);
       formData.append('password', password);
-      const response = await this.fetchWithCredentials(`${api_base}/v1/login`, {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetchWithCredentials(
+        `${api_base}/v1/login`,
+        {
+          method: 'POST',
+          body: formData,
+        },
+        this.locale
+      );
 
       return response;
     } catch (error) {
@@ -81,15 +67,18 @@ class AuthService {
 
   /**
    * Logout a user
-   * @returns {Promise<UserProfileAPIResponse>}
-   * */
-  async logout(): Promise<UserProfileAPIResponse> {
+   * @returns {Promise<IrminAPIResponse>}
+   * {@link https://api.irmin.dev/docs#authentication-POSTv1-logout Irmin API docs}
+   */
+  async logout(): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
     try {
-      const response = await this.fetchWithCredentials(
+      const response = await fetchWithCredentials(
         `${api_base}/v1/logout`,
         {
           method: 'POST',
-        }
+        },
+        this.locale
       );
 
       return response;
@@ -107,8 +96,9 @@ class AuthService {
    * @param {string} emailConfirmation - The user's email address confirmation
    * @param {string} password - The user's password
    * @param {string} passwordConfirmation - The user's password confirmation
-   * @returns {Promise<UserProfileAPIResponse>} A promise that resolves to a UserProfileAPIResponse object
-   * */
+   * @returns {Promise<IrminAPIResponse>}
+   * {@link https://api.irmin.dev/docs#authentication-POSTv1-register Irmin API docs}
+   */
   async register(
     name: string,
     company: string,
@@ -116,7 +106,8 @@ class AuthService {
     emailConfirmation: string,
     password: string,
     passwordConfirmation: string
-  ): Promise<UserProfileAPIResponse> {
+  ): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
     try {
       const formData = new FormData();
       formData.append('name', name);
@@ -126,13 +117,10 @@ class AuthService {
       formData.append('password', password);
       formData.append('password_confirmation', passwordConfirmation);
 
-      const response = await this.fetchWithCredentials(
-        `${api_base}/v1/register`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
+      const response = await fetchWithCredentials(`${api_base}/v1/register`, {
+        method: 'POST',
+        body: formData,
+      });
 
       return response;
     } catch (error) {
@@ -143,17 +131,20 @@ class AuthService {
 
   /**
    * Get the user's profile information
-   * @returns {Promise<UserProfileAPIResponse>} A promise that resolves to a UserProfileAPIResponse object
+   * @returns {Promise<ProfileAPIResponse>}
    * @throws {Error} An error if the request fails or the response is not OK, for example if not logged in
+   * {@link https://api.irmin.dev/docs#account-GETv1-account-profile Irmin API docs}
    */
-  async getProfile(): Promise<UserProfileAPIResponse> {
+  async getProfile(): Promise<ProfileAPIResponse> {
+    if (isOfflineMode) return { ...exampleAPIResponse, data: exampleProfile };
     try {
-      const response = await this.fetchWithCredentials(
+      const response = (await fetchWithCredentials(
         `${api_base}/v1/account/profile`,
         {
           method: 'GET',
-        }
-      );
+        },
+        this.locale
+      )) as ProfileAPIResponse;
       return response;
     } catch (error) {
       console.error('Get profile error:', error);
@@ -166,13 +157,15 @@ class AuthService {
    * @param {string} name - The user's name
    * @param {string} company - The user's company
    * @param {string} email - The user's email address
-   * @returns {Promise<UserProfileAPIResponse>} A promise that resolves to a UserProfileAPIResponse object
+   * @returns {Promise<IrminAPIResponse>}
+   * {@link https://api.irmin.dev/docs#account-PATCHv1-account-profile Irmin API docs}
    */
   async updateProfile(
     name: string,
     company: string,
     email: string
-  ): Promise<UserProfileAPIResponse> {
+  ): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
     try {
       const formData = new FormData();
       formData.append('name', name);
@@ -180,14 +173,14 @@ class AuthService {
       formData.append('email', email);
       formData.append('_method', 'PATCH');
 
-      const response = await this.fetchWithCredentials(
+      const response = await fetchWithCredentials(
         `${api_base}/v1/account/profile`,
         {
           method: 'POST',
           body: formData,
-        }
+        },
+        this.locale
       );
-
       return response;
     } catch (error) {
       console.error('Update profile error:', error);

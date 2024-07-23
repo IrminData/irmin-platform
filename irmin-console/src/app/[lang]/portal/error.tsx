@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import DashboardError from '@/components/misc/dashboardError';
+import PortalError from '@/components/misc/portalError';
 
 export default function Error({
   error,
@@ -15,5 +15,5 @@ export default function Error({
     console.error(error);
   }, [error]);
 
-  return <DashboardError error={error} reset={reset} />;
+  return <PortalError error={error} reset={reset} />;
 }

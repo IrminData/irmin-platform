@@ -1,6 +1,6 @@
 import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
 
-import { FAQSection } from '@/types/Wordpress';
+import { FAQSection } from '@/types/website/Wordpress';
 
 export default function WebsiteFaqsSection({
   section,

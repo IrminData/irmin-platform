@@ -2,18 +2,18 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { getURL } from '@/lib/linkUtil';
+import { getURL } from '@/lib/utils/wordpressLinkUtils';
 import WordPress from '@/lib/wordpress';
 
 import WebsitePageContent from '@/components/WebsitePageContent';
 import WebsiteSections from '@/components/WebsiteSections';
 
-interface PageProps {
+type PageProps = {
   params: {
     slug: string | string[];
     lang: string;
   };
-}
+};
 
 const NEXT_PUBLIC_BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';

@@ -6,12 +6,13 @@ import Image from 'next/image';
 
 import ConnectionService from '@/lib/api/ConnectionService';
 
-import { connectionDataType } from '@/components/connection-setup/connectionSetupView';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+
+import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 
 export default function DefineSync({
   connectionData,
@@ -19,8 +20,8 @@ export default function DefineSync({
   setCurrentStep,
   setIsOpen,
 }: {
-  connectionData: connectionDataType;
-  setConnectionData: React.Dispatch<React.SetStateAction<connectionDataType>>;
+  connectionData: ConnectionSetup;
+  setConnectionData: React.Dispatch<React.SetStateAction<ConnectionSetup>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
@@ -39,7 +40,7 @@ export default function DefineSync({
       if (isLoading) return;
       setIsLoading(true);
       // Save the cron value to the connection data
-      setConnectionData((prev: connectionDataType) => ({
+      setConnectionData((prev: ConnectionSetup) => ({
         ...prev,
         cron: cronValue,
       }));

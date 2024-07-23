@@ -2,18 +2,19 @@
 
 import React from 'react';
 
-import List, { GridRow } from '@/components/tables/elements/list';
+import List from '@/components/tables/elements/list';
 import StatusElement from '@/components/tables/elements/statusElement';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { ConnectionWithAdditionalData } from '@/types/Connection';
+import { ConnectionWorkflow } from '@/types/api/Workflow';
+import { GridRow } from '@/types/internal/ListUI';
 
 const ConnectionTable = ({
   connections,
   inSidebar = false,
 }: {
-  connections: ConnectionWithAdditionalData[];
+  connections: ConnectionWorkflow[];
   inSidebar?: boolean;
 }) => {
   const { dict } = useLocale();
@@ -60,34 +61,20 @@ const ConnectionTable = ({
             {connection.name}
             <br />
             <span className='text-xs text-irmin_blue'>
-              {connection.connector}
+              {connection.workflowable.connector.name}
             </span>
           </div>
           <StatusElement
-            runStatus={connection.status}
-            statusLabel={connection.status}
+            runStatus={connection.status ?? 'default'}
+            statusLabel={connection.status ?? ''}
           />
         </div>,
         <div key={`connection-${connection.id}-${connectionIndex}-nextSync`}>
-          {connection.nextSync}
-          <br />
-          <span className='text-xs text-irmin_blue'>
-            {connection.nextSyncTimestamp.toUTCString()}
-          </span>
+          {connection.cron_syntax && connection.cron_syntax.length > 0
+            ? connection.cron_syntax
+            : dict.list.connection.notScheduled}
         </div>,
       ],
-      details: (
-        <ul>
-          {connection.parts.map((part, index) => (
-            <li
-              key={`connection-${connection.id}-${connectionIndex}-details-${index}`}
-              className='border-color-irmin_green border-b py-2 text-xs md:text-sm xl:text-base'
-            >
-              {part}
-            </li>
-          ))}
-        </ul>
-      ),
       actions,
     };
   });

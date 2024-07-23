@@ -4,79 +4,90 @@ import React from 'react';
 
 import { useParams } from 'next/navigation';
 
-import List, { GridRow } from '@/components/tables/elements/list';
+import List from '@/components/tables/elements/list';
 import StatusElement from '@/components/tables/elements/statusElement';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { DataSet } from '@/types/DataSet';
+import { Dataset } from '@/types/api/Dataset';
+import { GridRow } from '@/types/internal/ListUI';
 
 const DatasetTable = ({
-  dataSets,
+  datasets,
   inSidebar = false,
 }: {
-  dataSets: DataSet[];
+  datasets: Dataset[];
   inSidebar?: boolean;
 }) => {
   const { dict } = useLocale();
   const { workspace } = useParams();
 
-  if (!dataSets || dataSets.length === 0) {
+  if (!datasets || datasets.length === 0) {
     return (
       <div className='px-4 py-12 text-center text-xl text-irmin_black'>
-        {dict.list.dataSets.noDataSetsFound}
+        {dict.list.datasets.noDatasetsFound}
       </div>
     );
   }
 
-  const rows: GridRow[] = dataSets.map((dataSet, index) => {
+  const rows: GridRow[] = datasets.map((dataset, datasetIndex) => {
     const actions = [
       {
-        label: dict.list.dataSets.view,
+        label: dict.list.datasets.view,
         primary: true,
-        href: `/portal/${workspace}/data-sets/viewer/${dataSet.id}`,
+        href: `/portal/${workspace}/datasets/viewer/${dataset.id}`,
       },
       {
-        label: dict.list.dataSets.logs,
+        label: dict.list.datasets.edit,
         primary: false,
-        href: `/portal/${workspace}/data-sets/viewer/${dataSet.id}/logs`,
+        href: `/portal/${workspace}/datasets/viewer/${dataset.id}/settings`,
       },
     ];
-    if (dataSet.status === 'connected') {
-      actions.push(
-        {
-          label: dict.list.dataSets.viewInfo,
-          primary: false,
-          href: `/portal/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
-        },
-        {
-          label: dict.list.dataSets.disconnect,
-          primary: false,
-          href: `/portal/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
-        }
-      );
-    } else {
-      actions.push({
-        label: dict.list.dataSets.edit,
-        primary: false,
-        href: `/portal/${workspace}/data-sets/viewer/${dataSet.id}/settings`,
-      });
-    }
+
+    // TODO: Add the marketplace and connection logic to types and backend
+    // if (dataset.status === 'connected') {
+    //   actions.push(
+    //     {
+    //       label: dict.list.datasets.viewInfo,
+    //       primary: false,
+    //       href: `/portal/${workspace}/datasets/viewer/${dataset.id}/settings`,
+    //     },
+    //     {
+    //       label: dict.list.datasets.disconnect,
+    //       primary: false,
+    //       href: `/portal/${workspace}/datasets/viewer/${dataset.id}/settings`,
+    //     }
+    //   );
+    // }
+
     return {
       columns: [
-        <div key={`dataset-${index}-name`}>
-          {dataSet.name}
+        <div key={`dataset-${datasetIndex}-name`}>
+          {dataset.name}
           <br />
           <span className='text-xs text-irmin_blue'>
-            {dict.list.dataSets.source}: {dataSet.sourceWorkspace}
+            {dict.list.datasets.source}:{' '}
+            {dataset.workflow ? dataset.workflow.name : '-'}
           </span>
         </div>,
         <StatusElement
-          key={`dataset-${index}-status`}
-          accessStatus={dataSet.status}
-          statusLabel={dataSet.status}
+          key={`dataset-${datasetIndex}-status`}
+          accessStatus={'private'}
+          statusLabel={'Private'}
         />,
       ],
+      details: (
+        <ul>
+          {dataset.tables.map((table, index) => (
+            <li
+              key={`dataset-${dataset.id}-${datasetIndex}-tables-${index}`}
+              className='border-color-irmin_green border-b py-2 text-xs md:text-sm xl:text-base'
+            >
+              {table}
+            </li>
+          ))}
+        </ul>
+      ),
       actions,
     };
   });
@@ -85,9 +96,9 @@ const DatasetTable = ({
     <div className='pb-28'>
       <List
         headers={[
-          dict.list.dataSets.name,
-          dict.list.dataSets.status,
-          dict.list.dataSets.actions,
+          dict.list.datasets.name,
+          dict.list.datasets.status,
+          dict.list.datasets.actions,
         ]}
         rows={rows}
         hideHeaders={inSidebar}

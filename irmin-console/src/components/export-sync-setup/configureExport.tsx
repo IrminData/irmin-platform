@@ -2,11 +2,12 @@
 
 import React from 'react';
 
-import { ExportDataType } from '@/components/export-sync-setup/exportSetupView';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 
 import { useLocale } from '@/context/LocaleContext';
+
+import { ExportSetup } from '@/types/internal/ExportSetup';
 
 export default function ConfigureExport({
   exportData,
@@ -14,8 +15,8 @@ export default function ConfigureExport({
   setCurrentStep,
   setIsOpen,
 }: {
-  exportData: ExportDataType;
-  setExportData: React.Dispatch<React.SetStateAction<ExportDataType>>;
+  exportData: ExportSetup;
+  setExportData: React.Dispatch<React.SetStateAction<ExportSetup>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {

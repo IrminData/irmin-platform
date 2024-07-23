@@ -115,7 +115,7 @@
       "error": "You must accept the terms and conditions and the privacy policy to continue."
     }
   },
-  "dashboardNavigation": {
+  "portalNavigation": {
     "search": "Search",
     "searchPlaceholder": "Search for data and more",
     "irminPortal": "Irmin Portal",
@@ -125,12 +125,14 @@
       "toggle": "Toggle notifications popup",
       "notifications": "Notifications",
       "clearAll": "Clear all",
-      "noNotifications": "No notifications"
+      "noNotifications": "No notifications",
+      "relatedWorkspace": "Workspace"
     },
     "links": {
       "dashboards": "Dashboards",
-      "dataSets": "Data sets",
+      "datasets": "Data sets",
       "editor": "Editor",
+      "actions": "Actions",
       "connections": "Connections",
       "exportSyncs": "Export syncs",
       "workspaceSettings": "Workspace settings",
@@ -151,7 +153,11 @@
     "failedToSwitch": "Failed to switch workspace",
     "workspace": "Workspace",
     "connections": "Connections",
-    "dataSets": "Data Sets"
+    "datasets": "Data Sets"
+  },
+  "dashboard": {
+    "dashboard": "Dashboard",
+    "createNewDashboard": "Create new dashboard"
   },
   "connection": {
     "connection": "Connection",
@@ -178,7 +184,7 @@
     }
   },
   "export": {
-    "selectSourceDataSet": "Select source data set",
+    "selectSourceDataset": "Select source data set",
     "selectDestinationConnection": "Select destination connection",
     "configureExport": "Configure Export",
     "exportSyncs": "Export syncs",
@@ -199,14 +205,14 @@
     "categories": "Categories",
     "dataMarketplace": "Data Marketplace",
     "pluginMarketplace": "Plugins & Extensions",
-    "searchDataSets": "Search for public datasets you would like to connect and use",
+    "searchDatasets": "Search for public datasets you would like to connect and use",
     "searchPlugins": "Search for plugins and extensions",
     "activePlugins": "Active plugins",
     "browsePlugins": "Browse plugins",
-    "activeDataSets": "Active data sets",
-    "browseDataSets": "Browse data sets",
+    "activeDatasets": "Active data sets",
+    "browseDatasets": "Browse data sets",
     "pluginsNotFound": "No plugins found",
-    "dataSetsNotFound": "No data sets found",
+    "datasetsNotFound": "No data sets found",
     "source": "Source",
     "details": "Details",
     "connect": "Connect",
@@ -239,12 +245,24 @@
       "view": "View",
       "logs": "Logs",
       "edit": "Edit",
-      "remove": "Remove"
+      "remove": "Remove",
+      "notScheduled": "Not scheduled"
     },
-    "dataSets": {
-      "noDataSetsFound": "No data sets found for this workspace",
+    "actions": {
+      "noActionsFound": "No actions found for this workspace",
       "view": "View",
       "logs": "Logs",
+      "viewInfo": "View info",
+      "disconnect": "Disconnect",
+      "edit": "Edit",
+      "source": "Source",
+      "name": "Name",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "datasets": {
+      "noDatasetsFound": "No data sets found for this workspace",
+      "view": "View",
       "viewInfo": "View info",
       "disconnect": "Disconnect",
       "edit": "Edit",
@@ -280,33 +298,32 @@
     "open": "Open",
     "delete": "Delete",
     "rename": "Rename",
-    "connections": "Connections",
-    "dataSets": "Data sets"
+    "datasets": "Data sets"
   },
   "actionResults": {
     "actionResults": "Action Results",
-    "visualisation": "Visualisation",
+    "widget": "Widget",
     "documentation": "Documentation",
     "switchToPlainText": "Switch to plain text",
     "switchToMarkdownEditor": "Switch to markdown editor",
     "save": "Save action",
     "run": "Run action",
-    "existingVisualisations": "Existing visualisations",
-    "addNewVisualisation": "Add new visualisation",
+    "existingWidgets": "Existing widgets",
+    "addNewWidget": "Add new widget",
     "startTypingDocumentation": "Start typing your documentation and notes here...",
     "exportTable": "export table (.csv)"
   },
-  "visualisation": {
+  "widget": {
     "create": {
       "table": "Table",
       "bar": "Bar",
       "line": "Line",
       "metric": "Metric",
-      "visualisationName": "Visualisation name",
+      "widgetName": "Widget name",
       "saveToDashboard": "Save to dashboard",
       "selectDashboard": "Select dashboard",
-      "visualisationType": "Visualisation type",
-      "createVisualisation": "Create visualisation"
+      "widgetType": "Widget type",
+      "createWidget": "Create widget"
     }
   },
   "usersPermissions": {

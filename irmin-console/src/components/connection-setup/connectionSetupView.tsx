@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 
-import ConnectionService from '@/lib/api/ConnectionService';
+import ConnectorService from '@/lib/api/ConnectorService';
 
 import DefineConnectionDetails from '@/components/connection-setup/defineConnectionDetails';
 import DefineConnectionSettings from '@/components/connection-setup/defineConnectionSettings';
@@ -13,23 +13,10 @@ import LoadingSpinner from '@/components/misc/LoadingSpinner';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import {
-  ConnectionDetailsAndSettings,
-  ConnectionDetailsAndSettingsFields,
-  Connector,
-} from '@/types/Connector';
+import { Connector } from '@/types/api/Connector';
+import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 
-export interface connectionDataType {
-  name: string;
-  cron: string;
-  connector: null | Connector;
-  connectionDetailsFields: null | ConnectionDetailsAndSettingsFields;
-  connectionSettingsFields: null | ConnectionDetailsAndSettingsFields;
-  connectionDetails: null | ConnectionDetailsAndSettings;
-  connectionSettings: null | ConnectionDetailsAndSettings;
-}
-
-const initialConnectionData: connectionDataType = {
+const initialConnectionData: ConnectionSetup = {
   name: '',
   cron: '0 0 * * *',
   connector: null,
@@ -52,8 +39,8 @@ const ConnectionSetupView = ({
 }) => {
   const { locale } = useLocale();
   const { irminAlert } = usePopup();
-  const connectionService = ConnectionService.getInstance(locale);
-  const [connectionData, setConnectionData] = useState<connectionDataType>(
+  const connectorService = ConnectorService.getInstance(locale);
+  const [connectionData, setConnectionData] = useState<ConnectionSetup>(
     initialConnectionData
   );
   const [connectors, setConnectors] = useState<Connector[]>([]);
@@ -66,16 +53,24 @@ const ConnectionSetupView = ({
 
   // Fetch all available connectors
   useEffect(() => {
-    connectionService
-      .fetchAllConnectors()
-      .then((response) => {
-        setConnectors(response.data);
-      })
-      .catch((error) => {
+    (async () => {
+      try {
+        const savedConnectors = await connectorService.getAllConnectors();
+        if (savedConnectors && savedConnectors.length > 0) {
+          setConnectors(savedConnectors);
+        } else {
+          const response = await connectorService.fetchAllConnectors();
+          if (!response || response.data.length === 0) {
+            irminAlert('error', 'Failed to fetch connectors');
+          }
+          setConnectors(response.data);
+        }
+      } catch (error) {
         console.error('Fetch connectors error:', error);
         irminAlert('error', 'Failed to fetch connectors');
-      });
-  }, [connectionService, irminAlert]);
+      }
+    })();
+  }, [connectorService, irminAlert]);
 
   if (
     connectors.length === 0 ||

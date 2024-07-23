@@ -3,19 +3,19 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { FooterLinkSection as FooterLinkSectionType } from '@/lib/menuUtils';
-
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { WebsiteFooterLinkSection } from '@/types/website/WebsiteNavigation';
+
 const FooterLinkSection = ({
   section,
   linkKey,
 }: {
-  section: FooterLinkSectionType;
+  section: WebsiteFooterLinkSection;
   linkKey: string;
 }) => (
   <div className='w-full sm:w-1/4 md:w-1/2 lg:w-1/3 xl:w-1/4' id={linkKey}>
@@ -39,8 +39,8 @@ export default function WebsiteFooterContent({
   footerLinksEN,
   footerLinksFI,
 }: {
-  footerLinksEN: FooterLinkSectionType[];
-  footerLinksFI: FooterLinkSectionType[];
+  footerLinksEN: WebsiteFooterLinkSection[];
+  footerLinksFI: WebsiteFooterLinkSection[];
 }) {
   const { dict, locale } = useLocale();
 

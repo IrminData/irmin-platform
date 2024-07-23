@@ -5,11 +5,11 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/twUtils';
 
 import { useLocale } from '@/context/LocaleContext';
 
-interface ButtonProps {
+const Button: React.FC<{
   variant?: 'solid' | 'outline' | 'icon' | 'link';
   colorScheme?: 'primary' | 'secondary' | 'tertiary' | 'gray' | 'black';
   size?: 'sm' | 'md' | 'lg';
@@ -25,9 +25,7 @@ interface ButtonProps {
   className?: string;
   ariaLabel?: string;
   type?: 'button' | 'submit' | 'reset';
-}
-
-const Button: React.FC<ButtonProps> = ({
+}> = ({
   variant,
   colorScheme,
   size = 'md',

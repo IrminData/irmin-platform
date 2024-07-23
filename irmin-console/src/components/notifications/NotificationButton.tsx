@@ -19,7 +19,7 @@ const NotificationButton = () => {
       <button
         onClick={handleClick}
         className='transitiona-all block max-w-max text-irmin_green hover:text-irmin_green-300'
-        aria-label={dict.dashboardNavigation.notifications.toggle}
+        aria-label={dict.portalNavigation.notifications.toggle}
       >
         <TbBell className='text-3xl' />
       </button>

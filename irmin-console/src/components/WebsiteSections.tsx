@@ -31,7 +31,7 @@ import {
   PriceSection,
   TeamSection,
   TestimonialSection,
-} from '@/types/Wordpress';
+} from '@/types/website/Wordpress';
 
 export default function WebsiteSections({
   sections,

@@ -1,6 +1,11 @@
+'use client';
+
 import Image from 'next/image';
 
-import { Post } from '@/types/Wordpress';
+import { useLocale } from '@/context/LocaleContext';
+
+import { WebsiteArticleCategory } from '@/types/website/WebsiteContent';
+import { Post } from '@/types/website/Wordpress';
 
 export default function WebsiteBlogPost({
   post,
@@ -8,13 +13,10 @@ export default function WebsiteBlogPost({
   image,
 }: {
   post: Post;
-  categories: {
-    name: string;
-    slug: string;
-    id: number;
-  }[];
+  categories: WebsiteArticleCategory[];
   image: string;
 }) {
+  const { locale } = useLocale();
   return (
     <section
       id='post-post-section'
@@ -32,7 +34,7 @@ export default function WebsiteBlogPost({
             </p>
             <span className='mx-1 text-irmin_green-500'>•</span>
             <p className='inline-block font-medium text-irmin_green-500'>
-              {new Date(post.date).toLocaleDateString('en-US')}
+              {new Date(post.date).toLocaleDateString(locale)}
             </p>
             <span className='mx-1 text-irmin_green-500'>•</span>
             <p className='inline-block font-medium text-irmin_green-500'>

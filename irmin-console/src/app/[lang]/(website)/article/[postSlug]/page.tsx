@@ -6,12 +6,14 @@ import WordPress from '@/lib/wordpress';
 
 import WebsiteBlogPost from '@/components/website/websiteBlogPost';
 
-interface PageProps {
+import { WebsiteArticleCategory } from '@/types/website/WebsiteContent';
+
+type PageProps = {
   params: {
     lang: string;
     postSlug: string | string[];
   };
-}
+};
 
 const NEXT_PUBLIC_BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
@@ -35,11 +37,7 @@ export default async function Page({ params }: PageProps) {
           .then((media) => media?.source_url)
       : '';
 
-  const categories: {
-    name: string;
-    slug: string;
-    id: number;
-  }[] = [];
+  const categories: WebsiteArticleCategory[] = [];
 
   if (post.categories) {
     for (let a = 0; a < post.categories.length; a++) {

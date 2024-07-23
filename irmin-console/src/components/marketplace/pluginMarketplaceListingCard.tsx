@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { IoClose } from 'react-icons/io5';
 import { TbCheck } from 'react-icons/tb';
 
-import { MarketplacePlugin } from '@/components/marketplace/pluginMarketplace';
 import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
+
+import { MarketplacePlugin } from '@/types/internal/Marketplace';
 
 const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
   plugin,

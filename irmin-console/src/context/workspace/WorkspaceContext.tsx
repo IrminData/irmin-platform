@@ -2,34 +2,81 @@
 
 import { createContext } from 'react';
 
-import { ConnectionWithAdditionalData } from '@/types/Connection';
-import { IrminRole, Workspace } from '@/types/Workspace';
+import { Dashboard } from '@/types/api/Dashboard';
+import { Dataset } from '@/types/api/Dataset';
+import { IrminRole } from '@/types/api/IrminRole';
+import {
+  ActionWorkflow,
+  ConnectionWorkflow,
+  ExportWorkflow,
+} from '@/types/api/Workflow';
+import { Workspace } from '@/types/api/Workspace';
 
 const WorkspaceContext = createContext<{
-  workspaces: Workspace[] | null;
-  workspaceLoading: boolean;
-  currentWorkspace: Workspace | null;
+  fetchWorkspaces: () => void;
   switchToWorkspace: (_workspaceSlug: string | null) => void;
   deleteCurrentWorkspace: () => void;
-  fetchWorkspaces: (_forceFetch?: boolean) => void;
+  workspaces: Workspace[];
+  currentWorkspace: Workspace | null;
+  workspaceLoading: boolean;
   irminRoles: IrminRole[];
+  dashboards: {
+    dashboards: Dashboard[];
+    isLoading: boolean;
+    fetchDashboards: (_forceFetch?: boolean) => void;
+  };
   connections: {
-    connections: ConnectionWithAdditionalData[];
+    connections: ConnectionWorkflow[];
     isLoading: boolean;
     fetchConnections: (_forceFetch?: boolean) => void;
   };
+  exports: {
+    exports: ExportWorkflow[];
+    isLoading: boolean;
+    fetchExports: (_forceFetch?: boolean) => void;
+  };
+  actions: {
+    actions: ActionWorkflow[];
+    isLoading: boolean;
+    fetchActions: (_forceFetch?: boolean) => void;
+  };
+  datasets: {
+    datasets: Dataset[];
+    isLoading: boolean;
+    fetchDatasets: (_forceFetch?: boolean) => void;
+  };
 }>({
-  workspaces: null,
+  switchToWorkspace: () => {},
+  fetchWorkspaces: () => {},
+  deleteCurrentWorkspace: () => {},
+  workspaces: [],
   workspaceLoading: false,
   currentWorkspace: null,
-  switchToWorkspace: () => {},
-  deleteCurrentWorkspace: () => {},
-  fetchWorkspaces: () => {},
   irminRoles: [],
+  dashboards: {
+    dashboards: [],
+    isLoading: false,
+    fetchDashboards: () => {},
+  },
   connections: {
     connections: [],
     isLoading: false,
     fetchConnections: () => {},
+  },
+  exports: {
+    exports: [],
+    isLoading: false,
+    fetchExports: () => {},
+  },
+  actions: {
+    actions: [],
+    isLoading: false,
+    fetchActions: () => {},
+  },
+  datasets: {
+    datasets: [],
+    isLoading: false,
+    fetchDatasets: () => {},
   },
 });
 

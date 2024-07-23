@@ -6,19 +6,17 @@ import ExportSetupView from '@/components/export-sync-setup/exportSetupView';
 import SideModal from '@/components/misc/SideModal';
 import PortalTitle from '@/components/portalTitle';
 import ExportTable from '@/components/tables/exportTable';
+import TableSkeleton from '@/components/tables/tableSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
+import { useWorkspace } from '@/context/workspace';
 
-export default function ExportSyncPage() {
+export default function ExportSyncsPage() {
   const { dict } = useLocale();
+  const { exports } = useWorkspace();
 
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const steps = [
-    dict.export.selectSourceDataSet,
-    dict.export.selectDestinationConnection,
-    dict.export.configureExport,
-  ];
 
   return (
     <>
@@ -27,7 +25,11 @@ export default function ExportSyncPage() {
         isOpen={isOpen}
         setIsOpen={setIsOpen}
         currentStep={currentStep}
-        steps={steps}
+        steps={[
+          dict.export.selectSourceDataset,
+          dict.export.selectDestinationConnection,
+          dict.export.configureExport,
+        ]}
         title={dict.export.createNewExportSync}
       >
         <ExportSetupView
@@ -37,58 +39,11 @@ export default function ExportSyncPage() {
           setCurrentStep={setCurrentStep}
         />
       </SideModal>
-      <ExportTable
-        processes={[
-          {
-            id: 1,
-            name: 'Customer Data Sync',
-            source: 'Salesforce',
-            destination: 'BigQuery',
-            status: 'running',
-            details: [
-              'Syncing customer data from Salesforce to BigQuery.',
-              'Last sync: 2024-06-20 10:00 UTC',
-              'Next sync scheduled: 2024-06-21 10:00 UTC',
-            ],
-          },
-          {
-            id: 2,
-            name: 'Order Data Sync',
-            source: 'UpCharge rents, users and venues',
-            destination: 'Snowflake',
-            status: 'paused',
-            details: [
-              'Syncing order data from Shopify to Snowflake.',
-              'Last sync: 2024-06-19 08:00 UTC',
-              'Next sync scheduled: Not scheduled',
-            ],
-          },
-          {
-            id: 3,
-            name: 'Loaction Data Sync',
-            source: 'UpCharge locations',
-            destination: 'Redshift',
-            status: 'error',
-            details: [
-              'Syncing marketing data from HubSpot to Redshift.',
-              'Last sync: 2024-06-18 07:00 UTC',
-              'Error: Network timeout during last sync.',
-            ],
-          },
-          {
-            id: 4,
-            name: 'CRM leed sync',
-            source: 'Restaurants in Finland',
-            destination: 'PostgreSQL',
-            status: 'warning',
-            details: [
-              'Syncing product data from Magento to PostgreSQL.',
-              'Last sync: 2024-06-20 12:00 UTC',
-              'Next sync scheduled: 2024-06-21 12:00 UTC',
-            ],
-          },
-        ]}
-      />
+      {exports.isLoading ? (
+        <TableSkeleton />
+      ) : (
+        <ExportTable processes={exports.exports} />
+      )}
     </>
   );
 }

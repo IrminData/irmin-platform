@@ -1,21 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import ConfigureExport from '@/components/export-sync-setup/configureExport';
-import SelectSourceDataSet from '@/components/export-sync-setup/selectSourceDataSet';
+import SelectDestination from '@/components/export-sync-setup/selectDestination';
+import SelectSource from '@/components/export-sync-setup/selectSource';
 
-import { ConnectionDetailsAndSettings } from '@/types/Connector';
+import { ExportSetup } from '@/types/internal/ExportSetup';
 
-import SelectDestinationConnection from './selectDestinationConnection';
+const initialExportData: ExportSetup = {
+  connectionID: null,
+  name: '',
+  settings: {},
+  cron: '1 0 * JAN *',
+};
 
-export interface ExportDataType {
-  connectionID: null | number;
-  name: string;
-  settings: ConnectionDetailsAndSettings;
-  cron: string;
-}
-
+// TODO: Show real data here
 const existingConnections = [
   { id: 1, name: 'Salesforce' },
   { id: 2, name: 'Shopify / verkkokauppa' },
@@ -25,7 +25,8 @@ const existingConnections = [
   { id: 6, name: 'Google Big Query / Production line data' },
 ];
 
-const existingDataSets = [
+// TODO: Show real data here
+const existingDatasets = [
   { id: 1, name: 'UpCharge rents, users and venues' },
   { id: 2, name: 'UpCharge locations' },
   { id: 3, name: 'Restaurants in Finland' },
@@ -33,6 +34,7 @@ const existingDataSets = [
 ];
 
 export default function ExportSetupView({
+  isOpen,
   setIsOpen,
   currentStep,
   setCurrentStep,
@@ -42,24 +44,25 @@ export default function ExportSetupView({
   currentStep: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
-  const [exportData, setExportData] = useState<ExportDataType>({
-    connectionID: null,
-    name: '',
-    settings: {},
-    cron: '1 0 * JAN *',
-  });
+  const [exportData, setExportData] = useState(initialExportData);
+
+  // Reset export data when modal is closed
+  useEffect(() => {
+    setCurrentStep(1);
+    setExportData(initialExportData);
+  }, [isOpen, setCurrentStep, setExportData]);
 
   return (
     <>
       {currentStep === 1 && (
-        <SelectSourceDataSet
-          dataSets={existingDataSets}
+        <SelectSource
+          datasets={existingDatasets}
           setExportData={setExportData}
           setCurrentStep={setCurrentStep}
         />
       )}
       {currentStep === 2 && (
-        <SelectDestinationConnection
+        <SelectDestination
           connections={existingConnections}
           setExportData={setExportData}
           setCurrentStep={setCurrentStep}

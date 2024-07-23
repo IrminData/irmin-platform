@@ -6,7 +6,6 @@ import Image from 'next/image';
 
 import ConnectionService from '@/lib/api/ConnectionService';
 
-import { connectionDataType } from '@/components/connection-setup/connectionSetupView';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
@@ -14,15 +13,16 @@ import LoadingSpinner from '@/components/misc/LoadingSpinner';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { ConnectionDetailsAndSettings } from '@/types/Connector';
+import { ConnectionDetailsAndSettings } from '@/types/api/Connector';
+import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 
 export default function DefineConnectionDetails({
   connectionData,
   setConnectionData,
   setCurrentStep,
 }: {
-  connectionData: connectionDataType;
-  setConnectionData: React.Dispatch<React.SetStateAction<connectionDataType>>;
+  connectionData: ConnectionSetup;
+  setConnectionData: React.Dispatch<React.SetStateAction<ConnectionSetup>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const { locale, dict } = useLocale();
@@ -48,7 +48,7 @@ export default function DefineConnectionDetails({
       const response = await connectionService.fetchNewConnectionDetails(
         connectionData.connector.id
       );
-      setConnectionData((prev: connectionDataType) => ({
+      setConnectionData((prev: ConnectionSetup) => ({
         ...prev,
         connectionDetailsFields: response.data,
       }));
@@ -122,7 +122,7 @@ export default function DefineConnectionDetails({
 
         // Update the connection data state
         const connectorName = connectionData.connector.name;
-        setConnectionData((prev: connectionDataType) => ({
+        setConnectionData((prev: ConnectionSetup) => ({
           ...prev,
           name: irminConnectionName ?? `${connectorName} ${Date.now()}`,
           connectionDetails: data,

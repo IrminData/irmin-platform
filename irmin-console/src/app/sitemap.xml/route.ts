@@ -1,4 +1,4 @@
-import { getURL } from '@/lib/linkUtil';
+import { getURL } from '@/lib/utils/wordpressLinkUtils';
 import WordPress from '@/lib/wordpress';
 
 export async function GET() {

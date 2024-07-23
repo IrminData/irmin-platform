@@ -2,12 +2,10 @@ import React, { ComponentPropsWithoutRef } from 'react';
 
 import Image from 'next/image';
 
-interface PortalTitleProps {
+const PortalTitle: React.FC<{
   title: string;
   props?: ComponentPropsWithoutRef<'div'>;
-}
-
-const PortalTitle: React.FC<PortalTitleProps> = ({ title, props }) => {
+}> = ({ title, props }) => {
   const _props = { ...props };
   delete _props.className;
   return (

@@ -10,11 +10,7 @@ import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-interface Message {
-  id: number;
-  text: string;
-  sender: 'user' | 'assistant';
-}
+import { Message } from '@/types/internal/Assistant';
 
 export default function AIAssistantPopup() {
   const { dict } = useLocale();

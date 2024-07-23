@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 
 import Link from 'next/link';
 
-import { useBreakpoint } from '@/lib/utils';
+import { useBreakpoint } from '@/lib/utils/twUtils';
 
 import { IoTriangle } from 'react-icons/io5';
 
@@ -11,35 +11,38 @@ import Button from '@/components/misc/Button';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
-interface IrminNotification {
-  id: number;
-  title: string;
-  message: string;
-  page: string;
-  relatedWorkspace: string;
-  timestamp: string;
-  type: 'info' | 'warning' | 'error' | 'success';
-}
+import { Notification } from '@/types/internal/Notification';
 
 const NotificationPopup = ({
   notificationsClickPosition,
 }: {
   notificationsClickPosition: { x: number; y: number } | null;
 }) => {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const { currentWorkspace } = useWorkspace();
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const workspaceSlug = currentWorkspace?.slug ?? 'test-workspace';
+  const workspaceSlug = currentWorkspace?.slug ?? '-';
+  const workspaceName = currentWorkspace?.name ?? '-';
 
-  const [notifications, setNotifications] = useState<IrminNotification[]>([
+  // TODO: Implement real data fetching
+  const [notifications, setNotifications] = useState<Notification[]>([
+    {
+      id: 0,
+      title: 'Irmin is having a party! 🎉',
+      message: 'Join us for a party at the office on Friday',
+      path: `/`,
+      timestamp: '2024-10-01T12:00:00Z',
+      type: 'info',
+    },
     {
       id: 1,
       title: 'New workspace created',
       message: 'You have created a new workspace',
-      page: `settings`,
-      relatedWorkspace: workspaceSlug,
+      path: `/settings`,
+      relatedWorkspaceSlug: workspaceSlug,
+      relatedWorkspaceName: workspaceName,
       timestamp: '2024-09-01T12:00:00Z',
       type: 'success',
     },
@@ -47,8 +50,9 @@ const NotificationPopup = ({
       id: 2,
       title: 'Workspace updated',
       message: 'You have updated the workspace',
-      page: `settings`,
-      relatedWorkspace: workspaceSlug,
+      path: `/settings`,
+      relatedWorkspaceSlug: workspaceSlug,
+      relatedWorkspaceName: workspaceName,
       timestamp: '2024-09-02T12:00:00Z',
       type: 'info',
     },
@@ -56,8 +60,9 @@ const NotificationPopup = ({
       id: 3,
       title: 'New user added to workspace',
       message: 'You have added a new user to the workspace',
-      page: `settings`,
-      relatedWorkspace: workspaceSlug,
+      path: `/settings`,
+      relatedWorkspaceSlug: workspaceSlug,
+      relatedWorkspaceName: workspaceName,
       timestamp: '2024-09-03T12:00:00Z',
       type: 'warning',
     },
@@ -65,8 +70,9 @@ const NotificationPopup = ({
       id: 4,
       title: 'Data sync complete',
       message: 'Data sync for Google Analytics has been completed',
-      page: `connections`,
-      relatedWorkspace: workspaceSlug,
+      path: `/connections`,
+      relatedWorkspaceSlug: workspaceSlug,
+      relatedWorkspaceName: workspaceName,
       timestamp: '2024-09-04T12:00:00Z',
       type: 'success',
     },
@@ -74,8 +80,9 @@ const NotificationPopup = ({
       id: 5,
       title: 'User joined workspace',
       message: 'A new user has joined the workspace',
-      page: `settings`,
-      relatedWorkspace: workspaceSlug,
+      path: ``,
+      relatedWorkspaceSlug: workspaceSlug,
+      relatedWorkspaceName: workspaceName,
       timestamp: '2024-09-05T12:00:00Z',
       type: 'info',
     },
@@ -83,17 +90,19 @@ const NotificationPopup = ({
       id: 6,
       title: 'Connection sync failed',
       message: 'Data sync for Google Analytics has failed',
-      page: `connections`,
-      relatedWorkspace: workspaceSlug,
+      path: `/connections`,
+      relatedWorkspaceSlug: workspaceSlug,
+      relatedWorkspaceName: workspaceName,
       timestamp: '2024-09-06T12:00:00Z',
       type: 'warning',
     },
     {
       id: 7,
-      title: 'Data set failed to create',
-      message: 'Users (public), data set creation has failed',
-      page: `data`,
-      relatedWorkspace: workspaceSlug,
+      title: 'Dataset failed to create',
+      message: 'Users (public), Dataset creation has failed',
+      path: ``,
+      relatedWorkspaceSlug: workspaceSlug,
+      relatedWorkspaceName: workspaceName,
       timestamp: '2024-09-07T12:00:00Z',
       type: 'error',
     },
@@ -137,7 +146,7 @@ const NotificationPopup = ({
           >
             <div className='flex items-center justify-between'>
               <div className='text-base font-semibold'>
-                {dict.dashboardNavigation.notifications.notifications}
+                {dict.portalNavigation.notifications.notifications}
               </div>
               <Button
                 onClick={clearNotifications}
@@ -145,7 +154,7 @@ const NotificationPopup = ({
                 colorScheme='primary'
                 size='sm'
               >
-                {dict.dashboardNavigation.notifications.clearAll}
+                {dict.portalNavigation.notifications.clearAll}
               </Button>
             </div>
           </div>
@@ -161,7 +170,11 @@ const NotificationPopup = ({
               })
               .map((notification, index) => (
                 <Link
-                  href={`/portal/${notification.relatedWorkspace}/${notification.page}`}
+                  href={
+                    notification.relatedWorkspaceSlug
+                      ? `/portal/${notification.relatedWorkspaceSlug}/${notification.path}`
+                      : notification.path
+                  }
                   key={`notification-${index}-${notification.id}`}
                 >
                   <div
@@ -170,16 +183,25 @@ const NotificationPopup = ({
                     <div className='flex justify-between'>
                       <div className='font-normal'>{notification.title}</div>
                       <div className='text-gray-500'>
-                        {new Date(notification.timestamp).toLocaleDateString()}
+                        {new Date(notification.timestamp).toLocaleString(
+                          locale
+                        )}
                       </div>
                     </div>
+                    {notification.relatedWorkspaceName && (
+                      <div className='text-irmin_green'>
+                        {dict.portalNavigation.notifications.relatedWorkspace}
+                        {': '}
+                        {notification.relatedWorkspaceName}
+                      </div>
+                    )}
                     <div className='text-gray-500'>{notification.message}</div>
                   </div>
                 </Link>
               ))
           ) : (
             <div className='px-4 py-2 text-sm text-gray-700'>
-              {dict.dashboardNavigation.notifications.noNotifications}
+              {dict.portalNavigation.notifications.noNotifications}
             </div>
           )}
         </div>

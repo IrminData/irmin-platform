@@ -11,7 +11,11 @@ import Input from '@/components/misc/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { ArticlesSection } from '@/types/Wordpress';
+import {
+  WebsiteArticle,
+  WebsiteArticleCategory,
+} from '@/types/website/WebsiteContent';
+import { ArticlesSection } from '@/types/website/Wordpress';
 
 export default function WebsiteBlogPostsContent({
   section,
@@ -19,33 +23,14 @@ export default function WebsiteBlogPostsContent({
   articles,
 }: {
   section: ArticlesSection;
-  categories: {
-    name: string;
-    slug: string;
-    id: number;
-  }[];
-  articles: {
-    title: string;
-    excerpt: string;
-    date: string;
-    misc?: {
-      'Written by': string;
-      'Estimated reading time': string;
-    };
-    slug: string;
-    url: string;
-    image: string;
-    categories: {
-      name: string;
-      slug: string;
-      id: number;
-    }[];
-  }[];
+  categories: WebsiteArticleCategory[];
+  articles: WebsiteArticle[];
 }) {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [filteredArticles, setFilteredArticles] = useState(articles);
+
   useEffect(() => {
     setFilteredArticles(
       articles.filter((article) => {
@@ -154,7 +139,7 @@ export default function WebsiteBlogPostsContent({
               </div>
               <p className='mb-2 text-xs text-gray-400'>
                 {article.misc?.['Written by'] ?? 'Irmin'} •{' '}
-                {new Date(article.date).toLocaleDateString('en-US')} •{' '}
+                {new Date(article.date).toLocaleDateString(locale)} •{' '}
                 {article.misc?.['Estimated reading time']}
               </p>
               <h3 className='mb-4 inline-block text-2xl font-bold leading-tight text-irmin_black'>

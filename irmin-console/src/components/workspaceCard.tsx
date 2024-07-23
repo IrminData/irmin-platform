@@ -10,14 +10,14 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Workspace } from '@/types/Workspace';
+import { Workspace } from '@/types/api/Workspace';
 
 const WorkspaceCard = ({
   workspace,
   description,
   users,
   connectionCount,
-  dataSetCount,
+  datasetCount,
 }: {
   workspace: Workspace;
   description: string;
@@ -26,7 +26,7 @@ const WorkspaceCard = ({
     name: string;
   }[];
   connectionCount: number;
-  dataSetCount: number;
+  datasetCount: number;
 }) => {
   const { dict } = useLocale();
 
@@ -104,10 +104,10 @@ const WorkspaceCard = ({
                 <GoDatabase className='md:h--8 h-6 text-base text-irmin_blue' />
                 <div className='ml-2 flex flex-col'>
                   <span className='text-sm font-semibold text-irmin_blue'>
-                    {dataSetCount}
+                    {datasetCount}
                   </span>
                   <span className='text-xs text-gray-400'>
-                    {dict.workspaceSwitcher.dataSets}
+                    {dict.workspaceSwitcher.datasets}
                   </span>
                 </div>
               </div>

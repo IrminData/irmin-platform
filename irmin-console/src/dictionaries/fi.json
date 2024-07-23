@@ -115,7 +115,7 @@
       "error": "Sinun on hyväksyttävä käyttöehdot ja tietosuojaseloste jatkaaksesi."
     }
   },
-  "dashboardNavigation": {
+  "portalNavigation": {
     "search": "Hae",
     "searchPlaceholder": "Etsi tietoja ja muuta",
     "irminPortal": "Irmin-sovellus",
@@ -125,12 +125,14 @@
       "toggle": "Vaihda ilmoitusponnahdusikkuna",
       "notifications": "Ilmoitukset",
       "clearAll": "Tyhjennä kaikki",
-      "noNotifications": "Ei ilmoituksia"
+      "noNotifications": "Ei ilmoituksia",
+      "relatedWorkspace": "Työtila"
     },
     "links": {
-      "dashboards": "Hallintapaneelit",
-      "dataSets": "Tietojoukot",
-      "editor": "Muokkain",
+      "dashboards": "Datapaneeli",
+      "datasets": "Tietojoukot",
+      "editor": "Editori",
+      "actions": "Toiminnot",
       "connections": "Yhteydet",
       "exportSyncs": "Vie synkronoinnit",
       "workspaceSettings": "Työtilan asetukset",
@@ -151,7 +153,11 @@
     "failedToSwitch": "Työtilan vaihto epäonnistui",
     "workspace": "Työtila",
     "connections": "Yhteydet",
-    "dataSets": "Tietojoukot"
+    "datasets": "Tietojoukot"
+  },
+  "dashboard": {
+    "dashboard": "Datapaneeli",
+    "createNewDashboard": "Luo uusi datapaneeli"
   },
   "connection": {
     "connection": "Yhteys",
@@ -178,7 +184,7 @@
     }
   },
   "export": {
-    "selectSourceDataSet": "Valitse lähdedatajoukko",
+    "selectSourceDataset": "Valitse lähdedatajoukko",
     "selectDestinationConnection": "Valitse kohdeyhteys",
     "configureExport": "Määritä vienti",
     "exportSyncs": "Vientisynkronoinnit",
@@ -199,14 +205,14 @@
     "categories": "Kategoriat",
     "dataMarketplace": "Tietomarkkinapaikka",
     "pluginMarketplace": "Liitännäiset ja laajennukset",
-    "searchDataSets": "Etsi julkisia tietojoukkoja, jotka haluat yhdistää ja käyttää",
+    "searchDatasets": "Etsi julkisia tietojoukkoja, jotka haluat yhdistää ja käyttää",
     "searchPlugins": "Etsi liitännäisiä ja laajennuksia",
     "activePlugins": "Aktiiviset liitännäiset",
     "browsePlugins": "Selaa liitännäisiä",
-    "activeDataSets": "Aktiiviset tietojoukot",
-    "browseDataSets": "Selaa tietojoukkoja",
+    "activeDatasets": "Aktiiviset tietojoukot",
+    "browseDatasets": "Selaa tietojoukkoja",
     "pluginsNotFound": "Ei liitännäisiä löytynyt",
-    "dataSetsNotFound": "Ei tietojoukkoja löytynyt",
+    "datasetsNotFound": "Ei tietojoukkoja löytynyt",
     "source": "Lähde",
     "details": "Lisätiedot",
     "connect": "Yhdistä",
@@ -239,12 +245,24 @@
       "view": "Näytä",
       "logs": "Lokit",
       "edit": "Muokkaa",
-      "remove": "Poista"
+      "remove": "Poista",
+      "notScheduled": "Ei aikataulutettu"
     },
-    "dataSets": {
-      "noDataSetsFound": "Tälle työtilalle ei löytynyt tietojoukkoja",
+    "actions": {
+      "noActionsFound": "Tälle työtilalle ei löytynyt toimintoja",
       "view": "Näytä",
       "logs": "Lokit",
+      "viewInfo": "Näytä tiedot",
+      "disconnect": "Katkaise yhteys",
+      "edit": "Muokkaa",
+      "source": "Lähde",
+      "name": "Nimi",
+      "status": "Tila",
+      "actions": "Toiminnot"
+    },
+    "datasets": {
+      "noDatasetsFound": "Tälle työtilalle ei löytynyt tietojoukkoja",
+      "view": "Näytä",
       "viewInfo": "Näytä tiedot",
       "disconnect": "Katkaise yhteys",
       "edit": "Muokkaa",
@@ -280,33 +298,32 @@
     "open": "Avaa",
     "delete": "Poista",
     "rename": "Nimeä uudelleen",
-    "connections": "Yhteydet",
-    "dataSets": "Tietojoukot"
+    "datasets": "Tietojoukot"
   },
   "actionResults": {
     "actionResults": "Toiminnon tulokset",
-    "visualisation": "Visualisointi",
+    "widget": "Widgetit",
     "documentation": "Dokumentaatio",
     "switchToPlainText": "Vaihda pelkkään tekstiin",
     "switchToMarkdownEditor": "Vaihda Markdown-editoriin",
     "save": "Tallenna toiminto",
     "run": "Suorita toiminto",
-    "existingVisualisations": "Olemassa olevat visualisoinnit",
-    "addNewVisualisation": "Lisää uusi visualisointi",
+    "existingWidgets": "Olemassa olevat widgetit",
+    "addNewWidget": "Lisää uusi widgetit",
     "startTypingDocumentation": "Aloita dokumentaation ja muistiinpanojen kirjoittaminen tähän...",
     "exportTable": "vie taulukko (.csv)"
   },
-  "visualisation": {
+  "widget": {
     "create": {
       "table": "Taulukko",
       "bar": "Palkki",
       "line": "Viiva",
       "metric": "Mittari",
-      "visualisationName": "Visualisoinnin nimi",
+      "widgetName": "Widgetin nimi",
       "saveToDashboard": "Tallenna kojelautaan",
       "selectDashboard": "Valitse kojelauta",
-      "visualisationType": "Visualisoinnin tyyppi",
-      "createVisualisation": "Luo visualisointi"
+      "widgetType": "Widgetin tyyppi",
+      "createWidget": "Luo widgetti"
     }
   },
   "usersPermissions": {

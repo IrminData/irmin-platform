@@ -1,10 +1,12 @@
+import { WorkflowStatus } from '@/types/api/Workflow';
+
 export default function StatusElement({
   accessStatus,
   runStatus,
   statusLabel,
 }: {
   accessStatus?: 'private' | 'public' | 'connected';
-  runStatus?: 'error' | 'warning' | 'running' | 'paused' | 'default';
+  runStatus?: WorkflowStatus;
   statusLabel: string;
 }) {
   if (accessStatus) {
@@ -52,7 +54,7 @@ export default function StatusElement({
             {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
           </div>
         );
-      case 'warning':
+      case 'complete':
         return (
           <div
             className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-irmin_teal px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
@@ -69,6 +71,22 @@ export default function StatusElement({
           </div>
         );
       case 'paused':
+        return (
+          <div
+            className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-gray-400 px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
+          >
+            {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
+          </div>
+        );
+      case 'pending':
+        return (
+          <div
+            className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-gray-400 px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
+          >
+            {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
+          </div>
+        );
+      case 'initiating':
         return (
           <div
             className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-gray-400 px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}

@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import InviteService from '@/lib/api/InviteService';
+import UserAndRoleService from '@/lib/api/UserAndRoleService';
 import WorkspaceService from '@/lib/api/WorkspaceService';
 
 import { IoExit, IoKey, IoMailOpenOutline } from 'react-icons/io5';
@@ -16,15 +17,21 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { IrminRole, Workspace, WorkspaceUser } from '@/types/Workspace';
+import { IrminRole } from '@/types/api/IrminRole';
+import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
+
+type WorkspaceUsersAndPermissionsUser = {
+  inviteId?: number;
+} & WorkspaceUser;
 
 const WorkspaceUsersAndPermissions: React.FC = () => {
   const { locale, dict } = useLocale();
   const { currentWorkspace, irminRoles, switchToWorkspace } = useWorkspace();
   const { irminAlert, irminConfirm } = usePopup();
+  const userService = UserAndRoleService.getInstance(locale);
   const workspaceService = WorkspaceService.getInstance(locale);
   const inviteService = InviteService.getInstance(locale);
-  const [users, setUsers] = useState<WorkspaceUser[]>([]);
+  const [users, setUsers] = useState<WorkspaceUsersAndPermissionsUser[]>([]);
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteError, setInviteError] = useState('');
@@ -37,36 +44,32 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
       if (!currentWorkspace) return;
       try {
         // Fetch workspace users and their roles
-        const workspaceUsers = await workspaceService.getWorkspaceUsers();
+        const workspaceUsers = (await userService.fetchAllUsers()).data;
         for (const user of workspaceUsers) {
-          const userRoles = await workspaceService.getWorkspaceUserRoles(
-            user.id
-          );
+          const userRoles = await userService.fetchUserRoles(user.id);
           if (userRoles) {
-            user.inviteId = false;
-            user.roles = userRoles;
+            user.roles = userRoles.data;
           } else {
             // User not found in workspace
             workspaceUsers.splice(workspaceUsers.indexOf(user), 1);
           }
         }
         // Also fetch users that have been invited but not yet accepted
-        const invitedUsers = await inviteService.getInvitesByWorkspace(
-          currentWorkspace.slug
-        );
-        for (const user of invitedUsers) {
-          const invitedUser: WorkspaceUser = {
+        const workspaceInvites = (
+          await inviteService.getInvitesByWorkspace(currentWorkspace.slug)
+        ).data;
+        for (const invite of workspaceInvites) {
+          const invitedUser: WorkspaceUsersAndPermissionsUser = {
             id: Math.max(...workspaceUsers.map((a) => a.id)) + 1,
-            name: user.name,
+            name: invite.name,
             company: '',
-            email: user.email,
+            email: invite.email,
             email_verified_at: null,
-            created_at: user.created_at,
-            updated_at: user.updated_at,
-            inviteId: user.id,
-            workspace: currentWorkspace,
+            created_at: invite.created_at,
+            updated_at: invite.updated_at,
+            inviteId: invite.id,
             roles: [
-              irminRoles.find((role) => role.name === user.role.name) ??
+              irminRoles.find((role) => role.name === invite.role.name) ??
                 irminRoles[0],
             ],
           };
@@ -77,7 +80,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
         console.error('Error fetching users and roles:', error);
       }
     },
-    [workspaceService, inviteService, irminRoles]
+    [inviteService, irminRoles, userService]
   );
 
   useEffect(() => {
@@ -173,7 +176,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
         // Removal confirmed
         try {
           // Remove user from workspace
-          const res = await workspaceService.removeUserFromWorkspace(id);
+          const res = await userService.removeUserFromWorkspace(id);
           // Remove user from the list
           setUsers(users.filter((user) => user.id !== id));
           irminAlert(
@@ -234,11 +237,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
   ) => {
     try {
       // Change user role
-      const res = await workspaceService.changeUserWorkspaceRole(
-        id,
-        newRole,
-        oldRole
-      );
+      const res = await userService.changeUserRole(id, newRole, oldRole);
       // Update the local state of workspace users
       const newUsers = users.map((user) => {
         if (user.id === id) {
@@ -362,7 +361,9 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                 ) : (
                   <select
                     value={
-                      user.roles.length === 0 ? 'no-role' : user.roles[0].id
+                      !user.roles || user.roles.length === 0
+                        ? 'no-role'
+                        : user.roles[0].id
                     }
                     onChange={(e) => {
                       const desiredRole = irminRoles.find(
@@ -379,7 +380,9 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                         // Change role of a regular user
                         handleChangeRole(
                           user.id,
-                          user.roles[0] ?? null,
+                          user.roles && user.roles.length > 0
+                            ? user.roles[0]
+                            : null,
                           desiredRole
                         );
                       }
@@ -401,7 +404,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
                 )}
               </td>
               <td className='border-b px-4 py-2 text-right'>
-                {user.roles.length !== 0 && !user.inviteId && (
+                {user.roles && user.roles.length > 0 && !user.inviteId && (
                   <div className='flex flex-row justify-end gap-2 align-middle'>
                     <Button
                       size='sm'
@@ -458,7 +461,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
       {isInviteModalOpen && (
         <Modal
           isOpen={isInviteModalOpen}
-          title='Invite a User'
+          title={dict.usersPermissions.inviteUser}
           onClose={() => setIsInviteModalOpen(false)}
         >
           <div className='mb-4'>
@@ -510,7 +513,6 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
               size='md'
               variant='outline'
               colorScheme='gray'
-              ariaLabel='Close the modal window'
               onClick={() => setIsInviteModalOpen(false)}
               className='w-1/2'
             >
@@ -520,7 +522,6 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
               size='md'
               variant='solid'
               colorScheme='primary'
-              ariaLabel='Send an invite to the user'
               onClick={handleInvite}
               className='w-1/2'
             >

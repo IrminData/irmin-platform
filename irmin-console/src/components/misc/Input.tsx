@@ -2,9 +2,9 @@
 
 import React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/twUtils';
 
-interface InputProps {
+const Input: React.FC<{
   variant?: 'solid' | 'outline' | 'underline';
   colorScheme?: 'primary' | 'secondary' | 'tertiary' | 'gray' | 'black';
   size?: 'sm' | 'md' | 'lg';
@@ -21,9 +21,7 @@ interface InputProps {
   type?: 'text' | 'password' | 'email' | 'number';
   id?: string;
   required?: boolean;
-}
-
-const Input: React.FC<InputProps> = ({
+}> = ({
   variant,
   colorScheme,
   size = 'md',

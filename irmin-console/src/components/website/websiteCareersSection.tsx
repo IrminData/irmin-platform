@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { getURL } from '@/lib/linkUtil';
+import { getURL } from '@/lib/utils/wordpressLinkUtils';
 
 import { FaSearch } from 'react-icons/fa';
 import { IoInformation, IoLocationOutline } from 'react-icons/io5';
@@ -12,7 +12,7 @@ import Input from '@/components/misc/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { CareersSection } from '@/types/Wordpress';
+import { CareersSection } from '@/types/website/Wordpress';
 
 export default function WebsiteCareersSection({
   section,

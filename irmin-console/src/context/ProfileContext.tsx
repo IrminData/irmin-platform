@@ -9,17 +9,16 @@ import {
 } from 'react';
 
 import AuthService from '@/lib/api/AuthService';
-import { offlineUser } from '@/lib/offlineObjects';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { User } from '@/types/UserProfile';
+import { Profile } from '@/types/api/Profile';
 
 const ProfileContext = createContext<{
-  profile: User | null;
+  profile: Profile | null;
   isLoading: boolean;
   fetchProfile: () => void;
-  setProfile: (_profile: User) => void;
+  setProfile: (_profile: Profile) => void;
 }>({
   profile: null,
   isLoading: true,
@@ -34,23 +33,16 @@ export const ProfileProvider = ({
 }) => {
   const { locale } = useLocale();
   const auth = AuthService.getInstance(locale);
-  const [profile, setProfile] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch the profile data
   const fetchProfile = useCallback(async () => {
-    const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-    if (offlineMode) {
-      setProfile(offlineUser);
-      setIsLoading(false);
-      return;
-    }
     try {
       setIsLoading(true);
       const data = await auth.getProfile();
       setProfile(data.data);
     } catch (error) {
-      console.error('Error fetching profile:', error);
       setProfile(null);
     } finally {
       setIsLoading(false);
@@ -59,7 +51,7 @@ export const ProfileProvider = ({
 
   /**
    * Fetch the profile data on component mount only
-   * */
+   */
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);

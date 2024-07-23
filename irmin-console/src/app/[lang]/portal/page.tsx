@@ -141,7 +141,7 @@ const ManageWorkspaces: React.FC = () => {
                     },
                   ]}
                   connectionCount={Math.floor(Math.random() * 30)}
-                  dataSetCount={Math.floor(Math.random() * 30)}
+                  datasetCount={Math.floor(Math.random() * 30)}
                 />
               ))}
             </div>

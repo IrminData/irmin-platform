@@ -6,8 +6,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { WebsiteNavLink } from '@/lib/menuUtils';
-
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 import Button from '@/components/misc/Button';
@@ -15,11 +13,13 @@ import Button from '@/components/misc/Button';
 import { useLocale } from '@/context/LocaleContext';
 import { useProfile } from '@/context/ProfileContext';
 
+import { WebsiteNavigationLink } from '@/types/website/WebsiteNavigation';
+
 const NavLink = ({
   link,
   linkKey,
 }: {
-  link: WebsiteNavLink;
+  link: WebsiteNavigationLink;
   linkKey: string;
 }) => {
   const pathname = usePathname();
@@ -59,7 +59,7 @@ const MobileNavLink = ({
   linkKey,
   closeMenu,
 }: {
-  link: WebsiteNavLink;
+  link: WebsiteNavigationLink;
   linkKey: string;
   closeMenu: () => void;
 }) => {
@@ -107,8 +107,8 @@ export default function WebsiteNavigationContent({
   navLinksFI,
   navLinksEN,
 }: {
-  navLinksFI: WebsiteNavLink[];
-  navLinksEN: WebsiteNavLink[];
+  navLinksFI: WebsiteNavigationLink[];
+  navLinksEN: WebsiteNavigationLink[];
 }) {
   const { dict, locale } = useLocale();
   const profile = useProfile();

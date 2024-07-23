@@ -1,12 +1,21 @@
-import { ConnectionDetailsAndSettings } from '@/types/Connector';
+import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
+
 import {
-  ConnectionDetailsAndSettingsAPIResponse,
-  ConnectionTestAPIResponse,
-  ConnectorsAPIResponse,
-  IrminAPIResponse,
-} from '@/types/IrminAPIResponse';
+  ConnectionDetailsAndSettings,
+  ConnectionDetailsAndSettingsFields,
+} from '@/types/api/Connector';
+import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;
+
+interface ConnectionDetailsAndSettingsAPIResponse extends IrminAPIResponse {
+  data: ConnectionDetailsAndSettingsFields;
+}
+interface ConnectionTestAPIResponse extends IrminAPIResponse {
+  data: {
+    connected: boolean;
+  };
+}
 
 class ConnectionService {
   private static instance: ConnectionService;
@@ -31,70 +40,24 @@ class ConnectionService {
   }
 
   /**
-   * Fetch data from the API with credentials
-   * @param {string} url - The URL to fetch data from
-   * @param {RequestInit} options - The fetch options
-   * @returns {Promise<IrminAPIResponse>} A promise that resolves to a IrminAPIResponse object
-   * */
-  private async fetchWithCredentials(
-    url: string,
-    options: RequestInit
-  ): Promise<IrminAPIResponse> {
-    const response = await fetch(url, {
-      ...options,
-      credentials: 'include', // Include credentials with every request
-      headers: {
-        Accept: 'application/json',
-        'Accept-Language': this.locale,
-        Referer: window.location.origin,
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Request failed');
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Fetch all connectors
-   * @returns {Promise<ConnectorsAPIResponse>} A promise that resolves to a ConnectorsAPIResponse object
-   * */
-  async fetchAllConnectors(): Promise<ConnectorsAPIResponse> {
-    try {
-      const response = await this.fetchWithCredentials(
-        `${api_base}/v1/connectors`,
-        {
-          method: 'GET',
-        }
-      );
-      return response as ConnectorsAPIResponse;
-    } catch (error) {
-      console.error('Fetch connectors error:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Fetch connection details for a new connection.
    * @param {number} connectorID - The ID of the connector to fetch
-   * @returns {Promise<ConnectionDetailsAndSettingsAPIResponse>} A promise that resolves to a ConnectionDetailsAndSettings object
-   * */
+   * @returns {Promise<ConnectionDetailsAndSettingsAPIResponse>}
+   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-details Irmin API docs}
+   */
   async fetchNewConnectionDetails(
     connectorID: number
   ): Promise<ConnectionDetailsAndSettingsAPIResponse> {
     try {
-      const response = await this.fetchWithCredentials(
+      const response = await fetchWithCredentials(
         `${api_base}/v1/connections/create/details?connector=${connectorID}`,
         {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
-        }
+        },
+        this.locale
       );
       return response as ConnectionDetailsAndSettingsAPIResponse;
     } catch (error) {
@@ -107,8 +70,9 @@ class ConnectionService {
    * Test a connection with the provided connection details
    * @param {number} connectorID - The ID of the connector
    * @param {ConnectionDetailsAndSettings} connectionDetails - The connection details to test
-   * @returns {Promise<ConnectionTestAPIResponse>} A promise that resolves to a ConnectionTestAPIResponse object
-   * */
+   * @returns {Promise<ConnectionTestAPIResponse>}
+   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-test-connection Irmin API docs}
+   */
   async testConnectionWithDetails(
     connectorID: number,
     connectionDetails: ConnectionDetailsAndSettings
@@ -124,12 +88,16 @@ class ConnectionService {
       const url = `${api_base}/v1/connections/create/test-connection?${params.toString()}`;
 
       // Make the request
-      const response = await this.fetchWithCredentials(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetchWithCredentials(
+        url,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      });
+        this.locale
+      );
       return response as ConnectionTestAPIResponse;
     } catch (error) {
       console.error('Fetch connector details error:', error);
@@ -141,8 +109,9 @@ class ConnectionService {
    * Fetch connection settings for a new connection.
    * @param {number} connectorID - The ID of the connector to fetch
    * @param {ConnectionDetailsAndSettings} connectionDetails - The connection details to fetch settings for
-   * @returns {Promise<ConnectionDetailsAndSettingsAPIResponse>} A promise that resolves to a ConnectionDetailsAndSettings object
-   * */
+   * @returns {Promise<ConnectionDetailsAndSettingsAPIResponse>}
+   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-settings Irmin API docs}
+   */
   async fetchNewConnectionSettings(
     connectorID: number,
     connectionDetails: ConnectionDetailsAndSettings
@@ -158,12 +127,16 @@ class ConnectionService {
       const url = `${api_base}/v1/connections/create/settings?${params.toString()}`;
 
       // Make the request
-      const response = await this.fetchWithCredentials(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetchWithCredentials(
+        url,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      });
+        this.locale
+      );
       return response as ConnectionDetailsAndSettingsAPIResponse;
     } catch (error) {
       console.error('Fetch connector details error:', error);
@@ -178,7 +151,8 @@ class ConnectionService {
    * @param {string} connectionCron - The cron syntax for the connection
    * @param {ConnectionDetailsAndSettings} connectionDetails - The connection details
    * @param {ConnectionDetailsAndSettings} connectionSettings - The connection settings
-   * @returns {Promise<IrminAPIResponse>} A promise that resolves to a IrminAPIResponse object
+   * @returns {Promise<IrminAPIResponse>}
+   * {@link https://api.irmin.dev/docs#workflows-POSTv1-connections-create Irmin API docs}
    */
   async createConnection(
     connectorID: number,
@@ -201,12 +175,13 @@ class ConnectionService {
         formData.append(`settings[${key}]`, connectionSettings[key] as string);
       });
 
-      const res = await this.fetchWithCredentials(
+      const res = await fetchWithCredentials(
         `${api_base}/v1/connections/create`,
         {
           method: 'POST',
           body: formData,
-        }
+        },
+        this.locale
       );
       return res;
     } catch (error) {

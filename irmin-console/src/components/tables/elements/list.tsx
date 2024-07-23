@@ -6,22 +6,7 @@ import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5';
 
 import Button from '@/components/misc/Button';
 
-interface TableRowAction {
-  label: string;
-  primary: boolean;
-  href?: string;
-  onClick?: () => void;
-}
-export type GridRow = {
-  columns: JSX.Element[];
-  actions?: TableRowAction[];
-  details?: JSX.Element;
-};
-type GridProps = {
-  rows: GridRow[];
-  headers: string[];
-  hideHeaders?: boolean;
-};
+import { GridProps } from '@/types/internal/ListUI';
 
 const List: React.FC<GridProps> = ({ rows, headers, hideHeaders = false }) => {
   const [openDetails, setOpenDetails] = useState<number[]>([]);

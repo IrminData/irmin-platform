@@ -1,4 +1,4 @@
-import { NumbersSection } from '@/types/Wordpress';
+import { NumbersSection } from '@/types/website/Wordpress';
 
 export default function WebsiteNumbersSection({
   section,

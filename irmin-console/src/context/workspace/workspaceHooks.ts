@@ -4,28 +4,31 @@ import { useCallback } from 'react';
 
 import { useParams, usePathname, useRouter } from 'next/navigation';
 
+import DashboardService from '@/lib/api/DashboardService';
+import DatasetService from '@/lib/api/DatasetService';
+import UserAndRoleService from '@/lib/api/UserAndRoleService';
+import WorkflowService from '@/lib/api/WorkflowService';
 import WorkspaceService from '@/lib/api/WorkspaceService';
-import {
-  offlineConnections,
-  offlineRoles,
-  offlineWorkspace,
-} from '@/lib/offlineObjects';
 
-import { ConnectionWithAdditionalData } from '@/types/Connection';
-import { IrminRole, Workspace } from '@/types/Workspace';
+import { Dashboard } from '@/types/api/Dashboard';
+import { Dataset } from '@/types/api/Dataset';
+import { IrminRole } from '@/types/api/IrminRole';
+import {
+  ActionWorkflow,
+  ConnectionWorkflow,
+  ExportWorkflow,
+} from '@/types/api/Workflow';
+import { Workspace } from '@/types/api/Workspace';
 
 /**
  * Hook to fetch the list of workspaces.
- * It will fetch from the API if not in offline mode.
  * @param setWorkspaces - Function to update the workspaces state.
- * @param setCurrentWorkspace - Function to update the current workspace state.
  * @param workspaceLoading - Loading state to prevent multiple simultaneous fetches.
  * @param setWorkspaceLoading - Function to update the workspace loading state.
  * @param locale - The current locale.
  */
 export const useFetchWorkspaces = (
-  setWorkspaces: React.Dispatch<React.SetStateAction<Workspace[] | null>>,
-  setCurrentWorkspace: React.Dispatch<React.SetStateAction<Workspace | null>>,
+  setWorkspaces: React.Dispatch<React.SetStateAction<Workspace[]>>,
   workspaceLoading: boolean,
   setWorkspaceLoading: React.Dispatch<React.SetStateAction<boolean>>,
   locale: string
@@ -35,143 +38,323 @@ export const useFetchWorkspaces = (
     const workspaceService = WorkspaceService.getInstance(locale);
     // Prevent multiple simultaneous fetches
     if (workspaceLoading) return;
-    // Handle offline mode
-    const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-    if (offlineMode) {
-      setWorkspaces([offlineWorkspace]);
-      setCurrentWorkspace(offlineWorkspace);
-      return;
-    }
     // Fetch the workspaces
     try {
       setWorkspaceLoading(true);
-      const data = await workspaceService.getWorkspaces();
-      setWorkspaces(Array.isArray(data) ? data : null);
+      const data = await workspaceService.fetchWorkspaces();
+      setWorkspaces(data.data ?? []);
     } catch (error) {
       console.error('Error fetching workspaces:', error);
       throw error;
     } finally {
       setWorkspaceLoading(false);
     }
-  }, [
-    setCurrentWorkspace,
-    setWorkspaces,
-    workspaceLoading,
-    setWorkspaceLoading,
-    locale,
-  ]);
+  }, [setWorkspaces, workspaceLoading, setWorkspaceLoading, locale]);
 
 /**
  * Hook to fetch the list of roles.
- * It will fetch from the API if not in offline mode.
- * @param irminRoles - The current roles state.
  * @param setIrminRoles - Function to update the roles state.
  * @param locale - The current locale.
  */
 export const useFetchRoles = (
-  irminRoles: IrminRole[],
   setIrminRoles: React.Dispatch<React.SetStateAction<IrminRole[]>>,
   locale: string
 ) =>
   useCallback(async () => {
-    // Check if the roles are already fetched
-    if (irminRoles.length > 0) return;
     // Get the workspace service
-    const workspaceService = WorkspaceService.getInstance(locale);
-    // Get the offline mode from the environment variable
-    const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-    if (offlineMode) {
-      setIrminRoles(offlineRoles);
-      return;
-    }
+    const rolesService = UserAndRoleService.getInstance(locale);
     // Fetch the roles
     try {
-      const data = await workspaceService.getIrminRoles();
-      setIrminRoles(data);
+      const savedRoles = await rolesService.getRoles();
+      if (savedRoles && savedRoles.length > 0) {
+        setIrminRoles(savedRoles);
+      } else {
+        const data = await rolesService.fetchRoles();
+        setIrminRoles(data.data);
+      }
     } catch (error) {
       console.error('Error fetching roles:', error);
       setIrminRoles([]);
       throw error;
     }
-  }, [irminRoles, setIrminRoles, locale]);
+  }, [setIrminRoles, locale]);
 
 /**
- * Hook to fetch the list of connections for the current workspace.
- * It will fetch from the API if not in offline mode.
- * @param currentWorkspace - The current workspace to fetch connections for.
+ * Hook to fetch the list of connection workflows for the current workspace.
+ * @param currentWorkspace - The current workspace
  * @param setConnections - Function to update the connections state.
- * @param connectionsLoading - Loading state to prevent multiple simultaneous fetches.
- * @param setConnectionsLoading - Function to update the connections loading state.
- * @param connectionsFetchedFor - The slug of the workspace the connections are fetched for.
- * @param setConnectionsFetchedFor - Function to update the connections fetched for state.
+ * @param loading - Loading state to prevent multiple simultaneous fetches.
+ * @param setLoading - Function to update the loading state.
+ * @param fetchedFor - The slug of the workspace workflows are fetched for.
+ * @param setFetchedFor - Function to update fetched for state.
  * @param locale - The current locale.
  */
 export const useFetchConnections = (
   currentWorkspace: Workspace | null,
-  setConnections: React.Dispatch<
-    React.SetStateAction<ConnectionWithAdditionalData[]>
-  >,
-  connectionsLoading: boolean,
-  setConnectionsLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  connectionsFetchedFor: string | null,
-  setConnectionsFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
+  setConnections: React.Dispatch<React.SetStateAction<ConnectionWorkflow[]>>,
+  loading: boolean,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  fetchedFor: string | null,
+  setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
   locale: string
 ) =>
   useCallback(
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
       if (!forceFetch) {
-        if (!connectionsFetchedFor && !currentWorkspace) return;
-        if (connectionsFetchedFor === currentWorkspace?.slug) return;
+        if (!fetchedFor && !currentWorkspace) return;
+        if (fetchedFor === currentWorkspace?.slug) return;
       }
-      setConnectionsFetchedFor(currentWorkspace?.slug ?? null);
+      setFetchedFor(currentWorkspace?.slug ?? null);
       // Get the workspace service
-      const workspaceService = WorkspaceService.getInstance(locale);
+      const workflowService = WorkflowService.getInstance(locale);
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {
         setConnections([]);
         return;
       }
-      // Get the offline mode from the environment variable
-      const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-      if (offlineMode) {
-        setConnections(offlineConnections);
-        setConnectionsLoading(false);
-        return;
-      }
       try {
         // Prevent multiple simultaneous fetches
-        if (connectionsLoading) return;
-        setConnectionsLoading(true);
+        if (loading) return;
+        setLoading(true);
         // Fetch the connections for the current workspace
-        const res = await workspaceService.fetchConnectionsForWorkspace();
-        // Set the connections
-        const newConnections: ConnectionWithAdditionalData[] = res.data.map(
-          (conn) => {
-            // Get random offline connections to simulate the data not yet provided by the API
-            const randomOfflineConection =
-              offlineConnections[
-                Math.floor(Math.random() * offlineConnections.length)
-              ];
-            // Return the connection with the offline data
-            return {
-              ...randomOfflineConection,
-              ...conn,
-            };
-          }
-        );
-        setConnections(newConnections);
+        const response = await workflowService.fetchConnections();
+        setConnections(response.data);
       } finally {
-        setConnectionsLoading(false);
+        setLoading(false);
       }
     },
     [
       currentWorkspace,
       setConnections,
-      connectionsLoading,
-      setConnectionsLoading,
-      connectionsFetchedFor,
-      setConnectionsFetchedFor,
+      loading,
+      setLoading,
+      fetchedFor,
+      setFetchedFor,
+      locale,
+    ]
+  );
+
+/**
+ * Hook to fetch the list of export workflows for the current workspace.
+ * @param currentWorkspace - The current workspace
+ * @param setExports - Function to update the exports state.
+ * @param loading - Loading state to prevent multiple simultaneous fetches.
+ * @param setLoading - Function to update the loading state.
+ * @param fetchedFor - The slug of the workspace workflows are fetched for.
+ * @param setFetchedFor - Function to update fetched for state.
+ * @param locale - The current locale.
+ */
+export const useFetchExports = (
+  currentWorkspace: Workspace | null,
+  setExports: React.Dispatch<React.SetStateAction<ExportWorkflow[]>>,
+  loading: boolean,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  fetchedFor: string | null,
+  setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
+  locale: string
+) =>
+  useCallback(
+    async (forceFetch?: boolean) => {
+      // Check if the connections are already fetched for the current workspace
+      if (!forceFetch) {
+        if (!fetchedFor && !currentWorkspace) return;
+        if (fetchedFor === currentWorkspace?.slug) return;
+      }
+      setFetchedFor(currentWorkspace?.slug ?? null);
+      // Get the workspace service
+      const workflowService = WorkflowService.getInstance(locale);
+      // If the current workspace is not set, clear the connections
+      if (!currentWorkspace) {
+        setExports([]);
+        return;
+      }
+      try {
+        // Prevent multiple simultaneous fetches
+        if (loading) return;
+        setLoading(true);
+        // Fetch the connections for the current workspace
+        const response = await workflowService.fetchExports();
+        setExports(response.data);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      currentWorkspace,
+      setExports,
+      loading,
+      setLoading,
+      fetchedFor,
+      setFetchedFor,
+      locale,
+    ]
+  );
+
+/**
+ * Hook to fetch the list of actions workflows for the current workspace.
+ * @param currentWorkspace - The current workspace
+ * @param setActions - Function to update the actions state.
+ * @param loading - Loading state to prevent multiple simultaneous fetches.
+ * @param setLoading - Function to update the loading state.
+ * @param fetchedFor - The slug of the workspace workflows are fetched for.
+ * @param setFetchedFor - Function to update fetched for state.
+ * @param locale - The current locale.
+ */
+export const useFetchActions = (
+  currentWorkspace: Workspace | null,
+  setActions: React.Dispatch<React.SetStateAction<ActionWorkflow[]>>,
+  loading: boolean,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  fetchedFor: string | null,
+  setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
+  locale: string
+) =>
+  useCallback(
+    async (forceFetch?: boolean) => {
+      // Check if the connections are already fetched for the current workspace
+      if (!forceFetch) {
+        if (!fetchedFor && !currentWorkspace) return;
+        if (fetchedFor === currentWorkspace?.slug) return;
+      }
+      setFetchedFor(currentWorkspace?.slug ?? null);
+      // Get the workspace service
+      const workflowService = WorkflowService.getInstance(locale);
+      // If the current workspace is not set, clear the connections
+      if (!currentWorkspace) {
+        setActions([]);
+        return;
+      }
+      try {
+        // Prevent multiple simultaneous fetches
+        if (loading) return;
+        setLoading(true);
+        // Fetch the connections for the current workspace
+        const response = await workflowService.fetchActions();
+        setActions(response.data);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      currentWorkspace,
+      setActions,
+      loading,
+      setLoading,
+      fetchedFor,
+      setFetchedFor,
+      locale,
+    ]
+  );
+
+/**
+ * Hook to fetch the list of Datasets for the current workspace.
+ * @param currentWorkspace - The current workspace
+ * @param setDatasets - Function to update the datasets state.
+ * @param loading - Loading state to prevent multiple simultaneous fetches.
+ * @param setLoading - Function to update the loading state.
+ * @param fetchedFor - The slug of the workspace workflows are fetched for.
+ * @param setFetchedFor - Function to update fetched for state.
+ * @param locale - The current locale.
+ */
+export const useFetchDatasets = (
+  currentWorkspace: Workspace | null,
+  setDatasets: React.Dispatch<React.SetStateAction<Dataset[]>>,
+  loading: boolean,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  fetchedFor: string | null,
+  setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
+  locale: string
+) =>
+  useCallback(
+    async (forceFetch?: boolean) => {
+      // Check if the connections are already fetched for the current workspace
+      if (!forceFetch) {
+        if (!fetchedFor && !currentWorkspace) return;
+        if (fetchedFor === currentWorkspace?.slug) return;
+      }
+      setFetchedFor(currentWorkspace?.slug ?? null);
+      // Get the workspace service
+      const datasetService = DatasetService.getInstance(locale);
+      // If the current workspace is not set, clear the connections
+      if (!currentWorkspace) {
+        setDatasets([]);
+        return;
+      }
+      try {
+        // Prevent multiple simultaneous fetches
+        if (loading) return;
+        setLoading(true);
+        // Fetch the connections for the current workspace
+        const response = await datasetService.fetchAllDatasets();
+        setDatasets(response.data);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      currentWorkspace,
+      setDatasets,
+      loading,
+      setLoading,
+      fetchedFor,
+      setFetchedFor,
+      locale,
+    ]
+  );
+
+/**
+ * Hook to fetch the list of dashboards for the current workspace.
+ * @param currentWorkspace - The current workspace
+ * @param setDashboards - Function to update the dashboards state.
+ * @param loading - Loading state to prevent multiple simultaneous fetches.
+ * @param setLoading - Function to update the loading state.
+ * @param fetchedFor - The slug of the workspace dashboards are fetched for.
+ * @param setFetchedFor - Function to update fetched for state.
+ * @param locale - The current locale.
+ */
+export const useFetchDashboards = (
+  currentWorkspace: Workspace | null,
+  setDashboards: React.Dispatch<React.SetStateAction<Dashboard[]>>,
+  loading: boolean,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  fetchedFor: string | null,
+  setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
+  locale: string
+) =>
+  useCallback(
+    async (forceFetch?: boolean) => {
+      // Check if the connections are already fetched for the current workspace
+      if (!forceFetch) {
+        if (!fetchedFor && !currentWorkspace) return;
+        if (fetchedFor === currentWorkspace?.slug) return;
+      }
+      setFetchedFor(currentWorkspace?.slug ?? null);
+      // Get the workspace service
+      const dashboardService = DashboardService.getInstance(locale);
+      // If the current workspace is not set, clear the connections
+      if (!currentWorkspace) {
+        setDashboards([]);
+        return;
+      }
+      try {
+        // Prevent multiple simultaneous fetches
+        if (loading) return;
+        setLoading(true);
+        // Fetch the connections for the current workspace
+        const response = await dashboardService.fetchDashboards();
+        setDashboards(response.data);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      currentWorkspace,
+      setDashboards,
+      loading,
+      setLoading,
+      fetchedFor,
+      setFetchedFor,
       locale,
     ]
   );
@@ -240,7 +423,7 @@ export const useSwitchWorkspace = (
           const newWorkspace =
             await workspaceService.switchWorkspace(workspaceSlug);
           if (newWorkspace) {
-            setCurrentWorkspace(newWorkspace);
+            setCurrentWorkspace(newWorkspace.data);
             // If router not already on a workspace page, redirect to the dashboards page
             if (!pathname.includes(`/portal/${workspaceSlug}`)) {
               router.push(`/portal/${workspaceSlug}/dashboards`);

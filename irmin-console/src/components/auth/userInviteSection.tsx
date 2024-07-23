@@ -41,7 +41,7 @@ const UserInvite: React.FC = () => {
     setSuccess(null);
 
     try {
-      const response = await inviteService.acceptUserInvite(
+      const response = await inviteService.acceptInvite(
         inviteId,
         company,
         password,
@@ -49,7 +49,7 @@ const UserInvite: React.FC = () => {
       );
       if (response.metadata?.message) {
         setSuccess(response.metadata.message);
-        // Redirect to dashboard or another page on successful accept
+        // Redirect to portal on success
         router.push('/portal');
       } else {
         throw new Error(response.message || 'Accepting invite failed');
@@ -67,7 +67,7 @@ const UserInvite: React.FC = () => {
     setSuccess(null);
 
     try {
-      const response = await inviteService.declineUserInvite(inviteId);
+      const response = await inviteService.declineInvite(inviteId);
       if (response.metadata?.message) {
         setSuccess(response.metadata.message);
         // Redirect to homepage or another page on successful decline

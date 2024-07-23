@@ -2,28 +2,20 @@
 
 import React from 'react';
 
-import List, { GridRow } from '@/components/tables/elements/list';
+import List from '@/components/tables/elements/list';
 import StatusElement from '@/components/tables/elements/statusElement';
 
 import { useLocale } from '@/context/LocaleContext';
 
-interface ExportProcess {
-  id: number;
-  name: string;
-  source: string;
-  destination: string;
-  status: 'error' | 'warning' | 'running' | 'paused' | 'default';
-  details: string[];
-}
+import { ExportWorkflow } from '@/types/api/Workflow';
+import { GridRow } from '@/types/internal/ListUI';
 
-interface ExportTableProps {
-  processes: ExportProcess[];
-  inSidebar?: boolean;
-}
-
-const ExportTable: React.FC<ExportTableProps> = ({
+const ExportTable = ({
   processes,
   inSidebar = false,
+}: {
+  processes: ExportWorkflow[];
+  inSidebar?: boolean;
 }) => {
   const { dict } = useLocale();
 
@@ -69,22 +61,11 @@ const ExportTable: React.FC<ExportTableProps> = ({
         <div
           key={`export-sync-${process.id}-${processIndex}-source-and-destination`}
         >
-          {dict.list.export.source}: {process.source} <br />
-          {dict.list.export.destination}: {process.destination}
+          {dict.list.export.source}: {process.workflowable.source.name} <br />
+          {dict.list.export.destination}:{' '}
+          {process.workflowable.destination.connector.name}
         </div>,
       ],
-      details: (
-        <ul>
-          {process.details.map((detail, index) => (
-            <li
-              key={`export-sync-${process.id}-${processIndex}-details-${index}`}
-              className='border-color-irmin_green border-b py-2 text-xs md:text-sm xl:text-base'
-            >
-              {detail}
-            </li>
-          ))}
-        </ul>
-      ),
       actions,
     };
   });

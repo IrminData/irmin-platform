@@ -4,13 +4,13 @@ import { useState } from 'react';
 
 import Image from 'next/image';
 
-import { getURL } from '@/lib/linkUtil';
+import { getURL } from '@/lib/utils/wordpressLinkUtils';
 
 import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { PriceSection } from '@/types/Wordpress';
+import { PriceSection } from '@/types/website/Wordpress';
 
 export default function WebsitePricingSection({
   section,

@@ -14,7 +14,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Workspace } from '@/types/Workspace';
+import { Workspace } from '@/types/api/Workspace';
 
 export default function WorkspaceSettingsPage() {
   const { dict } = useLocale();
@@ -62,7 +62,7 @@ const GeneralSettings = () => {
       setIsLoading(true);
       try {
         // Call the API to update the workspace
-        await workspaceService.updateWorkspace(currentWorkspace.slug, {
+        await workspaceService.updateWorkspace({
           name: workspaceName,
         } as Workspace);
         // Fetch the updated workspace data

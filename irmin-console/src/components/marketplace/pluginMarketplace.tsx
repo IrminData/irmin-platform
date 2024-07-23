@@ -9,22 +9,14 @@ import PortalTitle from '@/components/portalTitle';
 
 import { useLocale } from '@/context/LocaleContext';
 
-export interface MarketplacePlugin {
-  id: number;
-  name: string;
-  provider: string;
-  price: number;
-  category: string;
-  description?: string;
-  connected: boolean;
-}
+import { MarketplacePlugin } from '@/types/internal/Marketplace';
 
 export default function PluginMarketplace() {
   const { dict } = useLocale();
   const [selectedCategory, setSelectedCategory] = useState('');
   const [search, setSearch] = useState('');
 
-  // Hypothetical plugins data, you would fetch this from an API in a real app
+  // TODO: Implement real data fetching
   const plugins: MarketplacePlugin[] = [
     {
       id: 1,
@@ -82,16 +74,13 @@ export default function PluginMarketplace() {
     },
   ];
 
-  // Hypothetical categories, you would fetch this from an API in a real app
-  const categories = [
-    dict.marketplace.all,
-    'Analytics',
-    'CRM',
-    'Payments',
-    'Marketing',
-    'Communication',
-    'Email Marketing',
-  ];
+  // Get unique categories from plugins
+  const categories: string[] = [dict.marketplace.all];
+  plugins.forEach((plugin) => {
+    if (!categories.includes(plugin.category)) {
+      categories.push(plugin.category);
+    }
+  });
 
   // Filter plugins based on selected category and search term
   const filteredPlugins = plugins

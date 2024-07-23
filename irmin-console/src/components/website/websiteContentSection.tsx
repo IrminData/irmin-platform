@@ -4,7 +4,7 @@ import WordPress from '@/lib/wordpress';
 
 import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
 
-import { ContentSection } from '@/types/Wordpress';
+import { ContentSection } from '@/types/website/Wordpress';
 
 export default async function WebsiteContentSection({
   section,

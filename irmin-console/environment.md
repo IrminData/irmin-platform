@@ -40,6 +40,12 @@ This document explains the various environment properties used in the applicatio
 - **Purpose**: Specifies the URL of the WordPress CMS that the front-end application will interact with.
 - **Example**: `NEXT_PUBLIC_WORDPRESS_URL=https://cms.irmin.dev`
 
+### 7. NEXT_PUBLIC_ENVIRONMENT_TYPE
+
+- **Description**: The type of environment the application is running in.
+- **Purpose**: Identifies the type of environment the application is running in, such as `development`, `staging`, or `production`.
+- **Example**: `NEXT_PUBLIC_ENVIRONMENT_TYPE=development`
+
 ## Example Configuration
 
 Here is an example of how the environment variables should be set in your `.env` file:
@@ -51,4 +57,5 @@ ENV_PASSWORD=devpassword
 NEXT_PUBLIC_API_URL=https://api.irmin.dev
 NEXT_PUBLIC_OFFLINE_MODE=false
 NEXT_PUBLIC_WORDPRESS_URL=https://cms.irmin.dev
+NEXT_PUBLIC_ENVIRONMENT_TYPE=development
 ```

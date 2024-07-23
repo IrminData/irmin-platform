@@ -1,56 +1,25 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-
-import { DataSetService } from '@/lib/api/DataSetService';
+import React, { useState } from 'react';
 
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
 import ActionEditorWithOptions from '@/components/action-editor/actionEditorWithOptions';
-import ActionResultsAndTabs from '@/components/actionResultsAndTabs';
+// import ActionResultsAndTabs from '@/components/actionResultsAndTabs';
 import FileNavigator from '@/components/fileNavigator';
-import LoadingSpinner from '@/components/misc/LoadingSpinner';
-import ConnectionTable from '@/components/tables/connectionTable';
 import DatasetTable from '@/components/tables/datasetTable';
-import TableSkeleton from '@/components/tables/tableSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { DataSet } from '@/types/DataSet';
-
 export default function EditorPage() {
-  const { locale, dict } = useLocale();
-  const dataService = DataSetService.getInstance(locale);
-  const { connections } = useWorkspace();
+  const { dict } = useLocale();
+  const { datasets } = useWorkspace();
 
   const [editorHeight, setEditorHeight] = useState('400px');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [dataSets, setDataSets] = useState<DataSet[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        let fetchedDataSets = await dataService.getAllDataSets();
-        if (!fetchedDataSets || fetchedDataSets.length === 0) {
-          fetchedDataSets = await dataService.fetchAllDataSets();
-        }
-        if (fetchedDataSets) setDataSets(fetchedDataSets);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [dataService]);
-
-  const dataSet = dataSets[0] ?? null;
   return (
     <>
       <div className='flex'>
@@ -147,42 +116,25 @@ export default function EditorPage() {
             />
             <br />
             <div className='max-h-80 overflow-auto border-t p-2'>
-              <h3 className='px-4'>{dict.fileNavigator.connections}</h3>
-              {connections.isLoading ? (
-                <TableSkeleton />
-              ) : (
-                <ConnectionTable
-                  inSidebar={true}
-                  connections={connections.connections}
-                />
-              )}
-            </div>
-            <br />
-            <div className='max-h-80 overflow-auto border-t p-2'>
-              <h3 className='px-4'>{dict.fileNavigator.dataSets}</h3>
-              {loading ? (
-                <TableSkeleton />
-              ) : (
-                <DatasetTable inSidebar={true} dataSets={dataSets} />
-              )}
+              <h3 className='px-4'>{dict.fileNavigator.datasets}</h3>
+              <DatasetTable inSidebar={true} datasets={datasets.datasets} />
             </div>
           </div>
         </div>
         <div className='inline-block w-full overflow-auto bg-white'>
-          {dataSet ? (
-            <>
-              <ActionEditorWithOptions
-                editorHeight={editorHeight}
-                setEditorHeight={setEditorHeight}
-              />
+          <ActionEditorWithOptions
+            editorHeight={editorHeight}
+            setEditorHeight={setEditorHeight}
+          />
+          {/* TODO: Change ActionResults to actually show results of an action, instead of displaying Datasets*/}
+          {/* {dataset ? (
               <ActionResultsAndTabs
                 editorHeight={editorHeight}
-                dataSet={dataSet}
+                dataset={dataset}
               />
-            </>
           ) : (
             <LoadingSpinner />
-          )}
+          )} */}
         </div>
       </div>
     </>

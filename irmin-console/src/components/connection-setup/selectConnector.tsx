@@ -2,13 +2,13 @@
 
 import Image from 'next/image';
 
-import { connectionDataType } from '@/components/connection-setup/connectionSetupView';
 import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { Connector } from '@/types/Connector';
+import { Connector } from '@/types/api/Connector';
+import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 
 export function SelectConnector({
   connectors,
@@ -16,7 +16,7 @@ export function SelectConnector({
   setCurrentStep,
 }: {
   connectors: Connector[];
-  setConnectionData: React.Dispatch<React.SetStateAction<connectionDataType>>;
+  setConnectionData: React.Dispatch<React.SetStateAction<ConnectionSetup>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const { dict } = useLocale();

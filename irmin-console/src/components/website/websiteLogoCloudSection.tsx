@@ -2,7 +2,7 @@ import Image from 'next/image';
 
 import WordPress from '@/lib/wordpress';
 
-import { LogoCloudSection } from '@/types/Wordpress';
+import { LogoCloudSection } from '@/types/website/Wordpress';
 
 export default async function WebsiteLogoCloudSection({
   section,

@@ -8,7 +8,7 @@ import WordPress from '@/lib/wordpress';
 
 import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
 
-import { TestimonialSection } from '@/types/Wordpress';
+import { TestimonialSection } from '@/types/website/Wordpress';
 
 export default function WebsiteTestimonialsSection({
   section,

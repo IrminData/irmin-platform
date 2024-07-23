@@ -57,7 +57,7 @@ const SignUpSection: React.FC = () => {
       if (response.metadata?.message) {
         setSuccess(response.metadata.message);
         await fetchProfile();
-        // Redirect to dashboard or another page on successful login
+        // Redirect to portal on success
         router.push('/portal');
       } else {
         throw new Error(response.message || 'Registration failed');

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import DashboardNavigation from '@/components/dashboard-navigation/dashboardNavigation';
+import PortalNavigation from '@/components/portal-navigation/portalNavigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 import { PopupProvider } from '@/context/PopupContext';
@@ -23,9 +23,9 @@ export default function PortalLayout({
   return (
     <PopupProvider>
       <WorkspaceProvider>
-        <DashboardNavigation>
+        <PortalNavigation>
           <ProtectedRoute>{children}</ProtectedRoute>
-        </DashboardNavigation>
+        </PortalNavigation>
       </WorkspaceProvider>
     </PopupProvider>
   );

@@ -18,7 +18,7 @@ import { IoSettings } from 'react-icons/io5';
 
 import Button from '@/components/misc/Button';
 
-import { Visualisation } from '@/types/DataSet';
+import { ChartOrTableData, Widget } from '@/types/api/Widget';
 
 // Register the components required for the chart
 ChartJS.register(
@@ -31,14 +31,13 @@ ChartJS.register(
   Legend
 );
 
-const LineChart = ({ visualisation }: { visualisation: Visualisation }) => {
-  if (visualisation.type !== 'line') return <></>;
+const LineChart = ({ widget }: { widget: Widget }) => {
+  if (widget.type !== 'line') return <></>;
+  const widgetData = widget.data as ChartOrTableData;
   return (
     <div className='rounded border-t-2 border-irmin_green bg-white p-2 shadow-lg md:p-4'>
       <div className='flex h-14 items-center justify-between border-b px-6 py-4'>
-        <h2 className='text-xl font-semibold leading-tight'>
-          {visualisation.title}
-        </h2>
+        <h2 className='text-xl font-semibold leading-tight'>{widget.title}</h2>
         <Button
           variant='icon'
           colorScheme='primary'
@@ -51,7 +50,7 @@ const LineChart = ({ visualisation }: { visualisation: Visualisation }) => {
       </div>
       <div className='min-w-full max-w-[calc(100vw-4px)] overflow-scroll align-middle'>
         <Line
-          data={visualisation.data}
+          data={widgetData}
           options={{
             scales: {
               y: {

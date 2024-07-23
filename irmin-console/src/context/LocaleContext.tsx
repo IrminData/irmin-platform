@@ -11,25 +11,19 @@ import {
 import { useParams, usePathname, useRouter } from 'next/navigation';
 
 import { Dictionary, getDictionary } from '@/dictionaries';
-import { setCookie } from '@/lib/utils';
+import { setCookie } from '@/lib/utils/cookieUtils';
 
-interface LocaleContextType {
+const LocaleContext = createContext<{
   locale: string;
   dict: Dictionary;
   switchLocale: (newLocale: string) => void;
-}
-
-const LocaleContext = createContext<LocaleContextType>({
+}>({
   locale: 'en',
   dict: {} as Dictionary,
   switchLocale: () => {},
 });
 
-interface LocaleProviderProps {
-  children: ReactNode;
-}
-
-export function LocaleProvider({ children }: LocaleProviderProps) {
+export function LocaleProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { lang } = useParams() as { lang: string };
