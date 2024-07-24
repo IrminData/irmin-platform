@@ -222,7 +222,7 @@ export const exampleDataset = {
   description:
     'This an example dataset. It is used to work on planes or to fill up missing API data.',
   documentation: '#Irmin is awesome',
-  tables: [],
+  tables: ['users', 'sales', 'products'],
   created_at: new Date().toDateString(),
   updated_at: new Date().toDateString(),
 };
@@ -233,6 +233,7 @@ export const exampleWorkflow: Workflow = {
   id: 0,
   workflowable_id: 0,
   cron_syntax: '0 * 0 0 0',
+  next_run_at: new Date().toDateString(),
   status: 'running',
   created_at: new Date().toDateString(),
   updated_at: new Date().toDateString(),

@@ -25,7 +25,7 @@ const DatasetTable = ({
   if (!datasets || datasets.length === 0) {
     return (
       <div className='px-4 py-12 text-center text-xl text-irmin_black'>
-        {dict.list.datasets.noDatasetsFound}
+        {dict.list.noDatasetsFound}
       </div>
     );
   }
@@ -33,41 +33,24 @@ const DatasetTable = ({
   const rows: GridRow[] = datasets.map((dataset, datasetIndex) => {
     const actions = [
       {
-        label: dict.list.datasets.view,
+        label: dict.list.view,
         primary: true,
         href: `/portal/${workspace}/datasets/viewer/${dataset.id}`,
       },
       {
-        label: dict.list.datasets.edit,
+        label: dict.list.edit,
         primary: false,
         href: `/portal/${workspace}/datasets/viewer/${dataset.id}/settings`,
       },
     ];
 
-    // TODO: Add the marketplace and connection logic to types and backend
-    // if (dataset.status === 'connected') {
-    //   actions.push(
-    //     {
-    //       label: dict.list.datasets.viewInfo,
-    //       primary: false,
-    //       href: `/portal/${workspace}/datasets/viewer/${dataset.id}/settings`,
-    //     },
-    //     {
-    //       label: dict.list.datasets.disconnect,
-    //       primary: false,
-    //       href: `/portal/${workspace}/datasets/viewer/${dataset.id}/settings`,
-    //     }
-    //   );
-    // }
-
     return {
       columns: [
-        <div key={`dataset-${datasetIndex}-name`}>
+        <div key={`dataset-${datasetIndex}-name-source`}>
           {dataset.name}
           <br />
           <span className='text-xs text-irmin_blue'>
-            {dict.list.datasets.source}:{' '}
-            {dataset.workflow ? dataset.workflow.name : '-'}
+            {dict.list.source}: {dataset.workflow ? dataset.workflow.name : '-'}
           </span>
         </div>,
         <StatusElement
@@ -95,11 +78,7 @@ const DatasetTable = ({
   return (
     <div className='pb-28'>
       <List
-        headers={[
-          dict.list.datasets.name,
-          dict.list.datasets.status,
-          dict.list.datasets.actions,
-        ]}
+        headers={[dict.list.name, dict.list.status, dict.list.actions]}
         rows={rows}
         hideHeaders={inSidebar}
       />

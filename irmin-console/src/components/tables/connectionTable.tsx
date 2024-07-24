@@ -17,12 +17,12 @@ const ConnectionTable = ({
   connections: ConnectionWorkflow[];
   inSidebar?: boolean;
 }) => {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
 
   if (!connections || connections.length === 0) {
     return (
       <div className='px-4 py-12 text-center text-sm text-irmin_black'>
-        {dict.list.connection.noConnectionsFound}
+        {dict.list.noConnectionsFound}
       </div>
     );
   }
@@ -30,22 +30,22 @@ const ConnectionTable = ({
   const rows: GridRow[] = connections.map((connection, connectionIndex) => {
     const actions = [
       {
-        label: dict.list.connection.view,
+        label: dict.list.view,
         primary: true,
         href: `#`,
       },
       {
-        label: dict.list.connection.logs,
+        label: dict.list.logs,
         primary: false,
         href: `#`,
       },
       {
-        label: dict.list.connection.edit,
+        label: dict.list.edit,
         primary: false,
         href: `#`,
       },
       {
-        label: dict.list.connection.remove,
+        label: dict.list.remove,
         primary: false,
         href: `#`,
       },
@@ -53,26 +53,32 @@ const ConnectionTable = ({
 
     return {
       columns: [
-        <div
-          className='align-center flex flex-row justify-between'
-          key={`connection-${connection.id}-${connectionIndex}-name-and-status`}
-        >
-          <div>
-            {connection.name}
-            <br />
-            <span className='text-xs text-irmin_blue'>
-              {connection.workflowable.connector.name}
-            </span>
-          </div>
-          <StatusElement
-            runStatus={connection.status ?? 'default'}
-            statusLabel={connection.status ?? ''}
-          />
+        <div key={`connection-${connectionIndex}-name-and-connector`}>
+          {connection.name}
+          <br />
+          <span className='text-xs text-irmin_blue'>
+            {connection.workflowable.connector.name}
+          </span>
         </div>,
+        <StatusElement
+          key={`connection-${connectionIndex}-status`}
+          runStatus={connection.status ?? 'default'}
+          statusLabel={connection.status ?? ''}
+        />,
         <div key={`connection-${connection.id}-${connectionIndex}-nextSync`}>
-          {connection.cron_syntax && connection.cron_syntax.length > 0
-            ? connection.cron_syntax
-            : dict.list.connection.notScheduled}
+          {connection.cron_syntax && connection.cron_syntax.length > 0 ? (
+            <>
+              {connection.next_run_at
+                ? new Date(connection.next_run_at).toLocaleString(locale)
+                : ''}
+              <br />
+              <span className='text-xs text-irmin_blue'>
+                {dict.list.syncInterval}: {connection.cron_syntax}
+              </span>
+            </>
+          ) : (
+            dict.list.notScheduled
+          )}
         </div>,
       ],
       actions,
@@ -83,9 +89,10 @@ const ConnectionTable = ({
     <div className='pb-28'>
       <List
         headers={[
-          dict.list.connection.name,
-          dict.list.connection.nextSync,
-          dict.list.connection.actions,
+          dict.list.name,
+          dict.list.status,
+          dict.list.nextSync,
+          dict.list.actions,
         ]}
         rows={rows}
         hideHeaders={inSidebar}

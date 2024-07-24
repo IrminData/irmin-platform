@@ -19,65 +19,64 @@ const ActionTable = ({
   actions: ActionWorkflow[];
   inSidebar?: boolean;
 }) => {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const { workspace } = useParams();
 
   if (!actions || actions.length === 0) {
     return (
       <div className='px-4 py-12 text-center text-xl text-irmin_black'>
-        {dict.list.actions.noActionsFound}
+        {dict.list.noActionsFound}
       </div>
     );
   }
 
-  const rows: GridRow[] = actions.map((action, index) => {
+  const rows: GridRow[] = actions.map((action, actionIndex) => {
     const tableActions = [
       {
-        label: dict.list.actions.view,
+        label: dict.list.view,
         primary: true,
         href: `/portal/${workspace}/actions/viewer/${action.id}`,
       },
       {
-        label: dict.list.actions.logs,
+        label: dict.list.logs,
         primary: false,
         href: `/portal/${workspace}/actions/viewer/${action.id}/logs`,
       },
+      {
+        label: dict.list.edit,
+        primary: false,
+        href: `/portal/${workspace}/actions/viewer/${action.id}/settings`,
+      },
     ];
-    // TODO: Add the marketplace and connection logic to types and backend
-    // if (action.status === 'connected') {
-    //   tableActions.push(
-    //     {
-    //       label: dict.list.actions.viewInfo,
-    //       primary: false,
-    //       href: `/portal/${workspace}/actions/viewer/${action.id}/settings`,
-    //     },
-    //     {
-    //       label: dict.list.actions.disconnect,
-    //       primary: false,
-    //       href: `/portal/${workspace}/actions/viewer/${action.id}/settings`,
-    //     }
-    //   );
-    // } else {
-    //   tableActions.push({
-    //     label: dict.list.actions.edit,
-    //     primary: false,
-    //     href: `/portal/${workspace}/actions/viewer/${action.id}/settings`,
-    //   });
-    // }
     return {
       columns: [
-        <div key={`action-${index}-name`}>
+        <div key={`action-${actionIndex}-name-and-source`}>
           {action.name}
           <br />
           <span className='text-xs text-irmin_blue'>
-            {dict.list.actions.source}: {action.workflowable.path}
+            {dict.list.source}: {action.workflowable.path}
           </span>
         </div>,
         <StatusElement
-          key={`action-${index}-status`}
+          key={`action-${actionIndex}-status`}
           runStatus={action.status ?? 'default'}
-          statusLabel={action.status}
+          statusLabel={action.status ?? ''}
         />,
+        <div key={`action-${action.id}-${actionIndex}-nextSync`}>
+          {action.cron_syntax && action.cron_syntax.length > 0 ? (
+            <>
+              {action.next_run_at
+                ? new Date(action.next_run_at).toLocaleString(locale)
+                : ''}
+              <br />
+              <span className='text-xs text-irmin_blue'>
+                {dict.list.syncInterval}: {action.cron_syntax}
+              </span>
+            </>
+          ) : (
+            dict.list.notScheduled
+          )}
+        </div>,
       ],
       actions: tableActions,
     };
@@ -87,9 +86,10 @@ const ActionTable = ({
     <div className='pb-28'>
       <List
         headers={[
-          dict.list.actions.name,
-          dict.list.actions.status,
-          dict.list.actions.actions,
+          dict.list.name,
+          dict.list.status,
+          dict.list.nextSync,
+          dict.list.actions,
         ]}
         rows={rows}
         hideHeaders={inSidebar}

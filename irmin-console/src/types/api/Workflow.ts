@@ -9,6 +9,7 @@ export interface Workflow {
   workflowable_id: number;
   workflowable: Connection | Action | ExportSync;
   cron_syntax?: string;
+  next_run_at?: string; // Timestamp of the next run of the workflow
   status: WorkflowStatus;
   created_at: string;
   updated_at: string;

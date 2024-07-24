@@ -237,51 +237,22 @@
     "saveFile": "Save file"
   },
   "list": {
-    "connection": {
-      "noConnectionsFound": "No connections found for this workspace",
-      "name": "Name",
-      "nextSync": "Next sync",
-      "actions": "Actions",
-      "view": "View",
-      "logs": "Logs",
-      "edit": "Edit",
-      "remove": "Remove",
-      "notScheduled": "Not scheduled"
-    },
-    "actions": {
-      "noActionsFound": "No actions found for this workspace",
-      "view": "View",
-      "logs": "Logs",
-      "viewInfo": "View info",
-      "disconnect": "Disconnect",
-      "edit": "Edit",
-      "source": "Source",
-      "name": "Name",
-      "status": "Status",
-      "actions": "Actions"
-    },
-    "datasets": {
-      "noDatasetsFound": "No data sets found for this workspace",
-      "view": "View",
-      "viewInfo": "View info",
-      "disconnect": "Disconnect",
-      "edit": "Edit",
-      "source": "Source",
-      "name": "Name",
-      "status": "Status",
-      "actions": "Actions"
-    },
-    "export": {
-      "noExportProcessesFound": "No Export processes found for this workspace",
-      "logs": "Logs",
-      "edit": "Edit",
-      "remove": "Remove",
-      "source": "Source",
-      "destination": "Destination",
-      "name": "Name",
-      "sourceAndDestination": "Source & Destination",
-      "actions": "Actions"
-    }
+    "name": "Name",
+    "status": "Status",
+    "nextSync": "Next run",
+    "syncInterval": "Sync interval",
+    "notScheduled": "Not scheduled",
+    "actions": "Actions",
+    "view": "View",
+    "logs": "Logs",
+    "edit": "Edit",
+    "remove": "Remove",
+    "source": "Source",
+    "destination": "Destination",
+    "noConnectionsFound": "No connections found for this workspace",
+    "noActionsFound": "No actions found for this workspace",
+    "noDatasetsFound": "No data sets found for this workspace",
+    "noExportProcessesFound": "No Export processes found for this workspace"
   },
   "haz": {
     "greeting": "Hi! My name is Haz and I am here to help you with your data. Ask me anything!",

@@ -17,12 +17,12 @@ const ExportTable = ({
   processes: ExportWorkflow[];
   inSidebar?: boolean;
 }) => {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
 
   if (!processes || processes.length === 0) {
     return (
       <div className='px-4 py-12 text-center text-xl text-irmin_black'>
-        {dict.list.export.noExportProcessesFound}
+        {dict.list.noExportProcessesFound}
       </div>
     );
   }
@@ -30,17 +30,17 @@ const ExportTable = ({
   const rows: GridRow[] = processes.map((process, processIndex) => {
     const actions = [
       {
-        label: dict.list.export.logs,
+        label: dict.list.logs,
         primary: false,
         href: `#`,
       },
       {
-        label: dict.list.export.edit,
+        label: dict.list.edit,
         primary: false,
         href: `#`,
       },
       {
-        label: dict.list.export.remove,
+        label: dict.list.remove,
         primary: false,
         href: `#`,
       },
@@ -49,21 +49,38 @@ const ExportTable = ({
     return {
       columns: [
         <div
-          className='align-center flex flex-row justify-between'
-          key={`export-sync-${process.id}-${processIndex}-name-and-status`}
+          key={`export-sync-${process.id}-${processIndex}-name-source-destination`}
         >
-          <div>{process.name}</div>
-          <StatusElement
-            runStatus={process.status}
-            statusLabel={process.status}
-          />
+          {process.name}
+          <br />
+          <span className='text-xs text-irmin_blue'>
+            {dict.list.source}: {process.workflowable.source.name}
+          </span>
+          <br />
+          <span className='text-xs text-irmin_blue'>
+            {dict.list.destination}:{' '}
+            {process.workflowable.destination.connector.name}
+          </span>
         </div>,
-        <div
-          key={`export-sync-${process.id}-${processIndex}-source-and-destination`}
-        >
-          {dict.list.export.source}: {process.workflowable.source.name} <br />
-          {dict.list.export.destination}:{' '}
-          {process.workflowable.destination.connector.name}
+        <StatusElement
+          key={`export-sync-${process.id}-${processIndex}-status`}
+          runStatus={process.status}
+          statusLabel={process.status}
+        />,
+        <div key={`export-sync-${process.id}-${processIndex}-nextSync`}>
+          {process.cron_syntax && process.cron_syntax.length > 0 ? (
+            <>
+              {process.next_run_at
+                ? new Date(process.next_run_at).toLocaleString(locale)
+                : ''}
+              <br />
+              <span className='text-xs text-irmin_blue'>
+                {dict.list.syncInterval}: {process.cron_syntax}
+              </span>
+            </>
+          ) : (
+            dict.list.notScheduled
+          )}
         </div>,
       ],
       actions,
@@ -74,9 +91,10 @@ const ExportTable = ({
     <div className='pb-28'>
       <List
         headers={[
-          dict.list.export.name,
-          dict.list.export.sourceAndDestination,
-          dict.list.export.actions,
+          dict.list.name,
+          dict.list.status,
+          dict.list.nextSync,
+          dict.list.actions,
         ]}
         rows={rows}
         hideHeaders={inSidebar}

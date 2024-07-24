@@ -134,7 +134,7 @@
       "editor": "Editori",
       "actions": "Toiminnot",
       "connections": "Yhteydet",
-      "exportSyncs": "Vie synkronoinnit",
+      "exportSyncs": "Vientisynkronoinnit",
       "workspaceSettings": "Työtilan asetukset",
       "marketplace": "Markkinapaikka",
       "workspaces": "Työtilat",
@@ -237,51 +237,22 @@
     "saveFile": "Tallenna tiedosto"
   },
   "list": {
-    "connection": {
-      "noConnectionsFound": "Tälle työtilalle ei löytynyt yhteyksiä",
-      "name": "Nimi",
-      "nextSync": "Seuraava synkronointi",
-      "actions": "Toiminnot",
-      "view": "Näytä",
-      "logs": "Lokit",
-      "edit": "Muokkaa",
-      "remove": "Poista",
-      "notScheduled": "Ei aikataulutettu"
-    },
-    "actions": {
-      "noActionsFound": "Tälle työtilalle ei löytynyt toimintoja",
-      "view": "Näytä",
-      "logs": "Lokit",
-      "viewInfo": "Näytä tiedot",
-      "disconnect": "Katkaise yhteys",
-      "edit": "Muokkaa",
-      "source": "Lähde",
-      "name": "Nimi",
-      "status": "Tila",
-      "actions": "Toiminnot"
-    },
-    "datasets": {
-      "noDatasetsFound": "Tälle työtilalle ei löytynyt tietojoukkoja",
-      "view": "Näytä",
-      "viewInfo": "Näytä tiedot",
-      "disconnect": "Katkaise yhteys",
-      "edit": "Muokkaa",
-      "source": "Lähde",
-      "name": "Nimi",
-      "status": "Tila",
-      "actions": "Toiminnot"
-    },
-    "export": {
-      "noExportProcessesFound": "Tälle työtilalle ei löytynyt vientiprosesseja",
-      "logs": "Lokit",
-      "edit": "Muokkaa",
-      "remove": "Poista",
-      "source": "Lähde",
-      "destination": "Kohde",
-      "name": "Nimi",
-      "sourceAndDestination": "Lähde & Kohde",
-      "actions": "Toiminnot"
-    }
+    "name": "Nimi",
+    "status": "Tila",
+    "nextSync": "Seuraava ajo",
+    "syncInterval": "Synkronointiväli",
+    "notScheduled": "Ei ajastettu",
+    "actions": "Toiminnot",
+    "view": "Katso",
+    "logs": "Lokit",
+    "edit": "Muokkaa",
+    "remove": "Poista",
+    "source": "Lähde",
+    "destination": "Kohde",
+    "noConnectionsFound": "Yhteyksiä ei löytynyt",
+    "noActionsFound": "Toimintoja ei löytynyt",
+    "noDatasetsFound": "Tietojoukkoja ei löytynyt",
+    "noExportProcessesFound": "No Export processes found for this workspace"
   },
   "haz": {
     "greeting": "Hei! Nimeni on Haz ja olen täällä auttamassa sinua datan kanssa. Kysy mitä tahansa!",
