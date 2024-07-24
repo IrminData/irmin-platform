@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 
+import { Locale } from '@/dictionaries';
 import WordPress from '@/lib/wordpress';
 
 import {
@@ -15,7 +16,7 @@ export default async function WebsiteBlogPosts({
   lang,
 }: {
   section: ArticlesSection;
-  lang: string;
+  lang: Locale;
 }) {
   const wordpress = WordPress.getInstance();
   const posts = (await wordpress.getPosts())?.filter((a) => {

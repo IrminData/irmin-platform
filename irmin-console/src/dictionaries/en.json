@@ -1,4 +1,9 @@
 {
+  "static": {
+    "wordpressHomePageSlug": "home",
+    "wordpressMainMenuSlug": "primary-menu-en",
+    "wordpressFooterMenuSlug": "footer-menu-en"
+  },
   "website": {
     "navigation": {
       "goToPortal": "Go to portal"
@@ -53,6 +58,7 @@
     "error": "Error",
     "ohNo": "Oh no!",
     "pageNotFound": "Page not found",
+    "articleNotFound": "Article not found",
     "somethingWentWrong": "Something went wrong",
     "weEncounteredError": "We encountered an error",
     "tryAgainOrContactSupport": "Please try again or contact support",

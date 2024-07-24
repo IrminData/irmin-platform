@@ -1,6 +1,6 @@
 'use client';
 
-import { languages } from '@/dictionaries';
+import { languages, Locale } from '@/dictionaries';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -14,7 +14,7 @@ export default function LanguageSwitcher({
   return (
     <select
       value={locale}
-      onChange={(e) => switchLocale(e.target.value)}
+      onChange={(e) => switchLocale(e.target.value as Locale)}
       className={className}
       aria-label='Select language'
     >

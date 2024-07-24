@@ -1,3 +1,4 @@
+import { defaultLocale, Locale } from '@/dictionaries';
 import {
   exampleAPIResponse,
   exampleConnector,
@@ -21,13 +22,13 @@ class ConnectorService {
   private connectors: Connector[] = [];
 
   private static instance: ConnectorService;
-  private locale: string = 'en';
+  private locale: Locale = defaultLocale;
 
-  private constructor(locale: string) {
+  private constructor(locale: Locale) {
     this.locale = locale;
   }
 
-  public static getInstance(locale: string): ConnectorService {
+  public static getInstance(locale: Locale): ConnectorService {
     if (!ConnectorService.instance) {
       ConnectorService.instance = new ConnectorService(locale);
     } else {
@@ -37,7 +38,7 @@ class ConnectorService {
     return ConnectorService.instance;
   }
 
-  public setLocale(locale: string) {
+  public setLocale(locale: Locale) {
     this.locale = locale;
   }
 

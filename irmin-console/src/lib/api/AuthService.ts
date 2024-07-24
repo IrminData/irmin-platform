@@ -1,3 +1,4 @@
+import { defaultLocale, Locale } from '@/dictionaries';
 import {
   exampleAPIResponse,
   exampleProfile,
@@ -16,13 +17,13 @@ interface ProfileAPIResponse extends IrminAPIResponse {
 
 class AuthService {
   private static instance: AuthService;
-  private locale: string = 'en';
+  private locale: Locale = defaultLocale;
 
-  private constructor(locale: string) {
+  private constructor(locale: Locale) {
     this.locale = locale;
   }
 
-  public static getInstance(locale: string): AuthService {
+  public static getInstance(locale: Locale): AuthService {
     if (!AuthService.instance) {
       AuthService.instance = new AuthService(locale);
     } else {
@@ -32,7 +33,7 @@ class AuthService {
     return AuthService.instance;
   }
 
-  public setLocale(locale: string) {
+  public setLocale(locale: Locale) {
     this.locale = locale;
   }
 

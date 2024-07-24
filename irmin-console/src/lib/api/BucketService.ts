@@ -1,3 +1,4 @@
+import { defaultLocale, Locale } from '@/dictionaries';
 import {
   exampleAPIResponse,
   exampleBucket,
@@ -36,13 +37,13 @@ class BucketService {
   private bucket: Bucket | null = null;
 
   private static instance: BucketService;
-  private locale: string = 'en';
+  private locale: Locale = defaultLocale;
 
-  private constructor(locale: string) {
+  private constructor(locale: Locale) {
     this.locale = locale;
   }
 
-  public static getInstance(locale: string): BucketService {
+  public static getInstance(locale: Locale): BucketService {
     if (!BucketService.instance) {
       BucketService.instance = new BucketService(locale);
     } else {
@@ -52,7 +53,7 @@ class BucketService {
     return BucketService.instance;
   }
 
-  public setLocale(locale: string) {
+  public setLocale(locale: Locale) {
     this.locale = locale;
   }
 

@@ -1,4 +1,9 @@
 {
+  "static": {
+    "wordpressHomePageSlug": "etusivu",
+    "wordpressMainMenuSlug": "primary-menu-fi",
+    "wordpressFooterMenuSlug": "footer-menu-fi"
+  },
   "website": {
     "navigation": {
       "goToPortal": "Sovellukseen"
@@ -53,6 +58,7 @@
     "error": "Virhe",
     "ohNo": "Voi ei!",
     "pageNotFound": "Sivua ei löytynyt",
+    "articleNotFound": "Artikkeliä ei löytynyt",
     "somethingWentWrong": "Jotain meni pieleen",
     "weEncounteredError": "Kohtasimme virheen",
     "tryAgainOrContactSupport": "Yritä uudelleen tai ota yhteyttä tukeen",

@@ -1,3 +1,4 @@
+import { defaultLocale, Locale } from '@/dictionaries';
 import {
   exampleAPIResponse,
   exampleDashboard,
@@ -25,13 +26,13 @@ class DashboardService {
   private dashboards: Dashboard[] = [];
 
   private static instance: DashboardService;
-  private locale: string = 'en';
+  private locale: Locale = defaultLocale;
 
-  private constructor(locale: string) {
+  private constructor(locale: Locale) {
     this.locale = locale;
   }
 
-  public static getInstance(locale: string): DashboardService {
+  public static getInstance(locale: Locale): DashboardService {
     if (!DashboardService.instance) {
       DashboardService.instance = new DashboardService(locale);
     } else {
@@ -41,7 +42,7 @@ class DashboardService {
     return DashboardService.instance;
   }
 
-  public setLocale(locale: string) {
+  public setLocale(locale: Locale) {
     this.locale = locale;
   }
 

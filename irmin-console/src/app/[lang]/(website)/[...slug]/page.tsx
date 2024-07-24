@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
+import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 import { getURL } from '@/lib/utils/wordpressLinkUtils';
 import WordPress from '@/lib/wordpress';
 
@@ -11,7 +12,7 @@ import WebsiteSections from '@/components/WebsiteSections';
 type PageProps = {
   params: {
     slug: string | string[];
-    lang: string;
+    lang: Locale;
   };
 };
 
@@ -19,11 +20,13 @@ const NEXT_PUBLIC_BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
 export default async function Page({ params }: PageProps) {
-  const lang = params.lang;
+  const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
+
   const slug =
     typeof params.slug === 'string'
       ? params.slug
       : params.slug[params.slug.length - 1];
+
   const wordpress = WordPress.getInstance();
   const page = await wordpress.getPage(slug);
 
@@ -45,18 +48,22 @@ export default async function Page({ params }: PageProps) {
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const lang = params.lang;
+  const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
+
   const slug =
     typeof params.slug === 'string'
       ? params.slug
       : params.slug[params.slug.length - 1];
+
   const wordpress = WordPress.getInstance();
   const page = await wordpress.getPage(slug);
+
   if (!page) {
     return {
-      title: 'Page not found | IRMIN',
+      title: `${dictionaries[lang].misc.pageNotFound} | IRMIN`,
     };
   }
+
   return {
     title: page.yoast_head_json.title,
     description: page.yoast_head_json.og_description,

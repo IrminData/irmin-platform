@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 
 import { useParams, usePathname, useRouter } from 'next/navigation';
 
+import { Locale } from '@/dictionaries';
 import DashboardService from '@/lib/api/DashboardService';
 import DatasetService from '@/lib/api/DatasetService';
 import UserAndRoleService from '@/lib/api/UserAndRoleService';
@@ -31,7 +32,7 @@ export const useFetchWorkspaces = (
   setWorkspaces: React.Dispatch<React.SetStateAction<Workspace[]>>,
   workspaceLoading: boolean,
   setWorkspaceLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  locale: string
+  locale: Locale
 ) =>
   useCallback(async () => {
     // Get the workspace service
@@ -58,7 +59,7 @@ export const useFetchWorkspaces = (
  */
 export const useFetchRoles = (
   setIrminRoles: React.Dispatch<React.SetStateAction<IrminRole[]>>,
-  locale: string
+  locale: Locale
 ) =>
   useCallback(async () => {
     // Get the workspace service
@@ -96,7 +97,7 @@ export const useFetchConnections = (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
   setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
-  locale: string
+  locale: Locale
 ) =>
   useCallback(
     async (forceFetch?: boolean) => {
@@ -152,7 +153,7 @@ export const useFetchExports = (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
   setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
-  locale: string
+  locale: Locale
 ) =>
   useCallback(
     async (forceFetch?: boolean) => {
@@ -208,7 +209,7 @@ export const useFetchActions = (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
   setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
-  locale: string
+  locale: Locale
 ) =>
   useCallback(
     async (forceFetch?: boolean) => {
@@ -264,7 +265,7 @@ export const useFetchDatasets = (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
   setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
-  locale: string
+  locale: Locale
 ) =>
   useCallback(
     async (forceFetch?: boolean) => {
@@ -320,7 +321,7 @@ export const useFetchDashboards = (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
   setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
-  locale: string
+  locale: Locale
 ) =>
   useCallback(
     async (forceFetch?: boolean) => {
@@ -376,7 +377,7 @@ export const useSwitchWorkspace = (
   workspaceLoading: boolean,
   setWorkspaceLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchWorkspaces: () => void,
-  locale: string
+  locale: Locale
 ) => {
   const workspaceService = WorkspaceService.getInstance(locale);
   const router = useRouter();
@@ -464,7 +465,7 @@ export const useDeleteCurrentWorkspace = (
     _disableAlerts?: boolean
   ) => void,
   fetchWorkspaces: () => void,
-  locale: string
+  locale: Locale
 ) => {
   const workspaceService = WorkspaceService.getInstance(locale);
   return useCallback(async () => {

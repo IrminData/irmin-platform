@@ -1,3 +1,4 @@
+import { defaultLocale, Locale } from '@/dictionaries';
 import {
   exampleAPIResponse,
   exampleRole,
@@ -26,13 +27,13 @@ class UserAndRoleService {
   private roles: IrminRole[] = [];
 
   private static instance: UserAndRoleService;
-  private locale: string = 'en';
+  private locale: Locale = defaultLocale;
 
-  private constructor(locale: string) {
+  private constructor(locale: Locale) {
     this.locale = locale;
   }
 
-  public static getInstance(locale: string): UserAndRoleService {
+  public static getInstance(locale: Locale): UserAndRoleService {
     if (!UserAndRoleService.instance) {
       UserAndRoleService.instance = new UserAndRoleService(locale);
     } else {
@@ -42,7 +43,7 @@ class UserAndRoleService {
     return UserAndRoleService.instance;
   }
 
-  public setLocale(locale: string) {
+  public setLocale(locale: Locale) {
     this.locale = locale;
   }
 

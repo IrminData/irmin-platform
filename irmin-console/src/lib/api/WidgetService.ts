@@ -1,3 +1,4 @@
+import { defaultLocale, Locale } from '@/dictionaries';
 import {
   exampleAPIResponse,
   exampleWidgets,
@@ -22,13 +23,13 @@ const randomExampleWidget = () =>
 
 class WidgetService {
   private static instance: WidgetService;
-  private locale: string = 'en';
+  private locale: Locale = defaultLocale;
 
-  private constructor(locale: string) {
+  private constructor(locale: Locale) {
     this.locale = locale;
   }
 
-  public static getInstance(locale: string): WidgetService {
+  public static getInstance(locale: Locale): WidgetService {
     if (!WidgetService.instance) {
       WidgetService.instance = new WidgetService(locale);
     } else {
@@ -38,7 +39,7 @@ class WidgetService {
     return WidgetService.instance;
   }
 
-  public setLocale(locale: string) {
+  public setLocale(locale: Locale) {
     this.locale = locale;
   }
 

@@ -10,34 +10,44 @@ import {
 
 import { useParams, usePathname } from 'next/navigation';
 
-import { Dictionary, getDictionary } from '@/dictionaries';
+import {
+  defaultLocale,
+  dictionaries,
+  Dictionary,
+  getDictionary,
+  Locale,
+} from '@/dictionaries';
 import { setCookie } from '@/lib/utils/cookieUtils';
 
 const LocaleContext = createContext<{
-  locale: string;
+  locale: Locale;
   dict: Dictionary;
-  switchLocale: (newLocale: string) => void;
+  switchLocale: (newLocale: Locale) => void;
 }>({
-  locale: 'en',
+  locale: defaultLocale,
   dict: {} as Dictionary,
   switchLocale: () => {},
 });
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { lang } = useParams() as { lang: string };
-  const [locale, setLocale] = useState<string>(lang ?? 'en');
-  const [dict, setDict] = useState<Dictionary | null>(null);
+
+  const params = useParams() as { lang: Locale };
+  const requestPathLang = params.lang;
+
+  const [locale, setLocale] = useState<Locale>(
+    dictionaries[requestPathLang] ? requestPathLang : defaultLocale
+  );
+  const [dict, setDict] = useState<Dictionary>(
+    dictionaries[requestPathLang] ?? dictionaries[defaultLocale]
+  );
 
   useEffect(() => {
-    async function fetchDictionary() {
-      const dictionary = await getDictionary(locale);
-      setDict(dictionary);
-    }
-    fetchDictionary();
+    const dictionary = getDictionary(locale);
+    setDict(dictionary);
   }, [locale]);
 
-  const switchLocale = (newLocale: string) => {
+  const switchLocale = (newLocale: Locale) => {
     setLocale(newLocale);
     setCookie('locale', newLocale, 365);
     // Remove the current workspace from the local storage and state
@@ -47,11 +57,11 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (lang !== locale) {
-      setLocale(lang);
-      setCookie('locale', lang, 365);
+    if (requestPathLang !== locale) {
+      setLocale(requestPathLang);
+      setCookie('locale', requestPathLang, 365);
     }
-  }, [lang, locale]);
+  }, [requestPathLang, locale]);
 
   if (!dict) {
     return <></>;

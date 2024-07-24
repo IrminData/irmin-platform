@@ -104,18 +104,18 @@ const MobileNavLink = ({
 };
 
 export default function WebsiteNavigationContent({
-  navLinksFI,
-  navLinksEN,
+  navLinks,
 }: {
-  navLinksFI: WebsiteNavigationLink[];
-  navLinksEN: WebsiteNavigationLink[];
+  navLinks: {
+    [key: string]: WebsiteNavigationLink[];
+  };
 }) {
   const { dict, locale } = useLocale();
   const profile = useProfile();
   const [navbarOpen, setNavbarOpen] = React.useState(false);
   const [animate, setAnimate] = React.useState('');
 
-  const navLinks = locale === 'fi' ? navLinksFI : navLinksEN;
+  const links = navLinks[locale] ?? [];
 
   const closeMenu = () => {
     setAnimate('animate-slideOut');
@@ -148,7 +148,7 @@ export default function WebsiteNavigationContent({
                   />
                 </Link>
                 <ul className='hidden gap-1.5 md:flex md:justify-center xl:gap-3'>
-                  {navLinks.map((link, idx) => (
+                  {links.map((link, idx) => (
                     <NavLink
                       key={`website-desktop-navigation-link-${idx}`}
                       linkKey={`website-desktop-navigation-link-${idx}`}
@@ -294,7 +294,7 @@ export default function WebsiteNavigationContent({
                     </div>
                   )}
                   <ul className='mt-6 flex flex-col gap-2'>
-                    {navLinks.map((link, idx) => (
+                    {links.map((link, idx) => (
                       <MobileNavLink
                         key={`website-mobile-navigation-link-${idx}`}
                         linkKey={`website-desktop-navigation-link-${idx}`}

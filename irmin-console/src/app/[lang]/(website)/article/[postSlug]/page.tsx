@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
+import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 import WordPress from '@/lib/wordpress';
 
 import WebsiteBlogPost from '@/components/website/websiteBlogPost';
@@ -10,7 +11,7 @@ import { WebsiteArticleCategory } from '@/types/website/WebsiteContent';
 
 type PageProps = {
   params: {
-    lang: string;
+    lang: Locale;
     postSlug: string | string[];
   };
 };
@@ -59,18 +60,22 @@ export default async function Page({ params }: PageProps) {
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const lang = params.lang;
+  const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
+
   const slug =
     typeof params.postSlug === 'string'
       ? params.postSlug
       : params.postSlug[params.postSlug.length - 1];
+
   const wordpress = WordPress.getInstance();
   const post = await wordpress.getPost(slug);
+
   if (!post) {
     return {
-      title: 'Article not found | IRMIN',
+      title: `${dictionaries[lang].misc.articleNotFound} | IRMIN`,
     };
   }
+
   return {
     title: post.yoast_head_json.title,
     description: post.yoast_head_json.og_description,

@@ -1,3 +1,4 @@
+import { dictionaries, languages } from '@/dictionaries';
 import { transformMenuToFooterLinks } from '@/lib/utils/menuUtils';
 import WordPress from '@/lib/wordpress';
 
@@ -7,23 +8,26 @@ import { WebsiteFooterLinkSection } from '@/types/website/WebsiteNavigation';
 
 export default async function WebsiteFooter() {
   const wordpress = WordPress.getInstance();
-  const footerLinksEN: WebsiteFooterLinkSection[] = [];
-  const footerLinksFI: WebsiteFooterLinkSection[] = [];
 
-  const menuEN = await wordpress.getMenu('footer-menu-en');
-  if (menuEN) {
-    footerLinksEN.push(...transformMenuToFooterLinks(menuEN));
+  // Object to store footer links for each language
+  const navLinksForLocales: {
+    [key: string]: WebsiteFooterLinkSection[];
+  } = {};
+
+  // Loop through all languages and fetch the main menu for each language
+  for (let i = 0; i < languages.length; i++) {
+    const language = languages[i];
+
+    // Get the menu slug for the current language from the dictionary
+    const menuSlug = dictionaries[language.code].static.wordpressFooterMenuSlug;
+
+    // Fetch the menu
+    const menu = await wordpress.getMenu(menuSlug);
+    const navLinks = [];
+    if (menu) {
+      // Transform the menu into navigation links and add them to the array
+      navLinks.push(...transformMenuToFooterLinks(menu));
+    }
   }
-
-  const menuFI = await wordpress.getMenu('footer-menu-fi');
-  if (menuFI) {
-    footerLinksFI.push(...transformMenuToFooterLinks(menuFI));
-  }
-
-  return (
-    <WebsiteFooterContent
-      footerLinksEN={footerLinksEN}
-      footerLinksFI={footerLinksFI}
-    />
-  );
+  return <WebsiteFooterContent footerLinks={navLinksForLocales} />;
 }

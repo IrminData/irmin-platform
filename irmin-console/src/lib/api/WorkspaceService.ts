@@ -1,3 +1,4 @@
+import { defaultLocale, Locale } from '@/dictionaries';
 import {
   exampleAPIResponse,
   exampleWorkspace,
@@ -23,13 +24,13 @@ interface WorkspaceAPIResponse extends IrminAPIResponse {
 
 class WorkspaceService {
   private static instance: WorkspaceService;
-  private locale: string = 'en';
+  private locale: Locale = defaultLocale;
 
-  private constructor(locale: string) {
+  private constructor(locale: Locale) {
     this.locale = locale;
   }
 
-  public static getInstance(locale: string): WorkspaceService {
+  public static getInstance(locale: Locale): WorkspaceService {
     if (!WorkspaceService.instance) {
       WorkspaceService.instance = new WorkspaceService(locale);
     } else {
@@ -39,7 +40,7 @@ class WorkspaceService {
     return WorkspaceService.instance;
   }
 
-  public setLocale(locale: string) {
+  public setLocale(locale: Locale) {
     this.locale = locale;
   }
 

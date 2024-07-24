@@ -223,11 +223,23 @@ When creating a new context, ensure it follows the same structure as the existin
 
 ## Internationalisation
 
-The website is available in multiple languages. The language is determined by the locale set in the `LocaleContext`. The locale is set based on the URL path. For example, `/en` is English, `/fi` is Finnish, and so on. See route `src/app/[lang]`. 
+The website is available in multiple languages. 
 
-If language is not set in the URL, the `src/middleware.ts` will try to get users browser language. If the browser language is not supported, the default language is English. If user manually switches languages, the preferred language is stored in cookies and used in the future.
+The locale is set based on the URL path. For example, `/en` is English, `/fi` is Finnish, and so on. See route `src/app/[lang]`.
 
-Dictionaries can be found in `src/dictionaries.ts`. The dictionaries are used to translate the website content. The dictionaries are used in the components to translate the content based on the locale. Dictionaries are essencially JSON objects with key-value pairs. The key is the translation key and the value is the translation itself.
+If the language is set in the URL, the website will be displayed in that language. If the language is not set in the URL, the website will try to get the users browser language. If the browser language is not supported, the default language will be used.
+
+If user manually switches languages, the preferred language is stored in cookies and used in the future.
+
+Languages, default language and available locales are defined in `src/dictionaries.ts`.
+
+- `src/middleware.ts` -> Middleware for setting the locale based on the URL path or browser language.
+- `src/context/LocaleContext.tsx` -> Context for managing the locale and translations state across the application.
+- `src/dictionaries.ts` -> Responsible for providing translation lists, setting the default language, and available locales.
+
+Dictionaries are JSON objects which are used to translate the website content. They are used in the components to translate the content based on the locale. The key is the translation key and the value is the translation itself. `getDictionary()` function in `src/dictionaries.ts` is used to get the correct dictionary based on the locale.
+
+They can be found in the `src/dictionaries/...` folder. Used dictionaries are defined in `src/dictionaries.ts`. 
 
 For example see:
 - `src/dictionaries/en.json` -> English translations
@@ -237,11 +249,15 @@ For example see:
 
 The Wordpress CMS is used to manage the content of the website. The Wordpress API is used to fetch the content from the CMS. Pages are fetched from the API based on slug.
 
-Website navigation and footer links are managed in the Wordpress menu section. The menu is fetched from the API and used to render the navigation and footer links. The menu slugs are hardcoded for different locales. See `src/components/website/websiteFooter.tsx` and `src/components/website/websiteNavigation.tsx` for more information.
+Website navigation and footer links are managed in the Wordpress menu section. The menu is fetched from the API and used to render the navigation and footer links. 
+
+The Wordpress menu slugs are found in the translation dictionaries for different locales. See [Internationalisation](#internationalisation) for more information.
 
 For example:
 - `primary-menu-en` -> English website top navigation
 - `footer-menu-fi` -> Finnish website footer links
+
+See `src/components/website/websiteFooter.tsx` and `src/components/website/websiteNavigation.tsx` for more information.
 
 We use ACF (Advanced Custom Fields) to create custom fields for the Wordpress posts and pages. The key thing in these fields are sections, which are used to create the structure of the page. Each section can have multiple fields, such as text, image, or repeater fields. 
 

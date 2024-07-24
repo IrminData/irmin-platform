@@ -1,3 +1,4 @@
+import { defaultLocale, Locale } from '@/dictionaries';
 import {
   exampleAPIResponse,
   exampleDataset,
@@ -21,13 +22,13 @@ class DatasetService {
   private datasets: Dataset[] = [];
 
   private static instance: DatasetService;
-  private locale: string = 'en';
+  private locale: Locale = defaultLocale;
 
-  private constructor(locale: string) {
+  private constructor(locale: Locale) {
     this.locale = locale;
   }
 
-  public static getInstance(locale: string): DatasetService {
+  public static getInstance(locale: Locale): DatasetService {
     if (!DatasetService.instance) {
       DatasetService.instance = new DatasetService(locale);
     } else {
@@ -37,7 +38,7 @@ class DatasetService {
     return DatasetService.instance;
   }
 
-  public setLocale(locale: string) {
+  public setLocale(locale: Locale) {
     this.locale = locale;
   }
 

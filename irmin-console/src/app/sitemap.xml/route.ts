@@ -1,3 +1,4 @@
+import { detectLocaleFromURL, languages } from '@/dictionaries';
 import { getURL } from '@/lib/utils/wordpressLinkUtils';
 import WordPress from '@/lib/wordpress';
 
@@ -7,7 +8,10 @@ export async function GET() {
   const NEXT_PUBLIC_BASE_URL =
     process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
-  const staticPaths = ['/fi/', '/en/', '/sign-in/', '/sign-up/'];
+  const staticPaths = ['/sign-in/', '/sign-up/'];
+  languages.map((lang) => {
+    staticPaths.push(`/${lang.code}/`);
+  });
 
   const urls = staticPaths.map((path) => {
     return `
@@ -37,10 +41,10 @@ export async function GET() {
   if (posts) {
     for (let i = 0; i < posts.length; i++) {
       const post = posts[i];
-      const postLang = post.link.includes('/fi/') ? 'fi' : 'en';
+      const postLang = detectLocaleFromURL(post.link);
       urls.push(`
         <url>
-          <loc>${NEXT_PUBLIC_BASE_URL}${`/${postLang}/article/${post.slug}/`}</loc>
+          <loc>${NEXT_PUBLIC_BASE_URL}${`/${postLang ? postLang + '/' : ''}article/${post.slug}/`}</loc>
           <changefreq>daily</changefreq>
           <priority>0.7</priority>
         </url>

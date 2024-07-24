@@ -1,3 +1,4 @@
+import { dictionaries, languages } from '@/dictionaries';
 import { transformMenu } from '@/lib/utils/menuUtils';
 import WordPress from '@/lib/wordpress';
 
@@ -7,20 +8,26 @@ import { WebsiteNavigationLink } from '@/types/website/WebsiteNavigation';
 
 export default async function WebsiteNavigation() {
   const wordpress = WordPress.getInstance();
-  const navLinksEN: WebsiteNavigationLink[] = [];
-  const navLinksFI: WebsiteNavigationLink[] = [];
 
-  const menuEN = await wordpress.getMenu('primary-menu-en');
-  if (menuEN) {
-    navLinksEN.push(...transformMenu(menuEN));
+  const navLinksForLocales: {
+    [key: string]: WebsiteNavigationLink[];
+  } = {};
+
+  // Loop through all languages and fetch the main menu for each language
+  for (let i = 0; i < languages.length; i++) {
+    const language = languages[i];
+
+    // Get the menu slug for the current language from the dictionary
+    const menuSlug = dictionaries[language.code].static.wordpressMainMenuSlug;
+
+    // Fetch the menu
+    const menu = await wordpress.getMenu(menuSlug);
+    const navLinks = [];
+    if (menu) {
+      // Transform the menu into navigation links and add them to the array
+      navLinks.push(...transformMenu(menu));
+    }
   }
 
-  const menuFI = await wordpress.getMenu('primary-menu-fi');
-  if (menuFI) {
-    navLinksFI.push(...transformMenu(menuFI));
-  }
-
-  return (
-    <WebsiteNavigationContent navLinksEN={navLinksEN} navLinksFI={navLinksFI} />
-  );
+  return <WebsiteNavigationContent navLinks={navLinksForLocales} />;
 }

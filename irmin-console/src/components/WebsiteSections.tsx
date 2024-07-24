@@ -1,3 +1,5 @@
+import { Locale } from '@/dictionaries';
+
 import WebsiteBlogPosts from '@/components/website/websiteBlogPosts';
 import WebsiteCareersSection from '@/components/website/websiteCareersSection';
 import WebsiteContactSection from '@/components/website/websiteContactSection';
@@ -38,7 +40,7 @@ export default function WebsiteSections({
   lang,
 }: {
   sections: IrminWebsiteSection[];
-  lang: string;
+  lang: Locale;
 }) {
   return (
     <>

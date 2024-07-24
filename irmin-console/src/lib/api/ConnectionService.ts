@@ -1,3 +1,4 @@
+import { defaultLocale, Locale } from '@/dictionaries';
 import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
 
 import {
@@ -19,13 +20,13 @@ interface ConnectionTestAPIResponse extends IrminAPIResponse {
 
 class ConnectionService {
   private static instance: ConnectionService;
-  private locale: string = 'en';
+  private locale: Locale = defaultLocale;
 
-  private constructor(locale: string) {
+  private constructor(locale: Locale) {
     this.locale = locale;
   }
 
-  public static getInstance(locale: string): ConnectionService {
+  public static getInstance(locale: Locale): ConnectionService {
     if (!ConnectionService.instance) {
       ConnectionService.instance = new ConnectionService(locale);
     } else {
@@ -35,7 +36,7 @@ class ConnectionService {
     return ConnectionService.instance;
   }
 
-  public setLocale(locale: string) {
+  public setLocale(locale: Locale) {
     this.locale = locale;
   }
 

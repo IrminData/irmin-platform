@@ -1,3 +1,4 @@
+import { defaultLocale, Locale } from '@/dictionaries';
 import {
   exampleAPIResponse,
   exampleInvite,
@@ -19,13 +20,13 @@ interface InvitesAPIResponse extends IrminAPIResponse {
 }
 class InviteService {
   private static instance: InviteService;
-  private locale: string = 'en';
+  private locale: Locale = defaultLocale;
 
-  private constructor(locale: string) {
+  private constructor(locale: Locale) {
     this.locale = locale;
   }
 
-  public static getInstance(locale: string): InviteService {
+  public static getInstance(locale: Locale): InviteService {
     if (!InviteService.instance) {
       InviteService.instance = new InviteService(locale);
     } else {
@@ -35,7 +36,7 @@ class InviteService {
     return InviteService.instance;
   }
 
-  public setLocale(locale: string) {
+  public setLocale(locale: Locale) {
     this.locale = locale;
   }
 

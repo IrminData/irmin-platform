@@ -36,15 +36,14 @@ const FooterLinkSection = ({
 );
 
 export default function WebsiteFooterContent({
-  footerLinksEN,
-  footerLinksFI,
+  footerLinks,
 }: {
-  footerLinksEN: WebsiteFooterLinkSection[];
-  footerLinksFI: WebsiteFooterLinkSection[];
+  footerLinks: {
+    [key: string]: WebsiteFooterLinkSection[];
+  };
 }) {
   const { dict, locale } = useLocale();
-
-  const footerLinks = locale === 'fi' ? footerLinksFI : footerLinksEN;
+  const sections = footerLinks[locale] ?? [];
 
   return (
     <section className='mt-12 bg-irmin_black'>
@@ -84,7 +83,7 @@ export default function WebsiteFooterContent({
             </div>
           </div>
           <div className='flex flex-1 flex-wrap items-start justify-center gap-8'>
-            {footerLinks.map((section, idx) => (
+            {sections.map((section, idx) => (
               <FooterLinkSection
                 key={`website-footer-link-section-${idx}`}
                 linkKey={`website-footer-link-section-${idx}`}
