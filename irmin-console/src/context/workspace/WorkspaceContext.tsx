@@ -4,35 +4,55 @@ import { createContext } from 'react';
 
 import { Dashboard } from '@/types/api/Dashboard';
 import { Dataset } from '@/types/api/Dataset';
-import { IrminRole } from '@/types/api/IrminRole';
+import { Invite } from '@/types/api/Invite';
+import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
 import {
   ActionWorkflow,
   ConnectionWorkflow,
   ExportWorkflow,
 } from '@/types/api/Workflow';
 import { Workspace } from '@/types/api/Workspace';
+import { WorkspaceUser } from '@/types/api/Workspace';
 
 /**
- * Workspace context
- *
- * @remarks
- *
- * Context for handling workspace data.
- *
- * It provides the current workspace, workspaces list, and methods to fetch and switch workspaces.
- *
- * The context also provides data for dashboards, connections, exports, actions and datasets.
- *
- * @returns The workspace context
+ * Context for the workspace
  */
 const WorkspaceContext = createContext<{
   fetchWorkspaces: () => void;
   switchToWorkspace: (_workspaceSlug: string | null) => void;
-  deleteCurrentWorkspace: () => void;
+  deleteCurrentWorkspace: () => Promise<IrminAPIResponse>;
+  transferOwnership: (_userId: number) => Promise<IrminAPIResponse>;
   workspaces: Workspace[];
   currentWorkspace: Workspace | null;
   workspaceLoading: boolean;
   irminRoles: IrminRole[];
+  users: {
+    users: WorkspaceUser[];
+    isLoading: boolean;
+    fetchUsers: (_forceFetch?: boolean) => void;
+    deleteUser: (_userId: number) => Promise<IrminAPIResponse>;
+    changeUserRole: (
+      _userId: number,
+      _role: IrminRoleNames
+    ) => Promise<IrminAPIResponse>;
+  };
+  invites: {
+    invites: Invite[];
+    isLoading: boolean;
+    fetchInvites: (_forceFetch?: boolean) => void;
+    sendInvite: (
+      _name: string,
+      _email: string,
+      _role: IrminRoleNames
+    ) => Promise<IrminAPIResponse>;
+    resendInvite: (_inviteId: number) => Promise<IrminAPIResponse>;
+    cancelInvite: (_inviteId: number) => Promise<IrminAPIResponse>;
+    changeInvite: (
+      _inviteId: number,
+      _role: IrminRole
+    ) => Promise<IrminAPIResponse>;
+  };
   dashboards: {
     dashboards: Dashboard[];
     isLoading: boolean;
@@ -61,11 +81,28 @@ const WorkspaceContext = createContext<{
 }>({
   switchToWorkspace: () => {},
   fetchWorkspaces: () => {},
-  deleteCurrentWorkspace: () => {},
+  deleteCurrentWorkspace: () => Promise.resolve({}),
+  transferOwnership: () => Promise.resolve({}),
   workspaces: [],
   workspaceLoading: false,
   currentWorkspace: null,
   irminRoles: [],
+  users: {
+    users: [],
+    isLoading: false,
+    fetchUsers: () => {},
+    deleteUser: () => Promise.resolve({}),
+    changeUserRole: () => Promise.resolve({}),
+  },
+  invites: {
+    invites: [],
+    isLoading: false,
+    fetchInvites: () => {},
+    sendInvite: () => Promise.resolve({}),
+    resendInvite: () => Promise.resolve({}),
+    cancelInvite: () => Promise.resolve({}),
+    changeInvite: () => Promise.resolve({}),
+  },
   dashboards: {
     dashboards: [],
     isLoading: false,

@@ -7,7 +7,7 @@ import {
 import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
-import { IrminRole } from '@/types/api/IrminRole';
+import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
 import { WorkspaceUser } from '@/types/api/Workspace';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -175,24 +175,24 @@ class UserAndRoleService {
   /**
    * Change the role of a user in a workspace
    * @param user - The ID of the user to change the role of
-   * @param newRole - The new role
+   * @param newRole - The new role to assign to the user
    * @param currentRole - The current role or null if user has no role
    * @returns response from the API or example data
    * {@link https://api.irmin.dev/docs#roles-PATCHv1-users-roles | Irmin API docs}
    */
   async changeUserRole(
     user: number,
-    newRole: IrminRole,
-    currentRole: IrminRole | null
+    newRole: IrminRoleNames,
+    currentRole: IrminRoleNames | null
   ): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
     try {
       const formData = new FormData();
       formData.append('_method', 'PATCH');
       formData.append('user', user.toString());
-      formData.append('roles[]', newRole.name);
+      formData.append('roles[]', newRole);
       if (currentRole) {
-        formData.append('roles[]', currentRole.name);
+        formData.append('roles[]', currentRole);
       }
 
       const response = await fetchWithCredentials(

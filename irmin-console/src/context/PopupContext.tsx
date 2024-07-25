@@ -7,6 +7,9 @@ import ConfirmPopup from '@/components/misc/ConfirmPopup';
 import Modal from '@/components/misc/Modal';
 import NotificationPopup from '@/components/notifications/NotificationPopup';
 
+/**
+ * Context for the popup
+ */
 const PopupContext = createContext<{
   irminAlert: (_type: 'success' | 'error' | 'info', _message: string) => void;
   irminConfirm: (

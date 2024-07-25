@@ -6,27 +6,37 @@ import { useParams } from 'next/navigation';
 
 import { useLocale } from '@/context/LocaleContext';
 import {
+  useCancelInvite,
+  useChangeInvite,
+  useChangeUserRole,
   useDeleteCurrentWorkspace,
+  useDeleteUser,
   useFetchActions,
   useFetchConnections,
   useFetchDashboards,
   useFetchDatasets,
   useFetchExports,
+  useFetchInvites,
   useFetchRoles,
+  useFetchUsers,
   useFetchWorkspaces,
+  useResendInvite,
+  useSendInvite,
   useSwitchWorkspace,
+  useTransferOwnership,
   WorkspaceContext,
 } from '@/context/workspace';
 
 import { Dashboard } from '@/types/api/Dashboard';
 import { Dataset } from '@/types/api/Dataset';
+import { Invite } from '@/types/api/Invite';
 import { IrminRole } from '@/types/api/IrminRole';
 import {
   ActionWorkflow,
   ConnectionWorkflow,
   ExportWorkflow,
 } from '@/types/api/Workflow';
-import { Workspace } from '@/types/api/Workspace';
+import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
 
 /**
  * Workspace context provider
@@ -56,7 +66,10 @@ export const WorkspaceProvider = ({
   const { locale } = useLocale();
   const params = useParams();
 
-  // Users and Roles
+  // Ref to check if the component has been initialised
+  const initialisedRef = useRef(false);
+
+  // Roles
   const [irminRoles, setIrminRoles] = useState<IrminRole[]>([]);
 
   // Workspaces
@@ -100,6 +113,18 @@ export const WorkspaceProvider = ({
   const [dashboardsFetchedFor, setDashboardsFetchedFor] = useState<
     string | null
   >(null);
+
+  // Users
+  const [users, setUsers] = useState<WorkspaceUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersFetchedFor, setUsersFetchedFor] = useState<string | null>(null);
+
+  // Invites
+  const [invites, setInvites] = useState<Invite[]>([]);
+  const [invitesLoading, setInvitesLoading] = useState(false);
+  const [invitesFetchedFor, setInvitesFetchedFor] = useState<string | null>(
+    null
+  );
 
   /**
    * Hook to fetch the list of workspaces.
@@ -189,6 +214,34 @@ export const WorkspaceProvider = ({
   );
 
   /**
+   * Hook to fetch the list of users for the current workspace.
+   * It will be run whenever the current workspace changes to update the users.
+   */
+  const fetchUsers = useFetchUsers(
+    currentWorkspace,
+    setUsers,
+    usersLoading,
+    setUsersLoading,
+    usersFetchedFor,
+    setUsersFetchedFor,
+    locale
+  );
+
+  /**
+   * Hook to fetch the list of invites for the current workspace.
+   * It will be run whenever the current workspace changes to update the invites.
+   */
+  const fetchInvites = useFetchInvites(
+    currentWorkspace,
+    setInvites,
+    invitesLoading,
+    setInvitesLoading,
+    invitesFetchedFor,
+    setInvitesFetchedFor,
+    locale
+  );
+
+  /**
    * Hook to switch to a workspace. Updates localStorage and the current workspace state.
    * Fetches the new workspace data, calls API /switch endpoint, redirects to the new workspace,
    * and shows a success or error popup message.
@@ -214,11 +267,59 @@ export const WorkspaceProvider = ({
   );
 
   /**
-   * useEffect hook to initialise the context by fetching initial data.
-   * This effect runs only once when the component is mounted.
+   * Hook to transfer ownership of the current workspace. It calls the API to transfer ownership,
+   * and refetches the current workspace.
+   */
+  const transferOwnership = useTransferOwnership(
+    currentWorkspace,
+    setCurrentWorkspace,
+    locale
+  );
+
+  /**
+   * Hook to send an invite to a user. It calls the API to send the invite,
+   * and fetches the updated list of invites.
+   */
+  const sendInvite = useSendInvite(currentWorkspace, setInvites, locale);
+
+  /**
+   * Hook to resend an invite to a user. It calls the API to resend the invite,
+   * and fetches the updated list of invites.
+   */
+  const resendInvite = useResendInvite(locale);
+
+  /**
+   * Hook to cancel an invite to a user. It calls the API to cancel the invite,
+   * and fetches the updated list of invites.
+   */
+  const cancelInvite = useCancelInvite(invites, setInvites, locale);
+
+  /**
+   * Hook to change an invite to a user. It calls the API to change the invite,
+   * and fetches the updated list of invites.
+   */
+  const changeInvite = useChangeInvite(invites, setInvites, locale);
+
+  /**
+   * Hook to delete a user. It calls the API to delete the user,
+   * and fetches the updated list of users.
+   */
+  const deleteUser = useDeleteUser(users, setUsers, locale);
+
+  /**
+   * Hook to change the role of a user. It calls the API to change the role,
+   * and fetches the updated list of users.
+   */
+  const changeUserRole = useChangeUserRole(users, setUsers, locale);
+
+  /**
+   * Hook to initialise the context by fetching initial data.
+   *
+   * @remarks
+   *
+   * This useEffect runs only once when the component is mounted.
    * It fetches workspaces and roles, and attempts to switch to the workspace stored in localStorage.
    */
-  const initialisedRef = useRef(false);
   useEffect(() => {
     const initialise = async () => {
       if (initialisedRef.current) return;
@@ -265,7 +366,7 @@ export const WorkspaceProvider = ({
   }, [fetchWorkspaces, fetchRoles, switchToWorkspace, params]);
 
   /**
-   * useEffect hook to fetch workflows and datasets whenever the current workspace changes.
+   * useEffect hook to fetch workspace data whenever the current workspace changes.
    */
   useEffect(() => {
     fetchDashboards();
@@ -273,12 +374,16 @@ export const WorkspaceProvider = ({
     fetchActions();
     fetchExports();
     fetchDatasets();
+    fetchUsers();
+    fetchInvites();
   }, [
     fetchDashboards,
     fetchConnections,
     fetchActions,
     fetchExports,
     fetchDatasets,
+    fetchUsers,
+    fetchInvites,
     currentWorkspace,
   ]);
 
@@ -289,9 +394,26 @@ export const WorkspaceProvider = ({
         workspaceLoading,
         currentWorkspace,
         switchToWorkspace,
-        deleteCurrentWorkspace: deleteCurrentWorkspace,
+        deleteCurrentWorkspace,
+        transferOwnership,
         fetchWorkspaces,
         irminRoles,
+        users: {
+          users,
+          isLoading: usersLoading,
+          fetchUsers,
+          deleteUser,
+          changeUserRole,
+        },
+        invites: {
+          invites,
+          isLoading: invitesLoading,
+          fetchInvites,
+          sendInvite,
+          resendInvite,
+          cancelInvite,
+          changeInvite,
+        },
         dashboards: {
           dashboards,
           isLoading: dashboardsLoading,

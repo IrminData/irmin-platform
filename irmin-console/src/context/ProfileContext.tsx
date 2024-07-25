@@ -14,6 +14,9 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { Profile } from '@/types/api/Profile';
 
+/**
+ * User profile context
+ */
 const ProfileContext = createContext<{
   profile: Profile | null;
   isLoading: boolean;

@@ -7,22 +7,27 @@ import { useParams, usePathname, useRouter } from 'next/navigation';
 import { Locale } from '@/dictionaries';
 import DashboardService from '@/lib/api/DashboardService';
 import DatasetService from '@/lib/api/DatasetService';
+import InviteService from '@/lib/api/InviteService';
 import UserAndRoleService from '@/lib/api/UserAndRoleService';
 import WorkflowService from '@/lib/api/WorkflowService';
 import WorkspaceService from '@/lib/api/WorkspaceService';
 
 import { Dashboard } from '@/types/api/Dashboard';
 import { Dataset } from '@/types/api/Dataset';
-import { IrminRole } from '@/types/api/IrminRole';
+import { Invite } from '@/types/api/Invite';
+import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
 import {
   ActionWorkflow,
   ConnectionWorkflow,
   ExportWorkflow,
 } from '@/types/api/Workflow';
+import { WorkspaceUser } from '@/types/api/Workspace';
 import { Workspace } from '@/types/api/Workspace';
 
 /**
  * Hook to fetch the list of workspaces.
+ *
  * @param setWorkspaces - Function to update the workspaces state.
  * @param workspaceLoading - Loading state to prevent multiple simultaneous fetches.
  * @param setWorkspaceLoading - Function to update the workspace loading state.
@@ -54,6 +59,7 @@ export const useFetchWorkspaces = (
 
 /**
  * Hook to fetch the list of roles available on Irmin.
+ *
  * @param setIrminRoles - Function to update the roles state.
  * @param locale - The current locale.
  */
@@ -82,6 +88,7 @@ export const useFetchRoles = (
 
 /**
  * Hook to fetch the list of connection workflows for the current workspace.
+ *
  * @param currentWorkspace - The current workspace
  * @param setConnections - Function to update the connections state.
  * @param loading - Loading state to prevent multiple simultaneous fetches.
@@ -100,6 +107,10 @@ export const useFetchConnections = (
   locale: Locale
 ) =>
   useCallback(
+    /**
+     * Fetch and update context for connections of the current workspace.
+     * @param forceFetch - Whether to force fetch. Force fetch will fetch the even if the data is already fetched.
+     */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
       if (!forceFetch) {
@@ -138,6 +149,7 @@ export const useFetchConnections = (
 
 /**
  * Hook to fetch the list of export workflows for the current workspace.
+ *
  * @param currentWorkspace - The current workspace
  * @param setExports - Function to update the exports state.
  * @param loading - Loading state to prevent multiple simultaneous fetches.
@@ -156,6 +168,10 @@ export const useFetchExports = (
   locale: Locale
 ) =>
   useCallback(
+    /**
+     * Fetch and update context for exports of the current workspace.
+     * @param forceFetch - Whether to force fetch.
+     */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
       if (!forceFetch) {
@@ -194,6 +210,7 @@ export const useFetchExports = (
 
 /**
  * Hook to fetch the list of actions workflows for the current workspace.
+ *
  * @param currentWorkspace - The current workspace
  * @param setActions - Function to update the actions state.
  * @param loading - Loading state to prevent multiple simultaneous fetches.
@@ -212,6 +229,10 @@ export const useFetchActions = (
   locale: Locale
 ) =>
   useCallback(
+    /**
+     * Fetch and update context for actions of the current workspace.
+     * @param forceFetch - Whether to force fetch.
+     */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
       if (!forceFetch) {
@@ -250,6 +271,7 @@ export const useFetchActions = (
 
 /**
  * Hook to fetch the list of Datasets for the current workspace.
+ *
  * @param currentWorkspace - The current workspace
  * @param setDatasets - Function to update the datasets state.
  * @param loading - Loading state to prevent multiple simultaneous fetches.
@@ -268,6 +290,10 @@ export const useFetchDatasets = (
   locale: Locale
 ) =>
   useCallback(
+    /**
+     * Fetch and update context for datasets of the current workspace.
+     * @param forceFetch - Whether to force fetch.
+     */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
       if (!forceFetch) {
@@ -324,6 +350,10 @@ export const useFetchDashboards = (
   locale: Locale
 ) =>
   useCallback(
+    /**
+     * Fetch and update context for dashboards of the current workspace.
+     * @param forceFetch - Whether to force fetch.
+     */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
       if (!forceFetch) {
@@ -361,9 +391,137 @@ export const useFetchDashboards = (
   );
 
 /**
+ * Hook to fetch the list of users for the current workspace.
+ *
+ * @param currentWorkspace - The current workspace
+ * @param setUsers - Function to update the users state.
+ * @param loading - Loading state to prevent multiple simultaneous fetches.
+ * @param setLoading - Function to update the loading state.
+ * @param fetchedFor - The slug of the workspace dashboards are fetched for.
+ * @param setFetchedFor - Function to update fetched for state.
+ * @param locale - The current locale.
+ */
+export const useFetchUsers = (
+  currentWorkspace: Workspace | null,
+  setUsers: React.Dispatch<React.SetStateAction<WorkspaceUser[]>>,
+  loading: boolean,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  fetchedFor: string | null,
+  setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
+  locale: Locale
+) =>
+  useCallback(
+    /**
+     * Fetch and update context for users of the current workspace.
+     * @param forceFetch - Whether to force fetch.
+     */
+    async (forceFetch?: boolean) => {
+      // Check if the connections are already fetched for the current workspace
+      if (!forceFetch) {
+        if (!fetchedFor && !currentWorkspace) return;
+        if (fetchedFor === currentWorkspace?.slug) return;
+      }
+      setFetchedFor(currentWorkspace?.slug ?? null);
+      // Get the workspace service
+      const userService = UserAndRoleService.getInstance(locale);
+      // If the current workspace is not set, clear the connections
+      if (!currentWorkspace) {
+        setUsers([]);
+        return;
+      }
+      try {
+        // Prevent multiple simultaneous fetches
+        if (loading) return;
+        setLoading(true);
+        // Fetch the data
+        const response = await userService.fetchAllUsers();
+        setUsers(response.data);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      currentWorkspace,
+      setUsers,
+      loading,
+      setLoading,
+      fetchedFor,
+      setFetchedFor,
+      locale,
+    ]
+  );
+
+/**
+ * Hook to fetch the list of invites for the current workspace.
+ *
+ * @param currentWorkspace - The current workspace
+ * @param setInvites - Function to update the invites state.
+ * @param loading - Loading state to prevent multiple simultaneous fetches.
+ * @param setLoading - Function to update the loading state.
+ * @param fetchedFor - The slug of the workspace dashboards are fetched for.
+ * @param setFetchedFor - Function to update fetched for state.
+ * @param locale - The current locale.
+ */
+export const useFetchInvites = (
+  currentWorkspace: Workspace | null,
+  setInvites: React.Dispatch<React.SetStateAction<Invite[]>>,
+  loading: boolean,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  fetchedFor: string | null,
+  setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
+  locale: Locale
+) =>
+  useCallback(
+    /**
+     * Fetch and update context for invites of the current workspace.
+     * @param forceFetch - Whether to force fetch.
+     */
+    async (forceFetch?: boolean) => {
+      // Check if the connections are already fetched for the current workspace
+      if (!forceFetch) {
+        if (!fetchedFor && !currentWorkspace) return;
+        if (fetchedFor === currentWorkspace?.slug) return;
+      }
+      setFetchedFor(currentWorkspace?.slug ?? null);
+      // Get the workspace service
+      const inviteService = InviteService.getInstance(locale);
+      // If the current workspace is not set, clear the connections
+      if (!currentWorkspace) {
+        setInvites([]);
+        return;
+      }
+      try {
+        // Prevent multiple simultaneous fetches
+        if (loading) return;
+        setLoading(true);
+        // Fetch the data
+        const response = await inviteService.getInvitesByWorkspace(
+          currentWorkspace.slug
+        );
+        setInvites(response.data);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      currentWorkspace,
+      setInvites,
+      loading,
+      setLoading,
+      fetchedFor,
+      setFetchedFor,
+      locale,
+    ]
+  );
+
+/**
  * Hook to switch to a workspace.
+ *
+ * @remarks
+ *
  * It updates localStorage and the current workspace state, fetches the new workspace data,
  * calls API /switch endpoint, redirects to the new workspace, and shows a success or error popup message.
+ *
  * @param currentWorkspace - The current workspace to switch from.
  * @param setCurrentWorkspace - Function to update the current workspace state.
  * @param workspaceLoading - Loading state to prevent multiple simultaneous switches.
@@ -379,13 +537,14 @@ export const useSwitchWorkspace = (
   fetchWorkspaces: () => void,
   locale: Locale
 ) => {
-  const workspaceService = WorkspaceService.getInstance(locale);
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
   return useCallback(
     async (workspaceSlug: string | null) => {
       try {
+        // Get the workspace service
+        const workspaceService = WorkspaceService.getInstance(locale);
         // Prevent multiple simultaneous switches
         if (workspaceLoading) return;
         setWorkspaceLoading(true);
@@ -438,26 +597,68 @@ export const useSwitchWorkspace = (
       }
     },
     [
-      router,
-      pathname,
+      currentWorkspace,
       setCurrentWorkspace,
-      fetchWorkspaces,
       workspaceLoading,
       setWorkspaceLoading,
-      workspaceService,
+      fetchWorkspaces,
+      locale,
+      router,
+      pathname,
       params,
-      currentWorkspace,
     ]
   );
 };
 
 /**
+ * Hook to transfer ownership of a workspace.
+ *
+ * @param currentWorkspace - The current workspace.
+ * @param setCurrentWorkspace - Function to update the current workspace state.
+ * @param locale - The current locale.
+ *
+ * @remarks
+ *
+ * It transfers the ownership of the workspace using the workspace service and updates the current workspace owner.
+ * It also updates the currentWorkspace context state with the new owner.
+ */
+export const useTransferOwnership = (
+  currentWorkspace: Workspace | null,
+  setCurrentWorkspace: React.Dispatch<React.SetStateAction<Workspace | null>>,
+  locale: Locale
+) =>
+  useCallback(
+    /**
+     * @param newOwner - The ID of the new owner.
+     * @returns Irmin API response.
+     */
+    async (newOwner: number): Promise<IrminAPIResponse> => {
+      // Get the workspace service
+      const workspaceService = WorkspaceService.getInstance(locale);
+      // Transfer ownership
+      const response =
+        await workspaceService.transferWorkspaceOwnership(newOwner);
+      // Update the current workspace owner
+      if (currentWorkspace) {
+        setCurrentWorkspace({ ...currentWorkspace, owner_id: newOwner });
+      }
+
+      return response;
+    },
+    [currentWorkspace, setCurrentWorkspace, locale]
+  );
+
+/**
  * Hook to delete a workspace.
- * It deletes the workspace using the workspace service, updates the list of workspaces,
- * and resets the current workspace to null.
+ *
  * @param switchToWorkspace - Function to switch to a workspace.
  * @param fetchWorkspaces - Function to fetch the list of workspaces.
  * @param locale - The current locale.
+ *
+ * @remarks
+ *
+ * It deletes the workspace using the workspace service, updates the list of workspaces,
+ * and resets the current workspace to null.
  */
 export const useDeleteCurrentWorkspace = (
   switchToWorkspace: (
@@ -466,11 +667,242 @@ export const useDeleteCurrentWorkspace = (
   ) => void,
   fetchWorkspaces: () => void,
   locale: Locale
-) => {
-  const workspaceService = WorkspaceService.getInstance(locale);
-  return useCallback(async () => {
-    await workspaceService.deleteWorkspace();
-    await switchToWorkspace(null, true);
-    await fetchWorkspaces();
-  }, [switchToWorkspace, fetchWorkspaces, workspaceService]);
-};
+) =>
+  useCallback(
+    /**
+     * Delete the current workspace and update the context state.
+     * @returns Irmin API response.
+     */
+    async (): Promise<IrminAPIResponse> => {
+      const workspaceService = WorkspaceService.getInstance(locale);
+      const response = await workspaceService.deleteWorkspace();
+      await switchToWorkspace(null, true);
+      await fetchWorkspaces();
+
+      return response;
+    },
+    [switchToWorkspace, fetchWorkspaces, locale]
+  );
+
+/**
+ * Hook to delete a workspace user.
+ *
+ * @param users - The list of workspace users.
+ * @param setUsers - Function to update the users state.
+ * @param locale - The current locale.
+ */
+export const useDeleteUser = (
+  users: WorkspaceUser[],
+  setUsers: React.Dispatch<React.SetStateAction<WorkspaceUser[]>>,
+  locale: Locale
+) =>
+  useCallback(
+    /**
+     * Delete a user from the current workspace and update the context state.
+     * @param id - The ID of the user to delete.
+     *
+     * @returns Irmin API response.
+     */
+    async (id: number): Promise<IrminAPIResponse> => {
+      // Get the user service
+      const userService = UserAndRoleService.getInstance(locale);
+      // Remove user from workspace
+      const response = await userService.removeUserFromWorkspace(id);
+      // Remove user from the context state
+      setUsers(users.filter((user) => user.id !== id));
+
+      return response;
+    },
+    [users, setUsers, locale]
+  );
+
+/**
+ * Hook to change a user's role in the workspace.
+ *
+ * @param users - The list of workspace users.
+ * @param setUsers - Function to update the users state.
+ * @param locale - The current locale.
+ */
+export const useChangeUserRole = (
+  users: WorkspaceUser[],
+  setUsers: React.Dispatch<React.SetStateAction<WorkspaceUser[]>>,
+  locale: Locale
+) =>
+  useCallback(
+    /**
+     * Change a user's role in the workspace and update the context state.
+     *
+     * @param id - The ID of the user to change the role.
+     * @param role - The new role to assign to the user.
+     *
+     * @returns Irmin API response.
+     */
+    async (id: number, role: IrminRoleNames): Promise<IrminAPIResponse> => {
+      // Get the user service
+      const userService = UserAndRoleService.getInstance(locale);
+      // Find the user to get current role
+      const user = users.find((u) => u.id === id);
+      if (!user) throw new Error('User not found');
+      const currentRole =
+        user.roles && user.roles?.length > 0 ? user.roles[0] : null;
+      // Change the user's role
+      const response = await userService.changeUserRole(
+        id,
+        role,
+        currentRole ? currentRole.name : null
+      );
+      // Update the user's role in the context state
+      setUsers(
+        users.map((user) => (user.id === id ? { ...user, role: role } : user))
+      );
+
+      return response;
+    },
+    [users, setUsers, locale]
+  );
+
+/**
+ * Hook to send an invite to a user.
+ *
+ * @param currentWorkspace - The current workspace.
+ * @param setInvites - Function to update the invites state.
+ * @param locale - The current locale.
+ */
+export const useSendInvite = (
+  currentWorkspace: Workspace | null,
+  setInvites: React.Dispatch<React.SetStateAction<Invite[]>>,
+  locale: Locale
+) =>
+  useCallback(
+    /**
+     * Send an invite to a user and update the context state.
+     *
+     * @param name - The name of the user to invite.
+     * @param email - The email of the user to invite.
+     * @param role - The role to assign to the user.
+     *
+     * @returns Irmin API response.
+     */
+    async (
+      name: string,
+      email: string,
+      role: IrminRoleNames
+    ): Promise<IrminAPIResponse> => {
+      // Make sure there is a current workspace
+      if (!currentWorkspace) throw new Error('No current workspace');
+      // Get the invite service
+      const inviteService = InviteService.getInstance(locale);
+      // Send the invite
+      const response = await inviteService.inviteUserToWorkspace(
+        name,
+        email,
+        role
+      );
+      // Get new invites
+      const newInvites = await inviteService.getInvitesByWorkspace(
+        currentWorkspace.slug
+      );
+      // Update the invites in the context state
+      setInvites(newInvites.data);
+
+      return response;
+    },
+    [currentWorkspace, setInvites, locale]
+  );
+
+/**
+ * Hook to resend an invite to a user.
+ *
+ * @param locale - The current locale.
+ */
+export const useResendInvite = (locale: Locale) =>
+  useCallback(
+    /**
+     * Resend an invite to a user and update the context state.
+     *
+     * @param invite - The ID of the invite to resend.
+     *
+     * @returns Irmin API response.
+     */
+    async (invite: number): Promise<IrminAPIResponse> => {
+      // Get the invite service
+      const inviteService = InviteService.getInstance(locale);
+      // Resend the invite
+      const response = await inviteService.resendUserInvite(invite);
+
+      return response;
+    },
+    [locale]
+  );
+
+/**
+ * Hook to cancel an invite to a user.
+ *
+ * @param invites - The list of workspace invites.
+ * @param setInvites - Function to update the invites state.
+ * @param locale - The current locale.
+ */
+export const useCancelInvite = (
+  invites: Invite[],
+  setInvites: React.Dispatch<React.SetStateAction<Invite[]>>,
+  locale: Locale
+) =>
+  useCallback(
+    /**
+     * Cancel an invite to a user and update the context state.
+     *
+     * @param invite - The ID of the invite to cancel.
+     *
+     * @returns Irmin API response.
+     */
+    async (invite: number): Promise<IrminAPIResponse> => {
+      // Get the invite service
+      const inviteService = InviteService.getInstance(locale);
+      // Cancel the invite
+      const response = await inviteService.cancelUserInvite(invite);
+      // Update the invites in the context state
+      setInvites(invites.filter((i) => i.id !== invite));
+
+      return response;
+    },
+    [invites, setInvites, locale]
+  );
+
+/**
+ * Hook to change an invite to a user.
+ *
+ * @param invites - The list of workspace invites.
+ * @param setInvites - Function to update the invites state.
+ * @param locale - The current locale.
+ */
+export const useChangeInvite = (
+  invites: Invite[],
+  setInvites: React.Dispatch<React.SetStateAction<Invite[]>>,
+  locale: Locale
+) =>
+  useCallback(
+    /**
+     * Change an invite to a user and update the context state.
+     *
+     * @param invite - The ID of the invite to change.
+     * @param role - The role to assign to the user.
+     *
+     * @returns Irmin API response.
+     */
+    async (invite: number, role: IrminRole): Promise<IrminAPIResponse> => {
+      // Get the invite service
+      const inviteService = InviteService.getInstance(locale);
+      // Change the invite
+      const response = await inviteService.changeUserInviteRole(
+        invite,
+        role.name
+      );
+      // Update the invites in the context state
+      setInvites(
+        invites.map((i) => (i.id === invite ? { ...i, role: role } : i))
+      );
+
+      return response;
+    },
+    [invites, setInvites, locale]
+  );

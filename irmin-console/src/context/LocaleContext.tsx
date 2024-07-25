@@ -19,6 +19,9 @@ import {
 } from '@/dictionaries';
 import { setCookie } from '@/lib/utils/cookieUtils';
 
+/**
+ * Locale context to provide the locale and dictionary to the app
+ */
 const LocaleContext = createContext<{
   locale: Locale;
   dict: Dictionary;

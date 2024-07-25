@@ -7,7 +7,7 @@ import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
 
 import { Invite } from '@/types/api/Invite';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
-import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
+import { IrminRoleNames } from '@/types/api/IrminRole';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
@@ -164,19 +164,19 @@ class InviteService {
   /**
    * Change the invited user's role in the workspace.
    * @param invite - The invite's ID.
-   * @param role - The user's role.
+   * @param role - The role slug.
    * @returns response from the API or example data
    * {@link https://api.irmin.dev/docs#invites-PATCHv1-invites-update | Irmin API docs}
    */
   async changeUserInviteRole(
     invite: number,
-    role: IrminRole
+    role: IrminRoleNames
   ): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
     try {
       const formData = new FormData();
       formData.append('invite', invite.toString());
-      formData.append('role', role.name);
+      formData.append('role', role);
       formData.append('_method', 'PATCH');
 
       const response = await fetchWithCredentials(
