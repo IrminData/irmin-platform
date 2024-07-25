@@ -6,6 +6,9 @@ import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
+/**
+ * Error UI for the website
+ */
 export default function WebsiteError({
   pageNotFound,
   error,

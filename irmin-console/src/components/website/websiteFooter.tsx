@@ -6,6 +6,14 @@ import WebsiteFooterContent from '@/components/website/websiteFooterContent';
 
 import { WebsiteFooterLinkSection } from '@/types/website/WebsiteNavigation';
 
+/**
+ * Website footer
+ *
+ * @remarks
+ *
+ * This component is used to display the footer on the website. It is used in the website layout.
+ * It fetches the footer links from the WordPress API and displays them in the {@link WebsiteFooterContent} component.
+ */
 export default async function WebsiteFooter() {
   const wordpress = WordPress.getInstance();
 

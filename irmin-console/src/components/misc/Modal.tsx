@@ -2,6 +2,16 @@ import React from 'react';
 
 import { IoClose } from 'react-icons/io5';
 
+/**
+ * Modal UI component
+ *
+ * @remarks
+ *
+ * UI for displaying a modal with a title and content.
+ *
+ * This modal is shown when the user needs to interact with a form or a message.
+ * The position of the modal is fixed in the center of the screen.
+ */
 const Modal = ({
   isOpen,
   title,

@@ -11,6 +11,19 @@ import TableSkeleton from '@/components/tables/tableSkeleton';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
+/**
+ * Portal export syncs page
+ *
+ * @remarks
+ *
+ * This page is used to manage export syncs in the portal.
+ * It shows a list of export syncs that are available in the workspace.
+ * It allows the user to create a new export sync.
+ *
+ * It uses the WorkspaceContext to fetch and manage export sync data.
+ *
+ * @returns UI for managing export syncs
+ */
 export default function ExportSyncsPage() {
   const { dict } = useLocale();
   const { exports } = useWorkspace();

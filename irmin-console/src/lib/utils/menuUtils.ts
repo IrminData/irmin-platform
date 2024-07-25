@@ -7,7 +7,11 @@ import {
 } from '@/types/website/WebsiteNavigation';
 import { Menu, MenuItem } from '@/types/website/Wordpress';
 
-// Function to transform Menu to WebsiteNavigationLink[]
+/**
+ * Transform a WordPress {@link Menu} to {@link WebsiteNavigationLink} array
+ * @param menu - The WordPress Menu to transform
+ * @returns The transformed data as array of {@link WebsiteNavigationLink}
+ */
 export function transformMenu(menu: Menu): WebsiteNavigationLink[] {
   // Create a map to group items by their parent
   const parentMap: { [key: string]: MenuItem[] } = {};
@@ -51,7 +55,11 @@ export function transformMenu(menu: Menu): WebsiteNavigationLink[] {
   return [];
 }
 
-// Function to transform Menu to WebsiteFooterLinkSection[]
+/**
+ * Transform a WordPress {@link Menu} to {@link WebsiteFooterLinkSection} array
+ * @param menu - The WordPress Menu to transform
+ * @returns The transformed data as array of {@link WebsiteFooterLinkSection}
+ */
 export function transformMenuToFooterLinks(
   menu: Menu
 ): WebsiteFooterLinkSection[] {

@@ -9,6 +9,13 @@ import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
 
 import { useProfile } from '@/context/ProfileContext';
 
+/**
+ * Profile UI for the portal navigation
+ *
+ * @remarks
+ *
+ * This component is used to display the profile information in the portal navigation sidebar.
+ */
 export default function PortalNavProfile({
   setIsMenuOpen,
 }: {

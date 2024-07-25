@@ -6,9 +6,24 @@ import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5';
 
 import Button from '@/components/misc/Button';
 
-import { GridProps } from '@/types/internal/ListUI';
+import { ListUIProps } from '@/types/internal/ListUI';
 
-const List: React.FC<GridProps> = ({ rows, headers, hideHeaders = false }) => {
+/**
+ * List UI component
+ *
+ * @remarks
+ *
+ * This component is used to display a list of items in a table format.
+ *
+ * It can be used to display a list of items with headers and actions.
+ *
+ * The component is responsive and can be used in any layout.
+ */
+const List: React.FC<ListUIProps> = ({
+  rows,
+  headers,
+  hideHeaders = false,
+}) => {
   const [openDetails, setOpenDetails] = useState<number[]>([]);
   const totalColumns = headers.length;
   return (

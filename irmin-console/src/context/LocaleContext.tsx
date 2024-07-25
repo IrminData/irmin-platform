@@ -29,6 +29,13 @@ const LocaleContext = createContext<{
   switchLocale: () => {},
 });
 
+/**
+ * Locale provider component to provide the locale context to the app
+ * and handle locale switching
+ *
+ * @param children - The children components
+ * @returns The locale provider component
+ */
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
@@ -74,6 +81,10 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Hook to use the locale context
+ * @returns The locale context
+ */
 export function useLocale() {
   return useContext(LocaleContext);
 }

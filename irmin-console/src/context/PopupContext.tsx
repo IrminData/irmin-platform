@@ -36,6 +36,17 @@ const PopupContext = createContext<{
   },
 });
 
+/**
+ * Provider for the popup context to handle alerts, confirmations, notifications and modals
+ *
+ * @remarks
+ *
+ * Used to show, hide and update NotificationPopup, Alert, ConfirmPopup and Modal components.
+ * When shown, these components will be rendered on top of the current view.
+ *
+ * @param children - The children components
+ * @returns The popup provider component
+ */
 export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   // Handle alerts
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -166,4 +177,7 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+/**
+ * Hook to use the popup context
+ */
 export const usePopup = () => useContext(PopupContext);

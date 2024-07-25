@@ -22,6 +22,16 @@ import { useProfile } from '@/context/ProfileContext';
 
 import { PortalNavigationLink } from '@/types/internal/PortalNavigation';
 
+/**
+ * Hook to get portal navigation links
+ *
+ * @remarks
+ *
+ * This hook is used to get the portal navigation links.
+ * The links are defined in the code and are used in the portal navigation component.
+ *
+ * @returns Portal navigation links
+ */
 export const usePortalNavLinks = (): {
   hasWorkspace: PortalNavigationLink[];
   noWorkspace: PortalNavigationLink[];

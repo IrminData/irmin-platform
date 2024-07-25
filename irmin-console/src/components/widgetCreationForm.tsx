@@ -9,6 +9,16 @@ import Input from '@/components/misc/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 
+/**
+ * Widget creation form
+ *
+ * @remarks
+ *
+ * This component is used to create a new widget in the dashboard.
+ * It allows users to select the widget type, name, and dashboard to save the widget.
+ *
+ * TODO: Implement the widget creation functionality
+ */
 const WidgetCreationForm = () => {
   const { dict } = useLocale();
 

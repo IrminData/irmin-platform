@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 
 import AuthService from '@/lib/api/AuthService';
 
@@ -15,6 +15,15 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useProfile } from '@/context/ProfileContext';
 
+/**
+ * Portal user profile and settings page
+ *
+ * @remarks
+ *
+ * This page is used to manage user profile settings.
+ *
+ * @returns UI for managing user profile settings
+ */
 export default function UserProfileSettingsPage() {
   const { dict } = useLocale();
   return (
@@ -38,6 +47,19 @@ export default function UserProfileSettingsPage() {
   );
 }
 
+/**
+ * General settings tab content
+ *
+ * @remarks
+ *
+ * This component is used to manage user's general settings in the portal.
+ * It allows the user to change their profile information.
+ *
+ * It uses the ProfileContext to manage the profile's global state.
+ * It uses AuthService to call the API to update the profile.
+ *
+ * @returns UI to manage user's general settings in the portal
+ */
 const GeneralSettings: React.FC = () => {
   const { locale, dict } = useLocale();
   const { profile, setProfile } = useProfile();
@@ -47,37 +69,33 @@ const GeneralSettings: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSaveChanges = useCallback(
-    async (event: React.FormEvent) => {
-      event.preventDefault();
-      setIsLoading(true);
-      // Get form values
-      const form = event.target as HTMLFormElement;
-      const name = (form.elements.namedItem('name') as HTMLInputElement).value;
-      const email = (form.elements.namedItem('email') as HTMLInputElement)
-        .value;
-      const company = (form.elements.namedItem('company') as HTMLInputElement)
-        .value;
+  const handleSaveChanges = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsLoading(true);
+    // Get form values
+    const form = event.target as HTMLFormElement;
+    const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+    const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+    const company = (form.elements.namedItem('company') as HTMLInputElement)
+      .value;
 
-      try {
-        // Call the API to update the profile
-        await authService.updateProfile(name, company, email);
-        // Update the profile context
-        const data = await authService.getProfile();
-        if (!data) throw new Error('User not logged in.');
-        setProfile(data.data);
-        // Reset error and show success message
-        setError(null);
-        irminAlert('success', dict.profile.profileUpdatedSuccessfully);
-      } catch (error) {
-        console.error('Error updating profile:', error);
-        setError((error as Error)?.message ?? 'An error occurred.');
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [authService, setProfile, setError, irminAlert, dict]
-  );
+    try {
+      // Call the API to update the profile
+      await authService.updateProfile(name, company, email);
+      // Update the profile context
+      const data = await authService.getProfile();
+      if (!data) throw new Error('User not logged in.');
+      setProfile(data.data);
+      // Reset error and show success message
+      setError(null);
+      irminAlert('success', dict.profile.profileUpdatedSuccessfully);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setError((error as Error)?.message ?? 'An error occurred.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (!profile) return <LoadingSkeleton className='h-52 w-full' />;
 
@@ -146,14 +164,22 @@ const GeneralSettings: React.FC = () => {
   );
 };
 
+/**
+ * Change password settings tab content
+ *
+ * @remarks
+ * TODO: This component is not yet implemented.
+ *
+ * @returns UI to manage user's password settings in the portal
+ */
 const ChangePasswordSettings: React.FC = () => {
   const { dict } = useLocale();
 
-  const handleChangePassword = useCallback((event: React.FormEvent) => {
+  const handleChangePassword = (event: React.FormEvent) => {
     event.preventDefault();
     // TODO: Handle changing password
     console.log('Password changed.');
-  }, []);
+  };
 
   return (
     <div className='px-4'>

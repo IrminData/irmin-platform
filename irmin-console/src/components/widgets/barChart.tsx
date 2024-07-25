@@ -29,6 +29,14 @@ ChartJS.register(
   Legend
 );
 
+/**
+ * Bar chart widget
+ *
+ * @remarks
+ *
+ * This component is used to display a bar chart widget on the dashboard.
+ * It uses the ChartJS library to render the chart.
+ */
 const BarChart = ({ widget }: { widget: Widget }) => {
   if (widget.type !== 'bar') return;
   const widgetData = widget.data as ChartOrTableData;

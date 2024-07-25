@@ -8,6 +8,18 @@ import LargeTabs from '@/components/tabs/largeTabs';
 
 import { useLocale } from '@/context/LocaleContext';
 
+/**
+ * Portal marketplace page
+ *
+ * @remarks
+ *
+ * This page is used to show the marketplace in the portal.
+ * It shows the data marketplace and the plugin marketplace.
+ *
+ * Marketplace is currently just a placeholder and does not have any functionality.
+ *
+ * @returns UI for the marketplace
+ */
 export default function MarketplacePage() {
   const { dict } = useLocale();
 

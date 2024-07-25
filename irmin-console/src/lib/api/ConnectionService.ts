@@ -9,15 +9,44 @@ import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
+/**
+ * Connection details and settings API response type
+ * @internal
+ */
 interface ConnectionDetailsAndSettingsAPIResponse extends IrminAPIResponse {
   data: ConnectionDetailsAndSettingsFields;
 }
+
+/**
+ * Connection test API response type
+ * @internal
+ */
 interface ConnectionTestAPIResponse extends IrminAPIResponse {
   data: {
     connected: boolean;
   };
 }
 
+/**
+ * Connection API service
+ *
+ * @remarks
+ *
+ * This service calls the Irmin API and is responsible for all connection related API calls.
+ *
+ * Like the other API services, this service is a singleton, meaning that only one
+ * instance of the service can exist at a time.
+ *
+ * The service uses the {@link fetchWithCredentials} function to make API calls.
+ *
+ * If the environment is set to offline mode, service will return example data instead
+ * of making API calls.
+ *
+ * If the environment is set to development, service will log the API call errors to
+ * the console, but will not throw them. Instead, it will return the example data.
+ *
+ * Example data can be found here: `@/lib/exampleObjects/apiObjects`
+ */
 class ConnectionService {
   private static instance: ConnectionService;
   private locale: Locale = defaultLocale;
@@ -26,6 +55,10 @@ class ConnectionService {
     this.locale = locale;
   }
 
+  /**
+   * Get the instance of the {@link ConnectionService}
+   * @param locale - The locale to use for the instance
+   */
   public static getInstance(locale: Locale): ConnectionService {
     if (!ConnectionService.instance) {
       ConnectionService.instance = new ConnectionService(locale);
@@ -36,15 +69,19 @@ class ConnectionService {
     return ConnectionService.instance;
   }
 
+  /**
+   * Set the locale for the instance
+   * @param locale - The locale to set
+   */
   public setLocale(locale: Locale) {
     this.locale = locale;
   }
 
   /**
    * Fetch connection details for a new connection.
-   * @param {number} connectorID - The ID of the connector to fetch
-   * @returns {Promise<ConnectionDetailsAndSettingsAPIResponse>}
-   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-details Irmin API docs}
+   * @param connectorID - The ID of the connector to fetch
+   * @returns required details fields to create a connection
+   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-details | Irmin API docs}
    */
   async fetchNewConnectionDetails(
     connectorID: number
@@ -69,10 +106,10 @@ class ConnectionService {
 
   /**
    * Test a connection with the provided connection details
-   * @param {number} connectorID - The ID of the connector
-   * @param {ConnectionDetailsAndSettings} connectionDetails - The connection details to test
-   * @returns {Promise<ConnectionTestAPIResponse>}
-   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-test-connection Irmin API docs}
+   * @param connectorID - The ID of the connector
+   * @param connectionDetails - The connection details to test
+   * @returns whether the connection was successful or not
+   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-test-connection | Irmin API docs}
    */
   async testConnectionWithDetails(
     connectorID: number,
@@ -108,10 +145,10 @@ class ConnectionService {
 
   /**
    * Fetch connection settings for a new connection.
-   * @param {number} connectorID - The ID of the connector to fetch
-   * @param {ConnectionDetailsAndSettings} connectionDetails - The connection details to fetch settings for
-   * @returns {Promise<ConnectionDetailsAndSettingsAPIResponse>}
-   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-settings Irmin API docs}
+   * @param connectorID - The ID of the connector to fetch
+   * @param connectionDetails - The connection details to fetch settings for
+   * @returns required settings fields to create a connection
+   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-settings | Irmin API docs}
    */
   async fetchNewConnectionSettings(
     connectorID: number,
@@ -147,13 +184,13 @@ class ConnectionService {
 
   /**
    * Create a new connection and start sync with the provided details and settings for a workspace
-   * @param {number} connectorID - The ID of the connector
-   * @param {string} connectionName - The name of the connection
-   * @param {string} connectionCron - The cron syntax for the connection
-   * @param {ConnectionDetailsAndSettings} connectionDetails - The connection details
-   * @param {ConnectionDetailsAndSettings} connectionSettings - The connection settings
-   * @returns {Promise<IrminAPIResponse>}
-   * {@link https://api.irmin.dev/docs#workflows-POSTv1-connections-create Irmin API docs}
+   * @param connectorID - The ID of the connector
+   * @param connectionName - The name of the connection
+   * @param connectionCron - The cron syntax for the connection
+   * @param connectionDetails - The connection details
+   * @param connectionSettings - The connection settings
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#workflows-POSTv1-connections-create | Irmin API docs}
    */
   async createConnection(
     connectorID: number,

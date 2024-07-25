@@ -14,25 +14,34 @@ import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
+/**
+ * File navigator item properties
+ * @internal
+ */
 type FileItemProps = {
   name: string;
   type: 'file' | 'folder';
   children?: FileItemProps[];
 };
 
-type FileNavigatorProps = {
+/**
+ * File navigator component
+ *
+ * @remarks
+ *
+ * This component is used to display a file navigator in the portal.
+ * It displays a list of files and folders in a tree structure.
+ *
+ * It includes a context menu to open, delete, and rename files.
+ *
+ * The file navigator is used to browse and manage files in the portal.
+ */
+const FileNavigator: React.FC<{
   items: FileItemProps[];
   onOpenFile: (_name: string) => void; // Callback function when a file is opened
   onDeleteFile?: (_name: string) => void; // Callback function when a file is deleted
   onRenameFile?: (_name: string) => void; // Callback function when a file is renamed
-};
-
-const FileNavigator: React.FC<FileNavigatorProps> = ({
-  items,
-  onOpenFile,
-  onDeleteFile,
-  onRenameFile,
-}) => {
+}> = ({ items, onOpenFile, onDeleteFile, onRenameFile }) => {
   const { dict } = useLocale();
 
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});

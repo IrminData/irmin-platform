@@ -26,6 +26,15 @@ const ProfileContext = createContext<{
   setProfile: () => {},
 });
 
+/**
+ * Profile context provider
+ *
+ * @remarks
+ *
+ * Provider for the profile context to handle user profile data.
+ * It fetches the profile data from the API and provides it to the app.
+ * The profile data includes user information like name, email, etc.
+ */
 export const ProfileProvider = ({
   children,
 }: {

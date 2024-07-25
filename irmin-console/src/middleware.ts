@@ -3,12 +3,13 @@ import type { NextRequest } from 'next/server';
 
 import { defaultLocale, languages, Locale } from '@/dictionaries';
 
+// List of available locales
 const locales = languages.map((lang) => lang.code);
 
 /**
  * Get the preferred locale from the Accept-Language header
- * @param {NextRequest} request - The request object
- * @returns {Locale} preferredLocale - The users preferred locale
+ * @param request - The request object
+ * @returns The users preferred locale
  */
 function getLocaleFromHeader(request: NextRequest): Locale {
   const acceptLanguage = request.headers.get('accept-language');
@@ -23,8 +24,8 @@ function getLocaleFromHeader(request: NextRequest): Locale {
 
 /**
  * Get the locale from the cookies
- * @param {NextRequest} request - The request object
- * @returns {Locale | null} locale - The locale from the cookies or null if not found
+ * @param request - The request object
+ * @returns The locale from the cookies or null if not found
  */
 function getLocaleFromCookies(request: NextRequest): Locale | null {
   const cookieLocale = request.cookies.get('locale')?.value;
@@ -36,8 +37,8 @@ function getLocaleFromCookies(request: NextRequest): Locale | null {
 
 /**
  * Set the user's preferred locale in a cookie for 1 year
- * @param {NextResponse} response - The response object
- * @param {Locale} locale - The locale to set in the cookie
+ * @param response - The response object
+ * @param locale - The locale to set in the cookie
  */
 function setLocaleCookie(response: NextResponse, locale: Locale) {
   response.cookies.set('locale', locale, {
@@ -47,22 +48,34 @@ function setLocaleCookie(response: NextResponse, locale: Locale) {
 }
 
 /**
- * Middleware for handling locale and authentication (for development environment and internal routes)
- * Redirects to the correct locale if not found in the URL
- * Redirects to the /api/verify-dev-access route if the user is not authenticated and the environment requires it or the path is a TSDoc path
- * Redirects to the /frontend-docs/index.html route if the path is /frontend-docs or /tsdocs
- * @see {@link https://nextjs.org/docs/app/building-your-application/routing/middleware}
- * @param {NextRequest} req - The request object
- * @returns {NextResponse} response - The response object
+ * Main application middleware
+ *
+ * @remarks
+ *
+ * Middleware handles locale and dev env authentication.
+ * Authentication is required for development environments and TSDoc paths.
+ *
+ * - Redirects to the correct locale if not found in the URL
+ * - Redirects to the /api/verify-dev-access route if the user is not authenticated and the environment requires it or the path is a TSDoc path
+ * - Redirects to the /frontend-docs/index.html route if the path is /frontend-docs or /tsdocs
+ *
+ * {@link https://nextjs.org/docs/app/building-your-application/routing/middleware}
+ *
+ * @param req - The request object
+ * @returns The response object
  */
 export function middleware(req: NextRequest) {
   const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'true';
   const appPassword = process.env.ENV_PASSWORD ?? 'oiDeNuDEvenTICYc';
 
   const { pathname } = req.nextUrl;
+
   const pathnameHasLocale = locales.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
+
+  const isTsdocHome = pathname === '/frontend-docs' || pathname === '/tsdocs';
+  const isTsdocPath = pathname.startsWith('/frontend-docs');
 
   let locale = getLocaleFromCookies(req);
   if (!locale) {
@@ -71,7 +84,13 @@ export function middleware(req: NextRequest) {
 
   const response = NextResponse.next();
 
-  if (!pathnameHasLocale) {
+  // Redirect to /frontend-docs/index.html for specific TSDoc home page
+  if (isTsdocHome) {
+    return NextResponse.redirect(new URL('/frontend-docs/index.html', req.url));
+  }
+
+  // Locale handling
+  if (!pathnameHasLocale && !isTsdocPath) {
     req.nextUrl.pathname = `/${locale}${pathname}`;
     setLocaleCookie(response, locale);
     return NextResponse.redirect(req.nextUrl);
@@ -86,7 +105,7 @@ export function middleware(req: NextRequest) {
   }
 
   // Authentication handling
-  if (requireAuth === 'true') {
+  if (requireAuth === 'true' || isTsdocPath) {
     const { cookies } = req;
     const authorizedDev = cookies.get('authorizedDev');
     if (!authorizedDev || authorizedDev.value !== appPassword) {
@@ -99,6 +118,9 @@ export function middleware(req: NextRequest) {
 
 /**
  * Configuration for the middleware
+ *
+ * @remarks
+ *
  * Match all request paths except for the ones starting with:
  * - api (API routes)
  * - ui-assets (UI assets)
@@ -108,7 +130,8 @@ export function middleware(req: NextRequest) {
  * - all .svg, .png, .jpg, .webp and .jpeg files
  * - sitemap.xml
  * - robots.txt
- * @see {@link https://nextjs.org/docs/app/building-your-application/routing/middleware}
+ *
+ * {@link https://nextjs.org/docs/app/building-your-application/routing/middleware}
  */
 export const config = {
   matcher: [

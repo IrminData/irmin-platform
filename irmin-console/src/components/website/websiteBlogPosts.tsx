@@ -11,6 +11,18 @@ import { ArticlesSection } from '@/types/website/Wordpress';
 
 import WebsiteBlogPostsContent from './websiteBlogPostsContent';
 
+/**
+ * Website articles list section
+ *
+ * @remarks
+ *
+ * This component is used to display a list of blog posts on the website.
+ * It uses ACF data from WordpressAPI.
+ *
+ * It fetches the blog posts from the WordPress API and filters them by the current language.
+ *
+ * The articles are then displayed in the {@link WebsiteBlogPostsContent} component.
+ */
 export default async function WebsiteBlogPosts({
   section,
   lang,

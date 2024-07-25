@@ -14,8 +14,9 @@ import {
 } from '@/types/api/Workflow';
 import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
 
-// IrminAPIResponse types
-
+/**
+ * Example API response base for Irmin API
+ */
 export const exampleAPIResponse: IrminAPIResponse = {
   metadata: {
     allGood: 'yes',
@@ -28,8 +29,9 @@ export const exampleAPIResponse: IrminAPIResponse = {
   },
 };
 
-// Dashbaord types
-
+/**
+ * Example widgets for the dashboard
+ */
 export const exampleWidgets: Widget[] = [
   {
     id: 0,
@@ -104,6 +106,9 @@ export const exampleWidgets: Widget[] = [
   },
 ];
 
+/**
+ * Example dashboard
+ */
 export const exampleDashboard: Dashboard = {
   id: 0,
   name: 'Test',
@@ -112,8 +117,9 @@ export const exampleDashboard: Dashboard = {
   updated_at: new Date().toDateString(),
 };
 
-// Bucket types
-
+/**
+ * Example Bucket folder
+ */
 export const exampleFolder: BucketFolder = {
   id: 0,
   name: 'test',
@@ -123,6 +129,9 @@ export const exampleFolder: BucketFolder = {
   updated_at: new Date().toDateString(),
 };
 
+/**
+ * Example Bucket file of type SQL
+ */
 export const exampleFileSQL: BucketFile = {
   id: 0,
   name: 'sales_today.sql',
@@ -135,6 +144,9 @@ export const exampleFileSQL: BucketFile = {
   updated_at: new Date().toDateString(),
 };
 
+/**
+ * Example Bucket file of type JS
+ */
 export const exampleFileJS: BucketFile = {
   id: 1,
   name: 'helloworld.js',
@@ -147,22 +159,27 @@ export const exampleFileJS: BucketFile = {
   updated_at: new Date().toDateString(),
 };
 
+/**
+ * Example Bucket
+ */
 export const exampleBucket: Bucket = {
   id: 0,
   folders: [exampleFileSQL],
   files: [exampleFileSQL, exampleFileJS],
 };
 
-// IrminRole types
-
+/**
+ * Example role
+ */
 export const exampleRole: IrminRole = {
   name: 'admin',
   label: 'Admin',
   description: 'Can do everything',
 };
 
-// Profile types
-
+/**
+ * Example user profile
+ */
 export const exampleProfile: Profile = {
   id: 0,
   name: 'example User',
@@ -173,8 +190,9 @@ export const exampleProfile: Profile = {
   updated_at: new Date().toDateString(),
 };
 
-// Invite types
-
+/**
+ * Example invite
+ */
 export const exampleInvite: Invite = {
   id: 0,
   name: 'Invited User',
@@ -184,8 +202,9 @@ export const exampleInvite: Invite = {
   role: exampleRole,
 };
 
-// Workspace types
-
+/**
+ * Example workspace
+ */
 export const exampleWorkspace: Workspace = {
   id: 0,
   name: 'example workspace',
@@ -193,6 +212,9 @@ export const exampleWorkspace: Workspace = {
   owner_id: 0,
 };
 
+/**
+ * Example workspace user
+ */
 export const exampleWorkspaceUser: WorkspaceUser = {
   id: 0,
   name: 'Mr. Workspace User',
@@ -204,8 +226,9 @@ export const exampleWorkspaceUser: WorkspaceUser = {
   roles: [exampleRole],
 };
 
-// Connector types
-
+/**
+ * Example connector
+ */
 export const exampleConnector: Connector = {
   id: 0,
   name: 'example connector',
@@ -213,8 +236,9 @@ export const exampleConnector: Connector = {
   description: 'Used for playing around example or filling missing API data',
 };
 
-// Dataset types
-
+/**
+ * Example dataset
+ */
 export const exampleDataset = {
   id: 0,
   name: 'example dataset',
@@ -227,8 +251,9 @@ export const exampleDataset = {
   updated_at: new Date().toDateString(),
 };
 
-// Workflow types
-
+/**
+ * Example workflow
+ */
 export const exampleWorkflow: Workflow = {
   id: 0,
   workflowable_id: 0,
@@ -248,6 +273,9 @@ export const exampleWorkflow: Workflow = {
   },
 };
 
+/**
+ * Example connection workflow
+ */
 export const exampleConnection: ConnectionWorkflow = {
   ...exampleWorkflow,
   workflowable_type: 'connection',
@@ -258,6 +286,9 @@ export const exampleConnection: ConnectionWorkflow = {
   },
 };
 
+/**
+ * Example export workflow
+ */
 export const exampleExport: ExportWorkflow = {
   ...exampleWorkflow,
   workflowable_type: 'export',
@@ -267,6 +298,9 @@ export const exampleExport: ExportWorkflow = {
   },
 };
 
+/**
+ * Example action workflow
+ */
 export const exampleAction: ActionWorkflow = {
   ...exampleWorkflow,
   workflowable_type: 'action',

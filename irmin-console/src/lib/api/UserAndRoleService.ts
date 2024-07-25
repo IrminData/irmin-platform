@@ -13,16 +13,43 @@ import { WorkspaceUser } from '@/types/api/Workspace';
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
-
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
+/**
+ * Users API response type
+ * @internal
+ */
 interface UsersAPIResponse extends IrminAPIResponse {
   data: WorkspaceUser[];
 }
+/**
+ * Roles API response type
+ * @internal
+ */
 interface RolesAPIResponse extends IrminAPIResponse {
   data: IrminRole[];
 }
 
+/**
+ * Workspace user and role API service
+ *
+ * @remarks
+ *
+ * This service calls the Irmin API and is responsible for all workspace user and role related API calls.
+ *
+ * Like the other API services, this service is a singleton, meaning that only one
+ * instance of the service can exist at a time.
+ *
+ * The service uses the {@link fetchWithCredentials} function to make API calls.
+ *
+ * If the environment is set to offline mode, service will return example data instead
+ * of making API calls.
+ *
+ * If the environment is set to development, service will log the API call errors to
+ * the console, but will not throw them. Instead, it will return the example data.
+ *
+ * Example data can be found here: `@/lib/exampleObjects/apiObjects`
+ */
 class UserAndRoleService {
   private roles: IrminRole[] = [];
 
@@ -33,6 +60,10 @@ class UserAndRoleService {
     this.locale = locale;
   }
 
+  /**
+   * Get the instance of the {@link UserAndRoleService}
+   * @param locale - The locale to use for the instance
+   */
   public static getInstance(locale: Locale): UserAndRoleService {
     if (!UserAndRoleService.instance) {
       UserAndRoleService.instance = new UserAndRoleService(locale);
@@ -43,14 +74,18 @@ class UserAndRoleService {
     return UserAndRoleService.instance;
   }
 
+  /**
+   * Set the locale for the service
+   * @param locale - The locale to use for the service
+   */
   public setLocale(locale: Locale) {
     this.locale = locale;
   }
 
   /**
    * Fetch all users from the current workspace
-   * @returns {Promise<UsersAPIResponse>}
-   * {@link https://api.irmin.dev/docs#workspaces-GETv1-users Irmin API docs}
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#workspaces-GETv1-users | Irmin API docs}
    */
   async fetchAllUsers(): Promise<UsersAPIResponse> {
     if (isOfflineMode)
@@ -77,8 +112,8 @@ class UserAndRoleService {
 
   /**
    * Fetch all available roles
-   * @returns {Promise<RolesAPIResponse>}
-   * {@link https://api.irmin.dev/docs#roles-GETv1-roles Irmin API docs}
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#roles-GETv1-roles | Irmin API docs}
    */
   async fetchRoles(): Promise<RolesAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: [exampleRole] };
@@ -104,7 +139,7 @@ class UserAndRoleService {
 
   /**
    * Get all roles stored in the roles array.
-   * @returns {IrminRole[]}
+   * @returns all stored roles, empty array if none
    */
   getRoles(): IrminRole[] {
     return this.roles;
@@ -112,9 +147,9 @@ class UserAndRoleService {
 
   /**
    * Fetch roles for workspace user
-   * @param {number} user - User ID
-   * @returns {Promise<RolesAPIResponse>}
-   * {@link https://api.irmin.dev/docs#roles-GETv1-users-roles Irmin API docs}
+   * @param user - User ID
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#roles-GETv1-users-roles | Irmin API docs}
    */
   async fetchUserRoles(user: number): Promise<RolesAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: [exampleRole] };
@@ -139,11 +174,11 @@ class UserAndRoleService {
 
   /**
    * Change the role of a user in a workspace
-   * @param {number} user - The ID of the user to change the role of
-   * @param {IrminRole} newRoleId - The new role
-   * @param {IrminRole | null} currentRoleId - The current role or null if user has no role
-   * @returns {Promise<IrminAPIResponse>}
-   * {@link https://api.irmin.dev/docs#roles-PATCHv1-users-roles Irmin API docs}
+   * @param user - The ID of the user to change the role of
+   * @param newRole - The new role
+   * @param currentRole - The current role or null if user has no role
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#roles-PATCHv1-users-roles | Irmin API docs}
    */
   async changeUserRole(
     user: number,
@@ -178,9 +213,9 @@ class UserAndRoleService {
 
   /**
    * Remove a user from a workspace
-   * @param {number} user - The ID of the user to remove
-   * @returns {Promise<IrminAPIResponse>}
-   * {@link https://api.irmin.dev/docs#workspaces-DELETEv1-users-remove Irmin API docs}
+   * @param user - The ID of the user to remove
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#workspaces-DELETEv1-users-remove | Irmin API docs}
    */
   async removeUserFromWorkspace(user: number): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;

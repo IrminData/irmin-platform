@@ -1,3 +1,10 @@
+/**
+ * Set a cookie
+ * @param name - The name of the cookie
+ * @param value - The value of the cookie
+ * @param days - The number of days until the cookie expires
+ * {@link https://www.w3schools.com/js/js_cookies.asp | W3Schools}
+ */
 export function setCookie(name: string, value: string, days: number) {
   const date = new Date();
   date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
@@ -5,6 +12,12 @@ export function setCookie(name: string, value: string, days: number) {
   document.cookie = `${name}=${value};${expires};path=/`;
 }
 
+/**
+ * Get a cookie
+ * @param name - The name of the cookie
+ * @returns The value of the cookie or null if not found
+ * {@link https://www.w3schools.com/js/js_cookies.asp | W3Schools}
+ */
 export function getCookie(name: string): string | null {
   const nameEQ = `${name}=`;
   const ca = document.cookie.split(';');

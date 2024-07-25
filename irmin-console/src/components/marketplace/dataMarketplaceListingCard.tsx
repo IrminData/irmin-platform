@@ -7,6 +7,17 @@ import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
+/**
+ * Data marketplace listing card
+ *
+ * @remarks
+ *
+ * This component is used to display a single dataset listing card in the data marketplace.
+ * It displays the dataset name, source, price, and industry.
+ * It also includes a button to connect to the dataset.
+ *
+ * It is used by the DataMarketplace component to display a single dataset on the marketplace.
+ */
 export default function DataMarketplaceListingCard({
   dataset,
 }: {

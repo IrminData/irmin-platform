@@ -9,6 +9,9 @@ import { cn } from '@/lib/utils/twUtils';
 
 import { useLocale } from '@/context/LocaleContext';
 
+/**
+ * Universal button component, used across the application
+ */
 const Button: React.FC<{
   variant?: 'solid' | 'outline' | 'icon' | 'link';
   colorScheme?: 'primary' | 'secondary' | 'tertiary' | 'gray' | 'black';

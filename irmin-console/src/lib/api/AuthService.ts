@@ -11,10 +11,35 @@ import { Profile } from '@/types/api/Profile';
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
+/**
+ * Profile API response type
+ * @internal
+ */
 interface ProfileAPIResponse extends IrminAPIResponse {
   data: Profile;
 }
 
+/**
+ * Authentication API service
+ *
+ * @remarks
+ *
+ * This service calls the Irmin API and is responsible for all auth and profile
+ * related API calls.
+ *
+ * Like the other API services, this service is a singleton, meaning that only one
+ * instance of the service can exist at a time.
+ *
+ * The service uses the {@link fetchWithCredentials} function to make API calls.
+ *
+ * If the environment is set to offline mode, service will return example data instead
+ * of making API calls.
+ *
+ * If the environment is set to development, service will log the API call errors to
+ * the console, but will not throw them. Instead, it will return the example data.
+ *
+ * Example data can be found here: `@/lib/exampleObjects/apiObjects`
+ */
 class AuthService {
   private static instance: AuthService;
   private locale: Locale = defaultLocale;
@@ -23,6 +48,10 @@ class AuthService {
     this.locale = locale;
   }
 
+  /**
+   * Get the instance of the {@link AuthService}
+   * @param locale - The locale to use for the instance
+   */
   public static getInstance(locale: Locale): AuthService {
     if (!AuthService.instance) {
       AuthService.instance = new AuthService(locale);
@@ -33,16 +62,20 @@ class AuthService {
     return AuthService.instance;
   }
 
+  /**
+   * Set the locale for the instance
+   * @param locale - The locale to set
+   */
   public setLocale(locale: Locale) {
     this.locale = locale;
   }
 
   /**
    * Login a user
-   * @param {string} email - The user's email address
-   * @param {string} password - The user's password
-   * @returns {Promise<IrminAPIResponse>}
-   * {@link https://api.irmin.dev/docs#authentication-POSTv1-login Irmin API docs}
+   * @param email - The user's email address
+   * @param password - The user's password
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#authentication-POSTv1-login | Irmin API docs}
    */
   async login(email: string, password: string): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
@@ -68,8 +101,8 @@ class AuthService {
 
   /**
    * Logout a user
-   * @returns {Promise<IrminAPIResponse>}
-   * {@link https://api.irmin.dev/docs#authentication-POSTv1-logout Irmin API docs}
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#authentication-POSTv1-logout | Irmin API docs}
    */
   async logout(): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
@@ -91,14 +124,14 @@ class AuthService {
 
   /**
    * Register a user
-   * @param {string} name - The user's name
-   * @param {string} company - The user's company
-   * @param {string} email - The user's email address
-   * @param {string} emailConfirmation - The user's email address confirmation
-   * @param {string} password - The user's password
-   * @param {string} passwordConfirmation - The user's password confirmation
-   * @returns {Promise<IrminAPIResponse>}
-   * {@link https://api.irmin.dev/docs#authentication-POSTv1-register Irmin API docs}
+   * @param name - The user's name
+   * @param company - The user's company
+   * @param email - The user's email address
+   * @param emailConfirmation - The user's email address confirmation
+   * @param password - The user's password
+   * @param passwordConfirmation - The user's password confirmation
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#authentication-POSTv1-register | Irmin API docs}
    */
   async register(
     name: string,
@@ -132,8 +165,8 @@ class AuthService {
 
   /**
    * Get the user's profile information
-   * @returns {Promise<ProfileAPIResponse | null>} - Returns the user's profile information or null if the user is not logged in
-   * {@link https://api.irmin.dev/docs#account-GETv1-account-profile Irmin API docs}
+   * @returns Returns the user's profile information or null if the user is not logged in
+   * {@link https://api.irmin.dev/docs#account-GETv1-account-profile | Irmin API docs}
    */
   async getProfile(): Promise<ProfileAPIResponse | null> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleProfile };
@@ -161,11 +194,11 @@ class AuthService {
 
   /**
    * Update the user's profile information
-   * @param {string} name - The user's name
-   * @param {string} company - The user's company
-   * @param {string} email - The user's email address
-   * @returns {Promise<IrminAPIResponse>}
-   * {@link https://api.irmin.dev/docs#account-PATCHv1-account-profile Irmin API docs}
+   * @param name - The user's name
+   * @param company - The user's company
+   * @param email - The user's email address
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#account-PATCHv1-account-profile | Irmin API docs}
    */
   async updateProfile(
     name: string,

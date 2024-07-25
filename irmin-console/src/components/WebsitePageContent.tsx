@@ -1,3 +1,16 @@
+/**
+ * Wordpress Gutenberg content component (website)
+ *
+ * @remarks
+ *
+ * This component is used to display content from Wordpress Gutenberg editor.
+ * The content is wrapped in a container and rendered as HTML.
+ *
+ * The stylesheet for Gutenberg content is loaded from WordPress.
+ * It has been moved there from this repository.
+ *
+ * See this {@link https://github.com/IrminData/irmin-frontend/commit/cef8f6d4864035e01e36623a2cf333a92d249590 | commit} for more details.
+ */
 export default function WebsitePageContent({
   content = '',
   full_width = false,

@@ -2,6 +2,9 @@ import React from 'react';
 
 import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
 
+/**
+ * Skeleton UI for the list tables
+ */
 const TableSkeleton = () => {
   return (
     <div className='px-4'>

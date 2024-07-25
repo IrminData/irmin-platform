@@ -4,6 +4,17 @@ import WordPress from '@/lib/wordpress';
 
 import { LogoCloudSection } from '@/types/website/Wordpress';
 
+/**
+ * Website logo cloud section
+ *
+ * @remarks
+ *
+ * This component is used to display a logo cloud section on the website.
+ * It uses ACF data from WordpressAPI.
+ *
+ * It displays a list of logos with their titles.
+ * The logos are displayed 5 logos per row, in a grayscale color.
+ */
 export default async function WebsiteLogoCloudSection({
   section,
 }: {

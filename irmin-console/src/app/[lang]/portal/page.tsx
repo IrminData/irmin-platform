@@ -13,6 +13,19 @@ import WorkspaceCard from '@/components/workspaceCard';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
+/**
+ * Portal home page - Manage Workspaces
+ *
+ * @remarks
+ *
+ * This page is used to manage workspaces in the portal.
+ * Here, users can create new workspaces and navigate to existing ones.
+ *
+ * It uses the WorkspaceService to create new workspaces.
+ * It uses the WorkspaceContext to fetch and manage workspace data.
+ *
+ * @returns UI for managing workspaces
+ */
 const ManageWorkspaces: React.FC = () => {
   const { locale } = useLocale();
   const { workspaces, fetchWorkspaces, workspaceLoading } = useWorkspace();

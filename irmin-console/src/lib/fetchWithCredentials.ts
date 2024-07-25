@@ -4,11 +4,11 @@ import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 
 /**
  * Fetch data from the API with credentials
- * @param {string} url - The URL to fetch data from
- * @param {RequestInit} options - The fetch options
- * @param {Locale=} locale - The locale to use for the request, optional
- * @returns {Promise<IrminAPIResponse>}
- * {@link https://api.irmin.dev/docs#introduction Irmin API docs}
+ * @param url - The URL to fetch data from
+ * @param options - The fetch options
+ * @param locale - The locale to use for the request, optional
+ * @returns response from the API or example data
+ * {@link https://api.irmin.dev/docs#introduction | Irmin API docs}
  */
 export const fetchWithCredentials = async (
   url: string,

@@ -10,6 +10,20 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { NewsletterSection } from '@/types/website/Wordpress';
 
+/**
+ * Website newsletter section
+ *
+ * @remarks
+ *
+ * This component is used to display the newsletter section on the website.
+ * It uses ACF data from WordpressAPI.
+ *
+ * It displays the newsletter subscription form with an email input and a subscribe button.
+ * The form also includes a privacy notice with a link to the privacy policy.
+ *
+ * The newsletter section is used to collect email addresses for the newsletter subscription.
+ * TODO: Newsletter subscription is not implemented yet.
+ */
 export default function WebsiteNewsletterSection({
   section,
 }: {

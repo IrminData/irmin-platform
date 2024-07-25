@@ -7,6 +7,17 @@ import Button from '@/components/misc/Button';
 
 import { CTASection } from '@/types/website/Wordpress';
 
+/**
+ * Website CTA section
+ *
+ * @remarks
+ *
+ * This component is used to display a call-to-action section on the website.
+ * It uses ACF data from WordpressAPI.
+ *
+ * It displays the section title, bullet points, and buttons.
+ * The buttons are displayed as a list of links with text and colors.
+ */
 export default async function WebsiteCTASection({
   section,
 }: {

@@ -11,6 +11,20 @@ import TableSkeleton from '@/components/tables/tableSkeleton';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
+/**
+ * Portal connections page
+ *
+ * @remarks
+ *
+ * This page is used to manage connections in the portal.
+ * It shows a list of connections that are available in the workspace.
+ *
+ * It uses the WorkspaceContext to fetch and manage connection data.
+ *
+ * It uses SideModal to create a new connection.
+ *
+ * @returns UI for managing connections
+ */
 export default function ConnectionsPage() {
   const { dict } = useLocale();
   const { connections } = useWorkspace();

@@ -1,10 +1,14 @@
-export type LoginResponse = {
-  status?: string;
-};
-
 const appPassword = process.env.ENV_PASSWORD ?? 'oiDeNuDEvenTICYc';
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://localhost:3000';
 
+/**
+ * HTML form for signing in to the development environment
+ *
+ * @remarks
+ * This form is displayed when the user tries to access the development environment.
+ * The form contains a password input field and a submit button.
+ * When submitted in will POST /api/verify-dev-access with the password.
+ */
 const signIn = `
 <!DOCTYPE html>
 <html lang="en">
@@ -44,6 +48,16 @@ body {
 </html>
 `;
 
+/**
+ * GET request handler for verify-dev-access
+ *
+ * @remarks
+ *
+ * Users will be redirected to this page when they try to access the development environment
+ * without being authorised.
+ *
+ * @returns HTML form for signing in to the development environment
+ */
 export async function GET() {
   const response = new Response(signIn, {
     headers: {
@@ -53,6 +67,22 @@ export async function GET() {
   return response;
 }
 
+/**
+ * Handler for POST request to verify-dev-access
+ *
+ * @remarks
+ *
+ * This handler is used to verify the password entered by the user to access the development environment.
+ * If the password is correct, a cookie is set and the user is redirected to the home page.
+ *
+ * If the password is incorrect, a 403 Forbidden response is returned.
+ *
+ * The password is stored in the environment variable ENV_PASSWORD.
+ * This password is required when REQUIRE_ENV_AUTH is set to true.
+ *
+ * @param req - Request object
+ * @returns Response object - Redirects to the home page
+ */
 export async function POST(req: Request) {
   // Parse the request body
   const body = await req.formData();

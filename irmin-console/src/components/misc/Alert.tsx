@@ -6,6 +6,18 @@ import {
   IoInformationCircleOutline,
 } from 'react-icons/io5';
 
+/**
+ * Alert UI component
+ *
+ * @remarks
+ *
+ * UI for displaying alerts in a popup.
+ *
+ * It displays a message with an icon and a close button.
+ *
+ * This popup is shown when the user needs to be notified about something.
+ * The position of the popup is fixed at the bottom of the screen.
+ */
 const Alert = ({
   type,
   message,

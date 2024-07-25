@@ -4,6 +4,17 @@ import Button from '@/components/misc/Button';
 
 import { CTADarkSection } from '@/types/website/Wordpress';
 
+/**
+ * Website CTA dark section
+ *
+ * @remarks
+ *
+ * This component is used to display a call-to-action section on the website.
+ * It uses ACF data from WordpressAPI.
+ *
+ * It displays the section title, description, and buttons.
+ * The buttons are displayed as a list of links with text and colors.
+ */
 export default function WebsiteCTADarkSection({
   section,
 }: {

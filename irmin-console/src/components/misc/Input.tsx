@@ -4,6 +4,9 @@ import React from 'react';
 
 import { cn } from '@/lib/utils/twUtils';
 
+/**
+ * Universal input component, used across the application
+ */
 const Input: React.FC<{
   variant?: 'solid' | 'outline' | 'underline';
   colorScheme?: 'primary' | 'secondary' | 'tertiary' | 'gray' | 'black';

@@ -13,6 +13,9 @@ import {
 } from './workspaceHooks';
 import { WorkspaceProvider } from './WorkspaceProvider';
 
+/**
+ * Export all workspace context functionality
+ */
 export {
   useWorkspace,
   WorkspaceContext,

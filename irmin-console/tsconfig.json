@@ -22,6 +22,32 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*", "next-env.d.ts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", ".next", ".yarn", "certificates", "public"],
+  "typedocOptions": {
+    "out": "public/frontend-docs",
+    "includeVersion": true,
+    "readme": "README.md",
+    "plugin": ["typedoc-material-theme", "typedoc-plugin-missing-exports"],
+    "exclude": ["**/node_modules/**/*"],
+    "navigationLinks": {
+      "Irmin": "https://irmin.co",
+      "dev": "https://irmin.dev",
+      "API dev": "https://api.irmin.dev",
+      "API docs": "https://api.irmin.dev/docs"
+    },
+    "highlightLanguages": [
+      "text",
+      "bash",
+      "console",
+      "css",
+      "html",
+      "javascript",
+      "json",
+      "tsx",
+      "typescript",
+      "yaml",
+      "xml"
+    ]
+  }
 }

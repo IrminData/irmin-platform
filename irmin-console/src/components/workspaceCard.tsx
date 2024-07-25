@@ -12,6 +12,16 @@ import { useWorkspace } from '@/context/workspace';
 
 import { Workspace } from '@/types/api/Workspace';
 
+/**
+ * Workspace card component
+ *
+ * @remarks
+ *
+ * This component is used to display a workspace card in the workspace switcher
+ * on the portal home page. It displays the workspace name and some details.
+ *
+ * It allows users to switch to the workspace by clicking on the card.
+ */
 const WorkspaceCard = ({
   workspace,
   description,

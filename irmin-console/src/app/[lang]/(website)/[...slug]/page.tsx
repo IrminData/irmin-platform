@@ -9,6 +9,12 @@ import WordPress from '@/lib/wordpress';
 import WebsitePageContent from '@/components/WebsitePageContent';
 import WebsiteSections from '@/components/WebsiteSections';
 
+const NEXT_PUBLIC_BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+
+/**
+ * Router properties received by the page
+ */
 type PageProps = {
   params: {
     slug: string | string[];
@@ -16,9 +22,21 @@ type PageProps = {
   };
 };
 
-const NEXT_PUBLIC_BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
-
+/**
+ * Normal page (Website)
+ *
+ * @remarks
+ *
+ * Using router properties, like slug, it fetches the page
+ * content from WordPress API and renders it.
+ *
+ * It uses WebsitePageContent and WebsiteSections to render
+ * the page content and sections it receives from WordPress
+ * API.
+ *
+ * @param param0 - Router properties received by the page
+ * @returns Page content
+ */
 export default async function Page({ params }: PageProps) {
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
 
@@ -45,6 +63,16 @@ export default async function Page({ params }: PageProps) {
   );
 }
 
+/**
+ * Metadata for SEO of the page (Website)
+ *
+ * @remarks
+ * Using router properties, like slug, it fetches the page
+ * metadata from WordPress API and returns it.
+ *
+ * @param param0 - Router properties received by the page
+ * @returns metadata for SEO of the page
+ */
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {

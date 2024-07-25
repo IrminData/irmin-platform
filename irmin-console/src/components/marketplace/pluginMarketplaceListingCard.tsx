@@ -9,6 +9,15 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { MarketplacePlugin } from '@/types/internal/Marketplace';
 
+/**
+ * Plugin marketplace listing card
+ *
+ * @remarks
+ *
+ * This component is used to display a single plugin listing card in the plugin marketplace.
+ *
+ * It is used by the PluginMarketplace component to display a single plugin.
+ */
 const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
   plugin,
 }) => {

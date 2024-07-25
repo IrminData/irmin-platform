@@ -4,6 +4,14 @@ import React, { useCallback, useState } from 'react';
 
 import Button from '@/components/misc/Button';
 
+/**
+ * Settings tabs UI component
+ *
+ * @remarks
+ *
+ * This component is used to display settings tabs with content.
+ * Used on various settings pages.
+ */
 export default function SettingsTabs({
   tabs,
 }: {

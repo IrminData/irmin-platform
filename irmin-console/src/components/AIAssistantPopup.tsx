@@ -12,6 +12,18 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { Message } from '@/types/internal/Assistant';
 
+/**
+ * AI Assistant popup component
+ *
+ * @remarks
+ *
+ * This component is used to display an AI assistant chat popup on the portal.
+ * It allows users to interact with the AI assistant to get help and suggestions.
+ *
+ * It includes a chat window with messages and a text input to send messages.
+ *
+ * TODO: Implement real AI assistant functionality
+ */
 export default function AIAssistantPopup() {
   const { dict } = useLocale();
 

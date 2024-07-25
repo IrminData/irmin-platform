@@ -53,7 +53,7 @@ export const useFetchWorkspaces = (
   }, [setWorkspaces, workspaceLoading, setWorkspaceLoading, locale]);
 
 /**
- * Hook to fetch the list of roles.
+ * Hook to fetch the list of roles available on Irmin.
  * @param setIrminRoles - Function to update the roles state.
  * @param locale - The current locale.
  */

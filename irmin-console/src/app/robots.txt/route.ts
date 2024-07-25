@@ -1,3 +1,16 @@
+/**
+ * robots.txt route
+ *
+ * @remarks
+ *
+ * This route is used to provide instructions to web crawlers
+ * about which pages to crawl and which to avoid.
+ *
+ * Currently, the route is set to allow all pages to be crawled
+ * except for the API routes, docs, Irmin Portal and Next.js files.
+ *
+ * @returns response - text file with instructions for web crawlers
+ */
 export async function GET() {
   const NEXT_PUBLIC_BASE_URL =
     process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
@@ -7,6 +20,7 @@ export async function GET() {
     Allow: /
     Disallow: /api/
     Disallow: /_next/
+    Disallow: /frontend-docs/
     Disallow: /portal/
     
     # Sitemaps

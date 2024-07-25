@@ -10,6 +10,11 @@ import { useLocale } from '@/context/LocaleContext';
 import { ConnectionWorkflow } from '@/types/api/Workflow';
 import { GridRow } from '@/types/internal/ListUI';
 
+/**
+ * Table UI to display a list of connection workflows
+ *
+ * Uses {@link List} and {@link StatusElement} to display a list of connection workflows
+ */
 const ConnectionTable = ({
   connections,
   inSidebar = false,

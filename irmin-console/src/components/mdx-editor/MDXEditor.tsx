@@ -15,6 +15,17 @@ const Editor = dynamic(
 
 // This is what is imported by other components. Pre-initialized with plugins, and ready
 // to accept other props, including a ref.
+
+/**
+ * MDX editor component
+ *
+ * @remarks
+ *
+ * This is what is imported by other components. Pre-initialized with plugins, and ready
+ * to accept other props, including a ref.
+ *
+ * @returns Editor UI component
+ */
 const MDXEditor = forwardRef<MDXEditorMethods, MDXEditorProps>((props, ref) => (
   <Editor {...props} editorRef={ref} />
 ));

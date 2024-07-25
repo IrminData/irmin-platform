@@ -4,6 +4,16 @@ import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
+/**
+ * Plugin marketplace filters
+ *
+ * @remarks
+ *
+ * This component is used to display the plugin marketplace filters on the portal.
+ * It displays a list of categories to filter the plugins.
+ *
+ * It is used by the PluginMarketplace component.
+ */
 const PluginMarketplaceFilters: React.FC<{
   categories: string[];
   selectedCategory: string;

@@ -1,5 +1,16 @@
 import { NumbersSection } from '@/types/website/Wordpress';
 
+/**
+ * Website numbers section
+ *
+ * @remarks
+ *
+ * This component is used to display the numbers section on the website.
+ * It uses ACF data from WordpressAPI.
+ *
+ * It displays the section title, subtitle, description, and metrics.
+ * The metrics are displayed as a list of titles and descriptions.
+ */
 export default function WebsiteNumbersSection({
   section,
 }: {

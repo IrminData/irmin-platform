@@ -4,6 +4,17 @@ import { IoAdd, IoClose } from 'react-icons/io5';
 
 import Button from '@/components/misc/Button';
 
+/**
+ * Side modal UI component with steps
+ *
+ * @remarks
+ *
+ * This modal is used for example when creating a Connection workflow.
+ * It has a title, steps, content and a close button.
+ *
+ * The position of the modal is fixed on the right side of the screen.
+ * The modal has a slide-in and slide-out animation.
+ */
 export default function SideModal({
   setIsOpen,
   isOpen,

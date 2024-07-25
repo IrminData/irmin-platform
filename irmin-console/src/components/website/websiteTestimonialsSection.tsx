@@ -10,6 +10,19 @@ import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
 
 import { TestimonialSection } from '@/types/website/Wordpress';
 
+/**
+ * Website testimonials section
+ *
+ * @remarks
+ *
+ * This component is used to display the testimonials section on the website.
+ * It uses ACF data from WordpressAPI.
+ *
+ * It displays a list of testimonials with their names, titles, and quotes.
+ * The testimonials are displayed as a list of cards with a name, title, and quote.
+ *
+ * The testimonials section also includes a navigation to switch between testimonials.
+ */
 export default function WebsiteTestimonialsSection({
   section,
 }: {

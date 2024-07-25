@@ -12,6 +12,11 @@ import { useLocale } from '@/context/LocaleContext';
 import { Dataset } from '@/types/api/Dataset';
 import { GridRow } from '@/types/internal/ListUI';
 
+/**
+ * Table UI to display a list of datasets
+ *
+ * Uses {@link List} and {@link StatusElement} to display a list of datasets
+ */
 const DatasetTable = ({
   datasets,
   inSidebar = false,

@@ -1,5 +1,8 @@
 import React from 'react';
 
+/**
+ * Loading spinner component
+ */
 const LoadingSpinner: React.FC = () => {
   return (
     <div className='flex h-full max-h-screen items-center justify-center py-16'>

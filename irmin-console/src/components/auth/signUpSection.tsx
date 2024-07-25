@@ -14,6 +14,16 @@ import Input from '@/components/misc/Input';
 import { useLocale } from '@/context/LocaleContext';
 import { useProfile } from '@/context/ProfileContext';
 
+/**
+ * Sign up UI component
+ *
+ * @remarks
+ *
+ * UI for the sign up form. It handles the sign up process
+ * by calling the AuthService to register the user.
+ *
+ * @returns The sign up section component
+ */
 const SignUpSection: React.FC = () => {
   const { dict, locale } = useLocale();
   const { fetchProfile } = useProfile();

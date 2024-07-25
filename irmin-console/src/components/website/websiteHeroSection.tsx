@@ -7,6 +7,21 @@ import Button from '@/components/misc/Button';
 
 import { HeroSection } from '@/types/website/Wordpress';
 
+/**
+ * Website hero section
+ *
+ * @remarks
+ *
+ * This component is used to display the hero section on the website.
+ * It uses ACF data from WordpressAPI.
+ *
+ * It displays the section title, description, and buttons.
+ * The buttons are displayed as a list of links with text and colors.
+ *
+ * The hero section also includes a video background with a placeholder image.
+ * The video is displayed as a background video with a play button.
+ * The video is muted and loops automatically.
+ */
 export default async function WebsiteHeroSection({
   section,
 }: {

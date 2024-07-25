@@ -6,6 +6,14 @@ import Button from '@/components/misc/Button';
 
 import { ChartOrTableData, Widget } from '@/types/api/Widget';
 
+/**
+ * Scrollable table widget
+ *
+ * @remarks
+ *
+ * This component is used to display a scrollable table widget on the dashboard.
+ * It displays a table with a fixed header and scrollable body.
+ */
 const ScrollableTable = ({ widget }: { widget: Widget }) => {
   if (widget.type !== 'table') return <></>;
   const widgetData = widget.data as ChartOrTableData;

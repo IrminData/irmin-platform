@@ -14,13 +14,42 @@ const isDevelopment =
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
+/**
+ * Widget API response type
+ * @internal
+ */
 interface WidgetAPIResponse extends IrminAPIResponse {
   data: Widget;
 }
 
+/**
+ * Get a random example widget
+ * @returns a random example widget
+ * @internal
+ */
 const randomExampleWidget = () =>
   exampleWidgets[Math.floor(Math.random() * exampleWidgets.length)];
 
+/**
+ * Dashboard Widget API service
+ *
+ * @remarks
+ *
+ * This service calls the Irmin API and is responsible for all dashboard widget related API calls.
+ *
+ * Like the other API services, this service is a singleton, meaning that only one
+ * instance of the service can exist at a time.
+ *
+ * The service uses the {@link fetchWithCredentials} function to make API calls.
+ *
+ * If the environment is set to offline mode, service will return example data instead
+ * of making API calls.
+ *
+ * If the environment is set to development, service will log the API call errors to
+ * the console, but will not throw them. Instead, it will return the example data.
+ *
+ * Example data can be found here: `@/lib/exampleObjects/apiObjects`
+ */
 class WidgetService {
   private static instance: WidgetService;
   private locale: Locale = defaultLocale;
@@ -29,6 +58,10 @@ class WidgetService {
     this.locale = locale;
   }
 
+  /**
+   * Get the instance of the {@link WidgetService}
+   * @param locale - The locale to use for the instance
+   */
   public static getInstance(locale: Locale): WidgetService {
     if (!WidgetService.instance) {
       WidgetService.instance = new WidgetService(locale);
@@ -39,6 +72,10 @@ class WidgetService {
     return WidgetService.instance;
   }
 
+  /**
+   * Set the locale for the instance
+   * @param locale - The locale to set
+   */
   public setLocale(locale: Locale) {
     this.locale = locale;
   }
@@ -46,8 +83,8 @@ class WidgetService {
   /**
    * Fetch a widget by ID
    * TODO: Provide link to Irmin API docs
-   * @param {number} widgetId
-   * @returns {Promise<WidgetAPIResponse>}
+   * @param widgetId - ID of the widget to fetch
+   * @returns response from the API or example data
    */
   async getWidgetById(widgetId: number): Promise<WidgetAPIResponse> {
     if (isOfflineMode)
@@ -75,8 +112,8 @@ class WidgetService {
   /**
    * Create a new widget
    * TODO: Provide link to Irmin API docs
-   * @param {Widget} widget
-   * @returns {Promise<IrminAPIResponse>}
+   * @param widget - the widget to create
+   * @returns response from the API or example data
    */
   async createWidget(widget: Widget): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
@@ -103,8 +140,8 @@ class WidgetService {
   /**
    * Update an existing widget
    * TODO: Provide link to Irmin API docs
-   * @param {Widget} widget
-   * @returns {Promise<IrminAPIResponse>}
+   * @param widget - the widget to update
+   * @returns response from the API or example data
    */
   async updateWidget(widget: Widget): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
@@ -133,8 +170,8 @@ class WidgetService {
   /**
    * Delete a widget
    * TODO: Provide link to Irmin API docs
-   * @param {number} widgetId
-   * @returns {Promise<IrminAPIResponse>}
+   * @param widgetId - ID of the widget to delete
+   * @returns response from the API or example data
    */
   async deleteWidget(widgetId: number): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;

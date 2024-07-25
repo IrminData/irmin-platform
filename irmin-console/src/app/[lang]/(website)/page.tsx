@@ -9,15 +9,37 @@ import WordPress from '@/lib/wordpress';
 import WebsitePageContent from '@/components/WebsitePageContent';
 import WebsiteSections from '@/components/WebsiteSections';
 
+const NEXT_PUBLIC_BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+
+/**
+ * Router properties received by the page
+ */
 type PageProps = {
   params: {
     lang: Locale;
   };
 };
 
-const NEXT_PUBLIC_BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
-
+/**
+ * Website home page (Website)
+ *
+ * @remarks
+ *
+ * This page exists to make the home pages for different languages
+ * available at website.com/locale/, eg. website.com/fr/, etc.
+ *
+ * Based on the selected router lang path it fetches the page
+ * content from WordPress API and renders it. The slug for the
+ * home page is defined in the dictionary for each language.
+ *
+ * It uses WebsitePageContent and WebsiteSections to render
+ * the page content and sections it receives from WordPress
+ * API.
+ *
+ * @param param0 - Router properties received by the page
+ * @returns Page content
+ */
 export default async function WebsiteHome({ params }: PageProps) {
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
 
@@ -41,6 +63,12 @@ export default async function WebsiteHome({ params }: PageProps) {
   );
 }
 
+/**
+ * Generate SEO metadata for the website home page
+ *
+ * @param param0 - Router properties received by the page
+ * @returns Metadata for the page
+ */
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {

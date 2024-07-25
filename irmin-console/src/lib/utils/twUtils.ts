@@ -13,6 +13,12 @@ export const twConfig = resolveConfig(tailwindConfig);
 
 const breakpoints = twConfig.theme.screens;
 type BreakpointKey = keyof typeof breakpoints;
+
+/**
+ * Hook to determine if the screen is at least a certain breakpoint
+ * @param breakpointKey - The breakpoint to check
+ * @returns An object with a key of `is${Breakpoint}` and a boolean value
+ */
 export function useBreakpoint<K extends BreakpointKey>(breakpointKey: K) {
   const bool = useMediaQuery({
     query: `(min-width: ${breakpoints[breakpointKey]})`,

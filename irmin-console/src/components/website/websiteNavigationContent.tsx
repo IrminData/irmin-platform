@@ -15,6 +15,17 @@ import { useProfile } from '@/context/ProfileContext';
 
 import { WebsiteNavigationLink } from '@/types/website/WebsiteNavigation';
 
+/**
+ * Website navigation link (large screen)
+ *
+ * @remarks
+ *
+ * This component is used to display a navigation link in
+ * the website navigation.
+ *
+ * It is used by the WebsiteNavigationContent component, when
+ * the screen size is large.
+ */
 const NavLink = ({
   link,
   linkKey,
@@ -54,6 +65,17 @@ const NavLink = ({
   );
 };
 
+/**
+ * Website navigation link (small screen)
+ *
+ * @remarks
+ *
+ * This component is used to display a navigation link in
+ * the website navigation.
+ *
+ * It is used by the WebsiteNavigationContent component, when
+ * the screen size is small.
+ */
 const MobileNavLink = ({
   link,
   linkKey,
@@ -103,6 +125,20 @@ const MobileNavLink = ({
   );
 };
 
+/**
+ * Website navigation content
+ *
+ * @remarks
+ *
+ * This component is used to display the website navigation.
+ * It displays the navigation links and user profile.
+ *
+ * It handles animations and opening/closing the mobile navigation.
+ *
+ * For links {@link NavLink} and {@link MobileNavLink} are used.
+ *
+ * This component is used by the WebsiteNavigation component.
+ */
 export default function WebsiteNavigationContent({
   navLinks,
 }: {

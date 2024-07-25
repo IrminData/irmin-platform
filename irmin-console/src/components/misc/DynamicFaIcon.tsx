@@ -2,6 +2,14 @@ import React from 'react';
 
 import * as Icons from 'react-icons/fa6';
 
+/**
+ * Dynamic Font Awesome icon component
+ *
+ * @remarks
+ *
+ * Used to dynamically render Font Awesome icons based on the name prop, which is a string.
+ * This is useful when the icon name is coming from the backend or a CMS.
+ */
 export default function DynamicFaIcon({
   name,
   ...props

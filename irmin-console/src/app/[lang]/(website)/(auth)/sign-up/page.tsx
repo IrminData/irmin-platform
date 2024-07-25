@@ -2,6 +2,9 @@ import { Metadata } from 'next';
 
 import SignUpSection from '@/components/auth/signUpSection';
 
+/**
+ * Page metadata for SEO on the sign up page
+ */
 export const metadata: Metadata = {
   title: 'Create new account | IRMIN',
   description: 'Create a new account to access IRMIN.',
@@ -10,6 +13,9 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Sign up page (Website)
+ */
 export default function SignUpPage() {
   return <SignUpSection />;
 }

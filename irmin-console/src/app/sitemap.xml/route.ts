@@ -2,6 +2,19 @@ import { detectLocaleFromURL, languages } from '@/dictionaries';
 import { getURL } from '@/lib/utils/wordpressLinkUtils';
 import WordPress from '@/lib/wordpress';
 
+/**
+ * sitemap.xml route
+ *
+ * @remarks
+ *
+ * This route is used to generate an XML sitemap for the website.
+ *
+ * The sitemap includes all static pages, posts and pages fetched from the WordPress API.
+ *
+ * Note that the sitemap does not include the API, docs or Irmin Portal routes.
+ *
+ * @returns XML sitemap for the website
+ */
 export async function GET() {
   const wordpress = WordPress.getInstance();
 

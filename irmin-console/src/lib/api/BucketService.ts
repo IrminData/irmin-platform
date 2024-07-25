@@ -17,14 +17,26 @@ const isDevelopment =
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
+/**
+ * Bucket API response type
+ * @internal
+ */
 interface BucketAPIResponse extends IrminAPIResponse {
   data: Bucket;
 }
 
+/**
+ * Bucket file API response type
+ * @internal
+ */
 interface BucketFileAPIResponse extends IrminAPIResponse {
   data: BucketFile;
 }
 
+/**
+ * Bucket folder API response type
+ * @internal
+ */
 interface BucketFolderAPIResponse extends IrminAPIResponse {
   data: BucketFolder;
 }
@@ -33,6 +45,26 @@ const exampleFiles = [exampleFileJS, exampleFileSQL];
 const randomExampleFile = () =>
   exampleFiles[Math.floor(Math.random() * exampleFiles.length)];
 
+/**
+ * Bucket API service
+ *
+ * @remarks
+ *
+ * This service calls the Irmin API and is responsible for all bucket related API calls.
+ *
+ * Like the other API services, this service is a singleton, meaning that only one
+ * instance of the service can exist at a time.
+ *
+ * The service uses the {@link fetchWithCredentials} function to make API calls.
+ *
+ * If the environment is set to offline mode, service will return example data instead
+ * of making API calls.
+ *
+ * If the environment is set to development, service will log the API call errors to
+ * the console, but will not throw them. Instead, it will return the example data.
+ *
+ * Example data can be found here: `@/lib/exampleObjects/apiObjects`
+ */
 class BucketService {
   private bucket: Bucket | null = null;
 
@@ -43,6 +75,10 @@ class BucketService {
     this.locale = locale;
   }
 
+  /**
+   * Get the instance of the {@link BucketService}
+   * @param locale - The locale to use for the instance
+   */
   public static getInstance(locale: Locale): BucketService {
     if (!BucketService.instance) {
       BucketService.instance = new BucketService(locale);
@@ -53,6 +89,10 @@ class BucketService {
     return BucketService.instance;
   }
 
+  /**
+   * Set the locale for the instance
+   * @param locale - The locale to set
+   */
   public setLocale(locale: Locale) {
     this.locale = locale;
   }
@@ -60,7 +100,7 @@ class BucketService {
   /**
    * Fetch the bucket for the current workspace
    * TODO: Provide link to Irmin API docs
-   * @returns {Promise<BucketAPIResponse>}
+   * @returns response from the API or example data
    */
   async fetchBucket(): Promise<BucketAPIResponse> {
     if (isOfflineMode)
@@ -94,7 +134,7 @@ class BucketService {
 
   /**
    * Get the current stored bucket
-   * @returns {Bucket | null}
+   * @returns the stored bucket or null if not fetched yet
    */
   getBucket(): Bucket | null {
     return this.bucket;
@@ -103,8 +143,8 @@ class BucketService {
   /**
    * Create a new file in the bucket
    * TODO: Provide link to Irmin API docs
-   * @param {BucketFile} file
-   * @returns {Promise<BucketFileAPIResponse>}
+   * @param file - the file to create
+   * @returns response from the API or example data
    */
   async createFile(file: BucketFile): Promise<BucketFileAPIResponse> {
     if (isOfflineMode)
@@ -140,8 +180,8 @@ class BucketService {
   /**
    * Update a file in the bucket
    * TODO: Provide link to Irmin API docs
-   * @param {BucketFile} file
-   * @returns {Promise<BucketFileAPIResponse>}
+   * @param file - the file to update
+   * @returns response from the API or example data
    */
   async updateFile(file: BucketFile): Promise<BucketFileAPIResponse> {
     if (isOfflineMode)
@@ -182,8 +222,8 @@ class BucketService {
   /**
    * Delete a file from the bucket
    * TODO: Provide link to Irmin API docs
-   * @param {number} fileId
-   * @returns {Promise<void>}
+   * @param fileId - the ID of the file to delete
+   * @returns response from the API or example data
    */
   async deleteFile(fileId: number): Promise<void> {
     if (isOfflineMode) return;
@@ -210,8 +250,8 @@ class BucketService {
   /**
    * Create a new folder in the bucket
    * TODO: Provide link to Irmin API docs
-   * @param {BucketFolder} folder
-   * @returns {Promise<BucketFolderAPIResponse>}
+   * @param folder - the folder to create
+   * @returns response from the API or example data
    */
   async createFolder(folder: BucketFolder): Promise<BucketFolderAPIResponse> {
     if (isOfflineMode)
@@ -247,8 +287,8 @@ class BucketService {
   /**
    * Update a folder in the bucket
    * TODO: Provide link to Irmin API docs
-   * @param {BucketFolder} folder
-   * @returns {Promise<BucketFolderAPIResponse>}
+   * @param folder - the folder to update
+   * @returns response from the API or example data
    */
   async updateFolder(folder: BucketFolder): Promise<BucketFolderAPIResponse> {
     if (isOfflineMode)
@@ -289,8 +329,8 @@ class BucketService {
   /**
    * Delete a folder from the bucket
    * TODO: Provide link to Irmin API docs
-   * @param {number} folderId
-   * @returns {Promise<void>}
+   * @param folderId - the ID of the folder to delete
+   * @returns response from the API or example data
    */
   async deleteFolder(folderId: number): Promise<void> {
     if (isOfflineMode) return;

@@ -14,7 +14,23 @@ import { useWorkspace } from '@/context/workspace';
 
 import { Dashboard } from '@/types/api/Dashboard';
 
-export default function DashboardHome() {
+/**
+ * Portal dashboards page
+ *
+ * @remarks
+ *
+ * This page is used to show and manage dashboards of the workspace.
+ *
+ * It uses the WorkspaceContext to fetch and manage dashboard data.
+ * It uses the DashboardTitleAndSelector component to show the dashboard
+ * title and dashboard selector.
+ *
+ * It uses the widgets components to show the widgets of the selected dashboard.
+ * Widgets can be found here: `src/components/widgets`
+ *
+ * @returns UI fto show dashboards
+ */
+export default function DashboardsPage() {
   const { dict } = useLocale();
   const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(
     null

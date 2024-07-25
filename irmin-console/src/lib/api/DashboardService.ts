@@ -14,14 +14,42 @@ const isDevelopment =
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
+/**
+ * Dashboard API response type
+ * @internal
+ */
 interface DashboardAPIResponse extends IrminAPIResponse {
   data: Dashboard;
 }
 
+/**
+ * Dashboards API response type
+ * @internal
+ */
 interface DashboardsAPIResponse extends IrminAPIResponse {
   data: Dashboard[];
 }
 
+/**
+ * Dashboard API service
+ *
+ * @remarks
+ *
+ * This service calls the Irmin API and is responsible for all dashboard related API calls.
+ *
+ * Like the other API services, this service is a singleton, meaning that only one
+ * instance of the service can exist at a time.
+ *
+ * The service uses the {@link fetchWithCredentials} function to make API calls.
+ *
+ * If the environment is set to offline mode, service will return example data instead
+ * of making API calls.
+ *
+ * If the environment is set to development, service will log the API call errors to
+ * the console, but will not throw them. Instead, it will return the example data.
+ *
+ * Example data can be found here: `@/lib/exampleObjects/apiObjects`
+ */
 class DashboardService {
   private dashboards: Dashboard[] = [];
 
@@ -32,6 +60,10 @@ class DashboardService {
     this.locale = locale;
   }
 
+  /**
+   * Get the instance of the {@link DashboardService}
+   * @param locale - The locale to use for the instance
+   */
   public static getInstance(locale: Locale): DashboardService {
     if (!DashboardService.instance) {
       DashboardService.instance = new DashboardService(locale);
@@ -42,6 +74,10 @@ class DashboardService {
     return DashboardService.instance;
   }
 
+  /**
+   * Set the locale for the instance
+   * @param locale - The locale to set
+   */
   public setLocale(locale: Locale) {
     this.locale = locale;
   }
@@ -49,7 +85,7 @@ class DashboardService {
   /**
    * Fetch all dashboards
    * TODO: Provide link to Irmin API docs
-   * @returns {Promise<DashboardsAPIResponse>}
+   * @returns response from the API or example data
    */
   async fetchDashboards(): Promise<DashboardsAPIResponse> {
     if (isOfflineMode)
@@ -78,8 +114,8 @@ class DashboardService {
   /**
    * Create a new dashboard
    * TODO: Provide link to Irmin API docs
-   * @param {Dashboard} dashboard
-   * @returns {Promise<DashboardAPIResponse>}
+   * @param dashboard - the dashboard to create
+   * @returns response from the API or example data
    */
   async createDashboard(dashboard: Dashboard): Promise<DashboardAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleDashboard };
@@ -108,8 +144,8 @@ class DashboardService {
   /**
    * Update an existing dashboard
    * TODO: Provide link to Irmin API docs
-   * @param {Dashboard} dashboard
-   * @returns {Promise<DashboardAPIResponse>}
+   * @param dashboard - the dashboard to update
+   * @returns response from the API or example data
    */
   async updateDashboard(dashboard: Dashboard): Promise<DashboardAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleDashboard };
@@ -143,8 +179,8 @@ class DashboardService {
   /**
    * Delete a dashboard
    * TODO: Provide link to Irmin API docs
-   * @param {number} dashboardId
-   * @returns {Promise<void>}
+   * @param dashboardId - the ID of the dashboard to delete
+   * @returns response from the API or example data
    */
   async deleteDashboard(dashboardId: number): Promise<void> {
     if (isOfflineMode) return;
@@ -170,7 +206,7 @@ class DashboardService {
 
   /**
    * Get all dashboards stored in the dashboards array
-   * @returns {Dashboard[]}
+   * @returns the stored dashboards array, which may be empty if not fetched yet
    */
   getDashboards(): Dashboard[] {
     return this.dashboards;

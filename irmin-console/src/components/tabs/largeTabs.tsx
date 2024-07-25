@@ -4,6 +4,13 @@ import React, { useState } from 'react';
 
 import Button from '@/components/misc/Button';
 
+/**
+ * Large tabs UI component
+ *
+ * @remarks
+ *
+ * This component is used to display large tabs with content
+ */
 export default function LargeTabs({
   tabs,
 }: {

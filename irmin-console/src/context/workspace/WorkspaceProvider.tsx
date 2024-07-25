@@ -28,6 +28,26 @@ import {
 } from '@/types/api/Workflow';
 import { Workspace } from '@/types/api/Workspace';
 
+/**
+ * Workspace context provider
+ *
+ * @remarks
+ *
+ * Provider for the workspace context to handle workspace data.
+ * It fetches the workspace data from the API and provides it to the app.
+ *
+ * The workspace data includes:
+ *  workspaces - list of available workspaces
+ *  current workspace - the currently selected workspace
+ *  roles - list of all available roles on Irmin
+ *  dashboards - list of workspace's existing dashboards
+ *  connections - list of workspace's existing connections
+ *  exports - list of workspace's existing export processes
+ *  actions - list of workspace's existing actions
+ *  datasets - list of workspace's existing datasets
+ *
+ * It also provides methods to switch workspaces and delete the current workspace.
+ */
 export const WorkspaceProvider = ({
   children,
 }: {

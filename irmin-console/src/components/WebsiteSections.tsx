@@ -35,6 +35,18 @@ import {
   TestimonialSection,
 } from '@/types/website/Wordpress';
 
+/**
+ * Website sections component (website)
+ *
+ * @remarks
+ *
+ * This component is used to display sections from Wordpress.
+ * These sections are defined in ACF as repeatable blocks and
+ * are fetched from the Wordpress API.
+ *
+ * The sections are rendered based on their type.
+ * Each section has a different layout and content.
+ */
 export default function WebsiteSections({
   sections,
   lang,

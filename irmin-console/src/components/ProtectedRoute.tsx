@@ -8,6 +8,16 @@ import { useProfile } from '@/context/ProfileContext';
 
 import LoadingSkeleton from './misc/LoadingSkeleton';
 
+/**
+ * Protected route wrapper
+ *
+ * @remarks
+ *
+ * This component is used to protect routes that require authentication.
+ * It checks if the user is authenticated and redirects to the sign-in page if not.
+ *
+ * It is used by the portal layout to wrap routes.
+ */
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {

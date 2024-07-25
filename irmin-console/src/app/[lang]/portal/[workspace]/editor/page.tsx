@@ -13,6 +13,16 @@ import DatasetTable from '@/components/tables/datasetTable';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
+/**
+ * Portal editor page
+ *
+ * @remarks
+ *
+ * This page is used to manage files in the Workspace's Bucket.
+ * These files are used to create Actions.
+ *
+ * @returns  Editor UI
+ */
 export default function EditorPage() {
   const { dict } = useLocale();
   const { datasets } = useWorkspace();

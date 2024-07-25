@@ -1,6 +1,18 @@
 import { Workflow } from './Workflow';
 
-// This type will define the DB schema.
+/**
+ * Dataset type
+ * @typeParam id - Dataset ID
+ * @typeParam name - Dataset name
+ * @typeParam slug - Dataset slug
+ * @typeParam description - Dataset description
+ * @typeParam documentation - Dataset documentation
+ * @typeParam workflow - Workflow that created this dataset
+ * @typeParam tables - List of tables that are part of this dataset
+ * @typeParam created_at - Dataset creation date
+ * @typeParam updated_at - Dataset update date
+ * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ */
 export interface Dataset {
   id: number;
   name: string;

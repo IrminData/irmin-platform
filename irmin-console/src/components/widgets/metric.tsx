@@ -8,6 +8,14 @@ import Button from '@/components/misc/Button';
 
 import { MetricData, Widget } from '@/types/api/Widget';
 
+/**
+ * Metric widget
+ *
+ * @remarks
+ *
+ * This component is used to display a metric widget on the dashboard.
+ * It displays a single metric value with a label.
+ */
 const Metric = ({ widget }: { widget: Widget }) => {
   if (widget.type !== 'metric') return <></>;
   const widgetData = widget.data as MetricData;

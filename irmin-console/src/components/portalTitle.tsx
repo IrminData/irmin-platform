@@ -2,6 +2,15 @@ import React, { ComponentPropsWithoutRef } from 'react';
 
 import Image from 'next/image';
 
+/**
+ * Portal title UI component
+ *
+ * @remarks
+ *
+ * This component is used to display the title of the portal.
+ * It the title of the portal page.
+ * On mobile, it displays the Irmin logo as well.
+ */
 const PortalTitle: React.FC<{
   title: string;
   props?: ComponentPropsWithoutRef<'div'>;

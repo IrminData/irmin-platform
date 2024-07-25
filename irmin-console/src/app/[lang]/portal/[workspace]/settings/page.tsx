@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import WorkspaceService from '@/lib/api/WorkspaceService';
 
@@ -16,6 +16,17 @@ import { useWorkspace } from '@/context/workspace';
 
 import { Workspace } from '@/types/api/Workspace';
 
+/**
+ * Portal Workspace settings page
+ *
+ * @remarks
+ *
+ * This page is used to manage workspace settings in the portal.
+ * It allows the user to update the workspace name and delete the workspace.
+ * It also allows the user to manage users and permissions in the workspace.
+ *
+ * @returns UI for managing workspace settings
+ */
 export default function WorkspaceSettingsPage() {
   const { dict } = useLocale();
   return (
@@ -44,6 +55,19 @@ export default function WorkspaceSettingsPage() {
   );
 }
 
+/**
+ * General settings tab content
+ *
+ * @remarks
+ *
+ * This component is used to manage workspace's general settings in the portal.
+ * It allows the user to update the workspace's basic data, such as name,
+ * and delete the workspace.
+ *
+ * It uses the WorkspaceContext to fetch and manage workspace data.
+ *
+ * @returns UI for managing general workspace settings
+ */
 const GeneralSettings = () => {
   const { locale, dict } = useLocale();
   const { irminModal } = usePopup();
@@ -61,42 +85,32 @@ const GeneralSettings = () => {
     }
   }, [currentWorkspace]);
 
-  const handleUpdateWorkspace = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!currentWorkspace) return;
-      setIsLoading(true);
-      try {
-        // Call the API to update the workspace
-        await workspaceService.updateWorkspace({
-          name: workspaceName,
-        } as Workspace);
-        // Fetch the updated workspace data
-        await fetchWorkspaces();
-        // Show success message
-        irminAlert('success', dict.workspace.workspaceUpdatedSuccessfully);
-      } catch (error) {
-        console.error('Failed to update workspace:', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ??
-            'Failed to update workspace. Please try again.'
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [
-      workspaceService,
-      workspaceName,
-      fetchWorkspaces,
-      irminAlert,
-      dict,
-      currentWorkspace,
-    ]
-  );
+  const handleUpdateWorkspace = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentWorkspace) return;
+    setIsLoading(true);
+    try {
+      // Call the API to update the workspace
+      await workspaceService.updateWorkspace({
+        name: workspaceName,
+      } as Workspace);
+      // Fetch the updated workspace data
+      await fetchWorkspaces();
+      // Show success message
+      irminAlert('success', dict.workspace.workspaceUpdatedSuccessfully);
+    } catch (error) {
+      console.error('Failed to update workspace:', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ??
+          'Failed to update workspace. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const confirmDeletion = useCallback(() => {
+  const confirmDeletion = () => {
     if (!currentWorkspace) return;
 
     const handleDelete = async () => {
@@ -124,7 +138,10 @@ const GeneralSettings = () => {
             {dict.workspace.cancel}
           </Button>
           <Button
-            onClick={() => handleDelete()}
+            onClick={() => {
+              irminModal.close();
+              handleDelete();
+            }}
             className='rounded bg-red-800 px-4 py-2 text-white transition-all hover:bg-red-500'
           >
             {dict.workspace.delete}
@@ -133,7 +150,7 @@ const GeneralSettings = () => {
       </div>,
       () => {}
     );
-  }, [currentWorkspace, irminModal, deleteCurrentWorkspace, irminAlert, dict]);
+  };
 
   return (
     <div className='px-4'>
@@ -189,6 +206,17 @@ const GeneralSettings = () => {
   );
 };
 
+/**
+ * Billing settings tab content
+ *
+ * @remarks
+ *
+ * This component is used to manage workspace's billing settings in the portal.
+ *
+ * Currently Billing is not implemented, thus it only shows a contact us button.
+ *
+ * @returns UI for managing billing settings
+ */
 const BillingSettings: React.FC = () => {
   const { dict } = useLocale();
   return (

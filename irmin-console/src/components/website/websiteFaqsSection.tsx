@@ -2,6 +2,19 @@ import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
 
 import { FAQSection } from '@/types/website/Wordpress';
 
+/**
+ * Website FAQs section
+ *
+ * @remarks
+ *
+ * This component is used to display a FAQs section on the website.
+ * It uses ACF data from WordpressAPI.
+ *
+ * Icons are displayed using {@link DynamicFaIcon} component.
+ *
+ * It displays the section title, subtitle, and a list of questions with answers.
+ * The questions are displayed as a list of icons with titles and descriptions.
+ */
 export default function WebsiteFaqsSection({
   section,
 }: {

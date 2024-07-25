@@ -11,6 +11,21 @@ import { Media, Menu, Post } from '@/types/website/Wordpress';
 
 const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 
+/**
+ * WordPress API service
+ *
+ * @remarks
+ *
+ * This service calls the WordPress API and is responsible for all CMS API calls.
+ *
+ * Like the other API services, this service is a singleton, meaning that only one
+ * instance of the service can exist at a time.
+ *
+ * If the environment is set to offline mode, service will return example data instead
+ * of making API calls.
+ *
+ * Example data can be found here: `@/lib/exampleObjects/wordpressObjects`
+ */
 export default class WordPress {
   private static instance: WordPress;
   private baseUrl: string;
@@ -19,6 +34,10 @@ export default class WordPress {
     this.baseUrl = baseUrl;
   }
 
+  /**
+   * Get the instance of the {@link WordPress}
+   * @returns The instance of the WordPress
+   */
   public static getInstance(): WordPress {
     if (!WordPress.instance) {
       const baseUrl =
@@ -28,6 +47,12 @@ export default class WordPress {
     return WordPress.instance;
   }
 
+  /**
+   * Fetch data from the WordPress API
+   * @param endpoint - The API endpoint to fetch data from
+   * @returns The fetched data
+   * @internal
+   */
   private async fetchAPI(
     endpoint: string
   ): Promise<Post | Post[] | Media | Media[] | Menu | null> {
@@ -38,6 +63,11 @@ export default class WordPress {
     return await res.json();
   }
 
+  /**
+   * Get a Wordpress menu by its slug
+   * @param menuSlug - The slug of the menu to get
+   * @returns The menu or null if not found
+   */
   public async getMenu(menuSlug: string): Promise<Menu | null> {
     if (offlineMode)
       menuSlug.includes('footer-menu') ? exampleWPFooter : exampleWPMenu;
@@ -50,6 +80,11 @@ export default class WordPress {
     return null;
   }
 
+  /**
+   * Get a Wordpress page by its slug
+   * @param slug - The slug of the page to get
+   * @returns The page or null if not found
+   */
   public async getPage(slug: string): Promise<Post | null> {
     if (offlineMode) return exampleWPPage;
     try {
@@ -63,6 +98,11 @@ export default class WordPress {
     return null;
   }
 
+  /**
+   * Get a Wordpress post by its slug
+   * @param slug - The slug of the post to get
+   * @returns The post or null if not found
+   */
   public async getPost(slug: string): Promise<Post | null> {
     if (offlineMode) return exampleWPPost;
     try {
@@ -76,6 +116,11 @@ export default class WordPress {
     return null;
   }
 
+  /**
+   * Get a Wordpress post by its ID
+   * @param id - The ID of the post to get
+   * @returns The post or null if not found
+   */
   public async getPostByID(id: number): Promise<Post | null> {
     if (offlineMode) return exampleWPPost;
     try {
@@ -87,6 +132,11 @@ export default class WordPress {
     return null;
   }
 
+  /**
+   * Get a Wordpress media by its ID
+   * @param id - The ID of the media to get
+   * @returns The media or null if not found
+   */
   public async getMediaByID(id: number): Promise<Media | null> {
     if (offlineMode) return exampleWPMedia;
     try {
@@ -98,6 +148,11 @@ export default class WordPress {
     return null;
   }
 
+  /**
+   * Get a Wordpress category by its ID
+   * @param id - The ID of the category to get
+   * @returns The category or null if not found
+   */
   public async getCategoryByID(id: number): Promise<Post | null> {
     if (offlineMode) return exampleWPCategory;
     try {
@@ -109,6 +164,13 @@ export default class WordPress {
     return null;
   }
 
+  /**
+   * Fetch all data from a given endpoint
+   * @param endpoint - The API endpoint to fetch data from
+   * @param perPage - The number of items to fetch per page
+   * @returns The fetched data
+   * @internal
+   */
   private async fetchAll<T extends Post | Media>(
     endpoint: string,
     perPage: number = 100
@@ -145,16 +207,28 @@ export default class WordPress {
     return [];
   }
 
+  /**
+   * Get all posts from the WordPress API
+   * @returns The posts array or null if not found
+   */
   public async getPosts(): Promise<Post[] | null> {
     const posts = await this.fetchAll<Post>('posts');
     return posts ?? null;
   }
 
+  /**
+   * Get all pages from the WordPress API
+   * @returns The pages array or null if not found
+   */
   public async getPages(): Promise<Post[] | null> {
     const pages = await this.fetchAll<Post>('pages');
     return pages ?? null;
   }
 
+  /**
+   * Get all media from the WordPress API
+   * @returns The media array or null if not found
+   */
   public async getMedias(): Promise<Media[] | null> {
     const medias = await this.fetchAll<Media>('media');
     return medias ?? null;

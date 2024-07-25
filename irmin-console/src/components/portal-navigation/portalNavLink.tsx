@@ -4,6 +4,9 @@ import Link from 'next/link';
 
 import { PortalNavigationLink } from '@/types/internal/PortalNavigation';
 
+/**
+ * Navigation link for the portal
+ */
 export default function PortalNavLink({
   link,
   isMenuFolded,

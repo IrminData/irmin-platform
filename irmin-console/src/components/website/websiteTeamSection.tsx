@@ -7,6 +7,18 @@ import Button from '@/components/misc/Button';
 
 import { TeamSection } from '@/types/website/Wordpress';
 
+/**
+ * Website team section
+ *
+ * @remarks
+ *
+ * This component is used to display the team section on the website.
+ * It uses ACF data from WordpressAPI.
+ *
+ * It displays the team section title, subtitle, description, and buttons.
+ * The buttons are displayed as a list of links with text and colors.
+ * The team section also includes a list of team members with their profiles, names, titles, and descriptions.
+ */
 export default async function WebsiteTeamSection({
   section,
 }: {

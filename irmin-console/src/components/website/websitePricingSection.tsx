@@ -12,6 +12,20 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { PriceSection } from '@/types/website/Wordpress';
 
+/**
+ * Website pricing section
+ *
+ * @remarks
+ *
+ * This component is used to display the pricing section on the website.
+ * It uses ACF data from WordpressAPI.
+ *
+ * It displays the pricing plans with their titles, subtitles, prices, and bullet points.
+ * The pricing plans are displayed as a list of cards with a title, price, and bullet points.
+ *
+ * The pricing section also includes a toggle button to switch between monthly and annual billing cycles.
+ * The toggle button changes the prices and the billing cycle.
+ */
 export default function WebsitePricingSection({
   section,
 }: {

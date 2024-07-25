@@ -3,6 +3,9 @@ import type { Metadata } from 'next';
 import WebsiteFooter from '@/components/website/websiteFooter';
 import WebsiteNavigation from '@/components/website/websiteNavigation';
 
+/**
+ * Default layout level metadata for SEO on the website
+ */
 export const metadata: Metadata = {
   title: 'Just like GitHub for Data, made for developers | IRMIN',
   description:
@@ -12,6 +15,22 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Website layout (Website)
+ *
+ * @remarks
+ * This layout is used for all pages on the website.
+ * It includes the navigation and footer components.
+ *
+ * Website pages are:
+ * - Auth pages
+ * - Wordpress pages
+ * - Wordpress posts
+ * - Everything within the `src/[lang]/(website)` directory
+ *
+ * @param props - Children to render
+ * @returns Website layout
+ */
 export default function WebsiteLayout({
   children,
 }: Readonly<{

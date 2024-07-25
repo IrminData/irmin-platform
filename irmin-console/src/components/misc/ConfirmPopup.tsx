@@ -8,6 +8,17 @@ import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
+/**
+ * Confirmation popup UI
+ *
+ * @remarks
+ *
+ * UI for displaying a confirmation popup with a message and two buttons
+ * to confirm or cancel the action.
+ *
+ * This popup is shown when the user needs to confirm an action.
+ * The position of the popup is fixed at the bottom of the screen.
+ */
 const ConfirmPopup = ({
   type,
   message,

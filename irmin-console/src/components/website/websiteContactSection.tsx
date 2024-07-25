@@ -12,6 +12,21 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { ContactSection } from '@/types/website/Wordpress';
 
+/**
+ * Website contact section
+ *
+ * @remarks
+ *
+ * This component is used to display the contact section on the website.
+ * It uses ACF data from WordpressAPI.
+ *
+ * It displays the contact information with social media links and contact methods.
+ *
+ * Icons are displayed using {@link DynamicFaIcon} component.
+ *
+ * The contact form can be used to send message to Irmin.
+ * TODO: Contact form submission is not implemented yet.
+ */
 export default function WebsiteContactSection({
   section,
 }: {

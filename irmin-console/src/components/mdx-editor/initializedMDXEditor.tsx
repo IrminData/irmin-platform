@@ -26,6 +26,16 @@ import '@mdxeditor/editor/style.css';
 
 import '@/components/mdx-editor/styles.css';
 
+/**
+ * Initialized MDX editor
+ *
+ * @remarks
+ *
+ * Don't import this directly, use the `src/components/mdx-editor/MDXEditor.tsx` instead.
+ *
+ * {@link https://www.npmjs.com/package/@mdxeditor/editor}
+ *
+ */
 export default function InitializedMDXEditor({
   editorRef,
   ...props

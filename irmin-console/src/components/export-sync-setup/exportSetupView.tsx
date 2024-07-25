@@ -33,6 +33,19 @@ const existingDatasets = [
   { id: 4, name: 'Salesforce' },
 ];
 
+/**
+ * Export setup view
+ *
+ * @remarks
+ *
+ * View to setup a new export sync.
+ *
+ * It is wrapped in a side modal and is used to setup a new
+ * export. It guides the user through the setup steps.
+ *
+ * The component also is responsible for managing the state
+ * of the export sync creation process.
+ */
 export default function ExportSetupView({
   isOpen,
   setIsOpen,

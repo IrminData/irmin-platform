@@ -8,6 +8,9 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
+/**
+ * Workspace switcher UI for the portal navigation sidebar
+ */
 export default function PortalNavWorkspaceSwitcher({
   setIsMenuOpen,
 }: {

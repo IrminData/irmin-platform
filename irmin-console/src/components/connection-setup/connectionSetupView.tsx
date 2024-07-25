@@ -26,6 +26,20 @@ const initialConnectionData: ConnectionSetup = {
   connectionSettings: null,
 };
 
+/**
+ * Connection setup view
+ *
+ * @remarks
+ *
+ * View to setup a new connection.
+ *
+ * It is wrapped in a side modal and is used to setup a new
+ * connection. It includes steps to select a connector, define
+ * connection details, connection settings and sync settings.
+ *
+ * This component fetches all available connectors and is responsible
+ * for maanging the state of the connection creation process.
+ */
 const ConnectionSetupView = ({
   isOpen,
   setIsOpen,

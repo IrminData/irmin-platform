@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { useState } from 'react';
 
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -9,18 +9,24 @@ import InviteService from '@/lib/api/InviteService';
 
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
-import LoadingSpinner from '@/components/misc/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 
+/**
+ * User invite UI component
+ *
+ * @remarks
+ *
+ * UI for user to accept or decline an invite to join a workspace.
+ *
+ * New users will be prompted to enter their company name, password and confirm password.
+ * The API will handle user's registration if the invite is accepted.
+ *
+ * Existing users will be prompted to accept or decline the invite.
+ *
+ * @returns The user invite section component
+ */
 const UserInviteSection: React.FC = () => {
-  return (
-    <Suspense fallback={<LoadingSpinner />}>
-      <UserInvite />
-    </Suspense>
-  );
-};
-const UserInvite: React.FC = () => {
   const { dict, locale } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();

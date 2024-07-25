@@ -6,6 +6,14 @@ import WebsiteNavigationContent from '@/components/website/websiteNavigationCont
 
 import { WebsiteNavigationLink } from '@/types/website/WebsiteNavigation';
 
+/**
+ * Website navigation
+ *
+ * @remarks
+ *
+ * This component is used to display the navigation on the website. It is used in the website layout.
+ * It fetches the navigation links from the WordPress API and displays them in the {@link WebsiteNavigationContent} component.
+ */
 export default async function WebsiteNavigation() {
   const wordpress = WordPress.getInstance();
 

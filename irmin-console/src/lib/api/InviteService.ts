@@ -15,9 +15,34 @@ const isDevelopment =
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
+/**
+ * Invites API response type
+ * @internal
+ */
 interface InvitesAPIResponse extends IrminAPIResponse {
   data: Invite[];
 }
+
+/**
+ * Invite API service
+ *
+ * @remarks
+ *
+ * This service calls the Irmin API and is responsible for all invite related API calls.
+ *
+ * Like the other API services, this service is a singleton, meaning that only one
+ * instance of the service can exist at a time.
+ *
+ * The service uses the {@link fetchWithCredentials} function to make API calls.
+ *
+ * If the environment is set to offline mode, service will return example data instead
+ * of making API calls.
+ *
+ * If the environment is set to development, service will log the API call errors to
+ * the console, but will not throw them. Instead, it will return the example data.
+ *
+ * Example data can be found here: `@/lib/exampleObjects/apiObjects`
+ */
 class InviteService {
   private static instance: InviteService;
   private locale: Locale = defaultLocale;
@@ -26,6 +51,10 @@ class InviteService {
     this.locale = locale;
   }
 
+  /**
+   * Get the instance of the {@link InviteService}
+   * @param locale - The locale to use for the instance
+   */
   public static getInstance(locale: Locale): InviteService {
     if (!InviteService.instance) {
       InviteService.instance = new InviteService(locale);
@@ -42,11 +71,11 @@ class InviteService {
 
   /**
    * Invite the user to the workspace.
-   * @param {string} name - The user's name.
-   * @param {string} email - The user's email.
-   * @param {IrminRoleNames} role - The user's role slug.
-   * @returns {Promise<IrminAPIResponse>}
-   * {@link https://api.irmin.dev/docs#invites-POSTv1-invites-create Irmin API docs}
+   * @param name - The user's name.
+   * @param email - The user's email.
+   * @param role - The user's role slug.
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#invites-POSTv1-invites-create | Irmin API docs}
    */
   async inviteUserToWorkspace(
     name: string,
@@ -78,9 +107,9 @@ class InviteService {
 
   /**
    * Resend an invite.
-   * @param {number} invite - The invite's ID.
-   * @returns {Promise<IrminAPIResponse>}
-   * {@link https://api.irmin.dev/docs#invites-POSTv1-invites-resend Irmin API docs}
+   * @param invite - The invite's ID.
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#invites-POSTv1-invites-resend | Irmin API docs}
    */
   async resendUserInvite(invite: number): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
@@ -107,8 +136,8 @@ class InviteService {
   /**
    * Cancel a user's invite to the workspace.
    * @param invite - The invite's ID.
-   * @returns {Promise<IrminAPIResponse>}
-   * {@link https://api.irmin.dev/docs#invites-DELETEv1-invites-cancel Irmin API docs}
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#invites-DELETEv1-invites-cancel | Irmin API docs}
    */
   async cancelUserInvite(invite: number): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
@@ -134,10 +163,10 @@ class InviteService {
 
   /**
    * Change the invited user's role in the workspace.
-   * @param invite- The invite's ID.
+   * @param invite - The invite's ID.
    * @param role - The user's role.
-   * @returns {Promise<IrminAPIResponse>}
-   * {@link https://api.irmin.dev/docs#invites-PATCHv1-invites-update Irmin API docs}
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#invites-PATCHv1-invites-update | Irmin API docs}
    */
   async changeUserInviteRole(
     invite: number,
@@ -168,8 +197,8 @@ class InviteService {
   /**
    * Get a list of invites to the workspace
    * @param workspace - The workspace's slug
-   * @returns {Promise<InvitesAPIResponse>}
-   * {@link https://api.irmin.dev/docs#invites-GETv1-invites Irmin API docs}
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#invites-GETv1-invites | Irmin API docs}
    */
   async getInvitesByWorkspace(workspace: string): Promise<InvitesAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: [exampleInvite] };
@@ -197,8 +226,8 @@ class InviteService {
   /**
    * Get a list of invites for the user
    * @param user - The user's ID
-   * @returns {Promise<InvitesAPIResponse>}
-   * {@link https://api.irmin.dev/docs#invites-GETv1-invites Irmin API docs}
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#invites-GETv1-invites | Irmin API docs}
    */
   async getInvitesByUser(user: number): Promise<InvitesAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: [exampleInvite] };
@@ -229,8 +258,8 @@ class InviteService {
    * @param password - The user's password.
    * @param password_confirmation - The user's password.
    * @param company - The user's company.
-   * @returns {Promise<IrminAPIResponse>}
-   * {@link https://api.irmin.dev/docs#invites-POSTv1-invites-accept Irmin API docs}
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#invites-POSTv1-invites-accept | Irmin API docs}
    */
   async acceptInvite(
     invite: number,
@@ -264,8 +293,8 @@ class InviteService {
   /**
    * Decline the invite
    * @param invite - The ID of the invite to decline
-   * @returns {Promise<IrminAPIResponse>}
-   * {@link https://api.irmin.dev/docs#invites-DELETEv1-invites-decline Irmin API docs}
+   * @returns response from the API or example data
+   * {@link https://api.irmin.dev/docs#invites-DELETEv1-invites-decline | Irmin API docs}
    */
   async declineInvite(invite: number): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;

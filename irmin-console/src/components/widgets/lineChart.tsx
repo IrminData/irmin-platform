@@ -31,6 +31,14 @@ ChartJS.register(
   Legend
 );
 
+/**
+ * Line chart widget
+ *
+ * @remarks
+ *
+ * This component is used to display a line chart widget on the dashboard.
+ * It uses the ChartJS library to render the chart.
+ */
 const LineChart = ({ widget }: { widget: Widget }) => {
   if (widget.type !== 'line') return <></>;
   const widgetData = widget.data as ChartOrTableData;

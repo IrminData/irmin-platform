@@ -1,5 +1,8 @@
 import React from 'react';
 
+/**
+ * Loading skeleton component
+ */
 const LoadingSkeleton = ({ className }: { className?: string }) => {
   return (
     <div

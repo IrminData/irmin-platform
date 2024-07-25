@@ -6,6 +6,21 @@ import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
 
 import { ContentSection } from '@/types/website/Wordpress';
 
+/**
+ * Website content section
+ *
+ * @remarks
+ *
+ * This component is used to display a content section on the website.
+ * It uses ACF data from WordpressAPI.
+ *
+ * It displays the section title, subtitle, description, features, and an image.
+ * The features are displayed as a list of icons with titles and descriptions.
+ *
+ * Icons are displayed using {@link DynamicFaIcon} component.
+ *
+ * The image is displayed on the right or left side of the section, depending on the ACF data.
+ */
 export default async function WebsiteContentSection({
   section,
 }: {

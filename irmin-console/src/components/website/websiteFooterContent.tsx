@@ -11,6 +11,16 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { WebsiteFooterLinkSection } from '@/types/website/WebsiteNavigation';
 
+/**
+ * Website footer content
+ *
+ * @remarks
+ *
+ * This component is used to display the footer content on the website.
+ * It displays the footer links, newsletter subscription form, and legal information.
+ *
+ * It is used by the WebsiteFooter component.
+ */
 const FooterLinkSection = ({
   section,
   linkKey,

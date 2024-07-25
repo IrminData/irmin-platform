@@ -12,6 +12,19 @@ import {
 } from '@/types/api/Workflow';
 import { Workspace } from '@/types/api/Workspace';
 
+/**
+ * Workspace context
+ *
+ * @remarks
+ *
+ * Context for handling workspace data.
+ *
+ * It provides the current workspace, workspaces list, and methods to fetch and switch workspaces.
+ *
+ * The context also provides data for dashboards, connections, exports, actions and datasets.
+ *
+ * @returns The workspace context
+ */
 const WorkspaceContext = createContext<{
   fetchWorkspaces: () => void;
   switchToWorkspace: (_workspaceSlug: string | null) => void;

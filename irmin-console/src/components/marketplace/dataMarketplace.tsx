@@ -11,6 +11,20 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { MarketplaceDataset } from '@/types/internal/Marketplace';
 
+/**
+ * Data marketplace UI component
+ *
+ * @remarks
+ *
+ * This component is used to display the data marketplace on the portal.
+ * It displays a list of datasets available for purchase.
+ *
+ * It includes a search input, industry filters, and a list of datasets.
+ *
+ * The data marketplace is used to browse and connect datasets to Workspaces.
+ *
+ * TODO: Implement real data fetching
+ */
 export default function DataMarketplace() {
   const { dict } = useLocale();
   const [selectedIndustry, setSelectedIndustry] = useState('');

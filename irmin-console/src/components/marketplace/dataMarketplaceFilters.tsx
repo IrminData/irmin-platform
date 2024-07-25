@@ -4,6 +4,16 @@ import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
+/**
+ * Data marketplace filters
+ *
+ * @remarks
+ *
+ * This component is used to display the data marketplace filters on the portal.
+ * It displays a list of industries to filter the datasets.
+ *
+ * It is used by the DataMarketplace component.
+ */
 const DataMarketplaceFilters = ({
   industries,
   selectedIndustry,

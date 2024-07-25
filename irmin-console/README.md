@@ -2,7 +2,11 @@
 
 This repository contains the code for Irmin frontend, built using Next.js, TypeScript and Tailwind. To function correctly, this project requires the [Irmin API](https://github.com/IrminData/irmin-api) to be running.
 
-The strucure of Irmin can be found on Excalidraw: [Irmin Structure](https://excalidraw.com/#json=ZV3vKpXoNWZPcHqx2Rrc6,9cjm0aKRo43MvHZRYJyS1Q)
+Useful links:
+
+- [Irmin Structure](https://excalidraw.com/#json=ZV3vKpXoNWZPcHqx2Rrc6,9cjm0aKRo43MvHZRYJyS1Q)
+- [Irmin Frontend Documentation](https://irmin.dev/tsdocs)
+- [Irmin API Documentation](https://api.irmin.dev/docs)
 
 For project management and tickets we use Basecamp. If you need access to Basecamp, please contact us.
 
@@ -37,6 +41,12 @@ If you would like to contribute to the project, please follow the guidelines in 
 - [Additional Information](#additional-information)
 
 ## Getting Started
+
+Read the following resources to get familiar with the project:
+
+- [Irmin Structure](https://excalidraw.com/#json=ZV3vKpXoNWZPcHqx2Rrc6,9cjm0aKRo43MvHZRYJyS1Q)
+- [Irmin Frontend Documentation](https://irmin.dev/tsdocs)
+- [Irmin API Documentation](https://api.irmin.dev/docs)
 
 ### How to contribute?
 
@@ -80,7 +90,7 @@ To configure the environment variables for the project, create a `.env` file in 
 
 Example `.env` file:
 
-```dotenv
+```text
 NEXT_PUBLIC_BASE_URL=https://irmin.dev
 REQUIRE_ENV_AUTH=true
 ENV_PASSWORD=devpassword
@@ -190,7 +200,6 @@ Note! It is not meant for anything but local use.
 The backend is a Laravel application. API documentation can be found in Postman. Please refer to the Postman documentation for detailed API information.
 
 The API documentation can be found here: [Irmin API docs](https://api.irmin.dev/docs)
-
 
 ## API Services
 

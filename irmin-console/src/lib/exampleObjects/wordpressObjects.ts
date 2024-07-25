@@ -1,5 +1,8 @@
 import { Media, Menu, Post } from '@/types/website/Wordpress';
 
+/**
+ * Example WordPress category object
+ */
 export const exampleWPCategory: Post = {
   id: 19,
   link: 'https://cms.irmin.dev/en/category/irmin-news/',
@@ -100,6 +103,9 @@ export const exampleWPCategory: Post = {
   },
 } as Post;
 
+/**
+ * Example WordPress post object
+ */
 export const exampleWPPost: Post = {
   id: 266,
   date: '2024-07-18T11:51:08',
@@ -295,6 +301,9 @@ export const exampleWPPost: Post = {
   },
 };
 
+/**
+ * Example WordPress media object
+ */
 export const exampleWPMedia: Media = {
   id: 151,
   slug: 'cow_2',
@@ -355,6 +364,10 @@ export const exampleWPMedia: Media = {
   },
   source_url: 'https://cms.irmin.dev/wp-content/uploads/2024/07/cow_2.jpeg',
 };
+
+/**
+ * Example WordPress footer object
+ */
 export const exampleWPFooter: Menu = [
   { ID: 204, title: 'Irmin', url: '', menu_order: 1, menu_item_parent: '0' },
   {
@@ -380,6 +393,10 @@ export const exampleWPFooter: Menu = [
     menu_item_parent: '0',
   },
 ];
+
+/**
+ * Example WordPress main menu object
+ */
 export const exampleWPMenu: Menu = [
   { ID: 222, title: 'Product', url: '#', menu_order: 1, menu_item_parent: '0' },
   {
@@ -517,6 +534,10 @@ export const exampleWPMenu: Menu = [
     menu_item_parent: '238',
   },
 ];
+
+/**
+ * Example WordPress page object
+ */
 export const exampleWPPage: Post = {
   id: 180,
   date: '2024-07-13T14:09:38',

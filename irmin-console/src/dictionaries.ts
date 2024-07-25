@@ -1,5 +1,13 @@
-import dictEN from '@/dictionaries/en.json';
-import dictFI from '@/dictionaries/fi.json';
+/**
+ * A module for handling dictionaries and languages
+ *
+ * @remarks
+ *
+ * This module is used to handle the different languages supported by Irmin
+ * and to provide the correct dictionary based on the selected language
+ */
+import dictEN from '@/dictionaries/en';
+import dictFI from '@/dictionaries/fi';
 
 /**
  * A dictionary Type based on the JSON files in the dictionaries folder
@@ -42,8 +50,8 @@ export const dictionaries = languages
 
 /**
  * Get the dictionary for a given language
- * @param {Locale} lang - The language to get the dictionary for
- * @returns {Dictionary} dictionary - The dictionary for the given language
+ * @param lang - The language to get the dictionary for
+ * @returns The dictionary for the given language
  */
 export function getDictionary(lang: Locale): Dictionary {
   return dictionaries[lang] || dictionaries[defaultLocale];
@@ -51,8 +59,8 @@ export function getDictionary(lang: Locale): Dictionary {
 
 /**
  * Detect the locale from a given URL
- * @param {string} url - The URL to detect the locale from
- * @returns {Locale | null} detectedLocale - The detected locale or null if not found
+ * @param url - The URL to detect the locale from
+ * @returns The detected locale or null if not found
  */
 export function detectLocaleFromURL(url: string): Locale | null {
   const parsedUrl = new URL(url);

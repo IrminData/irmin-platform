@@ -4,6 +4,12 @@ import { useEffect } from 'react';
 
 import WebsiteError from '@/components/misc/websiteError';
 
+/**
+ * Error page (Website)
+ *
+ * @param param0 - Error properties
+ * @returns Error page content
+ */
 export default function Error({
   error,
   reset,

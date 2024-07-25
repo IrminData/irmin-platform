@@ -20,17 +20,40 @@ import { useWorkspace } from '@/context/workspace';
 import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
 import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
 
+/**
+ * Type for a workspace user used by this component.
+ * This way we are able to unify the data structure for both regular users and invited users
+ * @internal
+ */
 type WorkspaceUsersAndPermissionsUser = {
   inviteId?: number;
 } & WorkspaceUser;
 
+/**
+ * Workspace users and permissions UI
+ *
+ * @remarks
+ *
+ * This component is used to display the list of users and their permissions in the workspace.
+ *
+ * It allows to manage the users and their roles in the workspace.
+ * It includes the ability to invite new users, change roles, and remove users from the workspace.
+ *
+ * This component shows both regular users and invited users that have not yet accepted the invite as
+ * entities on the list. Invites and Users are converted to {@link WorkspaceUsersAndPermissionsUser} type.
+ */
 const WorkspaceUsersAndPermissions: React.FC = () => {
   const { locale, dict } = useLocale();
   const { currentWorkspace, irminRoles, switchToWorkspace } = useWorkspace();
   const { irminAlert, irminConfirm } = usePopup();
+
   const userService = UserAndRoleService.getInstance(locale);
   const workspaceService = WorkspaceService.getInstance(locale);
   const inviteService = InviteService.getInstance(locale);
+
+  const [initialFetchDoneForWorkspace, setInitialFetchDoneForWorkspace] =
+    useState<string | null>(null);
+
   const [users, setUsers] = useState<WorkspaceUsersAndPermissionsUser[]>([]);
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -39,6 +62,14 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
   const [inviteName, setInviteName] = useState('');
   const [inviteRole, setInviteRole] = useState<IrminRoleNames | null>(null);
 
+  /**
+   * Fetch workspace users and their roles.
+   * Invites and Users are converted to {@link WorkspaceUsersAndPermissionsUser} type,
+   * and then set to the local state.
+   *
+   * It uses the {@link UserAndRoleService} and the {@link InviteService} to fetch the
+   * users and invites for the current workspace.
+   */
   const fetchWorkspaceUsersAndRoles = useCallback(
     async (currentWorkspace: Workspace | null) => {
       if (!currentWorkspace) return;
@@ -80,17 +111,40 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
         console.error('Error fetching users and roles:', error);
       }
     },
-    [inviteService, irminRoles, userService]
+    [irminRoles, userService, inviteService, setUsers]
   );
 
   useEffect(() => {
-    fetchWorkspaceUsersAndRoles(currentWorkspace);
-  }, [fetchWorkspaceUsersAndRoles, currentWorkspace]);
+    // Make sure we have the current workspace
+    if (!currentWorkspace) return;
+    // Fetch users and roles for the current workspace if not already done
+    if (
+      !initialFetchDoneForWorkspace ||
+      initialFetchDoneForWorkspace !== currentWorkspace.slug
+    ) {
+      fetchWorkspaceUsersAndRoles(currentWorkspace);
+      setInitialFetchDoneForWorkspace(currentWorkspace.slug);
+    }
+  }, [
+    currentWorkspace,
+    fetchWorkspaceUsersAndRoles,
+    initialFetchDoneForWorkspace,
+  ]);
 
   useEffect(() => {
     setInviteRole(irminRoles[0].name);
   }, [irminRoles]);
 
+  /**
+   * Invite a new user to the workspace.
+   *
+   * @remarks
+   *
+   * It uses the {@link InviteService} to invite a user to the workspace.
+   * It informs the user that the invite has been sent.
+   *
+   * @internal
+   */
   const handleInvite = async () => {
     // Validate invite data
     if (!currentWorkspace || !inviteRole) {
@@ -120,6 +174,18 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     }
   };
 
+  /**
+   * Resend an existing invite
+   *
+   * @remarks
+   *
+   * It uses the {@link InviteService} to resend an invite to the user.
+   * It informs the user that the invite has been resent.
+   *
+   * @param email - The email of the user to resend the invite to
+   *
+   * @internal
+   */
   const handleResend = async (email: string) => {
     if (!currentWorkspace) return;
     try {
@@ -143,6 +209,18 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     }
   };
 
+  /**
+   * Cancel an existing invite
+   *
+   * @remarks
+   *
+   * It uses the {@link InviteService} to cancel an invite to the user.
+   * It informs the user that the invite has been canceled.
+   *
+   * @param email - The email of the user to cancel the invite for
+   *
+   * @internal
+   */
   const handleCancelInvite = async (email: string) => {
     if (!currentWorkspace) return;
     try {
@@ -167,6 +245,17 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     }
   };
 
+  /**
+   * Remove a user from the workspace
+   *
+   * @remarks
+   *
+   * It uses the {@link UserAndRoleService} to remove a user from the workspace.
+   * It informs the user that the user has been removed.
+   *
+   * @param id - The ID of the user to remove
+   * @internal
+   */
   const handleRemoveUser = async (id: number) => {
     // Confirm removal
     irminConfirm(
@@ -198,6 +287,17 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     );
   };
 
+  /**
+   * Transfer ownership of the workspace to another user
+   *
+   * @remarks
+   *
+   * It uses the {@link WorkspaceService} to transfer the ownership of the workspace to another user.
+   * It informs the user that the ownership has been transferred.
+   *
+   * @param id - The ID of the user to transfer the ownership to
+   * @internal
+   */
   const handleTransferOwnership = async (id: number) => {
     // Confirm transfer
     irminConfirm(
@@ -230,6 +330,19 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     );
   };
 
+  /**
+   * Change the role of a user in the workspace
+   *
+   * @remarks
+   *
+   * It uses the {@link UserAndRoleService} to change the role of a user in the workspace.
+   * It informs the user that the role has been changed.
+   *
+   * @param id - The ID of the user to change the role for
+   * @param oldRole - The old role of the user
+   * @param newRole - The new role of the user
+   * @internal
+   */
   const handleChangeRole = async (
     id: number,
     oldRole: IrminRole | null,
@@ -264,6 +377,18 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     }
   };
 
+  /**
+   * Change the role of an invited user in the workspace
+   *
+   * @remarks
+   *
+   * It uses the {@link InviteService} to change the role of an invited user in the workspace.
+   * It informs the user that the role has been changed.
+   *
+   * @param inviteId - The ID of the invite to change the role for
+   * @param newRole - The new role of the user
+   * @internal
+   */
   const handleChangeInviteRole = async (
     inviteId: number,
     newRole: IrminRole
@@ -299,6 +424,7 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
   };
 
   if (!currentWorkspace || users.length === 0) return <LoadingSpinner />;
+
   return (
     <div className=''>
       <div className='mb-4 flex flex-row items-center justify-between px-4'>

@@ -9,6 +9,9 @@ import './globals.scss';
 
 const inter = Inter({ subsets: ['latin'] });
 
+/**
+ * SEO metadata for the root layout of the application
+ */
 export const metadata: Metadata = {
   title: 'Just like GitHub for Data, made for developers | IRMIN',
   description:
@@ -18,13 +21,26 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Root layout component of the application
+ *
+ * @remarks
+ *
+ * This component is used to wrap the entire application with the necessary providers.
+ * The providers include the LocaleProvider and ProfileProvider.
+ *
+ * This component also includes the global styles and fonts for the application.
+ *
+ * @param children - The children components to render
+ * @returns The root layout of the application
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='en'>
+    <html>
       <body className={inter.className}>
         <LocaleProvider>
           <ProfileProvider>{children}</ProfileProvider>

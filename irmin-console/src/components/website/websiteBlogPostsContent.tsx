@@ -17,6 +17,16 @@ import {
 } from '@/types/website/WebsiteContent';
 import { ArticlesSection } from '@/types/website/Wordpress';
 
+/**
+ * Website blog posts list component
+ *
+ * @remarks
+ *
+ * This component is used to display a list of blog posts on the website.
+ *
+ * It displays the blog posts with their categories, authors, dates, and estimated reading times.
+ * The blog posts are filtered by category and search query.
+ */
 export default function WebsiteBlogPostsContent({
   section,
   categories,

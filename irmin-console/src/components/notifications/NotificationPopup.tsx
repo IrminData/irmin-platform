@@ -13,6 +13,18 @@ import { useWorkspace } from '@/context/workspace';
 
 import { Notification } from '@/types/internal/Notification';
 
+/**
+ * Notification popup UI
+ *
+ * @remarks
+ *
+ * UI for displaying notifications in a popup.
+ *
+ * It displays a list of notifications with titles, messages and timestamps.
+ *
+ * This popup is shown when the user clicks on the notifications icon in the header.
+ * The position of the popup is determined by the click position.
+ */
 const NotificationPopup = ({
   notificationsClickPosition,
 }: {

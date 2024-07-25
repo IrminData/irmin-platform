@@ -12,6 +12,11 @@ import { useLocale } from '@/context/LocaleContext';
 import { ActionWorkflow } from '@/types/api/Workflow';
 import { GridRow } from '@/types/internal/ListUI';
 
+/**
+ * Table UI to display a list of action workflows
+ *
+ * Uses {@link List} and {@link StatusElement} to display a list of action workflows
+ */
 const ActionTable = ({
   actions,
   inSidebar = false,

@@ -11,6 +11,19 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { MarketplacePlugin } from '@/types/internal/Marketplace';
 
+/**
+ * Plugin marketplace UI
+ *
+ * @remarks
+ *
+ * This component is used to display the plugin marketplace on the portal.
+ * It displays a list of plugins available for integration.
+ *
+ * It includes a search input, category filters, and a list of plugins.
+ *
+ * The plugin marketplace is used to browse and connect plugins to Workspaces.
+ * TODO: Plugin integration is not implemented yet.
+ */
 export default function PluginMarketplace() {
   const { dict } = useLocale();
   const [selectedCategory, setSelectedCategory] = useState('');

@@ -9,6 +9,12 @@ import WebsiteBlogPost from '@/components/website/websiteBlogPost';
 
 import { WebsiteArticleCategory } from '@/types/website/WebsiteContent';
 
+const NEXT_PUBLIC_BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+
+/**
+ * Router properties received by the page
+ */
 type PageProps = {
   params: {
     lang: Locale;
@@ -16,9 +22,20 @@ type PageProps = {
   };
 };
 
-const NEXT_PUBLIC_BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
-
+/**
+ * Single article/blog post page (Website)
+ *
+ * @remarks
+ *
+ * Using router properties, like postSlug, it fetches the post
+ * content from WordPress API and renders it.
+ *
+ * It uses WebsiteBlogPost to render the post content and
+ * categories it receives from WordPress API.
+ *
+ * @param param0 - Router properties received by the page
+ * @returns Post content
+ */
 export default async function Page({ params }: PageProps) {
   const slug =
     typeof params.postSlug === 'string'

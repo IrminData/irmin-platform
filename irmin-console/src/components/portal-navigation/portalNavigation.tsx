@@ -17,6 +17,20 @@ import PortalNavWorkspaceSwitcher from '@/components/portal-navigation/portalNav
 
 import { useLocale } from '@/context/LocaleContext';
 
+/**
+ * Portal navigation component
+ *
+ * @remarks
+ *
+ * This component is used to display the portal navigation sidebar and top bar.
+ *
+ * The sidebar can be folded or unfolded. It contains the navigation links,
+ * {@link PortalNavProfile}, and {@link PortalNavWorkspaceSwitcher}.
+ *
+ * Portal navigation component also contains the search bar and the {@link NotificationButton}.
+ *
+ * Links are fetched from {@link usePortalNavLinks} context and displayed using {@link PortalNavLink}.
+ */
 export default function PortalNavigation({
   children,
 }: Readonly<{ children: React.ReactNode }>) {

@@ -7,6 +7,19 @@ import { useLocale } from '@/context/LocaleContext';
 import { WebsiteArticleCategory } from '@/types/website/WebsiteContent';
 import { Post } from '@/types/website/Wordpress';
 
+/**
+ * Website blog post component
+ *
+ * @remarks
+ *
+ * Displays a single blog post with the post content, title, author, date, and reading time.
+ * The post content is rendered as HTML.
+ *
+ * The stylesheet for Gutenberg content is loaded from WordPress.
+ * It has been moved there from this repository.
+ *
+ * See this {@link https://github.com/IrminData/irmin-frontend/commit/cef8f6d4864035e01e36623a2cf333a92d249590 | commit} for more details.
+ */
 export default function WebsiteBlogPost({
   post,
   categories,

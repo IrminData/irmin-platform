@@ -8,6 +8,13 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { Dashboard } from '@/types/api/Dashboard';
 
+/**
+ * Dashboard title and selector
+ *
+ * @remarks
+ *
+ * This component is used to display the title of the dashboard and a selector to switch between dashboards.
+ */
 function DashboardTitleAndSelector({
   title,
   options,
