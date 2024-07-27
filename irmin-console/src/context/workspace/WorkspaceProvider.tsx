@@ -4,7 +4,8 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { useParams } from 'next/navigation';
 
-import { useLocale } from '@/context/LocaleContext';
+import { Locale } from '@/dictionaries';
+
 import {
   useCancelInvite,
   useChangeInvite,
@@ -46,24 +47,27 @@ import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
  * Provider for the workspace context to handle workspace data.
  * It fetches the workspace data from the API and provides it to the app.
  *
- * The workspace data includes:
- *  workspaces - list of available workspaces
+ * Objects handled by the context:
+ *  workspaces - available workspaces
  *  current workspace - the currently selected workspace
- *  roles - list of all available roles on Irmin
- *  dashboards - list of workspace's existing dashboards
- *  connections - list of workspace's existing connections
- *  exports - list of workspace's existing export processes
- *  actions - list of workspace's existing actions
- *  datasets - list of workspace's existing datasets
+ *  users - workspace's existing users
+ *  invites - workspace's existing invites
+ *  roles - available roles on Irmin
+ *  dashboards - workspace's existing dashboards
+ *  connections - workspace's existing connections
+ *  exports - workspace's existing export processes
+ *  actions - workspace's existing actions
+ *  datasets - workspace's existing datasets
  *
  * It also provides methods to switch workspaces and delete the current workspace.
  */
 export const WorkspaceProvider = ({
   children,
+  locale,
 }: {
   children: React.ReactNode;
+  locale: Locale;
 }) => {
-  const { locale } = useLocale();
   const params = useParams();
 
   // Ref to check if the component has been initialised
@@ -127,7 +131,7 @@ export const WorkspaceProvider = ({
   );
 
   /**
-   * Hook to fetch the list of workspaces.
+   * Hook to fetch the workspaces.
    * It will be run during the initialisation to load all available workspaces.
    */
   const fetchWorkspaces = useFetchWorkspaces(
@@ -138,13 +142,13 @@ export const WorkspaceProvider = ({
   );
 
   /**
-   * Hook to fetch the list of roles.
+   * Hook to fetch the roles.
    * It will be run during the initialisation to load all available roles.
    */
   const fetchRoles = useFetchRoles(setIrminRoles, locale);
 
   /**
-   * Hook to fetch the list of connections for the current workspace.
+   * Hook to fetch the connections for the current workspace.
    * It will be run whenever the current workspace changes to update the connections.
    */
   const fetchConnections = useFetchConnections(
@@ -158,7 +162,7 @@ export const WorkspaceProvider = ({
   );
 
   /**
-   * Hook to fetch the list of exports for the current workspace.
+   * Hook to fetch the exports for the current workspace.
    * It will be run whenever the current workspace changes to update the exports.
    */
   const fetchExports = useFetchExports(
@@ -172,7 +176,7 @@ export const WorkspaceProvider = ({
   );
 
   /**
-   * Hook to fetch the list of actions for the current workspace.
+   * Hook to fetch the actions for the current workspace.
    * It will be run whenever the current workspace changes to update the actions.
    */
   const fetchActions = useFetchActions(
@@ -186,7 +190,7 @@ export const WorkspaceProvider = ({
   );
 
   /**
-   * Hook to fetch the list of datasets for the current workspace.
+   * Hook to fetch the datasets for the current workspace.
    * It will be run whenever the current workspace changes to update the datasets.
    */
   const fetchDatasets = useFetchDatasets(
@@ -200,7 +204,7 @@ export const WorkspaceProvider = ({
   );
 
   /**
-   * Hook to fetch the list of dashboards for the current workspace.
+   * Hook to fetch the dashboards for the current workspace.
    * It will be run whenever the current workspace changes to update the dashboards.
    */
   const fetchDashboards = useFetchDashboards(
@@ -214,7 +218,7 @@ export const WorkspaceProvider = ({
   );
 
   /**
-   * Hook to fetch the list of users for the current workspace.
+   * Hook to fetch the users for the current workspace.
    * It will be run whenever the current workspace changes to update the users.
    */
   const fetchUsers = useFetchUsers(
@@ -228,7 +232,7 @@ export const WorkspaceProvider = ({
   );
 
   /**
-   * Hook to fetch the list of invites for the current workspace.
+   * Hook to fetch the invites for the current workspace.
    * It will be run whenever the current workspace changes to update the invites.
    */
   const fetchInvites = useFetchInvites(
@@ -258,7 +262,7 @@ export const WorkspaceProvider = ({
 
   /**
    * Hook to delete the current workspace. It calls the API to delete the workspace,
-   * switches to the default workspace, and fetches the updated list of workspaces.
+   * switches to the default workspace, and fetches the updated workspaces.
    */
   const deleteCurrentWorkspace = useDeleteCurrentWorkspace(
     switchToWorkspace,
@@ -278,37 +282,37 @@ export const WorkspaceProvider = ({
 
   /**
    * Hook to send an invite to a user. It calls the API to send the invite,
-   * and fetches the updated list of invites.
+   * and fetches the updated invites.
    */
   const sendInvite = useSendInvite(currentWorkspace, setInvites, locale);
 
   /**
    * Hook to resend an invite to a user. It calls the API to resend the invite,
-   * and fetches the updated list of invites.
+   * and fetches the updated invites.
    */
   const resendInvite = useResendInvite(locale);
 
   /**
    * Hook to cancel an invite to a user. It calls the API to cancel the invite,
-   * and fetches the updated list of invites.
+   * and fetches the updated invites.
    */
   const cancelInvite = useCancelInvite(invites, setInvites, locale);
 
   /**
    * Hook to change an invite to a user. It calls the API to change the invite,
-   * and fetches the updated list of invites.
+   * and fetches the updated invites.
    */
   const changeInvite = useChangeInvite(invites, setInvites, locale);
 
   /**
    * Hook to delete a user. It calls the API to delete the user,
-   * and fetches the updated list of users.
+   * and fetches the updated users.
    */
   const deleteUser = useDeleteUser(users, setUsers, locale);
 
   /**
    * Hook to change the role of a user. It calls the API to change the role,
-   * and fetches the updated list of users.
+   * and fetches the updated users.
    */
   const changeUserRole = useChangeUserRole(users, setUsers, locale);
 

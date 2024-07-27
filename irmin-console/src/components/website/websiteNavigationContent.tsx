@@ -38,7 +38,7 @@ const NavLink = ({
   return (
     <li className='group relative' id={linkKey}>
       <Link
-        className={`block h-full overflow-hidden text-nowrap rounded px-1 py-3 text-xs font-light transition-all hover:bg-gray-200 lg:text-sm xl:px-3 xl:text-base ${isActive ? 'text-ash_gray underline' : 'text-irmin_black'}`}
+        className={`block h-full overflow-hidden text-nowrap rounded px-2 py-3 text-xs font-light transition-all hover:bg-gray-200 lg:text-sm ${isActive ? 'text-ash_gray underline' : 'text-irmin_black'}`}
         aria-label={link.label}
         href={link.href}
       >
@@ -51,7 +51,7 @@ const NavLink = ({
               key={`website-desktop-navigation-link-sublink-${idx}-${linkKey}`}
             >
               <Link
-                className={`block overflow-hidden text-nowrap rounded px-2 py-2 text-sm font-light transition-all hover:bg-gray-200 ${isActive ? 'text-ash_gray underline' : 'text-irmin_black'}`}
+                className={`block overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-light transition-all hover:bg-gray-200 lg:text-sm ${isActive ? 'text-ash_gray underline' : 'text-irmin_black'}`}
                 aria-label={subpage.label}
                 href={subpage.href}
               >
@@ -170,11 +170,11 @@ export default function WebsiteNavigationContent({
   return (
     <>
       <div className='fixed z-50 w-full bg-white shadow'>
-        <div className='container mx-auto max-w-7xl px-2 py-4'>
+        <div className='container mx-auto max-w-7xl px-2'>
           <nav className='flex justify-between'>
             <div className='flex w-full items-center justify-between gap-2'>
-              <div className='flex w-full items-center justify-start gap-6'>
-                <Link href='/'>
+              <div className='flex items-center justify-start gap-6'>
+                <Link href='/' className='py-4'>
                   <Image
                     className='h-6 min-h-4 xl:h-12'
                     src='/irmin-logo.svg'
@@ -183,7 +183,7 @@ export default function WebsiteNavigationContent({
                     height={120}
                   />
                 </Link>
-                <ul className='hidden gap-1.5 md:flex md:justify-center xl:gap-3'>
+                <ul className='hidden max-w-full gap-1 py-4 md:flex md:justify-center lg:gap-2'>
                   {links.map((link, idx) => (
                     <NavLink
                       key={`website-desktop-navigation-link-${idx}`}
@@ -193,40 +193,35 @@ export default function WebsiteNavigationContent({
                   ))}
                 </ul>
               </div>
-              <div className='hidden flex-row items-center justify-end gap-1 md:flex'>
+              <div className='hidden flex-row items-center justify-end gap-2 py-4 md:flex lg:gap-4'>
                 {!profile.isLoading &&
                   (profile.profile ? (
                     <>
-                      <div className='flex w-24 flex-col gap-1 align-middle lg:w-36 lg:flex-row lg:gap-2'>
-                        <Link
-                          href='/portal/profile'
-                          className='align-center my-auto justify-center'
-                        >
-                          <Image
-                            src='/ui-assets/elements/avatar.webp'
-                            alt={profile.profile.name ?? ''}
-                            width={50}
-                            height={50}
-                            className='h-6 w-auto rounded-full xl:h-8'
-                          />
-                        </Link>
-                        <Link
-                          href='/portal/profile'
-                          className='align-center flex flex-col justify-center'
-                        >
-                          <h2 className='text-xs font-normal text-irmin_black lg:text-sm lg:font-semibold'>
+                      <Link
+                        href='/portal/profile'
+                        className='flex max-w-44 flex-row items-center gap-2 overflow-hidden transition-all hover:opacity-40 lg:max-w-56'
+                      >
+                        <Image
+                          src='/ui-assets/elements/avatar.webp'
+                          alt={profile.profile.name ?? ''}
+                          width={50}
+                          height={50}
+                          className='h-6 w-6 rounded-full xl:h-8 xl:w-8'
+                        />
+                        <div className='align-center flex flex-col justify-center'>
+                          <h2 className='text-xs font-normal text-irmin_black lg:text-sm'>
                             {profile.profile.name ?? ''}
                           </h2>
-                          <p className='text-xs font-light text-irmin_black lg:text-sm'>
+                          <p className='text-xs font-light text-irmin_black'>
                             {profile.profile.email ?? ''}
                           </p>
-                        </Link>
-                      </div>
+                        </div>
+                      </Link>
                       <Button
-                        size='sm'
+                        size='md'
                         variant='solid'
                         colorScheme='secondary'
-                        className='w-32 lg:w-36'
+                        className='min-w-32'
                         href='/portal'
                       >
                         {dict.website.navigation.goToPortal}
@@ -245,7 +240,7 @@ export default function WebsiteNavigationContent({
                         {dict.auth.signIn.signIn}
                       </Button>
                       <Button
-                        size='sm'
+                        size='md'
                         variant='solid'
                         colorScheme='secondary'
                         className='w-20 md:w-32'
@@ -303,31 +298,26 @@ export default function WebsiteNavigationContent({
                     />
                   </Link>
                   {!profile.isLoading && profile.profile && (
-                    <div className='mt-6 flex w-full flex-row justify-center gap-2 align-middle'>
-                      <Link
-                        href='/portal/profile'
-                        className='align-center my-auto justify-center'
-                      >
-                        <Image
-                          src='/ui-assets/elements/avatar.webp'
-                          alt={profile.profile.name ?? ''}
-                          width={50}
-                          height={50}
-                          className='h-8 w-auto rounded-full'
-                        />
-                      </Link>
-                      <Link
-                        href='/portal/profile'
-                        className='align-center flex flex-col justify-center'
-                      >
-                        <h2 className='text-xs font-normal text-irmin_black lg:text-sm lg:font-semibold'>
+                    <Link
+                      href='/portal/profile'
+                      className='mt-6 flex w-full flex-row items-center justify-center gap-2 overflow-hidden transition-all hover:opacity-40'
+                    >
+                      <Image
+                        src='/ui-assets/elements/avatar.webp'
+                        alt={profile.profile.name ?? ''}
+                        width={50}
+                        height={50}
+                        className='h-6 w-6 rounded-full xl:h-8 xl:w-8'
+                      />
+                      <div className='align-center flex flex-col justify-center'>
+                        <h2 className='text-xs font-normal text-irmin_black lg:text-sm'>
                           {profile.profile.name ?? ''}
                         </h2>
-                        <p className='text-xs font-light text-irmin_black lg:text-sm'>
+                        <p className='text-xs font-light text-irmin_black'>
                           {profile.profile.email ?? ''}
                         </p>
-                      </Link>
-                    </div>
+                      </div>
+                    </Link>
                   )}
                   <ul className='mt-6 flex flex-col gap-2'>
                     {links.map((link, idx) => (

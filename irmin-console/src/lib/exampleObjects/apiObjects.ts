@@ -118,73 +118,112 @@ export const exampleDashboard: Dashboard = {
 };
 
 /**
- * Example Bucket folder
+ * Example BucketFolder object
  */
-export const exampleFolder: BucketFolder = {
-  id: 0,
-  name: 'test',
-  parent_id: null,
-  bucket_id: 0,
-  created_at: new Date().toDateString(),
-  updated_at: new Date().toDateString(),
+export const exampleFolder1: BucketFolder = {
+  bucket: 'example-bucket',
+  name: 'folder1',
+  path: '/folder1',
+  created_at: '2024-01-01T12:00:00Z',
+  updated_at: '2024-01-01T12:00:00Z',
 };
 
 /**
- * Example Bucket file of type SQL
+ * Example BucketFolder object
  */
-export const exampleFileSQL: BucketFile = {
-  id: 0,
-  name: 'sales_today.sql',
-  path: '/sales_today.sql',
-  type: 'sql',
-  content: `SELECT * FROM sales WHERE date = CURRENT_DATE;`,
-  parent_id: null,
-  bucket_id: 0,
-  created_at: new Date().toDateString(),
-  updated_at: new Date().toDateString(),
+export const exampleFolder2: BucketFolder = {
+  bucket: 'example-bucket',
+  name: 'folder2',
+  path: '/folder1/folder2',
+  created_at: '2024-01-02T12:00:00Z',
+  updated_at: '2024-01-02T12:00:00Z',
 };
 
 /**
- * Example Bucket file of type JS
+ * Example BucketFile object
  */
-export const exampleFileJS: BucketFile = {
-  id: 1,
-  name: 'helloworld.js',
-  path: '/test/helloworld.js',
+export const exampleFile1: BucketFile = {
+  bucket: 'example-bucket',
+  name: 'file1.js',
+  path: '/folder1/file1.js',
   type: 'js',
-  content: `console.log("Hello World!");`,
-  parent_id: 0,
-  bucket_id: 0,
-  created_at: new Date().toDateString(),
-  updated_at: new Date().toDateString(),
+  contents: 'console.log("Hello, world!");',
+  is_draft: false,
+  created_at: '2024-01-01T12:00:00Z',
+  updated_at: '2024-01-01T12:00:00Z',
 };
 
 /**
- * Example Bucket
+ * Example BucketFile object
+ */
+export const exampleFile2: BucketFile = {
+  bucket: 'example-bucket',
+  name: 'file2.py',
+  path: '/folder1/folder2/file2.py',
+  type: 'py',
+  contents: 'print("Hello, world!")',
+  is_draft: true,
+  created_at: '2024-01-02T12:00:00Z',
+  updated_at: '2024-01-02T12:00:00Z',
+};
+
+/**
+ * Example BucketFile object
+ */
+export const exampleFile3: BucketFile = {
+  bucket: 'example-bucket',
+  name: 'file3.sql',
+  path: '/file3.sql',
+  type: 'sql',
+  contents: 'SELECT * FROM users;',
+  is_draft: false,
+  created_at: '2024-01-03T12:00:00Z',
+  updated_at: '2024-01-03T12:00:00Z',
+};
+
+/**
+ * Example Bucket object
  */
 export const exampleBucket: Bucket = {
-  id: 0,
-  folders: [exampleFileSQL],
-  files: [exampleFileSQL, exampleFileJS],
+  slug: 'example-bucket',
+  folders: [exampleFolder1, exampleFolder2],
+  files: [exampleFile1, exampleFile2],
 };
 
 /**
  * Example role
  */
-export const exampleRole: IrminRole = {
-  name: 'admin',
-  label: 'Admin',
-  description: 'Can do everything',
-};
+export const exampleRoles: IrminRole[] = [
+  {
+    name: 'admin',
+    label: 'Admin',
+    description: 'Can do everything',
+  },
+  {
+    name: 'editor',
+    label: 'Editor',
+    description: 'Can edit stuff',
+  },
+  {
+    name: 'viewer',
+    label: 'Viewer',
+    description: 'Can view stuff',
+  },
+  {
+    name: 'billing',
+    label: 'Billing',
+    description: 'Can do billing stuff',
+  },
+];
 
 /**
  * Example user profile
  */
 export const exampleProfile: Profile = {
   id: 0,
-  name: 'example User',
-  company: 'example Inc.',
-  email: 'work.example@finnair.com',
+  name: 'John Doe',
+  company: 'Example Inc.',
+  email: 'john.doe@example.com',
   email_verified_at: null,
   created_at: new Date().toDateString(),
   updated_at: new Date().toDateString(),
@@ -195,11 +234,11 @@ export const exampleProfile: Profile = {
  */
 export const exampleInvite: Invite = {
   id: 0,
-  name: 'Invited User',
-  email: 'invited.user@google.com',
+  name: 'Jane Doe',
+  email: 'jane.doe@example.com',
   created_at: new Date().toDateString(),
   updated_at: new Date().toDateString(),
-  role: exampleRole,
+  role: exampleRoles[2],
 };
 
 /**
@@ -223,7 +262,7 @@ export const exampleWorkspaceUser: WorkspaceUser = {
   email_verified_at: null,
   created_at: new Date().toDateString(),
   updated_at: new Date().toDateString(),
-  roles: [exampleRole],
+  roles: exampleRoles,
 };
 
 /**

@@ -1,6 +1,6 @@
 /**
  * Marketplace plugin type
- * TODO: Needs to be removed and implemented in the API types
+ * @todo Needs to be removed and implemented in the API types
  * @typeParam id - Plugin ID
  * @typeParam name - Plugin name
  * @typeParam provider - Plugin provider
@@ -21,7 +21,7 @@ export interface MarketplacePlugin {
 
 /**
  * Marketplace dataset type
- * TODO: Needs to be removed and implemented in the API types
+ * @todo Needs to be removed and implemented in the API types
  * @typeParam id - Dataset ID
  * @typeParam name - Dataset name
  * @typeParam source - Dataset source

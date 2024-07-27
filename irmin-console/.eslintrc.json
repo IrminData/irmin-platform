@@ -1,6 +1,6 @@
 {
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint", "eslint-plugin-tsdoc"],
+  "plugins": ["@typescript-eslint"],
   "extends": [
     "next/core-web-vitals",
     "eslint:recommended",
@@ -15,7 +15,6 @@
       { "argsIgnorePattern": "^_" }
     ],
     "no-console": "off",
-    "@typescript-eslint/no-explicit-any": "warn",
-    "tsdoc/syntax": "warn"
+    "@typescript-eslint/no-explicit-any": "warn"
   }
 }

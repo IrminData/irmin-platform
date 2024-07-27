@@ -2,14 +2,12 @@ import { defaultLocale, Locale } from '@/dictionaries';
 import {
   exampleAPIResponse,
   exampleBucket,
-  exampleFileJS,
-  exampleFileSQL,
-  exampleFolder,
 } from '@/lib/exampleObjects/apiObjects';
 import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
 
-import { Bucket, BucketFile, BucketFolder } from '@/types/api/Bucket';
+import { Bucket } from '@/types/api/Bucket';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
@@ -24,26 +22,6 @@ const api_base = process.env.NEXT_PUBLIC_API_URL;
 interface BucketAPIResponse extends IrminAPIResponse {
   data: Bucket;
 }
-
-/**
- * Bucket file API response type
- * @internal
- */
-interface BucketFileAPIResponse extends IrminAPIResponse {
-  data: BucketFile;
-}
-
-/**
- * Bucket folder API response type
- * @internal
- */
-interface BucketFolderAPIResponse extends IrminAPIResponse {
-  data: BucketFolder;
-}
-
-const exampleFiles = [exampleFileJS, exampleFileSQL];
-const randomExampleFile = () =>
-  exampleFiles[Math.floor(Math.random() * exampleFiles.length)];
 
 /**
  * Bucket API service
@@ -66,8 +44,6 @@ const randomExampleFile = () =>
  * Example data can be found here: `@/lib/exampleObjects/apiObjects`
  */
 class BucketService {
-  private bucket: Bucket | null = null;
-
   private static instance: BucketService;
   private locale: Locale = defaultLocale;
 
@@ -99,7 +75,7 @@ class BucketService {
 
   /**
    * Fetch the bucket for the current workspace
-   * TODO: Provide link to Irmin API docs
+   * @todo Provide link to Irmin API docs
    * @returns response from the API or example data
    */
   async fetchBucket(): Promise<BucketAPIResponse> {
@@ -119,7 +95,6 @@ class BucketService {
         },
         this.locale
       )) as BucketAPIResponse;
-      this.bucket = response.data;
       return response;
     } catch (error) {
       console.error('Fetch bucket error:', error);
@@ -133,225 +108,235 @@ class BucketService {
   }
 
   /**
-   * Get the current stored bucket
-   * @returns the stored bucket or null if not fetched yet
-   */
-  getBucket(): Bucket | null {
-    return this.bucket;
-  }
-
-  /**
    * Create a new file in the bucket
-   * TODO: Provide link to Irmin API docs
-   * @param file - the file to create
+   * @todo Provide link to Irmin API docs
+   * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    * @returns response from the API or example data
    */
-  async createFile(file: BucketFile): Promise<BucketFileAPIResponse> {
-    if (isOfflineMode)
-      return {
-        ...exampleAPIResponse,
-        data: randomExampleFile(),
-      };
+  async createFile(
+    fileNavigatorItem: FileNavigatorItem
+  ): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
     try {
-      const response = (await fetchWithCredentials(
+      // Make sure the item is a file
+      if (fileNavigatorItem.type !== 'file' || !fileNavigatorItem.current) {
+        throw new Error('Item is not a file');
+      }
+      // Create the file
+      const body = new FormData();
+      body.append('name', fileNavigatorItem.current.name);
+      body.append('path', fileNavigatorItem.current.path);
+      body.append('contents', fileNavigatorItem.current.contents);
+      const response = await fetchWithCredentials(
         `${api_base}/v1/buckets/files`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(file),
+          body,
         },
         this.locale
-      )) as BucketFileAPIResponse;
-      this.bucket?.files.push(response.data);
+      );
       return response;
     } catch (error) {
       console.error('Create file error:', error);
-      if (isDevelopment)
-        return {
-          ...exampleAPIResponse,
-          data: randomExampleFile(),
-        };
+      if (isDevelopment) return exampleAPIResponse;
       throw error;
     }
   }
 
   /**
    * Update a file in the bucket
-   * TODO: Provide link to Irmin API docs
-   * @param file - the file to update
+   * @todo Provide link to Irmin API docs
+   * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    * @returns response from the API or example data
    */
-  async updateFile(file: BucketFile): Promise<BucketFileAPIResponse> {
-    if (isOfflineMode)
-      return {
-        ...exampleAPIResponse,
-        data: randomExampleFile(),
-      };
+  async updateFile(
+    fileNavigatorItem: FileNavigatorItem
+  ): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
     try {
+      // Make sure the item is a file
+      if (
+        fileNavigatorItem.type !== 'file' ||
+        !fileNavigatorItem.current ||
+        !fileNavigatorItem.original
+      ) {
+        throw new Error('Item is not a file');
+      }
+      // Update the file
       const body = new FormData();
       body.append('_method', 'PUT');
-      body.append('file', JSON.stringify(file));
-
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/buckets/files/${file.id}`,
+      body.append('name', fileNavigatorItem.current.name);
+      body.append('path', fileNavigatorItem.current.path);
+      body.append('contents', fileNavigatorItem.current.contents);
+      body.append('original_path', fileNavigatorItem.original.path);
+      body.append('original_contents', fileNavigatorItem.original.contents);
+      const response = await fetchWithCredentials(
+        `${api_base}/v1/buckets/files`,
         {
           method: 'POST',
           body,
         },
         this.locale
-      )) as BucketFileAPIResponse;
-
-      const index = this.bucket?.files.findIndex((f) => f.id === file.id);
-      if (index !== undefined && index !== -1) {
-        this.bucket!.files[index] = response.data;
-      }
+      );
       return response;
     } catch (error) {
       console.error('Update file error:', error);
-      if (isDevelopment)
-        return {
-          ...exampleAPIResponse,
-          data: randomExampleFile(),
-        };
+      if (isDevelopment) return exampleAPIResponse;
       throw error;
     }
   }
 
   /**
    * Delete a file from the bucket
-   * TODO: Provide link to Irmin API docs
-   * @param fileId - the ID of the file to delete
-   * @returns response from the API or example data
+   * @todo Provide link to Irmin API docs
+   * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
+   * @returns response from the API or void
    */
-  async deleteFile(fileId: number): Promise<void> {
-    if (isOfflineMode) return;
+  async deleteFile(
+    fileNavigatorItem: FileNavigatorItem
+  ): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
     try {
+      // Make sure the item is a file
+      if (fileNavigatorItem.type !== 'file' || !fileNavigatorItem.original) {
+        throw new Error('Item is not a file');
+      }
+      // Delete the file
       const body = new FormData();
       body.append('_method', 'DELETE');
-
-      await fetchWithCredentials(
-        `${api_base}/v1/buckets/files/${fileId}`,
+      body.append('name', fileNavigatorItem.original.name);
+      body.append('path', fileNavigatorItem.original.path);
+      const response = await fetchWithCredentials(
+        `${api_base}/v1/buckets/files`,
         {
           method: 'POST',
           body,
         },
         this.locale
       );
-      this.bucket!.files = this.bucket!.files.filter((f) => f.id !== fileId);
+      return response;
     } catch (error) {
       console.error('Delete file error:', error);
-      if (isDevelopment) return;
+      if (isDevelopment) return exampleAPIResponse;
       throw error;
     }
   }
 
   /**
    * Create a new folder in the bucket
-   * TODO: Provide link to Irmin API docs
-   * @param folder - the folder to create
+   * @todo Provide link to Irmin API docs
+   * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    * @returns response from the API or example data
    */
-  async createFolder(folder: BucketFolder): Promise<BucketFolderAPIResponse> {
-    if (isOfflineMode)
-      return {
-        ...exampleAPIResponse,
-        data: exampleFolder,
-      };
+  async createFolder(
+    fileNavigatorItem: FileNavigatorItem
+  ): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
     try {
-      const response = (await fetchWithCredentials(
+      // Make sure the item is a folder
+      if (fileNavigatorItem.type !== 'folder' || !fileNavigatorItem.current) {
+        throw new Error('Item is not a folder');
+      }
+      // Create the folder
+      const body = new FormData();
+      body.append('name', fileNavigatorItem.current.name);
+      body.append('path', fileNavigatorItem.current.path);
+      const response = await fetchWithCredentials(
         `${api_base}/v1/buckets/folders`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(folder),
+          body,
         },
         this.locale
-      )) as BucketFolderAPIResponse;
-      this.bucket?.folders.push(response.data);
+      );
       return response;
     } catch (error) {
       console.error('Create folder error:', error);
-      if (isDevelopment)
-        return {
-          ...exampleAPIResponse,
-          data: exampleFolder,
-        };
+      if (isDevelopment) return exampleAPIResponse;
       throw error;
     }
   }
 
   /**
    * Update a folder in the bucket
-   * TODO: Provide link to Irmin API docs
-   * @param folder - the folder to update
+   * @todo Provide link to Irmin API docs
+   * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    * @returns response from the API or example data
    */
-  async updateFolder(folder: BucketFolder): Promise<BucketFolderAPIResponse> {
-    if (isOfflineMode)
-      return {
-        ...exampleAPIResponse,
-        data: exampleFolder,
-      };
+  async updateFolder(
+    fileNavigatorItem: FileNavigatorItem
+  ): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
     try {
+      // Make sure the item is a folder
+      if (
+        fileNavigatorItem.type !== 'folder' ||
+        !fileNavigatorItem.current ||
+        !fileNavigatorItem.original
+      ) {
+        throw new Error('Item is not a folder');
+      }
+      // Update the folder
       const body = new FormData();
       body.append('_method', 'PUT');
-      body.append('folder', JSON.stringify(folder));
-
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/buckets/folders/${folder.id}`,
+      body.append('name', fileNavigatorItem.current.name);
+      body.append('path', fileNavigatorItem.current.path);
+      body.append('original_path', fileNavigatorItem.original.path);
+      const response = await fetchWithCredentials(
+        `${api_base}/v1/buckets/folders`,
         {
           method: 'POST',
           body,
         },
         this.locale
-      )) as BucketFolderAPIResponse;
+      );
 
-      const index = this.bucket?.folders.findIndex((f) => f.id === folder.id);
-      if (index !== undefined && index !== -1) {
-        this.bucket!.folders[index] = response.data;
-      }
       return response;
     } catch (error) {
       console.error('Update folder error:', error);
-      if (isDevelopment)
-        return {
-          ...exampleAPIResponse,
-          data: exampleFolder,
-        };
+      if (isDevelopment) return exampleAPIResponse;
       throw error;
     }
   }
 
   /**
    * Delete a folder from the bucket
-   * TODO: Provide link to Irmin API docs
-   * @param folderId - the ID of the folder to delete
-   * @returns response from the API or example data
+   * @todo Provide link to Irmin API docs
+   * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
+   * @returns response from the API or void
    */
-  async deleteFolder(folderId: number): Promise<void> {
-    if (isOfflineMode) return;
+  async deleteFolder(
+    fileNavigatorItem: FileNavigatorItem
+  ): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
     try {
+      // Make sure the item is a folder
+      if (fileNavigatorItem.type !== 'folder' || !fileNavigatorItem.original) {
+        throw new Error('Item is not a folder');
+      }
+      // Delete the folder
       const body = new FormData();
       body.append('_method', 'DELETE');
-
-      await fetchWithCredentials(
-        `${api_base}/v1/buckets/folders/${folderId}`,
+      body.append('name', fileNavigatorItem.original.name);
+      body.append('path', fileNavigatorItem.original.path);
+      const response = await fetchWithCredentials(
+        `${api_base}/v1/buckets/folders`,
         {
           method: 'POST',
           body,
         },
         this.locale
       );
-      this.bucket!.folders = this.bucket!.folders.filter(
-        (f) => f.id !== folderId
-      );
+      return response;
     } catch (error) {
       console.error('Delete folder error:', error);
-      if (isDevelopment) return;
+      if (isDevelopment) return exampleAPIResponse;
       throw error;
     }
   }

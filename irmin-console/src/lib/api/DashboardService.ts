@@ -84,7 +84,7 @@ class DashboardService {
 
   /**
    * Fetch all dashboards
-   * TODO: Provide link to Irmin API docs
+   * @todo Provide link to Irmin API docs
    * @returns response from the API or example data
    */
   async fetchDashboards(): Promise<DashboardsAPIResponse> {
@@ -113,7 +113,7 @@ class DashboardService {
 
   /**
    * Create a new dashboard
-   * TODO: Provide link to Irmin API docs
+   * @todo Provide link to Irmin API docs
    * @param dashboard - the dashboard to create
    * @returns response from the API or example data
    */
@@ -143,7 +143,7 @@ class DashboardService {
 
   /**
    * Update an existing dashboard
-   * TODO: Provide link to Irmin API docs
+   * @todo Provide link to Irmin API docs
    * @param dashboard - the dashboard to update
    * @returns response from the API or example data
    */
@@ -178,7 +178,7 @@ class DashboardService {
 
   /**
    * Delete a dashboard
-   * TODO: Provide link to Irmin API docs
+   * @todo Provide link to Irmin API docs
    * @param dashboardId - the ID of the dashboard to delete
    * @returns response from the API or example data
    */

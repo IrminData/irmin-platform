@@ -168,28 +168,27 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
     irminConfirm(
       'info',
       dict.usersPermissions.removeUserConfirmation,
-      async () => {
-        // Removal confirmed
-        try {
-          // Remove user from workspace
-          const res = await deleteUser(id);
-          // Remove user from the list
-          setUsers(users.filter((user) => user.id !== id));
-          irminAlert(
-            'success',
-            res.metadata?.message ??
-              'User removed successfully from the workspace'
-          );
-        } catch (error) {
-          console.error('Error changing user role:', error);
-          irminAlert(
-            'error',
-            (error as Error)?.message ?? 'Error removing user'
-          );
+      async (confirmed) => {
+        if (confirmed) {
+          // Removal confirmed
+          try {
+            // Remove user from workspace
+            const res = await deleteUser(id);
+            // Remove user from the list
+            setUsers(users.filter((user) => user.id !== id));
+            irminAlert(
+              'success',
+              res.metadata?.message ??
+                'User removed successfully from the workspace'
+            );
+          } catch (error) {
+            console.error('Error changing user role:', error);
+            irminAlert(
+              'error',
+              (error as Error)?.message ?? 'Error removing user'
+            );
+          }
         }
-      },
-      () => {
-        // Removal not confirmed
       }
     );
   };
@@ -197,31 +196,30 @@ const WorkspaceUsersAndPermissions: React.FC = () => {
   const handleTransferOwnership = async (id: number) => {
     // Confirm transfer
     irminConfirm(
-      'info',
+      'warning',
       dict.usersPermissions.transferOwnershipConfirmation,
-      async () => {
-        // Transfer confirmed
-        if (!currentWorkspace) return;
-        try {
-          // Transfer ownership
-          const res = await transferOwnership(id);
-          // Refetch the current workspace
-          switchToWorkspace(currentWorkspace.slug);
-          // Inform that ownership has been transferred
-          irminAlert(
-            'success',
-            res.metadata?.message ?? 'Ownership transfered successfully'
-          );
-        } catch (error) {
-          console.error('Error transferring ownership:', error);
-          irminAlert(
-            'error',
-            (error as Error)?.message ?? 'Error transferring ownership'
-          );
+      async (confirmed) => {
+        if (confirmed) {
+          // Transfer confirmed
+          if (!currentWorkspace) return;
+          try {
+            // Transfer ownership
+            const res = await transferOwnership(id);
+            // Refetch the current workspace
+            switchToWorkspace(currentWorkspace.slug);
+            // Inform that ownership has been transferred
+            irminAlert(
+              'success',
+              res.metadata?.message ?? 'Ownership transfered successfully'
+            );
+          } catch (error) {
+            console.error('Error transferring ownership:', error);
+            irminAlert(
+              'error',
+              (error as Error)?.message ?? 'Error transferring ownership'
+            );
+          }
         }
-      },
-      () => {
-        // Transfer not confirmed
       }
     );
   };

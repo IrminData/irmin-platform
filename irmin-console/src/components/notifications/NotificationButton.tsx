@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { TbBell } from 'react-icons/tb';
+import { GoBell } from 'react-icons/go';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -21,7 +21,7 @@ const NotificationButton = () => {
         className='transitiona-all block max-w-max text-irmin_green hover:text-irmin_green-300'
         aria-label={dict.portalNavigation.notifications.toggle}
       >
-        <TbBell className='text-3xl' />
+        <GoBell className='text-2xl' />
       </button>
     </div>
   );

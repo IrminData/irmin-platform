@@ -1,61 +1,55 @@
 /**
  * Single Bucket type
- * @typeParam id - Bucket ID
- * @typeParam folders - Array of BucketFolder
- * @typeParam files - Array of BucketFile
  * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
  */
 export interface Bucket {
-  id: number;
+  slug: string;
   folders: BucketFolder[];
   files: BucketFile[];
 }
 
 /**
  * Bucket Folder type
- * @typeParam id - Folder ID
- * @typeParam name - Folder name
- * @typeParam parent_id - Parent folder ID
- * @typeParam bucket_id - Bucket ID
- * @typeParam created_at - Folder creation date
- * @typeParam updated_at - Folder update date
+ * @param bucket - Slug of the bucket this folder is in
+ * @param name - Name of the folder
+ * @param path - Path of the file in the bucket, relative to the workspace's bucket. / is the bucket's root
+ * @param created_at - Folder creation date
+ * @param updated_at - Folder update date
  * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
  */
 export interface BucketFolder {
-  id: number;
+  bucket: string;
   name: string;
-  parent_id: number | null;
-  bucket_id: number;
+  path: string;
   created_at: string;
   updated_at: string;
 }
 
 /**
- * Types on files which can exist on Irmin
+ * Available extensions for files on Irmin
  */
-type IrminFileType = 'js' | 'py' | 'sql';
+export const irminFileTypes = ['js', 'py', 'sql'];
+export type IrminFileType = (typeof irminFileTypes)[number];
 
 /**
  * Bucket File type
- * @typeParam id - File ID
- * @typeParam name - File name
- * @typeParam path - File path
- * @typeParam type - File type
- * @typeParam content - File content
- * @typeParam parent_id - Parent folder ID
- * @typeParam bucket_id - Bucket ID
- * @typeParam created_at - File creation date
- * @typeParam updated_at - File update date
+ * @param bucket - Slug of the bucket this file is in
+ * @param name - Name of the file
+ * @param path - Path of the file in the bucket, relative to the workspace's bucket. / is the bucket's root
+ * @param type - Type of the file (file extension)
+ * @param contents - Content of the file
+ * @param is_draft - Is the file a draft
+ * @param created_at - File creation date
+ * @param updated_at - File update date
  * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
  */
 export interface BucketFile {
-  id: number;
+  bucket: string;
   name: string;
   path: string;
   type: IrminFileType;
-  content: string;
-  parent_id: number | null;
-  bucket_id: number;
+  contents: string;
+  is_draft: boolean;
   created_at: string;
   updated_at: string;
 }

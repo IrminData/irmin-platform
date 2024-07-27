@@ -28,36 +28,33 @@ export default function PortalNavProfile({
   }
 
   return (
-    <div className='flex flex-wrap'>
-      <div className='w-auto p-2'>
-        <Link
-          href='/portal/profile'
-          onClick={() => {
-            setIsMenuOpen(false);
-          }}
-        >
-          <Image
-            src='/ui-assets/elements/avatar.webp'
-            alt={profile.profile.name ?? ''}
-            width={50}
-            height={50}
-            className='rounded-full'
-          />
-        </Link>
+    <Link
+      className='flex w-full flex-wrap items-center'
+      href='/portal/profile'
+      onClick={() => {
+        setIsMenuOpen(false);
+      }}
+    >
+      <div className='flex w-auto items-center p-2'>
+        <Image
+          src='/ui-assets/elements/avatar.webp'
+          alt={profile.profile.name ?? ''}
+          width={50}
+          height={50}
+          className='h-10 w-10 rounded-full'
+        />
       </div>
       <div className='w-auto overflow-hidden p-2'>
-        <Link href='/portal/profile'>
-          <h2 className='mb-1 text-xs font-semibold text-irmin_green md:text-sm xl:text-base'>
-            {profile.profile.name ?? ''}
-          </h2>
-          <p className='mb-1 text-xs font-light text-irmin_green md:text-sm xl:text-base'>
-            {profile.profile.email ?? ''}
-          </p>
-          <p className='text-xs font-light text-irmin_green'>
-            {profile.profile.company ?? ''}
-          </p>
-        </Link>
+        <h2 className='mb-1 text-sm font-normal text-irmin_green'>
+          {profile.profile.name ?? ''}
+        </h2>
+        <p className='mb-1 text-xs font-light text-irmin_green'>
+          {profile.profile.email ?? ''}
+        </p>
+        <p className='text-xs font-light text-irmin_green'>
+          {profile.profile.company ?? ''}
+        </p>
       </div>
-    </div>
+    </Link>
   );
 }

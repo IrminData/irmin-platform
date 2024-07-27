@@ -11,6 +11,14 @@ import { IoClose } from 'react-icons/io5';
  *
  * This modal is shown when the user needs to interact with a form or a message.
  * The position of the modal is fixed in the center of the screen.
+ *
+ * @param modalDetails - The details of the modal
+ * @param modalDetails.isOpen - Whether the modal is open
+ * @param modalDetails.title - The title of the modal
+ * @param modalDetails.children - The content of the modal
+ * @param modalDetails.onClose - The function to call when the user closes the modal
+ *
+ * @returns The modal component
  */
 const Modal = ({
   isOpen,

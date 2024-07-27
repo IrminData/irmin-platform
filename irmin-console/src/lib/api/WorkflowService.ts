@@ -127,7 +127,7 @@ class WorkflowService {
 
   /**
    * Fetch all Export Workflows
-   * TODO: Provide link to Irmin API docs
+   * @todo Provide link to Irmin API docs
    * @returns response from the API or example data
    */
   async fetchExports(): Promise<ExportAPIResponse> {
@@ -154,7 +154,7 @@ class WorkflowService {
 
   /**
    * Fetch all Action Workflows
-   * TODO: Provide link to Irmin API docs
+   * @todo Provide link to Irmin API docs
    * @returns response from the API or example data
    */
   async fetchActions(): Promise<ActionAPIResponse> {

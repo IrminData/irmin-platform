@@ -22,8 +22,7 @@ export default function ConfigureExport({
 }) {
   const { dict } = useLocale();
   const handleSave = () => {
-    // Save the export configuration
-    console.log('Saving Export Configuration:', exportData);
+    // TODO: Save the export configuration
     setIsOpen(false);
   };
 

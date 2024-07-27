@@ -8,9 +8,8 @@ import {
   useState,
 } from 'react';
 
+import { Locale } from '@/dictionaries';
 import AuthService from '@/lib/api/AuthService';
-
-import { useLocale } from '@/context/LocaleContext';
 
 import { Profile } from '@/types/api/Profile';
 
@@ -40,10 +39,11 @@ const ProfileContext = createContext<{
  */
 export const ProfileProvider = ({
   children,
+  locale,
 }: {
   children: React.ReactNode;
+  locale: Locale;
 }) => {
-  const { locale } = useLocale();
   const auth = AuthService.getInstance(locale);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,4 +86,13 @@ export const ProfileProvider = ({
   );
 };
 
-export const useProfile = () => useContext(ProfileContext);
+/**
+ * Hook to use the profile context
+ */
+export const useProfile = () => {
+  const context = useContext(ProfileContext);
+  if (!context) {
+    throw new Error('useProfile must be used within a ProfileProvider');
+  }
+  return context;
+};

@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 
-import DashboardTitleAndSelector from '@/components/dashboardTitleAndSelector';
+import DashboardTitleAndSelector from '@/components/dashboards/dashboardTitleAndSelector';
+import BarChart from '@/components/dashboards/widgets/barChart';
+import LineChart from '@/components/dashboards/widgets/lineChart';
+import Metric from '@/components/dashboards/widgets/metric';
+import ScrollableTable from '@/components/dashboards/widgets/scrollableTable';
 import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
-import BarChart from '@/components/widgets/barChart';
-import LineChart from '@/components/widgets/lineChart';
-import Metric from '@/components/widgets/metric';
-import ScrollableTable from '@/components/widgets/scrollableTable';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
@@ -61,7 +61,6 @@ export default function DashboardsPage() {
         }}
         createNew={() => {
           // TODO: Implement create new dashboard
-          console.log('create new dashboard');
         }}
       />
       {selectedDashboard ? (

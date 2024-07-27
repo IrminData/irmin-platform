@@ -4,7 +4,7 @@ import React from 'react';
 
 import Image from 'next/image';
 
-import { GoDatabase, GoSync } from 'react-icons/go';
+import { GoDatabase, GoPlay, GoSync } from 'react-icons/go';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -28,6 +28,7 @@ const WorkspaceCard = ({
   users,
   connectionCount,
   datasetCount,
+  actionCount,
 }: {
   workspace: Workspace;
   description: string;
@@ -37,6 +38,7 @@ const WorkspaceCard = ({
   }[];
   connectionCount: number;
   datasetCount: number;
+  actionCount: number;
 }) => {
   const { dict } = useLocale();
 
@@ -76,7 +78,9 @@ const WorkspaceCard = ({
           <h3 className='mt-1 block text-lg font-medium leading-tight text-irmin_black md:text-xl'>
             {workspace.name}
           </h3>
-          <p className='mt-2 font-light text-irmin_blue'>{description}</p>
+          <p className='mt-2 text-sm font-light text-irmin_blue'>
+            {description}
+          </p>
           <div className='mt-4'>
             <div className='flex items-center'>
               <div className='flex -space-x-2 overflow-hidden'>
@@ -98,26 +102,37 @@ const WorkspaceCard = ({
               </div>
             </div>
 
-            <div className='md:sace-x-4 mt-4 flex w-full space-x-2'>
+            <div className='mt-4 flex w-full flex-row justify-between gap-4'>
               <div className='flex items-center'>
-                <GoSync className='text-base text-irmin_blue md:h-8' />
+                <GoSync className='h-3 text-base text-irmin_blue md:h-4' />
                 <div className='ml-2 flex flex-col'>
                   <span className='text-sm font-semibold text-irmin_blue'>
                     {connectionCount}
                   </span>
-                  <span className='text-xs text-gray-400'>
+                  <span className='text-[8px] leading-tight text-gray-400'>
                     {dict.workspaceSwitcher.connections}
                   </span>
                 </div>
               </div>
               <div className='flex items-center'>
-                <GoDatabase className='md:h--8 h-6 text-base text-irmin_blue' />
+                <GoDatabase className='h-3 text-base text-irmin_blue md:h-4' />
                 <div className='ml-2 flex flex-col'>
                   <span className='text-sm font-semibold text-irmin_blue'>
                     {datasetCount}
                   </span>
-                  <span className='text-xs text-gray-400'>
+                  <span className='text-[8px] leading-tight text-gray-400'>
                     {dict.workspaceSwitcher.datasets}
+                  </span>
+                </div>
+              </div>
+              <div className='flex items-center'>
+                <GoPlay className='h-3 text-base text-irmin_blue md:h-4' />
+                <div className='ml-2 flex flex-col'>
+                  <span className='text-sm font-semibold text-irmin_blue'>
+                    {actionCount}
+                  </span>
+                  <span className='text-[8px] leading-tight text-gray-400'>
+                    {dict.workspaceSwitcher.actions}
                   </span>
                 </div>
               </div>

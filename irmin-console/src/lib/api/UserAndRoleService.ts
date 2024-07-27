@@ -1,7 +1,7 @@
 import { defaultLocale, Locale } from '@/dictionaries';
 import {
   exampleAPIResponse,
-  exampleRole,
+  exampleRoles,
   exampleWorkspaceUser,
 } from '@/lib/exampleObjects/apiObjects';
 import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
@@ -116,7 +116,7 @@ class UserAndRoleService {
    * {@link https://api.irmin.dev/docs#roles-GETv1-roles | Irmin API docs}
    */
   async fetchRoles(): Promise<RolesAPIResponse> {
-    if (isOfflineMode) return { ...exampleAPIResponse, data: [exampleRole] };
+    if (isOfflineMode) return { ...exampleAPIResponse, data: exampleRoles };
     try {
       const response = (await fetchWithCredentials(
         `${api_base}/v1/roles`,
@@ -132,7 +132,7 @@ class UserAndRoleService {
       return response;
     } catch (error) {
       console.error('Fetch roles error:', error);
-      if (isDevelopment) return { ...exampleAPIResponse, data: [exampleRole] };
+      if (isDevelopment) return { ...exampleAPIResponse, data: exampleRoles };
       throw error;
     }
   }
@@ -152,7 +152,7 @@ class UserAndRoleService {
    * {@link https://api.irmin.dev/docs#roles-GETv1-users-roles | Irmin API docs}
    */
   async fetchUserRoles(user: number): Promise<RolesAPIResponse> {
-    if (isOfflineMode) return { ...exampleAPIResponse, data: [exampleRole] };
+    if (isOfflineMode) return { ...exampleAPIResponse, data: exampleRoles };
     try {
       const response = (await fetchWithCredentials(
         `${api_base}/v1/users/roles?user=${user}`,
@@ -167,7 +167,7 @@ class UserAndRoleService {
       return response;
     } catch (error) {
       console.error('Fetch user roles error:', error);
-      if (isDevelopment) return { ...exampleAPIResponse, data: [exampleRole] };
+      if (isDevelopment) return { ...exampleAPIResponse, data: exampleRoles };
       throw error;
     }
   }

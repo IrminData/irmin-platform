@@ -73,8 +73,7 @@ export default function DataMarketplaceListingCard({
               size='sm'
               ariaLabel={`Connect to ${dataset.name}`}
               onClick={() => {
-                /* TODO: function to handle connect */
-                console.log('Connect to', dataset.name);
+                // TODO: Implement connect to dataset
               }}
             >
               {dict.marketplace.connect}

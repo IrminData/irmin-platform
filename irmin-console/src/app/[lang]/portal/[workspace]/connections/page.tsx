@@ -57,7 +57,7 @@ export default function ConnectionsPage() {
       {connections.isLoading ? (
         <TableSkeleton />
       ) : (
-        <ConnectionTable connections={connections.connections} />
+        <ConnectionTable connectionWorkflows={connections.connections} />
       )}
     </>
   );

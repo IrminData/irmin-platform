@@ -61,8 +61,7 @@ const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
               size='sm'
               ariaLabel={`Connect to ${plugin.name}`}
               onClick={() => {
-                /* TODO: function to handle connect */
-                console.log('Connect to', plugin.name);
+                // TODO: Connect to the plugin
               }}
             >
               {dict.marketplace.connect}

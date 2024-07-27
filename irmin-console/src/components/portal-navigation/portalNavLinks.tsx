@@ -7,6 +7,13 @@ import AuthService from '@/lib/api/AuthService';
 import { AiOutlineConsoleSql } from 'react-icons/ai';
 import { CiDatabase } from 'react-icons/ci';
 import { IoChevronBackCircleOutline } from 'react-icons/io5';
+import {
+  MdCode,
+  MdOutlineFindInPage,
+  MdOutlineLibraryBooks,
+  MdOutlinePrivacyTip,
+  MdOutlineSupportAgent,
+} from 'react-icons/md';
 import { PiStorefront } from 'react-icons/pi';
 import { RxDashboard } from 'react-icons/rx';
 import {
@@ -30,13 +37,13 @@ import { PortalNavigationLink } from '@/types/internal/PortalNavigation';
  * This hook is used to get the portal navigation links.
  * The links are defined in the code and are used in the portal navigation component.
  *
- * @returns Portal navigation links
+ * @returns Portal navigation links sorted by sections
  */
 export const usePortalNavLinks = (): {
   hasWorkspace: PortalNavigationLink[];
   noWorkspace: PortalNavigationLink[];
   settings: PortalNavigationLink[];
-  bottom: PortalNavigationLink[];
+  useful: PortalNavigationLink[];
 } => {
   const { locale, dict } = useLocale();
   const profile = useProfile();
@@ -135,10 +142,29 @@ export const usePortalNavLinks = (): {
     },
   ];
 
-  const bottomLinks = [
+  const usefulLinks = [
     {
       title: dict.portalNavigation.links.contactSupport,
       href: `/${locale}/contact`,
+      icon: <MdOutlineSupportAgent />,
+      props: {
+        target: '_blank',
+      },
+      active: false,
+    },
+    {
+      title: dict.portalNavigation.links.developerDocs,
+      href: `/${locale}/docs`,
+      icon: <MdCode />,
+      props: {
+        target: '_blank',
+      },
+      active: false,
+    },
+    {
+      title: dict.portalNavigation.links.irminWebsite,
+      href: `/${locale}/contact`,
+      icon: <MdOutlineFindInPage />,
       props: {
         target: '_blank',
       },
@@ -147,6 +173,7 @@ export const usePortalNavLinks = (): {
     {
       title: dict.portalNavigation.links.privacyPolicy,
       href: `/${locale}/legal/privacy-policy`,
+      icon: <MdOutlinePrivacyTip />,
       props: {
         target: '_blank',
       },
@@ -155,6 +182,7 @@ export const usePortalNavLinks = (): {
     {
       title: dict.portalNavigation.links.termsOfUse,
       href: `/${locale}/legal/terms-of-use`,
+      icon: <MdOutlineLibraryBooks />,
       props: {
         target: '_blank',
       },
@@ -166,6 +194,6 @@ export const usePortalNavLinks = (): {
     hasWorkspace: workspaceLinks,
     noWorkspace: noWorkspaceLinks,
     settings: settingsLinks,
-    bottom: bottomLinks,
+    useful: usefulLinks,
   };
 };

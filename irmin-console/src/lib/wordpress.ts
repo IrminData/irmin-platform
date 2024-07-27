@@ -70,7 +70,7 @@ export default class WordPress {
    */
   public async getMenu(menuSlug: string): Promise<Menu | null> {
     if (offlineMode)
-      menuSlug.includes('footer-menu') ? exampleWPFooter : exampleWPMenu;
+      return menuSlug.includes('footer') ? exampleWPFooter : exampleWPMenu;
     try {
       const menu = (await this.fetchAPI(`menus?slug=${menuSlug}`)) as Menu;
       return menu ?? null;

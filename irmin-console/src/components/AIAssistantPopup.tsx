@@ -22,7 +22,7 @@ import { Message } from '@/types/internal/Assistant';
  *
  * It includes a chat window with messages and a text input to send messages.
  *
- * TODO: Implement real AI assistant functionality
+ * @todo Implement real AI assistant functionality
  */
 export default function AIAssistantPopup() {
   const { dict } = useLocale();

@@ -82,7 +82,7 @@ class WidgetService {
 
   /**
    * Fetch a widget by ID
-   * TODO: Provide link to Irmin API docs
+   * @todo Provide link to Irmin API docs
    * @param widgetId - ID of the widget to fetch
    * @returns response from the API or example data
    */
@@ -111,7 +111,7 @@ class WidgetService {
 
   /**
    * Create a new widget
-   * TODO: Provide link to Irmin API docs
+   * @todo Provide link to Irmin API docs
    * @param widget - the widget to create
    * @returns response from the API or example data
    */
@@ -139,7 +139,7 @@ class WidgetService {
 
   /**
    * Update an existing widget
-   * TODO: Provide link to Irmin API docs
+   * @todo Provide link to Irmin API docs
    * @param widget - the widget to update
    * @returns response from the API or example data
    */
@@ -169,7 +169,7 @@ class WidgetService {
 
   /**
    * Delete a widget
-   * TODO: Provide link to Irmin API docs
+   * @todo Provide link to Irmin API docs
    * @param widgetId - ID of the widget to delete
    * @returns response from the API or example data
    */

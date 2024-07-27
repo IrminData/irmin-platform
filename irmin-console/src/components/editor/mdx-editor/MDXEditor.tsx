@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import { MDXEditorMethods, MDXEditorProps } from '@mdxeditor/editor';
 
 const Editor = dynamic(
-  () => import('@/components/mdx-editor/initializedMDXEditor'),
+  () => import('@/components/editor/mdx-editor/initializedMDXEditor'),
   {
     ssr: false,
   }

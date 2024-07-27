@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
+
 import PortalNavigation from '@/components/portal-navigation/portalNavigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -11,11 +13,6 @@ import { WorkspaceProvider } from '@/context/workspace';
  */
 export const metadata: Metadata = {
   title: 'Portal | IRMIN Portal',
-  openGraph: {
-    type: 'website',
-    title: 'Portal | IRMIN Portal',
-    description: 'Sync, analyse & manage your data with AI in minutes.',
-  },
 };
 
 /**
@@ -37,12 +34,15 @@ export const metadata: Metadata = {
  */
 export default function PortalLayout({
   children,
+  params,
 }: Readonly<{
   children: React.ReactNode;
+  params: { lang: Locale };
 }>) {
+  const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
   return (
     <PopupProvider>
-      <WorkspaceProvider>
+      <WorkspaceProvider locale={lang}>
         <PortalNavigation>
           <ProtectedRoute>{children}</ProtectedRoute>
         </PortalNavigation>

@@ -8,15 +8,29 @@ import Modal from '@/components/misc/Modal';
 import NotificationPopup from '@/components/notifications/NotificationPopup';
 
 /**
- * Context for the popup
+ * Context to use and show alerts, confirmations, notifications and modals
+ *
+ * @remarks
+ *
+ * This context is used to show, hide and update {@link NotificationPopup},
+ * {@link Alert}, {@link ConfirmPopup} and {@link Modal} components.
+ *
+ * When shown, these components will be rendered on top of the current view,
+ * in the portal layout.
+ *
+ * @param irminAlert - Function to show an alert
+ * @param irminConfirm - Function to show a confirmation popup
+ * @param toggleNotificationsPopup - Function to toggle the notifications popup
+ * @param irminModal - Object with functions to show and close a modal
+ *
+ * @returns The popup context
  */
 const PopupContext = createContext<{
   irminAlert: (_type: 'success' | 'error' | 'info', _message: string) => void;
   irminConfirm: (
-    _type: 'success' | 'error' | 'info',
+    _type: 'warning' | 'info',
     _message: string,
-    _onConfirm: () => void,
-    _onCancel: () => void
+    _onSelect: (_confirmed: boolean) => void
   ) => void;
   toggleNotificationsPopup: (
     _e: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -24,8 +38,8 @@ const PopupContext = createContext<{
   irminModal: {
     show: (
       _title: string,
-      _content: React.ReactNode,
-      _onClose: () => void
+      _content: React.JSX.Element,
+      _onClose?: () => void
     ) => void;
     close: () => void;
   };
@@ -67,23 +81,20 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Handle confirmations
   const [confirmMessage, setConfirmMessage] = useState<string | null>(null);
-  const [confirmType, setConfirmType] = useState<
-    'success' | 'error' | 'info' | null
-  >(null);
-  const [confirmSuccess, setConfirmSuccess] = useState<(() => void) | null>(
+  const [confirmType, setConfirmType] = useState<'warning' | 'info' | null>(
     null
   );
-  const [confirmCancel, setConfirmCancel] = useState<(() => void) | null>(null);
+  const [confirmOnSelect, setConfirmOnSelect] = useState<
+    null | ((_confirmed: boolean) => void)
+  >(null);
   const irminConfirm = (
-    type: 'success' | 'error' | 'info',
+    type: 'warning' | 'info',
     message: string,
-    confirmSuccess: () => void,
-    confirmCancel: () => void
+    onSelect: (_confirmed: boolean) => void
   ) => {
     setConfirmType(type);
+    setConfirmOnSelect(() => onSelect);
     setConfirmMessage(message);
-    setConfirmSuccess(confirmSuccess);
-    setConfirmCancel(confirmCancel);
   };
 
   // Handle notifications
@@ -102,18 +113,18 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   // Handle modal
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
-  const [modalContent, setModalContent] = useState<React.ReactNode | null>(
+  const [modalContent, setModalContent] = useState<React.JSX.Element | null>(
     null
   );
-  const [modalOnClose, setModalOnClose] = useState<() => void>(() => {});
+  const [modalOnClose, setModalOnClose] = useState<null | (() => void)>(null);
   const showIrminModal = (
     title: string,
-    content: React.ReactNode,
-    onClose: () => void
+    content: React.JSX.Element,
+    onClose?: () => void
   ) => {
     setModalTitle(title);
     setModalContent(content);
-    setModalOnClose(onClose);
+    if (onClose) setModalOnClose(() => onClose);
     setModalOpen(true);
   };
   const closeModal = () => {
@@ -143,17 +154,14 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
           onClose={() => setAlertMessage(null)}
         />
       )}
-      {confirmMessage && confirmType && confirmSuccess && confirmCancel && (
+      {confirmMessage && confirmType && (
         <ConfirmPopup
           type={confirmType}
           message={confirmMessage}
-          onConfirm={() => {
-            confirmSuccess();
+          onSelect={(confirmed) => {
             setConfirmMessage(null);
-          }}
-          onCancel={() => {
-            confirmCancel();
-            setConfirmMessage(null);
+            if (typeof confirmOnSelect === 'function')
+              confirmOnSelect(confirmed);
           }}
         />
       )}
@@ -168,9 +176,7 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
           title={modalTitle}
           onClose={() => {
             setModalOpen(false);
-            if (modalOnClose) {
-              modalOnClose();
-            }
+            if (typeof modalOnClose === 'function') modalOnClose();
           }}
         >
           {modalContent}
@@ -183,4 +189,10 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
 /**
  * Hook to use the popup context
  */
-export const usePopup = () => useContext(PopupContext);
+export const usePopup = () => {
+  const context = useContext(PopupContext);
+  if (!context) {
+    throw new Error('usePopup must be used within a BucketProvider');
+  }
+  return context;
+};

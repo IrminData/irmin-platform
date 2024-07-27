@@ -36,6 +36,9 @@ export default async function WebsiteFooter() {
       // Transform the menu into navigation links and add them to the array
       navLinks.push(...transformMenuToFooterLinks(menu));
     }
+
+    // Add the locale to the navLinksForLocales object
+    navLinksForLocales[language.code] = navLinks;
   }
   return <WebsiteFooterContent footerLinks={navLinksForLocales} />;
 }

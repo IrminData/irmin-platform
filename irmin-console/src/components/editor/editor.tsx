@@ -7,14 +7,18 @@ import CodeMirror from '@uiw/react-codemirror';
 
 import { useLocale } from '@/context/LocaleContext';
 
-const ActionEditor = ({
+import { IrminFileType } from '@/types/api/Bucket';
+
+const Editor = ({
   content,
+  updateTabContent,
   language,
   editorHeight,
   setEditorHeight,
 }: {
   content: string;
-  language: 'sql' | 'js' | 'python';
+  updateTabContent: (_value: string) => void;
+  language: IrminFileType;
   editorHeight: string;
   setEditorHeight: (_height: string) => void;
 }) => {
@@ -42,29 +46,29 @@ const ActionEditor = ({
 
   return (
     <div style={{ minHeight: editorHeight }} ref={editorRef}>
-      {language === 'sql' ? (
+      {language === 'py' ? (
         <CodeMirror
-          defaultValue={content}
-          height={editorHeight}
-          extensions={[sql()]}
-          placeholder={dict.editor.writeYourSQL}
-          onChange={(value) => setEditorHeight(value)}
-        />
-      ) : language === 'js' ? (
-        <CodeMirror
-          defaultValue={content}
-          height={editorHeight}
-          extensions={[javascript()]}
-          placeholder={dict.editor.writeYourJS}
-          onChange={(value) => setEditorHeight(value)}
-        />
-      ) : (
-        <CodeMirror
-          defaultValue={content}
+          value={content}
           height={editorHeight}
           extensions={[python()]}
           placeholder={dict.editor.writeYourPython}
-          onChange={(value) => setEditorHeight(value)}
+          onChange={(value) => updateTabContent(value)}
+        />
+      ) : language === 'js' ? (
+        <CodeMirror
+          value={content}
+          height={editorHeight}
+          extensions={[javascript()]}
+          placeholder={dict.editor.writeYourJS}
+          onChange={(value) => updateTabContent(value)}
+        />
+      ) : (
+        <CodeMirror
+          value={content}
+          height={editorHeight}
+          extensions={[sql()]}
+          placeholder={dict.editor.writeYourSQL}
+          onChange={(value) => updateTabContent(value)}
         />
       )}
       <div
@@ -75,4 +79,4 @@ const ActionEditor = ({
   );
 };
 
-export default ActionEditor;
+export default Editor;

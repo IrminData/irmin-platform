@@ -75,7 +75,7 @@ class DatasetService {
 
   /**
    * Fetch all available datasets
-   * TODO: Provide link to Irmin API docs
+   * @todo Provide link to Irmin API docs
    * @returns response from the API or example data
    */
   async fetchAllDatasets(): Promise<DatasetAPIResponse> {

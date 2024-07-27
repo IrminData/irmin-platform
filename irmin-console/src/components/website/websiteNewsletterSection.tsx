@@ -22,7 +22,7 @@ import { NewsletterSection } from '@/types/website/Wordpress';
  * The form also includes a privacy notice with a link to the privacy policy.
  *
  * The newsletter section is used to collect email addresses for the newsletter subscription.
- * TODO: Newsletter subscription is not implemented yet.
+ * @todo Newsletter subscription is not implemented yet.
  */
 export default function WebsiteNewsletterSection({
   section,

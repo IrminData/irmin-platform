@@ -6,6 +6,8 @@ import {
   IoInformationCircleOutline,
 } from 'react-icons/io5';
 
+import { useLocale } from '@/context/LocaleContext';
+
 /**
  * Alert UI component
  *
@@ -17,6 +19,13 @@ import {
  *
  * This popup is shown when the user needs to be notified about something.
  * The position of the popup is fixed at the bottom of the screen.
+ *
+ * @param alertDetails - The details of the alert popup
+ * @param alertDetails.type - The type of the alert popup
+ * @param alertDetails.message - The message to display in the alert popup
+ * @param alertDetails.onClose - The function to call when the user closes the alert
+ *
+ * @returns The alert popup component
  */
 const Alert = ({
   type,
@@ -27,6 +36,10 @@ const Alert = ({
   message: string;
   onClose: () => void;
 }) => {
+  const { dict } = useLocale();
+  const successTitle = dict.misc.success;
+  const errorTitle = dict.misc.error;
+  const infoTitle = dict.misc.info;
   return (
     <div
       id='alert'
@@ -44,13 +57,13 @@ const Alert = ({
             {type === 'success' && <IoCheckbox size={32} />}
             {type === 'error' && <IoClose size={32} />}
             {type === 'info' && <IoInformationCircleOutline size={32} />}
-            <h2 className='ml-2 pt-[2px] text-xl font-bold'>
-              {type === 'success' && 'Success'}
-              {type === 'error' && 'Error'}
-              {type === 'info' && 'Info'}
+            <h2 className='ml-2 pt-[2px] text-lg font-medium'>
+              {type === 'success' && successTitle}
+              {type === 'error' && errorTitle}
+              {type === 'info' && infoTitle}
             </h2>
           </div>
-          <p className='pb-4 font-medium'>{message}</p>
+          <p className='pb-4 text-sm font-normal'>{message}</p>
         </div>
         <button
           className='ml-4 transition-all hover:opacity-50'

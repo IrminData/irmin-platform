@@ -138,7 +138,7 @@ const UserInviteSection: React.FC = () => {
                   {dict.auth.invite.company}*
                 </label>
                 <Input
-                  variant='outline'
+                  variant='solid'
                   colorScheme='black'
                   size='md'
                   required
@@ -159,7 +159,7 @@ const UserInviteSection: React.FC = () => {
                   {dict.auth.invite.password} *
                 </label>
                 <Input
-                  variant='outline'
+                  variant='solid'
                   colorScheme='black'
                   size='md'
                   required
@@ -180,7 +180,7 @@ const UserInviteSection: React.FC = () => {
                   {dict.auth.invite.confirmPassword} *
                 </label>
                 <Input
-                  variant='outline'
+                  variant='solid'
                   colorScheme='black'
                   size='md'
                   required

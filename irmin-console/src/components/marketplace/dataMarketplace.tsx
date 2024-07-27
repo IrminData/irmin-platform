@@ -23,7 +23,7 @@ import { MarketplaceDataset } from '@/types/internal/Marketplace';
  *
  * The data marketplace is used to browse and connect datasets to Workspaces.
  *
- * TODO: Implement real data fetching
+ * @todo Implement real data fetching
  */
 export default function DataMarketplace() {
   const { dict } = useLocale();

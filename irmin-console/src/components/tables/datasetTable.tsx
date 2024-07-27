@@ -17,13 +17,7 @@ import { GridRow } from '@/types/internal/ListUI';
  *
  * Uses {@link List} and {@link StatusElement} to display a list of datasets
  */
-const DatasetTable = ({
-  datasets,
-  inSidebar = false,
-}: {
-  datasets: Dataset[];
-  inSidebar?: boolean;
-}) => {
+const DatasetTable = ({ datasets }: { datasets: Dataset[] }) => {
   const { dict } = useLocale();
   const { workspace } = useParams();
 
@@ -40,12 +34,12 @@ const DatasetTable = ({
       {
         label: dict.list.view,
         primary: true,
-        href: `/portal/${workspace}/datasets/viewer/${dataset.id}`,
+        href: `/portal/${workspace}/datasets/${dataset.id}`,
       },
       {
         label: dict.list.edit,
         primary: false,
-        href: `/portal/${workspace}/datasets/viewer/${dataset.id}/settings`,
+        href: `/portal/${workspace}/datasets/${dataset.id}/settings`,
       },
     ];
 
@@ -85,7 +79,7 @@ const DatasetTable = ({
       <List
         headers={[dict.list.name, dict.list.status, dict.list.actions]}
         rows={rows}
-        hideHeaders={inSidebar}
+        hideHeaders={false}
       />
     </div>
   );

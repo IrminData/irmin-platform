@@ -55,7 +55,7 @@ export default function ExportSyncsPage() {
       {exports.isLoading ? (
         <TableSkeleton />
       ) : (
-        <ExportTable processes={exports.exports} />
+        <ExportTable exportWorkflows={exports.exports} />
       )}
     </>
   );

@@ -24,7 +24,7 @@ import {
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 
-import '@/components/mdx-editor/styles.css';
+import '@/components/editor/mdx-editor/styles.css';
 
 /**
  * Initialized MDX editor

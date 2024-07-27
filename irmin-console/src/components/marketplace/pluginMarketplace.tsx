@@ -22,7 +22,7 @@ import { MarketplacePlugin } from '@/types/internal/Marketplace';
  * It includes a search input, category filters, and a list of plugins.
  *
  * The plugin marketplace is used to browse and connect plugins to Workspaces.
- * TODO: Plugin integration is not implemented yet.
+ * @todo Plugin integration is not implemented yet.
  */
 export default function PluginMarketplace() {
   const { dict } = useLocale();

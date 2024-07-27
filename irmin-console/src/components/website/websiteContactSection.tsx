@@ -25,7 +25,7 @@ import { ContactSection } from '@/types/website/Wordpress';
  * Icons are displayed using {@link DynamicFaIcon} component.
  *
  * The contact form can be used to send message to Irmin.
- * TODO: Contact form submission is not implemented yet.
+ * @todo Contact form submission is not implemented yet.
  */
 export default function WebsiteContactSection({
   section,

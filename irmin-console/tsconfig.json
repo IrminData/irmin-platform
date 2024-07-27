@@ -28,14 +28,18 @@
     "out": "public/frontend-docs",
     "includeVersion": true,
     "readme": "README.md",
-    "plugin": ["typedoc-material-theme", "typedoc-plugin-missing-exports"],
+    "plugin": ["typedoc-plugin-missing-exports"],
+    "blockTags": [
+      "@todo",
+      "@param",
+      "@typeParam",
+      "@returns",
+      "@example",
+      "@deprecated",
+      "@remarks",
+      "@see"
+    ],
     "exclude": ["**/node_modules/**/*"],
-    "navigationLinks": {
-      "Irmin": "https://irmin.co",
-      "dev": "https://irmin.dev",
-      "API dev": "https://api.irmin.dev",
-      "API docs": "https://api.irmin.dev/docs"
-    },
     "highlightLanguages": [
       "text",
       "bash",

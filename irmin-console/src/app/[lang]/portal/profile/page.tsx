@@ -168,7 +168,7 @@ const GeneralSettings: React.FC = () => {
  * Change password settings tab content
  *
  * @remarks
- * TODO: This component is not yet implemented.
+ * @todo This component is not yet implemented.
  *
  * @returns UI to manage user's password settings in the portal
  */
@@ -178,7 +178,6 @@ const ChangePasswordSettings: React.FC = () => {
   const handleChangePassword = (event: React.FormEvent) => {
     event.preventDefault();
     // TODO: Handle changing password
-    console.log('Password changed.');
   };
 
   return (

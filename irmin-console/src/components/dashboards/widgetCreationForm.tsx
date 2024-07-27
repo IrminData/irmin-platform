@@ -17,7 +17,7 @@ import { useLocale } from '@/context/LocaleContext';
  * This component is used to create a new widget in the dashboard.
  * It allows users to select the widget type, name, and dashboard to save the widget.
  *
- * TODO: Implement the widget creation functionality
+ * @todo Implement the widget creation functionality
  */
 const WidgetCreationForm = () => {
   const { dict } = useLocale();

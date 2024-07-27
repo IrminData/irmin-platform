@@ -1,6 +1,6 @@
 /**
  * Notification type
- * TODO: Needs to be removed and implemented in the API types
+ * @todo Needs to be removed and implemented in the API types
  * @typeParam id - Notification ID
  * @typeParam title - Notification title
  * @typeParam message - Notification message

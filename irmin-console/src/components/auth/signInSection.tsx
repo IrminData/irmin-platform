@@ -83,7 +83,7 @@ const SignInSection: React.FC = () => {
                 {dict.auth.signIn.email}
               </label>
               <Input
-                variant='outline'
+                variant='solid'
                 colorScheme='black'
                 size='md'
                 type='email'
@@ -104,7 +104,7 @@ const SignInSection: React.FC = () => {
                 {dict.auth.signIn.password}
               </label>
               <Input
-                variant='outline'
+                variant='solid'
                 colorScheme='black'
                 size='md'
                 required

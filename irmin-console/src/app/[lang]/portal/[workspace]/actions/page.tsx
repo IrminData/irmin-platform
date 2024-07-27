@@ -29,7 +29,7 @@ export default function ActionsPage() {
       {actions.isLoading ? (
         <TableSkeleton />
       ) : (
-        <ActionTable actions={actions.actions} />
+        <ActionTable actionWorkflows={actions.actions} />
       )}
     </>
   );

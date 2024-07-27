@@ -15,19 +15,17 @@ import { GridRow } from '@/types/internal/ListUI';
 /**
  * Table UI to display a list of action workflows
  *
- * Uses {@link List} and {@link StatusElement} to display a list of action workflows
+ * Uses {@link List} and {@link StatusElement}
  */
 const ActionTable = ({
-  actions,
-  inSidebar = false,
+  actionWorkflows,
 }: {
-  actions: ActionWorkflow[];
-  inSidebar?: boolean;
+  actionWorkflows: ActionWorkflow[];
 }) => {
   const { dict, locale } = useLocale();
   const { workspace } = useParams();
 
-  if (!actions || actions.length === 0) {
+  if (!actionWorkflows || actionWorkflows.length === 0) {
     return (
       <div className='px-4 py-12 text-center text-xl text-irmin_black'>
         {dict.list.noActionsFound}
@@ -35,47 +33,50 @@ const ActionTable = ({
     );
   }
 
-  const rows: GridRow[] = actions.map((action, actionIndex) => {
+  const rows: GridRow[] = actionWorkflows.map((actionWorkflow, actionIndex) => {
     const tableActions = [
       {
         label: dict.list.view,
         primary: true,
-        href: `/portal/${workspace}/actions/viewer/${action.id}`,
-      },
-      {
-        label: dict.list.logs,
-        primary: false,
-        href: `/portal/${workspace}/actions/viewer/${action.id}/logs`,
+        href: `/portal/${workspace}/actions/${actionWorkflow.id}`,
       },
       {
         label: dict.list.edit,
         primary: false,
-        href: `/portal/${workspace}/actions/viewer/${action.id}/settings`,
+        href: `/portal/${workspace}/actions/${actionWorkflow.id}/settings`,
+      },
+      {
+        label: dict.list.logs,
+        primary: false,
+        href: `/portal/${workspace}/logs/workflow/${actionWorkflow.id}`,
       },
     ];
     return {
       columns: [
-        <div key={`action-${actionIndex}-name-and-source`}>
-          {action.name}
+        <div key={`actionWorkflow-${actionIndex}-name-and-source`}>
+          {actionWorkflow.name}
           <br />
           <span className='text-xs text-irmin_blue'>
-            {dict.list.source}: {action.workflowable.path}
+            {dict.list.source}: {actionWorkflow.workflowable.path}
           </span>
         </div>,
         <StatusElement
-          key={`action-${actionIndex}-status`}
-          runStatus={action.status ?? 'default'}
-          statusLabel={action.status ?? ''}
+          key={`actionWorkflow-${actionIndex}-status`}
+          runStatus={actionWorkflow.status ?? 'default'}
+          statusLabel={actionWorkflow.status ?? ''}
         />,
-        <div key={`action-${action.id}-${actionIndex}-nextSync`}>
-          {action.cron_syntax && action.cron_syntax.length > 0 ? (
+        <div
+          key={`actionWorkflow-${actionWorkflow.id}-${actionIndex}-nextSync`}
+        >
+          {actionWorkflow.cron_syntax &&
+          actionWorkflow.cron_syntax.length > 0 ? (
             <>
-              {action.next_run_at
-                ? new Date(action.next_run_at).toLocaleString(locale)
+              {actionWorkflow.next_run_at
+                ? new Date(actionWorkflow.next_run_at).toLocaleString(locale)
                 : ''}
               <br />
               <span className='text-xs text-irmin_blue'>
-                {dict.list.syncInterval}: {action.cron_syntax}
+                {dict.list.syncInterval}: {actionWorkflow.cron_syntax}
               </span>
             </>
           ) : (
@@ -97,7 +98,7 @@ const ActionTable = ({
           dict.list.actions,
         ]}
         rows={rows}
-        hideHeaders={inSidebar}
+        hideHeaders={false}
       />
     </div>
   );

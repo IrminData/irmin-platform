@@ -107,7 +107,7 @@ const SignUpSection: React.FC = () => {
                   {dict.auth.signUp.name} *
                 </label>
                 <Input
-                  variant='outline'
+                  variant='solid'
                   colorScheme='black'
                   size='md'
                   required
@@ -128,7 +128,7 @@ const SignUpSection: React.FC = () => {
                   {dict.auth.signUp.company} *
                 </label>
                 <Input
-                  variant='outline'
+                  variant='solid'
                   colorScheme='black'
                   size='md'
                   required
@@ -149,7 +149,7 @@ const SignUpSection: React.FC = () => {
                   {dict.auth.signUp.email} *
                 </label>
                 <Input
-                  variant='outline'
+                  variant='solid'
                   colorScheme='black'
                   size='md'
                   required
@@ -170,7 +170,7 @@ const SignUpSection: React.FC = () => {
                   {dict.auth.signUp.confirmEmail} *
                 </label>
                 <Input
-                  variant='outline'
+                  variant='solid'
                   colorScheme='black'
                   size='md'
                   required
@@ -191,7 +191,7 @@ const SignUpSection: React.FC = () => {
                   {dict.auth.signUp.password} *
                 </label>
                 <Input
-                  variant='outline'
+                  variant='solid'
                   colorScheme='black'
                   size='md'
                   required
@@ -212,7 +212,7 @@ const SignUpSection: React.FC = () => {
                   {dict.auth.signUp.confirmPassword} *
                 </label>
                 <Input
-                  variant='outline'
+                  variant='solid'
                   colorScheme='black'
                   size='md'
                   required

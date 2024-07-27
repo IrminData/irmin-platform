@@ -398,7 +398,13 @@ export const exampleWPFooter: Menu = [
  * Example WordPress main menu object
  */
 export const exampleWPMenu: Menu = [
-  { ID: 222, title: 'Product', url: '#', menu_order: 1, menu_item_parent: '0' },
+  {
+    ID: 222,
+    title: 'Product',
+    url: '#',
+    menu_order: 1,
+    menu_item_parent: '0',
+  },
   {
     ID: 223,
     title: 'Overview 🖥️',
@@ -504,7 +510,13 @@ export const exampleWPMenu: Menu = [
     menu_order: 16,
     menu_item_parent: '0',
   },
-  { ID: 238, title: 'Irmin', url: '#', menu_order: 17, menu_item_parent: '0' },
+  {
+    ID: 238,
+    title: 'Irmin',
+    url: '#',
+    menu_order: 17,
+    menu_item_parent: '0',
+  },
   {
     ID: 239,
     title: 'About us 📊',
