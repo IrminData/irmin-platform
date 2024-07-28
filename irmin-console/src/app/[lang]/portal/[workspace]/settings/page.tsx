@@ -160,13 +160,13 @@ const GeneralSettings = () => {
       <div className='pb-8'>
         <form onSubmit={handleUpdateWorkspace}>
           <div>
-            <label className='mb-4 block text-gray-700'>
+            <label className='block text-xs text-gray-700 md:text-sm'>
               {dict.workspace.workspaceName}
             </label>
             <Input
+              size='sm'
               variant='outline'
-              colorScheme='black'
-              size='md'
+              colorScheme='gray'
               required
               className='w-full'
               type='text'
@@ -177,8 +177,8 @@ const GeneralSettings = () => {
           <Button
             className='mt-4 w-full'
             type='submit'
-            size='md'
-            colorScheme='primary'
+            size='sm'
+            colorScheme='light'
             variant='solid'
             disabled={isLoading}
             loading={isLoading}

@@ -1,4 +1,4 @@
-import React, { ComponentPropsWithoutRef } from 'react';
+import React from 'react';
 
 import Image from 'next/image';
 
@@ -10,26 +10,29 @@ import Image from 'next/image';
  * This component is used to display the title of the portal.
  * It the title of the portal page.
  * On mobile, it displays the Irmin logo as well.
+ *
+ * @param props - The props of the component
+ * @param props.title - The title of the portal
+ * @param props.showLogo - Whether to hide the logo or not
  */
 const PortalTitle: React.FC<{
   title: string;
-  props?: ComponentPropsWithoutRef<'div'>;
-}> = ({ title, props }) => {
-  const _props = { ...props };
-  delete _props.className;
+  showLogo?: boolean;
+}> = ({ title, showLogo }) => {
   return (
     <div
-      className={`px-4 pb-6 pt-4 text-lg font-semibold text-irmin_black md:pb-8 md:pt-12 md:text-3xl ${props?.className ?? ''}`}
-      {..._props}
+      className={`px-4 pb-8 pt-6 text-lg font-medium text-irmin_black md:pb-8 md:pt-12 md:text-3xl`}
     >
-      <Image
-        src='/irmin-logo.svg'
-        alt='Irmin'
-        width={120}
-        height={120}
-        className={`h-14 md:hidden ${props?.className ?? ''}`}
-      />
-      <h1 className={`${props?.className ?? ''}`}>{title}</h1>
+      {showLogo && (
+        <Image
+          src='/irmin-logo.svg'
+          alt='Irmin'
+          width={80}
+          height={20}
+          className={`h-8 md:hidden`}
+        />
+      )}
+      <h1>{title}</h1>
     </div>
   );
 };

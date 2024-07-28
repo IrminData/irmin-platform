@@ -9,7 +9,6 @@ import {
   FiChevronRight,
   FiFileText,
   FiFolder,
-  FiPlus,
 } from 'react-icons/fi';
 
 import Button from '@/components/misc/Button';
@@ -32,15 +31,33 @@ import {
  * It includes a context menu to open, delete, and rename files.
  *
  * The file navigator is used to browse and manage files in the portal.
+ *
+ * @param fileNavigatorProps - The props for the file navigator
+ * @param fileNavigatorProps.items - The items to display in the file navigator
+ * @param fileNavigatorProps.addNewFile - Function to prompt the user to create a new file
+ * @param fileNavigatorProps.addNewFolder - Function to prompt the user to create a new folder
+ * @param fileNavigatorProps.onOpenFile - Function to open a specific file in the editor
+ * @param fileNavigatorProps.onDelete - Function to delete a file or folder
+ * @param fileNavigatorProps.onRename - Function to rename a file or folder
+ * @param fileNavigatorProps.onMove - Function to move a file or folder
  */
-const FileNavigator: React.FC<{
+const FileNavigator = ({
+  items,
+  addNewFile,
+  addNewFolder,
+  onOpenFile,
+  onDelete,
+  onRename,
+  onMove,
+}: {
   items: FileNavigatorItem[];
-  addNewItem: () => void;
+  addNewFile: () => void;
+  addNewFolder: () => void;
   onOpenFile: (_item: FileNavigatorFileItem) => void;
   onDelete: (_item: FileNavigatorItem) => void;
   onRename: (_item: FileNavigatorItem) => void;
   onMove: (_item: FileNavigatorItem) => void;
-}> = ({ items, addNewItem, onOpenFile, onDelete, onRename, onMove }) => {
+}) => {
   const { dict } = useLocale();
 
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
@@ -171,21 +188,33 @@ const FileNavigator: React.FC<{
 
   return (
     <div id='file-navigator' className='relative'>
-      <div className='px-3'>
+      <div className='mb-0 flex flex-row justify-start gap-0 border-b border-gray-200 bg-gray-100 p-0 lg:justify-stretch'>
         <Button
-          className='mb-2 w-full text-base font-normal hover:no-underline hover:opacity-40'
-          variant='link'
-          colorScheme='secondary'
+          className='w-[30%] rounded-none px-2 py-2 shadow-none lg:w-1/2'
+          variant='solid'
+          colorScheme='light'
           size='sm'
-          onClick={addNewItem}
-          icon={
-            <FiPlus size={24} className='mr-2 inline-block text-irmin_blue' />
-          }
+          onClick={addNewFile}
+          icon={<FiFileText size={12} />}
+          ariaLabel='Create a new file'
         >
-          {dict.fileNavigator.createNewFileOrFolder}
+          {dict.fileNavigator.createFile}
+        </Button>
+        <Button
+          className='w-[30%] rounded-none px-2 py-2 shadow-none lg:w-1/2'
+          variant='solid'
+          colorScheme='light'
+          size='sm'
+          onClick={addNewFolder}
+          icon={<FiFolder size={12} />}
+          ariaLabel='Create a new folder'
+        >
+          {dict.fileNavigator.createFolder}
         </Button>
       </div>
-      <div className='fileNavigator px-3'>{renderItems(items)}</div>
+      <div className='overflow-auto border-t px-3 py-4'>
+        {renderItems(items)}
+      </div>
       {contextMenu && contextMenu.visible && (
         <ul
           id='file-navigator-context-menu'

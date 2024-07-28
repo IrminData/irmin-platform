@@ -24,9 +24,9 @@ export default function PortalNavWorkspaceSwitcher({
   const { workspace: workspaceSlug } = useParams();
 
   return (
-    <div className='mt-4 block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-4 text-sm text-gray-900'>
+    <div className='mt-4 block w-full cursor-pointer rounded-lg border border-irmin_green border-opacity-20 bg-irmin_green bg-opacity-0 px-4 py-2 text-sm font-light text-irmin_green transition-all hover:bg-opacity-10'>
       <select
-        className='w-full rounded-lg bg-gray-50'
+        className='w-full cursor-pointer rounded-lg bg-transparent focus:border-0 focus:outline-none focus:ring-0'
         value={
           workspaceSlug && currentWorkspace?.id
             ? currentWorkspace.id

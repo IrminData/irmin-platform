@@ -30,7 +30,7 @@ export default function SettingsTabs({
   if (tabs.length === 0) return <></>;
   return (
     <div className='container box-border overflow-hidden px-2 lg:px-4'>
-      <div className='w-full max-w-3xl rounded-lg border-b-2 border-t-2 border-irmin_green bg-white shadow-md'>
+      <div className='w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white shadow-md'>
         <div className='scrollbar-hide mb-6 mt-4 flex w-full max-w-2xl justify-start gap-2 overflow-y-scroll px-2 md:px-4'>
           {tabs.map((tab, idx) => (
             <Button

@@ -22,7 +22,7 @@ import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
  * - path-input
  * - type-select
  *
- * Currently this function is used by the AddNewItemModalContent and RenameOrMoveItemModalContent components.
+ * Currently this function is used by the editor modals.
  *
  * @param navItemData - The set of data for the item
  * @param navItemData.type - The type of the item (file or folder)

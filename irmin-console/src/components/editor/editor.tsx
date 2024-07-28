@@ -45,7 +45,7 @@ const Editor = ({
   };
 
   return (
-    <div style={{ minHeight: editorHeight }} ref={editorRef}>
+    <div style={{ minHeight: editorHeight }} ref={editorRef} id='code-editor'>
       {language === 'py' ? (
         <CodeMirror
           value={content}

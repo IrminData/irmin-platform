@@ -5,7 +5,8 @@ import React, { useState } from 'react';
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 
 import FileNavigator from '@/components/editor/fileNavigator';
-import AddNewItemModalContent from '@/components/editor/modals/AddNewItemModalContent';
+import AddNewFileModal from '@/components/editor/modals/AddNewFileModal';
+import AddNewFolderModal from '@/components/editor/modals/AddNewFolderModal';
 
 import { useBucket } from '@/context/BucketContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -15,7 +16,7 @@ import { useWorkspace } from '@/context/workspace';
 import { Dataset } from '@/types/api/Dataset';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
-import RenameOrMoveItemModalContent from './modals/RenameOrMoveItemModalContent';
+import RenameOrMoveItemModal from './modals/RenameOrMoveItemModal';
 
 /**
  * Component to wrap the editor pages in.
@@ -29,13 +30,12 @@ export default function EditorWrapper({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { irminModal, irminConfirm } = usePopup();
+  const { irminModal, irminConfirm, irminAlert } = usePopup();
   const { dict } = useLocale();
   const { datasets } = useWorkspace();
   const {
     bucket,
     items,
-    updateFileContents,
     createFile,
     createFolder,
     updateFile,
@@ -44,7 +44,6 @@ export default function EditorWrapper({
     deleteFolder,
     openFileTabs,
     setOpenFileTabs,
-    activeTab,
     setActiveTab,
   } = useBucket();
 
@@ -55,36 +54,42 @@ export default function EditorWrapper({
    * and insert it into the editor.
    */
   const selectDatasetTable = (dataset: Dataset, table: string) => {
-    // Get the current tab and the file it represents
-    const currentTabSlug = openFileTabs[activeTab];
-    const currentTab = bucket?.files.find(
-      (file) => file.path === currentTabSlug
-    );
-    if (!currentTab) return;
     // Format the table name
     const formattedTable = ` $[${dataset.slug}.${table}.0]`;
-    // Insert the table name into the current tab contents
-    const newContents = currentTab.contents + formattedTable;
-    // Update the file with the new contents in the bucket and the item list
-    updateFileContents({
-      ...currentTab,
-      contents: newContents,
-    });
+    // Alert the table name to the user
+    irminAlert(
+      'info',
+      <div>
+        <p className='m-0 text-xs font-light text-irmin_black'>
+          {dict.editor.referenceDataSet.toReferenceTheTable}{' '}
+          <span className='font-medium text-irmin_blue'>{table}</span>{' '}
+          {dict.editor.referenceDataSet.fromTheDataset}{' '}
+          <span className='font-medium text-irmin_blue'>{dataset.name}</span>{' '}
+          {dict.editor.referenceDataSet.inTheEditor}
+        </p>
+        <p className='my-2 text-sm font-normal text-irmin_blue'>
+          {formattedTable}
+        </p>
+      </div>
+    );
   };
 
   /**
-   * Open the modal to add a new file or folder.
-   *
-   * The modal will ask for what to create and where to create it.
+   * Open the modal to create a new file
    */
-  const addNewItem = () =>
+  const addNewFile = () =>
     irminModal.show(
-      dict.fileNavigator.createNewFileOrFolder,
-      <AddNewItemModalContent
-        bucket={bucket}
-        createFile={createFile}
-        createFolder={createFolder}
-      />
+      dict.fileNavigator.createFile,
+      <AddNewFileModal bucket={bucket} createFile={createFile} />
+    );
+
+  /**
+   * Open the modal to create a new folder
+   */
+  const addNewFolder = () =>
+    irminModal.show(
+      dict.fileNavigator.createFolder,
+      <AddNewFolderModal bucket={bucket} createFolder={createFolder} />
     );
 
   /**
@@ -99,7 +104,7 @@ export default function EditorWrapper({
       item.type === 'file'
         ? dict.fileNavigator.updateFile
         : dict.fileNavigator.updateFolder,
-      <RenameOrMoveItemModalContent
+      <RenameOrMoveItemModal
         item={item}
         bucket={bucket}
         updateFile={updateFile}
@@ -143,29 +148,33 @@ export default function EditorWrapper({
   return (
     <div className='flex'>
       <div
-        className={`inline-block overflow-y-scroll bg-gray-50 ${
-          !sidebarOpen ? 'w-10' : 'absolute z-10 w-96'
-        } xl:w-96`}
+        className={`absolute z-10 overflow-y-scroll border-r bg-gray-50 ${
+          !sidebarOpen ? 'max-w-10' : 'max-w-72'
+        } w-full lg:relative lg:max-w-72`}
         style={{
           height: 'calc(100vh - 55px)',
         }}
       >
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className='block px-1 py-1 text-xl focus:outline-none xl:hidden'
+          className={`absolute z-20 bg-gray-100 px-1 py-1 text-irmin_black opacity-60 transition-all hover:opacity-100 focus:outline-none lg:hidden ${!sidebarOpen ? 'text-center' : 'right-0 w-8'}`}
+          aria-label='Toggle editor sidebar'
         >
           {sidebarOpen ? (
-            <IoChevronBack className='mr-2 inline-block w-full' />
+            <IoChevronBack size={24} />
           ) : (
-            <IoChevronForward className='mr-2 inline-block w-full' />
+            <IoChevronForward size={24} />
           )}
         </button>
         <div
-          className={`${!sidebarOpen ? 'hidden' : 'block w-96'} py-8 xl:block`}
+          className={`${!sidebarOpen ? 'invisible -ml-72' : 'visible ml-0'} h-full w-full transition-all lg:visible lg:ml-0`}
         >
           <FileNavigator
-            addNewItem={() => {
-              addNewItem();
+            addNewFile={() => {
+              addNewFile();
+            }}
+            addNewFolder={() => {
+              addNewFolder();
             }}
             onRename={(item) => {
               renameOrMoveItem(item);
@@ -187,21 +196,24 @@ export default function EditorWrapper({
             }}
             items={items}
           />
-          <br />
           <div className='max-h-80 overflow-auto border-t p-2'>
-            <p className='px-4 text-sm font-bold'>
+            <p className='px-4 pb-2 text-sm'>
               {dict.portalNavigation.links.datasets}
             </p>
-            <ul>
+            <p className='px-4 text-xs text-gray-400'>
+              {dict.editor.referenceDataSet.clickOnATable}
+            </p>
+            <ul className='text-xs'>
               {datasets.datasets.map((dataset) => (
-                <li key={dataset.id} className='px-4 py-2 text-xs'>
-                  {dataset.name}
-                  <ul>
+                <li key={`dataset-${dataset.id}`} className='px-4 py-2'>
+                  <p className='border-t pt-2 font-normal'>{dataset.name}</p>
+                  <ul className='mb-4 list-item pb-4 font-light'>
                     {dataset.tables.map((table, i) => (
                       <li
-                        key={`datset-${dataset.id}-table-${i}`}
+                        key={`dataset-${dataset.id}-table-${i}`}
                         className='cursor-pointer px-4 pt-2 transition-colors hover:text-irmin_green'
                         onClick={() => selectDatasetTable(dataset, table)}
+                        aria-label={`Click to get the reference snippet for the table ${table} from ${dataset.name}`}
                       >
                         {table}
                       </li>
@@ -213,7 +225,7 @@ export default function EditorWrapper({
           </div>
         </div>
       </div>
-      <div className='inline-block w-full overflow-auto bg-white'>
+      <div className='ml-10 inline-block w-full overflow-auto lg:ml-0'>
         {children}
       </div>
     </div>

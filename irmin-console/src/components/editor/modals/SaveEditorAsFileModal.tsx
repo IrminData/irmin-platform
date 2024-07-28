@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 
 import { itemCanBeCreated, updateFieldValues } from '@/lib/utils/bucketUtils';
 
+import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
+
+import PathSelector from '@/components/editor/pathSelector';
 import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -26,7 +29,7 @@ import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
  *
  * @returns The modal content
  */
-export default function SaveEditorAsFileModalContent({
+export default function SaveEditorAsFileModal({
   defaultName,
   defaultPath,
   defaultType,
@@ -46,6 +49,7 @@ export default function SaveEditorAsFileModalContent({
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPathSelector, setShowPathSelector] = useState(true);
   const [newItemData, setNewItemData] = useState({
     name: defaultName,
     path: defaultPath,
@@ -107,35 +111,44 @@ export default function SaveEditorAsFileModalContent({
 
   return (
     <div>
-      <div className='py-2'>
-        <select
-          id='type-select'
-          disabled={loading}
-          className='w-full rounded border p-2'
-          defaultValue={newItemData.extension}
-          onChange={(e) => {
-            // Get and set the correct name, path and extension
-            const { name, path, extension } = updateFieldValues({
-              type: 'file',
-              name: newItemData.name,
-              path: newItemData.path,
-              extension: e.target.value,
-            });
-            setNewItemData({ ...newItemData, path, name, extension });
-          }}
-        >
-          <option value='sql'>SQL</option>
-          <option value='js'>JavaScript</option>
-          <option value='py'>Python</option>
-        </select>
+      <div className='pb-2'>
+        <div className='w-[150px] rounded border'>
+          <select
+            id='type-select'
+            disabled={loading}
+            className='h-6 w-[146px] rounded border border-r-4 border-white bg-white px-2 py-1 text-xs'
+            aria-label='Select the type of the file'
+            defaultValue={newItemData.extension}
+            onChange={(e) => {
+              // Get and set the correct name, path and extension
+              const { name, path, extension } = updateFieldValues({
+                type: 'file',
+                name: newItemData.name,
+                path: newItemData.path,
+                extension: e.target.value,
+              });
+              setNewItemData({
+                ...newItemData,
+                path,
+                name,
+                extension,
+              });
+            }}
+          >
+            <option value='sql'>SQL</option>
+            <option value='js'>JavaScript</option>
+            <option value='py'>Python</option>
+          </select>
+        </div>
       </div>
-      <div className='py-2'>
-        <label className='mb-1'>{dict.fileNavigator.newFileName}</label>
+      <div className='pb-3'>
+        <label className='text-xs'>{dict.fileNavigator.newFileName}</label>
         <input
           id='name-input'
           disabled={loading}
           type='text'
-          className='w-full rounded border p-2'
+          className='w-full rounded border p-2 text-sm placeholder:text-gray-400'
+          placeholder='example.sql'
           defaultValue={newItemData.name}
           onChange={(e) => {
             // Get the cursor position
@@ -153,34 +166,57 @@ export default function SaveEditorAsFileModalContent({
           }}
         />
       </div>
-      <div className='py-2'>
-        <label className='mb-1'>{dict.fileNavigator.newFilePath}</label>
-        <input
-          id='path-input'
-          disabled={loading}
-          type='text'
-          className='w-full rounded border p-2'
-          defaultValue={newItemData.path}
-          onChange={(e) => {
-            // Get the cursor position
-            const cursorPosition = e.target.selectionStart;
+      <div className='pb-3'>
+        <label className='text-xs'>{dict.fileNavigator.newFilePath}</label>
+        <div className='flex'>
+          <input
+            id='path-input'
+            disabled={true}
+            type='text'
+            className='w-full rounded border bg-gray-100 p-2 text-sm placeholder:text-gray-300'
+            placeholder='/folder/example.sql'
+            value={newItemData.path}
+          />
+          <Button
+            variant='icon'
+            colorScheme='secondary'
+            size='sm'
+            className='m-0 ml-auto p-0 pl-2'
+            ariaLabel='Toggle the path selector'
+            onClick={() => setShowPathSelector(!showPathSelector)}
+            disabled={loading}
+          >
+            {!showPathSelector && (
+              <IoChevronDown className='inline-block' size={24} />
+            )}
+            {showPathSelector && (
+              <IoChevronUp className='inline-block' size={24} />
+            )}
+          </Button>
+        </div>
+      </div>
+      {showPathSelector && (
+        <PathSelector
+          bucket={bucket}
+          itemName={newItemData.name}
+          originalItemPath={null}
+          currentSelected={newItemData.path}
+          onSelectPath={(selectedPath: string) => {
             // Get and set the correct name, path and extension
             const { name, path, extension } = updateFieldValues({
               type: 'file',
               name: newItemData.name,
-              path: e.target.value,
+              path: selectedPath,
               extension: newItemData.extension,
             });
             setNewItemData({ ...newItemData, path, name, extension });
-            // Restore the cursor position
-            e.target.setSelectionRange(cursorPosition, cursorPosition);
           }}
         />
-      </div>
+      )}
       {error && error.length > 0 && (
         <div className='py-2 text-red-800'>{error}</div>
       )}
-      <div className='py-2'>
+      <div className='pb-3'>
         <Button
           variant='solid'
           colorScheme='primary'

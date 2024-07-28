@@ -22,7 +22,7 @@ import { useLocale } from '@/context/LocaleContext';
  *
  * @param alertDetails - The details of the alert popup
  * @param alertDetails.type - The type of the alert popup
- * @param alertDetails.message - The message to display in the alert popup
+ * @param alertDetails.message - The message to display in the alert popup, can be a string or JSX element
  * @param alertDetails.onClose - The function to call when the user closes the alert
  *
  * @returns The alert popup component
@@ -33,7 +33,7 @@ const Alert = ({
   onClose,
 }: {
   type: 'success' | 'error' | 'info';
-  message: string;
+  message: string | JSX.Element;
   onClose: () => void;
 }) => {
   const { dict } = useLocale();

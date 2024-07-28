@@ -181,6 +181,7 @@ const en = {
   dashboard: {
     dashboard: 'Dashboard',
     createNewDashboard: 'Create new dashboard',
+    noDashboards: 'No dashboards found',
   },
   connection: {
     connection: 'Connection',
@@ -265,6 +266,12 @@ const en = {
       'Haz, your AI assistant, is here to lend a hand with SQL queries, scripts and more!',
     setupNewConnection: 'Setup new connection',
     saveFile: 'Save file',
+    referenceDataSet: {
+      clickOnATable: 'Select data set table to reference',
+      toReferenceTheTable: 'To reference the table',
+      fromTheDataset: 'from the dataset',
+      inTheEditor: 'in the editor, use the following syntax:',
+    },
   },
   list: {
     name: 'Name',
@@ -293,9 +300,6 @@ const en = {
     writeYourMessage: 'Write your message here...',
   },
   fileNavigator: {
-    search: 'Search',
-    searchPlaceholder: 'Search for files and folders',
-    createNewFileOrFolder: 'Create new file or folder',
     original: 'Original',
     saveFile: 'Save file',
     createFile: 'Create file',
@@ -306,8 +310,7 @@ const en = {
     delete: 'Delete',
     rename: 'Rename',
     move: 'Move',
-    file: 'File',
-    folder: 'Folder',
+    bucketRoot: 'Bucket root',
     newNameOfTheFile: 'New name of the file',
     newNameOfTheFolder: 'New name of the folder',
     newPathOfTheFile: 'New path of the file',
@@ -335,8 +338,8 @@ const en = {
     actionResults: 'Action Results',
     widget: 'Widget',
     documentation: 'Documentation',
-    switchToPlainText: 'Switch to plain text',
-    switchToMarkdownEditor: 'Switch to markdown editor',
+    switchToPlainText: 'Plain text',
+    switchToMarkdownEditor: 'Markdown editor',
     save: 'Save action',
     run: 'Run action',
     existingWidgets: 'Existing widgets',

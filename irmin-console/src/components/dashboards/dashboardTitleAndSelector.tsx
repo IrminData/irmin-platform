@@ -1,12 +1,10 @@
 import React from 'react';
 
-import Image from 'next/image';
-
-import { TbChevronDown } from 'react-icons/tb';
-
 import { useLocale } from '@/context/LocaleContext';
 
 import { Dashboard } from '@/types/api/Dashboard';
+
+import PortalTitle from '../portalTitle';
 
 /**
  * Dashboard title and selector
@@ -40,34 +38,23 @@ function DashboardTitleAndSelector({
     }
   };
   return (
-    <div className='flex items-center justify-between p-4 align-top'>
-      <div className={`text-lg font-bold text-gray-800 md:text-3xl`}>
-        <Image
-          src='/irmin-logo.svg'
-          alt='Irmin'
-          width={120}
-          height={120}
-          className={`h-14 md:hidden`}
-        />
-        <h1>{title}</h1>
-      </div>
-
-      <div className='relative'>
+    <div className='flex items-center justify-between pr-4'>
+      <PortalTitle title={title} />
+      <div className='ml-auto w-max min-w-32 max-w-[50%] rounded border border-gray-300 bg-white px-2 py-1 text-xs leading-tight text-gray-700 shadow md:text-sm'>
         <select
-          defaultValue={selected?.id ?? 'create-new'}
+          value={selected?.name ?? 'create-new'}
           onChange={(e) => processSelectionChange(e.target.value)}
-          className='block w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2 pr-8 leading-tight text-gray-700 focus:outline-none'
+          className='block w-full focus:outline-none'
         >
           {options.map((option, index) => (
-            <option key={index} value={option.id}>
+            <option key={index} value={option.name}>
               {option.name}
             </option>
           ))}
-          <option value={-1}>{dict.dashboard.createNewDashboard}</option>
+          <option value={'create-new'}>
+            {dict.dashboard.createNewDashboard}
+          </option>
         </select>
-        <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-          <TbChevronDown className='h-4 w-4' />
-        </div>
       </div>
     </div>
   );

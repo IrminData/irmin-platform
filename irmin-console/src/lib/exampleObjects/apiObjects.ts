@@ -110,7 +110,7 @@ export const exampleWidgets: Widget[] = [
  * Example dashboard
  */
 export const exampleDashboard: Dashboard = {
-  id: 0,
+  id: 1,
   name: 'Test',
   widgets: exampleWidgets,
   created_at: new Date().toDateString(),

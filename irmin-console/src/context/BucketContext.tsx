@@ -190,16 +190,28 @@ export const BucketProvider = ({
    */
   const openNewTab = () => {
     if (!currentBucket) return;
+    // Create a new tab with a random file name and switch to it
+    const prevOpenFileTabs = [...openFileTabs];
+    setOpenFileTabs([
+      ...prevOpenFileTabs,
+      `/${Math.random().toString(36).substring(7)}.sql`,
+    ]);
+    setActiveTab(prevOpenFileTabs.length);
+
     // Create a new untitled file and make sure it's unique
     const untitledFiles =
-      currentBucket.files.filter((file) => file.name.includes('untitled')) ??
-      [];
-    const untitledCount = untitledFiles.length;
-    const untitledName = `untitled_${untitledCount}.sql`;
+      currentBucket.files.filter((file) =>
+        file.name.toLowerCase().includes('untitled')
+      ) ?? [];
+    const untitledTabs = openFileTabs.filter((path) =>
+      path.toLowerCase().includes('untitled')
+    );
+    const untitledCount = untitledFiles.length + untitledTabs.length;
+    const untitledName = `untitled_${untitledCount + 1}.sql`;
     const untitledPath = `/${untitledName}`;
-    // Update the open file tabs
-    setOpenFileTabs([...openFileTabs, untitledPath]);
-    setActiveTab(openFileTabs.length);
+
+    // Update the newly created tab with the untitled file path
+    setOpenFileTabs([...prevOpenFileTabs, untitledPath]);
   };
 
   /**

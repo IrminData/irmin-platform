@@ -71,7 +71,7 @@ const ManageWorkspaces: React.FC = () => {
       )}
       {workspaces && (
         <div className='mx-auto max-w-sm'>
-          <p className='mb-4 block text-center font-normal text-gray-400'>
+          <p className='mb-4 block text-center text-sm font-normal text-irmin_black opacity-40 md:text-base'>
             {dict.workspaceSwitcher.createNewWorkspace}
           </p>
           <form
@@ -87,7 +87,7 @@ const ManageWorkspaces: React.FC = () => {
               placeholder={dict.workspaceSwitcher.workspaceName}
               onChange={(e) => setNewWorkspaceName(e.target.value ?? '')}
               required
-              className='mb-6 w-full'
+              className='mb-2 h-11 w-full md:mb-6'
             />
             {error && <p className='mb-4 text-red-800'>{error}</p>}
             {success && <p className='mb-4 text-irmin_green'>{success}</p>}
@@ -95,7 +95,7 @@ const ManageWorkspaces: React.FC = () => {
               variant='solid'
               colorScheme='primary'
               size='sm'
-              className='mb-6 w-full'
+              className='mb-6 h-10 w-full'
               type='submit'
               disabled={loading || workspaceLoading}
               loading={loading}
@@ -105,14 +105,14 @@ const ManageWorkspaces: React.FC = () => {
           </form>
         </div>
       )}
-      <hr className='mx-auto my-4 max-w-sm border-gray-200 shadow-sm' />
+      <hr className='mx-auto my-4 max-w-sm border-irmin_black opacity-10 shadow-sm' />
       {workspaces && workspaces.length > 0 && (
         <>
-          <p className='mb-4 block text-center font-normal text-gray-400'>
+          <p className='mb-4 block text-center text-sm font-normal text-irmin_black opacity-40 md:text-base'>
             {dict.workspaceSwitcher.orSelectExisting}
           </p>
           <div
-            className={`grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-3 lg:grid-cols-3 xl:grid-cols-4 xl:gap-4 ${workspaceLoading && 'blur-sm'}`}
+            className={`grid w-full grid-cols-2 gap-2 lg:grid-cols-3 xl:gap-4 ${workspaceLoading && 'blur-sm'}`}
           >
             {workspaces.map((workspace, idx) => (
               <WorkspaceCard

@@ -48,11 +48,8 @@ export default function PortalNavProfile({
         <h2 className='mb-1 text-sm font-normal text-irmin_green'>
           {profile.profile.name ?? ''}
         </h2>
-        <p className='mb-1 text-xs font-light text-irmin_green'>
+        <p className='m-0 text-xs font-light text-irmin_green opacity-60'>
           {profile.profile.email ?? ''}
-        </p>
-        <p className='text-xs font-light text-irmin_green'>
-          {profile.profile.company ?? ''}
         </p>
       </div>
     </Link>

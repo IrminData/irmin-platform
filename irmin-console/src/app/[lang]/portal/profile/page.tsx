@@ -105,16 +105,17 @@ const GeneralSettings: React.FC = () => {
         {dict.profile.generalSettings}
       </h2>
       <LanguageSwitcher
-        className={`my-4 block overflow-hidden text-nowrap rounded border border-irmin_green bg-white px-4 py-2 text-xs font-light text-irmin_black shadow-sm transition-all lg:text-sm xl:text-base`}
+        className={`my-4 block overflow-hidden text-nowrap rounded-lg border-r-4 border-white bg-white px-4 py-2 text-xs font-light text-irmin_black shadow ring-1 ring-gray-400 transition-all focus:outline-none lg:text-sm xl:text-base`}
       />
       <form onSubmit={handleSaveChanges} className='pb-8 text-sm md:text-base'>
         <div className='mb-4'>
-          <label className='block text-sm text-gray-700 md:text-base'>
+          <label className='block text-xs text-gray-700 md:text-sm'>
             {dict.profile.name}
           </label>
           <Input
+            size='sm'
             variant='outline'
-            colorScheme='primary'
+            colorScheme='gray'
             type='text'
             className='mt-2 w-full'
             defaultValue={profile.name}
@@ -122,12 +123,13 @@ const GeneralSettings: React.FC = () => {
           />
         </div>
         <div className='mb-4'>
-          <label className='block text-sm text-gray-700 md:text-base'>
+          <label className='block text-xs text-gray-700 md:text-sm'>
             {dict.profile.email}
           </label>
           <Input
+            size='sm'
             variant='outline'
-            colorScheme='primary'
+            colorScheme='gray'
             type='text'
             className='mt-2 w-full'
             defaultValue={profile.email}
@@ -135,12 +137,13 @@ const GeneralSettings: React.FC = () => {
           />
         </div>
         <div className='mb-4'>
-          <label className='block text-sm text-gray-700 md:text-base'>
+          <label className='block text-xs text-gray-700 md:text-sm'>
             {dict.profile.company}
           </label>
           <Input
+            size='sm'
             variant='outline'
-            colorScheme='primary'
+            colorScheme='gray'
             type='text'
             className='mt-2 w-full'
             defaultValue={profile.company ?? ''}
@@ -150,8 +153,8 @@ const GeneralSettings: React.FC = () => {
         <Button
           className='mt-4 w-full'
           type='submit'
-          size='md'
-          colorScheme='primary'
+          size='sm'
+          colorScheme='light'
           variant='solid'
           disabled={isLoading}
           loading={isLoading}
@@ -187,34 +190,37 @@ const ChangePasswordSettings: React.FC = () => {
       </h2>
       <form onSubmit={handleChangePassword} className='text-sm md:text-base'>
         <div className='mb-4'>
-          <label className='block text-gray-700'>
+          <label className='block text-xs text-gray-700 md:text-sm'>
             {dict.profile.currentPassword}
           </label>
           <Input
+            size='sm'
             variant='outline'
-            colorScheme='primary'
+            colorScheme='gray'
             type='password'
             className='mt-2 w-full'
           />
         </div>
         <div className='mb-4'>
-          <label className='block text-gray-700'>
+          <label className='block text-xs text-gray-700 md:text-sm'>
             {dict.profile.newPassword}
           </label>
           <Input
+            size='sm'
             variant='outline'
-            colorScheme='primary'
+            colorScheme='gray'
             type='password'
             className='mt-2 w-full'
           />
         </div>
         <div className='mb-4'>
-          <label className='block text-gray-700'>
+          <label className='block text-xs text-gray-700 md:text-sm'>
             {dict.profile.confirmNewPassword}
           </label>
           <Input
+            size='sm'
             variant='outline'
-            colorScheme='primary'
+            colorScheme='gray'
             type='password'
             className='mt-2 w-full'
           />
@@ -223,8 +229,8 @@ const ChangePasswordSettings: React.FC = () => {
         <Button
           className='mt-4 w-full'
           type='submit'
-          size='md'
-          colorScheme='primary'
+          size='sm'
+          colorScheme='light'
           variant='solid'
         >
           {dict.profile.saveChanges}

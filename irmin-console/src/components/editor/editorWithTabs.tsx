@@ -15,8 +15,8 @@ import { usePopup } from '@/context/PopupContext';
 import { Bucket, BucketFile, IrminFileType } from '@/types/api/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
-import RenameOrMoveItemModalContent from './modals/RenameOrMoveItemModalContent';
-import SaveEditorAsFileModalContent from './modals/SaveEditorAsFileModalContent';
+import RenameOrMoveItemModal from './modals/RenameOrMoveItemModal';
+import SaveEditorAsFileModal from './modals/SaveEditorAsFileModal';
 
 /**
  * Get the language from a filename
@@ -102,6 +102,8 @@ const EditorWithTabs = ({
   } = useBucket();
   const { dict } = useLocale();
 
+  const [currentTabContent, setCurrentTabContent] = useState<string>('');
+
   const [openTabsContents, setOpenTabsContents] = useState<FileContents[]>([]);
   const activeLanguage = getLanguageFromFilename(openFileTabs[activeTab] ?? '');
   const activeTabContents = openTabsContents.find(
@@ -121,7 +123,7 @@ const EditorWithTabs = ({
       // Prompt the user with the rename or move modal
       irminModal.show(
         dict.fileNavigator.updateFile,
-        <RenameOrMoveItemModalContent
+        <RenameOrMoveItemModal
           item={fileNavItem}
           bucket={bucket}
           updateFile={updateFile}
@@ -165,8 +167,8 @@ const EditorWithTabs = ({
     } else {
       // The file does not exist yet, create a new file
       irminModal.show(
-        dict.fileNavigator.createNewFileOrFolder,
-        <SaveEditorAsFileModalContent
+        dict.fileNavigator.saveFile,
+        <SaveEditorAsFileModal
           defaultName={activeTabContents.path.split('/').pop() ?? 'Untitled'}
           defaultPath={activeTabContents.path}
           defaultType={activeLanguage}
@@ -241,11 +243,42 @@ const EditorWithTabs = ({
     setOpenTabsContents(newOpenTabsContents);
   }, [openFileTabs, openTabsContents, bucket]);
 
+  /**
+   * Update the current tab content when the active tab changes
+   */
+  useEffect(() => {
+    if (currentTabContent !== (activeTabContents?.contents ?? '')) {
+      setCurrentTabContent(activeTabContents?.contents ?? '');
+    }
+  }, [activeTab, activeTabContents, currentTabContent]);
+
+  /**
+   * Update active tab content
+   *
+   * To avoid flickering when typing, we debounce the update of the active tab content,
+   * nstead of updating the full object on every key press.
+   */
+  useEffect(() => {
+    const debounceTimeout = setTimeout(() => {
+      const newOpenTabsContents = openTabsContents.map((a) => {
+        if (a.path === openFileTabs[activeTab]) {
+          return { ...a, contents: currentTabContent, changed: true };
+        }
+        return a;
+      });
+      setOpenTabsContents(newOpenTabsContents);
+    }, 300);
+
+    return () => {
+      clearTimeout(debounceTimeout);
+    };
+  }, [currentTabContent, activeTab, openFileTabs, openTabsContents]);
+
   return (
     <div>
       {openFileTabs.length > 0 && (
-        <div className='mb-2 flex items-center justify-between gap-1 pr-2'>
-          <div className='flex w-1/2 items-center overflow-x-auto xl:w-3/4'>
+        <div className='mb-0 flex items-center justify-between gap-1 border-b border-gray-200 pb-1 pr-2'>
+          <div className='scrollbar-hide flex items-center overflow-x-auto'>
             {openFileTabs.map((tab, index) => (
               <div
                 key={index}
@@ -257,10 +290,11 @@ const EditorWithTabs = ({
                   size='sm'
                   variant='link'
                   colorScheme='black'
-                  className={`min-w-28 px-2 py-1 hover:no-underline`}
+                  className={`min-w-20 px-2 py-1 hover:no-underline`}
                   onClick={() => setActiveTab(index)}
+                  ariaLabel={`Switch to tab ${tab}`}
                 >
-                  {getFileByPath(tab, bucket)?.name ?? 'Untitled'}
+                  {tab.replace(/.*\/([^/]+)\..*$/, '$1') ?? 'Untitled'}
                 </Button>
                 <Button
                   size='sm'
@@ -269,7 +303,7 @@ const EditorWithTabs = ({
                   className={`border-none px-1 py-1`}
                   onClick={() => closeTab(index)}
                 >
-                  <IoClose />
+                  <IoClose size={12} />
                 </Button>
               </div>
             ))}
@@ -281,52 +315,48 @@ const EditorWithTabs = ({
               onClick={() => openNewTab()}
               ariaLabel='Add new tab'
             >
-              <IoAdd />
+              <IoAdd size={18} />
             </Button>
           </div>
-          <select
-            className='mt-2 rounded-lg border-irmin_green px-2 py-2 text-xs text-irmin_blue shadow transition-all focus:outline-none xl:text-sm'
-            value={activeLanguage}
-            onChange={(e) => {
-              e.preventDefault();
-              changeLanguage(e.target.value as IrminFileType);
-            }}
-          >
-            <option value={'sql'}>SQL</option>
-            <option value={'js'}>JavaScript</option>
-            <option value={'py'}>Python</option>
-          </select>
-          <Button
-            size='sm'
-            variant='solid'
-            colorScheme='primary'
-            className='mt-2 px-0 py-2 text-xs'
-            ariaLabel='Save file'
-            onClick={() => saveActiveTabAsFile()}
-          >
-            <IoSave className='mr-2 inline-block' /> {dict.editor.saveFile}
-          </Button>
+          <div className='flex flex-row items-center justify-end gap-2'>
+            <select
+              className='mt-2 hidden rounded-lg border-r-2 border-white px-2 py-2 text-xs text-irmin_blue shadow focus:outline-none md:block xl:text-sm'
+              value={activeLanguage}
+              onChange={(e) => {
+                e.preventDefault();
+                changeLanguage(e.target.value as IrminFileType);
+              }}
+            >
+              <option value={'sql'}>SQL</option>
+              <option value={'js'}>JavaScript</option>
+              <option value={'py'}>Python</option>
+            </select>
+            <Button
+              size='sm'
+              variant='solid'
+              colorScheme='primary'
+              className='mt-2 px-2 py-2 text-xs'
+              ariaLabel='Save file'
+              onClick={() => saveActiveTabAsFile()}
+            >
+              <IoSave className='mr-2 inline-block' /> {dict.editor.saveFile}
+            </Button>
+          </div>
         </div>
       )}
-      {openFileTabs.length > 0 ? (
-        <Editor
-          content={activeTabContents?.contents ?? ''}
-          updateTabContent={(val) => {
-            const newOpenTabsContents = openTabsContents.map((a) => {
-              if (a.path === openFileTabs[activeTab]) {
-                return { ...a, contents: val, changed: true };
-              }
-              return a;
-            });
-            setOpenTabsContents(newOpenTabsContents);
-          }}
-          language={activeLanguage}
-          editorHeight={editorHeight}
-          setEditorHeight={setEditorHeight}
-        />
-      ) : (
-        <ScriptEditorNew addNewTab={() => openNewTab()} />
-      )}
+      <div className=''>
+        {openFileTabs.length > 0 ? (
+          <Editor
+            content={currentTabContent}
+            updateTabContent={(value) => setCurrentTabContent(value)}
+            language={activeLanguage}
+            editorHeight={editorHeight}
+            setEditorHeight={setEditorHeight}
+          />
+        ) : (
+          <ScriptEditorNew addNewTab={() => openNewTab()} />
+        )}
+      </div>
     </div>
   );
 };

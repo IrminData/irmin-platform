@@ -26,7 +26,10 @@ import NotificationPopup from '@/components/notifications/NotificationPopup';
  * @returns The popup context
  */
 const PopupContext = createContext<{
-  irminAlert: (_type: 'success' | 'error' | 'info', _message: string) => void;
+  irminAlert: (
+    _type: 'success' | 'error' | 'info',
+    _message: string | JSX.Element
+  ) => void;
   irminConfirm: (
     _type: 'warning' | 'info',
     _message: string,
@@ -66,11 +69,16 @@ const PopupContext = createContext<{
  */
 export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   // Handle alerts
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertMessage, setAlertMessage] = useState<string | JSX.Element | null>(
+    null
+  );
   const [alertType, setAlertType] = useState<
     'success' | 'error' | 'info' | null
   >(null);
-  const irminAlert = (type: 'success' | 'error' | 'info', message: string) => {
+  const irminAlert = (
+    type: 'success' | 'error' | 'info',
+    message: string | JSX.Element
+  ) => {
     setAlertType(type);
     setAlertMessage(message);
     setTimeout(() => {

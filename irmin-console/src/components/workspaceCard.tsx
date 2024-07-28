@@ -71,18 +71,47 @@ const WorkspaceCard = ({
       aria-label={`Go to ${workspace.name} workspace`}
     >
       <div className='overflow-hidden rounded-xl bg-white shadow'>
-        <div className='p-2 text-xs lg:p-4 lg:text-base xl:p-8'>
+        <div className='p-4 text-xs lg:p-6 lg:text-base xl:p-8'>
           <span className='md:text-normal text-xs font-semibold uppercase tracking-wide text-irmin_green'>
             {dict.workspaceSwitcher.workspace}
           </span>
-          <h3 className='mt-1 block text-lg font-medium leading-tight text-irmin_black md:text-xl'>
+          <h3 className='mt-1 block text-base font-medium leading-tight text-irmin_black md:text-lg'>
             {workspace.name}
           </h3>
-          <p className='mt-2 text-sm font-light text-irmin_blue'>
+          <p className='mt-2 text-xs font-light leading-tight text-irmin_blue'>
             {description}
           </p>
-          <div className='mt-4'>
-            <div className='flex items-center'>
+          <div className='mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-2'>
+            <div className='flex flex-col items-start gap-1'>
+              <div className='flex flex-col items-start gap-1'>
+                <p className='w-full text-sm font-medium text-irmin_blue'>
+                  <GoSync className='mr-1 inline h-3 text-gray-400' />
+                  {connectionCount}
+                  <span className='inline pl-1 text-xs font-light text-gray-400'>
+                    {dict.workspaceSwitcher.connections}
+                  </span>
+                </p>
+              </div>
+              <div className='flex flex-col items-start gap-1'>
+                <p className='w-full text-sm font-medium text-irmin_blue'>
+                  <GoDatabase className='mr-1 inline h-3 text-gray-400' />
+                  {datasetCount}
+                  <span className='inline pl-1 text-xs font-light text-gray-400'>
+                    {dict.workspaceSwitcher.datasets}
+                  </span>
+                </p>
+              </div>
+              <div className='flex flex-col items-start gap-1'>
+                <p className='w-full text-sm font-medium text-irmin_blue'>
+                  <GoPlay className='mr-1 inline h-3 text-gray-400' />
+                  {actionCount}
+                  <span className='inline pl-1 text-xs font-light text-gray-400'>
+                    {dict.workspaceSwitcher.actions}
+                  </span>
+                </p>
+              </div>
+            </div>
+            <div className='flex items-center justify-between gap-0'>
               <div className='flex -space-x-2 overflow-hidden'>
                 {users.slice(0, 3).map((user, idx) => (
                   <Image
@@ -99,42 +128,6 @@ const WorkspaceCard = ({
                     +{users.length - 3}
                   </span>
                 )}
-              </div>
-            </div>
-
-            <div className='mt-4 flex w-full flex-row justify-between gap-4'>
-              <div className='flex items-center'>
-                <GoSync className='h-3 text-base text-irmin_blue md:h-4' />
-                <div className='ml-2 flex flex-col'>
-                  <span className='text-sm font-semibold text-irmin_blue'>
-                    {connectionCount}
-                  </span>
-                  <span className='text-[8px] leading-tight text-gray-400'>
-                    {dict.workspaceSwitcher.connections}
-                  </span>
-                </div>
-              </div>
-              <div className='flex items-center'>
-                <GoDatabase className='h-3 text-base text-irmin_blue md:h-4' />
-                <div className='ml-2 flex flex-col'>
-                  <span className='text-sm font-semibold text-irmin_blue'>
-                    {datasetCount}
-                  </span>
-                  <span className='text-[8px] leading-tight text-gray-400'>
-                    {dict.workspaceSwitcher.datasets}
-                  </span>
-                </div>
-              </div>
-              <div className='flex items-center'>
-                <GoPlay className='h-3 text-base text-irmin_blue md:h-4' />
-                <div className='ml-2 flex flex-col'>
-                  <span className='text-sm font-semibold text-irmin_blue'>
-                    {actionCount}
-                  </span>
-                  <span className='text-[8px] leading-tight text-gray-400'>
-                    {dict.workspaceSwitcher.actions}
-                  </span>
-                </div>
               </div>
             </div>
           </div>

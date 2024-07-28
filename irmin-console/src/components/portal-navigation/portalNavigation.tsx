@@ -9,7 +9,9 @@ import React, {
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
+
+import { useBreakpoint } from '@/lib/utils/twUtils';
 
 import { TbChevronLeft, TbChevronRight, TbSearch } from 'react-icons/tb';
 
@@ -41,6 +43,7 @@ export default function PortalNavigation({
 }: Readonly<{ children: React.ReactNode }>) {
   const { dict } = useLocale();
   const { workspace: workspaceSlug } = useParams();
+  const currentPath = usePathname();
 
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isMenuFolded, setIsMenuFolded] = React.useState(false);
@@ -108,29 +111,39 @@ export default function PortalNavigation({
    */
   const hideItemLabels = isMenuFolded || debouncedIsMenuFolded;
 
+  // Check if the screen size is over md breakpoint
+  const { isMd: isDesktop } = useBreakpoint('md');
+
+  // Hide the menu bar logo if on Portal homepage, to avoid showing multiple logos
+  const hideLogoOnPortalHome = currentPath.endsWith('/portal');
+
   return (
     <>
       <AIAssistantPopup />
       <div id='dashboard-navigation'>
         {/* Dashboard navigation toggle on mobile */}
-        <div className='fixed left-2 top-2 z-50 block md:hidden'>
+        <div className='fixed left-4 top-[5px] z-50 block md:hidden'>
           <button
-            className='relative h-9 w-12 rounded-full bg-irmin_green focus:outline-none'
+            className='relative h-9 w-12 rounded-full bg-gray-200 bg-opacity-10 focus:outline-none'
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <div className='absolute left-4 top-1/2 block w-5 -translate-x-1/2 -translate-y-1/2 transform'>
+            <div
+              className={`absolute left-4 top-1/2 block w-5 -translate-x-1/2 -translate-y-1/2 transform ${
+                isMenuOpen ? 'text-irmin_green' : 'text-irmin_blue'
+              }`}
+            >
               <span
-                className={`absolute block h-0.5 w-7 transform bg-current text-white transition duration-500 ease-in-out ${
+                className={`absolute block h-0.5 w-7 transform bg-current transition duration-500 ease-in-out ${
                   isMenuOpen ? 'rotate-45' : '-translate-y-1.5'
                 }`}
               ></span>
               <span
-                className={`absolute block h-0.5 w-5 transform bg-current text-white transition duration-500 ease-in-out ${
+                className={`absolute block h-0.5 w-5 transform bg-current transition duration-500 ease-in-out ${
                   isMenuOpen ? 'opacity-0' : ''
                 }`}
               ></span>
               <span
-                className={`absolute block h-0.5 w-7 transform bg-current text-white transition duration-500 ease-in-out ${
+                className={`absolute block h-0.5 w-7 transform bg-current transition duration-500 ease-in-out ${
                   isMenuOpen ? '-rotate-45' : 'translate-y-1.5'
                 }`}
               ></span>
@@ -139,39 +152,39 @@ export default function PortalNavigation({
         </div>
         {/* Top menu bar */}
         <div
-          className={`fixed left-0 right-0 z-40 block transition-all duration-200`}
+          className={`fixed left-0 right-0 z-40 block transition-all duration-200 ${!isMenuOpen ? '' : 'blur-sm md:blur-none'}`}
           style={{
-            marginLeft: sideBarWidth,
+            marginLeft: isDesktop ? sideBarWidth : 0,
           }}
         >
-          <div className='bg-white px-4 py-1 pl-[80px] shadow-md md:pl-4'>
-            <div className='flex w-full'>
-              {isMenuFolded && (
-                <Link href='/' className='pr-4'>
+          <div className='bg-white px-2 py-1 pl-[60px] shadow-md md:pl-2'>
+            <div className='group flex w-full items-center'>
+              {!hideLogoOnPortalHome && (
+                <div
+                  className={`py-2 pr-4 group-focus-within:hidden ${isMenuFolded ? 'md:block' : 'md:hidden'}`}
+                >
                   <Image
-                    className={'h-[90%]'}
+                    className={'h-full max-h-4 object-contain md:max-h-6'}
                     src='/irmin-logo.svg'
                     alt='Irmin logo'
                     width={100}
-                    height={50}
+                    height={26}
                   />
-                </Link>
+                </div>
               )}
-              <form className='ml-auto w-full max-w-sm transition-all focus-within:max-w-full lg:max-w-md'>
+              <form className='ml-auto w-full max-w-24 rounded-full border border-gray-200 transition-all focus-within:max-w-full md:max-w-sm lg:max-w-md'>
                 <div className='relative'>
                   <div className='pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3'>
                     <TbSearch className='text-gray-500' />
                   </div>
                   <input
                     type='search'
-                    id='default-search'
-                    className='block w-full rounded-full border border-gray-300 bg-gray-50 px-4 py-3 ps-10 text-xs text-gray-900 focus:outline-none md:text-sm'
+                    className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible focus:outline-none group-focus-within:placeholder:visible md:text-sm md:placeholder:visible'
                     placeholder={dict.portalNavigation.searchPlaceholder}
-                    required
                   />
                   <button
-                    type='submit'
-                    className='absolute bottom-0 right-0 top-0 rounded-full border border-gray-300 bg-gray-50 px-4 py-3 text-xs font-light text-gray-900 transition-all hover:bg-gray-100 focus:outline-none md:text-sm'
+                    type='button'
+                    className='invisible absolute bottom-0 right-0 top-0 rounded-full bg-gray-50 px-4 py-3 text-xs font-light text-gray-800 opacity-0 transition-all hover:bg-gray-100 focus:outline-none group-focus-within:visible group-focus-within:opacity-100 md:visible md:text-sm md:opacity-100'
                   >
                     {dict.portalNavigation.search}
                   </button>
@@ -188,8 +201,11 @@ export default function PortalNavigation({
           } ${isMenuFolded ? 'w-20' : 'w-full max-w-80 md:w-2/5 lg:w-1/5'}`}
         >
           <div className={`flex h-screen w-full flex-col justify-between`}>
-            <div className='mt-12 md:mt-0'>
-              <div className='z-40 flex w-full items-center justify-between p-4 pl-8'>
+            <div
+              className={`mt-12 flex flex-col justify-start ${hideItemLabels ? 'mt-24 gap-0' : 'gap-8'} md:mt-1`}
+            >
+              {/* Logo,  notifications and fold button */}
+              <div className='z-40 flex w-full items-center justify-between px-4 pt-4 md:pl-8'>
                 {!hideItemLabels && (
                   <div className='block max-w-max'>
                     <Link href='/'>
@@ -205,7 +221,7 @@ export default function PortalNavigation({
                 )}
                 <button
                   className={`absolute top-[16px] hidden text-irmin_green md:top-[8px] md:block ${
-                    !isMenuFolded ? 'right-2' : 'left-7'
+                    !isMenuFolded ? 'right-2' : 'left-6'
                   }`}
                   aria-label='Fold the side navigation'
                   onClick={() => setIsMenuFolded(!isMenuFolded)}
@@ -217,21 +233,21 @@ export default function PortalNavigation({
                   )}
                 </button>
                 <div
-                  className={`absolute right-10 top-[16x] md:top-[13px] ${hideItemLabels && 'hidden'}`}
+                  className={`absolute right-10 md:top-[14px] ${hideItemLabels && 'hidden'}`}
                 >
                   <NotificationButton />
                 </div>
               </div>
-              <div className={`px-5 ${hideItemLabels ? 'hidden' : 'block'}`}>
+
+              {/* Profile and workspace switcher */}
+              <div className={`px-4 ${hideItemLabels ? 'hidden' : 'block'}`}>
                 <PortalNavProfile setIsMenuOpen={setIsMenuOpen} />
                 <PortalNavWorkspaceSwitcher setIsMenuOpen={setIsMenuOpen} />
               </div>
 
+              {/* No workspace links */}
               {!workspaceSlug && (
-                <div
-                  className={isMenuFolded ? 'mt-6' : 'mt-12'}
-                  id='portal-links'
-                >
+                <div id='portal-links'>
                   <p
                     className={`mb-2 px-8 text-xs font-medium uppercase text-irmin_green ${
                       isMenuFolded ? 'hidden' : 'block'
@@ -251,11 +267,10 @@ export default function PortalNavigation({
                   </ul>
                 </div>
               )}
+
+              {/* Workspace links */}
               {workspaceSlug && (
-                <div
-                  className={isMenuFolded ? 'mt-6' : 'mt-12'}
-                  id='workspace-links'
-                >
+                <div id='workspace-links'>
                   <p
                     className={`mb-2 px-8 text-xs font-medium uppercase text-irmin_green ${
                       isMenuFolded ? 'hidden' : 'block'
@@ -275,10 +290,9 @@ export default function PortalNavigation({
                   </ul>
                 </div>
               )}
-              <div
-                className={hideItemLabels ? 'mt-0' : 'mt-8'}
-                id='settings-links'
-              >
+
+              {/* Settings links */}
+              <div id='settings-links'>
                 <p
                   className={`px-8 text-xs font-medium uppercase text-irmin_green ${
                     hideItemLabels ? 'hidden' : 'block'
@@ -329,9 +343,9 @@ export default function PortalNavigation({
       </div>
       {/* Dashboard content */}
       <div
-        className={`relative min-h-screen bg-white bg-center pt-[55px] transition-all duration-200`}
+        className={`relative min-h-screen bg-white bg-center pt-[55px] transition-all duration-200 ${!isMenuOpen ? '' : 'blur-sm md:blur-none'}`}
         style={{
-          marginLeft: sideBarWidth,
+          marginLeft: isDesktop ? sideBarWidth : 0,
           backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
         }}
       >

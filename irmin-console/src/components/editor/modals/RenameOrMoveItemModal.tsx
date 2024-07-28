@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 
 import { itemCanBeCreated, updateFieldValues } from '@/lib/utils/bucketUtils';
 
+import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
+
+import PathSelector from '@/components/editor/pathSelector';
 import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -24,7 +27,7 @@ import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
  *
  * @returns The modal content
  */
-export default function RenameOrMoveItemModalContent({
+export default function RenameOrMoveItemModal({
   item,
   bucket,
   updateFile,
@@ -40,7 +43,8 @@ export default function RenameOrMoveItemModalContent({
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [itemData, setItemData] = useState({
+  const [showPathSelector, setShowPathSelector] = useState(true);
+  const [newItemData, setNewItemData] = useState({
     bucket: bucket?.slug ?? '',
     name: '',
     path: '',
@@ -57,12 +61,12 @@ export default function RenameOrMoveItemModalContent({
       setLoading(true);
       // Make sure that can be created
       const canCreate = itemCanBeCreated(
-        itemData.path,
-        itemData.name,
+        newItemData.path,
+        newItemData.name,
         type,
         bucket,
         dict,
-        itemData.type
+        newItemData.type
       );
       if (!canCreate.canCreate) {
         throw new Error(canCreate.reason);
@@ -71,13 +75,13 @@ export default function RenameOrMoveItemModalContent({
       if (type === 'file') {
         updateFile({
           original: item.original,
-          current: itemData,
+          current: newItemData,
           type,
         } as FileNavigatorItem);
       } else {
         updateFolder({
           original: item.original,
-          current: itemData as BucketFolder,
+          current: newItemData as BucketFolder,
           type,
         } as FileNavigatorItem);
       }
@@ -94,35 +98,38 @@ export default function RenameOrMoveItemModalContent({
   return (
     <div>
       {type === 'file' && (
-        <div className='py-2'>
-          <select
-            id='type-select'
-            disabled={loading}
-            className='w-full rounded border p-2'
-            defaultValue={itemData.type}
-            onChange={(e) => {
-              // Get and set the correct name, path and extension
-              const { name, path, extension } = updateFieldValues({
-                type: type,
-                name: itemData.name,
-                path: itemData.path,
-                extension: e.target.value,
-              });
-              setItemData({ ...itemData, path, name, type: extension });
-            }}
-          >
-            <option value='sql'>SQL</option>
-            <option value='js'>JavaScript</option>
-            <option value='py'>Python</option>
-          </select>
-          <p className='mt-1 text-xs text-gray-400'>
+        <div className='pb-2'>
+          <div className='w-[150px] rounded border'>
+            <select
+              id='type-select'
+              disabled={loading}
+              className='h-6 w-[146px] rounded border border-r-4 border-white bg-white px-2 py-1 text-xs'
+              aria-label='Select the type of the file'
+              defaultValue={newItemData.type}
+              onChange={(e) => {
+                // Get and set the correct name, path and extension
+                const { name, path, extension } = updateFieldValues({
+                  type: type,
+                  name: newItemData.name,
+                  path: newItemData.path,
+                  extension: e.target.value,
+                });
+                setNewItemData({ ...newItemData, path, name, type: extension });
+              }}
+            >
+              <option value='sql'>SQL</option>
+              <option value='js'>JavaScript</option>
+              <option value='py'>Python</option>
+            </select>
+          </div>
+          <p className='mt-1 pl-1 text-xs text-gray-400'>
             {dict.fileNavigator.original}:{' '}
             {(item.original as BucketFile)?.type ?? ''}
           </p>
         </div>
       )}
-      <div className='py-2'>
-        <label className='mb-1'>
+      <div className='pb-3'>
+        <label className='text-xs'>
           {type === 'file'
             ? dict.fileNavigator.newNameOfTheFile
             : dict.fileNavigator.newNameOfTheFolder}
@@ -131,8 +138,9 @@ export default function RenameOrMoveItemModalContent({
           id='name-input'
           disabled={loading}
           type='text'
-          className='w-full rounded border p-2'
-          defaultValue={itemData.name}
+          className='w-full rounded border p-2 text-sm placeholder:text-gray-400'
+          placeholder='example_name'
+          defaultValue={newItemData.name}
           onChange={(e) => {
             // Get the cursor position
             const cursorPosition = e.target.selectionStart;
@@ -140,53 +148,76 @@ export default function RenameOrMoveItemModalContent({
             const { name, path } = updateFieldValues({
               type: type,
               name: e.target.value,
-              path: itemData.path,
-              extension: itemData.type,
+              path: newItemData.path,
+              extension: newItemData.type,
             });
-            setItemData({ ...itemData, path, name });
+            setNewItemData({ ...newItemData, path, name });
             // Restore the cursor position
             e.target.setSelectionRange(cursorPosition, cursorPosition);
           }}
         />
-        <p className='mt-1 text-xs text-gray-400'>
+        <p className='mt-1 pl-1 text-xs text-gray-400'>
           {dict.fileNavigator.original}: {item.original?.name ?? ''}
         </p>
       </div>
-      <div className='py-2'>
-        <label className='mb-1'>
+      <div className='pb-3'>
+        <label className='text-xs'>
           {type === 'file'
             ? dict.fileNavigator.newPathOfTheFile
             : dict.fileNavigator.newPathOfTheFolder}
         </label>
-        <input
-          id='path-input'
-          disabled={loading}
-          type='text'
-          className='w-full rounded border p-2'
-          defaultValue={itemData.path}
-          onChange={(e) => {
-            // Get the cursor position
-            const cursorPosition = e.target.selectionStart;
-            // Get and set the correct name, path and extension
-            const { name, path } = updateFieldValues({
-              type: type,
-              name: itemData.name,
-              path: e.target.value,
-              extension: itemData.type,
-            });
-            setItemData({ ...itemData, path, name });
-            // Restore the cursor position
-            e.target.setSelectionRange(cursorPosition, cursorPosition);
-          }}
-        />
-        <p className='mt-1 text-xs text-gray-400'>
+        <div className='flex'>
+          <input
+            id='path-input'
+            disabled={true}
+            type='text'
+            className='w-full rounded border bg-gray-100 p-2 text-sm placeholder:text-gray-300'
+            placeholder='/folder/example/path'
+            value={newItemData.path}
+          />
+          <Button
+            variant='icon'
+            colorScheme='secondary'
+            size='sm'
+            className='m-0 ml-auto p-0 pl-2'
+            ariaLabel='Toggle the path selector'
+            onClick={() => setShowPathSelector(!showPathSelector)}
+            disabled={loading}
+          >
+            {!showPathSelector && (
+              <IoChevronDown className='inline-block' size={24} />
+            )}
+            {showPathSelector && (
+              <IoChevronUp className='inline-block' size={24} />
+            )}
+          </Button>
+        </div>
+        <p className='mt-1 pl-1 text-xs text-gray-400'>
           {dict.fileNavigator.original}: {item.original?.path ?? ''}
         </p>
       </div>
+      {showPathSelector && (
+        <PathSelector
+          bucket={bucket}
+          itemName={newItemData.name}
+          originalItemPath={item.original?.path ?? null}
+          currentSelected={newItemData.path}
+          onSelectPath={(selectedPath: string) => {
+            // Get and set the correct name, path and extension
+            const { name, path, extension } = updateFieldValues({
+              type: type,
+              name: newItemData.name,
+              path: selectedPath,
+              extension: newItemData.type,
+            });
+            setNewItemData({ ...newItemData, path, name, type: extension });
+          }}
+        />
+      )}
       {error && error.length > 0 && (
         <div className='py-2 text-red-800'>{error}</div>
       )}
-      <div className='py-2'>
+      <div className='pb-3'>
         <Button
           variant='solid'
           colorScheme='primary'
@@ -197,7 +228,7 @@ export default function RenameOrMoveItemModalContent({
         >
           {loading
             ? dict.misc.loading
-            : itemData.type === 'folder'
+            : newItemData.type === 'folder'
               ? dict.fileNavigator.updateFolder
               : dict.fileNavigator.updateFile}
         </Button>

@@ -5,6 +5,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import DataTable from 'react-data-table-component';
 
 import { AiOutlineDownload, AiOutlineSave } from 'react-icons/ai';
+import { BsFileEarmarkRichtext } from 'react-icons/bs';
+import { CiTextAlignLeft } from 'react-icons/ci';
 import { MdPlayArrow } from 'react-icons/md';
 
 import MDXEditor from '@/components/editor/mdx-editor/MDXEditor';
@@ -123,13 +125,13 @@ const EditorResults: React.FC<{
 
   if (openFileTabs.length === 0) return <></>;
   return (
-    <>
+    <div className='bg-white'>
       {/* Tab Buttons */}
       <div className='scrollbar-hide mb-4 flex w-full justify-start gap-6 overflow-y-scroll px-2 pt-2 md:gap-4'>
         <Button
           onClick={() => setActiveTab('data')}
           size='sm'
-          className={`rounded-none border-b-2 ${
+          className={`w-44 rounded-none border-b-2 ${
             activeTab === 'data' ? 'border-irmin_green' : 'border-transparent'
           }`}
         >
@@ -138,7 +140,7 @@ const EditorResults: React.FC<{
         <Button
           onClick={() => setActiveTab('documentation')}
           size='sm'
-          className={`rounded-none border-b-2 ${
+          className={`w-44 rounded-none border-b-2 ${
             activeTab === 'documentation'
               ? 'border-irmin_green'
               : 'border-transparent'
@@ -157,7 +159,14 @@ const EditorResults: React.FC<{
               variant='link'
               colorScheme={'gray'}
               size='sm'
-              className='p-0 text-xs'
+              className='min-w-48 p-0 text-xs'
+              icon={
+                documentationTab === 'mdx' ? (
+                  <BsFileEarmarkRichtext />
+                ) : (
+                  <CiTextAlignLeft />
+                )
+              }
             >
               {documentationTab === 'mdx'
                 ? dict.actionResults.switchToPlainText
@@ -166,19 +175,19 @@ const EditorResults: React.FC<{
           )}
           <Button
             icon={<AiOutlineSave />}
-            colorScheme='secondary'
-            variant='outline'
+            colorScheme='light'
+            variant='solid'
             size='sm'
-            className='p-0 text-xs'
+            className='text-xs'
           >
             {dict.actionResults.save}
           </Button>
           <Button
             icon={<MdPlayArrow />}
-            colorScheme='secondary'
-            variant='outline'
+            colorScheme='primary'
+            variant='solid'
             size='sm'
-            className='p-0 text-xs'
+            className='text-xs'
           >
             {dict.actionResults.run}
           </Button>
@@ -237,7 +246,7 @@ const EditorResults: React.FC<{
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 };
 

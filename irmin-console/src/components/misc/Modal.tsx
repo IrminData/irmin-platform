@@ -34,19 +34,23 @@ const Modal = ({
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 flex animate-fadeIn items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm'>
-      <div className='relative w-[500px] max-w-[90vw] rounded-lg border-2 border-irmin_green bg-gray-50 p-8 shadow-lg'>
-        <div className='align-center mb-4 flex flex-row justify-between'>
-          <h2 className='text-lg font-normal'>{title}</h2>
-          <button
-            className='ml-4 transition-all hover:opacity-50'
-            onClick={onClose}
-            aria-label='Close modal'
-          >
-            <IoClose size={24} />
-          </button>
+    <div className='fixed inset-0 z-50 flex animate-fadeIn items-center justify-center bg-gray-200 bg-opacity-30 backdrop-blur-[2px]'>
+      <div className='w-[500px] max-w-[90vw] pt-[40px]'>
+        <div className='rounded-lg border-2 border-irmin_green bg-gray-50 shadow-lg'>
+          <div className='align-center flex flex-row justify-between border-b px-4 pb-2 pt-4'>
+            <h2 className='text-lg font-normal'>{title}</h2>
+            <button
+              className='ml-4 transition-all hover:opacity-50'
+              onClick={onClose}
+              aria-label='Close modal'
+            >
+              <IoClose size={24} />
+            </button>
+          </div>
+          <div className='relative max-h-[calc(100vh-150px)] overflow-scroll px-4 pt-4'>
+            {children}
+          </div>
         </div>
-        {children}
       </div>
     </div>
   );
