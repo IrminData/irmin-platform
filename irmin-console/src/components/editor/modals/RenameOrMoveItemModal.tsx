@@ -2,7 +2,11 @@
 
 import React, { useState } from 'react';
 
-import { itemCanBeCreated, updateFieldValues } from '@/lib/utils/bucketUtils';
+import {
+  getCorrectNameWithExtension,
+  getCorrectPath,
+  itemCanBeCreated,
+} from '@/lib/utils/bucketUtils';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
@@ -48,16 +52,60 @@ export default function RenameOrMoveItemModal({
     bucket: bucket?.slug ?? '',
     name: '',
     path: '',
-    type: 'sql',
     contents: '',
     is_draft: false,
+    extension:
+      item.type === 'file' && item.current?.type ? item.current.type : 'sql',
     ...item.current,
   });
   const type = item.type;
 
-  const continueRename = () => {
+  const extenstionSelectRef = React.useRef<HTMLSelectElement>(null);
+  const nameInputRef = React.useRef<HTMLInputElement>(null);
+  const pathInputRef = React.useRef<HTMLInputElement>(null);
+
+  /**
+   * Process the change in the inputs and update the state
+   */
+  const processChange = () => {
+    // Get the current values
+    const extensionInputValue = extenstionSelectRef.current?.value;
+    const nameInputValue = nameInputRef.current?.value;
+    const pathInputValue = pathInputRef.current?.value ?? newItemData.path;
+    // Check that the values are not null
+    if (!extensionInputValue || !nameInputValue) {
+      pathInputRef.current!.value = '';
+      return;
+    }
+    // Clean the name and add the extension
+    const { withExtension, withoutExtension } = getCorrectNameWithExtension(
+      nameInputValue,
+      type,
+      type === 'file'
+        ? (extensionInputValue ?? newItemData.extension)
+        : undefined
+    );
+    // Get the updated path
+    const newPath = getCorrectPath(pathInputValue, withExtension);
+    // Set the correct input values
+    nameInputRef.current!.value = withoutExtension;
+    pathInputRef.current!.value = newPath;
+    // Update the state with the new info
+    setNewItemData({
+      ...newItemData,
+      name: withExtension,
+      path: newPath,
+      extension: extensionInputValue ?? newItemData.extension ?? '',
+    });
+  };
+
+  /**
+   * Update the file/folder based on the values provided by the user
+   */
+  const continueUpdate = () => {
     if (loading) return;
     try {
+      setError('');
       setLoading(true);
       // Make sure that can be created
       const canCreate = itemCanBeCreated(
@@ -66,24 +114,38 @@ export default function RenameOrMoveItemModal({
         type,
         bucket,
         dict,
-        newItemData.type
+        newItemData.extension
       );
       if (!canCreate.canCreate) {
         throw new Error(canCreate.reason);
       }
       // Update the item
       if (type === 'file') {
+        const newFile = {
+          is_draft: newItemData.is_draft,
+          bucket: bucket?.slug ?? '',
+          contents: newItemData.contents,
+          name: newItemData.name,
+          path: newItemData.path,
+          type: newItemData.extension,
+        } as BucketFile;
         updateFile({
           original: item.original,
-          current: newItemData,
-          type,
-        } as FileNavigatorItem);
-      } else {
+          current: newFile,
+          type: 'file',
+        });
+      } else if (type === 'folder') {
+        const newFolder = {
+          bucket: bucket?.slug ?? '',
+          name: newItemData.name,
+          path: newItemData.path,
+        } as BucketFolder;
         updateFolder({
           original: item.original,
-          current: newItemData as BucketFolder,
-          type,
-        } as FileNavigatorItem);
+          children: item.children ?? [],
+          current: newFolder,
+          type: 'folder',
+        });
       }
       // Close the modal after updating
       irminModal.close();
@@ -101,21 +163,13 @@ export default function RenameOrMoveItemModal({
         <div className='pb-2'>
           <div className='w-[150px] rounded border'>
             <select
+              ref={extenstionSelectRef}
               id='type-select'
               disabled={loading}
               className='h-6 w-[146px] rounded border border-r-4 border-white bg-white px-2 py-1 text-xs'
               aria-label='Select the type of the file'
-              defaultValue={newItemData.type}
-              onChange={(e) => {
-                // Get and set the correct name, path and extension
-                const { name, path, extension } = updateFieldValues({
-                  type: type,
-                  name: newItemData.name,
-                  path: newItemData.path,
-                  extension: e.target.value,
-                });
-                setNewItemData({ ...newItemData, path, name, type: extension });
-              }}
+              defaultValue={newItemData.extension}
+              onChange={() => processChange()}
             >
               <option value='sql'>SQL</option>
               <option value='js'>JavaScript</option>
@@ -135,26 +189,20 @@ export default function RenameOrMoveItemModal({
             : dict.fileNavigator.newNameOfTheFolder}
         </label>
         <input
+          ref={nameInputRef}
           id='name-input'
           disabled={loading}
           type='text'
           className='w-full rounded border p-2 text-sm placeholder:text-gray-400'
-          placeholder='example_name'
-          defaultValue={newItemData.name}
-          onChange={(e) => {
-            // Get the cursor position
-            const cursorPosition = e.target.selectionStart;
-            // Get and set the correct name, path and extension
-            const { name, path } = updateFieldValues({
-              type: type,
-              name: e.target.value,
-              path: newItemData.path,
-              extension: newItemData.type,
-            });
-            setNewItemData({ ...newItemData, path, name });
-            // Restore the cursor position
-            e.target.setSelectionRange(cursorPosition, cursorPosition);
-          }}
+          placeholder='example'
+          defaultValue={
+            getCorrectNameWithExtension(
+              newItemData.name,
+              type,
+              newItemData.extension
+            ).withoutExtension
+          }
+          onChange={() => processChange()}
         />
         <p className='mt-1 pl-1 text-xs text-gray-400'>
           {dict.fileNavigator.original}: {item.original?.name ?? ''}
@@ -168,11 +216,11 @@ export default function RenameOrMoveItemModal({
         </label>
         <div className='flex'>
           <input
+            ref={pathInputRef}
             id='path-input'
             disabled={true}
             type='text'
-            className='w-full rounded border bg-gray-100 p-2 text-sm placeholder:text-gray-300'
-            placeholder='/folder/example/path'
+            className='w-full rounded border bg-gray-100 p-2 text-sm'
             value={newItemData.path}
           />
           <Button
@@ -203,14 +251,7 @@ export default function RenameOrMoveItemModal({
           originalItemPath={item.original?.path ?? null}
           currentSelected={newItemData.path}
           onSelectPath={(selectedPath: string) => {
-            // Get and set the correct name, path and extension
-            const { name, path, extension } = updateFieldValues({
-              type: type,
-              name: newItemData.name,
-              path: selectedPath,
-              extension: newItemData.type,
-            });
-            setNewItemData({ ...newItemData, path, name, type: extension });
+            setNewItemData({ ...newItemData, path: selectedPath });
           }}
         />
       )}
@@ -223,12 +264,12 @@ export default function RenameOrMoveItemModal({
           colorScheme='primary'
           size='sm'
           className='w-full'
-          onClick={continueRename}
+          onClick={continueUpdate}
           disabled={loading}
         >
           {loading
             ? dict.misc.loading
-            : newItemData.type === 'folder'
+            : newItemData.extension === 'folder'
               ? dict.fileNavigator.updateFolder
               : dict.fileNavigator.updateFile}
         </Button>

@@ -7,6 +7,7 @@ import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 import FileNavigator from '@/components/editor/fileNavigator';
 import AddNewFileModal from '@/components/editor/modals/AddNewFileModal';
 import AddNewFolderModal from '@/components/editor/modals/AddNewFolderModal';
+import RenameOrMoveItemModal from '@/components/editor/modals/RenameOrMoveItemModal';
 
 import { useBucket } from '@/context/BucketContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -15,8 +16,6 @@ import { useWorkspace } from '@/context/workspace';
 
 import { Dataset } from '@/types/api/Dataset';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
-
-import RenameOrMoveItemModal from './modals/RenameOrMoveItemModal';
 
 /**
  * Component to wrap the editor pages in.

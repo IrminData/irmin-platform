@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { IoEnterOutline } from 'react-icons/io5';
 
 import Button from '@/components/misc/Button';
 
@@ -38,14 +39,14 @@ const NavLink = ({
   return (
     <li className='group relative' id={linkKey}>
       <Link
-        className={`block h-full overflow-hidden text-nowrap rounded px-2 py-3 text-xs font-light transition-all hover:bg-gray-200 lg:text-sm ${isActive ? 'text-ash_gray underline' : 'text-irmin_black'}`}
+        className={`flex h-full min-h-14 items-center overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-light transition-all hover:bg-white group-hover:bg-white md:text-sm xl:text-base ${isActive ? 'text-ash_gray underline' : 'text-irmin_black'}`}
         aria-label={link.label}
         href={link.href}
       >
         {link.label}
       </Link>
       {link.subpages.length > 0 && (
-        <ul className='absolute left-0 mt-0 hidden w-44 overflow-hidden rounded bg-white py-4 shadow group-hover:block'>
+        <ul className='absolute left-0 -mt-1 hidden w-44 overflow-hidden rounded bg-white py-4 group-hover:block'>
           {link.subpages.map((subpage, idx) => (
             <li
               key={`website-desktop-navigation-link-sublink-${idx}-${linkKey}`}
@@ -92,7 +93,7 @@ const MobileNavLink = ({
   return (
     <li className='relative' id={linkKey}>
       <div
-        className={`block w-full ${!isOpen && 'border-b'} text-nowrap rounded px-4 py-2 text-base font-light ${isActive ? 'text-ash_gray' : 'text-irmin_black'} flex items-center justify-between`}
+        className={`block w-full ${!isOpen && 'border-b'} text-nowrap rounded border-gray-200 px-4 py-2 pb-4 text-base font-light ${isActive ? 'text-ash_gray' : 'text-irmin_black'} flex items-center justify-between`}
         aria-label={link.label}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -158,7 +159,7 @@ export default function WebsiteNavigationContent({
     setTimeout(() => {
       setNavbarOpen(false);
       setAnimate('');
-    }, 200);
+    }, 300);
   };
 
   useEffect(() => {
@@ -169,18 +170,18 @@ export default function WebsiteNavigationContent({
 
   return (
     <>
-      <div className='fixed z-50 w-full bg-white shadow'>
-        <div className='container mx-auto max-w-7xl px-2'>
+      <div className='fixed z-40 max-h-[80px] w-full bg-white bg-opacity-70 backdrop-blur-md'>
+        <div className='container mx-auto max-w-7xl px-2 md:px-4 xl:px-0'>
           <nav className='flex justify-between'>
             <div className='flex w-full items-center justify-between gap-2'>
               <div className='flex items-center justify-start gap-6'>
                 <Link href='/' className='py-4'>
                   <Image
-                    className='h-6 min-h-4 xl:h-12'
+                    className='h-6 min-h-4 w-auto'
                     src='/irmin-logo.svg'
                     alt='Irmin logo'
-                    width={120}
-                    height={120}
+                    width={100}
+                    height={100}
                   />
                 </Link>
                 <ul className='hidden max-w-full gap-1 py-4 md:flex md:justify-center lg:gap-2'>
@@ -193,36 +194,33 @@ export default function WebsiteNavigationContent({
                   ))}
                 </ul>
               </div>
-              <div className='hidden flex-row items-center justify-end gap-2 py-4 md:flex lg:gap-4'>
+              <div className='hidden flex-row items-center justify-end gap-2 md:flex lg:gap-4'>
                 {!profile.isLoading &&
                   (profile.profile ? (
                     <>
                       <Link
                         href='/portal/profile'
-                        className='flex max-w-44 flex-row items-center gap-2 overflow-hidden transition-all hover:opacity-40 lg:max-w-56'
+                        className='flex max-w-44 flex-row items-center gap-2 overflow-hidden pr-4 transition-all hover:opacity-40 lg:max-w-56'
                       >
                         <Image
                           src='/ui-assets/elements/avatar.webp'
                           alt={profile.profile.name ?? ''}
                           width={50}
                           height={50}
-                          className='h-6 w-6 rounded-full xl:h-8 xl:w-8'
+                          className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
                         />
-                        <div className='align-center flex flex-col justify-center'>
-                          <h2 className='text-xs font-normal text-irmin_black lg:text-sm'>
-                            {profile.profile.name ?? ''}
-                          </h2>
-                          <p className='text-xs font-light text-irmin_black'>
-                            {profile.profile.email ?? ''}
-                          </p>
-                        </div>
+                        <h2 className='text-xs font-normal text-irmin_black lg:text-sm'>
+                          {profile.profile.name ?? ''}
+                        </h2>
                       </Link>
                       <Button
                         size='md'
-                        variant='solid'
+                        variant='gradient'
                         colorScheme='secondary'
-                        className='min-w-32'
+                        className='min-w-32 pl-6 pr-3'
                         href='/portal'
+                        iconFirst={false}
+                        icon={<IoEnterOutline size={24} className='ml-1' />}
                       >
                         {dict.website.navigation.goToPortal}
                       </Button>
@@ -233,7 +231,7 @@ export default function WebsiteNavigationContent({
                         size='sm'
                         variant='link'
                         colorScheme='secondary'
-                        className='w-20 md:w-32'
+                        className='h-14 w-20 md:w-32'
                         href='/sign-in'
                         onClick={closeMenu}
                       >
@@ -241,11 +239,13 @@ export default function WebsiteNavigationContent({
                       </Button>
                       <Button
                         size='md'
-                        variant='solid'
+                        variant='gradient'
                         colorScheme='secondary'
-                        className='w-20 md:w-32'
+                        className='min-w-32 pl-6 pr-3'
                         href='/sign-up'
                         onClick={closeMenu}
+                        iconFirst={false}
+                        icon={<IoEnterOutline size={24} className='mr-1' />}
                       >
                         {dict.auth.signIn.signUp}
                       </Button>
@@ -253,143 +253,129 @@ export default function WebsiteNavigationContent({
                   ))}
               </div>
             </div>
-            <button
-              className='navbar-burger self-center md:hidden'
-              onClick={() => {
-                setNavbarOpen(!navbarOpen);
-              }}
-            >
-              <svg
-                width={35}
-                height={35}
-                viewBox='0 0 32 32'
-                fill='none'
-                xmlns='http://www.w3.org/2000/svg'
-              >
-                <path
-                  className='text-irmin_black'
-                  d='M7 12H25C25.2652 12 25.5196 11.8946 25.7071 11.7071C25.8946 11.5196 26 11.2652 26 11C26 10.7348 25.8946 10.4804 25.7071 10.2929C25.5196 10.1054 25.2652 10 25 10H7C6.73478 10 6.48043 10.1054 6.29289 10.2929C6.10536 10.4804 6 10.7348 6 11C6 11.2652 6.10536 11.5196 6.29289 11.7071C6.48043 11.8946 6.73478 12 7 12ZM25 15H7C6.73478 15 6.48043 15.1054 6.29289 15.2929C6.10536 15.4804 6 15.7348 6 16C6 16.2652 6.10536 16.5196 6.29289 16.7071C6.48043 16.8946 6.73478 17 7 17H25C25.2652 17 25.5196 16.8946 25.7071 16.7071C25.8946 16.5196 26 16.2652 26 16C26 15.7348 25.8946 15.4804 25.7071 15.2929C25.5196 15.1054 25.2652 15 25 15ZM25 20H7C6.73478 20 6.48043 20.1054 6.29289 20.2929C6.10536 20.4804 6 20.7348 6 21C6 21.2652 6.10536 21.5196 6.29289 21.7071C6.48043 21.8946 6.73478 22 7 22H25C25.2652 22 25.5196 21.8946 25.7071 21.7071C25.8946 21.5196 26 21.2652 26 21C26 20.7348 25.8946 20.4804 25.7071 20.2929C25.5196 20.1054 25.2652 20 25 20Z'
-                  fill='currentColor'
-                />
-              </svg>
-            </button>
           </nav>
         </div>
       </div>
+      {/* Add a gap to the top of the page, since the nav bar is position fixed */}
       <div className='h-[80px]'></div>
-
+      {/* Mobile navigation */}
       {navbarOpen && (
-        <div className='bg-transparent'>
+        <div
+          className={`fixed right-0 top-0 z-40 h-full w-full bg-white bg-opacity-10 backdrop-blur-sm`}
+        >
           <div
-            className={`navbar-menu fixed right-0 top-0 z-50 h-full w-full bg-irmin_black bg-opacity-50`}
+            className={`fixed bottom-0 right-0 top-0 w-full max-w-sm border-l border-irmin_blue bg-white ${animate} transition-all duration-300`}
           >
-            <div
-              className={`fixed bottom-0 right-0 top-0 w-full max-w-xs bg-white ${animate}`}
-            >
-              <nav className='relative h-full overflow-y-auto px-4 py-20'>
-                <div className='flex h-full flex-col justify-start'>
-                  <Link className='inline-block' href='/'>
-                    <Image
-                      className='mx-auto h-8'
-                      src='/irmin-logo.svg'
-                      alt='Irmin logo'
-                      width={150}
-                      height={50}
-                    />
-                  </Link>
-                  {!profile.isLoading && profile.profile && (
-                    <Link
-                      href='/portal/profile'
-                      className='mt-6 flex w-full flex-row items-center justify-center gap-2 overflow-hidden transition-all hover:opacity-40'
-                    >
-                      <Image
-                        src='/ui-assets/elements/avatar.webp'
-                        alt={profile.profile.name ?? ''}
-                        width={50}
-                        height={50}
-                        className='h-6 w-6 rounded-full xl:h-8 xl:w-8'
-                      />
-                      <div className='align-center flex flex-col justify-center'>
-                        <h2 className='text-xs font-normal text-irmin_black lg:text-sm'>
-                          {profile.profile.name ?? ''}
-                        </h2>
-                        <p className='text-xs font-light text-irmin_black'>
-                          {profile.profile.email ?? ''}
-                        </p>
-                      </div>
-                    </Link>
-                  )}
-                  <ul className='mt-6 flex flex-col gap-2'>
-                    {links.map((link, idx) => (
-                      <MobileNavLink
-                        key={`website-mobile-navigation-link-${idx}`}
-                        linkKey={`website-desktop-navigation-link-${idx}`}
-                        link={link}
-                        closeMenu={closeMenu}
-                      />
-                    ))}
-                  </ul>
-                  <div className='pb-20 pt-4'>
-                    {!profile.isLoading &&
-                      (profile.profile ? (
-                        <Button
-                          href='/portal'
-                          colorScheme='primary'
-                          size='lg'
-                          variant='outline'
-                          className='w-full'
-                          onClick={closeMenu}
-                        >
-                          {dict.website.navigation.goToPortal}
-                        </Button>
-                      ) : (
-                        <div className='flex w-full flex-col items-center justify-stretch gap-2'>
-                          <Button
-                            size='lg'
-                            variant='link'
-                            colorScheme='secondary'
-                            href='/sign-in'
-                            onClick={closeMenu}
-                            className='w-full'
-                          >
-                            {dict.auth.signIn.signIn}
-                          </Button>
-                          <Button
-                            size='lg'
-                            variant='solid'
-                            colorScheme='secondary'
-                            href='/sign-up'
-                            onClick={closeMenu}
-                            className='w-full'
-                          >
-                            {dict.auth.signIn.signUp}
-                          </Button>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              </nav>
-              <button
-                onClick={closeMenu}
-                className='navbar-close absolute right-3 top-5 p-4'
-              >
-                <svg
-                  width={14}
-                  height={14}
-                  viewBox='0 0 12 12'
-                  fill='none'
-                  xmlns='http://www.w3.org/2000/svg'
-                >
-                  <path
-                    d='M6.94004 6L11.14 1.80667C11.2656 1.68113 11.3361 1.51087 11.3361 1.33333C11.3361 1.1558 11.2656 0.985537 11.14 0.860002C11.0145 0.734466 10.8442 0.66394 10.6667 0.66394C10.4892 0.66394 10.3189 0.734466 10.1934 0.860002L6.00004 5.06L1.80671 0.860002C1.68117 0.734466 1.51091 0.663941 1.33337 0.663941C1.15584 0.663941 0.985576 0.734466 0.860041 0.860002C0.734505 0.985537 0.66398 1.1558 0.66398 1.33333C0.66398 1.51087 0.734505 1.68113 0.860041 1.80667L5.06004 6L0.860041 10.1933C0.797555 10.2553 0.747959 10.329 0.714113 10.4103C0.680267 10.4915 0.662842 10.5787 0.662842 10.6667C0.662842 10.7547 0.680267 10.8418 0.714113 10.9231C0.747959 11.0043 0.797555 11.078 0.860041 11.14C0.922016 11.2025 0.99575 11.2521 1.07699 11.2859C1.15823 11.3198 1.24537 11.3372 1.33337 11.3372C1.42138 11.3372 1.50852 11.3198 1.58976 11.2859C1.671 11.2521 1.74473 11.2025 1.80671 11.14L6.00004 6.94L10.1934 11.14C10.2554 11.2025 10.3291 11.2521 10.4103 11.2859C10.4916 11.3198 10.5787 11.3372 10.6667 11.3372C10.7547 11.3372 10.8419 11.3198 10.9231 11.2859C11.0043 11.2521 11.0781 11.2025 11.14 11.14C11.2025 11.078 11.2521 11.0043 11.286 10.9231C11.3198 10.8418 11.3372 10.7547 11.3372 10.6667C11.3372 10.5787 11.3198 10.4915 11.286 10.4103C11.2521 10.329 11.2025 10.2553 11.14 10.1933L6.94004 6Z'
-                    fill='#556987'
+            <nav className='relative flex h-full flex-col justify-start overflow-y-scroll px-4 pb-8 pt-24'>
+              <Link className='inline-block' href='/'>
+                <Image
+                  className='mx-auto h-8'
+                  src='/irmin-logo.svg'
+                  alt='Irmin logo'
+                  width={150}
+                  height={50}
+                />
+              </Link>
+              <ul className='mt-12 flex flex-col gap-4'>
+                {links.map((link, idx) => (
+                  <MobileNavLink
+                    key={`website-mobile-navigation-link-${idx}`}
+                    linkKey={`website-desktop-navigation-link-${idx}`}
+                    link={link}
+                    closeMenu={closeMenu}
                   />
-                </svg>
-              </button>
-            </div>
+                ))}
+              </ul>
+              <div className='mt-auto flex flex-col'>
+                {!profile.isLoading &&
+                  (profile.profile ? (
+                    <Button
+                      href='/portal'
+                      colorScheme='light'
+                      size='md'
+                      variant='gradient'
+                      className='w-full'
+                      onClick={closeMenu}
+                      icon={<IoEnterOutline size={24} className='mr-1' />}
+                    >
+                      {dict.website.navigation.goToPortal}
+                    </Button>
+                  ) : (
+                    <div className='flex w-full flex-col items-center justify-stretch gap-2'>
+                      <Button
+                        size='md'
+                        variant='link'
+                        colorScheme='secondary'
+                        href='/sign-in'
+                        onClick={closeMenu}
+                        className='w-full'
+                      >
+                        {dict.auth.signIn.signIn}
+                      </Button>
+                      <Button
+                        href='/sign-up'
+                        colorScheme='light'
+                        size='md'
+                        variant='gradient'
+                        onClick={closeMenu}
+                        className='w-full'
+                        icon={<IoEnterOutline size={24} className='mr-1' />}
+                      >
+                        {dict.auth.signIn.signUp}
+                      </Button>
+                    </div>
+                  ))}
+
+                {!profile.isLoading && profile.profile && (
+                  <Link
+                    href='/portal/profile'
+                    className='mt-6 flex w-full flex-row items-center justify-center gap-2 overflow-hidden transition-all hover:opacity-40'
+                  >
+                    <Image
+                      src='/ui-assets/elements/avatar.webp'
+                      alt={profile.profile.name ?? ''}
+                      width={50}
+                      height={50}
+                      className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
+                    />
+                    <h2 className='text-xs font-normal text-irmin_black lg:text-sm'>
+                      {profile.profile.name ?? ''}
+                    </h2>
+                  </Link>
+                )}
+              </div>
+            </nav>
           </div>
         </div>
       )}
+      {/* Mobile navigation button */}
+      <div className='fixed right-2 top-2 z-50 md:hidden'>
+        <button
+          className='relative h-9 w-12 scale-110 transform rounded-full focus:outline-none'
+          onClick={() => {
+            if (navbarOpen) closeMenu();
+            else setNavbarOpen(true);
+          }}
+          aria-label='Open or close the navigation menu on mobile'
+          type='button'
+        >
+          <span
+            className={`absolute block h-0.5 w-7 transform bg-current transition duration-500 ease-in-out ${
+              navbarOpen ? 'rotate-45' : '-translate-y-1.5'
+            }`}
+          ></span>
+          <span
+            className={`absolute block h-0.5 w-5 transform bg-current transition duration-500 ease-in-out ${
+              navbarOpen ? 'opacity-0' : ''
+            }`}
+          ></span>
+          <span
+            className={`absolute block h-0.5 w-7 transform bg-current transition duration-500 ease-in-out ${
+              navbarOpen ? '-rotate-45' : 'translate-y-1.5'
+            }`}
+          ></span>
+        </button>
+      </div>
     </>
   );
 }

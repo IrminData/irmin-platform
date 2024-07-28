@@ -245,6 +245,8 @@ export default function PortalNavigation({
                 <PortalNavWorkspaceSwitcher setIsMenuOpen={setIsMenuOpen} />
               </div>
 
+              {hideItemLabels && <div className='mb-12'></div>}
+
               {/* No workspace links */}
               {!workspaceSlug && (
                 <div id='portal-links'>

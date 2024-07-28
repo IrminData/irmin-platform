@@ -4,9 +4,9 @@ import React, { useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { useProfile } from '@/context/ProfileContext';
+import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
 
-import LoadingSkeleton from './misc/LoadingSkeleton';
+import { useProfile } from '@/context/ProfileContext';
 
 /**
  * Protected route wrapper

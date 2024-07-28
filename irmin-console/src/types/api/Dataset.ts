@@ -1,4 +1,4 @@
-import { Workflow } from './Workflow';
+import { Workflow } from '@/types/api/Workflow';
 
 /**
  * Dataset type

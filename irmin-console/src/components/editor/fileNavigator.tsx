@@ -190,7 +190,7 @@ const FileNavigator = ({
     <div id='file-navigator' className='relative'>
       <div className='mb-0 flex flex-row justify-start gap-0 border-b border-gray-200 bg-gray-100 p-0 lg:justify-stretch'>
         <Button
-          className='w-[30%] rounded-none px-2 py-2 shadow-none lg:w-1/2'
+          className='w-[30%] rounded-none px-2 py-2 text-xs shadow-none hover:bg-gray-200 lg:w-1/2 lg:text-xs'
           variant='solid'
           colorScheme='light'
           size='sm'
@@ -201,7 +201,7 @@ const FileNavigator = ({
           {dict.fileNavigator.createFile}
         </Button>
         <Button
-          className='w-[30%] rounded-none px-2 py-2 shadow-none lg:w-1/2'
+          className='w-[30%] rounded-none px-2 py-2 text-xs shadow-none hover:bg-gray-200 lg:w-1/2 lg:text-xs'
           variant='solid'
           colorScheme='light'
           size='sm'

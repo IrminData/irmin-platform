@@ -10,7 +10,7 @@ const en = {
   },
   website: {
     navigation: {
-      goToPortal: 'Go to portal',
+      goToPortal: 'Irmin Portal',
     },
     footer: {
       description:

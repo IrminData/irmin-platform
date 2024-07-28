@@ -4,6 +4,7 @@ import { getURL } from '@/lib/utils/wordpressLinkUtils';
 import WordPress from '@/lib/wordpress';
 
 import Button from '@/components/misc/Button';
+import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
 
 import { TeamSection } from '@/types/website/Wordpress';
 
@@ -79,6 +80,11 @@ export default async function WebsiteTeamSection({
                   size='lg'
                   variant={button.variant}
                   colorScheme={button.color_scheme}
+                  icon={
+                    button.icon ? (
+                      <DynamicFaIcon name={button.icon} />
+                    ) : undefined
+                  }
                   ariaLabel={button.text}
                   href={getURL(button.link)}
                 >

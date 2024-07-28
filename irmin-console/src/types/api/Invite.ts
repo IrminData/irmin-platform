@@ -1,4 +1,4 @@
-import { IrminRole } from './IrminRole';
+import { IrminRole } from '@/types/api/IrminRole';
 
 /**
  * Invite type

@@ -151,7 +151,7 @@ export const BucketProvider = ({
    * @returns Updated bucket
    */
   const constructUpdatedBucketForFolder = (folder: FileNavigatorItem) => {
-    if (!currentBucket) return;
+    if (!currentBucket) throw new Error('Bucket not found');
     // Construct the updated bucket
     const updatedBucket = { ...currentBucket };
     updatedBucket.folders = updatedBucket.folders?.map((f) => {
@@ -189,7 +189,7 @@ export const BucketProvider = ({
    * Does not update the bucket or the item list, only the editor tabs
    */
   const openNewTab = () => {
-    if (!currentBucket) return;
+    if (!currentBucket) throw new Error('Bucket not found');
     // Create a new tab with a random file name and switch to it
     const prevOpenFileTabs = [...openFileTabs];
     setOpenFileTabs([
@@ -228,7 +228,7 @@ export const BucketProvider = ({
    */
   const updateFileContents = async (file: BucketFile) => {
     try {
-      if (!currentBucket) return;
+      if (!currentBucket) throw new Error('Bucket not found');
       // Update the context state
       const updatedBucket = { ...currentBucket };
       updatedBucket.files = updatedBucket.files.map((f) =>
@@ -267,7 +267,7 @@ export const BucketProvider = ({
    */
   const createFile = async (file: FileNavigatorItem) => {
     try {
-      if (!currentBucket) return;
+      if (!currentBucket) throw new Error('Bucket not found');
       // Update the context state
       const updatedBucket = { ...currentBucket };
       updatedBucket.files.push(file.current as BucketFile);
@@ -298,7 +298,7 @@ export const BucketProvider = ({
    */
   const updateFile = async (file: FileNavigatorItem) => {
     try {
-      if (!currentBucket) return;
+      if (!currentBucket) throw new Error('Bucket not found');
       // Update the context state
       const updatedBucket = { ...currentBucket };
       updatedBucket.files = updatedBucket.files.map((f) =>
@@ -339,7 +339,7 @@ export const BucketProvider = ({
    */
   const deleteFile = async (file: FileNavigatorItem) => {
     try {
-      if (!currentBucket) return;
+      if (!currentBucket) throw new Error('Bucket not found');
       // Update the context state
       const updatedBucket = { ...currentBucket };
       updatedBucket.files = updatedBucket.files.filter(
@@ -376,7 +376,7 @@ export const BucketProvider = ({
    */
   const createFolder = async (folder: FileNavigatorItem) => {
     try {
-      if (!currentBucket) return;
+      if (!currentBucket) throw new Error('Bucket not found');
       // Update the context state
       const updatedBucket = { ...currentBucket };
       updatedBucket.folders.push(folder.current as BucketFolder);
@@ -412,7 +412,8 @@ export const BucketProvider = ({
     try {
       // Construct the updated bucket
       const updatedBucket = constructUpdatedBucketForFolder(folder);
-      if (!updatedBucket) return;
+      if (!updatedBucket)
+        throw new Error('Bucket failed to construct for folder');
       // Update the context state
       updateStateWithBucket(updatedBucket);
       // Update the open file tabs
@@ -457,7 +458,7 @@ export const BucketProvider = ({
    */
   const deleteFolder = async (folder: FileNavigatorItem) => {
     try {
-      if (!currentBucket) return;
+      if (!currentBucket) throw new Error('Bucket not found');
       // Remove the folder and its children from the context state
       const updatedBucket = { ...currentBucket };
       updatedBucket.folders = updatedBucket.folders.filter(

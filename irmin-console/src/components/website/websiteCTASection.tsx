@@ -4,6 +4,7 @@ import { getURL } from '@/lib/utils/wordpressLinkUtils';
 import WordPress from '@/lib/wordpress';
 
 import Button from '@/components/misc/Button';
+import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
 
 import { CTASection } from '@/types/website/Wordpress';
 
@@ -77,6 +78,11 @@ export default async function WebsiteCTASection({
                       className={`w-full`}
                       ariaLabel={button.text}
                       href={getURL(button.link)}
+                      icon={
+                        button.icon ? (
+                          <DynamicFaIcon name={button.icon} />
+                        ) : undefined
+                      }
                     >
                       {button.text}
                     </Button>

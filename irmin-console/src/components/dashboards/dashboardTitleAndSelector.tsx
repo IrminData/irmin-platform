@@ -1,10 +1,10 @@
 import React from 'react';
 
+import PortalTitle from '@/components/portalTitle';
+
 import { useLocale } from '@/context/LocaleContext';
 
 import { Dashboard } from '@/types/api/Dashboard';
-
-import PortalTitle from '../portalTitle';
 
 /**
  * Dashboard title and selector

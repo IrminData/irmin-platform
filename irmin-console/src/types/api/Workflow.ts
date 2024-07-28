@@ -1,5 +1,5 @@
-import { Connector } from './Connector';
-import { Dataset } from './Dataset';
+import { Connector } from '@/types/api/Connector';
+import { Dataset } from '@/types/api/Dataset';
 
 /**
  * Types of workflows that can be created

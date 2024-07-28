@@ -6,6 +6,7 @@ import AuthService from '@/lib/api/AuthService';
 
 import { AiOutlineConsoleSql } from 'react-icons/ai';
 import { CiDatabase } from 'react-icons/ci';
+import { GrUserSettings } from 'react-icons/gr';
 import { IoChevronBackCircleOutline } from 'react-icons/io5';
 import {
   MdCode,
@@ -131,7 +132,7 @@ export const usePortalNavLinks = (): {
     {
       title: dict.portalNavigation.links.myProfile,
       href: `/${locale}/portal/profile`,
-      icon: <TbSettings />,
+      icon: <GrUserSettings />,
       active: isActiveLink(`/${locale}/portal/profile`),
     },
     {

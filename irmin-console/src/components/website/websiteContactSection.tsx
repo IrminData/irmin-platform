@@ -79,6 +79,11 @@ export default function WebsiteContactSection({
                     <Button
                       variant={button.variant}
                       colorScheme={button.color_scheme}
+                      icon={
+                        button.icon ? (
+                          <DynamicFaIcon name={button.icon} />
+                        ) : undefined
+                      }
                       size='md'
                       className={`w-full`}
                       href={getURL(button.link)}

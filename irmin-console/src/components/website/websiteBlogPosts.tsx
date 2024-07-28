@@ -3,13 +3,13 @@ import { notFound } from 'next/navigation';
 import { Locale } from '@/dictionaries';
 import WordPress from '@/lib/wordpress';
 
+import WebsiteBlogPostsContent from '@/components/website/websiteBlogPostsContent';
+
 import {
   WebsiteArticle,
   WebsiteArticleCategory,
 } from '@/types/website/WebsiteContent';
 import { ArticlesSection } from '@/types/website/Wordpress';
-
-import WebsiteBlogPostsContent from './websiteBlogPostsContent';
 
 /**
  * Website articles list section

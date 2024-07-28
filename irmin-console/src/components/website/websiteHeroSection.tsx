@@ -4,6 +4,7 @@ import { getURL } from '@/lib/utils/wordpressLinkUtils';
 import WordPress from '@/lib/wordpress';
 
 import Button from '@/components/misc/Button';
+import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
 
 import { HeroSection } from '@/types/website/Wordpress';
 
@@ -49,48 +50,51 @@ export default async function WebsiteHeroSection({
           backgroundPosition: 'center',
         }}
       >
-        <div className='pb-28 pt-12 md:pb-72 lg:pt-32'>
-          <div className='container mx-auto max-w-7xl px-4'>
-            <div className='mx-auto max-w-3xl text-center'>
-              <h1 className='mb-6 text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:text-6xl'>
-                {section.title_parts.map((titlePart, index) => (
-                  <span
-                    key={`title-part-${index}`}
-                    className={`${
-                      !titlePart.green ? 'text-irmin_black' : 'text-irmin_green'
-                    }`}
+        <div className='container mx-auto flex min-h-[60vh] max-w-7xl items-end justify-center px-4 pb-12'>
+          <div className='w-full max-w-3xl text-center'>
+            <h1 className='mb-6 text-3xl font-bold leading-tight tracking-tighter md:text-4xl lg:text-6xl'>
+              {section.title_parts.map((titlePart, index) => (
+                <span
+                  key={`title-part-${index}`}
+                  className={`${
+                    !titlePart.green ? 'text-irmin_black' : 'text-irmin_green'
+                  }`}
+                >
+                  {titlePart.title}
+                </span>
+              ))}
+            </h1>
+            <p className='mx-auto mb-8 max-w-3xl text-sm font-light text-irmin_black md:text-base'>
+              {section.description}
+            </p>
+            <div className='flex flex-wrap justify-center'>
+              {section.buttons.map((button, index) => (
+                <div
+                  className='w-full py-1 md:mr-4 md:w-auto md:py-0'
+                  key={`button-${index}`}
+                >
+                  <Button
+                    size='lg'
+                    variant={button.variant}
+                    colorScheme={button.color_scheme}
+                    icon={
+                      button.icon ? (
+                        <DynamicFaIcon name={button.icon} />
+                      ) : undefined
+                    }
+                    className='w-full'
+                    ariaLabel={button.text}
+                    href={getURL(button.link)}
                   >
-                    {titlePart.title}
-                  </span>
-                ))}
-              </h1>
-              <p className='mx-auto mb-8 max-w-3xl text-sm font-light text-irmin_black md:text-base'>
-                {section.description}
-              </p>
-              <div className='flex flex-wrap justify-center'>
-                {section.buttons.map((button, index) => (
-                  <div
-                    className='w-full py-1 md:mr-4 md:w-auto md:py-0'
-                    key={`button-${index}`}
-                  >
-                    <Button
-                      size='lg'
-                      variant={button.variant}
-                      colorScheme={button.color_scheme}
-                      className='w-full'
-                      ariaLabel={button.text}
-                      href={getURL(button.link)}
-                    >
-                      {button.text}
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                    {button.text}
+                  </Button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
-      <div className='container mx-auto -mt-32 max-w-7xl px-4 py-20 md:-mt-72 md:pb-32'>
+      <div className='container mx-auto max-w-7xl px-4 pb-8'>
         <div className='relative mx-auto max-w-max'>
           <Image
             className='absolute -left-8 -top-8 z-20 w-28 md:w-auto'

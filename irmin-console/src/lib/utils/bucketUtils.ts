@@ -10,124 +10,35 @@ import {
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
- * Update the field values for inputs (for file navigator modals)
- *
- * @remarks
- *
- * Make sure the name and path are correct
- * Update inputs with correct values
- *
- * Requires the form fields to have specific IDs:
- * - name-input
- * - path-input
- * - type-select
- *
- * Currently this function is used by the editor modals.
- *
- * @param navItemData - The set of data for the item
- * @param navItemData.type - The type of the item (file or folder)
- * @param navItemData.name - The name of the file
- * @param navItemData.path - The path of the file
- * @param navItemData.extension - The extension of the file
- *
- * @returns The correct name and path
- */
-export const updateFieldValues = ({
-  type,
-  name,
-  path,
-  extension,
-}: {
-  type: string;
-  name: string;
-  path: string;
-  extension: string;
-}) => {
-  try {
-    if (type !== 'file' && type !== 'folder') return { name, path, extension };
-    const correctName = getCorrectNameWithExtension(
-      name,
-      type,
-      extension as IrminFileType
-    );
-    const correctPath = getCorrectPath(path, correctName);
-    // Update the field values
-    try {
-      const nameInput = document.getElementById(
-        'name-input'
-      ) as HTMLInputElement;
-      const pathInput = document.getElementById(
-        'path-input'
-      ) as HTMLInputElement;
-      if (nameInput) nameInput.value = correctName;
-      if (pathInput) pathInput.value = correctPath;
-      const selectField = document.getElementById(
-        'type-select'
-      ) as HTMLSelectElement;
-      if (selectField) selectField.value = extension;
-    } catch (error) {
-      console.error('Error updating field values by IDs:', error);
-    }
-    // Return the correct name, path and extension
-    return {
-      name: correctName,
-      path: correctPath,
-      extension,
-    };
-  } catch (error) {
-    console.error('Error updating field values:', error);
-    return { name, path, extension };
-  }
-};
-
-/**
  * Format the file or folder name
  * Make sure the name is alphanumeric and has the correct extension
  * @param name The name of the file
  * @param type The type of the object (file or folder)
  * @param desiredExtension The desired extension of the file (sql, js, py)
- * @returns The correct name with extension
+ * @returns The correct name with extension and without extension
  */
 export const getCorrectNameWithExtension = (
   name: string,
   type: 'file' | 'folder',
   desiredExtension?: IrminFileType
-) => {
+): {
+  withExtension: string;
+  withoutExtension: string;
+} => {
+  // Remove all existing extensions from the name, regex searching .sql, .js, .py and (.*) and replacing with empty string
+  const nameWithoutExtensions = name.replace(/\.(sql|js|py)(.*)$/, '');
   // Replace all non-alphanumeric characters with underscores, except for dots
-  const formattedName = name.replace(/[^a-zA-Z0-9.]/g, '_').trim();
+  const formattedName = nameWithoutExtensions
+    .replace(/[^a-zA-Z0-9.]/g, '_')
+    .trim();
   // Skip if not a file
-  if (type !== 'file') return formattedName;
-  // Remove the current extension from name if any (. and everything after it)
-  const nameWithoutExtensions = formattedName.replace(/\..*$/, '');
+  if (type !== 'file')
+    return { withExtension: formattedName, withoutExtension: formattedName };
   // Add extension to the name
-  const nameWithExtension = `${nameWithoutExtensions}.${desiredExtension ?? 'sql'}`;
-  return nameWithExtension;
-};
-
-/**
- * Format the file or folder path
- * Make sure the path is alphanumeric and includes the name of the object being created
- * @param path The path of the file
- * @param desiredName The name of the file
- * @returns The correct path with the desired name
- */
-export const getCorrectPath = (path: string, desiredName: string) => {
-  // Replace all non-alphanumeric characters with underscores, except for dots and slashes
-  let formattedPath = path.replace(/[^a-zA-Z0-9./]/g, '_').trim();
-  // Make sure path starts with /
-  formattedPath = formattedPath.startsWith('/')
-    ? formattedPath
-    : `/${formattedPath}`;
-  // Remove the last / from the path, if it is the last character, but not the only character
-  formattedPath =
-    formattedPath.length > 1 && formattedPath.endsWith('/')
-      ? formattedPath.slice(0, -1)
-      : formattedPath;
-  // Remove all dots from the path
-  formattedPath = formattedPath.replace(/\./g, '');
-  // Remove the final part of the part and replace with /desiredName
-  formattedPath = formattedPath.replace(/\/[^/]*$/, `/${desiredName}`);
-  return formattedPath;
+  return {
+    withExtension: `${formattedName}.${desiredExtension ?? 'sql'}`,
+    withoutExtension: formattedName,
+  };
 };
 
 /**
@@ -174,7 +85,7 @@ export const itemCanBeCreated = function (
   if (nameWithoutExtensions.length > 255)
     return { canCreate: false, reason: dict.fileNavigator.errors.longName };
   // Make sure name is correct
-  const correctName = getCorrectNameWithExtension(
+  const { withExtension: correctName } = getCorrectNameWithExtension(
     name,
     type,
     extension as IrminFileType
@@ -205,41 +116,6 @@ export const itemCanBeCreated = function (
   return {
     canCreate: true,
   };
-};
-
-/**
- * Get the parent path from a given path
- * @param path - Path to get the parent from
- * @returns Parent path, or '/' if the path is root
- */
-const getParentPath = (path: string, name?: string): string => {
-  // Remove the first / from the path if it exists, and split the path into segments
-  const pathSegments = path.replace(/^\//, '').split('/');
-  // If the last element is the name or name is not provided, remove it
-  if (!name || pathSegments[pathSegments.length - 1] === name)
-    pathSegments.pop();
-  return '/' + pathSegments.join('/');
-};
-
-/**
- * Get the Irmin File Type from a given path or file name
- * @param path - Path to get the file type from
- * @returns Irmin File Type or null if the file type is not recognized
- */
-export const getIrminFileTypeFromPath = (
-  path: string
-): IrminFileType | null => {
-  const extension = path.split('.').pop();
-  switch (extension) {
-    case 'sql':
-      return 'sql';
-    case 'js':
-      return 'js';
-    case 'py':
-      return 'py';
-    default:
-      return null;
-  }
 };
 
 /**
@@ -280,4 +156,46 @@ export const transformBucketToFileNavItem = (
       .filter((file) => getParentPath(file.path) === '/')
       .map(transformFile),
   ];
+};
+
+/**
+ * Format the file or folder path
+ * Make sure the path is alphanumeric and includes the name of the object being created
+ * @param path The path of the file
+ * @param desiredName The name of the file
+ * @returns The correct path with the desired name
+ */
+export const getCorrectPath = (path: string, desiredName: string) => {
+  // Replace all non-alphanumeric characters with underscores, except for dots and slashes
+  let formattedPath = path.replace(/[^a-zA-Z0-9./]/g, '_').trim();
+  // Make sure path starts with /
+  formattedPath = formattedPath.startsWith('/')
+    ? formattedPath
+    : `/${formattedPath}`;
+  // Remove the last / from the path, if it is the last character, but not the only character
+  formattedPath =
+    formattedPath.length > 1 && formattedPath.endsWith('/')
+      ? formattedPath.slice(0, -1)
+      : formattedPath;
+  // Remove all dots from the path
+  formattedPath = formattedPath.replace(/\./g, '');
+  // Remove the final part of the part and replace with /desiredName
+  formattedPath = formattedPath.replace(/\/[^/]*$/, `/${desiredName}`);
+  return formattedPath;
+};
+
+/**
+ * Get the parent path from a given path
+ * @param path - Path to get the parent from
+ * @returns Parent path, or '/' if the path is root
+ *
+ * @internal
+ */
+const getParentPath = (path: string, name?: string): string => {
+  // Remove the first / from the path if it exists, and split the path into segments
+  const pathSegments = path.replace(/^\//, '').split('/');
+  // If the last element is the name or name is not provided, remove it
+  if (!name || pathSegments[pathSegments.length - 1] === name)
+    pathSegments.pop();
+  return '/' + pathSegments.join('/');
 };

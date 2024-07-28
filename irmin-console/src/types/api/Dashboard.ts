@@ -1,4 +1,4 @@
-import { Widget } from './Widget';
+import { Widget } from '@/types/api/Widget';
 
 /**
  * Dashboard type

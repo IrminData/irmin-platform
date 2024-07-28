@@ -1,6 +1,7 @@
 import { getURL } from '@/lib/utils/wordpressLinkUtils';
 
 import Button from '@/components/misc/Button';
+import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
 
 import { CTADarkSection } from '@/types/website/Wordpress';
 
@@ -54,6 +55,11 @@ export default function WebsiteCTADarkSection({
                   className='mb-2 flex-grow'
                   ariaLabel={button.text}
                   href={getURL(button.link)}
+                  icon={
+                    button.icon ? (
+                      <DynamicFaIcon name={button.icon} />
+                    ) : undefined
+                  }
                 >
                   {button.text}
                 </Button>

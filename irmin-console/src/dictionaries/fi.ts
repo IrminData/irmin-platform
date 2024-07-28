@@ -10,7 +10,7 @@ const fi = {
   },
   website: {
     navigation: {
-      goToPortal: 'Sovellukseen',
+      goToPortal: 'Irmin Portal',
     },
     footer: {
       description:

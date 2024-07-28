@@ -2,7 +2,11 @@
 
 import React, { useState } from 'react';
 
-import { itemCanBeCreated, updateFieldValues } from '@/lib/utils/bucketUtils';
+import {
+  getCorrectNameWithExtension,
+  getCorrectPath,
+  itemCanBeCreated,
+} from '@/lib/utils/bucketUtils';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
@@ -43,20 +47,46 @@ export default function AddNewFolderModal({
     path: '',
   });
 
+  const nameInputRef = React.useRef<HTMLInputElement>(null);
+  const pathInputRef = React.useRef<HTMLInputElement>(null);
+
   /**
-   * Create the new folder based on the data
-   *
-   * @remarks
-   *
-   * Enable loading state when processing
-   * Make sure the folder can be created
-   * Create the new folder
-   * Show an error if the creation fails
-   * Close the modal after creation
+   * Process the change in the inputs and update the state
+   */
+  const processChange = () => {
+    // Get the current values
+    const nameInputValue = nameInputRef.current?.value ?? newItemData.name;
+    const pathInputValue = pathInputRef.current?.value ?? newItemData.path;
+    // Check that the values are not null
+    if (!nameInputValue) {
+      pathInputRef.current!.value = '';
+      return;
+    }
+    // Clean the name and add the extension
+    const { withExtension, withoutExtension } = getCorrectNameWithExtension(
+      nameInputValue,
+      'folder'
+    );
+    // Get the updated path
+    const newPath = getCorrectPath(pathInputValue, withExtension);
+    // Set the correct input values
+    nameInputRef.current!.value = withoutExtension;
+    pathInputRef.current!.value = newPath;
+    // Update the state with the new info
+    setNewItemData({
+      ...newItemData,
+      name: withExtension,
+      path: newPath,
+    });
+  };
+
+  /**
+   * Create the folder based on the values provided by the user
    */
   const continueCreation = () => {
     if (loading) return;
     try {
+      setError('');
       setLoading(true);
       // Make sure that can be created
       const canCreate = itemCanBeCreated(
@@ -96,37 +126,28 @@ export default function AddNewFolderModal({
       <div className='pb-3'>
         <label className='text-xs'>{dict.fileNavigator.newFolderName}</label>
         <input
+          ref={nameInputRef}
           id='name-input'
           disabled={loading}
           type='text'
           className='w-full rounded border p-2 text-sm placeholder:text-gray-400'
           placeholder='my_folder_name'
-          defaultValue={newItemData.name}
-          onChange={(e) => {
-            // Get the cursor position
-            const cursorPosition = e.target.selectionStart;
-            // Get and set the correct name and path
-            const { name, path } = updateFieldValues({
-              type: 'folder',
-              name: e.target.value,
-              path: newItemData.path,
-              extension: '',
-            });
-            setNewItemData({ ...newItemData, path, name });
-            // Restore the cursor position
-            e.target.setSelectionRange(cursorPosition, cursorPosition);
-          }}
+          defaultValue={
+            getCorrectNameWithExtension(newItemData.name, 'folder')
+              .withoutExtension
+          }
+          onChange={() => processChange()}
         />
       </div>
       <div className='pb-3'>
         <label className='text-xs'>{dict.fileNavigator.newFolderPath}</label>
         <div className='flex'>
           <input
+            ref={pathInputRef}
             id='path-input'
             disabled={true}
             type='text'
-            className='w-full rounded border bg-gray-100 p-2 text-sm placeholder:text-gray-300'
-            placeholder='/folder/example/path'
+            className='w-full rounded border bg-gray-100 p-2 text-sm'
             value={newItemData.path}
           />
           <Button
@@ -154,14 +175,7 @@ export default function AddNewFolderModal({
           originalItemPath={null}
           currentSelected={newItemData.path}
           onSelectPath={(selectedPath: string) => {
-            // Get and set the correct name and path
-            const { name, path } = updateFieldValues({
-              type: 'folder',
-              name: newItemData.name,
-              path: selectedPath,
-              extension: '',
-            });
-            setNewItemData({ ...newItemData, path, name });
+            setNewItemData({ ...newItemData, path: selectedPath });
           }}
         />
       )}

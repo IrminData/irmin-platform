@@ -503,8 +503,15 @@ export interface NewsletterSection {
 interface Button {
   text: string;
   link: string | WordpressLink;
-  variant: 'link' | 'outline' | 'solid';
-  color_scheme: 'primary' | 'secondary' | 'tertiary' | 'gray' | 'black';
+  icon?: string | null;
+  variant: 'link' | 'outline' | 'solid' | 'gradient';
+  color_scheme:
+    | 'primary'
+    | 'secondary'
+    | 'tertiary'
+    | 'gray'
+    | 'black'
+    | 'light';
 }
 
 /**

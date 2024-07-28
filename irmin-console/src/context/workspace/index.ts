@@ -1,5 +1,5 @@
-import { useWorkspace } from './useWorkspace';
-import WorkspaceContext from './WorkspaceContext';
+import { useWorkspace } from '@/context/workspace/useWorkspace';
+import WorkspaceContext from '@/context/workspace/WorkspaceContext';
 import {
   useCancelInvite,
   useChangeInvite,
@@ -19,8 +19,8 @@ import {
   useSendInvite,
   useSwitchWorkspace,
   useTransferOwnership,
-} from './workspaceHooks';
-import { WorkspaceProvider } from './WorkspaceProvider';
+} from '@/context/workspace/workspaceHooks';
+import { WorkspaceProvider } from '@/context/workspace/WorkspaceProvider';
 
 /**
  * Export all workspace context functionality

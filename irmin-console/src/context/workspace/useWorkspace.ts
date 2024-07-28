@@ -2,7 +2,7 @@
 
 import { useContext } from 'react';
 
-import WorkspaceContext from './WorkspaceContext';
+import WorkspaceContext from '@/context/workspace/WorkspaceContext';
 
 /**
  * Hook to use the workspace context

@@ -24,7 +24,7 @@ export default function PortalNavProfile({
   const profile = useProfile();
 
   if (!profile.profile) {
-    return <LoadingSkeleton className='h-12 w-full' />;
+    return <LoadingSkeleton className='h-8 w-full' />;
   }
 
   return (

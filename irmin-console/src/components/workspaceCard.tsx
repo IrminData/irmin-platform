@@ -84,28 +84,28 @@ const WorkspaceCard = ({
           <div className='mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-2'>
             <div className='flex flex-col items-start gap-1'>
               <div className='flex flex-col items-start gap-1'>
-                <p className='w-full text-sm font-medium text-irmin_blue'>
+                <p className='w-full text-sm font-normal text-irmin_blue'>
                   <GoSync className='mr-1 inline h-3 text-gray-400' />
                   {connectionCount}
-                  <span className='inline pl-1 text-xs font-light text-gray-400'>
+                  <span className='inline pl-1 text-xs text-gray-400'>
                     {dict.workspaceSwitcher.connections}
                   </span>
                 </p>
               </div>
               <div className='flex flex-col items-start gap-1'>
-                <p className='w-full text-sm font-medium text-irmin_blue'>
+                <p className='w-full text-sm font-normal text-irmin_blue'>
                   <GoDatabase className='mr-1 inline h-3 text-gray-400' />
                   {datasetCount}
-                  <span className='inline pl-1 text-xs font-light text-gray-400'>
+                  <span className='inline pl-1 text-xs text-gray-400'>
                     {dict.workspaceSwitcher.datasets}
                   </span>
                 </p>
               </div>
               <div className='flex flex-col items-start gap-1'>
-                <p className='w-full text-sm font-medium text-irmin_blue'>
+                <p className='w-full text-sm font-normal text-irmin_blue'>
                   <GoPlay className='mr-1 inline h-3 text-gray-400' />
                   {actionCount}
-                  <span className='inline pl-1 text-xs font-light text-gray-400'>
+                  <span className='inline pl-1 text-xs text-gray-400'>
                     {dict.workspaceSwitcher.actions}
                   </span>
                 </p>

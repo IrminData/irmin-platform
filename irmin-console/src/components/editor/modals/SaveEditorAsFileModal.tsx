@@ -2,7 +2,11 @@
 
 import React, { useState } from 'react';
 
-import { itemCanBeCreated, updateFieldValues } from '@/lib/utils/bucketUtils';
+import {
+  getCorrectNameWithExtension,
+  getCorrectPath,
+  itemCanBeCreated,
+} from '@/lib/utils/bucketUtils';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
@@ -56,20 +60,51 @@ export default function SaveEditorAsFileModal({
     extension: defaultType,
   });
 
+  const extenstionSelectRef = React.useRef<HTMLSelectElement>(null);
+  const nameInputRef = React.useRef<HTMLInputElement>(null);
+  const pathInputRef = React.useRef<HTMLInputElement>(null);
+
   /**
-   * Create the new item based on the data
-   *
-   * @remarks
-   *
-   * Enable loading state when processing
-   * Make sure the item can be created
-   * Create the new item
-   * Show an error if the creation fails
-   * Close the modal after creation
+   * Process the change in the inputs and update the state
+   */
+  const processChange = () => {
+    // Get the current values
+    const extensionInputValue =
+      extenstionSelectRef.current?.value ?? newItemData.extension;
+    const nameInputValue = nameInputRef.current?.value ?? newItemData.name;
+    const pathInputValue = pathInputRef.current?.value ?? newItemData.path;
+    // Check that the values are not null
+    if (!extensionInputValue || !nameInputValue) {
+      pathInputRef.current!.value = '';
+      return;
+    }
+    // Clean the name and add the extension
+    const { withExtension, withoutExtension } = getCorrectNameWithExtension(
+      nameInputValue,
+      'file',
+      extensionInputValue
+    );
+    // Get the updated path
+    const newPath = getCorrectPath(pathInputValue, withExtension);
+    // Set the correct input values
+    nameInputRef.current!.value = withoutExtension;
+    pathInputRef.current!.value = newPath;
+    // Update the state with the new info
+    setNewItemData({
+      ...newItemData,
+      name: withExtension,
+      path: newPath,
+      extension: extensionInputValue ?? newItemData.extension ?? '',
+    });
+  };
+
+  /**
+   * Create the new item based on the values provided by the user
    */
   const continueCreation = () => {
     if (loading) return;
     try {
+      setError('');
       setLoading(true);
       // Make sure that can be created
       const canCreate = itemCanBeCreated(
@@ -83,20 +118,18 @@ export default function SaveEditorAsFileModal({
       if (!canCreate.canCreate) {
         throw new Error(canCreate.reason);
       }
-      // Create the new item
-      const newItem = {
+      // Create the new file
+      const newFile = {
+        is_draft: false,
         bucket: bucket?.slug ?? '',
+        contents: contents,
         name: newItemData.name,
         path: newItemData.path,
-      };
+        type: newItemData.extension,
+      } as BucketFile;
       createFile({
         original: null,
-        current: {
-          type: 'file',
-          contents: contents,
-          is_draft: false,
-          ...newItem,
-        } as BucketFile,
+        current: newFile,
         type: 'file',
       });
       // Close the modal after creation
@@ -114,26 +147,13 @@ export default function SaveEditorAsFileModal({
       <div className='pb-2'>
         <div className='w-[150px] rounded border'>
           <select
+            ref={extenstionSelectRef}
             id='type-select'
             disabled={loading}
             className='h-6 w-[146px] rounded border border-r-4 border-white bg-white px-2 py-1 text-xs'
             aria-label='Select the type of the file'
             defaultValue={newItemData.extension}
-            onChange={(e) => {
-              // Get and set the correct name, path and extension
-              const { name, path, extension } = updateFieldValues({
-                type: 'file',
-                name: newItemData.name,
-                path: newItemData.path,
-                extension: e.target.value,
-              });
-              setNewItemData({
-                ...newItemData,
-                path,
-                name,
-                extension,
-              });
-            }}
+            onChange={() => processChange()}
           >
             <option value='sql'>SQL</option>
             <option value='js'>JavaScript</option>
@@ -144,37 +164,31 @@ export default function SaveEditorAsFileModal({
       <div className='pb-3'>
         <label className='text-xs'>{dict.fileNavigator.newFileName}</label>
         <input
+          ref={nameInputRef}
           id='name-input'
           disabled={loading}
           type='text'
           className='w-full rounded border p-2 text-sm placeholder:text-gray-400'
-          placeholder='example.sql'
-          defaultValue={newItemData.name}
-          onChange={(e) => {
-            // Get the cursor position
-            const cursorPosition = e.target.selectionStart;
-            // Get and set the correct name, path and extension
-            const { name, path, extension } = updateFieldValues({
-              type: 'file',
-              name: e.target.value,
-              path: newItemData.path,
-              extension: newItemData.extension,
-            });
-            setNewItemData({ ...newItemData, path, name, extension });
-            // Restore the cursor position
-            e.target.setSelectionRange(cursorPosition, cursorPosition);
-          }}
+          placeholder='example'
+          defaultValue={
+            getCorrectNameWithExtension(
+              newItemData.name,
+              'file',
+              newItemData.extension
+            ).withoutExtension
+          }
+          onChange={() => processChange()}
         />
       </div>
       <div className='pb-3'>
         <label className='text-xs'>{dict.fileNavigator.newFilePath}</label>
         <div className='flex'>
           <input
+            ref={pathInputRef}
             id='path-input'
             disabled={true}
             type='text'
-            className='w-full rounded border bg-gray-100 p-2 text-sm placeholder:text-gray-300'
-            placeholder='/folder/example.sql'
+            className='w-full rounded border bg-gray-100 p-2 text-sm'
             value={newItemData.path}
           />
           <Button
@@ -202,14 +216,7 @@ export default function SaveEditorAsFileModal({
           originalItemPath={null}
           currentSelected={newItemData.path}
           onSelectPath={(selectedPath: string) => {
-            // Get and set the correct name, path and extension
-            const { name, path, extension } = updateFieldValues({
-              type: 'file',
-              name: newItemData.name,
-              path: selectedPath,
-              extension: newItemData.extension,
-            });
-            setNewItemData({ ...newItemData, path, name, extension });
+            setNewItemData({ ...newItemData, path: selectedPath });
           }}
         />
       )}

@@ -11,9 +11,42 @@ import { useLocale } from '@/context/LocaleContext';
 
 /**
  * Universal button component, used across the application
+ *
+ * @param buttonProps - The button properties
+ * @param buttonProps.variant - The button variant
+ * @param buttonProps.colorScheme - The button color scheme
+ * @param buttonProps.size - The button size
+ * @param buttonProps.href - The button href, if it is a link
+ * @param buttonProps.target - The button link target
+ * @param buttonProps.onClick - The button onClick function
+ * @param buttonProps.disabled - The button disabled state
+ * @param buttonProps.loading - The button loading state
+ * @param buttonProps.icon - The button icon
+ * @param buttonProps.iconFirst - The button icon position, either first or last
+ * @param buttonProps.children - The button children, either text or a component
+ * @param buttonProps.className - The button class name, to be used for custom styling
+ * @param buttonProps.ariaLabel - The button aria label
+ * @param buttonProps.type - The button type, either button, submit or reset
+ *
+ * @returns The button component
  */
-const Button: React.FC<{
-  variant?: 'solid' | 'outline' | 'icon' | 'link';
+const Button = ({
+  variant,
+  colorScheme,
+  size = 'md',
+  href,
+  target = '_self',
+  onClick,
+  disabled = false,
+  loading = false,
+  icon,
+  iconFirst = true,
+  children,
+  className = '',
+  ariaLabel,
+  type = 'button',
+}: {
+  variant?: 'solid' | 'outline' | 'gradient' | 'icon' | 'link';
   colorScheme?:
     | 'primary'
     | 'secondary'
@@ -30,62 +63,56 @@ const Button: React.FC<{
   disabled?: boolean;
   loading?: boolean;
   icon?: React.ReactNode;
+  iconFirst?: boolean;
   children: React.ReactNode;
   className?: string;
   ariaLabel?: string;
   type?: 'button' | 'submit' | 'reset';
-}> = ({
-  variant,
-  colorScheme,
-  size = 'md',
-  href,
-  target = '_self',
-  onClick,
-  disabled = false,
-  loading = false,
-  icon,
-  children,
-  className = '',
-  ariaLabel,
-  type = 'button',
 }) => {
   const { dict } = useLocale();
   const router = useRouter();
 
   const baseClasses =
-    'inline-flex items-center justify-center rounded-lg transition-all outline-none';
+    'inline-flex items-center justify-center rounded-lg transition-all outline-none hover:opacity-60 duration-500 hover:backdrop-blur active:shadow-md';
   const variantClasses = {
     solid: {
-      primary:
-        'bg-irmin_green-500 text-white hover:bg-irmin_green-400 shadow active:bg-irmin_green-600',
-      secondary:
-        'bg-irmin_blue text-white hover:bg-irmin_blue-400 shadow active:bg-irmin_blue-600',
-      tertiary:
-        'bg-irmin_teal text-white hover:bg-irmin_teal-400 shadow active:bg-irmin_teal-600',
-      gray: 'bg-gray-500 text-white hover:bg-gray-400 shadow active:bg-gray-600',
-      black:
-        'bg-irmin_black text-white hover:bg-irmin_black-400 shadow active:bg-irmin_black-600',
-      light:
-        'bg-gray-100 text-black hover:bg-gray-200 shadow active:bg-gray-300',
+      primary: 'bg-irmin_green text-white shadow active:bg-irmin_green-600',
+      secondary: 'bg-irmin_blue text-white shadow active:bg-irmin_blue-600',
+      tertiary: 'bg-irmin_teal text-white  shadow active:bg-irmin_teal-600',
+      gray: 'bg-gray-500 text-white shadow active:bg-gray-600',
+      black: 'bg-irmin_black text-white shadow active:bg-irmin_black-600',
+      light: 'bg-gray-100 text-black shadow active:bg-gray-300',
     },
     outline: {
       primary:
-        'border border-irmin_green-500 text-irmin_green-500 hover:bg-white hover:text-irmin_green-400 hover:border-irmin_green-400 shadow active:shadow-md',
+        'border border-irmin_green text-irmin_green hover:bg-white hover:text-irmin_blue hover:border-irmin_blue shadow',
       secondary:
-        'border border-irmin_blue text-irmin_blue hover:bg-white hover:text-irmin_blue-400 hover:border-irmin_blue-400 shadow active:shadow-md',
+        'border border-irmin_blue text-irmin_blue hover:bg-white hover:text-irmin_gree hover:border-irmin_green shadow',
       tertiary:
-        'border border-irmin_teal text-irmin_teal hover:bg-white hover:text-irmin_teal-400 hover:border-irmin_teal-400 shadow active:shadow-md',
+        'border border-irmin_teal text-irmin_teal hover:bg-white hover:text-irmin_teal-400 hover:border-irmin_teal-400 shadow',
       gray: 'border border-gray-500 text-gray-500 hover:bg-white hover:text-gray-400 hover:border-gray-400 shadow',
       black:
-        'border border-irmin_black text-irmin_black hover:bg-white hover:text-irmin_black-400 hover:border-irmin_black-400 shadow active:shadow-md',
+        'border border-irmin_black text-irmin_black hover:bg-white hover:text-irmin_black-400 hover:border-irmin_black-400 shadow',
       light:
-        'border border-gray-200 text-gray-100 hover:bg-white hover:text-gray-400 hover:border-gray-400 shadow active:shadow-md',
+        'border border-gray-200 text-gray-100 hover:bg-white hover:text-gray-400 hover:border-gray-400 shadow',
+    },
+    gradient: {
+      primary:
+        'bg-gradient-to-r from-irmin_green to-irmin_green-400 text-white shadow',
+      secondary:
+        'bg-gradient-to-r from-irmin_blue to-irmin_blue-400 text-white shadow',
+      tertiary:
+        'bg-gradient-to-r from-irmin_teal to-irmin_teal-400 text-white  shadow',
+      gray: 'bg-gradient-to-r from-gray-500 to-gray-400 text-white  shadow',
+      black:
+        'bg-gradient-to-r from-irmin_black to-irmin_black-400 text-white  shadow',
+      light: 'bg-gradient-to-r from-gray-100 to-gray-200 text-black shadow',
     },
     icon: {
       primary:
-        'text-irmin_green-500 hover:text-irmin_green-400 rounded-full active:text-irmin_green-600',
+        'text-irmin_green hover:text-irmin_green-400 rounded-full active:text-irmin_green-600',
       secondary:
-        'text-irmin_blue-500 hover:text-irmin_blue-400 rounded-full active:text-irmin_blue-600',
+        'text-irmin_blue hover:text-irmin_blue-400 rounded-full active:text-irmin_blue-600',
       tertiary:
         'text-irmin_teal-500 hover:text-irmin_teal-400 rounded-full active:text-irmin_teal-600',
       gray: 'text-gray-500 hover:text-gray-400 rounded-full active:text-gray-600',
@@ -96,7 +123,7 @@ const Button: React.FC<{
     },
     link: {
       primary:
-        'text-irmin_green-500 hover:underline shadow-none active:text-irmin_green-600',
+        'text-irmin_green hover:underline shadow-none active:text-irmin_green-600',
       secondary:
         'text-irmin_blue hover:underline shadow-none active:text-irmin_blue-600',
       tertiary:
@@ -112,6 +139,12 @@ const Button: React.FC<{
     sm: 'px-2 py-1 w-fit min-h-8 text-xs font-light lg:px-3 lg:text-sm lg:min-h-10',
     md: 'px-3 py-1 w-fit min-h-11 text-sm font-normal lg:px-4 lg:text-base lg:min-h-14',
     lg: 'px-4 py-2 w-fit min-h-14 text-base font-normal lg:px-6 lg:min-h-16',
+  };
+
+  const iconSizeClasses = {
+    sm: 'pr-1',
+    md: 'pr-2',
+    lg: 'pr-3',
   };
 
   let combinedClasses = `${baseClasses} ${sizeClasses[size]} ${icon ? 'min-w-32 ' : ''}${disabled ? 'opacity-50 cursor-not-allowed ' : ''} ${className}`;
@@ -131,12 +164,12 @@ const Button: React.FC<{
     if (href && !e.defaultPrevented) router.push(href);
   };
 
-  if (href && !disabled) {
+  if (href) {
     return (
       <Link
-        href={loading ? '' : href}
+        href={loading || disabled ? '' : href}
         className={cn(combinedClasses.split(' '))}
-        onClick={handleClick}
+        onClick={(e) => !disabled && !loading && handleClick(e)}
         aria-label={ariaLabel}
         target={target}
       >
@@ -147,8 +180,13 @@ const Button: React.FC<{
           </>
         ) : (
           <>
-            {icon && <span className='mr-1'>{icon}</span>}
+            {icon && iconFirst && (
+              <span className={iconSizeClasses[size]}>{icon}</span>
+            )}
             {children}
+            {icon && !iconFirst && (
+              <span className={iconSizeClasses[size]}>{icon}</span>
+            )}
           </>
         )}
       </Link>
@@ -158,7 +196,7 @@ const Button: React.FC<{
   return (
     <button
       className={cn(combinedClasses.split(' '))}
-      onClick={handleClick}
+      onClick={(e) => !disabled && !loading && handleClick(e)}
       disabled={disabled}
       aria-label={ariaLabel}
       type={type}
@@ -170,8 +208,13 @@ const Button: React.FC<{
         </>
       ) : (
         <>
-          {icon && <span className='mr-1'>{icon}</span>}
+          {icon && iconFirst && (
+            <span className={iconSizeClasses[size]}>{icon}</span>
+          )}
           {children}
+          {icon && !iconFirst && (
+            <span className={iconSizeClasses[size]}>{icon}</span>
+          )}
         </>
       )}
     </button>
