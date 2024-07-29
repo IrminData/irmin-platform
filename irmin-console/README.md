@@ -1,39 +1,19 @@
-<img src="https://github.com/IrminData/irmin-frontend/blob/development/public/irmin-logo-light.svg" width="200">
+# Irmin web (irmin-frontend)
 
-# Irmin web application
+This repository contains the code for Irmin frontend, built using Next.js, TypeScript and Tailwind. 
 
-This repository contains the code for Irmin frontend, built using Next.js, TypeScript and Tailwind. To function correctly, this project requires the [Irmin API](https://github.com/IrminData/irmin-api) to be running.
+| Project | Repository | Development Environment | Documentation | Admin/CMS |
+|---------------|---------------|---------------|---------------|---------------|
+| Irmin Web App (Next.js, TypeScript) | [Repository](https://github.com/IrminData/irmin-frontend) | [Environment](https://irmin.dev) | [Docs](https://irmin.dev/tsdocs) | [WordPress CMS](https://cms.irmin.dev/wp-admin) |
+| Irmin API (Laravel, PHP)| [Repository](https://github.com/IrminData/irmin-api)| [Environment](https://api.irmin.dev) | [Docs](https://api.irmin.dev/docs) | |
 
-Useful links:
-
-- [Irmin Structure](https://excalidraw.com/#json=ZV3vKpXoNWZPcHqx2Rrc6,9cjm0aKRo43MvHZRYJyS1Q)
-- [Irmin Frontend Documentation](https://irmin.dev/tsdocs)
-- [Irmin API Documentation](https://api.irmin.dev/docs)
-
-For project management and tickets we use Basecamp. If you need access to Basecamp, please contact us.
-
-For feature requests, bug reports, or any other issues, please create a new issue on Github. 
-- [Irmin frontend issues](https://github.com/IrminData/irmin-frontend/issues)
-- [Irmin API issues](https://github.com/IrminData/irmin-api/issues)
-
-If you would like to contribute to the project, please follow the guidelines in this README.
-
-## Table of Contents
-
-- [Getting Started](#getting-started)
-- [How to contribute?](#how-to-contribute)
-- [Prerequisites](#prerequisites)
+- [How to Contribute?](#how-to-contribute)
+- [Prerequisites and stack](#prerequisites-and-stack)
 - [Environment Configuration](#environment-configuration)
 - [Running the Project](#running-the-project)
-  - [Development](#development)
-  - [Production](#production)
-  - [Linting and Formatting](#linting-and-formatting)
-- [Next.js App Router](#nextjs-app-router)
-- [Branch Naming Rules](#branch-naming-rules)
-- [GitHub Actions](#github-actions)
 - [TypeScript and Types](#typescript-and-types)
 - [Static data](#static-data)
-  - [Offline mode](#offline-mode)
+- [Offline mode](#offline-mode)
 - [Irmin API](#irmin-api)
 - [API Services](#api-services)
 - [Internationalisation](#internationalisation)
@@ -45,137 +25,74 @@ If you would like to contribute to the project, please follow the guidelines in 
   - [WorkspaceContext](#workspacecontext)
 - [Wordpress CMS](#wordpress-cms)
 - [Yarn v2 Migration Guide](#yarn-v2-migration-guide)
-- [TypeDoc documentation](#typedoc)
-- [Additional Information](#additional-information)
+- [TypeDoc documentation](#typedoc-documentation)
 
-## Getting Started
+## How to Contribute?
 
-Read the following resources to get familiar with the project:
+1. Create a branch from `development` using this structure: `name/type-description-ticketID` or `name/type-description`.
+   - Example: `tim/feat-files-123123`, `alice/feat-auth-389123`, `kamala/fix-login-error`
+2. Make your changes.
+3. Push your changes to the branch.
+4. Run tests and ensure the build is successful.
+5. Create a pull request to `development`.
+6. Await review and approval from a team member.
+7. Merge the pull request after approval.
+8. Delete the branch after merging.
 
-- [Irmin Structure](https://excalidraw.com/#json=ZV3vKpXoNWZPcHqx2Rrc6,9cjm0aKRo43MvHZRYJyS1Q)
-- [Irmin Frontend Documentation](https://irmin.dev/tsdocs)
-- [Irmin API Documentation](https://api.irmin.dev/docs)
+**Important**: Never push directly to `development` or `production`. Always create a pull request for changes.
 
-### How to contribute?
+### Prerequisites and stack
 
-The most important is thing is don't forget to follow the branch naming rules and the guidelines in this README.
+Ensure you have the following installed:
 
-#### Internal Contributors (Irmin Team)
+- Node.js (v20.x+)
+- Yarn (v2.x+). See [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration details.
 
-Contribute to the project by following these steps:
+In the web app we use TypeScript, Next.js (React framework) with the App Router enabled, and Tailwind (styles). 
+We also use ESLint and Prettier for code quality.
 
-1. Create a new branch from `development`
-2. Make your changes
-3. Push your changes to the branch
-4. Run the tests and try to build. Ensure they pass and the build is successful.
-5. Create a pull request to `development`
-6. Wait for a review from another team member
-7. Merge the pull request after the review has been approved
-8. Delete the branch after merging
-
-#### External Contributors
-
-To contribute to the project, follow these steps:
-
-1. Fork the repository
-2. Create a new branch
-3. Make your changes
-4. Push your changes to your fork
-5. Run the tests and try to build. Ensure they pass and the build is successful.
-6. Create a pull request
-7. Wait for a review from our team member
-
-### Prerequisites
-
-Before you start, ensure you have the following installed on your machine:
-
-- Node.js (v20.x or later)
-- Yarn (v2.x or later), see [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration from Yarn v1 to Yarn v2
+[Next.js documentation](https://nextjs.org/docs/app)
 
 ## Environment Configuration
 
-To configure the environment variables for the project, create a `.env` file in the root directory of the project. Refer to the [environment.md](environment.md) file for detailed information on the required environment variables and their purposes.
-
-Example `.env` file:
+Create a `.env` file in the project root. Add the following environment variables:
 
 ```text
-NEXT_PUBLIC_BASE_URL=https://irmin.dev
-REQUIRE_ENV_AUTH=true
-ENV_PASSWORD=devpassword
-NEXT_PUBLIC_API_URL=https://api.irmin.dev
-NEXT_PUBLIC_OFFLINE_MODE=false
-NEXT_PUBLIC_WORDPRESS_URL=https://cms.irmin.dev
-NEXT_PUBLIC_ENVIRONMENT_TYPE=development
+NEXT_PUBLIC_BASE_URL=https://irmin.dev  # Base URL of the application
+REQUIRE_ENV_AUTH=true  # Enable environment-specific authentication
+ENV_PASSWORD=devpassword  # Password for environment authentication
+NEXT_PUBLIC_API_URL=https://api.irmin.dev  # API endpoint URL
+NEXT_PUBLIC_OFFLINE_MODE=false  # Toggle offline mode
+NEXT_PUBLIC_WORDPRESS_URL=https://cms.irmin.dev  # WordPress CMS URL
+NEXT_PUBLIC_ENVIRONMENT_TYPE=development  # Environment type
 ```
 
 ## Running the Project
 
-### Development
-
-To start the development server, run:
-
-```bash
-yarn dev-ssl
-```
-
-### Production
-
-To build the project for production, run:
-
-```bash
-yarn build
-```
-
-To start the production server, run:
-
-```bash
-yarn start
-```
-
-### Linting and Formatting
-
-To lint the codebase, run:
+Lint and code formatting:
 
 ```bash
 yarn lint
-```
 
-To check the formatting of the codebase, run:
-
-```bash
 yarn format
-```
-
-To fix formatting issues, run:
-
-```bash
+# or
 yarn format:fix
 ```
 
-## Next.js App Router
+Start the server:
 
-We use Next.js with the App Router. For more information, see the [Next.js documentation](https://nextjs.org/docs/app).
+```bash
+yarn dev-ssl
+# or
+yarn dev
+```
 
-## Branch Naming Rules
+Build and start the server:
 
-When creating a new branch, please adhere to the following naming conventions:
-
-- For new features: `person/feat-(featurename)`
-  - Example: `alice/feat-user-authentication`
-- For bug fixes: `person/fix-(bugfix)`
-  - Example: `bob/fix-login-error`
-
-**Important**: Never push to `development` directly or especially to `production`! Always create a pull request for any changes you want to merge.
-
-## GitHub Actions
-
-When a Pull Request (PR) is opened, the following GitHub Actions are automatically run:
-
-1. **Code Formatting**: Checks if the code is properly formatted using Prettier.
-2. **Linting**: Runs ESLint to ensure code quality.
-3. **Build**: Attempts to build the application to catch any build-time errors.
-
-Please ensure your code passes all these checks before requesting a review.
+```bash
+yarn build
+yarn start
+```
 
 ## TypeScript and Types
 
@@ -204,12 +121,6 @@ The offline mode exists to enable smooth development process in situations with 
 When offline mode is enabled something is always returned for API requests in API Services. The offline mode returns objects from example objects eg. [src/lib/exampleObjects/apiObjects.ts](src/lib/exampleObjects/apiObjects.ts) depending on what would be the APIs expected return type.
 
 Note! It is not meant for anything but local use.
-
-## Irmin API
-
-The backend is a Laravel application. API documentation can be found in Postman. Please refer to the Postman documentation for detailed API information.
-
-The API documentation can be found here: [Irmin API docs](https://api.irmin.dev/docs)
 
 ## API Services
 
@@ -392,16 +303,3 @@ Please make sure to document all functions and types you create, especially if t
 The documentation will be generated in the `public/frontend-docs` directory. The middleware is setup to serve the documentation at `/tsdocs` and to require dev password to access it, see [middleware.ts](src/middleware.ts) for more information.
 
 See [TypeDoc website](https://typedoc.org/) for more information on TypeDoc.
-
-## Additional Information
-
-The development environment can be found at:
-
-- Next.js: [https://irmin.dev](https://irmin.dev)
-- API: [https://api.irmin.dev](https://api.irmin.dev)
-
-Both are hosted on DigitalOcean. The API uses Forge for deployments.
-
-If you have any questions or need further assistance, please contact us via email or create a new issue on Github.
-
-Thank you for contributing to the Irmin project!
