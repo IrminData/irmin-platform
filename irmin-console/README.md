@@ -1,3 +1,5 @@
+<img src="https://github.com/IrminData/irmin-frontend/blob/development/public/irmin-logo-light.svg" width="200">
+
 # Irmin web (irmin-frontend)
 
 This repository contains the code for Irmin frontend, built using Next.js, TypeScript and Tailwind. 
@@ -6,6 +8,8 @@ This repository contains the code for Irmin frontend, built using Next.js, TypeS
 |---------------|---------------|---------------|---------------|---------------|
 | Irmin Web App (Next.js, TypeScript) | [Repository](https://github.com/IrminData/irmin-frontend) | [Environment](https://irmin.dev) | [Docs](https://irmin.dev/tsdocs) | [WordPress CMS](https://cms.irmin.dev/wp-admin) |
 | Irmin API (Laravel, PHP)| [Repository](https://github.com/IrminData/irmin-api)| [Environment](https://api.irmin.dev) | [Docs](https://api.irmin.dev/docs) | |
+
+## Table of Contents
 
 - [How to Contribute?](#how-to-contribute)
 - [Prerequisites and stack](#prerequisites-and-stack)
