@@ -1,23 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
-<svg viewBox="83.627 14.764 474.748 107.99" width="474.748px" height="107.99px" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <g id="logo-center" transform="matrix(1, 0, 0, 1, -50.59021759033203, -295.26062011718756)">
-    <g id="title" style="font-style:normal;font-weight:normal;font-size:72px;line-height:1;font-family:'Brandmark Sans 2 &#10;Color';font-variant-ligatures:normal;text-align:center;text-anchor:middle" transform="matrix(1, 0, 0, 1, -142.798737, 0.860368)">
-      <g id="path133678" aria-label="R" transform="translate(0 312.48085937499997) translate(338.39588000000003 -0.4720000000000013) scale(2) translate(-435.26488 &#10;50.472)">
-        <path class="c1" d="M 475.516 -0.068 L 462.771 -0.068 L 453.842 -16.557 L 446.57 -16.557 L 446.57 -0.068 L 435.265 -0.068 L 435.265 -50.472 L 455.859 -50.472 C 467.955 -50.472 474.868 -45.071 474.868 -33.982 C 474.868 -25.486 471.268 -20.157 464.715 -17.853 L 475.516 -0.068 Z M 464.283 -33.55 C 464.283 -39.095 461.043 -41.183 455.21 -41.183 L 446.497 -41.183 L 446.497 -25.774 L 455.21 -25.774 C 460.971 -25.774 464.283 -27.934 464.283 -33.55 Z" stroke-width="0" stroke-linejoin="miter" stroke-miterlimit="2" style="stroke: rgb(239, 246, 224); fill: rgb(239, 246, 224);"/>
-      </g>
-      <g id="path133680" aria-label="^M" transform="translate(0 312.48085937499997) translate(454.44612000000006 -0.32799999999999585) scale(2) translate(-483.29 &#10;50.4)">
-        <polygon class="c1" points="125.09473,74.79785 103.70801,120.08984 96.36426,120.08984 83.83496,89.70313 83.83496,125.20215 73.89746,125.20215 73.89746,74.79785 &#10;86.49902,74.79785 100.03613,106.19238 115.66113,74.79785 " transform="translate(409.39254 -125.19785)" stroke-width="0" stroke-linejoin="miter" stroke-miterlimit="2" style="stroke: rgb(239, 246, 224); fill: rgb(239, 246, 224);"/>
-        <path class="c3" d="M116.16504,103.52832c0.14453-0.28809,3.60059-10.00879,9.9375-13.96924v35.64307h-9.79297 l-0.07227-21.60205L116.16504,103.52832z" transform="translate(409.39254 -125.19785)" stroke-width="0" stroke-linejoin="miter" stroke-miterlimit="2" style="stroke: rgb(239, 246, 224); fill: rgb(174, 195, 176);"/>
-      </g>
-      <g id="path133682" aria-label="I" transform="translate(0 312.48085937499997) translate(598.19612 -0.32799999999999585) scale(2) translate(-545.165 50.4)">
-        <path class="c1" d="M94.34717,125.20215v-50.4043h11.30566v50.4043H94.34717z" transform="translate(450.81783 -125.19785)" stroke-width="0" stroke-linejoin="miter" stroke-miterlimit="2" style="stroke: rgb(239, 246, 224); fill: rgb(239, 246, 224);"/>
-        <path class="c1" d="M 386.357 0.376 L 386.357 -50.028 L 397.663 -50.028 L 397.663 0.376 L 386.357 0.376 Z" stroke-width="0" stroke-linejoin="miter" stroke-miterlimit="2" style="stroke: rgb(239, 246, 224); fill: rgb(239, 246, 224);"/>
-      </g>
-      <g id="path133684" aria-label="N" transform="translate(0 312.48085937499997) translate(660.80212 -0.32799999999999585) scale(2) translate(-566.468 50.4)">
-        <path class="c1" d="M88.22705,74.79785l33.62695,50.4043h-11.59277L88.65967,92.36719v32.83496H78.146v-50.4043H88.22705z M121.854,74.79785v38.95508c-7.05664-4.32031-9.86426-12.60107-10.44043-14.61719V74.79785H121.854z" stroke-width="0" stroke-linejoin="miter" stroke-miterlimit="2" style="transform-box: fill-box; transform-origin: 50% 50%; stroke: rgb(239, 246, 224); fill: rgb(239, 246, 224);" transform="translate(488.322 -125.19785)"/>
-        <path class="c3" d="M 599.544 -26.026 C 599.703 -25.7 603.444 -14.755 610.306 -10.295 L 610.306 -50.428 L 599.703 -50.428 L 599.622 -26.105 L 599.544 -26.026 Z" stroke-width="0" stroke-linejoin="miter" stroke-miterlimit="2" style="transform-origin: 604.925px -30.363px; stroke: rgb(239, 246, 224); fill: rgb(174, 195, 176);"/>
-      </g>
-    </g>
-    <image id="icon" style="display: none;" x="0" y="0" xlink:href=""/>
+<svg viewBox="83.627 14.764 474.748 107.99" width="474.748" height="107.99" xmlns="http://www.w3.org/2000/svg">
+  <g style="line-height:1;font-variant-ligatures:normal;text-align:center" font-weight="400" font-size="72" font-family="Brandmark Sans 2 Color" text-anchor="middle">
+    <path class="c1" d="M225.51 118.417h-25.49l-17.86-32.978h-14.544v32.978h-22.61V17.609h41.188c24.192 0 38.018 10.802 38.018 32.98 0 16.992-7.2 27.65-20.306 32.258l21.602 35.57zm-22.467-66.964c0-11.09-6.48-15.266-18.146-15.266h-17.426v30.818h17.426c11.522 0 18.146-4.32 18.146-15.552zm160.409-33.7l-42.774 90.584h-14.687l-25.059-60.774v70.998h-19.875V17.753h25.203l27.075 62.789 31.25-62.79z" fill="#c9d2b9"/>
+    <path class="c3" d="M345.592 75.214c.29-.577 7.202-20.018 19.875-27.939v71.286h-19.586l-.144-43.204-.145-.143z" fill="#8da394"/>
+    <path class="c1" d="M404.807 118.561V17.753h22.611V118.56h-22.61zm-317.616.744V18.497h22.612v100.808H87.191z" fill="#c9d2b9"/>
+    <path class="c1" d="M487.575 17.753L554.83 118.56h-23.185l-43.203-65.67v65.67h-21.028V17.753h20.162zm67.254 0v77.91c-14.113-8.64-19.728-25.202-20.88-29.235V17.753h20.88z" style="transform-box:fill-box;transform-origin:50% 50%" fill="#c9d2b9"/>
+    <path class="c3" d="M533.565 66.5c.318.653 7.8 22.543 21.524 31.463V17.697h-21.206l-.162 48.646-.156.158z" style="transform-origin:604.925px -30.363px" fill="#8da394"/>
   </g>
 </svg>
