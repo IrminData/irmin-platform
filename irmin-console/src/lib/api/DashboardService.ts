@@ -33,9 +33,7 @@ interface DashboardsAPIResponse extends IrminAPIResponse {
 /**
  * Dashboard API service
  *
- * @remarks
- *
- * This service calls the Irmin API and is responsible for all dashboard related API calls.
+ * Responsible for all dashboard related API calls.
  */
 class DashboardService {
   private dashboards: Dashboard[] = [];

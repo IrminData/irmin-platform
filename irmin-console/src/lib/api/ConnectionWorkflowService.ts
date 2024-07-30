@@ -30,9 +30,7 @@ interface ConnectionTestAPIResponse extends IrminAPIResponse {
 /**
  * Connection Workflow API service
  *
- * @remarks
- *
- * This service calls the Irmin API and is responsible for all Connection Workflow related API calls.
+ * Responsible for all Connection Workflow related API calls.
  */
 class ConnectionWorkflowService {
   private static instance: ConnectionWorkflowService;
@@ -68,9 +66,9 @@ class ConnectionWorkflowService {
 
   /**
    * Fetch connection details for a new connection.
+   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-details | Irmin API docs}
    * @param connectorID - The ID of the connector to fetch
    * @returns required details fields to create a connection
-   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-details | Irmin API docs}
    */
   async fetchNewConnectionDetails(
     connectorID: number
@@ -95,10 +93,10 @@ class ConnectionWorkflowService {
 
   /**
    * Test a connection with the provided connection details
+   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-test-connection | Irmin API docs}
    * @param connectorID - The ID of the connector
    * @param connectionDetails - The connection details to test
    * @returns whether the connection was successful or not
-   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-test-connection | Irmin API docs}
    */
   async testConnectionWithDetails(
     connectorID: number,
@@ -134,10 +132,10 @@ class ConnectionWorkflowService {
 
   /**
    * Fetch connection settings for a new connection.
+   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-settings | Irmin API docs}
    * @param connectorID - The ID of the connector to fetch
    * @param connectionDetails - The connection details to fetch settings for
    * @returns required settings fields to create a connection
-   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-settings | Irmin API docs}
    */
   async fetchNewConnectionSettings(
     connectorID: number,
@@ -173,6 +171,7 @@ class ConnectionWorkflowService {
 
   /**
    * Create a new connection and start sync with the provided details and settings for a workspace
+   * {@link https://api.irmin.dev/docs#workflows-POSTv1-connections-create | Irmin API docs}
    *
    * @param connectionProps - The new connection data
    * @param connectionProps.connectorID - The ID of the connector
@@ -183,7 +182,6 @@ class ConnectionWorkflowService {
    * @param connectionProps.cron_syntax - Cron syntax for the workflow, leave empty for manual run
    *
    * @returns response from the API or example data
-   * {@link https://api.irmin.dev/docs#workflows-POSTv1-connections-create | Irmin API docs}
    */
   async createConnection({
     connectorID,

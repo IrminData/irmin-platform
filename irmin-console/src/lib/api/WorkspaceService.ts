@@ -32,9 +32,7 @@ interface WorkspaceAPIResponse extends IrminAPIResponse {
 /**
  * Workspace API service
  *
- * @remarks
- *
- * This service calls the Irmin API and is responsible for all workspace related API calls.
+ * Responsible for all workspace related API calls.
  */
 class WorkspaceService {
   private static instance: WorkspaceService;
@@ -68,8 +66,8 @@ class WorkspaceService {
 
   /**
    * Fetch all workspaces
-   * @returns response from the API or example data
    * {@link https://api.irmin.dev/docs#workspaces-GETv1-workspaces | Irmin API docs}
+   * @returns response from the API or example data
    */
   async fetchWorkspaces(): Promise<WorkspacesAPIResponse> {
     if (isOfflineMode)
@@ -102,9 +100,9 @@ class WorkspaceService {
 
   /**
    * Fetch a single workspace by slug
+   * {@link https://api.irmin.dev/docs#workspaces-GETv1-workspaces--slug- | Irmin API docs}
    * @param workspaceSlug - The slug of the workspace to fetch
    * @returns response from the API or example data
-   * {@link https://api.irmin.dev/docs#workspaces-GETv1-workspaces--slug- | Irmin API docs}
    */
   async fetchWorkspace(workspaceSlug: string): Promise<WorkspaceAPIResponse> {
     if (isOfflineMode)
@@ -137,9 +135,9 @@ class WorkspaceService {
 
   /**
    * Transfer the ownership of the workspace to another user
+   * {@link https://api.irmin.dev/docs#workspaces-POSTv1-workspaces-transfer-ownership | Irmin API docs}
    * @param user - The ID of the user to transfer the ownership to
    * @returns response from the API or example data
-   * {@link https://api.irmin.dev/docs#workspaces-POSTv1-workspaces-transfer-ownership | Irmin API docs}
    */
   async transferWorkspaceOwnership(user: number): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
@@ -165,10 +163,10 @@ class WorkspaceService {
 
   /**
    * Create a new workspace
+   * {@link https://api.irmin.dev/docs#workspaces-POSTv1-workspaces | Irmin API docs}
    * @param name - The name of the new workspace
    * @param description - The description of the new workspace
    * @returns response from the API or example data
-   * {@link https://api.irmin.dev/docs#workspaces-POSTv1-workspaces | Irmin API docs}
    */
   async createWorkspace(
     name: string,
@@ -198,9 +196,9 @@ class WorkspaceService {
 
   /**
    * Update the current workspace
+   * {@link https://api.irmin.dev/docs#workspaces-PATCHv1-workspaces | Irmin API docs}
    * @param workspace - The workspace object with updated values
    * @returns response from the API or example data
-   * {@link https://api.irmin.dev/docs#workspaces-PATCHv1-workspaces | Irmin API docs}
    */
   async updateWorkspace(workspace: Workspace): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
@@ -228,8 +226,8 @@ class WorkspaceService {
 
   /**
    * Delete the current workspace
-   * @returns response from the API or example data
    * {@link https://api.irmin.dev/docs#workspaces-DELETEv1-workspaces | Irmin API docs}
+   * @returns response from the API or example data
    */
   async deleteWorkspace(): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
@@ -253,11 +251,13 @@ class WorkspaceService {
   }
 
   /**
-   * Switch to a Workspace.
+   * Switch to a Workspace
+   * {@link https://api.irmin.dev/docs#workspaces-POSTv1-workspaces-switch | Irmin API docs}
+   *
    * Used by the API to know which workspace to use for the current user on future requests.
+   *
    * @param workspaceSlug - The slug of the workspace to switch to
    * @returns response from the API or example data
-   * {@link https://api.irmin.dev/docs#workspaces-POSTv1-workspaces-switch | Irmin API docs}
    */
   async switchWorkspace(workspaceSlug: string): Promise<WorkspaceAPIResponse> {
     if (isOfflineMode)

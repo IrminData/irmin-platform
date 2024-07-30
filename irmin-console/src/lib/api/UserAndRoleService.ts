@@ -33,9 +33,7 @@ interface RolesAPIResponse extends IrminAPIResponse {
 /**
  * Workspace user and role API service
  *
- * @remarks
- *
- * This service calls the Irmin API and is responsible for all workspace user and role related API calls.
+ * Responsible for all workspace user and role related API calls.
  */
 class UserAndRoleService {
   private roles: IrminRole[] = [];
@@ -71,8 +69,8 @@ class UserAndRoleService {
 
   /**
    * Fetch all users from the current workspace
-   * @returns response from the API or example data
    * {@link https://api.irmin.dev/docs#workspaces-GETv1-users | Irmin API docs}
+   * @returns response from the API or example data
    */
   async fetchAllUsers(): Promise<UsersAPIResponse> {
     if (isOfflineMode)
@@ -99,8 +97,8 @@ class UserAndRoleService {
 
   /**
    * Fetch all available roles
-   * @returns response from the API or example data
    * {@link https://api.irmin.dev/docs#roles-GETv1-roles | Irmin API docs}
+   * @returns response from the API or example data
    */
   async fetchRoles(): Promise<RolesAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleRoles };
@@ -134,9 +132,9 @@ class UserAndRoleService {
 
   /**
    * Fetch roles for workspace user
+   * {@link https://api.irmin.dev/docs#roles-GETv1-users-roles | Irmin API docs}
    * @param user - User ID
    * @returns response from the API or example data
-   * {@link https://api.irmin.dev/docs#roles-GETv1-users-roles | Irmin API docs}
    */
   async fetchUserRoles(user: number): Promise<RolesAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleRoles };
@@ -161,11 +159,11 @@ class UserAndRoleService {
 
   /**
    * Change the role of a user in a workspace
+   * {@link https://api.irmin.dev/docs#roles-PATCHv1-users-roles | Irmin API docs}
    * @param user - The ID of the user to change the role of
    * @param newRole - The new role to assign to the user
    * @param currentRole - The current role or null if user has no role
    * @returns response from the API or example data
-   * {@link https://api.irmin.dev/docs#roles-PATCHv1-users-roles | Irmin API docs}
    */
   async changeUserRole(
     user: number,
@@ -200,9 +198,9 @@ class UserAndRoleService {
 
   /**
    * Remove a user from a workspace
+   * {@link https://api.irmin.dev/docs#workspaces-DELETEv1-users-remove | Irmin API docs}
    * @param user - The ID of the user to remove
    * @returns response from the API or example data
-   * {@link https://api.irmin.dev/docs#workspaces-DELETEv1-users-remove | Irmin API docs}
    */
   async removeUserFromWorkspace(user: number): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;

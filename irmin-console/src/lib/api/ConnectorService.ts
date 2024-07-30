@@ -25,9 +25,7 @@ interface ConnectorAPIResponse extends IrminAPIResponse {
 /**
  * Connector API service
  *
- * @remarks
- *
- * This service calls the Irmin API and is responsible for all connector related API calls.
+ * Responsible for all connector related API calls.
  */
 class ConnectorService {
   private connectors: Connector[] = [];
@@ -63,8 +61,8 @@ class ConnectorService {
 
   /**
    * Fetch all available connectors
-   * @returns avalable connectors
    * {@link https://api.irmin.dev/docs#connectors-GETv1-connectors | Irmin API docs}
+   * @returns avalable connectors
    */
   async fetchAllConnectors(): Promise<ConnectorAPIResponse> {
     if (isOfflineMode)

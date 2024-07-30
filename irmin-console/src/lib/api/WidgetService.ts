@@ -33,9 +33,7 @@ const randomExampleWidget = () =>
 /**
  * Dashboard Widget API service
  *
- * @remarks
- *
- * This service calls the Irmin API and is responsible for all dashboard widget related API calls.
+ * Responsible for all dashboard widget related API calls.
  */
 class WidgetService {
   private static instance: WidgetService;

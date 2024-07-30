@@ -24,9 +24,7 @@ interface DatasetAPIResponse extends IrminAPIResponse {
 /**
  * Dataset API service
  *
- * @remarks
- *
- * This service calls the Irmin API and is responsible for all dataset related API calls.
+ * Responsible for all dataset related API calls.
  */
 class DatasetService {
   private datasets: Dataset[] = [];

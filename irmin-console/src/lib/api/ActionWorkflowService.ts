@@ -8,9 +8,7 @@ const api_base = process.env.NEXT_PUBLIC_API_URL;
 /**
  * Action Workflow API service
  *
- * @remarks
- *
- * This service calls the Irmin API and is responsible for all Action Workflow related API calls.
+ * Responsible for all Action Workflow related API calls.
  */
 class ActionWorkflowService {
   private static instance: ActionWorkflowService;
@@ -44,6 +42,8 @@ class ActionWorkflowService {
 
   /**
    * Create a new action workflow
+   *
+   * @todo Provide link to Irmin API docs
    *
    * @param actionProps - Action workflow properties
    * @param actionProps.path - Path to the action execution file

@@ -12,6 +12,7 @@ import {
   ActionWorkflow,
   ConnectionWorkflow,
   ExportWorkflow,
+  Workflow,
 } from '@/types/api/Workflow';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -44,9 +45,7 @@ interface ActionAPIResponse extends IrminAPIResponse {
 /**
  * Workflow API service
  *
- * @remarks
- *
- * This service calls the Irmin API and is responsible for all workflow related API calls,
+ * Responsible for all workflow related API calls,
  * except for what is Workflow type specific. Those are handled by the specific services,
  * like ConnectionWorkflowService, ExportService, and ActionService.
  */
@@ -80,14 +79,107 @@ class WorkflowService {
     this.locale = locale;
   }
 
-  // TODO: Add missing API calls
-  // https://api.irmin.dev/docs#workflows-PATCHv1-workflows-update
-  // https://api.irmin.dev/docs#workflows-PATCHv1-workflows-pause
+  /**
+   * Update a Workflow
+   * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-update | Irmin API docs}
+   * @returns response from the API or example data
+   */
+  async updateWorkflow(workflow: Workflow): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
+    try {
+      const formData = new FormData();
+
+      formData.append('_method', 'PATCH');
+      formData.append('worflow', workflow.id.toString());
+      formData.append('cron_syntax', workflow.cron_syntax ?? '');
+
+      const response = await fetchWithCredentials(
+        `${api_base}/v1/workflows/update`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+        this.locale
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Update workflow error:', error);
+      if (isDevelopment) return exampleAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Pause a Workflow
+   * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-pause | Irmin API docs}
+   * @returns response from the API or example data
+   */
+  async pauseWorkflow(workflow: Workflow): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
+    try {
+      const formData = new FormData();
+
+      formData.append('_method', 'PATCH');
+      formData.append('worflow', workflow.id.toString());
+
+      const response = await fetchWithCredentials(
+        `${api_base}/v1/workflows/pause`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+        this.locale
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Pause workflow error:', error);
+      if (isDevelopment) return exampleAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Resume a Workflow
+   * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-resume | Irmin API docs}
+   * @returns response from the API or example data
+   */
+  async resumeWorkflow(workflow: Workflow): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
+    try {
+      const formData = new FormData();
+
+      formData.append('_method', 'PATCH');
+      formData.append('worflow', workflow.id.toString());
+
+      const response = await fetchWithCredentials(
+        `${api_base}/v1/workflows/resume`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+        this.locale
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Resume workflow error:', error);
+      if (isDevelopment) return exampleAPIResponse;
+      throw error;
+    }
+  }
 
   /**
    * Fetch all Connection Workflows
-   * @returns response from the API or example data
    * {@link https://api.irmin.dev/docs#workflows-GETv1-connections | Irmin API docs}
+   * @returns response from the API or example data
    */
   async fetchConnections(): Promise<ConnectionsAPIResponse> {
     if (isOfflineMode)

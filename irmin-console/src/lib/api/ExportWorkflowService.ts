@@ -8,9 +8,7 @@ const api_base = process.env.NEXT_PUBLIC_API_URL;
 /**
  * Export Workflow API service
  *
- * @remarks
- *
- * This service calls the Irmin API and is responsible for all Export Workflow related API calls.
+ * Responsible for all Export Workflow related API calls.
  */
 class ExportWorkflowService {
   private static instance: ExportWorkflowService;
@@ -44,6 +42,8 @@ class ExportWorkflowService {
 
   /**
    * Create a new export workflow
+   *
+   * @todo Provide link to Irmin API docs
    *
    * @param exportProps - Export workflow properties
    * @param exportProps.source - Data Set ID, where the data will be exported from

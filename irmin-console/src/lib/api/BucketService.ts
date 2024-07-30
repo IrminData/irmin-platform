@@ -26,9 +26,7 @@ interface BucketAPIResponse extends IrminAPIResponse {
 /**
  * Bucket API service
  *
- * @remarks
- *
- * This service calls the Irmin API and is responsible for all bucket related API calls.
+ * Responsible for all bucket related API calls.
  */
 class BucketService {
   private static instance: BucketService;
