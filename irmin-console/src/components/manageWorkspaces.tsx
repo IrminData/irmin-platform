@@ -29,7 +29,10 @@ import { useWorkspace } from '@/context/workspace';
  */
 const ManageWorkspaces: React.FC = () => {
   const { locale, dict } = useLocale();
-  const { workspaces, fetchWorkspaces, workspaceLoading } = useWorkspace();
+  const {
+    workspaceLoading,
+    workspaces: { workspaces, fetchWorkspaces },
+  } = useWorkspace();
   const workspaceService = WorkspaceService.getInstance(locale);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [newWorkspaceDescription, setNewWorkspaceDescription] = useState('');
