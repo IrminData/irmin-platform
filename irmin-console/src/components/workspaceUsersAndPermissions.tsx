@@ -41,10 +41,8 @@ type WorkspaceUsersAndPermissionsUser = {
 const WorkspaceUsersAndPermissions: React.FC = () => {
   const { dict } = useLocale();
   const {
-    currentWorkspace,
+    workspaces: { currentWorkspace, switchToWorkspace, transferOwnership },
     irminRoles,
-    switchToWorkspace,
-    transferOwnership,
     users: { users: workspaceUsers, deleteUser, changeUserRole },
     invites: {
       invites: workspaceInvites,

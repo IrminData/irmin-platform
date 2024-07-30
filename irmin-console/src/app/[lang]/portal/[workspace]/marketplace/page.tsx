@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 import DataMarketplace from '@/components/marketplace/dataMarketplace';
 import PluginMarketplace from '@/components/marketplace/pluginMarketplace';
 import LargeTabs from '@/components/tabs/largeTabs';

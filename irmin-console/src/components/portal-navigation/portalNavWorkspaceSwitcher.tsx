@@ -17,8 +17,10 @@ export default function PortalNavWorkspaceSwitcher({
   setIsMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const { dict } = useLocale();
-  const { currentWorkspace, workspaces, switchToWorkspace, workspaceLoading } =
-    useWorkspace();
+  const {
+    workspaces: { currentWorkspace, workspaces, switchToWorkspace },
+    workspaceLoading,
+  } = useWorkspace();
   const router = useRouter();
   const { irminAlert } = usePopup();
   const { workspace: workspaceSlug } = useParams();

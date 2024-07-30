@@ -1,5 +1,3 @@
-import React from 'react';
-
 import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';

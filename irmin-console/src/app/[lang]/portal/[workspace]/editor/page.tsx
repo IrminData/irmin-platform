@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import EditorResults from '@/components/editor/editorResults';
 import EditorWithTabs from '@/components/editor/editorWithTabs';

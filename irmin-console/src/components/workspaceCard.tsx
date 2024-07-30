@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 import Image from 'next/image';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -33,7 +31,10 @@ const WorkspaceCard = ({
   const { dict } = useLocale();
 
   const { irminAlert } = usePopup();
-  const { switchToWorkspace, workspaceLoading } = useWorkspace();
+  const {
+    workspaces: { switchToWorkspace },
+    workspaceLoading,
+  } = useWorkspace();
 
   return (
     <div

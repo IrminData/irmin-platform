@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext } from 'react';
+import { createContext, useContext } from 'react';
 
 import { Dashboard } from '@/types/api/Dashboard';
 import { Dataset } from '@/types/api/Dataset';
@@ -12,21 +12,23 @@ import {
   ConnectionWorkflow,
   ExportWorkflow,
 } from '@/types/api/Workflow';
-import { Workspace } from '@/types/api/Workspace';
-import { WorkspaceUser } from '@/types/api/Workspace';
+import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
 
 /**
  * Context for the workspace
  */
-const WorkspaceContext = createContext<{
-  fetchWorkspaces: () => void;
-  switchToWorkspace: (_workspaceSlug: string | null) => void;
-  deleteCurrentWorkspace: () => Promise<IrminAPIResponse>;
-  transferOwnership: (_userId: number) => Promise<IrminAPIResponse>;
-  workspaces: Workspace[];
-  currentWorkspace: Workspace | null;
+export const WorkspaceContext = createContext<{
   workspaceLoading: boolean;
   irminRoles: IrminRole[];
+  workspaces: {
+    workspaces: Workspace[];
+    fetchWorkspaces: () => void;
+    switchToWorkspace: (_workspaceSlug: string | null) => void;
+    deleteCurrentWorkspace: () => Promise<IrminAPIResponse>;
+    transferOwnership: (_userId: number) => Promise<IrminAPIResponse>;
+    currentWorkspace: Workspace | null;
+    workspacesLoading: boolean;
+  };
   users: {
     users: WorkspaceUser[];
     isLoading: boolean;
@@ -79,14 +81,17 @@ const WorkspaceContext = createContext<{
     fetchDatasets: (_forceFetch?: boolean) => void;
   };
 }>({
-  switchToWorkspace: () => {},
-  fetchWorkspaces: () => {},
-  deleteCurrentWorkspace: () => Promise.resolve({}),
-  transferOwnership: () => Promise.resolve({}),
-  workspaces: [],
   workspaceLoading: false,
-  currentWorkspace: null,
   irminRoles: [],
+  workspaces: {
+    workspaces: [],
+    switchToWorkspace: () => {},
+    fetchWorkspaces: () => {},
+    deleteCurrentWorkspace: () => Promise.resolve({}),
+    transferOwnership: () => Promise.resolve({}),
+    workspacesLoading: false,
+    currentWorkspace: null,
+  },
   users: {
     users: [],
     isLoading: false,
@@ -130,4 +135,13 @@ const WorkspaceContext = createContext<{
   },
 });
 
-export default WorkspaceContext;
+/**
+ * Hook to use the workspace context
+ */
+export const useWorkspace = () => {
+  const context = useContext(WorkspaceContext);
+  if (!context) {
+    throw new Error('useWorkspace must be used within a WorkspaceProvider');
+  }
+  return context;
+};

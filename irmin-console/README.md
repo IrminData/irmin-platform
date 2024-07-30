@@ -2,12 +2,12 @@
 
 # Irmin web (irmin-frontend)
 
-This repository contains the code for Irmin frontend, built using Next.js, TypeScript and Tailwind. 
+This repository contains the code for Irmin frontend, built using Next.js, TypeScript and Tailwind.
 
-| Project | Repository | Development Environment | Documentation | Admin/CMS |
-|---------------|---------------|---------------|---------------|---------------|
-| Irmin Web App (Next.js, TypeScript) | [Repository](https://github.com/IrminData/irmin-frontend) | [Environment](https://irmin.dev) | [Docs](https://irmin.dev/tsdocs) | [WordPress CMS](https://cms.irmin.dev/wp-admin) |
-| Irmin API (Laravel, PHP)| [Repository](https://github.com/IrminData/irmin-api)| [Environment](https://api.irmin.dev) | [Docs](https://api.irmin.dev/docs) | |
+| Project                             | Repository                                                | Development Environment              | Documentation                      | Admin/CMS                                       |
+| ----------------------------------- | --------------------------------------------------------- | ------------------------------------ | ---------------------------------- | ----------------------------------------------- |
+| Irmin Web App (Next.js, TypeScript) | [Repository](https://github.com/IrminData/irmin-frontend) | [Environment](https://irmin.dev)     | [Docs](https://irmin.dev/tsdocs)   | [WordPress CMS](https://cms.irmin.dev/wp-admin) |
+| Irmin API (Laravel, PHP)            | [Repository](https://github.com/IrminData/irmin-api)      | [Environment](https://api.irmin.dev) | [Docs](https://api.irmin.dev/docs) |                                                 |
 
 ## Table of Contents
 
@@ -52,7 +52,7 @@ Ensure you have the following installed:
 - Node.js (v20.x+)
 - Yarn (v2.x+). See [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration details.
 
-In the web app we use TypeScript, Next.js (React framework) with the App Router enabled, and Tailwind (styles). 
+In the web app we use TypeScript, Next.js (React framework) with the App Router enabled, and Tailwind (styles).
 We also use ESLint and Prettier for code quality.
 
 [Next.js documentation](https://nextjs.org/docs/app)
@@ -108,7 +108,7 @@ Types can be found in the `types` directory. If you need to create a new type, a
 
 Avoid creating types inside components. Instead, create them in the `types` directory and import them where needed. If you still decide to create a type inside a component, ensure it is only used within that component and not exported.
 
-All types are stored in `src/types` directory. 
+All types are stored in `src/types` directory.
 
 ## Static data
 
@@ -120,7 +120,7 @@ Note! This is not meant for use in production or staging environments, but only 
 
 The offline mode can be enabled by setting the `NEXT_PUBLIC_OFFLINE_MODE` environment variable to `true`.
 
-The offline mode exists to enable smooth development process in situations with bad or non existent internet connections, such as on a plane. 
+The offline mode exists to enable smooth development process in situations with bad or non existent internet connections, such as on a plane.
 
 When offline mode is enabled something is always returned for API requests in API Services. The offline mode returns objects from example objects eg. [src/lib/exampleObjects/apiObjects.ts](src/lib/exampleObjects/apiObjects.ts) depending on what would be the APIs expected return type.
 
@@ -130,15 +130,15 @@ Note! It is not meant for anything but local use.
 
 To call the API, we use API Services. These services contain the API endpoints and the logic for calling the API. The API Services are located in the `src/lib/api` directory. Each service corresponds to a specific resource in the API.
 
-Please note that accessing a lot of things on the API requires user to be authenticated and the API call be made from the client. This is because the API relies on a cookie set on the API domain. This is why most API Services are not used on the server side, but only on the client side. 
+Please note that accessing a lot of things on the API requires user to be authenticated and the API call be made from the client. This is because the API relies on a cookie set on the API domain. This is why most API Services are not used on the server side, but only on the client side.
 
 Every API Service function for fetching the API should follow the same structure:
 
-1) The function should be async and return a Promise.
-2) The function should call the API using the fetchWithCredentials utility function.
-3) The function should return the response itself, not the data from the response. The data should be extracted in the component that calls the service.
-4) The function should be documented with TypeDoc/TypeDoc comments. The comments should include a description of the function, the parameters, and the return value. Also, if available add the link to the API documentation for that endpoint. If not available, add a TODO note that the API documentation is not available yet.
-5) The function should be able to handle Offline Mode and Development Environments needs. This means returning static data when the API request fails or when Offline Mode is enabled.
+1. The function should be async and return a Promise.
+2. The function should call the API using the fetchWithCredentials utility function.
+3. The function should return the response itself, not the data from the response. The data should be extracted in the component that calls the service.
+4. The function should be documented with TypeDoc/TypeDoc comments. The comments should include a description of the function, the parameters, and the return value. Also, if available add the link to the API documentation for that endpoint. If not available, add a TODO note that the API documentation is not available yet.
+5. The function should be able to handle Offline Mode and Development Environments needs. This means returning static data when the API request fails or when Offline Mode is enabled.
 
 Some services have been created before the API has been fully implemented. In these cases, when the environment is set to development, the services return example objects from the [apiObjects.ts](src/lib/exampleObjects/apiObjects.ts) file. See [Static data](#static-data) section of this README for more information
 
@@ -150,7 +150,7 @@ Examples:
 
 ## Internationalisation
 
-The website is available in multiple languages. 
+The website is available in multiple languages.
 
 The locale is set based on the URL path. For example, `/en` is English, `/fi` is Finnish, and so on. See route `src/app/[lang]`.
 
@@ -169,9 +169,9 @@ Dictionaries are JSON objects which are used to translate the website content. T
 Dictionaries can be found in the `src/dictionaries` folder.
 
 For example see:
--  [English dictionary](src/dictionaries/en.ts) -> English translations
--  [Finnish dictionary](src/dictionaries/fi.ts) -> Finnish translations
 
+- [English dictionary](src/dictionaries/en.ts) -> English translations
+- [Finnish dictionary](src/dictionaries/fi.ts) -> Finnish translations
 
 ## Contexts
 
@@ -185,19 +185,19 @@ When creating a new context, ensure it follows the same structure as the existin
 
 [src/context/ProfileContext.tsx](src/context/ProfileContext.tsx)
 
-ProfileContext is used to manage the user profile state across the application. It provides the user profile data and a function to refetch the user profile data. ProfileProvider is wrapping the root layout of the application. 
+ProfileContext is used to manage the user profile state across the application. It provides the user profile data and a function to refetch the user profile data. ProfileProvider is wrapping the root layout of the application.
 
 For example, the application will know that a user is not logged in if the user profile data is not available. [AuthService](src/lib/api/AuthService.ts) will avoid throwing an error on getProfile if the user is not logged in. Instead, it will return null.
 
 This context provides the application with logic to communicate with the [Auth API Service](src/lib/api/AuthService.ts).
 
-Please note that unlike with other contexts, the AuthService is a lot of times used directly in components. 
+Please note that unlike with other contexts, the AuthService is a lot of times used directly in components.
 
 ### LocaleContext
 
 [src/context/LocaleContext.tsx](src/context/LocaleContext.tsx)
 
-LocaleContext is used to manage the locale and translations state across the application. It provides the current locale, current dictionary, and a function to change the locale. LocaleProvider is wrapping the root layout of the application. 
+LocaleContext is used to manage the locale and translations state across the application. It provides the current locale, current dictionary, and a function to change the locale. LocaleProvider is wrapping the root layout of the application.
 
 See (Internationalisation)[#internationalisation] for more information.
 
@@ -209,7 +209,7 @@ PopupContext is used to manage the popup state across the application. It provid
 
 The context is not using any API Services and exists mostly for convinience and to render the popups on top of other UIs.
 
-The popup UIs can be found in the `src/components/misc` directory. 
+The popup UIs can be found in the `src/components/misc` directory.
 
 ### BucketContext
 
@@ -225,7 +225,7 @@ See [Bucket API Service](src/lib/api/BucketService.ts) and [the Editor](src/app/
 
 [src/context/workspace/WorkspaceContext.tsx](src/context/workspace/WorkspaceContext.tsx)
 
-Split into multiple files for clarity and to avoid a single file becoming too large. 
+Split into multiple files for clarity and to avoid a single file becoming too large.
 
 This context is responsible for managing the workspace state. This includes the workspace data, workflows, datasets, and other workspace-related data, which is not provided by other contexts.
 
@@ -239,26 +239,27 @@ It provides the application with logic to communicate with:
 - [Dashboard API Service](src/lib/api/DashboardService.ts)
 - [Dataset API Service](src/lib/api/DatasetService.ts)
 
-
 ## Wordpress CMS
 
 The Wordpress CMS is used to manage the content of the website. The Wordpress API is used to fetch the content from the CMS. Pages are fetched from the API based on slug.
 
-Website navigation and footer links are managed in the Wordpress menu section. The menu is fetched from the API and used to render the navigation and footer links. 
+Website navigation and footer links are managed in the Wordpress menu section. The menu is fetched from the API and used to render the navigation and footer links.
 
 [Wordpress Class](src/lib/wordpress.ts) is used to communicate with the Wordpress API. This class is not under API Services since it is not used to fetch data for the application, but to fetch data for the website content. In addition, the Wordpress Class is used directly, without a context, because Next.js fetches the data on the server side.
 
 The Wordpress menu slugs are found in the translation dictionaries for different locales. See [Internationalisation](#internationalisation) for more information.
 
 For example:
+
 - `primary-menu-en` -> English website top navigation
 - `footer-menu-fi` -> Finnish website footer links
 
 See `src/components/website/websiteFooter.tsx` and `src/components/website/websiteNavigation.tsx` for more information.
 
-We use ACF (Advanced Custom Fields) to create custom fields for the Wordpress posts and pages. The key thing in these fields are sections, which are used to create the structure of the page. Each section can have multiple fields, such as text, image, or repeater fields. 
+We use ACF (Advanced Custom Fields) to create custom fields for the Wordpress posts and pages. The key thing in these fields are sections, which are used to create the structure of the page. Each section can have multiple fields, such as text, image, or repeater fields.
 
 To render the Wordpress content we use 2 different components:
+
 - `@/components/WebsitePageContent` -> used to render Wordpress Gutenberg editor content. Mainly used for basic text pages like Privacy Policy or Articles
 - `@/components/WebsiteSections` -> used to render Wordpress ACF content. This component is used for more complex pages like the homepage or the workspace page. The component takes the sections from the Wordpress API, loops through them, and renders the correct component for each section.
 
@@ -292,7 +293,7 @@ Refer to the migration guide for more detailed steps and troubleshooting tips.
 
 ## TypeDoc documentation
 
-TypeDoc is used to document the codebase. TypeDoc is a standard for documenting TypeScript code. It is similar to JSDoc but is specifically designed for TypeScript. 
+TypeDoc is used to document the codebase. TypeDoc is a standard for documenting TypeScript code. It is similar to JSDoc but is specifically designed for TypeScript.
 
 When documenting code, use TypeDoc comments. TypeDoc comments should be placed above the function or type they are documenting. The comments should include a description of the function or type, the parameters, and the return value.
 

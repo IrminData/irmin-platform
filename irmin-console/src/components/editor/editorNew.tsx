@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { FiDatabase, FiUser } from 'react-icons/fi';
 
 import { useLocale } from '@/context/LocaleContext';

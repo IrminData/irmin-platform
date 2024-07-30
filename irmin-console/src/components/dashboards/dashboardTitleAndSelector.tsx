@@ -1,5 +1,3 @@
-import React from 'react';
-
 import PortalTitle from '@/components/portalTitle';
 
 import { useLocale } from '@/context/LocaleContext';

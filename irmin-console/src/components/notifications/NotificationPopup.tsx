@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import Link from 'next/link';
 
@@ -31,7 +31,9 @@ const NotificationPopup = ({
   notificationsClickPosition: { x: number; y: number } | null;
 }) => {
   const { dict, locale } = useLocale();
-  const { currentWorkspace } = useWorkspace();
+  const {
+    workspaces: { currentWorkspace },
+  } = useWorkspace();
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 

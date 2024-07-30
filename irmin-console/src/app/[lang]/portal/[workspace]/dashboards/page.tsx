@@ -36,53 +36,46 @@ export default function DashboardsPage() {
   const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(
     null
   );
-  const workspace = useWorkspace();
+  const { dashboards } = useWorkspace();
 
   useEffect(() => {
-    if (
-      !selectedDashboard &&
-      !workspace.dashboards.isLoading &&
-      workspace.dashboards.dashboards
-    ) {
-      if (workspace.dashboards.dashboards.length > 0) {
-        setSelectedDashboard(workspace.dashboards.dashboards[0]);
+    if (!selectedDashboard && !dashboards.isLoading && dashboards.dashboards) {
+      if (dashboards.dashboards.length > 0) {
+        setSelectedDashboard(dashboards.dashboards[0]);
       } else {
         // TODO: Prompt user to create a new dashboard
       }
     }
-  }, [workspace.dashboards, selectedDashboard]);
+  }, [dashboards, selectedDashboard]);
 
-  if (workspace.dashboards.isLoading || !workspace.dashboards.dashboards) {
+  if (dashboards.isLoading || !dashboards.dashboards) {
     return <LoadingSkeleton className='h-96 w-full' />;
   }
   return (
     <div className='px-0 lg:px-4'>
-      {workspace.dashboards.isLoading && (
-        <LoadingSkeleton className='h-96 w-full' />
+      {dashboards.isLoading && <LoadingSkeleton className='h-96 w-full' />}
+      {dashboards.dashboards.length === 0 && !dashboards.isLoading && (
+        <div className='flex h-96 flex-col items-center justify-center gap-4'>
+          <p className='text-xl font-semibold text-irmin_black'>
+            {dict.dashboard.noDashboards}
+          </p>
+          <Button
+            variant='solid'
+            colorScheme='secondary'
+            size='md'
+            onClick={() => {
+              // TODO: Implement create new dashboard
+            }}
+          >
+            {dict.dashboard.createNewDashboard}
+          </Button>
+        </div>
       )}
-      {workspace.dashboards.dashboards.length === 0 &&
-        !workspace.dashboards.isLoading && (
-          <div className='flex h-96 flex-col items-center justify-center gap-4'>
-            <p className='text-xl font-semibold text-irmin_black'>
-              {dict.dashboard.noDashboards}
-            </p>
-            <Button
-              variant='solid'
-              colorScheme='secondary'
-              size='md'
-              onClick={() => {
-                // TODO: Implement create new dashboard
-              }}
-            >
-              {dict.dashboard.createNewDashboard}
-            </Button>
-          </div>
-        )}
       {selectedDashboard && (
         <>
           <DashboardTitleAndSelector
             title={selectedDashboard?.name ?? dict.dashboard.dashboard}
-            options={workspace.dashboards.dashboards}
+            options={dashboards.dashboards}
             selected={selectedDashboard}
             onSelectionChange={(value) => {
               setSelectedDashboard(value);

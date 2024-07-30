@@ -1,6 +1,6 @@
 'use client';
 
-import React, { KeyboardEvent, useState } from 'react';
+import { KeyboardEvent, useState } from 'react';
 
 import { AiOutlineSend } from 'react-icons/ai';
 import { IoClose } from 'react-icons/io5';

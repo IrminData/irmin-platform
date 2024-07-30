@@ -71,8 +71,9 @@ export default function WorkspaceSettingsPage() {
 const GeneralSettings = () => {
   const { locale, dict } = useLocale();
   const { irminModal } = usePopup();
-  const { currentWorkspace, fetchWorkspaces, deleteCurrentWorkspace } =
-    useWorkspace();
+  const {
+    workspaces: { currentWorkspace, fetchWorkspaces, deleteCurrentWorkspace },
+  } = useWorkspace();
   const { irminAlert } = usePopup();
 
   const [workspaceName, setWorkspaceName] = useState('');

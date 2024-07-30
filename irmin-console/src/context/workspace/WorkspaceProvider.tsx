@@ -6,38 +6,16 @@ import { useParams } from 'next/navigation';
 
 import { Locale } from '@/dictionaries';
 
-import {
-  useCancelInvite,
-  useChangeInvite,
-  useChangeUserRole,
-  useDeleteCurrentWorkspace,
-  useDeleteUser,
-  useFetchActions,
-  useFetchConnections,
-  useFetchDashboards,
-  useFetchDatasets,
-  useFetchExports,
-  useFetchInvites,
-  useFetchRoles,
-  useFetchUsers,
-  useFetchWorkspaces,
-  useResendInvite,
-  useSendInvite,
-  useSwitchWorkspace,
-  useTransferOwnership,
-  WorkspaceContext,
-} from '@/context/workspace';
+import { WorkspaceContext } from '@/context/workspace';
 
-import { Dashboard } from '@/types/api/Dashboard';
-import { Dataset } from '@/types/api/Dataset';
-import { Invite } from '@/types/api/Invite';
-import { IrminRole } from '@/types/api/IrminRole';
-import {
-  ActionWorkflow,
-  ConnectionWorkflow,
-  ExportWorkflow,
-} from '@/types/api/Workflow';
-import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
+import useActions from './provider/useActions';
+import useConnections from './provider/useConnections';
+import useDashboards from './provider/useDashboards';
+import useDatasets from './provider/useDatasets';
+import useExports from './provider/useExports';
+import useInvite from './provider/useInvite';
+import useUsersAndRoles from './provider/useUsersAndRoles';
+import useWorkspaces from './provider/useWorkspaces';
 
 /**
  * Workspace context provider
@@ -47,7 +25,7 @@ import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
  * Provider for the workspace context to handle workspace data.
  * It fetches the workspace data from the API and provides it to the app.
  *
- * Objects handled by the context:
+ * Domains handled by the context:
  *  workspaces - available workspaces
  *  current workspace - the currently selected workspace
  *  users - workspace's existing users
@@ -73,248 +51,77 @@ export const WorkspaceProvider = ({
   // Ref to check if the component has been initialised
   const initialisedRef = useRef(false);
 
-  // Roles
-  const [irminRoles, setIrminRoles] = useState<IrminRole[]>([]);
-
-  // Workspaces
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(
-    null
-  );
+  // Loading state for the Workspace Context as a whole
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
 
-  // Connections
-  const [connections, setConnections] = useState<ConnectionWorkflow[]>([]);
-  const [connectionsLoading, setConnectionsLoading] = useState(false);
-  const [connectionsFetchedFor, setConnectionsFetchedFor] = useState<
-    string | null
-  >(null);
-
-  // Exports
-  const [exports, setExports] = useState<ExportWorkflow[]>([]);
-  const [exportsLoading, setExportsLoading] = useState(false);
-  const [exportsFetchedFor, setExportsFetchedFor] = useState<string | null>(
-    null
-  );
+  // Workspaces
+  const {
+    workspaces,
+    workspacesLoading,
+    currentWorkspace,
+    switchToWorkspace,
+    deleteCurrentWorkspace,
+    transferOwnership,
+    fetchWorkspaces,
+  } = useWorkspaces({ locale });
 
   // Actions
-  const [actions, setActions] = useState<ActionWorkflow[]>([]);
-  const [actionsLoading, setActionsLoading] = useState(false);
-  const [actionsFetchedFor, setActionsFetchedFor] = useState<string | null>(
-    null
-  );
+  const { actions, actionsLoading, fetchActions } = useActions({
+    currentWorkspace,
+    locale,
+  });
 
-  // Datasets
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
-  const [datasetsLoading, setDatasetsLoading] = useState(false);
-  const [datasetsFetchedFor, setDatasetsFetchedFor] = useState<string | null>(
-    null
-  );
+  // Connections
+  const { connections, connectionsLoading, fetchConnections } = useConnections({
+    currentWorkspace,
+    locale,
+  });
+
+  // Exports
+  const { exports, exportsLoading, fetchExports } = useExports({
+    currentWorkspace,
+    locale,
+  });
 
   // Dashboards
-  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
-  const [dashboardsLoading, setDashboardsLoading] = useState(false);
-  const [dashboardsFetchedFor, setDashboardsFetchedFor] = useState<
-    string | null
-  >(null);
+  const { dashboards, dashboardsLoading, fetchDashboards } = useDashboards({
+    currentWorkspace,
+    locale,
+  });
 
-  // Users
-  const [users, setUsers] = useState<WorkspaceUser[]>([]);
-  const [usersLoading, setUsersLoading] = useState(false);
-  const [usersFetchedFor, setUsersFetchedFor] = useState<string | null>(null);
+  // Datasets
+  const { datasets, datasetsLoading, fetchDatasets } = useDatasets({
+    currentWorkspace,
+    locale,
+  });
+
+  // Users and roles
+  const {
+    irminRoles,
+    fetchRoles,
+    users,
+    usersLoading,
+    fetchUsers,
+    deleteUser,
+    changeUserRole,
+  } = useUsersAndRoles({
+    currentWorkspace,
+    locale,
+  });
 
   // Invites
-  const [invites, setInvites] = useState<Invite[]>([]);
-  const [invitesLoading, setInvitesLoading] = useState(false);
-  const [invitesFetchedFor, setInvitesFetchedFor] = useState<string | null>(
-    null
-  );
-
-  /**
-   * Hook to fetch the workspaces.
-   * It will be run during the initialisation to load all available workspaces.
-   */
-  const fetchWorkspaces = useFetchWorkspaces(
-    setWorkspaces,
-    workspaceLoading,
-    setWorkspaceLoading,
-    locale
-  );
-
-  /**
-   * Hook to fetch the roles.
-   * It will be run during the initialisation to load all available roles.
-   */
-  const fetchRoles = useFetchRoles(setIrminRoles, locale);
-
-  /**
-   * Hook to fetch the connections for the current workspace.
-   * It will be run whenever the current workspace changes to update the connections.
-   */
-  const fetchConnections = useFetchConnections(
-    currentWorkspace,
-    setConnections,
-    connectionsLoading,
-    setConnectionsLoading,
-    connectionsFetchedFor,
-    setConnectionsFetchedFor,
-    locale
-  );
-
-  /**
-   * Hook to fetch the exports for the current workspace.
-   * It will be run whenever the current workspace changes to update the exports.
-   */
-  const fetchExports = useFetchExports(
-    currentWorkspace,
-    setExports,
-    exportsLoading,
-    setExportsLoading,
-    exportsFetchedFor,
-    setExportsFetchedFor,
-    locale
-  );
-
-  /**
-   * Hook to fetch the actions for the current workspace.
-   * It will be run whenever the current workspace changes to update the actions.
-   */
-  const fetchActions = useFetchActions(
-    currentWorkspace,
-    setActions,
-    actionsLoading,
-    setActionsLoading,
-    actionsFetchedFor,
-    setActionsFetchedFor,
-    locale
-  );
-
-  /**
-   * Hook to fetch the datasets for the current workspace.
-   * It will be run whenever the current workspace changes to update the datasets.
-   */
-  const fetchDatasets = useFetchDatasets(
-    currentWorkspace,
-    setDatasets,
-    datasetsLoading,
-    setDatasetsLoading,
-    datasetsFetchedFor,
-    setDatasetsFetchedFor,
-    locale
-  );
-
-  /**
-   * Hook to fetch the dashboards for the current workspace.
-   * It will be run whenever the current workspace changes to update the dashboards.
-   */
-  const fetchDashboards = useFetchDashboards(
-    currentWorkspace,
-    setDashboards,
-    dashboardsLoading,
-    setDashboardsLoading,
-    dashboardsFetchedFor,
-    setDashboardsFetchedFor,
-    locale
-  );
-
-  /**
-   * Hook to fetch the users for the current workspace.
-   * It will be run whenever the current workspace changes to update the users.
-   */
-  const fetchUsers = useFetchUsers(
-    currentWorkspace,
-    setUsers,
-    usersLoading,
-    setUsersLoading,
-    usersFetchedFor,
-    setUsersFetchedFor,
-    locale
-  );
-
-  /**
-   * Hook to fetch the invites for the current workspace.
-   * It will be run whenever the current workspace changes to update the invites.
-   */
-  const fetchInvites = useFetchInvites(
-    currentWorkspace,
-    setInvites,
+  const {
+    invites,
     invitesLoading,
-    setInvitesLoading,
-    invitesFetchedFor,
-    setInvitesFetchedFor,
-    locale
-  );
-
-  /**
-   * Hook to switch to a workspace. Updates localStorage and the current workspace state.
-   * Fetches the new workspace data, calls API /switch endpoint, redirects to the new workspace,
-   * and shows a success or error popup message.
-   * @param workspaceSlug - The slug of the workspace to switch to.
-   */
-  const switchToWorkspace = useSwitchWorkspace(
+    fetchInvites,
+    sendInvite,
+    resendInvite,
+    cancelInvite,
+    changeInvite,
+  } = useInvite({
     currentWorkspace,
-    setCurrentWorkspace,
-    workspaceLoading,
-    setWorkspaceLoading,
-    fetchWorkspaces,
-    locale
-  );
-
-  /**
-   * Hook to delete the current workspace. It calls the API to delete the workspace,
-   * switches to the default workspace, and fetches the updated workspaces.
-   */
-  const deleteCurrentWorkspace = useDeleteCurrentWorkspace(
-    switchToWorkspace,
-    fetchWorkspaces,
-    locale
-  );
-
-  /**
-   * Hook to transfer ownership of the current workspace. It calls the API to transfer ownership,
-   * and refetches the current workspace.
-   */
-  const transferOwnership = useTransferOwnership(
-    currentWorkspace,
-    setCurrentWorkspace,
-    locale
-  );
-
-  /**
-   * Hook to send an invite to a user. It calls the API to send the invite,
-   * and fetches the updated invites.
-   */
-  const sendInvite = useSendInvite(currentWorkspace, setInvites, locale);
-
-  /**
-   * Hook to resend an invite to a user. It calls the API to resend the invite,
-   * and fetches the updated invites.
-   */
-  const resendInvite = useResendInvite(locale);
-
-  /**
-   * Hook to cancel an invite to a user. It calls the API to cancel the invite,
-   * and fetches the updated invites.
-   */
-  const cancelInvite = useCancelInvite(invites, setInvites, locale);
-
-  /**
-   * Hook to change an invite to a user. It calls the API to change the invite,
-   * and fetches the updated invites.
-   */
-  const changeInvite = useChangeInvite(invites, setInvites, locale);
-
-  /**
-   * Hook to delete a user. It calls the API to delete the user,
-   * and fetches the updated users.
-   */
-  const deleteUser = useDeleteUser(users, setUsers, locale);
-
-  /**
-   * Hook to change the role of a user. It calls the API to change the role,
-   * and fetches the updated users.
-   */
-  const changeUserRole = useChangeUserRole(users, setUsers, locale);
+    locale,
+  });
 
   /**
    * Hook to initialise the context by fetching initial data.
@@ -394,14 +201,17 @@ export const WorkspaceProvider = ({
   return (
     <WorkspaceContext.Provider
       value={{
-        workspaces,
         workspaceLoading,
-        currentWorkspace,
-        switchToWorkspace,
-        deleteCurrentWorkspace,
-        transferOwnership,
-        fetchWorkspaces,
         irminRoles,
+        workspaces: {
+          workspaces,
+          currentWorkspace,
+          switchToWorkspace,
+          deleteCurrentWorkspace,
+          transferOwnership,
+          fetchWorkspaces,
+          workspacesLoading,
+        },
         users: {
           users,
           isLoading: usersLoading,

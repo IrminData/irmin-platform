@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import DataMarketplaceFilters from '@/components/marketplace/dataMarketplaceFilters';
 import DataMarketplaceListingCard from '@/components/marketplace/dataMarketplaceListingCard';

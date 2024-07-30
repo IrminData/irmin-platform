@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { BsBarChart, BsGraphUp, BsSpeedometer, BsTable } from 'react-icons/bs';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import PluginMarketplaceFilters from '@/components/marketplace/pluginMarketplaceFilters';
 import PluginMarketplaceListingCard from '@/components/marketplace/pluginMarketplaceListingCard';

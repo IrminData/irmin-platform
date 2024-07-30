@@ -1,5 +1,3 @@
-import React from 'react';
-
 import * as Icons from 'react-icons/fa6';
 
 /**
