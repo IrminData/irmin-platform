@@ -192,6 +192,7 @@ const fi = {
       select: 'Valitse',
       connector: 'Yhdistin',
       connectionName: 'Yhteyden nimi',
+      connectionDescription: 'Yhteyden kuvaus',
       addCustomConnector: 'Lisää mukautettu yhdistin',
       syncIntervalLabel:
         'Synkronointiväli (cron-lauseke) tai jätä tyhjäksi manuaalista synkronointia varten',

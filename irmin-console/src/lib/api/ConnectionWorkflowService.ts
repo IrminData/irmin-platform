@@ -186,27 +186,40 @@ class ConnectionWorkflowService {
 
   /**
    * Create a new connection and start sync with the provided details and settings for a workspace
-   * @param connectorID - The ID of the connector
-   * @param connectionName - The name of the connection
-   * @param connectionCron - The cron syntax for the connection
-   * @param connectionDetails - The connection details
-   * @param connectionSettings - The connection settings
+   *
+   * @param newConnectionData - The new connection data
+   * @param newConnectionData.connectorID - The ID of the connector
+   * @param newConnectionData.connectionDetails - The connection details
+   * @param newConnectionData.connectionSettings - The connection settings
+   * @param newConnectionData.name - Name of the workflow
+   * @param newConnectionData.description - Description of the workflow
+   * @param newConnectionData.cron_syntax - Cron syntax for the workflow, leave empty for manual run
+   *
    * @returns response from the API or example data
    * {@link https://api.irmin.dev/docs#workflows-POSTv1-connections-create | Irmin API docs}
    */
-  async createConnection(
-    connectorID: number,
-    connectionName: string,
-    connectionCron: string,
-    connectionDetails: ConnectionDetailsAndSettings,
-    connectionSettings: ConnectionDetailsAndSettings
-  ): Promise<IrminAPIResponse> {
+  async createConnection({
+    connectorID,
+    connectionDetails,
+    connectionSettings,
+    name,
+    description,
+    cron_syntax,
+  }: {
+    connectorID: number;
+    connectionDetails: ConnectionDetailsAndSettings;
+    connectionSettings: ConnectionDetailsAndSettings;
+    name: string;
+    description: string;
+    cron_syntax: string;
+  }): Promise<IrminAPIResponse> {
     try {
       const formData = new FormData();
 
       formData.append('connector', connectorID.toString());
-      formData.append('name', connectionName);
-      formData.append('cron_syntax', connectionCron);
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('cron_syntax', cron_syntax);
 
       Object.keys(connectionDetails).forEach((key) => {
         formData.append(`details[${key}]`, connectionDetails[key] as string);

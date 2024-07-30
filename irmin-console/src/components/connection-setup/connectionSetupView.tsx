@@ -19,6 +19,7 @@ import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 const initialConnectionData: ConnectionSetup = {
   name: '',
   cron: '0 0 * * *',
+  description: '',
   connector: null,
   connectionDetailsFields: null,
   connectionSettingsFields: null,

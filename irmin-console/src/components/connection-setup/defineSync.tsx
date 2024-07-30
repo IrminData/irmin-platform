@@ -62,13 +62,14 @@ export default function DefineSync({
       }
       try {
         // Start the sync
-        const res = await connectionWorkflowService.createConnection(
-          connectionData.connector.id,
-          connectionData.name,
-          connectionData.cron,
-          connectionData.connectionDetails,
-          connectionData.connectionSettings
-        );
+        const res = await connectionWorkflowService.createConnection({
+          connectorID: connectionData.connector.id,
+          connectionDetails: connectionData.connectionDetails,
+          connectionSettings: connectionData.connectionSettings,
+          name: connectionData.name,
+          description: connectionData.description,
+          cron_syntax: connectionData.cron,
+        });
         // Inform that sync has started
         irminAlert(
           'success',
@@ -123,6 +124,23 @@ export default function DefineSync({
           defaultValue={cronValue}
           onChange={(e) => {
             setCronValue(e.target.value);
+          }}
+        />
+      </div>
+      <div className='mb-6'>
+        <label className='mb-2 block font-light text-irmin_black' htmlFor=''>
+          {dict.connection.create.connectionDescription}
+        </label>
+        <Input
+          variant='outline'
+          colorScheme='black'
+          className='mt-2 w-full'
+          defaultValue={connectionData.description}
+          onChange={(e) => {
+            setConnectionData((prev: ConnectionSetup) => ({
+              ...prev,
+              description: e.target.value ?? '',
+            }));
           }}
         />
       </div>

@@ -192,6 +192,7 @@ const en = {
       select: 'Select',
       connector: 'Connector',
       connectionName: 'Connection name',
+      connectionDescription: 'Connection description',
       addCustomConnector: 'Add custom connector',
       syncIntervalLabel:
         'Sync interval (cron expression) or leave empty for manual sync',
