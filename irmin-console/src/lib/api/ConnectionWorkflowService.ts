@@ -88,7 +88,7 @@ class ConnectionWorkflowService {
       );
       return response as ConnectionDetailsAndSettingsAPIResponse;
     } catch (error) {
-      console.error('Fetch connector details error:', error);
+      console.error('Failed to fetch new connection workflow details:', error);
       throw error;
     }
   }
@@ -127,7 +127,7 @@ class ConnectionWorkflowService {
       );
       return response as ConnectionTestAPIResponse;
     } catch (error) {
-      console.error('Fetch connector details error:', error);
+      console.error('Failed to test new connection workflow:', error);
       throw error;
     }
   }
@@ -166,7 +166,7 @@ class ConnectionWorkflowService {
       );
       return response as ConnectionDetailsAndSettingsAPIResponse;
     } catch (error) {
-      console.error('Fetch connector details error:', error);
+      console.error('Failed to fetch new connection workflow settings:', error);
       throw error;
     }
   }
@@ -174,13 +174,13 @@ class ConnectionWorkflowService {
   /**
    * Create a new connection and start sync with the provided details and settings for a workspace
    *
-   * @param newConnectionData - The new connection data
-   * @param newConnectionData.connectorID - The ID of the connector
-   * @param newConnectionData.connectionDetails - The connection details
-   * @param newConnectionData.connectionSettings - The connection settings
-   * @param newConnectionData.name - Name of the workflow
-   * @param newConnectionData.description - Description of the workflow
-   * @param newConnectionData.cron_syntax - Cron syntax for the workflow, leave empty for manual run
+   * @param connectionProps - The new connection data
+   * @param connectionProps.connectorID - The ID of the connector
+   * @param connectionProps.connectionDetails - The connection details
+   * @param connectionProps.connectionSettings - The connection settings
+   * @param connectionProps.name - Name of the workflow
+   * @param connectionProps.description - Description of the workflow
+   * @param connectionProps.cron_syntax - Cron syntax for the workflow, leave empty for manual run
    *
    * @returns response from the API or example data
    * {@link https://api.irmin.dev/docs#workflows-POSTv1-connections-create | Irmin API docs}
@@ -203,17 +203,19 @@ class ConnectionWorkflowService {
     try {
       const formData = new FormData();
 
+      // Export workflow properties
       formData.append('connector', connectorID.toString());
-      formData.append('name', name);
-      formData.append('description', description);
-      formData.append('cron_syntax', cron_syntax);
-
       Object.keys(connectionDetails).forEach((key) => {
         formData.append(`details[${key}]`, connectionDetails[key] as string);
       });
       Object.keys(connectionSettings).forEach((key) => {
         formData.append(`settings[${key}]`, connectionSettings[key] as string);
       });
+
+      // Workflow properties
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('cron_syntax', cron_syntax);
 
       const res = await fetchWithCredentials(
         `${api_base}/v1/connections/create`,
@@ -225,7 +227,7 @@ class ConnectionWorkflowService {
       );
       return res;
     } catch (error) {
-      console.error('Failed to create connection:', error);
+      console.error('Failed to create connection workflow:', error);
       throw error;
     }
   }
