@@ -36,19 +36,6 @@ const randomExampleWidget = () =>
  * @remarks
  *
  * This service calls the Irmin API and is responsible for all dashboard widget related API calls.
- *
- * Like the other API services, this service is a singleton, meaning that only one
- * instance of the service can exist at a time.
- *
- * The service uses the {@link fetchWithCredentials} function to make API calls.
- *
- * If the environment is set to offline mode, service will return example data instead
- * of making API calls.
- *
- * If the environment is set to development, service will log the API call errors to
- * the console, but will not throw them. Instead, it will return the example data.
- *
- * Example data can be found here: `@/lib/exampleObjects/apiObjects`
  */
 class WidgetService {
   private static instance: WidgetService;
