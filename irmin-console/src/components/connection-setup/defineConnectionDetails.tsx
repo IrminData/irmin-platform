@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
-import ConnectionService from '@/lib/api/ConnectionService';
+import ConnectionWorkflowService from '@/lib/api/ConnectionWorkflowService';
 
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
@@ -27,7 +27,8 @@ export default function DefineConnectionDetails({
 }) {
   const { locale, dict } = useLocale();
   const { irminAlert } = usePopup();
-  const connectionService = ConnectionService.getInstance(locale);
+  const connectionWorkflowService =
+    ConnectionWorkflowService.getInstance(locale);
   const [loading, setLoading] = useState(false);
   const [initialLoadingDone, setInitialLoadingDone] = useState(false);
 
@@ -45,9 +46,10 @@ export default function DefineConnectionDetails({
     setLoading(true);
 
     try {
-      const response = await connectionService.fetchNewConnectionDetails(
-        connectionData.connector.id
-      );
+      const response =
+        await connectionWorkflowService.fetchNewConnectionDetails(
+          connectionData.connector.id
+        );
       setConnectionData((prev: ConnectionSetup) => ({
         ...prev,
         connectionDetailsFields: response.data,
@@ -61,7 +63,7 @@ export default function DefineConnectionDetails({
       );
     }
   }, [
-    connectionService,
+    connectionWorkflowService,
     connectionData.connector,
     irminAlert,
     loading,
@@ -129,7 +131,7 @@ export default function DefineConnectionDetails({
         }));
 
         // Test the connection
-        const res = await connectionService.testConnectionWithDetails(
+        const res = await connectionWorkflowService.testConnectionWithDetails(
           connectionData.connector.id,
           data
         );
@@ -157,7 +159,7 @@ export default function DefineConnectionDetails({
       setLoading,
       setConnectionData,
       setCurrentStep,
-      connectionService,
+      connectionWorkflowService,
       irminAlert,
       dict,
     ]

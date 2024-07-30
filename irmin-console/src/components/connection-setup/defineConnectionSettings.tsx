@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
-import ConnectionService from '@/lib/api/ConnectionService';
+import ConnectionWorkflowService from '@/lib/api/ConnectionWorkflowService';
 
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
@@ -27,7 +27,8 @@ export default function DefineConnectionSettings({
 }) {
   const { locale, dict } = useLocale();
   const { irminAlert } = usePopup();
-  const connectionService = ConnectionService.getInstance(locale);
+  const connectionWorkflowService =
+    ConnectionWorkflowService.getInstance(locale);
 
   const [loading, setLoading] = useState(false);
   const [initialLoadingDone, setInitialLoadingDone] = useState(false);
@@ -47,10 +48,11 @@ export default function DefineConnectionSettings({
     setLoading(true);
 
     try {
-      const response = await connectionService.fetchNewConnectionSettings(
-        connectionData.connector.id,
-        connectionData.connectionDetails
-      );
+      const response =
+        await connectionWorkflowService.fetchNewConnectionSettings(
+          connectionData.connector.id,
+          connectionData.connectionDetails
+        );
       if (
         Object.prototype.hasOwnProperty.call(response.data, 'settings') &&
         !response.data.settings
@@ -83,7 +85,7 @@ export default function DefineConnectionSettings({
       );
     }
   }, [
-    connectionService,
+    connectionWorkflowService,
     connectionData.connector,
     connectionData.connectionDetails,
     irminAlert,

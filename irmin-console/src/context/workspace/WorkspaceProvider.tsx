@@ -7,15 +7,14 @@ import { useParams } from 'next/navigation';
 import { Locale } from '@/dictionaries';
 
 import { WorkspaceContext } from '@/context/workspace';
-
-import useActions from './provider/useActions';
-import useConnections from './provider/useConnections';
-import useDashboards from './provider/useDashboards';
-import useDatasets from './provider/useDatasets';
-import useExports from './provider/useExports';
-import useInvite from './provider/useInvite';
-import useUsersAndRoles from './provider/useUsersAndRoles';
-import useWorkspaces from './provider/useWorkspaces';
+import useActions from '@/context/workspace/provider/useActions';
+import useConnections from '@/context/workspace/provider/useConnections';
+import useDashboards from '@/context/workspace/provider/useDashboards';
+import useDatasets from '@/context/workspace/provider/useDatasets';
+import useExports from '@/context/workspace/provider/useExports';
+import useInvite from '@/context/workspace/provider/useInvite';
+import useUsersAndRoles from '@/context/workspace/provider/useUsersAndRoles';
+import useWorkspaces from '@/context/workspace/provider/useWorkspaces';
 
 /**
  * Workspace context provider

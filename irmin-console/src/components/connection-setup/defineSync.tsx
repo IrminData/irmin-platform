@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 
 import Image from 'next/image';
 
-import ConnectionService from '@/lib/api/ConnectionService';
+import ConnectionWorkflowService from '@/lib/api/ConnectionWorkflowService';
 
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
@@ -26,7 +26,8 @@ export default function DefineSync({
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const { locale, dict } = useLocale();
-  const connectionService = ConnectionService.getInstance(locale);
+  const connectionWorkflowService =
+    ConnectionWorkflowService.getInstance(locale);
 
   const { irminAlert } = usePopup();
 
@@ -61,7 +62,7 @@ export default function DefineSync({
       }
       try {
         // Start the sync
-        const res = await connectionService.createConnection(
+        const res = await connectionWorkflowService.createConnection(
           connectionData.connector.id,
           connectionData.name,
           connectionData.cron,
@@ -88,7 +89,7 @@ export default function DefineSync({
       isLoading,
       cronValue,
       connectionData,
-      connectionService,
+      connectionWorkflowService,
       irminAlert,
       setIsOpen,
       setIsLoading,

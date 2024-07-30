@@ -48,7 +48,7 @@ interface ActionAPIResponse extends IrminAPIResponse {
  *
  * This service calls the Irmin API and is responsible for all workflow related API calls,
  * except for what is Workflow type specific. Those are handled by the specific services,
- * like ConnectionService, ExportService, and ActionService.
+ * like ConnectionWorkflowService, ExportService, and ActionService.
  *
  * Like the other API services, this service is a singleton, meaning that only one
  * instance of the service can exist at a time.

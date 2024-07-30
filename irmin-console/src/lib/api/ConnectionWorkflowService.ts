@@ -47,8 +47,8 @@ interface ConnectionTestAPIResponse extends IrminAPIResponse {
  *
  * Example data can be found here: `@/lib/exampleObjects/apiObjects`
  */
-class ConnectionService {
-  private static instance: ConnectionService;
+class ConnectionWorkflowService {
+  private static instance: ConnectionWorkflowService;
   private locale: Locale = defaultLocale;
 
   private constructor(locale: Locale) {
@@ -56,17 +56,19 @@ class ConnectionService {
   }
 
   /**
-   * Get the instance of the {@link ConnectionService}
+   * Get the instance of the {@link ConnectionWorkflowService}
    * @param locale - The locale to use for the instance
    */
-  public static getInstance(locale: Locale): ConnectionService {
-    if (!ConnectionService.instance) {
-      ConnectionService.instance = new ConnectionService(locale);
+  public static getInstance(locale: Locale): ConnectionWorkflowService {
+    if (!ConnectionWorkflowService.instance) {
+      ConnectionWorkflowService.instance = new ConnectionWorkflowService(
+        locale
+      );
     } else {
       // Update the locale if the instance already exists
-      ConnectionService.instance.setLocale(locale);
+      ConnectionWorkflowService.instance.setLocale(locale);
     }
-    return ConnectionService.instance;
+    return ConnectionWorkflowService.instance;
   }
 
   /**
@@ -229,4 +231,4 @@ class ConnectionService {
   }
 }
 
-export default ConnectionService;
+export default ConnectionWorkflowService;
