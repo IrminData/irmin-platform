@@ -73,7 +73,7 @@ const Button = ({
   const router = useRouter();
 
   const baseClasses =
-    'inline-flex items-center justify-center rounded-lg transition-all outline-none hover:opacity-60 duration-500 hover:backdrop-blur active:shadow-md';
+    'inline-flex items-center justify-center text-center rounded-lg transition-all outline-none hover:opacity-60 duration-500 hover:backdrop-blur active:shadow-md';
   const variantClasses = {
     solid: {
       primary: 'bg-irmin_green text-white shadow active:bg-irmin_green-600',

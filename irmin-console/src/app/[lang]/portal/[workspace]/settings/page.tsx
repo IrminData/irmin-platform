@@ -76,12 +76,15 @@ const GeneralSettings = () => {
   const { irminAlert } = usePopup();
 
   const [workspaceName, setWorkspaceName] = useState('');
+  const [workspaceDescription, setWorkspaceDescription] = useState('');
+
   const [isLoading, setIsLoading] = useState(false);
   const workspaceService = WorkspaceService.getInstance(locale);
 
   useEffect(() => {
     if (currentWorkspace) {
       setWorkspaceName(currentWorkspace.name);
+      setWorkspaceDescription(currentWorkspace.description ?? '');
     }
   }, [currentWorkspace]);
 
@@ -92,7 +95,8 @@ const GeneralSettings = () => {
     try {
       // Call the API to update the workspace
       await workspaceService.updateWorkspace({
-        name: workspaceName,
+        name: workspaceName ?? currentWorkspace.name,
+        description: workspaceDescription ?? currentWorkspace.description ?? '',
       } as Workspace);
       // Fetch the updated workspace data
       await fetchWorkspaces();
@@ -160,8 +164,23 @@ const GeneralSettings = () => {
       <div className='pb-8'>
         <form onSubmit={handleUpdateWorkspace}>
           <div>
-            <label className='block text-xs text-gray-700 md:text-sm'>
+            <label className='mb-2 block text-xs text-gray-700 md:text-sm'>
               {dict.workspace.workspaceName}
+            </label>
+            <Input
+              size='sm'
+              variant='outline'
+              colorScheme='gray'
+              required
+              className='h-11 w-full'
+              type='text'
+              defaultValue={workspaceName}
+              onChange={(e) => setWorkspaceName(e.target.value)}
+            />
+          </div>
+          <div className='mt-4'>
+            <label className='mb-2 block text-xs text-gray-700 md:text-sm'>
+              {dict.workspace.workspaceDescription}
             </label>
             <Input
               size='sm'
@@ -170,12 +189,15 @@ const GeneralSettings = () => {
               required
               className='w-full'
               type='text'
-              defaultValue={workspaceName}
-              onChange={(e) => setWorkspaceName(e.target.value)}
+              defaultValue={workspaceDescription}
+              onChange={(e) => setWorkspaceDescription(e.target.value)}
+              longtext={{
+                rows: 3,
+              }}
             />
           </div>
           <Button
-            className='mt-4 w-full'
+            className='mt-4 h-11 w-full'
             type='submit'
             size='sm'
             colorScheme='light'

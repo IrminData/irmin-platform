@@ -4,8 +4,6 @@ import React from 'react';
 
 import Image from 'next/image';
 
-import { GoDatabase, GoPlay, GoSync } from 'react-icons/go';
-
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
@@ -24,21 +22,13 @@ import { Workspace } from '@/types/api/Workspace';
  */
 const WorkspaceCard = ({
   workspace,
-  description,
   users,
-  connectionCount,
-  datasetCount,
-  actionCount,
 }: {
   workspace: Workspace;
-  description: string;
   users: {
     avatar: string;
     name: string;
   }[];
-  connectionCount: number;
-  datasetCount: number;
-  actionCount: number;
 }) => {
   const { dict } = useLocale();
 
@@ -71,64 +61,33 @@ const WorkspaceCard = ({
       aria-label={`Go to ${workspace.name} workspace`}
     >
       <div className='overflow-hidden rounded-xl bg-white shadow'>
-        <div className='p-4 text-xs lg:p-6 lg:text-base xl:p-8'>
+        <div className='p-2 text-xs sm:p-4 lg:p-6 lg:text-base xl:p-8'>
           <span className='md:text-normal text-xs font-semibold uppercase tracking-wide text-irmin_green'>
             {dict.workspaceSwitcher.workspace}
           </span>
-          <h3 className='mt-1 block text-base font-medium leading-tight text-irmin_black md:text-lg'>
+          <h3 className='mt-2 block text-base font-normal leading-tight text-irmin_black md:text-lg'>
             {workspace.name}
           </h3>
           <p className='mt-2 text-xs font-light leading-tight text-irmin_blue'>
-            {description}
+            {workspace.description ?? '-'}
           </p>
-          <div className='mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-2'>
-            <div className='flex flex-col items-start gap-1'>
-              <div className='flex flex-col items-start gap-1'>
-                <p className='w-full text-sm font-normal text-irmin_blue'>
-                  <GoSync className='mr-1 inline h-3 text-gray-400' />
-                  {connectionCount}
-                  <span className='inline pl-1 text-xs text-gray-400'>
-                    {dict.workspaceSwitcher.connections}
-                  </span>
-                </p>
-              </div>
-              <div className='flex flex-col items-start gap-1'>
-                <p className='w-full text-sm font-normal text-irmin_blue'>
-                  <GoDatabase className='mr-1 inline h-3 text-gray-400' />
-                  {datasetCount}
-                  <span className='inline pl-1 text-xs text-gray-400'>
-                    {dict.workspaceSwitcher.datasets}
-                  </span>
-                </p>
-              </div>
-              <div className='flex flex-col items-start gap-1'>
-                <p className='w-full text-sm font-normal text-irmin_blue'>
-                  <GoPlay className='mr-1 inline h-3 text-gray-400' />
-                  {actionCount}
-                  <span className='inline pl-1 text-xs text-gray-400'>
-                    {dict.workspaceSwitcher.actions}
-                  </span>
-                </p>
-              </div>
-            </div>
-            <div className='flex items-center justify-between gap-0'>
-              <div className='flex -space-x-2 overflow-hidden'>
-                {users.slice(0, 3).map((user, idx) => (
-                  <Image
-                    key={`select-workspace-card-${workspace.id}-user-${idx}`}
-                    className='inline-block h-6 w-6 rounded-full ring-2 ring-white'
-                    src={user.avatar}
-                    width={30}
-                    height={30}
-                    alt={user.name}
-                  />
-                ))}
-                {users.length > 3 && (
-                  <span className='inline-block h-6 w-6 rounded-full bg-gray-200 text-center text-xs font-medium leading-6 text-irmin_blue'>
-                    +{users.length - 3}
-                  </span>
-                )}
-              </div>
+          <div className='mt-4 flex items-center justify-between gap-0'>
+            <div className='flex -space-x-2 overflow-hidden'>
+              {users.slice(0, 3).map((user, idx) => (
+                <Image
+                  key={`select-workspace-card-${workspace.id}-user-${idx}`}
+                  className='inline-block h-6 w-6 rounded-full ring-2 ring-white'
+                  src={user.avatar}
+                  width={30}
+                  height={30}
+                  alt={user.name}
+                />
+              ))}
+              {users.length > 3 && (
+                <span className='inline-block h-6 w-6 rounded-full bg-gray-200 text-center text-xs font-medium leading-6 text-irmin_blue'>
+                  +{users.length - 3}
+                </span>
+              )}
             </div>
           </div>
         </div>

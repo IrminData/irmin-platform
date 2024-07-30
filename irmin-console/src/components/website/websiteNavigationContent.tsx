@@ -39,7 +39,7 @@ const NavLink = ({
   return (
     <li className='group relative' id={linkKey}>
       <Link
-        className={`flex h-full min-h-14 items-center overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-light transition-all hover:bg-white group-hover:bg-white md:text-sm xl:text-base ${isActive ? 'text-ash_gray underline' : 'text-irmin_black'}`}
+        className={`flex h-full min-h-14 items-center overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-light transition-all hover:bg-white group-hover:bg-white md:text-sm xl:text-base ${isActive ? 'text-irmin_green underline' : 'text-irmin_black'}`}
         aria-label={link.label}
         href={link.href}
       >
@@ -52,7 +52,7 @@ const NavLink = ({
               key={`website-desktop-navigation-link-sublink-${idx}-${linkKey}`}
             >
               <Link
-                className={`block overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-light transition-all hover:bg-gray-200 lg:text-sm ${isActive ? 'text-ash_gray underline' : 'text-irmin_black'}`}
+                className={`block overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-light transition-all hover:bg-gray-200 lg:text-sm ${isActive ? 'text-irmin_green underline' : 'text-irmin_black'}`}
                 aria-label={subpage.label}
                 href={subpage.href}
               >
@@ -93,7 +93,7 @@ const MobileNavLink = ({
   return (
     <li className='relative' id={linkKey}>
       <div
-        className={`block w-full ${!isOpen && 'border-b'} text-nowrap rounded border-gray-200 px-4 py-2 pb-4 text-base font-light ${isActive ? 'text-ash_gray' : 'text-irmin_black'} flex items-center justify-between`}
+        className={`block w-full ${!isOpen && 'border-b'} text-nowrap rounded border-gray-200 px-4 py-2 pb-4 text-base font-light ${isActive ? 'text-irmin_green' : 'text-irmin_black'} flex items-center justify-between`}
         aria-label={link.label}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -170,7 +170,7 @@ export default function WebsiteNavigationContent({
 
   return (
     <>
-      <div className='fixed z-40 max-h-[80px] w-full bg-white bg-opacity-70 backdrop-blur-md'>
+      <div className='fixed z-40 max-h-[80px] w-full bg-white bg-opacity-80 backdrop-blur-md'>
         <div className='container mx-auto max-w-7xl px-2 md:px-4 xl:px-0'>
           <nav className='flex justify-between'>
             <div className='flex w-full items-center justify-between gap-2'>
@@ -214,10 +214,10 @@ export default function WebsiteNavigationContent({
                         </h2>
                       </Link>
                       <Button
-                        size='md'
+                        size='sm'
                         variant='gradient'
                         colorScheme='secondary'
-                        className='min-w-32 pl-6 pr-3'
+                        className='min-w-32 py-2 pl-6 pr-3 text-xs font-light md:text-sm xl:text-base'
                         href='/portal'
                         iconFirst={false}
                         icon={<IoEnterOutline size={24} className='ml-1' />}
@@ -229,25 +229,25 @@ export default function WebsiteNavigationContent({
                     <>
                       <Button
                         size='sm'
-                        variant='link'
-                        colorScheme='secondary'
-                        className='h-14 w-20 md:w-32'
+                        variant='gradient'
+                        colorScheme='light'
+                        className='min-w-32 py-2 text-xs font-light md:text-sm xl:text-base'
                         href='/sign-in'
                         onClick={closeMenu}
                       >
                         {dict.auth.signIn.signIn}
                       </Button>
                       <Button
-                        size='md'
+                        size='sm'
                         variant='gradient'
                         colorScheme='secondary'
-                        className='min-w-32 pl-6 pr-3'
+                        className='min-w-32 py-2 pl-6 pr-3 text-xs font-light md:text-sm xl:text-base'
                         href='/sign-up'
                         onClick={closeMenu}
                         iconFirst={false}
                         icon={<IoEnterOutline size={24} className='mr-1' />}
                       >
-                        {dict.auth.signIn.signUp}
+                        {dict.website.navigation.getStarted}
                       </Button>
                     </>
                   ))}
@@ -264,7 +264,7 @@ export default function WebsiteNavigationContent({
           className={`fixed right-0 top-0 z-40 h-full w-full bg-white bg-opacity-10 backdrop-blur-sm`}
         >
           <div
-            className={`fixed bottom-0 right-0 top-0 w-full max-w-sm border-l border-irmin_blue bg-white ${animate} transition-all duration-300`}
+            className={`fixed bottom-0 right-0 top-0 w-full max-w-full border-l border-gray-300 bg-white sm:max-w-sm ${animate} transition-all duration-300`}
           >
             <nav className='relative flex h-full flex-col justify-start overflow-y-scroll px-4 pb-8 pt-24'>
               <Link className='inline-block' href='/'>
@@ -288,7 +288,7 @@ export default function WebsiteNavigationContent({
               </ul>
               <div className='mt-auto flex flex-col'>
                 {!profile.isLoading &&
-                  (profile.profile ? (
+                  (!profile.profile ? (
                     <Button
                       href='/portal'
                       colorScheme='light'
@@ -303,9 +303,9 @@ export default function WebsiteNavigationContent({
                   ) : (
                     <div className='flex w-full flex-col items-center justify-stretch gap-2'>
                       <Button
+                        colorScheme='light'
                         size='md'
-                        variant='link'
-                        colorScheme='secondary'
+                        variant='gradient'
                         href='/sign-in'
                         onClick={closeMenu}
                         className='w-full'
@@ -314,14 +314,14 @@ export default function WebsiteNavigationContent({
                       </Button>
                       <Button
                         href='/sign-up'
-                        colorScheme='light'
+                        colorScheme='secondary'
                         size='md'
                         variant='gradient'
                         onClick={closeMenu}
                         className='w-full'
                         icon={<IoEnterOutline size={24} className='mr-1' />}
                       >
-                        {dict.auth.signIn.signUp}
+                        {dict.website.navigation.getStarted}
                       </Button>
                     </div>
                   ))}
@@ -351,7 +351,7 @@ export default function WebsiteNavigationContent({
       {/* Mobile navigation button */}
       <div className='fixed right-2 top-2 z-50 md:hidden'>
         <button
-          className='relative h-9 w-12 scale-110 transform rounded-full focus:outline-none'
+          className='relative aspect-square h-10 w-10 scale-110 transform rounded-full focus:outline-none'
           onClick={() => {
             if (navbarOpen) closeMenu();
             else setNavbarOpen(true);

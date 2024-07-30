@@ -246,8 +246,9 @@ export const exampleInvite: Invite = {
  */
 export const exampleWorkspace: Workspace = {
   id: 0,
-  name: 'example workspace',
+  name: 'Example workspace',
   slug: 'example-workspace',
+  description: 'This is an example workspace',
   owner_id: 0,
 };
 

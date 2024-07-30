@@ -16,8 +16,8 @@
   "dependencies": {
     "@codemirror/lang-python": "^6.1.6",
     "@codemirror/lang-sql": "^6.7.0",
-    "@codemirror/view": "^6.28.6",
-    "@mdxeditor/editor": "^3.8.0",
+    "@codemirror/view": "^6.29.1",
+    "@mdxeditor/editor": "^3.10.1",
     "@radix-ui/react-icons": "^1.3.0",
     "@uiw/react-codemirror": "^4.23.0",
     "chart.js": "^4.4.3",
@@ -38,26 +38,26 @@
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/eslint": "8.56.0",
-    "@types/node": "^20.14.11",
+    "@types/node": "^22.0.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "@typescript-eslint/eslint-plugin": "7.16.1",
-    "@typescript-eslint/parser": "7.16.1",
+    "@typescript-eslint/eslint-plugin": "7.18.0",
+    "@typescript-eslint/parser": "7.18.0",
     "autoprefixer": "^10.4.19",
     "eslint": "8.56.0",
     "eslint-config-next": "14.2.5",
     "eslint-config-prettier": "^9.1.0",
-    "postcss": "^8.4.39",
+    "postcss": "^8.4.40",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.5",
     "sass": "^1.77.8",
-    "tailwindcss": "^3.4.6",
+    "tailwindcss": "^3.4.7",
     "typedoc": "^0.26.5",
     "typedoc-plugin-missing-exports": "^3.0.0",
-    "typescript": "5.4.5"
+    "typescript": "5.5.4"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "packageManager": "yarn@4.3.0"
 }

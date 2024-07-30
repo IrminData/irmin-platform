@@ -10,7 +10,8 @@ const en = {
   },
   website: {
     navigation: {
-      goToPortal: 'Irmin Portal',
+      goToPortal: 'Portal',
+      getStarted: 'Get started',
     },
     footer: {
       description:
@@ -169,14 +170,10 @@ const en = {
     manageWorkspaces: 'Manage Workspaces',
     selectWorkspace: 'Select a workspace',
     createNewWorkspace: 'Create new workspace',
-    workspaceName: 'Työtilan nimi',
     orSelectExisting: 'Or select an existing workspace',
     switchedTo: 'Switched to',
     failedToSwitch: 'Failed to switch workspace',
     workspace: 'Workspace',
-    connections: 'Connections',
-    datasets: 'Datasets',
-    actions: 'Actions',
   },
   dashboard: {
     dashboard: 'Dashboard',
@@ -408,6 +405,7 @@ const en = {
     delete: 'Delete',
     generalSettings: 'General Settings',
     workspaceName: 'Workspace Name',
+    workspaceDescription: 'Workspace Description',
     saveChanges: 'Save Changes',
     dangerZone: 'Danger Zone',
     deletionNote:

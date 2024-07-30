@@ -145,8 +145,8 @@ export default function AIAssistantPopup() {
           ariaLabel='Toggle AI Assistant'
           type='submit'
           variant='solid'
-          colorScheme='tertiary'
-          className='rounded-full'
+          colorScheme='black'
+          className='aspect-square rounded-full opacity-90'
           onClick={() => setOpen(!open)}
         >
           {open ? (

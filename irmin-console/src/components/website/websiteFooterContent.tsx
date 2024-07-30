@@ -62,7 +62,7 @@ export default function WebsiteFooterContent({
   return (
     <section className='mt-12 bg-irmin_black'>
       <div className='container mx-auto max-w-7xl px-2 md:px-4 xl:px-0'>
-        <div className='flex flex-wrap justify-between gap-y-12 py-6 md:flex-row md:items-start md:justify-start md:pt-12 xl:pt-24'>
+        <div className='flex flex-wrap justify-center gap-y-12 py-6 md:flex-row md:items-start md:justify-start md:pt-12 xl:pt-24'>
           <div className='min-w-72 sm:w-[40%] md:w-1/4 md:pl-2 xl:w-1/6'>
             <div className='flex flex-col items-start'>
               <Link className='mb-8 inline-block' href='#'>
@@ -77,7 +77,7 @@ export default function WebsiteFooterContent({
               <p className='mb-8 w-full max-w-64 text-left text-xs font-light text-white text-opacity-40'>
                 {dict.website.footer.description}
               </p>
-              <div className='max-w-[110px]'>
+              <div className='w-full max-w-40'>
                 <LanguageSwitcher
                   className={`my-4 -ml-1 block w-full overflow-hidden text-nowrap rounded-lg border-r-4 border-[#051f2a] bg-[#051f2a] py-2 pl-4 pr-3 text-sm font-light text-irmin_green transition-all focus:outline-none lg:text-sm xl:text-base`}
                 />
@@ -85,7 +85,7 @@ export default function WebsiteFooterContent({
             </div>
           </div>
           <div className='order-3 min-w-72 sm:w-full md:order-2 md:w-fit md:max-w-[50%] xl:max-w-[62%]'>
-            <div className='flex flex-wrap gap-4'>
+            <div className='flex flex-wrap justify-center gap-4'>
               {sections.map((section, idx) => (
                 <FooterLinkSection
                   key={`website-footer-link-section-${idx}`}
@@ -127,7 +127,7 @@ export default function WebsiteFooterContent({
             </div>
           </div>
         </div>
-        <div className='mt-8 flex w-full flex-col items-start gap-4 py-2 sm:flex-row sm:items-center sm:justify-end'>
+        <div className='mt-8 flex w-full flex-col items-center gap-4 py-2 md:pr-2 lg:items-end'>
           <div className='flex flex-row items-center gap-4'>
             <Link
               className='inline-block text-xs font-light text-white text-opacity-40 transition-all duration-200 hover:underline'

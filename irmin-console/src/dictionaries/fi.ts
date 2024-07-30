@@ -10,7 +10,8 @@ const fi = {
   },
   website: {
     navigation: {
-      goToPortal: 'Irmin Portal',
+      goToPortal: 'Portal',
+      getStarted: 'Aloita',
     },
     footer: {
       description:
@@ -169,14 +170,10 @@ const fi = {
     manageWorkspaces: 'Hallinnoi työtiloja',
     selectWorkspace: 'Valitse työtila',
     createNewWorkspace: 'Luo uusi työtila',
-    workspaceName: 'Työtilan nimi',
     orSelectExisting: 'tai valitse olemassa oleva',
     switchedTo: 'Työtila vaihdettu',
     failedToSwitch: 'Työtilan vaihto epäonnistui',
     workspace: 'Työtila',
-    connections: 'Yhteyttä',
-    datasets: 'Tietojoukkoa',
-    actions: 'Toimintoa',
   },
   dashboard: {
     dashboard: 'Datapaneeli',
@@ -409,6 +406,7 @@ const fi = {
     delete: 'Poista',
     generalSettings: 'Yleiset asetukset',
     workspaceName: 'Työtilan nimi',
+    workspaceDescription: 'Työtilan kuvaus',
     saveChanges: 'Tallenna muutokset',
     dangerZone: 'Vaaravyöhyke',
     deletionNote:

@@ -179,14 +179,19 @@ class WorkspaceService {
   /**
    * Create a new workspace
    * @param name - The name of the new workspace
+   * @param description - The description of the new workspace
    * @returns response from the API or example data
    * {@link https://api.irmin.dev/docs#workspaces-POSTv1-workspaces | Irmin API docs}
    */
-  async createWorkspace(name: string): Promise<IrminAPIResponse> {
+  async createWorkspace(
+    name: string,
+    description: string
+  ): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
     try {
       const formData = new FormData();
       formData.append('name', name);
+      formData.append('description', description);
 
       const response = await fetchWithCredentials(
         `${api_base}/v1/workspaces`,
@@ -216,6 +221,7 @@ class WorkspaceService {
       const formData = new FormData();
       formData.append('_method', 'PATCH');
       formData.append('name', workspace.name);
+      formData.append('description', workspace.description ?? '');
 
       const response = await fetchWithCredentials(
         `${api_base}/v1/workspaces`,

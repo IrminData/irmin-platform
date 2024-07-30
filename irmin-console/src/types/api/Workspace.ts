@@ -6,12 +6,15 @@ import { IrminRole } from '@/types/api/IrminRole';
  * @typeParam name - Workspace name
  * @typeParam slug - Workspace slug
  * @typeParam owner_id - Workspace owner ID
+ * @typeParam description - Workspace description to be displayed (optional)
+ * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
  */
 export interface Workspace {
   id: number;
   name: string;
   slug: string;
   owner_id: number;
+  description?: string;
 }
 
 /**

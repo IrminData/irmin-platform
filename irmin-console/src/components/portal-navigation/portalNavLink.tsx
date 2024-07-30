@@ -16,7 +16,7 @@ export default function PortalNavLink({
   isMenuFolded: boolean;
   setIsMenuOpen: (_value: boolean) => void;
 }) {
-  const menuIconStyles = `text-base lg:text-xl ${isMenuFolded ? '' : 'mr-2'}`;
+  const menuIconStyles = `text-lg lg:text-xl ${isMenuFolded ? 'ml-1' : 'mr-2'}`;
   const menuLinkStyles = `text-xs font-light md:text-sm xl:text-base ${
     isMenuFolded ? 'hidden' : 'block'
   }`;
@@ -27,15 +27,13 @@ export default function PortalNavLink({
         <Link
           className={`flex items-center justify-between rounded-md p-3 py-4 text-irmin_green hover:text-irmin_green-300 ${
             link.active ? 'bg-gray-700' : ''
-          }`}
+          } overflow-hidden transition-all ${isMenuFolded ? 'w-12' : 'w-full'}`}
           href={link.href}
           onClick={() => setIsMenuOpen(false)}
           aria-label={link.title}
           {...(link.props as ComponentPropsWithoutRef<'a'>)}
         >
-          <div
-            className={`flex w-full items-center ${!isMenuFolded ? 'justify-start' : 'justify-between'}`}
-          >
+          <div className={`flex w-full min-w-44 items-center justify-start`}>
             <div className={menuIconStyles}>{link.icon}</div>
             <p className={menuLinkStyles}>{link.title}</p>
           </div>
@@ -48,7 +46,7 @@ export default function PortalNavLink({
         <button
           className={`flex items-center justify-between rounded-md p-3 py-4 text-irmin_green hover:text-irmin_green-300 ${
             link.active ? 'bg-gray-700' : ''
-          }`}
+          } overflow-hidden transition-all ${isMenuFolded ? 'w-12' : 'w-full'}`}
           onClick={() => {
             setIsMenuOpen(false);
             if (link.action) link.action();
@@ -56,9 +54,7 @@ export default function PortalNavLink({
           aria-label={link.title}
           {...(link.props as ComponentPropsWithoutRef<'button'>)}
         >
-          <div
-            className={`flex w-full items-center ${!isMenuFolded ? 'justify-start' : 'justify-between'}`}
-          >
+          <div className={`flex w-full min-w-44 items-center justify-start`}>
             <div className={menuIconStyles}>{link.icon}</div>
             <p className={menuLinkStyles}>{link.title}</p>
           </div>

@@ -24,6 +24,10 @@ const Input: React.FC<{
   type?: 'text' | 'password' | 'email' | 'number';
   id?: string;
   required?: boolean;
+  maxLength?: number;
+  longtext?: {
+    rows: number;
+  };
 }> = ({
   variant,
   colorScheme,
@@ -41,6 +45,8 @@ const Input: React.FC<{
   type = 'text',
   id = '',
   required = false,
+  maxLength = 100,
+  longtext,
 }) => {
   const baseClasses =
     'relative inline-flex items-center justify-center rounded-lg transition-all outline-none border-opacity-60';
@@ -94,6 +100,32 @@ const Input: React.FC<{
       combinedClasses = `${variantClasses[variant].primary} ${combinedClasses}`;
     }
   }
+  if (longtext) {
+    return (
+      <div className={cn(combinedClasses.split(' '))}>
+        {icon && <span className='absolute left-3 text-sm'>{icon}</span>}
+        <textarea
+          className={`w-full ${icon ? 'pl-10' : 'pl-1'} bg-transparent py-2 pr-1 focus:outline-none`}
+          onChange={onChange as <T>(e: React.ChangeEvent<T>) => void}
+          disabled={disabled}
+          aria-label={ariaLabel}
+          id={id}
+          required={required}
+          placeholder={placeholder}
+          name={name}
+          defaultValue={defaultValue}
+          value={value}
+          rows={longtext.rows}
+          maxLength={maxLength}
+        />
+        {loading && (
+          <div className='absolute right-3'>
+            <div className='inline h-4 w-4 animate-spin rounded-full border-2 border-t-2 border-irmin_green-200 border-t-irmin_green'></div>
+          </div>
+        )}
+      </div>
+    );
+  }
   return (
     <div className={cn(combinedClasses.split(' '))}>
       {icon && <span className='absolute left-3 text-sm'>{icon}</span>}
@@ -109,6 +141,7 @@ const Input: React.FC<{
         name={name}
         defaultValue={defaultValue}
         value={value}
+        maxLength={maxLength}
       />
       {loading && (
         <div className='absolute right-3'>

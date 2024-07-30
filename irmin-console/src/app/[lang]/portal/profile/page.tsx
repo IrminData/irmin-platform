@@ -104,9 +104,11 @@ const GeneralSettings: React.FC = () => {
       <h2 className='mb-4 text-xl font-normal md:text-2xl'>
         {dict.profile.generalSettings}
       </h2>
-      <LanguageSwitcher
-        className={`my-4 block overflow-hidden text-nowrap rounded-lg border-r-4 border-white bg-white px-4 py-2 text-xs font-light text-irmin_black shadow ring-1 ring-gray-400 transition-all focus:outline-none lg:text-sm xl:text-base`}
-      />
+      <div className='my-4 w-full max-w-40 rounded-lg border border-gray-400 shadow'>
+        <LanguageSwitcher
+          className={`block w-full overflow-hidden text-nowrap rounded-lg border-r-4 border-white bg-white py-2 pl-4 pr-3 text-sm font-light text-irmin_black transition-all focus:outline-none lg:text-sm xl:text-base`}
+        />
+      </div>
       <form onSubmit={handleSaveChanges} className='pb-8 text-sm md:text-base'>
         <div className='mb-4'>
           <label className='block text-xs text-gray-700 md:text-sm'>

@@ -32,6 +32,8 @@ const ManageWorkspaces: React.FC = () => {
   const { workspaces, fetchWorkspaces, workspaceLoading } = useWorkspace();
   const workspaceService = WorkspaceService.getInstance(locale);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [newWorkspaceDescription, setNewWorkspaceDescription] = useState('');
+
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,11 +46,15 @@ const ManageWorkspaces: React.FC = () => {
     setSuccess(null);
     // Create new workspace
     try {
-      const response = await workspaceService.createWorkspace(newWorkspaceName);
+      const response = await workspaceService.createWorkspace(
+        newWorkspaceName,
+        newWorkspaceDescription
+      );
       if (response.metadata?.message) {
         await fetchWorkspaces();
         setSuccess(response.metadata.message);
         setNewWorkspaceName('');
+        setNewWorkspaceDescription('');
       } else {
         throw new Error(response.message || 'Creation failed');
       }
@@ -84,18 +90,33 @@ const ManageWorkspaces: React.FC = () => {
               size='sm'
               type='text'
               id='newWorkspaceName'
-              placeholder={dict.workspaceSwitcher.workspaceName}
+              placeholder={dict.workspace.workspaceName}
               onChange={(e) => setNewWorkspaceName(e.target.value ?? '')}
               required
-              className='mb-2 h-11 w-full md:mb-6'
+              className='mb-2 h-11 w-full md:mb-4'
             />
-            {error && <p className='mb-4 text-red-800'>{error}</p>}
-            {success && <p className='mb-4 text-irmin_green'>{success}</p>}
-            <Button
+            <Input
               variant='solid'
+              colorScheme='secondary'
+              size='sm'
+              type='text'
+              id='newWorkspaceDescription'
+              placeholder={dict.workspace.workspaceDescription}
+              onChange={(e) => setNewWorkspaceDescription(e.target.value ?? '')}
+              maxLength={255}
+              longtext={{
+                rows: 3,
+              }}
+              required
+              className='mb-2 w-full md:mb-4'
+            />
+            {error && <p className='mb-2 text-red-800'>{error}</p>}
+            {success && <p className='mb-2 text-irmin_green'>{success}</p>}
+            <Button
+              variant='gradient'
               colorScheme='primary'
               size='sm'
-              className='mb-6 h-10 w-full'
+              className='mb-4 h-11 w-full'
               type='submit'
               disabled={loading || workspaceLoading}
               loading={loading}
@@ -118,7 +139,6 @@ const ManageWorkspaces: React.FC = () => {
               <WorkspaceCard
                 key={`select-workspace-card-${idx}`}
                 workspace={workspace}
-                description='Marketing, engineering, sales, and customer success teams collaborate here to drive growth.'
                 users={[
                   {
                     name: 'John Doe',
@@ -141,9 +161,6 @@ const ManageWorkspaces: React.FC = () => {
                     avatar: '/ui-assets/images/blog/avatar.png',
                   },
                 ]}
-                actionCount={0}
-                connectionCount={0}
-                datasetCount={0}
               />
             ))}
           </div>

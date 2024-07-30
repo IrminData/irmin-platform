@@ -4,8 +4,6 @@ import React, { useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
-
 import { useProfile } from '@/context/ProfileContext';
 
 /**
@@ -31,11 +29,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   }, [isLoading, profile, router]);
 
   if (isLoading || !profile) {
-    return (
-      <div className='px-4'>
-        <LoadingSkeleton className='h-96 w-full' />
-      </div>
-    );
+    return <></>;
   }
 
   return children;

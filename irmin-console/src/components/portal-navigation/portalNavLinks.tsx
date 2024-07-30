@@ -10,8 +10,6 @@ import { GrUserSettings } from 'react-icons/gr';
 import { IoChevronBackCircleOutline } from 'react-icons/io5';
 import {
   MdCode,
-  MdOutlineFindInPage,
-  MdOutlineLibraryBooks,
   MdOutlinePrivacyTip,
   MdOutlineSupportAgent,
 } from 'react-icons/md';
@@ -163,27 +161,12 @@ export const usePortalNavLinks = (): {
       active: false,
     },
     {
-      title: dict.portalNavigation.links.irminWebsite,
-      href: `/${locale}/contact`,
-      icon: <MdOutlineFindInPage />,
-      props: {
-        target: '_blank',
-      },
-      active: false,
-    },
-    {
-      title: dict.portalNavigation.links.privacyPolicy,
-      href: `/${locale}/legal/privacy-policy`,
+      title:
+        dict.portalNavigation.links.privacyPolicy +
+        ' & ' +
+        dict.portalNavigation.links.termsOfUse,
+      href: `/${locale}/legal`,
       icon: <MdOutlinePrivacyTip />,
-      props: {
-        target: '_blank',
-      },
-      active: false,
-    },
-    {
-      title: dict.portalNavigation.links.termsOfUse,
-      href: `/${locale}/legal/terms-of-use`,
-      icon: <MdOutlineLibraryBooks />,
       props: {
         target: '_blank',
       },
