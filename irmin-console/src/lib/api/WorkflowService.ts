@@ -91,6 +91,9 @@ class WorkflowService {
 
       formData.append('_method', 'PATCH');
       formData.append('worflow', workflow.id.toString());
+      formData.append('name', workflow.name);
+      formData.append('description', workflow.description ?? '');
+      formData.append('documentation', workflow.documentation ?? '');
       formData.append('cron_syntax', workflow.cron_syntax ?? '');
 
       const response = await fetchWithCredentials(
