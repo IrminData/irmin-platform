@@ -1,8 +1,6 @@
 'use client';
 
-import { useParams, usePathname, useRouter } from 'next/navigation';
-
-import AuthService from '@/lib/api/AuthService';
+import { useParams, usePathname } from 'next/navigation';
 
 import { AiOutlineConsoleSql } from 'react-icons/ai';
 import { CiDatabase } from 'react-icons/ci';
@@ -23,8 +21,8 @@ import {
   TbSettings,
 } from 'react-icons/tb';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useProfile } from '@/context/ProfileContext';
 
 import { PortalNavigationLink } from '@/types/internal/PortalNavigation';
 
@@ -35,6 +33,7 @@ import { PortalNavigationLink } from '@/types/internal/PortalNavigation';
  *
  * This hook is used to get the portal navigation links.
  * The links are defined in the code and are used in the portal navigation component.
+ * Uses {@link useIAM} to interact with the user's identity and APIs.
  *
  * @returns Portal navigation links sorted by sections
  */
@@ -45,11 +44,9 @@ export const usePortalNavLinks = (): {
   useful: PortalNavigationLink[];
 } => {
   const { locale, dict } = useLocale();
-  const profile = useProfile();
-  const router = useRouter();
+  const { logout } = useIAM();
   const { workspace: workspaceSlug } = useParams();
   const pathname = usePathname();
-  const auth = AuthService.getInstance(locale);
 
   const isActiveLink = (href: string) => {
     if (href === '/portal' || !href.includes('/portal'))
@@ -57,11 +54,8 @@ export const usePortalNavLinks = (): {
     return pathname.startsWith(href);
   };
 
-  const handleSignOut = () => {
-    auth.logout().then(() => {
-      profile.fetchProfile();
-      router.push('/sign-in');
-    });
+  const handleSignOut = async () => {
+    await logout();
   };
 
   const workspaceLinks = [

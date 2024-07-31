@@ -22,7 +22,7 @@ This repository contains the code for Irmin frontend, built using Next.js, TypeS
 - [API Services](#api-services)
 - [Internationalisation](#internationalisation)
 - [Contexts](#contexts)
-  - [ProfileContext](#profilecontext)
+  - [Identity and Access Management (IAMContext)](#identity-and-access-management-iamcontext)
   - [LocaleContext](#localecontext)
   - [PopupContext](#popupcontext)
   - [BucketContext](#bucketcontext)
@@ -181,17 +181,20 @@ Contexts are responsible for directly using the [API Services](#api-services) to
 
 When creating a new context, ensure it follows the same structure as the existing contexts.
 
-### ProfileContext
+### Identity and Access Management (IAMContext)
 
-[src/context/ProfileContext.tsx](src/context/ProfileContext.tsx)
+[src/context/IAMContext.tsx](src/context/IAMContext.tsx)
 
-ProfileContext is used to manage the user profile state across the application. It provides the user profile data and a function to refetch the user profile data. ProfileProvider is wrapping the root layout of the application.
+IAMContext is used to manage the user profile state across the application. It provides the user profile data, function to refetch and update the user profile data. It also provides functions to login, register and logout the user.
 
-For example, the application will know that a user is not logged in if the user profile data is not available. [AuthService](src/lib/api/AuthService.ts) will avoid throwing an error on getProfile if the user is not logged in. Instead, it will return null.
+IAMProvider is wrapping the root layout of the application.
 
-This context provides the application with logic to communicate with the [Auth API Service](src/lib/api/AuthService.ts).
+The application will know that a user is not logged in if the user profile data is not available. 
 
-Please note that unlike with other contexts, the AuthService is a lot of times used directly in components.
+This context provides the application with logic to communicate with the [Auth API Service](src/lib/api/AuthService.ts) and
+[Profile API Service](src/lib/api/ProfileService.ts).
+
+[ProfileService](src/lib/api/ProfileService.ts) will avoid throwing an error on getProfile if the user is not logged in. Instead, it will return null.
 
 ### LocaleContext
 
@@ -225,19 +228,20 @@ See [Bucket API Service](src/lib/api/BucketService.ts) and [the Editor](src/app/
 
 [src/context/workspace/WorkspaceContext.tsx](src/context/workspace/WorkspaceContext.tsx)
 
-Split into multiple files for clarity and to avoid a single file becoming too large.
-
-This context is responsible for managing the workspace state. This includes the workspace data, workflows, datasets, and other workspace-related data, which is not provided by other contexts.
-
-It provides the application with logic to communicate with:
+This context is responsible for managing the workspace state and data across the application. 
+In addition, it provides the application with logic to communicate with:
 
 - [Workspace API Service](src/lib/api/WorkspaceService.ts)
-- [Workflow API Service](src/lib/api/WorkflowService.ts)
-- [Dataset API Service](src/lib/api/DatasetService.ts)
-- [User and Role API Service](src/lib/api/UserAndRoleService.ts)
-- [Invite API Service](src/lib/api/InviteService.ts)
 - [Dashboard API Service](src/lib/api/DashboardService.ts)
+- [Workflow API Service](src/lib/api/WorkflowService.ts)
+- [Connection Workflow API Service](src/lib/api/ConnectionWorkflowService.ts)
+- [Export Workflow API Service](src/lib/api/ExportWorkflowService.ts)
+- [Action Workflow API Service](src/lib/api/ActionWorkflowService.ts)
 - [Dataset API Service](src/lib/api/DatasetService.ts)
+- [Invite API Service](src/lib/api/InviteService.ts)
+- [User and Role API Service](src/lib/api/UserAndRoleService.ts)
+
+The context, hooks, provider etc. are split into multiple files for clarity and to avoid any single file becoming too large.
 
 ## Wordpress CMS
 

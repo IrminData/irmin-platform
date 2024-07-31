@@ -4,8 +4,8 @@ import { Inter } from 'next/font/google';
 
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 
+import { IAMProvider } from '@/context/IAMContext';
 import { LocaleProvider } from '@/context/LocaleContext';
-import { ProfileProvider } from '@/context/ProfileContext';
 
 import './globals.scss';
 
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
  * @remarks
  *
  * This component is used to wrap the entire application with the necessary providers.
- * The providers include the LocaleProvider and ProfileProvider.
+ * The providers include the LocaleProvider and IAMProvider.
  *
  * This component also includes the global styles and fonts for the application.
  *
@@ -48,7 +48,7 @@ export default function RootLayout({
     <html>
       <body className={inter.className}>
         <LocaleProvider>
-          <ProfileProvider locale={lang}>{children}</ProfileProvider>
+          <IAMProvider locale={lang}>{children}</IAMProvider>
         </LocaleProvider>
       </body>
     </html>

@@ -2,30 +2,25 @@
 
 import React, { useState } from 'react';
 
-import { useRouter } from 'next/navigation';
-
-import AuthService from '@/lib/api/AuthService';
-
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useProfile } from '@/context/ProfileContext';
 
 /**
  * Sign in UI component
  *
  * @remarks
  *
- * UI for the sign in form. It handles the sign in process
- * by calling the AuthService to authenticate the user.
+ * UI for the sign in form. It allows users to sign in to the application.
+ * It uses the {@link useIAM} hook to interact with the user's identity and APIs.
  *
  * @returns The sign in section component
  */
 const SignInSection: React.FC = () => {
-  const { dict, locale } = useLocale();
-  const { fetchProfile } = useProfile();
-  const router = useRouter();
+  const { dict } = useLocale();
+  const { login } = useIAM();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,24 +31,8 @@ const SignInSection: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    setSuccess(null);
-    const authService = AuthService.getInstance(locale);
-    try {
-      const response = await authService.login(email, password);
-      if (response.metadata?.message) {
-        setSuccess(response.metadata.message);
-        await fetchProfile();
-        // Redirect to portal on success
-        router.push('/portal');
-      } else {
-        throw new Error(response.message || 'Login failed');
-      }
-    } catch (error) {
-      setError((error as Error)?.message ?? 'Login failed');
-    } finally {
-      setLoading(false);
-    }
+    await login(email, password, setSuccess, setError);
+    setLoading(false);
   };
 
   return (

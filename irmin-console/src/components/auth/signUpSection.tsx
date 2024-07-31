@@ -4,30 +4,26 @@ import React, { useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
-import AuthService from '@/lib/api/AuthService';
 
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useProfile } from '@/context/ProfileContext';
 
 /**
  * Sign up UI component
  *
  * @remarks
  *
- * UI for the sign up form. It handles the sign up process
- * by calling the AuthService to register the user.
+ * UI for the sign up form. It allows users to sign up to the application.
+ * It uses the {@link useIAM} hook to interact with the user's identity and APIs.
  *
  * @returns The sign up section component
  */
 const SignUpSection: React.FC = () => {
-  const { dict, locale } = useLocale();
-  const { fetchProfile } = useProfile();
-  const router = useRouter();
+  const { dict } = useLocale();
+  const { register } = useIAM();
 
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
@@ -53,30 +49,18 @@ const SignUpSection: React.FC = () => {
       setLoading(false);
       return;
     }
-    // Register user
-    const authService = AuthService.getInstance(locale);
-    try {
-      const response = await authService.register(
-        name,
-        company,
-        email,
-        emailConfirmation,
-        password,
-        passwordConfirmation
-      );
-      if (response.metadata?.message) {
-        setSuccess(response.metadata.message);
-        await fetchProfile();
-        // Redirect to portal on success
-        router.push('/portal');
-      } else {
-        throw new Error(response.message || 'Registration failed');
-      }
-    } catch (error) {
-      setError((error as Error)?.message ?? 'Registration failed');
-    } finally {
-      setLoading(false);
-    }
+    // Register the user
+    await register(
+      name,
+      company,
+      email,
+      emailConfirmation,
+      password,
+      passwordConfirmation,
+      setSuccess,
+      setError
+    );
+    setLoading(false);
   };
 
   return (

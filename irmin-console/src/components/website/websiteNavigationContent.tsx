@@ -11,8 +11,8 @@ import { IoEnterOutline } from 'react-icons/io5';
 
 import Button from '@/components/misc/Button';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useProfile } from '@/context/ProfileContext';
 
 import { WebsiteNavigationLink } from '@/types/website/WebsiteNavigation';
 
@@ -134,6 +134,8 @@ const MobileNavLink = ({
  * This component is used to display the website navigation.
  * It displays the navigation links and user profile.
  *
+ * Uses {@link useIAM} to interact with the user's identity and APIs.
+ *
  * It handles animations and opening/closing the mobile navigation.
  *
  * For links {@link NavLink} and {@link MobileNavLink} are used.
@@ -148,7 +150,7 @@ export default function WebsiteNavigationContent({
   };
 }) {
   const { dict, locale } = useLocale();
-  const profile = useProfile();
+  const { profile, isLoading } = useIAM();
   const [navbarOpen, setNavbarOpen] = React.useState(false);
   const [animate, setAnimate] = React.useState('');
 
@@ -195,8 +197,8 @@ export default function WebsiteNavigationContent({
                 </ul>
               </div>
               <div className='hidden flex-row items-center justify-end gap-2 md:flex lg:gap-4'>
-                {!profile.isLoading &&
-                  (profile.profile ? (
+                {!isLoading &&
+                  (profile ? (
                     <>
                       <Link
                         href='/portal/profile'
@@ -204,13 +206,13 @@ export default function WebsiteNavigationContent({
                       >
                         <Image
                           src='/ui-assets/elements/avatar.webp'
-                          alt={profile.profile.name ?? ''}
+                          alt={profile.name ?? ''}
                           width={50}
                           height={50}
                           className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
                         />
                         <h2 className='text-xs font-normal text-irmin_black lg:text-sm'>
-                          {profile.profile.name ?? ''}
+                          {profile.name ?? ''}
                         </h2>
                       </Link>
                       <Button
@@ -287,8 +289,8 @@ export default function WebsiteNavigationContent({
                 ))}
               </ul>
               <div className='mt-auto flex flex-col'>
-                {!profile.isLoading &&
-                  (!profile.profile ? (
+                {!isLoading &&
+                  (!profile ? (
                     <Button
                       href='/portal'
                       colorScheme='light'
@@ -326,20 +328,20 @@ export default function WebsiteNavigationContent({
                     </div>
                   ))}
 
-                {!profile.isLoading && profile.profile && (
+                {!isLoading && profile && (
                   <Link
                     href='/portal/profile'
                     className='mt-6 flex w-full flex-row items-center justify-center gap-2 overflow-hidden transition-all hover:opacity-40'
                   >
                     <Image
                       src='/ui-assets/elements/avatar.webp'
-                      alt={profile.profile.name ?? ''}
+                      alt={profile.name ?? ''}
                       width={50}
                       height={50}
                       className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
                     />
                     <h2 className='text-xs font-normal text-irmin_black lg:text-sm'>
-                      {profile.profile.name ?? ''}
+                      {profile.name ?? ''}
                     </h2>
                   </Link>
                 )}

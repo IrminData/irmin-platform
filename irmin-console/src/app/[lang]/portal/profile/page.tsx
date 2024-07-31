@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react';
 
-import AuthService from '@/lib/api/AuthService';
-
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
@@ -11,16 +9,11 @@ import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
 import PortalTitle from '@/components/portalTitle';
 import SettingsTabs from '@/components/tabs/settingsTabs';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
-import { useProfile } from '@/context/ProfileContext';
 
 /**
- * Portal user profile and settings page
- *
- * @remarks
- *
- * This page is used to manage user profile settings.
+ * Portal user profile and settings page.
  *
  * @returns UI for managing user profile settings
  */
@@ -55,23 +48,20 @@ export default function UserProfileSettingsPage() {
  * This component is used to manage user's general settings in the portal.
  * It allows the user to change their profile information.
  *
- * It uses the ProfileContext to manage the profile's global state.
- * It uses AuthService to call the API to update the profile.
+ * Uses {@link useIAM} to interact with the user's identity and APIs.
  *
  * @returns UI to manage user's general settings in the portal
  */
 const GeneralSettings: React.FC = () => {
-  const { locale, dict } = useLocale();
-  const { profile, setProfile } = useProfile();
-  const { irminAlert } = usePopup();
-  const authService = AuthService.getInstance(locale);
+  const { dict } = useLocale();
+  const { profile, updateProfile } = useIAM();
 
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSaveChanges = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
+
     // Get form values
     const form = event.target as HTMLFormElement;
     const name = (form.elements.namedItem('name') as HTMLInputElement).value;
@@ -79,22 +69,9 @@ const GeneralSettings: React.FC = () => {
     const company = (form.elements.namedItem('company') as HTMLInputElement)
       .value;
 
-    try {
-      // Call the API to update the profile
-      await authService.updateProfile(name, company, email);
-      // Update the profile context
-      const data = await authService.getProfile();
-      if (!data) throw new Error('User not logged in.');
-      setProfile(data.data);
-      // Reset error and show success message
-      setError(null);
-      irminAlert('success', dict.profile.profileUpdatedSuccessfully);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      setError((error as Error)?.message ?? 'An error occurred.');
-    } finally {
-      setIsLoading(false);
-    }
+    // Update the profile
+    await updateProfile(name, company, email);
+    setIsLoading(false);
   };
 
   if (!profile) return <LoadingSkeleton className='h-52 w-full' />;
@@ -163,7 +140,6 @@ const GeneralSettings: React.FC = () => {
         >
           {dict.profile.saveChanges}
         </Button>
-        {error && <p className='mt-2 text-red-500'>{error}</p>}
       </form>
     </div>
   );
@@ -171,10 +147,7 @@ const GeneralSettings: React.FC = () => {
 
 /**
  * Change password settings tab content
- *
- * @remarks
- * @todo This component is not yet implemented.
- *
+ * @todo Logic should be implemented to handle changing the user's password
  * @returns UI to manage user's password settings in the portal
  */
 const ChangePasswordSettings: React.FC = () => {

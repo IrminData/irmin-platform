@@ -29,16 +29,19 @@ export const metadata: Metadata = {
  *
  * Portal pages everything thas is within the `src/[lang]/portal` directory
  *
- * @param props - Children to render
+ * @param props - Layout properties
+ * @param props.children - Page content
+ * @param props.params - Page parameters
+ *
  * @returns Website layout
  */
 export default function PortalLayout({
   children,
   params,
-}: Readonly<{
+}: {
   children: React.ReactNode;
   params: { lang: Locale };
-}>) {
+}) {
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
   return (
     <PopupProvider>
