@@ -4,10 +4,14 @@
 
 This repository contains the code for Irmin frontend, built using Next.js, TypeScript and Tailwind.
 
-| Project                             | Repository                                                | Development Environment              | Documentation                      | Admin/CMS                                       |
+To access dev/staging environments of `irmin-frontend` the password is: `LeTamiNtItENowNp`.
+To access the internal PHPDoc documentation of the API, the user is `irmin`, and the password is `6svtkffnp9iaj47kzbla`
+
+| Project | Repository | Dev | Documentation | Admin/CMS |
 | ----------------------------------- | --------------------------------------------------------- | ------------------------------------ | ---------------------------------- | ----------------------------------------------- |
-| Irmin Web App (Next.js, TypeScript) | [Repository](https://github.com/IrminData/irmin-frontend) | [Environment](https://irmin.dev)     | [Docs](https://irmin.dev/tsdocs)   | [WordPress CMS](https://cms.irmin.dev/wp-admin) |
-| Irmin API (Laravel, PHP)            | [Repository](https://github.com/IrminData/irmin-api)      | [Environment](https://api.irmin.dev) | [Docs](https://api.irmin.dev/docs) |                                                 |
+| Irmin Web App (Next.js, TypeScript) | [Repository](https://github.com/IrminData/irmin-frontend) | [irmin.dev](https://irmin.dev)     | [Internal TSDoc](https://irmin.dev/tsdocs)   | [WordPress CMS](https://cms.irmin.dev/wp-admin) |
+| Irmin API (Laravel, PHP)            | [Repository](https://github.com/IrminData/irmin-api)      | [api.irmin.dev](https://api.irmin.dev) | [API Docs](https://api.irmin.dev/docs) - [Internal PHPDoc](https://internal-api-documentation.irmin.dev/docs)  | |
+
 
 ## Table of Contents
 
