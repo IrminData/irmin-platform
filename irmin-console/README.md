@@ -4,6 +4,8 @@
 
 This repository contains the code for Irmin frontend, built using Next.js, TypeScript and Tailwind.
 
+## Project Links
+
 To access dev/staging environments of `irmin-frontend` the password is: `LeTamiNtItENowNp`.
 To access the internal PHPDoc documentation of the API, the user is `irmin`, and the password is `6svtkffnp9iaj47kzbla`
 
