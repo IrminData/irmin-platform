@@ -17,7 +17,8 @@ import {
   getDictionary,
   Locale,
 } from '@/dictionaries';
-import { setCookie } from '@/lib/utils/cookieUtils';
+
+import { setCookie } from '@/utils/cookie';
 
 /**
  * Locale context to provide the locale and dictionary to the app

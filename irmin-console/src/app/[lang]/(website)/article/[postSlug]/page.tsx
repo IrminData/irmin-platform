@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
-import WordPress from '@/lib/wordpress';
+import WordPress from '@/services/wordpress';
 
 import WebsiteBlogPost from '@/components/website/websiteBlogPost';
 

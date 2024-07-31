@@ -8,7 +8,7 @@ import { IrminRole } from '@/types/api/IrminRole';
  * @typeParam created_at - Invite creation date
  * @typeParam updated_at - Invite update date
  * @typeParam role - Invite role
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface Invite {
   id: number;

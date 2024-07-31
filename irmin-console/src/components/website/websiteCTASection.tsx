@@ -1,10 +1,11 @@
 import Image from 'next/image';
 
-import { getURL } from '@/lib/utils/wordpressLinkUtils';
-import WordPress from '@/lib/wordpress';
+import WordPress from '@/services/wordpress';
 
 import Button from '@/components/misc/Button';
 import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
+
+import { getURL } from '@/utils/wordpress';
 
 import { CTASection } from '@/types/website/Wordpress';
 

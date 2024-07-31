@@ -1,8 +1,9 @@
 import { dictionaries, languages } from '@/dictionaries';
-import { transformMenuToFooterLinks } from '@/lib/utils/menuUtils';
-import WordPress from '@/lib/wordpress';
+import WordPress from '@/services/wordpress';
 
 import WebsiteFooterContent from '@/components/website/websiteFooterContent';
+
+import { transformMenuToFooterLinks } from '@/utils/menu';
 
 import { WebsiteFooterLinkSection } from '@/types/website/WebsiteNavigation';
 

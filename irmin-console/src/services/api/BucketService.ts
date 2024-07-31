@@ -1,12 +1,9 @@
 import { defaultLocale, Locale } from '@/dictionaries';
-import {
-  exampleAPIResponse,
-  exampleBucket,
-} from '@/lib/exampleObjects/apiObjects';
-import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
+import { fetchWithCredentials } from '@/services/fetchWithCredentials';
 
 import { Bucket } from '@/types/api/Bucket';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import { exampleAPIResponse, exampleBucket } from '@/types/examples/apiObjects';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';

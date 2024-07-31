@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 
-import { getURL } from '@/lib/utils/wordpressLinkUtils';
-
 import Button from '@/components/misc/Button';
 import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
 import Input from '@/components/misc/Input';
 
 import { useLocale } from '@/context/LocaleContext';
+
+import { getURL } from '@/utils/wordpress';
 
 import { ContactSection } from '@/types/website/Wordpress';
 

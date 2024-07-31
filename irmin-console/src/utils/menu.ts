@@ -1,4 +1,4 @@
-import { getURL } from '@/lib/utils/wordpressLinkUtils';
+import { getURL } from '@/utils/wordpress';
 
 import {
   WebsiteFooterLink,

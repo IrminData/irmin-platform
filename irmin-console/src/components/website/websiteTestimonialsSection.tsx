@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
-import WordPress from '@/lib/wordpress';
+import WordPress from '@/services/wordpress';
 
 import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
 

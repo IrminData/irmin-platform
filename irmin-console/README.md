@@ -128,13 +128,13 @@ The offline mode can be enabled by setting the `NEXT_PUBLIC_OFFLINE_MODE` enviro
 
 The offline mode exists to enable smooth development process in situations with bad or non existent internet connections, such as on a plane.
 
-When offline mode is enabled something is always returned for API requests in API Services. The offline mode returns objects from example objects eg. [src/lib/exampleObjects/apiObjects.ts](src/lib/exampleObjects/apiObjects.ts) depending on what would be the APIs expected return type.
+When offline mode is enabled something is always returned for API requests in API Services. The offline mode returns objects from example objects eg. [src/types/examples/apiObjects.ts](src/types/examples/apiObjects.ts) depending on what would be the APIs expected return type.
 
 Note! It is not meant for anything but local use.
 
 ## API Services
 
-To call the API, we use API Services. These services contain the API endpoints and the logic for calling the API. The API Services are located in the `src/lib/api` directory. Each service corresponds to a specific resource in the API.
+To call the API, we use API Services. These services contain the API endpoints and the logic for calling the API. The API Services are located in the `src/services/api` directory. Each service corresponds to a specific resource in the API.
 
 Please note that accessing a lot of things on the API requires user to be authenticated and the API call be made from the client. This is because the API relies on a cookie set on the API domain. This is why most API Services are not used on the server side, but only on the client side.
 
@@ -146,12 +146,12 @@ Every API Service function for fetching the API should follow the same structure
 4. The function should be documented with TypeDoc/TypeDoc comments. The comments should include a description of the function, the parameters, and the return value. Also, if available add the link to the API documentation for that endpoint. If not available, add a TODO note that the API documentation is not available yet.
 5. The function should be able to handle Offline Mode and Development Environments needs. This means returning static data when the API request fails or when Offline Mode is enabled.
 
-Some services have been created before the API has been fully implemented. In these cases, when the environment is set to development, the services return example objects from the [apiObjects.ts](src/lib/exampleObjects/apiObjects.ts) file. See [Static data](#static-data) section of this README for more information
+Some services have been created before the API has been fully implemented. In these cases, when the environment is set to development, the services return example objects from the [apiObjects.ts](src/types/examples/apiObjects.ts) file. See [Static data](#static-data) section of this README for more information
 
 Examples:
 
-[src/lib/api/BucketService.ts](src/lib/api/BucketService.ts) -> contains a list of endpoints for Buckets the frontend will be calling.
-[src/lib/exampleObjects/apiObjects.ts](src/lib/exampleObjects/apiObjects.ts) -> contains example API objects of certain types. These objects are used in development when the API request fails or if Offline Mode is enabled
+[src/services/api/BucketService.ts](src/services/api/BucketService.ts) -> contains a list of endpoints for Buckets the frontend will be calling.
+[src/types/examples/apiObjects.ts](src/types/examples/apiObjects.ts) -> contains example API objects of certain types. These objects are used in development when the API request fails or if Offline Mode is enabled
 [src/types/api/Bucket.ts](src/types/api/Bucket.ts) -> contains types for Bucket resources, which the BucketService and ExampleObject refer to.
 
 ## Internationalisation
@@ -164,13 +164,13 @@ If the language is set in the URL, the website will be displayed in that languag
 
 If user manually switches languages, the preferred language is stored in cookies and used in the future.
 
-Languages, default language and available locales are defined in [src/dictionaries.ts](src/dictionaries.ts).
+Languages, default language and available locales are defined in [src/dictionaries/index.ts](src/dictionaries/index.ts).
 
 - [src/middleware.ts](src/middleware.ts) -> Middleware for setting the locale based on the URL path or browser language.
 - [src/context/LocaleContext.tsx](src/context/LocaleContext.tsx) -> Context for managing the locale and translations state across the application.
-- [src/dictionaries.ts](src/dictionaries.ts) -> Responsible for providing translation lists, setting the default language, and available locales.
+- [src/dictionaries/index.ts](src/dictionaries/index.ts) -> Responsible for providing translation lists, setting the default language, and available locales.
 
-Dictionaries are JSON objects which are used to translate the website content. They are used in the components to translate the content based on the locale. The key is the translation key and the value is the translation itself. `getDictionary()` function in `dictionaries.ts` is used to get the correct dictionary based on the locale.
+Dictionaries are JSON objects which are used to translate the website content. They are used in the components to translate the content based on the locale. The key is the translation key and the value is the translation itself. `getDictionary()` function in `dictionaries/index.ts` is used to get the correct dictionary based on the locale.
 
 Dictionaries can be found in the `src/dictionaries` folder.
 
@@ -197,10 +197,10 @@ IAMProvider is wrapping the root layout of the application.
 
 The application will know that a user is not logged in if the user profile data is not available. 
 
-This context provides the application with logic to communicate with the [Auth API Service](src/lib/api/AuthService.ts) and
-[Profile API Service](src/lib/api/ProfileService.ts).
+This context provides the application with logic to communicate with the [Auth API Service](src/services/api/AuthService.ts) and
+[Profile API Service](src/services/api/ProfileService.ts).
 
-[ProfileService](src/lib/api/ProfileService.ts) will avoid throwing an error on getProfile if the user is not logged in. Instead, it will return null.
+[ProfileService](src/services/api/ProfileService.ts) will avoid throwing an error on getProfile if the user is not logged in. Instead, it will return null.
 
 ### LocaleContext
 
@@ -228,7 +228,7 @@ BucketContext is used to manage the bucket and file navigator state across the a
 
 BucketProvider is wrapping the [Workspace Layout](src/app/[lang]/portal/[workspace]/layout.tsx) of the application, since it only relates to a specific workspace.
 
-See [Bucket API Service](src/lib/api/BucketService.ts) and [the Editor](src/app/[lang]/portal/[workspace]/editor/layout.tsx) for more information.
+See [Bucket API Service](src/services/api/BucketService.ts) and [the Editor](src/app/[lang]/portal/[workspace]/editor/layout.tsx) for more information.
 
 ### WorkspaceContext
 
@@ -237,15 +237,15 @@ See [Bucket API Service](src/lib/api/BucketService.ts) and [the Editor](src/app/
 This context is responsible for managing the workspace state and data across the application. 
 In addition, it provides the application with logic to communicate with:
 
-- [Workspace API Service](src/lib/api/WorkspaceService.ts)
-- [Dashboard API Service](src/lib/api/DashboardService.ts)
-- [Workflow API Service](src/lib/api/WorkflowService.ts)
-- [Connection Workflow API Service](src/lib/api/ConnectionWorkflowService.ts)
-- [Export Workflow API Service](src/lib/api/ExportWorkflowService.ts)
-- [Action Workflow API Service](src/lib/api/ActionWorkflowService.ts)
-- [Dataset API Service](src/lib/api/DatasetService.ts)
-- [Invite API Service](src/lib/api/InviteService.ts)
-- [User and Role API Service](src/lib/api/UserAndRoleService.ts)
+- [Workspace API Service](src/services/api/WorkspaceService.ts)
+- [Dashboard API Service](src/services/api/DashboardService.ts)
+- [Workflow API Service](src/services/api/WorkflowService.ts)
+- [Connection Workflow API Service](src/services/api/ConnectionWorkflowService.ts)
+- [Export Workflow API Service](src/services/api/ExportWorkflowService.ts)
+- [Action Workflow API Service](src/services/api/ActionWorkflowService.ts)
+- [Dataset API Service](src/services/api/DatasetService.ts)
+- [Invite API Service](src/services/api/InviteService.ts)
+- [User and Role API Service](src/services/api/UserAndRoleService.ts)
 
 The context, hooks, provider etc. are split into multiple files for clarity and to avoid any single file becoming too large.
 
@@ -255,7 +255,7 @@ The Wordpress CMS is used to manage the content of the website. The Wordpress AP
 
 Website navigation and footer links are managed in the Wordpress menu section. The menu is fetched from the API and used to render the navigation and footer links.
 
-[Wordpress Class](src/lib/wordpress.ts) is used to communicate with the Wordpress API. This class is not under API Services since it is not used to fetch data for the application, but to fetch data for the website content. In addition, the Wordpress Class is used directly, without a context, because Next.js fetches the data on the server side.
+[Wordpress Service](src/services/wordpress.ts) is used to communicate with the Wordpress API. This service is not under API Services since it is not used to fetch data from the `irmin-api` or any other app data. But instead is used to fetch data for the website content. In addition, the Wordpress Service is used directly, without a context, because Next.js fetches the data on the server side.
 
 The Wordpress menu slugs are found in the translation dictionaries for different locales. See [Internationalisation](#internationalisation) for more information.
 

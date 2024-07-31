@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { cn } from '@/lib/utils/twUtils';
+import { cn } from '@/utils/tw';
 
 /**
  * Universal input component, used across the application

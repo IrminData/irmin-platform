@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react';
 
-import WorkspaceService from '@/lib/api/WorkspaceService';
-
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
@@ -20,7 +18,6 @@ import { useWorkspace } from '@/context/workspace';
  * This component is used to manage workspaces in the portal.
  * Here, users can create new workspaces and navigate to existing ones.
  *
- * It uses the {@link WorkspaceService} to create new workspaces.
  * It uses the {@link useWorkspace} Context to fetch and manage workspace data.
  *
  * @todo The workspace card shows dummy data for now. This should be replaced with real data.
@@ -28,12 +25,11 @@ import { useWorkspace } from '@/context/workspace';
  * @returns UI for managing workspaces
  */
 const ManageWorkspaces: React.FC = () => {
-  const { locale, dict } = useLocale();
+  const { dict } = useLocale();
   const {
     workspaceLoading,
-    workspaces: { workspaces, fetchWorkspaces },
+    workspaces: { workspaces, fetchWorkspaces, createWorkspace },
   } = useWorkspace();
-  const workspaceService = WorkspaceService.getInstance(locale);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [newWorkspaceDescription, setNewWorkspaceDescription] = useState('');
 
@@ -49,7 +45,7 @@ const ManageWorkspaces: React.FC = () => {
     setSuccess(null);
     // Create new workspace
     try {
-      const response = await workspaceService.createWorkspace(
+      const response = await createWorkspace(
         newWorkspaceName,
         newWorkspaceDescription
       );

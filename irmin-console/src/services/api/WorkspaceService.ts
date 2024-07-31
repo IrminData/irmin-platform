@@ -1,12 +1,12 @@
 import { defaultLocale, Locale } from '@/dictionaries';
-import {
-  exampleAPIResponse,
-  exampleWorkspace,
-} from '@/lib/exampleObjects/apiObjects';
-import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
+import { fetchWithCredentials } from '@/services/fetchWithCredentials';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { Workspace } from '@/types/api/Workspace';
+import {
+  exampleAPIResponse,
+  exampleWorkspace,
+} from '@/types/examples/apiObjects';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =

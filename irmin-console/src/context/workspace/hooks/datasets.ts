@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import { Locale } from '@/dictionaries';
-import DatasetService from '@/lib/api/DatasetService';
+import DatasetService from '@/services/api/DatasetService';
 
 import { Dataset } from '@/types/api/Dataset';
 import { Workspace } from '@/types/api/Workspace';

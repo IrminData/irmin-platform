@@ -11,7 +11,7 @@ import { Workflow } from '@/types/api/Workflow';
  * @typeParam tables - List of tables that are part of this dataset
  * @typeParam created_at - Dataset creation date
  * @typeParam updated_at - Dataset update date
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface Dataset {
   id: number;

@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-import { getURL } from '@/lib/utils/wordpressLinkUtils';
-
 import { FaSearch } from 'react-icons/fa';
 import { IoInformation, IoLocationOutline } from 'react-icons/io5';
 
@@ -11,6 +9,8 @@ import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 
 import { useLocale } from '@/context/LocaleContext';
+
+import { getURL } from '@/utils/wordpress';
 
 import { CareersSection } from '@/types/website/Wordpress';
 

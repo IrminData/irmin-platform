@@ -1,6 +1,6 @@
 /**
  * Post object returned by the Wordpress API
- * @example See `/src/lib/exampleObjects/wordpressObjects.ts`
+ * @example See `/src/types/examples/wordpressObjects.ts`
  */
 export interface Post {
   id: number;
@@ -24,7 +24,7 @@ export interface Post {
 
 /**
  * One of the tyes returned by the Wordpress API
- * @example See `/src/lib/exampleObjects/wordpressObjects.ts`
+ * @example See `/src/types/examples/wordpressObjects.ts`
  */
 interface Title {
   rendered: string;
@@ -32,7 +32,7 @@ interface Title {
 
 /**
  * One of the tyes returned by the Wordpress API
- * @example See `/src/lib/exampleObjects/wordpressObjects.ts`
+ * @example See `/src/types/examples/wordpressObjects.ts`
  */
 interface Content {
   rendered: string;
@@ -41,7 +41,7 @@ interface Content {
 
 /**
  * One of the tyes returned by the Wordpress API
- * @example See `/src/lib/exampleObjects/wordpressObjects.ts`
+ * @example See `/src/types/examples/wordpressObjects.ts`
  */
 interface Excerpt {
   rendered: string;
@@ -58,7 +58,7 @@ interface Excerpt {
  * @param sections - Sections of the page. Each section is a different type of content block.
  * @param full_width - Whether the page should be full width or not.
  *
- * @example See `/src/lib/exampleObjects/wordpressObjects.ts`
+ * @example See `/src/types/examples/wordpressObjects.ts`
  */
 interface Acf {
   sections: IrminWebsiteSection[];
@@ -70,7 +70,7 @@ interface Acf {
  *
  * See src/components/WebsiteSections.tsx to understand section rendering
  *
- * @example See `/src/lib/exampleObjects/wordpressObjects.ts`
+ * @example See `/src/types/examples/wordpressObjects.ts`
  */
 export type IrminWebsiteSection =
   | NewsletterSection

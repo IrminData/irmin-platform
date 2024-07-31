@@ -2,8 +2,6 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { getCorrectPath } from '@/lib/utils/bucketUtils';
-
 import { IoAdd, IoClose, IoSave } from 'react-icons/io5';
 
 import Editor from '@/components/editor/editor';
@@ -15,6 +13,8 @@ import Button from '@/components/misc/Button';
 import { useBucket } from '@/context/BucketContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+
+import { getCorrectPath } from '@/utils/bucket';
 
 import { Bucket, BucketFile, IrminFileType } from '@/types/api/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';

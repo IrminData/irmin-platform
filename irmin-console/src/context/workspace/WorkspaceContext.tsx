@@ -26,6 +26,11 @@ export const WorkspaceContext = createContext<{
     switchToWorkspace: (_workspaceSlug: string | null) => void;
     deleteCurrentWorkspace: () => Promise<IrminAPIResponse>;
     transferOwnership: (_userId: number) => Promise<IrminAPIResponse>;
+    createWorkspace: (
+      _name: string,
+      _description: string
+    ) => Promise<IrminAPIResponse>;
+    updateWorkspace: (_workspace: Workspace) => Promise<IrminAPIResponse>;
     currentWorkspace: Workspace | null;
     workspacesLoading: boolean;
   };
@@ -89,6 +94,8 @@ export const WorkspaceContext = createContext<{
     fetchWorkspaces: () => {},
     deleteCurrentWorkspace: () => Promise.resolve({}),
     transferOwnership: () => Promise.resolve({}),
+    createWorkspace: () => Promise.resolve({}),
+    updateWorkspace: () => Promise.resolve({}),
     workspacesLoading: false,
     currentWorkspace: null,
   },

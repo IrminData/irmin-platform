@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 
-import ConnectorService from '@/lib/api/ConnectorService';
+import ConnectorService from '@/services/api/ConnectorService';
 
 import DefineConnectionDetails from '@/components/connection-setup/defineConnectionDetails';
 import DefineConnectionSettings from '@/components/connection-setup/defineConnectionSettings';

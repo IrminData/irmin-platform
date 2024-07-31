@@ -1,14 +1,14 @@
 import { defaultLocale, Locale } from '@/dictionaries';
-import {
-  exampleAPIResponse,
-  exampleRoles,
-  exampleWorkspaceUser,
-} from '@/lib/exampleObjects/apiObjects';
-import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
+import { fetchWithCredentials } from '@/services/fetchWithCredentials';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
 import { WorkspaceUser } from '@/types/api/Workspace';
+import {
+  exampleAPIResponse,
+  exampleRoles,
+  exampleWorkspaceUser,
+} from '@/types/examples/apiObjects';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =

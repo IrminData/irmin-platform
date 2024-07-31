@@ -62,6 +62,8 @@ export const WorkspaceProvider = ({
     deleteCurrentWorkspace,
     transferOwnership,
     fetchWorkspaces,
+    createWorkspace,
+    updateWorkspace,
   } = useWorkspaces({ locale });
 
   // Actions
@@ -210,6 +212,8 @@ export const WorkspaceProvider = ({
           transferOwnership,
           fetchWorkspaces,
           workspacesLoading,
+          createWorkspace,
+          updateWorkspace,
         },
         users: {
           users,

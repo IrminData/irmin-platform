@@ -2,14 +2,14 @@ import { useRef, useState } from 'react';
 
 import Link from 'next/link';
 
-import { useBreakpoint } from '@/lib/utils/twUtils';
-
 import { IoTriangle } from 'react-icons/io5';
 
 import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
+
+import { useBreakpoint } from '@/utils/tw';
 
 import { Notification } from '@/types/internal/Notification';
 

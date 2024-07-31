@@ -22,7 +22,7 @@ type WorkflowableType = 'connection' | 'action' | 'export';
  * @typeParam description - Workflow description
  * @typeParam documentation - Workflow documentation as a markdown string
  * @typeParam result - Dataset that is the result of the workflow.  If a workspace results in data, it should be wrapped as a Dataset. Not relevant for Export Workflows.
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface Workflow {
   id: number;
@@ -60,7 +60,7 @@ export type ActionWorkflow = Workflow & { workflowable: Action };
  * @typeParam status - Status of the workflow run
  * @typeParam started_at - Timestamp of when the workflow run started
  * @typeParam finished_at - Timestamp of when the workflow run finished
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface WorkflowRun {
   id: number;
@@ -98,7 +98,7 @@ interface Connection {
  * Export workflow Workflowable object
  * @typeParam destination - Connection object of where to export the data
  * @typeParam source - Dataset object of what to export
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 interface ExportSync {
   destination: Connection;
@@ -108,7 +108,7 @@ interface ExportSync {
 /**
  * Action workflow Workflowable object
  * @typeParam path - Path to the action
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 interface Action {
   path: string;

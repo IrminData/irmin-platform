@@ -3,7 +3,7 @@ import { useMediaQuery } from 'react-responsive';
 import { twMerge } from 'tailwind-merge';
 import resolveConfig from 'tailwindcss/resolveConfig';
 
-import tailwindConfig from '../../../tailwind.config';
+import tailwindConfig from '../../tailwind.config';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

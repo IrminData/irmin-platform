@@ -1,11 +1,5 @@
 import { defaultLocale, Locale } from '@/dictionaries';
-import {
-  exampleAction,
-  exampleAPIResponse,
-  exampleConnection,
-  exampleExport,
-} from '@/lib/exampleObjects/apiObjects';
-import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
+import { fetchWithCredentials } from '@/services/fetchWithCredentials';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import {
@@ -14,6 +8,12 @@ import {
   ExportWorkflow,
   Workflow,
 } from '@/types/api/Workflow';
+import {
+  exampleAction,
+  exampleAPIResponse,
+  exampleConnection,
+  exampleExport,
+} from '@/types/examples/apiObjects';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =

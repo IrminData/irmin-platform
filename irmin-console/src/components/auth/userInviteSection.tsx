@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import InviteService from '@/lib/api/InviteService';
+import InviteService from '@/services/api/InviteService';
 
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
@@ -14,6 +14,8 @@ import { useLocale } from '@/context/LocaleContext';
 
 /**
  * User invite UI component
+ *
+ * @todo This component needs to be tested and fixed. Use Signed URLs. Seperate the logic from the UI.
  *
  * @remarks
  *

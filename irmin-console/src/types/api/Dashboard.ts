@@ -7,7 +7,7 @@ import { Widget } from '@/types/api/Widget';
  * @typeParam widgets - Array of Widgets to show on the dashboard, in order
  * @typeParam created_at - Dashboard creation date
  * @typeParam updated_at - Dashboard update date
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface Dashboard {
   id: number;

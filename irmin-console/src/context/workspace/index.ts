@@ -17,10 +17,12 @@ import {
   useFetchUsers,
 } from '@/context/workspace/hooks/usersAndRoles';
 import {
+  useCreateWorkspace,
   useDeleteCurrentWorkspace,
   useFetchWorkspaces,
   useSwitchWorkspace,
   useTransferOwnership,
+  useUpdateWorkspace,
 } from '@/context/workspace/hooks/workspaces';
 import {
   useWorkspace,
@@ -48,11 +50,11 @@ export {
   useFetchWorkspaces,
   useResendInvite,
   useSendInvite,
-  // Hooks
   useSwitchWorkspace,
   useTransferOwnership,
+  useCreateWorkspace,
+  useUpdateWorkspace,
   useWorkspace,
-  // Context
   WorkspaceContext,
   WorkspaceProvider,
 };

@@ -1,6 +1,6 @@
 /**
  * Finnish dictionary
- * See `/src/dictionaries.ts` for more information
+ * See `/src/dictionaries/index.ts` for more information
  */
 const fi = {
   static: {

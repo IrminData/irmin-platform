@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import { Locale } from '@/dictionaries';
-import InviteService from '@/lib/api/InviteService';
+import InviteService from '@/services/api/InviteService';
 
 import { Invite } from '@/types/api/Invite';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';

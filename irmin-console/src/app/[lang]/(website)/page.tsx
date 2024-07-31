@@ -3,11 +3,12 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
-import { getURL } from '@/lib/utils/wordpressLinkUtils';
-import WordPress from '@/lib/wordpress';
+import WordPress from '@/services/wordpress';
 
 import WebsitePageContent from '@/components/WebsitePageContent';
 import WebsiteSections from '@/components/WebsiteSections';
+
+import { getURL } from '@/utils/wordpress';
 
 const NEXT_PUBLIC_BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';

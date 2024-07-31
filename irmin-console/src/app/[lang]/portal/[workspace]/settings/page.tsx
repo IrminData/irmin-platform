@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 
-import WorkspaceService from '@/lib/api/WorkspaceService';
-
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 import PortalTitle from '@/components/portalTitle';
@@ -69,10 +67,15 @@ export default function WorkspaceSettingsPage() {
  * @returns UI for managing general workspace settings
  */
 const GeneralSettings = () => {
-  const { locale, dict } = useLocale();
+  const { dict } = useLocale();
   const { irminModal } = usePopup();
   const {
-    workspaces: { currentWorkspace, fetchWorkspaces, deleteCurrentWorkspace },
+    workspaces: {
+      currentWorkspace,
+      fetchWorkspaces,
+      deleteCurrentWorkspace,
+      updateWorkspace,
+    },
   } = useWorkspace();
   const { irminAlert } = usePopup();
 
@@ -80,7 +83,6 @@ const GeneralSettings = () => {
   const [workspaceDescription, setWorkspaceDescription] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
-  const workspaceService = WorkspaceService.getInstance(locale);
 
   useEffect(() => {
     if (currentWorkspace) {
@@ -95,7 +97,7 @@ const GeneralSettings = () => {
     setIsLoading(true);
     try {
       // Call the API to update the workspace
-      await workspaceService.updateWorkspace({
+      await updateWorkspace({
         name: workspaceName ?? currentWorkspace.name,
         description: workspaceDescription ?? currentWorkspace.description ?? '',
       } as Workspace);

@@ -5,8 +5,7 @@ import {
   exampleWPMenu,
   exampleWPPage,
   exampleWPPost,
-} from '@/lib/exampleObjects/wordpressObjects';
-
+} from '@/types/examples/wordpressObjects';
 import { Media, Menu, Post } from '@/types/website/Wordpress';
 
 const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -24,7 +23,7 @@ const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
  * If the environment is set to offline mode, service will return example data instead
  * of making API calls.
  *
- * Example data can be found here: `@/lib/exampleObjects/wordpressObjects`
+ * Example data can be found here: `@/types/examples/wordpressObjects`
  */
 export default class WordPress {
   private static instance: WordPress;

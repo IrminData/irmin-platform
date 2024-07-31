@@ -1,8 +1,9 @@
 import { dictionaries, languages } from '@/dictionaries';
-import { transformMenu } from '@/lib/utils/menuUtils';
-import WordPress from '@/lib/wordpress';
+import WordPress from '@/services/wordpress';
 
 import WebsiteNavigationContent from '@/components/website/websiteNavigationContent';
+
+import { transformMenu } from '@/utils/menu';
 
 import { WebsiteNavigationLink } from '@/types/website/WebsiteNavigation';
 

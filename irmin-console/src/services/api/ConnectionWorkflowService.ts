@@ -1,5 +1,5 @@
 import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
+import { fetchWithCredentials } from '@/services/fetchWithCredentials';
 
 import {
   ConnectionDetailsAndSettings,

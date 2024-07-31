@@ -1,6 +1,7 @@
 import { detectLocaleFromURL, languages } from '@/dictionaries';
-import { getURL } from '@/lib/utils/wordpressLinkUtils';
-import WordPress from '@/lib/wordpress';
+import WordPress from '@/services/wordpress';
+
+import { getURL } from '@/utils/wordpress';
 
 /**
  * sitemap.xml route

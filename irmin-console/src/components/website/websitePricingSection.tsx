@@ -4,11 +4,11 @@ import { useState } from 'react';
 
 import Image from 'next/image';
 
-import { getURL } from '@/lib/utils/wordpressLinkUtils';
-
 import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
+
+import { getURL } from '@/utils/wordpress';
 
 import { PriceSection } from '@/types/website/Wordpress';
 

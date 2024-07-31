@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { Locale } from '@/dictionaries';
-import WordPress from '@/lib/wordpress';
+import WordPress from '@/services/wordpress';
 
 import WebsiteBlogPostsContent from '@/components/website/websiteBlogPostsContent';
 

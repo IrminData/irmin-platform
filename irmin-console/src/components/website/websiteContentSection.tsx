@@ -1,6 +1,6 @@
 import Image from 'next/image';
 
-import WordPress from '@/lib/wordpress';
+import WordPress from '@/services/wordpress';
 
 import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
 

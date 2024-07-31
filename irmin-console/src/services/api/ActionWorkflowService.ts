@@ -1,6 +1,6 @@
 import { defaultLocale, Locale } from '@/dictionaries';
+import { fetchWithCredentials } from '@/services/fetchWithCredentials';
 
-import { fetchWithCredentials } from '@/lib/fetchWithCredentials';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 
 const api_base = process.env.NEXT_PUBLIC_API_URL;

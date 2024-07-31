@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import { Locale } from '@/dictionaries';
-import WorkflowService from '@/lib/api/WorkflowService';
+import WorkflowService from '@/services/api/WorkflowService';
 
 import { ExportWorkflow } from '@/types/api/Workflow';
 import { Workspace } from '@/types/api/Workspace';

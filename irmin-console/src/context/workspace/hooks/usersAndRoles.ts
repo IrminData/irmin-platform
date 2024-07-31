@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import { Locale } from '@/dictionaries';
-import UserAndRoleService from '@/lib/api/UserAndRoleService';
+import UserAndRoleService from '@/services/api/UserAndRoleService';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';

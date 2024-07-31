@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 
 import Image from 'next/image';
 
-import ConnectionWorkflowService from '@/lib/api/ConnectionWorkflowService';
+import ConnectionWorkflowService from '@/services/api/ConnectionWorkflowService';
 
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';

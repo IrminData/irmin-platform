@@ -2,12 +2,6 @@
 
 import React, { useState } from 'react';
 
-import {
-  getCorrectNameWithExtension,
-  getCorrectPath,
-  itemCanBeCreated,
-} from '@/lib/utils/bucketUtils';
-
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
 import PathSelector from '@/components/editor/pathSelector';
@@ -15,6 +9,12 @@ import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+
+import {
+  getCorrectNameWithExtension,
+  getCorrectPath,
+  itemCanBeCreated,
+} from '@/utils/bucket';
 
 import { Bucket, BucketFile } from '@/types/api/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';

@@ -11,8 +11,8 @@ import {
 import { useRouter } from 'next/navigation';
 
 import { Locale } from '@/dictionaries';
-import AuthService from '@/lib/api/AuthService';
-import ProfileService from '@/lib/api/ProfileService';
+import AuthService from '@/services/api/AuthService';
+import ProfileService from '@/services/api/ProfileService';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';

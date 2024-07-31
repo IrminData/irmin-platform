@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 
 import { Locale } from '@/dictionaries';
-import WorkspaceService from '@/lib/api/WorkspaceService';
+import WorkspaceService from '@/services/api/WorkspaceService';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { Workspace } from '@/types/api/Workspace';
@@ -41,6 +41,43 @@ export const useFetchWorkspaces = (
       setWorkspaceLoading(false);
     }
   }, [setWorkspaces, workspaceLoading, setWorkspaceLoading, locale]);
+
+/**
+ * Hook to create a new workspace
+ *
+ * @param locale - The current locale.
+ */
+export const useCreateWorkspace = (locale: Locale) =>
+  useCallback(
+    async (newWorkspaceName: string, newWorkspaceDescription: string) => {
+      // Get the workspace service
+      const workspaceService = WorkspaceService.getInstance(locale);
+      // Create the workspace
+      const response = await workspaceService.createWorkspace(
+        newWorkspaceName,
+        newWorkspaceDescription
+      );
+      return response;
+    },
+    [locale]
+  );
+
+/**
+ * Hook to update the current workspace data.
+ *
+ * @param locale - The current locale.
+ */
+export const useUpdateWorkspace = (locale: Locale) =>
+  useCallback(
+    async (workspace: Workspace) => {
+      // Get the workspace service
+      const workspaceService = WorkspaceService.getInstance(locale);
+      // Update the workspace
+      const response = await workspaceService.updateWorkspace(workspace);
+      return response;
+    },
+    [locale]
+  );
 
 /**
  * Hook to switch to a workspace.

@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import { Locale } from '@/dictionaries';
-import DashboardService from '@/lib/api/DashboardService';
+import DashboardService from '@/services/api/DashboardService';
 
 import { Dashboard } from '@/types/api/Dashboard';
 import { Workspace } from '@/types/api/Workspace';

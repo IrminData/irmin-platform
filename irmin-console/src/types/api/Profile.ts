@@ -7,7 +7,7 @@
  * @typeParam email_verified_at - Profile email verified at
  * @typeParam created_at - Profile creation date
  * @typeParam updated_at - Profile update date
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface Profile {
   id: number;

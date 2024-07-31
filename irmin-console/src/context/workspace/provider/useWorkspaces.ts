@@ -5,10 +5,12 @@ import { useState } from 'react';
 import { Locale } from '@/dictionaries';
 
 import {
+  useCreateWorkspace,
   useDeleteCurrentWorkspace,
   useFetchWorkspaces,
   useSwitchWorkspace,
   useTransferOwnership,
+  useUpdateWorkspace,
 } from '@/context/workspace';
 
 import { Workspace } from '@/types/api/Workspace';
@@ -39,9 +41,21 @@ const useWorkspaces = ({ locale }: { locale: Locale }) => {
   );
 
   /**
+   * Hook to create a new workspace.
+   * @param newWorkspaceName - The name of the new workspace.
+   * @param newWorkspaceDescription - The description of the new workspace.
+   */
+  const createWorkspace = useCreateWorkspace(locale);
+
+  /**
+   * Hook to update the current workspace data.
+   * @param workspace - The updated workspace data object.
+   */
+  const updateWorkspace = useUpdateWorkspace(locale);
+
+  /**
    * Hook to switch to a workspace. Updates localStorage and the current workspace state.
-   * Fetches the new workspace data, calls API /switch endpoint, redirects to the new workspace,
-   * and shows a success or error popup message.
+   * Fetches the workspace data for switch target, calls API /switch endpoint, redirects to the switched workplace.
    * @param workspaceSlug - The slug of the workspace to switch to.
    */
   const switchToWorkspace = useSwitchWorkspace(
@@ -81,6 +95,8 @@ const useWorkspaces = ({ locale }: { locale: Locale }) => {
     switchToWorkspace,
     deleteCurrentWorkspace,
     transferOwnership,
+    createWorkspace,
+    updateWorkspace,
   };
 };
 

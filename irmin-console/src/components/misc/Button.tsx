@@ -5,9 +5,9 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { cn } from '@/lib/utils/twUtils';
-
 import { useLocale } from '@/context/LocaleContext';
+
+import { cn } from '@/utils/tw';
 
 /**
  * Universal button component, used across the application

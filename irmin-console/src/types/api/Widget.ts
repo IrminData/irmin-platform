@@ -10,7 +10,7 @@ export type WidgetType = 'line' | 'bar' | 'table' | 'metric';
  * @typeParam type - Type of widget
  * @typeParam title - Widget title
  * @typeParam data - Widget data
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface Widget {
   id: number;
@@ -24,7 +24,7 @@ export interface Widget {
  * Data for a chart or table widget
  * @typeParam labels - Labels for the data
  * @typeParam datasets - Data for the chart or table
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export type ChartOrTableData = {
   labels: string[];
@@ -40,7 +40,7 @@ export type ChartOrTableData = {
  * Data for a metric widget
  * @typeParam currentValue - Current value of the metric
  * @typeParam label - Label for the metric
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export type MetricData = {
   currentValue: number;

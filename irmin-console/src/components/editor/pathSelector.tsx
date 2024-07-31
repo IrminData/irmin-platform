@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 
-import { transformBucketToFileNavItem } from '@/lib/utils/bucketUtils';
-
 import { FaFolderTree } from 'react-icons/fa6';
 import { FiChevronDown, FiChevronRight, FiFolder } from 'react-icons/fi';
 
 import { useLocale } from '@/context/LocaleContext';
+
+import { transformBucketToFileNavItem } from '@/utils/bucket';
 
 import { Bucket } from '@/types/api/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';

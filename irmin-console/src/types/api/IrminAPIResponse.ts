@@ -4,7 +4,7 @@
  * @typeParam message - Message from the API response
  * @typeParam errors - Errors from the API response
  * @typeParam data - Data from the API response
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface IrminAPIResponse {
   metadata?: {

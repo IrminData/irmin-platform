@@ -1,6 +1,6 @@
 /**
  * Single Bucket type
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface Bucket {
   slug: string;
@@ -15,7 +15,7 @@ export interface Bucket {
  * @param path - Path of the file in the bucket, relative to the workspace's bucket. / is the bucket's root
  * @param created_at - Folder creation date
  * @param updated_at - Folder update date
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface BucketFolder {
   bucket: string;
@@ -41,7 +41,7 @@ export type IrminFileType = (typeof irminFileTypes)[number];
  * @param is_draft - Is the file a draft
  * @param created_at - File creation date
  * @param updated_at - File update date
- * @example See `/src/lib/exampleObjects/apiObjects.ts`.ts - find object referencing this type
+ * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface BucketFile {
   bucket: string;

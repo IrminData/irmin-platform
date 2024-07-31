@@ -1,7 +1,7 @@
-import { getURL } from '@/lib/utils/wordpressLinkUtils';
-
 import Button from '@/components/misc/Button';
 import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
+
+import { getURL } from '@/utils/wordpress';
 
 import { CTADarkSection } from '@/types/website/Wordpress';
 

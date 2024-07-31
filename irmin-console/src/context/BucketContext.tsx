@@ -9,10 +9,11 @@ import React, {
 } from 'react';
 
 import { Locale } from '@/dictionaries';
-import BucketService from '@/lib/api/BucketService';
-import { transformBucketToFileNavItem } from '@/lib/utils/bucketUtils';
+import BucketService from '@/services/api/BucketService';
 
 import { usePopup } from '@/context/PopupContext';
+
+import { transformBucketToFileNavItem } from '@/utils/bucket';
 
 import { Bucket, BucketFile, BucketFolder } from '@/types/api/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
