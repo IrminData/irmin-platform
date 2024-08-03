@@ -135,7 +135,7 @@ const EditorResults: React.FC<{
             activeTab === 'data' ? 'border-irmin_green' : 'border-transparent'
           }`}
         >
-          {dict.actionResults.actionResults}
+          {dict.editor.actionResults}
         </Button>
         <Button
           onClick={() => setActiveTab('documentation')}
@@ -146,7 +146,7 @@ const EditorResults: React.FC<{
               : 'border-transparent'
           }`}
         >
-          {dict.actionResults.documentation}
+          {dict.documentation.documentation}
         </Button>
         <div className='ml-auto flex gap-2 text-right'>
           {activeTab === 'documentation' && (
@@ -169,8 +169,8 @@ const EditorResults: React.FC<{
               }
             >
               {documentationTab === 'mdx'
-                ? dict.actionResults.switchToPlainText
-                : dict.actionResults.switchToMarkdownEditor}
+                ? dict.documentation.switchToPlainText
+                : dict.documentation.switchToMarkdownEditor}
             </Button>
           )}
           <Button
@@ -180,7 +180,7 @@ const EditorResults: React.FC<{
             size='sm'
             className='text-xs'
           >
-            {dict.actionResults.save}
+            {dict.editor.saveAction}
           </Button>
           <Button
             icon={<MdPlayArrow />}
@@ -189,7 +189,7 @@ const EditorResults: React.FC<{
             size='sm'
             className='text-xs'
           >
-            {dict.actionResults.run}
+            {dict.editor.runAction}
           </Button>
         </div>
       </div>
@@ -209,7 +209,7 @@ const EditorResults: React.FC<{
                   variant='link'
                   size='sm'
                 >
-                  {dict.actionResults.exportTable}
+                  {dict.editor.exportTable}
                 </Button>
               </div>
             </div>
@@ -225,7 +225,7 @@ const EditorResults: React.FC<{
             {documentationTab === 'plain' && (
               <textarea
                 className='h-full w-full p-2 focus:outline-none'
-                placeholder={dict.actionResults.startTypingDocumentation}
+                placeholder={dict.documentation.startTypingDocumentation}
                 value={currentDocumentation}
                 onChange={(e) => {
                   setCurrentDocumentation(e.target.value);
@@ -236,7 +236,7 @@ const EditorResults: React.FC<{
               <MDXEditor
                 className='h-full w-full focus:outline-none'
                 contentEditableClassName='h-full w-full p-2 focus:outline-none'
-                placeholder={dict.actionResults.startTypingDocumentation}
+                placeholder={dict.documentation.startTypingDocumentation}
                 markdown={currentDocumentation}
                 onChange={(markdown) => {
                   setCurrentDocumentation(markdown);

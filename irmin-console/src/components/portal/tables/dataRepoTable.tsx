@@ -36,12 +36,12 @@ const DataRepoTable = ({
       {
         label: dict.list.view,
         primary: true,
-        href: `/portal/${workspace}/dataRepositories/${dataRepo.id}`,
+        href: `/portal/${workspace}/data-repositories/${dataRepo.slug}`,
       },
       {
         label: dict.list.edit,
         primary: false,
-        href: `/portal/${workspace}/dataRepositories/${dataRepo.id}/settings`,
+        href: `/portal/${workspace}/data-repositories/${dataRepo.slug}/settings`,
       },
     ];
 

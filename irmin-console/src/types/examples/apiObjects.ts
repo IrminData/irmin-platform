@@ -285,7 +285,7 @@ export const exampleDataset = {
   slug: 'example-data-set',
   description:
     'This an example dataRepo. It is used to work on planes or to fill up missing API data.',
-  documentation: '#Irmin is awesome',
+  documentation: '# Irmin is awesome',
   tables: ['users', 'sales', 'products'],
   created_at: new Date().toDateString(),
   updated_at: new Date().toDateString(),

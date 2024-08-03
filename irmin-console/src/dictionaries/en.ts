@@ -179,6 +179,30 @@ const en = {
     dashboard: 'Dashboard',
     createNewDashboard: 'Create new dashboard',
     noDashboards: 'No dashboards found',
+    existingWidgets: 'Existing widgets',
+    addNewWidget: 'Add new widget',
+  },
+  dataRepository: {
+    dataRepository: 'Data Repository',
+    dataTables: 'Data Tables',
+    noDataTables: 'No tables found in this data repository',
+    rowsReturnedIn: 'rows returned in',
+    sqlQuery: 'SQL Query',
+    runQuery: 'Run query',
+    settings: {
+      name: 'Name',
+      saveChanges: 'Save changes',
+      dangerZone: 'Danger Zone',
+      deletionNote:
+        'Deleting this data repository will remove all data associated with it. This action is irreversible.',
+      deleteDataRepository: 'Delete Data Repository',
+    },
+    tabs: {
+      dataViewer: 'Data Viewer',
+      documentation: 'Documentation',
+      workflows: 'Workflows',
+      settings: 'Settings',
+    },
   },
   connection: {
     connection: 'Connection',
@@ -264,6 +288,10 @@ const en = {
       'Haz, your AI assistant, is here to lend a hand with SQL queries, scripts and more!',
     setupNewConnection: 'Setup new connection',
     saveFile: 'Save file',
+    actionResults: 'Action Results',
+    saveAction: 'Save action',
+    runAction: 'Run action',
+    exportTable: 'export table (.csv)',
     referenceDataSet: {
       clickOnATable: 'Select data set table to reference',
       toReferenceTheTable: 'To reference the table',
@@ -332,19 +360,12 @@ const en = {
       parentPathNotExist: 'Parent path does not exist',
     },
   },
-  actionResults: {
-    actionResults: 'Action Results',
-    widget: 'Widget',
+  documentation: {
     documentation: 'Documentation',
     switchToPlainText: 'Plain text',
     switchToMarkdownEditor: 'Markdown editor',
-    save: 'Save action',
-    run: 'Run action',
-    existingWidgets: 'Existing widgets',
-    addNewWidget: 'Add new widget',
     startTypingDocumentation:
       'Start typing your documentation and notes here...',
-    exportTable: 'export table (.csv)',
   },
   widget: {
     create: {

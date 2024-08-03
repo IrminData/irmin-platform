@@ -17,37 +17,30 @@ export default function StatusElement({
   runStatus?: WorkflowStatus;
   statusLabel: string;
 }) {
+  const baseStyles = `flex h-full max-h-8 max-w-24 items-center justify-center rounded-full shadow-sm px-2 py-1 text-center text-white text-sm lg:w-32 lg:max-w-max`;
   if (accessStatus) {
     switch (accessStatus) {
       case 'private':
         return (
-          <div
-            className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-irmin_teal-400 px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
-          >
+          <div className={`bg-irmin_teal-400 ${baseStyles}`}>
             {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
           </div>
         );
       case 'public':
         return (
-          <div
-            className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-irmin_teal px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
-          >
+          <div className={`bg-irmin_teal ${baseStyles}`}>
             {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
           </div>
         );
       case 'connected':
         return (
-          <div
-            className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-irmin_teal-600 px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
-          >
+          <div className={`bg-irmin_teal-600 ${baseStyles}`}>
             {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
           </div>
         );
       default:
         return (
-          <div
-            className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-irmin_green px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
-          >
+          <div className={`bg-irmin_green ${baseStyles}`}>
             {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
           </div>
         );
@@ -56,66 +49,50 @@ export default function StatusElement({
     switch (runStatus) {
       case 'error':
         return (
-          <div
-            className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-irmin_teal-400 px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
-          >
+          <div className={`bg-irmin_teal-400 ${baseStyles}`}>
             {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
           </div>
         );
       case 'complete':
         return (
-          <div
-            className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-irmin_teal px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
-          >
+          <div className={`bg-irmin_teal ${baseStyles}`}>
             {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
           </div>
         );
       case 'running':
         return (
-          <div
-            className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-irmin_teal-600 px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
-          >
+          <div className={`bg-irmin_teal-600 ${baseStyles}`}>
             {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
           </div>
         );
       case 'paused':
         return (
-          <div
-            className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-gray-400 px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
-          >
+          <div className={`bg-gray-400 ${baseStyles}`}>
             {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
           </div>
         );
       case 'pending':
         return (
-          <div
-            className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-gray-400 px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
-          >
+          <div className={`bg-gray-400 ${baseStyles}`}>
             {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
           </div>
         );
       case 'initiating':
         return (
-          <div
-            className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-gray-400 px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
-          >
+          <div className={`bg-gray-400 ${baseStyles}`}>
             {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
           </div>
         );
       default:
         return (
-          <div
-            className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-irmin_green px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
-          >
+          <div className={`bg-irmin_green ${baseStyles}`}>
             {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
           </div>
         );
     }
   } else {
     return (
-      <div
-        className={`flex h-full max-h-8 max-w-32 items-center justify-center rounded-full bg-irmin_teal px-2 py-1 text-center text-white shadow-sm lg:w-32 lg:max-w-full`}
-      >
+      <div className={`bg-irmin_teal ${baseStyles}`}>
         {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
       </div>
     );

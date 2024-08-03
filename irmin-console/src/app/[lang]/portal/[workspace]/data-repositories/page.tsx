@@ -8,16 +8,16 @@ import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 /**
- * Portal dataRepositories page
+ * Portal Data Repositories list page
  *
  * @remarks
  *
- * This page is used to manage dataRepositories in the portal.
- * It shows a list of dataRepositories that are available in the workspace.
+ * This page is used to manage Data Repositories in the portal.
+ * It shows a list of Data Repositories that are available in the workspace.
  *
- * It uses the WorkspaceContext to fetch and manage dataRepo data.
+ * It uses the WorkspaceContext to fetch and manage Data Repository data.
  *
- * @returns UI for managing dataRepositories
+ * @returns UI for managing Data Repositories
  */
 export default function DataRepositoriesPage() {
   const { dict } = useLocale();

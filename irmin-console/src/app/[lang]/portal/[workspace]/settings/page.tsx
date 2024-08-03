@@ -212,10 +212,12 @@ const GeneralSettings = () => {
           </Button>
         </form>
         <div className='mt-8'>
-          <h3 className='text-xl font-normal text-red-800'>
+          <p className='text-sm font-normal text-red-800 md:text-xl'>
             {dict.workspace.dangerZone}
-          </h3>
-          <p className='mt-2 text-gray-700'>{dict.workspace.deletionNote}</p>
+          </p>
+          <p className='mt-2 text-xs text-gray-700 md:text-base'>
+            {dict.workspace.deletionNote}
+          </p>
           <Button
             className='mt-4'
             onClick={confirmDeletion}

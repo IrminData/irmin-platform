@@ -285,7 +285,7 @@ export default function PortalNavigation({
           </div>
           {/* Dashboard content */}
           <div
-            className={`relative h-full w-full overflow-x-hidden overflow-y-scroll bg-white bg-center`}
+            className={`relative h-full w-full max-w-[100vw] overflow-x-hidden overflow-y-scroll bg-white bg-center`}
             style={{
               backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
             }}

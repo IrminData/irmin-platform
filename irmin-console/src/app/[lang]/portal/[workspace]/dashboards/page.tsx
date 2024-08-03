@@ -51,6 +51,7 @@ export default function DashboardsPage() {
   if (dashboards.isLoading || !dashboards.dashboards) {
     return <LoadingSkeleton className='h-96 w-full' />;
   }
+
   return (
     <div className='px-0 lg:px-4'>
       {dashboards.isLoading && <LoadingSkeleton className='h-96 w-full' />}

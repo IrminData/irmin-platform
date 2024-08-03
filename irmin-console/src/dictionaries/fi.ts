@@ -148,7 +148,7 @@ const fi = {
     },
     links: {
       dashboards: 'Datapaneeli',
-      dataRepositories: 'Tieto Arkistot',
+      dataRepositories: 'Tietovarastot',
       editor: 'Editori',
       actions: 'Toiminnot',
       connections: 'Yhteydet',
@@ -179,6 +179,30 @@ const fi = {
     dashboard: 'Datapaneeli',
     createNewDashboard: 'Luo uusi datapaneeli',
     noDashboards: 'Ei datapaneeleja',
+    existingWidgets: 'Olemassa olevat widgetit',
+    addNewWidget: 'Lisää uusi widgetit',
+  },
+  dataRepository: {
+    dataRepository: 'Tietovarasto',
+    dataTables: 'Tietotaulut',
+    noDataTables: 'Ei tietotauluja tässä tietovarastossa',
+    rowsReturnedIn: 'riviä palautettu ajassa',
+    sqlQuery: 'SQL Kysely',
+    runQuery: 'Ajaa kysely',
+    settings: {
+      name: 'Nimi',
+      saveChanges: 'Tallenna',
+      dangerZone: 'Vaaravyöhyke',
+      deletionNote:
+        'Tietovaraston poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
+      deleteDataRepository: 'Poista Tietovarasto',
+    },
+    tabs: {
+      dataViewer: 'Tietokatselu',
+      documentation: 'Dokumentaatio',
+      workflows: 'Tehtävät',
+      settings: 'Asetukset',
+    },
   },
   connection: {
     connection: 'Yhteys',
@@ -232,14 +256,14 @@ const fi = {
     dataMarketplace: 'Tietomarkkinapaikka',
     pluginMarketplace: 'Liitännäiset ja laajennukset',
     searchDataRepositories:
-      'Etsi julkisia tieto arkistoja, jotka haluat yhdistää ja käyttää',
+      'Etsi julkisia tietovarastoja, jotka haluat yhdistää ja käyttää',
     searchPlugins: 'Etsi lisäosia',
     activePlugins: 'Aktiiviset lisäosat',
     browsePlugins: 'Selaa lisäosia',
-    activeDataRepositories: 'Aktiiviset Tieto Arkistot',
+    activeDataRepositories: 'Aktiiviset tietovarastot',
     browseDataRepositories: 'Selaa Titeto Arkistoja',
     pluginsNotFound: 'Ei liitännäisiä löytynyt',
-    dataRepositoriesNotFound: 'Ei tieto arkistoja löytynyt',
+    dataRepositoriesNotFound: 'Ei löytynyt tietovarastoja',
     source: 'Lähde',
     details: 'Lisätiedot',
     connect: 'Yhdistä',
@@ -249,7 +273,7 @@ const fi = {
     provider: 'Tarjoaja',
     category: 'Kategoria',
     pricePostfix: '/kk',
-    closeThePopup: 'Sulje tietojen ponnahdusikkuna',
+    closeThePopup: 'Sulje ponnahdusikkuna',
     myListings: 'Omat julkaisut',
   },
   editor: {
@@ -263,10 +287,14 @@ const fi = {
       'Haz, AI-avustajasi, on täällä auttamassa SQL-kyselyiden, skriptien ja paljon muun kanssa!',
     setupNewConnection: 'Aseta uusi yhteys',
     saveFile: 'Tallenna',
+    actionResults: 'Toiminnon tulokset',
+    saveAction: 'Tallenna toiminto',
+    runAction: 'Suorita toiminto',
+    exportTable: 'vie taulukko (.csv)',
     referenceDataSet: {
       clickOnATable: 'Klikkaa taulukkoa viitataksesi siihen',
       toReferenceTheTable: 'Käyttääksesi taulukkoa',
-      fromTheDataRepo: 'tieto arkistosta',
+      fromTheDataRepo: 'tietovarastosta',
       inTheEditor: 'editorissa, käytä seuraavaa syntaksia:',
     },
   },
@@ -284,7 +312,7 @@ const fi = {
     destination: 'Kohde',
     noConnectionsFound: 'Yhteyksiä ei löytynyt',
     noActionsFound: 'Toimintoja ei löytynyt',
-    noDataRepositoriesFound: 'Tieto Arkistoja ei löytynyt',
+    noDataRepositoriesFound: 'Tietovarastoja ei löytynyt',
     noExportProcessesFound: 'No Export processes found for this workspace',
   },
   haz: {
@@ -332,19 +360,12 @@ const fi = {
       parentPathNotExist: 'Yläkansiota ei ole olemassa',
     },
   },
-  actionResults: {
-    actionResults: 'Toiminnon tulokset',
-    widget: 'Widgetit',
+  documentation: {
     documentation: 'Dokumentaatio',
     switchToPlainText: 'Teksti',
     switchToMarkdownEditor: 'Markdown muokkaaja',
-    save: 'Tallenna toiminto',
-    run: 'Suorita toiminto',
-    existingWidgets: 'Olemassa olevat widgetit',
-    addNewWidget: 'Lisää uusi widgetit',
     startTypingDocumentation:
       'Aloita dokumentaation ja muistiinpanojen kirjoittaminen tähän...',
-    exportTable: 'vie taulukko (.csv)',
   },
   widget: {
     create: {
