@@ -3,7 +3,7 @@
 import { createContext, useContext } from 'react';
 
 import { Dashboard } from '@/types/api/Dashboard';
-import { Dataset } from '@/types/api/Dataset';
+import { DataRepo } from '@/types/api/DataRepo';
 import { Invite } from '@/types/api/Invite';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
@@ -80,10 +80,10 @@ export const WorkspaceContext = createContext<{
     isLoading: boolean;
     fetchActions: (_forceFetch?: boolean) => void;
   };
-  datasets: {
-    datasets: Dataset[];
+  dataRepositories: {
+    dataRepositories: DataRepo[];
     isLoading: boolean;
-    fetchDatasets: (_forceFetch?: boolean) => void;
+    fetchDataRepositories: (_forceFetch?: boolean) => void;
   };
 }>({
   workspaceLoading: false,
@@ -135,10 +135,10 @@ export const WorkspaceContext = createContext<{
     isLoading: false,
     fetchActions: () => {},
   },
-  datasets: {
-    datasets: [],
+  dataRepositories: {
+    dataRepositories: [],
     isLoading: false,
-    fetchDatasets: () => {},
+    fetchDataRepositories: () => {},
   },
 });
 

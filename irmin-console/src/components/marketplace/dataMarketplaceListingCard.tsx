@@ -12,16 +12,16 @@ import { useLocale } from '@/context/LocaleContext';
  *
  * @remarks
  *
- * This component is used to display a single dataset listing card in the data marketplace.
- * It displays the dataset name, source, price, and industry.
- * It also includes a button to connect to the dataset.
+ * This component is used to display a single dataRepo listing card in the data marketplace.
+ * It displays the dataRepo name, source, price, and industry.
+ * It also includes a button to connect to the dataRepo.
  *
- * It is used by the DataMarketplace component to display a single dataset on the marketplace.
+ * It is used by the DataMarketplace component to display a single dataRepo on the marketplace.
  */
 export default function DataMarketplaceListingCard({
-  dataset,
+  dataRepo,
 }: {
-  dataset: {
+  dataRepo: {
     id: number;
     name: string;
     source: string;
@@ -37,19 +37,19 @@ export default function DataMarketplaceListingCard({
   return (
     <div className='rounded-lg border bg-white p-4 shadow transition duration-300 hover:shadow-lg'>
       <div className='mb-2 flex items-center justify-between'>
-        <span className='font-medium text-gray-800'>{dataset.name}</span>
-        {dataset.connected ? (
+        <span className='font-medium text-gray-800'>{dataRepo.name}</span>
+        {dataRepo.connected ? (
           <span className='text-irmin_green'>
             <TbCheck className='text-2xl' />
           </span>
         ) : null}
       </div>
       <div className='mb-4 text-sm text-gray-600'>
-        {dict.marketplace.source}: {dataset.source}
+        {dict.marketplace.source}: {dataRepo.source}
       </div>
       <div className='flex items-center justify-between'>
         <span className={`font-lighter text-gray-600`}>
-          {dataset.price} € {dict.marketplace.pricePostfix}
+          {dataRepo.price} € {dict.marketplace.pricePostfix}
         </span>
         <div>
           <Button
@@ -58,11 +58,11 @@ export default function DataMarketplaceListingCard({
             size='sm'
             className='mr-4'
             onClick={() => setShowDetails(true)}
-            ariaLabel={`View details of ${dataset.name}`}
+            ariaLabel={`View details of ${dataRepo.name}`}
           >
             {dict.marketplace.details}
           </Button>
-          {dataset.connected ? (
+          {dataRepo.connected ? (
             <span className='inline-block rounded bg-irmin_green px-2 py-1 text-xs font-semibold text-white'>
               {dict.marketplace.connected}
             </span>
@@ -71,9 +71,9 @@ export default function DataMarketplaceListingCard({
               variant='solid'
               colorScheme='primary'
               size='sm'
-              ariaLabel={`Connect to ${dataset.name}`}
+              ariaLabel={`Connect to ${dataRepo.name}`}
               onClick={() => {
-                // TODO: Implement connect to dataset
+                // TODO: Implement connect to dataRepo
               }}
             >
               {dict.marketplace.connect}
@@ -87,7 +87,7 @@ export default function DataMarketplaceListingCard({
           <div className='w-full rounded bg-white p-6 shadow-lg md:w-3/4 lg:w-1/2'>
             <div className='mb-4 flex items-center justify-between border-b pb-3'>
               <h2 className='text-xl font-semibold'>
-                {dataset.name} - {dict.marketplace.details}
+                {dataRepo.name} - {dict.marketplace.details}
               </h2>
               <Button
                 variant='icon'
@@ -100,23 +100,23 @@ export default function DataMarketplaceListingCard({
             </div>
             <div className='flex flex-col space-y-2'>
               {/* Description */}
-              <p className='border-b py-4'>{dataset.description ?? ''}</p>
+              <p className='border-b py-4'>{dataRepo.description ?? ''}</p>
               {/* Details */}
               <div className='flex justify-between'>
                 <span className='font-medium'>{dict.marketplace.source}:</span>
-                <span>{dataset.source}</span>
+                <span>{dataRepo.source}</span>
               </div>
               <div className='flex justify-between'>
                 <span className='font-medium'>{dict.marketplace.price}:</span>
                 <span>
-                  {dataset.price} € {dict.marketplace.pricePostfix}
+                  {dataRepo.price} € {dict.marketplace.pricePostfix}
                 </span>
               </div>
               <div className='flex justify-between'>
                 <span className='font-medium'>
                   {dict.marketplace.industry}:
                 </span>
-                <span>{dataset.industry}</span>
+                <span>{dataRepo.industry}</span>
               </div>
             </div>
             <div className='mt-4 flex justify-end'>

@@ -1,7 +1,7 @@
 import { defaultLocale, Locale } from '@/dictionaries';
 import { fetchWithCredentials } from '@/services/fetchWithCredentials';
 
-import { Dataset } from '@/types/api/Dataset';
+import { DataRepo } from '@/types/api/DataRepo';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import {
   exampleAPIResponse,
@@ -14,22 +14,22 @@ const isDevelopment =
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
 /**
- * Dataset API response type
+ * DataRepo API response type
  * @internal
  */
 interface DatasetAPIResponse extends IrminAPIResponse {
-  data: Dataset[];
+  data: DataRepo[];
 }
 
 /**
- * Dataset API service
+ * DataRepo API service
  *
- * Responsible for all dataset related API calls.
+ * Responsible for all dataRepo related API calls.
  */
-class DatasetService {
-  private datasets: Dataset[] = [];
+class DataRepoService {
+  private dataRepositories: DataRepo[] = [];
 
-  private static instance: DatasetService;
+  private static instance: DataRepoService;
   private locale: Locale = defaultLocale;
 
   private constructor(locale: Locale) {
@@ -37,17 +37,17 @@ class DatasetService {
   }
 
   /**
-   * Get the instance of the {@link DatasetService}
+   * Get the instance of the {@link DataRepoService}
    * @param locale - The locale to use for the instance
    */
-  public static getInstance(locale: Locale): DatasetService {
-    if (!DatasetService.instance) {
-      DatasetService.instance = new DatasetService(locale);
+  public static getInstance(locale: Locale): DataRepoService {
+    if (!DataRepoService.instance) {
+      DataRepoService.instance = new DataRepoService(locale);
     } else {
       // Update the locale if the instance already exists
-      DatasetService.instance.setLocale(locale);
+      DataRepoService.instance.setLocale(locale);
     }
-    return DatasetService.instance;
+    return DataRepoService.instance;
   }
 
   /**
@@ -59,15 +59,15 @@ class DatasetService {
   }
 
   /**
-   * Fetch all available datasets
+   * Fetch all available dataRepositories
    * @todo Provide link to Irmin API docs
    * @returns response from the API or example data
    */
-  async fetchAllDatasets(): Promise<DatasetAPIResponse> {
+  async fetchAllDataRepositories(): Promise<DatasetAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: [exampleDataset] };
     try {
       const response = (await fetchWithCredentials(
-        `${api_base}/v1/datasets`,
+        `${api_base}/v1/dataRepositories`,
         {
           method: 'GET',
           headers: {
@@ -76,10 +76,10 @@ class DatasetService {
         },
         this.locale
       )) as DatasetAPIResponse;
-      this.datasets = response.data;
+      this.dataRepositories = response.data;
       return response;
     } catch (error) {
-      console.error('Fetch datasets error:', error);
+      console.error('Fetch dataRepositories error:', error);
       if (isDevelopment)
         return { ...exampleAPIResponse, data: [exampleDataset] };
       throw error;
@@ -87,12 +87,12 @@ class DatasetService {
   }
 
   /**
-   * Get all stored datasets
-   * @returns all stored datasets, empty array if none
+   * Get all stored dataRepositories
+   * @returns all stored dataRepositories, empty array if none
    */
-  getAllDatasets(): Dataset[] {
-    return this.datasets;
+  getAllDataRepositories(): DataRepo[] {
+    return this.dataRepositories;
   }
 }
 
-export default DatasetService;
+export default DataRepoService;

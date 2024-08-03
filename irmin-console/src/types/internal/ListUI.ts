@@ -24,7 +24,7 @@ export type GridRow = {
 };
 /**
  * Props for the List UI component that displays a table list
- * @example used for displaying a list of connections, actions, exports, datasets, etc.
+ * @example used for displaying a list of connections, actions, exports, dataRepositories, etc.
  */
 export type ListUIProps = {
   rows: GridRow[];

@@ -148,7 +148,7 @@ const en = {
     },
     links: {
       dashboards: 'Dashboards',
-      datasets: 'Datasets',
+      dataRepositories: 'Data Repositories',
       editor: 'Editor',
       actions: 'Actions',
       connections: 'Connections',
@@ -208,7 +208,7 @@ const en = {
     },
   },
   export: {
-    selectSourceDataset: 'Select source data set',
+    selectSourceDataset: 'Select source Data Repository',
     selectDestinationConnection: 'Select destination connection',
     configureExport: 'Configure Export',
     exportSyncs: 'Export syncs',
@@ -231,15 +231,15 @@ const en = {
     categories: 'Categories',
     dataMarketplace: 'Data Marketplace',
     pluginMarketplace: 'Plugins & Extensions',
-    searchDatasets:
-      'Search for public datasets you would like to connect and use',
+    searchDataRepositories:
+      'Search for public data repositories you would like to connect and use',
     searchPlugins: 'Search for plugins and extensions',
     activePlugins: 'Active plugins',
     browsePlugins: 'Browse plugins',
-    activeDatasets: 'Active Datasets',
-    browseDatasets: 'Browse Datasets',
+    activeDataRepositories: 'Active Data Repositories',
+    browseDataRepositories: 'Browse Data Repositories',
     pluginsNotFound: 'No plugins found',
-    datasetsNotFound: 'No Datasets found',
+    dataRepositoriesNotFound: 'No Data Repositories found',
     source: 'Source',
     details: 'Details',
     connect: 'Connect',
@@ -267,7 +267,7 @@ const en = {
     referenceDataSet: {
       clickOnATable: 'Select data set table to reference',
       toReferenceTheTable: 'To reference the table',
-      fromTheDataset: 'from the dataset',
+      fromTheDataRepo: 'from the data repository',
       inTheEditor: 'in the editor, use the following syntax:',
     },
   },
@@ -285,7 +285,7 @@ const en = {
     destination: 'Destination',
     noConnectionsFound: 'No connections found for this workspace',
     noActionsFound: 'No actions found for this workspace',
-    noDatasetsFound: 'No Datasets found for this workspace',
+    noDataRepositoriesFound: 'No Data Repositories found for this workspace',
     noExportProcessesFound: 'No Export processes found for this workspace',
   },
   haz: {

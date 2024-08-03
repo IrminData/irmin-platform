@@ -1,5 +1,5 @@
 import { Connector } from '@/types/api/Connector';
-import { Dataset } from '@/types/api/Dataset';
+import { DataRepo } from '@/types/api/DataRepo';
 
 /**
  * Types of workflows that can be created
@@ -21,7 +21,7 @@ type WorkflowableType = 'connection' | 'action' | 'export';
  * @typeParam name - Workflow name
  * @typeParam description - Workflow description
  * @typeParam documentation - Workflow documentation as a markdown string
- * @typeParam result - Dataset that is the result of the workflow.  If a workspace results in data, it should be wrapped as a Dataset. Not relevant for Export Workflows.
+ * @typeParam result - DataRepo that is the result of the workflow.  If a workspace results in data, it should be wrapped as a DataRepo. Not relevant for Export Workflows.
  * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface Workflow {
@@ -37,7 +37,7 @@ export interface Workflow {
   name: string;
   description?: string;
   documentation?: string;
-  result?: Dataset;
+  result?: DataRepo;
 }
 
 /**
@@ -97,12 +97,12 @@ interface Connection {
 /**
  * Export workflow Workflowable object
  * @typeParam destination - Connection object of where to export the data
- * @typeParam source - Dataset object of what to export
+ * @typeParam source - DataRepo object of what to export
  * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 interface ExportSync {
   destination: Connection;
-  source: Dataset;
+  source: DataRepo;
 }
 
 /**

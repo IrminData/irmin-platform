@@ -243,7 +243,7 @@ In addition, it provides the application with logic to communicate with:
 - [Connection Workflow API Service](src/services/api/ConnectionWorkflowService.ts)
 - [Export Workflow API Service](src/services/api/ExportWorkflowService.ts)
 - [Action Workflow API Service](src/services/api/ActionWorkflowService.ts)
-- [Dataset API Service](src/services/api/DatasetService.ts)
+- [DataRepo API Service](src/services/api/DataRepoService.ts)
 - [Invite API Service](src/services/api/InviteService.ts)
 - [User and Role API Service](src/services/api/UserAndRoleService.ts)
 

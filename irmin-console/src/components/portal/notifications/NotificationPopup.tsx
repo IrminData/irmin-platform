@@ -112,8 +112,8 @@ const NotificationPopup = ({
     },
     {
       id: 7,
-      title: 'Dataset failed to create',
-      message: 'Users (public), Dataset creation has failed',
+      title: 'DataRepo failed to create',
+      message: 'Users (public), DataRepo creation has failed',
       path: ``,
       relatedWorkspaceSlug: workspaceSlug,
       relatedWorkspaceName: workspaceName,

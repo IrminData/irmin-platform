@@ -3,25 +3,25 @@
 import { useCallback } from 'react';
 
 import { Locale } from '@/dictionaries';
-import DatasetService from '@/services/api/DatasetService';
+import DataRepoService from '@/services/api/DataRepoService';
 
-import { Dataset } from '@/types/api/Dataset';
+import { DataRepo } from '@/types/api/DataRepo';
 import { Workspace } from '@/types/api/Workspace';
 
 /**
- * Hook to fetch the list of Datasets for the current workspace.
+ * Hook to fetch the list of DataRepositories for the current workspace.
  *
  * @param currentWorkspace - The current workspace
- * @param setDatasets - Function to update the datasets state.
+ * @param setDataRepositories - Function to update the dataRepositories state.
  * @param loading - Loading state to prevent multiple simultaneous fetches.
  * @param setLoading - Function to update the loading state.
  * @param fetchedFor - The slug of the workspace workflows are fetched for.
  * @param setFetchedFor - Function to update fetched for state.
  * @param locale - The current locale.
  */
-export const useFetchDatasets = (
+export const useFetchDataRepositories = (
   currentWorkspace: Workspace | null,
-  setDatasets: React.Dispatch<React.SetStateAction<Dataset[]>>,
+  setDataRepositories: React.Dispatch<React.SetStateAction<DataRepo[]>>,
   loading: boolean,
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
@@ -30,7 +30,7 @@ export const useFetchDatasets = (
 ) =>
   useCallback(
     /**
-     * Fetch and update context for datasets of the current workspace.
+     * Fetch and update context for dataRepositories of the current workspace.
      * @param forceFetch - Whether to force fetch.
      */
     async (forceFetch?: boolean) => {
@@ -41,10 +41,10 @@ export const useFetchDatasets = (
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
       // Get the workspace service
-      const datasetService = DatasetService.getInstance(locale);
+      const datasetService = DataRepoService.getInstance(locale);
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {
-        setDatasets([]);
+        setDataRepositories([]);
         return;
       }
       try {
@@ -52,15 +52,15 @@ export const useFetchDatasets = (
         if (loading) return;
         setLoading(true);
         // Fetch the connections for the current workspace
-        const response = await datasetService.fetchAllDatasets();
-        setDatasets(response.data);
+        const response = await datasetService.fetchAllDataRepositories();
+        setDataRepositories(response.data);
       } finally {
         setLoading(false);
       }
     },
     [
       currentWorkspace,
-      setDatasets,
+      setDataRepositories,
       loading,
       setLoading,
       fetchedFor,

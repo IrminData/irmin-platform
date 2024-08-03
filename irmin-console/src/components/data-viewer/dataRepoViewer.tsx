@@ -12,7 +12,7 @@ import Button from '@/components/misc/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { Dataset } from '@/types/api/Dataset';
+import { DataRepo } from '@/types/api/DataRepo';
 
 /**
  * Placeholder data for the table
@@ -72,23 +72,23 @@ const placeholderColumns = [
   },
 ];
 /**
- * Dataset Viewer component
+ * DataRepo Viewer component
  *
- * When a dataset is selected, this component is used to view the dataset.
+ * When a dataRepo is selected, this component is used to view the dataRepo.
  * Components for viewing the data, creating widgets, and editing documentation are included.
  *
- * @todo Datasets consist of multiple tables. This component should have a way to switch between tables.
- * @todo Fetch real data based on the dataset
+ * @todo DataRepositories consist of multiple tables. This component should have a way to switch between tables.
+ * @todo Fetch real data based on the dataRepo
  */
 const DatasetViewer: React.FC<{
-  dataset: Dataset;
-}> = ({ dataset }) => {
+  dataRepo: DataRepo;
+}> = ({ dataRepo }) => {
   const { dict } = useLocale();
 
   const [activeTab, setActiveTab] = useState('data');
 
   const [currentDocumentation, setCurrentDocumentation] = useState(
-    dataset.documentation ?? ''
+    dataRepo.documentation ?? ''
   );
   const [documentationTab, setDocumentationTab] = useState<'mdx' | 'plain'>(
     'mdx'

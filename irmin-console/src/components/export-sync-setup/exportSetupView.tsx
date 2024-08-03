@@ -26,7 +26,7 @@ const existingConnections = [
 ];
 
 // TODO: Show real data here
-const existingDatasets = [
+const existingDataRepositories = [
   { id: 1, name: 'UpCharge rents, users and venues' },
   { id: 2, name: 'UpCharge locations' },
   { id: 3, name: 'Restaurants in Finland' },
@@ -69,7 +69,7 @@ export default function ExportSetupView({
     <>
       {currentStep === 1 && (
         <SelectSource
-          datasets={existingDatasets}
+          dataRepositories={existingDataRepositories}
           setExportData={setExportData}
           setCurrentStep={setCurrentStep}
         />

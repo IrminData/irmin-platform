@@ -6,7 +6,7 @@ import { WorkflowStatus } from '@/types/api/Workflow';
  * @remarks
  *
  * This component is used to display a status element in a table.
- * It can handle both access status and run status of workflows and datasets.
+ * It can handle both access status and run status of workflows and dataRepositories.
  */
 export default function StatusElement({
   accessStatus,

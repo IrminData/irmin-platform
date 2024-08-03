@@ -1,7 +1,7 @@
 import { useFetchActions } from '@/context/workspace/hooks/actions';
 import { useFetchConnections } from '@/context/workspace/hooks/connections';
 import { useFetchDashboards } from '@/context/workspace/hooks/dashboards';
-import { useFetchDatasets } from '@/context/workspace/hooks/datasets';
+import { useFetchDataRepositories } from '@/context/workspace/hooks/dataRepositories';
 import { useFetchExports } from '@/context/workspace/hooks/exports';
 import {
   useCancelInvite,
@@ -42,7 +42,7 @@ export {
   useFetchActions,
   useFetchConnections,
   useFetchDashboards,
-  useFetchDatasets,
+  useFetchDataRepositories,
   useFetchExports,
   useFetchInvites,
   useFetchRoles,

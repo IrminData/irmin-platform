@@ -17,11 +17,11 @@ import { MarketplaceDataset } from '@/types/internal/Marketplace';
  * @remarks
  *
  * This component is used to display the data marketplace on the portal.
- * It displays a list of datasets available for purchase.
+ * It displays a list of dataRepositories available for purchase.
  *
- * It includes a search input, industry filters, and a list of datasets.
+ * It includes a search input, industry filters, and a list of dataRepositories.
  *
- * The data marketplace is used to browse and connect datasets to Workspaces.
+ * The data marketplace is used to browse and connect dataRepositories to Workspaces.
  *
  * @todo Implement real data fetching
  */
@@ -31,7 +31,7 @@ export default function DataMarketplace() {
   const [search, setSearch] = useState('');
 
   // TODO: Implement real data fetching
-  const datasets: MarketplaceDataset[] = [
+  const dataRepositories: MarketplaceDataset[] = [
     {
       id: 1,
       name: 'Restaurants in Finland',
@@ -216,27 +216,27 @@ export default function DataMarketplace() {
     },
   ];
 
-  // Get unique industries from datasets
+  // Get unique industries from dataRepositories
   const industries: string[] = [dict.marketplace.all];
-  datasets.forEach((dataset) => {
-    if (!industries.includes(dataset.industry)) {
-      industries.push(dataset.industry);
+  dataRepositories.forEach((dataRepo) => {
+    if (!industries.includes(dataRepo.industry)) {
+      industries.push(dataRepo.industry);
     }
   });
 
-  // Filter datasets based on selected industry and department
-  const filteredDatasets = datasets
+  // Filter dataRepositories based on selected industry and department
+  const filteredDataRepositories = dataRepositories
     .filter(
-      (dataset) =>
+      (dataRepo) =>
         selectedIndustry === '' ||
         selectedIndustry === dict.marketplace.all ||
-        dataset.industry === selectedIndustry
+        dataRepo.industry === selectedIndustry
     )
     .filter(
-      (dataset) =>
+      (dataRepo) =>
         search === '' ||
-        dataset.name.toLowerCase().includes(search.toLowerCase()) ||
-        dataset.source.toLowerCase().includes(search.toLowerCase())
+        dataRepo.name.toLowerCase().includes(search.toLowerCase()) ||
+        dataRepo.source.toLowerCase().includes(search.toLowerCase())
     );
 
   return (
@@ -250,7 +250,7 @@ export default function DataMarketplace() {
             colorScheme='gray'
             className='w-full'
             type='text'
-            placeholder={dict.marketplace.searchDatasets}
+            placeholder={dict.marketplace.searchDataRepositories}
             defaultValue={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -262,43 +262,43 @@ export default function DataMarketplace() {
             onSelectIndustry={setSelectedIndustry}
           />
         </div>
-        {filteredDatasets.filter((d) => d.connected).length > 0 && (
+        {filteredDataRepositories.filter((d) => d.connected).length > 0 && (
           <div>
             <h2 className='my-4 text-xl font-semibold'>
-              {dict.marketplace.activeDatasets}
+              {dict.marketplace.activeDataRepositories}
             </h2>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
-              {filteredDatasets
+              {filteredDataRepositories
                 .filter((d) => d.connected)
-                .map((dataset) => (
+                .map((dataRepo) => (
                   <DataMarketplaceListingCard
-                    key={dataset.id}
-                    dataset={dataset}
+                    key={dataRepo.id}
+                    dataRepo={dataRepo}
                   />
                 ))}
             </div>
           </div>
         )}
-        {filteredDatasets.filter((d) => !d.connected).length > 0 && (
+        {filteredDataRepositories.filter((d) => !d.connected).length > 0 && (
           <div>
             <h2 className='my-4 text-xl font-semibold'>
-              {dict.marketplace.browseDatasets}
+              {dict.marketplace.browseDataRepositories}
             </h2>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
-              {filteredDatasets
+              {filteredDataRepositories
                 .filter((d) => !d.connected)
-                .map((dataset) => (
+                .map((dataRepo) => (
                   <DataMarketplaceListingCard
-                    key={dataset.id}
-                    dataset={dataset}
+                    key={dataRepo.id}
+                    dataRepo={dataRepo}
                   />
                 ))}
             </div>
           </div>
         )}
-        {filteredDatasets.length === 0 && (
+        {filteredDataRepositories.length === 0 && (
           <div className='mt-8 text-center text-gray-400'>
-            {dict.marketplace.datasetsNotFound}
+            {dict.marketplace.dataRepositoriesNotFound}
           </div>
         )}
       </div>

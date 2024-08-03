@@ -5,11 +5,11 @@ import React from 'react';
 import { ExportSetup } from '@/types/internal/ExportSetup';
 
 export default function SelectSource({
-  datasets,
+  dataRepositories,
   setExportData,
   setCurrentStep,
 }: {
-  datasets: { id: number; name: string }[];
+  dataRepositories: { id: number; name: string }[];
   setExportData: React.Dispatch<React.SetStateAction<ExportSetup>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
@@ -24,13 +24,13 @@ export default function SelectSource({
   return (
     <div className='px-6 py-4'>
       <ul>
-        {datasets.map((dataset) => (
+        {dataRepositories.map((dataRepo) => (
           <li
-            key={dataset.id}
+            key={dataRepo.id}
             className='mb-2 cursor-pointer rounded bg-gray-100 p-2 hover:bg-gray-200'
-            onClick={() => handleSelect(dataset.id)}
+            onClick={() => handleSelect(dataRepo.id)}
           >
-            {dataset.name}
+            {dataRepo.name}
           </li>
         ))}
       </ul>

@@ -8,7 +8,7 @@ import { useLocale } from '@/context/LocaleContext';
  * @remarks
  *
  * This component is used to display the data marketplace filters on the portal.
- * It displays a list of industries to filter the datasets.
+ * It displays a list of industries to filter the dataRepositories.
  *
  * It is used by the DataMarketplace component.
  */

@@ -65,8 +65,8 @@ export const usePortalNavLinks = (): {
       icon: <RxDashboard />,
     },
     {
-      title: dict.portalNavigation.links.datasets,
-      href: `/${locale}/portal/${workspaceSlug}/datasets`,
+      title: dict.portalNavigation.links.dataRepositories,
+      href: `/${locale}/portal/${workspaceSlug}/data-repositories`,
       icon: <CiDatabase />,
     },
     {

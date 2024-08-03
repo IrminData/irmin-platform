@@ -10,7 +10,7 @@ import { WorkspaceContext } from '@/context/workspace';
 import useActions from '@/context/workspace/provider/useActions';
 import useConnections from '@/context/workspace/provider/useConnections';
 import useDashboards from '@/context/workspace/provider/useDashboards';
-import useDatasets from '@/context/workspace/provider/useDatasets';
+import useDataRepositories from '@/context/workspace/provider/useDataRepositories';
 import useExports from '@/context/workspace/provider/useExports';
 import useInvite from '@/context/workspace/provider/useInvite';
 import useUsersAndRoles from '@/context/workspace/provider/useUsersAndRoles';
@@ -34,7 +34,7 @@ import useWorkspaces from '@/context/workspace/provider/useWorkspaces';
  *  connections - workspace's existing connections
  *  exports - workspace's existing export processes
  *  actions - workspace's existing actions
- *  datasets - workspace's existing datasets
+ *  dataRepositories - workspace's existing dataRepositories
  *
  * It also provides methods to switch workspaces and delete the current workspace.
  */
@@ -90,11 +90,12 @@ export const WorkspaceProvider = ({
     locale,
   });
 
-  // Datasets
-  const { datasets, datasetsLoading, fetchDatasets } = useDatasets({
-    currentWorkspace,
-    locale,
-  });
+  // DataRepositories
+  const { dataRepositories, dataRepositoriesLoading, fetchDataRepositories } =
+    useDataRepositories({
+      currentWorkspace,
+      locale,
+    });
 
   // Users and roles
   const {
@@ -185,7 +186,7 @@ export const WorkspaceProvider = ({
     fetchConnections();
     fetchActions();
     fetchExports();
-    fetchDatasets();
+    fetchDataRepositories();
     fetchUsers();
     fetchInvites();
   }, [
@@ -193,7 +194,7 @@ export const WorkspaceProvider = ({
     fetchConnections,
     fetchActions,
     fetchExports,
-    fetchDatasets,
+    fetchDataRepositories,
     fetchUsers,
     fetchInvites,
     currentWorkspace,
@@ -251,10 +252,10 @@ export const WorkspaceProvider = ({
           isLoading: actionsLoading,
           fetchActions,
         },
-        datasets: {
-          datasets,
-          isLoading: datasetsLoading,
-          fetchDatasets,
+        dataRepositories: {
+          dataRepositories,
+          isLoading: dataRepositoriesLoading,
+          fetchDataRepositories,
         },
       }}
     >

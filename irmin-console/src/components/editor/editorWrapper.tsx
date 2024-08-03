@@ -14,7 +14,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Dataset } from '@/types/api/Dataset';
+import { DataRepo } from '@/types/api/DataRepo';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
@@ -31,7 +31,7 @@ export default function EditorWrapper({
 }>) {
   const { irminModal, irminConfirm, irminAlert } = usePopup();
   const { dict } = useLocale();
-  const { datasets } = useWorkspace();
+  const { dataRepositories } = useWorkspace();
   const {
     bucket,
     items,
@@ -49,12 +49,12 @@ export default function EditorWrapper({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   /**
-   * When a dataset table is selected, format the table name
+   * When a dataRepo table is selected, format the table name
    * and insert it into the editor.
    */
-  const selectDatasetTable = (dataset: Dataset, table: string) => {
+  const selectDatasetTable = (dataRepo: DataRepo, table: string) => {
     // Format the table name
-    const formattedTable = ` $[${dataset.slug}.${table}.0]`;
+    const formattedTable = ` $[${dataRepo.slug}.${table}.0]`;
     // Alert the table name to the user
     irminAlert(
       'info',
@@ -62,8 +62,8 @@ export default function EditorWrapper({
         <p className='m-0 text-xs font-light text-irmin_black'>
           {dict.editor.referenceDataSet.toReferenceTheTable}{' '}
           <span className='font-medium text-irmin_blue'>{table}</span>{' '}
-          {dict.editor.referenceDataSet.fromTheDataset}{' '}
-          <span className='font-medium text-irmin_blue'>{dataset.name}</span>{' '}
+          {dict.editor.referenceDataSet.fromTheDataRepo}{' '}
+          <span className='font-medium text-irmin_blue'>{dataRepo.name}</span>{' '}
           {dict.editor.referenceDataSet.inTheEditor}
         </p>
         <p className='my-2 text-sm font-normal text-irmin_blue'>
@@ -197,22 +197,22 @@ export default function EditorWrapper({
           />
           <div className='max-h-80 overflow-auto border-t p-2'>
             <p className='px-4 pb-2 text-sm'>
-              {dict.portalNavigation.links.datasets}
+              {dict.portalNavigation.links.dataRepositories}
             </p>
             <p className='px-4 text-xs text-gray-400'>
               {dict.editor.referenceDataSet.clickOnATable}
             </p>
             <ul className='text-xs'>
-              {datasets.datasets.map((dataset) => (
-                <li key={`dataset-${dataset.id}`} className='px-4 py-2'>
-                  <p className='border-t pt-2 font-normal'>{dataset.name}</p>
+              {dataRepositories.dataRepositories.map((dataRepo) => (
+                <li key={`dataRepo-${dataRepo.id}`} className='px-4 py-2'>
+                  <p className='border-t pt-2 font-normal'>{dataRepo.name}</p>
                   <ul className='mb-4 list-item pb-4 font-light'>
-                    {dataset.tables.map((table, i) => (
+                    {dataRepo.tables.map((table, i) => (
                       <li
-                        key={`dataset-${dataset.id}-table-${i}`}
+                        key={`dataRepo-${dataRepo.id}-table-${i}`}
                         className='cursor-pointer px-4 pt-2 transition-colors hover:text-irmin_green'
-                        onClick={() => selectDatasetTable(dataset, table)}
-                        aria-label={`Click to get the reference snippet for the table ${table} from ${dataset.name}`}
+                        onClick={() => selectDatasetTable(dataRepo, table)}
+                        aria-label={`Click to get the reference snippet for the table ${table} from ${dataRepo.name}`}
                       >
                         {table}
                       </li>
