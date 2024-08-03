@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 
-import SignInSection from '@/components/auth/signInSection';
+import SignIn from '@/components/auth/signIn';
 
 /**
  * Page metadata for SEO on the sign in page
@@ -17,5 +17,5 @@ export const metadata: Metadata = {
  * Sign in page (Website)
  */
 export default function SignInPage() {
-  return <SignInSection />;
+  return <SignIn />;
 }

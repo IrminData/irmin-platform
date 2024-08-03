@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 
+import WorkspaceCard from '@/components/manage-workspaces/workspaceCard';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
 import LoadingSpinner from '@/components/misc/LoadingSpinner';
-import WorkspaceCard from '@/components/workspaceCard';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';

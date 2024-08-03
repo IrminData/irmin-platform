@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { Locale } from '@/dictionaries';
 import WordPress from '@/services/wordpress';
 
-import WebsiteBlogPostsContent from '@/components/website/websiteBlogPostsContent';
+import WebsiteArticlesSectionContent from '@/components/website/sections/articles/content';
 
 import {
   WebsiteArticle,
@@ -21,9 +21,9 @@ import { ArticlesSection } from '@/types/website/Wordpress';
  *
  * It fetches the blog posts from the WordPress API and filters them by the current language.
  *
- * The articles are then displayed in the {@link WebsiteBlogPostsContent} component.
+ * The articles are then displayed in the {@link WebsiteArticlesSectionContent} component.
  */
-export default async function WebsiteBlogPosts({
+export default async function WebsiteArticlesSection({
   section,
   lang,
 }: {
@@ -95,7 +95,7 @@ export default async function WebsiteBlogPosts({
     });
   }
   return (
-    <WebsiteBlogPostsContent
+    <WebsiteArticlesSectionContent
       section={section}
       articles={articles}
       categories={allCategories}

@@ -264,14 +264,14 @@ For example:
 - `primary-menu-en` -> English website top navigation
 - `footer-menu-fi` -> Finnish website footer links
 
-See `src/components/website/websiteFooter.tsx` and `src/components/website/websiteNavigation.tsx` for more information.
+See `src/components/website/footer/WebsiteFooter.tsx` and `src/components/website/navigation/WebsiteNavigation.tsx` for more information.
 
 We use ACF (Advanced Custom Fields) to create custom fields for the Wordpress posts and pages. The key thing in these fields are sections, which are used to create the structure of the page. Each section can have multiple fields, such as text, image, or repeater fields.
 
 To render the Wordpress content we use 2 different components:
 
-- `@/components/WebsitePageContent` -> used to render Wordpress Gutenberg editor content. Mainly used for basic text pages like Privacy Policy or Articles
-- `@/components/WebsiteSections` -> used to render Wordpress ACF content. This component is used for more complex pages like the homepage or the workspace page. The component takes the sections from the Wordpress API, loops through them, and renders the correct component for each section.
+- `@/components/website/templates/PageContent` -> used to render Wordpress Gutenberg editor content. Mainly used for basic text pages like Privacy Policy or Articles
+- `@/components/website/templates/PageSections` -> used to render Wordpress ACF content. This component is used for more complex pages like the homepage or the workspace page. The component takes the sections from the Wordpress API, loops through them, and renders the correct component for each section.
 
 In Wordpress we use Polylang to manage translations.
 

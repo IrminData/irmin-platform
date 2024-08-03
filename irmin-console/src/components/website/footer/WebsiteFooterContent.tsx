@@ -5,9 +5,9 @@ import Link from 'next/link';
 
 import { MdOutlineEmail } from 'react-icons/md';
 
-import LanguageSwitcher from '@/components/LanguageSwitcher';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
+import LanguageSwitcher from '@/components/misc/LanguageSwitcher';
 
 import { useLocale } from '@/context/LocaleContext';
 

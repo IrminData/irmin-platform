@@ -1,8 +1,8 @@
 'use client';
 
-import PortalTitle from '@/components/portalTitle';
-import DatasetTable from '@/components/tables/datasetTable';
-import TableSkeleton from '@/components/tables/tableSkeleton';
+import PortalTitle from '@/components/portal/portalTitle';
+import DatasetTable from '@/components/portal/tables/datasetTable';
+import TableSkeleton from '@/components/portal/tables/tableSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';

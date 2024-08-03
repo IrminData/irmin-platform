@@ -4,9 +4,9 @@ import { useState } from 'react';
 
 import ExportSetupView from '@/components/export-sync-setup/exportSetupView';
 import SideModal from '@/components/misc/SideModal';
-import PortalTitle from '@/components/portalTitle';
-import ExportTable from '@/components/tables/exportTable';
-import TableSkeleton from '@/components/tables/tableSkeleton';
+import PortalTitle from '@/components/portal/portalTitle';
+import ExportTable from '@/components/portal/tables/exportTable';
+import TableSkeleton from '@/components/portal/tables/tableSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';

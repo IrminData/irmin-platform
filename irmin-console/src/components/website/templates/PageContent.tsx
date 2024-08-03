@@ -11,7 +11,7 @@
  *
  * See this {@link https://github.com/IrminData/irmin-frontend/commit/cef8f6d4864035e01e36623a2cf333a92d249590 | commit} for more details.
  */
-export default function WebsitePageContent({
+export default function PageContent({
   content = '',
   full_width = false,
 }: {

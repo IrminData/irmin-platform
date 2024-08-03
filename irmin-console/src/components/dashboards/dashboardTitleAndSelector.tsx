@@ -1,4 +1,4 @@
-import PortalTitle from '@/components/portalTitle';
+import PortalTitle from '@/components/portal/portalTitle';
 
 import { useLocale } from '@/context/LocaleContext';
 

@@ -18,7 +18,7 @@ import { useLocale } from '@/context/LocaleContext';
  *
  * @returns The sign in section component
  */
-const SignInSection: React.FC = () => {
+const SignIn = () => {
   const { dict } = useLocale();
   const { login } = useIAM();
 
@@ -143,4 +143,4 @@ const SignInSection: React.FC = () => {
   );
 };
 
-export default SignInSection;
+export default SignIn;

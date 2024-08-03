@@ -8,12 +8,12 @@ import { useParams, usePathname } from 'next/navigation';
 
 import { TbChevronLeft, TbChevronRight, TbSearch } from 'react-icons/tb';
 
-import AIAssistantPopup from '@/components/AIAssistantPopup';
-import NotificationButton from '@/components/notifications/NotificationButton';
-import PortalNavLink from '@/components/portal-navigation/portalNavLink';
-import { usePortalNavLinks } from '@/components/portal-navigation/portalNavLinks';
-import PortalNavProfile from '@/components/portal-navigation/portalNavProfile';
-import PortalNavWorkspaceSwitcher from '@/components/portal-navigation/portalNavWorkspaceSwitcher';
+import AIAssistantPopup from '@/components/portal/AIAssistantPopup';
+import PortalNavLink from '@/components/portal/navigation/portalNavLink';
+import { usePortalNavLinks } from '@/components/portal/navigation/portalNavLinks';
+import PortalNavProfile from '@/components/portal/navigation/portalNavProfile';
+import PortalNavWorkspaceSwitcher from '@/components/portal/navigation/portalNavWorkspaceSwitcher';
+import NotificationButton from '@/components/portal/notifications/NotificationButton';
 
 import { useLocale } from '@/context/LocaleContext';
 

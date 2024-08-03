@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 
-import LanguageSwitcher from '@/components/LanguageSwitcher';
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
+import LanguageSwitcher from '@/components/misc/LanguageSwitcher';
 import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
-import PortalTitle from '@/components/portalTitle';
-import SettingsTabs from '@/components/tabs/settingsTabs';
+import PortalTitle from '@/components/portal/portalTitle';
+import SettingsTabs from '@/components/portal/tabs/settingsTabs';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';

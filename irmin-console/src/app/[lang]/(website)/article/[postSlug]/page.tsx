@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 import WordPress from '@/services/wordpress';
 
-import WebsiteBlogPost from '@/components/website/websiteBlogPost';
+import Post from '@/components/website/templates/Post';
 
 import { WebsiteArticleCategory } from '@/types/website/WebsiteContent';
 
@@ -30,7 +30,7 @@ type PageProps = {
  * Using router properties, like postSlug, it fetches the post
  * content from WordPress API and renders it.
  *
- * It uses WebsiteBlogPost to render the post content and
+ * It uses Post to render the post content and
  * categories it receives from WordPress API.
  *
  * @param param0 - Router properties received by the page
@@ -69,9 +69,7 @@ export default async function Page({ params }: PageProps) {
     }
   }
 
-  return (
-    <WebsiteBlogPost post={post} categories={categories} image={image ?? ''} />
-  );
+  return <Post post={post} categories={categories} image={image ?? ''} />;
 }
 
 export async function generateMetadata({

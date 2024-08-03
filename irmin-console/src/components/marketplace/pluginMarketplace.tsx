@@ -5,7 +5,7 @@ import { useState } from 'react';
 import PluginMarketplaceFilters from '@/components/marketplace/pluginMarketplaceFilters';
 import PluginMarketplaceListingCard from '@/components/marketplace/pluginMarketplaceListingCard';
 import Input from '@/components/misc/Input';
-import PortalTitle from '@/components/portalTitle';
+import PortalTitle from '@/components/portal/portalTitle';
 
 import { useLocale } from '@/context/LocaleContext';
 

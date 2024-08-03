@@ -2,7 +2,7 @@
  * Post object returned by the Wordpress API
  * @example See `/src/types/examples/wordpressObjects.ts`
  */
-export interface Post {
+export interface WPPost {
   id: number;
   date: string;
   date_gmt: string;
@@ -53,7 +53,7 @@ interface Excerpt {
  * These are fields added using the Advanced Custom Fields plugin
  * These fields are used to store additional data for the post
  *
- * See src/components/WebsiteSections.tsx to understand section rendering
+ * See src/components/website/templates/PageSections.tsx to understand section rendering
  *
  * @param sections - Sections of the page. Each section is a different type of content block.
  * @param full_width - Whether the page should be full width or not.
@@ -68,7 +68,7 @@ interface Acf {
 /**
  * Options for the different types of sections on the website
  *
- * See src/components/WebsiteSections.tsx to understand section rendering
+ * See src/components/website/templates/PageSections.tsx to understand section rendering
  *
  * @example See `/src/types/examples/wordpressObjects.ts`
  */
@@ -98,7 +98,7 @@ export type IrminWebsiteSection =
  * @param description - The description of the section
  * @param metrics - The metrics displayed in the section
  *
- * @example See `src/components/website/websiteNumbersSection.tsx`
+ * @example See `src/components/website/sections/numbers.tsx`
  */
 export interface NumbersSection {
   acf_fc_layout: 'numbers';
@@ -126,7 +126,7 @@ interface Metric {
  * @param subtitle - The subtitle of the section
  * @param description - The description of the section
  *
- * @example See `src/components/website/websiteBlogPosts.tsx`
+ * @example See `src/components/website/sections/articles.tsx`
  */
 export interface ArticlesSection {
   acf_fc_layout: 'articles';
@@ -142,7 +142,7 @@ export interface ArticlesSection {
  * @param subtitle - The subtitle of the section
  * @param description - The description of the section
  * @param open_positions - The open positions displayed in the section
- * @example See `src/components/website/websiteCareersSection.tsx`
+ * @example See `src/components/website/sections/careers.tsx`
  */
 export interface CareersSection {
   acf_fc_layout: 'careers';
@@ -159,7 +159,7 @@ export interface CareersSection {
  * @param note - A note about the position
  * @param description - The description of the position
  * @param link - The link to the position
- * @example See `src/components/website/websiteCareersSection.tsx`
+ * @example See `src/components/website/sections/careers.tsx`
  */
 interface OpenPosition {
   role: string;
@@ -178,7 +178,7 @@ interface OpenPosition {
  * @param buttons - The buttons displayed in the section
  * @param contact_methods - The contact methods displayed in the section
  * @param socials - The socials displayed in the section
- * @example See `src/components/website/websiteContactSection.tsx`
+ * @example See `src/components/website/sections/contact.tsx`
  */
 export interface ContactSection {
   acf_fc_layout: 'contact';
@@ -205,7 +205,7 @@ interface ContactMethod {
  * Single social displayed in the contact section
  * @param icon - The icon of the social
  * @param link - The link of the social
- * @example See `src/components/website/websiteContactSection.tsx`
+ * @example See `src/components/website/sections/contact.tsx`
  */
 interface Social {
   icon: string;
@@ -221,7 +221,7 @@ interface Social {
  * @param features - The features displayed in the section
  * @param main_image - The main image of the section
  * @param image_first - Whether the image should be displayed first or not
- * @example See `src/components/website/websiteContentSection.tsx`
+ * @example See `src/components/website/sections/content.tsx`
  */
 export interface ContentSection {
   acf_fc_layout: 'content';
@@ -241,7 +241,7 @@ export interface ContentSection {
  * @param description - The description of the section
  * @param features - The features displayed in the section
  * @param image - The image of the section
- * @example See `src/components/website/websiteFeaturesSection.tsx`
+ * @example See `src/components/website/sections/features.tsx`
  */
 export interface FeaturesSection {
   acf_fc_layout: 'features';
@@ -272,7 +272,7 @@ interface Feature {
  * @param description - The description of the section
  * @param buttons - The buttons displayed in the section
  * @param people - The people displayed in the section
- * @example See `src/components/website/websiteTeamSection.tsx`
+ * @example See `src/components/website/sections/team.tsx`
  */
 export interface TeamSection {
   acf_fc_layout: 'team';
@@ -289,7 +289,7 @@ export interface TeamSection {
  * @param title - The title of the person
  * @param description - The description of the person
  * @param profile - The profile of the person
- * @example See `src/components/website/websiteTeamSection.tsx`
+ * @example See `src/components/website/sections/team.tsx`
  */
 interface People {
   name: string;
@@ -305,7 +305,7 @@ interface People {
  * @param bullet_points - The bullet points displayed in the section
  * @param buttons - The buttons displayed in the section
  * @param image - The image of the section
- * @example See `src/components/website/websiteCTASection.tsx`
+ * @example See `src/components/website/sections/cta.tsx`
  */
 export interface CTASection {
   acf_fc_layout: string;
@@ -321,7 +321,7 @@ export interface CTASection {
  * @param title - The title of the section
  * @param description - The description of the section
  * @param buttons - The buttons displayed in the section
- * @example See `src/components/website/websiteCTADarkSection.tsx`
+ * @example See `src/components/website/sections/cta-dark.tsx`
  */
 export interface CTADarkSection {
   acf_fc_layout: 'cta_dark';
@@ -415,7 +415,7 @@ interface BulletPoint {
  * @param buttons - The buttons displayed in the section
  * @param video_placeholder - The video placeholder of the section
  * @param video - The video of the section
- * @example See `src/components/website/websiteHeroSection.tsx`
+ * @example See `src/components/website/sections/hero.tsx`
  */
 export interface HeroSection {
   acf_fc_layout: 'hero';
@@ -465,7 +465,7 @@ interface Testimonial {
  * @param acf_fc_layout - The type of section, in this case 'logo_cloud'
  * @param title - The title of the section
  * @param logos - The logos displayed in the section
- * @example See `src/components/website/websiteLogoCloudSection.tsx`
+ * @example See `src/components/website/sections/logoCloud.tsx`
  */
 export interface LogoCloudSection {
   acf_fc_layout: 'logo_cloud';
@@ -488,7 +488,7 @@ interface Logo {
  * @param acf_fc_layout - The type of section, in this case 'newsletter'
  * @param title - The title of the section
  * @param subtitle - The subtitle of the section
- * @example See `src/components/website/websiteNewsletterSection.tsx`
+ * @example See `src/components/website/sections/newsletter.tsx`
  */
 export interface NewsletterSection {
   acf_fc_layout: 'newsletter';

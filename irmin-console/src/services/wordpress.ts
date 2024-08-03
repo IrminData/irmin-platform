@@ -6,7 +6,7 @@ import {
   exampleWPPage,
   exampleWPPost,
 } from '@/types/examples/wordpressObjects';
-import { Media, Menu, Post } from '@/types/website/Wordpress';
+import { Media, Menu, WPPost } from '@/types/website/Wordpress';
 
 const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 
@@ -54,7 +54,7 @@ export default class WordPress {
    */
   private async fetchAPI(
     endpoint: string
-  ): Promise<Post | Post[] | Media | Media[] | Menu | null> {
+  ): Promise<WPPost | WPPost[] | Media | Media[] | Menu | null> {
     const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/${endpoint}`);
     if (!res.ok) {
       throw new Error(`Failed to fetch ${endpoint}`);
@@ -84,10 +84,10 @@ export default class WordPress {
    * @param slug - The slug of the page to get
    * @returns The page or null if not found
    */
-  public async getPage(slug: string): Promise<Post | null> {
+  public async getPage(slug: string): Promise<WPPost | null> {
     if (offlineMode) return exampleWPPage;
     try {
-      const post = (await this.fetchAPI(`pages?slug=${slug}`)) as Post[];
+      const post = (await this.fetchAPI(`pages?slug=${slug}`)) as WPPost[];
       if (post && post.length > 0) {
         return post[0];
       }
@@ -102,10 +102,10 @@ export default class WordPress {
    * @param slug - The slug of the post to get
    * @returns The post or null if not found
    */
-  public async getPost(slug: string): Promise<Post | null> {
+  public async getPost(slug: string): Promise<WPPost | null> {
     if (offlineMode) return exampleWPPost;
     try {
-      const post = (await this.fetchAPI(`posts?slug=${slug}`)) as Post[];
+      const post = (await this.fetchAPI(`posts?slug=${slug}`)) as WPPost[];
       if (post && post.length > 0) {
         return post[0];
       }
@@ -120,10 +120,10 @@ export default class WordPress {
    * @param id - The ID of the post to get
    * @returns The post or null if not found
    */
-  public async getPostByID(id: number): Promise<Post | null> {
+  public async getPostByID(id: number): Promise<WPPost | null> {
     if (offlineMode) return exampleWPPost;
     try {
-      const post = (await this.fetchAPI(`posts/${id}?_embed`)) as Post;
+      const post = (await this.fetchAPI(`posts/${id}?_embed`)) as WPPost;
       return post ?? null;
     } catch (e) {
       console.error('Wordpress getPostByID failed: ', e);
@@ -152,10 +152,10 @@ export default class WordPress {
    * @param id - The ID of the category to get
    * @returns The category or null if not found
    */
-  public async getCategoryByID(id: number): Promise<Post | null> {
+  public async getCategoryByID(id: number): Promise<WPPost | null> {
     if (offlineMode) return exampleWPCategory;
     try {
-      const taxonomy = (await this.fetchAPI(`categories/${id}`)) as Post;
+      const taxonomy = (await this.fetchAPI(`categories/${id}`)) as WPPost;
       return taxonomy ?? null;
     } catch (e) {
       console.error('Wordpress getCategoryByID failed: ', e);
@@ -170,7 +170,7 @@ export default class WordPress {
    * @returns The fetched data
    * @internal
    */
-  private async fetchAll<T extends Post | Media>(
+  private async fetchAll<T extends WPPost | Media>(
     endpoint: string,
     perPage: number = 100
   ): Promise<T[] | null> {
@@ -210,8 +210,8 @@ export default class WordPress {
    * Get all posts from the WordPress API
    * @returns The posts array or null if not found
    */
-  public async getPosts(): Promise<Post[] | null> {
-    const posts = await this.fetchAll<Post>('posts');
+  public async getPosts(): Promise<WPPost[] | null> {
+    const posts = await this.fetchAll<WPPost>('posts');
     return posts ?? null;
   }
 
@@ -219,8 +219,8 @@ export default class WordPress {
    * Get all pages from the WordPress API
    * @returns The pages array or null if not found
    */
-  public async getPages(): Promise<Post[] | null> {
-    const pages = await this.fetchAll<Post>('pages');
+  public async getPages(): Promise<WPPost[] | null> {
+    const pages = await this.fetchAll<WPPost>('pages');
     return pages ?? null;
   }
 

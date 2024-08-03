@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import PortalError from '@/components/misc/portalError';
+import PortalError from '@/components/portal/portalError';
 
 /**
  * Error component for the portal

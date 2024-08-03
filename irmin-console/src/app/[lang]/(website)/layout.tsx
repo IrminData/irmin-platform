@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
-import WebsiteFooter from '@/components/website/websiteFooter';
-import WebsiteNavigation from '@/components/website/websiteNavigation';
+import WebsiteFooter from '@/components/website/footer/WebsiteFooter';
+import WebsiteNavigation from '@/components/website/navigation/WebsiteNavigation';
 
 /**
  * Default layout level metadata for SEO on the website

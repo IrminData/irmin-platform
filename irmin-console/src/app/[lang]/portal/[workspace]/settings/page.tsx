@@ -4,9 +4,9 @@ import React, { useEffect, useState } from 'react';
 
 import Button from '@/components/misc/Button';
 import Input from '@/components/misc/Input';
-import PortalTitle from '@/components/portalTitle';
-import SettingsTabs from '@/components/tabs/settingsTabs';
-import WorkspaceUsersAndPermissions from '@/components/workspaceUsersAndPermissions';
+import PortalTitle from '@/components/portal/portalTitle';
+import SettingsTabs from '@/components/portal/tabs/settingsTabs';
+import WorkspaceUsersAndPermissions from '@/components/portal/workspaceUsersAndPermissions';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';

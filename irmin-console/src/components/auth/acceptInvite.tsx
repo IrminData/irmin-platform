@@ -28,7 +28,7 @@ import { useLocale } from '@/context/LocaleContext';
  *
  * @returns The user invite section component
  */
-const UserInviteSection: React.FC = () => {
+const AcceptInvite = () => {
   const { dict, locale } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -272,4 +272,4 @@ const UserInviteSection: React.FC = () => {
   );
 };
 
-export default UserInviteSection;
+export default AcceptInvite;

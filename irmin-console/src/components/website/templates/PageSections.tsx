@@ -1,20 +1,20 @@
 import { Locale } from '@/dictionaries';
 
-import WebsiteBlogPosts from '@/components/website/websiteBlogPosts';
-import WebsiteCareersSection from '@/components/website/websiteCareersSection';
-import WebsiteContactSection from '@/components/website/websiteContactSection';
-import WebsiteContentSection from '@/components/website/websiteContentSection';
-import WebsiteCTADarkSection from '@/components/website/WebsiteCTADarkSection';
-import WebsiteCTASection from '@/components/website/websiteCTASection';
-import WebsiteFaqsSection from '@/components/website/websiteFaqsSection';
-import WebsiteFeaturesSection from '@/components/website/websiteFeaturesSection';
-import WebsiteHeroSection from '@/components/website/websiteHeroSection';
-import WebsiteLogoCloudSection from '@/components/website/websiteLogoCloudSection';
-import WebsiteNewsletterSection from '@/components/website/websiteNewsletterSection';
-import WebsiteNumbersSection from '@/components/website/websiteNumbersSection';
-import WebsitePricingSection from '@/components/website/websitePricingSection';
-import WebsiteTeamSection from '@/components/website/websiteTeamSection';
-import WebsiteTestimonialsSection from '@/components/website/websiteTestimonialsSection';
+import WebsiteArticlesSection from '@/components/website/sections/articles';
+import WebsiteCareersSection from '@/components/website/sections/careers';
+import WebsiteContactSection from '@/components/website/sections/contact';
+import WebsiteContentSection from '@/components/website/sections/content';
+import WebsiteCTASection from '@/components/website/sections/cta';
+import WebsiteCTADarkSection from '@/components/website/sections/cta-dark';
+import WebsiteFaqsSection from '@/components/website/sections/faqs';
+import WebsiteFeaturesSection from '@/components/website/sections/features';
+import WebsiteHeroSection from '@/components/website/sections/hero';
+import WebsiteLogoCloudSection from '@/components/website/sections/logoCloud';
+import WebsiteNewsletterSection from '@/components/website/sections/newsletter';
+import WebsiteNumbersSection from '@/components/website/sections/numbers';
+import WebsitePricingSection from '@/components/website/sections/pricing';
+import WebsiteTeamSection from '@/components/website/sections/team';
+import WebsiteTestimonialsSection from '@/components/website/sections/testimonials';
 
 import {
   ArticlesSection,
@@ -47,7 +47,7 @@ import {
  * The sections are rendered based on their type.
  * Each section has a different layout and content.
  */
-export default function WebsiteSections({
+export default function PageSections({
   sections,
   lang,
 }: {
@@ -158,7 +158,7 @@ export default function WebsiteSections({
             );
           case 'articles':
             return (
-              <WebsiteBlogPosts
+              <WebsiteArticlesSection
                 section={section as ArticlesSection}
                 key={`section-articles-${index}`}
                 lang={lang}

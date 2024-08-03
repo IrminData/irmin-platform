@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 
-import UserInviteSection from '@/components/auth/userInviteSection';
+import AcceptInvite from '@/components/auth/acceptInvite';
 
 /**
  * Page metadata for SEO on the accept invite page
@@ -17,5 +17,5 @@ export const metadata: Metadata = {
  * Accept invite page (Website)
  */
 export default function AcceptInvitePage() {
-  return <UserInviteSection />;
+  return <AcceptInvite />;
 }

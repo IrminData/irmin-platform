@@ -5,8 +5,8 @@ import { notFound } from 'next/navigation';
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 import WordPress from '@/services/wordpress';
 
-import WebsitePageContent from '@/components/WebsitePageContent';
-import WebsiteSections from '@/components/WebsiteSections';
+import PageContent from '@/components/website/templates/PageContent';
+import PageSections from '@/components/website/templates/PageSections';
 
 import { getURL } from '@/utils/wordpress';
 
@@ -31,7 +31,7 @@ type PageProps = {
  * Using router properties, like slug, it fetches the page
  * content from WordPress API and renders it.
  *
- * It uses WebsitePageContent and WebsiteSections to render
+ * It uses PageContent and PageSections to render
  * the page content and sections it receives from WordPress
  * API.
  *
@@ -55,11 +55,11 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <>
-      <WebsitePageContent
+      <PageContent
         content={page.content?.rendered ?? ''}
         full_width={page.acf?.full_width ?? false}
       />
-      <WebsiteSections sections={page.acf?.sections ?? []} lang={lang} />
+      <PageSections sections={page.acf?.sections ?? []} lang={lang} />
     </>
   );
 }

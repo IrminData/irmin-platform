@@ -4,9 +4,9 @@ import { useState } from 'react';
 
 import ConnectionSetupView from '@/components/connection-setup/connectionSetupView';
 import SideModal from '@/components/misc/SideModal';
-import PortalTitle from '@/components/portalTitle';
-import ConnectionTable from '@/components/tables/connectionTable';
-import TableSkeleton from '@/components/tables/tableSkeleton';
+import PortalTitle from '@/components/portal/portalTitle';
+import ConnectionTable from '@/components/portal/tables/connectionTable';
+import TableSkeleton from '@/components/portal/tables/tableSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';

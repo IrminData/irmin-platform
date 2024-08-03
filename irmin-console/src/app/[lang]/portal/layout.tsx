@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 
-import PortalNavigation from '@/components/portal-navigation/portalNavigation';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import PortalNavigation from '@/components/portal/navigation/portalNavigation';
+import ProtectedRoute from '@/components/portal/ProtectedRoute';
 
 import { PopupProvider } from '@/context/PopupContext';
 import { WorkspaceProvider } from '@/context/workspace';

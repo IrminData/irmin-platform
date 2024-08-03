@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import WebsiteError from '@/components/misc/websiteError';
+import WebsiteError from '@/components/website/websiteError';
 
 /**
  * Error page (Website)

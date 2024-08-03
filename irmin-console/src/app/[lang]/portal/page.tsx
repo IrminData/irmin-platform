@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-import ManageWorkspaces from '@/components/manageWorkspaces';
+import ManageWorkspaces from '@/components/manage-workspaces/manage';
 
 import { useLocale } from '@/context/LocaleContext';
 

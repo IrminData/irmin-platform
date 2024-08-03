@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useLocale } from '@/context/LocaleContext';
 
 import { WebsiteArticleCategory } from '@/types/website/WebsiteContent';
-import { Post } from '@/types/website/Wordpress';
+import { WPPost } from '@/types/website/Wordpress';
 
 /**
  * Website blog post component
@@ -20,12 +20,12 @@ import { Post } from '@/types/website/Wordpress';
  *
  * See this {@link https://github.com/IrminData/irmin-frontend/commit/cef8f6d4864035e01e36623a2cf333a92d249590 | commit} for more details.
  */
-export default function WebsiteBlogPost({
+export default function Post({
   post,
   categories,
   image,
 }: {
-  post: Post;
+  post: WPPost;
   categories: WebsiteArticleCategory[];
   image: string;
 }) {

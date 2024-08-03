@@ -1,8 +1,8 @@
 'use client';
 
-import PortalTitle from '@/components/portalTitle';
-import ActionTable from '@/components/tables/actionTable';
-import TableSkeleton from '@/components/tables/tableSkeleton';
+import PortalTitle from '@/components/portal/portalTitle';
+import ActionTable from '@/components/portal/tables/actionTable';
+import TableSkeleton from '@/components/portal/tables/tableSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';

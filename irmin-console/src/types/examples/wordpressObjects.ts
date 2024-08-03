@@ -1,9 +1,9 @@
-import { Media, Menu, Post } from '@/types/website/Wordpress';
+import { Media, Menu, WPPost } from '@/types/website/Wordpress';
 
 /**
  * Example WordPress category object
  */
-export const exampleWPCategory: Post = {
+export const exampleWPCategory: WPPost = {
   id: 19,
   link: 'https://cms.irmin.dev/en/category/irmin-news/',
   name: 'Irmin News',
@@ -101,12 +101,12 @@ export const exampleWPCategory: Post = {
       ],
     },
   },
-} as Post;
+} as WPPost;
 
 /**
  * Example WordPress post object
  */
-export const exampleWPPost: Post = {
+export const exampleWPPost: WPPost = {
   id: 266,
   date: '2024-07-18T11:51:08',
   date_gmt: '2024-07-18T08:51:08',
@@ -550,7 +550,7 @@ export const exampleWPMenu: Menu = [
 /**
  * Example WordPress page object
  */
-export const exampleWPPage: Post = {
+export const exampleWPPage: WPPost = {
   id: 180,
   date: '2024-07-13T14:09:38',
   date_gmt: '2024-07-13T14:09:38',

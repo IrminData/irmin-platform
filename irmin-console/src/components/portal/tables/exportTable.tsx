@@ -2,8 +2,8 @@
 
 import { useParams } from 'next/navigation';
 
-import List from '@/components/tables/elements/list';
-import StatusElement from '@/components/tables/elements/statusElement';
+import List from '@/components/portal/tables/elements/list';
+import StatusElement from '@/components/portal/tables/elements/statusElement';
 
 import { useLocale } from '@/context/LocaleContext';
 

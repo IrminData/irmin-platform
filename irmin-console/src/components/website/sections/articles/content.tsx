@@ -27,7 +27,7 @@ import { ArticlesSection } from '@/types/website/Wordpress';
  * It displays the blog posts with their categories, authors, dates, and estimated reading times.
  * The blog posts are filtered by category and search query.
  */
-export default function WebsiteBlogPostsContent({
+export default function WebsiteArticlesSectionContent({
   section,
   categories,
   articles,
