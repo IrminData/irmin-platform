@@ -98,7 +98,7 @@ export async function POST(req: Request) {
 
   // Set the cookie
   const expires = new Date(Date.now() + 60 * 60 * 24 * 12 * 365 * 100);
-  const setCookieHeader = `authorizedDev=${appPassword}; Expires=${expires.toUTCString()}; Path=/; HttpOnly`;
+  const setCookieHeader = `authorisedDev=${appPassword}; Expires=${expires.toUTCString()}; Path=/; HttpOnly`;
 
   // Redirect to the home page
   const headers = new Headers();

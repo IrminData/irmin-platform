@@ -36,7 +36,7 @@ export const useFetchInvites = (
      *
      * @param forceFetch - If true, will refetch even if already fetched
      *
-     * @returns Error if the fetch fails
+     * @returns Void or Error if fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -46,7 +46,7 @@ export const useFetchInvites = (
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
       // Get the invite service
-      const inviteService = InviteService.getInstance(locale);
+      const inviteService = InviteService.getInstance(locale, '');
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {
         setInvites([]);
@@ -111,7 +111,7 @@ export const useSendInvite = (
       // Make sure there is a current workspace
       if (!currentWorkspace) throw new Error('No current workspace');
       // Get the invite service
-      const inviteService = InviteService.getInstance(locale);
+      const inviteService = InviteService.getInstance(locale, '');
       // Send the invite
       const response = await inviteService.inviteUserToWorkspace(
         name,
@@ -148,7 +148,7 @@ export const useResendInvite = (locale: Locale) =>
      */
     async (invite: number): Promise<IrminAPIResponse> => {
       // Get the invite service
-      const inviteService = InviteService.getInstance(locale);
+      const inviteService = InviteService.getInstance(locale, '');
       // Resend the invite
       const response = await inviteService.resendUserInvite(invite);
 
@@ -181,7 +181,7 @@ export const useCancelInvite = (
      */
     async (invite: number): Promise<IrminAPIResponse> => {
       // Get the invite service
-      const inviteService = InviteService.getInstance(locale);
+      const inviteService = InviteService.getInstance(locale, '');
       // Cancel the invite
       const response = await inviteService.cancelUserInvite(invite);
       // Update the invites in the context state
@@ -217,7 +217,7 @@ export const useChangeInvite = (
      */
     async (invite: number, role: IrminRole): Promise<IrminAPIResponse> => {
       // Get the invite service
-      const inviteService = InviteService.getInstance(locale);
+      const inviteService = InviteService.getInstance(locale, '');
       // Change the invite
       const response = await inviteService.changeUserInviteRole(
         invite,

@@ -1,5 +1,5 @@
-import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/services/fetchWithCredentials';
+import { Locale } from '@/dictionaries';
+import IrminAPI from '@/services/IrminAPI';
 
 import { Bucket } from '@/types/api/Bucket';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
@@ -10,11 +10,8 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
 
-const api_base = process.env.NEXT_PUBLIC_API_URL;
-
 /**
  * Bucket API response type
- * @internal
  */
 interface BucketAPIResponse extends IrminAPIResponse {
   data: Bucket;
@@ -27,32 +24,25 @@ interface BucketAPIResponse extends IrminAPIResponse {
  */
 class BucketService {
   private static instance: BucketService;
-  private locale: Locale = defaultLocale;
+  private api: IrminAPI = IrminAPI.getInstance();
 
-  private constructor(locale: Locale) {
-    this.locale = locale;
+  private constructor(locale: Locale, apiToken: string) {
+    this.api.setProps(locale, apiToken);
   }
 
   /**
    * Get the instance of the {@link BucketService}
    * @param locale - The locale to use for the instance
+   * @param apiToken - The API token to use for the instance
    */
-  public static getInstance(locale: Locale): BucketService {
+  public static getInstance(locale: Locale, apiToken: string): BucketService {
     if (!BucketService.instance) {
-      BucketService.instance = new BucketService(locale);
+      BucketService.instance = new BucketService(locale, apiToken);
     } else {
-      // Update the locale if the instance already exists
-      BucketService.instance.setLocale(locale);
+      // Update the existing instance
+      BucketService.instance.api.setProps(locale, apiToken);
     }
     return BucketService.instance;
-  }
-
-  /**
-   * Set the locale for the instance
-   * @param locale - The locale to set
-   */
-  public setLocale(locale: Locale) {
-    this.locale = locale;
   }
 
   /**
@@ -67,16 +57,9 @@ class BucketService {
         data: exampleBucket,
       };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/bucket`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      )) as BucketAPIResponse;
+      const response = (await this.api.fetch(`/v1/bucket`, {
+        method: 'GET',
+      })) as BucketAPIResponse;
       return response;
     } catch (error) {
       console.error('Fetch bucket error:', error);
@@ -109,17 +92,11 @@ class BucketService {
       body.append('name', fileNavigatorItem.current.name);
       body.append('path', fileNavigatorItem.current.path);
       body.append('contents', fileNavigatorItem.current.contents);
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/buckets/files`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/buckets/files`, {
+        method: 'POST',
+
+        body,
+      });
       return response;
     } catch (error) {
       console.error('Create file error:', error);
@@ -155,14 +132,10 @@ class BucketService {
       body.append('contents', fileNavigatorItem.current.contents);
       body.append('original_path', fileNavigatorItem.original.path);
       body.append('original_contents', fileNavigatorItem.original.contents);
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/buckets/files`,
-        {
-          method: 'POST',
-          body,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/buckets/files`, {
+        method: 'POST',
+        body,
+      });
       return response;
     } catch (error) {
       console.error('Update file error:', error);
@@ -191,14 +164,10 @@ class BucketService {
       body.append('_method', 'DELETE');
       body.append('name', fileNavigatorItem.original.name);
       body.append('path', fileNavigatorItem.original.path);
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/buckets/files`,
-        {
-          method: 'POST',
-          body,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/buckets/files`, {
+        method: 'POST',
+        body,
+      });
       return response;
     } catch (error) {
       console.error('Delete file error:', error);
@@ -226,17 +195,11 @@ class BucketService {
       const body = new FormData();
       body.append('name', fileNavigatorItem.current.name);
       body.append('path', fileNavigatorItem.current.path);
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/buckets/folders`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/buckets/folders`, {
+        method: 'POST',
+
+        body,
+      });
       return response;
     } catch (error) {
       console.error('Create folder error:', error);
@@ -270,14 +233,10 @@ class BucketService {
       body.append('name', fileNavigatorItem.current.name);
       body.append('path', fileNavigatorItem.current.path);
       body.append('original_path', fileNavigatorItem.original.path);
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/buckets/folders`,
-        {
-          method: 'POST',
-          body,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/buckets/folders`, {
+        method: 'POST',
+        body,
+      });
 
       return response;
     } catch (error) {
@@ -307,14 +266,10 @@ class BucketService {
       body.append('_method', 'DELETE');
       body.append('name', fileNavigatorItem.original.name);
       body.append('path', fileNavigatorItem.original.path);
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/buckets/folders`,
-        {
-          method: 'POST',
-          body,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/buckets/folders`, {
+        method: 'POST',
+        body,
+      });
       return response;
     } catch (error) {
       console.error('Delete folder error:', error);

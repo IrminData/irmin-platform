@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
+import { useIAM } from '@/context/IAMContext';
 import {
   useChangeUserRole,
   useDeleteUser,
@@ -28,6 +29,9 @@ const useUsersAndRoles = ({
   currentWorkspace: Workspace | null;
   locale: Locale;
 }) => {
+  // Get token from IAM context
+  const { token } = useIAM();
+
   // Roles
   const [irminRoles, setIrminRoles] = useState<IrminRole[]>([]);
 
@@ -40,7 +44,7 @@ const useUsersAndRoles = ({
    * Hook to fetch the roles.
    * It will be run during the initialisation to load all available roles.
    */
-  const fetchRoles = useFetchRoles(setIrminRoles, locale);
+  const fetchRoles = useFetchRoles(setIrminRoles, locale, token ?? '');
 
   /**
    * Hook to fetch the users for the current workspace.

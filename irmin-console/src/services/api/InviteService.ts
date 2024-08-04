@@ -1,5 +1,5 @@
-import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/services/fetchWithCredentials';
+import { Locale } from '@/dictionaries';
+import IrminAPI from '@/services/IrminAPI';
 
 import { Invite } from '@/types/api/Invite';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
@@ -13,11 +13,8 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
 
-const api_base = process.env.NEXT_PUBLIC_API_URL;
-
 /**
  * Invites API response type
- * @internal
  */
 interface InvitesAPIResponse extends IrminAPIResponse {
   data: Invite[];
@@ -30,28 +27,25 @@ interface InvitesAPIResponse extends IrminAPIResponse {
  */
 class InviteService {
   private static instance: InviteService;
-  private locale: Locale = defaultLocale;
+  private api: IrminAPI = IrminAPI.getInstance();
 
-  private constructor(locale: Locale) {
-    this.locale = locale;
+  private constructor(locale: Locale, apiToken: string) {
+    this.api.setProps(locale, apiToken);
   }
 
   /**
    * Get the instance of the {@link InviteService}
    * @param locale - The locale to use for the instance
+   * @param apiToken - The API token to use for the instance
    */
-  public static getInstance(locale: Locale): InviteService {
+  public static getInstance(locale: Locale, apiToken: string): InviteService {
     if (!InviteService.instance) {
-      InviteService.instance = new InviteService(locale);
+      InviteService.instance = new InviteService(locale, apiToken);
     } else {
-      // Update the locale if the instance already exists
-      InviteService.instance.setLocale(locale);
+      // Update the existing instance
+      InviteService.instance.api.setProps(locale, apiToken);
     }
     return InviteService.instance;
-  }
-
-  public setLocale(locale: Locale) {
-    this.locale = locale;
   }
 
   /**
@@ -75,14 +69,10 @@ class InviteService {
       formData.append('email', email);
       formData.append('role', role);
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/invites/create`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/invites/create`, {
+        method: 'POST',
+        body: formData,
+      });
       return response;
     } catch (error) {
       console.error('Invite user error:', error);
@@ -103,14 +93,10 @@ class InviteService {
 
       formData.append('invite', invite.toString());
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/invites/resend`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/invites/resend`, {
+        method: 'POST',
+        body: formData,
+      });
       return response;
     } catch (error) {
       console.error('Resend invite error:', error);
@@ -131,14 +117,10 @@ class InviteService {
       formData.append('invite', invite.toString());
       formData.append('_method', 'DELETE');
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/invites/cancel`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/invites/cancel`, {
+        method: 'POST',
+        body: formData,
+      });
       return response;
     } catch (error) {
       console.error('Cancel invite error:', error);
@@ -164,14 +146,10 @@ class InviteService {
       formData.append('role', role);
       formData.append('_method', 'PATCH');
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/invites/update`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/invites/update`, {
+        method: 'POST',
+        body: formData,
+      });
       return response;
     } catch (error) {
       console.error('Change invite role error:', error);
@@ -188,15 +166,11 @@ class InviteService {
   async getInvitesByWorkspace(workspace: string): Promise<InvitesAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleInvites };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/invites?workspace=${workspace}`,
+      const response = (await this.api.fetch(
+        `/v1/invites?workspace=${workspace}`,
         {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
+        }
       )) as InvitesAPIResponse;
 
       return response;
@@ -216,16 +190,9 @@ class InviteService {
   async getInvitesByUser(user: number): Promise<InvitesAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleInvites };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/invites?user=${user}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      )) as InvitesAPIResponse;
+      const response = (await this.api.fetch(`/v1/invites?user=${user}`, {
+        method: 'GET',
+      })) as InvitesAPIResponse;
 
       return response;
     } catch (error) {
@@ -258,14 +225,10 @@ class InviteService {
       formData.append('password', password ?? '');
       formData.append('password_confirmation', password_confirmation ?? '');
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/invites/accept`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/invites/accept`, {
+        method: 'POST',
+        body: formData,
+      });
       return response;
     } catch (error) {
       console.error('Accept user invite error:', error);
@@ -286,14 +249,10 @@ class InviteService {
       formData.append('invite', invite.toString());
       formData.append('_method', 'DELETE');
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/invites/decline`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/invites/decline`, {
+        method: 'POST',
+        body: formData,
+      });
       return response;
     } catch (error) {
       console.error('Decline user invite error:', error);

@@ -1,9 +1,7 @@
-import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/services/fetchWithCredentials';
+import { Locale } from '@/dictionaries';
+import IrminAPI from '@/services/IrminAPI';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
-
-const api_base = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Export Workflow API service
@@ -12,32 +10,31 @@ const api_base = process.env.NEXT_PUBLIC_API_URL;
  */
 class ExportWorkflowService {
   private static instance: ExportWorkflowService;
-  private locale: Locale = defaultLocale;
+  private api: IrminAPI = IrminAPI.getInstance();
 
-  private constructor(locale: Locale) {
-    this.locale = locale;
+  private constructor(locale: Locale, apiToken: string) {
+    this.api.setProps(locale, apiToken);
   }
 
   /**
    * Get the instance of the {@link ExportWorkflowService}
    * @param locale - The locale to use for the instance
+   * @param apiToken - The API token to use for the instance
    */
-  public static getInstance(locale: Locale): ExportWorkflowService {
+  public static getInstance(
+    locale: Locale,
+    apiToken: string
+  ): ExportWorkflowService {
     if (!ExportWorkflowService.instance) {
-      ExportWorkflowService.instance = new ExportWorkflowService(locale);
+      ExportWorkflowService.instance = new ExportWorkflowService(
+        locale,
+        apiToken
+      );
     } else {
-      // Update the locale if the instance already exists
-      ExportWorkflowService.instance.setLocale(locale);
+      // Update the existing instance
+      ExportWorkflowService.instance.api.setProps(locale, apiToken);
     }
     return ExportWorkflowService.instance;
-  }
-
-  /**
-   * Set the locale for the instance
-   * @param locale - The locale to set
-   */
-  public setLocale(locale: Locale) {
-    this.locale = locale;
   }
 
   /**
@@ -79,14 +76,10 @@ class ExportWorkflowService {
       formData.append('description', description);
       formData.append('cron_syntax', cron_syntax);
 
-      const res = await fetchWithCredentials(
-        `${api_base}/v1/exports/create`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const res = await this.api.fetch(`/v1/exports/create`, {
+        method: 'POST',
+        body: formData,
+      });
       return res;
     } catch (error) {
       console.error('Failed to create export workflow:', error);

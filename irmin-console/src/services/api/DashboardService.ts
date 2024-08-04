@@ -1,5 +1,5 @@
-import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/services/fetchWithCredentials';
+import { Locale } from '@/dictionaries';
+import IrminAPI from '@/services/IrminAPI';
 
 import { Dashboard } from '@/types/api/Dashboard';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
@@ -12,11 +12,8 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
 
-const api_base = process.env.NEXT_PUBLIC_API_URL;
-
 /**
  * Dashboard API response type
- * @internal
  */
 interface DashboardAPIResponse extends IrminAPIResponse {
   data: Dashboard;
@@ -24,7 +21,6 @@ interface DashboardAPIResponse extends IrminAPIResponse {
 
 /**
  * Dashboards API response type
- * @internal
  */
 interface DashboardsAPIResponse extends IrminAPIResponse {
   data: Dashboard[];
@@ -39,32 +35,28 @@ class DashboardService {
   private dashboards: Dashboard[] = [];
 
   private static instance: DashboardService;
-  private locale: Locale = defaultLocale;
+  private api: IrminAPI = IrminAPI.getInstance();
 
-  private constructor(locale: Locale) {
-    this.locale = locale;
+  private constructor(locale: Locale, apiToken: string) {
+    this.api.setProps(locale, apiToken);
   }
 
   /**
    * Get the instance of the {@link DashboardService}
    * @param locale - The locale to use for the instance
+   * @param apiToken - The API token to use for the instance
    */
-  public static getInstance(locale: Locale): DashboardService {
+  public static getInstance(
+    locale: Locale,
+    apiToken: string
+  ): DashboardService {
     if (!DashboardService.instance) {
-      DashboardService.instance = new DashboardService(locale);
+      DashboardService.instance = new DashboardService(locale, apiToken);
     } else {
-      // Update the locale if the instance already exists
-      DashboardService.instance.setLocale(locale);
+      // Update the existing instance
+      DashboardService.instance.api.setProps(locale, apiToken);
     }
     return DashboardService.instance;
-  }
-
-  /**
-   * Set the locale for the instance
-   * @param locale - The locale to set
-   */
-  public setLocale(locale: Locale) {
-    this.locale = locale;
   }
 
   /**
@@ -76,16 +68,9 @@ class DashboardService {
     if (isOfflineMode)
       return { ...exampleAPIResponse, data: exampleDashboards };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/dashboards`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      )) as DashboardsAPIResponse;
+      const response = (await this.api.fetch(`/v1/dashboards`, {
+        method: 'GET',
+      })) as DashboardsAPIResponse;
       this.dashboards = response.data;
       return response;
     } catch (error) {
@@ -106,17 +91,11 @@ class DashboardService {
     if (isOfflineMode)
       return { ...exampleAPIResponse, data: exampleDashboards[0] };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/dashboards`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(dashboard),
-        },
-        this.locale
-      )) as DashboardAPIResponse;
+      const response = (await this.api.fetch(`/v1/dashboards`, {
+        method: 'POST',
+
+        body: JSON.stringify(dashboard),
+      })) as DashboardAPIResponse;
       this.dashboards.push(response.data);
       return response;
     } catch (error) {
@@ -141,14 +120,10 @@ class DashboardService {
       body.append('_method', 'PUT');
       body.append('dashboard', JSON.stringify(dashboard));
 
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/dashboards/${dashboard.id}`,
-        {
-          method: 'POST',
-          body,
-        },
-        this.locale
-      )) as DashboardAPIResponse;
+      const response = (await this.api.fetch(`/v1/dashboards/${dashboard.id}`, {
+        method: 'POST',
+        body,
+      })) as DashboardAPIResponse;
 
       const index = this.dashboards.findIndex((d) => d.id === dashboard.id);
       if (index !== undefined && index !== -1) {
@@ -175,14 +150,10 @@ class DashboardService {
       const body = new FormData();
       body.append('_method', 'DELETE');
 
-      await fetchWithCredentials(
-        `${api_base}/v1/dashboards/${dashboardId}`,
-        {
-          method: 'POST',
-          body,
-        },
-        this.locale
-      );
+      await this.api.fetch(`/v1/dashboards/${dashboardId}`, {
+        method: 'POST',
+        body,
+      });
       this.dashboards = this.dashboards.filter((d) => d.id !== dashboardId);
     } catch (error) {
       console.error('Delete dashboard error:', error);

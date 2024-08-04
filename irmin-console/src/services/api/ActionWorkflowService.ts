@@ -1,9 +1,7 @@
-import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/services/fetchWithCredentials';
+import { Locale } from '@/dictionaries';
+import IrminAPI from '@/services/IrminAPI';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
-
-const api_base = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Action Workflow API service
@@ -12,32 +10,31 @@ const api_base = process.env.NEXT_PUBLIC_API_URL;
  */
 class ActionWorkflowService {
   private static instance: ActionWorkflowService;
-  private locale: Locale = defaultLocale;
+  private api: IrminAPI = IrminAPI.getInstance();
 
-  private constructor(locale: Locale) {
-    this.locale = locale;
+  private constructor(locale: Locale, apiToken: string) {
+    this.api.setProps(locale, apiToken);
   }
 
   /**
    * Get the instance of the {@link ActionWorkflowService}
    * @param locale - The locale to use for the instance
+   * @param apiToken - The API token to use for the instance
    */
-  public static getInstance(locale: Locale): ActionWorkflowService {
+  public static getInstance(
+    locale: Locale,
+    apiToken: string
+  ): ActionWorkflowService {
     if (!ActionWorkflowService.instance) {
-      ActionWorkflowService.instance = new ActionWorkflowService(locale);
+      ActionWorkflowService.instance = new ActionWorkflowService(
+        locale,
+        apiToken
+      );
     } else {
-      // Update the locale if the instance already exists
-      ActionWorkflowService.instance.setLocale(locale);
+      // Update the existing instance
+      ActionWorkflowService.instance.api.setProps(locale, apiToken);
     }
     return ActionWorkflowService.instance;
-  }
-
-  /**
-   * Set the locale for the instance
-   * @param locale - The locale to set
-   */
-  public setLocale(locale: Locale) {
-    this.locale = locale;
   }
 
   /**
@@ -75,14 +72,10 @@ class ActionWorkflowService {
       formData.append('description', description);
       formData.append('cron_syntax', cron_syntax);
 
-      const res = await fetchWithCredentials(
-        `${api_base}/v1/actions/create`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const res = await this.api.fetch(`/v1/actions/create`, {
+        method: 'POST',
+        body: formData,
+      });
       return res;
     } catch (error) {
       console.error('Failed to create action workflow:', error);

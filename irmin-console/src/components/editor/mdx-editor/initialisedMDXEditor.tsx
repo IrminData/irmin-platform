@@ -34,7 +34,7 @@ import '@mdxeditor/editor/style.css';
  * {@link https://www.npmjs.com/package/@mdxeditor/editor}
  *
  */
-export default function InitializedMDXEditor({
+export default function InitialisedMDXEditor({
   editorRef,
   ...props
 }: { editorRef: ForwardedRef<MDXEditorMethods> | null } & MDXEditorProps) {

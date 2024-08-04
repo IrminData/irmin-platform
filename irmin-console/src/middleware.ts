@@ -107,8 +107,8 @@ export function middleware(req: NextRequest) {
   // Authentication handling
   if (requireAuth === 'true' || isTsdocPath) {
     const { cookies } = req;
-    const authorizedDev = cookies.get('authorizedDev');
-    if (!authorizedDev || authorizedDev.value !== appPassword) {
+    const authorisedDev = cookies.get('authorisedDev');
+    if (!authorisedDev || authorisedDev.value !== appPassword) {
       return NextResponse.redirect(new URL('/api/verify-dev-access', req.url));
     }
   }
@@ -125,7 +125,7 @@ export function middleware(req: NextRequest) {
  * - api (API routes)
  * - ui-assets (UI assets)
  * - _next/static (static files)
- * - _next/image (image optimization files)
+ * - _next/image (image optimisation files)
  * Or specific files:
  * - all .svg, .png, .jpg, .webp and .jpeg files
  * - sitemap.xml

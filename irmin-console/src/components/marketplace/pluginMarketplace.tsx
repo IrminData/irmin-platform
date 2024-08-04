@@ -38,7 +38,7 @@ export default function PluginMarketplace() {
       price: 0,
       connected: true,
       category: 'Analytics',
-      description: 'Integrate Google Analytics to track and analyze your data.',
+      description: 'Integrate Google Analytics to track and analyse your data.',
     },
     {
       id: 2,

@@ -34,7 +34,7 @@ export const useFetchDataRepositories = (
      *
      * @param forceFetch - If true, will refetch even if already fetched
      *
-     * @returns Error if the fetch fails
+     * @returns Void or Error if fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -44,7 +44,7 @@ export const useFetchDataRepositories = (
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
       // Get the data repository service
-      const datasetService = DataRepoService.getInstance(locale);
+      const datasetService = DataRepoService.getInstance(locale, '');
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {
         setDataRepositories([]);
@@ -97,7 +97,7 @@ export const useCreateDataRepository = (
      */
     async (dataRepo: DataRepo) => {
       // Create the data repository
-      const datasetService = DataRepoService.getInstance(locale);
+      const datasetService = DataRepoService.getInstance(locale, '');
       const response = await datasetService.createDataRepo(dataRepo);
       // Update the local state with the new data repository
       if (response.data) {
@@ -133,7 +133,7 @@ export const useUpdateDataRepository = (
      */
     async (dataRepoSlug: string, updatedDataRepo: DataRepo) => {
       // Update the data repository
-      const datasetService = DataRepoService.getInstance(locale);
+      const datasetService = DataRepoService.getInstance(locale, '');
       const response = await datasetService.updateDataRepo(
         dataRepoSlug,
         updatedDataRepo
@@ -172,7 +172,7 @@ export const useDeleteDataRepository = (
      */
     async (dataRepoSlug: string) => {
       // Delete the data repository
-      const datasetService = DataRepoService.getInstance(locale);
+      const datasetService = DataRepoService.getInstance(locale, '');
       const response = await datasetService.deleteDataRepo(dataRepoSlug);
       // Update the local state by removing the deleted data repository
       const updatedDataRepositories = dataRepositories.filter(
@@ -209,7 +209,7 @@ export const useReassignDataRepository = (
      */
     async (dataRepo: DataRepo, newOwner: WorkspaceUser) => {
       // Reassign the data repositories
-      const datasetService = DataRepoService.getInstance(locale);
+      const datasetService = DataRepoService.getInstance(locale, '');
       const response = await datasetService.reassignDataRepo(
         dataRepo,
         newOwner

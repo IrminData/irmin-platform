@@ -1,5 +1,5 @@
-import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/services/fetchWithCredentials';
+import { Locale } from '@/dictionaries';
+import IrminAPI from '@/services/IrminAPI';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { Workspace } from '@/types/api/Workspace';
@@ -12,11 +12,8 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
 
-const api_base = process.env.NEXT_PUBLIC_API_URL;
-
 /**
  * Workspaces API response type
- * @internal
  */
 interface WorkspacesAPIResponse extends IrminAPIResponse {
   data: Workspace[];
@@ -36,32 +33,28 @@ interface WorkspaceAPIResponse extends IrminAPIResponse {
  */
 class WorkspaceService {
   private static instance: WorkspaceService;
-  private locale: Locale = defaultLocale;
+  private api: IrminAPI = IrminAPI.getInstance();
 
-  private constructor(locale: Locale) {
-    this.locale = locale;
+  private constructor(locale: Locale, apiToken: string) {
+    this.api.setProps(locale, apiToken);
   }
 
   /**
    * Get the instance of the WorkspaceService
    * @param locale - The locale to use for the service
+   * @param apiToken - The API token to use for the service
    */
-  public static getInstance(locale: Locale): WorkspaceService {
+  public static getInstance(
+    locale: Locale,
+    apiToken: string
+  ): WorkspaceService {
     if (!WorkspaceService.instance) {
-      WorkspaceService.instance = new WorkspaceService(locale);
+      WorkspaceService.instance = new WorkspaceService(locale, apiToken);
     } else {
-      // Update the locale if the instance already exists
-      WorkspaceService.instance.setLocale(locale);
+      // Update the existing instance
+      WorkspaceService.instance.api.setProps(locale, apiToken);
     }
     return WorkspaceService.instance;
-  }
-
-  /**
-   * Set the locale for the service
-   * @param locale - The locale to use for the service
-   */
-  public setLocale(locale: Locale) {
-    this.locale = locale;
   }
 
   /**
@@ -76,16 +69,9 @@ class WorkspaceService {
         data: exampleWorkspaces,
       };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/workspaces`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      )) as WorkspacesAPIResponse;
+      const response = (await this.api.fetch(`/v1/workspaces`, {
+        method: 'GET',
+      })) as WorkspacesAPIResponse;
       return response;
     } catch (error) {
       console.error('Fetch workspaces error:', error);
@@ -111,15 +97,11 @@ class WorkspaceService {
         data: exampleWorkspaces[0],
       };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/workspaces/${workspaceSlug}`,
+      const response = (await this.api.fetch(
+        `/v1/workspaces/${workspaceSlug}`,
         {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
+        }
       )) as WorkspaceAPIResponse;
       return response;
     } catch (error) {
@@ -145,13 +127,12 @@ class WorkspaceService {
       const formData = new FormData();
       formData.append('user', user.toString());
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/workspaces/transfer-ownership`,
+      const response = await this.api.fetch(
+        `/v1/workspaces/transfer-ownership`,
         {
           method: 'POST',
           body: formData,
-        },
-        this.locale
+        }
       );
 
       return response;
@@ -178,14 +159,10 @@ class WorkspaceService {
       formData.append('name', name);
       formData.append('description', description);
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/workspaces`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/workspaces`, {
+        method: 'POST',
+        body: formData,
+      });
 
       return response;
     } catch (error) {
@@ -208,14 +185,10 @@ class WorkspaceService {
       formData.append('name', workspace.name);
       formData.append('description', workspace.description ?? '');
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/workspaces`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/workspaces`, {
+        method: 'POST',
+        body: formData,
+      });
 
       return response;
     } catch (error) {
@@ -234,14 +207,10 @@ class WorkspaceService {
     try {
       const formData = new FormData();
       formData.append('_method', 'DELETE');
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/workspaces`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/workspaces`, {
+        method: 'POST',
+        body: formData,
+      });
 
       return response;
     } catch (error) {
@@ -269,14 +238,10 @@ class WorkspaceService {
       const formData = new FormData();
       formData.append('workspace', workspaceSlug);
 
-      await fetchWithCredentials(
-        `${api_base}/v1/workspaces/switch`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      await this.api.fetch(`/v1/workspaces/switch`, {
+        method: 'POST',
+        body: formData,
+      });
 
       const newWorkspace = await this.fetchWorkspace(workspaceSlug);
 

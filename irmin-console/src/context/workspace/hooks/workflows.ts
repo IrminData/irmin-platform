@@ -47,7 +47,7 @@ export const useUpdateWorkflow = (
      */
     async (workflowId: number, updatedWorkflow: Workflow) => {
       // Update the workflow using the workflow service
-      const workflowService = WorkflowService.getInstance(locale);
+      const workflowService = WorkflowService.getInstance(locale, '');
       const response = await workflowService.updateWorkflow(
         workflowId,
         updatedWorkflow
@@ -129,7 +129,7 @@ export const usePauseWorkflow = (
      */
     async (workflowId: number) => {
       // Pause the workflow
-      const workflowService = WorkflowService.getInstance(locale);
+      const workflowService = WorkflowService.getInstance(locale, '');
       const response = await workflowService.pauseWorkflow(workflowId);
       // Update the local state based on the paused workflow and it's type
       const pausedWorkflow =
@@ -213,7 +213,7 @@ export const useResumeWorkflow = (
      */
     async (workflowId: number) => {
       // Resume the workflow
-      const workflowService = WorkflowService.getInstance(locale);
+      const workflowService = WorkflowService.getInstance(locale, '');
       const response = await workflowService.resumeWorkflow(workflowId);
       // Update the local state based on the resumed workflow and it's type
       const resumedWorkflow =
@@ -297,7 +297,7 @@ export const useDeleteWorkflow = (
      */
     async (workflowId: number) => {
       // Delete the workflow
-      const workflowService = WorkflowService.getInstance(locale);
+      const workflowService = WorkflowService.getInstance(locale, '');
       const response = await workflowService.deleteWorkflow(workflowId);
       // Update the local state based on the deleted workflow and it's type
       const deletedWorkflow =
@@ -363,7 +363,7 @@ export const useFetchWorkflowRuns = (
      *
      * @param forceFetch - If true, will refetch even if already fetched
      *
-     * @returns Error if the fetch fails
+     * @returns Void or Error if fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -373,7 +373,7 @@ export const useFetchWorkflowRuns = (
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
       // Get the workflow service
-      const workflowService = WorkflowService.getInstance(locale);
+      const workflowService = WorkflowService.getInstance(locale, '');
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {
         setWorkflowRuns([]);
@@ -420,12 +420,11 @@ export const useFetchWorkflowRunsByWorkflow = (
      * Fetch Workflow Runs using the {@link WorkflowService}.
      * @param workflowId - The ID of the workflow to fetch runs for.
      *
-     * @returns The list of Workflow Runs for the Workflow
-     * @returns Error if the fetch fails
+     * @returns The list of Workflow Runs for the Workflow or throws an error
      */
     async (workflowId: number) => {
       // Get the workflow service
-      const workflowService = WorkflowService.getInstance(locale);
+      const workflowService = WorkflowService.getInstance(locale, '');
       try {
         // Prevent multiple simultaneous fetches
         if (loading) return;

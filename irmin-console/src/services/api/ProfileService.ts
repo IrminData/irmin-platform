@@ -1,5 +1,5 @@
-import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/services/fetchWithCredentials';
+import { Locale } from '@/dictionaries';
+import IrminAPI from '@/services/IrminAPI';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { Profile } from '@/types/api/Profile';
@@ -11,11 +11,9 @@ import {
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
-const api_base = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Profile API response type
- * @internal
  */
 interface ProfileAPIResponse extends IrminAPIResponse {
   data: Profile;
@@ -28,32 +26,25 @@ interface ProfileAPIResponse extends IrminAPIResponse {
  */
 class ProfileService {
   private static instance: ProfileService;
-  private locale: Locale = defaultLocale;
+  private api: IrminAPI = IrminAPI.getInstance();
 
-  private constructor(locale: Locale) {
-    this.locale = locale;
+  private constructor(locale: Locale, apiToken: string) {
+    this.api.setProps(locale, apiToken);
   }
 
   /**
    * Get the instance of the {@link ProfileService}
    * @param locale - The locale to use for the instance
+   * @param apiToken - The API token to use for the instance
    */
-  public static getInstance(locale: Locale): ProfileService {
+  public static getInstance(locale: Locale, apiToken: string): ProfileService {
     if (!ProfileService.instance) {
-      ProfileService.instance = new ProfileService(locale);
+      ProfileService.instance = new ProfileService(locale, apiToken);
     } else {
-      // Update the locale if the instance already exists
-      ProfileService.instance.setLocale(locale);
+      // Update the existing instance
+      ProfileService.instance.api.setProps(locale, apiToken);
     }
     return ProfileService.instance;
-  }
-
-  /**
-   * Set the locale for the instance
-   * @param locale - The locale to set
-   */
-  public setLocale(locale: Locale) {
-    this.locale = locale;
   }
 
   /**
@@ -64,13 +55,9 @@ class ProfileService {
   async getProfile(): Promise<ProfileAPIResponse | null> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleProfile };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/account/profile`,
-        {
-          method: 'GET',
-        },
-        this.locale
-      )) as ProfileAPIResponse;
+      const response = (await this.api.fetch(`/v1/account/profile`, {
+        method: 'GET',
+      })) as ProfileAPIResponse;
       return response;
     } catch (error) {
       // Check if the error is due to not being logged in
@@ -96,13 +83,9 @@ class ProfileService {
   async regenerateToken(): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
     try {
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/regenerate-token`,
-        {
-          method: 'POST',
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/regenerate-token`, {
+        method: 'POST',
+      });
       return response;
     } catch (error) {
       console.error('Regenerate token error:', error);
@@ -132,14 +115,10 @@ class ProfileService {
       formData.append('email', email);
       formData.append('_method', 'PATCH');
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/account/profile`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/account/profile`, {
+        method: 'POST',
+        body: formData,
+      });
       return response;
     } catch (error) {
       console.error('Update profile error:', error);

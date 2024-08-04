@@ -26,6 +26,10 @@ To access the internal PHPDoc documentation of the API, the user is `irmin`, and
 - [Offline mode](#offline-mode)
 - [Irmin API](#irmin-api)
 - [API Services](#api-services)
+   - [Irmin API authorisation](#irmin-api-authorisation)
+   - [API Service structure](#api-service-structure)
+   - [Fake data for API Services](#fake-data-for-api-services)
+   - [Examples](#examples)
 - [Internationalisation](#internationalisation)
 - [Contexts](#contexts)
   - [Identity and Access Management (IAMContext)](#identity-and-access-management-iamcontext)
@@ -137,15 +141,31 @@ Note! It is not meant for anything but local use.
 
 To call the API, we use API Services. These services contain the API endpoints and the logic for calling the API. The API Services are located in the `src/services/api` directory. Each service corresponds to a specific resource in the API.
 
-Please note that accessing a lot of things on the API requires user to be authenticated and the API call be made from the client. This is because the API relies on a cookie set on the API domain. This is why most API Services are not used on the server side, but only on the client side.
+Every call to the API is wrapped in [src/services/IrminAPI.ts](src/services/IrminAPI.ts). This class handles the API call, default properties, request locale and request token.
+
+### Irmin API authorisation
+
+The API can be authorised with 2 different methods:
+
+- Cookie based authentication: The API sets a cookie on the API domain when the user logs in. This cookie is used to authenticate the user on the API. This is the default method.
+
+- Token based authentication: The API can also be authorised with a token. The token is returned with GET/profile and is maintaind by the [IAMContext](src/context/IAMContext.tsx). This is used when the API call is made from the server side, since the cookie is not available on the server side.
+
+The API Services are built to handle both methods. See [internal /roles API route](src/app/api/roles/route.ts) for an example of how to use the token based authentication. The API routes use the API Services to fetch data and receive the token and locale from the request. Requests to the internal API routes are made using API Proxy services like the [Roles Proxy Service](src/services/api-proxies/roles.ts).
+
+In the future, more data fetching will be done on the server side, and the token based authentication will be used more.
+
+### API Service structure
 
 Every API Service function for fetching the API should follow the same structure:
 
 1. The function should be async and return a Promise.
-2. The function should call the API using the fetchWithCredentials utility function.
+2. The function should call the API using the fetchIrminAPI utility function.
 3. The function should return the response itself, not the data from the response. The data should be extracted in the component that calls the service.
 4. The function should be documented with TypeDoc/TypeDoc comments. The comments should include a description of the function, the parameters, and the return value. Also, if available add the link to the API documentation for that endpoint. If not available, add a TODO note that the API documentation is not available yet.
 5. The function should be able to handle Offline Mode and Development Environments needs. This means returning static data when the API request fails or when Offline Mode is enabled.
+
+### Fake data for API Services
 
 Some services have been created before the API has been fully implemented. In these cases, when the environment is set to development, the services return example objects from the [apiObjects.ts](src/types/examples/apiObjects.ts) file. See [Static data](#static-data) section of this README for more information
 

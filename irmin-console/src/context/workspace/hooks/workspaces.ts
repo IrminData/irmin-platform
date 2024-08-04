@@ -28,11 +28,11 @@ export const useFetchWorkspaces = (
     /**
      * Fetch and update context for workspaces using the {@link WorkspaceService}.
      *
-     * @returns Error if the fetch fails
+     * @returns Void or Error if fails
      */
     async () => {
       // Get the workspace service
-      const workspaceService = WorkspaceService.getInstance(locale);
+      const workspaceService = WorkspaceService.getInstance(locale, '');
       // Prevent multiple simultaneous fetches
       if (workspaceLoading) return;
       // Fetch the workspaces
@@ -68,7 +68,7 @@ export const useCreateWorkspace = (locale: Locale) =>
      */
     async (newWorkspaceName: string, newWorkspaceDescription: string) => {
       // Get the workspace service
-      const workspaceService = WorkspaceService.getInstance(locale);
+      const workspaceService = WorkspaceService.getInstance(locale, '');
       // Create the workspace
       const response = await workspaceService.createWorkspace(
         newWorkspaceName,
@@ -96,7 +96,7 @@ export const useUpdateWorkspace = (locale: Locale) =>
      */
     async (workspace: Workspace) => {
       // Get the workspace service
-      const workspaceService = WorkspaceService.getInstance(locale);
+      const workspaceService = WorkspaceService.getInstance(locale, '');
       // Update the workspace
       const response = await workspaceService.updateWorkspace(workspace);
       return response;
@@ -142,7 +142,7 @@ export const useSwitchWorkspace = (
     async (workspaceSlug: string | null) => {
       try {
         // Get the workspace service
-        const workspaceService = WorkspaceService.getInstance(locale);
+        const workspaceService = WorkspaceService.getInstance(locale, '');
         // Prevent multiple simultaneous switches
         if (workspaceLoading) return;
         setWorkspaceLoading(true);
@@ -237,7 +237,7 @@ export const useTransferOwnership = (
      */
     async (newOwner: number): Promise<IrminAPIResponse> => {
       // Get the workspace service
-      const workspaceService = WorkspaceService.getInstance(locale);
+      const workspaceService = WorkspaceService.getInstance(locale, '');
       // Transfer ownership
       const response =
         await workspaceService.transferWorkspaceOwnership(newOwner);
@@ -279,7 +279,7 @@ export const useDeleteCurrentWorkspace = (
      * @returns Error if the deletion fails.
      */
     async (): Promise<IrminAPIResponse> => {
-      const workspaceService = WorkspaceService.getInstance(locale);
+      const workspaceService = WorkspaceService.getInstance(locale, '');
       const response = await workspaceService.deleteWorkspace();
       await switchToWorkspace(null, true);
       await fetchWorkspaces();

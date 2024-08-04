@@ -11,6 +11,7 @@ import React, {
 import { Locale } from '@/dictionaries';
 import BucketService from '@/services/api/BucketService';
 
+import { useIAM } from '@/context/IAMContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { transformBucketToFileNavItem } from '@/utils/bucket';
@@ -76,6 +77,7 @@ export const BucketProvider = ({
   children: React.ReactNode;
 }) => {
   const { irminAlert } = usePopup();
+  const { token } = useIAM();
 
   const [filesFetechedForWorkspace, setFilesFetechedForWorkspace] =
     useState<string>('');
@@ -87,7 +89,7 @@ export const BucketProvider = ({
   const [activeTab, setActiveTab] = useState<number>(0);
   const [openFileTabs, setOpenFileTabs] = useState<string[]>([]);
 
-  const bucketService = BucketService.getInstance(locale);
+  const bucketService = BucketService.getInstance(locale, token ?? '');
 
   /*
    * Fetch files and folders from the current workspace bucket

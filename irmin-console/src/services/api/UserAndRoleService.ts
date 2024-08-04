@@ -1,5 +1,5 @@
-import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/services/fetchWithCredentials';
+import { Locale } from '@/dictionaries';
+import IrminAPI from '@/services/IrminAPI';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
@@ -13,20 +13,17 @@ import {
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
-const api_base = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Users API response type
- * @internal
  */
 interface UsersAPIResponse extends IrminAPIResponse {
   data: WorkspaceUser[];
 }
 /**
  * Roles API response type
- * @internal
  */
-interface RolesAPIResponse extends IrminAPIResponse {
+export interface RolesAPIResponse extends IrminAPIResponse {
   data: IrminRole[];
 }
 
@@ -36,35 +33,29 @@ interface RolesAPIResponse extends IrminAPIResponse {
  * Responsible for all workspace user and role related API calls.
  */
 class UserAndRoleService {
-  private roles: IrminRole[] = [];
-
   private static instance: UserAndRoleService;
-  private locale: Locale = defaultLocale;
+  private api: IrminAPI = IrminAPI.getInstance();
 
-  private constructor(locale: Locale) {
-    this.locale = locale;
+  private constructor(locale: Locale, apiToken: string) {
+    this.api.setProps(locale, apiToken);
   }
 
   /**
    * Get the instance of the {@link UserAndRoleService}
    * @param locale - The locale to use for the instance
+   * @param apiToken - The API token to use for the instance
    */
-  public static getInstance(locale: Locale): UserAndRoleService {
+  public static getInstance(
+    locale: Locale,
+    apiToken: string
+  ): UserAndRoleService {
     if (!UserAndRoleService.instance) {
-      UserAndRoleService.instance = new UserAndRoleService(locale);
+      UserAndRoleService.instance = new UserAndRoleService(locale, apiToken);
     } else {
-      // Update the locale if the instance already exists
-      UserAndRoleService.instance.setLocale(locale);
+      // Update the existing instance
+      UserAndRoleService.instance.api.setProps(locale, apiToken);
     }
     return UserAndRoleService.instance;
-  }
-
-  /**
-   * Set the locale for the service
-   * @param locale - The locale to use for the service
-   */
-  public setLocale(locale: Locale) {
-    this.locale = locale;
   }
 
   /**
@@ -76,16 +67,9 @@ class UserAndRoleService {
     if (isOfflineMode)
       return { ...exampleAPIResponse, data: exampleWorkspaceUsers };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/users`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      )) as UsersAPIResponse;
+      const response = (await this.api.fetch(`/v1/users`, {
+        method: 'GET',
+      })) as UsersAPIResponse;
       return response;
     } catch (error) {
       console.error('Fetch users error:', error);
@@ -103,31 +87,15 @@ class UserAndRoleService {
   async fetchRoles(): Promise<RolesAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleRoles };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/roles`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      )) as RolesAPIResponse;
-      this.roles = response.data;
+      const response = (await this.api.fetch(`/v1/roles`, {
+        method: 'GET',
+      })) as RolesAPIResponse;
       return response;
     } catch (error) {
       console.error('Fetch roles error:', error);
       if (isDevelopment) return { ...exampleAPIResponse, data: exampleRoles };
       throw error;
     }
-  }
-
-  /**
-   * Get all roles stored in the roles array.
-   * @returns all stored roles, empty array if none
-   */
-  getRoles(): IrminRole[] {
-    return this.roles;
   }
 
   /**
@@ -139,16 +107,9 @@ class UserAndRoleService {
   async fetchUserRoles(user: number): Promise<RolesAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleRoles };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/users/roles?user=${user}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      )) as RolesAPIResponse;
+      const response = (await this.api.fetch(`/v1/users/roles?user=${user}`, {
+        method: 'GET',
+      })) as RolesAPIResponse;
       return response;
     } catch (error) {
       console.error('Fetch user roles error:', error);
@@ -180,14 +141,10 @@ class UserAndRoleService {
         formData.append('roles[]', currentRole);
       }
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/users/roles`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/users/roles`, {
+        method: 'POST',
+        body: formData,
+      });
 
       return response;
     } catch (error) {
@@ -209,14 +166,10 @@ class UserAndRoleService {
       formData.append('_method', 'DELETE');
       formData.append('user', user.toString());
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/users/remove`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/users/remove`, {
+        method: 'POST',
+        body: formData,
+      });
 
       return response;
     } catch (error) {

@@ -104,11 +104,10 @@ export const IAMProvider = ({
         setInitialFetchDone(true);
         setIsLoading(true);
         // Get the profile service
-        const profileService = ProfileService.getInstance(locale);
+        const profileService = ProfileService.getInstance(locale, '');
         // Regenerate the token
-        let tokenResponse;
         try {
-          tokenResponse = await profileService.regenerateToken();
+          await profileService.regenerateToken();
         } catch (error) {
           console.error('Error regenerating token:', error);
         }
@@ -151,7 +150,7 @@ export const IAMProvider = ({
     async (name: string, company: string, email: string) => {
       try {
         setIsLoading(true);
-        const profileService = ProfileService.getInstance(locale);
+        const profileService = ProfileService.getInstance(locale, '');
         const result = await profileService.updateProfile(name, company, email);
         irminAlert(
           'success',
@@ -181,7 +180,7 @@ export const IAMProvider = ({
     try {
       setIsLoading(true);
       // Handle logout
-      const authService = AuthService.getInstance(locale);
+      const authService = AuthService.getInstance(locale, '');
       const result = await authService.logout();
       // Show success message if logout was successful
       irminAlert(
@@ -214,7 +213,7 @@ export const IAMProvider = ({
       try {
         setError(null);
         setIsLoading(true);
-        const authService = AuthService.getInstance(locale);
+        const authService = AuthService.getInstance(locale, '');
         const response = await authService.login(email, password);
         setSuccess(
           response.metadata?.message ??
@@ -252,7 +251,7 @@ export const IAMProvider = ({
       try {
         setError(null);
         setIsLoading(true);
-        const authService = AuthService.getInstance(locale);
+        const authService = AuthService.getInstance(locale, '');
         const response = await authService.register(
           name,
           company,

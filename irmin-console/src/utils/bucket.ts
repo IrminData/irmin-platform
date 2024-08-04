@@ -189,7 +189,6 @@ export const getCorrectPath = (path: string, desiredName: string) => {
  * @param path - Path to get the parent from
  * @returns Parent path, or '/' if the path is root
  *
- * @internal
  */
 const getParentPath = (path: string, name?: string): string => {
   // Remove the first / from the path if it exists, and split the path into segments

@@ -1,5 +1,5 @@
-import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/services/fetchWithCredentials';
+import { Locale } from '@/dictionaries';
+import IrminAPI from '@/services/IrminAPI';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { Widget } from '@/types/api/Widget';
@@ -12,11 +12,8 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
 
-const api_base = process.env.NEXT_PUBLIC_API_URL;
-
 /**
  * Widget API response type
- * @internal
  */
 interface WidgetAPIResponse extends IrminAPIResponse {
   data: Widget;
@@ -25,7 +22,6 @@ interface WidgetAPIResponse extends IrminAPIResponse {
 /**
  * Get a random example widget
  * @returns a random example widget
- * @internal
  */
 const randomExampleWidget = () =>
   exampleWidgets[Math.floor(Math.random() * exampleWidgets.length)];
@@ -37,32 +33,25 @@ const randomExampleWidget = () =>
  */
 class WidgetService {
   private static instance: WidgetService;
-  private locale: Locale = defaultLocale;
+  private api: IrminAPI = IrminAPI.getInstance();
 
-  private constructor(locale: Locale) {
-    this.locale = locale;
+  private constructor(locale: Locale, apiToken: string) {
+    this.api.setProps(locale, apiToken);
   }
 
   /**
    * Get the instance of the {@link WidgetService}
    * @param locale - The locale to use for the instance
+   * @param apiToken - The API token to use for the instance
    */
-  public static getInstance(locale: Locale): WidgetService {
+  public static getInstance(locale: Locale, apiToken: string): WidgetService {
     if (!WidgetService.instance) {
-      WidgetService.instance = new WidgetService(locale);
+      WidgetService.instance = new WidgetService(locale, apiToken);
     } else {
       // Update the locale if the instance already exists
-      WidgetService.instance.setLocale(locale);
+      WidgetService.instance.api.setProps(locale, apiToken);
     }
     return WidgetService.instance;
-  }
-
-  /**
-   * Set the locale for the instance
-   * @param locale - The locale to set
-   */
-  public setLocale(locale: Locale) {
-    this.locale = locale;
   }
 
   /**
@@ -75,16 +64,9 @@ class WidgetService {
     if (isOfflineMode)
       return { ...exampleAPIResponse, data: randomExampleWidget() };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/widgets/${widgetId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      )) as WidgetAPIResponse;
+      const response = (await this.api.fetch(`/v1/widgets/${widgetId}`, {
+        method: 'GET',
+      })) as WidgetAPIResponse;
       return response;
     } catch (error) {
       console.error('Get widget by ID error:', error);
@@ -103,17 +85,11 @@ class WidgetService {
   async createWidget(widget: Widget): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/widgets`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(widget),
-        },
-        this.locale
-      )) as IrminAPIResponse;
+      const response = (await this.api.fetch(`/v1/widgets`, {
+        method: 'POST',
+
+        body: JSON.stringify(widget),
+      })) as IrminAPIResponse;
       return response;
     } catch (error) {
       console.error('Create widget error:', error);
@@ -135,14 +111,10 @@ class WidgetService {
       body.append('_method', 'PUT');
       body.append('widget', JSON.stringify(widget));
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/widgets/${widget.id}`,
-        {
-          method: 'POST',
-          body,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/widgets/${widget.id}`, {
+        method: 'POST',
+        body,
+      });
 
       return response;
     } catch (error) {
@@ -164,14 +136,10 @@ class WidgetService {
       const body = new FormData();
       body.append('_method', 'DELETE');
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/widgets/${widgetId}`,
-        {
-          method: 'POST',
-          body,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/widgets/${widgetId}`, {
+        method: 'POST',
+        body,
+      });
       return response;
     } catch (error) {
       console.error('Delete widget error:', error);

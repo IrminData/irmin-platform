@@ -54,7 +54,7 @@ const ConnectionSetupView = ({
 }) => {
   const { locale } = useLocale();
   const { irminAlert } = usePopup();
-  const connectorService = ConnectorService.getInstance(locale);
+  const connectorService = ConnectorService.getInstance(locale, '');
   const [connectionData, setConnectionData] = useState<ConnectionSetup>(
     initialConnectionData
   );

@@ -19,7 +19,6 @@ import { WorkspaceUser } from '@/types/api/Workspace';
 /**
  * Type for a workspace user used by this component.
  * This way we are able to unify the data structure for both regular users and invited users
- * @internal
  */
 type WorkspaceUsersAndPermissionsUser = {
   inviteId?: number;

@@ -27,8 +27,10 @@ export default function DefineConnectionSettings({
 }) {
   const { locale, dict } = useLocale();
   const { irminAlert } = usePopup();
-  const connectionWorkflowService =
-    ConnectionWorkflowService.getInstance(locale);
+  const connectionWorkflowService = ConnectionWorkflowService.getInstance(
+    locale,
+    ''
+  );
 
   const [loading, setLoading] = useState(false);
   const [initialLoadingDone, setInitialLoadingDone] = useState(false);

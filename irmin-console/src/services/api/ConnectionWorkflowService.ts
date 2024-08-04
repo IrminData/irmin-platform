@@ -1,5 +1,5 @@
-import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/services/fetchWithCredentials';
+import { Locale } from '@/dictionaries';
+import IrminAPI from '@/services/IrminAPI';
 
 import {
   ConnectionDetailsAndSettings,
@@ -7,11 +7,8 @@ import {
 } from '@/types/api/Connector';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 
-const api_base = process.env.NEXT_PUBLIC_API_URL;
-
 /**
  * Connection details and settings API response type
- * @internal
  */
 interface ConnectionDetailsAndSettingsAPIResponse extends IrminAPIResponse {
   data: ConnectionDetailsAndSettingsFields;
@@ -19,7 +16,6 @@ interface ConnectionDetailsAndSettingsAPIResponse extends IrminAPIResponse {
 
 /**
  * Connection test API response type
- * @internal
  */
 interface ConnectionTestAPIResponse extends IrminAPIResponse {
   data: {
@@ -34,34 +30,31 @@ interface ConnectionTestAPIResponse extends IrminAPIResponse {
  */
 class ConnectionWorkflowService {
   private static instance: ConnectionWorkflowService;
-  private locale: Locale = defaultLocale;
+  private api: IrminAPI = IrminAPI.getInstance();
 
-  private constructor(locale: Locale) {
-    this.locale = locale;
+  private constructor(locale: Locale, apiToken: string) {
+    this.api.setProps(locale, apiToken);
   }
 
   /**
    * Get the instance of the {@link ConnectionWorkflowService}
    * @param locale - The locale to use for the instance
+   * @param apiToken - The API token to use for the instance
    */
-  public static getInstance(locale: Locale): ConnectionWorkflowService {
+  public static getInstance(
+    locale: Locale,
+    apiToken: string
+  ): ConnectionWorkflowService {
     if (!ConnectionWorkflowService.instance) {
       ConnectionWorkflowService.instance = new ConnectionWorkflowService(
-        locale
+        locale,
+        apiToken
       );
     } else {
-      // Update the locale if the instance already exists
-      ConnectionWorkflowService.instance.setLocale(locale);
+      // Update the existing instance
+      ConnectionWorkflowService.instance.api.setProps(locale, apiToken);
     }
     return ConnectionWorkflowService.instance;
-  }
-
-  /**
-   * Set the locale for the instance
-   * @param locale - The locale to set
-   */
-  public setLocale(locale: Locale) {
-    this.locale = locale;
   }
 
   /**
@@ -74,15 +67,11 @@ class ConnectionWorkflowService {
     connectorID: number
   ): Promise<ConnectionDetailsAndSettingsAPIResponse> {
     try {
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/connections/create/details?connector=${connectorID}`,
+      const response = await this.api.fetch(
+        `/v1/connections/create/details?connector=${connectorID}`,
         {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
+        }
       );
       return response as ConnectionDetailsAndSettingsAPIResponse;
     } catch (error) {
@@ -109,19 +98,12 @@ class ConnectionWorkflowService {
         ...connectionDetails,
       });
 
-      // Construct the full URL with query parameters
-      const url = `${api_base}/v1/connections/create/test-connection?${params.toString()}`;
-
       // Make the request
-      const response = await fetchWithCredentials(
-        url,
+      const response = await this.api.fetch(
+        `/v1/connections/create/test-connection?${params.toString()}`,
         {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
+        }
       );
       return response as ConnectionTestAPIResponse;
     } catch (error) {
@@ -148,19 +130,12 @@ class ConnectionWorkflowService {
         ...connectionDetails,
       });
 
-      // Construct the full URL with query parameters
-      const url = `${api_base}/v1/connections/create/settings?${params.toString()}`;
-
       // Make the request
-      const response = await fetchWithCredentials(
-        url,
+      const response = await this.api.fetch(
+        `/v1/connections/create/settings?${params.toString()}`,
         {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
+        }
       );
       return response as ConnectionDetailsAndSettingsAPIResponse;
     } catch (error) {
@@ -215,14 +190,10 @@ class ConnectionWorkflowService {
       formData.append('description', description);
       formData.append('cron_syntax', cron_syntax);
 
-      const res = await fetchWithCredentials(
-        `${api_base}/v1/connections/create`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const res = await this.api.fetch(`/v1/connections/create`, {
+        method: 'POST',
+        body: formData,
+      });
       return res;
     } catch (error) {
       console.error('Failed to create connection workflow:', error);

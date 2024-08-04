@@ -1,5 +1,5 @@
-import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/services/fetchWithCredentials';
+import { Locale } from '@/dictionaries';
+import IrminAPI from '@/services/IrminAPI';
 
 import { DataRepo } from '@/types/api/DataRepo';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
@@ -12,11 +12,9 @@ import {
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
-const api_base = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Data repositories API response type (multiple)
- * @internal
  */
 interface DataRepositoriesAPIResponse extends IrminAPIResponse {
   data: DataRepo[];
@@ -24,7 +22,6 @@ interface DataRepositoriesAPIResponse extends IrminAPIResponse {
 
 /**
  * Data repository API response type (single)
- * @internal
  */
 interface DataRepositoryAPIResponse extends IrminAPIResponse {
   data: DataRepo;
@@ -37,32 +34,25 @@ interface DataRepositoryAPIResponse extends IrminAPIResponse {
  */
 class DataRepoService {
   private static instance: DataRepoService;
-  private locale: Locale = defaultLocale;
+  private api: IrminAPI = IrminAPI.getInstance();
 
-  private constructor(locale: Locale) {
-    this.locale = locale;
+  private constructor(locale: Locale, apiToken: string) {
+    this.api.setProps(locale, apiToken);
   }
 
   /**
    * Get the instance of the {@link DataRepoService}
    * @param locale - The locale to use for the instance
+   * @param apiToken - The API token to use for the instance
    */
-  public static getInstance(locale: Locale): DataRepoService {
+  public static getInstance(locale: Locale, apiToken: string): DataRepoService {
     if (!DataRepoService.instance) {
-      DataRepoService.instance = new DataRepoService(locale);
+      DataRepoService.instance = new DataRepoService(locale, apiToken);
     } else {
-      // Update the locale if the instance already exists
-      DataRepoService.instance.setLocale(locale);
+      // Update the existing instance
+      DataRepoService.instance.api.setProps(locale, apiToken);
     }
     return DataRepoService.instance;
-  }
-
-  /**
-   * Set the locale for the service
-   * @param locale - The locale to set
-   */
-  public setLocale(locale: Locale) {
-    this.locale = locale;
   }
 
   /**
@@ -73,16 +63,9 @@ class DataRepoService {
   async fetchAllDataRepositories(): Promise<DataRepositoriesAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleDataRepos };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/data-repositories`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      )) as DataRepositoriesAPIResponse;
+      const response = (await this.api.fetch(`/v1/data-repositories`, {
+        method: 'GET',
+      })) as DataRepositoriesAPIResponse;
 
       return response;
     } catch (error) {
@@ -122,17 +105,11 @@ class DataRepoService {
         formData.append('tables', table);
       });
 
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/data-repositories/create`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: formData,
-        },
-        this.locale
-      )) as DataRepositoryAPIResponse;
+      const response = (await this.api.fetch(`/v1/data-repositories/create`, {
+        method: 'POST',
+
+        body: formData,
+      })) as DataRepositoryAPIResponse;
 
       return response;
     } catch (error) {
@@ -165,16 +142,13 @@ class DataRepoService {
       const formData = new FormData();
       formData.append('assignee', newOwner.id.toString());
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/data-repositories/${dataRepo.slug}/reassign`,
+      const response = await this.api.fetch(
+        `/v1/data-repositories/${dataRepo.slug}/reassign`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+
           body: formData,
-        },
-        this.locale
+        }
       );
       return response;
     } catch (error) {
@@ -200,16 +174,13 @@ class DataRepoService {
 
       formData.append('_method', 'DELETE');
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/data-repositories/${dataRepoSlug}/delete`,
+      const response = await this.api.fetch(
+        `/v1/data-repositories/${dataRepoSlug}/delete`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+
           body: formData,
-        },
-        this.locale
+        }
       );
 
       return response;
@@ -243,16 +214,13 @@ class DataRepoService {
         formData.append('tables', table);
       });
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/data-repositories/${dataRepoSlug}/update`,
+      const response = await this.api.fetch(
+        `/v1/data-repositories/${dataRepoSlug}/update`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+
           body: formData,
-        },
-        this.locale
+        }
       );
 
       return response;

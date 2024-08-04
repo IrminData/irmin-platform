@@ -33,7 +33,7 @@ export const useFetchDashboards = (
      *
      * @param forceFetch - If true, will refetch even if already fetched
      *
-     * @returns Error if the fetch fails
+     * @returns Void or Error if fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -43,7 +43,7 @@ export const useFetchDashboards = (
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
       // Get the dashboard service
-      const dashboardService = DashboardService.getInstance(locale);
+      const dashboardService = DashboardService.getInstance(locale, '');
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {
         setDashboards([]);

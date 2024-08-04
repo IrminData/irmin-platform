@@ -26,8 +26,10 @@ export default function DefineSync({
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const { locale, dict } = useLocale();
-  const connectionWorkflowService =
-    ConnectionWorkflowService.getInstance(locale);
+  const connectionWorkflowService = ConnectionWorkflowService.getInstance(
+    locale,
+    ''
+  );
 
   const { irminAlert } = usePopup();
 

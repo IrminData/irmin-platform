@@ -1,11 +1,10 @@
-import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/services/fetchWithCredentials';
+import { Locale } from '@/dictionaries';
+import IrminAPI from '@/services/IrminAPI';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { exampleAPIResponse } from '@/types/examples/apiObjects';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const api_base = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Authentication API service
@@ -14,32 +13,25 @@ const api_base = process.env.NEXT_PUBLIC_API_URL;
  */
 class AuthService {
   private static instance: AuthService;
-  private locale: Locale = defaultLocale;
+  private api: IrminAPI = IrminAPI.getInstance();
 
-  private constructor(locale: Locale) {
-    this.locale = locale;
+  private constructor(locale: Locale, apiToken: string) {
+    this.api.setProps(locale, apiToken);
   }
 
   /**
    * Get the instance of the {@link AuthService}
    * @param locale - The locale to use for the instance
+   * @param apiToken - The API token to use for the instance
    */
-  public static getInstance(locale: Locale): AuthService {
+  public static getInstance(locale: Locale, apiToken: string): AuthService {
     if (!AuthService.instance) {
-      AuthService.instance = new AuthService(locale);
+      AuthService.instance = new AuthService(locale, apiToken);
     } else {
-      // Update the locale if the instance already exists
-      AuthService.instance.setLocale(locale);
+      // Update the existing instance
+      AuthService.instance.api.setProps(locale, apiToken);
     }
     return AuthService.instance;
-  }
-
-  /**
-   * Set the locale for the instance
-   * @param locale - The locale to set
-   */
-  public setLocale(locale: Locale) {
-    this.locale = locale;
   }
 
   /**
@@ -55,14 +47,10 @@ class AuthService {
       const formData = new FormData();
       formData.append('email', email);
       formData.append('password', password);
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/login`,
-        {
-          method: 'POST',
-          body: formData,
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/login`, {
+        method: 'POST',
+        body: formData,
+      });
 
       return response;
     } catch (error) {
@@ -79,13 +67,9 @@ class AuthService {
   async logout(): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
     try {
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/logout`,
-        {
-          method: 'POST',
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/logout`, {
+        method: 'POST',
+      });
 
       return response;
     } catch (error) {
@@ -123,7 +107,7 @@ class AuthService {
       formData.append('password', password);
       formData.append('password_confirmation', passwordConfirmation);
 
-      const response = await fetchWithCredentials(`${api_base}/v1/register`, {
+      const response = await this.api.fetch(`/v1/register`, {
         method: 'POST',
         body: formData,
       });

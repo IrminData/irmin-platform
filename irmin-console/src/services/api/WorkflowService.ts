@@ -1,5 +1,5 @@
-import { defaultLocale, Locale } from '@/dictionaries';
-import { fetchWithCredentials } from '@/services/fetchWithCredentials';
+import { Locale } from '@/dictionaries';
+import IrminAPI from '@/services/IrminAPI';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import {
@@ -21,32 +21,27 @@ import {
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
-const api_base = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Workflow Runs API response type
- * @internal
  */
 interface WorkflowRunsAPIResponse extends IrminAPIResponse {
   data: WorkflowRun[];
 }
 /**
  * Connection Workflows API response type
- * @internal
  */
 interface ConnectionsAPIResponse extends IrminAPIResponse {
   data: ConnectionWorkflow[];
 }
 /**
  * Export Workflows API response type
- * @internal
  */
 interface ExportsAPIResponse extends IrminAPIResponse {
   data: ExportWorkflow[];
 }
 /**
  * Action Workflows API response type
- * @internal
  */
 interface ActionsAPIResponse extends IrminAPIResponse {
   data: ActionWorkflow[];
@@ -61,32 +56,25 @@ interface ActionsAPIResponse extends IrminAPIResponse {
  */
 class WorkflowService {
   private static instance: WorkflowService;
-  private locale: Locale = defaultLocale;
+  private api: IrminAPI = IrminAPI.getInstance();
 
-  private constructor(locale: Locale) {
-    this.locale = locale;
+  private constructor(locale: Locale, apiToken: string) {
+    this.api.setProps(locale, apiToken);
   }
 
   /**
    * Get the instance of the {@link WorkflowService}
    * @param locale - The locale to use for the instance
+   * @param apiToken - The API token to use for the instance
    */
-  public static getInstance(locale: Locale): WorkflowService {
+  public static getInstance(locale: Locale, apiToken: string): WorkflowService {
     if (!WorkflowService.instance) {
-      WorkflowService.instance = new WorkflowService(locale);
+      WorkflowService.instance = new WorkflowService(locale, apiToken);
     } else {
-      // Update the locale if the instance already exists
-      WorkflowService.instance.setLocale(locale);
+      // Update the existing instance
+      WorkflowService.instance.api.setProps(locale, apiToken);
     }
     return WorkflowService.instance;
-  }
-
-  /**
-   * Set the locale for the instance
-   * @param locale - The locale to set
-   */
-  public setLocale(locale: Locale) {
-    this.locale = locale;
   }
 
   /**
@@ -113,16 +101,9 @@ class WorkflowService {
       formData.append('documentation', workflow.documentation ?? '');
       formData.append('cron_syntax', workflow.cron_syntax ?? '');
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/workflows/update`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/workflows/update`, {
+        method: 'POST',
+      });
 
       return response;
     } catch (error) {
@@ -149,16 +130,9 @@ class WorkflowService {
       formData.append('_method', 'DELETE');
       formData.append('workflow', workflowId.toString());
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/workflows/delete`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/workflows/delete`, {
+        method: 'POST',
+      });
 
       return response;
     } catch (error) {
@@ -184,16 +158,9 @@ class WorkflowService {
       formData.append('_method', 'PATCH');
       formData.append('workflow', workflowId.toString());
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/workflows/pause`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/workflows/pause`, {
+        method: 'POST',
+      });
 
       return response;
     } catch (error) {
@@ -219,16 +186,9 @@ class WorkflowService {
       formData.append('_method', 'PATCH');
       formData.append('workflow', workflowId.toString());
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/workflows/resume`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/workflows/resume`, {
+        method: 'POST',
+      });
 
       return response;
     } catch (error) {
@@ -257,16 +217,9 @@ class WorkflowService {
       formData.append('workflow', workflow.id.toString());
       formData.append('assignee', newOwner.id.toString());
 
-      const response = await fetchWithCredentials(
-        `${api_base}/v1/workflows/reassign`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      );
+      const response = await this.api.fetch(`/v1/workflows/reassign`, {
+        method: 'POST',
+      });
 
       return response;
     } catch (error) {
@@ -287,16 +240,9 @@ class WorkflowService {
     if (isOfflineMode)
       return { ...exampleAPIResponse, data: exampleWorkflowRuns };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/workflows/runs`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      )) as WorkflowRunsAPIResponse;
+      const response = (await this.api.fetch(`/v1/workflows/runs`, {
+        method: 'GET',
+      })) as WorkflowRunsAPIResponse;
       return response;
     } catch (error) {
       console.error('Fetch workflow runs error:', error);
@@ -326,15 +272,11 @@ class WorkflowService {
           exampleWorkflowRuns,
       };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/workflows/${workflowId}/runs`,
+      const response = (await this.api.fetch(
+        `/v1/workflows/${workflowId}/runs`,
         {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
+        }
       )) as WorkflowRunsAPIResponse;
       return response;
     } catch (error) {
@@ -360,16 +302,9 @@ class WorkflowService {
     if (isOfflineMode)
       return { ...exampleAPIResponse, data: exampleConnections };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/connections`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      )) as ConnectionsAPIResponse;
+      const response = (await this.api.fetch(`/v1/connections`, {
+        method: 'GET',
+      })) as ConnectionsAPIResponse;
       return response;
     } catch (error) {
       console.error('Fetch connections error:', error);
@@ -387,16 +322,9 @@ class WorkflowService {
   async fetchExports(): Promise<ExportsAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleExports };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/exports`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      )) as ExportsAPIResponse;
+      const response = (await this.api.fetch(`/v1/exports`, {
+        method: 'GET',
+      })) as ExportsAPIResponse;
       return response;
     } catch (error) {
       console.error('Fetch exports error:', error);
@@ -413,16 +341,9 @@ class WorkflowService {
   async fetchActions(): Promise<ActionsAPIResponse> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleActions };
     try {
-      const response = (await fetchWithCredentials(
-        `${api_base}/v1/actions`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        this.locale
-      )) as ActionsAPIResponse;
+      const response = (await this.api.fetch(`/v1/actions`, {
+        method: 'GET',
+      })) as ActionsAPIResponse;
       return response;
     } catch (error) {
       console.error('Fetch actions error:', error);

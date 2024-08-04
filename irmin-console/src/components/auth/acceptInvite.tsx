@@ -41,7 +41,7 @@ const AcceptInvite = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const inviteService = InviteService.getInstance(locale);
+  const inviteService = InviteService.getInstance(locale, '');
 
   const handleAcceptInvite = async () => {
     setLoading(true);

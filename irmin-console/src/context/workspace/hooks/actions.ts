@@ -34,7 +34,7 @@ export const useFetchActions = (
      *
      * @param forceFetch - If true, will refetch even if already fetched
      *
-     * @returns Error if the fetch fails
+     * @returns Void or Error if fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -44,7 +44,7 @@ export const useFetchActions = (
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
       // Get the workflow service
-      const workflowService = WorkflowService.getInstance(locale);
+      const workflowService = WorkflowService.getInstance(locale, '');
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {
         setActions([]);
