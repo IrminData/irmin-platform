@@ -9,6 +9,8 @@ import {
 } from '@/types/examples/apiObjects';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
+const isDevelopment =
+  process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
 /**
@@ -57,7 +59,7 @@ class ProfileService {
   /**
    * Get the user's profile information
    * {@link https://api.irmin.dev/docs#account-GETv1-account-profile | Irmin API docs}
-   * @returns Returns the user's profile information or null if the user is not logged in
+   * @returns user's profile information or null if the user is not logged in
    */
   async getProfile(): Promise<ProfileAPIResponse | null> {
     if (isOfflineMode) return { ...exampleAPIResponse, data: exampleProfile };
@@ -77,8 +79,34 @@ class ProfileService {
         console.log("User isn't logged in");
         return null;
       }
-      // If not, log and throw the error
+      // Otherwise, log the error
       console.error('Get profile error:', error);
+      // Ignore any other errors if in development mode
+      if (isDevelopment) return { ...exampleAPIResponse, data: exampleProfile };
+      // Otherwise, throw the error
+      throw error;
+    }
+  }
+
+  /**
+   * Regenerate the user's API token
+   * {@link https://api.irmin.dev/docs#miscellaneous-POSTv1-regenerate-token | Irmin API docs}
+   * @returns response from the API or example data
+   */
+  async regenerateToken(): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
+    try {
+      const response = await fetchWithCredentials(
+        `${api_base}/v1/regenerate-token`,
+        {
+          method: 'POST',
+        },
+        this.locale
+      );
+      return response;
+    } catch (error) {
+      console.error('Regenerate token error:', error);
+      if (isDevelopment) return exampleAPIResponse;
       throw error;
     }
   }
@@ -115,6 +143,7 @@ class ProfileService {
       return response;
     } catch (error) {
       console.error('Update profile error:', error);
+      if (isDevelopment) return exampleAPIResponse;
       throw error;
     }
   }

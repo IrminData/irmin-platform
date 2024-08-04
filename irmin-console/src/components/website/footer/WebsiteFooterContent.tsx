@@ -63,7 +63,8 @@ export default function WebsiteFooterContent({
     <section className='mt-12 bg-irmin_black'>
       <div className='container mx-auto max-w-7xl px-2 md:px-4 xl:px-0'>
         <div className='flex flex-wrap justify-center gap-y-12 py-6 md:flex-row md:items-start md:justify-start md:pt-12 xl:pt-24'>
-          <div className='min-w-72 sm:w-[40%] md:w-1/4 md:pl-2 xl:w-1/6'>
+          {/* Logo, description and language switcher */}
+          <div className='order-1 min-w-72 sm:w-[40%] md:w-1/4 md:pl-2 xl:w-1/6 xl:min-w-96'>
             <div className='flex flex-col items-start'>
               <Link className='mb-8 inline-block' href='#'>
                 <Image
@@ -84,8 +85,9 @@ export default function WebsiteFooterContent({
               </div>
             </div>
           </div>
-          <div className='order-3 min-w-72 sm:w-full md:order-2 md:w-fit md:max-w-[50%] xl:max-w-[62%]'>
-            <div className='flex flex-wrap justify-center gap-4'>
+          {/* Footer links */}
+          <div className='order-2 min-w-72 sm:w-full md:w-fit md:max-w-[50%] xl:min-w-96 xl:max-w-[62%]'>
+            <div className='flex flex-wrap justify-between gap-4 sm:justify-center'>
               {sections.map((section, idx) => (
                 <FooterLinkSection
                   key={`website-footer-link-section-${idx}`}
@@ -95,9 +97,10 @@ export default function WebsiteFooterContent({
               ))}
             </div>
           </div>
-          <div className='order-2 min-w-72 overflow-hidden sm:w-[40%] md:order-3 md:ml-auto md:w-1/4 md:pr-2 xl:w-1/6'>
+          {/* Newsletter subscription form */}
+          <div className='order-3 min-w-72 overflow-hidden sm:w-[40%] md:ml-auto md:w-1/4 md:pr-2 lg:order-3 xl:w-1/6 xl:min-w-96'>
             <div className='flex flex-col items-start'>
-              <div className='max-w-56'>
+              <div className='max-w-64'>
                 <h3 className='mb-3 text-left text-lg font-medium text-white text-opacity-80'>
                   {dict.website.footer.newsletter.title}
                 </h3>
@@ -105,7 +108,7 @@ export default function WebsiteFooterContent({
                   {dict.website.footer.newsletter.subtitle}
                 </p>
               </div>
-              <div className='flex w-full max-w-sm flex-row justify-stretch gap-0 align-middle md:mx-0'>
+              <div className='flex w-full flex-row justify-stretch gap-0 align-middle md:mx-0'>
                 <Input
                   size='sm'
                   colorScheme='secondary'

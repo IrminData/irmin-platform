@@ -11,7 +11,7 @@ type WorkflowableType = 'connection' | 'action' | 'export';
 /**
  * Workflow type
  *
- * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type
+ * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  *
  * @typeParam id - Workflow ID
  * @typeParam name - Workflow name
@@ -61,7 +61,7 @@ export type ActionWorkflow = Workflow & { workflowable: Action };
 /**
  * Workflow run type, single execution of a workflow
  *
- * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type
+ * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  *
  * @typeParam id - Workflow run ID
  * @typeParam workflow_id - ID of the workflow that was run

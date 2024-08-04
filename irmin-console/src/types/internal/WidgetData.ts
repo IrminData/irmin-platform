@@ -6,7 +6,7 @@ export type WidgetData = ChartOrTableWidgetData | MetricWidgetData;
 /**
  * Data for a chart or table widget
  *
- * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type to view example
+ * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  *
  * @typeParam labels - Labels for the data
  * @typeParam datasets - Data for the chart or table
@@ -24,7 +24,7 @@ export type ChartOrTableWidgetData = {
 /**
  * Data for a metric widget
  *
- * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type to view example
+ * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  *
  * @typeParam currentValue - Current value of the metric
  * @typeParam label - Label for the metric

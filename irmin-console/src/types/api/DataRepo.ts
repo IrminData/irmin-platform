@@ -4,7 +4,7 @@ import { WorkspaceUser } from '@/types/api/Workspace';
 /**
  * DataRepo type
  *
- * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type to view example
+ * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  *
  * @typeParam id - DataRepo ID
  * @typeParam name - Name of the Data Repository

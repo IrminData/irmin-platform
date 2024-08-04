@@ -1,4 +1,4 @@
-<img src="https://github.com/IrminData/irmin-frontend/blob/development/public/irmin-logo-light.svg" width="200">
+<img src="https://github.com/IrminData/.github/blob/development/irmin-logo-light.svg" width="200">
 
 # Irmin web (irmin-frontend)
 
@@ -75,6 +75,7 @@ NEXT_PUBLIC_API_URL=https://api.irmin.dev  # API endpoint URL
 NEXT_PUBLIC_OFFLINE_MODE=false  # Toggle offline mode
 NEXT_PUBLIC_WORDPRESS_URL=https://cms.irmin.dev  # WordPress CMS URL
 NEXT_PUBLIC_ENVIRONMENT_TYPE=development  # Environment type
+NEXT_PUBLIC_TOKEN_MAX_AGE=1800 # 30 minutes, how long are the token and profile data valid, before they are refetched
 ```
 
 ## Running the Project
@@ -192,6 +193,11 @@ When creating a new context, ensure it follows the same structure as the existin
 [IAMContext](src/context/IAMContext.tsx)
 
 IAMContext is used to manage the user profile state across the application. It provides the user profile data, function to refetch and update the user profile data. It also provides functions to login, register and logout the user.
+
+IAMContext also fetches and stores the users API token. This token and the profile data are valid for NEXT_PUBLIC_TOKEN_MAX_AGE seconds. If the token is expired, the application will automatically refetch the token and profile data. If no profile data is available, the application will automatically log the user out.
+
+Irmin API normally sets a cookie on the API domain when the user logs in. This cookie is used to authenticate the user on the API.
+The User's token fetched and stored, to make requests to the API on the server side, since the cookie is not available on the server side.
 
 IAMProvider is wrapping the root layout of the application.
 

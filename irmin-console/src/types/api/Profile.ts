@@ -1,3 +1,6 @@
+import { IrminRole } from '@/types/api/IrminRole';
+import { Workspace } from '@/types/api/Workspace';
+
 /**
  * Irmin user profile type
  *
@@ -5,7 +8,7 @@
  * WorkspaceUser is used to represent a user in the context of a workspace - used to access workspace functionality.
  * Profile is used to represent a user's profile in the Irmin system - used for sign in etc.
  *
- * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type to view example
+ * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  *
  * @typeParam id - Profile's ID
  * @typeParam name - Profile's name
@@ -13,8 +16,9 @@
  * @typeParam email - Profile's email
  * @typeParam profile_picture - URL of profile picture (can be base64 encoded data URL)
  * @typeParam email_verified_at - Timestamp of email verification
- * @typeParam created_at - Timestamp of when the profile was created
- * @typeParam updated_at - Timestamp of when the profile was last updated
+ * @typeParam workspace - The currently active workspace of the user
+ * @typeParam roles - Array of roles user has in the currently active workspace
+ * @typeParam api_token - API token for the user
  */
 export interface Profile {
   id: number;
@@ -23,6 +27,7 @@ export interface Profile {
   email: string;
   profile_picture?: string | null;
   email_verified_at?: string | null;
-  created_at: string;
-  updated_at: string;
+  workspace?: Workspace | null;
+  roles?: IrminRole[] | null;
+  api_token?: string | null;
 }

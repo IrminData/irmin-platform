@@ -1,6 +1,6 @@
 /**
  * Single Bucket type
- * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type to view example
+ * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  */
 export interface Bucket {
   slug: string;
@@ -11,7 +11,7 @@ export interface Bucket {
 /**
  * Bucket Folder type
  *
- * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type to view example
+ * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  *
  * @param bucket - Slug of the bucket this folder is in
  * @param name - Name of the folder
@@ -36,7 +36,7 @@ export type IrminFileType = (typeof irminFileTypes)[number];
 /**
  * Bucket File type
  *
- * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type to view example
+ * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  *
  * @param bucket - Slug of the bucket this file is in
  * @param name - Name of the file

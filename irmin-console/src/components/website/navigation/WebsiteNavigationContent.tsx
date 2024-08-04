@@ -219,7 +219,7 @@ export default function WebsiteNavigationContent({
                         size='sm'
                         variant='gradient'
                         colorScheme='secondary'
-                        className='min-w-32 py-2 pl-6 pr-3 text-xs font-light md:text-sm xl:text-base'
+                        className='min-w-32 py-2 pl-6 pr-3 text-xs font-light md:text-sm xl:text-sm'
                         href='/portal'
                         iconFirst={false}
                         icon={<IoEnterOutline size={24} className='ml-1' />}
@@ -233,7 +233,7 @@ export default function WebsiteNavigationContent({
                         size='sm'
                         variant='gradient'
                         colorScheme='light'
-                        className='min-w-32 py-2 text-xs font-light md:text-sm xl:text-base'
+                        className='min-w-32 py-2 text-xs font-light md:text-sm xl:text-sm'
                         href='/sign-in'
                         onClick={closeMenu}
                       >
@@ -243,11 +243,11 @@ export default function WebsiteNavigationContent({
                         size='sm'
                         variant='gradient'
                         colorScheme='secondary'
-                        className='min-w-32 py-2 pl-6 pr-3 text-xs font-light md:text-sm xl:text-base'
+                        className='min-w-32 py-2 pl-6 pr-3 text-xs font-light md:text-sm xl:text-sm'
                         href='/sign-up'
                         onClick={closeMenu}
                         iconFirst={false}
-                        icon={<IoEnterOutline size={24} className='mr-1' />}
+                        icon={<IoEnterOutline size={24} className='ml-1' />}
                       >
                         {dict.website.navigation.getStarted}
                       </Button>
@@ -298,7 +298,7 @@ export default function WebsiteNavigationContent({
                       variant='gradient'
                       className='w-full'
                       onClick={closeMenu}
-                      icon={<IoEnterOutline size={24} className='mr-1' />}
+                      icon={<IoEnterOutline size={24} className='ml-1' />}
                     >
                       {dict.website.navigation.goToPortal}
                     </Button>
@@ -321,7 +321,7 @@ export default function WebsiteNavigationContent({
                         variant='gradient'
                         onClick={closeMenu}
                         className='w-full'
-                        icon={<IoEnterOutline size={24} className='mr-1' />}
+                        icon={<IoEnterOutline size={24} className='ml-1' />}
                       >
                         {dict.website.navigation.getStarted}
                       </Button>

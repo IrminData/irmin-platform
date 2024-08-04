@@ -8,7 +8,7 @@ export type WidgetType = 'line' | 'bar' | 'table' | 'metric';
 /**
  * Widget type
  *
- * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type to view example
+ * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  *
  * @todo
  *

@@ -30,6 +30,8 @@ const SignIn = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
+    setSuccess(null);
     setLoading(true);
     await login(email, password, setSuccess, setError);
     setLoading(false);

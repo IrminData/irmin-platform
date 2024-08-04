@@ -255,50 +255,6 @@ export const exampleRoles: IrminRole[] = [
 ];
 
 /**
- * Example user profile
- */
-export const exampleProfile: Profile = {
-  id: 0,
-  name: 'Joe Biden',
-  company: 'Example Inc.',
-  email: 'joe.biden@example.com',
-  profile_picture: '/ui-assets/elements/avatar.webp',
-  email_verified_at: new Date().toDateString(),
-  created_at: new Date().toDateString(),
-  updated_at: new Date().toDateString(),
-};
-
-/**
- * Example invites
- */
-export const exampleInvites: Invite[] = [
-  {
-    id: 0,
-    name: 'Petteri Orpo',
-    email: 'petteri@example.com',
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
-    role: exampleRoles[2],
-  },
-  {
-    id: 1,
-    name: 'Sanna Marin',
-    email: 'sanna@example.com',
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
-    role: exampleRoles[1],
-  },
-  {
-    id: 2,
-    name: 'Juha Sipilä',
-    email: 'juha@example.com',
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
-    role: exampleRoles[4],
-  },
-];
-
-/**
  * Example workspaces
  */
 export const exampleWorkspaces: Workspace[] = [
@@ -342,13 +298,55 @@ export const exampleWorkspaces: Workspace[] = [
 ];
 
 /**
+ * Example user profile
+ */
+export const exampleProfile: Profile = {
+  id: 0,
+  name: 'Joe Biden',
+  company: 'Example Inc.',
+  email: 'joe.biden@example.com',
+  profile_picture: '/ui-assets/elements/avatar.webp',
+  email_verified_at: new Date().toDateString(),
+  workspace: exampleWorkspaces[0],
+  roles: [exampleRoles[0]],
+  api_token: 'offline',
+};
+
+/**
+ * Example invites
+ */
+export const exampleInvites: Invite[] = [
+  {
+    id: 0,
+    name: 'Petteri Orpo',
+    email: 'petteri@example.com',
+    created_at: new Date().toDateString(),
+    updated_at: new Date().toDateString(),
+    role: exampleRoles[2],
+  },
+  {
+    id: 1,
+    name: 'Sanna Marin',
+    email: 'sanna@example.com',
+    created_at: new Date().toDateString(),
+    updated_at: new Date().toDateString(),
+    role: exampleRoles[1],
+  },
+  {
+    id: 2,
+    name: 'Juha Sipilä',
+    email: 'juha@example.com',
+    created_at: new Date().toDateString(),
+    updated_at: new Date().toDateString(),
+    role: exampleRoles[4],
+  },
+];
+
+/**
  * Example workspace users
  */
 export const exampleWorkspaceUsers: WorkspaceUser[] = [
-  {
-    ...exampleProfile,
-    roles: [exampleRoles[0]],
-  },
+  exampleProfile,
   {
     id: 1,
     name: 'John Doe',
@@ -356,8 +354,6 @@ export const exampleWorkspaceUsers: WorkspaceUser[] = [
     email: 'john.doe@example.com',
     profile_picture: '/ui-assets/elements/avatar.webp',
     email_verified_at: null,
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
     roles: [exampleRoles[1]],
   },
   {
@@ -367,8 +363,6 @@ export const exampleWorkspaceUsers: WorkspaceUser[] = [
     email: 'jane.doe@example.com',
     profile_picture: '/ui-assets/elements/avatar.webp',
     email_verified_at: null,
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
     roles: [exampleRoles[2]],
   },
   {
@@ -378,8 +372,6 @@ export const exampleWorkspaceUsers: WorkspaceUser[] = [
     email: 'jack.doe@example.com',
     profile_picture: '/ui-assets/elements/avatar.webp',
     email_verified_at: null,
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
     roles: [exampleRoles[3]],
   },
 ];

@@ -51,7 +51,7 @@ export default async function WebsiteHeroSection({
           backgroundPosition: 'center',
         }}
       >
-        <div className='container mx-auto flex min-h-[60vh] max-w-7xl items-end justify-center px-4 pb-12'>
+        <div className='container mx-auto flex min-h-[60vh] max-w-7xl items-end justify-center px-4 pb-12 lg:pb-24'>
           <div className='w-full max-w-3xl text-center'>
             <h1 className='mb-6 text-3xl font-bold leading-tight tracking-tighter md:text-4xl lg:text-6xl'>
               {section.title_parts.map((titlePart, index) => (
