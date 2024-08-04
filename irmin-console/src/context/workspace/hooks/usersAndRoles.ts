@@ -22,6 +22,8 @@ export const useFetchRoles = (
   useCallback(
     /**
      * Fetch and update context for roles available on Irmin using the {@link UserAndRoleService}.
+     *
+     * @returns Error if the fetch fails
      */
     async () => {
       // Get the User and Role service
@@ -70,6 +72,8 @@ export const useFetchUsers = (
      * using the {@link UserAndRoleService}.
      *
      * @param forceFetch - If true, will refetch even if already fetched
+     *
+     * @returns Error if the fetch fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -92,8 +96,10 @@ export const useFetchUsers = (
         // Fetch the data
         const response = await userService.fetchAllUsers();
         setUsers(response.data);
-      } finally {
         setLoading(false);
+      } catch (e) {
+        setLoading(false);
+        throw e;
       }
     },
     [
@@ -127,6 +133,7 @@ export const useDeleteUser = (
      * @param id - The ID of the user to delete.
      *
      * @returns Irmin API response.
+     * @returns Error if the user delete fails
      */
     async (id: number): Promise<IrminAPIResponse> => {
       // Get the User and Role service
@@ -162,6 +169,7 @@ export const useChangeUserRole = (
      * @param role - The new role to assign to the user.
      *
      * @returns Irmin API response.
+     * @returns Error if the user role change fails
      */
     async (id: number, role: IrminRoleNames): Promise<IrminAPIResponse> => {
       // Get the User and Role service

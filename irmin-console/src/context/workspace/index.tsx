@@ -2,6 +2,8 @@
 
 import { createContext, useContext } from 'react';
 
+import { WorkspaceProvider } from '@/context/workspace/WorkspaceProvider';
+
 import { Dashboard } from '@/types/api/Dashboard';
 import { DataRepo } from '@/types/api/DataRepo';
 import { Invite } from '@/types/api/Invite';
@@ -11,6 +13,7 @@ import {
   ActionWorkflow,
   ConnectionWorkflow,
   ExportWorkflow,
+  Workflow,
   WorkflowRun,
 } from '@/types/api/Workflow';
 import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
@@ -18,7 +21,7 @@ import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
 /**
  * Context for the workspace
  */
-export const WorkspaceContext = createContext<{
+const WorkspaceContext = createContext<{
   workspaceLoading: boolean;
   irminRoles: IrminRole[];
   workspaces: {
@@ -85,12 +88,35 @@ export const WorkspaceContext = createContext<{
     dataRepositories: DataRepo[];
     isLoading: boolean;
     fetchDataRepositories: (_forceFetch?: boolean) => void;
+    createDataRepository: (_dataRepo: DataRepo) => Promise<IrminAPIResponse>;
+    updateDataRepository: (
+      _dataRepoSlug: string,
+      _updatedDataRepo: DataRepo
+    ) => Promise<IrminAPIResponse>;
+    deleteDataRepository: (_dataRepoSlug: string) => Promise<IrminAPIResponse>;
+    reassignDataRepository: (
+      _dataRepo: DataRepo,
+      _newOwner: WorkspaceUser
+    ) => Promise<IrminAPIResponse>;
   };
-  workflowRuns: {
+  workflows: {
     workflowRuns: WorkflowRun[];
-    isLoading: boolean;
+    workflowRunsLoading: boolean;
     fetchWorkflowRuns: (_forceFetch?: boolean) => void;
     fetchWorkflowRunsByWorkflow: (_workflowId: number) => void;
+    updateWorkflow: (
+      _workflowId: number,
+      _updatedWorkflow: Workflow
+    ) => Promise<IrminAPIResponse | undefined>;
+    deleteWorkflow: (
+      _workflowId: number
+    ) => Promise<IrminAPIResponse | undefined>;
+    pauseWorkflow: (
+      _workflowId: number
+    ) => Promise<IrminAPIResponse | undefined>;
+    resumeWorkflow: (
+      _workflowId: number
+    ) => Promise<IrminAPIResponse | undefined>;
   };
 }>({
   workspaceLoading: false,
@@ -146,22 +172,35 @@ export const WorkspaceContext = createContext<{
     dataRepositories: [],
     isLoading: false,
     fetchDataRepositories: () => {},
+    createDataRepository: () => Promise.resolve({}),
+    updateDataRepository: () => Promise.resolve({}),
+    deleteDataRepository: () => Promise.resolve({}),
+    reassignDataRepository: () => Promise.resolve({}),
   },
-  workflowRuns: {
+  workflows: {
     workflowRuns: [],
-    isLoading: false,
+    workflowRunsLoading: false,
     fetchWorkflowRuns: () => {},
     fetchWorkflowRunsByWorkflow: () => {},
+    updateWorkflow: () => Promise.resolve({}),
+    deleteWorkflow: () => Promise.resolve({}),
+    pauseWorkflow: () => Promise.resolve({}),
+    resumeWorkflow: () => Promise.resolve({}),
   },
 });
 
 /**
  * Hook to use the workspace context
  */
-export const useWorkspace = () => {
+const useWorkspace = () => {
   const context = useContext(WorkspaceContext);
   if (!context) {
     throw new Error('useWorkspace must be used within a WorkspaceProvider');
   }
   return context;
 };
+
+/**
+ * Provide entry point for the Workspace context
+ */
+export { useWorkspace, WorkspaceContext, WorkspaceProvider };

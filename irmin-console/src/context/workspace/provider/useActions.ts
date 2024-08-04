@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
-import { useFetchActions } from '@/context/workspace';
+import { useFetchActions } from '@/context/workspace/hooks/actions';
 
 import { ActionWorkflow } from '@/types/api/Workflow';
 import { Workspace } from '@/types/api/Workspace';
@@ -48,6 +48,7 @@ const useActions = ({
     actions,
     actionsLoading,
     fetchActions,
+    setActions,
   };
 };
 

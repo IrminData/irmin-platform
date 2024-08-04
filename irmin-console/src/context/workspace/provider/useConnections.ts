@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
-import { useFetchConnections } from '@/context/workspace';
+import { useFetchConnections } from '@/context/workspace/hooks/connections';
 
 import { ConnectionWorkflow } from '@/types/api/Workflow';
 import { Workspace } from '@/types/api/Workspace';
@@ -48,6 +48,7 @@ const useConnections = ({
     connections,
     connectionsLoading,
     fetchConnections,
+    setConnections,
   };
 };
 

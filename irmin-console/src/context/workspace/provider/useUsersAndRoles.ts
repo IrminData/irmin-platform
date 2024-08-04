@@ -9,7 +9,7 @@ import {
   useDeleteUser,
   useFetchRoles,
   useFetchUsers,
-} from '@/context/workspace';
+} from '@/context/workspace/hooks/usersAndRoles';
 
 import { IrminRole } from '@/types/api/IrminRole';
 import { Workspace, WorkspaceUser } from '@/types/api/Workspace';

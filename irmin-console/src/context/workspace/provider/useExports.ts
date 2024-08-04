@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
-import { useFetchExports } from '@/context/workspace';
+import { useFetchExports } from '@/context/workspace/hooks/exports';
 
 import { ExportWorkflow } from '@/types/api/Workflow';
 import { Workspace } from '@/types/api/Workspace';
@@ -48,6 +48,7 @@ const useExports = ({
     exports,
     exportsLoading,
     fetchExports,
+    setExports,
   };
 };
 

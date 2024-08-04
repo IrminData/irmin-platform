@@ -27,6 +27,8 @@ export const useFetchWorkspaces = (
   useCallback(
     /**
      * Fetch and update context for workspaces using the {@link WorkspaceService}.
+     *
+     * @returns Error if the fetch fails
      */
     async () => {
       // Get the workspace service
@@ -38,11 +40,11 @@ export const useFetchWorkspaces = (
         setWorkspaceLoading(true);
         const data = await workspaceService.fetchWorkspaces();
         setWorkspaces(data.data ?? []);
+        setWorkspaceLoading(false);
       } catch (error) {
+        setWorkspaceLoading(false);
         console.error('Error fetching workspaces:', error);
         throw error;
-      } finally {
-        setWorkspaceLoading(false);
       }
     },
     [setWorkspaces, workspaceLoading, setWorkspaceLoading, locale]
@@ -57,9 +59,12 @@ export const useCreateWorkspace = (locale: Locale) =>
   useCallback(
     /**
      * Create new workspace using the {@link WorkspaceService}.
+     *
      * @param newWorkspaceName - The name of the new workspace.
      * @param newWorkspaceDescription - The description of the new workspace.
+     *
      * @returns Irmin API response.
+     * @returns Error if the creation fails
      */
     async (newWorkspaceName: string, newWorkspaceDescription: string) => {
       // Get the workspace service
@@ -83,8 +88,11 @@ export const useUpdateWorkspace = (locale: Locale) =>
   useCallback(
     /**
      * Update exisiting workspace using the {@link WorkspaceService}.
+     *
      * @param workspace - The workspace data to update.
+     *
      * @returns Irmin API response.
+     * @returns Error if the update fails
      */
     async (workspace: Workspace) => {
       // Get the workspace service
@@ -126,7 +134,10 @@ export const useSwitchWorkspace = (
     /**
      * Switch user to a different workspace using the {@link WorkspaceService}.
      * Refetches and sets the state of the current workspace.
+     *
      * @param workspaceSlug - The slug of the workspace to switch to.
+     *
+     * @returns Error if the switch fails.
      */
     async (workspaceSlug: string | null) => {
       try {
@@ -179,8 +190,10 @@ export const useSwitchWorkspace = (
             throw new Error('Switching workspace failed');
           }
         }
-      } finally {
         setWorkspaceLoading(false);
+      } catch (error) {
+        setWorkspaceLoading(false);
+        throw error;
       }
     },
     [
@@ -218,7 +231,9 @@ export const useTransferOwnership = (
     /**
      * Transfer ownership of the current workspace to a new owner using the {@link WorkspaceService}.
      * @param newOwner - The ID of the new owner.
+     *
      * @returns Irmin API response.
+     * @returns Error if the transfer fails.
      */
     async (newOwner: number): Promise<IrminAPIResponse> => {
       // Get the workspace service
@@ -259,7 +274,9 @@ export const useDeleteCurrentWorkspace = (
   useCallback(
     /**
      * Delete the current workspace and update the context state using the {@link WorkspaceService}.
+     *
      * @returns Irmin API response.
+     * @returns Error if the deletion fails.
      */
     async (): Promise<IrminAPIResponse> => {
       const workspaceService = WorkspaceService.getInstance(locale);

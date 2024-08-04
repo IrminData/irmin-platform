@@ -189,7 +189,7 @@ When creating a new context, ensure it follows the same structure as the existin
 
 ### Identity and Access Management (IAMContext)
 
-[src/context/IAMContext.tsx](src/context/IAMContext.tsx)
+[IAMContext](src/context/IAMContext.tsx)
 
 IAMContext is used to manage the user profile state across the application. It provides the user profile data, function to refetch and update the user profile data. It also provides functions to login, register and logout the user.
 
@@ -204,7 +204,7 @@ This context provides the application with logic to communicate with the [Auth A
 
 ### LocaleContext
 
-[src/context/LocaleContext.tsx](src/context/LocaleContext.tsx)
+[LocaleContext](src/context/LocaleContext.tsx)
 
 LocaleContext is used to manage the locale and translations state across the application. It provides the current locale, current dictionary, and a function to change the locale. LocaleProvider is wrapping the root layout of the application.
 
@@ -212,7 +212,7 @@ See (Internationalisation)[#internationalisation] for more information.
 
 ### PopupContext
 
-[src/context/PopupContext.tsx](src/context/PopupContext.tsx)
+[PopupContext](src/context/PopupContext.tsx)
 
 PopupContext is used to manage the popup state across the application. It provides functions to open and close different popups. PopupProvider is wrapping the [Portal Layout](src/app/[lang]/portal/layout.tsx) of the application, since it is only used in the portal.
 
@@ -222,7 +222,7 @@ The popup UIs can be found in the `src/components/misc` directory.
 
 ### BucketContext
 
-[src/context/BucketContext.tsx](src/context/BucketContext.tsx)
+[BucketContext](src/context/BucketContext.tsx)
 
 BucketContext is used to manage the bucket and file navigator state across the application. It provides the bucket data, file navigator data, and a lot of functions around them.
 
@@ -232,20 +232,22 @@ See [Bucket API Service](src/services/api/BucketService.ts) and [the Editor](src
 
 ### WorkspaceContext
 
-[src/context/workspace/WorkspaceContext.tsx](src/context/workspace/WorkspaceContext.tsx)
+[WorkspaceContext](src/context/workspace/index.tsx)
 
 This context is responsible for managing the workspace state and data across the application. 
 In addition, it provides the application with logic to communicate with:
 
-- [Workspace API Service](src/services/api/WorkspaceService.ts)
-- [Dashboard API Service](src/services/api/DashboardService.ts)
-- [Workflow API Service](src/services/api/WorkflowService.ts)
-- [Connection Workflow API Service](src/services/api/ConnectionWorkflowService.ts)
-- [Export Workflow API Service](src/services/api/ExportWorkflowService.ts)
 - [Action Workflow API Service](src/services/api/ActionWorkflowService.ts)
-- [DataRepo API Service](src/services/api/DataRepoService.ts)
+- [Connection Workflow API Service](src/services/api/ConnectionWorkflowService.ts)
+- [Connector API Service](src/services/api/ConnectorService.ts)
+- [Dashboard API Service](src/services/api/DashboardService.ts)
+- [Data Repository API Service](src/services/api/DataRepoService.ts)
+- [Export Workflow API Service](src/services/api/ExportWorkflowService.ts)
 - [Invite API Service](src/services/api/InviteService.ts)
 - [User and Role API Service](src/services/api/UserAndRoleService.ts)
+- [Widget API Service](src/services/api/WidgetService.ts)
+- [Workflow API Service](src/services/api/WorkflowService.ts)
+- [Workspace API Service](src/services/api/WorkspaceService.ts)
 
 The context, hooks, provider etc. are split into multiple files for clarity and to avoid any single file becoming too large.
 

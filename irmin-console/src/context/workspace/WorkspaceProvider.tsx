@@ -14,31 +14,14 @@ import useDataRepositories from '@/context/workspace/provider/useDataRepositorie
 import useExports from '@/context/workspace/provider/useExports';
 import useInvite from '@/context/workspace/provider/useInvite';
 import useUsersAndRoles from '@/context/workspace/provider/useUsersAndRoles';
+import useWorkflows from '@/context/workspace/provider/useWorkflows';
 import useWorkspaces from '@/context/workspace/provider/useWorkspaces';
 
-import useWorkflowRuns from './provider/useWorkflowRuns';
-
 /**
- * Workspace context provider
- *
- * @remarks
- *
  * Provider for the workspace context to handle workspace data.
- * It fetches the workspace data from the API and provides it to the app.
  *
- * Domains handled by the context:
- *  workspaces - available workspaces
- *  current workspace - the currently selected workspace
- *  users - workspace's existing users
- *  invites - workspace's existing invites
- *  roles - available roles on Irmin
- *  dashboards - workspace's existing dashboards
- *  connections - workspace's existing connections
- *  exports - workspace's existing export processes
- *  actions - workspace's existing actions
- *  dataRepositories - workspace's existing dataRepositories
- *
- * It also provides methods to switch workspaces and delete the current workspace.
+ * It fetches the workspace related data from the API, provides it to the app,
+ * and provides functions to interact with the workspace data and API services.
  */
 export const WorkspaceProvider = ({
   children,
@@ -69,19 +52,20 @@ export const WorkspaceProvider = ({
   } = useWorkspaces({ locale });
 
   // Actions
-  const { actions, actionsLoading, fetchActions } = useActions({
+  const { actions, actionsLoading, fetchActions, setActions } = useActions({
     currentWorkspace,
     locale,
   });
 
   // Connections
-  const { connections, connectionsLoading, fetchConnections } = useConnections({
-    currentWorkspace,
-    locale,
-  });
+  const { connections, connectionsLoading, fetchConnections, setConnections } =
+    useConnections({
+      currentWorkspace,
+      locale,
+    });
 
   // Exports
-  const { exports, exportsLoading, fetchExports } = useExports({
+  const { exports, exportsLoading, fetchExports, setExports } = useExports({
     currentWorkspace,
     locale,
   });
@@ -92,12 +76,19 @@ export const WorkspaceProvider = ({
     locale,
   });
 
-  // DataRepositories
-  const { dataRepositories, dataRepositoriesLoading, fetchDataRepositories } =
-    useDataRepositories({
-      currentWorkspace,
-      locale,
-    });
+  // Data repositories
+  const {
+    dataRepositories,
+    dataRepositoriesLoading,
+    fetchDataRepositories,
+    createDataRepository,
+    updateDataRepository,
+    deleteDataRepository,
+    reassignDataRepository,
+  } = useDataRepositories({
+    currentWorkspace,
+    locale,
+  });
 
   // Users and roles
   const {
@@ -127,13 +118,23 @@ export const WorkspaceProvider = ({
     locale,
   });
 
-  // Workflow Runs
+  // Workflows and Workflow Runs (common logic for all workflow types)
   const {
     workflowRuns,
     workflowRunsLoading,
     fetchWorkflowRuns,
     fetchWorkflowRunsByWorkflow,
-  } = useWorkflowRuns({
+    updateWorkflow,
+    deleteWorkflow,
+    pauseWorkflow,
+    resumeWorkflow,
+  } = useWorkflows({
+    actions,
+    setActions,
+    connections,
+    setConnections,
+    exports,
+    setExports,
     currentWorkspace,
     locale,
   });
@@ -269,12 +270,20 @@ export const WorkspaceProvider = ({
           dataRepositories,
           isLoading: dataRepositoriesLoading,
           fetchDataRepositories,
+          createDataRepository,
+          updateDataRepository,
+          deleteDataRepository,
+          reassignDataRepository,
         },
-        workflowRuns: {
+        workflows: {
           workflowRuns,
-          isLoading: workflowRunsLoading,
+          workflowRunsLoading,
           fetchWorkflowRuns,
           fetchWorkflowRunsByWorkflow,
+          updateWorkflow,
+          deleteWorkflow,
+          pauseWorkflow,
+          resumeWorkflow,
         },
       }}
     >

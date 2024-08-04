@@ -11,7 +11,7 @@ import {
   useSwitchWorkspace,
   useTransferOwnership,
   useUpdateWorkspace,
-} from '@/context/workspace';
+} from '@/context/workspace/hooks/workspaces';
 
 import { Workspace } from '@/types/api/Workspace';
 

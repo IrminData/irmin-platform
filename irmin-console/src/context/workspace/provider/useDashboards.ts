@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
-import { useFetchDashboards } from '@/context/workspace';
+import { useFetchDashboards } from '@/context/workspace/hooks/dashboards';
 
 import { Dashboard } from '@/types/api/Dashboard';
 import { Workspace } from '@/types/api/Workspace';

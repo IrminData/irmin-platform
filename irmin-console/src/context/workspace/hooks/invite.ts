@@ -33,7 +33,10 @@ export const useFetchInvites = (
   useCallback(
     /**
      * Fetch and update context for Invites of the current workspace using the {@link InviteService}.
+     *
      * @param forceFetch - If true, will refetch even if already fetched
+     *
+     * @returns Error if the fetch fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -58,8 +61,10 @@ export const useFetchInvites = (
           currentWorkspace.slug
         );
         setInvites(response.data);
-      } finally {
         setLoading(false);
+      } catch (e) {
+        setLoading(false);
+        throw e;
       }
     },
     [
@@ -96,6 +101,7 @@ export const useSendInvite = (
      * @param role - The role to assign to the user.
      *
      * @returns Irmin API response.
+     * @returns Error if the invite sending fails.
      */
     async (
       name: string,
@@ -112,7 +118,7 @@ export const useSendInvite = (
         email,
         role
       );
-      // Get new invites
+      // Refetch the invites
       const newInvites = await inviteService.getInvitesByWorkspace(
         currentWorkspace.slug
       );
@@ -138,6 +144,7 @@ export const useResendInvite = (locale: Locale) =>
      * @param invite - The ID of the invite to resend.
      *
      * @returns Irmin API response.
+     * @returns Error if the invite resend fails.
      */
     async (invite: number): Promise<IrminAPIResponse> => {
       // Get the invite service
@@ -170,6 +177,7 @@ export const useCancelInvite = (
      * @param invite - The ID of the invite to cancel.
      *
      * @returns Irmin API response.
+     * @returns Error if the invite cancelation fails.
      */
     async (invite: number): Promise<IrminAPIResponse> => {
       // Get the invite service
@@ -205,6 +213,7 @@ export const useChangeInvite = (
      * @param role - The role to assign to the user.
      *
      * @returns Irmin API response.
+     * @returns Error if the invite change fails.
      */
     async (invite: number, role: IrminRole): Promise<IrminAPIResponse> => {
       // Get the invite service

@@ -10,7 +10,7 @@ import {
   useFetchInvites,
   useResendInvite,
   useSendInvite,
-} from '@/context/workspace';
+} from '@/context/workspace/hooks/invite';
 
 import { Invite } from '@/types/api/Invite';
 import { Workspace } from '@/types/api/Workspace';

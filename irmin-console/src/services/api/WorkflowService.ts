@@ -9,6 +9,7 @@ import {
   Workflow,
   WorkflowRun,
 } from '@/types/api/Workflow';
+import { WorkspaceUser } from '@/types/api/Workspace';
 import {
   exampleActions,
   exampleAPIResponse,
@@ -91,15 +92,22 @@ class WorkflowService {
   /**
    * Update a Workflow
    * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-update | Irmin API docs}
+   *
+   * @param workflowId - The ID of the workflow to update
+   * @param workflow - The updated workflow object
+   *
    * @returns response from the API or example data
    */
-  async updateWorkflow(workflow: Workflow): Promise<IrminAPIResponse> {
+  async updateWorkflow(
+    workflowId: number,
+    workflow: Workflow
+  ): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
     try {
       const formData = new FormData();
 
       formData.append('_method', 'PATCH');
-      formData.append('worflow', workflow.id.toString());
+      formData.append('workflow', workflowId.toString());
       formData.append('name', workflow.name);
       formData.append('description', workflow.description ?? '');
       formData.append('documentation', workflow.documentation ?? '');
@@ -125,17 +133,56 @@ class WorkflowService {
   }
 
   /**
+   * Delete a Workflow by ID
+   *
+   * @todo What to do with the associated data repos, workspace DB tables, runs etc?
+   *
+   * @todo Provide link to Irmin API docs
+   *
+   * @param workflowId - The ID of the workflow to delete
+   */
+  async deleteWorkflow(workflowId: number): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
+    try {
+      const formData = new FormData();
+
+      formData.append('_method', 'DELETE');
+      formData.append('workflow', workflowId.toString());
+
+      const response = await fetchWithCredentials(
+        `${api_base}/v1/workflows/delete`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+        this.locale
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Delete workflow error:', error);
+      if (isDevelopment) return exampleAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
    * Pause a Workflow
    * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-pause | Irmin API docs}
+   *
+   * @param workflowId - ID of the workflow to pause
+   *
    * @returns response from the API or example data
    */
-  async pauseWorkflow(workflow: Workflow): Promise<IrminAPIResponse> {
+  async pauseWorkflow(workflowId: number): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
     try {
       const formData = new FormData();
 
       formData.append('_method', 'PATCH');
-      formData.append('worflow', workflow.id.toString());
+      formData.append('workflow', workflowId.toString());
 
       const response = await fetchWithCredentials(
         `${api_base}/v1/workflows/pause`,
@@ -159,15 +206,18 @@ class WorkflowService {
   /**
    * Resume a Workflow
    * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-resume | Irmin API docs}
+   *
+   * @param workflowId - ID of the workflow to resume
+   *
    * @returns response from the API or example data
    */
-  async resumeWorkflow(workflow: Workflow): Promise<IrminAPIResponse> {
+  async resumeWorkflow(workflowId: number): Promise<IrminAPIResponse> {
     if (isOfflineMode) return exampleAPIResponse;
     try {
       const formData = new FormData();
 
       formData.append('_method', 'PATCH');
-      formData.append('worflow', workflow.id.toString());
+      formData.append('workflow', workflowId.toString());
 
       const response = await fetchWithCredentials(
         `${api_base}/v1/workflows/resume`,
@@ -183,6 +233,44 @@ class WorkflowService {
       return response;
     } catch (error) {
       console.error('Resume workflow error:', error);
+      if (isDevelopment) return exampleAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Reassign a Workflow to a new owner
+   * {@link https://api.irmin.dev/docs#workflows-POSTv1-workflows-reassign | Irmin API docs}
+   *
+   * @param workflow - The workflow to reassign
+   * @param newOwner - The new owner of the workflow
+   *
+   * @returns response from the API or example data
+   */
+  async reassignWorkflow(
+    workflow: Workflow,
+    newOwner: WorkspaceUser
+  ): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return exampleAPIResponse;
+    try {
+      const formData = new FormData();
+      formData.append('workflow', workflow.id.toString());
+      formData.append('assignee', newOwner.id.toString());
+
+      const response = await fetchWithCredentials(
+        `${api_base}/v1/workflows/reassign`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+        this.locale
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Reassign workflow error:', error);
       if (isDevelopment) return exampleAPIResponse;
       throw error;
     }
@@ -223,16 +311,13 @@ class WorkflowService {
    *
    * @todo Provide link to Irmin API docs
    *
-   * @param props0 - Properties to fetch the runs
-   * @param props0.workflowId - The ID of the workflow to fetch the runs for
+   * @param workflowId - The ID of the workflow to fetch the runs for
    *
    * @returns response from the API or example data
    */
-  async fetchRunsByWorkflow({
-    workflowId,
-  }: {
-    workflowId: number;
-  }): Promise<WorkflowRunsAPIResponse> {
+  async fetchRunsByWorkflow(
+    workflowId: number
+  ): Promise<WorkflowRunsAPIResponse> {
     if (isOfflineMode)
       return {
         ...exampleAPIResponse,

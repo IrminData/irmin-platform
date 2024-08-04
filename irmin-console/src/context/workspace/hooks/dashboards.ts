@@ -30,7 +30,10 @@ export const useFetchDashboards = (
   useCallback(
     /**
      * Fetch and update context for Dashboards of the current workspace using the {@link DashboardService}.
+     *
      * @param forceFetch - If true, will refetch even if already fetched
+     *
+     * @returns Error if the fetch fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -53,8 +56,10 @@ export const useFetchDashboards = (
         // Fetch the connections for the current workspace
         const response = await dashboardService.fetchDashboards();
         setDashboards(response.data);
-      } finally {
         setLoading(false);
+      } catch (e) {
+        setLoading(false);
+        throw e;
       }
     },
     [

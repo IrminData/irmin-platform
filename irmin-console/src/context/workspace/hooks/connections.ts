@@ -31,7 +31,10 @@ export const useFetchConnections = (
   useCallback(
     /**
      * Fetch and update context for Connections Workflows of the current workspace using the {@link WorkflowService}.
+     *
      * @param forceFetch - If true, will refetch even if already fetched
+     *
+     * @returns Error if the fetch fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -54,8 +57,10 @@ export const useFetchConnections = (
         // Fetch the connections for the current workspace
         const response = await workflowService.fetchConnections();
         setConnections(response.data);
-      } finally {
         setLoading(false);
+      } catch (e) {
+        setLoading(false);
+        throw e;
       }
     },
     [
