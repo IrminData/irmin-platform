@@ -2,7 +2,8 @@ import { IoSettings } from 'react-icons/io5';
 
 import Button from '@/components/misc/Button';
 
-import { ChartOrTableData, Widget } from '@/types/api/Widget';
+import { Widget } from '@/types/api/Widget';
+import { ChartOrTableWidgetData } from '@/types/internal/WidgetData';
 
 /**
  * Scrollable table widget
@@ -14,7 +15,7 @@ import { ChartOrTableData, Widget } from '@/types/api/Widget';
  */
 const ScrollableTable = ({ widget }: { widget: Widget }) => {
   if (widget.type !== 'table') return <></>;
-  const widgetData = widget.data as ChartOrTableData;
+  const widgetData = widget.data as ChartOrTableWidgetData;
   return (
     <div
       className='rounded border-t-2 border-irmin_green bg-white p-2 shadow-lg md:p-4'

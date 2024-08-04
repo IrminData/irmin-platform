@@ -5,7 +5,7 @@ import { DataRepo } from '@/types/api/DataRepo';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import {
   exampleAPIResponse,
-  exampleDataset,
+  exampleDataRepos,
 } from '@/types/examples/apiObjects';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -64,7 +64,7 @@ class DataRepoService {
    * @returns response from the API or example data
    */
   async fetchAllDataRepositories(): Promise<DatasetAPIResponse> {
-    if (isOfflineMode) return { ...exampleAPIResponse, data: [exampleDataset] };
+    if (isOfflineMode) return { ...exampleAPIResponse, data: exampleDataRepos };
     try {
       const response = (await fetchWithCredentials(
         `${api_base}/v1/dataRepositories`,
@@ -81,7 +81,7 @@ class DataRepoService {
     } catch (error) {
       console.error('Fetch dataRepositories error:', error);
       if (isDevelopment)
-        return { ...exampleAPIResponse, data: [exampleDataset] };
+        return { ...exampleAPIResponse, data: exampleDataRepos };
       throw error;
     }
   }

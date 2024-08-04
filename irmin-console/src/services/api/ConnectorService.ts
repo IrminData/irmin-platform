@@ -5,7 +5,7 @@ import { Connector } from '@/types/api/Connector';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import {
   exampleAPIResponse,
-  exampleConnector,
+  exampleConnectors,
 } from '@/types/examples/apiObjects';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -66,7 +66,7 @@ class ConnectorService {
    */
   async fetchAllConnectors(): Promise<ConnectorAPIResponse> {
     if (isOfflineMode)
-      return { ...exampleAPIResponse, data: [exampleConnector] };
+      return { ...exampleAPIResponse, data: exampleConnectors };
     try {
       const response = (await fetchWithCredentials(
         `${api_base}/v1/connectors`,
@@ -83,7 +83,7 @@ class ConnectorService {
     } catch (error) {
       console.error('Fetch connectors error:', error);
       if (isDevelopment)
-        return { ...exampleAPIResponse, data: [exampleConnector] };
+        return { ...exampleAPIResponse, data: exampleConnectors };
       throw error;
     }
   }

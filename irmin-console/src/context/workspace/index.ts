@@ -17,6 +17,10 @@ import {
   useFetchUsers,
 } from '@/context/workspace/hooks/usersAndRoles';
 import {
+  useFetchWorkflowRuns,
+  useFetchWorkflowRunsByWorkflow,
+} from '@/context/workspace/hooks/workflowRuns';
+import {
   useCreateWorkspace,
   useDeleteCurrentWorkspace,
   useFetchWorkspaces,
@@ -48,6 +52,8 @@ export {
   useFetchRoles,
   useFetchUsers,
   useFetchWorkspaces,
+  useFetchWorkflowRuns,
+  useFetchWorkflowRunsByWorkflow,
   useResendInvite,
   useSendInvite,
   useSwitchWorkspace,

@@ -5,7 +5,7 @@ import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { Workspace } from '@/types/api/Workspace';
 import {
   exampleAPIResponse,
-  exampleWorkspace,
+  exampleWorkspaces,
 } from '@/types/examples/apiObjects';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -73,7 +73,7 @@ class WorkspaceService {
     if (isOfflineMode)
       return {
         ...exampleAPIResponse,
-        data: [exampleWorkspace],
+        data: exampleWorkspaces,
       };
     try {
       const response = (await fetchWithCredentials(
@@ -92,7 +92,7 @@ class WorkspaceService {
       if (isDevelopment)
         return {
           ...exampleAPIResponse,
-          data: [exampleWorkspace],
+          data: exampleWorkspaces,
         };
       throw error;
     }
@@ -108,7 +108,7 @@ class WorkspaceService {
     if (isOfflineMode)
       return {
         ...exampleAPIResponse,
-        data: exampleWorkspace,
+        data: exampleWorkspaces[0],
       };
     try {
       const response = (await fetchWithCredentials(
@@ -127,7 +127,7 @@ class WorkspaceService {
       if (isDevelopment)
         return {
           ...exampleAPIResponse,
-          data: exampleWorkspace,
+          data: exampleWorkspaces[0],
         };
       throw error;
     }
@@ -263,7 +263,7 @@ class WorkspaceService {
     if (isOfflineMode)
       return {
         ...exampleAPIResponse,
-        data: exampleWorkspace,
+        data: exampleWorkspaces[0],
       };
     try {
       const formData = new FormData();

@@ -30,8 +30,8 @@ export const useFetchDataRepositories = (
 ) =>
   useCallback(
     /**
-     * Fetch and update context for dataRepositories of the current workspace.
-     * @param forceFetch - Whether to force fetch.
+     * Fetch and update context for Data Repositories of the current workspace using the {@link DataRepoService}.
+     * @param forceFetch - If true, will refetch even if already fetched
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -40,7 +40,7 @@ export const useFetchDataRepositories = (
         if (fetchedFor === currentWorkspace?.slug) return;
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
-      // Get the workspace service
+      // Get the data repository service
       const datasetService = DataRepoService.getInstance(locale);
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {

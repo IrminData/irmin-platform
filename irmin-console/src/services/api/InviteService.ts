@@ -4,7 +4,10 @@ import { fetchWithCredentials } from '@/services/fetchWithCredentials';
 import { Invite } from '@/types/api/Invite';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { IrminRoleNames } from '@/types/api/IrminRole';
-import { exampleAPIResponse, exampleInvite } from '@/types/examples/apiObjects';
+import {
+  exampleAPIResponse,
+  exampleInvites,
+} from '@/types/examples/apiObjects';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
@@ -183,7 +186,7 @@ class InviteService {
    * @returns response from the API or example data
    */
   async getInvitesByWorkspace(workspace: string): Promise<InvitesAPIResponse> {
-    if (isOfflineMode) return { ...exampleAPIResponse, data: [exampleInvite] };
+    if (isOfflineMode) return { ...exampleAPIResponse, data: exampleInvites };
     try {
       const response = (await fetchWithCredentials(
         `${api_base}/v1/invites?workspace=${workspace}`,
@@ -199,8 +202,7 @@ class InviteService {
       return response;
     } catch (error) {
       console.error('Get invites by workspace error:', error);
-      if (isDevelopment)
-        return { ...exampleAPIResponse, data: [exampleInvite] };
+      if (isDevelopment) return { ...exampleAPIResponse, data: exampleInvites };
       throw error;
     }
   }
@@ -212,7 +214,7 @@ class InviteService {
    * @returns response from the API or example data
    */
   async getInvitesByUser(user: number): Promise<InvitesAPIResponse> {
-    if (isOfflineMode) return { ...exampleAPIResponse, data: [exampleInvite] };
+    if (isOfflineMode) return { ...exampleAPIResponse, data: exampleInvites };
     try {
       const response = (await fetchWithCredentials(
         `${api_base}/v1/invites?user=${user}`,
@@ -228,8 +230,7 @@ class InviteService {
       return response;
     } catch (error) {
       console.error('Get invites by user error:', error);
-      if (isDevelopment)
-        return { ...exampleAPIResponse, data: [exampleInvite] };
+      if (isDevelopment) return { ...exampleAPIResponse, data: exampleInvites };
       throw error;
     }
   }

@@ -7,7 +7,7 @@ import { WorkspaceUser } from '@/types/api/Workspace';
 import {
   exampleAPIResponse,
   exampleRoles,
-  exampleWorkspaceUser,
+  exampleWorkspaceUsers,
 } from '@/types/examples/apiObjects';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -74,7 +74,7 @@ class UserAndRoleService {
    */
   async fetchAllUsers(): Promise<UsersAPIResponse> {
     if (isOfflineMode)
-      return { ...exampleAPIResponse, data: [exampleWorkspaceUser] };
+      return { ...exampleAPIResponse, data: exampleWorkspaceUsers };
     try {
       const response = (await fetchWithCredentials(
         `${api_base}/v1/users`,
@@ -90,7 +90,7 @@ class UserAndRoleService {
     } catch (error) {
       console.error('Fetch users error:', error);
       if (isDevelopment)
-        return { ...exampleAPIResponse, data: [exampleWorkspaceUser] };
+        return { ...exampleAPIResponse, data: exampleWorkspaceUsers };
       throw error;
     }
   }

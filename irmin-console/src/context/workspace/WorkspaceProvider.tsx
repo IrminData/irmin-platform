@@ -16,6 +16,8 @@ import useInvite from '@/context/workspace/provider/useInvite';
 import useUsersAndRoles from '@/context/workspace/provider/useUsersAndRoles';
 import useWorkspaces from '@/context/workspace/provider/useWorkspaces';
 
+import useWorkflowRuns from './provider/useWorkflowRuns';
+
 /**
  * Workspace context provider
  *
@@ -125,6 +127,17 @@ export const WorkspaceProvider = ({
     locale,
   });
 
+  // Workflow Runs
+  const {
+    workflowRuns,
+    workflowRunsLoading,
+    fetchWorkflowRuns,
+    fetchWorkflowRunsByWorkflow,
+  } = useWorkflowRuns({
+    currentWorkspace,
+    locale,
+  });
+
   /**
    * Hook to initialise the context by fetching initial data.
    *
@@ -179,7 +192,7 @@ export const WorkspaceProvider = ({
   }, [fetchWorkspaces, fetchRoles, switchToWorkspace, params]);
 
   /**
-   * useEffect hook to fetch workspace data whenever the current workspace changes.
+   * Hook to fetch workspace data whenever the current workspace changes.
    */
   useEffect(() => {
     fetchDashboards();
@@ -256,6 +269,12 @@ export const WorkspaceProvider = ({
           dataRepositories,
           isLoading: dataRepositoriesLoading,
           fetchDataRepositories,
+        },
+        workflowRuns: {
+          workflowRuns,
+          isLoading: workflowRunsLoading,
+          fetchWorkflowRuns,
+          fetchWorkflowRunsByWorkflow,
         },
       }}
     >

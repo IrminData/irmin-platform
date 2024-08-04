@@ -29,8 +29,8 @@ export const useFetchDashboards = (
 ) =>
   useCallback(
     /**
-     * Fetch and update context for dashboards of the current workspace.
-     * @param forceFetch - Whether to force fetch.
+     * Fetch and update context for Dashboards of the current workspace using the {@link DashboardService}.
+     * @param forceFetch - If true, will refetch even if already fetched
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -39,7 +39,7 @@ export const useFetchDashboards = (
         if (fetchedFor === currentWorkspace?.slug) return;
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
-      // Get the workspace service
+      // Get the dashboard service
       const dashboardService = DashboardService.getInstance(locale);
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {

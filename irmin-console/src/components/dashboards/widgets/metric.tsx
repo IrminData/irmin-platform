@@ -4,7 +4,8 @@ import { IoSettings } from 'react-icons/io5';
 
 import Button from '@/components/misc/Button';
 
-import { MetricData, Widget } from '@/types/api/Widget';
+import { Widget } from '@/types/api/Widget';
+import { MetricWidgetData } from '@/types/internal/WidgetData';
 
 /**
  * Metric widget
@@ -16,7 +17,7 @@ import { MetricData, Widget } from '@/types/api/Widget';
  */
 const Metric = ({ widget }: { widget: Widget }) => {
   if (widget.type !== 'metric') return <></>;
-  const widgetData = widget.data as MetricData;
+  const widgetData = widget.data as MetricWidgetData;
 
   return (
     <div className='rounded border-t-2 border-irmin_green bg-white p-2 shadow-lg md:p-4'>

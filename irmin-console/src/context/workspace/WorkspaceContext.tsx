@@ -11,6 +11,7 @@ import {
   ActionWorkflow,
   ConnectionWorkflow,
   ExportWorkflow,
+  WorkflowRun,
 } from '@/types/api/Workflow';
 import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
 
@@ -85,6 +86,12 @@ export const WorkspaceContext = createContext<{
     isLoading: boolean;
     fetchDataRepositories: (_forceFetch?: boolean) => void;
   };
+  workflowRuns: {
+    workflowRuns: WorkflowRun[];
+    isLoading: boolean;
+    fetchWorkflowRuns: (_forceFetch?: boolean) => void;
+    fetchWorkflowRunsByWorkflow: (_workflowId: number) => void;
+  };
 }>({
   workspaceLoading: false,
   irminRoles: [],
@@ -139,6 +146,12 @@ export const WorkspaceContext = createContext<{
     dataRepositories: [],
     isLoading: false,
     fetchDataRepositories: () => {},
+  },
+  workflowRuns: {
+    workflowRuns: [],
+    isLoading: false,
+    fetchWorkflowRuns: () => {},
+    fetchWorkflowRunsByWorkflow: () => {},
   },
 });
 

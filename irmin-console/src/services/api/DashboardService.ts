@@ -5,7 +5,7 @@ import { Dashboard } from '@/types/api/Dashboard';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import {
   exampleAPIResponse,
-  exampleDashboard,
+  exampleDashboards,
 } from '@/types/examples/apiObjects';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -74,7 +74,7 @@ class DashboardService {
    */
   async fetchDashboards(): Promise<DashboardsAPIResponse> {
     if (isOfflineMode)
-      return { ...exampleAPIResponse, data: [exampleDashboard] };
+      return { ...exampleAPIResponse, data: exampleDashboards };
     try {
       const response = (await fetchWithCredentials(
         `${api_base}/v1/dashboards`,
@@ -91,7 +91,7 @@ class DashboardService {
     } catch (error) {
       console.error('Fetch dashboards error:', error);
       if (isDevelopment)
-        return { ...exampleAPIResponse, data: [exampleDashboard] };
+        return { ...exampleAPIResponse, data: exampleDashboards };
       throw error;
     }
   }
@@ -103,7 +103,8 @@ class DashboardService {
    * @returns response from the API or example data
    */
   async createDashboard(dashboard: Dashboard): Promise<DashboardAPIResponse> {
-    if (isOfflineMode) return { ...exampleAPIResponse, data: exampleDashboard };
+    if (isOfflineMode)
+      return { ...exampleAPIResponse, data: exampleDashboards[0] };
     try {
       const response = (await fetchWithCredentials(
         `${api_base}/v1/dashboards`,
@@ -121,7 +122,7 @@ class DashboardService {
     } catch (error) {
       console.error('Create dashboard error:', error);
       if (isDevelopment)
-        return { ...exampleAPIResponse, data: exampleDashboard };
+        return { ...exampleAPIResponse, data: exampleDashboards[0] };
       throw error;
     }
   }
@@ -133,7 +134,8 @@ class DashboardService {
    * @returns response from the API or example data
    */
   async updateDashboard(dashboard: Dashboard): Promise<DashboardAPIResponse> {
-    if (isOfflineMode) return { ...exampleAPIResponse, data: exampleDashboard };
+    if (isOfflineMode)
+      return { ...exampleAPIResponse, data: exampleDashboards[0] };
     try {
       const body = new FormData();
       body.append('_method', 'PUT');
@@ -156,7 +158,7 @@ class DashboardService {
     } catch (error) {
       console.error('Update dashboard error:', error);
       if (isDevelopment)
-        return { ...exampleAPIResponse, data: exampleDashboard };
+        return { ...exampleAPIResponse, data: exampleDashboards[0] };
       throw error;
     }
   }

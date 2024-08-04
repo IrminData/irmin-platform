@@ -30,8 +30,8 @@ export const useFetchExports = (
 ) =>
   useCallback(
     /**
-     * Fetch and update context for exports of the current workspace.
-     * @param forceFetch - Whether to force fetch.
+     * Fetch and update context for Export Workflows of the current workspace using the {@link WorkflowService}.
+     * @param forceFetch - If true, will refetch even if already fetched
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -40,7 +40,7 @@ export const useFetchExports = (
         if (fetchedFor === currentWorkspace?.slug) return;
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
-      // Get the workspace service
+      // Get the workflow service
       const workflowService = WorkflowService.getInstance(locale);
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {

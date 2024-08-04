@@ -66,7 +66,10 @@ const ExportTable = ({
             <br />
             <span className='text-xs text-irmin_blue'>
               {dict.list.destination}:{' '}
-              {exportWorkflow.workflowable.destination.connector.name}
+              {
+                exportWorkflow.workflowable.destination.workflowable.connector
+                  .name
+              }
             </span>
           </div>,
           <StatusElement

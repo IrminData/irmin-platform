@@ -32,8 +32,8 @@ export const useFetchInvites = (
 ) =>
   useCallback(
     /**
-     * Fetch and update context for invites of the current workspace.
-     * @param forceFetch - Whether to force fetch.
+     * Fetch and update context for Invites of the current workspace using the {@link InviteService}.
+     * @param forceFetch - If true, will refetch even if already fetched
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -42,7 +42,7 @@ export const useFetchInvites = (
         if (fetchedFor === currentWorkspace?.slug) return;
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
-      // Get the workspace service
+      // Get the invite service
       const inviteService = InviteService.getInstance(locale);
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {
@@ -87,7 +87,9 @@ export const useSendInvite = (
 ) =>
   useCallback(
     /**
-     * Send an invite to a user and update the context state.
+     * Send an invite to a user and update the context state
+     * using the {@link InviteService}.
+     *
      *
      * @param name - The name of the user to invite.
      * @param email - The email of the user to invite.
@@ -130,7 +132,8 @@ export const useSendInvite = (
 export const useResendInvite = (locale: Locale) =>
   useCallback(
     /**
-     * Resend an invite to a user and update the context state.
+     * Resend an invite to a user and update the context state
+     * using the {@link InviteService}.
      *
      * @param invite - The ID of the invite to resend.
      *
@@ -161,7 +164,8 @@ export const useCancelInvite = (
 ) =>
   useCallback(
     /**
-     * Cancel an invite to a user and update the context state.
+     * Cancel an invite to a user and update the context state
+     * using the {@link InviteService}.
      *
      * @param invite - The ID of the invite to cancel.
      *
@@ -194,7 +198,8 @@ export const useChangeInvite = (
 ) =>
   useCallback(
     /**
-     * Change an invite to a user and update the context state.
+     * Change an invite to a user and update the context state
+     * using the {@link InviteService}.
      *
      * @param invite - The ID of the invite to change.
      * @param role - The role to assign to the user.

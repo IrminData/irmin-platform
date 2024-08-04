@@ -2,40 +2,50 @@ import { IrminRole } from '@/types/api/IrminRole';
 
 /**
  * Workspace type
+ *
+ * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type to view example
+ *
  * @typeParam id - Workspace ID
  * @typeParam name - Workspace name
  * @typeParam slug - Workspace slug
  * @typeParam owner_id - Workspace owner ID
  * @typeParam description - Workspace description to be displayed (optional)
- * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface Workspace {
   id: number;
   name: string;
   slug: string;
   owner_id: number;
-  description?: string;
+  description?: string | null;
 }
 
 /**
- * WorkspaceUser type
- * @typeParam id - User ID
- * @typeParam name - User name
- * @typeParam company - User company
- * @typeParam email - User email
- * @typeParam email_verified_at - User email verified at
- * @typeParam created_at - User creation date
- * @typeParam updated_at - User update date
- * @typeParam roles - Array of IrminRole
- * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
+ * Workspace User type
+ *
+ * Not to be confused with the Profile type.
+ * WorkspaceUser is used to represent a user in the context of a workspace - used to access workspace functionality.
+ * Profile is used to represent a user's profile in the Irmin system - used for sign in etc.
+ *
+ * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type to view example
+ *
+ * @typeParam id - User's ID
+ * @typeParam name - User's name
+ * @typeParam company - User's company
+ * @typeParam email - User's email
+ * @typeParam profile_picture - URL of user's profile picture (can be base64 encoded data URL)
+ * @typeParam email_verified_at - Timestamp of email verification
+ * @typeParam created_at - Timestamp of when the user was created
+ * @typeParam updated_at - Timestamp of when the user was last updated
+ * @typeParam roles - Array of IrminRole objects assigned to the user
  */
 export interface WorkspaceUser {
   id: number;
   name: string;
-  company: string;
+  company?: string | null;
   email: string;
-  email_verified_at: string | null;
+  profile_picture?: string | null;
+  email_verified_at?: string | null;
   created_at: string;
   updated_at: string;
-  roles?: IrminRole[];
+  roles?: IrminRole[] | null;
 }

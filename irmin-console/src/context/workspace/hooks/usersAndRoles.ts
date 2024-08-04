@@ -19,24 +19,30 @@ export const useFetchRoles = (
   setIrminRoles: React.Dispatch<React.SetStateAction<IrminRole[]>>,
   locale: Locale
 ) =>
-  useCallback(async () => {
-    // Get the workspace service
-    const rolesService = UserAndRoleService.getInstance(locale);
-    // Fetch the roles
-    try {
-      const savedRoles = await rolesService.getRoles();
-      if (savedRoles && savedRoles.length > 0) {
-        setIrminRoles(savedRoles);
-      } else {
-        const data = await rolesService.fetchRoles();
-        setIrminRoles(data.data);
+  useCallback(
+    /**
+     * Fetch and update context for roles available on Irmin using the {@link UserAndRoleService}.
+     */
+    async () => {
+      // Get the User and Role service
+      const rolesService = UserAndRoleService.getInstance(locale);
+      // Fetch the roles
+      try {
+        const savedRoles = await rolesService.getRoles();
+        if (savedRoles && savedRoles.length > 0) {
+          setIrminRoles(savedRoles);
+        } else {
+          const data = await rolesService.fetchRoles();
+          setIrminRoles(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+        setIrminRoles([]);
+        throw error;
       }
-    } catch (error) {
-      console.error('Error fetching roles:', error);
-      setIrminRoles([]);
-      throw error;
-    }
-  }, [setIrminRoles, locale]);
+    },
+    [setIrminRoles, locale]
+  );
 
 /**
  * Hook to fetch the list of users for the current workspace.
@@ -60,8 +66,10 @@ export const useFetchUsers = (
 ) =>
   useCallback(
     /**
-     * Fetch and update context for users of the current workspace.
-     * @param forceFetch - Whether to force fetch.
+     * Fetch and update context for users of the current workspace
+     * using the {@link UserAndRoleService}.
+     *
+     * @param forceFetch - If true, will refetch even if already fetched
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -70,7 +78,7 @@ export const useFetchUsers = (
         if (fetchedFor === currentWorkspace?.slug) return;
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
-      // Get the workspace service
+      // Get the User and Role service
       const userService = UserAndRoleService.getInstance(locale);
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {
@@ -113,13 +121,15 @@ export const useDeleteUser = (
 ) =>
   useCallback(
     /**
-     * Delete a user from the current workspace and update the context state.
+     * Delete a user from the current workspace and update the context state
+     * using the {@link UserAndRoleService}.
+     *
      * @param id - The ID of the user to delete.
      *
      * @returns Irmin API response.
      */
     async (id: number): Promise<IrminAPIResponse> => {
-      // Get the user service
+      // Get the User and Role service
       const userService = UserAndRoleService.getInstance(locale);
       // Remove user from workspace
       const response = await userService.removeUserFromWorkspace(id);
@@ -145,7 +155,8 @@ export const useChangeUserRole = (
 ) =>
   useCallback(
     /**
-     * Change a user's role in the workspace and update the context state.
+     * Change a user's role in the workspace and update the context state
+     * using the {@link UserAndRoleService}.
      *
      * @param id - The ID of the user to change the role.
      * @param role - The new role to assign to the user.
@@ -153,7 +164,7 @@ export const useChangeUserRole = (
      * @returns Irmin API response.
      */
     async (id: number, role: IrminRoleNames): Promise<IrminAPIResponse> => {
-      // Get the user service
+      // Get the User and Role service
       const userService = UserAndRoleService.getInstance(locale);
       // Find the user to get current role
       const user = users.find((u) => u.id === id);

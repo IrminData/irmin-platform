@@ -16,7 +16,8 @@ import { IoSettings } from 'react-icons/io5';
 
 import Button from '@/components/misc/Button';
 
-import { ChartOrTableData, Widget } from '@/types/api/Widget';
+import { Widget } from '@/types/api/Widget';
+import { ChartOrTableWidgetData } from '@/types/internal/WidgetData';
 
 // Register the components required for the chart
 ChartJS.register(
@@ -39,7 +40,7 @@ ChartJS.register(
  */
 const LineChart = ({ widget }: { widget: Widget }) => {
   if (widget.type !== 'line') return <></>;
-  const widgetData = widget.data as ChartOrTableData;
+  const widgetData = widget.data as ChartOrTableWidgetData;
   return (
     <div className='rounded border-t-2 border-irmin_green bg-white p-2 shadow-lg md:p-4'>
       <div className='flex h-14 items-center justify-between border-b px-6 py-4'>

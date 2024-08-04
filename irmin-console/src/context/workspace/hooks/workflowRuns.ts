@@ -5,23 +5,23 @@ import { useCallback } from 'react';
 import { Locale } from '@/dictionaries';
 import WorkflowService from '@/services/api/WorkflowService';
 
-import { ConnectionWorkflow } from '@/types/api/Workflow';
+import { WorkflowRun } from '@/types/api/Workflow';
 import { Workspace } from '@/types/api/Workspace';
 
 /**
- * Hook to fetch the list of connection workflows for the current workspace.
+ * Hook to fetch the list of Workflow Runs for the current workspace.
  *
  * @param currentWorkspace - The current workspace
- * @param setConnections - Function to update the connections state.
+ * @param setWorkflowRuns - Function to update the Workflow Runs state.
  * @param loading - Loading state to prevent multiple simultaneous fetches.
  * @param setLoading - Function to update the loading state.
  * @param fetchedFor - The slug of the workspace workflows are fetched for.
  * @param setFetchedFor - Function to update fetched for state.
  * @param locale - The current locale.
  */
-export const useFetchConnections = (
+export const useFetchWorkflowRuns = (
   currentWorkspace: Workspace | null,
-  setConnections: React.Dispatch<React.SetStateAction<ConnectionWorkflow[]>>,
+  setWorkflowRuns: React.Dispatch<React.SetStateAction<WorkflowRun[]>>,
   loading: boolean,
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
@@ -30,7 +30,7 @@ export const useFetchConnections = (
 ) =>
   useCallback(
     /**
-     * Fetch and update context for Connections Workflows of the current workspace using the {@link WorkflowService}.
+     * Fetch and update context for Workflow Runs of the current workspace using the {@link WorkflowService}.
      * @param forceFetch - If true, will refetch even if already fetched
      */
     async (forceFetch?: boolean) => {
@@ -44,27 +44,64 @@ export const useFetchConnections = (
       const workflowService = WorkflowService.getInstance(locale);
       // If the current workspace is not set, clear the connections
       if (!currentWorkspace) {
-        setConnections([]);
+        setWorkflowRuns([]);
         return;
       }
       try {
         // Prevent multiple simultaneous fetches
         if (loading) return;
         setLoading(true);
-        // Fetch the connections for the current workspace
-        const response = await workflowService.fetchConnections();
-        setConnections(response.data);
+        // Fetch the workflow runs for the current workspace
+        const response = await workflowService.fetchRuns();
+        setWorkflowRuns(response.data);
       } finally {
         setLoading(false);
       }
     },
     [
       currentWorkspace,
-      setConnections,
+      setWorkflowRuns,
       loading,
       setLoading,
       fetchedFor,
       setFetchedFor,
       locale,
     ]
+  );
+
+/**
+ * Hook to fetch the list of Workflow Runs for a specific workflow.
+ *
+ * @param loading - Loading state to prevent multiple simultaneous fetches.
+ * @param setLoading - Function to update the loading state.
+ * @param locale - The current locale.
+ */
+export const useFetchWorkflowRunsByWorkflow = (
+  loading: boolean,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  locale: Locale
+) =>
+  useCallback(
+    /**
+     * Fetch Workflow Runs using the {@link WorkflowService}.
+     * @param workflowId - The ID of the workflow to fetch runs for.
+     */
+    async (workflowId: number) => {
+      // Get the workflow service
+      const workflowService = WorkflowService.getInstance(locale);
+      try {
+        // Prevent multiple simultaneous fetches
+        if (loading) return;
+        setLoading(true);
+        // Fetch the workflow runs for the current workspace
+        const response = await workflowService.fetchRunsByWorkflow({
+          workflowId,
+        });
+        setLoading(false);
+        return response.data;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loading, setLoading, locale]
   );

@@ -24,31 +24,43 @@ export const useFetchWorkspaces = (
   setWorkspaceLoading: React.Dispatch<React.SetStateAction<boolean>>,
   locale: Locale
 ) =>
-  useCallback(async () => {
-    // Get the workspace service
-    const workspaceService = WorkspaceService.getInstance(locale);
-    // Prevent multiple simultaneous fetches
-    if (workspaceLoading) return;
-    // Fetch the workspaces
-    try {
-      setWorkspaceLoading(true);
-      const data = await workspaceService.fetchWorkspaces();
-      setWorkspaces(data.data ?? []);
-    } catch (error) {
-      console.error('Error fetching workspaces:', error);
-      throw error;
-    } finally {
-      setWorkspaceLoading(false);
-    }
-  }, [setWorkspaces, workspaceLoading, setWorkspaceLoading, locale]);
+  useCallback(
+    /**
+     * Fetch and update context for workspaces using the {@link WorkspaceService}.
+     */
+    async () => {
+      // Get the workspace service
+      const workspaceService = WorkspaceService.getInstance(locale);
+      // Prevent multiple simultaneous fetches
+      if (workspaceLoading) return;
+      // Fetch the workspaces
+      try {
+        setWorkspaceLoading(true);
+        const data = await workspaceService.fetchWorkspaces();
+        setWorkspaces(data.data ?? []);
+      } catch (error) {
+        console.error('Error fetching workspaces:', error);
+        throw error;
+      } finally {
+        setWorkspaceLoading(false);
+      }
+    },
+    [setWorkspaces, workspaceLoading, setWorkspaceLoading, locale]
+  );
 
 /**
- * Hook to create a new workspace
+ * Hook to create a new workspace.
  *
  * @param locale - The current locale.
  */
 export const useCreateWorkspace = (locale: Locale) =>
   useCallback(
+    /**
+     * Create new workspace using the {@link WorkspaceService}.
+     * @param newWorkspaceName - The name of the new workspace.
+     * @param newWorkspaceDescription - The description of the new workspace.
+     * @returns Irmin API response.
+     */
     async (newWorkspaceName: string, newWorkspaceDescription: string) => {
       // Get the workspace service
       const workspaceService = WorkspaceService.getInstance(locale);
@@ -69,6 +81,11 @@ export const useCreateWorkspace = (locale: Locale) =>
  */
 export const useUpdateWorkspace = (locale: Locale) =>
   useCallback(
+    /**
+     * Update exisiting workspace using the {@link WorkspaceService}.
+     * @param workspace - The workspace data to update.
+     * @returns Irmin API response.
+     */
     async (workspace: Workspace) => {
       // Get the workspace service
       const workspaceService = WorkspaceService.getInstance(locale);
@@ -106,6 +123,11 @@ export const useSwitchWorkspace = (
   const pathname = usePathname();
   const params = useParams();
   return useCallback(
+    /**
+     * Switch user to a different workspace using the {@link WorkspaceService}.
+     * Refetches and sets the state of the current workspace.
+     * @param workspaceSlug - The slug of the workspace to switch to.
+     */
     async (workspaceSlug: string | null) => {
       try {
         // Get the workspace service
@@ -194,6 +216,7 @@ export const useTransferOwnership = (
 ) =>
   useCallback(
     /**
+     * Transfer ownership of the current workspace to a new owner using the {@link WorkspaceService}.
      * @param newOwner - The ID of the new owner.
      * @returns Irmin API response.
      */
@@ -235,7 +258,7 @@ export const useDeleteCurrentWorkspace = (
 ) =>
   useCallback(
     /**
-     * Delete the current workspace and update the context state.
+     * Delete the current workspace and update the context state using the {@link WorkspaceService}.
      * @returns Irmin API response.
      */
     async (): Promise<IrminAPIResponse> => {

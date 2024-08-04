@@ -1,10 +1,12 @@
 /**
  * Connector type
+ *
+ * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type to view example
+ *
  * @typeParam id - Connector ID
  * @typeParam name - Connector name
  * @typeParam logo - Connector logo
  * @typeParam description - Connector description
- * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface Connector {
   id: number;
@@ -15,9 +17,11 @@ export interface Connector {
 
 /**
  * List of Details or Settings fields required to create a connection
+ *
+ * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type to view example
+ *
  * @typeParam key - Field name
  * @typeParam value - Field type
- * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface ConnectionDetailsAndSettingsFields {
   [key: string]: 'text' | 'password' | 'number' | 'integer' | 'float';
@@ -25,9 +29,11 @@ export interface ConnectionDetailsAndSettingsFields {
 
 /**
  * Connection details and settings
+ *
+ * @see {@link https://github.com/IrminData/irmin-frontend/blob/development/src/types/examples/apiObjects.ts | examples/apiObjects.ts} - find object referencing this type to view example
+ *
  * @typeParam key - Field name
  * @typeParam value - Field value
- * @example See `/src/types/examples/apiObjects.ts`.ts - find object referencing this type
  */
 export interface ConnectionDetailsAndSettings {
   [key: string]: string | number;

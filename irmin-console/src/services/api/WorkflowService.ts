@@ -7,12 +7,14 @@ import {
   ConnectionWorkflow,
   ExportWorkflow,
   Workflow,
+  WorkflowRun,
 } from '@/types/api/Workflow';
 import {
-  exampleAction,
+  exampleActions,
   exampleAPIResponse,
-  exampleConnection,
-  exampleExport,
+  exampleConnections,
+  exampleExports,
+  exampleWorkflowRuns,
 } from '@/types/examples/apiObjects';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -20,6 +22,13 @@ const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
 const api_base = process.env.NEXT_PUBLIC_API_URL;
 
+/**
+ * Workflow Runs API response type
+ * @internal
+ */
+interface WorkflowRunsAPIResponse extends IrminAPIResponse {
+  data: WorkflowRun[];
+}
 /**
  * Connection Workflows API response type
  * @internal
@@ -31,14 +40,14 @@ interface ConnectionsAPIResponse extends IrminAPIResponse {
  * Export Workflows API response type
  * @internal
  */
-interface ExportAPIResponse extends IrminAPIResponse {
+interface ExportsAPIResponse extends IrminAPIResponse {
   data: ExportWorkflow[];
 }
 /**
  * Action Workflows API response type
  * @internal
  */
-interface ActionAPIResponse extends IrminAPIResponse {
+interface ActionsAPIResponse extends IrminAPIResponse {
   data: ActionWorkflow[];
 }
 
@@ -180,13 +189,91 @@ class WorkflowService {
   }
 
   /**
+   * Fetch all Workflow Runs
+   *
+   * @todo Provide link to Irmin API docs
+   *
+   * @returns response from the API or example data
+   */
+  async fetchRuns(): Promise<WorkflowRunsAPIResponse> {
+    if (isOfflineMode)
+      return { ...exampleAPIResponse, data: exampleWorkflowRuns };
+    try {
+      const response = (await fetchWithCredentials(
+        `${api_base}/v1/workflows/runs`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+        this.locale
+      )) as WorkflowRunsAPIResponse;
+      return response;
+    } catch (error) {
+      console.error('Fetch workflow runs error:', error);
+      if (isDevelopment)
+        return { ...exampleAPIResponse, data: exampleWorkflowRuns };
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch Workflow Runs by Workflow ID
+   *
+   * @todo Provide link to Irmin API docs
+   *
+   * @param props0 - Properties to fetch the runs
+   * @param props0.workflowId - The ID of the workflow to fetch the runs for
+   *
+   * @returns response from the API or example data
+   */
+  async fetchRunsByWorkflow({
+    workflowId,
+  }: {
+    workflowId: number;
+  }): Promise<WorkflowRunsAPIResponse> {
+    if (isOfflineMode)
+      return {
+        ...exampleAPIResponse,
+        data:
+          exampleWorkflowRuns.filter((val) => val.workflow_id === workflowId) ??
+          exampleWorkflowRuns,
+      };
+    try {
+      const response = (await fetchWithCredentials(
+        `${api_base}/v1/workflows/${workflowId}/runs`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+        this.locale
+      )) as WorkflowRunsAPIResponse;
+      return response;
+    } catch (error) {
+      console.error('Fetch workflow runs by workflow error:', error);
+      if (isDevelopment)
+        return {
+          ...exampleAPIResponse,
+          data:
+            exampleWorkflowRuns.filter(
+              (val) => val.workflow_id === workflowId
+            ) ?? exampleWorkflowRuns,
+        };
+      throw error;
+    }
+  }
+
+  /**
    * Fetch all Connection Workflows
    * {@link https://api.irmin.dev/docs#workflows-GETv1-connections | Irmin API docs}
    * @returns response from the API or example data
    */
   async fetchConnections(): Promise<ConnectionsAPIResponse> {
     if (isOfflineMode)
-      return { ...exampleAPIResponse, data: [exampleConnection] };
+      return { ...exampleAPIResponse, data: exampleConnections };
     try {
       const response = (await fetchWithCredentials(
         `${api_base}/v1/connections`,
@@ -202,7 +289,7 @@ class WorkflowService {
     } catch (error) {
       console.error('Fetch connections error:', error);
       if (isDevelopment)
-        return { ...exampleAPIResponse, data: [exampleConnection] };
+        return { ...exampleAPIResponse, data: exampleConnections };
       throw error;
     }
   }
@@ -212,8 +299,8 @@ class WorkflowService {
    * @todo Provide link to Irmin API docs
    * @returns response from the API or example data
    */
-  async fetchExports(): Promise<ExportAPIResponse> {
-    if (isOfflineMode) return { ...exampleAPIResponse, data: [exampleExport] };
+  async fetchExports(): Promise<ExportsAPIResponse> {
+    if (isOfflineMode) return { ...exampleAPIResponse, data: exampleExports };
     try {
       const response = (await fetchWithCredentials(
         `${api_base}/v1/exports`,
@@ -224,12 +311,11 @@ class WorkflowService {
           },
         },
         this.locale
-      )) as ExportAPIResponse;
+      )) as ExportsAPIResponse;
       return response;
     } catch (error) {
       console.error('Fetch exports error:', error);
-      if (isDevelopment)
-        return { ...exampleAPIResponse, data: [exampleExport] };
+      if (isDevelopment) return { ...exampleAPIResponse, data: exampleExports };
       throw error;
     }
   }
@@ -239,8 +325,8 @@ class WorkflowService {
    * @todo Provide link to Irmin API docs
    * @returns response from the API or example data
    */
-  async fetchActions(): Promise<ActionAPIResponse> {
-    if (isOfflineMode) return { ...exampleAPIResponse, data: [exampleAction] };
+  async fetchActions(): Promise<ActionsAPIResponse> {
+    if (isOfflineMode) return { ...exampleAPIResponse, data: exampleActions };
     try {
       const response = (await fetchWithCredentials(
         `${api_base}/v1/actions`,
@@ -251,12 +337,11 @@ class WorkflowService {
           },
         },
         this.locale
-      )) as ActionAPIResponse;
+      )) as ActionsAPIResponse;
       return response;
     } catch (error) {
       console.error('Fetch actions error:', error);
-      if (isDevelopment)
-        return { ...exampleAPIResponse, data: [exampleAction] };
+      if (isDevelopment) return { ...exampleAPIResponse, data: exampleActions };
       throw error;
     }
   }
