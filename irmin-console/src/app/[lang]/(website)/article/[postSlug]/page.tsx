@@ -9,8 +9,7 @@ import Post from '@/components/website/templates/Post';
 
 import { WebsiteArticleCategory } from '@/types/website/WebsiteContent';
 
-const NEXT_PUBLIC_BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
 /**
  * Router properties received by the page
@@ -34,7 +33,6 @@ type PageProps = {
  * categories it receives from WordPress API.
  *
  * @param param0 - Router properties received by the page
- * @returns Post content
  */
 export default async function Page({ params }: PageProps) {
   const slug =
@@ -97,7 +95,7 @@ export async function generateMetadata({
     openGraph: {
       type: 'article',
       locale: lang,
-      url: NEXT_PUBLIC_BASE_URL + '/' + lang + '/article/' + slug + '/',
+      url: app_base + '/' + lang + '/article/' + slug + '/',
       title: post.yoast_head_json.og_title,
       description: post.yoast_head_json.og_description,
       images: post.yoast_head_json.og_image,

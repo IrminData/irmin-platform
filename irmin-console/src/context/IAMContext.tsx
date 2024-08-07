@@ -5,14 +5,15 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from 'react';
 
 import { useRouter } from 'next/navigation';
 
 import { Locale } from '@/dictionaries';
-import AuthService from '@/services/api/AuthService';
-import ProfileService from '@/services/api/ProfileService';
+import IrminCore from '@/services/core/IrminCore';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -63,7 +64,7 @@ const IAMContext = createContext<{
  * @remarks
  *
  * Provider for {@link IAMContext} to handle user profile data and authentication.
- * Uses the {@link ProfileService} and the {@link AuthService} to interact with the API.
+ * Uses the {@link IrminCore} and the {@link IrminCore} to interact with the API.
  */
 export const IAMProvider = ({
   children,
@@ -76,71 +77,66 @@ export const IAMProvider = ({
   const { irminAlert } = usePopup();
   const router = useRouter();
 
-  // Profile data and loading state
+  // Get the needed services
+  const { profileService, authService } = useMemo(
+    () => new IrminCore(locale),
+    [locale]
+  );
+
+  // Ref to check if the component has been initialised
+  const initialisedRef = useRef(false);
+
+  // Profile data
   const [profile, setProfile] = useState<Profile | null>(null);
+
+  // Loading state, used only for the UI. Don't prevent IAM loads with this
   const [isLoading, setIsLoading] = useState(true);
-  const [initialFetchDone, setInitialFetchDone] = useState(false);
 
   // Profile's API token and timestamp
   const [token, setToken] = useState<string | null>(null);
   const [tokenTimestamp, setTokenTimestamp] = useState<string | null>(null);
 
   /**
-   * Fetch the profile data from the API
-   * and set the profile state accordingly
+   * Fetch the profile data from the API and set the profile state accordingly
+   * using the {@link IrminCore}
    */
-  const fetchProfile = useCallback(
-    /**
-     * Fetch the profile data from the API using the {@link ProfileService}
-     * @param forceFetch - if true, fetch and set the profile data even if it already exists
-     */
-    async (forceFetch?: boolean) => {
+  const fetchProfile = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      // Regenerate the token
       try {
-        // Make sure profile is not already being fetched
-        if (isLoading) return;
-        // Skip if not forceFetch and initial fetch done
-        if (!forceFetch && initialFetchDone) return;
-        // Continue with the fetch
-        setInitialFetchDone(true);
-        setIsLoading(true);
-        // Get the profile service
-        const profileService = ProfileService.getInstance(locale, '');
-        // Regenerate the token
-        try {
-          await profileService.regenerateToken();
-        } catch (error) {
-          console.error('Error regenerating token:', error);
-        }
-        // Fetch the profile data
-        const response = await profileService.getProfile();
-        if (response) {
-          // Update the profile's API token and timestamp if they exist
-          if (response.data.api_token) {
-            setToken(response.data.api_token ?? null);
-            setTokenTimestamp(Date.now().toString());
-          } else {
-            setToken(null);
-            setTokenTimestamp(null);
-          }
-          // Update the profile state
-          setProfile(response.data);
+        await profileService.regenerateToken();
+      } catch (error) {
+        console.error('Error regenerating token:', error);
+      }
+      // Fetch the profile data
+      const response = await profileService.getProfile();
+      if (response) {
+        // Update the profile's API token and timestamp if they exist
+        if (response.data.api_token) {
+          setToken(response.data.api_token ?? null);
+          setTokenTimestamp(Date.now().toString());
         } else {
-          // If no profile data is returned, reset the IAM state
           setToken(null);
           setTokenTimestamp(null);
-          setProfile(null);
         }
-      } catch (error) {
-        // If error encountered, reset the IAM state
+        // Update the profile state
+        setProfile(response.data);
+      } else {
+        // If no profile data is returned, reset the IAM state
         setToken(null);
         setTokenTimestamp(null);
         setProfile(null);
-      } finally {
-        setIsLoading(false);
       }
-    },
-    [locale, isLoading, initialFetchDone]
-  );
+    } catch (error) {
+      // If error encountered, reset the IAM state
+      setToken(null);
+      setTokenTimestamp(null);
+      setProfile(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [profileService]);
 
   /**
    * Update the user profile data and refetch the profile data on success.
@@ -150,7 +146,6 @@ export const IAMProvider = ({
     async (name: string, company: string, email: string) => {
       try {
         setIsLoading(true);
-        const profileService = ProfileService.getInstance(locale, '');
         const result = await profileService.updateProfile(name, company, email);
         irminAlert(
           'success',
@@ -158,7 +153,7 @@ export const IAMProvider = ({
             result.metadata?.message ??
             dict.profile.profileUpdatedSuccessfully
         );
-        await fetchProfile(true);
+        await fetchProfile();
       } catch (error) {
         console.error('Error updating profile:', error);
         irminAlert(
@@ -169,7 +164,12 @@ export const IAMProvider = ({
         setIsLoading(false);
       }
     },
-    [locale, fetchProfile, irminAlert, dict.profile.profileUpdatedSuccessfully]
+    [
+      profileService,
+      fetchProfile,
+      irminAlert,
+      dict.profile.profileUpdatedSuccessfully,
+    ]
   );
 
   /**
@@ -180,7 +180,6 @@ export const IAMProvider = ({
     try {
       setIsLoading(true);
       // Handle logout
-      const authService = AuthService.getInstance(locale, '');
       const result = await authService.logout();
       // Show success message if logout was successful
       irminAlert(
@@ -190,15 +189,15 @@ export const IAMProvider = ({
           "You've been signed out successfully"
       );
       // Refetch the profile data
-      await fetchProfile(true);
-      // Redirect of unauthorised users is handled by the ProtectedRoute component
+      await fetchProfile();
+      // Redirect of unauthorised users is handled by the ProtectedRouteWrapper component
     } catch (error) {
       console.error('Error logging out user:', error);
       irminAlert('error', (error as Error).message ?? 'Failed to sign out');
     } finally {
       setIsLoading(false);
     }
-  }, [locale, fetchProfile, irminAlert]);
+  }, [authService, fetchProfile, irminAlert]);
 
   /**
    * Login the user and refetch the profile data
@@ -213,7 +212,6 @@ export const IAMProvider = ({
       try {
         setError(null);
         setIsLoading(true);
-        const authService = AuthService.getInstance(locale, '');
         const response = await authService.login(email, password);
         setSuccess(
           response.metadata?.message ??
@@ -221,7 +219,7 @@ export const IAMProvider = ({
             'Signed in successfully'
         );
         // Refetch the profile data
-        await fetchProfile(true);
+        await fetchProfile();
         // Redirect to the portal
         router.push('/portal');
       } catch (error) {
@@ -231,7 +229,7 @@ export const IAMProvider = ({
         setIsLoading(false);
       }
     },
-    [locale, fetchProfile, router]
+    [authService, fetchProfile, router]
   );
 
   /**
@@ -251,7 +249,6 @@ export const IAMProvider = ({
       try {
         setError(null);
         setIsLoading(true);
-        const authService = AuthService.getInstance(locale, '');
         const response = await authService.register(
           name,
           company,
@@ -266,7 +263,7 @@ export const IAMProvider = ({
             'Registered successfully'
         );
         // Refetch the profile data
-        await fetchProfile(true);
+        await fetchProfile();
         // Redirect to the portal
         router.push('/portal');
       } catch (error) {
@@ -276,13 +273,16 @@ export const IAMProvider = ({
         setIsLoading(false);
       }
     },
-    [locale, fetchProfile, router]
+    [authService, fetchProfile, router]
   );
 
   /**
    * Fetch the profile data on component mount only
    */
   useEffect(() => {
+    // Do not initialise if the component is already initialised
+    if (initialisedRef.current) return;
+    initialisedRef.current = true;
     fetchProfile();
   }, [fetchProfile]);
 
@@ -291,13 +291,16 @@ export const IAMProvider = ({
    */
   useEffect(() => {
     const interval = setInterval(() => {
+      // Do not run if the component is not initialised
+      if (!initialisedRef.current) return;
+      // Check if token and tokenTimestamp
       if (token && tokenTimestamp) {
         const tokenMaxAge = parseInt(
           process.env.NEXT_PUBLIC_TOKEN_MAX_AGE ?? '3600'
         ); // Default to 1 hour if not set
         const tokenAge = (Date.now() - parseInt(tokenTimestamp)) / 1000 / 60;
         if (tokenAge > tokenMaxAge) {
-          fetchProfile(true);
+          fetchProfile();
         }
       }
     }, 60000); // Check every minute

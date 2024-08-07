@@ -32,7 +32,6 @@ const useActions = ({
 
   /**
    * Hook to fetch the actions for the current workspace.
-   * It will be run whenever the current workspace changes to update the actions.
    */
   const fetchActions = useFetchActions(
     currentWorkspace,

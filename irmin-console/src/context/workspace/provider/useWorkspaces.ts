@@ -4,9 +4,11 @@ import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
+import { useIAM } from '@/context/IAMContext';
 import {
   useCreateWorkspace,
   useDeleteCurrentWorkspace,
+  useFetchFullCurrentWorkspace,
   useFetchWorkspaces,
   useSwitchWorkspace,
   useTransferOwnership,
@@ -22,6 +24,9 @@ import { Workspace } from '@/types/api/Workspace';
  * @param props.locale - The locale to use for the API calls
  */
 const useWorkspaces = ({ locale }: { locale: Locale }) => {
+  // Get token from IAM context
+  const { token } = useIAM();
+
   // Workspaces
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(
@@ -38,6 +43,14 @@ const useWorkspaces = ({ locale }: { locale: Locale }) => {
     workspacesLoading,
     setWorkspacesLoading,
     locale
+  );
+
+  /**
+   * Hook to fetch the full data for the current workspace.
+   */
+  const fetchFullCurrentWorkspace = useFetchFullCurrentWorkspace(
+    locale,
+    token ?? ''
   );
 
   /**
@@ -58,8 +71,7 @@ const useWorkspaces = ({ locale }: { locale: Locale }) => {
    * Fetches the workspace data for switch target, calls API /switch endpoint, redirects to the switched workplace.
    * @param workspaceSlug - The slug of the workspace to switch to.
    */
-  const switchToWorkspace = useSwitchWorkspace(
-    currentWorkspace,
+  const switchWorkspace = useSwitchWorkspace(
     setCurrentWorkspace,
     workspacesLoading,
     setWorkspacesLoading,
@@ -72,7 +84,7 @@ const useWorkspaces = ({ locale }: { locale: Locale }) => {
    * switches to the default workspace, and fetches the updated workspaces.
    */
   const deleteCurrentWorkspace = useDeleteCurrentWorkspace(
-    switchToWorkspace,
+    switchWorkspace,
     fetchWorkspaces,
     locale
   );
@@ -92,7 +104,8 @@ const useWorkspaces = ({ locale }: { locale: Locale }) => {
     currentWorkspace,
     workspacesLoading,
     fetchWorkspaces,
-    switchToWorkspace,
+    fetchFullCurrentWorkspace,
+    switchWorkspace,
     deleteCurrentWorkspace,
     transferOwnership,
     createWorkspace,

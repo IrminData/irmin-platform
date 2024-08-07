@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import PortalError from '@/components/portal/portalError';
+import PortalErrorSection from '@/components/portal/PortalErrorSection';
 
 /**
  * Error component for the portal
@@ -15,7 +15,6 @@ import PortalError from '@/components/portal/portalError';
  * Normal API call failures should be handled by the UI.
  *
  * @param param0 - Error and reset function
- * @returns Error component
  */
 export default function Error({
   error,
@@ -28,5 +27,5 @@ export default function Error({
     console.error(error);
   }, [error]);
 
-  return <PortalError error={error} reset={reset} />;
+  return <PortalErrorSection error={error} reset={reset} />;
 }

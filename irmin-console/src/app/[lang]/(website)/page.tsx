@@ -10,8 +10,7 @@ import PageSections from '@/components/website/templates/PageSections';
 
 import { getURL } from '@/utils/wordpress';
 
-const NEXT_PUBLIC_BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
 /**
  * Router properties received by the page
@@ -39,7 +38,6 @@ type PageProps = {
  * API.
  *
  * @param param0 - Router properties received by the page
- * @returns Page content
  */
 export default async function WebsiteHome({ params }: PageProps) {
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
@@ -68,7 +66,6 @@ export default async function WebsiteHome({ params }: PageProps) {
  * Generate SEO metadata for the website home page
  *
  * @param param0 - Router properties received by the page
- * @returns Metadata for the page
  */
 export async function generateMetadata({
   params,
@@ -93,7 +90,7 @@ export async function generateMetadata({
     openGraph: {
       type: 'website',
       locale: lang,
-      url: NEXT_PUBLIC_BASE_URL + getURL(page.link),
+      url: `${app_base}${getURL(page.link)}`,
       title: page.yoast_head_json.og_title,
       description: page.yoast_head_json.og_description,
       images: page.yoast_head_json.og_image,

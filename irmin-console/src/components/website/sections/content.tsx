@@ -2,7 +2,7 @@ import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
 
-import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
+import DynamicFaIcon from '@/components/common/DynamicFaIcon';
 
 import { ContentSection } from '@/types/website/Wordpress';
 

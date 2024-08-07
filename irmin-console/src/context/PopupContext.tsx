@@ -2,10 +2,10 @@
 
 import { createContext, useContext, useState } from 'react';
 
-import Alert from '@/components/misc/Alert';
-import ConfirmPopup from '@/components/misc/ConfirmPopup';
-import Modal from '@/components/misc/Modal';
-import NotificationPopup from '@/components/portal/notifications/NotificationPopup';
+import Alert from '@/components/common/popup/Alert';
+import Confirm from '@/components/common/popup/Confirm';
+import Modal from '@/components/common/popup/Modal';
+import NotificationPopup from '@/components/portal/wrapper/notifications/NotificationPopup';
 
 /**
  * Context to use and show alerts, confirmations, notifications and modals
@@ -13,7 +13,7 @@ import NotificationPopup from '@/components/portal/notifications/NotificationPop
  * @remarks
  *
  * This context is used to show, hide and update {@link NotificationPopup},
- * {@link Alert}, {@link ConfirmPopup} and {@link Modal} components.
+ * {@link Alert}, {@link Confirm} and {@link Modal} components.
  *
  * When shown, these components will be rendered on top of the current view,
  * in the portal layout.
@@ -61,7 +61,7 @@ const PopupContext = createContext<{
  *
  * @remarks
  *
- * Used to show, hide and update NotificationPopup, Alert, ConfirmPopup and Modal components.
+ * Used to show, hide and update NotificationPopup, Alert, Confirm and Modal components.
  * When shown, these components will be rendered on top of the current view.
  *
  * @param children - The children components
@@ -163,7 +163,7 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
         />
       )}
       {confirmMessage && confirmType && (
-        <ConfirmPopup
+        <Confirm
           type={confirmType}
           message={confirmMessage}
           onSelect={(confirmed) => {

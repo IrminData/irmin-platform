@@ -1,8 +1,8 @@
 'use client';
 
-import DataMarketplace from '@/components/marketplace/dataMarketplace';
-import PluginMarketplace from '@/components/marketplace/pluginMarketplace';
-import LargeTabs from '@/components/portal/tabs/largeTabs';
+import LargeTabs from '@/components/common/tabs/LargeTabs';
+import DataMarketplaceSection from '@/components/marketplace/data-marketplace/DataMarketplaceSection';
+import PluginMarketplaceSection from '@/components/marketplace/plugin-marketplace/PluginMarketplaceSection';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -15,8 +15,6 @@ import { useLocale } from '@/context/LocaleContext';
  * It shows the data marketplace and the plugin marketplace.
  *
  * Marketplace is currently just a placeholder and does not have any functionality.
- *
- * @returns UI for the marketplace
  */
 export default function MarketplacePage() {
   const { dict } = useLocale();
@@ -26,11 +24,11 @@ export default function MarketplacePage() {
       tabs={[
         {
           name: dict.marketplace.dataMarketplace,
-          content: <DataMarketplace />,
+          content: <DataMarketplaceSection />,
         },
         {
           name: dict.marketplace.pluginMarketplace,
-          content: <PluginMarketplace />,
+          content: <PluginMarketplaceSection />,
         },
         { name: dict.marketplace.myListings, content: <></> },
       ]}

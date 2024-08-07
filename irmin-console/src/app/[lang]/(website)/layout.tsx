@@ -29,7 +29,6 @@ export const metadata: Metadata = {
  * - Everything within the `src/[lang]/(website)` directory
  *
  * @param props - Children to render
- * @returns Website layout
  */
 export default function WebsiteLayout({
   children,

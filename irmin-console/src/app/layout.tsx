@@ -34,7 +34,6 @@ export const metadata: Metadata = {
  * This component also includes the global styles and fonts for the application.
  *
  * @param children - The children components to render
- * @returns The root layout of the application
  */
 export default function RootLayout({
   children,

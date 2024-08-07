@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 import { defaultLocale, languages, Locale } from '@/dictionaries';
 
-// List of available locales
+// NormalList of available locales
 const locales = languages.map((lang) => lang.code);
 
 /**
@@ -62,7 +62,6 @@ function setLocaleCookie(response: NextResponse, locale: Locale) {
  * {@link https://nextjs.org/docs/app/building-your-application/routing/middleware}
  *
  * @param req - The request object
- * @returns The response object
  */
 export function middleware(req: NextRequest) {
   const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'true';

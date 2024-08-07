@@ -3,10 +3,9 @@
 import { useCallback } from 'react';
 
 import { Locale } from '@/dictionaries';
-import InviteService from '@/services/api/InviteService';
+import IrminCore from '@/services/core/IrminCore';
 
 import { Invite } from '@/types/api/Invite';
-import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
 import { Workspace } from '@/types/api/Workspace';
 
@@ -32,11 +31,9 @@ export const useFetchInvites = (
 ) =>
   useCallback(
     /**
-     * Fetch and update context for Invites of the current workspace using the {@link InviteService}.
+     * Fetch and update context for Invites of the current workspace using the {@link IrminCore}.
      *
      * @param forceFetch - If true, will refetch even if already fetched
-     *
-     * @returns Void or Error if fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -45,26 +42,24 @@ export const useFetchInvites = (
         if (fetchedFor === currentWorkspace?.slug) return;
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
-      // Get the invite service
-      const inviteService = InviteService.getInstance(locale, '');
-      // If the current workspace is not set, clear the connections
-      if (!currentWorkspace) {
-        setInvites([]);
-        return;
-      }
+      // Prevent multiple simultaneous fetches
+      if (loading) return;
+      setLoading(true);
       try {
-        // Prevent multiple simultaneous fetches
-        if (loading) return;
-        setLoading(true);
+        // Get the invite service
+        const { inviteService } = new IrminCore(locale);
+        // If the current workspace is not set, clear the connections
+        if (!currentWorkspace) {
+          setInvites([]);
+          return;
+        }
         // Fetch the data
-        const response = await inviteService.getInvitesByWorkspace(
+        const response = await inviteService.fetchInvitesByWorkspace(
           currentWorkspace.slug
         );
         setInvites(response.data);
+      } finally {
         setLoading(false);
-      } catch (e) {
-        setLoading(false);
-        throw e;
       }
     },
     [
@@ -93,25 +88,18 @@ export const useSendInvite = (
   useCallback(
     /**
      * Send an invite to a user and update the context state
-     * using the {@link InviteService}.
+     * using the {@link IrminCore}.
      *
      *
      * @param name - The name of the user to invite.
      * @param email - The email of the user to invite.
      * @param role - The role to assign to the user.
-     *
-     * @returns Irmin API response.
-     * @returns Error if the invite sending fails.
      */
-    async (
-      name: string,
-      email: string,
-      role: IrminRoleNames
-    ): Promise<IrminAPIResponse> => {
+    async (name: string, email: string, role: IrminRoleNames) => {
       // Make sure there is a current workspace
       if (!currentWorkspace) throw new Error('No current workspace');
       // Get the invite service
-      const inviteService = InviteService.getInstance(locale, '');
+      const { inviteService } = new IrminCore(locale);
       // Send the invite
       const response = await inviteService.inviteUserToWorkspace(
         name,
@@ -119,7 +107,7 @@ export const useSendInvite = (
         role
       );
       // Refetch the invites
-      const newInvites = await inviteService.getInvitesByWorkspace(
+      const newInvites = await inviteService.fetchInvitesByWorkspace(
         currentWorkspace.slug
       );
       // Update the invites in the context state
@@ -139,16 +127,13 @@ export const useResendInvite = (locale: Locale) =>
   useCallback(
     /**
      * Resend an invite to a user and update the context state
-     * using the {@link InviteService}.
+     * using the {@link IrminCore}.
      *
      * @param invite - The ID of the invite to resend.
-     *
-     * @returns Irmin API response.
-     * @returns Error if the invite resend fails.
      */
-    async (invite: number): Promise<IrminAPIResponse> => {
+    async (invite: number) => {
       // Get the invite service
-      const inviteService = InviteService.getInstance(locale, '');
+      const { inviteService } = new IrminCore(locale);
       // Resend the invite
       const response = await inviteService.resendUserInvite(invite);
 
@@ -172,16 +157,13 @@ export const useCancelInvite = (
   useCallback(
     /**
      * Cancel an invite to a user and update the context state
-     * using the {@link InviteService}.
+     * using the {@link IrminCore}.
      *
      * @param invite - The ID of the invite to cancel.
-     *
-     * @returns Irmin API response.
-     * @returns Error if the invite cancelation fails.
      */
-    async (invite: number): Promise<IrminAPIResponse> => {
+    async (invite: number) => {
       // Get the invite service
-      const inviteService = InviteService.getInstance(locale, '');
+      const { inviteService } = new IrminCore(locale);
       // Cancel the invite
       const response = await inviteService.cancelUserInvite(invite);
       // Update the invites in the context state
@@ -207,17 +189,14 @@ export const useChangeInvite = (
   useCallback(
     /**
      * Change an invite to a user and update the context state
-     * using the {@link InviteService}.
+     * using the {@link IrminCore}.
      *
      * @param invite - The ID of the invite to change.
      * @param role - The role to assign to the user.
-     *
-     * @returns Irmin API response.
-     * @returns Error if the invite change fails.
      */
-    async (invite: number, role: IrminRole): Promise<IrminAPIResponse> => {
+    async (invite: number, role: IrminRole) => {
       // Get the invite service
-      const inviteService = InviteService.getInstance(locale, '');
+      const { inviteService } = new IrminCore(locale);
       // Change the invite
       const response = await inviteService.changeUserInviteRole(
         invite,

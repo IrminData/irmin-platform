@@ -19,8 +19,7 @@ import { getURL } from '@/utils/wordpress';
 export async function GET() {
   const wordpress = WordPress.getInstance();
 
-  const NEXT_PUBLIC_BASE_URL =
-    process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+  const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
   const staticPaths = ['/sign-in/', '/sign-up/'];
   languages.map((lang) => {
@@ -30,7 +29,7 @@ export async function GET() {
   const urls = staticPaths.map((path) => {
     return `
       <url>
-        <loc>${NEXT_PUBLIC_BASE_URL}${path}</loc>
+        <loc>${app_base}${path}</loc>
         <changefreq>daily</changefreq>
         <priority>1</priority>
       </url>
@@ -43,7 +42,7 @@ export async function GET() {
       const page = pages[i];
       urls.push(`
         <url>
-          <loc>${NEXT_PUBLIC_BASE_URL}${getURL(page.link)}</loc>
+          <loc>${app_base}${getURL(page.link)}</loc>
           <changefreq>daily</changefreq>
           <priority>0.7</priority>
         </url>
@@ -58,7 +57,7 @@ export async function GET() {
       const postLang = detectLocaleFromURL(post.link);
       urls.push(`
         <url>
-          <loc>${NEXT_PUBLIC_BASE_URL}${`/${postLang ? postLang + '/' : ''}article/${post.slug}/`}</loc>
+          <loc>${app_base}${`/${postLang ? postLang + '/' : ''}article/${post.slug}/`}</loc>
           <changefreq>daily</changefreq>
           <priority>0.7</priority>
         </url>

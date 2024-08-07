@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { IoInformation, IoLocationOutline } from 'react-icons/io5';
 
-import Button from '@/components/misc/Button';
-import Input from '@/components/misc/Input';
+import Button from '@/components/common/button/Button';
+import Input from '@/components/common/form/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 

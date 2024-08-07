@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 import { FaSearch } from 'react-icons/fa';
 
-import Input from '@/components/misc/Input';
+import Input from '@/components/common/form/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 

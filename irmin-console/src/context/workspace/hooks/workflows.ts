@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import { Locale } from '@/dictionaries';
-import WorkflowService from '@/services/api/WorkflowService';
+import IrminCore from '@/services/core/IrminCore';
 
 import {
   ActionWorkflow,
@@ -18,12 +18,12 @@ import { Workspace } from '@/types/api/Workspace';
  * Hook to update a workflow
  *
  * @param locale - The current locale.
- * @param actions - The list of action workflows
- * @param setActions - Function to update the action workflows
- * @param connections - The list of connection workflows
- * @param setConnections - Function to update the connection workflows
- * @param exports - The list of export workflows
- * @param setExports - Function to update the export workflows
+ * @param actions - The list of Action Workflows
+ * @param setActions - Function to update the Action Workflows
+ * @param connections - The list of Connection Workflows
+ * @param setConnections - Function to update the Connection Workflows
+ * @param exports - The list of Export Workflows
+ * @param setExports - Function to update the Export Workflows
  */
 export const useUpdateWorkflow = (
   locale: Locale,
@@ -36,18 +36,15 @@ export const useUpdateWorkflow = (
 ) =>
   useCallback(
     /**
-     * Update a workflow using the {@link WorkflowService}.
+     * Update a workflow using the {@link IrminCore}.
      * Update the local context state accordingly.
      *
      * @param workflowId - The ID of the workflow to update
      * @param updatedWorkflow - The updated workflow object
-     *
-     * @returns The API response
-     * @returns Error if update fails
      */
     async (workflowId: number, updatedWorkflow: Workflow) => {
       // Update the workflow using the workflow service
-      const workflowService = WorkflowService.getInstance(locale, '');
+      const { workflowService } = new IrminCore(locale);
       const response = await workflowService.updateWorkflow(
         workflowId,
         updatedWorkflow
@@ -101,12 +98,12 @@ export const useUpdateWorkflow = (
  * Hook to pause a workflow
  *
  * @param locale - The current locale.
- * @param actions - The list of action workflows
- * @param setActions - Function to update the action workflows
- * @param connections - The list of connection workflows
- * @param setConnections - Function to update the connection workflows
- * @param exports - The list of export workflows
- * @param setExports - Function to update the export workflows
+ * @param actions - The list of Action Workflows
+ * @param setActions - Function to update the Action Workflows
+ * @param connections - The list of Connection Workflows
+ * @param setConnections - Function to update the Connection Workflows
+ * @param exports - The list of Export Workflows
+ * @param setExports - Function to update the Export Workflows
  */
 export const usePauseWorkflow = (
   locale: Locale,
@@ -119,17 +116,14 @@ export const usePauseWorkflow = (
 ) =>
   useCallback(
     /**
-     * Pause a workflow using the {@link WorkflowService}.
+     * Pause a workflow using the {@link IrminCore}.
      * Update the local context state accordingly.
      *
-     * @param workflowId - The ID of the workflow to pause
-     *
-     * @returns The API response object
-     * @returns Error if pause fails
+     * @param workflowId - The ID of the workflow to pause object
      */
     async (workflowId: number) => {
       // Pause the workflow
-      const workflowService = WorkflowService.getInstance(locale, '');
+      const { workflowService } = new IrminCore(locale);
       const response = await workflowService.pauseWorkflow(workflowId);
       // Update the local state based on the paused workflow and it's type
       const pausedWorkflow =
@@ -185,12 +179,12 @@ export const usePauseWorkflow = (
  * Hook to resume a workflow
  *
  * @param locale - The current locale.
- * @param actions - The list of action workflows
- * @param setActions - Function to update the action workflows
- * @param connections - The list of connection workflows
- * @param setConnections - Function to update the connection workflows
- * @param exports - The list of export workflows
- * @param setExports - Function to update the export workflows
+ * @param actions - The list of Action Workflows
+ * @param setActions - Function to update the Action Workflows
+ * @param connections - The list of Connection Workflows
+ * @param setConnections - Function to update the Connection Workflows
+ * @param exports - The list of Export Workflows
+ * @param setExports - Function to update the Export Workflows
  */
 export const useResumeWorkflow = (
   locale: Locale,
@@ -203,17 +197,14 @@ export const useResumeWorkflow = (
 ) =>
   useCallback(
     /**
-     * Resume a workflow using the {@link WorkflowService}.
+     * Resume a workflow using the {@link IrminCore}.
      * Update the local context state accordingly.
      *
-     * @param workflowId - The ID of the workflow to resume
-     *
-     * @returns The API response object
-     * @returns Error if resume fails
+     * @param workflowId - The ID of the workflow to resume object
      */
     async (workflowId: number) => {
       // Resume the workflow
-      const workflowService = WorkflowService.getInstance(locale, '');
+      const { workflowService } = new IrminCore(locale);
       const response = await workflowService.resumeWorkflow(workflowId);
       // Update the local state based on the resumed workflow and it's type
       const resumedWorkflow =
@@ -269,12 +260,12 @@ export const useResumeWorkflow = (
  * Hook to delete a workflow
  *
  * @param locale - The current locale.
- * @param actions - The list of action workflows
- * @param setActions - Function to update the action workflows
- * @param connections - The list of connection workflows
- * @param setConnections - Function to update the connection workflows
- * @param exports - The list of export workflows
- * @param setExports - Function to update the export workflows
+ * @param actions - The list of Action Workflows
+ * @param setActions - Function to update the Action Workflows
+ * @param connections - The list of Connection Workflows
+ * @param setConnections - Function to update the Connection Workflows
+ * @param exports - The list of Export Workflows
+ * @param setExports - Function to update the Export Workflows
  */
 export const useDeleteWorkflow = (
   locale: Locale,
@@ -287,17 +278,14 @@ export const useDeleteWorkflow = (
 ) =>
   useCallback(
     /**
-     * Delete a workflow using the {@link WorkflowService}.
+     * Delete a workflow using the {@link IrminCore}.
      * Update the local context state accordingly.
      *
-     * @param workflowId - The ID of the workflow to delete
-     *
-     * @returns The API response object
-     * @returns Error if the delete fails
+     * @param workflowId - The ID of the workflow to delete object
      */
     async (workflowId: number) => {
       // Delete the workflow
-      const workflowService = WorkflowService.getInstance(locale, '');
+      const { workflowService } = new IrminCore(locale);
       const response = await workflowService.deleteWorkflow(workflowId);
       // Update the local state based on the deleted workflow and it's type
       const deletedWorkflow =
@@ -359,11 +347,9 @@ export const useFetchWorkflowRuns = (
 ) =>
   useCallback(
     /**
-     * Fetch and update context for Workflow Runs of the current workspace using the {@link WorkflowService}.
+     * Fetch and update context for Workflow Runs of the current workspace using the {@link IrminCore}.
      *
      * @param forceFetch - If true, will refetch even if already fetched
-     *
-     * @returns Void or Error if fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -372,24 +358,22 @@ export const useFetchWorkflowRuns = (
         if (fetchedFor === currentWorkspace?.slug) return;
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
-      // Get the workflow service
-      const workflowService = WorkflowService.getInstance(locale, '');
-      // If the current workspace is not set, clear the connections
-      if (!currentWorkspace) {
-        setWorkflowRuns([]);
-        return;
-      }
+      // Prevent multiple simultaneous fetches
+      if (loading) return;
+      setLoading(true);
       try {
-        // Prevent multiple simultaneous fetches
-        if (loading) return;
-        setLoading(true);
+        // Get the workflow service
+        const { workflowService } = new IrminCore(locale);
+        // If the current workspace is not set, clear the connections
+        if (!currentWorkspace) {
+          setWorkflowRuns([]);
+          return;
+        }
         // Fetch the workflow runs for the current workspace
         const response = await workflowService.fetchRuns();
         setWorkflowRuns(response.data);
+      } finally {
         setLoading(false);
-      } catch (e) {
-        setLoading(false);
-        throw e;
       }
     },
     [
@@ -417,25 +401,24 @@ export const useFetchWorkflowRunsByWorkflow = (
 ) =>
   useCallback(
     /**
-     * Fetch Workflow Runs using the {@link WorkflowService}.
+     * Fetch Workflow Runs using the {@link IrminCore}.
      * @param workflowId - The ID of the workflow to fetch runs for.
      *
      * @returns The list of Workflow Runs for the Workflow or throws an error
      */
     async (workflowId: number) => {
-      // Get the workflow service
-      const workflowService = WorkflowService.getInstance(locale, '');
+      // Prevent multiple simultaneous fetches
+      if (loading) return;
+      setLoading(true);
       try {
-        // Prevent multiple simultaneous fetches
-        if (loading) return;
-        setLoading(true);
+        // Get the workflow service
+        const { workflowService } = new IrminCore(locale);
         // Fetch the workflow runs for the current workspace
         const response = await workflowService.fetchRunsByWorkflow(workflowId);
         setLoading(false);
         return response.data;
-      } catch (e) {
+      } finally {
         setLoading(false);
-        throw e;
       }
     },
     [loading, setLoading, locale]

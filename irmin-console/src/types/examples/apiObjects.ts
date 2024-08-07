@@ -1,11 +1,11 @@
 import { Bucket, BucketFile, BucketFolder } from '@/types/api/Bucket';
 import { Connector } from '@/types/api/Connector';
 import { Dashboard } from '@/types/api/Dashboard';
-import { DataRepo } from '@/types/api/DataRepo';
 import { Invite } from '@/types/api/Invite';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { IrminRole } from '@/types/api/IrminRole';
 import { Profile } from '@/types/api/Profile';
+import { Repository } from '@/types/api/Repository';
 import { Widget } from '@/types/api/Widget';
 import {
   ActionWorkflow,
@@ -288,7 +288,7 @@ export const exampleWorkspaces: Workspace[] = [
     owner_id: 0,
   },
   {
-    id: 3,
+    id: 4,
     name: 'Example App',
     slug: 'example-app',
     description:
@@ -419,17 +419,17 @@ export const exampleConnectors: Connector[] = [
 ];
 
 /**
- * Example Data Repositories
+ * Example Repositories
  */
-export const exampleDataRepos: DataRepo[] = [
+export const exampleRepositories: Repository[] = [
   {
     id: 0,
     name: 'KPIs and Performance Metrics',
     slug: 'kpi-and-performance-metrics',
     description:
-      'This is an example of a Data Repo that has been created manually.',
+      'This is an example of a Repository that has been created manually.',
     documentation:
-      '#Explain here what this data repo is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
+      '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
       'excel-kpis.sales',
       'excel-management.inventory',
@@ -447,9 +447,9 @@ export const exampleDataRepos: DataRepo[] = [
     name: 'Google Analytics, example.com',
     slug: 'google-analytics-example-com',
     description:
-      'This is an example of a Data Repo that has been created by the Google Analytics Connection Workflow.',
+      'This is an example of a Repository that has been created by the Google Analytics Connection Workflow.',
     documentation:
-      '#Explain here what this data repo is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
+      '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
       'google-analytics-example-com.sessions',
       'google-analytics-example-com.users',
@@ -466,9 +466,9 @@ export const exampleDataRepos: DataRepo[] = [
     name: 'Mobile app usage and statistics',
     slug: 'mobile-app-usage-and-statistics',
     description:
-      'This is an example of a Data Repo that has been created by an Action Workflow.',
+      'This is an example of a Repository that has been created by an Action Workflow.',
     documentation:
-      '#Explain here what this data repo is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
+      '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
       'mobile-app-usage-and-statistics.users',
       'mobile-app-usage-and-statistics.downloads',
@@ -487,9 +487,9 @@ export const exampleDataRepos: DataRepo[] = [
     name: 'Excel KPIs',
     slug: 'excel-kpis',
     description:
-      'This is an example of a Data Repo that has been created by a Connection Workflow.',
+      'This is an example of a Repository that has been created by a Connection Workflow.',
     documentation:
-      '#Explain here what this data repo is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
+      '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
       'excel-kpis.sales',
       'excel-kpis.expenses',
@@ -505,9 +505,9 @@ export const exampleDataRepos: DataRepo[] = [
     name: 'Excel management',
     slug: 'excel-management',
     description:
-      'This is an example of a Data Repo that has been created by a Connection Workflow.',
+      'This is an example of a Repository that has been created by a Connection Workflow.',
     documentation:
-      '#Explain here what this data repo is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
+      '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: ['excel-management.inventory', 'excel-management.employees'],
     workflow: null,
     owner: exampleWorkspaceUsers[3],
@@ -519,9 +519,9 @@ export const exampleDataRepos: DataRepo[] = [
     name: 'Google Sheets KPIs',
     slug: 'google-sheets-kpis',
     description:
-      'This is an example of a Data Repo that has been created by a Connection Workflow.',
+      'This is an example of a Repository that has been created by a Connection Workflow.',
     documentation:
-      '#Explain here what this data repo is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
+      '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
       'google-sheets-kpis.sales',
       'google-sheets-kpis.inventory',
@@ -536,19 +536,19 @@ export const exampleDataRepos: DataRepo[] = [
   },
 ];
 
-/** Example Google Sheets connection workflow */
+/** Example Google Sheets Connection Workflow */
 const exampleGoogleSheetsConnection: ConnectionWorkflow = {
   id: 6,
   name: 'Google Sheets KPIs sync',
   owner: exampleWorkspaceUsers[0],
   description:
-    'This an example connection workflow for syncing KPIs from Google Sheets',
+    'This an example Connection Workflow for syncing KPIs from Google Sheets',
   documentation:
-    'This workflow is not scheduled and should be ran manually when needed. It is used as the destination for the export workflow example.',
+    'This workflow is not scheduled and should be ran manually when needed. It is used as the destination for the Export Workflow example.',
   cron_syntax: null,
   next_run_at: null,
   status: 'paused',
-  result: exampleDataRepos[6],
+  result: exampleRepositories[6],
   workflowable_id: 0,
   workflowable_type: 'connection',
   workflowable: {
@@ -566,14 +566,14 @@ export const exampleWorkflows: Workflow[] = [
     name: 'Main Google Analytics sync',
     owner: exampleWorkspaceUsers[0],
     description:
-      'This an example connection workflow for syncing Google Analytics data to a Data Repository.',
+      'This an example Connection Workflow for syncing Google Analytics data to a Repository.',
     documentation: '#Hello World!',
     cron_syntax: '2 * 0 0 0',
     next_run_at: new Date().toDateString(),
     status: 'running',
     created_at: new Date().toDateString(),
     updated_at: new Date().toDateString(),
-    result: exampleDataRepos[1],
+    result: exampleRepositories[1],
     workflowable_id: 0,
     workflowable_type: 'connection',
     workflowable: {
@@ -587,7 +587,7 @@ export const exampleWorkflows: Workflow[] = [
     name: 'Export KPIs to Google Sheets',
     owner: exampleWorkspaceUsers[1],
     description:
-      'This an example export workflow for exporting a Data Repository to Google Sheets Connection.',
+      'This an example Export Workflow for exporting a Repository to Google Sheets Connection.',
     documentation: '#Hello World!',
     cron_syntax: '2 * 0 0 0',
     next_run_at: new Date().toDateString(),
@@ -598,7 +598,7 @@ export const exampleWorkflows: Workflow[] = [
     workflowable_type: 'export',
     workflowable: {
       destination: exampleGoogleSheetsConnection,
-      source: exampleDataRepos[0],
+      source: exampleRepositories[0],
     },
   },
   {
@@ -606,14 +606,14 @@ export const exampleWorkflows: Workflow[] = [
     name: 'Fetch app usage data',
     owner: exampleWorkspaceUsers[2],
     description:
-      'This an example of an action workflow for fetching app usage data and storing results in a Data Repo.',
+      'This an example of an Action Workflow for fetching app usage data and storing results in a Repository.',
     documentation: '#Hello World!',
     cron_syntax: '2 * 0 0 0',
     next_run_at: new Date().toDateString(),
     status: 'running',
     created_at: new Date().toDateString(),
     updated_at: new Date().toDateString(),
-    result: exampleDataRepos[2],
+    result: exampleRepositories[2],
     workflowable_id: 0,
     workflowable_type: 'action',
     workflowable: {
@@ -625,7 +625,7 @@ export const exampleWorkflows: Workflow[] = [
     name: 'Send receipt on order',
     owner: exampleWorkspaceUsers[0],
     description:
-      'This an example of an action workflow for sending receipts on orders. Results in no Data Repository.',
+      'This an example of an Action Workflow for sending receipts on orders. Results in no Repository.',
     documentation: '#Hello World!',
     cron_syntax: '2 * 0 0 0',
     next_run_at: new Date().toDateString(),
@@ -643,13 +643,13 @@ export const exampleWorkflows: Workflow[] = [
     name: 'KPIs from Excel',
     owner: exampleWorkspaceUsers[0],
     description:
-      'This an example connection workflow for syncing an Excel Sheet to a Data Repository.',
+      'This an example Connection Workflow for syncing an Excel Sheet to a Repository.',
     documentation:
       'Manually imported Excel file with KPIs and performance metrics. This workflow is not scheduled and should be ran manually when needed.',
     cron_syntax: null,
     next_run_at: null,
     status: 'running',
-    result: exampleDataRepos[4],
+    result: exampleRepositories[4],
     workflowable_id: 0,
     workflowable_type: 'connection',
     workflowable: {
@@ -665,13 +665,13 @@ export const exampleWorkflows: Workflow[] = [
     name: 'Management data from Excel',
     owner: exampleWorkspaceUsers[3],
     description:
-      'This an example connection workflow for syncing an Excel Sheet to a Data Repository.',
+      'This an example Connection Workflow for syncing an Excel Sheet to a Repository.',
     documentation:
       'Manually imported Excel file with KPIs and performance metrics. This workflow is not scheduled and should be ran manually when needed. ',
     cron_syntax: '2 * 0 0 0',
     next_run_at: new Date().toDateString(),
     status: 'running',
-    result: exampleDataRepos[5],
+    result: exampleRepositories[5],
     workflowable_id: 0,
     workflowable_type: 'connection',
     workflowable: {
@@ -702,13 +702,13 @@ export const exampleActions = [
   exampleWorkflows[3],
 ] as ActionWorkflow[];
 
-/** Assign Workflows to example Data Repositories */
-exampleDataRepos[0].workflow = null;
-exampleDataRepos[1].workflow = exampleWorkflows[0] as ConnectionWorkflow;
-exampleDataRepos[2].workflow = exampleWorkflows[2] as ActionWorkflow;
-exampleDataRepos[3].workflow = exampleWorkflows[4] as ConnectionWorkflow;
-exampleDataRepos[4].workflow = exampleWorkflows[5] as ConnectionWorkflow;
-exampleDataRepos[5].workflow = exampleWorkflows[6] as ConnectionWorkflow;
+/** Assign Workflows to example Repositories */
+exampleRepositories[0].workflow = null;
+exampleRepositories[1].workflow = exampleWorkflows[0] as ConnectionWorkflow;
+exampleRepositories[2].workflow = exampleWorkflows[2] as ActionWorkflow;
+exampleRepositories[3].workflow = exampleWorkflows[4] as ConnectionWorkflow;
+exampleRepositories[4].workflow = exampleWorkflows[5] as ConnectionWorkflow;
+exampleRepositories[5].workflow = exampleWorkflows[6] as ConnectionWorkflow;
 
 /** Base properties to fake Workflow Runs for every Workflow with */
 const fakeRuns: Array<{

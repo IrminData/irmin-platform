@@ -20,17 +20,17 @@ export interface MarketplacePlugin {
 }
 
 /**
- * Marketplace dataRepo type
+ * Marketplace repository type
  * @todo Needs to be removed and implemented in the API types
- * @typeParam id - DataRepo ID
- * @typeParam name - DataRepo name
- * @typeParam source - DataRepo source
- * @typeParam price - DataRepo price
- * @typeParam connected - DataRepo connected status
- * @typeParam industry - DataRepo industry
- * @typeParam description - DataRepo description
+ * @typeParam id - Repository ID
+ * @typeParam name - Repository name
+ * @typeParam source - Repository source
+ * @typeParam price - Repository price
+ * @typeParam connected - Repository connected status
+ * @typeParam industry - Repository industry
+ * @typeParam description - Repository description
  */
-export interface MarketplaceDataset {
+export interface MarketplaceRepository {
   id: number;
   name: string;
   source: string;

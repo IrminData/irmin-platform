@@ -1,4 +1,4 @@
-import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
+import DynamicFaIcon from '@/components/common/DynamicFaIcon';
 
 import { FAQSection } from '@/types/website/Wordpress';
 

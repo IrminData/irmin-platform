@@ -9,7 +9,7 @@ import { ComponentPropsWithoutRef } from 'react';
  * @typeParam action - Link action
  * @typeParam props - Link props
  */
-export interface PortalNavigationLink {
+export interface PortalNavigationLinkType {
   title: string;
   active: boolean;
   icon?: React.ReactNode;

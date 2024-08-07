@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { IoEnterOutline } from 'react-icons/io5';
 
-import Button from '@/components/misc/Button';
+import Button from '@/components/common/button/Button';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -177,7 +177,7 @@ export default function WebsiteNavigationContent({
           <nav className='flex justify-between'>
             <div className='flex w-full items-center justify-between gap-2'>
               <div className='flex items-center justify-start gap-6'>
-                <Link href='/' className='py-4'>
+                <Link href='/' className='py-4' aria-label='Go to home page'>
                   <Image
                     className='h-6 min-h-4 w-auto'
                     src='/irmin-logo.svg'
@@ -218,7 +218,7 @@ export default function WebsiteNavigationContent({
                       <Button
                         size='sm'
                         variant='gradient'
-                        colorScheme='secondary'
+                        colorScheme='light'
                         className='min-w-32 py-2 pl-6 pr-3 text-xs font-light md:text-sm xl:text-sm'
                         href='/portal'
                         iconFirst={false}
@@ -269,7 +269,11 @@ export default function WebsiteNavigationContent({
             className={`fixed bottom-0 right-0 top-0 w-full max-w-full border-l border-gray-300 bg-white sm:max-w-sm ${animate} transition-all duration-300`}
           >
             <nav className='relative flex h-full flex-col justify-start overflow-y-scroll px-4 pb-8 pt-24'>
-              <Link className='inline-block' href='/'>
+              <Link
+                className='inline-block'
+                href='/'
+                aria-label='Go to home page'
+              >
                 <Image
                   className='mx-auto h-8'
                   src='/irmin-logo.svg'
@@ -290,11 +294,11 @@ export default function WebsiteNavigationContent({
               </ul>
               <div className='mt-auto flex flex-col'>
                 {!isLoading &&
-                  (!profile ? (
+                  (profile ? (
                     <Button
                       href='/portal'
-                      colorScheme='light'
                       size='md'
+                      colorScheme='light'
                       variant='gradient'
                       className='w-full'
                       onClick={closeMenu}
@@ -305,8 +309,8 @@ export default function WebsiteNavigationContent({
                   ) : (
                     <div className='flex w-full flex-col items-center justify-stretch gap-2'>
                       <Button
-                        colorScheme='light'
                         size='md'
+                        colorScheme='light'
                         variant='gradient'
                         href='/sign-in'
                         onClick={closeMenu}
@@ -316,8 +320,8 @@ export default function WebsiteNavigationContent({
                       </Button>
                       <Button
                         href='/sign-up'
-                        colorScheme='secondary'
                         size='md'
+                        colorScheme='secondary'
                         variant='gradient'
                         onClick={closeMenu}
                         className='w-full'

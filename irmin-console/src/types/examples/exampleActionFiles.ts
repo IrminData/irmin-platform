@@ -30,7 +30,7 @@ const exampleActionFiles = {
                 }
             }
 
-            // Return null to avoid creating a Data Repository based on this action
+            // Return null to avoid creating a Repository based on this action
             irmin.actionResult(null);
         } catch (error) {
             irmin.log("error", "Error fetching orders: " + error.message);

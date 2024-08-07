@@ -32,12 +32,12 @@ import { Workspace } from '@/types/api/Workspace';
  * In addition it provides {@link WorkflowRun} related logic.
  *
  * @param workspaceProps - The workspace properties
- * @param workspaceProps.actions - The action workflows
- * @param workspaceProps.setActions - Function to set the action workflows
- * @param workspaceProps.connections - The connection workflows
- * @param workspaceProps.setConnections - Function to set the connection workflows
- * @param workspaceProps.exports - The export workflows
- * @param workspaceProps.setExports - Function to set the export workflows
+ * @param workspaceProps.actions - The Action Workflows
+ * @param workspaceProps.setActions - Function to set the Action Workflows
+ * @param workspaceProps.connections - The Connection Workflows
+ * @param workspaceProps.setConnections - Function to set the Connection Workflows
+ * @param workspaceProps.exports - The Export Workflows
+ * @param workspaceProps.setExports - Function to set the Export Workflows
  * @param workspaceProps.currentWorkspace - The current workspace
  * @param workspaceProps.locale - The locale to use for the API calls
  */
@@ -69,7 +69,6 @@ const useWorkflows = ({
 
   /**
    * Hook to fetch the Workflow Runs for the current workspace.
-   * It will be run whenever the current workspace changes to update the Workflow Runs.
    */
   const fetchWorkflowRuns = useFetchWorkflowRuns(
     currentWorkspace,

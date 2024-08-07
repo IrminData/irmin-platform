@@ -2,20 +2,17 @@
 
 import React, { useState } from 'react';
 
-import Button from '@/components/misc/Button';
-import Input from '@/components/misc/Input';
-import LanguageSwitcher from '@/components/misc/LanguageSwitcher';
-import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
-import PortalTitle from '@/components/portal/portalTitle';
-import SettingsTabs from '@/components/portal/tabs/settingsTabs';
+import Button from '@/components/common/button/Button';
+import Input from '@/components/common/form/Input';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+import SettingsTabs from '@/components/common/tabs/SettingsTabs';
+import PortalTitle from '@/components/portal/PortalTitle';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
 /**
  * Portal user profile and settings page.
- *
- * @returns UI for managing user profile settings
  */
 export default function UserProfileSettingsPage() {
   const { dict } = useLocale();
@@ -48,19 +45,18 @@ export default function UserProfileSettingsPage() {
  * This component is used to manage user's general settings in the portal.
  * It allows the user to change their profile information.
  *
- * Uses {@link useIAM} to interact with the user's identity and APIs.
- *
- * @returns UI to manage user's general settings in the portal
+ * Uses {@link useIAM} to interact with the user's identity and APIs
  */
 const GeneralSettings: React.FC = () => {
   const { dict } = useLocale();
-  const { profile, updateProfile } = useIAM();
+  const { isLoading, profile, updateProfile } = useIAM();
+  const [processing, setProcessing] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const loading = isLoading || processing || !profile;
 
   const handleSaveChanges = async (event: React.FormEvent) => {
     event.preventDefault();
-    setIsLoading(true);
+    setProcessing(true);
 
     // Get form values
     const form = event.target as HTMLFormElement;
@@ -71,10 +67,8 @@ const GeneralSettings: React.FC = () => {
 
     // Update the profile
     await updateProfile(name, company, email);
-    setIsLoading(false);
+    setProcessing(false);
   };
-
-  if (!profile) return <LoadingSkeleton className='h-52 w-full' />;
 
   return (
     <div className='px-4'>
@@ -91,43 +85,52 @@ const GeneralSettings: React.FC = () => {
           <label className='block text-xs text-gray-700 md:text-sm'>
             {dict.profile.name}
           </label>
-          <Input
-            size='sm'
-            variant='outline'
-            colorScheme='gray'
-            type='text'
-            className='mt-2 w-full'
-            defaultValue={profile.name}
-            name='name'
-          />
+          {profile && (
+            <Input
+              size='sm'
+              variant='outline'
+              colorScheme='gray'
+              type='text'
+              className='mt-2 w-full'
+              defaultValue={profile.name}
+              name='name'
+              disabled={loading}
+            />
+          )}
         </div>
         <div className='mb-4'>
           <label className='block text-xs text-gray-700 md:text-sm'>
             {dict.profile.email}
           </label>
-          <Input
-            size='sm'
-            variant='outline'
-            colorScheme='gray'
-            type='text'
-            className='mt-2 w-full'
-            defaultValue={profile.email}
-            name='email'
-          />
+          {profile && (
+            <Input
+              size='sm'
+              variant='outline'
+              colorScheme='gray'
+              type='text'
+              className='mt-2 w-full'
+              defaultValue={profile.email}
+              name='email'
+              disabled={loading}
+            />
+          )}
         </div>
         <div className='mb-4'>
           <label className='block text-xs text-gray-700 md:text-sm'>
             {dict.profile.company}
           </label>
-          <Input
-            size='sm'
-            variant='outline'
-            colorScheme='gray'
-            type='text'
-            className='mt-2 w-full'
-            defaultValue={profile.company ?? ''}
-            name='company'
-          />
+          {profile && (
+            <Input
+              size='sm'
+              variant='outline'
+              colorScheme='gray'
+              type='text'
+              className='mt-2 w-full'
+              defaultValue={profile.company ?? ''}
+              name='company'
+              disabled={loading}
+            />
+          )}
         </div>
         <Button
           className='mt-4 w-full'
@@ -135,8 +138,8 @@ const GeneralSettings: React.FC = () => {
           size='sm'
           colorScheme='light'
           variant='solid'
-          disabled={isLoading}
-          loading={isLoading}
+          disabled={loading}
+          loading={loading}
         >
           {dict.profile.saveChanges}
         </Button>
@@ -148,7 +151,6 @@ const GeneralSettings: React.FC = () => {
 /**
  * Change password settings tab content
  * @todo Logic should be implemented to handle changing the user's password
- * @returns UI to manage user's password settings in the portal
  */
 const ChangePasswordSettings: React.FC = () => {
   const { dict } = useLocale();

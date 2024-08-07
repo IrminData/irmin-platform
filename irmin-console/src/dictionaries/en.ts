@@ -148,11 +148,11 @@ const en = {
     },
     links: {
       dashboards: 'Dashboards',
-      dataRepositories: 'Data Repositories',
+      repositories: 'Repositories',
       editor: 'Editor',
       actions: 'Actions',
       connections: 'Connections',
-      exportSyncs: 'Export syncs',
+      exportWorkflows: 'Export syncs',
       workspaceSettings: 'Workspace settings',
       marketplace: 'Marketplace',
       workspaces: 'Workspaces',
@@ -182,10 +182,10 @@ const en = {
     existingWidgets: 'Existing widgets',
     addNewWidget: 'Add new widget',
   },
-  dataRepository: {
-    dataRepository: 'Data Repository',
+  repository: {
+    repository: 'Repository',
     dataTables: 'Data Tables',
-    noDataTables: 'No tables found in this data repository',
+    noDataTables: 'No tables found in this repository',
     rowsReturnedIn: 'rows returned in',
     sqlQuery: 'SQL Query',
     runQuery: 'Run query',
@@ -194,8 +194,8 @@ const en = {
       saveChanges: 'Save changes',
       dangerZone: 'Danger Zone',
       deletionNote:
-        'Deleting this data repository will remove all data associated with it. This action is irreversible.',
-      deleteDataRepository: 'Delete Data Repository',
+        'Deleting this repository will remove all data associated with it. This action is irreversible.',
+      deleteDataRepository: 'Delete Repository',
     },
     tabs: {
       dataViewer: 'Data Viewer',
@@ -204,49 +204,78 @@ const en = {
       settings: 'Settings',
     },
   },
-  connection: {
-    connection: 'Connection',
-    connections: 'Connections',
-    selectConnector: 'Select a connector',
-    establishConnection: 'Establish connection',
-    configureSettings: 'Configure settings',
-    configureSync: 'Configure sync',
-    createNew: 'Create a new connection',
-    create: {
-      select: 'Select',
-      connector: 'Connector',
-      connectionName: 'Connection name',
-      connectionDescription: 'Connection description',
-      addCustomConnector: 'Add custom connector',
-      syncIntervalLabel:
-        'Sync interval (cron expression) or leave empty for manual sync',
-      syncIntervalPlaceholder:
-        'Enter cron expression (e.g. 0 0 * * *) or leave empty for manual sync',
-      continueAndTest: 'Continue & test connection',
-      startSync: 'Start sync',
-      continue: 'Continue',
-      goBack: 'Go back',
-      success: 'Connection successful',
-      failed: 'Connection failed',
-      contactSupport: 'Contact support',
+  workflow: {
+    connection: {
+      connection: 'Connection',
+      connections: 'Connections',
+      selectConnector: 'Select a connector',
+      establishConnection: 'Establish connection',
+      configureSettings: 'Configure settings',
+      configureWorkflow: 'Configure Connection Workflow',
+      createNewConnectionWorkflow: 'Create new Connection',
+      create: {
+        select: 'Select',
+        connector: 'Connector',
+        workflowName: 'Connection name',
+        workflowNamePlaceholder: 'Enter a name for the Connection Workflow',
+        workflowDescription: 'Connection description',
+        workflowDescriptionPlaceholder:
+          'Enter a description for the Connection Workflow',
+        addCustomConnector: 'Add custom connector',
+        syncIntervalLabel:
+          'Sync interval (cron expression) or leave empty for manual sync',
+        syncIntervalPlaceholder:
+          'Enter cron expression (e.g. 0 0 * * *) or leave empty for manual sync',
+        continueAndTest: 'Continue & test connection',
+        startWorkflow: 'Start workflow',
+        continue: 'Continue',
+        goBack: 'Go back',
+        success: 'Connection successful',
+        failed: 'Connection failed',
+        contactSupport: 'Contact support',
+      },
     },
-  },
-  export: {
-    selectSourceDataset: 'Select source Data Repository',
-    selectDestinationConnection: 'Select destination connection',
-    configureExport: 'Configure Export',
-    exportSyncs: 'Export syncs',
-    createNewExportSync: 'Create a new Export sync',
-    create: {
-      title: 'Configure export',
-      processName: 'Process name',
-      processNamePlaceholder: 'Enter a name for the export process',
-      syncIntervalLabel:
-        'Sync interval (cron expression) or leave empty for manual sync',
-      syncIntervalPlaceholder:
-        'Enter cron expression (e.g. 0 0 * * *) or leave empty for manual sync',
-      startSync: 'Start sync',
-      goBack: 'Go back',
+    export: {
+      selectSourceRepository: 'Select source Repository',
+      selectDestinationConnection: 'Select destination Connection',
+      configureExport: 'Configure Export',
+      exportWorkflows: 'Export Workflows',
+      createNewExportWorkflow: 'Create new Export',
+      create: {
+        title: 'Configure export',
+        workflowName: 'Export name',
+        workflowNamePlaceholder: 'Enter a name for the Export Workflow',
+        workflowDescription: 'Export description',
+        workflowDescriptionPlaceholder:
+          'Enter a description for the Export Workflow',
+        syncIntervalLabel:
+          'Sync interval (cron expression) or leave empty for manual sync',
+        syncIntervalPlaceholder:
+          'Enter cron expression (e.g. 0 0 * * *) or leave empty for manual sync',
+        startWorkflow: 'Start workflow',
+        goBack: 'Go back',
+      },
+    },
+    action: {
+      selectSourceFile: 'Select source file',
+      selectDestinationRepository: 'Select destination Repository',
+      configureAction: 'Configure Action',
+      actionWorkflows: 'Action Workflows',
+      createNewActionWorkflow: 'Create new Action',
+      create: {
+        title: 'Configure action',
+        workflowName: 'Action name',
+        workflowNamePlaceholder: 'Enter a name for the Action Workflow',
+        workflowDescription: 'Action description',
+        workflowDescriptionPlaceholder:
+          'Enter a description for the Action Workflow',
+        syncIntervalLabel:
+          'Sync interval (cron expression) or leave empty for manual sync',
+        syncIntervalPlaceholder:
+          'Enter cron expression (e.g. 0 0 * * *) or leave empty for manual sync',
+        startWorkflow: 'Start workflow',
+        goBack: 'Go back',
+      },
     },
   },
   marketplace: {
@@ -256,14 +285,14 @@ const en = {
     dataMarketplace: 'Data Marketplace',
     pluginMarketplace: 'Plugins & Extensions',
     searchDataRepositories:
-      'Search for public data repositories you would like to connect and use',
+      'Search for public Repositories you would like to connect and use',
     searchPlugins: 'Search for plugins and extensions',
     activePlugins: 'Active plugins',
     browsePlugins: 'Browse plugins',
-    activeDataRepositories: 'Active Data Repositories',
-    browseDataRepositories: 'Browse Data Repositories',
+    activeDataRepositories: 'Active Repositories',
+    browseDataRepositories: 'Browse Repositories',
     pluginsNotFound: 'No plugins found',
-    dataRepositoriesNotFound: 'No Data Repositories found',
+    dataRepositoriesNotFound: 'No Repositories found',
     source: 'Source',
     details: 'Details',
     connect: 'Connect',
@@ -292,10 +321,10 @@ const en = {
     saveAction: 'Save action',
     runAction: 'Run action',
     exportTable: 'export table (.csv)',
-    referenceDataSet: {
-      clickOnATable: 'Select data set table to reference',
+    referenceRepository: {
+      clickOnATable: 'Select repository table to reference',
       toReferenceTheTable: 'To reference the table',
-      fromTheDataRepo: 'from the data repository',
+      fromTheDataRepo: 'from the repository',
       inTheEditor: 'in the editor, use the following syntax:',
     },
   },
@@ -313,7 +342,7 @@ const en = {
     destination: 'Destination',
     noConnectionsFound: 'No connections found for this workspace',
     noActionsFound: 'No actions found for this workspace',
-    noDataRepositoriesFound: 'No Data Repositories found for this workspace',
+    noDataRepositoriesFound: 'No Repositories found for this workspace',
     noExportProcessesFound: 'No Export processes found for this workspace',
   },
   haz: {

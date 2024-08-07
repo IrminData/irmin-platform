@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 
-import Button from '@/components/misc/Button';
-import Input from '@/components/misc/Input';
-import PortalTitle from '@/components/portal/portalTitle';
-import SettingsTabs from '@/components/portal/tabs/settingsTabs';
-import WorkspaceUsersAndPermissions from '@/components/portal/workspaceUsersAndPermissions';
+import Button from '@/components/common/button/Button';
+import Input from '@/components/common/form/Input';
+import SettingsTabs from '@/components/common/tabs/SettingsTabs';
+import PortalTitle from '@/components/portal/PortalTitle';
+import UsersAndInvites from '@/components/workspace/UsersAndInvites';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -22,8 +22,6 @@ import { Workspace } from '@/types/api/Workspace';
  * This page is used to manage workspace settings in the portal.
  * It allows the user to update the workspace name and delete the workspace.
  * It also allows the user to manage users and permissions in the workspace.
- *
- * @returns UI for managing workspace settings
  */
 export default function WorkspaceSettingsPage() {
   const { dict } = useLocale();
@@ -40,7 +38,7 @@ export default function WorkspaceSettingsPage() {
           {
             slug: 'users',
             name: dict.workspace.users,
-            content: <WorkspaceUsersAndPermissions />,
+            content: <UsersAndInvites />,
           },
           {
             slug: 'billing',
@@ -63,13 +61,12 @@ export default function WorkspaceSettingsPage() {
  * and delete the workspace.
  *
  * It uses the WorkspaceContext to fetch and manage workspace data.
- *
- * @returns UI for managing general workspace settings
  */
 const GeneralSettings = () => {
   const { dict } = useLocale();
   const { irminModal } = usePopup();
   const {
+    workspaceLoading,
     workspaces: {
       currentWorkspace,
       fetchWorkspaces,
@@ -82,7 +79,8 @@ const GeneralSettings = () => {
   const [workspaceName, setWorkspaceName] = useState('');
   const [workspaceDescription, setWorkspaceDescription] = useState('');
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [processing, setIsLoading] = useState(false);
+  const isLoading = workspaceLoading || processing;
 
   useEffect(() => {
     if (currentWorkspace) {
@@ -179,6 +177,7 @@ const GeneralSettings = () => {
               type='text'
               defaultValue={workspaceName}
               onChange={(e) => setWorkspaceName(e.target.value)}
+              disabled={isLoading}
             />
           </div>
           <div className='mt-4'>
@@ -197,6 +196,7 @@ const GeneralSettings = () => {
               longtext={{
                 rows: 3,
               }}
+              disabled={isLoading}
             />
           </div>
           <Button
@@ -224,6 +224,7 @@ const GeneralSettings = () => {
             size='sm'
             colorScheme='secondary'
             variant='outline'
+            disabled={isLoading}
           >
             {dict.workspace.deleteWorkspace}
           </Button>
@@ -241,8 +242,6 @@ const GeneralSettings = () => {
  * This component is used to manage workspace's billing settings in the portal.
  *
  * Currently Billing is not implemented, thus it only shows a contact us button.
- *
- * @returns UI for managing billing settings
  */
 const BillingSettings: React.FC = () => {
   const { dict } = useLocale();

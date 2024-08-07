@@ -38,7 +38,6 @@ const useInvite = ({
 
   /**
    * Hook to fetch the invites for the current workspace.
-   * It will be run whenever the current workspace changes to update the invites.
    */
   const fetchInvites = useFetchInvites(
     currentWorkspace,
@@ -77,6 +76,7 @@ const useInvite = ({
   return {
     invites,
     invitesLoading,
+    setInvites,
     fetchInvites,
     sendInvite,
     resendInvite,

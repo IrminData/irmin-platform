@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 
-import PortalNavigation from '@/components/portal/navigation/portalNavigation';
-import ProtectedRoute from '@/components/portal/ProtectedRoute';
+import ProtectedRouteWrapper from '@/components/authentication/ProtectedRouteWrapper';
+import PortalWrapper from '@/components/portal/wrapper/PortalWrapper';
 
 import { PopupProvider } from '@/context/PopupContext';
 import { WorkspaceProvider } from '@/context/workspace';
@@ -32,8 +32,6 @@ export const metadata: Metadata = {
  * @param props - Layout properties
  * @param props.children - Page content
  * @param props.params - Page parameters
- *
- * @returns Website layout
  */
 export default function PortalLayout({
   children,
@@ -46,9 +44,9 @@ export default function PortalLayout({
   return (
     <PopupProvider>
       <WorkspaceProvider locale={lang}>
-        <PortalNavigation>
-          <ProtectedRoute>{children}</ProtectedRoute>
-        </PortalNavigation>
+        <PortalWrapper>
+          <ProtectedRouteWrapper>{children}</ProtectedRouteWrapper>
+        </PortalWrapper>
       </WorkspaceProvider>
     </PopupProvider>
   );

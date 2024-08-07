@@ -32,7 +32,6 @@ const useExports = ({
 
   /**
    * Hook to fetch the exports for the current workspace.
-   * It will be run whenever the current workspace changes to update the exports.
    */
   const fetchExports = useFetchExports(
     currentWorkspace,

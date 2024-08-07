@@ -5,19 +5,23 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from 'react';
 
 import { Locale } from '@/dictionaries';
-import BucketService from '@/services/api/BucketService';
+import IrminCore from '@/services/core/IrminCore';
+import { fetchBucketProxy } from '@/services/proxies/bucket';
 
-import { useIAM } from '@/context/IAMContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { transformBucketToFileNavItem } from '@/utils/bucket';
 
 import { Bucket, BucketFile, BucketFolder } from '@/types/api/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
+
+import { useIAM } from './IAMContext';
 
 /**
  * Bucket context properties
@@ -79,8 +83,6 @@ export const BucketProvider = ({
   const { irminAlert } = usePopup();
   const { token } = useIAM();
 
-  const [filesFetechedForWorkspace, setFilesFetechedForWorkspace] =
-    useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
 
   const [currentBucket, setCurrentBucket] = useState<Bucket | null>(null);
@@ -89,29 +91,40 @@ export const BucketProvider = ({
   const [activeTab, setActiveTab] = useState<number>(0);
   const [openFileTabs, setOpenFileTabs] = useState<string[]>([]);
 
-  const bucketService = BucketService.getInstance(locale, token ?? '');
+  const { bucketService } = useMemo(
+    () => new IrminCore(locale, token ?? ''),
+    [locale, token]
+  );
+
+  // Ref to check which workspace the files were fetched for
+  const filesFetchedForRef = useRef<string | null>(null);
 
   /*
    * Fetch files and folders from the current workspace bucket
    */
   const fetchBucket = useCallback(async () => {
+    // Don't fetch twice for the same workspace
+    if (currentWorkspace === filesFetchedForRef.current) {
+      setLoading(false);
+      return;
+    }
+    filesFetchedForRef.current = currentWorkspace;
+    setLoading(true);
     try {
-      // Skip if already loading
-      if (loading) return;
-      setLoading(true);
-      setFilesFetechedForWorkspace(currentWorkspace);
       // Fetch bucket data
-      const response = await bucketService.fetchBucket();
+      const response = await fetchBucketProxy({
+        locale: locale,
+        token: token ?? '',
+        workspace: currentWorkspace,
+      });
       if (!response || !response.data) return;
-      const bucket = response.data;
-      // Transform bucket to file items
-      const fileItems = transformBucketToFileNavItem(bucket);
+      const bucketProxyData = response.data;
       // Update the context state
-      setCurrentBucket(bucket);
-      setItems(fileItems);
+      setCurrentBucket(bucketProxyData.bucket);
+      setItems(bucketProxyData.fileNavItems);
     } catch (error) {
-      console.error('BucketContext fetchFiles error', error);
-      setFilesFetechedForWorkspace('');
+      console.error('BucketContext fetchBucket error', error);
+      filesFetchedForRef.current = null;
       irminAlert(
         'error',
         (error as Error)?.message ?? 'Failed to fetch bucket'
@@ -119,17 +132,17 @@ export const BucketProvider = ({
     } finally {
       setLoading(false);
     }
-  }, [loading, bucketService, currentWorkspace, irminAlert]);
+  }, [token, locale, currentWorkspace, irminAlert]);
 
   /**
    * Hook to fetch the bucket when the workspace changes
    */
   useEffect(() => {
     // Fetch items if workspace changes
-    if (currentWorkspace !== filesFetechedForWorkspace) {
+    if (currentWorkspace !== filesFetchedForRef.current) {
       fetchBucket();
     }
-  }, [currentWorkspace, filesFetechedForWorkspace, fetchBucket]);
+  }, [currentWorkspace, fetchBucket]);
 
   /**
    * Update the context state with the bucket data

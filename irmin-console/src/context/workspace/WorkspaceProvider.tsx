@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useParams } from 'next/navigation';
 
@@ -10,9 +10,9 @@ import { WorkspaceContext } from '@/context/workspace';
 import useActions from '@/context/workspace/provider/useActions';
 import useConnections from '@/context/workspace/provider/useConnections';
 import useDashboards from '@/context/workspace/provider/useDashboards';
-import useDataRepositories from '@/context/workspace/provider/useDataRepositories';
 import useExports from '@/context/workspace/provider/useExports';
 import useInvite from '@/context/workspace/provider/useInvite';
+import useRepositories from '@/context/workspace/provider/useRepositories';
 import useUsersAndRoles from '@/context/workspace/provider/useUsersAndRoles';
 import useWorkflows from '@/context/workspace/provider/useWorkflows';
 import useWorkspaces from '@/context/workspace/provider/useWorkspaces';
@@ -35,7 +35,10 @@ export const WorkspaceProvider = ({
   // Ref to check if the component has been initialised
   const initialisedRef = useRef(false);
 
-  // Loading state for the Workspace Context as a whole
+  // Ref to check if the workspace is loading and which workspace is fetched
+  const workspaceFetchedRef = useRef<string | null>(null);
+
+  // Workspace loading state
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
 
   // Workspaces
@@ -43,10 +46,11 @@ export const WorkspaceProvider = ({
     workspaces,
     workspacesLoading,
     currentWorkspace,
-    switchToWorkspace,
+    switchWorkspace,
     deleteCurrentWorkspace,
     transferOwnership,
     fetchWorkspaces,
+    fetchFullCurrentWorkspace,
     createWorkspace,
     updateWorkspace,
   } = useWorkspaces({ locale });
@@ -71,21 +75,23 @@ export const WorkspaceProvider = ({
   });
 
   // Dashboards
-  const { dashboards, dashboardsLoading, fetchDashboards } = useDashboards({
-    currentWorkspace,
-    locale,
-  });
+  const { dashboards, dashboardsLoading, setDashboards, fetchDashboards } =
+    useDashboards({
+      currentWorkspace,
+      locale,
+    });
 
-  // Data repositories
+  // Repositories
   const {
-    dataRepositories,
+    repositories,
     dataRepositoriesLoading,
+    setDataRepositories,
     fetchDataRepositories,
     createDataRepository,
     updateDataRepository,
     deleteDataRepository,
     reassignDataRepository,
-  } = useDataRepositories({
+  } = useRepositories({
     currentWorkspace,
     locale,
   });
@@ -96,6 +102,7 @@ export const WorkspaceProvider = ({
     fetchRoles,
     users,
     usersLoading,
+    setUsers,
     fetchUsers,
     deleteUser,
     changeUserRole,
@@ -108,6 +115,7 @@ export const WorkspaceProvider = ({
   const {
     invites,
     invitesLoading,
+    setInvites,
     fetchInvites,
     sendInvite,
     resendInvite,
@@ -140,23 +148,87 @@ export const WorkspaceProvider = ({
   });
 
   /**
-   * Hook to initialise the context by fetching initial data.
-   *
-   * @remarks
-   *
-   * This useEffect runs only once when the component is mounted.
-   * It fetches workspaces and roles, and attempts to switch to the workspace stored in localStorage.
+   * Function to update the full workspace context data.
+   * @param workspace The workspace to fetch the data for.
+   */
+  const updateFullWorkspaceData = useCallback(
+    async (workspaceSlug: string | null) => {
+      // Set the fetched workspace slug
+      workspaceFetchedRef.current = workspaceSlug;
+      // Set the loading state
+      setWorkspaceLoading(true);
+      // Empty workspace slug = reset the context data
+      if (!workspaceSlug) {
+        setDashboards([]);
+        setConnections([]);
+        setExports([]);
+        setActions([]);
+        setDataRepositories([]);
+        setUsers([]);
+        setInvites([]);
+        return;
+      }
+      try {
+        // Fetch the full data for the current workspace
+        const res = await fetchFullCurrentWorkspace(workspaceSlug);
+        // Set the states
+        setDashboards(res.data.dashboards);
+        setConnections(res.data.connections);
+        setExports(res.data.exports);
+        setActions(res.data.actions);
+        setDataRepositories(res.data.repositories);
+        setUsers(res.data.users);
+        setInvites(res.data.invites);
+      } catch (error) {
+        console.error('Failed to fetch initial workspace data:', error);
+      } finally {
+        // Reset the loading state
+        setWorkspaceLoading(false);
+      }
+    },
+    [
+      fetchFullCurrentWorkspace,
+      setDashboards,
+      setConnections,
+      setExports,
+      setActions,
+      setDataRepositories,
+      setUsers,
+      setInvites,
+    ]
+  );
+
+  /**
+   * Fetch and set the initial data for the workspace when the currentWorkspace changes
    */
   useEffect(() => {
-    const initialise = async () => {
-      if (initialisedRef.current) return;
-      initialisedRef.current = true;
+    // Check if the current workspace is set
+    if (!currentWorkspace) {
+      // Reset the workspace data
+      updateFullWorkspaceData(null);
+      return;
+    }
+    // Make sure data is fetched once per workspace
+    if (workspaceFetchedRef.current === currentWorkspace.slug) return;
+    // Fetch the full data for the current workspace
+    updateFullWorkspaceData(currentWorkspace.slug);
+  }, [updateFullWorkspaceData, currentWorkspace]);
 
+  /**
+   * Hook to initialise the context by setting the current workspace.
+   *
+   * This useEffect runs only once when the component is mounted.
+   * Fetches roles, as they are not workspace specific.
+   * Attempts to switch to the workspace to that is found in the query params or in localStorage.
+   */
+  useEffect(() => {
+    (async () => {
       try {
-        setWorkspaceLoading(true);
-        // Fetch workspaces and roles
+        // Do not initialise if the component is already initialised
+        if (initialisedRef.current) return;
+        initialisedRef.current = true;
+        // Fetch roles
         await fetchRoles();
-        await fetchWorkspaces();
         // Check if path is provided with workspace
         const pathHasWorkspace =
           Object.prototype.hasOwnProperty.call(params, 'workspace') &&
@@ -164,7 +236,7 @@ export const WorkspaceProvider = ({
           params.workspace.length > 0;
         if (pathHasWorkspace) {
           // Attempt to switch to the workspace provided in the path
-          await switchToWorkspace(params.workspace as string);
+          await switchWorkspace(params.workspace as string);
         } else {
           // Attempt to switch to the workspace stored in localStorage
           const currentWorkspaceSlug = localStorage.getItem(
@@ -174,45 +246,19 @@ export const WorkspaceProvider = ({
             // Remove the workspace slug from localStorage
             localStorage.removeItem('currentWorkspaceSlug');
             // Switch to the cached workspace
-            await switchToWorkspace(currentWorkspaceSlug);
+            await switchWorkspace(currentWorkspaceSlug);
           } else {
             // Set workspace to null
-            await switchToWorkspace(null);
+            await switchWorkspace(null);
           }
         }
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
         // Set workspace to null
-        await switchToWorkspace(null);
-      } finally {
-        setWorkspaceLoading(false);
+        await switchWorkspace(null);
       }
-    };
-
-    initialise();
-  }, [fetchWorkspaces, fetchRoles, switchToWorkspace, params]);
-
-  /**
-   * Hook to fetch workspace data whenever the current workspace changes.
-   */
-  useEffect(() => {
-    fetchDashboards();
-    fetchConnections();
-    fetchActions();
-    fetchExports();
-    fetchDataRepositories();
-    fetchUsers();
-    fetchInvites();
-  }, [
-    fetchDashboards,
-    fetchConnections,
-    fetchActions,
-    fetchExports,
-    fetchDataRepositories,
-    fetchUsers,
-    fetchInvites,
-    currentWorkspace,
-  ]);
+    })();
+  }, [fetchWorkspaces, fetchRoles, switchWorkspace, params]);
 
   return (
     <WorkspaceContext.Provider
@@ -222,7 +268,7 @@ export const WorkspaceProvider = ({
         workspaces: {
           workspaces,
           currentWorkspace,
-          switchToWorkspace,
+          switchWorkspace,
           deleteCurrentWorkspace,
           transferOwnership,
           fetchWorkspaces,
@@ -266,8 +312,8 @@ export const WorkspaceProvider = ({
           isLoading: actionsLoading,
           fetchActions,
         },
-        dataRepositories: {
-          dataRepositories,
+        repositories: {
+          repositories,
           isLoading: dataRepositoriesLoading,
           fetchDataRepositories,
           createDataRepository,

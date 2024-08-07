@@ -1,5 +1,5 @@
 import { Connector } from '@/types/api/Connector';
-import { DataRepo } from '@/types/api/DataRepo';
+import { Repository } from '@/types/api/Repository';
 import { WorkspaceUser } from '@/types/api/Workspace';
 
 /**
@@ -18,13 +18,13 @@ type WorkflowableType = 'connection' | 'action' | 'export';
  * @typeParam owner - The workspace user that owns this workflow and is responsible for it
  * @typeParam workflowable_type - Type of workflow
  * @typeParam workflowable_id - ID of the workflowable
- * @typeParam workflowable - The workflowable object
+ * @typeParam workflowable - Object with details for the workflow, specific to the workflowable type
  * @typeParam cron_syntax - Cron syntax for the workflow
  * @typeParam next_run_at - Timestamp of the next run of the workflow
  * @typeParam status - Status of the workflow
  * @typeParam description - Workflow description
  * @typeParam documentation - Workflow documentation as a markdown string
- * @typeParam result - DataRepo that is the result of the workflow. If a workspace results in data, it will be grouped as a DataRepo.
+ * @typeParam result - Repository that is the result of the workflow. If a workspace results in data, it will be grouped as a Repository.
  * @typeParam created_at - Workflow creation date
  * @typeParam updated_at - Workflow update date
  */
@@ -40,7 +40,7 @@ export interface Workflow {
   status: WorkflowStatus;
   description?: string | null;
   documentation?: string | null;
-  result?: DataRepo | null;
+  result?: Repository | null;
   created_at: string;
   updated_at: string;
 }
@@ -92,7 +92,7 @@ export type WorkflowStatus =
   | 'error';
 
 /**
- * Connection workflow Workflowable object
+ * Connection object - workflowable for the Workflow
  *
  * @typeParam details - String which contains a JSON object
  * @typeParam settings - String which contains a JSON object
@@ -105,18 +105,18 @@ interface Connection {
 }
 
 /**
- * Export workflow Workflowable object
+ * Export object - workflowable for the Workflow
  *
  * @typeParam destination - Connection Workflow object of where to export
- * @typeParam source - Data Repository object of what to export
+ * @typeParam source - Repository object of what to export
  */
 interface ExportSync {
   destination: ConnectionWorkflow;
-  source: DataRepo;
+  source: Repository;
 }
 
 /**
- * Action workflow Workflowable object
+ * Action object - workflowable for the Workflow
  *
  * @typeParam path - Path to the action
  */

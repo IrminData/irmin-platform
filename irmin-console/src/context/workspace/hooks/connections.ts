@@ -3,13 +3,13 @@
 import { useCallback } from 'react';
 
 import { Locale } from '@/dictionaries';
-import WorkflowService from '@/services/api/WorkflowService';
+import IrminCore from '@/services/core/IrminCore';
 
 import { ConnectionWorkflow } from '@/types/api/Workflow';
 import { Workspace } from '@/types/api/Workspace';
 
 /**
- * Hook to fetch the list of connection workflows for the current workspace.
+ * Hook to fetch the list of Connection Workflows for the current workspace.
  *
  * @param currentWorkspace - The current workspace
  * @param setConnections - Function to update the connections state.
@@ -30,11 +30,9 @@ export const useFetchConnections = (
 ) =>
   useCallback(
     /**
-     * Fetch and update context for Connections Workflows of the current workspace using the {@link WorkflowService}.
+     * Fetch and update context for Connections Workflows of the current workspace using the {@link IrminCore}.
      *
      * @param forceFetch - If true, will refetch even if already fetched
-     *
-     * @returns Void or Error if fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -43,24 +41,22 @@ export const useFetchConnections = (
         if (fetchedFor === currentWorkspace?.slug) return;
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
-      // Get the workflow service
-      const workflowService = WorkflowService.getInstance(locale, '');
-      // If the current workspace is not set, clear the connections
-      if (!currentWorkspace) {
-        setConnections([]);
-        return;
-      }
+      // Prevent multiple simultaneous fetches
+      if (loading) return;
+      setLoading(true);
       try {
-        // Prevent multiple simultaneous fetches
-        if (loading) return;
-        setLoading(true);
+        // Get the workflow service
+        const { workflowService } = new IrminCore(locale);
+        // If the current workspace is not set, clear the connections
+        if (!currentWorkspace) {
+          setConnections([]);
+          return;
+        }
         // Fetch the connections for the current workspace
         const response = await workflowService.fetchConnections();
         setConnections(response.data);
+      } finally {
         setLoading(false);
-      } catch (e) {
-        setLoading(false);
-        throw e;
       }
     },
     [

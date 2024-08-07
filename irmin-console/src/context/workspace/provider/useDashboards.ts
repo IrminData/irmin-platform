@@ -32,7 +32,6 @@ const useDashboards = ({
 
   /**
    * Hook to fetch the dashboards for the current workspace.
-   * It will be run whenever the current workspace changes to update the dashboards.
    */
   const fetchDashboards = useFetchDashboards(
     currentWorkspace,
@@ -47,6 +46,7 @@ const useDashboards = ({
   return {
     dashboards,
     dashboardsLoading,
+    setDashboards,
     fetchDashboards,
   };
 };

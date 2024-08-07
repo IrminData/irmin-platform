@@ -8,9 +8,8 @@ import WebsiteError from '@/components/website/websiteError';
  * Error page (Website)
  *
  * @param param0 - Error properties
- * @returns Error page content
  */
-export default function Error({
+export default function WebsiteErrorPage({
   error,
   reset,
 }: {

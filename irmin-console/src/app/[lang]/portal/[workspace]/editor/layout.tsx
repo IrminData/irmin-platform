@@ -2,9 +2,15 @@ import { Metadata } from 'next';
 
 import { Locale } from '@/dictionaries';
 
-import EditorWrapper from '@/components/editor/editorWrapper';
+import EditorLayoutWrapper from '@/components/bucket/editor/EditorLayoutWrapper';
 
-type LayoutParams = {
+/**
+ * URL parameters for the Editor layout
+ *
+ * @param lang - The language of the user
+ * @param workspace - The slug of the current workspace
+ */
+export type EditorLayoutParams = {
   lang: Locale;
   workspace: string;
 };
@@ -15,7 +21,7 @@ type LayoutParams = {
 export async function generateMetadata({
   params,
 }: {
-  params: LayoutParams;
+  params: EditorLayoutParams;
 }): Promise<Metadata> {
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
@@ -26,12 +32,12 @@ export async function generateMetadata({
 /**
  * Layout for the Editor page in the Portal
  * @param children - The children to render
- * @returns The Editor layout
  */
-export default function PortalEditorLayout({
+export default function EditorLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
+  params: EditorLayoutParams;
 }>) {
-  return <EditorWrapper>{children}</EditorWrapper>;
+  return <EditorLayoutWrapper>{children}</EditorLayoutWrapper>;
 }

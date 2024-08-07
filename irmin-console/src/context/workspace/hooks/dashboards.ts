@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import { Locale } from '@/dictionaries';
-import DashboardService from '@/services/api/DashboardService';
+import IrminCore from '@/services/core/IrminCore';
 
 import { Dashboard } from '@/types/api/Dashboard';
 import { Workspace } from '@/types/api/Workspace';
@@ -29,11 +29,9 @@ export const useFetchDashboards = (
 ) =>
   useCallback(
     /**
-     * Fetch and update context for Dashboards of the current workspace using the {@link DashboardService}.
+     * Fetch and update context for Dashboards of the current workspace using the {@link IrminCore}.
      *
      * @param forceFetch - If true, will refetch even if already fetched
-     *
-     * @returns Void or Error if fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -42,24 +40,22 @@ export const useFetchDashboards = (
         if (fetchedFor === currentWorkspace?.slug) return;
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
-      // Get the dashboard service
-      const dashboardService = DashboardService.getInstance(locale, '');
-      // If the current workspace is not set, clear the connections
-      if (!currentWorkspace) {
-        setDashboards([]);
-        return;
-      }
+      // Prevent multiple simultaneous fetches
+      if (loading) return;
+      setLoading(true);
       try {
-        // Prevent multiple simultaneous fetches
-        if (loading) return;
-        setLoading(true);
+        // Get the dashboard service
+        const { dashboardService } = new IrminCore(locale);
+        // If the current workspace is not set, clear the connections
+        if (!currentWorkspace) {
+          setDashboards([]);
+          return;
+        }
         // Fetch the connections for the current workspace
         const response = await dashboardService.fetchDashboards();
         setDashboards(response.data);
+      } finally {
         setLoading(false);
-      } catch (e) {
-        setLoading(false);
-        throw e;
       }
     },
     [

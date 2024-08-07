@@ -6,7 +6,7 @@ import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
 
-import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
+import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
 import { TestimonialSection } from '@/types/website/Wordpress';
 
@@ -170,7 +170,9 @@ export default function WebsiteTestimonialsSection({
             </div>
           </div>
         ) : (
-          <LoadingSkeleton />
+          <div id='website-testimonials-loading-skeleton'>
+            <LoadingSkeleton />
+          </div>
         )}
       </div>
     </section>

@@ -9,11 +9,10 @@ This repository contains the code for Irmin frontend, built using Next.js, TypeS
 To access dev/staging environments of `irmin-frontend` the password is: `LeTamiNtItENowNp`.
 To access the internal PHPDoc documentation of the API, the user is `irmin`, and the password is `6svtkffnp9iaj47kzbla`
 
-| Project | Repository | Dev | Documentation | Admin/CMS |
-| ----------------------------------- | --------------------------------------------------------- | ------------------------------------ | ---------------------------------- | ----------------------------------------------- |
-| Irmin Web App (Next.js, TypeScript) | [Repository](https://github.com/IrminData/irmin-frontend) | [irmin.dev](https://irmin.dev)     | [Internal TSDoc](https://irmin.dev/tsdocs)   | [WordPress CMS](https://cms.irmin.dev/wp-admin) |
-| Irmin API (Laravel, PHP)            | [Repository](https://github.com/IrminData/irmin-api)      | [api.irmin.dev](https://api.irmin.dev) | [API Docs](https://api.irmin.dev/docs) - [Internal PHPDoc](https://internal-api-documentation.irmin.dev/docs)  | |
-
+| Project                             | Repository                                                | Dev                                    | Documentation                                                                                                 | Admin/CMS                                       |
+| ----------------------------------- | --------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Irmin Web App (Next.js, TypeScript) | [Repository](https://github.com/IrminData/irmin-frontend) | [irmin.dev](https://irmin.dev)         | [Internal TSDoc](https://irmin.dev/tsdocs)                                                                    | [WordPress CMS](https://cms.irmin.dev/wp-admin) |
+| Irmin API (Laravel, PHP)            | [Repository](https://github.com/IrminData/irmin-api)      | [api.irmin.dev](https://api.irmin.dev) | [API Docs](https://api.irmin.dev/docs) - [Internal PHPDoc](https://internal-api-documentation.irmin.dev/docs) |                                                 |
 
 ## Table of Contents
 
@@ -21,15 +20,24 @@ To access the internal PHPDoc documentation of the API, the user is `irmin`, and
 - [Prerequisites and stack](#prerequisites-and-stack)
 - [Environment Configuration](#environment-configuration)
 - [Running the Project](#running-the-project)
+- [Components](#components)
+  - [/app directory](#app-directory)
+  - [Naming conventions](#naming-conventions)
+  - [No logic in /components](#no-logic-in-components)
+  - [File structure](#file-structure)
 - [TypeScript and Types](#typescript-and-types)
 - [Static data](#static-data)
 - [Offline mode](#offline-mode)
 - [Irmin API](#irmin-api)
-- [API Services](#api-services)
-   - [Irmin API authorisation](#irmin-api-authorisation)
-   - [API Service structure](#api-service-structure)
-   - [Fake data for API Services](#fake-data-for-api-services)
-   - [Examples](#examples)
+- [Server side actions](#server-side-actions)
+  - [Middleware](#middleware)
+  - [Route handlers](#route-handlers)
+- [Services](#services)
+  - [Irmin API authorisation](#irmin-api-authorisation)
+  - [Core Services](#core-services)
+    - [Fake data](#fake-data)
+  - [Proxy Services](#proxy-services)
+  - [Wordpress Service](#wordpress-service)
 - [Internationalisation](#internationalisation)
 - [Contexts](#contexts)
   - [Identity and Access Management (IAMContext)](#identity-and-access-management-iamcontext)
@@ -63,6 +71,7 @@ Ensure you have the following installed:
 - Yarn (v2.x+). See [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration details.
 
 In the web app we use TypeScript, Next.js (React framework) with the App Router enabled, and Tailwind (styles).
+
 We also use ESLint and Prettier for code quality.
 
 [Next.js documentation](https://nextjs.org/docs/app)
@@ -109,6 +118,54 @@ yarn build
 yarn start
 ```
 
+## Components
+
+Components are the building blocks of the application. They are reusable pieces of UI that can be used in multiple places. Components are located in the `src/components` and `src/app` directories.
+
+### /app directory
+
+[Pages and Layouts](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts) are used to provide the route content. They are located in the `/app` directory. 
+
+We generally try to avoid using the `app` directory for anything other than defining the routes, layouts and SEO.  The actual content should be in the `/components` directory.
+
+It is also okay to handle certain data fetching in the `app` directory components. This could be used as a sort of cache layer for generic data. Fetching user/workspace specific data, or large amounts of data this way, can be problematic.
+
+Components in the `app` directory should be server-side rendered, and can not access any contexts or cookies on the API domain. Don't fetch something that is already fetched in contexts.
+
+See [Server side actions](#server-side-actions) for more information.
+
+### Naming conventions
+
+If a component is used to provide a route Layout, it should say `LayoutWrapper` eg. `EditorLayoutWrapper`, corresponding layout for this component should be `EditorLayout`. 
+
+If a component is used to provide a route Page content, it should say `Section`, eg. `EditorSection`, corresponding page for this component should be `EditorPage`.
+
+Components should be named in PascalCase and should be descriptive of their purpose. 
+
+### No logic in /components
+
+The general idea is to keep the components as small and reusable as possible.
+
+An attempt should be made to keep components "UI-focused" and avoid logic. If a component requires logic, move that logic to a relevant [Context](#contexts), or make a new one.
+
+### File structure
+
+Components are located in the `src/components` directory. Components are split into different directories and subdirectories based on their purpose.
+
+General components are:
+
+- `src/components/website/...` -> Components specific to the website pages
+- `src/components/portal/...` -> Components specific to the portal pages
+- `src/components/common/...` -> Components that are used in multiple places, like popups, buttons, lists etc.
+
+ If a component is used only in a specific feature, it should be placed in the feature directory grouped by features, purposes or domains. 
+
+For example: 
+
+- `src/components/workflow/...` -> Components related to Workflows
+- `src/components/workflow/action/...` -> Components related to Action Workflows
+- `src/components/workspace/...` -> Components related to Workspace logic
+
 ## TypeScript and Types
 
 The project is written in TypeScript. When developing, try to always define types and avoid using `any`. Types should be named in PascalCase and should be descriptive of their purpose. This ensures better type safety and code quality.
@@ -137,11 +194,42 @@ When offline mode is enabled something is always returned for API requests in AP
 
 Note! It is not meant for anything but local use.
 
-## API Services
+## Server side actions
 
-To call the API, we use API Services. These services contain the API endpoints and the logic for calling the API. The API Services are located in the `src/services/api` directory. Each service corresponds to a specific resource in the API.
+Next.js allows for many ways of running server-side code. See [Next.js documentation](https://nextjs.org/docs/app) for more information.
 
-Every call to the API is wrapped in [src/services/IrminAPI.ts](src/services/IrminAPI.ts). This class handles the API call, default properties, request locale and request token.
+Since Irmin API authorises the user with a cookie, the API cannot be called directly on the server side. 
+
+Whenever the API is called on the server side, the token is used instead of the cookie. The token needs to be passed to the server side action from the client side. 
+
+The token is stored in the [IAMContext](src/context/IAMContext.tsx). See [Irmin API authorisation](#irmin-api-authorisation) for more information.
+
+### Middleware
+
+Middleware is used to run server-side code before anything is rendered. Middleware is located in the [middleware.ts](src/middleware.ts) file.
+
+Middleware provides redirects, setting the locale, password protection for the environment, and more.
+
+### Route Handlers
+
+Next.js Route handlers are used to create serverless functions as routes within the Next.js project.
+
+[Next.js documentation on route handlers](https://nextjs.org/docs/app/building-your-application/routing/route-handlers)
+
+In Irmin, we use route handlers for multiple purposes:
+
+- To build a sitemap of the project for SEO purposes
+  - [src/app/sitemap.xml/route.ts](src/app/sitemap.xml/route.ts)
+- To build a robots.txt file for SEO purposes
+  - [src/app/robots.txt/route.ts](src/app/robots.txt/route.ts)
+- To provide UI and handler for the environment access password verification
+  - [src/app/api/verify-dev-access/route.ts](src/app/api/verify-dev-access/route.ts)
+- To provide API routes for the frontend. Located in `src/app/api`
+  - Some of the API routes are used to proxy requests to Irmin API or other internal services.
+  - This is done to improve security, minimise amount of requests on the client side and improve performance.
+  - See [Proxy Services](#proxy-services) for information on how these routes are used in the frontend.
+
+## Services
 
 ### Irmin API authorisation
 
@@ -151,29 +239,54 @@ The API can be authorised with 2 different methods:
 
 - Token based authentication: The API can also be authorised with a token. The token is returned with GET/profile and is maintaind by the [IAMContext](src/context/IAMContext.tsx). This is used when the API call is made from the server side, since the cookie is not available on the server side.
 
-The API Services are built to handle both methods. See [internal /roles API route](src/app/api/roles/route.ts) for an example of how to use the token based authentication. The API routes use the API Services to fetch data and receive the token and locale from the request. Requests to the internal API routes are made using API Proxy services like the [Roles Proxy Service](src/services/api-proxies/roles.ts).
+The API Services are built to handle both methods. See [internal /workspace API route](src/app/api/workspace/route.ts) for an example of how to use the token based authentication. The API routes use the API Services to fetch data and receive the token and locale from the request. Requests to the internal API routes are made using API Proxy services like the [Workspace Proxy Service](src/services/proxies/workspace.ts).
 
 In the future, more data fetching will be done on the server side, and the token based authentication will be used more.
 
-### API Service structure
+### Core Services
 
-Every API Service function for fetching the API should follow the same structure:
+IrminCore can be found in `src/services/core/IrminCore.ts`.
 
-1. The function should be async and return a Promise.
-2. The function should call the API using the fetchIrminAPI utility function.
-3. The function should return the response itself, not the data from the response. The data should be extracted in the component that calls the service.
-4. The function should be documented with TypeDoc/TypeDoc comments. The comments should include a description of the function, the parameters, and the return value. Also, if available add the link to the API documentation for that endpoint. If not available, add a TODO note that the API documentation is not available yet.
-5. The function should be able to handle Offline Mode and Development Environments needs. This means returning static data when the API request fails or when Offline Mode is enabled.
+To interact with the Irmin API, we utilise the `IrminCore` Class, which centralises all individual API services. 
 
-### Fake data for API Services
+API services leverage the `fetch`-function, provided by the `IrminCore`, to make API calls. This class manages the API call process, including default properties, request locale, and request token.
+
+The services provided by `IrminCore` contain the API endpoints and the logic for making API calls. They are located in the `src/services/core/resources` directory. Each service corresponds to a specific resource in the API (or at least tries to, API resources are still a different thing).
+
+All API service functions for fetching data from the API follow a consistent structure. They return a promise with a standardised return type, such as `IrminAPIResponse` and its variations.
+
+With the Irmin Core, accessing and managing various API services is streamlined, providing a centralised and efficient way to interact with the Irmin API.
+
+#### Fake data
 
 Some services have been created before the API has been fully implemented. In these cases, when the environment is set to development, the services return example objects from the [apiObjects.ts](src/types/examples/apiObjects.ts) file. See [Static data](#static-data) section of this README for more information
 
 Examples:
 
-[src/services/api/BucketService.ts](src/services/api/BucketService.ts) -> contains a list of endpoints for Buckets the frontend will be calling.
-[src/types/examples/apiObjects.ts](src/types/examples/apiObjects.ts) -> contains example API objects of certain types. These objects are used in development when the API request fails or if Offline Mode is enabled
-[src/types/api/Bucket.ts](src/types/api/Bucket.ts) -> contains types for Bucket resources, which the BucketService and ExampleObject refer to.
+- [src/services/core/resources/BucketService.ts](src/services/core/resources/BucketService.ts) -> contains a list of endpoints for Buckets the frontend will be calling.
+
+- [src/types/examples/apiObjects.ts](src/types/examples/apiObjects.ts) -> contains example API objects of certain types. These objects are used in development when the API request fails or if Offline Mode is enabled
+
+- [src/types/api/Bucket.ts](src/types/api/Bucket.ts) -> contains types for Bucket resources, which the BucketService and ExampleObject refer to.
+
+### Proxy Services
+
+Proxy services are used to call the internal API routes. The proxy services are located in the `src/services/proxies` directory. 
+
+See [src/services/proxies/workspace.ts](src/services/proxies/workspace.ts) for an example of a proxy service.
+
+Note that proxy services do not need to handle example objects or offline mode, since they are only used to call the internal API routes. Those rely on other API Services, which handle the example objects and offline mode.
+
+### Wordpress Service
+
+[src/services/wordpress.ts](src/services/wordpress.ts) ->
+
+The Wordpress Service is used to communicate with the Wordpress API.
+
+Wordpress Service uses fake data when needed. See [Static data](#static-data) section of this README for more information. Example Worpdress objects can be found here: [src/types/examples/wordpressObjects.ts](src/types/examples/wordpressObjects.ts)
+
+
+See [Wordpress CMS](#wordpress-cms) for more information.
 
 ## Internationalisation
 
@@ -221,12 +334,10 @@ The User's token fetched and stored, to make requests to the API on the server s
 
 IAMProvider is wrapping the root layout of the application.
 
-The application will know that a user is not logged in if the user profile data is not available. 
+The application will know that a user is not logged in if the user profile data is not available.
 
-This context provides the application with logic to communicate with the [Auth API Service](src/services/api/AuthService.ts) and
-[Profile API Service](src/services/api/ProfileService.ts).
-
-[ProfileService](src/services/api/ProfileService.ts) will avoid throwing an error on getProfile if the user is not logged in. Instead, it will return null.
+This context provides the application with logic to communicate with the [Auth API Service](src/services/core/resources/AuthService.ts) and
+[Profile API Service](src/services/core/resources/ProfileService.ts).
 
 ### LocaleContext
 
@@ -244,7 +355,7 @@ PopupContext is used to manage the popup state across the application. It provid
 
 The context is not using any API Services and exists mostly for convinience and to render the popups on top of other UIs.
 
-The popup UIs can be found in the `src/components/misc` directory.
+The popup UIs can be found in the `src/components/common/popup` directory.
 
 ### BucketContext
 
@@ -254,26 +365,32 @@ BucketContext is used to manage the bucket and file navigator state across the a
 
 BucketProvider is wrapping the [Workspace Layout](src/app/[lang]/portal/[workspace]/layout.tsx) of the application, since it only relates to a specific workspace.
 
-See [Bucket API Service](src/services/api/BucketService.ts) and [the Editor](src/app/[lang]/portal/[workspace]/editor/layout.tsx) for more information.
+See [Bucket API Service](src/services/core/resources/BucketService.ts) and [the Editor](src/app/[lang]/portal/[workspace]/editor/layout.tsx) for more information.
 
 ### WorkspaceContext
 
 [WorkspaceContext](src/context/workspace/index.tsx)
 
-This context is responsible for managing the workspace state and data across the application. 
+This context is responsible for managing the workspace state and data across the application.
+
+Attempts to set the current workspace on initial load. Attempts to switch to the workspace to that is found in the query params or in localStorage.
+
+It uses the [Workspace Proxy Service](src/services/proxies/workspace.ts) to fetch the initial workspace data for the current workspace. The workspace data is stored in the context and can be accessed by the components that are wrapped in the WorkspaceProvider.
+
 In addition, it provides the application with logic to communicate with:
 
-- [Action Workflow API Service](src/services/api/ActionWorkflowService.ts)
-- [Connection Workflow API Service](src/services/api/ConnectionWorkflowService.ts)
-- [Connector API Service](src/services/api/ConnectorService.ts)
-- [Dashboard API Service](src/services/api/DashboardService.ts)
-- [Data Repository API Service](src/services/api/DataRepoService.ts)
-- [Export Workflow API Service](src/services/api/ExportWorkflowService.ts)
-- [Invite API Service](src/services/api/InviteService.ts)
-- [User and Role API Service](src/services/api/UserAndRoleService.ts)
-- [Widget API Service](src/services/api/WidgetService.ts)
-- [Workflow API Service](src/services/api/WorkflowService.ts)
-- [Workspace API Service](src/services/api/WorkspaceService.ts)
+- [Action Workflow API Service](src/services/core/resources/ActionWorkflowService.ts)
+- [Connection Workflow API Service](src/services/core/resources/ConnectionWorkflowService.ts)
+- [Connector API Service](src/services/core/resources/ConnectorService.ts)
+- [Dashboard API Service](src/services/core/resources/DashboardService.ts)
+- [Repository API Service](src/services/core/resources/RepositoryService.ts)
+- [Export Workflow API Service](src/services/core/resources/ExportWorkflowService.ts)
+- [Invite API Service](src/services/core/resources/InviteService.ts)
+- [User API Service](src/services/core/resources/UserService.ts)
+- [Role API Service](src/services/core/resources/RoleService.ts)
+- [Widget API Service](src/services/core/resources/WidgetService.ts)
+- [Workflow API Service](src/services/core/resources/WorkflowService.ts)
+- [Workspace API Service](src/services/core/resources/WorkspaceService.ts)
 
 The context, hooks, provider etc. are split into multiple files for clarity and to avoid any single file becoming too large.
 

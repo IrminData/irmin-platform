@@ -5,9 +5,9 @@ import Link from 'next/link';
 
 import { MdOutlineEmail } from 'react-icons/md';
 
-import Button from '@/components/misc/Button';
-import Input from '@/components/misc/Input';
-import LanguageSwitcher from '@/components/misc/LanguageSwitcher';
+import Button from '@/components/common/button/Button';
+import Input from '@/components/common/form/Input';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -66,7 +66,7 @@ export default function WebsiteFooterContent({
           {/* Logo, description and language switcher */}
           <div className='order-1 min-w-72 sm:w-[40%] md:w-1/4 md:pl-2 xl:w-1/6 xl:min-w-96'>
             <div className='flex flex-col items-start'>
-              <Link className='mb-8 inline-block' href='#'>
+              <div className='mb-8 inline-block'>
                 <Image
                   className='h-6 min-h-4 w-auto'
                   src='/irmin-logo-light.svg'
@@ -74,7 +74,7 @@ export default function WebsiteFooterContent({
                   width={100}
                   height={100}
                 />
-              </Link>
+              </div>
               <p className='mb-8 w-full max-w-64 text-left text-xs font-light text-white text-opacity-40'>
                 {dict.website.footer.description}
               </p>

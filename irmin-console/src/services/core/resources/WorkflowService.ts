@@ -1,0 +1,329 @@
+import IrminCore from '@/services/core/IrminCore';
+
+import fake from '@/utils/prepareFakeResponse';
+
+import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import {
+  ActionWorkflow,
+  ConnectionWorkflow,
+  ExportWorkflow,
+  Workflow,
+  WorkflowRun,
+} from '@/types/api/Workflow';
+import { WorkspaceUser } from '@/types/api/Workspace';
+import {
+  exampleActions,
+  exampleConnections,
+  exampleExports,
+  exampleWorkflowRuns,
+} from '@/types/examples/apiObjects';
+
+const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
+const isDevelopment =
+  process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
+
+/**
+ * Workflow Runs API response type
+ */
+interface WorkflowRunsAPIResponse extends IrminAPIResponse {
+  data: WorkflowRun[];
+}
+/**
+ * Connection Workflows API response type
+ */
+interface ConnectionsAPIResponse extends IrminAPIResponse {
+  data: ConnectionWorkflow[];
+}
+/**
+ * Export Workflows API response type
+ */
+interface ExportsAPIResponse extends IrminAPIResponse {
+  data: ExportWorkflow[];
+}
+/**
+ * Action Workflows API response type
+ */
+interface ActionsAPIResponse extends IrminAPIResponse {
+  data: ActionWorkflow[];
+}
+
+/**
+ * Workflow API service
+ *
+ * Responsible for all workflow related API calls,
+ * except for what is Workflow type specific. Those are handled by the specific services,
+ * like ConnectionWorkflowService, ExportService, and ActionService.
+ */
+class WorkflowService {
+  private irminCore: IrminCore;
+
+  constructor(irminCore: IrminCore) {
+    this.irminCore = irminCore;
+    // Bind methods
+    this.updateWorkflow = this.updateWorkflow.bind(this);
+    this.deleteWorkflow = this.deleteWorkflow.bind(this);
+    this.pauseWorkflow = this.pauseWorkflow.bind(this);
+    this.resumeWorkflow = this.resumeWorkflow.bind(this);
+    this.reassignWorkflow = this.reassignWorkflow.bind(this);
+    this.fetchRuns = this.fetchRuns.bind(this);
+    this.fetchRunsByWorkflow = this.fetchRunsByWorkflow.bind(this);
+    this.fetchConnections = this.fetchConnections.bind(this);
+    this.fetchExports = this.fetchExports.bind(this);
+    this.fetchActions = this.fetchActions.bind(this);
+  }
+
+  /**
+   * Update a Workflow
+   * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-update | Irmin API docs}
+   *
+   * @param workflowId - The ID of the workflow to update
+   * @param workflow - The updated workflow object
+   *
+   */
+  async updateWorkflow(workflowId: number, workflow: Workflow) {
+    if (isOfflineMode) return fake();
+    try {
+      const formData = new FormData();
+
+      formData.append('_method', 'PATCH');
+      formData.append('workflow', workflowId.toString());
+      formData.append('name', workflow.name);
+      formData.append('description', workflow.description ?? '');
+      formData.append('documentation', workflow.documentation ?? '');
+      formData.append('cron_syntax', workflow.cron_syntax ?? '');
+
+      const response = await this.irminCore.fetch(`/v1/workflows/update`, {
+        method: 'POST',
+      });
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Update workflow error');
+      if (isDevelopment) return fake();
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a Workflow by ID
+   *
+   * @todo What to do with the associated data repos, workspace DB tables, runs etc?
+   *
+   * @todo Provide link to Irmin API docs
+   *
+   * @param workflowId - The ID of the workflow to delete
+   */
+  async deleteWorkflow(workflowId: number) {
+    if (isOfflineMode) return fake();
+    try {
+      const formData = new FormData();
+
+      formData.append('_method', 'DELETE');
+      formData.append('workflow', workflowId.toString());
+
+      const response = await this.irminCore.fetch(`/v1/workflows/delete`, {
+        method: 'POST',
+      });
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Delete workflow error');
+      if (isDevelopment) return fake();
+      throw error;
+    }
+  }
+
+  /**
+   * Pause a Workflow
+   * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-pause | Irmin API docs}
+   *
+   * @param workflowId - ID of the workflow to pause
+   *
+   */
+  async pauseWorkflow(workflowId: number) {
+    if (isOfflineMode) return fake();
+    try {
+      const formData = new FormData();
+
+      formData.append('_method', 'PATCH');
+      formData.append('workflow', workflowId.toString());
+
+      const response = await this.irminCore.fetch(`/v1/workflows/pause`, {
+        method: 'POST',
+      });
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Pause workflow error');
+      if (isDevelopment) return fake();
+      throw error;
+    }
+  }
+
+  /**
+   * Resume a Workflow
+   * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-resume | Irmin API docs}
+   *
+   * @param workflowId - ID of the workflow to resume
+   *
+   */
+  async resumeWorkflow(workflowId: number) {
+    if (isOfflineMode) return fake();
+    try {
+      const formData = new FormData();
+
+      formData.append('_method', 'PATCH');
+      formData.append('workflow', workflowId.toString());
+
+      const response = await this.irminCore.fetch(`/v1/workflows/resume`, {
+        method: 'POST',
+      });
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Resume workflow error');
+      if (isDevelopment) return fake();
+      throw error;
+    }
+  }
+
+  /**
+   * Reassign a Workflow to a new owner
+   * {@link https://api.irmin.dev/docs#workflows-POSTv1-workflows-reassign | Irmin API docs}
+   *
+   * @param workflow - The workflow to reassign
+   * @param newOwner - The new owner of the workflow
+   *
+   */
+  async reassignWorkflow(workflow: Workflow, newOwner: WorkspaceUser) {
+    if (isOfflineMode) return fake();
+    try {
+      const formData = new FormData();
+      formData.append('workflow', workflow.id.toString());
+      formData.append('assignee', newOwner.id.toString());
+
+      const response = await this.irminCore.fetch(`/v1/workflows/reassign`, {
+        method: 'POST',
+      });
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Reassign workflow error');
+      if (isDevelopment) return fake();
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch all Workflow Runs
+   *
+   * @todo Provide link to Irmin API docs
+   *
+   */
+  async fetchRuns(): Promise<WorkflowRunsAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleWorkflowRuns) as WorkflowRunsAPIResponse;
+    try {
+      const response = (await this.irminCore.fetch(`/v1/workflows/runs`, {
+        method: 'GET',
+      })) as WorkflowRunsAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch workflow runs error');
+      if (isDevelopment)
+        return fake(exampleWorkflowRuns) as WorkflowRunsAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch Workflow Runs by Workflow ID
+   *
+   * @todo Provide link to Irmin API docs
+   *
+   * @param workflowId - The ID of the workflow to fetch the runs for
+   *
+   */
+  async fetchRunsByWorkflow(
+    workflowId: number
+  ): Promise<WorkflowRunsAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleWorkflowRuns) as WorkflowRunsAPIResponse;
+    try {
+      const response = (await this.irminCore.fetch(
+        `/v1/workflows/${workflowId}/runs`,
+        {
+          method: 'GET',
+        }
+      )) as WorkflowRunsAPIResponse;
+      return response;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Fetch workflow runs by workflow error'
+      );
+      if (isDevelopment)
+        return fake(exampleWorkflowRuns) as WorkflowRunsAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch all Connection Workflows
+   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections | Irmin API docs}
+   */
+  async fetchConnections(): Promise<ConnectionsAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleConnections) as ConnectionsAPIResponse;
+    try {
+      const response = (await this.irminCore.fetch(`/v1/connections`, {
+        method: 'GET',
+      })) as ConnectionsAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch connections error');
+      if (isDevelopment)
+        return fake(exampleConnections) as ConnectionsAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch all Export Workflows
+   * @todo Provide link to Irmin API docs
+   */
+  async fetchExports(): Promise<ExportsAPIResponse> {
+    if (isOfflineMode) return fake(exampleExports) as ExportsAPIResponse;
+
+    try {
+      const response = (await this.irminCore.fetch(`/v1/exports`, {
+        method: 'GET',
+      })) as ExportsAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch exports error');
+      if (isDevelopment) return fake(exampleExports) as ExportsAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch all Action Workflows
+   * @todo Provide link to Irmin API docs
+   */
+  async fetchActions(): Promise<ActionsAPIResponse> {
+    if (isOfflineMode) return fake(exampleActions) as ActionsAPIResponse;
+    try {
+      const response = (await this.irminCore.fetch(`/v1/actions`, {
+        method: 'GET',
+      })) as ActionsAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch actions error');
+      if (isDevelopment) return fake(exampleActions) as ActionsAPIResponse;
+      throw error;
+    }
+  }
+}
+
+export default WorkflowService;

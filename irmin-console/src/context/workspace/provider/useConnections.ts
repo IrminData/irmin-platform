@@ -32,7 +32,6 @@ const useConnections = ({
 
   /**
    * Hook to fetch the connections for the current workspace.
-   * It will be run whenever the current workspace changes to update the connections.
    */
   const fetchConnections = useFetchConnections(
     currentWorkspace,

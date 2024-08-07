@@ -1,5 +1,5 @@
 /**
- * Interface for the response from the Irmin API
+ * Interface for the response from Core Irmin API
  *
  * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  *

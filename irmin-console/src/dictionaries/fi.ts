@@ -148,11 +148,11 @@ const fi = {
     },
     links: {
       dashboards: 'Datapaneeli',
-      dataRepositories: 'Tietovarastot',
+      repositories: 'Tietovarastot',
       editor: 'Editori',
       actions: 'Toiminnot',
       connections: 'Yhteydet',
-      exportSyncs: 'Vientisynkronoinnit',
+      exportWorkflows: 'Vientisynkronoinnit',
       workspaceSettings: 'Työtilan asetukset',
       marketplace: 'Markkinapaikka',
       workspaces: 'Työtilat',
@@ -182,8 +182,8 @@ const fi = {
     existingWidgets: 'Olemassa olevat widgetit',
     addNewWidget: 'Lisää uusi widgetit',
   },
-  dataRepository: {
-    dataRepository: 'Tietovarasto',
+  repository: {
+    repository: 'Tietovarasto',
     dataTables: 'Tietotaulut',
     noDataTables: 'Ei tietotauluja tässä tietovarastossa',
     rowsReturnedIn: 'riviä palautettu ajassa',
@@ -204,49 +204,75 @@ const fi = {
       settings: 'Asetukset',
     },
   },
-  connection: {
-    connection: 'Yhteys',
-    connections: 'Yhteydet',
-    selectConnector: 'Valitse liitin',
-    establishConnection: 'Perusta yhteys',
-    configureSettings: 'Määritä asetukset',
-    configureSync: 'Määritä synkronointi',
-    createNew: 'Luo uusi yhteys',
-    create: {
-      select: 'Valitse',
-      connector: 'Yhdistin',
-      connectionName: 'Yhteyden nimi',
-      connectionDescription: 'Yhteyden kuvaus',
-      addCustomConnector: 'Lisää mukautettu yhdistin',
-      syncIntervalLabel:
-        'Synkronointiväli (cron-lauseke) tai jätä tyhjäksi manuaalista synkronointia varten',
-      syncIntervalPlaceholder:
-        'Anna cron-lauseke (esim. 0 0 * * *) tai jätä tyhjäksi manuaalista synkronointia varten',
-      continueAndTest: 'Jatka ja testaa yhteys',
-      startSync: 'Aloita synkronointi',
-      continue: 'Jatkaa',
-      goBack: 'Mene takaisin',
-      success: 'Yhteys onnistui',
-      failed: 'Yhteys epäonnistui',
-      contactSupport: 'Ota yhteyttä tukeen',
+  workflow: {
+    connection: {
+      connection: 'Yhteys',
+      connections: 'Yhteydet',
+      selectConnector: 'Valitse liitin',
+      establishConnection: 'Perusta yhteys',
+      configureSettings: 'Määritä asetukset',
+      configureWorkflow: 'Määritä synkronointi',
+      createNewConnectionWorkflow: 'Luo uusi yhteysprosessi',
+      create: {
+        select: 'Valitse',
+        connector: 'Yhdistin',
+        workflowName: 'Yhteyden nimi',
+        workflowNamePlaceholder: 'Anna nimi yhteysprosessille',
+        workflowDescription: 'Yhteyden kuvaus',
+        workflowDescriptionPlaceholder: 'Anna kuvaus yhteysprosessille',
+        addCustomConnector: 'Lisää mukautettu yhdistin',
+        syncIntervalLabel:
+          'Synkronointiväli (cron-lauseke) tai jätä tyhjäksi manuaalista ajoa varten',
+        syncIntervalPlaceholder:
+          'Anna cron-lauseke (esim. 0 0 * * *) tai jätä tyhjäksi manuaalista ajoa varten',
+        continueAndTest: 'Jatka ja testaa yhteys',
+        startWorkflow: 'Aloita prosessi',
+        continue: 'Jatkaa',
+        goBack: 'Mene takaisin',
+        success: 'Yhteys onnistui',
+        failed: 'Yhteys epäonnistui',
+        contactSupport: 'Ota yhteyttä tukeen',
+      },
     },
-  },
-  export: {
-    selectSourceDataset: 'Valitse lähde tietoarkisto',
-    selectDestinationConnection: 'Valitse kohdeyhteys',
-    configureExport: 'Määritä vienti',
-    exportSyncs: 'Vientisynkronoinnit',
-    createNewExportSync: 'Luo uusi vientisynkronointi',
-    create: {
-      title: 'Määritä vienti',
-      processName: 'Prosessin nimi',
-      processNamePlaceholder: 'Anna nimi vientiprosessille',
-      syncIntervalLabel:
-        'Synkronointiväli (cron-lauseke) tai jätä tyhjäksi manuaalista synkronointia varten',
-      syncIntervalPlaceholder:
-        'Anna cron-lauseke (esim. 0 0 * * *) tai jätä tyhjäksi manuaalista synkronointia varten',
-      startSync: 'Aloita synkronointi',
-      goBack: 'Mene takaisin',
+    export: {
+      selectSourceRepository: 'Valitse lähde tietoarkisto',
+      selectDestinationConnection: 'Valitse kohdeyhteys',
+      configureExport: 'Määritä vienti',
+      exportWorkflows: 'Vientisynkronoinnit',
+      createNewExportWorkflow: 'Luo uusi vientiprosessi',
+      create: {
+        title: 'Määritä vienti',
+        workflowName: 'Prosessin nimi',
+        workflowNamePlaceholder: 'Anna nimi vientiprosessille',
+        workflowDescription: 'Prosessin kuvaus',
+        workflowDescriptionPlaceholder: 'Anna kuvaus vientiprosessille',
+        syncIntervalLabel:
+          'Synkronointiväli (cron-lauseke) tai jätä tyhjäksi manuaalista ajoa varten',
+        syncIntervalPlaceholder:
+          'Anna cron-lauseke (esim. 0 0 * * *) tai jätä tyhjäksi manuaalista ajoa varten',
+        startWorkflow: 'Aloita prosessi',
+        goBack: 'Mene takaisin',
+      },
+    },
+    action: {
+      selectSourceFile: 'Select source file',
+      selectDestinationRepository: 'Select destination Repository',
+      configureAction: 'Määritä toiminto',
+      actionWorkflows: 'Toimintoprosessit',
+      createNewActionWorkflow: 'Luo uusi toimintoprosesi',
+      create: {
+        title: 'Määritä toiminto',
+        workflowName: 'Prosessin nimi',
+        workflowNamePlaceholder: 'Anna nimi toimintoprosessille',
+        workflowDescription: 'Prosessin kuvaus',
+        workflowDescriptionPlaceholder: 'Anna kuvaus toimintoprosessille',
+        syncIntervalLabel:
+          'Synkronointiväli (cron-lauseke) tai jätä tyhjäksi manuaalista ajoa varten',
+        syncIntervalPlaceholder:
+          'Anna cron-lauseke (esim. 0 0 * * *) tai jätä tyhjäksi manuaalista ajoa varten',
+        startWorkflow: 'Aloita prosessi',
+        goBack: 'Mene takaisin',
+      },
     },
   },
   marketplace: {
@@ -291,7 +317,7 @@ const fi = {
     saveAction: 'Tallenna toiminto',
     runAction: 'Suorita toiminto',
     exportTable: 'vie taulukko (.csv)',
-    referenceDataSet: {
+    referenceRepository: {
       clickOnATable: 'Klikkaa taulukkoa viitataksesi siihen',
       toReferenceTheTable: 'Käyttääksesi taulukkoa',
       fromTheDataRepo: 'tietovarastosta',

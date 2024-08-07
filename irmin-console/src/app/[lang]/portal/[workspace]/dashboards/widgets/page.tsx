@@ -2,32 +2,38 @@
 
 import { useEffect, useState } from 'react';
 
-import WidgetCreationForm from '@/components/dashboards/widgetCreationForm';
+import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import WidgetCreationForm from '@/components/dashboard/widget/WidgetCreationForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 import { Dashboard } from '@/types/api/Dashboard';
 
-export default function DashboardWidgetsPage() {
+export default function WidgetsPage() {
   const { dict } = useLocale();
   const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(
     null
   );
-  const { dashboards } = useWorkspace();
+  const {
+    workspaceLoading,
+    dashboards: { dashboards, isLoading },
+  } = useWorkspace();
+
+  const loading = workspaceLoading || isLoading;
 
   useEffect(() => {
-    if (!selectedDashboard && !dashboards.isLoading && dashboards.dashboards) {
-      if (dashboards.dashboards.length > 0) {
-        setSelectedDashboard(dashboards.dashboards[0]);
-      } else {
-        // TODO: Prompt user to create a new dashboard
-      }
+    if (!selectedDashboard && dashboards && dashboards.length > 0) {
+      setSelectedDashboard(dashboards[0]);
     }
   }, [dashboards, selectedDashboard]);
 
-  if (dashboards.isLoading || !dashboards.dashboards) {
-    return <></>;
+  if (loading) {
+    return (
+      <div id='widgets-loading-skeleton'>
+        <LoadingSkeleton className='min-h-[80vh]' />
+      </div>
+    );
   }
 
   return (

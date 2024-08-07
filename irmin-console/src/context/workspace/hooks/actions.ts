@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import { Locale } from '@/dictionaries';
-import WorkflowService from '@/services/api/WorkflowService';
+import IrminCore from '@/services/core/IrminCore';
 
 import { ActionWorkflow } from '@/types/api/Workflow';
 import { Workspace } from '@/types/api/Workspace';
@@ -30,11 +30,9 @@ export const useFetchActions = (
 ) =>
   useCallback(
     /**
-     * Fetch and update context for Action Workflows of the current workspace using the {@link WorkflowService}.
+     * Fetch and update context for Action Workflows of the current workspace using the {@link IrminCore}.
      *
      * @param forceFetch - If true, will refetch even if already fetched
-     *
-     * @returns Void or Error if fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -43,24 +41,22 @@ export const useFetchActions = (
         if (fetchedFor === currentWorkspace?.slug) return;
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
-      // Get the workflow service
-      const workflowService = WorkflowService.getInstance(locale, '');
-      // If the current workspace is not set, clear the connections
-      if (!currentWorkspace) {
-        setActions([]);
-        return;
-      }
+      // Prevent multiple simultaneous fetches
+      if (loading) return;
+      setLoading(true);
       try {
-        // Prevent multiple simultaneous fetches
-        if (loading) return;
-        setLoading(true);
+        // Get the workflow service
+        const { workflowService } = new IrminCore(locale);
+        // If the current workspace is not set, clear the connections
+        if (!currentWorkspace) {
+          setActions([]);
+          return;
+        }
         // Fetch the connections for the current workspace
         const response = await workflowService.fetchActions();
         setActions(response.data);
+      } finally {
         setLoading(false);
-      } catch (e) {
-        setLoading(false);
-        throw e;
       }
     },
     [

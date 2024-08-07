@@ -1,5 +1,5 @@
 const appPassword = process.env.ENV_PASSWORD ?? 'oiDeNuDEvenTICYc';
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://localhost:3000';
+const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
 /**
  * HTML form for signing in to the development environment
@@ -37,7 +37,7 @@ body {
   margin-bottom: 1rem;
 }
 </style>
-<form action="${baseUrl}/api/verify-dev-access" method="post">
+<form action="${app_base}/api/verify-dev-access" method="post">
 <div class="signInDev">
 <label for="password">Enter password to access this environment</label>
 <input type="password" name="password" id="password" placeholder="Password">
@@ -51,7 +51,7 @@ body {
 /**
  * GET request handler for verify-dev-access
  *
- * @remarks
+ * Can be accessed at GET /api/verify-dev-access
  *
  * Users will be redirected to this page when they try to access the development environment
  * without being authorised.
@@ -70,7 +70,7 @@ export async function GET() {
 /**
  * Handler for POST request to verify-dev-access
  *
- * @remarks
+ * Can be accessed at POST /api/verify-dev-access
  *
  * This handler is used to verify the password entered by the user to access the development environment.
  * If the password is correct, a cookie is set and the user is redirected to the home page.

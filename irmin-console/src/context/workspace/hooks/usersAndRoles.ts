@@ -3,10 +3,8 @@
 import { useCallback } from 'react';
 
 import { Locale } from '@/dictionaries';
-import apiProxies from '@/services/api-proxies';
-import UserAndRoleService from '@/services/api/UserAndRoleService';
+import IrminCore from '@/services/core/IrminCore';
 
-import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
 import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
 
@@ -15,27 +13,22 @@ import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
  *
  * @param setIrminRoles - Function to update the roles state.
  * @param locale - The current locale.
- * @param token - The API token to use for the request.
  */
 export const useFetchRoles = (
   setIrminRoles: React.Dispatch<React.SetStateAction<IrminRole[]>>,
-  locale: Locale,
-  token: string
+  locale: Locale
 ) =>
   useCallback(
     /**
      * Fetch and update context for roles available on Irmin using
-     * {@link apiProxies} instead of fetching the Irmin API on the client side.
-     *
-     * @returns Void or Error if fails
+     * using the {@link IrminCore}.
      */
     async () => {
-      // Fetch the roles
       try {
-        const data = await apiProxies.fetchRoles({
-          locale,
-          token,
-        });
+        // Get the User and Role service
+        const { roleService } = new IrminCore(locale);
+        // Fetch the roles
+        const data = await roleService.fetchRoles();
         setIrminRoles(data.data);
       } catch (error) {
         console.error('Error fetching roles:', error);
@@ -43,7 +36,7 @@ export const useFetchRoles = (
         throw error;
       }
     },
-    [setIrminRoles, locale, token]
+    [setIrminRoles, locale]
   );
 
 /**
@@ -69,11 +62,9 @@ export const useFetchUsers = (
   useCallback(
     /**
      * Fetch and update context for users of the current workspace
-     * using the {@link UserAndRoleService}.
+     * using the {@link IrminCore}.
      *
      * @param forceFetch - If true, will refetch even if already fetched
-     *
-     * @returns Void or Error if fails
      */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
@@ -82,24 +73,22 @@ export const useFetchUsers = (
         if (fetchedFor === currentWorkspace?.slug) return;
       }
       setFetchedFor(currentWorkspace?.slug ?? null);
-      // Get the User and Role service
-      const userService = UserAndRoleService.getInstance(locale, '');
-      // If the current workspace is not set, clear the connections
-      if (!currentWorkspace) {
-        setUsers([]);
-        return;
-      }
+      // Prevent multiple simultaneous fetches
+      if (loading) return;
+      setLoading(true);
       try {
-        // Prevent multiple simultaneous fetches
-        if (loading) return;
-        setLoading(true);
+        // Get the User and Role service
+        const { userService } = new IrminCore(locale);
+        // If the current workspace is not set, clear the connections
+        if (!currentWorkspace) {
+          setUsers([]);
+          return;
+        }
         // Fetch the data
-        const response = await userService.fetchAllUsers();
+        const response = await userService.fetchWorkspaceUsers();
         setUsers(response.data);
+      } finally {
         setLoading(false);
-      } catch (e) {
-        setLoading(false);
-        throw e;
       }
     },
     [
@@ -128,16 +117,13 @@ export const useDeleteUser = (
   useCallback(
     /**
      * Delete a user from the current workspace and update the context state
-     * using the {@link UserAndRoleService}.
+     * using the {@link IrminCore}.
      *
      * @param id - The ID of the user to delete.
-     *
-     * @returns Irmin API response.
-     * @returns Error if the user delete fails
      */
-    async (id: number): Promise<IrminAPIResponse> => {
+    async (id: number) => {
       // Get the User and Role service
-      const userService = UserAndRoleService.getInstance(locale, '');
+      const { userService } = new IrminCore(locale);
       // Remove user from workspace
       const response = await userService.removeUserFromWorkspace(id);
       // Remove user from the context state
@@ -163,17 +149,14 @@ export const useChangeUserRole = (
   useCallback(
     /**
      * Change a user's role in the workspace and update the context state
-     * using the {@link UserAndRoleService}.
+     * using the {@link IrminCore}.
      *
      * @param id - The ID of the user to change the role.
      * @param role - The new role to assign to the user.
-     *
-     * @returns Irmin API response.
-     * @returns Error if the user role change fails
      */
-    async (id: number, role: IrminRoleNames): Promise<IrminAPIResponse> => {
+    async (id: number, role: IrminRoleNames) => {
       // Get the User and Role service
-      const userService = UserAndRoleService.getInstance(locale, '');
+      const { userService } = new IrminCore(locale);
       // Find the user to get current role
       const user = users.find((u) => u.id === id);
       if (!user) throw new Error('User not found');

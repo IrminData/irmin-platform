@@ -12,8 +12,7 @@
  * @returns response - text file with instructions for web crawlers
  */
 export async function GET() {
-  const NEXT_PUBLIC_BASE_URL =
-    process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+  const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
   let txt = `
     # *
     User-agent: *
@@ -24,7 +23,7 @@ export async function GET() {
     Disallow: /portal/
     
     # Sitemaps
-    Sitemap: ${NEXT_PUBLIC_BASE_URL}/sitemap.xml
+    Sitemap: ${app_base}/sitemap.xml
     `;
 
   const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'true';

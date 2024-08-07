@@ -2,8 +2,8 @@ import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
 
-import Button from '@/components/misc/Button';
-import DynamicFaIcon from '@/components/misc/DynamicFaIcon';
+import Button from '@/components/common/button/Button';
+import DynamicFaIcon from '@/components/common/DynamicFaIcon';
 
 import { getURL } from '@/utils/wordpress';
 

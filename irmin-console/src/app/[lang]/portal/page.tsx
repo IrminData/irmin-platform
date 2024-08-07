@@ -2,14 +2,14 @@
 
 import Image from 'next/image';
 
-import ManageWorkspaces from '@/components/manage-workspaces/manage';
+import ManageWorkspacesSection from '@/components/workspace/ManageWorkspacesSection';
 
 import { useLocale } from '@/context/LocaleContext';
 
 /**
  * Portal home page
  *
- * It uses the {@link ManageWorkspaces} component to display the workspace management UI.
+ * It uses the {@link ManageWorkspacesSection} component to display the workspace management UI.
  */
 const PortalHome: React.FC = () => {
   const { dict } = useLocale();
@@ -28,7 +28,7 @@ const PortalHome: React.FC = () => {
         />
         <h1>{dict.workspaceSwitcher.manageWorkspaces}</h1>
       </div>
-      <ManageWorkspaces />
+      <ManageWorkspacesSection />
     </>
   );
 };

@@ -3,8 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import Button from '@/components/misc/Button';
-import Input from '@/components/misc/Input';
+import Button from '@/components/common/button/Button';
+import Input from '@/components/common/form/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 

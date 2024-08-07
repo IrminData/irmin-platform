@@ -1,4 +1,4 @@
-import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
+import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
 /**
  * Loading UI for the Portal
@@ -6,14 +6,12 @@ import LoadingSkeleton from '@/components/misc/LoadingSkeleton';
  * @remarks
  *
  * When Next.js is processing server-side data fetching,
- * it shows this loading UI element.
- *
- * @returns Loading UI element
+ * it shows this loading UI element
  */
 export default function PortalLoading() {
   return (
-    <div className='px-4'>
-      <LoadingSkeleton className='h-96 w-full' />
+    <div className='px-4' id='portal-loading-skeleton'>
+      <LoadingSkeleton className='min-h-[80vh]' />;
     </div>
   );
 }

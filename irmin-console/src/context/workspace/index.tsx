@@ -5,10 +5,10 @@ import { createContext, useContext } from 'react';
 import { WorkspaceProvider } from '@/context/workspace/WorkspaceProvider';
 
 import { Dashboard } from '@/types/api/Dashboard';
-import { DataRepo } from '@/types/api/DataRepo';
 import { Invite } from '@/types/api/Invite';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
+import { Repository } from '@/types/api/Repository';
 import {
   ActionWorkflow,
   ConnectionWorkflow,
@@ -26,8 +26,8 @@ const WorkspaceContext = createContext<{
   irminRoles: IrminRole[];
   workspaces: {
     workspaces: Workspace[];
-    fetchWorkspaces: () => void;
-    switchToWorkspace: (_workspaceSlug: string | null) => void;
+    fetchWorkspaces: () => Promise<Workspace[] | undefined>;
+    switchWorkspace: (_workspaceSlug: string | null) => void;
     deleteCurrentWorkspace: () => Promise<IrminAPIResponse>;
     transferOwnership: (_userId: number) => Promise<IrminAPIResponse>;
     createWorkspace: (
@@ -84,18 +84,18 @@ const WorkspaceContext = createContext<{
     isLoading: boolean;
     fetchActions: (_forceFetch?: boolean) => void;
   };
-  dataRepositories: {
-    dataRepositories: DataRepo[];
+  repositories: {
+    repositories: Repository[];
     isLoading: boolean;
     fetchDataRepositories: (_forceFetch?: boolean) => void;
-    createDataRepository: (_dataRepo: DataRepo) => Promise<IrminAPIResponse>;
+    createDataRepository: (_dataRepo: Repository) => Promise<IrminAPIResponse>;
     updateDataRepository: (
       _dataRepoSlug: string,
-      _updatedDataRepo: DataRepo
+      _updatedDataRepo: Repository
     ) => Promise<IrminAPIResponse>;
     deleteDataRepository: (_dataRepoSlug: string) => Promise<IrminAPIResponse>;
     reassignDataRepository: (
-      _dataRepo: DataRepo,
+      _dataRepo: Repository,
       _newOwner: WorkspaceUser
     ) => Promise<IrminAPIResponse>;
   };
@@ -107,24 +107,18 @@ const WorkspaceContext = createContext<{
     updateWorkflow: (
       _workflowId: number,
       _updatedWorkflow: Workflow
-    ) => Promise<IrminAPIResponse | undefined>;
-    deleteWorkflow: (
-      _workflowId: number
-    ) => Promise<IrminAPIResponse | undefined>;
-    pauseWorkflow: (
-      _workflowId: number
-    ) => Promise<IrminAPIResponse | undefined>;
-    resumeWorkflow: (
-      _workflowId: number
-    ) => Promise<IrminAPIResponse | undefined>;
+    ) => Promise<IrminAPIResponse>;
+    deleteWorkflow: (_workflowId: number) => Promise<IrminAPIResponse>;
+    pauseWorkflow: (_workflowId: number) => Promise<IrminAPIResponse>;
+    resumeWorkflow: (_workflowId: number) => Promise<IrminAPIResponse>;
   };
 }>({
   workspaceLoading: false,
   irminRoles: [],
   workspaces: {
     workspaces: [],
-    switchToWorkspace: () => {},
-    fetchWorkspaces: () => {},
+    switchWorkspace: () => {},
+    fetchWorkspaces: () => Promise.resolve([]),
     deleteCurrentWorkspace: () => Promise.resolve({}),
     transferOwnership: () => Promise.resolve({}),
     createWorkspace: () => Promise.resolve({}),
@@ -168,8 +162,8 @@ const WorkspaceContext = createContext<{
     isLoading: false,
     fetchActions: () => {},
   },
-  dataRepositories: {
-    dataRepositories: [],
+  repositories: {
+    repositories: [],
     isLoading: false,
     fetchDataRepositories: () => {},
     createDataRepository: () => Promise.resolve({}),
