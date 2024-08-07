@@ -87,14 +87,14 @@ const WorkspaceContext = createContext<{
   repositories: {
     repositories: Repository[];
     isLoading: boolean;
-    fetchDataRepositories: (_forceFetch?: boolean) => void;
-    createDataRepository: (_dataRepo: Repository) => Promise<IrminAPIResponse>;
-    updateDataRepository: (
+    fetchRepositories: (_forceFetch?: boolean) => void;
+    createRepository: (_dataRepo: Repository) => Promise<IrminAPIResponse>;
+    updateRepository: (
       _dataRepoSlug: string,
-      _updatedDataRepo: Repository
+      _updatedRepository: Repository
     ) => Promise<IrminAPIResponse>;
-    deleteDataRepository: (_dataRepoSlug: string) => Promise<IrminAPIResponse>;
-    reassignDataRepository: (
+    deleteRepository: (_dataRepoSlug: string) => Promise<IrminAPIResponse>;
+    reassignRepository: (
       _dataRepo: Repository,
       _newOwner: WorkspaceUser
     ) => Promise<IrminAPIResponse>;
@@ -165,11 +165,11 @@ const WorkspaceContext = createContext<{
   repositories: {
     repositories: [],
     isLoading: false,
-    fetchDataRepositories: () => {},
-    createDataRepository: () => Promise.resolve({}),
-    updateDataRepository: () => Promise.resolve({}),
-    deleteDataRepository: () => Promise.resolve({}),
-    reassignDataRepository: () => Promise.resolve({}),
+    fetchRepositories: () => {},
+    createRepository: () => Promise.resolve({}),
+    updateRepository: () => Promise.resolve({}),
+    deleteRepository: () => Promise.resolve({}),
+    reassignRepository: () => Promise.resolve({}),
   },
   workflows: {
     workflowRuns: [],

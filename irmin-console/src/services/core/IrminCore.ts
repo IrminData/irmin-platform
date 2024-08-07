@@ -95,7 +95,7 @@ class IrminCore {
       credentials: 'include', // Include credentials with every request
       headers: {
         Accept: 'application/json',
-        'Accept-Language': this.locale, // Irmin API returns localized messages based on the Accept-Language header
+        'Accept-Language': this.locale, // Irmin API returns localised messages based on the Accept-Language header
         Referer: app_base,
         ...options.headers,
       },

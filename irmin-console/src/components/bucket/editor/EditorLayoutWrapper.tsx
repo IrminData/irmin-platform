@@ -61,7 +61,7 @@ export default function EditorLayoutWrapper({
         <p className='m-0 text-xs font-light text-irmin_black'>
           {dict.editor.referenceRepository.toReferenceTheTable}{' '}
           <span className='font-medium text-irmin_blue'>{table}</span>{' '}
-          {dict.editor.referenceRepository.fromTheDataRepo}{' '}
+          {dict.editor.referenceRepository.fromTheRepository}{' '}
           <span className='font-medium text-irmin_blue'>{repo.name}</span>{' '}
           {dict.editor.referenceRepository.inTheEditor}
         </p>

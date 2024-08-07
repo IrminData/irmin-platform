@@ -81,7 +81,7 @@ export async function GET(req: Request) {
       connections: workflowService.fetchConnections,
       exports: workflowService.fetchExports,
       actions: workflowService.fetchActions,
-      repositories: repositoryService.fetchDataRepositories,
+      repositories: repositoryService.fetchRepositories,
       users: userService.fetchWorkspaceUsers,
       invites: () =>
         inviteService.fetchInvitesByWorkspace(

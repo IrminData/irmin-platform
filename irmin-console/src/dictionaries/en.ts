@@ -195,7 +195,7 @@ const en = {
       dangerZone: 'Danger Zone',
       deletionNote:
         'Deleting this repository will remove all data associated with it. This action is irreversible.',
-      deleteDataRepository: 'Delete Repository',
+      deleteRepository: 'Delete Repository',
     },
     tabs: {
       dataViewer: 'Data Viewer',
@@ -284,13 +284,13 @@ const en = {
     categories: 'Categories',
     dataMarketplace: 'Data Marketplace',
     pluginMarketplace: 'Plugins & Extensions',
-    searchDataRepositories:
+    searchRepositories:
       'Search for public Repositories you would like to connect and use',
     searchPlugins: 'Search for plugins and extensions',
     activePlugins: 'Active plugins',
     browsePlugins: 'Browse plugins',
-    activeDataRepositories: 'Active Repositories',
-    browseDataRepositories: 'Browse Repositories',
+    activeRepositories: 'Active Repositories',
+    browseRepositories: 'Browse Repositories',
     pluginsNotFound: 'No plugins found',
     dataRepositoriesNotFound: 'No Repositories found',
     source: 'Source',
@@ -324,7 +324,7 @@ const en = {
     referenceRepository: {
       clickOnATable: 'Select repository table to reference',
       toReferenceTheTable: 'To reference the table',
-      fromTheDataRepo: 'from the repository',
+      fromTheRepository: 'from the repository',
       inTheEditor: 'in the editor, use the following syntax:',
     },
   },
@@ -342,7 +342,7 @@ const en = {
     destination: 'Destination',
     noConnectionsFound: 'No connections found for this workspace',
     noActionsFound: 'No actions found for this workspace',
-    noDataRepositoriesFound: 'No Repositories found for this workspace',
+    noRepositoriesFound: 'No Repositories found for this workspace',
     noExportProcessesFound: 'No Export processes found for this workspace',
   },
   haz: {

@@ -22,7 +22,7 @@ const RepositoryList = ({ repositories }: { repositories: Repository[] }) => {
   if (!repositories || repositories.length === 0) {
     return (
       <div className='px-4 py-12 text-center text-xl text-irmin_black'>
-        {dict.list.noDataRepositoriesFound}
+        {dict.list.noRepositoriesFound}
       </div>
     );
   }

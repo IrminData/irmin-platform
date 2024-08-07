@@ -5,11 +5,11 @@ import { useState } from 'react';
 import { Locale } from '@/dictionaries';
 
 import {
-  useCreateDataRepository,
-  useDeleteDataRepository,
-  useFetchDataRepositories,
-  useReassignDataRepository,
-  useUpdateDataRepository,
+  useCreateRepository,
+  useDeleteRepository,
+  useFetchRepositories,
+  useReassignRepository,
+  useUpdateRepository,
 } from '@/context/workspace/hooks/repositories';
 
 import { Repository } from '@/types/api/Repository';
@@ -30,70 +30,70 @@ const useRepositories = ({
   locale: Locale;
 }) => {
   // Repositories
-  const [repositories, setDataRepositories] = useState<Repository[]>([]);
-  const [dataRepositoriesLoading, setDataRepositoriesLoading] = useState(false);
-  const [dataRepositoriesFetchedFor, setDataRepositoriesFetchedFor] = useState<
+  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [dataRepositoriesLoading, setRepositoriesLoading] = useState(false);
+  const [dataRepositoriesFetchedFor, setRepositoriesFetchedFor] = useState<
     string | null
   >(null);
 
   /**
    * Hook to fetch the repositories for the current workspace.
    */
-  const fetchDataRepositories = useFetchDataRepositories(
+  const fetchRepositories = useFetchRepositories(
     currentWorkspace,
-    setDataRepositories,
+    setRepositories,
     dataRepositoriesLoading,
-    setDataRepositoriesLoading,
+    setRepositoriesLoading,
     dataRepositoriesFetchedFor,
-    setDataRepositoriesFetchedFor,
+    setRepositoriesFetchedFor,
     locale
   );
 
   /**
    * Hook to create a new repository.
    */
-  const createDataRepository = useCreateDataRepository(
+  const createRepository = useCreateRepository(
     repositories,
-    setDataRepositories,
+    setRepositories,
     locale
   );
 
   /**
    * Hook to update a repository.
    */
-  const updateDataRepository = useUpdateDataRepository(
+  const updateRepository = useUpdateRepository(
     repositories,
-    setDataRepositories,
+    setRepositories,
     locale
   );
 
   /**
    * Hook to delete a repository.
    */
-  const deleteDataRepository = useDeleteDataRepository(
+  const deleteRepository = useDeleteRepository(
     repositories,
-    setDataRepositories,
+    setRepositories,
     locale
   );
 
   /**
    * Hook to reassign repository to a new owner.
    */
-  const reassignDataRepository = useReassignDataRepository(
+  const reassignRepository = useReassignRepository(
     repositories,
-    setDataRepositories,
+    setRepositories,
     locale
   );
 
   return {
     repositories,
     dataRepositoriesLoading,
-    setDataRepositories,
-    fetchDataRepositories,
-    createDataRepository,
-    updateDataRepository,
-    deleteDataRepository,
-    reassignDataRepository,
+    setRepositories,
+    fetchRepositories,
+    createRepository,
+    updateRepository,
+    deleteRepository,
+    reassignRepository,
   };
 };
 

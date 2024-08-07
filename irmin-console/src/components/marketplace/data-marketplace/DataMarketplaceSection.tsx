@@ -250,7 +250,7 @@ export default function DataMarketplaceSection() {
             colorScheme='gray'
             className='w-full'
             type='text'
-            placeholder={dict.marketplace.searchDataRepositories}
+            placeholder={dict.marketplace.searchRepositories}
             defaultValue={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -265,7 +265,7 @@ export default function DataMarketplaceSection() {
         {filteredListings.filter((d) => d.connected).length > 0 && (
           <div>
             <h2 className='my-4 text-xl font-semibold'>
-              {dict.marketplace.activeDataRepositories}
+              {dict.marketplace.activeRepositories}
             </h2>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
               {filteredListings
@@ -282,7 +282,7 @@ export default function DataMarketplaceSection() {
         {filteredListings.filter((d) => !d.connected).length > 0 && (
           <div>
             <h2 className='my-4 text-xl font-semibold'>
-              {dict.marketplace.browseDataRepositories}
+              {dict.marketplace.browseRepositories}
             </h2>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
               {filteredListings

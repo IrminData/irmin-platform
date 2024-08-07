@@ -27,7 +27,7 @@ export default function RepositorySettingsPage({
 
   if (!repository) return <></>;
 
-  const handleUpdateDataRepo = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleUpdateRepository = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // TODO: Update repository
   };
@@ -39,7 +39,7 @@ export default function RepositorySettingsPage({
           {dict.repository.tabs.settings}
         </h2>
         <div className='pb-8'>
-          <form onSubmit={handleUpdateDataRepo}>
+          <form onSubmit={handleUpdateRepository}>
             <div>
               <label className='mb-2 block text-xs text-gray-700 md:text-sm'>
                 {dict.repository.settings.name}
@@ -78,7 +78,7 @@ export default function RepositorySettingsPage({
               colorScheme='secondary'
               variant='outline'
             >
-              {dict.repository.settings.deleteDataRepository}
+              {dict.repository.settings.deleteRepository}
             </Button>
           </div>
         </div>

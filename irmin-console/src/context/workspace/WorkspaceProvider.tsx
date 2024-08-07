@@ -85,12 +85,12 @@ export const WorkspaceProvider = ({
   const {
     repositories,
     dataRepositoriesLoading,
-    setDataRepositories,
-    fetchDataRepositories,
-    createDataRepository,
-    updateDataRepository,
-    deleteDataRepository,
-    reassignDataRepository,
+    setRepositories,
+    fetchRepositories,
+    createRepository,
+    updateRepository,
+    deleteRepository,
+    reassignRepository,
   } = useRepositories({
     currentWorkspace,
     locale,
@@ -163,7 +163,7 @@ export const WorkspaceProvider = ({
         setConnections([]);
         setExports([]);
         setActions([]);
-        setDataRepositories([]);
+        setRepositories([]);
         setUsers([]);
         setInvites([]);
         return;
@@ -176,7 +176,7 @@ export const WorkspaceProvider = ({
         setConnections(res.data.connections);
         setExports(res.data.exports);
         setActions(res.data.actions);
-        setDataRepositories(res.data.repositories);
+        setRepositories(res.data.repositories);
         setUsers(res.data.users);
         setInvites(res.data.invites);
       } catch (error) {
@@ -192,7 +192,7 @@ export const WorkspaceProvider = ({
       setConnections,
       setExports,
       setActions,
-      setDataRepositories,
+      setRepositories,
       setUsers,
       setInvites,
     ]
@@ -315,11 +315,11 @@ export const WorkspaceProvider = ({
         repositories: {
           repositories,
           isLoading: dataRepositoriesLoading,
-          fetchDataRepositories,
-          createDataRepository,
-          updateDataRepository,
-          deleteDataRepository,
-          reassignDataRepository,
+          fetchRepositories,
+          createRepository,
+          updateRepository,
+          deleteRepository,
+          reassignRepository,
         },
         workflows: {
           workflowRuns,

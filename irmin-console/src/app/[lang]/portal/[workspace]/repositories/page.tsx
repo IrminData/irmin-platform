@@ -17,7 +17,7 @@ import { useWorkspace } from '@/context/workspace';
  *
  * It uses the WorkspaceContext to fetch and manage Repository data.
  */
-export default function DataRepositoriesPage() {
+export default function RepositoriesPage() {
   const { dict } = useLocale();
   const { workspaceLoading, repositories } = useWorkspace();
 

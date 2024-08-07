@@ -195,7 +195,7 @@ const fi = {
       dangerZone: 'Vaaravyöhyke',
       deletionNote:
         'Tietovaraston poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
-      deleteDataRepository: 'Poista Tietovarasto',
+      deleteRepository: 'Poista Tietovarasto',
     },
     tabs: {
       dataViewer: 'Tietokatselu',
@@ -281,13 +281,13 @@ const fi = {
     categories: 'Kategoriat',
     dataMarketplace: 'Tietomarkkinapaikka',
     pluginMarketplace: 'Liitännäiset ja laajennukset',
-    searchDataRepositories:
+    searchRepositories:
       'Etsi julkisia tietovarastoja, jotka haluat yhdistää ja käyttää',
     searchPlugins: 'Etsi lisäosia',
     activePlugins: 'Aktiiviset lisäosat',
     browsePlugins: 'Selaa lisäosia',
-    activeDataRepositories: 'Aktiiviset tietovarastot',
-    browseDataRepositories: 'Selaa Titeto Arkistoja',
+    activeRepositories: 'Aktiiviset tietovarastot',
+    browseRepositories: 'Selaa Titeto Arkistoja',
     pluginsNotFound: 'Ei liitännäisiä löytynyt',
     dataRepositoriesNotFound: 'Ei löytynyt tietovarastoja',
     source: 'Lähde',
@@ -320,7 +320,7 @@ const fi = {
     referenceRepository: {
       clickOnATable: 'Klikkaa taulukkoa viitataksesi siihen',
       toReferenceTheTable: 'Käyttääksesi taulukkoa',
-      fromTheDataRepo: 'tietovarastosta',
+      fromTheRepository: 'tietovarastosta',
       inTheEditor: 'editorissa, käytä seuraavaa syntaksia:',
     },
   },
@@ -338,7 +338,7 @@ const fi = {
     destination: 'Kohde',
     noConnectionsFound: 'Yhteyksiä ei löytynyt',
     noActionsFound: 'Toimintoja ei löytynyt',
-    noDataRepositoriesFound: 'Tietovarastoja ei löytynyt',
+    noRepositoriesFound: 'Tietovarastoja ei löytynyt',
     noExportProcessesFound: 'No Export processes found for this workspace',
   },
   haz: {

@@ -14,14 +14,14 @@ const isDevelopment =
 /**
  * Repositories API response type (multiple)
  */
-interface DataRepositoriesAPIResponse extends IrminAPIResponse {
+interface RepositoriesAPIResponse extends IrminAPIResponse {
   data: Repository[];
 }
 
 /**
  * Repository API response type (single)
  */
-interface DataRepositoryAPIResponse extends IrminAPIResponse {
+interface RepositoryAPIResponse extends IrminAPIResponse {
   data: Repository;
 }
 
@@ -36,30 +36,30 @@ class RepositoryService {
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
-    this.fetchDataRepositories = this.fetchDataRepositories.bind(this);
-    this.createDataRepo = this.createDataRepo.bind(this);
-    this.reassignDataRepo = this.reassignDataRepo.bind(this);
-    this.deleteDataRepo = this.deleteDataRepo.bind(this);
-    this.updateDataRepo = this.updateDataRepo.bind(this);
+    this.fetchRepositories = this.fetchRepositories.bind(this);
+    this.createRepository = this.createRepository.bind(this);
+    this.reassignRepository = this.reassignRepository.bind(this);
+    this.deleteRepository = this.deleteRepository.bind(this);
+    this.updateRepository = this.updateRepository.bind(this);
   }
 
   /**
    * Fetch all available repositories
    * @todo Provide link to Irmin API docs
    */
-  async fetchDataRepositories(): Promise<DataRepositoriesAPIResponse> {
+  async fetchRepositories(): Promise<RepositoriesAPIResponse> {
     if (isOfflineMode)
-      return fake(exampleRepositories) as DataRepositoriesAPIResponse;
+      return fake(exampleRepositories) as RepositoriesAPIResponse;
     try {
       const response = (await this.irminCore.fetch(`/v1/repositories`, {
         method: 'GET',
-      })) as DataRepositoriesAPIResponse;
+      })) as RepositoriesAPIResponse;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Repositories error');
       if (isDevelopment)
-        return fake(exampleRepositories) as DataRepositoriesAPIResponse;
+        return fake(exampleRepositories) as RepositoriesAPIResponse;
       throw error;
     }
   }
@@ -73,11 +73,11 @@ class RepositoryService {
    *
    * @returns response from the API with data being the newly created Repository
    */
-  async createDataRepo(
+  async createRepository(
     repository: Repository
-  ): Promise<DataRepositoryAPIResponse> {
+  ): Promise<RepositoryAPIResponse> {
     if (isOfflineMode)
-      return fake(exampleRepositories[0]) as DataRepositoryAPIResponse;
+      return fake(exampleRepositories[0]) as RepositoryAPIResponse;
     try {
       const formData = new FormData();
 
@@ -93,13 +93,13 @@ class RepositoryService {
         method: 'POST',
 
         body: formData,
-      })) as DataRepositoryAPIResponse;
+      })) as RepositoryAPIResponse;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create Repositories error');
       if (isDevelopment)
-        return fake(exampleRepositories[0]) as DataRepositoryAPIResponse;
+        return fake(exampleRepositories[0]) as RepositoryAPIResponse;
       throw error;
     }
   }
@@ -113,7 +113,7 @@ class RepositoryService {
    * @param newOwner - The new owner of the Repository
    *
    */
-  async reassignDataRepo(repository: Repository, newOwner: WorkspaceUser) {
+  async reassignRepository(repository: Repository, newOwner: WorkspaceUser) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
@@ -143,7 +143,7 @@ class RepositoryService {
    * @param dataRepoSlug - The slug of the Repository to delete
    *
    */
-  async deleteDataRepo(dataRepoSlug: string) {
+  async deleteRepository(dataRepoSlug: string) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
@@ -173,19 +173,19 @@ class RepositoryService {
    * @todo Provide link to Irmin API docs
    *
    * @param dataRepoSlug - The slug of the Repository to update
-   * @param updatedDataRepo - The updated Repository object
+   * @param updatedRepository - The updated Repository object
    *
    */
-  async updateDataRepo(dataRepoSlug: string, updatedDataRepo: Repository) {
+  async updateRepository(dataRepoSlug: string, updatedRepository: Repository) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
 
       formData.append('_method', 'PATCH');
-      formData.append('name', updatedDataRepo.name);
-      formData.append('description', updatedDataRepo.description ?? '');
-      formData.append('documentation', updatedDataRepo.documentation ?? '');
-      updatedDataRepo.tables.forEach((table: string) => {
+      formData.append('name', updatedRepository.name);
+      formData.append('description', updatedRepository.description ?? '');
+      formData.append('documentation', updatedRepository.documentation ?? '');
+      updatedRepository.tables.forEach((table: string) => {
         formData.append('tables', table);
       });
 

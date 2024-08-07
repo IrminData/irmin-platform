@@ -12,16 +12,16 @@ import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
  * Hook to fetch the list of Repositories for the current workspace.
  *
  * @param currentWorkspace - The current workspace
- * @param setDataRepositories - Function to update the repositories state.
+ * @param setRepositories - Function to update the repositories state.
  * @param loading - Loading state to prevent multiple simultaneous fetches.
  * @param setLoading - Function to update the loading state.
  * @param fetchedFor - The slug of the workspace workflows are fetched for.
  * @param setFetchedFor - Function to update fetched for state.
  * @param locale - The current locale.
  */
-export const useFetchDataRepositories = (
+export const useFetchRepositories = (
   currentWorkspace: Workspace | null,
-  setDataRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
+  setRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
   loading: boolean,
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
@@ -49,19 +49,19 @@ export const useFetchDataRepositories = (
         const { repositoryService } = new IrminCore(locale);
         // If the current workspace is not set, clear the connections
         if (!currentWorkspace) {
-          setDataRepositories([]);
+          setRepositories([]);
           return;
         }
         // Fetch the connections for the current workspace
-        const response = await repositoryService.fetchDataRepositories();
-        setDataRepositories(response.data);
+        const response = await repositoryService.fetchRepositories();
+        setRepositories(response.data);
       } finally {
         setLoading(false);
       }
     },
     [
       currentWorkspace,
-      setDataRepositories,
+      setRepositories,
       loading,
       setLoading,
       fetchedFor,
@@ -74,12 +74,12 @@ export const useFetchDataRepositories = (
  * Hook to create a new Repository.
  *
  * @param repositories - The current list of Repositories
- * @param setDataRepositories - Function to update the repositories state.
+ * @param setRepositories - Function to update the repositories state.
  * @param locale - The current locale.
  */
-export const useCreateDataRepository = (
+export const useCreateRepository = (
   repositories: Repository[],
-  setDataRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
+  setRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
   locale: Locale
 ) =>
   useCallback(
@@ -92,27 +92,27 @@ export const useCreateDataRepository = (
     async (repository: Repository) => {
       // Create the repository
       const { repositoryService } = new IrminCore(locale);
-      const response = await repositoryService.createDataRepo(repository);
+      const response = await repositoryService.createRepository(repository);
       // Update the local state with the new repository
       if (response.data) {
-        setDataRepositories([...repositories, response.data]);
+        setRepositories([...repositories, response.data]);
       }
       // Return the response from the API
       return response;
     },
-    [repositories, setDataRepositories, locale]
+    [repositories, setRepositories, locale]
   );
 
 /**
  * Hook to update a Repository.
  *
  * @param repositories - The current list of Repositories
- * @param setDataRepositories - Function to update the repositories state.
+ * @param setRepositories - Function to update the repositories state.
  * @param locale - The current locale.
  */
-export const useUpdateDataRepository = (
+export const useUpdateRepository = (
   repositories: Repository[],
-  setDataRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
+  setRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
   locale: Locale
 ) =>
   useCallback(
@@ -121,36 +121,36 @@ export const useUpdateDataRepository = (
      * Updates the context state accordingly.
      *
      * @param dataRepoSlug - The slug of the Repository to update
-     * @param updatedDataRepo - The updated Repository object
+     * @param updatedRepository - The updated Repository object
      */
-    async (dataRepoSlug: string, updatedDataRepo: Repository) => {
+    async (dataRepoSlug: string, updatedRepository: Repository) => {
       // Update the repository
       const { repositoryService } = new IrminCore(locale);
-      const response = await repositoryService.updateDataRepo(
+      const response = await repositoryService.updateRepository(
         dataRepoSlug,
-        updatedDataRepo
+        updatedRepository
       );
       // Update the local state with the updated repository
-      const updatedDataRepositories = repositories.map((repo) =>
-        repo.slug === dataRepoSlug ? { ...repo, ...updatedDataRepo } : repo
+      const updatedRepositories = repositories.map((repo) =>
+        repo.slug === dataRepoSlug ? { ...repo, ...updatedRepository } : repo
       );
-      setDataRepositories(updatedDataRepositories);
+      setRepositories(updatedRepositories);
       // Return the response from the API
       return response;
     },
-    [repositories, setDataRepositories, locale]
+    [repositories, setRepositories, locale]
   );
 
 /**
  * Hook to delete a Repository.
  *
  * @param repositories - The current list of Repositories
- * @param setDataRepositories - Function to update the repositories state.
+ * @param setRepositories - Function to update the repositories state.
  * @param locale - The current locale.
  */
-export const useDeleteDataRepository = (
+export const useDeleteRepository = (
   repositories: Repository[],
-  setDataRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
+  setRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
   locale: Locale
 ) =>
   useCallback(
@@ -163,28 +163,28 @@ export const useDeleteDataRepository = (
     async (dataRepoSlug: string) => {
       // Delete the repository
       const { repositoryService } = new IrminCore(locale);
-      const response = await repositoryService.deleteDataRepo(dataRepoSlug);
+      const response = await repositoryService.deleteRepository(dataRepoSlug);
       // Update the local state by removing the deleted repository
-      const updatedDataRepositories = repositories.filter(
+      const updatedRepositories = repositories.filter(
         (repo) => repo.slug !== dataRepoSlug
       );
-      setDataRepositories(updatedDataRepositories);
+      setRepositories(updatedRepositories);
       // Return the response from the API
       return response;
     },
-    [repositories, setDataRepositories, locale]
+    [repositories, setRepositories, locale]
   );
 
 /**
  * Hook to reassign a Repository to a new owner.
  *
  * @param repositories - The current list of Repositories
- * @param setDataRepositories - Function to update the repositories state.
+ * @param setRepositories - Function to update the repositories state.
  * @param locale - The current locale.
  */
-export const useReassignDataRepository = (
+export const useReassignRepository = (
   repositories: Repository[],
-  setDataRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
+  setRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
   locale: Locale
 ) =>
   useCallback(
@@ -198,17 +198,17 @@ export const useReassignDataRepository = (
     async (repository: Repository, newOwner: WorkspaceUser) => {
       // Reassign the Repositories
       const { repositoryService } = new IrminCore(locale);
-      const response = await repositoryService.reassignDataRepo(
+      const response = await repositoryService.reassignRepository(
         repository,
         newOwner
       );
       // Update the local state by changing the owner prop to the new owner
-      const updatedDataRepositories = repositories.map((repo) =>
+      const updatedRepositories = repositories.map((repo) =>
         repo.slug === repository.slug ? { ...repo, owner: newOwner } : repo
       );
-      setDataRepositories(updatedDataRepositories);
+      setRepositories(updatedRepositories);
       // Return the response from the API
       return response;
     },
-    [repositories, setDataRepositories, locale]
+    [repositories, setRepositories, locale]
   );
