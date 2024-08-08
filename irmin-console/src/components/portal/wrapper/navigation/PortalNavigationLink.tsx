@@ -16,8 +16,8 @@ export default function PortalNavigationLink({
   isMenuFolded: boolean;
   setIsMenuOpen: (_value: boolean) => void;
 }) {
-  const menuIconStyles = `text-lg lg:text-xl ${isMenuFolded ? 'ml-1' : 'mr-2'}`;
-  const menuLinkStyles = `text-xs font-light md:text-sm xl:text-base ${
+  const menuIconStyles = `text-lg ${isMenuFolded ? 'ml-1' : 'mr-2'}`;
+  const menuLinkStyles = `text-xs font-light md:text-sm ${
     isMenuFolded ? 'hidden' : 'block'
   }`;
 
@@ -25,15 +25,15 @@ export default function PortalNavigationLink({
     return (
       <li>
         <Link
-          className={`flex items-center justify-between rounded-md p-3 py-4 text-irmin_green hover:text-irmin_green-300 ${
-            link.active ? 'bg-gray-700' : ''
+          className={`flex items-center justify-between rounded-md p-3 py-3 text-irmin_blue hover:bg-gray-100 ${
+            link.active ? 'bg-gray-200' : ''
           } overflow-hidden transition-all ${isMenuFolded ? 'w-12' : 'w-full'}`}
           href={link.href}
           onClick={() => setIsMenuOpen(false)}
           aria-label={link.title}
           {...(link.props as ComponentPropsWithoutRef<'a'>)}
         >
-          <div className={`flex w-full min-w-44 items-center justify-start`}>
+          <div className={`flex w-full min-w-36 items-center justify-start`}>
             <div className={menuIconStyles}>{link.icon}</div>
             <p className={menuLinkStyles}>{link.title}</p>
           </div>
@@ -44,8 +44,8 @@ export default function PortalNavigationLink({
     return (
       <li>
         <button
-          className={`flex items-center justify-between rounded-md p-3 py-4 text-irmin_green hover:text-irmin_green-300 ${
-            link.active ? 'bg-gray-700' : ''
+          className={`flex items-center justify-between rounded-md p-3 py-3 text-irmin_blue hover:bg-gray-100 ${
+            link.active ? 'bg-gray-200' : ''
           } overflow-hidden transition-all ${isMenuFolded ? 'w-12' : 'w-full'}`}
           onClick={() => {
             setIsMenuOpen(false);
@@ -54,7 +54,7 @@ export default function PortalNavigationLink({
           aria-label={link.title}
           {...(link.props as ComponentPropsWithoutRef<'button'>)}
         >
-          <div className={`flex w-full min-w-44 items-center justify-start`}>
+          <div className={`flex w-full min-w-36 items-center justify-start`}>
             <div className={menuIconStyles}>{link.icon}</div>
             <p className={menuLinkStyles}>{link.title}</p>
           </div>

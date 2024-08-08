@@ -13,7 +13,6 @@ import PortalNavigationLink from '@/components/portal/wrapper/navigation/PortalN
 import PortalNavigationProfile from '@/components/portal/wrapper/navigation/PortalNavigationProfile';
 import PortalNavigationWorkspaceSwitcher from '@/components/portal/wrapper/navigation/PortalNavigationWorkspaceSwitcher';
 import usePortalNavigationLinks from '@/components/portal/wrapper/navigation/usePortalNavigationLinks';
-import NotificationButton from '@/components/portal/wrapper/notifications/NotificationButton';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -56,9 +55,9 @@ export default function PortalWrapper({
         {/* Portal navigation sidebar */}
         <div
           id='portal-sidebar-wrapper'
-          className={`scrollbar-hide h-screen overflow-y-scroll bg-irmin_black transition-all duration-300 ${
+          className={`scrollbar-hide h-screen overflow-y-scroll border-r bg-white transition-all duration-300 ${
             isMenuOpen ? 'absolute z-10 block' : 'hidden md:relative md:block'
-          } ${isMenuFolded ? 'w-20' : 'w-80 min-w-72'}`}
+          } ${isMenuFolded ? 'w-20' : 'w-60'}`}
         >
           <div
             id='portal-sidebar'
@@ -79,7 +78,7 @@ export default function PortalWrapper({
                   <Link href='/' aria-label='Go to website home page'>
                     <Image
                       className={'h-[24px]'}
-                      src='/irmin-logo-light.svg'
+                      src='/irmin-logo.svg'
                       alt='Irmin logo'
                       width={100}
                       height={50}
@@ -87,23 +86,18 @@ export default function PortalWrapper({
                   </Link>
                 </div>
                 <button
-                  className={`absolute top-[16px] hidden text-irmin_green md:top-[8px] md:block ${
+                  className={`hover:irmin_teal absolute top-[16px] hidden text-irmin_blue transition-all md:top-[15px] md:block ${
                     !isMenuFolded ? 'right-2' : 'left-6'
                   }`}
                   aria-label='Fold the side navigation'
                   onClick={() => setIsMenuFolded(!isMenuFolded)}
                 >
                   {isMenuFolded ? (
-                    <TbChevronRight className='text-4xl' />
+                    <TbChevronRight className='text-3xl' />
                   ) : (
-                    <TbChevronLeft className='text-4xl' />
+                    <TbChevronLeft className='text-3xl' />
                   )}
                 </button>
-                <div
-                  className={`absolute right-10 md:top-[14px] ${isMenuFolded && 'hidden'}`}
-                >
-                  <NotificationButton />
-                </div>
               </div>
 
               {/* Profile and workspace switcher */}
@@ -111,7 +105,7 @@ export default function PortalWrapper({
                 id='portal-sidebar-profile-and-workspace'
                 className={`transition-all ${isMenuFolded ? 'hidden w-0' : 'block w-full'}`}
               >
-                <div className='w-full min-w-64 px-4'>
+                <div className='w-full min-w-36 px-4'>
                   <PortalNavigationProfile setIsMenuOpen={setIsMenuOpen} />
                   <PortalNavigationWorkspaceSwitcher
                     setIsMenuOpen={setIsMenuOpen}
@@ -125,7 +119,7 @@ export default function PortalWrapper({
               {!workspaceSlug && (
                 <div id='portal-sidebar-links-no-workspace'>
                   <p
-                    className={`mb-2 px-8 text-xs font-medium uppercase text-gray-500 transition-all duration-300 ${
+                    className={`mb-2 px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 ${
                       isMenuFolded ? 'hidden opacity-0' : 'opacity-100'
                     }`}
                   >
@@ -148,7 +142,7 @@ export default function PortalWrapper({
               {workspaceSlug && (
                 <div id='portal-sidebar-links-workspace'>
                   <p
-                    className={`mb-2 px-8 text-xs font-medium uppercase text-gray-500 transition-all duration-300 ${
+                    className={`mb-2 px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 ${
                       isMenuFolded ? 'hidden opacity-0' : 'opacity-100'
                     }`}
                   >
@@ -170,7 +164,7 @@ export default function PortalWrapper({
               {/* Settings links */}
               <div id='portal-sidebar-links-settings'>
                 <p
-                  className={`mb-2 px-8 text-xs font-medium uppercase text-gray-500 transition-all duration-300 ${
+                  className={`mb-2 px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 ${
                     isMenuFolded ? 'hidden opacity-0' : 'opacity-100'
                   }`}
                 >
@@ -198,22 +192,24 @@ export default function PortalWrapper({
                 id='portal-sidebar-useful-links'
               >
                 <p
-                  className={`px-8 text-xs font-medium uppercase text-gray-500`}
+                  className={`px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 ${
+                    isMenuFolded ? 'hidden opacity-0' : 'opacity-100'
+                  }`}
                 >
                   {dict.portalNavigation.usefulLinks}
                 </p>
-                <div className='flex flex-col p-4 pb-12 pl-8'>
+                <div className='flex flex-col p-4 pl-8'>
                   {links.useful.map((link, index) => (
                     <Link
                       key={`Portal-nav-useful-${index}`}
-                      className='mb-4 text-left text-gray-500 transition-colors hover:text-gray-200'
+                      className='mb-2 text-left text-gray-500 transition-colors hover:text-gray-700'
                       href={link.href ?? ''}
                       onClick={() => setIsMenuOpen(false)}
                       aria-label={link.title}
                       {...(link.props as ComponentPropsWithoutRef<'a'>)}
                     >
                       <div className={`flex w-full items-center justify-start`}>
-                        <div className={'mr-2 text-lg'}>{link.icon}</div>
+                        <div className={'mr-1 text-sm'}>{link.icon}</div>
                         <p className={'text-xs font-light'}>{link.title}</p>
                       </div>
                     </Link>
@@ -226,7 +222,7 @@ export default function PortalWrapper({
         {/* Portal content to the right of the sidebar */}
         <div
           id='portal-content-wrapper'
-          className={`ml-auto flex h-screen flex-grow flex-col gap-0 transition-all duration-300 ${isMenuOpen ? 'w-screen blur-sm md:blur-none' : ''} max-w-full overflow-scroll`}
+          className={`flex h-screen flex-1 flex-col gap-0 transition-all duration-300 ${isMenuOpen ? 'w-screen blur-sm md:blur-none' : ''} max-w-full overflow-scroll`}
         >
           {/* Top menu bar */}
           <div
@@ -291,7 +287,7 @@ export default function PortalWrapper({
         >
           <div
             className={`absolute left-4 top-1/2 block w-5 -translate-x-1/2 -translate-y-1/2 transform ${
-              isMenuOpen ? 'text-irmin_green' : 'text-irmin_blue'
+              isMenuOpen ? 'text-irmin_blue' : 'text-irmin_blue'
             }`}
           >
             <span

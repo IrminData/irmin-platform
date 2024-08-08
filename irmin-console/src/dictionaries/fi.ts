@@ -159,6 +159,7 @@ const fi = {
       goToWebsite: 'Siirry verkkosivustolle',
       myProfile: 'Profiilini',
       signOut: 'Kirjaudu ulos',
+      guides: 'Oppaat',
       contactSupport: 'Ota yhteyttä tukeen',
       developerDocs: 'Dokumentaatio kehittäjille',
       irminWebsite: 'Irmin -verkkosivusto',

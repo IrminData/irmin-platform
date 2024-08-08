@@ -2,23 +2,24 @@
 
 import { useParams, usePathname } from 'next/navigation';
 
-import { AiOutlineConsoleSql } from 'react-icons/ai';
-import { CiDatabase } from 'react-icons/ci';
-import { GrUserSettings } from 'react-icons/gr';
-import { IoChevronBackCircleOutline } from 'react-icons/io5';
 import {
   MdCode,
   MdOutlinePrivacyTip,
   MdOutlineSupportAgent,
 } from 'react-icons/md';
-import { PiStorefront } from 'react-icons/pi';
-import { RxDashboard } from 'react-icons/rx';
 import {
+  TbBook,
+  TbBuildingStore,
+  TbChevronLeft,
+  TbDashboard,
+  TbDatabase,
   TbDatabaseExport,
   TbDatabaseImport,
+  TbFile,
   TbLogout,
   TbPlayerPlay,
   TbSettings,
+  TbUser,
 } from 'react-icons/tb';
 
 import { useIAM } from '@/context/IAMContext';
@@ -62,17 +63,17 @@ const usePortalNavigationLinks = (): {
     {
       title: dict.portalNavigation.links.dashboards,
       href: `/${locale}/portal/${workspaceSlug}/dashboards`,
-      icon: <RxDashboard />,
+      icon: <TbDashboard />,
     },
     {
       title: dict.portalNavigation.links.repositories,
       href: `/${locale}/portal/${workspaceSlug}/repositories`,
-      icon: <CiDatabase />,
+      icon: <TbDatabase />,
     },
     {
       title: dict.portalNavigation.links.editor,
       href: `/${locale}/portal/${workspaceSlug}/editor`,
-      icon: <AiOutlineConsoleSql />,
+      icon: <TbFile />,
     },
     {
       title: dict.portalNavigation.links.actions,
@@ -97,7 +98,7 @@ const usePortalNavigationLinks = (): {
     {
       title: dict.portalNavigation.links.marketplace,
       href: `/${locale}/portal/${workspaceSlug}/marketplace`,
-      icon: <PiStorefront />,
+      icon: <TbBuildingStore />,
     },
   ].map((link) => ({
     ...link,
@@ -108,12 +109,12 @@ const usePortalNavigationLinks = (): {
     {
       title: dict.portalNavigation.links.workspaces,
       href: `/portal`,
-      icon: <RxDashboard />,
+      icon: <TbDashboard />,
     },
     {
       title: dict.portalNavigation.links.goToWebsite,
       href: '/',
-      icon: <IoChevronBackCircleOutline />,
+      icon: <TbChevronLeft />,
     },
   ].map((link) => ({
     ...link,
@@ -124,7 +125,7 @@ const usePortalNavigationLinks = (): {
     {
       title: dict.portalNavigation.links.myProfile,
       href: `/${locale}/portal/profile`,
-      icon: <GrUserSettings />,
+      icon: <TbUser />,
       active: isActiveLink(`/${locale}/portal/profile`),
     },
     {
@@ -137,9 +138,9 @@ const usePortalNavigationLinks = (): {
 
   const usefulLinks = [
     {
-      title: dict.portalNavigation.links.contactSupport,
-      href: `/${locale}/contact`,
-      icon: <MdOutlineSupportAgent />,
+      title: dict.portalNavigation.links.guides,
+      href: `/${locale}/legal`,
+      icon: <TbBook />,
       props: {
         target: '_blank',
       },
@@ -155,10 +156,16 @@ const usePortalNavigationLinks = (): {
       active: false,
     },
     {
-      title:
-        dict.portalNavigation.links.privacyPolicy +
-        ' & ' +
-        dict.portalNavigation.links.termsOfUse,
+      title: dict.portalNavigation.links.contactSupport,
+      href: `/${locale}/contact`,
+      icon: <MdOutlineSupportAgent />,
+      props: {
+        target: '_blank',
+      },
+      active: false,
+    },
+    {
+      title: dict.portalNavigation.links.privacyPolicy,
       href: `/${locale}/legal`,
       icon: <MdOutlinePrivacyTip />,
       props: {

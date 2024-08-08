@@ -18,10 +18,10 @@ const NotificationButton = () => {
     <div id='notification-popup'>
       <button
         onClick={handleClick}
-        className='transitiona-all block max-w-max text-irmin_green hover:text-irmin_green-300'
+        className='transitiona-all block max-w-max text-irmin_blue hover:text-irmin_teal'
         aria-label={dict.portalNavigation.notifications.toggle}
       >
-        <PiBell className='text-2xl' />
+        <PiBell className='text-xl' />
       </button>
     </div>
   );

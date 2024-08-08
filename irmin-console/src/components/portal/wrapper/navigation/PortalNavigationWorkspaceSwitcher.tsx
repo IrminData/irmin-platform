@@ -46,11 +46,11 @@ export default function PortalNavigationWorkspaceSwitcher({
   return (
     <div className='mt-4' id='portal-nav-workspace-switcher'>
       {currentValue !== 'select-workspace' && !loading && (
-        <p className='-mb-2 px-4 text-xs text-gray-400'>
+        <p className='-mb-2 px-4 text-xs text-irmin_blue'>
           {dict.workspaceSwitcher.selectWorkspace}
         </p>
       )}
-      <div className='block w-full cursor-pointer rounded-lg border border-gray-400 border-opacity-20 bg-irmin_green bg-opacity-0 text-sm font-light text-gray-400 transition-all hover:bg-opacity-10'>
+      <div className='block w-full cursor-pointer rounded-lg border border-gray-400 border-opacity-20 bg-irmin_green bg-opacity-0 text-sm font-light text-irmin_black transition-all hover:bg-opacity-10'>
         {loading ? (
           <div id='portal-nav-workspace-switcher-loading-skeleton'>
             <LoadingSkeleton className='h-4' />
