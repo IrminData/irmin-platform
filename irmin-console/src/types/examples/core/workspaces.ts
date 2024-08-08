@@ -3,11 +3,11 @@ import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 import { Workspace } from '@/types/api/Workspace';
 
 /**
- * Example workspaces
+ * Get example workspaces
  *
  * Array of {@link Workspace}
  */
-export const workspaces: Workspace[] = [
+export const workspaces: () => Workspace[] = () => [
   {
     id: 0,
     name: 'Example Core',

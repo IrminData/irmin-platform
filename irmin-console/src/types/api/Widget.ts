@@ -26,7 +26,7 @@ export interface Widget {
   id: number;
   type: WidgetType;
   title: string;
-  dashboards: Dashboard[];
+  dashboards?: Dashboard[] | null;
   data: WidgetData;
   created_at: string;
   updated_at: string;

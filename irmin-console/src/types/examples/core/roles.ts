@@ -1,11 +1,11 @@
 import { IrminRole } from '@/types/api/IrminRole';
 
 /**
- * Example roles
+ * Get example roles
  *
  * Array of {@link IrminRole}
  */
-export const roles: IrminRole[] = [
+export const roles: () => IrminRole[] = () => [
   {
     name: 'admin',
     label: 'Admin',

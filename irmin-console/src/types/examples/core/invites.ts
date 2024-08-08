@@ -2,19 +2,19 @@ import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
 import { Invite } from '@/types/api/Invite';
 
-import { exampleRoles } from '.';
+import { roles } from './roles';
 
 /**
- * Example invites
+ * Get example invites
  *
  * Array of {@link Invite}
  */
-export const invites: Invite[] = [
+export const invites: () => Invite[] = () => [
   {
     id: 0,
     name: 'Petteri Orpo',
     email: 'petteri@example.com',
-    role: exampleRoles[2],
+    role: roles()[2],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -22,7 +22,7 @@ export const invites: Invite[] = [
     id: 1,
     name: 'Sanna Marin',
     email: 'sanna@example.com',
-    role: exampleRoles[1],
+    role: roles()[1],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -30,7 +30,7 @@ export const invites: Invite[] = [
     id: 2,
     name: 'Juha Sipilä',
     email: 'juha@example.com',
-    role: exampleRoles[4],
+    role: roles()[4],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },

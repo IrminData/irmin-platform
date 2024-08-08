@@ -1,7 +1,7 @@
 import { transformBucketToFileNavItem } from '@/utils/bucket';
 
 import { Bucket } from '@/types/api/Bucket';
-import { exampleBucket } from '@/types/examples/base';
+import { exampleBucket } from '@/types/examples/core';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**

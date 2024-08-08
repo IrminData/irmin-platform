@@ -1,5 +1,5 @@
 /**
- * Example/Fake API response objects
+ * Get example/Fake API response objects
  * of the Irmin Core API
  *
  * Used to simulate API responses, testing, working offline,
@@ -19,11 +19,11 @@ import { roles } from './roles';
 import { workspaceUsers } from './users';
 import { widgets } from './widgets';
 import { workflowRuns } from './workflowRuns';
-import { workflows } from './workflows';
+import { actions, connections, exports, workflows } from './workflows';
 import { workspaces } from './workspaces';
 
 /**
- * Example API response base from the Irmin Core API
+ * Get example API response base from the Irmin Core API
  *
  *
  * Type: {@link IrminAPIResponse}
@@ -43,69 +43,84 @@ export const exampleAPIResponse: IrminAPIResponse = {
 /**
  * Fake {@link widgets}
  */
-export const exampleWidgets = widgets;
+export const exampleWidgets = widgets();
 
 /**
  * Fake {@link dashboards}
  */
-export const exampleDashboards = dashboards;
+export const exampleDashboards = dashboards();
 
 /**
  * Fake {@link roles}
  */
-export const exampleRoles = roles;
+export const exampleRoles = roles();
 
 /**
  * Fake workspaces {@link workspaces}
  */
-export const exampleWorkspaces = workspaces;
+export const exampleWorkspaces = workspaces();
 
 /**
  * Fake profile {@link profile}
  */
-export const exampleProfile = profile;
+export const exampleProfile = profile();
 
 /**
  * Fake invites {@link invites}
  */
-export const exampleInvites = invites;
+export const exampleInvites = invites();
 
 /**
  * Fake workspace users {@link workspaceUsers}
  */
-export const exampleWorkspaceUsers = workspaceUsers;
+export const exampleWorkspaceUsers = workspaceUsers();
 
 /**
  * Fake connectors {@link connectors}
  */
-export const exampleConnectors = connectors;
+export const exampleConnectors = connectors();
 
 /**
  * Fake repositories {@link repositories}
  */
-export const exampleRepositories = repositories;
+export const exampleRepositories = repositories();
 
 /**
  * Fake workflows {@link workflows}
  */
-export const exampleWorkflows = workflows;
+export const exampleWorkflows = workflows();
+
+/**
+ * Fake actions {@link actions}
+ */
+export const exampleActions = actions();
+
+/**
+ * Fake connections {@link connections}
+ */
+export const exampleConnections = connections();
+
+/**
+ * Fake exports {@link exports}
+ */
+export const exampleExports = exports();
 
 /**
  * Fake workflow runs {@link workflowRuns}
  */
-export const exampleWorkflowRuns = workflowRuns;
+export const exampleWorkflowRuns = workflowRuns();
 
 /**
  * Fake folders {@link folders}
  */
-export const exampleFolders = folders;
+export const exampleFolders = folders();
 
 /**
  * Fake files {@link files}
  */
-export const exampleFiles = files;
+export const exampleFiles = files();
 
 /**
  * Fake bucket {@link bucket}
  */
-export const exampleBucket = bucket;
+export const exampleBucket = bucket();

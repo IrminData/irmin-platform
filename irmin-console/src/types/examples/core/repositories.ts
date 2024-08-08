@@ -2,14 +2,17 @@ import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
 import { Repository } from '@/types/api/Repository';
 
-import { exampleWorkflows, exampleWorkspaceUsers } from '.';
+import { workspaceUsers } from './users';
+import { workflows } from './workflows';
 
 /**
- * Example Repositories
+ * Get example Repositories
  *
  * Array of {@link Repository}
+ *
+ * @param last - If true, the items will avoid having children
  */
-export const repositories: Repository[] = [
+export const repositories = (last = false): Repository[] => [
   {
     id: 0,
     name: 'KPIs and Performance Metrics',
@@ -25,7 +28,7 @@ export const repositories: Repository[] = [
       'excel-kpis.profit_by_month.0',
       'management-data-from-excel.employees.0',
     ],
-    owner: exampleWorkspaceUsers[0],
+    owner: workspaceUsers()[0],
     workflow: null,
     immutable: false,
     created_at: getRandomDateTimeString(500, 'past', 60),
@@ -45,8 +48,8 @@ export const repositories: Repository[] = [
       'main-google-analytics.pageviews.0',
       'main-google-analytics.events.0',
     ],
-    owner: exampleWorkspaceUsers[0],
-    workflow: exampleWorkflows[0],
+    owner: workspaceUsers()[0],
+    workflow: !last ? workflows(true)[0] : undefined,
     immutable: true,
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
@@ -67,8 +70,8 @@ export const repositories: Repository[] = [
       'app-usage-data.ad_clicks.0',
       'app-usage-data.ad_impressions.0',
     ],
-    owner: exampleWorkspaceUsers[1],
-    workflow: exampleWorkflows[2],
+    owner: workspaceUsers()[1],
+    workflow: !last ? workflows(true)[2] : undefined,
     immutable: true,
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
@@ -86,8 +89,8 @@ export const repositories: Repository[] = [
       'excel-kpis.expenses.0',
       'excel-kpis.profit_by_month.0',
     ],
-    owner: exampleWorkspaceUsers[2],
-    workflow: exampleWorkflows[4],
+    owner: workspaceUsers()[2],
+    workflow: !last ? workflows(true)[4] : undefined,
     immutable: true,
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
@@ -104,9 +107,9 @@ export const repositories: Repository[] = [
       'management-data-from-excel.inventory.0',
       'management-data-from-excel.employees.0',
     ],
-    workflow: exampleWorkflows[5],
+    workflow: !last ? workflows(true)[5] : undefined,
     immutable: true,
-    owner: exampleWorkspaceUsers[3],
+    owner: workspaceUsers()[3],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -125,9 +128,9 @@ export const repositories: Repository[] = [
       'google-sheets-kpis.profit_by_month.0',
       'google-sheets-kpis.employees.0',
     ],
-    workflow: exampleWorkflows[6],
+    workflow: !last ? workflows(true)[6] : undefined,
     immutable: true,
-    owner: exampleWorkspaceUsers[0],
+    owner: workspaceUsers()[0],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -138,9 +141,9 @@ export const repositories: Repository[] = [
     description: '',
     documentation: '',
     tables: [],
-    workflow: exampleWorkflows[1],
+    workflow: !last ? workflows(true)[1] : undefined,
     immutable: true,
-    owner: exampleWorkspaceUsers[1],
+    owner: workspaceUsers()[1],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -151,9 +154,9 @@ export const repositories: Repository[] = [
     description: '',
     documentation: '',
     tables: [],
-    workflow: exampleWorkflows[3],
+    workflow: !last ? workflows(true)[3] : undefined,
     immutable: true,
-    owner: exampleWorkspaceUsers[2],
+    owner: workspaceUsers()[2],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -164,9 +167,9 @@ export const repositories: Repository[] = [
     description: '',
     documentation: '',
     tables: ['top-100-ad-clicking-users.top-100-ad-clicking-users.0'],
-    workflow: exampleWorkflows[7],
+    workflow: !last ? workflows(true)[7] : undefined,
     immutable: true,
-    owner: exampleWorkspaceUsers[2],
+    owner: workspaceUsers()[2],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -184,7 +187,7 @@ export const repositories: Repository[] = [
     ],
     workflow: null,
     immutable: false,
-    owner: exampleWorkspaceUsers[3],
+    owner: workspaceUsers()[3],
     created_at: getRandomDateTimeString(100, 'past', 20),
     updated_at: getRandomDateTimeString(10, 'past', 5),
   },

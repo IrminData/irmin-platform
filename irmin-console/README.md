@@ -190,7 +190,7 @@ The offline mode can be enabled by setting the `NEXT_PUBLIC_OFFLINE_MODE` enviro
 
 The offline mode exists to enable smooth development process in situations with bad or non existent internet connections, such as on a plane.
 
-When offline mode is enabled something is always returned for API requests in API Services. The offline mode returns objects from example objects eg. [src/types/examples/base](src/types/examples/base/index.ts) depending on what would be the APIs expected return type.
+When offline mode is enabled something is always returned for API requests in API Services. The offline mode returns objects from example objects eg. [src/types/examples/core](src/types/examples/core/index.ts) depending on what would be the APIs expected return type.
 
 Note! It is not meant for anything but local use.
 
@@ -259,13 +259,13 @@ With the Irmin Core, accessing and managing various API services is streamlined,
 
 #### Fake data
 
-Some services have been created before the API has been fully implemented. In these cases, when the environment is set to development, the services return example objects from the [apiObjects.ts](src/types/examples/base) file. See [Static data](#static-data) section of this README for more information
+Some services have been created before the API has been fully implemented. In these cases, when the environment is set to development, the services return example objects from the `src/types/examples` folder. See [Static data](#static-data) section of this README for more information
 
 Examples:
 
 - [src/services/core/resources/BucketService.ts](src/services/core/resources/BucketService.ts) -> contains a list of endpoints for Buckets the frontend will be calling.
 
-- [src/types/examples/base](src/types/examples/base) -> contains example API objects of certain types. These objects are used in development when the API request fails or if Offline Mode is enabled
+- [src/types/examples/core](src/types/examples/core/index.ts) -> contains example API objects of certain types. These objects are used in development when the API request fails or if Offline Mode is enabled
 
 - [src/types/api/Bucket.ts](src/types/api/Bucket.ts) -> contains types for Bucket resources, which the BucketService and ExampleObject refer to.
 

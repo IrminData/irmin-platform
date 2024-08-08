@@ -1,14 +1,15 @@
 import { WorkspaceUser } from '@/types/api/Workspace';
 
-import { exampleProfile, exampleRoles } from '.';
+import { profile } from './profile';
+import { roles } from './roles';
 
 /**
- * Example workspace users
+ * Get example workspace users
  *
  * Array of {@link WorkspaceUser}
  */
-export const workspaceUsers: WorkspaceUser[] = [
-  exampleProfile,
+export const workspaceUsers: () => WorkspaceUser[] = () => [
+  profile(),
   {
     id: 1,
     name: 'John Doe',
@@ -16,7 +17,7 @@ export const workspaceUsers: WorkspaceUser[] = [
     email: 'john.doe@example.com',
     profile_picture: '/ui-assets/elements/avatar.webp',
     email_verified_at: null,
-    roles: [exampleRoles[1]],
+    roles: [roles()[1]],
   },
   {
     id: 2,
@@ -25,7 +26,7 @@ export const workspaceUsers: WorkspaceUser[] = [
     email: 'jane.doe@example.com',
     profile_picture: '/ui-assets/elements/avatar.webp',
     email_verified_at: null,
-    roles: [exampleRoles[2]],
+    roles: [roles()[2]],
   },
   {
     id: 3,
@@ -34,7 +35,7 @@ export const workspaceUsers: WorkspaceUser[] = [
     email: 'jack.doe@example.com',
     profile_picture: '/ui-assets/elements/avatar.webp',
     email_verified_at: null,
-    roles: [exampleRoles[3]],
+    roles: [roles()[0]],
   },
   {
     id: 4,
@@ -43,6 +44,6 @@ export const workspaceUsers: WorkspaceUser[] = [
     email: 'jill.doe@example.com',
     profile_picture: '/ui-assets/elements/avatar.webp',
     email_verified_at: null,
-    roles: [exampleRoles[2]],
+    roles: [roles()[2]],
   },
 ];

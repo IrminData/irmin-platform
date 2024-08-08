@@ -71,7 +71,7 @@ export default function DashboardsPage() {
             }}
           />
           <div className='grid grid-cols-1 gap-8 px-4 pb-[100px] xl:grid-cols-2'>
-            {selectedDashboard.widgets.map((widget) => {
+            {selectedDashboard.widgets?.map((widget) => {
               switch (widget.type) {
                 case 'table':
                   return (

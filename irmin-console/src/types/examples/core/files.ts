@@ -5,11 +5,11 @@ import { BucketFile } from '@/types/api/Bucket';
 import exampleActionFiles from '../exampleActionFiles';
 
 /**
- * Example file objects for the Bucket
+ * Get example file objects for the Bucket
  *
  * Array of {@link BucketFile}
  */
-export const files: BucketFile[] = [
+export const files: () => BucketFile[] = () => [
   {
     bucket: 'example-bucket',
     name: 'file1.js',

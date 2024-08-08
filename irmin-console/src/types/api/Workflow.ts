@@ -33,13 +33,13 @@ export interface Workflow {
   owner: WorkspaceUser;
   workflowable_type: WorkflowableType;
   workflowable: Connection | Action | ExportSync;
-  cron_syntax?: string | null;
+  cron_syntax: string | null;
   last_run_at?: string | null;
   next_run_at?: string | null;
   status: WorkflowStatus;
-  description?: string | null;
-  documentation?: string | null;
-  repository: Repository;
+  description: string;
+  documentation: string;
+  repository?: Repository | null;
   created_at: string;
   updated_at: string;
 }

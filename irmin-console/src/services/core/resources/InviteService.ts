@@ -5,7 +5,7 @@ import fake from '@/utils/prepareFakeResponse';
 import { Invite } from '@/types/api/Invite';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { IrminRoleNames } from '@/types/api/IrminRole';
-import { exampleInvites } from '@/types/examples/base';
+import { exampleInvites } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =

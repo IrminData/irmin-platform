@@ -12,7 +12,7 @@ import { Widget } from '@/types/api/Widget';
 export interface Dashboard {
   id: number;
   name: string;
-  widgets: Widget[];
+  widgets?: Widget[] | null;
   created_at: string;
   updated_at: string;
 }

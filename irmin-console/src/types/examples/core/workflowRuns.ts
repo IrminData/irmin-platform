@@ -2,7 +2,7 @@ import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
 import { WorkflowRun } from '@/types/api/Workflow';
 
-import { exampleWorkflows } from '.';
+import { workflows } from './workflows';
 
 /** Base properties to fake Workflow Runs for every Workflow with */
 const runs: Array<{
@@ -44,12 +44,12 @@ const runs: Array<{
 ];
 
 /**
- * Example Workflow Runs
+ * Get example Workflow Runs
  *
  * Array of {@link WorkflowRun}
  */
-export const workflowRuns: WorkflowRun[] = exampleWorkflows.flatMap(
-  (workflow, workflowIdx) =>
+export const workflowRuns: () => WorkflowRun[] = () =>
+  workflows().flatMap((workflow, workflowIdx) =>
     runs.map((run, runIdx) => {
       const baseRun = {
         id: workflowIdx * runs.length + runIdx, // Fake unique ID
@@ -65,4 +65,4 @@ export const workflowRuns: WorkflowRun[] = exampleWorkflows.flatMap(
 
       return baseRun as WorkflowRun;
     })
-);
+  );

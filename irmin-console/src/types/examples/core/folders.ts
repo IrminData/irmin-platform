@@ -3,11 +3,11 @@ import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 import { BucketFolder } from '@/types/api/Bucket';
 
 /**
- * Example BucketFolder objects
+ * Get example BucketFolder objects
  *
  * Array of {@link BucketFolder}
  */
-export const folders: BucketFolder[] = [
+export const folders: () => BucketFolder[] = () => [
   {
     bucket: 'example-bucket',
     name: 'folder1',

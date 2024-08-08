@@ -1,11 +1,11 @@
 import { Connector } from '@/types/api/Connector';
 
 /**
- * Example connectors
+ * Get example connectors
  *
  * Array of {@link Connector}
  */
-export const connectors: Connector[] = [
+export const connectors: () => Connector[] = () => [
   {
     id: 0,
     name: 'PostgreSQL',

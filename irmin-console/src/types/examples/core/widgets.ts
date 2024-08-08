@@ -2,19 +2,21 @@ import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
 import { Widget } from '@/types/api/Widget';
 
-import { exampleDashboards } from '.';
+import { dashboards } from './dashboards';
 
 /**
- * Example widgets for the dashboard
+ * Get example widgets for the dashboard
  *
  * Array of {@link Widget}
+ *
+ * @param last - If true, the item will avoid having children
  */
-export const widgets: Widget[] = [
+export const widgets = (last = false): Widget[] => [
   {
     id: 0,
     type: 'metric',
     title: 'Total Sales',
-    dashboards: exampleDashboards,
+    dashboards: !last ? dashboards(true) : undefined,
     data: {
       currentValue: 1000,
       label: '2024 Sales in USD',
@@ -26,7 +28,7 @@ export const widgets: Widget[] = [
     id: 1,
     type: 'line',
     title: 'Monthly Sales 1',
-    dashboards: exampleDashboards,
+    dashboards: !last ? dashboards(true) : undefined,
     data: {
       labels: ['January', 'February', 'March', 'April'],
       datasets: [
@@ -45,7 +47,7 @@ export const widgets: Widget[] = [
     id: 2,
     type: 'bar',
     title: 'Monthly Sales 2',
-    dashboards: exampleDashboards,
+    dashboards: !last ? dashboards(true) : undefined,
     data: {
       labels: ['January', 'February', 'March', 'April'],
       datasets: [
@@ -64,7 +66,7 @@ export const widgets: Widget[] = [
     id: 5,
     type: 'table',
     title: 'Monthly Sales 5',
-    dashboards: exampleDashboards,
+    dashboards: !last ? dashboards(true) : undefined,
     data: {
       labels: ['January', 'February', 'March', 'April'],
       datasets: [
