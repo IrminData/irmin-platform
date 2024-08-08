@@ -16,7 +16,7 @@ import {
   exampleConnections,
   exampleExports,
   exampleWorkflowRuns,
-} from '@/types/examples/apiObjects';
+} from '@/types/examples/base';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =

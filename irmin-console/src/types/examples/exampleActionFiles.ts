@@ -1,4 +1,7 @@
 const exampleActionFiles = {
+  findTop100AdClickingUsers: `
+    SELECT user_id, COUNT(*) as clicks FROM $[app-usage-data.ad_clicks] GROUP BY user_id ORDER BY clicks DESC LIMIT 100 JOIN $[app-usage-data.users] ON $[app-usage-data.ad_clicks].user_id = $[app-usage-data.users].id;
+  `,
   sendReceiptOnOrder: `
     const irmin = require('irmin');
     const fetch = require('node-fetch');
@@ -6,7 +9,7 @@ const exampleActionFiles = {
     async function sendReceipts() {
         try {
             // Fetch orders where receipt_sent is false
-            const result = await irmin.query("SELECT * FROM orders WHERE receipt_sent = false");
+            const result = await irmin.query("SELECT * FROM $[app-usage-data.purchase_events] WHERE receipt_sent = false");
             const orders = result.rows;
 
             for (const order of orders) {
@@ -48,41 +51,27 @@ const exampleActionFiles = {
     `,
   fetchAppUsageData: `
     const irmin = require('irmin');
+    const fetch = require('node-fetch');
+    async function fetchAppUsageData() {
+        try {
+            // Fetch app usage data from API
+            const response = await fetch('https://api.example.com/app-usage-data');
+            const data = await response.json();
 
-    async function fetchData() {
-        const tables = [
-            "users",
-            "downloads",
-            "sessions",
-            "purchase_events",
-            "ad_clicks",
-            "ad_impressions"
-        ];
-
-        const data = {};
-
-        for (const table of tables) {
-            try {
-                const result = await irmin.query("SELECT * FROM " + table);
-                data[table] = result.rows; 
-                irmin.log("success", "Successfully fetched data from table " + table);
-            } catch (error) {
-                irmin.log("warning", "Failed to fetch data from table " + table + ": " + error.message);
-            }
+            // Return the data to create a Repository based on this action
+            irmin.actionResult(data);
+        } catch (error) {
+            irmin.log("error", "Error fetching app usage data: " + error.message);
         }
-
-        // Return object where keys are table names and values are arrays of rows. For rows keys are column names and values are column values.
-        irmin.result(data); 
     }
-
     (async () => {
         try {
             irmin.log("info", "Running fetchAppUsageData action");
-            await fetchData();
+            await fetchAppUsageData();
         } catch (error) {
-            irmin.log("error", "Error in fetchData execution: " + error.message);
+            irmin.log("error", "Error in fetchAppUsageData execution: " + error.message);
         }
     })();
-  `,
+    `,
 };
 export default exampleActionFiles;

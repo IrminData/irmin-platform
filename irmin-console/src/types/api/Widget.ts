@@ -1,5 +1,7 @@
 import { WidgetData } from '@/types/internal/WidgetData';
 
+import { Dashboard } from './Dashboard';
+
 /**
  * Types of widgets that can be created
  */
@@ -14,15 +16,18 @@ export type WidgetType = 'line' | 'bar' | 'table' | 'metric';
  * That resulting data will be converted to the Widget Data format and be shown in the UI.
  *
  * @typeParam id - Widget ID
- * @typeParam dashboard - ID of the dashboard this widget belongs to
  * @typeParam type - Type of widget
  * @typeParam title - Widget title
  * @typeParam data - The widget data
+ * @typeParam created_at - Creation date
+ * @typeParam updated_at - Last updated date
  */
 export interface Widget {
   id: number;
-  dashboard: number; // ID of the dashboard this widget belongs to
   type: WidgetType;
   title: string;
+  dashboards: Dashboard[];
   data: WidgetData;
+  created_at: string;
+  updated_at: string;
 }

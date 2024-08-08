@@ -4,7 +4,7 @@ import fake from '@/utils/prepareFakeResponse';
 
 import { Connector } from '@/types/api/Connector';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
-import { exampleConnectors } from '@/types/examples/apiObjects';
+import { exampleConnectors } from '@/types/examples/base';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =

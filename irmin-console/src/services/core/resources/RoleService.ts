@@ -4,7 +4,7 @@ import fake from '@/utils/prepareFakeResponse';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { IrminRole } from '@/types/api/IrminRole';
-import { exampleRoles } from '@/types/examples/apiObjects';
+import { exampleRoles } from '@/types/examples/base';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =

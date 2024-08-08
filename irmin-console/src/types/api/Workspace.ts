@@ -15,6 +15,8 @@ export interface Workspace {
   slug: string;
   owner_id: number;
   description?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 /**

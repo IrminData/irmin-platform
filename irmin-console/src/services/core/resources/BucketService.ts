@@ -4,7 +4,7 @@ import fake from '@/utils/prepareFakeResponse';
 
 import { Bucket } from '@/types/api/Bucket';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
-import { exampleBucket } from '@/types/examples/apiObjects';
+import { exampleBucket } from '@/types/examples/base';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';

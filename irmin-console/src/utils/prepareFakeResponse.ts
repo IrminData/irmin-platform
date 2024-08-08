@@ -2,7 +2,7 @@
 import removeCircularJSON from '@/utils/removeCircularJSON';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
-import { exampleAPIResponse } from '@/types/examples/apiObjects';
+import { exampleAPIResponse } from '@/types/examples/base';
 
 /**
  * Prepare an example object for the API response

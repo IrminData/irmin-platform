@@ -4,7 +4,7 @@ import fake from '@/utils/prepareFakeResponse';
 
 import { Dashboard } from '@/types/api/Dashboard';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
-import { exampleDashboards } from '@/types/examples/apiObjects';
+import { exampleDashboards } from '@/types/examples/base';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
