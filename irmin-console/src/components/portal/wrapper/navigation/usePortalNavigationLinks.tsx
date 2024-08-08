@@ -108,7 +108,7 @@ const usePortalNavigationLinks = (): {
   const noWorkspaceLinks = [
     {
       title: dict.portalNavigation.links.workspaces,
-      href: `/portal`,
+      href: `/portal/manage-workspaces`,
       icon: <TbDashboard />,
     },
     {

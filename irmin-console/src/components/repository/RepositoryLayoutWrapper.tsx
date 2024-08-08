@@ -65,7 +65,7 @@ export default function RepositoryLayoutWrapper({
 
   return (
     <>
-      <div className='container mx-auto w-full max-w-7xl px-2 md:px-4'>
+      <div className='mx-auto w-full px-2 md:px-4'>
         <div className='flex flex-col gap-2 py-4'>
           <span className='text-sm text-gray-400'>
             {dict.repository.repository}

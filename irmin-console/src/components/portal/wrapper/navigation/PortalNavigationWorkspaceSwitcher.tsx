@@ -67,7 +67,7 @@ export default function PortalNavigationWorkspaceSwitcher({
                   setProcessing(true);
                   const value = e.target.value;
                   if (value === 'create-new' || value === 'select-workspace') {
-                    router.push('/portal');
+                    router.push('/portal/manage-workspaces');
                     setIsMenuOpen(false);
                     return;
                   }

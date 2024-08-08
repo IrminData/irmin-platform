@@ -174,9 +174,10 @@ export const useSwitchWorkspace = (
           // Make sure the user is not on a workspace page eg. /portal/{workspace-slug}/*
           if (
             pathname.includes('/portal/') &&
+            !pathname.includes('/portal/manage-workspaces') &&
             !pathname.includes('/portal/profile')
           ) {
-            router.push('/portal');
+            router.push('/portal/manage-workspaces');
           }
           return;
         }
