@@ -21,7 +21,7 @@ import { CareersSection } from '@/types/website/Wordpress';
  *
  * This component is used to display the careers section on the website.
  * It uses ACF data from WordpressAPI.
-
+ *
  * It displays the open positions with their roles, descriptions, locations, and types.
  *
  * The open positions can be filtered by role, location, and type.

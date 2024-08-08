@@ -1,8 +1,6 @@
 /**
  * IrminRole
  *
- * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
- *
  * @typeParam description - Human-readable description
  * @typeParam label - Human-readable name
  * @typeParam name - Slug of the role

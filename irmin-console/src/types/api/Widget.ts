@@ -8,8 +8,6 @@ export type WidgetType = 'line' | 'bar' | 'table' | 'metric';
 /**
  * Widget type
  *
- * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
- *
  * @todo
  *
  * The API will not be providing Widget Data directly. Instead, we will store "widget creation query". This widget creation query will be used to fetch the data from the Workspace DB.

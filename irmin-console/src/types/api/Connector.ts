@@ -1,8 +1,6 @@
 /**
  * Connector type
  *
- * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
- *
  * @typeParam id - Connector ID
  * @typeParam name - Connector name
  * @typeParam logo - Connector logo
@@ -18,8 +16,6 @@ export interface Connector {
 /**
  * List of Details or Settings fields required to create a connection
  *
- * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
- *
  * @typeParam key - Field name
  * @typeParam value - Field type
  */
@@ -29,8 +25,6 @@ export interface ConnectionDetailsAndSettingsFields {
 
 /**
  * Connection details and settings
- *
- * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  *
  * @typeParam key - Field name
  * @typeParam value - Field value

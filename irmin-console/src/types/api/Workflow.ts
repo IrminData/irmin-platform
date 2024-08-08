@@ -11,36 +11,35 @@ type WorkflowableType = 'connection' | 'action' | 'export';
 /**
  * Workflow type
  *
- * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
- *
  * @typeParam id - Workflow ID
  * @typeParam name - Workflow name
  * @typeParam owner - The workspace user that owns this workflow and is responsible for it
  * @typeParam workflowable_type - Type of workflow
- * @typeParam workflowable_id - ID of the workflowable
  * @typeParam workflowable - Object with details for the workflow, specific to the workflowable type
  * @typeParam cron_syntax - Cron syntax for the workflow
+ * @typeParam last_run_at - Timestamp of the last run of the workflow
  * @typeParam next_run_at - Timestamp of the next run of the workflow
  * @typeParam status - Status of the workflow
  * @typeParam description - Workflow description
  * @typeParam documentation - Workflow documentation as a markdown string
- * @typeParam result - Repository that is the result of the workflow. If a workspace results in data, it will be grouped as a Repository.
+ * @typeParam repository - Result of the workflow. If a workspace results in data, it will be grouped as a Repository.
  * @typeParam created_at - Workflow creation date
  * @typeParam updated_at - Workflow update date
  */
 export interface Workflow {
   id: number;
   name: string;
+  slug: string;
   owner: WorkspaceUser;
   workflowable_type: WorkflowableType;
-  workflowable_id: number;
   workflowable: Connection | Action | ExportSync;
   cron_syntax?: string | null;
+  last_run_at?: string | null;
   next_run_at?: string | null;
   status: WorkflowStatus;
   description?: string | null;
   documentation?: string | null;
-  result?: Repository | null;
+  repository: Repository;
   created_at: string;
   updated_at: string;
 }
@@ -60,8 +59,6 @@ export type ActionWorkflow = Workflow & { workflowable: Action };
 
 /**
  * Workflow run type, single execution of a workflow
- *
- * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  *
  * @typeParam id - Workflow run ID
  * @typeParam workflow_id - ID of the workflow that was run

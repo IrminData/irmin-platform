@@ -8,8 +8,6 @@ import { Workspace } from '@/types/api/Workspace';
  * WorkspaceUser is used to represent a user in the context of a workspace - used to access workspace functionality.
  * Profile is used to represent a user's profile in the Irmin system - used for sign in etc.
  *
- * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
- *
  * @typeParam id - Profile's ID
  * @typeParam name - Profile's name
  * @typeParam company - Profile's company

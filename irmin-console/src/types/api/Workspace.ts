@@ -3,8 +3,6 @@ import { IrminRole } from '@/types/api/IrminRole';
 /**
  * Workspace type
  *
- * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
- *
  * @typeParam id - Workspace ID
  * @typeParam name - Workspace name
  * @typeParam slug - Workspace slug
@@ -25,8 +23,6 @@ export interface Workspace {
  * Not to be confused with the Profile type.
  * WorkspaceUser is used to represent a user in the context of a workspace - used to access workspace functionality.
  * Profile is used to represent a user's profile in the Irmin system - used for sign in etc.
- *
- * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
  *
  * @typeParam id - User's ID
  * @typeParam name - User's name

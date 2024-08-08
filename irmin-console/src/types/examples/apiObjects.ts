@@ -1,3 +1,5 @@
+import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
+
 import { Bucket, BucketFile, BucketFolder } from '@/types/api/Bucket';
 import { Connector } from '@/types/api/Connector';
 import { Dashboard } from '@/types/api/Dashboard';
@@ -117,29 +119,29 @@ export const exampleDashboards: Dashboard[] = [
     id: 0,
     name: 'Main Dashboard',
     widgets: exampleWidgets,
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 1,
     name: 'Financial Overview',
     widgets: exampleWidgets,
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 2,
     name: 'App Analytics',
     widgets: exampleWidgets,
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 3,
     name: 'Ad Campaign Performance',
     widgets: exampleWidgets,
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
 ];
 
@@ -306,7 +308,7 @@ export const exampleProfile: Profile = {
   company: 'Example Inc.',
   email: 'joe.biden@example.com',
   profile_picture: '/ui-assets/elements/avatar.webp',
-  email_verified_at: new Date().toDateString(),
+  email_verified_at: getRandomDateTimeString(500, 'past', 100),
   workspace: exampleWorkspaces[0],
   roles: [exampleRoles[0]],
   api_token: 'offline',
@@ -320,24 +322,24 @@ export const exampleInvites: Invite[] = [
     id: 0,
     name: 'Petteri Orpo',
     email: 'petteri@example.com',
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
     role: exampleRoles[2],
   },
   {
     id: 1,
     name: 'Sanna Marin',
     email: 'sanna@example.com',
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
     role: exampleRoles[1],
   },
   {
     id: 2,
     name: 'Juha Sipilä',
     email: 'juha@example.com',
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
     role: exampleRoles[4],
   },
 ];
@@ -416,6 +418,60 @@ export const exampleConnectors: Connector[] = [
     logo: '/logo.svg',
     description: 'Upload a local Excel file to Irmin',
   },
+  {
+    id: 6,
+    name: 'Google Analytics',
+    logo: '/logo.svg',
+    description: 'Sync data from Google Analytics',
+  },
+  {
+    id: 7,
+    name: 'Pipedrive',
+    logo: '/logo.svg',
+    description: 'Sync data to and from Pipedrive CRM',
+  },
+  {
+    id: 8,
+    name: 'HubSpot',
+    logo: '/logo.svg',
+    description: 'Sync data to and from HubSpot CRM',
+  },
+  {
+    id: 9,
+    name: 'Microsoft Dynamics',
+    logo: '/logo.svg',
+    description: 'Sync data to and from Microsoft Dynamics CRM',
+  },
+  {
+    id: 10,
+    name: 'Salesforce',
+    logo: '/logo.svg',
+    description: 'Sync data to and from Salesforce CRM',
+  },
+  {
+    id: 11,
+    name: 'Shopify',
+    logo: '/logo.svg',
+    description: 'Sync data to and from Shopify',
+  },
+  {
+    id: 12,
+    name: 'Stripe',
+    logo: '/logo.svg',
+    description: 'Sync data to and from Stripe',
+  },
+  {
+    id: 13,
+    name: 'Mailchimp',
+    logo: '/logo.svg',
+    description: 'Sync data to and from Mailchimp',
+  },
+  {
+    id: 14,
+    name: 'SendGrid',
+    logo: '/logo.svg',
+    description: 'Sync data to and from SendGrid',
+  },
 ];
 
 /**
@@ -439,48 +495,51 @@ export const exampleRepositories: Repository[] = [
     ],
     owner: exampleWorkspaceUsers[0],
     workflow: null,
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    immutable: false,
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 1,
-    name: 'Google Analytics, example.com',
-    slug: 'google-analytics-example-com',
+    name: 'Main Google Analytics',
+    slug: 'main-google-analytics',
     description:
       'This is an example of a Repository that has been created by the Google Analytics Connection Workflow.',
     documentation:
       '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
-      'google-analytics-example-com.sessions',
-      'google-analytics-example-com.users',
-      'google-analytics-example-com.pageviews',
-      'google-analytics-example-com.events',
+      'main-google-analytics.sessions',
+      'main-google-analytics.users',
+      'main-google-analytics.pageviews',
+      'main-google-analytics.events',
     ],
     owner: exampleWorkspaceUsers[0],
     workflow: null,
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    immutable: true,
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 2,
-    name: 'Mobile app usage and statistics',
-    slug: 'mobile-app-usage-and-statistics',
+    name: 'App usage data',
+    slug: 'app-usage-data',
     description:
       'This is an example of a Repository that has been created by an Action Workflow.',
     documentation:
       '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
-      'mobile-app-usage-and-statistics.users',
-      'mobile-app-usage-and-statistics.downloads',
-      'mobile-app-usage-and-statistics.sessions',
-      'mobile-app-usage-and-statistics.purchase_events',
-      'mobile-app-usage-and-statistics.ad_clicks',
-      'mobile-app-usage-and-statistics.ad_impressions',
+      'app-usage-data.users',
+      'app-usage-data.downloads',
+      'app-usage-data.sessions',
+      'app-usage-data.purchase_events',
+      'app-usage-data.ad_clicks',
+      'app-usage-data.ad_impressions',
     ],
     owner: exampleWorkspaceUsers[1],
     workflow: null,
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    immutable: true,
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 3,
@@ -497,22 +556,27 @@ export const exampleRepositories: Repository[] = [
     ],
     owner: exampleWorkspaceUsers[2],
     workflow: null,
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    immutable: true,
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 4,
-    name: 'Excel management',
-    slug: 'excel-management',
+    name: 'Management data from Excel',
+    slug: 'management-data-from-excel',
     description:
       'This is an example of a Repository that has been created by a Connection Workflow.',
     documentation:
       '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
-    tables: ['excel-management.inventory', 'excel-management.employees'],
+    tables: [
+      'management-data-from-excel.inventory',
+      'management-data-from-excel.employees',
+    ],
     workflow: null,
+    immutable: true,
     owner: exampleWorkspaceUsers[3],
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 5,
@@ -530,51 +594,56 @@ export const exampleRepositories: Repository[] = [
       'google-sheets-kpis.employees',
     ],
     workflow: null,
+    immutable: true,
     owner: exampleWorkspaceUsers[0],
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
+  },
+  {
+    id: 6,
+    name: 'Export KPIs to Google Sheets',
+    slug: 'export-kpis-to-google-sheets',
+    description: '',
+    documentation: '',
+    tables: [],
+    workflow: null,
+    immutable: true,
+    owner: exampleWorkspaceUsers[1],
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
+  },
+  {
+    id: 7,
+    name: 'Send receipt on order',
+    slug: 'send-receipt-on-order',
+    description: '',
+    documentation: '',
+    tables: [],
+    workflow: null,
+    immutable: true,
+    owner: exampleWorkspaceUsers[2],
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
 ];
 
-/** Example Google Sheets Connection Workflow */
-const exampleGoogleSheetsConnection: ConnectionWorkflow = {
-  id: 6,
-  name: 'Google Sheets KPIs sync',
-  owner: exampleWorkspaceUsers[0],
-  description:
-    'This an example Connection Workflow for syncing KPIs from Google Sheets',
-  documentation:
-    'This workflow is not scheduled and should be ran manually when needed. It is used as the destination for the Export Workflow example.',
-  cron_syntax: null,
-  next_run_at: null,
-  status: 'paused',
-  result: exampleRepositories[6],
-  workflowable_id: 0,
-  workflowable_type: 'connection',
-  workflowable: {
-    details: "{googleApiKey:'pk-123123',username:'admin'}",
-    settings: "{path:'/business/financials/KPIs.xlsx'}",
-    connector: exampleConnectors[4],
-  },
-  created_at: new Date().toDateString(),
-  updated_at: new Date().toDateString(),
-};
-/** Example Workflows */
+/** Example Workflows, don't cast to a type just yet. */
 export const exampleWorkflows: Workflow[] = [
   {
     id: 0,
-    name: 'Main Google Analytics sync',
+    name: 'Main Google Analytics',
+    slug: 'main-google-analytics',
     owner: exampleWorkspaceUsers[0],
     description:
       'This an example Connection Workflow for syncing Google Analytics data to a Repository.',
     documentation: '#Hello World!',
     cron_syntax: '2 * 0 0 0',
-    next_run_at: new Date().toDateString(),
+    last_run_at: getRandomDateTimeString(2, 'past', 0),
+    next_run_at: getRandomDateTimeString(2, 'future', 0),
     status: 'running',
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
-    result: exampleRepositories[1],
-    workflowable_id: 0,
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
+    repository: exampleRepositories[1],
     workflowable_type: 'connection',
     workflowable: {
       details: "{googleApiKey:'pk-13123123',username:'admin'}",
@@ -585,36 +654,39 @@ export const exampleWorkflows: Workflow[] = [
   {
     id: 1,
     name: 'Export KPIs to Google Sheets',
+    slug: 'export-kpis-to-google-sheets',
     owner: exampleWorkspaceUsers[1],
     description:
       'This an example Export Workflow for exporting a Repository to Google Sheets Connection.',
     documentation: '#Hello World!',
     cron_syntax: '2 * 0 0 0',
-    next_run_at: new Date().toDateString(),
+    last_run_at: getRandomDateTimeString(2, 'past', 0),
+    next_run_at: getRandomDateTimeString(2, 'future', 0),
     status: 'running',
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
-    workflowable_id: 0,
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
+    repository: exampleRepositories[6],
     workflowable_type: 'export',
     workflowable: {
-      destination: exampleGoogleSheetsConnection,
+      destination: {} as ConnectionWorkflow, // This is assigned later
       source: exampleRepositories[0],
     },
   },
   {
     id: 2,
-    name: 'Fetch app usage data',
+    name: 'App usage data',
+    slug: 'app-usage-data',
     owner: exampleWorkspaceUsers[2],
     description:
       'This an example of an Action Workflow for fetching app usage data and storing results in a Repository.',
     documentation: '#Hello World!',
     cron_syntax: '2 * 0 0 0',
-    next_run_at: new Date().toDateString(),
+    last_run_at: getRandomDateTimeString(2, 'past', 0),
+    next_run_at: getRandomDateTimeString(2, 'future', 0),
     status: 'running',
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
-    result: exampleRepositories[2],
-    workflowable_id: 0,
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
+    repository: exampleRepositories[2],
     workflowable_type: 'action',
     workflowable: {
       path: '/fetch-app-usage-data.js',
@@ -623,16 +695,17 @@ export const exampleWorkflows: Workflow[] = [
   {
     id: 3,
     name: 'Send receipt on order',
+    slug: 'send-receipt-on-order',
     owner: exampleWorkspaceUsers[0],
     description:
       'This an example of an Action Workflow for sending receipts on orders. Results in no Repository.',
     documentation: '#Hello World!',
     cron_syntax: '2 * 0 0 0',
-    next_run_at: new Date().toDateString(),
-    status: 'running',
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
-    workflowable_id: 0,
+    next_run_at: getRandomDateTimeString(2, 'future', 0),
+    status: 'error',
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
+    repository: exampleRepositories[7],
     workflowable_type: 'action',
     workflowable: {
       path: '/send-receipt-on-order.js',
@@ -641,49 +714,74 @@ export const exampleWorkflows: Workflow[] = [
   {
     id: 4,
     name: 'KPIs from Excel',
+    slug: 'kpis-from-excel',
     owner: exampleWorkspaceUsers[0],
     description:
       'This an example Connection Workflow for syncing an Excel Sheet to a Repository.',
     documentation:
       'Manually imported Excel file with KPIs and performance metrics. This workflow is not scheduled and should be ran manually when needed.',
     cron_syntax: null,
+    last_run_at: getRandomDateTimeString(40, 'past', 10),
     next_run_at: null,
     status: 'running',
-    result: exampleRepositories[4],
-    workflowable_id: 0,
+    repository: exampleRepositories[4],
     workflowable_type: 'connection',
     workflowable: {
       details: "{file: 'kpis.xlsx'}",
       settings: '{}',
       connector: exampleConnectors[6],
     },
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 5,
     name: 'Management data from Excel',
+    slug: 'management-data-from-excel',
     owner: exampleWorkspaceUsers[3],
     description:
       'This an example Connection Workflow for syncing an Excel Sheet to a Repository.',
     documentation:
       'Manually imported Excel file with KPIs and performance metrics. This workflow is not scheduled and should be ran manually when needed. ',
     cron_syntax: '2 * 0 0 0',
-    next_run_at: new Date().toDateString(),
+    next_run_at: getRandomDateTimeString(2, 'future', 0),
     status: 'running',
-    result: exampleRepositories[5],
-    workflowable_id: 0,
+    repository: exampleRepositories[4],
     workflowable_type: 'connection',
     workflowable: {
       details: "{file: 'management-and-hr.xlsx'}",
       settings: '{}',
       connector: exampleConnectors[6],
     },
-    created_at: new Date().toDateString(),
-    updated_at: new Date().toDateString(),
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
-  exampleGoogleSheetsConnection,
+  {
+    id: 6,
+    name: 'Google Sheets KPIs',
+    slug: 'google-sheets-kpis',
+    owner: exampleWorkspaceUsers[0],
+    description:
+      'This an example Connection Workflow for syncing KPIs from Google Sheets',
+    documentation:
+      'This workflow is not scheduled and should be ran manually when needed. It is used as the destination for the Export Workflow example.',
+    cron_syntax: null,
+    last_run_at: getRandomDateTimeString(10, 'past', 2),
+    next_run_at: null,
+    status: 'paused',
+    repository: exampleRepositories[5],
+    workflowable_type: 'connection',
+    workflowable: {
+      details: "{googleApiKey:'pk-123123',username:'admin'}",
+      settings: "{path:'/business/financials/KPIs.xlsx'}",
+      connector: exampleConnectors[4],
+    },
+    created_at: getRandomDateTimeString(500, 'past', 60),
+    updated_at: getRandomDateTimeString(50, 'past', 10),
+  },
 ];
+(exampleWorkflows[1] as ExportWorkflow).workflowable.destination =
+  exampleWorkflows[6] as ConnectionWorkflow; // Assign destination to Export Workflow, handled here due to circular dependency
 
 /** Example Connection Workflow */
 export const exampleConnections = [
@@ -702,7 +800,7 @@ export const exampleActions = [
   exampleWorkflows[3],
 ] as ActionWorkflow[];
 
-/** Assign Workflows to example Repositories */
+/** Assign Repositories to example Workflows */
 exampleRepositories[0].workflow = null;
 exampleRepositories[1].workflow = exampleWorkflows[0] as ConnectionWorkflow;
 exampleRepositories[2].workflow = exampleWorkflows[2] as ActionWorkflow;
@@ -718,36 +816,34 @@ const fakeRuns: Array<{
 }> = [
   {
     status: 'running',
-    started_at: new Date().toISOString(),
+    started_at: getRandomDateTimeString(2, 'past', 0),
   },
   {
     status: 'complete',
-    started_at: new Date(new Date().getTime() - 3600 * 1000).toISOString(), // 1 hour ago
-    finished_at: new Date(new Date().getTime() - 1800 * 1000).toISOString(), // 30 minutes ago
+    started_at: getRandomDateTimeString(2, 'past', 0),
+    finished_at: getRandomDateTimeString(1, 'past', 0),
   },
   {
     status: 'error',
-    started_at: new Date(new Date().getTime() - 7200 * 1000).toISOString(), // 2 hours ago
-    finished_at: new Date(new Date().getTime() - 7100 * 1000).toISOString(), // 1 hour 59 minutes ago
+    started_at: getRandomDateTimeString(2, 'past', 0),
+    finished_at: getRandomDateTimeString(1, 'past', 0),
   },
   {
     status: 'pending',
-    started_at: new Date().toISOString(),
+    started_at: getRandomDateTimeString(2, 'past', 0),
   },
   {
     status: 'paused',
-    started_at: new Date(new Date().getTime() - 86400 * 1000).toISOString(), // 1 day ago
+    started_at: getRandomDateTimeString(2, 'past', 0),
   },
   {
     status: 'initiating',
-    started_at: new Date().toISOString(),
+    started_at: getRandomDateTimeString(1, 'past', 0),
   },
   {
     status: 'complete',
-    started_at: new Date(new Date().getTime() - 2 * 86400 * 1000).toISOString(), // 2 days ago
-    finished_at: new Date(
-      new Date().getTime() - 1.5 * 86400 * 1000
-    ).toISOString(), // 1.5 days ago
+    started_at: getRandomDateTimeString(2, 'past', 1),
+    finished_at: getRandomDateTimeString(1, 'past', 0),
   },
 ];
 

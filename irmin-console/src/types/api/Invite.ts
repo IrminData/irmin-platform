@@ -3,8 +3,6 @@ import { IrminRole } from '@/types/api/IrminRole';
 /**
  * Invite type
  *
- * @see `@/src/types/examples/apiObjects.ts` - find object referencing this type to view example
- *
  * @typeParam id - Invite ID
  * @typeParam name - Invite name
  * @typeParam email - Invite email
