@@ -26,7 +26,7 @@ import { useLocale } from '@/context/LocaleContext';
  * The sidebar can be folded or unfolded. It contains the navigation links,
  * {@link PortalNavigationProfile}, and {@link PortalNavigationWorkspaceSwitcher}.
  *
- * Portal navigation component also contains the search bar and the {@link NotificationButton}.
+ * Portal navigation component also contains the search bar and the notifications button.
  *
  * Links are fetched from {@link usePortalNavigationLinks} context and displayed using {@link PortalNavigationLink}.
  */
@@ -43,7 +43,9 @@ export default function PortalWrapper({
   const links = usePortalNavigationLinks();
 
   // Hide the menu bar logo if on Portal homepage, to avoid showing multiple logos
-  const hideLogoOnPortalHome = currentPath.endsWith('/portal');
+  const hideLogoOnPortalHome = currentPath.endsWith(
+    '/portal/manage-workspaces'
+  );
 
   return (
     <>
@@ -55,7 +57,7 @@ export default function PortalWrapper({
         {/* Portal navigation sidebar */}
         <div
           id='portal-sidebar-wrapper'
-          className={`scrollbar-hide h-screen overflow-y-scroll border-r bg-white transition-all duration-300 ${
+          className={`scrollbar-hide h-screen overflow-y-scroll border-r border-irmin_green bg-white transition-all duration-300 ${
             isMenuOpen ? 'absolute z-10 block' : 'hidden md:relative md:block'
           } ${isMenuFolded ? 'w-20' : 'w-60'}`}
         >

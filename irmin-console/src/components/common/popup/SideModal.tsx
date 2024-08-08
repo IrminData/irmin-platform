@@ -49,14 +49,14 @@ export default function SideModal({
   return (
     <>
       <button
-        className='group absolute right-2 top-8 flex cursor-pointer items-center justify-center transition-all lg:right-5 lg:top-10'
+        className='group absolute right-2 top-8 flex cursor-pointer items-center justify-center transition-all lg:right-5 lg:top-6'
         onClick={() => setIsOpen(true)}
         aria-label={title}
       >
-        <p className='-mr-3 flex items-center justify-center rounded-l-full bg-white py-2 pl-2 pr-4 text-xs text-irmin_blue shadow transition-all group-hover:text-irmin_black'>
+        <p className='-mr-4 flex items-center justify-center rounded-l-full py-2 pl-2 pr-6 text-xs text-gray-500 opacity-0 shadow transition-all group-hover:opacity-100'>
           {title}
         </p>
-        <p className='flex h-12 w-12 items-center justify-center rounded-full bg-irmin_blue text-white transition-all group-hover:bg-irmin_black'>
+        <p className='flex h-12 w-12 items-center justify-center rounded-full bg-irmin_green text-white transition-all group-hover:bg-irmin_green-600'>
           <IoAdd size={30} />
         </p>
       </button>

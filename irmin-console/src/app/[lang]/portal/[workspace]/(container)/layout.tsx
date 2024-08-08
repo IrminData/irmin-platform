@@ -5,7 +5,7 @@ export default function PortalWorkspaceContainerLayout({
 }) {
   return (
     <div
-      className='container mx-auto max-w-6xl'
+      className='container relative mx-auto max-w-6xl'
       id='portal-workspace-container-layout'
     >
       {children}

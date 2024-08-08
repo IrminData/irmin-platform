@@ -34,7 +34,7 @@ function PortalErrorSection({
               variant='solid'
               colorScheme='primary'
               size='md'
-              href='/portal'
+              href='/portal/manage-workspaces'
             >
               {dict.misc.goBackPortal}
             </Button>

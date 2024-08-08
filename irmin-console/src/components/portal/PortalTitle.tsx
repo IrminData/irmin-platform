@@ -21,7 +21,7 @@ const PortalTitle: React.FC<{
 }> = ({ title, showLogo }) => {
   return (
     <div
-      className={`px-4 pb-8 pt-6 text-lg font-medium text-irmin_black text-opacity-80 md:pb-8 md:pt-12 md:text-3xl`}
+      className={`px-4 pb-8 pt-6 text-lg font-medium text-irmin_black text-opacity-80 md:pb-8 md:pt-8 md:text-3xl`}
     >
       {showLogo && (
         <Image

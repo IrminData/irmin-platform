@@ -39,7 +39,10 @@ const ProtectedRouteWrapper = ({ children }: { children: React.ReactNode }) => {
   // Show loading skeleton while loading
   if (isLoading || !profile) {
     return (
-      <div id='protected-route-loading-skeleton'>
+      <div
+        id='protected-route-loading-skeleton'
+        className='container relative mx-auto max-w-6xl'
+      >
         <LoadingSkeleton className='min-h-[80vh]' />
       </div>
     );
