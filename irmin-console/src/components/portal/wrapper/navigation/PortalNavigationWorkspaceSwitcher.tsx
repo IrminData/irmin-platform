@@ -4,7 +4,7 @@ import React from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import Select from '@/components/common/select/Select';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -40,76 +40,63 @@ export default function PortalNavigationWorkspaceSwitcher({
     workspaceSlug &&
     currentWorkspace?.slug &&
     workspaceSlug === currentWorkspace.slug
-      ? currentWorkspace.id
+      ? currentWorkspace.slug
       : 'select-workspace';
+
+  const onChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    try {
+      e.preventDefault();
+      setProcessing(true);
+      const value = e.target.value;
+      if (value === 'create-new' || value === 'select-workspace') {
+        router.push('/portal/manage-workspaces');
+        setIsMenuOpen(false);
+        return;
+      }
+      const newWorkspace = workspaces?.find((w) => w.slug === value);
+      if (newWorkspace) {
+        await switchWorkspace(newWorkspace.slug);
+        irminAlert(
+          'success',
+          `${dict.workspaceSwitcher.switchedTo} ${newWorkspace.name}`
+        );
+        setIsMenuOpen(false);
+      }
+    } catch (error) {
+      console.error('Failed to switch workspace: ', error);
+      const errorMessage = (error as Error)?.message ?? '';
+      irminAlert(
+        'error',
+        `${dict.workspaceSwitcher.failedToSwitch}: ` + errorMessage
+      );
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   return (
     <div className='mt-4' id='portal-nav-workspace-switcher'>
-      {currentValue !== 'select-workspace' && !loading && (
-        <p className='-mb-2 px-4 text-xs text-irmin_blue'>
-          {dict.workspaceSwitcher.selectWorkspace}
-        </p>
-      )}
-      <div className='block w-full cursor-pointer rounded-lg border border-gray-400 border-opacity-20 bg-irmin_green bg-opacity-0 text-sm font-light text-irmin_black transition-all hover:bg-opacity-10'>
-        {loading ? (
-          <div id='portal-nav-workspace-switcher-loading-skeleton'>
-            <LoadingSkeleton className='h-4' />
-          </div>
-        ) : (
-          <div className='px-4 py-3'>
-            <select
-              className='w-full cursor-pointer bg-transparent focus:border-0 focus:outline-none focus:ring-0'
-              value={currentValue}
-              disabled={loading}
-              onChange={async (e) => {
-                try {
-                  e.preventDefault();
-                  setProcessing(true);
-                  const value = e.target.value;
-                  if (value === 'create-new' || value === 'select-workspace') {
-                    router.push('/portal/manage-workspaces');
-                    setIsMenuOpen(false);
-                    return;
-                  }
-                  const workspaceID = parseInt(value);
-                  const newWorkspace = workspaces?.find(
-                    (w) => w.id === workspaceID
-                  );
-                  if (newWorkspace) {
-                    await switchWorkspace(newWorkspace.slug);
-                    irminAlert(
-                      'success',
-                      `${dict.workspaceSwitcher.switchedTo} ${newWorkspace.name}`
-                    );
-                    setIsMenuOpen(false);
-                  }
-                } catch (error) {
-                  console.error('Failed to switch workspace: ', error);
-                  const errorMessage = (error as Error)?.message ?? '';
-                  irminAlert(
-                    'error',
-                    `${dict.workspaceSwitcher.failedToSwitch}: ` + errorMessage
-                  );
-                } finally {
-                  setProcessing(false);
-                }
-              }}
-            >
-              <option value={'select-workspace'}>
-                {dict.workspaceSwitcher.selectWorkspace}
-              </option>
-              {workspaces?.map((w, i) => (
-                <option key={`workspace-option-${w.id + i}`} value={w.id}>
-                  {w.name}
-                </option>
-              ))}
-              <option key={'create-new'} value={'create-new'}>
-                {dict.workspaceSwitcher.createNewWorkspace}
-              </option>
-            </select>
-          </div>
-        )}
-      </div>
+      <Select
+        label={dict.workspaceSwitcher.selectWorkspace}
+        onChange={onChange}
+        loading={loading}
+        currentValue={currentValue}
+        defaultValue={'select-workspace'}
+        options={[
+          {
+            value: 'select-workspace',
+            label: dict.workspaceSwitcher.selectWorkspace,
+          },
+          ...(workspaces?.map((w) => ({
+            value: w.slug,
+            label: w.name,
+          })) ?? []),
+          {
+            value: 'create-new',
+            label: dict.workspaceSwitcher.createNewWorkspace,
+          },
+        ]}
+      />
     </div>
   );
 }

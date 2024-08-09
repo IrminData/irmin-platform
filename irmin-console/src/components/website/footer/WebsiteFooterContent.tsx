@@ -79,9 +79,7 @@ export default function WebsiteFooterContent({
                 {dict.website.footer.description}
               </p>
               <div className='w-full max-w-40'>
-                <LanguageSwitcher
-                  className={`my-4 -ml-1 block w-full overflow-hidden text-nowrap rounded-lg border-r-4 border-[#051f2a] bg-[#051f2a] py-2 pl-4 pr-3 text-sm font-light text-irmin_green transition-all focus:outline-none lg:text-sm xl:text-base`}
-                />
+                <LanguageSwitcher variant='on-dark-bg' />
               </div>
             </div>
           </div>

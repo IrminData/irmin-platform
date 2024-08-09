@@ -5,7 +5,6 @@ import { useState } from 'react';
 import Input from '@/components/common/form/Input';
 import DataMarketplaceFilters from '@/components/marketplace/data-marketplace/partials/DataMarketplaceFilters';
 import DataMarketplaceListingCard from '@/components/marketplace/data-marketplace/partials/DataMarketplaceListingCard';
-import PortalTitle from '@/components/portal/PortalTitle';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -241,12 +240,12 @@ export default function DataMarketplaceSection() {
 
   return (
     <>
-      <PortalTitle title={dict.marketplace.dataMarketplace} />
       <div className='p-4 pb-24'>
-        <div className='mb-4'>
+        <h3 className='text-lg'>{dict.marketplace.dataMarketplace}</h3>
+        <div className='mb-4 mt-2'>
           <Input
-            size='md'
-            variant='outline'
+            size='sm'
+            variant='solid'
             colorScheme='gray'
             className='w-full'
             type='text'
@@ -264,9 +263,9 @@ export default function DataMarketplaceSection() {
         </div>
         {filteredListings.filter((d) => d.connected).length > 0 && (
           <div>
-            <h2 className='my-4 text-xl font-semibold'>
+            <h3 className='my-4 text-lg'>
               {dict.marketplace.activeRepositories}
-            </h2>
+            </h3>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
               {filteredListings
                 .filter((d) => d.connected)
@@ -281,7 +280,7 @@ export default function DataMarketplaceSection() {
         )}
         {filteredListings.filter((d) => !d.connected).length > 0 && (
           <div>
-            <h2 className='my-4 text-xl font-semibold'>
+            <h2 className='my-4 text-lg'>
               {dict.marketplace.browseRepositories}
             </h2>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>

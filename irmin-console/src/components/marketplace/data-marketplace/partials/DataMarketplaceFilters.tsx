@@ -25,9 +25,7 @@ const DataMarketplaceFilters = ({
   return (
     <div className='my-8'>
       <div className='mb-4'>
-        <span className='text-lg font-semibold'>
-          {dict.marketplace.industries}
-        </span>
+        <span className='text-lg'>{dict.marketplace.industries}</span>
         <div className='mt-2 flex flex-wrap gap-2'>
           {industries.map((industry, idx) => (
             <Button
@@ -35,11 +33,11 @@ const DataMarketplaceFilters = ({
               onClick={() => onSelectIndustry(industry)}
               ariaLabel={`Toggle ${industry} filter`}
               size='sm'
-              variant={`${selectedIndustry === industry ? 'solid' : 'outline'}`}
+              variant={`outline`}
               colorScheme={`${
                 selectedIndustry === industry ? 'primary' : 'gray'
               }`}
-              className='min-w-16'
+              className={`min-w-16 ${selectedIndustry === industry ? 'bg-gray-100' : 'bg-white'}`}
             >
               {industry}
             </Button>

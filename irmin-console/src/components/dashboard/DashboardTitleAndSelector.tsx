@@ -1,3 +1,5 @@
+import Select from '@/components/common/select/Select';
+
 import { useLocale } from '@/context/LocaleContext';
 
 import { Dashboard } from '@/types/api/Dashboard';
@@ -44,31 +46,22 @@ function DashboardTitleAndSelector({
         <h1>{title}</h1>
       </div>
       <div id='dashboard-selector ml-auto w-max min-w-28 max-w-[50%]'>
-        <p className='z-10 -mb-2 px-2 text-xs text-gray-400'>
-          {dict.dashboard.dashboard}
-        </p>
-        <div className='group rounded border border-gray-200 bg-white px-2 py-2 text-xs leading-tight text-gray-700 shadow-sm transition-all hover:bg-gray-100 md:text-sm'>
-          <select
-            value={selected?.name ?? 'create-new'}
-            onChange={(e) => processSelectionChange(e.target.value)}
-            className='block w-full cursor-pointer transition-all focus:outline-none group-hover:bg-gray-100'
-            onClick={(e) => {
-              if (e.currentTarget.value === 'create-new') {
-                e.preventDefault();
-                createNew();
-              }
-            }}
-          >
-            {options.map((option, index) => (
-              <option key={index} value={option.name}>
-                {option.name}
-              </option>
-            ))}
-            <option value={'create-new'}>
-              {dict.dashboard.createNewDashboard}
-            </option>
-          </select>
-        </div>
+        <Select
+          label={dict.dashboard.dashboard}
+          onChange={(e) => {
+            processSelectionChange(e.target.value);
+          }}
+          loading={false}
+          currentValue={selected?.id.toString() ?? ''}
+          defaultValue={''}
+          options={[
+            { value: 'create-new', label: dict.dashboard.createNewDashboard },
+            ...(options.map((option) => ({
+              value: option.id.toString(),
+              label: option.name,
+            })) ?? []),
+          ]}
+        />
       </div>
     </div>
   );

@@ -2,6 +2,8 @@
 
 import { languages, Locale } from '@/dictionaries';
 
+import Select from '@/components/common/select/Select';
+
 import { useLocale } from '@/context/LocaleContext';
 
 /**
@@ -15,24 +17,24 @@ import { useLocale } from '@/context/LocaleContext';
  * It uses the LocaleContext to switch the language. See {@link useLocale}
  */
 export default function LanguageSwitcher({
-  className,
+  variant = 'default',
 }: {
-  className?: string;
+  variant?: 'default' | 'on-dark-bg';
 }) {
-  const { locale, switchLocale } = useLocale();
+  const { locale, dict, switchLocale } = useLocale();
 
   return (
-    <select
-      value={locale}
+    <Select
+      currentValue={locale as string}
       onChange={(e) => switchLocale(e.target.value as Locale)}
-      className={className}
-      aria-label='Select language'
-    >
-      {languages.map((lang) => (
-        <option key={lang.code} value={lang.code}>
-          {lang.name}
-        </option>
-      ))}
-    </select>
+      options={languages.map((lang) => ({
+        value: lang.code,
+        label: lang.name,
+      }))}
+      loading={false}
+      label={dict.misc.selectLanguage}
+      defaultValue=''
+      variant={variant}
+    />
   );
 }

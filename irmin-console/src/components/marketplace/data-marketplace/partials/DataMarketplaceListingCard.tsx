@@ -39,9 +39,14 @@ export default function DataMarketplaceListingCard({
       <div className='mb-2 flex items-center justify-between'>
         <span className='font-medium text-gray-800'>{repository.name}</span>
         {repository.connected ? (
-          <span className='text-irmin_green'>
-            <TbCheck className='text-2xl' />
-          </span>
+          <div className='flex flex-row items-center'>
+            <span className='rounded px-2 text-xs text-gray-400'>
+              {dict.marketplace.connected}
+            </span>
+            <span className='text-gray-400'>
+              <TbCheck className='text-xl' />
+            </span>
+          </div>
         ) : null}
       </div>
       <div className='mb-4 text-sm text-gray-600'>
@@ -54,24 +59,34 @@ export default function DataMarketplaceListingCard({
         <div>
           <Button
             variant='link'
-            colorScheme='primary'
+            colorScheme='secondary'
             size='sm'
-            className='mr-4'
+            className='mr-2'
             onClick={() => setShowDetails(true)}
             ariaLabel={`View details of ${repository.name}`}
           >
             {dict.marketplace.details}
           </Button>
           {repository.connected ? (
-            <span className='inline-block rounded bg-irmin_green px-2 py-1 text-xs font-semibold text-white'>
-              {dict.marketplace.connected}
-            </span>
+            <Button
+              variant='solid'
+              colorScheme='primary'
+              size='sm'
+              ariaLabel={`View ${repository.name}`}
+              className='w-32'
+              onClick={() => {
+                // TODO: Implement view connected repository
+              }}
+            >
+              {dict.marketplace.view}
+            </Button>
           ) : (
             <Button
               variant='solid'
               colorScheme='primary'
               size='sm'
               ariaLabel={`Connect to ${repository.name}`}
+              className='w-32'
               onClick={() => {
                 // TODO: Implement connect to repository
               }}

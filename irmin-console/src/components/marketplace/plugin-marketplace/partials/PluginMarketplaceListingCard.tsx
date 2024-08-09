@@ -29,39 +29,56 @@ const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
       <div className='mb-2 flex items-center justify-between'>
         <span className='font-medium text-gray-800'>{plugin.name}</span>
         {plugin.connected ? (
-          <span className='text-irmin_green'>
-            <TbCheck className='text-2xl' />
-          </span>
+          <div className='flex flex-row items-center'>
+            <span className='rounded px-2 text-xs text-gray-400'>
+              {dict.marketplace.connected}
+            </span>
+            <span className='text-gray-400'>
+              <TbCheck className='text-xl' />
+            </span>
+          </div>
         ) : null}
       </div>
       <div className='mb-4 text-sm text-gray-600'>
         {dict.marketplace.provider}: {plugin.provider}
       </div>
       <div className='flex items-center justify-between'>
-        <span className={`font-lighter text-gray-600`}>{plugin.price} €</span>
+        <span className={`font-lighter text-gray-600`}>
+          {plugin.price} € / month
+        </span>
         <div>
           <Button
             variant='link'
-            colorScheme='primary'
+            colorScheme='secondary'
             size='sm'
-            className='mr-4'
+            className='mr-2'
             onClick={() => setShowDetails(true)}
             ariaLabel={`View details of ${plugin.name}`}
           >
             {dict.marketplace.details}
           </Button>
           {plugin.connected ? (
-            <span className='inline-block rounded bg-irmin_green px-2 py-1 text-xs font-semibold text-white'>
-              {dict.marketplace.connected}
-            </span>
+            <Button
+              variant='solid'
+              colorScheme='primary'
+              size='sm'
+              ariaLabel={`View ${plugin.name}`}
+              className='w-32'
+              onClick={() => {
+                // TODO: Implement view connected plugin
+              }}
+            >
+              {dict.marketplace.view}
+            </Button>
           ) : (
             <Button
               variant='solid'
               colorScheme='primary'
               size='sm'
               ariaLabel={`Connect to ${plugin.name}`}
+              className='w-32'
               onClick={() => {
-                // TODO: Connect to the plugin
+                // TODO: Implement connect plugin
               }}
             >
               {dict.marketplace.connect}
@@ -98,7 +115,7 @@ const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
               </div>
               <div className='flex justify-between'>
                 <span className='font-medium'>{dict.marketplace.price}:</span>
-                <span>{plugin.price} €</span>
+                <span>{plugin.price} € / month</span>
               </div>
               <div className='flex justify-between'>
                 <span className='font-medium'>

@@ -5,7 +5,6 @@ import { useState } from 'react';
 import Input from '@/components/common/form/Input';
 import PluginMarketplaceFilters from '@/components/marketplace/plugin-marketplace/partials/PluginMarketplaceFilters';
 import PluginMarketplaceListingCard from '@/components/marketplace/plugin-marketplace/partials/PluginMarketplaceListingCard';
-import PortalTitle from '@/components/portal/PortalTitle';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -112,11 +111,11 @@ export default function PluginMarketplaceSection() {
 
   return (
     <>
-      <PortalTitle title={dict.marketplace.pluginMarketplace} />
       <div className='p-4 pb-24'>
-        <div className='mb-4'>
+        <h2 className='text-lg'>{dict.marketplace.pluginMarketplace}</h2>
+        <div className='mb-4 mt-2'>
           <Input
-            size='md'
+            size='sm'
             variant='outline'
             colorScheme='gray'
             className='w-full'
@@ -135,9 +134,7 @@ export default function PluginMarketplaceSection() {
         </div>
         {filteredListings.filter((p) => p.connected).length > 0 && (
           <div>
-            <h2 className='my-4 text-xl font-semibold'>
-              {dict.marketplace.activePlugins}
-            </h2>
+            <h3 className='my-4 text-lg'>{dict.marketplace.activePlugins}</h3>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
               {filteredListings
                 .filter((p) => p.connected)
@@ -152,9 +149,7 @@ export default function PluginMarketplaceSection() {
         )}
         {filteredListings.filter((p) => !p.connected).length > 0 && (
           <div>
-            <h2 className='my-4 text-xl font-semibold'>
-              {dict.marketplace.browsePlugins}
-            </h2>
+            <h3 className='my-4 text-lg'>{dict.marketplace.browsePlugins}</h3>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
               {filteredListings
                 .filter((p) => !p.connected)

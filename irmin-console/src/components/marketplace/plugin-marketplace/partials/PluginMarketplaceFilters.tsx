@@ -23,9 +23,7 @@ const PluginMarketplaceFilters: React.FC<{
   return (
     <div className='my-8'>
       <div className='mb-4'>
-        <span className='text-lg font-semibold'>
-          {dict.marketplace.categories}
-        </span>
+        <span className='text-lg'>{dict.marketplace.categories}</span>
         <div className='mt-2 flex flex-wrap gap-2'>
           {categories.map((category, idx) => (
             <Button
@@ -33,11 +31,11 @@ const PluginMarketplaceFilters: React.FC<{
               onClick={() => onSelectCategory(category)}
               ariaLabel={`Toggle ${category} filter`}
               size='sm'
-              variant={`${selectedCategory === category ? 'solid' : 'outline'}`}
+              variant={`outline`}
               colorScheme={`${
                 selectedCategory === category ? 'primary' : 'gray'
               }`}
-              className='min-w-16'
+              className={`min-w-16 ${selectedCategory === category ? 'bg-gray-100' : 'bg-white'}`}
             >
               {category}
             </Button>

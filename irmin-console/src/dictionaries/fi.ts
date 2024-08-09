@@ -59,6 +59,7 @@ const fi = {
     },
   },
   misc: {
+    selectLanguage: 'Valitse kieli',
     loading: 'Ladataan...',
     cancel: 'Peruuta',
     confirm: 'Vahvista',
@@ -281,6 +282,7 @@ const fi = {
     all: 'Kaikki',
     industries: 'Toimialat',
     categories: 'Kategoriat',
+    marketplaceHome: 'Markkinapaikka',
     dataMarketplace: 'Tietomarkkinapaikka',
     pluginMarketplace: 'Liitännäiset ja laajennukset',
     searchRepositories:
@@ -295,6 +297,7 @@ const fi = {
     source: 'Lähde',
     details: 'Lisätiedot',
     connect: 'Yhdistä',
+    view: 'Katso',
     connected: 'Yhdistetty',
     price: 'Hinta',
     industry: 'Toimiala',

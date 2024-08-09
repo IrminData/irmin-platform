@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
-import SettingsTabs from '@/components/common/tabs/SettingsTabs';
+import WrappedTabs from '@/components/common/tabs/WrappedTabs';
 import PortalTitle from '@/components/portal/PortalTitle';
 import UsersAndInvites from '@/components/workspace/UsersAndInvites';
 
@@ -28,7 +28,7 @@ export default function WorkspaceSettingsPage() {
   return (
     <>
       <PortalTitle title={dict.workspace.workspaceSettings} />
-      <SettingsTabs
+      <WrappedTabs
         tabs={[
           {
             slug: 'general',

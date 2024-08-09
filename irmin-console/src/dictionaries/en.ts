@@ -59,6 +59,7 @@ const en = {
     },
   },
   misc: {
+    selectLanguage: 'Select language',
     loading: 'Loading...',
     cancel: 'Cancel',
     confirm: 'Confirm',
@@ -284,7 +285,8 @@ const en = {
     all: 'All',
     industries: 'Industries',
     categories: 'Categories',
-    dataMarketplace: 'Data Marketplace',
+    marketplaceHome: 'Marketplace',
+    dataMarketplace: 'Data Repositories',
     pluginMarketplace: 'Plugins & Extensions',
     searchRepositories:
       'Search for public Repositories you would like to connect and use',
@@ -298,6 +300,7 @@ const en = {
     source: 'Source',
     details: 'Details',
     connect: 'Connect',
+    view: 'View',
     connected: 'Connected',
     price: 'Price',
     industry: 'Industry',

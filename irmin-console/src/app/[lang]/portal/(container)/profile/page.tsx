@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
-import SettingsTabs from '@/components/common/tabs/SettingsTabs';
+import WrappedTabs from '@/components/common/tabs/WrappedTabs';
 import PortalTitle from '@/components/portal/PortalTitle';
 
 import { useIAM } from '@/context/IAMContext';
@@ -19,7 +19,7 @@ export default function UserProfileSettingsPage() {
   return (
     <>
       <PortalTitle title={dict.profile.profileSettings} />
-      <SettingsTabs
+      <WrappedTabs
         tabs={[
           {
             slug: 'general',
@@ -72,14 +72,15 @@ const GeneralSettings: React.FC = () => {
 
   return (
     <div className='px-4'>
-      <h2 className='mb-4 text-xl font-normal md:text-2xl'>
-        {dict.profile.generalSettings}
-      </h2>
-      <div className='my-4 w-full max-w-40 rounded-lg border border-gray-400 shadow'>
-        <LanguageSwitcher
-          className={`block w-full overflow-hidden text-nowrap rounded-lg border-r-4 border-white bg-white py-2 pl-4 pr-3 text-sm font-light text-irmin_black transition-all focus:outline-none lg:text-sm xl:text-base`}
-        />
+      <div className='flex w-full flex-wrap items-center justify-between gap-2'>
+        <h2 className='mb-4 text-xl font-normal md:text-2xl'>
+          {dict.profile.generalSettings}
+        </h2>
+        <div className='my-4 max-w-40'>
+          <LanguageSwitcher />
+        </div>
       </div>
+
       <form onSubmit={handleSaveChanges} className='pb-8 text-sm md:text-base'>
         <div className='mb-4'>
           <label className='block text-xs text-gray-700 md:text-sm'>
