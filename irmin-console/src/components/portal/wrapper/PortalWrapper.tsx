@@ -229,7 +229,7 @@ export default function PortalWrapper({
           {/* Top menu bar */}
           <div
             id='portal-top-bar'
-            className={`z-10 w-full bg-white shadow-md md:pl-2 ${isMenuOpen ? 'pl-0' : 'pl-12 md:pl-0'}`}
+            className={`z-10 w-full border-b border-irmin_green bg-white md:pl-2 ${isMenuOpen ? 'pl-0' : 'pl-12 md:pl-0'}`}
           >
             <div className='group flex h-14 w-full items-center px-2 py-1'>
               {!hideLogoOnPortalHome && (
@@ -268,7 +268,7 @@ export default function PortalWrapper({
           {/* Portal content */}
           <div
             id='portal-content'
-            className={`relative flex-grow bg-white bg-center`}
+            className={`relative flex-grow overflow-y-scroll bg-white bg-center`}
             style={{
               backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
             }}

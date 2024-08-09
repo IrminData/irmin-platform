@@ -165,6 +165,7 @@ const en = {
       irminWebsite: 'Irmin Website',
       privacyPolicy: 'Privacy Policy',
       termsOfUse: 'Terms of Use',
+      termsAndPrivacy: 'Terms & Privacy',
     },
   },
   workspaceSwitcher: {

@@ -165,6 +165,7 @@ const fi = {
       irminWebsite: 'Irmin -verkkosivusto',
       privacyPolicy: 'Tietosuojakäytäntö',
       termsOfUse: 'Käyttöehdot',
+      termsAndPrivacy: 'Käyttöehdot ja tietosuoja',
     },
   },
   workspaceSwitcher: {

@@ -165,7 +165,7 @@ const usePortalNavigationLinks = (): {
       active: false,
     },
     {
-      title: dict.portalNavigation.links.privacyPolicy,
+      title: dict.portalNavigation.links.termsAndPrivacy,
       href: `/${locale}/legal`,
       icon: <MdOutlinePrivacyTip />,
       props: {
