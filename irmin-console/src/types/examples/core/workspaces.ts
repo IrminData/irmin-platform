@@ -2,6 +2,8 @@ import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
 import { Workspace } from '@/types/api/Workspace';
 
+import { workspaceUsers } from './users';
+
 /**
  * Get example workspaces
  *
@@ -15,6 +17,7 @@ export const workspaces: () => Workspace[] = () => [
     description:
       'Main workspace for Example company. Financials, HR, other admin stuff',
     owner_id: 0,
+    users: workspaceUsers(true),
     created_at: getRandomDateTimeString(800, 'past', 500),
     updated_at: getRandomDateTimeString(400, 'past', 100),
   },
@@ -24,6 +27,7 @@ export const workspaces: () => Workspace[] = () => [
     slug: 'example-finland',
     description: 'The Finnish branch of Example company. Sales and marketing',
     owner_id: 0,
+    users: workspaceUsers(true),
     created_at: getRandomDateTimeString(800, 'past', 500),
     updated_at: getRandomDateTimeString(400, 'past', 100),
   },
@@ -33,6 +37,7 @@ export const workspaces: () => Workspace[] = () => [
     slug: 'example-sweden',
     description: 'The Swedish branch of Example company. Sales and marketing',
     owner_id: 0,
+    users: workspaceUsers(true),
     created_at: getRandomDateTimeString(800, 'past', 500),
     updated_at: getRandomDateTimeString(400, 'past', 100),
   },
@@ -42,6 +47,7 @@ export const workspaces: () => Workspace[] = () => [
     slug: 'example-norway',
     description: 'The Norwegian branch of Example company. Sales and marketing',
     owner_id: 0,
+    users: workspaceUsers(true),
     created_at: getRandomDateTimeString(800, 'past', 500),
     updated_at: getRandomDateTimeString(400, 'past', 100),
   },
@@ -52,6 +58,7 @@ export const workspaces: () => Workspace[] = () => [
     description:
       'Workspace for the Example App. Usage data, user data, and other app-related data',
     owner_id: 0,
+    users: workspaceUsers(true),
     created_at: getRandomDateTimeString(800, 'past', 500),
     updated_at: getRandomDateTimeString(400, 'past', 100),
   },

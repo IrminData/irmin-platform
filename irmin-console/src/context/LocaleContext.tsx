@@ -61,8 +61,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const switchLocale = (newLocale: Locale) => {
     setLocale(newLocale);
     setCookie('locale', newLocale, 365);
-    // Remove the current workspace from the local storage and state
-    localStorage.removeItem('currentWorkspaceSlug');
+    setCookie('currentWorkspaceSlug', '', -1);
     // Redirect to the new locale
     window.open(`/${newLocale}${pathname.substring(3)}`, '_self');
   };

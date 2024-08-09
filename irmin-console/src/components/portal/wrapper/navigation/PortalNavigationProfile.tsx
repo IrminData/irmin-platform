@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import ProfileImagePlaceholder from '@/components/common/ProfileImagePlaceholder';
 import NotificationButton from '@/components/portal/wrapper/notifications/NotificationButton';
 
 import { useIAM } from '@/context/IAMContext';
@@ -42,20 +43,24 @@ export default function PortalNavigationProfile({
       }}
     >
       <div className='flex w-auto items-center p-1'>
-        <Image
-          src='/ui-assets/elements/avatar.webp'
-          alt={profile.name ?? ''}
-          width={40}
-          height={40}
-          className='h-8 w-8 rounded-full'
-        />
+        {profile.profile_picture ? (
+          <Image
+            src={profile.profile_picture}
+            alt={profile.name ?? ''}
+            width={50}
+            height={50}
+            className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
+          />
+        ) : (
+          <ProfileImagePlaceholder
+            user={profile}
+            className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
+          />
+        )}
       </div>
       <div className='w-auto overflow-hidden p-1'>
-        <h2 className='text-sm font-normal text-irmin_black'>
+        <p className='text-sm font-normal text-irmin_black'>
           {profile.name ?? ''}
-        </h2>
-        <p className='m-0 text-xs font-light text-irmin_blue'>
-          {profile.email ?? ''}
         </p>
       </div>
       <div className='ml-auto'>

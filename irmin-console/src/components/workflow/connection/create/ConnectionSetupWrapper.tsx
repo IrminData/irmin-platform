@@ -71,16 +71,11 @@ const ConnectionSetupWrapper = ({
   useEffect(() => {
     (async () => {
       try {
-        const savedConnectors = await connectorService.getAllConnectors();
-        if (savedConnectors && savedConnectors.length > 0) {
-          setConnectors(savedConnectors);
-        } else {
-          const response = await connectorService.fetchAllConnectors();
-          if (!response || response.data.length === 0) {
-            irminAlert('error', 'Failed to fetch connectors');
-          }
-          setConnectors(response.data);
+        const response = await connectorService.fetchAllConnectors();
+        if (!response || response.data.length === 0) {
+          irminAlert('error', 'Failed to fetch connectors');
         }
+        setConnectors(response.data);
       } catch (error) {
         console.error('Fetch connectors error:', error);
         irminAlert('error', 'Failed to fetch connectors');

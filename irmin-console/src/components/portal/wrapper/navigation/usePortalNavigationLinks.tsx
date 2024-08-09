@@ -13,11 +13,9 @@ import {
   TbChevronLeft,
   TbDashboard,
   TbDatabase,
-  TbDatabaseExport,
-  TbDatabaseImport,
   TbFile,
   TbLogout,
-  TbPlayerPlay,
+  TbRun,
   TbSettings,
   TbUser,
 } from 'react-icons/tb';
@@ -76,19 +74,9 @@ const usePortalNavigationLinks = (): {
       icon: <TbFile />,
     },
     {
-      title: dict.portalNavigation.links.actions,
-      href: `/${locale}/portal/${workspaceSlug}/workflows/actions`,
-      icon: <TbPlayerPlay />,
-    },
-    {
-      title: dict.portalNavigation.links.connections,
-      href: `/${locale}/portal/${workspaceSlug}/workflows/connections`,
-      icon: <TbDatabaseImport />,
-    },
-    {
-      title: dict.portalNavigation.links.exportWorkflows,
-      href: `/${locale}/portal/${workspaceSlug}/workflows/exports`,
-      icon: <TbDatabaseExport />,
+      title: dict.portalNavigation.links.workflows,
+      href: `/${locale}/portal/${workspaceSlug}/workflows`,
+      icon: <TbRun />,
     },
     {
       title: dict.portalNavigation.links.workspaceSettings,

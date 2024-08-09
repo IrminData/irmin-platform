@@ -8,6 +8,9 @@ import { IrminRole } from '@/types/api/IrminRole';
  * @typeParam slug - Workspace slug
  * @typeParam owner_id - Workspace owner ID
  * @typeParam description - Workspace description to be displayed (optional)
+ * @typeParam users - Array of WorkspaceUser objects in the workspace
+ * @typeParam created_at - Timestamp of workspace creation
+ * @typeParam updated_at - Timestamp of workspace update
  */
 export interface Workspace {
   id: number;
@@ -15,6 +18,7 @@ export interface Workspace {
   slug: string;
   owner_id: number;
   description?: string | null;
+  users?: WorkspaceUser[] | null;
   created_at: string;
   updated_at: string;
 }

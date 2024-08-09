@@ -98,7 +98,7 @@ const Button = ({
     },
     gradient: {
       primary:
-        'bg-gradient-to-r from-irmin_green to-irmin_green-400 text-white shadow',
+        'bg-gradient-to-r from-irmin_green-600 to-irmin_green-400 text-white shadow',
       secondary:
         'bg-gradient-to-r from-irmin_blue to-irmin_blue-400 text-white shadow',
       tertiary:
@@ -147,7 +147,7 @@ const Button = ({
     lg: 'pr-3',
   };
 
-  let combinedClasses = `${baseClasses} ${sizeClasses[size]} ${icon ? 'min-w-32 ' : ''}${disabled ? 'opacity-50 cursor-not-allowed ' : ''} ${className}`;
+  let combinedClasses = `${baseClasses} ${sizeClasses[size]} ${disabled ? 'opacity-50 cursor-not-allowed ' : ''} ${className}`;
   if (variant) {
     if (colorScheme) {
       combinedClasses = `${variantClasses[variant][colorScheme]} ${combinedClasses}`;

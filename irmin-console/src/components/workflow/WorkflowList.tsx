@@ -7,43 +7,44 @@ import StatusBadge from '@/components/common/status/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { ConnectionWorkflow } from '@/types/api/Workflow';
+import { Workflow } from '@/types/api/Workflow';
 import { GridRow } from '@/types/internal/ListProps';
 
 /**
- * Table UI to display a list of Connection Workflows
+ * Table UI to display a list of Workflows of all types
  *
  * Uses {@link CardOrNormalList} and {@link StatusBadge}
  */
-const ConnectionWorkflowList = ({
+const WorkflowList = ({
   loading,
-  connectionWorkflows: items,
+  workflows: items,
 }: {
   loading: boolean;
-  connectionWorkflows: ConnectionWorkflow[];
+  workflows: Workflow[];
 }) => {
   const { dict, locale } = useLocale();
   const { workspace } = useParams();
 
   if (!loading && (!items || items.length === 0)) {
     return (
-      <div className='px-4 py-12 text-center text-sm text-irmin_black'>
-        {dict.list.noConnectionsFound}
+      <div className='px-4 py-12 text-center text-xl text-irmin_black'>
+        {dict.list.noWorkflowsFound}
       </div>
     );
   }
 
   const rows: GridRow[] = items.map((item, i) => {
-    const actions = [
+    const type = `${item.workflowable_type}s`;
+    const tableActions = [
       {
         label: dict.list.view,
         primary: true,
-        href: `/portal/${workspace}/workflows/connections/${item.id}`,
+        href: `/portal/${workspace}/workflows/${type}/${item.id}`,
       },
       {
         label: dict.list.edit,
         primary: false,
-        href: `/portal/${workspace}/workflows/connections/${item.id}/settings`,
+        href: `/portal/${workspace}/workflows/${type}/${item.id}/settings`,
       },
       {
         label: dict.list.logs,
@@ -51,7 +52,6 @@ const ConnectionWorkflowList = ({
         href: `/portal/${workspace}/logs/workflow/${item.id}`,
       },
     ];
-
     return {
       columns: [
         <div
@@ -61,7 +61,12 @@ const ConnectionWorkflowList = ({
           <span className='text-xs text-gray-400'>
             {dict.list.owner}: {item.owner.name}
           </span>
-          <p className='text-base text-irmin_black'>{item.name}</p>
+          <p className='text-base text-irmin_black'>
+            {item.name}
+            <span className='ml-2 bg-irmin_light_green px-1 text-xs leading-3 text-irmin_blue'>
+              {item.workflowable_type}
+            </span>
+          </p>
           {item.description && item.description.length > 0 && (
             <p className='max-w-72 text-xs text-gray-400'>
               {item.description.substring(0, 120).trim()}
@@ -99,7 +104,7 @@ const ConnectionWorkflowList = ({
           />
         </div>,
       ],
-      actions,
+      actions: tableActions,
     };
   });
 
@@ -119,4 +124,4 @@ const ConnectionWorkflowList = ({
   );
 };
 
-export default ConnectionWorkflowList;
+export default WorkflowList;

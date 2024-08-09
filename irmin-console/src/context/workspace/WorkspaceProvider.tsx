@@ -17,6 +17,8 @@ import useUsersAndRoles from '@/context/workspace/provider/useUsersAndRoles';
 import useWorkflows from '@/context/workspace/provider/useWorkflows';
 import useWorkspaces from '@/context/workspace/provider/useWorkspaces';
 
+import { getCookie, setCookie } from '@/utils/cookie';
+
 /**
  * Provider for the workspace context to handle workspace data.
  *
@@ -219,7 +221,7 @@ export const WorkspaceProvider = ({
    *
    * This useEffect runs only once when the component is mounted.
    * Fetches roles, as they are not workspace specific.
-   * Attempts to switch to the workspace to that is found in the query params or in localStorage.
+   * Attempts to switch to the workspace to that is found in the query params or in cookies.
    */
   useEffect(() => {
     (async () => {
@@ -239,12 +241,10 @@ export const WorkspaceProvider = ({
           await switchWorkspace(params.workspace as string);
         } else {
           // Attempt to switch to the workspace stored in localStorage
-          const currentWorkspaceSlug = localStorage.getItem(
-            'currentWorkspaceSlug'
-          );
+          const currentWorkspaceSlug = getCookie('currentWorkspaceSlug');
           if (currentWorkspaceSlug && currentWorkspaceSlug.length > 0) {
             // Remove the workspace slug from localStorage
-            localStorage.removeItem('currentWorkspaceSlug');
+            setCookie('currentWorkspaceSlug', '', -1);
             // Switch to the cached workspace
             await switchWorkspace(currentWorkspaceSlug);
           } else {
@@ -258,7 +258,7 @@ export const WorkspaceProvider = ({
         await switchWorkspace(null);
       }
     })();
-  }, [fetchWorkspaces, fetchRoles, switchWorkspace, params]);
+  }, [fetchRoles, switchWorkspace, params]);
 
   return (
     <WorkspaceContext.Provider

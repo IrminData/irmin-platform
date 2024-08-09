@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 
-import NormalListSkeleton from '@/components/common/list/NormalList/Skeleton';
 import SideModal from '@/components/common/popup/SideModal';
 import PortalTitle from '@/components/portal/PortalTitle';
 import ConnectionWorkflowList from '@/components/workflow/connection/ConnectionWorkflowList';
@@ -34,7 +33,7 @@ export default function ConnectionsPage() {
 
   return (
     <>
-      <PortalTitle title={dict.workflow.connection.connections} />
+      <PortalTitle title={dict.portalNavigation.links.connections} />
       <SideModal
         isOpen={isOpen}
         setIsOpen={setIsOpen}
@@ -54,11 +53,10 @@ export default function ConnectionsPage() {
           setCurrentStep={setCurrentStep}
         />
       </SideModal>
-      {loading ? (
-        <NormalListSkeleton />
-      ) : (
-        <ConnectionWorkflowList connectionWorkflows={connections.connections} />
-      )}
+      <ConnectionWorkflowList
+        loading={loading}
+        connectionWorkflows={connections.connections}
+      />
     </>
   );
 }

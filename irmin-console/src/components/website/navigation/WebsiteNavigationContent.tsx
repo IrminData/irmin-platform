@@ -10,6 +10,7 @@ import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { IoEnterOutline } from 'react-icons/io5';
 
 import Button from '@/components/common/button/Button';
+import ProfileImagePlaceholder from '@/components/common/ProfileImagePlaceholder';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -204,16 +205,23 @@ export default function WebsiteNavigationContent({
                         href='/portal/profile'
                         className='flex max-w-44 flex-row items-center gap-2 overflow-hidden pr-4 transition-all hover:opacity-40 lg:max-w-56'
                       >
-                        <Image
-                          src='/ui-assets/elements/avatar.webp'
-                          alt={profile.name ?? ''}
-                          width={50}
-                          height={50}
-                          className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
-                        />
-                        <h2 className='text-xs font-normal text-irmin_black lg:text-sm'>
+                        {profile.profile_picture ? (
+                          <Image
+                            src={profile.profile_picture}
+                            alt={profile.name ?? ''}
+                            width={50}
+                            height={50}
+                            className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
+                          />
+                        ) : (
+                          <ProfileImagePlaceholder
+                            user={profile}
+                            className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
+                          />
+                        )}
+                        <p className='text-xs font-normal text-irmin_black lg:text-sm'>
                           {profile.name ?? ''}
-                        </h2>
+                        </p>
                       </Link>
                       <Button
                         size='sm'
@@ -337,16 +345,23 @@ export default function WebsiteNavigationContent({
                     href='/portal/profile'
                     className='mt-6 flex w-full flex-row items-center justify-center gap-2 overflow-hidden transition-all hover:opacity-40'
                   >
-                    <Image
-                      src='/ui-assets/elements/avatar.webp'
-                      alt={profile.name ?? ''}
-                      width={50}
-                      height={50}
-                      className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
-                    />
-                    <h2 className='text-xs font-normal text-irmin_black lg:text-sm'>
+                    {profile.profile_picture ? (
+                      <Image
+                        src={profile.profile_picture}
+                        alt={profile.name ?? ''}
+                        width={50}
+                        height={50}
+                        className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
+                      />
+                    ) : (
+                      <ProfileImagePlaceholder
+                        user={profile}
+                        className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
+                      />
+                    )}
+                    <p className='text-xs font-normal text-irmin_black lg:text-sm'>
                       {profile.name ?? ''}
-                    </h2>
+                    </p>
                   </Link>
                 )}
               </div>

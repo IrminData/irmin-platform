@@ -17,7 +17,7 @@ export default function StatusBadge({
   runStatus?: WorkflowStatus;
   statusLabel: string;
 }) {
-  const baseStyles = `flex h-full max-h-8 max-w-24 items-center justify-center rounded-full shadow-sm px-2 py-1 text-center text-white text-sm lg:w-32 lg:max-w-max`;
+  const baseStyles = `flex h-full max-h-8 w-24 items-center justify-center rounded-full shadow-sm px-2 py-1 text-center text-white text-sm`;
   if (accessStatus) {
     switch (accessStatus) {
       case 'private':

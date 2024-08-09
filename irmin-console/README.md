@@ -325,11 +325,14 @@ When creating a new context, ensure it follows the same structure as the existin
 
 [IAMContext](src/context/IAMContext.tsx)
 
-IAMContext is used to manage the user profile state across the application. It provides the user profile data, function to refetch and update the user profile data. It also provides functions to login, register and logout the user.
+IAMContext is used to manage the user profile state across the application. It provides the user profile data, function to refetch and update the user profile data. It also provides functions to login, register and logout the user. 
+
+Profile information, except for token will be stored in cookies as well, to simplify some server side rendering and avoid making every component with profile info client side rendered. 
 
 IAMContext also fetches and stores the users API token. This token and the profile data are valid for NEXT_PUBLIC_TOKEN_MAX_AGE seconds. If the token is expired, the application will automatically refetch the token and profile data. If no profile data is available, the application will automatically log the user out.
 
 Irmin API normally sets a cookie on the API domain when the user logs in. This cookie is used to authenticate the user on the API.
+
 The User's token fetched and stored, to make requests to the API on the server side, since the cookie is not available on the server side.
 
 IAMProvider is wrapping the root layout of the application.
@@ -373,7 +376,7 @@ See [Bucket API Service](src/services/core/resources/BucketService.ts) and [the 
 
 This context is responsible for managing the workspace state and data across the application.
 
-Attempts to set the current workspace on initial load. Attempts to switch to the workspace to that is found in the query params or in localStorage.
+Attempts to set the current workspace on initial load. Attempts to switch to the workspace to what is found in the query params or in the cookies.
 
 It uses the [Workspace Proxy Service](src/services/proxies/workspace.ts) to fetch the initial workspace data for the current workspace. The workspace data is stored in the context and can be accessed by the components that are wrapped in the WorkspaceProvider.
 

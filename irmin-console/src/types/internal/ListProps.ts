@@ -23,10 +23,11 @@ export type GridRow = {
   details?: JSX.Element;
 };
 /**
- * Props for the NormalList UI component that displays a table list
+ * Props for the NormalList and CardList UI components
  * @example used for displaying a list of connections, actions, exports, repositories, etc.
  */
-export type NormalListProps = {
+export type ListProps = {
+  loading?: boolean;
   rows: GridRow[];
   headers: string[];
   hideHeaders?: boolean;

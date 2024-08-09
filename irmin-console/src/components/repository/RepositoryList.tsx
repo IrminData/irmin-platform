@@ -2,24 +2,30 @@
 
 import { useParams } from 'next/navigation';
 
-import NormalList from '@/components/common/list/NormalList';
+import CardOrNormalList from '@/components/common/list/CardOrNormalList';
 import StatusBadge from '@/components/common/status/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import { Repository } from '@/types/api/Repository';
-import { GridRow } from '@/types/internal/NormalListProps';
+import { GridRow } from '@/types/internal/ListProps';
 
 /**
  * Table UI to display a list of repositories
  *
- * Uses {@link NormalList} and {@link StatusBadge} to display a list of repositories
+ * Uses {@link CardOrNormalList} and {@link StatusBadge} to display a list of repositories
  */
-const RepositoryList = ({ repositories }: { repositories: Repository[] }) => {
+const RepositoryList = ({
+  loading,
+  repositories: items,
+}: {
+  loading: boolean;
+  repositories: Repository[];
+}) => {
   const { dict } = useLocale();
   const { workspace } = useParams();
 
-  if (!repositories || repositories.length === 0) {
+  if (!loading && (!items || items.length === 0)) {
     return (
       <div className='px-4 py-12 text-center text-xl text-irmin_black'>
         {dict.list.noRepositoriesFound}
@@ -27,41 +33,61 @@ const RepositoryList = ({ repositories }: { repositories: Repository[] }) => {
     );
   }
 
-  const rows: GridRow[] = repositories.map((repo, repoIndex) => {
+  const rows: GridRow[] = items.map((item, i) => {
     const actions = [
       {
         label: dict.list.view,
         primary: true,
-        href: `/portal/${workspace}/repositories/${repo.slug}`,
+        href: `/portal/${workspace}/repositories/${item.slug}`,
       },
       {
         label: dict.list.edit,
         primary: false,
-        href: `/portal/${workspace}/repositories/${repo.slug}/settings`,
+        href: `/portal/${workspace}/repositories/${item.slug}/settings`,
       },
     ];
 
     return {
       columns: [
-        <div key={`repo-${repoIndex}-name-source`}>
-          {repo.name}
-          <br />
-          <span className='text-xs text-irmin_blue'>
-            {dict.list.source}: {repo.workflow ? repo.workflow.name : '-'}
+        <div
+          key={`item-${i}-name-description-owner`}
+          className='inline-flex flex-col gap-1'
+        >
+          <span className='text-xs text-gray-400'>
+            {dict.list.owner}: {item.owner.name}
           </span>
+          <p className='text-base text-irmin_black'>
+            {item.name}
+            {item.workflow ? (
+              <span className='ml-2 bg-irmin_light_green px-1 text-xs leading-3 text-irmin_blue'>
+                {dict.list.managedByWorkflow}
+              </span>
+            ) : item.is_immutable ? (
+              <span className='ml-2 bg-irmin_light_green px-1 text-xs leading-3 text-irmin_blue'>
+                {dict.list.immutable}
+              </span>
+            ) : (
+              <></>
+            )}
+          </p>
+          {item.description && item.description.length > 0 && (
+            <p className='max-w-72 text-xs text-gray-400'>
+              {item.description.substring(0, 120).trim()}
+            </p>
+          )}
         </div>,
         <StatusBadge
-          key={`repo-${repoIndex}-status`}
+          key={`item-${i}-status`}
           accessStatus={'private'}
           statusLabel={'Private'}
         />,
       ],
       details: (
         <ul>
-          {repo.tables.map((table, index) => (
+          {item.tables.map((table, index) => (
             <li
-              key={`repo-${repo.id}-${repoIndex}-tables-${index}`}
-              className='border-color-irmin_green border-b py-2 text-xs md:text-sm xl:text-base'
+              key={`item-${item.id}-${i}-tables-${index}`}
+              className='border-b border-gray-100 py-2 text-xs'
             >
               {table}
             </li>
@@ -74,7 +100,8 @@ const RepositoryList = ({ repositories }: { repositories: Repository[] }) => {
 
   return (
     <div className='pb-28'>
-      <NormalList
+      <CardOrNormalList
+        loading={loading}
         headers={[dict.list.name, dict.list.status, dict.list.actions]}
         rows={rows}
         hideHeaders={false}

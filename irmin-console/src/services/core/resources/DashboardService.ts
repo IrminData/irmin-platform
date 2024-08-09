@@ -30,8 +30,6 @@ interface DashboardsAPIResponse extends IrminAPIResponse {
  * Responsible for all dashboard related API calls.
  */
 class DashboardService {
-  private dashboards: Dashboard[] = [];
-
   private irminCore: IrminCore;
 
   constructor(irminCore: IrminCore) {
@@ -53,7 +51,6 @@ class DashboardService {
       const response = (await this.irminCore.fetch(`/v1/dashboards`, {
         method: 'GET',
       })) as DashboardsAPIResponse;
-      this.dashboards = response.data;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch dashboards error');
@@ -77,7 +74,6 @@ class DashboardService {
 
         body: JSON.stringify(dashboard),
       })) as DashboardAPIResponse;
-      this.dashboards.push(response.data);
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create dashboard error');
@@ -108,10 +104,6 @@ class DashboardService {
         }
       )) as DashboardAPIResponse;
 
-      const index = this.dashboards.findIndex((d) => d.id === dashboard.id);
-      if (index !== undefined && index !== -1) {
-        this.dashboards[index] = response.data;
-      }
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update dashboard error');
@@ -136,20 +128,11 @@ class DashboardService {
         method: 'POST',
         body,
       });
-      this.dashboards = this.dashboards.filter((d) => d.id !== dashboardId);
     } catch (error) {
       console.error((error as Error).message, 'Delete dashboard error');
       if (isDevelopment) return;
       throw error;
     }
-  }
-
-  /**
-   * Get all dashboards stored in the dashboards array
-   * @returns the stored dashboards array, which may be empty if not fetched yet
-   */
-  getDashboards(): Dashboard[] {
-    return this.dashboards;
   }
 }
 

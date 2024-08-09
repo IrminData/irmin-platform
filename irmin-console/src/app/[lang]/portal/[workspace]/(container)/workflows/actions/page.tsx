@@ -1,6 +1,5 @@
 'use client';
 
-import NormalListSkeleton from '@/components/common/list/NormalList/Skeleton';
 import PortalTitle from '@/components/portal/PortalTitle';
 import ActionWorkflowList from '@/components/workflow/action/ActionWorkflowList';
 
@@ -26,11 +25,7 @@ export default function ActionsPage() {
   return (
     <>
       <PortalTitle title={dict.portalNavigation.links.actions} />
-      {loading ? (
-        <NormalListSkeleton />
-      ) : (
-        <ActionWorkflowList actionWorkflows={actions.actions} />
-      )}
+      <ActionWorkflowList loading={loading} actionWorkflows={actions.actions} />
     </>
   );
 }

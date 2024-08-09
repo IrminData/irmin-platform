@@ -18,6 +18,8 @@ import IrminCore from '@/services/core/IrminCore';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
+import { setCookie } from '@/utils/cookie';
+
 import { Profile } from '@/types/api/Profile';
 
 const IAMContext = createContext<{
@@ -120,6 +122,18 @@ export const IAMProvider = ({
           setToken(null);
           setTokenTimestamp(null);
         }
+        // Set cookies
+        setCookie(
+          'profile',
+          JSON.stringify({
+            name: response.data.name,
+            company: response.data.company,
+            email: response.data.email,
+            profile_picture: response.data.profile_picture,
+          }),
+          1
+        );
+
         // Update the profile state
         setProfile(response.data);
       } else {
@@ -181,6 +195,9 @@ export const IAMProvider = ({
       setIsLoading(true);
       // Handle logout
       const result = await authService.logout();
+      // Reset cookies
+      setCookie('profile', '', -1);
+      setCookie('workspaces', '', -1);
       // Show success message if logout was successful
       irminAlert(
         'success',

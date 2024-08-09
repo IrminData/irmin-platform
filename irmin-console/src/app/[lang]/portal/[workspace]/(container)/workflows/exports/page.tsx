@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 
-import NormalListSkeleton from '@/components/common/list/NormalList/Skeleton';
 import SideModal from '@/components/common/popup/SideModal';
 import PortalTitle from '@/components/portal/PortalTitle';
 import ExportSetupView from '@/components/workflow/export/create/exportSetupView';
@@ -31,7 +30,7 @@ export default function ExportsPage() {
 
   return (
     <>
-      <PortalTitle title={dict.workflow.export.exportWorkflows} />
+      <PortalTitle title={dict.portalNavigation.links.exports} />
       <SideModal
         isOpen={isOpen}
         setIsOpen={setIsOpen}
@@ -50,11 +49,7 @@ export default function ExportsPage() {
           setCurrentStep={setCurrentStep}
         />
       </SideModal>
-      {loading ? (
-        <NormalListSkeleton />
-      ) : (
-        <ExportWorkflowList exportWorkflows={exports.exports} />
-      )}
+      <ExportWorkflowList loading={loading} exportWorkflows={exports.exports} />
     </>
   );
 }

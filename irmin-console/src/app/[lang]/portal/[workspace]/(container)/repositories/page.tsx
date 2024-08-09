@@ -1,6 +1,5 @@
 'use client';
 
-import NormalListSkeleton from '@/components/common/list/NormalList/Skeleton';
 import PortalTitle from '@/components/portal/PortalTitle';
 import RepositoryList from '@/components/repository/RepositoryList';
 
@@ -26,11 +25,10 @@ export default function RepositoriesPage() {
   return (
     <>
       <PortalTitle title={dict.portalNavigation.links.repositories} />
-      {loading ? (
-        <NormalListSkeleton />
-      ) : (
-        <RepositoryList repositories={repositories.repositories} />
-      )}
+      <RepositoryList
+        loading={loading}
+        repositories={repositories.repositories}
+      />
     </>
   );
 }

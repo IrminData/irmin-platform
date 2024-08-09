@@ -39,6 +39,7 @@ class ProfileService {
    * @returns user's profile information or null if the user is not logged in
    */
   async getProfile(): Promise<ProfileAPIResponse | null> {
+    if (isOfflineMode) return fake(exampleProfile) as ProfileAPIResponse;
     try {
       const response = (await this.irminCore.fetch(`/v1/account/profile`, {
         method: 'GET',

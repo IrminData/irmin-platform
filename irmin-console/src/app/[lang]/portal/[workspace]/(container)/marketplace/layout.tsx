@@ -10,7 +10,7 @@ import PortalMarketplaceLayoutWrapper from '@/components/marketplace/PortalMarke
  * @param lang - The language of the user
  * @param workspace - The slug of the current workspace
  */
-export type MarkatplaceLayoutParams = {
+export type MarketplaceLayoutParams = {
   lang: Locale;
   workspace: string;
 };
@@ -18,9 +18,14 @@ export type MarkatplaceLayoutParams = {
 /**
  * SEO metadata for the Marketplace layout
  */
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: MarketplaceLayoutParams;
+}): Promise<Metadata> {
+  const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
-    title: `Marketplace | IRMIN Portal`,
+    title: `Marketplace | ${formattedWorkspace} | IRMIN Portal`,
   };
 }
 
@@ -31,7 +36,7 @@ export default function PortalMarketplaceLayout({
   params,
   children,
 }: Readonly<{
-  params: MarkatplaceLayoutParams;
+  params: MarketplaceLayoutParams;
   children: React.ReactNode;
 }>) {
   return (

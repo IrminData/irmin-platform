@@ -8,6 +8,8 @@ import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 import { fetchWorkspaceProxy } from '@/services/proxies/workspace';
 
+import { setCookie } from '@/utils/cookie';
+
 import { Workspace } from '@/types/api/Workspace';
 
 /**
@@ -165,10 +167,12 @@ export const useSwitchWorkspace = (
         const { workspaceService } = new IrminCore(locale);
         // Fetch a list of all workspaces available to the user
         const workspaces = await fetchWorkspaces();
+        // Update the workspaces cookie
+        setCookie('workspaces', JSON.stringify(workspaces), 1);
         // If the workspace slug is not provided, reset the current workspace
         if (!workspaceSlug) {
-          // Remove the current workspace from the local storage and state
-          localStorage.removeItem('currentWorkspaceSlug');
+          // Remove the current workspace from the cookies and state
+          setCookie('currentWorkspaceSlug', '', -1);
           // Clear the current workspace
           setCurrentWorkspace(null);
           // Make sure the user is not on a workspace page eg. /portal/{workspace-slug}/*
@@ -189,8 +193,8 @@ export const useSwitchWorkspace = (
         ) {
           throw new Error('Invalid workspace slug');
         }
-        // Set desired workspace slug to local storage for future use
-        localStorage.setItem('currentWorkspaceSlug', workspaceSlug);
+        // Set desired workspace slug to cookies for future use
+        setCookie('currentWorkspaceSlug', workspaceSlug, 1);
         // Switch to the new workspace
         const newWorkspace =
           await workspaceService.switchWorkspace(workspaceSlug);
@@ -202,6 +206,16 @@ export const useSwitchWorkspace = (
           }
         } else {
           throw new Error('Switching workspace failed');
+        }
+      } catch (e) {
+        console.error('Switching workspace failed:', e);
+        // Make sure the user is not on a workspace page eg. /portal/{workspace-slug}/*
+        if (
+          pathname.includes('/portal/') &&
+          !pathname.includes('/portal/manage-workspaces') &&
+          !pathname.includes('/portal/profile')
+        ) {
+          router.push('/portal/manage-workspaces');
         }
       } finally {
         setWorkspaceLoading(false);

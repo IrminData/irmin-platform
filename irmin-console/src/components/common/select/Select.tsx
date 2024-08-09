@@ -1,5 +1,7 @@
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
+import { cn } from '@/utils/tw';
+
 export default function Select({
   label,
   onChange,
@@ -8,6 +10,8 @@ export default function Select({
   defaultValue,
   options,
   variant = 'default',
+  selectClass = '',
+  labelClass = '',
 }: {
   label: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -16,24 +20,24 @@ export default function Select({
   defaultValue: string;
   options: { value: string; label: string }[];
   variant?: 'default' | 'on-dark-bg';
+  selectClass?: string;
+  labelClass?: string;
 }) {
-  const labelClasses =
-    variant === 'on-dark-bg' ? 'text-gray-300' : 'text-irmin_blue';
-  const selectClasses =
+  const labelClasses = `-mb-2 px-4 text-xs ${variant === 'on-dark-bg' ? 'text-gray-300' : 'text-irmin_blue'} ${labelClass}`;
+  const selectClasses = `block w-full cursor-pointer rounded-lg border border-opacity-20 bg-opacity-0 text-sm font-light transition-all hover:bg-opacity-10 ${
     variant === 'on-dark-bg'
       ? 'bg-irmin_blue text-gray-400 border-gray-400'
-      : 'bg-irmin_green text-irmin_black border-gray-400';
+      : 'bg-irmin_green text-irmin_black border-gray-400'
+  } ${selectClass}`;
   return (
     <div id='common-select' className='flex flex-col'>
       {currentValue !== '' && currentValue !== defaultValue && (
-        <p className={`-mb-2 px-4 text-xs ${labelClasses}`}>{label}</p>
+        <p className={cn(labelClasses.split(' '))}>{label}</p>
       )}
-      <div
-        className={`block w-full cursor-pointer rounded-lg border border-opacity-20 bg-opacity-0 text-sm font-light transition-all hover:bg-opacity-10 ${selectClasses}`}
-      >
-        {loading ? (
-          <LoadingSkeleton className='h-4' />
-        ) : (
+      {loading ? (
+        <LoadingSkeleton className='h-8' />
+      ) : (
+        <div className={cn(selectClasses.split(' '))}>
           <div className='px-4 py-3'>
             <select
               className='w-full cursor-pointer bg-transparent focus:border-0 focus:outline-none focus:ring-0'
@@ -49,8 +53,8 @@ export default function Select({
               ))}
             </select>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

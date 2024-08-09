@@ -68,97 +68,75 @@ const ManageWorkspacesSection: React.FC = () => {
   };
 
   return (
-    <div className='container mx-auto px-4 pb-28 pt-4'>
-      <div className='mx-auto max-w-sm'>
-        <p className='mb-4 block text-center text-sm font-normal text-irmin_black opacity-40 md:text-base'>
-          {dict.workspaceSwitcher.createNewWorkspace}
-        </p>
-        <form
-          onSubmit={handleCreateWorkspace}
-          className={`${loading && 'blur-sm'}`}
-        >
-          <Input
-            variant='solid'
-            colorScheme='secondary'
-            size='sm'
-            type='text'
-            id='newWorkspaceName'
-            placeholder={dict.workspace.workspaceName}
-            onChange={(e) => setNewWorkspaceName(e.target.value ?? '')}
-            required
-            className='mb-2 h-11 w-full md:mb-4'
-            disabled={loading}
-          />
-          <Input
-            variant='solid'
-            colorScheme='secondary'
-            size='sm'
-            type='text'
-            id='newWorkspaceDescription'
-            placeholder={dict.workspace.workspaceDescription}
-            onChange={(e) => setNewWorkspaceDescription(e.target.value ?? '')}
-            maxLength={255}
-            longtext={{
-              rows: 3,
-            }}
-            required
-            className='mb-2 w-full md:mb-4'
-            disabled={loading}
-          />
-          {error && <p className='mb-2 text-red-800'>{error}</p>}
-          {success && <p className='mb-2 text-irmin_green'>{success}</p>}
-          <Button
-            variant='gradient'
-            colorScheme='primary'
-            size='sm'
-            className='mb-4 h-11 w-full'
-            type='submit'
-            disabled={loading}
-            loading={loading}
-          >
+    <div className='flex flex-col gap-4 px-4 pb-28 pt-4 lg:flex-row-reverse'>
+      <div className='w-full max-w-80'>
+        <div className='rounded-xl bg-white p-2 text-xs shadow sm:p-4 lg:p-6 lg:text-base xl:p-8'>
+          <p className='mb-4 block text-left text-sm font-medium text-irmin_blue md:text-base'>
             {dict.workspaceSwitcher.createNewWorkspace}
-          </Button>
-        </form>
-      </div>
-      <hr className='mx-auto my-4 max-w-sm border-irmin_black opacity-10 shadow-sm' />
-      {workspaces.length > 0 && (
-        <>
-          <p className='mb-4 block text-center text-sm font-normal text-irmin_black opacity-40 md:text-base'>
-            {dict.workspaceSwitcher.orSelectExisting}
           </p>
+          <form
+            onSubmit={handleCreateWorkspace}
+            className={`${loading && 'blur-sm'}`}
+          >
+            <Input
+              variant='solid'
+              colorScheme='gray'
+              size='sm'
+              type='text'
+              id='newWorkspaceName'
+              placeholder={dict.workspace.workspaceName}
+              onChange={(e) => setNewWorkspaceName(e.target.value ?? '')}
+              required
+              className='mb-2 h-11 w-full md:mb-4'
+              disabled={loading}
+            />
+            <Input
+              variant='solid'
+              colorScheme='gray'
+              size='sm'
+              type='text'
+              id='newWorkspaceDescription'
+              placeholder={dict.workspace.workspaceDescription}
+              onChange={(e) => setNewWorkspaceDescription(e.target.value ?? '')}
+              maxLength={255}
+              longtext={{
+                rows: 3,
+              }}
+              required
+              className='mb-2 w-full md:mb-4'
+              disabled={loading}
+            />
+            {error && <p className='mb-2 text-red-800'>{error}</p>}
+            {success && <p className='mb-2 text-irmin_green'>{success}</p>}
+            <Button
+              variant='gradient'
+              colorScheme='primary'
+              size='sm'
+              className='mb-4 h-11 w-full'
+              type='submit'
+              disabled={loading}
+              loading={loading}
+            >
+              {dict.workspaceSwitcher.createNewWorkspace}
+            </Button>
+          </form>
+        </div>
+      </div>
+      {workspaces.length > 0 && (
+        <div className='ml-auto flex-grow'>
           <div
-            className={`grid w-full grid-cols-2 gap-2 lg:grid-cols-3 xl:gap-4 ${loading && 'blur-sm'}`}
+            className={`flex w-full flex-wrap content-stretch items-stretch justify-start ${loading && 'blur-sm'} -mx-2`}
           >
             {workspaces.map((workspace, idx) => (
-              <WorkspaceCard
+              <div
+                className='w-full max-w-60 px-2 pb-4'
                 key={`select-workspace-card-${idx}`}
-                workspace={workspace}
-                users={[
-                  {
-                    name: 'John Doe',
-                    avatar: '/ui-assets/images/blog/avatar.png',
-                  },
-                  {
-                    name: 'Jane Doe',
-                    avatar: '/ui-assets/images/blog/avatar.png',
-                  },
-                  {
-                    name: 'John Smith',
-                    avatar: '/ui-assets/images/blog/avatar.png',
-                  },
-                  {
-                    name: 'Haz Johnson',
-                    avatar: '/ui-assets/images/blog/avatar.png',
-                  },
-                  {
-                    name: 'Tim Borovkov',
-                    avatar: '/ui-assets/images/blog/avatar.png',
-                  },
-                ]}
-              />
+              >
+                <WorkspaceCard workspace={workspace} />
+              </div>
             ))}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

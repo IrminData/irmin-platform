@@ -17,19 +17,40 @@ import { TabsType } from '@/types/internal/Tabs';
  */
 export default function Tabs({ tabs }: { tabs: TabsType }) {
   const router = useRouter();
-  const path = usePathname();
+  const pathname = usePathname();
   const [activeTab, setActiveTab] = useState(tabs[0].slug ?? '');
 
   useEffect(() => {
+    // If tabs are links, active tab needs to be set based on the path
     const tabsHaveLinks = tabs.some((tab) => tab.link);
     if (!tabsHaveLinks) return;
-    const tab = tabs.find((tab) => {
-      if (path === tab.link) {
-        return true;
+
+    // Match by full path
+    const exactMatchTab = tabs.find((tab) => tab.link && pathname === tab.link);
+    if (exactMatchTab) {
+      setActiveTab(exactMatchTab.slug);
+      return;
+    }
+
+    // Find the tab with the longest matching prefix
+    let closestMatchTab: TabsType[number] | undefined;
+    let maxPrefixLength = 0;
+
+    tabs.forEach((tab) => {
+      if (
+        tab.link &&
+        pathname.startsWith(tab.link) &&
+        tab.link.length > maxPrefixLength
+      ) {
+        closestMatchTab = tab;
+        maxPrefixLength = tab.link.length;
       }
     });
-    if (tab) setActiveTab(tab.slug);
-  }, [path, tabs]);
+
+    if (closestMatchTab) {
+      setActiveTab(closestMatchTab.slug);
+    }
+  }, [pathname, tabs]);
 
   const renderTabContent = () => {
     return tabs.find((tab) => tab.slug === activeTab)?.content ?? null;
@@ -39,7 +60,7 @@ export default function Tabs({ tabs }: { tabs: TabsType }) {
 
   return (
     <>
-      <div className='mb-4 mt-4 flex w-full flex-wrap justify-start gap-2 border-b border-gray-200 px-2'>
+      <div className='mb-4 mt-4 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b'>
         {tabs.map((tab, idx) => (
           <div
             key={`large-tab-${idx}-${tab.slug}`}

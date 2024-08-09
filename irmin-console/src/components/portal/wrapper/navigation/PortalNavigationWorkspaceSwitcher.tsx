@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
@@ -32,8 +32,7 @@ export default function PortalNavigationWorkspaceSwitcher({
   const { irminAlert } = usePopup();
   const { workspace: workspaceSlug } = useParams();
 
-  const [processing, setProcessing] = React.useState(false);
-
+  const [processing, setProcessing] = useState(false);
   const loading = workspacesLoading || processing;
 
   const currentValue =
@@ -82,6 +81,7 @@ export default function PortalNavigationWorkspaceSwitcher({
         loading={loading}
         currentValue={currentValue}
         defaultValue={'select-workspace'}
+        labelClass='text-[10px] font-medium uppercase text-gray-400'
         options={[
           {
             value: 'select-workspace',

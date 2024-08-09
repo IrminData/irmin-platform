@@ -50,6 +50,7 @@ class WorkspaceService {
    * {@link https://api.irmin.dev/docs#workspaces-GETv1-workspaces | Irmin API docs}
    */
   async fetchWorkspaces(): Promise<WorkspacesAPIResponse> {
+    if (isOfflineMode) return fake(exampleWorkspaces) as WorkspacesAPIResponse;
     try {
       const response = (await this.irminCore.fetch(`/v1/workspaces`, {
         method: 'GET',

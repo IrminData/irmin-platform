@@ -23,8 +23,6 @@ interface ConnectorAPIResponse extends IrminAPIResponse {
  * Responsible for all connector related API calls.
  */
 class ConnectorService {
-  private connectors: Connector[] = [];
-
   private irminCore: IrminCore;
 
   constructor(irminCore: IrminCore) {
@@ -44,21 +42,12 @@ class ConnectorService {
       const response = (await this.irminCore.fetch(`/v1/connectors`, {
         method: 'GET',
       })) as ConnectorAPIResponse;
-      this.connectors = response.data;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch connectors error');
       if (isDevelopment) return fake(exampleConnectors) as ConnectorAPIResponse;
       throw error;
     }
-  }
-
-  /**
-   * Get all connectors stored in the connectors array.
-   * @returns all stored connectors, empty if not fetched yet
-   */
-  getAllConnectors(): Connector[] {
-    return this.connectors;
   }
 }
 
