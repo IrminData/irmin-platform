@@ -63,13 +63,62 @@ const SignUpSection = () => {
 
   return (
     <section
-      className='relative bg-white py-16 md:py-28'
+      className='bg-white py-16 md:py-28'
       style={{
         backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
         backgroundPosition: 'center',
       }}
     >
-      <div className='container mx-auto mb-16 max-w-7xl px-4 md:mb-0'>
+      <div className='container mx-auto mb-16 flex max-w-7xl flex-wrap px-4 md:mb-0'>
+        <div className='w-full md:w-1/2 md:pl-4'>
+          <div className='bg-irmin_black-50 flex h-full items-center justify-center px-8 py-14'>
+            <div className='mx-auto text-center md:max-w-xl'>
+              <span className='relative z-10 mb-4 inline-block rounded-full bg-irmin_green-100 px-2 py-px text-xs font-light uppercase leading-5 text-irmin_green-500 shadow-sm'>
+                Quotes
+              </span>
+              <div className='relative mb-16'>
+                <Image
+                  className='absolute -top-10 left-0 2xl:-left-12'
+                  src='/ui-assets/elements/quotes-top.svg'
+                  alt='Quotes top'
+                  width={142}
+                  height={98}
+                />
+                <Image
+                  className='absolute -bottom-16 right-0'
+                  src='/ui-assets/elements/quotes-bottom.svg'
+                  alt='Quotes bottom'
+                  width={142}
+                  height={98}
+                />
+                <h3 className='relative text-xl font-light leading-tight text-irmin_black md:text-3xl'>
+                  Love the simplicity of the service and the prompt customer
+                  support. We can&apos;t imagine working without it.
+                </h3>
+              </div>
+              <div className='relative text-center'>
+                <Image
+                  className='mx-auto mb-6 h-24 w-24 rounded-full'
+                  src='/ui-assets/images/sign-up/avatar-men-sign-up.png'
+                  alt="John Doe's avatar"
+                  width={88}
+                  height={88}
+                />
+                <h4 className='mb-2 text-lg font-semibold text-irmin_black'>
+                  John Doe
+                </h4>
+                <span className='mb-8 block text-lg text-irmin_black'>
+                  CEO &amp; Founder at Acme Inc.
+                </span>
+                <div className='flex items-center justify-center'>
+                  <span className='mr-3 h-3 w-3 rounded-full bg-irmin_light_green' />
+                  <span className='mr-3 h-3 w-3 rounded-full bg-irmin_green' />
+                  <span className='h-3 w-3 rounded-full bg-irmin_light_green' />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div className='w-full md:w-1/2 md:pr-4'>
           <div className='mx-auto max-w-sm'>
             <div className='mb-6 text-center'>
@@ -209,39 +258,35 @@ const SignUpSection = () => {
               </div>
               {error && <p className='mb-4 text-red-800'>{error}</p>}
               {success && <p className='mb-4 text-irmin_green'>{success}</p>}
-              <div className='mb-6 flex flex-wrap items-center justify-between'>
-                <div className='w-full md:w-1/2'>
-                  <label className='relative inline-flex items-center'>
-                    <input
-                      className='form-checkbox'
-                      name='accept-terms'
-                      type='checkbox'
-                    />
-                    <span className='ml-2 text-xs font-light text-irmin_black'>
-                      {dict.auth.accept.accept}{' '}
-                      <Link
-                        className='text-irmin_blue-500 hover:text-irmin_blue-600'
-                        href='/legal/terms-of-use'
-                        target='_blank'
-                      >
-                        {dict.auth.accept.terms}
-                      </Link>{' '}
-                      {dict.auth.accept.and}{' '}
-                      <Link
-                        className='text-irmin_blue-500 hover:text-irmin_blue-600'
-                        href='/legal/privacy-policy'
-                        target='_blank'
-                      >
-                        {dict.auth.accept.privacy}
-                      </Link>
-                    </span>
-                  </label>
-                </div>
+              <div className='mb-6 flex w-full items-center md:w-2/3'>
+                <input
+                  name='accept-terms'
+                  type='checkbox'
+                  className='h-6 w-6 rounded border-gray-300 bg-gray-100'
+                />
+                <label className='ms-2 text-xs font-light text-irmin_black'>
+                  {dict.auth.accept.accept}{' '}
+                  <Link
+                    className='text-irmin_blue-500 hover:text-irmin_blue-600'
+                    href='/legal/terms-of-use'
+                    target='_blank'
+                  >
+                    {dict.auth.accept.terms}
+                  </Link>{' '}
+                  {dict.auth.accept.and}{' '}
+                  <Link
+                    className='text-irmin_blue-500 hover:text-irmin_blue-600'
+                    href='/legal/privacy-policy'
+                    target='_blank'
+                  >
+                    {dict.auth.accept.privacy}
+                  </Link>
+                </label>
               </div>
               <Button
                 className='mb-6 w-full'
-                variant='solid'
-                colorScheme='secondary'
+                variant='gradient'
+                colorScheme='primary'
                 size='md'
                 disabled={loading}
                 loading={loading}
@@ -249,69 +294,21 @@ const SignUpSection = () => {
               >
                 {dict.auth.signUp.signUp}
               </Button>
-              <p className='text-center'>
-                <span className='text-xs font-light'>
+              <div className='flex w-full items-center justify-center'>
+                <span className='text-sm font-light'>
                   {dict.auth.signUp.alreadyHaveAccount}{' '}
                 </span>
                 <Button
                   variant='link'
                   href='/sign-in'
-                  size='sm'
+                  size='md'
                   colorScheme='secondary'
+                  className='my-0 py-0'
                 >
                   {dict.auth.signUp.signIn}
                 </Button>
-              </p>
+              </div>
             </form>
-          </div>
-        </div>
-        <div className='md:absolute md:right-0 md:top-0 md:h-full md:w-1/2 md:pl-4'>
-          <div className='bg-irmin_black-50 flex h-full items-center justify-center px-8 py-14'>
-            <div className='mx-auto text-center md:max-w-xl'>
-              <span className='relative z-10 mb-4 inline-block rounded-full bg-irmin_green-100 px-2 py-px text-xs font-light uppercase leading-5 text-irmin_green-500 shadow-sm'>
-                Quotes
-              </span>
-              <div className='relative mb-16'>
-                <Image
-                  className='absolute -top-10 left-0 2xl:-left-12'
-                  src='/ui-assets/elements/quotes-top.svg'
-                  alt='Quotes top'
-                  width={142}
-                  height={98}
-                />
-                <Image
-                  className='absolute -bottom-16 right-0'
-                  src='/ui-assets/elements/quotes-bottom.svg'
-                  alt='Quotes bottom'
-                  width={142}
-                  height={98}
-                />
-                <h3 className='relative text-2xl font-light leading-tight text-irmin_black md:text-3xl'>
-                  Love the simplicity of the service and the prompt customer
-                  support. We can&apos;t imagine working without it.
-                </h3>
-              </div>
-              <div className='relative text-center'>
-                <Image
-                  className='mx-auto mb-6 h-24 w-24 rounded-full'
-                  src='/ui-assets/images/sign-up/avatar-men-sign-up.png'
-                  alt="John Doe's avatar"
-                  width={88}
-                  height={88}
-                />
-                <h4 className='mb-2 text-lg font-semibold text-irmin_black'>
-                  John Doe
-                </h4>
-                <span className='mb-8 block text-lg text-irmin_black'>
-                  CEO &amp; Founder at Acme Inc.
-                </span>
-                <div className='flex items-center justify-center'>
-                  <span className='mr-3 h-3 w-3 rounded-full bg-irmin_black-100' />
-                  <span className='mr-3 h-3 w-3 rounded-full bg-irmin_green-500' />
-                  <span className='h-3 w-3 rounded-full bg-irmin_black-100' />
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

@@ -38,6 +38,14 @@ label {
   }
 }
 
+/* Enable browser styles for checkboxes and radio buttons */
+input[type='checkbox'],
+input[type='radio'] {
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+  appearance: auto;
+}
+
 /* Markdown editor styles */
 .mdxeditor {
   font-family: 'Helvetica Neue', Arial, sans-serif;

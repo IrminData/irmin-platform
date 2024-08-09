@@ -100,17 +100,18 @@ const SignInSection = () => {
             {success && <p className='mb-4 text-irmin_green'>{success}</p>}
             <div className='mb-6 flex flex-wrap items-center justify-between'>
               <div className='w-full md:w-1/2'>
-                <label className='relative inline-flex items-center'>
+                <div className='flex items-center'>
                   <input
-                    className='form-checkbox'
-                    type='checkbox'
                     name='remember-me'
                     defaultChecked
+                    type='checkbox'
+                    value=''
+                    className='h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600'
                   />
-                  <span className='ml-2 text-xs font-light text-irmin_black'>
+                  <label className='ms-2 text-sm font-light text-irmin_black'>
                     {dict.auth.signIn.rememberMe}
-                  </span>
-                </label>
+                  </label>
+                </div>
               </div>
               <div className='mt-1 w-full md:w-auto'>
                 <Button
@@ -125,8 +126,8 @@ const SignInSection = () => {
             </div>
             <Button
               className='mb-6 w-full'
-              variant='solid'
-              colorScheme='secondary'
+              variant='gradient'
+              colorScheme='primary'
               size='md'
               disabled={loading}
               loading={loading}
@@ -134,19 +135,20 @@ const SignInSection = () => {
             >
               {dict.auth.signIn.signIn}
             </Button>
-            <p className='text-center'>
-              <span className='text-xs font-light'>
+            <div className='flex w-full items-center justify-center'>
+              <span className='text-sm font-light'>
                 {dict.auth.signIn.dontHaveAccount}{' '}
               </span>
               <Button
                 variant='link'
                 href='/sign-up'
-                size='sm'
+                size='md'
                 colorScheme='secondary'
+                className='my-0 py-0'
               >
                 {dict.auth.signIn.signUp}
               </Button>
-            </p>
+            </div>
           </form>
         </div>
       </div>
