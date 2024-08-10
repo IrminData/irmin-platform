@@ -29,8 +29,7 @@ function DashboardTitleAndSelector({
     if (value === 'create-new') {
       createNew();
     } else {
-      const id = parseInt(value);
-      const selectedDashboards = options.filter((val) => val.id === id);
+      const selectedDashboards = options.filter((val) => val.slug === value);
       if (selectedDashboards.length > 0)
         onSelectionChange(selectedDashboards[0]);
     }
@@ -52,12 +51,12 @@ function DashboardTitleAndSelector({
             processSelectionChange(e.target.value);
           }}
           loading={false}
-          currentValue={selected?.id.toString() ?? ''}
+          currentValue={selected?.slug.toString() ?? ''}
           defaultValue={''}
           options={[
             { value: 'create-new', label: dict.dashboard.createNewDashboard },
             ...(options.map((option) => ({
-              value: option.id.toString(),
+              value: option.slug,
               label: option.name,
             })) ?? []),
           ]}

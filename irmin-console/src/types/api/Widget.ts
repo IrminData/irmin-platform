@@ -5,7 +5,7 @@ import { Dashboard } from './Dashboard';
 /**
  * Types of widgets that can be created
  */
-export type WidgetType = 'line' | 'bar' | 'table' | 'metric';
+export type WidgetType = 'line' | 'bar' | 'pie' | 'radar' | 'table' | 'metric';
 
 /**
  * Widget type
@@ -19,6 +19,7 @@ export type WidgetType = 'line' | 'bar' | 'table' | 'metric';
  * @typeParam type - Type of widget
  * @typeParam title - Widget title
  * @typeParam data - The widget data
+ * @typeParam size - Size of the widget on the dashboard in grid units
  * @typeParam created_at - Creation date
  * @typeParam updated_at - Last updated date
  */
@@ -28,6 +29,9 @@ export interface Widget {
   title: string;
   dashboards?: Dashboard[] | null;
   data: WidgetData;
+  size?: {
+    w: number;
+  } | null;
   created_at: string;
   updated_at: string;
 }

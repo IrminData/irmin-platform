@@ -1,8 +1,6 @@
 'use client';
 
-import { IoSettings } from 'react-icons/io5';
-
-import Button from '@/components/common/button/Button';
+import WidgetWrapper from '@/components/dashboard/widget/WidgetWrapper';
 
 import { Widget } from '@/types/api/Widget';
 import { MetricWidgetData } from '@/types/internal/WidgetData';
@@ -16,34 +14,21 @@ import { MetricWidgetData } from '@/types/internal/WidgetData';
  * It displays a single metric value with a label.
  */
 const Metric = ({ widget }: { widget: Widget }) => {
-  if (widget.type !== 'metric') return <></>;
   const widgetData = widget.data as MetricWidgetData;
 
   return (
-    <div className='rounded border-t-2 border-irmin_green bg-white p-2 shadow-lg md:p-4'>
-      <div className='flex h-14 items-center justify-between border-b px-6 py-4'>
-        <h2 className='text-xl font-semibold leading-tight'>{widget.title}</h2>
-        <Button
-          variant='icon'
-          colorScheme='primary'
-          onClick={() => {
-            // TODO: Implement settings modal
-          }}
-        >
-          <IoSettings size={18} />
-        </Button>
-      </div>
-      <div className='flex h-full min-h-48 w-full items-center justify-center'>
-        <div>
-          <h3 className='mb-4 text-center text-3xl font-bold text-irmin_black lg:text-7xl'>
+    <WidgetWrapper widget={widget}>
+      <div className='flex h-full flex-grow items-center justify-center'>
+        <div className='py-8'>
+          <h4 className='mb-4 text-center text-xl font-bold text-irmin_black lg:text-3xl'>
             {widgetData.currentValue}
-          </h3>
-          <p className='text-center text-lg text-gray-500 lg:text-2xl'>
+          </h4>
+          <p className='text-center text-base text-gray-500 lg:text-lg'>
             {widgetData.label}
           </p>
         </div>
       </div>
-    </div>
+    </WidgetWrapper>
   );
 };
 

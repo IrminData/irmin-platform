@@ -1,4 +1,5 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
+import { shuffleArray } from '@/utils/shuffleArray';
 
 import { Dashboard } from '@/types/api/Dashboard';
 
@@ -15,6 +16,7 @@ export const dashboards = (last = false): Dashboard[] => [
   {
     id: 0,
     name: 'Main Dashboard',
+    slug: 'main-dashboard',
     widgets: !last ? widgets(true) : undefined,
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
@@ -22,21 +24,24 @@ export const dashboards = (last = false): Dashboard[] => [
   {
     id: 1,
     name: 'Financial Overview',
-    widgets: !last ? widgets(true) : undefined,
+    slug: 'financial-overview',
+    widgets: !last ? shuffleArray(widgets(true)) : undefined,
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 2,
     name: 'App Analytics',
-    widgets: !last ? widgets(true) : undefined,
+    slug: 'app-analytics',
+    widgets: !last ? shuffleArray(widgets(true)) : undefined,
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 3,
     name: 'Ad Campaign Performance',
-    widgets: !last ? widgets(true) : undefined,
+    slug: 'ad-campaign-performance',
+    widgets: !last ? shuffleArray(widgets(true)) : undefined,
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },

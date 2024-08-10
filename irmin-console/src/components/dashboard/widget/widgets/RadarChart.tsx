@@ -1,16 +1,15 @@
 'use client';
 
 import {
-  CategoryScale,
   Chart as ChartJS,
+  Filler,
   Legend,
-  LinearScale,
   LineElement,
   PointElement,
-  Title,
+  RadialLinearScale,
   Tooltip,
 } from 'chart.js';
-import { Line } from 'react-chartjs-2';
+import { Radar } from 'react-chartjs-2';
 
 import WidgetWrapper from '@/components/dashboard/widget/WidgetWrapper';
 
@@ -19,32 +18,32 @@ import { ChartOrTableWidgetData } from '@/types/internal/WidgetData';
 
 // Register the components required for the chart
 ChartJS.register(
-  CategoryScale,
-  LinearScale,
+  RadialLinearScale,
   PointElement,
   LineElement,
-  Title,
+  Filler,
   Tooltip,
   Legend
 );
 
 /**
- * Line chart widget
+ * Radar chart widget
  *
  * @remarks
  *
- * This component is used to display a line chart widget on the dashboard.
+ * This component is used to display a radar chart widget on the dashboard.
  * It uses the ChartJS library to render the chart.
  */
-const LineChart = ({ widget }: { widget: Widget }) => {
+const RadarChart = ({ widget }: { widget: Widget }) => {
   const widgetData = widget.data as ChartOrTableWidgetData;
+
   return (
     <WidgetWrapper widget={widget}>
-      <Line
+      <Radar
         data={widgetData}
         options={{
           scales: {
-            y: {
+            r: {
               beginAtZero: true,
             },
           },
@@ -62,4 +61,4 @@ const LineChart = ({ widget }: { widget: Widget }) => {
   );
 };
 
-export default LineChart;
+export default RadarChart;
