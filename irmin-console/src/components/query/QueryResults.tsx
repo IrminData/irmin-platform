@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 
 import { useTheme } from 'next-themes';
 import DataTable from 'react-data-table-component';
@@ -278,8 +278,8 @@ const QueryResults = ({
   );
 
   const [filterText, setFilterText] = React.useState('');
-  const [resetPaginationToggle, setResetPaginationToggle] =
-    React.useState(false);
+  //   const [resetPaginationToggle, setResetPaginationToggle] =
+  //     React.useState(false);
 
   const filteredItems = placeholderData.filter((item) => {
     return Object.keys(item).some((key) => {
@@ -291,12 +291,12 @@ const QueryResults = ({
     });
   });
 
-  const handleClear = () => {
-    if (filterText) {
-      setResetPaginationToggle(!resetPaginationToggle);
-      setFilterText('');
-    }
-  };
+  //   const handleClear = () => {
+  //     if (filterText) {
+  //       setResetPaginationToggle(!resetPaginationToggle);
+  //       setFilterText('');
+  //     }
+  //   };
   const handleRowsSelected = (selected: {
     allSelected: boolean;
     selectedCount: number;
@@ -434,7 +434,7 @@ const QueryResults = ({
                   selectAllRowsItem: true,
                   selectAllRowsItemText: dict.query.selectAllRows,
                 }}
-                paginationResetDefaultPage={resetPaginationToggle}
+                // paginationResetDefaultPage={resetPaginationToggle}
                 persistTableHead
                 theme={theme.theme === 'dark' ? 'dark' : 'default'}
                 customStyles={{

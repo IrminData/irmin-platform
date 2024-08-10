@@ -1,3 +1,5 @@
+'use client';
+
 import { IoAdd } from 'react-icons/io5';
 
 import Select from '@/components/common/select/Select';

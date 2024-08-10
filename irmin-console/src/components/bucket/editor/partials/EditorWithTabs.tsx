@@ -382,7 +382,7 @@ const EditorWithTabs = ({
               ariaLabel='Save file'
               onClick={() => saveActiveTabAsFile()}
             >
-              <IoSave className='mr-2 inline-block' /> {dict.query.saveFile}
+              <IoSave className='mr-2 inline-block' /> {dict.query.save}
             </Button>
           </div>
         </div>
