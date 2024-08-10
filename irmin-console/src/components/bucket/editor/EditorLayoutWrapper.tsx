@@ -8,13 +8,12 @@ import AddNewFileModal from '@/components/bucket/modals/AddNewFileModal';
 import AddNewFolderModal from '@/components/bucket/modals/AddNewFolderModal';
 import RenameOrMoveItemModal from '@/components/bucket/modals/RenameOrMoveItemModal';
 import FileNavigator from '@/components/bucket/navigator/FileNavigator';
+import RepositoryTableReferenceList from '@/components/repository/RepositoryTableReferenceList';
 
 import { useBucket } from '@/context/BucketContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
 
-import { Repository } from '@/types/api/Repository';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
@@ -28,9 +27,8 @@ export default function EditorLayoutWrapper({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { irminModal, irminConfirm, irminAlert } = usePopup();
+  const { irminModal, irminConfirm } = usePopup();
   const { dict } = useLocale();
-  const { repositories: repos } = useWorkspace();
   const {
     bucket,
     items,
@@ -46,31 +44,6 @@ export default function EditorLayoutWrapper({
   } = useBucket();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  /**
-   * When a repository table is selected, format the table name
-   * and insert it into the editor.
-   */
-  const selectDBTable = (repo: Repository, table: string) => {
-    // Format the table name
-    const formattedTable = ` $[${repo.slug}.${table}.0]`;
-    // Alert the table name to the user
-    irminAlert(
-      'info',
-      <div>
-        <p className='m-0 text-xs font-light text-irmin_black'>
-          {dict.editor.referenceRepository.toReferenceTheTable}{' '}
-          <span className='font-medium text-irmin_blue'>{table}</span>{' '}
-          {dict.editor.referenceRepository.fromTheRepository}{' '}
-          <span className='font-medium text-irmin_blue'>{repo.name}</span>{' '}
-          {dict.editor.referenceRepository.inTheEditor}
-        </p>
-        <p className='my-2 text-sm font-normal text-irmin_blue'>
-          {formattedTable}
-        </p>
-      </div>
-    );
-  };
 
   /**
    * Open the modal to create a new file
@@ -144,7 +117,10 @@ export default function EditorLayoutWrapper({
   };
 
   return (
-    <div id='editor-layout-wrapper' className='flex flex-row'>
+    <div
+      id='editor-layout-wrapper'
+      className='flex h-full flex-row content-stretch items-stretch overflow-hidden'
+    >
       <div
         className={`absolute z-10 h-[calc(100vh-55px)] overflow-y-scroll border-r bg-gray-50 ${
           !sidebarOpen ? 'max-w-10' : 'max-w-72'
@@ -193,40 +169,11 @@ export default function EditorLayoutWrapper({
             }}
             items={items}
           />
-          <div
-            id='editor-sidebar-repositories'
-            className='flex-grow overflow-auto border-t p-2'
-          >
-            <p className='px-4 pb-2 text-sm'>
-              {dict.portalNavigation.links.repositories}
-            </p>
-            <p className='px-4 text-xs text-gray-400'>
-              {dict.editor.referenceRepository.clickOnATable}
-            </p>
-            <ul className='text-xs'>
-              {repos.repositories.map((repo) => (
-                <li key={`repo-${repo.id}`} className='px-4 py-2'>
-                  <p className='border-t pt-2 font-normal'>{repo.name}</p>
-                  <ul className='list-item font-light'>
-                    {repo.tables.map((table, i) => (
-                      <li
-                        key={`repo-${repo.id}-table-${i}`}
-                        className='cursor-pointer px-2 pt-3 transition-colors hover:text-irmin_green'
-                        onClick={() => selectDBTable(repo, table)}
-                        aria-label={`Click to get the reference snippet for the table ${table} from ${repo.name}`}
-                      >
-                        {table}
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <RepositoryTableReferenceList />
         </div>
       </div>
       <div
-        className='ml-10 inline-block flex-grow overflow-auto lg:ml-0'
+        className='ml-10 flex flex-1 flex-col bg-white lg:ml-0'
         id='editor-page-content'
       >
         {children}

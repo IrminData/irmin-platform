@@ -8,8 +8,8 @@ import CodeMirror from '@uiw/react-codemirror';
 import { AiOutlinePlayCircle } from 'react-icons/ai';
 
 import Button from '@/components/common/button/Button';
+import QueryResults from '@/components/query/QueryResults';
 import TableSelector from '@/components/repository/viewer/TableSelector';
-import TableViewer from '@/components/repository/viewer/TableViewer';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
@@ -88,8 +88,8 @@ export default function RepositoryPage({
         </div>
       </div>
       {selectedTable && (
-        <div className='max-w-full overflow-x-auto'>
-          <TableViewer
+        <div className='flex max-w-full flex-col overflow-x-auto'>
+          <QueryResults
             title={`${currentWorkspace.slug} / ${repository.slug} / ${selectedTable}`}
           />
         </div>

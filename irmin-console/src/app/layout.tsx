@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 
+import { DarkModeProvider } from '@/context/DarkModeContext';
 import { IAMProvider } from '@/context/IAMContext';
 import { LocaleProvider } from '@/context/LocaleContext';
 
@@ -43,12 +44,15 @@ export default function RootLayout({
   params: { lang: Locale };
 }>) {
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
+
   return (
-    <html>
+    <html suppressHydrationWarning>
       <body className={inter.className}>
-        <LocaleProvider>
-          <IAMProvider locale={lang}>{children}</IAMProvider>
-        </LocaleProvider>
+        <DarkModeProvider>
+          <LocaleProvider>
+            <IAMProvider locale={lang}>{children}</IAMProvider>
+          </LocaleProvider>
+        </DarkModeProvider>
       </body>
     </html>
   );

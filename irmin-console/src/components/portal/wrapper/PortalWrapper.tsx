@@ -9,6 +9,7 @@ import { useParams } from 'next/navigation';
 import { TbChevronLeft, TbChevronRight, TbSearch } from 'react-icons/tb';
 
 import AssistantPopup from '@/components/assistant/AssistantPopup';
+import ThemeSwitch from '@/components/common/ThemeSwitch';
 import PortalNavigationLink from '@/components/portal/wrapper/navigation/PortalNavigationLink';
 import PortalNavigationProfile from '@/components/portal/wrapper/navigation/PortalNavigationProfile';
 import PortalNavigationWorkspaceSwitcher from '@/components/portal/wrapper/navigation/PortalNavigationWorkspaceSwitcher';
@@ -71,7 +72,7 @@ export default function PortalWrapper({
               {/* Logo, notifications and fold button */}
               <div
                 id='portal-sidebar-header'
-                className='z-40 flex w-full items-center justify-between px-4 pt-4 md:pl-6'
+                className='z-40 flex w-full items-center justify-start gap-4 px-4 pt-4 md:pl-6'
               >
                 <div
                   className={`block transition-all duration-300 ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}`}
@@ -86,6 +87,7 @@ export default function PortalWrapper({
                     />
                   </Link>
                 </div>
+                <ThemeSwitch />
                 <button
                   className={`hover:irmin_teal absolute top-[16px] hidden text-irmin_blue transition-all lg:top-[15px] lg:block ${
                     !foldMenu ? 'right-2' : 'left-6'
@@ -230,7 +232,7 @@ export default function PortalWrapper({
             id='portal-top-bar'
             className={`z-10 w-full border-b border-irmin_green bg-white ${isMenuOpen ? 'pl-0' : 'pl-12 lg:pl-0'}`}
           >
-            <div className='group flex h-14 w-full items-center px-2 py-1'>
+            <div className='group flex h-14 w-full items-center px-4 py-1 xl:px-6'>
               <div
                 className={`py-2 pr-4 group-focus-within:hidden ${foldMenu ? 'lg:block' : 'lg:hidden'}`}
               >

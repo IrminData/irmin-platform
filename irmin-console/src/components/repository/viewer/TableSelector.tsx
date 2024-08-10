@@ -41,7 +41,8 @@ const TableSelector = ({
           }
           icon={<CiViewTable />}
         >
-          {table}
+          {/* Only show part of the table name between first and last dots */}
+          {table.split('.').slice(1, -1).join('.')}
         </Button>
       ))}
       {repository.tables.length === 0 && (

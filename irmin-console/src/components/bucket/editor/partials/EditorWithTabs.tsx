@@ -4,8 +4,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { IoAdd, IoClose, IoSave } from 'react-icons/io5';
 
-import CodeEditor from '@/components/bucket/editor/partials/ui/CodeEditor';
-import NewTabContent from '@/components/bucket/editor/partials/ui/NewTabContent';
 import RenameOrMoveItemModal from '@/components/bucket/modals/RenameOrMoveItemModal';
 import SaveEditorAsFileModal from '@/components/bucket/modals/SaveEditorAsFileModal';
 import Button from '@/components/common/button/Button';
@@ -18,6 +16,9 @@ import { getCorrectPath } from '@/utils/bucket';
 
 import { Bucket, BucketFile, IrminFileType } from '@/types/api/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
+
+import CodeEditor from './CodeEditor';
+import NewTabContent from './NewTabContent';
 
 /**
  * Get the language from a filename
@@ -234,19 +235,17 @@ const EditorWithTabs = ({
 
   /**
    * Closes a tab by removing it from the open tabs and open tabs contents
-   * @param index - Index of the tab to close
+   * @param tab - Path of the tab to close
    */
   const closeTab = useCallback(
-    (index: number) => {
-      const newTabs = openFileTabs.filter((_, i) => i !== index);
-      const newOpenTabsContents = openTabsContents.filter(
-        (a) => a.path !== openFileTabs[index]
-      );
-      setOpenTabsContents(newOpenTabsContents);
-      setOpenFileTabs(newTabs);
-      if (activeTab === index) {
-        setActiveTab(Math.max(0, index - 1));
-      }
+    (tab: string) => {
+      // Change the active tab
+      const tabIndexToClose = openFileTabs.findIndex((t) => t === tab);
+      if (tabIndexToClose === activeTab) setActiveTab(0);
+      if (tabIndexToClose < activeTab) setActiveTab(activeTab - 1);
+      // Remove the tab from openTabsContents and openFileTabs
+      setOpenTabsContents(openTabsContents.filter((a) => a.path !== tab));
+      setOpenFileTabs(openFileTabs.filter((t) => t !== tab));
     },
     [openFileTabs, openTabsContents, activeTab, setActiveTab, setOpenFileTabs]
   );
@@ -344,7 +343,7 @@ const EditorWithTabs = ({
                   variant='icon'
                   colorScheme='black'
                   className={`border-none px-1 py-1`}
-                  onClick={() => closeTab(index)}
+                  onClick={() => closeTab(tab)}
                 >
                   <IoClose size={12} />
                 </Button>
@@ -383,7 +382,7 @@ const EditorWithTabs = ({
               ariaLabel='Save file'
               onClick={() => saveActiveTabAsFile()}
             >
-              <IoSave className='mr-2 inline-block' /> {dict.editor.saveFile}
+              <IoSave className='mr-2 inline-block' /> {dict.query.saveFile}
             </Button>
           </div>
         </div>

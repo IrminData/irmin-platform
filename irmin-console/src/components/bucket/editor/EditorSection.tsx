@@ -2,14 +2,19 @@
 
 import { useState } from 'react';
 
-import EditorResults from '@/components/bucket/editor/partials/EditorResults';
 import EditorWithTabs from '@/components/bucket/editor/partials/EditorWithTabs';
+import QueryResults from '@/components/query/QueryResults';
+
+import { useBucket } from '@/context/BucketContext';
+import { useLocale } from '@/context/LocaleContext';
 
 /**
  * Editor Section, provides UI for the Editor Page.
  * Used to edit files in the Workspace's Bucket
  */
 export default function EditorSection() {
+  const { dict } = useLocale();
+  const { openFileTabs } = useBucket();
   const [editorHeight, setEditorHeight] = useState('400px');
 
   return (
@@ -18,7 +23,9 @@ export default function EditorSection() {
         editorHeight={editorHeight}
         setEditorHeight={setEditorHeight}
       />
-      <EditorResults editorHeight={editorHeight} />
+      {openFileTabs.length > 0 && (
+        <QueryResults title={dict.editor.actionResults} />
+      )}
     </>
   );
 }

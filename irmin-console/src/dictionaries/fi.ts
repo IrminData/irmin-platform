@@ -150,6 +150,7 @@ const fi = {
     links: {
       dashboards: 'Datapaneeli',
       repositories: 'Tietovarastot',
+      query: 'Kyselyt',
       editor: 'Editori',
       workflows: 'Prosessit',
       actions: 'Toiminnot',
@@ -206,6 +207,12 @@ const fi = {
       documentation: 'Dokumentaatio',
       workflows: 'Prosessit',
       settings: 'Asetukset',
+    },
+    referenceRepository: {
+      clickOnATable: 'Klikkaa taulukkoa viitataksesi siihen',
+      toReferenceTheTable: 'Käyttääksesi taulukkoa',
+      fromTheRepository: 'tietovarastosta',
+      inTheEditor: 'editorissa, käytä seuraavaa syntaksia:',
     },
   },
   workflow: {
@@ -319,17 +326,20 @@ const fi = {
     hazAISubtitle:
       'Haz, AI-avustajasi, on täällä auttamassa SQL-kyselyiden, skriptien ja paljon muun kanssa!',
     setupNewConnection: 'Aseta uusi yhteys',
-    saveFile: 'Tallenna',
-    actionResults: 'Toiminnon tulokset',
-    saveAction: 'Tallenna toiminto',
-    runAction: 'Suorita toiminto',
+    actionResults: 'Action Results',
+  },
+  query: {
+    queryResults: 'Kyselyn tulokset',
+    results: 'Tulokset',
+    save: 'Tallenna',
+    run: 'Suorita',
+    rowsReturnedIn: 'riviä palautettu ajassa',
     exportTable: 'vie taulukko (.csv)',
-    referenceRepository: {
-      clickOnATable: 'Klikkaa taulukkoa viitataksesi siihen',
-      toReferenceTheTable: 'Käyttääksesi taulukkoa',
-      fromTheRepository: 'tietovarastosta',
-      inTheEditor: 'editorissa, käytä seuraavaa syntaksia:',
-    },
+    rowsPerPage: 'Rivejä per sivu',
+    rangeSeparator: '/',
+    selectAllRows: 'Kaikki',
+    noResults: 'Ei tuloksia',
+    search: 'Hae tuloksista',
   },
   list: {
     name: 'Nimi',

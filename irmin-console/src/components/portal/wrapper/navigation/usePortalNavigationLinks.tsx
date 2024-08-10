@@ -17,6 +17,7 @@ import {
   TbLogout,
   TbRun,
   TbSettings,
+  TbSql,
   TbUser,
 } from 'react-icons/tb';
 
@@ -67,6 +68,11 @@ const usePortalNavigationLinks = (): {
       title: dict.portalNavigation.links.repositories,
       href: `/${locale}/portal/${workspaceSlug}/repositories`,
       icon: <TbDatabase />,
+    },
+    {
+      title: dict.portalNavigation.links.query,
+      href: `/${locale}/portal/${workspaceSlug}/query`,
+      icon: <TbSql />,
     },
     {
       title: dict.portalNavigation.links.editor,

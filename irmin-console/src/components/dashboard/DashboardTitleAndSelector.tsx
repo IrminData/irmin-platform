@@ -1,3 +1,5 @@
+import { IoAdd } from 'react-icons/io5';
+
 import Select from '@/components/common/select/Select';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -44,23 +46,33 @@ function DashboardTitleAndSelector({
       >
         <h1>{title}</h1>
       </div>
-      <div id='dashboard-selector ml-auto w-max min-w-28 max-w-[50%]'>
-        <Select
-          label={dict.dashboard.dashboard}
-          onChange={(e) => {
-            processSelectionChange(e.target.value);
-          }}
-          loading={false}
-          currentValue={selected?.slug.toString() ?? ''}
-          defaultValue={''}
-          options={[
-            { value: 'create-new', label: dict.dashboard.createNewDashboard },
-            ...(options.map((option) => ({
-              value: option.slug,
-              label: option.name,
-            })) ?? []),
-          ]}
-        />
+      <div className='ml-auto flex max-w-[50%] flex-row justify-end gap-4'>
+        <button
+          className='group flex cursor-pointer items-center justify-center transition-all'
+          aria-label='Create new dashboard or widget'
+        >
+          <p className='flex h-10 w-10 items-center justify-center rounded-full bg-irmin_green text-white transition-all group-hover:bg-irmin_green-600'>
+            <IoAdd size={25} />
+          </p>
+        </button>
+        <div id='dashboard-selector w-max min-w-28'>
+          <Select
+            label={dict.dashboard.dashboard}
+            onChange={(e) => {
+              processSelectionChange(e.target.value);
+            }}
+            loading={false}
+            currentValue={selected?.slug.toString() ?? ''}
+            defaultValue={''}
+            options={[
+              { value: 'create-new', label: dict.dashboard.createNewDashboard },
+              ...(options.map((option) => ({
+                value: option.slug,
+                label: option.name,
+              })) ?? []),
+            ]}
+          />
+        </div>
       </div>
     </div>
   );

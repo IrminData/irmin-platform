@@ -11,6 +11,7 @@ import { IoEnterOutline } from 'react-icons/io5';
 
 import Button from '@/components/common/button/Button';
 import ProfileImagePlaceholder from '@/components/common/ProfileImagePlaceholder';
+import ThemeSwitch from '@/components/common/ThemeSwitch';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -195,6 +196,7 @@ export default function WebsiteNavigationContent({
                       link={link}
                     />
                   ))}
+                  <ThemeSwitch />
                 </ul>
               </div>
               <div className='hidden flex-row items-center justify-end gap-2 md:flex lg:gap-4'>
@@ -365,6 +367,7 @@ export default function WebsiteNavigationContent({
                   </Link>
                 )}
               </div>
+              <ThemeSwitch />
             </nav>
           </div>
         </div>

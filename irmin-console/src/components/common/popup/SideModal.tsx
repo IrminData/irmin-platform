@@ -56,8 +56,8 @@ export default function SideModal({
         <p className='-mr-4 flex items-center justify-center rounded-l-full py-2 pl-2 pr-6 text-xs text-gray-500 opacity-0 shadow transition-all group-hover:opacity-100'>
           {title}
         </p>
-        <p className='flex h-12 w-12 items-center justify-center rounded-full bg-irmin_green text-white transition-all group-hover:bg-irmin_green-600'>
-          <IoAdd size={30} />
+        <p className='flex h-10 w-10 items-center justify-center rounded-full bg-irmin_green text-white transition-all group-hover:bg-irmin_green-600'>
+          <IoAdd size={25} />
         </p>
       </button>
       {(isRealOpen || isAnimating) && (

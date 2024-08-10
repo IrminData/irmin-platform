@@ -150,6 +150,7 @@ const en = {
     links: {
       dashboards: 'Dashboards',
       repositories: 'Repositories',
+      query: 'Query',
       editor: 'Editor',
       workflows: 'Workflows',
       actions: 'Actions',
@@ -206,6 +207,12 @@ const en = {
       documentation: 'Documentation',
       workflows: 'Workflows',
       settings: 'Settings',
+    },
+    referenceRepository: {
+      clickOnATable: 'Select repository table to reference',
+      toReferenceTheTable: 'To reference the table',
+      fromTheRepository: 'from the repository',
+      inTheEditor: 'in the editor, use the following syntax:',
     },
   },
   workflow: {
@@ -323,17 +330,20 @@ const en = {
     hazAISubtitle:
       'Haz, your AI assistant, is here to lend a hand with SQL queries, scripts and more!',
     setupNewConnection: 'Setup new connection',
-    saveFile: 'Save file',
     actionResults: 'Action Results',
-    saveAction: 'Save action',
-    runAction: 'Run action',
+  },
+  query: {
+    queryResults: 'Query Results',
+    results: 'Results',
+    save: 'Save',
+    run: 'Run',
+    rowsReturnedIn: 'rows returned in',
     exportTable: 'export table (.csv)',
-    referenceRepository: {
-      clickOnATable: 'Select repository table to reference',
-      toReferenceTheTable: 'To reference the table',
-      fromTheRepository: 'from the repository',
-      inTheEditor: 'in the editor, use the following syntax:',
-    },
+    rowsPerPage: 'Rows per page',
+    rangeSeparator: 'of',
+    selectAllRows: 'All',
+    noResults: 'No results',
+    search: 'Search in results',
   },
   list: {
     name: 'Name',
