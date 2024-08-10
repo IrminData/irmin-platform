@@ -2382,6 +2382,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/react-virtual@npm:^3.0.0-beta.18":
+  version: 3.8.6
+  resolution: "@tanstack/react-virtual@npm:3.8.6"
+  dependencies:
+    "@tanstack/virtual-core": "npm:3.8.6"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: 10c0/e4a783b5dbcc711049d6722ef2e2d35066801b8366f4658f3dda9ce9170edde8d505010e348eaef0cda9196ba3469d98a17a896db7da886e3f2302a9f36584e2
+  languageName: node
+  linkType: hard
+
+"@tanstack/virtual-core@npm:3.8.6":
+  version: 3.8.6
+  resolution: "@tanstack/virtual-core@npm:3.8.6"
+  checksum: 10c0/d0f0d948a8536df35cdf56c300a36d5ed7a83dd59e8a02153d4a83821609bb75db1c4fb6580196f7c9bb6b91684a38ce4768cc109c6540c62f8aaeb521ce6264
+  languageName: node
+  linkType: hard
+
 "@trivago/prettier-plugin-sort-imports@npm:^4.3.0":
   version: 4.3.0
   resolution: "@trivago/prettier-plugin-sort-imports@npm:4.3.0"
@@ -3331,7 +3350,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"classnames@npm:^2.3.2":
+"classnames@npm:^2.3.1, classnames@npm:^2.3.2":
   version: 2.5.1
   resolution: "classnames@npm:2.5.1"
   checksum: 10c0/afff4f77e62cea2d79c39962980bf316bacb0d7c49e13a21adaadb9221e1c6b9d3cdb829d8bb1b23c406f4e740507f37e1dcf506f7e3b7113d17c5bab787aa69
@@ -4990,6 +5009,7 @@ __metadata:
     react: "npm:^18.3.1"
     react-chartjs-2: "npm:^5.2.0"
     react-data-table-component: "npm:^7.6.2"
+    react-datasheet-grid: "npm:^4.11.4"
     react-dom: "npm:^18.3.1"
     react-icons: "npm:^5.2.1"
     react-responsive: "npm:^10.0.0"
@@ -7093,6 +7113,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-datasheet-grid@npm:^4.11.4":
+  version: 4.11.4
+  resolution: "react-datasheet-grid@npm:4.11.4"
+  dependencies:
+    "@tanstack/react-virtual": "npm:^3.0.0-beta.18"
+    classnames: "npm:^2.3.1"
+    fast-deep-equal: "npm:^3.1.3"
+    react-resize-detector: "npm:^7.1.2"
+    throttle-debounce: "npm:^3.0.1"
+  peerDependencies:
+    react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
+  checksum: 10c0/341d5e73f771e2ba22603ebf1b2d0ec7e7265f52360970035da0af1e67d6e7459c4ac3248798efaa0a21a5b17406f62bbe978952c789314b4f8a168a1e1ce0a8
+  languageName: node
+  linkType: hard
+
 "react-devtools-inline@npm:4.4.0":
   version: 4.4.0
   resolution: "react-devtools-inline@npm:4.4.0"
@@ -7189,6 +7224,18 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/dcd523ada602bd0a839c2032cadf0b3e4af55ee85acefee3760976a9cceaa4606927801b093bbb8bf3c2989c71e048f5428c2c6eb9e6681762e86356833d039b
+  languageName: node
+  linkType: hard
+
+"react-resize-detector@npm:^7.1.2":
+  version: 7.1.2
+  resolution: "react-resize-detector@npm:7.1.2"
+  dependencies:
+    lodash: "npm:^4.17.21"
+  peerDependencies:
+    react: ^16.0.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0
+  checksum: 10c0/2285b0024bcc736c7d5e80279e819835a5e8bef0899778100d2434b1c4b10971e6ae253df073ca96a20cacc47b3c249bc675479e5fc4ec1f6652fcca7f48ec22
   languageName: node
   linkType: hard
 
@@ -8040,6 +8087,13 @@ __metadata:
   dependencies:
     any-promise: "npm:^1.0.0"
   checksum: 10c0/f375aeb2b05c100a456a30bc3ed07ef03a39cbdefe02e0403fb714b8c7e57eeaad1a2f5c4ecfb9ce554ce3db9c2b024eba144843cd9e344566d9fcee73b04767
+  languageName: node
+  linkType: hard
+
+"throttle-debounce@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "throttle-debounce@npm:3.0.1"
+  checksum: 10c0/c8e558479463b7ed8bac30d6b10cc87abd1c9fc64edfce2db4109be1a04acaef5d2d0557f49c1a3845ea07d9f79e6e0389b1b60db0a77c44e5b7a1216596f285
   languageName: node
   linkType: hard
 

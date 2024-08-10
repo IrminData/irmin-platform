@@ -1,14 +1,25 @@
 import React, { useCallback, useRef } from 'react';
 
-import { javascript } from '@codemirror/lang-javascript';
-import { python } from '@codemirror/lang-python';
-import { sql } from '@codemirror/lang-sql';
-import CodeMirror from '@uiw/react-codemirror';
-
 import { useLocale } from '@/context/LocaleContext';
 
 import { IrminFileType } from '@/types/api/Bucket';
 
+import CodeMirrorEditor from './CodeMirrorEditor';
+
+/**
+ * Code editor component for the Editor and Query tools
+ *
+ * Used to edit files in the Workspace's Bucket and run Irmin SQL queries on workspace data.
+ *
+ * @param props - The props for the component
+ * @param props.content - The content of the editor
+ * @param props.updateTabContent - The function to update the content of the editor
+ * @param props.language - The language of the editor
+ * @param props.editorHeight - The height of the editor
+ * @param props.setEditorHeight - The function to set the height of the editor
+ *
+ * @returns The CodeEditor component
+ */
 const CodeEditor = ({
   content,
   updateTabContent,
@@ -46,31 +57,13 @@ const CodeEditor = ({
 
   return (
     <div style={{ minHeight: editorHeight }} ref={editorRef} id='code-editor'>
-      {language === 'py' ? (
-        <CodeMirror
-          value={content}
-          height={editorHeight}
-          extensions={[python()]}
-          placeholder={dict.editor.writeYourPython}
-          onChange={(value) => updateTabContent(value)}
-        />
-      ) : language === 'js' ? (
-        <CodeMirror
-          value={content}
-          height={editorHeight}
-          extensions={[javascript()]}
-          placeholder={dict.editor.writeYourJS}
-          onChange={(value) => updateTabContent(value)}
-        />
-      ) : (
-        <CodeMirror
-          value={content}
-          height={editorHeight}
-          extensions={[sql()]}
-          placeholder={dict.editor.writeYourSQL}
-          onChange={(value) => updateTabContent(value)}
-        />
-      )}
+      <CodeMirrorEditor
+        language={language}
+        content={content}
+        editorHeight={editorHeight}
+        dict={dict}
+        updateTabContent={updateTabContent}
+      />
       <div
         className='resizer h-1 cursor-ns-resize bg-gray-200'
         onMouseDown={handleMouseDown}

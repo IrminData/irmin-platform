@@ -25,9 +25,9 @@ export default function EditorLayoutWrapper({
       className='flex h-full flex-row content-stretch items-stretch overflow-hidden'
     >
       <div
-        className={`absolute z-10 h-[calc(100vh-55px)] overflow-y-scroll border-r bg-gray-50 ${
+        className={`absolute z-10 h-full w-full overflow-y-scroll border-r bg-gray-50 ${
           !sidebarOpen ? 'max-w-10' : 'max-w-72'
-        } w-full lg:relative lg:max-w-72`}
+        } lg:static lg:min-w-72 lg:max-w-72`}
       >
         <button
           id='query-sidebar-toggle-mobile'
@@ -43,16 +43,18 @@ export default function EditorLayoutWrapper({
         </button>
         <div
           id='query-sidebar'
-          className={`h-full max-h-[calc(100vh-56px)] w-full transition-all lg:visible lg:ml-0 ${!sidebarOpen ? 'invisible -ml-72' : 'visible ml-0'}`}
+          className={`h-full max-h-full w-full transition-all lg:visible lg:ml-0 ${!sidebarOpen ? 'invisible -ml-72' : 'visible ml-0'}`}
         >
           <RepositoryTableReferenceList />
         </div>
       </div>
-      <div
-        className='ml-10 flex flex-1 flex-col bg-white lg:ml-0'
-        id='query-page-content'
-      >
-        {children}
+      <div className='ml-10 flex-1 flex-shrink lg:ml-0'>
+        <div
+          className='flex h-full w-full flex-col bg-white'
+          id='query-page-content'
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

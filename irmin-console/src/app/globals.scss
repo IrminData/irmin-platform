@@ -2,13 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Code editor */
-#code-editor {
-  .cm-editor.cm-focused {
-    outline: none;
-  }
-}
-
 /* Hide scrollbar visual */
 .scrollbar-hide {
   scrollbar-width: none; /* Firefox */
@@ -44,6 +37,35 @@ input[type='radio'] {
   -webkit-appearance: auto;
   -moz-appearance: auto;
   appearance: auto;
+}
+
+/* DataSheetGrid styles, https://react-datasheet-grid.netlify.app/docs/styling */
+.data-sheet-grid {
+  font-size: 12px;
+  --dsg-border-color: #e5e7eb;
+  --dsg-selection-border-color: #aec3b0;
+  --dsg-header-text-color: #444d51;
+  --dsg-header-active-text-color: #124559;
+  --dsg-cell-background-color: white;
+  --dsg-cell-disabled-background-color: white;
+  --dsg-corner-indicator-width: 10px;
+  .dsg-container {
+    height: 100% !important;
+    color: #01161e;
+  }
+  .dsg-input {
+    font-size: 12px;
+  }
+  .dsg-corner-indicator {
+    opacity: 0.5;
+  }
+}
+
+/* Code editor */
+#code-editor {
+  .cm-editor.cm-focused {
+    outline: none;
+  }
 }
 
 /* Markdown editor styles */

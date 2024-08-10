@@ -13,9 +13,6 @@ const Editor = dynamic(
   }
 );
 
-// This is what is imported by other components. Pre-initialised with plugins, and ready
-// to accept other props, including a ref.
-
 /**
  * MDX editor component
  *

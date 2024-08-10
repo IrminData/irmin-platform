@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
+import 'react-datasheet-grid/dist/style.css';
 
 import { DarkModeProvider } from '@/context/DarkModeContext';
 import { IAMProvider } from '@/context/IAMContext';

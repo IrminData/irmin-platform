@@ -1,9 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
-
-import { useTheme } from 'next-themes';
-import DataTable from 'react-data-table-component';
+import { useEffect, useState } from 'react';
 
 import { AiOutlineDownload, AiOutlineSave } from 'react-icons/ai';
 import { BsFileEarmarkRichtext } from 'react-icons/bs';
@@ -13,245 +10,14 @@ import { TbFileText, TbTable } from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
 import MDXEditor from '@/components/common/markdown-editor/MDXEditor';
+import AdvancedDatatable from '@/components/query/datatables/AdvancedDatatable';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import { downloadCSV } from '@/utils/csv';
 
 import { ActionWorkflow } from '@/types/api/Workflow';
-
-import Input from '../common/form/Input';
-
-/**
- * Placeholder data for the table
- */
-const placeholderData = [
-  {
-    name: 'John Doe',
-    age: 25,
-    city: 'New York',
-    country: 'USA',
-    email: 'johndoe@example.com',
-    jobTitle: 'Software Engineer',
-    company: 'TechCorp',
-  },
-  {
-    name: 'Jane Doe',
-    age: 26,
-    city: 'Toronto',
-    country: 'Canada',
-    email: 'janedoe@example.com',
-    jobTitle: 'Product Manager',
-    company: 'Innovatech',
-  },
-  {
-    name: 'John Smith',
-    age: 30,
-    city: 'London',
-    country: 'UK',
-    email: 'johnsmith@example.com',
-    jobTitle: 'Data Analyst',
-    company: 'DataSolve',
-  },
-  {
-    name: 'Jane Smith',
-    age: 22,
-    city: 'Paris',
-    country: 'France',
-    email: 'janesmith@example.com',
-    jobTitle: 'Graphic Designer',
-    company: 'DesignHub',
-  },
-  {
-    name: 'John Johnson',
-    age: 28,
-    city: 'Berlin',
-    country: 'Germany',
-    email: 'johnjohnson@example.com',
-    jobTitle: 'DevOps Engineer',
-    company: 'CloudBase',
-  },
-  {
-    name: 'Jane Johnson',
-    age: 29,
-    city: 'Tokyo',
-    country: 'Japan',
-    email: 'janejohnson@example.com',
-    jobTitle: 'UX Researcher',
-    company: 'UserFirst',
-  },
-  {
-    name: 'John Williams',
-    age: 27,
-    city: 'Sydney',
-    country: 'Australia',
-    email: 'johnwilliams@example.com',
-    jobTitle: 'Accountant',
-    company: 'FinancePro',
-  },
-  {
-    name: 'Jane Williams',
-    age: 24,
-    city: 'Cape Town',
-    country: 'South Africa',
-    email: 'janewilliams@example.com',
-    jobTitle: 'Marketing Specialist',
-    company: 'BrandMakers',
-  },
-  {
-    name: 'John Brown',
-    age: 23,
-    city: 'Rio de Janeiro',
-    country: 'Brazil',
-    email: 'johnbrown@example.com',
-    jobTitle: 'Sales Manager',
-    company: 'SalesForce',
-  },
-  {
-    name: 'Jane Brown',
-    age: 31,
-    city: 'Moscow',
-    country: 'Russia',
-    email: 'janebrown@example.com',
-    jobTitle: 'HR Coordinator',
-    company: 'PeopleOps',
-  },
-  {
-    name: 'John Davis',
-    age: 33,
-    city: 'Beijing',
-    country: 'China',
-    email: 'johndavis@example.com',
-    jobTitle: 'Business Analyst',
-    company: 'BizInsights',
-  },
-  {
-    name: 'Jane Davis',
-    age: 32,
-    city: 'New Delhi',
-    country: 'India',
-    email: 'janedavis@example.com',
-    jobTitle: 'Consultant',
-    company: 'AdvisoryCo',
-  },
-  {
-    name: 'John Miller',
-    age: 34,
-    city: 'Seoul',
-    country: 'South Korea',
-    email: 'johnmiller@example.com',
-    jobTitle: 'Project Manager',
-    company: 'PM Solutions',
-  },
-  {
-    name: 'Jane Miller',
-    age: 35,
-    city: 'Cairo',
-    country: 'Egypt',
-    email: 'janemiller@example.com',
-    jobTitle: 'Architect',
-    company: 'UrbanBuild',
-  },
-  {
-    name: 'John Wilson',
-    age: 36,
-    city: 'Cape Town',
-    country: 'South Africa',
-    email: 'johnwilson@example.com',
-    jobTitle: 'Research Scientist',
-    company: 'LabWorks',
-  },
-  {
-    name: 'Jane Wilson',
-    age: 37,
-    city: 'Lagos',
-    country: 'Nigeria',
-    email: 'janewilson@example.com',
-    jobTitle: 'Financial Analyst',
-    company: 'FinAdvisors',
-  },
-  {
-    name: 'John Moore',
-    age: 38,
-    city: 'Mexico City',
-    country: 'Mexico',
-    email: 'johnmoore@example.com',
-    jobTitle: 'Operations Manager',
-    company: 'GlobalOps',
-  },
-  {
-    name: 'Jane Moore',
-    age: 39,
-    city: 'Buenos Aires',
-    country: 'Argentina',
-    email: 'janemoore@example.com',
-    jobTitle: 'Content Strategist',
-    company: 'MediaHouse',
-  },
-  {
-    name: 'John Taylor',
-    age: 40,
-    city: 'Santiago',
-    country: 'Chile',
-    email: 'johntaylor@example.com',
-    jobTitle: 'Engineer',
-    company: 'BuildTech',
-  },
-  {
-    name: 'Jane Taylor',
-    age: 41,
-    city: 'Helsinki',
-    country: 'Finland',
-    email: 'janetaylor@example.com',
-    jobTitle: 'Legal Advisor',
-    company: 'LawFirm',
-  },
-];
-
-const placeholderColumns = [
-  {
-    name: 'Name',
-    sortable: true,
-    reorder: true,
-    selector: (e: (typeof placeholderData)[0]) => e.name,
-  },
-  {
-    name: 'Age',
-    sortable: true,
-    reorder: true,
-    selector: (e: (typeof placeholderData)[0]) => e.age,
-  },
-  {
-    name: 'City',
-    sortable: true,
-    reorder: true,
-    selector: (e: (typeof placeholderData)[0]) => e.city,
-  },
-  {
-    name: 'Country',
-    sortable: true,
-    reorder: true,
-    selector: (e: (typeof placeholderData)[0]) => e.country,
-  },
-  {
-    name: 'Email',
-    sortable: true,
-    reorder: true,
-    selector: (e: (typeof placeholderData)[0]) => e.email,
-  },
-  {
-    name: 'Job Title',
-    sortable: true,
-    reorder: true,
-    selector: (e: (typeof placeholderData)[0]) => e.jobTitle,
-  },
-  {
-    name: 'Company',
-    sortable: true,
-    reorder: true,
-    selector: (e: (typeof placeholderData)[0]) => e.company,
-  },
-];
+import { placeholderData } from '@/types/examples/datatableData';
 
 /**
  * Query Results component
@@ -265,7 +31,6 @@ const QueryResults = ({
   title: string;
   actionWorkflow?: ActionWorkflow;
 }) => {
-  const theme = useTheme();
   const { dict } = useLocale();
 
   const [activeTab, setActiveTab] = useState('data');
@@ -277,37 +42,36 @@ const QueryResults = ({
     'mdx'
   );
 
-  const [filterText, setFilterText] = React.useState('');
-  //   const [resetPaginationToggle, setResetPaginationToggle] =
-  //     React.useState(false);
+  const [filterText, setFilterText] = useState('');
+  const [filteredItems, setFilteredItems] = useState(placeholderData);
 
-  const filteredItems = placeholderData.filter((item) => {
-    return Object.keys(item).some((key) => {
-      const value = key in item ? item[key as keyof typeof item] : undefined;
-      return (
-        value &&
-        value.toString().toLowerCase().includes(filterText.toLowerCase())
-      );
-    });
-  });
+  // Update the filtered items when the filter text changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (filterText && filterText.length > 0) {
+        const newData = placeholderData.filter((item) => {
+          return Object.keys(item).some((key) => {
+            const value =
+              key in item ? item[key as keyof typeof item] : undefined;
+            return (
+              value &&
+              value.toString().toLowerCase().includes(filterText.toLowerCase())
+            );
+          });
+        });
+        setFilteredItems(newData);
+      } else {
+        setFilteredItems(placeholderData);
+      }
+    }, 300);
 
-  //   const handleClear = () => {
-  //     if (filterText) {
-  //       setResetPaginationToggle(!resetPaginationToggle);
-  //       setFilterText('');
-  //     }
-  //   };
-  const handleRowsSelected = (selected: {
-    allSelected: boolean;
-    selectedCount: number;
-    selectedRows: (typeof placeholderData)[0][];
-  }) => {
-    console.log(selected);
-    // TODO: Do something with the selected rows
-  };
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [filterText]);
 
   return (
-    <>
+    <div className='flex flex-1 flex-col overflow-hidden' id='query-results'>
       {/* Tab Buttons */}
       <div className='mb-0 mt-4 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b'>
         <div
@@ -406,11 +170,9 @@ const QueryResults = ({
               >
                 {dict.query.exportTable}
               </Button>
-              <Input
-                variant='underline'
-                colorScheme='gray'
-                size='sm'
-                className='w-48'
+              <input
+                type='text'
+                className='h-8 w-48 rounded-md px-2 py-1 text-xs shadow focus:outline-none'
                 placeholder={dict.query.search}
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
@@ -418,34 +180,14 @@ const QueryResults = ({
             </div>
           </div>
           {/* Table */}
-          <div className='relative flex h-0 flex-grow overflow-scroll'>
-            <div className='absolute h-full w-full'>
-              <DataTable
-                onSelectedRowsChange={handleRowsSelected}
-                columns={placeholderColumns}
-                data={filteredItems}
-                selectableRows
-                // dense
-                pagination
-                paginationPerPage={13}
-                paginationComponentOptions={{
-                  rowsPerPageText: dict.query.rowsPerPage,
-                  rangeSeparatorText: dict.query.rangeSeparator,
-                  selectAllRowsItem: true,
-                  selectAllRowsItemText: dict.query.selectAllRows,
-                }}
-                // paginationResetDefaultPage={resetPaginationToggle}
-                persistTableHead
-                theme={theme.theme === 'dark' ? 'dark' : 'default'}
-                customStyles={{
-                  pagination: {
-                    style: {
-                      justifyContent: 'flex-start',
-                    },
-                  },
-                }}
-              />
-            </div>
+          <div className='flex h-0 flex-1 overflow-hidden'>
+            {!filteredItems || filteredItems.length === 0 ? (
+              <div className='w-full px-4 py-12 text-center text-gray-400'>
+                {dict.query.noResults}
+              </div>
+            ) : (
+              <AdvancedDatatable items={filteredItems} />
+            )}
           </div>
         </>
       )}
@@ -474,7 +216,7 @@ const QueryResults = ({
           )}
         </>
       )}
-    </>
+    </div>
   );
 };
 
