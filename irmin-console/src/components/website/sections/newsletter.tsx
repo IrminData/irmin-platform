@@ -3,6 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { useTheme } from 'next-themes';
+
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
 
@@ -29,13 +31,14 @@ export default function WebsiteNewsletterSection({
 }: {
   section: NewsletterSection;
 }) {
+  const { theme } = useTheme();
   const { dict } = useLocale();
   return (
     <section
       id='newsletter-section'
       className='relative bg-white py-12'
       style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
         backgroundPosition: 'center',
       }}
     >

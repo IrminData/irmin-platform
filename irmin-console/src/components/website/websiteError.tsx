@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 
+import { useTheme } from 'next-themes';
+
 import Button from '@/components/common/button/Button';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -18,13 +20,14 @@ export default function WebsiteError({
   error?: Error & { digest?: string };
   reset?: () => void;
 }) {
+  const { theme } = useTheme();
   const { dict } = useLocale();
   return (
     <>
       <section
         className='relative bg-white'
         style={{
-          backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+          backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
           backgroundPosition: 'center',
         }}
       >
@@ -55,7 +58,7 @@ export default function WebsiteError({
                     ? dict.misc.pageNotFound
                     : dict.misc.somethingWentWrong}
                 </h2>
-                <p className='mb-6 text-lg text-irmin_black md:text-xl'>
+                <p className='mb-6 text-xs text-irmin_black md:text-sm dark:text-gray-300'>
                   {error?.message}
                 </p>
                 <div className='flex flex-wrap gap-2'>

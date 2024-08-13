@@ -5,9 +5,19 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { useTheme } from 'next-themes';
+
 import { useLocale } from '@/context/LocaleContext';
 
 import { cn } from '@/utils/tw';
+
+type ButtonColorScheme =
+  | 'primary'
+  | 'secondary'
+  | 'tertiary'
+  | 'gray'
+  | 'black'
+  | 'light';
 
 /**
  * Universal button component, used across the application
@@ -47,13 +57,7 @@ const Button = ({
   type = 'button',
 }: {
   variant?: 'solid' | 'outline' | 'gradient' | 'icon' | 'link';
-  colorScheme?:
-    | 'primary'
-    | 'secondary'
-    | 'tertiary'
-    | 'gray'
-    | 'black'
-    | 'light';
+  colorScheme?: ButtonColorScheme;
   size?: 'sm' | 'md' | 'lg';
   href?: string;
   target?: '_blank' | '_self' | '_parent' | '_top' | 'framename';
@@ -69,8 +73,31 @@ const Button = ({
   ariaLabel?: string;
   type?: 'button' | 'submit' | 'reset';
 }) => {
+  const { theme } = useTheme();
   const { dict } = useLocale();
   const router = useRouter();
+
+  let newColorScheme: ButtonColorScheme;
+  if (theme === 'dark') {
+    // Color schemes are defined for light theme
+    // If the user is using dark mode, invert colorScheme
+    switch (colorScheme) {
+      case 'primary':
+        newColorScheme = 'secondary';
+      case 'secondary':
+        newColorScheme = 'primary';
+      case 'black':
+        newColorScheme = 'light';
+      case 'light':
+        newColorScheme = 'black';
+      case 'tertiary':
+      case 'gray':
+      default:
+        newColorScheme = colorScheme ?? 'secondary';
+    }
+  } else {
+    newColorScheme = colorScheme ?? 'primary';
+  }
 
   const baseClasses =
     'inline-flex items-center justify-center text-center rounded-lg transition-all outline-none hover:opacity-60 duration-300 hover:backdrop-blur active:shadow-md';
@@ -149,8 +176,8 @@ const Button = ({
 
   let combinedClasses = `${baseClasses} ${sizeClasses[size]} ${disabled ? 'opacity-50 cursor-not-allowed ' : ''} ${className}`;
   if (variant) {
-    if (colorScheme) {
-      combinedClasses = `${variantClasses[variant][colorScheme]} ${combinedClasses}`;
+    if (newColorScheme) {
+      combinedClasses = `${variantClasses[variant][newColorScheme]} ${combinedClasses}`;
     } else {
       combinedClasses = `${variantClasses[variant].primary} ${combinedClasses}`;
     }

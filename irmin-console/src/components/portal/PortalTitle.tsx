@@ -21,16 +21,23 @@ const PortalTitle: React.FC<{
 }> = ({ title, showLogo }) => {
   return (
     <div
-      className={`px-4 pb-8 pt-6 text-lg font-medium text-irmin_black text-opacity-80 md:pb-8 md:pt-8 md:text-3xl`}
+      className={`px-4 pb-8 pt-6 text-lg font-medium text-irmin_black text-opacity-80 md:pb-8 md:pt-8 md:text-3xl dark:text-white`}
     >
       {showLogo && (
-        <Image
-          src='/irmin-logo.svg'
-          alt='Irmin'
-          width={80}
-          height={20}
-          className={`h-8 md:hidden`}
-        />
+        <>
+          <Image
+            className='block h-8 w-auto md:hidden dark:hidden'
+            src='/irmin-logo.svg'
+            alt='Irmin logo'
+            width={100}
+            height={100}
+          />
+          <Image
+            className='hidden h-8 w-auto md:hidden dark:block dark:md:hidden'
+            src='/irmin-logo-light.svg'
+            alt='Irmin logo'
+          />
+        </>
       )}
       <h1>{title}</h1>
     </div>

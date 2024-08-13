@@ -1,3 +1,5 @@
+import { useTheme } from 'next-themes';
+
 import { NumbersSection } from '@/types/website/Wordpress';
 
 /**
@@ -16,12 +18,13 @@ export default function WebsiteNumbersSection({
 }: {
   section: NumbersSection;
 }) {
+  const { theme } = useTheme();
   return (
     <section
       id='numbers-section'
       className='bg-white py-12'
       style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
         backgroundPosition: 'center',
       }}
     >

@@ -41,20 +41,20 @@ const NavLink = ({
   return (
     <li className='group relative' id={linkKey}>
       <Link
-        className={`flex h-full min-h-14 items-center overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-light transition-all hover:bg-white group-hover:bg-white md:text-sm xl:text-base ${isActive ? 'text-irmin_green underline' : 'text-irmin_black'}`}
+        className={`flex h-full min-h-14 items-center overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-light transition-all hover:bg-white group-hover:bg-white lg:text-sm dark:hover:bg-gray-800 dark:group-hover:bg-gray-800 ${isActive ? 'text-irmin_green underline dark:text-irmin_light_green' : 'text-irmin_black dark:text-gray-200'}`}
         aria-label={link.label}
         href={link.href}
       >
         {link.label}
       </Link>
       {link.subpages.length > 0 && (
-        <ul className='absolute left-0 -mt-1 hidden w-44 overflow-hidden rounded bg-white py-4 group-hover:block'>
+        <ul className='absolute left-0 -mt-1 hidden w-44 overflow-hidden rounded bg-white py-4 group-hover:block dark:bg-black'>
           {link.subpages.map((subpage, idx) => (
             <li
               key={`website-desktop-navigation-link-sublink-${idx}-${linkKey}`}
             >
               <Link
-                className={`block overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-light transition-all hover:bg-gray-200 lg:text-sm ${isActive ? 'text-irmin_green underline' : 'text-irmin_black'}`}
+                className={`block overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-light transition-all hover:bg-gray-200 lg:text-sm dark:hover:bg-gray-800 ${isActive ? 'text-irmin_green underline dark:text-irmin_black' : 'text-irmin_black dark:text-gray-200'}`}
                 aria-label={subpage.label}
                 href={subpage.href}
               >
@@ -95,7 +95,7 @@ const MobileNavLink = ({
   return (
     <li className='relative' id={linkKey}>
       <div
-        className={`block w-full ${!isOpen && 'border-b'} text-nowrap rounded border-gray-200 px-4 py-2 pb-4 text-base font-light ${isActive ? 'text-irmin_green' : 'text-irmin_black'} flex items-center justify-between`}
+        className={`block w-full ${!isOpen && 'border-b'} flex items-center justify-between text-nowrap rounded border-gray-200 px-4 py-2 pb-4 text-base font-light dark:border-gray-800 ${isActive ? 'text-irmin_green underline dark:text-irmin_black' : 'text-irmin_black dark:text-gray-200'}`}
         aria-label={link.label}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -113,7 +113,7 @@ const MobileNavLink = ({
               key={`website-mobile-navigation-link-sublink-${idx}-${linkKey}`}
             >
               <Link
-                className='block text-nowrap rounded px-2 py-2 text-base font-light text-irmin_black transition-all hover:bg-gray-200'
+                className='block text-nowrap rounded px-2 py-2 text-base font-light transition-all hover:bg-gray-200 dark:hover:bg-gray-800'
                 aria-label={subpage.label}
                 href={subpage.href}
                 onClick={closeMenu}
@@ -174,15 +174,22 @@ export default function WebsiteNavigationContent({
 
   return (
     <>
-      <div className='fixed z-40 max-h-[80px] w-full bg-white bg-opacity-80 backdrop-blur-md'>
+      <div className='fixed z-40 max-h-[80px] w-full bg-white bg-opacity-70 backdrop-blur-md dark:bg-irmin_black dark:bg-opacity-70 dark:backdrop-blur-md'>
         <div className='container mx-auto max-w-7xl px-2 md:px-4 xl:px-0'>
           <nav className='flex justify-between'>
             <div className='flex w-full items-center justify-between gap-2'>
               <div className='flex items-center justify-start gap-6'>
                 <Link href='/' className='py-4' aria-label='Go to home page'>
                   <Image
-                    className='h-6 min-h-4 w-auto'
+                    className='h-6 min-h-4 w-auto dark:hidden'
                     src='/irmin-logo.svg'
+                    alt='Irmin logo'
+                    width={100}
+                    height={100}
+                  />
+                  <Image
+                    className='hidden h-6 min-h-4 w-auto dark:block'
+                    src='/irmin-logo-light.svg'
                     alt='Irmin logo'
                     width={100}
                     height={100}
@@ -198,6 +205,9 @@ export default function WebsiteNavigationContent({
                   ))}
                   <ThemeSwitch />
                 </ul>
+              </div>
+              <div className='flex items-center justify-end pr-14 md:hidden'>
+                <ThemeSwitch />
               </div>
               <div className='hidden flex-row items-center justify-end gap-2 md:flex lg:gap-4'>
                 {!isLoading &&
@@ -221,7 +231,7 @@ export default function WebsiteNavigationContent({
                             className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
                           />
                         )}
-                        <p className='text-xs font-normal text-irmin_black lg:text-sm'>
+                        <p className='text-xs font-normal lg:text-sm'>
                           {profile.name ?? ''}
                         </p>
                       </Link>
@@ -273,10 +283,10 @@ export default function WebsiteNavigationContent({
       {/* Mobile navigation */}
       {navbarOpen && (
         <div
-          className={`fixed right-0 top-0 z-40 h-full w-full bg-white bg-opacity-10 backdrop-blur-sm`}
+          className={`fixed right-0 top-0 z-40 h-full w-full bg-white bg-opacity-10 backdrop-blur-sm dark:bg-black dark:bg-opacity-10 dark:backdrop-blur-sm`}
         >
           <div
-            className={`fixed bottom-0 right-0 top-0 w-full max-w-full border-l border-gray-300 bg-white sm:max-w-sm ${animate} transition-all duration-300`}
+            className={`fixed bottom-0 right-0 top-0 w-full max-w-full border-l border-gray-300 bg-white sm:max-w-sm dark:border-gray-800 dark:bg-black ${animate} transition-all duration-300`}
           >
             <nav className='relative flex h-full flex-col justify-start overflow-y-scroll px-4 pb-8 pt-24'>
               <Link
@@ -285,8 +295,15 @@ export default function WebsiteNavigationContent({
                 aria-label='Go to home page'
               >
                 <Image
-                  className='mx-auto h-8'
+                  className='mx-auto h-8 dark:hidden'
                   src='/irmin-logo.svg'
+                  alt='Irmin logo'
+                  width={150}
+                  height={50}
+                />
+                <Image
+                  className='mx-auto hidden h-8 dark:block'
+                  src='/irmin-logo-light.svg'
                   alt='Irmin logo'
                   width={150}
                   height={50}
@@ -361,13 +378,12 @@ export default function WebsiteNavigationContent({
                         className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
                       />
                     )}
-                    <p className='text-xs font-normal text-irmin_black lg:text-sm'>
+                    <p className='text-xs font-normal lg:text-sm'>
                       {profile.name ?? ''}
                     </p>
                   </Link>
                 )}
               </div>
-              <ThemeSwitch />
             </nav>
           </div>
         </div>

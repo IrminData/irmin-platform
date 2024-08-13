@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 
+import { useTheme } from 'next-themes';
+
 import Button from '@/components/common/button/Button';
 import DynamicFaIcon from '@/components/common/DynamicFaIcon';
 import Input from '@/components/common/form/Input';
@@ -32,13 +34,14 @@ export default function WebsiteContactSection({
 }: {
   section: ContactSection;
 }) {
+  const { theme } = useTheme();
   const { dict } = useLocale();
   return (
     <>
       <section
         className='bg-white pb-16'
         style={{
-          backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+          backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
           backgroundPosition: 'center',
         }}
       >

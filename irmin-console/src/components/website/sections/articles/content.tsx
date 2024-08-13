@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { useTheme } from 'next-themes';
+
 import { FaSearch } from 'react-icons/fa';
 
 import Input from '@/components/common/form/Input';
@@ -36,6 +38,7 @@ export default function WebsiteArticlesSectionContent({
   categories: WebsiteArticleCategory[];
   articles: WebsiteArticle[];
 }) {
+  const { theme } = useTheme();
   const { dict, locale } = useLocale();
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [searchFilter, setSearchFilter] = useState<string>('');
@@ -61,7 +64,7 @@ export default function WebsiteArticlesSectionContent({
     <section
       className='bg-white py-12'
       style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'left top',
       }}

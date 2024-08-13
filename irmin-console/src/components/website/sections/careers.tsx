@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { useTheme } from 'next-themes';
+
 import { FaSearch } from 'react-icons/fa';
 import { IoInformation, IoLocationOutline } from 'react-icons/io5';
 
@@ -31,6 +33,7 @@ export default function WebsiteCareersSection({
 }: {
   section: CareersSection;
 }) {
+  const { theme } = useTheme();
   const { dict } = useLocale();
 
   const [filteredPositions, setFilteredPositions] = useState<
@@ -69,7 +72,7 @@ export default function WebsiteCareersSection({
       id='careers-section'
       className='bg-white py-12'
       style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
         backgroundPosition: 'center',
       }}
     >

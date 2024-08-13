@@ -1,6 +1,7 @@
 import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
+import { useTheme } from 'next-themes';
 
 import Button from '@/components/common/button/Button';
 import DynamicFaIcon from '@/components/common/DynamicFaIcon';
@@ -26,6 +27,7 @@ export default async function WebsiteTeamSection({
 }: {
   section: TeamSection;
 }) {
+  const { theme } = useTheme();
   const wordpress = WordPress.getInstance();
 
   const people: {
@@ -53,7 +55,7 @@ export default async function WebsiteTeamSection({
       id='team-section'
       className='bg-white py-12'
       style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
         backgroundPosition: 'center',
       }}
     >

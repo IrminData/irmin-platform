@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 
+import { useTheme } from 'next-themes';
+
 import { useLocale } from '@/context/LocaleContext';
 
 import { WebsiteArticleCategory } from '@/types/website/WebsiteContent';
@@ -29,6 +31,7 @@ export default function Post({
   categories: WebsiteArticleCategory[];
   image: string;
 }) {
+  const { theme } = useTheme();
   const { locale } = useLocale();
   const wpURL =
     process.env.NEXT_PUBLIC_WORDPRESS_URL ?? 'https://cms.irmin.dev';
@@ -37,7 +40,7 @@ export default function Post({
       id='post-post-section'
       className='bg-white py-12'
       style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
         backgroundPosition: 'center top',
       }}
     >

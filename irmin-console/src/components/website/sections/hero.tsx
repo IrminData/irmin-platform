@@ -1,6 +1,9 @@
+'use client';
+
 import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
+import { useTheme } from 'next-themes';
 
 import Button from '@/components/common/button/Button';
 import DynamicFaIcon from '@/components/common/DynamicFaIcon';
@@ -29,6 +32,7 @@ export default async function WebsiteHeroSection({
 }: {
   section: HeroSection;
 }) {
+  const { theme } = useTheme();
   const wordpress = WordPress.getInstance();
   const videoPlaceholder =
     typeof section.video_placeholder === 'number'
@@ -47,7 +51,7 @@ export default async function WebsiteHeroSection({
       <div
         className='relative overflow-hidden bg-white'
         style={{
-          backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+          backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
           backgroundPosition: 'center',
         }}
       >

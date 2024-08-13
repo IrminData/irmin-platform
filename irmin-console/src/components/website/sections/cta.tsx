@@ -1,6 +1,7 @@
 import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
+import { useTheme } from 'next-themes';
 
 import Button from '@/components/common/button/Button';
 import DynamicFaIcon from '@/components/common/DynamicFaIcon';
@@ -25,6 +26,7 @@ export default async function WebsiteCTASection({
 }: {
   section: CTASection;
 }) {
+  const { theme } = useTheme();
   const wordpress = WordPress.getInstance();
 
   const image =
@@ -39,7 +41,7 @@ export default async function WebsiteCTASection({
       id='cta-section'
       className='overflow-hidden bg-white py-12'
       style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
         backgroundPosition: 'center',
       }}
     >

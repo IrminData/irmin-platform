@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 
+import { useTheme } from 'next-themes';
+
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
 
@@ -17,6 +19,7 @@ import { useLocale } from '@/context/LocaleContext';
  * It uses the {@link useIAM} hook to interact with the user's identity and APIs.
  */
 const SignInSection = () => {
+  const { theme } = useTheme();
   const { dict } = useLocale();
   const { login } = useIAM();
 
@@ -39,7 +42,7 @@ const SignInSection = () => {
     <section
       className='relative bg-white py-16 md:py-28'
       style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
         backgroundPosition: 'center',
       }}
     >

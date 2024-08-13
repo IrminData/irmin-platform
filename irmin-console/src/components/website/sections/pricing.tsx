@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import Image from 'next/image';
 
+import { useTheme } from 'next-themes';
+
 import Button from '@/components/common/button/Button';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -31,6 +33,7 @@ export default function WebsitePricingSection({
 }: {
   section: PriceSection;
 }) {
+  const { theme } = useTheme();
   const { dict } = useLocale();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>(
     'monthly'
@@ -45,7 +48,7 @@ export default function WebsitePricingSection({
       id='pricing-section'
       className='bg-white py-12'
       style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
         backgroundPosition: 'center',
       }}
     >

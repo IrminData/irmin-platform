@@ -6,6 +6,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
+import { useTheme } from 'next-themes';
+
 import { TbChevronLeft, TbChevronRight, TbSearch } from 'react-icons/tb';
 
 import AssistantPopup from '@/components/assistant/AssistantPopup';
@@ -36,6 +38,7 @@ import { useBreakpoint } from '@/utils/tw';
 export default function PortalWrapper({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const { theme } = useTheme();
   const { dict } = useLocale();
   const { workspace: workspaceSlug } = useParams();
 
@@ -269,7 +272,7 @@ export default function PortalWrapper({
             id='portal-content'
             className={`relative flex-grow overflow-y-scroll bg-neutral-50 bg-center`}
             style={{
-              backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+              backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
             }}
           >
             {/* Portal content */}

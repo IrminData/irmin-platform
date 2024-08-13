@@ -1,3 +1,5 @@
+import { useTheme } from 'next-themes';
+
 import Button from '@/components/common/button/Button';
 import DynamicFaIcon from '@/components/common/DynamicFaIcon';
 
@@ -21,12 +23,13 @@ export default function WebsiteCTADarkSection({
 }: {
   section: CTADarkSection;
 }) {
+  const { theme } = useTheme();
   return (
     <section
       id='cta-dark-section'
       className='bg-white py-12'
       style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
+        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
         backgroundPosition: 'center',
       }}
     >
@@ -34,7 +37,7 @@ export default function WebsiteCTADarkSection({
         <div
           className='relative -mb-40 overflow-hidden rounded-xl bg-irmin_black px-4 py-16 md:px-8 lg:px-16'
           style={{
-            backgroundImage: 'url("/ui-assets/elements/pattern-dark.svg")',
+            backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-dark' : 'pattern-white'}.svg")`,
             backgroundPosition: 'center',
           }}
         >
