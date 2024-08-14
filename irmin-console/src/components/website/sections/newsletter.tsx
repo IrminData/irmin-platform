@@ -3,10 +3,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { useTheme } from 'next-themes';
-
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -31,17 +30,9 @@ export default function WebsiteNewsletterSection({
 }: {
   section: NewsletterSection;
 }) {
-  const { theme } = useTheme();
   const { dict } = useLocale();
   return (
-    <section
-      id='newsletter-section'
-      className='relative bg-white py-12'
-      style={{
-        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
-        backgroundPosition: 'center',
-      }}
-    >
+    <WebsiteSectionWrapper id='website-newsletter-section'>
       <Image
         className='absolute left-6 top-6 w-24 md:w-auto'
         src='/ui-assets/elements/dots3-violet.svg'
@@ -97,6 +88,6 @@ export default function WebsiteNewsletterSection({
           </div>
         </div>
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }

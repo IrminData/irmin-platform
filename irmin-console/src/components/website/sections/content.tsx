@@ -1,9 +1,9 @@
 import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
-import { useTheme } from 'next-themes';
 
 import DynamicFaIcon from '@/components/common/DynamicFaIcon';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { ContentSection } from '@/types/website/Wordpress';
 
@@ -27,7 +27,6 @@ export default async function WebsiteContentSection({
 }: {
   section: ContentSection;
 }) {
-  const { theme } = useTheme();
   const wordpress = WordPress.getInstance();
 
   const image =
@@ -38,14 +37,7 @@ export default async function WebsiteContentSection({
       : section.main_image;
 
   return (
-    <section
-      id='website-content-section'
-      className='relative overflow-hidden bg-white py-12'
-      style={{
-        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
-        backgroundPosition: 'center',
-      }}
-    >
+    <WebsiteSectionWrapper id='website-content-section'>
       <div className='container mx-auto mb-16 flex w-full max-w-7xl flex-col items-start gap-4 px-4 md:mb-0 md:flex-row'>
         <div
           className={`max-w-xl md:w-1/2 ${section.image_first ? 'order-2' : 'order-1'}`}
@@ -111,6 +103,6 @@ export default async function WebsiteContentSection({
           />
         </div>
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }

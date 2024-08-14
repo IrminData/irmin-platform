@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from 'react';
 
-import { useTheme } from 'next-themes';
-
 import { FaSearch } from 'react-icons/fa';
 import { IoInformation, IoLocationOutline } from 'react-icons/io5';
 
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -33,7 +32,6 @@ export default function WebsiteCareersSection({
 }: {
   section: CareersSection;
 }) {
-  const { theme } = useTheme();
   const { dict } = useLocale();
 
   const [filteredPositions, setFilteredPositions] = useState<
@@ -68,14 +66,7 @@ export default function WebsiteCareersSection({
     .filter((value, index, self) => self.indexOf(value) === index);
 
   return (
-    <section
-      id='careers-section'
-      className='bg-white py-12'
-      style={{
-        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
-        backgroundPosition: 'center',
-      }}
-    >
+    <WebsiteSectionWrapper id='careers-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='mx-auto mb-8 max-w-4xl text-center'>
           <span className='mb-4 inline-block rounded-full bg-irmin_green px-2 py-px text-xs font-medium uppercase leading-5 text-white shadow-sm'>
@@ -205,6 +196,6 @@ export default function WebsiteCareersSection({
           </div>
         ))}
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }

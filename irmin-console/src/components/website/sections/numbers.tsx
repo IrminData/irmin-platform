@@ -1,4 +1,4 @@
-import { useTheme } from 'next-themes';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { NumbersSection } from '@/types/website/Wordpress';
 
@@ -18,16 +18,8 @@ export default function WebsiteNumbersSection({
 }: {
   section: NumbersSection;
 }) {
-  const { theme } = useTheme();
   return (
-    <section
-      id='numbers-section'
-      className='bg-white py-12'
-      style={{
-        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
-        backgroundPosition: 'center',
-      }}
-    >
+    <WebsiteSectionWrapper id='website-numbers-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='text-center'>
           <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-light uppercase leading-5 text-white'>
@@ -56,6 +48,6 @@ export default function WebsiteNumbersSection({
           </div>
         </div>
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }

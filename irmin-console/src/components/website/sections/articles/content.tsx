@@ -5,11 +5,10 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { useTheme } from 'next-themes';
-
 import { FaSearch } from 'react-icons/fa';
 
 import Input from '@/components/common/form/Input';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -38,7 +37,6 @@ export default function WebsiteArticlesSectionContent({
   categories: WebsiteArticleCategory[];
   articles: WebsiteArticle[];
 }) {
-  const { theme } = useTheme();
   const { dict, locale } = useLocale();
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [searchFilter, setSearchFilter] = useState<string>('');
@@ -61,14 +59,7 @@ export default function WebsiteArticlesSectionContent({
   }, [categoryFilter, searchFilter, articles]);
 
   return (
-    <section
-      className='bg-white py-12'
-      style={{
-        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'left top',
-      }}
-    >
+    <WebsiteSectionWrapper id='website-article-content-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='mx-auto mb-8 text-center md:mb-16 md:max-w-5xl'>
           <span className='mb-4 inline-block rounded-full bg-irmin_green px-2 py-px text-xs font-medium uppercase leading-5 text-white shadow-sm'>
@@ -165,6 +156,6 @@ export default function WebsiteArticlesSectionContent({
           ))}
         </div>
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }

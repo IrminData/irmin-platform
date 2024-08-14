@@ -4,9 +4,8 @@ import { useState } from 'react';
 
 import Image from 'next/image';
 
-import { useTheme } from 'next-themes';
-
 import Button from '@/components/common/button/Button';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -33,7 +32,6 @@ export default function WebsitePricingSection({
 }: {
   section: PriceSection;
 }) {
-  const { theme } = useTheme();
   const { dict } = useLocale();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>(
     'monthly'
@@ -44,14 +42,7 @@ export default function WebsitePricingSection({
   };
 
   return (
-    <section
-      id='pricing-section'
-      className='bg-white py-12'
-      style={{
-        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
-        backgroundPosition: 'center',
-      }}
-    >
+    <WebsiteSectionWrapper id='website-pricing-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='text-center'>
           <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-light uppercase leading-5 text-white shadow-sm'>
@@ -163,6 +154,6 @@ export default function WebsitePricingSection({
           ))}
         </div>
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }
