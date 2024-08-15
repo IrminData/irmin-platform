@@ -2,8 +2,6 @@
 
 import React from 'react';
 
-import { useTheme } from 'next-themes';
-
 import { cn } from '@/utils/tw';
 
 /**
@@ -50,24 +48,6 @@ const Input: React.FC<{
   maxLength = 100,
   longtext,
 }) => {
-  const { theme } = useTheme();
-
-  let newColorScheme = colorScheme;
-  if (theme === 'dark') {
-    // Color schemes are defined for light theme
-    // If the user is using dark mode, invert colorScheme
-    switch (colorScheme) {
-      case 'primary':
-        newColorScheme = 'secondary';
-      case 'secondary':
-        newColorScheme = 'primary';
-      case 'black':
-      case 'tertiary':
-      case 'gray':
-      default:
-    }
-  }
-
   const baseClasses =
     'relative inline-flex items-center justify-center rounded-lg transition-all outline-none border-opacity-60';
   const variantClasses = {
@@ -114,8 +94,8 @@ const Input: React.FC<{
 
   let combinedClasses = `${baseClasses} ${sizeClasses[size]} ${icon ? 'min-w-32 ' : ''}${disabled ? 'opacity-50 cursor-not-allowed ' : ''} ${className}`;
   if (variant) {
-    if (newColorScheme) {
-      combinedClasses = `${variantClasses[variant][newColorScheme]} ${combinedClasses}`;
+    if (colorScheme) {
+      combinedClasses = `${variantClasses[variant][colorScheme]} ${combinedClasses}`;
     } else {
       combinedClasses = `${variantClasses[variant].primary} ${combinedClasses}`;
     }

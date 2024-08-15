@@ -51,12 +51,9 @@ export default function PortalWrapper({
   const foldMenu = isLargeScreen ? isMenuFolded : false;
 
   return (
-    <>
+    <div className='contents' id='portal-wrapper'>
       {/* Portal wrapper structure */}
-      <div
-        className='flex w-screen flex-row items-start justify-start gap-0'
-        id='portal-wrapper'
-      >
+      <div className='flex w-screen flex-row items-start justify-start gap-0'>
         {/* Portal navigation sidebar */}
         <div
           id='portal-sidebar-wrapper'
@@ -270,12 +267,8 @@ export default function PortalWrapper({
           {/* Portal content */}
           <div
             id='portal-content'
-            className={`relative flex-grow overflow-y-scroll bg-neutral-50 bg-center`}
-            style={{
-              backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
-            }}
+            className='pattern-bg relative overflow-y-scroll bg-white bg-contain bg-center bg-no-repeat dark:bg-irmin_black'
           >
-            {/* Portal content */}
             {children}
           </div>
         </div>
@@ -316,6 +309,6 @@ export default function PortalWrapper({
       <div id='portal-assistant-popup'>
         <AssistantPopup />
       </div>
-    </>
+    </div>
   );
 }

@@ -49,19 +49,21 @@ export default async function WebsiteHeroSection({
     <WebsiteSectionWrapper id='website-hero-section'>
       <div className='container mx-auto flex min-h-[60vh] max-w-7xl items-end justify-center px-4 pb-12 lg:pb-24'>
         <div className='w-full max-w-3xl text-center'>
-          <h1 className='mb-6 text-3xl font-bold leading-tight tracking-tighter md:text-4xl lg:text-6xl'>
+          <h1 className='mb-6 text-4xl font-bold leading-tight tracking-tighter md:text-6xl'>
             {section.title_parts.map((titlePart, index) => (
               <span
                 key={`title-part-${index}`}
                 className={`${
-                  !titlePart.green ? 'text-irmin_black' : 'text-irmin_green'
+                  !titlePart.green
+                    ? 'text-irmin_black dark:text-gray-300'
+                    : 'text-irmin_green'
                 }`}
               >
                 {titlePart.title}
               </span>
             ))}
           </h1>
-          <p className='mx-auto mb-8 max-w-3xl text-sm font-light text-irmin_black md:text-base'>
+          <p className='mx-auto mb-8 max-w-3xl text-sm font-light text-irmin_black md:text-base dark:text-gray-500'>
             {section.description}
           </p>
           <div className='flex flex-wrap justify-center'>

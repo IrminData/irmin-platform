@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes';
 
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -39,14 +40,8 @@ const SignInSection = () => {
   };
 
   return (
-    <section
-      className='relative bg-white py-16 md:py-28'
-      style={{
-        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
-        backgroundPosition: 'center',
-      }}
-    >
-      <div className='container mx-auto max-w-7xl px-4'>
+    <WebsiteSectionWrapper id='sign-in-section'>
+      <div className='container mx-auto max-w-7xl px-4 py-16 md:py-28'>
         <div className='mx-auto max-w-sm'>
           <div className='mb-6 text-center'>
             <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
@@ -155,7 +150,7 @@ const SignInSection = () => {
           </form>
         </div>
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 };
 

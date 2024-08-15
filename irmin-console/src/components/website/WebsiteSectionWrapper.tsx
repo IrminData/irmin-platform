@@ -1,7 +1,3 @@
-'use client';
-
-import { useTheme } from 'next-themes';
-
 /**
  * Used to wrap website sections and provide correct background pattern
  */
@@ -9,14 +5,10 @@ const WebsiteSectionWrapper = ({
   id,
   children,
 }: Readonly<{ id: string; children: React.ReactNode }>) => {
-  const { theme } = useTheme();
   return (
     <section
       id={id}
-      className='relative overflow-hidden bg-white bg-contain bg-center py-12 dark:bg-irmin_black'
-      style={{
-        backgroundImage: `url("/ui-assets/elements/${theme !== 'dark' ? 'pattern-white' : 'pattern-dark'}.svg")`,
-      }}
+      className='pattern-bg relative overflow-hidden bg-white bg-contain bg-center bg-no-repeat dark:bg-irmin_black'
     >
       {children}
     </section>
