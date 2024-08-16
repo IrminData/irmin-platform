@@ -8,7 +8,7 @@ const WebsiteSectionWrapper = ({
   return (
     <section
       id={id}
-      className='pattern-bg relative overflow-hidden bg-white bg-contain bg-center bg-no-repeat dark:bg-irmin_black'
+      className='pattern-bg relative overflow-hidden bg-white bg-contain bg-top bg-no-repeat dark:bg-irmin_black'
     >
       {children}
     </section>

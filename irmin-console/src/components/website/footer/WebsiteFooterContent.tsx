@@ -60,7 +60,7 @@ export default function WebsiteFooterContent({
   const sections = footerLinks[locale] ?? [];
 
   return (
-    <section className='mt-12 bg-irmin_black'>
+    <section className='mt-12 bg-irmin_black dark:bg-black'>
       <div className='container mx-auto max-w-7xl px-2 md:px-4 xl:px-0'>
         <div className='flex flex-wrap justify-center gap-y-12 py-6 md:flex-row md:items-start md:justify-start md:pt-12 xl:pt-24'>
           {/* Logo, description and language switcher */}

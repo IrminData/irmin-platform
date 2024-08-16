@@ -267,7 +267,7 @@ export default function PortalWrapper({
           {/* Portal content */}
           <div
             id='portal-content'
-            className='pattern-bg relative overflow-y-scroll bg-white bg-contain bg-center bg-no-repeat dark:bg-irmin_black'
+            className='pattern-bg relative overflow-y-scroll bg-white bg-contain bg-top bg-no-repeat dark:bg-irmin_black'
           >
             {children}
           </div>
