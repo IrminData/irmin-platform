@@ -55,14 +55,14 @@ const WorkspaceCard = ({ workspace }: { workspace: Workspace }) => {
       onClick={handleWorkspaceCardClick}
       aria-label={`Go to ${workspace.name} workspace`}
     >
-      <div className='flex h-full flex-col rounded-xl bg-white p-2 text-xs shadow sm:p-4 lg:p-6 lg:text-base xl:p-8'>
+      <div className='flex h-full flex-col rounded-xl bg-white p-2 text-xs shadow sm:p-4 lg:p-6 lg:text-base xl:p-8 dark:bg-irmin_black-900'>
         <span className='md:text-normal text-xs font-semibold uppercase tracking-wide text-irmin_green'>
           {dict.workspaceSwitcher.workspace}
         </span>
-        <h3 className='mt-2 block text-base font-normal leading-tight text-irmin_black md:text-lg'>
+        <h3 className='mt-2 block text-base font-normal leading-tight md:text-lg'>
           {workspace.name}
         </h3>
-        <p className='mb-4 mt-2 text-xs font-light leading-tight text-irmin_blue'>
+        <p className='mb-4 mt-2 text-xs font-light leading-tight'>
           {workspace.description ?? '-'}
         </p>
         <div className='flex-grow'></div>
@@ -79,18 +79,18 @@ const WorkspaceCard = ({ workspace }: { workspace: Workspace }) => {
                       width={30}
                       height={30}
                       alt={user.name}
-                      className='inline-block h-6 w-6 rounded-full ring-2 ring-white'
+                      className='inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-irmin_black-900'
                     />
                   ) : (
                     <ProfileImagePlaceholder
                       key={`select-workspace-card-${workspace.id}-user-${idx}`}
                       user={user}
-                      className='inline-block h-6 w-6 rounded-full text-xs ring-2 ring-white'
+                      className='inline-block h-6 w-6 rounded-full text-xs ring-2 ring-white dark:ring-irmin_black-900'
                     />
                   )
                 )}
               {workspace.users.length > 3 && (
-                <span className='z-10 inline-block h-6 w-6 rounded-full bg-gray-100 text-center text-xs font-medium leading-6 text-irmin_blue'>
+                <span className='z-10 inline-block h-6 w-6 rounded-full bg-gray-200 text-center text-xs font-medium leading-6 dark:bg-gray-800'>
                   +{workspace.users.length - 3}
                 </span>
               )}
