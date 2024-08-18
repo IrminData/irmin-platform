@@ -1,10 +1,6 @@
-'use client';
-
-import React from 'react';
+import Tabs from '@/components/common/tabs/Tabs';
 
 import { TabsType } from '@/types/internal/Tabs';
-
-import Tabs from './Tabs';
 
 /**
  * Tabs UI wrapped in a white bordered component
@@ -21,7 +17,7 @@ export default function WrappedTabs({ tabs }: { tabs: TabsType }) {
       id='wrapped-tabs'
       className='container box-border overflow-hidden px-2 lg:px-4'
     >
-      <div className='min-h-96 w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white shadow-md'>
+      <div className='min-h-96 w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white shadow-md dark:bg-irmin_black dark:shadow-gray-800'>
         <Tabs tabs={tabs} />
       </div>
     </div>

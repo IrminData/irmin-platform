@@ -362,7 +362,7 @@ const EditorWithTabs = ({
           </div>
           <div className='flex flex-row items-center justify-end gap-2'>
             <select
-              className='mt-2 hidden rounded-lg border-r-2 border-white px-2 py-2 text-xs text-irmin_blue shadow focus:outline-none md:block xl:text-sm'
+              className='mt-2 hidden rounded-lg border-r-2 border-white px-2 py-2 text-xs text-irmin_blue shadow focus:outline-none md:block xl:text-sm dark:shadow-gray-800'
               value={getLanguageFromFilename(openFileTabs[activeTab] ?? '')}
               onChange={(e) => {
                 e.preventDefault();

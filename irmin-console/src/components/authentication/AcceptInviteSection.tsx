@@ -115,7 +115,7 @@ const AcceptInviteSection = () => {
             <div className='w-full md:w-1/2 md:pl-4'>
               <div className='bg-irmin_black-50 flex h-full items-center justify-center px-8 py-14'>
                 <div className='mx-auto text-center md:max-w-xl'>
-                  <span className='relative z-10 mb-4 inline-block rounded-full bg-irmin_green-100 px-2 py-px text-xs font-light uppercase leading-5 text-irmin_green-500 shadow-sm'>
+                  <span className='relative z-10 mb-4 inline-block rounded-full bg-irmin_green-100 px-2 py-px text-xs font-light uppercase leading-5 text-irmin_green-500 shadow-sm dark:shadow-gray-800'>
                     Quotes
                   </span>
                   <div className='relative mb-16'>

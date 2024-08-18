@@ -50,7 +50,7 @@ export default function RepositoryPage({
   return (
     <>
       <div className='mb-4 flex w-full flex-col items-start gap-1 px-2 md:flex-row md:gap-2 md:px-4'>
-        <div className='h-full w-max max-w-80 rounded border bg-white pb-4 shadow-sm md:px-4 md:py-2'>
+        <div className='h-full w-max max-w-80 rounded border bg-white pb-4 shadow-sm md:px-4 md:py-2 dark:shadow-gray-800'>
           <p className='mb-0 p-2 text-sm text-irmin_blue md:mb-2'>
             {dict.repository.dataTables}
           </p>
@@ -60,7 +60,7 @@ export default function RepositoryPage({
             setSelectedTable={setSelectedTable}
           />
         </div>
-        <div className='relative w-full max-w-full overflow-hidden rounded border bg-white shadow-sm md:px-4 md:py-2'>
+        <div className='relative w-full max-w-full overflow-hidden rounded border bg-white shadow-sm md:px-4 md:py-2 dark:shadow-gray-800'>
           <div className='h-full' id='code-editor'>
             <p className='mb-0 p-2 text-sm text-irmin_blue md:mb-2 md:p-0'>
               {dict.repository.sqlQuery}
