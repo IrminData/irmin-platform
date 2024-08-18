@@ -4,6 +4,7 @@ import WordPress from '@/services/wordpress';
 
 import Button from '@/components/common/button/Button';
 import DynamicFaIcon from '@/components/common/DynamicFaIcon';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { getURL } from '@/utils/wordpress';
 
@@ -43,55 +44,49 @@ export default async function WebsiteHeroSection({
           .then((media) => media?.source_url)
       : section.video;
   return (
-    <section className='overflow-hidden' id='hero-section'>
-      <div
-        className='relative overflow-hidden bg-white'
-        style={{
-          backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className='container mx-auto flex min-h-[60vh] max-w-7xl items-end justify-center px-4 pb-12 lg:pb-24'>
-          <div className='w-full max-w-3xl text-center'>
-            <h1 className='mb-6 text-3xl font-bold leading-tight tracking-tighter md:text-4xl lg:text-6xl'>
-              {section.title_parts.map((titlePart, index) => (
-                <span
-                  key={`title-part-${index}`}
-                  className={`${
-                    !titlePart.green ? 'text-irmin_black' : 'text-irmin_green'
-                  }`}
+    <WebsiteSectionWrapper id='website-hero-section'>
+      <div className='container mx-auto flex min-h-[60vh] max-w-7xl items-end justify-center px-4 pb-12 lg:pb-24'>
+        <div className='w-full max-w-3xl text-center'>
+          <h1 className='mb-6 text-4xl font-bold leading-tight tracking-tighter md:text-6xl'>
+            {section.title_parts.map((titlePart, index) => (
+              <span
+                key={`title-part-${index}`}
+                className={`${
+                  !titlePart.green
+                    ? 'text-irmin_black dark:text-gray-300'
+                    : 'text-irmin_green'
+                }`}
+              >
+                {titlePart.title}
+              </span>
+            ))}
+          </h1>
+          <p className='mx-auto mb-8 max-w-3xl text-sm font-light text-irmin_black md:text-base dark:text-gray-500'>
+            {section.description}
+          </p>
+          <div className='flex flex-wrap justify-center'>
+            {section.buttons.map((button, index) => (
+              <div
+                className='w-full py-1 md:mr-4 md:w-auto md:py-0'
+                key={`button-${index}`}
+              >
+                <Button
+                  size='lg'
+                  variant={button.variant}
+                  colorScheme={button.color_scheme}
+                  icon={
+                    button.icon ? (
+                      <DynamicFaIcon name={button.icon} />
+                    ) : undefined
+                  }
+                  className='w-full'
+                  ariaLabel={button.text}
+                  href={getURL(button.link)}
                 >
-                  {titlePart.title}
-                </span>
-              ))}
-            </h1>
-            <p className='mx-auto mb-8 max-w-3xl text-sm font-light text-irmin_black md:text-base'>
-              {section.description}
-            </p>
-            <div className='flex flex-wrap justify-center'>
-              {section.buttons.map((button, index) => (
-                <div
-                  className='w-full py-1 md:mr-4 md:w-auto md:py-0'
-                  key={`button-${index}`}
-                >
-                  <Button
-                    size='lg'
-                    variant={button.variant}
-                    colorScheme={button.color_scheme}
-                    icon={
-                      button.icon ? (
-                        <DynamicFaIcon name={button.icon} />
-                      ) : undefined
-                    }
-                    className='w-full'
-                    ariaLabel={button.text}
-                    href={getURL(button.link)}
-                  >
-                    {button.text}
-                  </Button>
-                </div>
-              ))}
-            </div>
+                  {button.text}
+                </Button>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -130,6 +125,6 @@ export default async function WebsiteHeroSection({
           </div>
         </div>
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }

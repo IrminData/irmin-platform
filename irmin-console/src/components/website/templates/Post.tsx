@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
+
 import { useLocale } from '@/context/LocaleContext';
 
 import { WebsiteArticleCategory } from '@/types/website/WebsiteContent';
@@ -33,14 +35,7 @@ export default function Post({
   const wpURL =
     process.env.NEXT_PUBLIC_WORDPRESS_URL ?? 'https://cms.irmin.dev';
   return (
-    <section
-      id='post-post-section'
-      className='bg-white py-12'
-      style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
-        backgroundPosition: 'center top',
-      }}
-    >
+    <WebsiteSectionWrapper id='website-post-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='mx-auto mb-12 text-center md:max-w-2xl'>
           <div className='flex items-center justify-center'>
@@ -94,6 +89,6 @@ export default function Post({
           }}
         />
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }

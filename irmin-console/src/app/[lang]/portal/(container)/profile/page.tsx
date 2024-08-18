@@ -162,8 +162,8 @@ const ChangePasswordSettings: React.FC = () => {
   };
 
   return (
-    <div className='px-4'>
-      <h2 className='mb-4 text-xl font-normal md:text-2xl'>
+    <div className='my-8 px-4'>
+      <h2 className='mb-8 text-xl font-normal md:text-2xl'>
         {dict.profile.changePassword}
       </h2>
       <form onSubmit={handleChangePassword} className='text-sm md:text-base'>

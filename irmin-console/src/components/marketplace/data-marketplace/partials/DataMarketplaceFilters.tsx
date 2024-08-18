@@ -34,10 +34,7 @@ const DataMarketplaceFilters = ({
               ariaLabel={`Toggle ${industry} filter`}
               size='sm'
               variant={`outline`}
-              colorScheme={`${
-                selectedIndustry === industry ? 'primary' : 'gray'
-              }`}
-              className={`min-w-16 ${selectedIndustry === industry ? 'bg-gray-100' : 'bg-white'}`}
+              className={`min-w-16 text-irmin_black dark:text-white ${selectedIndustry === industry ? 'bg-gray-100 dark:bg-gray-800' : 'bg-white dark:bg-irmin_black-600'}`}
             >
               {industry}
             </Button>

@@ -34,7 +34,7 @@ export default function RepositorySettingsPage({
 
   return (
     <div className='mx-2 md:mx-4'>
-      <div className='w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-4 py-4 shadow-md md:mx-4'>
+      <div className='w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-4 py-4 shadow-md md:mx-4 dark:shadow-gray-800'>
         <h2 className='mb-4 text-2xl font-normal'>
           {dict.repository.tabs.settings}
         </h2>

@@ -1,4 +1,5 @@
 import DynamicFaIcon from '@/components/common/DynamicFaIcon';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { FAQSection } from '@/types/website/Wordpress';
 
@@ -21,14 +22,7 @@ export default function WebsiteFaqsSection({
   section: FAQSection;
 }) {
   return (
-    <section
-      id='faq-section'
-      className='bg-white py-12'
-      style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
-        backgroundPosition: 'center',
-      }}
-    >
+    <WebsiteSectionWrapper id='faq-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='max-w-4xl'>
           <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-light uppercase leading-5 text-white shadow-sm'>
@@ -71,6 +65,6 @@ export default function WebsiteFaqsSection({
           ))}
         </div>
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }

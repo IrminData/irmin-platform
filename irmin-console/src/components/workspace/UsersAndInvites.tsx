@@ -16,6 +16,8 @@ import { useWorkspace } from '@/context/workspace';
 import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
 import { WorkspaceUser } from '@/types/api/Workspace';
 
+import Select from '../common/select/Select';
+
 type WorkspaceUsersAndPermissionsUser = {
   inviteId?: number;
 } & WorkspaceUser;
@@ -82,7 +84,7 @@ const UsersAndInvites: React.FC = () => {
             email: invite.email,
             inviteId: invite.id,
             roles: [
-              irminRoles.find((role) => role.name === invite.role.name) ??
+              irminRoles.find((role) => role.name === invite.role?.name) ??
                 irminRoles[0],
             ],
           }) as WorkspaceUsersAndPermissionsUser
@@ -321,8 +323,8 @@ const UsersAndInvites: React.FC = () => {
   };
 
   return (
-    <div className=''>
-      <div className='mb-4 flex flex-row items-center justify-between px-4'>
+    <div className='my-8 px-2'>
+      <div className='mb-4 flex flex-row items-center justify-between px-2'>
         <h2 className='text-base md:text-xl xl:text-2xl'>
           {dict.usersPermissions.usersAndPermissions}
         </h2>
@@ -341,59 +343,60 @@ const UsersAndInvites: React.FC = () => {
           <LoadingSkeleton />
         </div>
       ) : (
-        <table className='min-w-full bg-white'>
+        <table className='min-w-full'>
           <thead>
-            <tr>
-              <th className='border-b px-4 py-2 text-left text-xs font-normal text-irmin_black md:text-sm'>
+            <tr className='border-b dark:border-gray-800'>
+              <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
                 {dict.usersPermissions.name}
               </th>
-              <th className='hidden border-b px-4 py-2 text-left text-sm font-normal text-irmin_black md:table-cell'>
+              <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
                 {dict.usersPermissions.email}
               </th>
-              <th className='border-b px-4 py-2 text-left text-xs font-normal text-irmin_black md:text-sm'>
+              <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
                 {dict.usersPermissions.role}
               </th>
-              <th className='border-b px-4 py-2 text-center text-xs font-normal text-irmin_black md:text-right md:text-sm'>
+              <th className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
                 {/* Actions */}
               </th>
             </tr>
           </thead>
           <tbody>
             {users.map((user, idx) => (
-              <tr key={`workspace-user-${user.id}-${idx}`}>
-                <td className='border-b px-4 py-2 text-sm text-gray-700'>
+              <tr
+                key={`workspace-user-${user.id}-${idx}`}
+                className='h-14 border-b dark:border-gray-800'
+              >
+                <td className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
                   {user.name}
                   {/* Only for mobile screens */}
-                  <span className='block text-xs text-gray-400 md:hidden'>
+                  <span className='block text-xs opacity-70 md:hidden'>
                     {user.email}
                   </span>
-                  {user.inviteId && (
-                    <span className='block text-xs text-gray-400 md:hidden'>
+                  {user.inviteId ? (
+                    <span className='block text-xs opacity-70 md:hidden'>
                       {dict.usersPermissions.invited}
                     </span>
+                  ) : (
+                    <></>
                   )}
                 </td>
                 {/* Only for larger screens */}
-                <td className='hidden border-b px-4 py-2 text-sm text-gray-700 md:table-cell'>
+                <td className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
                   {user.email}
-                  {user.inviteId && (
-                    <span className='ml-2 text-xs text-gray-400'>
+                  {user.inviteId ? (
+                    <span className='ml-2 text-xs opacity-70'>
                       {dict.usersPermissions.invited}
                     </span>
+                  ) : (
+                    <></>
                   )}
                 </td>
-                <td className='border-b px-4 py-2'>
+                <td className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
                   {currentWorkspace.owner_id === user.id ? (
-                    <p className='text-sm text-gray-700'>
-                      {dict.usersPermissions.owner}
-                    </p>
+                    dict.usersPermissions.owner
                   ) : (
-                    <select
-                      value={
-                        !user.roles || user.roles.length === 0
-                          ? 'no-role'
-                          : user.roles[0].name
-                      }
+                    <Select
+                      label={dict.usersPermissions.role}
                       onChange={(e) => {
                         const desiredRole = irminRoles.find(
                           (role) => role.name === e.target.value
@@ -410,76 +413,92 @@ const UsersAndInvites: React.FC = () => {
                           handleChangeRole(user.id, desiredRole);
                         }
                       }}
-                      className='rounded-lg border p-1 text-sm text-gray-700'
-                    >
-                      <option value={'no-role'}>
-                        {dict.usersPermissions.noRole}
-                      </option>
-                      {irminRoles.map((role, i) => (
-                        <option
-                          key={`role-option-${role.name}-${i}`}
-                          value={role.name}
-                        >
-                          {role.label}
-                        </option>
-                      ))}
-                    </select>
+                      loading={loading}
+                      defaultValue={
+                        !user.roles || user.roles.length === 0
+                          ? 'no-role'
+                          : user.roles[0].name
+                      }
+                      currentValue={
+                        !user.roles || user.roles.length === 0
+                          ? 'no-role'
+                          : user.roles[0].name
+                      }
+                      options={[
+                        {
+                          value: 'no-role',
+                          label: dict.usersPermissions.noRole,
+                        },
+                        ...irminRoles.map((role) => ({
+                          value: role.name,
+                          label: role.label,
+                        })),
+                      ]}
+                    />
                   )}
                 </td>
-                {currentWorkspace.owner_id !== user.id ? (
-                  <td className='border-b px-4 py-2 text-right'>
-                    {user.roles && user.roles.length > 0 && !user.inviteId && (
-                      <div className='flex flex-row justify-end gap-2 align-middle'>
-                        <Button
-                          size='sm'
-                          variant='outline'
-                          colorScheme='gray'
-                          aria-label='Transfer ownership to user'
-                          onClick={() => handleTransferOwnership(user.id)}
-                          icon={<IoKey size={24} />}
-                        >
-                          {dict.usersPermissions.transferOwnership}
-                        </Button>
-                        <Button
-                          size='sm'
-                          variant='outline'
-                          colorScheme='gray'
-                          aria-label='Remove user from workspace'
-                          onClick={() => handleRemoveUser(user.id)}
-                          icon={<IoExit size={24} />}
-                        >
-                          {dict.usersPermissions.removeFromWorkspace}
-                        </Button>
-                      </div>
-                    )}
-                    {user.inviteId && (
-                      <div className='flex flex-row justify-end gap-2 align-middle'>
-                        <Button
-                          size='sm'
-                          variant='outline'
-                          colorScheme='gray'
-                          aria-label='Resend invite'
-                          icon={<IoMailOpenOutline size={24} />}
-                          onClick={() => handleResend(user.email)}
-                        >
-                          {dict.usersPermissions.resendInvite}
-                        </Button>
-                        <Button
-                          size='sm'
-                          variant='outline'
-                          colorScheme='gray'
-                          aria-label='Cancel invite'
-                          icon={<IoExit size={24} />}
-                          onClick={() => handleCancelInvite(user.email)}
-                        >
-                          {dict.usersPermissions.cancelInvite}
-                        </Button>
-                      </div>
-                    )}
-                  </td>
-                ) : (
-                  <td className='border-b px-4 py-2 text-right'></td>
-                )}
+                <td className='px-4 py-2 text-right'>
+                  {currentWorkspace.owner_id !== user.id && (
+                    <div className='flex w-full flex-row justify-end gap-2 align-middle'>
+                      {user.roles && user.roles.length > 0 && !user.inviteId ? (
+                        <>
+                          <Button
+                            size='sm'
+                            variant='icon'
+                            colorScheme='gray'
+                            aria-label='Transfer ownership to user'
+                            onClick={() => handleTransferOwnership(user.id)}
+                            icon={<IoKey size={14} />}
+                          >
+                            {''}
+                            {/* {dict.usersPermissions.transferOwnership} */}
+                          </Button>
+                          <Button
+                            size='sm'
+                            variant='icon'
+                            colorScheme='gray'
+                            aria-label='Remove user from workspace'
+                            onClick={() => handleRemoveUser(user.id)}
+                            icon={<IoExit size={14} />}
+                          >
+                            {''}
+                            {/* {dict.usersPermissions.removeFromWorkspace} */}
+                          </Button>
+                        </>
+                      ) : (
+                        <></>
+                      )}
+                      {user.inviteId ? (
+                        <>
+                          <Button
+                            size='sm'
+                            variant='icon'
+                            colorScheme='gray'
+                            aria-label='Resend invite'
+                            icon={<IoMailOpenOutline size={14} />}
+                            onClick={() => handleResend(user.email)}
+                          >
+                            {''}
+                            {/* {dict.usersPermissions.resendInvite} */}
+                          </Button>
+                          <Button
+                            size='sm'
+                            variant='icon'
+                            colorScheme='gray'
+                            aria-label='Cancel invite'
+                            icon={<IoExit size={14} />}
+                            onClick={() => handleCancelInvite(user.email)}
+                          >
+                            {''}
+                            {/* {dict.usersPermissions.cancelInvite} */}
+                          </Button>
+                        </>
+                      ) : (
+                        <></>
+                      )}
+                    </div>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

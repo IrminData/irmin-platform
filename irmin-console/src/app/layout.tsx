@@ -48,7 +48,7 @@ export default function RootLayout({
 
   return (
     <html suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} scrollbar-hide`}>
         <DarkModeProvider>
           <LocaleProvider>
             <IAMProvider locale={lang}>{children}</IAMProvider>

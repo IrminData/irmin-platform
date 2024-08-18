@@ -67,8 +67,8 @@ To access the internal PHPDoc documentation of the API, the user is `irmin`, and
 
 Ensure you have the following installed:
 
-- Node.js (v20.x+)
-- Yarn (v2.x+). See [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration details.
+- Node.js (>=v18.x)
+- Yarn v2. See [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration details.
 
 In the web app we use TypeScript, Next.js (React framework) with the App Router enabled, and Tailwind (styles).
 

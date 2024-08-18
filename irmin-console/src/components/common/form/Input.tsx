@@ -53,36 +53,36 @@ const Input: React.FC<{
   const variantClasses = {
     solid: {
       primary:
-        'bg-white border border-irmin_green-500 text-irmin_green-900 placeholder-gray-300 shadow',
+        'bg-white border border-irmin_green-500 text-irmin_green-900 placeholder-gray-300 shadow dark:text-irmin_green-100',
       secondary:
-        'bg-white border border-irmin_blue-500 text-irmin_blue-900 placeholder-gray-300 shadow',
+        'bg-white border border-irmin_blue-500 text-irmin_blue-900 placeholder-gray-300 shadow dark:text-irmin_blue-100',
       tertiary:
-        'bg-white border border-irmin_teal-500 text-irmin_teal-900 placeholder-gray-300 shadow',
-      gray: 'border border-gray-500 text-gray-900 placeholder-gray-300 shadow',
+        'bg-white border border-irmin_teal-500 text-irmin_teal-900 placeholder-gray-300 shadow dark:text-irmin_teal-100',
+      gray: 'border border-gray-500 text-gray-900 placeholder-gray-300 shadow dark:text-gray-100',
       black:
-        'bg-white border border-irmin_black text-irmin_black placeholder-gray-300 shadow',
+        'bg-white border border-irmin_black text-irmin_black placeholder-gray-300 shadow dark:text-irmin_black',
     },
     outline: {
       primary:
-        'border border-irmin_green-500 text-irmin_green-900 placeholder-gray-300 shadow',
+        'border border-irmin_green-500 text-irmin_green-900 placeholder-gray-300 shadow dark:text-irmin_green-100',
       secondary:
-        'border border-irmin_blue-500 text-irmin_blue-900 placeholder-gray-300 shadow',
+        'border border-irmin_blue-500 text-irmin_blue-900 placeholder-gray-300 shadow dark:text-irmin_blue-100',
       tertiary:
-        'border border-irmin_teal-500 text-irmin_teal-900 placeholder-gray-300 shadow',
-      gray: 'border border-gray-500 text-gray-900 placeholder-gray-300 shadow',
+        'border border-irmin_teal-500 text-irmin_teal-900 placeholder-gray-300 shadow dark:text-irmin_teal-100',
+      gray: 'border border-gray-500 text-gray-900 placeholder-gray-300 shadow dark:text-gray-100',
       black:
-        'border border-irmin_black text-irmin_black placeholder-gray-300 shadow',
+        'border border-irmin_black text-irmin_black placeholder-gray-300 shadow dark:text-irmin_black',
     },
     underline: {
       primary:
-        'border-b border-irmin_green-500 text-irmin_green-900 placeholder-gray-300 shadow',
+        'border-b border-irmin_green-500 text-irmin_green-900 placeholder-gray-300 shadow dark:text-irmin_green-100',
       secondary:
-        'border-b border-irmin_blue-500 text-irmin_blue-900 placeholder-gray-300 shadow',
+        'border-b border-irmin_blue-500 text-irmin_blue-900 placeholder-gray-300 shadow dark:text-irmin_blue-100',
       tertiary:
-        'border-b border-irmin_teal-500 text-irmin_teal-900 placeholder-gray-300 shadow',
-      gray: 'border-b border-gray-500 text-gray-900 placeholder-gray-300 shadow',
+        'border-b border-irmin_teal-500 text-irmin_teal-900 placeholder-gray-300 shadow dark:text-irmin_teal-100',
+      gray: 'border-b border-gray-500 text-gray-900 placeholder-gray-300 shadow dark:text-gray-100',
       black:
-        'border-b border-irmin_black text-irmin_black placeholder-gray-300 shadow',
+        'border-b border-irmin_black text-irmin_black placeholder-gray-300 shadow dark:text-irmin_black',
     },
   };
 

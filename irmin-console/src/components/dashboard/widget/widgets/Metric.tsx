@@ -20,10 +20,10 @@ const Metric = ({ widget }: { widget: Widget }) => {
     <WidgetWrapper widget={widget}>
       <div className='flex h-full flex-grow items-center justify-center'>
         <div className='py-8'>
-          <h4 className='mb-4 text-center text-xl font-bold text-irmin_black lg:text-3xl'>
+          <h4 className='mb-4 text-center text-xl font-bold lg:text-3xl'>
             {widgetData.currentValue}
           </h4>
-          <p className='text-center text-base text-gray-500 lg:text-lg'>
+          <p className='text-center text-base text-gray-400 lg:text-lg'>
             {widgetData.label}
           </p>
         </div>

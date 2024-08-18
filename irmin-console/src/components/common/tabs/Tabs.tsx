@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -60,18 +60,18 @@ export default function Tabs({ tabs }: { tabs: TabsType }) {
 
   return (
     <>
-      <div className='mb-4 mt-4 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b'>
+      <div className='mb-4 mt-4 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b dark:border-gray-800'>
         {tabs.map((tab, idx) => (
           <div
             key={`large-tab-${idx}-${tab.slug}`}
-            className={`border-irmin_green bg-white ${activeTab === tab.slug ? 'border-b-2' : ''}`}
+            className={`border-irmin_green ${activeTab === tab.slug ? 'border-b-2' : ''}`}
           >
             <Button
               ariaLabel={`Switch to ${tab.name} tab`}
               size='sm'
               variant='outline'
-              colorScheme={activeTab === tab.slug ? 'secondary' : 'gray'}
-              className={`justify-start rounded-none text-xs shadow-none hover:no-underline`}
+              colorScheme={activeTab === tab.slug ? 'primary' : 'gray'}
+              className={`justify-start rounded-none text-xs shadow-none hover:bg-transparent hover:no-underline`}
               onClick={() => {
                 setActiveTab(tab.slug);
                 if (tab.link) router.push(tab.link);

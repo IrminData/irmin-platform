@@ -2,6 +2,8 @@ import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
 
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
+
 import { LogoCloudSection } from '@/types/website/Wordpress';
 
 /**
@@ -41,7 +43,7 @@ export default async function WebsiteLogoCloudSection({
     });
   }
   return (
-    <section className='bg-irmin_black py-12' id='logo-cloud-section'>
+    <WebsiteSectionWrapper id='website-logo-cloud-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <h3 className='mb-8 text-center text-lg font-light leading-6 text-white'>
           {section.title}
@@ -63,6 +65,6 @@ export default async function WebsiteLogoCloudSection({
           ))}
         </div>
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }

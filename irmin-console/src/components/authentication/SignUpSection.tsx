@@ -7,6 +7,7 @@ import Link from 'next/link';
 
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -62,18 +63,12 @@ const SignUpSection = () => {
   };
 
   return (
-    <section
-      className='bg-white py-16 md:py-28'
-      style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
-        backgroundPosition: 'center',
-      }}
-    >
-      <div className='container mx-auto mb-16 flex max-w-7xl flex-wrap px-4 md:mb-0'>
+    <WebsiteSectionWrapper id='sign-up-section'>
+      <div className='container mx-auto mb-16 flex max-w-7xl flex-wrap px-4 py-16 md:mb-0 md:py-28'>
         <div className='w-full md:w-1/2 md:pl-4'>
           <div className='bg-irmin_black-50 flex h-full items-center justify-center px-8 py-14'>
             <div className='mx-auto text-center md:max-w-xl'>
-              <span className='relative z-10 mb-4 inline-block rounded-full bg-irmin_green-100 px-2 py-px text-xs font-light uppercase leading-5 text-irmin_green-500 shadow-sm'>
+              <span className='relative z-10 mb-4 inline-block rounded-full bg-irmin_green-100 px-2 py-px text-xs font-light uppercase leading-5 text-irmin_green-500 shadow-sm dark:shadow-gray-800'>
                 Quotes
               </span>
               <div className='relative mb-16'>
@@ -312,7 +307,7 @@ const SignUpSection = () => {
           </div>
         </div>
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 };
 

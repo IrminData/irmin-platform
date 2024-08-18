@@ -1,3 +1,5 @@
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
+
 /**
  * Wordpress Gutenberg content component (website)
  *
@@ -22,7 +24,7 @@ export default function PageContent({
     process.env.NEXT_PUBLIC_WORDPRESS_URL ?? 'https://cms.irmin.dev';
   if (content && content.length > 3) {
     return (
-      <>
+      <WebsiteSectionWrapper id='website-page-content'>
         <div className='wp-content bg-gray-50'>
           {full_width ? (
             <div
@@ -50,7 +52,7 @@ export default function PageContent({
           `,
           }}
         />
-      </>
+      </WebsiteSectionWrapper>
     );
   }
 }

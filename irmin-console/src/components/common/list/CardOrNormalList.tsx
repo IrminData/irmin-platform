@@ -1,5 +1,3 @@
-import React from 'react';
-
 import CardList from '@/components/common/list/CardList';
 import NormalList from '@/components/common/list/NormalList';
 
@@ -10,7 +8,7 @@ import { ListProps } from '@/types/internal/ListProps';
  *
  * {@link CardList} and {@link NormalList}
  */
-const CardOrNormalList: React.FC<ListProps> = (props) => {
+const CardOrNormalList = (props: ListProps) => {
   return (
     <div id='card-or-normal-list'>
       <div className='block sm:hidden' id='card-list-on-small-screen'>

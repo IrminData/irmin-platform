@@ -69,9 +69,9 @@ const ManageWorkspacesSection: React.FC = () => {
 
   return (
     <div className='flex flex-col gap-4 px-4 pb-28 pt-4 lg:flex-row-reverse'>
-      <div className='w-full max-w-80'>
-        <div className='rounded-xl bg-white p-2 text-xs shadow sm:p-4 lg:p-6 lg:text-base xl:p-8'>
-          <p className='mb-4 block text-left text-sm font-medium text-irmin_blue md:text-base'>
+      <div className='w-full pr-4 lg:max-w-80'>
+        <div className='rounded-xl bg-white p-2 text-xs shadow sm:p-4 lg:p-4 lg:text-base dark:bg-irmin_black-600'>
+          <p className='mb-4 mt-4 block text-center text-sm font-light md:text-base lg:mt-0 lg:text-left'>
             {dict.workspaceSwitcher.createNewWorkspace}
           </p>
           <form
@@ -112,7 +112,7 @@ const ManageWorkspacesSection: React.FC = () => {
               variant='gradient'
               colorScheme='primary'
               size='sm'
-              className='mb-4 h-11 w-full'
+              className='mb-0 h-11 w-full'
               type='submit'
               disabled={loading}
               loading={loading}
@@ -129,7 +129,7 @@ const ManageWorkspacesSection: React.FC = () => {
           >
             {workspaces.map((workspace, idx) => (
               <div
-                className='w-full max-w-60 px-2 pb-4'
+                className='w-1/2 p-2 lg:w-full lg:max-w-60'
                 key={`select-workspace-card-${idx}`}
               >
                 <WorkspaceCard workspace={workspace} />

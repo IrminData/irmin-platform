@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5';
 
@@ -20,7 +20,7 @@ import { ListProps } from '@/types/internal/ListProps';
  *
  * The component is responsive and can be used in any layout.
  */
-const CardList: React.FC<ListProps> = ({ rows, loading = false }) => {
+const CardList = ({ rows, loading = false }: ListProps) => {
   const [openDetails, setOpenDetails] = useState<number[]>([]);
 
   return (
@@ -39,7 +39,7 @@ const CardList: React.FC<ListProps> = ({ rows, loading = false }) => {
           rows.map((card, rowIndex) => (
             <div
               key={`list-card-${rowIndex}`}
-              className='flex flex-col gap-1 rounded-lg border border-gray-200 bg-white px-2 py-4 text-xs shadow-sm md:text-sm xl:text-base'
+              className='flex flex-col gap-1 rounded-lg border border-gray-200 bg-white px-2 py-4 text-xs shadow-sm md:text-sm xl:text-base dark:border-gray-900 dark:bg-irmin_black-600'
             >
               <div className='flex flex-wrap items-center justify-between gap-4'>
                 {card.columns.map((column, index) => (

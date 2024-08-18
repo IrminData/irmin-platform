@@ -217,7 +217,7 @@ const FileNavigator = ({
       {contextMenu && contextMenu.visible && (
         <ul
           id='file-navigator-context-menu'
-          className='absolute left-2 right-2 rounded-lg bg-white px-4 py-2 shadow'
+          className='absolute left-2 right-2 rounded-lg bg-white px-4 py-2 shadow dark:shadow-gray-800'
           style={{ top: `${contextMenu.top}px` }}
         >
           <button

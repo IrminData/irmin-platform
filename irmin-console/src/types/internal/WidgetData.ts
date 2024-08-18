@@ -14,8 +14,6 @@ export type ChartOrTableWidgetData = {
   datasets: {
     label: string;
     data: (number | string)[];
-    backgroundColor?: string | string[];
-    borderColor?: string | string[];
   }[];
 };
 
@@ -28,5 +26,4 @@ export type ChartOrTableWidgetData = {
 export type MetricWidgetData = {
   currentValue: number;
   label: string;
-  color?: string;
 };

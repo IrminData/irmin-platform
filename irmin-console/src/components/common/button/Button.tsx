@@ -9,6 +9,14 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { cn } from '@/utils/tw';
 
+type ButtonColorScheme =
+  | 'primary'
+  | 'secondary'
+  | 'tertiary'
+  | 'gray'
+  | 'black'
+  | 'light';
+
 /**
  * Universal button component, used across the application
  *
@@ -47,13 +55,7 @@ const Button = ({
   type = 'button',
 }: {
   variant?: 'solid' | 'outline' | 'gradient' | 'icon' | 'link';
-  colorScheme?:
-    | 'primary'
-    | 'secondary'
-    | 'tertiary'
-    | 'gray'
-    | 'black'
-    | 'light';
+  colorScheme?: ButtonColorScheme;
   size?: 'sm' | 'md' | 'lg';
   href?: string;
   target?: '_blank' | '_self' | '_parent' | '_top' | 'framename';
@@ -73,65 +75,69 @@ const Button = ({
   const router = useRouter();
 
   const baseClasses =
-    'inline-flex items-center justify-center text-center rounded-lg transition-all outline-none hover:opacity-60 duration-300 hover:backdrop-blur active:shadow-md';
+    'inline-flex items-center justify-center text-center rounded-lg transition-all outline-none hover:opacity-60 duration-300 hover:backdrop-blur';
   const variantClasses = {
     solid: {
-      primary: 'bg-irmin_green text-white shadow active:bg-irmin_green-600',
-      secondary: 'bg-irmin_blue text-white shadow active:bg-irmin_blue-600',
-      tertiary: 'bg-irmin_teal text-white  shadow active:bg-irmin_teal-600',
-      gray: 'bg-gray-500 text-white shadow active:bg-gray-600',
-      black: 'bg-irmin_black text-white shadow active:bg-irmin_black-600',
-      light: 'bg-gray-100 text-black shadow active:bg-gray-300',
+      primary:
+        'bg-irmin_green text-white shadow shadow-gray-300 dark:shadow-black',
+      secondary:
+        'bg-irmin_blue text-white shadow shadow-gray-300 dark:shadow-black',
+      tertiary:
+        'bg-irmin_teal text-white shadow shadow-gray-300 dark:shadow-black',
+      gray: 'bg-gray-500 text-white shadow shadow-gray-300 dark:shadow-black',
+      black:
+        'bg-irmin_black text-white shadow shadow-gray-300 dark:bg-gray-50 dark:shadow-black',
+      light:
+        'bg-gray-100 text-black dark:bg-gray-800 dark:text-white shadow shadow-gray-300 dark:shadow-black',
     },
     outline: {
       primary:
-        'border border-irmin_green text-irmin_green hover:bg-white hover:text-irmin_blue hover:border-irmin_blue shadow',
+        'border border-irmin_green text-irmin_green shadow shadow-gray-300 dark:shadow-black',
       secondary:
-        'border border-irmin_blue text-irmin_blue hover:bg-white hover:text-irmin_gree hover:border-irmin_green shadow',
+        'border border-irmin_blue text-irmin_blue shadow shadow-gray-300 dark:shadow-black',
       tertiary:
-        'border border-irmin_teal text-irmin_teal hover:bg-white hover:text-irmin_teal-400 hover:border-irmin_teal-400 shadow',
-      gray: 'border border-gray-500 text-gray-500 hover:bg-white hover:text-gray-400 hover:border-gray-400 shadow',
+        'border border-irmin_teal text-irmin_teal shadow shadow-gray-300 dark:shadow-black',
+      gray: 'border border-gray-500 text-gray-500 shadow shadow-gray-300 dark:shadow-black',
       black:
-        'border border-irmin_black text-irmin_black hover:bg-white hover:text-irmin_black-400 hover:border-irmin_black-400 shadow',
+        'border border-irmin_black text-irmin_black shadow shadow-gray-300 dark:border-gray-50 dark:text-gray-50 dark:shadow-black',
       light:
-        'border border-gray-200 text-gray-100 hover:bg-white hover:text-gray-400 hover:border-gray-400 shadow',
+        'border border-gray-200 text-gray-100 dark:border-gray-800 dark:text-gray-200 shadow shadow-gray-300 dark:shadow-black',
     },
     gradient: {
       primary:
-        'bg-gradient-to-r from-irmin_green-600 to-irmin_green-400 text-white shadow',
+        'bg-gradient-to-r from-irmin_green-600 to-irmin_green-400 text-white shadow shadow-gray-300 dark:shadow-black',
       secondary:
-        'bg-gradient-to-r from-irmin_blue to-irmin_blue-400 text-white shadow',
+        'bg-gradient-to-r from-irmin_blue to-irmin_blue-400 text-white shadow shadow-gray-300 dark:shadow-black',
       tertiary:
-        'bg-gradient-to-r from-irmin_teal to-irmin_teal-400 text-white  shadow',
-      gray: 'bg-gradient-to-r from-gray-500 to-gray-400 text-white  shadow',
+        'bg-gradient-to-r from-irmin_teal to-irmin_teal-400 text-white shadow shadow-gray-300 dark:shadow-black',
+      gray: 'bg-gradient-to-r from-gray-500 to-gray-400 text-white shadow shadow-gray-300 dark:shadow-black',
       black:
-        'bg-gradient-to-r from-irmin_black to-irmin_black-400 text-white  shadow',
-      light: 'bg-gradient-to-r from-gray-100 to-gray-200 text-black shadow',
+        'bg-gradient-to-r from-irmin_black to-irmin_black-400 text-white shadow shadow-gray-300 dark:shadow-black',
+      light:
+        'bg-gradient-to-r from-gray-100 to-gray-200 text-black dark:from-gray-800 dark:to-gray-700 dark:text-white shadow shadow-gray-300 dark:shadow-black',
     },
     icon: {
       primary:
-        'text-irmin_green hover:text-irmin_green-400 rounded-full active:text-irmin_green-600',
+        'text-irmin_green rounded-full rounded-full shadow-none dark:shadow-none border-none',
       secondary:
-        'text-irmin_blue hover:text-irmin_blue-400 rounded-full active:text-irmin_blue-600',
+        'text-irmin_blue rounded-full rounded-full shadow-none dark:shadow-none border-none',
       tertiary:
-        'text-irmin_teal-500 hover:text-irmin_teal-400 rounded-full active:text-irmin_teal-600',
-      gray: 'text-gray-500 hover:text-gray-400 rounded-full active:text-gray-600',
+        'text-irmin_teal-500 rounded-full rounded-full shadow-none dark:shadow-none border-none',
+      gray: 'text-gray-500 rounded-full shadow-none dark:shadow-none border-none',
       black:
-        'text-irmin_black hover:text-irmin_black-400 rounded-full active:text-irmin_black-600',
+        'text-irmin_black dark:text-gray-200 rounded-full shadow-none dark:shadow-none border-none',
       light:
-        'text-gray-200 hover:text-gray-400 rounded-full active:text-gray-300',
+        'text-gray-200 dark:text-gray-800 rounded-full shadow-none dark:shadow-none border-none',
     },
     link: {
-      primary:
-        'text-irmin_green hover:underline shadow-none active:text-irmin_green-600',
-      secondary:
-        'text-irmin_blue hover:underline shadow-none active:text-irmin_blue-600',
-      tertiary:
-        'text-irmin_teal hover:underline shadow-none active:text-irmin_teal-600',
-      gray: 'text-gray-500 hover:underline shadow-none active:text-gray-600',
+      primary: 'text-irmin_green hover:underline shadow-none dark:shadow-none',
+      secondary: 'text-irmin_blue hover:underline shadow-none dark:shadow-none',
+      tertiary: 'text-irmin_teal hover:underline shadow-none dark:shadow-none',
+      gray: 'text-gray-500 hover:underline shadow-none dark:shadow-none',
       black:
-        'text-irmin_black hover:underline shadow-none active:text-irmin_black-600',
-      light: 'text-gray-200 hover:underline shadow-none active:text-gray-300',
+        'text-irmin_black dark:text-gray-200 hover:underline shadow-none dark:shadow-none',
+      light:
+        'text-gray-200 hover:underline shadow-none dark:shadow-none dark:text-gray-800',
     },
   };
 

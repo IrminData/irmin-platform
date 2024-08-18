@@ -3,6 +3,7 @@ import Image from 'next/image';
 import WordPress from '@/services/wordpress';
 
 import DynamicFaIcon from '@/components/common/DynamicFaIcon';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { FeaturesSection } from '@/types/website/Wordpress';
 
@@ -34,14 +35,7 @@ export default async function WebsiteFeaturesSection({
           .then((media) => media?.source_url)
       : section.image;
   return (
-    <section
-      id='features-section'
-      className='overflow-hidden bg-white py-12'
-      style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
-        backgroundPosition: 'center',
-      }}
-    >
+    <WebsiteSectionWrapper id='website-features-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='mb-12 md:max-w-4xl'>
           <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-light uppercase leading-5 text-white shadow-sm'>
@@ -101,6 +95,6 @@ export default async function WebsiteFeaturesSection({
           </div>
         </div>
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }

@@ -7,6 +7,7 @@ import Image from 'next/image';
 import WordPress from '@/services/wordpress';
 
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { TestimonialSection } from '@/types/website/Wordpress';
 
@@ -77,14 +78,7 @@ export default function WebsiteTestimonialsSection({
   }, [section, testimonials, wordpress]);
 
   return (
-    <section
-      id='testimonials-section'
-      className='bg-white py-12'
-      style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
-        backgroundPosition: 'center',
-      }}
-    >
+    <WebsiteSectionWrapper id='website-testimonials-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         {testimonials.length > 0 ? (
           <div className='-mx-4 flex flex-wrap items-center justify-center lg:justify-between'>
@@ -175,6 +169,6 @@ export default function WebsiteTestimonialsSection({
           </div>
         )}
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }

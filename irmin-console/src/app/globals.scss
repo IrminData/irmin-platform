@@ -2,12 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Body styles and background patterns */
+html {
+  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #01161e;
+  background-color: #fff;
+  .pattern-bg {
+    background-image: url('/ui-assets/elements/pattern-white.svg');
+  }
+  &.dark {
+    background-color: #01161e;
+    color: #fff;
+    .pattern-bg {
+      background-image: url('/ui-assets/elements/pattern-dark.svg');
+    }
+  }
+}
+
 /* Hide scrollbar visual */
 .scrollbar-hide {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
   ::-webkit-scrollbar {
     display: none; /* For Webkit-based browsers (Chrome, Safari and Opera) */
+  }
+}
+.scrollbar-show {
+  scrollbar-width: auto; /* Firefox */
+  -ms-overflow-style: auto; /* IE and Edge */
+  ::-webkit-scrollbar {
+    display: auto; /* For Webkit-based browsers (Chrome, Safari and Opera) */
   }
 }
 
@@ -84,6 +110,7 @@ input[type='radio'] {
     color: #222;
     margin-bottom: 0.5em;
     line-height: 1.25;
+    letter-spacing: -0.05em;
   }
 
   h1 {

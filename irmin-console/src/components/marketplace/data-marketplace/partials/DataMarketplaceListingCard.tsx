@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 
 import { IoClose } from 'react-icons/io5';
@@ -35,31 +37,27 @@ export default function DataMarketplaceListingCard({
   const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <div className='rounded-lg border bg-white p-4 shadow transition duration-300 hover:shadow-lg'>
-      <div className='mb-2 flex items-center justify-between'>
-        <span className='font-medium text-gray-800'>{repository.name}</span>
+    <div className='rounded-lg border bg-white p-4 transition duration-300 hover:shadow dark:border-gray-800 dark:bg-irmin_black'>
+      <div className='mb-2 flex items-center justify-between text-irmin_black dark:text-white'>
+        <span className='font-medium'>{repository.name}</span>
         {repository.connected ? (
-          <div className='flex flex-row items-center'>
-            <span className='rounded px-2 text-xs text-gray-400'>
-              {dict.marketplace.connected}
-            </span>
-            <span className='text-gray-400'>
-              <TbCheck className='text-xl' />
-            </span>
+          <div className='flex flex-row items-center text-xs opacity-80'>
+            <span className='rounded px-2'>{dict.marketplace.connected}</span>
+            <TbCheck className='-mt-1 text-xl' />
           </div>
         ) : null}
       </div>
-      <div className='mb-4 text-sm text-gray-600'>
+      <div className='mb-4 text-sm text-irmin_black dark:text-white'>
         {dict.marketplace.source}: {repository.source}
       </div>
       <div className='flex items-center justify-between'>
-        <span className={`font-lighter text-gray-600`}>
+        <span className={`font-lighter text-irmin_black dark:text-white`}>
           {repository.price} € {dict.marketplace.pricePostfix}
         </span>
         <div>
           <Button
             variant='link'
-            colorScheme='secondary'
+            colorScheme='black'
             size='sm'
             className='mr-2'
             onClick={() => setShowDetails(true)}

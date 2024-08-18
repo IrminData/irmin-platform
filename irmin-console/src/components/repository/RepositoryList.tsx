@@ -56,18 +56,14 @@ const RepositoryList = ({
           <span className='text-xs text-gray-400'>
             {dict.list.owner}: {item.owner.name}
           </span>
-          <p className='text-base text-irmin_black'>
+          <p className='text-base'>
             {item.name}
-            {item.workflow ? (
-              <span className='ml-2 bg-irmin_light_green px-1 text-xs leading-3 text-irmin_blue'>
-                {dict.list.managedByWorkflow}
+            {item.workflow && (
+              <span className='ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-3 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+                {item.is_immutable
+                  ? dict.list.immutable
+                  : dict.list.managedByWorkflow}
               </span>
-            ) : item.is_immutable ? (
-              <span className='ml-2 bg-irmin_light_green px-1 text-xs leading-3 text-irmin_blue'>
-                {dict.list.immutable}
-              </span>
-            ) : (
-              <></>
             )}
           </p>
           {item.description && item.description.length > 0 && (

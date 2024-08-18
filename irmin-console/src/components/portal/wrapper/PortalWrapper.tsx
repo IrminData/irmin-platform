@@ -48,16 +48,13 @@ export default function PortalWrapper({
   const foldMenu = isLargeScreen ? isMenuFolded : false;
 
   return (
-    <>
+    <div className='contents' id='portal-wrapper'>
       {/* Portal wrapper structure */}
-      <div
-        className='flex w-screen flex-row items-start justify-start gap-0'
-        id='portal-wrapper'
-      >
+      <div className='flex w-screen flex-row items-start justify-start gap-0'>
         {/* Portal navigation sidebar */}
         <div
           id='portal-sidebar-wrapper'
-          className={`scrollbar-hide h-screen overflow-y-scroll border-r border-irmin_green bg-white transition-all duration-300 ${
+          className={`scrollbar-hide h-screen overflow-y-scroll border-r bg-white transition-all duration-300 dark:border-gray-800 dark:bg-irmin_black ${
             isMenuOpen ? 'absolute z-10 block' : 'hidden lg:relative lg:block'
           } ${foldMenu ? 'w-20' : 'w-60'}`}
         >
@@ -79,17 +76,28 @@ export default function PortalWrapper({
                 >
                   <Link href='/' aria-label='Go to website home page'>
                     <Image
-                      className={'h-[24px]'}
+                      className={'block h-[24px] dark:hidden'}
                       src='/irmin-logo.svg'
                       alt='Irmin logo'
                       width={100}
-                      height={50}
+                      height={100}
+                    />
+                    <Image
+                      className={'hidden h-[24px] dark:block'}
+                      src='/irmin-logo-light.svg'
+                      alt='Irmin logo'
+                      width={100}
+                      height={100}
                     />
                   </Link>
                 </div>
-                <ThemeSwitch />
+                {!foldMenu && (
+                  <div className='pl-4'>
+                    <ThemeSwitch />
+                  </div>
+                )}
                 <button
-                  className={`hover:irmin_teal absolute top-[16px] hidden text-irmin_blue transition-all lg:top-[15px] lg:block ${
+                  className={`hover:irmin_teal absolute top-[16px] hidden text-irmin_blue transition-all hover:text-irmin_teal lg:top-[15px] lg:block dark:text-irmin_teal dark:hover:text-irmin_blue ${
                     !foldMenu ? 'right-2' : 'left-6'
                   }`}
                   aria-label='Fold the side navigation'
@@ -186,6 +194,11 @@ export default function PortalWrapper({
               </div>
             </div>
             <div className='flex-grow'></div>
+            {foldMenu && (
+              <div className='mx-auto mb-8 mt-auto'>
+                <ThemeSwitch />
+              </div>
+            )}
             <div
               id='portal-sidebar-footer'
               className={`mt-auto transition-all ${foldMenu ? 'hidden w-0' : 'block w-full'}`}
@@ -230,33 +243,44 @@ export default function PortalWrapper({
           {/* Top menu bar */}
           <div
             id='portal-top-bar'
-            className={`z-10 w-full border-b border-irmin_green bg-white ${isMenuOpen ? 'pl-0' : 'pl-12 lg:pl-0'}`}
+            className={`z-10 w-full border-b bg-white dark:border-gray-800 dark:bg-irmin_black ${isMenuOpen ? 'pl-0' : 'pl-12 lg:pl-0'}`}
           >
             <div className='group flex h-14 w-full items-center px-4 py-1 xl:px-6'>
               <div
                 className={`py-2 pr-4 group-focus-within:hidden ${foldMenu ? 'lg:block' : 'lg:hidden'}`}
               >
                 <Image
-                  className={'h-full max-h-4 object-contain md:max-h-6'}
+                  className={
+                    'block h-full max-h-4 object-contain md:max-h-6 dark:hidden'
+                  }
                   src='/irmin-logo.svg'
                   alt='Irmin logo'
                   width={100}
                   height={26}
                 />
+                <Image
+                  className={
+                    'hidden h-full max-h-4 object-contain md:max-h-6 dark:block'
+                  }
+                  src='/irmin-logo-light.svg'
+                  alt='Irmin logo'
+                  width={100}
+                  height={26}
+                />
               </div>
-              <form className='ml-auto w-full max-w-24 rounded-full border border-gray-200 transition-all focus-within:max-w-full md:max-w-sm lg:max-w-md'>
+              <form className='ml-auto w-full max-w-24 rounded-full border border-gray-200 transition-all focus-within:max-w-full md:max-w-sm lg:max-w-md dark:border-gray-800'>
                 <div className='relative'>
                   <div className='pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3'>
                     <TbSearch className='text-gray-500' />
                   </div>
                   <input
                     type='search'
-                    className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible focus:outline-none group-focus-within:placeholder:visible md:text-sm md:placeholder:visible'
+                    className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible focus:outline-none group-focus-within:placeholder:visible md:text-sm md:placeholder:visible dark:bg-irmin_black dark:text-white'
                     placeholder={dict.portalNavigation.searchPlaceholder}
                   />
                   <button
                     type='button'
-                    className='invisible absolute bottom-0 right-0 top-0 rounded-full bg-gray-50 px-4 py-3 text-xs font-light text-gray-800 opacity-0 transition-all hover:bg-gray-100 focus:outline-none group-focus-within:visible group-focus-within:opacity-100 md:visible md:text-sm md:opacity-100'
+                    className='invisible absolute bottom-0 right-0 top-0 rounded-full bg-gray-50 px-4 py-3 text-xs font-light text-gray-800 opacity-0 transition-all hover:bg-gray-100 focus:outline-none group-focus-within:visible group-focus-within:opacity-100 md:visible md:text-sm md:opacity-100 dark:bg-irmin_black dark:text-white dark:hover:bg-gray-800'
                   >
                     {dict.portalNavigation.search}
                   </button>
@@ -267,12 +291,8 @@ export default function PortalWrapper({
           {/* Portal content */}
           <div
             id='portal-content'
-            className={`relative flex-grow overflow-y-scroll bg-neutral-50 bg-center`}
-            style={{
-              backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
-            }}
+            className='pattern-bg relative overflow-y-scroll bg-white bg-contain bg-top bg-no-repeat dark:bg-irmin_black'
           >
-            {/* Portal content */}
             {children}
           </div>
         </div>
@@ -313,6 +333,6 @@ export default function PortalWrapper({
       <div id='portal-assistant-popup'>
         <AssistantPopup />
       </div>
-    </>
+    </div>
   );
 }

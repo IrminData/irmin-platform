@@ -4,6 +4,7 @@ import WordPress from '@/services/wordpress';
 
 import Button from '@/components/common/button/Button';
 import DynamicFaIcon from '@/components/common/DynamicFaIcon';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { getURL } from '@/utils/wordpress';
 
@@ -35,14 +36,7 @@ export default async function WebsiteCTASection({
       : section.image;
 
   return (
-    <section
-      id='cta-section'
-      className='overflow-hidden bg-white py-12'
-      style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
-        backgroundPosition: 'center',
-      }}
-    >
+    <WebsiteSectionWrapper id='cta-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='-mx-4 flex flex-wrap'>
           <div className='mb-20 w-full px-4 md:w-1/2 lg:mb-0'>
@@ -119,6 +113,6 @@ export default async function WebsiteCTASection({
           </div>
         </div>
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }

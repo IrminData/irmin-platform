@@ -4,6 +4,7 @@ import WordPress from '@/services/wordpress';
 
 import Button from '@/components/common/button/Button';
 import DynamicFaIcon from '@/components/common/DynamicFaIcon';
+import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { getURL } from '@/utils/wordpress';
 
@@ -49,14 +50,7 @@ export default async function WebsiteTeamSection({
     });
   }
   return (
-    <section
-      id='team-section'
-      className='bg-white py-12'
-      style={{
-        backgroundImage: 'url("/ui-assets/elements/pattern-white.svg")',
-        backgroundPosition: 'center',
-      }}
-    >
+    <WebsiteSectionWrapper id='website-team-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='-mx-4 mb-16 flex flex-wrap items-center justify-between'>
           <div className='mb-8 w-full px-4 md:mb-0 md:w-1/2'>
@@ -125,6 +119,6 @@ export default async function WebsiteTeamSection({
           ))}
         </div>
       </div>
-    </section>
+    </WebsiteSectionWrapper>
   );
 }
