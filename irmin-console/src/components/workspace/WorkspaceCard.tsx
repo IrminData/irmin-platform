@@ -55,7 +55,7 @@ const WorkspaceCard = ({ workspace }: { workspace: Workspace }) => {
       onClick={handleWorkspaceCardClick}
       aria-label={`Go to ${workspace.name} workspace`}
     >
-      <div className='flex h-full flex-col rounded-xl bg-white p-2 text-xs shadow sm:p-4 lg:p-6 lg:text-base xl:p-8 dark:bg-irmin_black-600'>
+      <div className='flex h-full flex-col rounded-xl bg-white p-2 text-xs shadow lg:p-4 lg:text-base dark:bg-irmin_black-600'>
         <span className='md:text-normal text-xs font-semibold uppercase tracking-wide text-irmin_green'>
           {dict.workspaceSwitcher.workspace}
         </span>
