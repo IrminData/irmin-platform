@@ -17,7 +17,7 @@ export default function WrappedTabs({ tabs }: { tabs: TabsType }) {
       id='wrapped-tabs'
       className='container box-border overflow-hidden px-2 lg:px-4'
     >
-      <div className='min-h-96 w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white shadow-md dark:bg-irmin_black dark:shadow-gray-800'>
+      <div className='min-h-96 w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white shadow-md dark:bg-irmin_black-600 dark:shadow-black'>
         <Tabs tabs={tabs} />
       </div>
     </div>

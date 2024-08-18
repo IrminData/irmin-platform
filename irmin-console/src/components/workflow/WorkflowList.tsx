@@ -61,9 +61,9 @@ const WorkflowList = ({
           <span className='text-xs text-gray-400'>
             {dict.list.owner}: {item.owner.name}
           </span>
-          <p className='text-base text-irmin_black'>
+          <p className='text-base'>
             {item.name}
-            <span className='ml-2 bg-irmin_light_green px-1 text-xs leading-3 text-irmin_blue'>
+            <span className='ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-3 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
               {item.workflowable_type}
             </span>
           </p>

@@ -13,6 +13,8 @@ import { ListProps } from '@/types/internal/ListProps';
 const CardOrNormalList: React.FC<ListProps> = (props) => {
   return (
     <div id='card-or-normal-list'>
+      <CardList {...props} />
+
       <div className='block sm:hidden' id='card-list-on-small-screen'>
         <CardList {...props} />
       </div>

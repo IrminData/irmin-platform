@@ -158,7 +158,7 @@ const GeneralSettings = () => {
   };
 
   return (
-    <div className='px-4'>
+    <div className='my-8 px-4'>
       <h2 className='mb-4 text-2xl font-normal'>
         {dict.workspace.generalSettings}
       </h2>
@@ -212,17 +212,17 @@ const GeneralSettings = () => {
           </Button>
         </form>
         <div className='mt-8'>
-          <p className='text-sm font-normal text-red-800 md:text-xl'>
+          <p className='text-sm font-normal text-red-800 md:text-xl dark:text-red-400'>
             {dict.workspace.dangerZone}
           </p>
-          <p className='mt-2 text-xs text-gray-700 md:text-base'>
+          <p className='mt-2 text-xs text-gray-500 md:text-base'>
             {dict.workspace.deletionNote}
           </p>
           <Button
-            className='mt-4'
+            className='mt-4 shadow-none'
             onClick={confirmDeletion}
             size='sm'
-            colorScheme='secondary'
+            colorScheme='black'
             variant='outline'
             disabled={isLoading}
           >
@@ -246,11 +246,11 @@ const GeneralSettings = () => {
 const BillingSettings: React.FC = () => {
   const { dict } = useLocale();
   return (
-    <div className='px-4 pb-4'>
+    <div className='my-8 px-4'>
       <h2 className='mb-4 text-2xl font-normal'>
         {dict.workspace.billingSettings}
       </h2>
-      <p className='mb-4 font-normal text-gray-700'>
+      <p className='mb-4 font-normal text-gray-500'>
         {dict.workspace.billingNote}
       </p>
       <Button

@@ -75,35 +75,46 @@ const Button = ({
   const router = useRouter();
 
   const baseClasses =
-    'inline-flex items-center justify-center text-center rounded-lg transition-all outline-none hover:opacity-60 duration-300 hover:backdrop-blur shadow shadow-gray-300 dark:shadow-gray-700';
+    'inline-flex items-center justify-center text-center rounded-lg transition-all outline-none hover:opacity-60 duration-300 hover:backdrop-blur';
   const variantClasses = {
     solid: {
-      primary: 'bg-irmin_green text-white',
-      secondary: 'bg-irmin_blue text-white',
-      tertiary: 'bg-irmin_teal text-white',
-      gray: 'bg-gray-500 text-white',
-      black: 'bg-irmin_black text-white',
-      light: 'bg-gray-100 text-black dark:bg-gray-800 dark:text-white',
+      primary:
+        'bg-irmin_green text-white shadow shadow-gray-300 dark:shadow-gray-700',
+      secondary:
+        'bg-irmin_blue text-white shadow shadow-gray-300 dark:shadow-gray-700',
+      tertiary:
+        'bg-irmin_teal text-white shadow shadow-gray-300 dark:shadow-gray-700',
+      gray: 'bg-gray-500 text-white shadow shadow-gray-300 dark:shadow-gray-700',
+      black:
+        'bg-irmin_black text-white shadow shadow-gray-300 dark:bg-gray-50 dark:shadow-gray-700',
+      light:
+        'bg-gray-100 text-black dark:bg-gray-800 dark:text-white shadow shadow-gray-300 dark:shadow-gray-700',
     },
     outline: {
-      primary: 'border border-irmin_green text-irmin_green',
-      secondary: 'border border-irmin_blue text-irmin_blue',
-      tertiary: 'border border-irmin_teal text-irmin_teal',
-      gray: 'border border-gray-500 text-gray-500',
-      black: 'border border-irmin_black text-irmin_black',
+      primary:
+        'border border-irmin_green text-irmin_green shadow shadow-gray-300 dark:shadow-gray-700',
+      secondary:
+        'border border-irmin_blue text-irmin_blue shadow shadow-gray-300 dark:shadow-gray-700',
+      tertiary:
+        'border border-irmin_teal text-irmin_teal shadow shadow-gray-300 dark:shadow-gray-700',
+      gray: 'border border-gray-500 text-gray-500 shadow shadow-gray-300 dark:shadow-gray-700',
+      black:
+        'border border-irmin_black text-irmin_black shadow shadow-gray-300 dark:border-gray-50 dark:text-gray-50 dark:shadow-gray-700',
       light:
-        'border border-gray-200 text-gray-100 dark:border-gray-800 dark:text-gray-200',
+        'border border-gray-200 text-gray-100 dark:border-gray-800 dark:text-gray-200 shadow shadow-gray-300 dark:shadow-gray-700',
     },
     gradient: {
       primary:
-        'bg-gradient-to-r from-irmin_green-600 to-irmin_green-400 text-white',
+        'bg-gradient-to-r from-irmin_green-600 to-irmin_green-400 text-white shadow shadow-gray-300 dark:shadow-gray-700',
       secondary:
-        'bg-gradient-to-r from-irmin_blue to-irmin_blue-400 text-white',
-      tertiary: 'bg-gradient-to-r from-irmin_teal to-irmin_teal-400 text-white',
-      gray: 'bg-gradient-to-r from-gray-500 to-gray-400 text-white',
-      black: 'bg-gradient-to-r from-irmin_black to-irmin_black-400 text-white',
+        'bg-gradient-to-r from-irmin_blue to-irmin_blue-400 text-white shadow shadow-gray-300 dark:shadow-gray-700',
+      tertiary:
+        'bg-gradient-to-r from-irmin_teal to-irmin_teal-400 text-white shadow shadow-gray-300 dark:shadow-gray-700',
+      gray: 'bg-gradient-to-r from-gray-500 to-gray-400 text-white shadow shadow-gray-300 dark:shadow-gray-700',
+      black:
+        'bg-gradient-to-r from-irmin_black to-irmin_black-400 text-white shadow shadow-gray-300 dark:shadow-gray-700',
       light:
-        'bg-gradient-to-r from-gray-100 to-gray-200 text-black dark:from-gray-800 dark:to-gray-700 dark:text-white',
+        'bg-gradient-to-r from-gray-100 to-gray-200 text-black dark:from-gray-800 dark:to-gray-700 dark:text-white shadow shadow-gray-300 dark:shadow-gray-700',
     },
     icon: {
       primary:

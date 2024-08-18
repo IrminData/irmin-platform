@@ -63,7 +63,7 @@ const ExportWorkflowList = ({
           <span className='text-xs text-gray-400'>
             {dict.list.owner}: {item.owner.name}
           </span>
-          <p className='text-base text-irmin_black'>{item.name}</p>
+          <p className='text-base'>{item.name}</p>
           {item.description && item.description.length > 0 && (
             <p className='max-w-72 text-xs text-gray-400'>
               {item.description.substring(0, 120).trim()}
