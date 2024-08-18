@@ -44,7 +44,7 @@ function DashboardTitleAndSelector({
       className='flex items-center justify-between pb-8 pr-4 pt-6 md:pb-8 md:pt-8'
     >
       <div
-        className={`px-4 text-lg font-medium text-irmin_black text-opacity-80 md:text-3xl`}
+        className={`px-4 text-lg font-medium text-irmin_black text-opacity-80 md:text-3xl dark:text-white`}
       >
         <h1>{title}</h1>
       </div>

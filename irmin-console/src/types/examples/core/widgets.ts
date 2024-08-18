@@ -20,7 +20,6 @@ export const widgets = (last = false): Widget[] => [
     data: {
       currentValue: 1000,
       label: '2024 Sales in USD',
-      color: '#36a2eb',
     },
     size: {
       w: 1,
@@ -39,7 +38,6 @@ export const widgets = (last = false): Widget[] => [
         {
           label: 'Sales',
           data: [65, 59, 80, 81, 56, 55, 40],
-          backgroundColor: '#aec3b0',
         },
       ],
     },
@@ -75,8 +73,6 @@ export const widgets = (last = false): Widget[] => [
         {
           label: 'Sales',
           data: [150, 200, 180, 220],
-          backgroundColor: '#aec3b0',
-          borderColor: '#aec3b0',
         },
       ],
     },
@@ -158,8 +154,6 @@ export const widgets = (last = false): Widget[] => [
         {
           label: 'Growth',
           data: [10, 20, 30, 40, 50, 60],
-          backgroundColor: '#36a2eb',
-          borderColor: '#36a2eb',
         },
       ],
     },
@@ -180,7 +174,6 @@ export const widgets = (last = false): Widget[] => [
         {
           label: 'Sales',
           data: [300, 500, 200, 100],
-          backgroundColor: ['#ff6384', '#36a2eb', '#ffcd56', '#cc65fe'],
         },
       ],
     },
@@ -201,7 +194,6 @@ export const widgets = (last = false): Widget[] => [
         {
           label: 'Revenue',
           data: [1500, 2000, 1800, 2200],
-          backgroundColor: ['#ffcd56', '#ff6384', '#36a2eb', '#cc65fe'],
         },
       ],
     },
@@ -222,14 +214,10 @@ export const widgets = (last = false): Widget[] => [
         {
           label: 'Current',
           data: [20, 30, 40, 50, 60],
-          backgroundColor: 'rgba(179,181,198,0.2)',
-          borderColor: 'rgba(179,181,198,1)',
         },
         {
           label: 'Target',
           data: [25, 35, 45, 55, 65],
-          backgroundColor: 'rgba(255,99,132,0.2)',
-          borderColor: 'rgba(255,99,132,1)',
         },
       ],
     },
@@ -250,13 +238,6 @@ export const widgets = (last = false): Widget[] => [
         {
           label: 'Market Share',
           data: [40, 30, 20, 10, 5],
-          backgroundColor: [
-            '#ff6384',
-            '#36a2eb',
-            '#ffcd56',
-            '#cc65fe',
-            '#4bc0c0',
-          ],
         },
       ],
     },

@@ -24,10 +24,10 @@ interface WidgetWrapperProps {
 const WidgetWrapper = ({ widget, children }: WidgetWrapperProps) => {
   return (
     <div
-      className={`flex flex-col rounded-lg border-t-2 border-irmin_green bg-white p-4 pb-0 shadow-lg col-span-${widget?.size?.w ?? 2}`}
+      className={`flex flex-col rounded-lg border-t-2 border-irmin_green bg-white p-4 pb-0 shadow-lg dark:bg-gray-800 col-span-${widget?.size?.w ?? 2}`}
       id={`widget-${widget?.type ?? 'loading'}-${widget?.id ?? 0}`}
     >
-      <div className='flex h-14 items-center justify-between border-b'>
+      <div className='flex h-14 items-center justify-between border-b dark:border-gray-600'>
         <h3 className='text-sm font-medium leading-tight lg:text-base'>
           {widget?.title ?? '...'}
         </h3>
@@ -42,7 +42,9 @@ const WidgetWrapper = ({ widget, children }: WidgetWrapperProps) => {
           <IoSettings size={18} />
         </Button>
       </div>
-      <div className='-mx-4 h-full overflow-scroll px-4'>{children}</div>
+      <div className='-mx-4 h-full max-h-80 overflow-scroll px-4'>
+        {children}
+      </div>
     </div>
   );
 };

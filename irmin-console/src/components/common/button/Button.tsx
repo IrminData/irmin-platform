@@ -78,12 +78,12 @@ const Button = ({
     'inline-flex items-center justify-center text-center rounded-lg transition-all outline-none hover:opacity-60 duration-300 hover:backdrop-blur shadow shadow-gray-300 dark:shadow-gray-700';
   const variantClasses = {
     solid: {
-      primary: 'bg-irmin_green text-white active:bg-irmin_green-600',
-      secondary: 'bg-irmin_blue text-white active:bg-irmin_blue-600',
-      tertiary: 'bg-irmin_teal text-white active:bg-irmin_teal-600',
-      gray: 'bg-gray-500 text-white active:bg-gray-600',
-      black: 'bg-irmin_black text-white active:bg-irmin_black-600',
-      light: 'bg-gray-100 text-black active:bg-gray-300',
+      primary: 'bg-irmin_green text-white',
+      secondary: 'bg-irmin_blue text-white',
+      tertiary: 'bg-irmin_teal text-white',
+      gray: 'bg-gray-500 text-white',
+      black: 'bg-irmin_black text-white',
+      light: 'bg-gray-100 text-black dark:bg-gray-800 dark:text-white',
     },
     outline: {
       primary: 'border border-irmin_green text-irmin_green',
@@ -91,7 +91,8 @@ const Button = ({
       tertiary: 'border border-irmin_teal text-irmin_teal',
       gray: 'border border-gray-500 text-gray-500',
       black: 'border border-irmin_black text-irmin_black',
-      light: 'border border-gray-200 text-gray-100',
+      light:
+        'border border-gray-200 text-gray-100 dark:border-gray-800 dark:text-gray-200',
     },
     gradient: {
       primary:
@@ -101,27 +102,30 @@ const Button = ({
       tertiary: 'bg-gradient-to-r from-irmin_teal to-irmin_teal-400 text-white',
       gray: 'bg-gradient-to-r from-gray-500 to-gray-400 text-white',
       black: 'bg-gradient-to-r from-irmin_black to-irmin_black-400 text-white',
-      light: 'bg-gradient-to-r from-gray-100 to-gray-200 text-black',
+      light:
+        'bg-gradient-to-r from-gray-100 to-gray-200 text-black dark:from-gray-800 dark:to-gray-700 dark:text-white',
     },
     icon: {
-      primary: 'text-irmin_green rounded-full active:text-irmin_green-600',
-      secondary: 'text-irmin_blue rounded-full active:text-irmin_blue-600',
-      tertiary: 'text-irmin_teal-500 rounded-full active:text-irmin_teal-600',
-      gray: 'text-gray-500 rounded-full active:text-gray-600',
-      black: 'text-irmin_black rounded-full active:text-irmin_black-600',
-      light: 'text-gray-200 rounded-full active:text-gray-300',
+      primary:
+        'text-irmin_green rounded-full rounded-full shadow-none dark:shadow-none border-none',
+      secondary:
+        'text-irmin_blue rounded-full rounded-full shadow-none dark:shadow-none border-none',
+      tertiary:
+        'text-irmin_teal-500 rounded-full rounded-full shadow-none dark:shadow-none border-none',
+      gray: 'text-gray-500 rounded-full shadow-none dark:shadow-none border-none',
+      black:
+        'text-irmin_black rounded-full shadow-none dark:shadow-none border-none',
+      light:
+        'text-gray-200 dark:text-gray-800 rounded-full shadow-none dark:shadow-none border-none',
     },
     link: {
-      primary:
-        'text-irmin_green hover:underline shadow-none active:text-irmin_green-600',
-      secondary:
-        'text-irmin_blue hover:underline shadow-none active:text-irmin_blue-600',
-      tertiary:
-        'text-irmin_teal hover:underline shadow-none active:text-irmin_teal-600',
-      gray: 'text-gray-500 hover:underline shadow-none active:text-gray-600',
-      black:
-        'text-irmin_black hover:underline shadow-none active:text-irmin_black-600',
-      light: 'text-gray-200 hover:underline shadow-none active:text-gray-300',
+      primary: 'text-irmin_green hover:underline shadow-none dark:shadow-none',
+      secondary: 'text-irmin_blue hover:underline shadow-none dark:shadow-none',
+      tertiary: 'text-irmin_teal hover:underline shadow-none dark:shadow-none',
+      gray: 'text-gray-500 hover:underline shadow-none dark:shadow-none',
+      black: 'text-irmin_black hover:underline shadow-none dark:shadow-none',
+      light:
+        'text-gray-200 hover:underline shadow-none dark:shadow-none dark:text-gray-800',
     },
   };
 
