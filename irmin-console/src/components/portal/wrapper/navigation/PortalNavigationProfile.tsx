@@ -35,37 +35,39 @@ export default function PortalNavigationProfile({
   }
 
   return (
-    <Link
-      className='flex w-full flex-wrap items-center'
-      href='/portal/profile'
-      onClick={() => {
-        setIsMenuOpen(false);
-      }}
-    >
-      <div className='flex w-auto items-center p-1'>
-        {profile.profile_picture ? (
-          <Image
-            src={profile.profile_picture}
-            alt={profile.name ?? ''}
-            width={50}
-            height={50}
-            className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
-          />
-        ) : (
-          <ProfileImagePlaceholder
-            user={profile}
-            className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
-          />
-        )}
-      </div>
-      <div className='w-auto overflow-hidden p-1'>
-        <p className='text-sm font-normal text-irmin_black dark:text-irmin_green'>
-          {profile.name ?? ''}
-        </p>
-      </div>
+    <div className='flex w-full flex-wrap items-center'>
+      <Link
+        className='contents'
+        href='/portal/profile'
+        onClick={() => {
+          setIsMenuOpen(false);
+        }}
+      >
+        <div className='flex w-auto items-center p-1'>
+          {profile.profile_picture ? (
+            <Image
+              src={profile.profile_picture}
+              alt={profile.name ?? ''}
+              width={50}
+              height={50}
+              className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
+            />
+          ) : (
+            <ProfileImagePlaceholder
+              user={profile}
+              className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
+            />
+          )}
+        </div>
+        <div className='w-auto overflow-hidden p-1'>
+          <p className='text-sm font-normal text-irmin_black dark:text-irmin_green'>
+            {profile.name ?? ''}
+          </p>
+        </div>
+      </Link>
       <div className='ml-auto'>
         <NotificationButton />
       </div>
-    </Link>
+    </div>
   );
 }

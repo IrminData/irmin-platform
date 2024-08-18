@@ -32,10 +32,7 @@ const PluginMarketplaceFilters: React.FC<{
               ariaLabel={`Toggle ${category} filter`}
               size='sm'
               variant={`outline`}
-              colorScheme={`${
-                selectedCategory === category ? 'primary' : 'gray'
-              }`}
-              className={`min-w-16 ${selectedCategory === category ? 'bg-gray-100' : 'bg-white'}`}
+              className={`min-w-16 text-irmin_black dark:text-white ${selectedCategory === category ? 'bg-gray-100 dark:bg-gray-800' : 'bg-white dark:bg-irmin_black-600'}`}
             >
               {category}
             </Button>

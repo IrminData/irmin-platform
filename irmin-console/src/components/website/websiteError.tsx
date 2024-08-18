@@ -2,8 +2,6 @@
 
 import Image from 'next/image';
 
-import { useTheme } from 'next-themes';
-
 import Button from '@/components/common/button/Button';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
@@ -21,7 +19,6 @@ export default function WebsiteError({
   error?: Error & { digest?: string };
   reset?: () => void;
 }) {
-  const { theme } = useTheme();
   const { dict } = useLocale();
   return (
     <WebsiteSectionWrapper id='website-error-section'>

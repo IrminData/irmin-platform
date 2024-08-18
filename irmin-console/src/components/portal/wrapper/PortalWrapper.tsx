@@ -6,8 +6,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
-import { useTheme } from 'next-themes';
-
 import { TbChevronLeft, TbChevronRight, TbSearch } from 'react-icons/tb';
 
 import AssistantPopup from '@/components/assistant/AssistantPopup';
@@ -38,7 +36,6 @@ import { useBreakpoint } from '@/utils/tw';
 export default function PortalWrapper({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { theme } = useTheme();
   const { dict } = useLocale();
   const { workspace: workspaceSlug } = useParams();
 

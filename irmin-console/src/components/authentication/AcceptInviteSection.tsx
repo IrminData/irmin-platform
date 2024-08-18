@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import IrminCore from '@/services/core/IrminCore';
-import { useTheme } from 'next-themes';
 
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
@@ -31,7 +30,6 @@ import { useLocale } from '@/context/LocaleContext';
  */
 const AcceptInviteSection = () => {
   const { dict, locale } = useLocale();
-  const { theme } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteId = parseInt(searchParams.get('invite') || '-1', 10);

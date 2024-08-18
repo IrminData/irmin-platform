@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react';
 
-import { useTheme } from 'next-themes';
-
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
@@ -20,7 +18,6 @@ import { useLocale } from '@/context/LocaleContext';
  * It uses the {@link useIAM} hook to interact with the user's identity and APIs.
  */
 const SignInSection = () => {
-  const { theme } = useTheme();
   const { dict } = useLocale();
   const { login } = useIAM();
 

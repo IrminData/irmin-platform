@@ -20,6 +20,7 @@ const NotificationButton = () => {
         onClick={handleClick}
         className='block max-w-max text-irmin_blue transition-all hover:text-irmin_teal dark:text-irmin_teal dark:hover:text-irmin_blue'
         aria-label={dict.portalNavigation.notifications.toggle}
+        type='button'
       >
         <PiBell className='text-xl' />
       </button>

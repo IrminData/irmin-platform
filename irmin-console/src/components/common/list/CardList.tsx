@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5';
 
@@ -20,7 +20,7 @@ import { ListProps } from '@/types/internal/ListProps';
  *
  * The component is responsive and can be used in any layout.
  */
-const CardList: React.FC<ListProps> = ({ rows, loading = false }) => {
+const CardList = ({ rows, loading = false }: ListProps) => {
   const [openDetails, setOpenDetails] = useState<number[]>([]);
 
   return (

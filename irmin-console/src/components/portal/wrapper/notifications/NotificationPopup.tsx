@@ -1,3 +1,5 @@
+'use client';
+
 import { useRef, useState } from 'react';
 
 import Link from 'next/link';
@@ -150,13 +152,13 @@ const NotificationPopup = ({
             }
       }
     >
-      <div className='max-h-[320px] w-64 overflow-y-scroll rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5'>
-        <div className='absolute -top-[16px] left-auto right-[16px] z-50 -translate-x-1/2 transform text-white md:left-[22px] md:right-auto'>
+      <div className='max-h-[320px] w-64 overflow-y-scroll rounded-md bg-white shadow-lg dark:bg-irmin_black-800'>
+        <div className='absolute -top-[16px] left-auto right-[16px] z-50 -translate-x-1/2 transform text-white md:left-[22px] md:right-auto dark:text-irmin_black-800'>
           <IoTriangle size={20} />
         </div>
-        <div className='sticky top-0 z-10 bg-white py-2 shadow-sm'>
+        <div className='sticky top-0 z-10 bg-white py-2 shadow-sm dark:bg-irmin_black-800 dark:shadow-gray-800'>
           <div
-            className={`px-4 ${isScrolled ? 'pt-2' : 'pt-0'} transition-all`}
+            className={`px-3 ${isScrolled ? 'pt-2' : 'pt-0'} transition-all`}
           >
             <div className='flex items-center justify-between'>
               <div className='text-base font-semibold'>
@@ -192,29 +194,27 @@ const NotificationPopup = ({
                   key={`notification-${index}-${notification.id}`}
                 >
                   <div
-                    className={`border-b px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 ${notification.type === 'info' ? 'border-irmin_green' : ''} ${notification.type === 'warning' ? 'border-yellow-500' : ''} ${notification.type === 'error' ? 'border-red-500' : ''} ${notification.type === 'success' ? 'border-green-500' : ''} `}
+                    className={`border-b px-3 py-2 text-xs text-gray-800 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800 ${notification.type === 'info' ? 'border-irmin_green' : ''} ${notification.type === 'warning' ? 'border-yellow-500' : ''} ${notification.type === 'error' ? 'border-red-500' : ''} ${notification.type === 'success' ? 'border-green-500' : ''} `}
                   >
-                    <div className='flex justify-between'>
-                      <div className='font-normal'>{notification.title}</div>
-                      <div className='text-gray-500'>
-                        {new Date(notification.timestamp).toLocaleString(
-                          locale
-                        )}
-                      </div>
+                    <div className='text-[8px] text-xs text-gray-500'>
+                      {new Date(notification.timestamp).toLocaleString(locale)}
                     </div>
+                    <div className='font-normal'>{notification.title}</div>
                     {notification.relatedWorkspaceName && (
-                      <div className='text-irmin_green'>
+                      <div className='text-[8px] text-irmin_green'>
                         {dict.portalNavigation.notifications.relatedWorkspace}
                         {': '}
                         {notification.relatedWorkspaceName}
                       </div>
                     )}
-                    <div className='text-gray-500'>{notification.message}</div>
+                    <div className='text-[8px] text-gray-500'>
+                      {notification.message}
+                    </div>
                   </div>
                 </Link>
               ))
           ) : (
-            <div className='px-4 py-2 text-sm text-gray-700'>
+            <div className='px-3 py-2 text-sm text-gray-700'>
               {dict.portalNavigation.notifications.noNotifications}
             </div>
           )}

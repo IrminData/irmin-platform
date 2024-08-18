@@ -79,42 +79,42 @@ const Button = ({
   const variantClasses = {
     solid: {
       primary:
-        'bg-irmin_green text-white shadow shadow-gray-300 dark:shadow-gray-700',
+        'bg-irmin_green text-white shadow shadow-gray-300 dark:shadow-black',
       secondary:
-        'bg-irmin_blue text-white shadow shadow-gray-300 dark:shadow-gray-700',
+        'bg-irmin_blue text-white shadow shadow-gray-300 dark:shadow-black',
       tertiary:
-        'bg-irmin_teal text-white shadow shadow-gray-300 dark:shadow-gray-700',
-      gray: 'bg-gray-500 text-white shadow shadow-gray-300 dark:shadow-gray-700',
+        'bg-irmin_teal text-white shadow shadow-gray-300 dark:shadow-black',
+      gray: 'bg-gray-500 text-white shadow shadow-gray-300 dark:shadow-black',
       black:
-        'bg-irmin_black text-white shadow shadow-gray-300 dark:bg-gray-50 dark:shadow-gray-700',
+        'bg-irmin_black text-white shadow shadow-gray-300 dark:bg-gray-50 dark:shadow-black',
       light:
-        'bg-gray-100 text-black dark:bg-gray-800 dark:text-white shadow shadow-gray-300 dark:shadow-gray-700',
+        'bg-gray-100 text-black dark:bg-gray-800 dark:text-white shadow shadow-gray-300 dark:shadow-black',
     },
     outline: {
       primary:
-        'border border-irmin_green text-irmin_green shadow shadow-gray-300 dark:shadow-gray-700',
+        'border border-irmin_green text-irmin_green shadow shadow-gray-300 dark:shadow-black',
       secondary:
-        'border border-irmin_blue text-irmin_blue shadow shadow-gray-300 dark:shadow-gray-700',
+        'border border-irmin_blue text-irmin_blue shadow shadow-gray-300 dark:shadow-black',
       tertiary:
-        'border border-irmin_teal text-irmin_teal shadow shadow-gray-300 dark:shadow-gray-700',
-      gray: 'border border-gray-500 text-gray-500 shadow shadow-gray-300 dark:shadow-gray-700',
+        'border border-irmin_teal text-irmin_teal shadow shadow-gray-300 dark:shadow-black',
+      gray: 'border border-gray-500 text-gray-500 shadow shadow-gray-300 dark:shadow-black',
       black:
-        'border border-irmin_black text-irmin_black shadow shadow-gray-300 dark:border-gray-50 dark:text-gray-50 dark:shadow-gray-700',
+        'border border-irmin_black text-irmin_black shadow shadow-gray-300 dark:border-gray-50 dark:text-gray-50 dark:shadow-black',
       light:
-        'border border-gray-200 text-gray-100 dark:border-gray-800 dark:text-gray-200 shadow shadow-gray-300 dark:shadow-gray-700',
+        'border border-gray-200 text-gray-100 dark:border-gray-800 dark:text-gray-200 shadow shadow-gray-300 dark:shadow-black',
     },
     gradient: {
       primary:
-        'bg-gradient-to-r from-irmin_green-600 to-irmin_green-400 text-white shadow shadow-gray-300 dark:shadow-gray-700',
+        'bg-gradient-to-r from-irmin_green-600 to-irmin_green-400 text-white shadow shadow-gray-300 dark:shadow-black',
       secondary:
-        'bg-gradient-to-r from-irmin_blue to-irmin_blue-400 text-white shadow shadow-gray-300 dark:shadow-gray-700',
+        'bg-gradient-to-r from-irmin_blue to-irmin_blue-400 text-white shadow shadow-gray-300 dark:shadow-black',
       tertiary:
-        'bg-gradient-to-r from-irmin_teal to-irmin_teal-400 text-white shadow shadow-gray-300 dark:shadow-gray-700',
-      gray: 'bg-gradient-to-r from-gray-500 to-gray-400 text-white shadow shadow-gray-300 dark:shadow-gray-700',
+        'bg-gradient-to-r from-irmin_teal to-irmin_teal-400 text-white shadow shadow-gray-300 dark:shadow-black',
+      gray: 'bg-gradient-to-r from-gray-500 to-gray-400 text-white shadow shadow-gray-300 dark:shadow-black',
       black:
-        'bg-gradient-to-r from-irmin_black to-irmin_black-400 text-white shadow shadow-gray-300 dark:shadow-gray-700',
+        'bg-gradient-to-r from-irmin_black to-irmin_black-400 text-white shadow shadow-gray-300 dark:shadow-black',
       light:
-        'bg-gradient-to-r from-gray-100 to-gray-200 text-black dark:from-gray-800 dark:to-gray-700 dark:text-white shadow shadow-gray-300 dark:shadow-gray-700',
+        'bg-gradient-to-r from-gray-100 to-gray-200 text-black dark:from-gray-800 dark:to-gray-700 dark:text-white shadow shadow-gray-300 dark:shadow-black',
     },
     icon: {
       primary:
@@ -125,7 +125,7 @@ const Button = ({
         'text-irmin_teal-500 rounded-full rounded-full shadow-none dark:shadow-none border-none',
       gray: 'text-gray-500 rounded-full shadow-none dark:shadow-none border-none',
       black:
-        'text-irmin_black rounded-full shadow-none dark:shadow-none border-none',
+        'text-irmin_black dark:text-gray-200 rounded-full shadow-none dark:shadow-none border-none',
       light:
         'text-gray-200 dark:text-gray-800 rounded-full shadow-none dark:shadow-none border-none',
     },
@@ -134,7 +134,8 @@ const Button = ({
       secondary: 'text-irmin_blue hover:underline shadow-none dark:shadow-none',
       tertiary: 'text-irmin_teal hover:underline shadow-none dark:shadow-none',
       gray: 'text-gray-500 hover:underline shadow-none dark:shadow-none',
-      black: 'text-irmin_black hover:underline shadow-none dark:shadow-none',
+      black:
+        'text-irmin_black dark:text-gray-200 hover:underline shadow-none dark:shadow-none',
       light:
         'text-gray-200 hover:underline shadow-none dark:shadow-none dark:text-gray-800',
     },
