@@ -55,14 +55,14 @@ const WorkspaceCard = ({ workspace }: { workspace: Workspace }) => {
       onClick={handleWorkspaceCardClick}
       aria-label={`Go to ${workspace.name} workspace`}
     >
-      <div className='flex h-full flex-col rounded-xl bg-white p-2 text-xs shadow sm:p-4 lg:p-6 lg:text-base xl:p-8 dark:bg-irmin_black-900'>
+      <div className='flex h-full flex-col rounded-xl bg-white p-2 text-xs shadow sm:p-4 lg:p-6 lg:text-base xl:p-8 dark:bg-irmin_black-600'>
         <span className='md:text-normal text-xs font-semibold uppercase tracking-wide text-irmin_green'>
           {dict.workspaceSwitcher.workspace}
         </span>
         <h3 className='mt-2 block text-base font-normal leading-tight md:text-lg'>
           {workspace.name}
         </h3>
-        <p className='mb-4 mt-2 text-xs font-light leading-tight'>
+        <p className='mb-4 mt-2 text-xs font-light leading-tight opacity-60'>
           {workspace.description ?? '-'}
         </p>
         <div className='flex-grow'></div>

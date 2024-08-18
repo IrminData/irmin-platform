@@ -70,7 +70,7 @@ const ManageWorkspacesSection: React.FC = () => {
   return (
     <div className='flex flex-col gap-4 px-4 pb-28 pt-4 lg:flex-row-reverse'>
       <div className='w-full max-w-80'>
-        <div className='rounded-xl bg-white p-2 text-xs shadow sm:p-4 lg:p-6 lg:text-base xl:p-8 dark:bg-irmin_black-900'>
+        <div className='rounded-xl bg-white p-2 text-xs shadow sm:p-4 lg:p-6 lg:text-base xl:p-8 dark:bg-irmin_black-600'>
           <p className='mb-4 block text-left text-sm font-medium md:text-base'>
             {dict.workspaceSwitcher.createNewWorkspace}
           </p>
