@@ -23,7 +23,7 @@ export default function Select({
   selectClass?: string;
   labelClass?: string;
 }) {
-  const labelClasses = `-mb-2 px-4 z-10 text-xs ${variant === 'on-dark-bg' ? 'text-gray-300' : 'text-irmin_blue dark:text-gray-300'} ${labelClass}`;
+  const labelClasses = `-mb-2 mx-2 z-10 text-xs w-fit bg-white ${variant === 'on-dark-bg' ? 'text-gray-300' : 'text-irmin_black dark:text-gray-300'} ${labelClass}`;
 
   const baseSelectClasses =
     'block w-full cursor-pointer rounded-lg border bg-opacity-0 text-sm font-light transition-all hover:bg-opacity-10';
@@ -35,7 +35,7 @@ export default function Select({
 
   const selectClasses = `${baseSelectClasses} ${classes} ${selectClass}`;
   return (
-    <div id='common-select' className='flex flex-col'>
+    <div id='common-select' className='flex min-w-32 flex-col'>
       {currentValue !== '' && currentValue !== defaultValue && (
         <p className={cn(labelClasses.split(' '))}>{label}</p>
       )}
@@ -43,7 +43,7 @@ export default function Select({
         <LoadingSkeleton className='h-8' />
       ) : (
         <div className={cn(selectClasses.split(' '))}>
-          <div className='px-4 py-3'>
+          <div className='px-2 py-3'>
             <select
               className='w-full cursor-pointer bg-transparent focus:border-0 focus:outline-none focus:ring-0'
               value={currentValue}
