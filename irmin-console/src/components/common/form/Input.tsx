@@ -7,7 +7,26 @@ import { cn } from '@/utils/tw';
 /**
  * Universal input component, used across the application
  */
-const Input: React.FC<{
+const Input = ({
+  variant,
+  colorScheme,
+  size = 'md',
+  name = '',
+  placeholder,
+  value,
+  defaultValue,
+  onChange,
+  disabled = false,
+  loading = false,
+  icon,
+  className = '',
+  ariaLabel = '',
+  type = 'text',
+  id = '',
+  required = false,
+  maxLength = 100,
+  longtext,
+}: {
   variant?: 'solid' | 'outline' | 'underline';
   colorScheme?: 'primary' | 'secondary' | 'tertiary' | 'gray' | 'black';
   size?: 'sm' | 'md' | 'lg';
@@ -28,25 +47,6 @@ const Input: React.FC<{
   longtext?: {
     rows: number;
   };
-}> = ({
-  variant,
-  colorScheme,
-  size = 'md',
-  name = '',
-  placeholder,
-  value,
-  defaultValue,
-  onChange,
-  disabled = false,
-  loading = false,
-  icon,
-  className = '',
-  ariaLabel = '',
-  type = 'text',
-  id = '',
-  required = false,
-  maxLength = 100,
-  longtext,
 }) => {
   const baseClasses =
     'relative inline-flex items-center justify-center rounded-lg transition-all outline-none border-opacity-60';

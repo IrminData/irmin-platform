@@ -23,14 +23,14 @@ export default function Select({
   selectClass?: string;
   labelClass?: string;
 }) {
-  const labelClasses = `-mb-2 px-4 z-10 text-xs ${variant === 'on-dark-bg' ? 'text-gray-300 dark:text-irmin_blue' : 'text-irmin_blue dark:text-gray-300'} ${labelClass}`;
+  const labelClasses = `-mb-2 px-4 z-10 text-xs ${variant === 'on-dark-bg' ? 'text-gray-300' : 'text-irmin_blue dark:text-gray-300'} ${labelClass}`;
 
   const baseSelectClasses =
-    'block w-full cursor-pointer rounded-lg border border-opacity-20 bg-opacity-0 text-sm font-light transition-all hover:bg-opacity-10';
+    'block w-full cursor-pointer rounded-lg border bg-opacity-0 text-sm font-light transition-all hover:bg-opacity-10';
 
   const classes =
     variant === 'on-dark-bg'
-      ? 'bg-irmin_black text-gray-400 border-gray-800'
+      ? 'bg-irmin_black text-gray-400 border-gray-600'
       : 'bg-irmin_green text-irmin_black dark:text-gray-100 border-gray-400';
 
   const selectClasses = `${baseSelectClasses} ${classes} ${selectClass}`;
