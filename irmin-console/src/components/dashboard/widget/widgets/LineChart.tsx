@@ -14,6 +14,8 @@ import { Line } from 'react-chartjs-2';
 
 import WidgetWrapper from '@/components/dashboard/widget/WidgetWrapper';
 
+import { addColorsToWidget } from '@/utils/addColorsToWidget';
+
 import { Widget } from '@/types/api/Widget';
 import { ChartOrTableWidgetData } from '@/types/internal/WidgetData';
 
@@ -37,7 +39,7 @@ ChartJS.register(
  * It uses the ChartJS library to render the chart.
  */
 const LineChart = ({ widget }: { widget: Widget }) => {
-  const widgetData = widget.data as ChartOrTableWidgetData;
+  const widgetData = addColorsToWidget(widget.data as ChartOrTableWidgetData);
   return (
     <WidgetWrapper widget={widget}>
       <Line

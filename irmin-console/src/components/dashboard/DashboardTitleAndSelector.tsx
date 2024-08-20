@@ -53,9 +53,9 @@ function DashboardTitleAndSelector({
           className='group flex cursor-pointer items-center justify-center transition-all'
           aria-label='Create new dashboard or widget'
         >
-          <p className='flex h-10 w-10 items-center justify-center rounded-full bg-irmin_green text-white transition-all group-hover:bg-irmin_green-600'>
+          <span className='flex h-10 w-10 items-center justify-center rounded-full bg-irmin_green text-white shadow transition-all group-hover:bg-irmin_green-600'>
             <IoAdd size={25} />
-          </p>
+          </span>
         </button>
         <div id='dashboard-selector w-max min-w-28'>
           <Select

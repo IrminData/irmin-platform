@@ -23,7 +23,7 @@ export default function Select({
   selectClass?: string;
   labelClass?: string;
 }) {
-  const labelClasses = `-mb-2 mx-2 z-10 text-xs w-fit bg-white ${variant === 'on-dark-bg' ? 'text-gray-300' : 'text-irmin_black dark:text-gray-300'} ${labelClass}`;
+  const labelClasses = `-mb-2 mx-2 z-10 text-xs w-fit ${variant === 'on-dark-bg' ? 'text-gray-300 bg-irmin_black' : 'text-irmin_black bg-white dark:text-gray-300 dark:bg-irmin_black'} ${labelClass}`;
 
   const baseSelectClasses =
     'block w-full cursor-pointer rounded-lg border bg-opacity-0 text-sm font-light transition-all hover:bg-opacity-10';
@@ -31,7 +31,7 @@ export default function Select({
   const classes =
     variant === 'on-dark-bg'
       ? 'bg-irmin_black text-gray-400 border-gray-600'
-      : 'bg-irmin_green text-irmin_black dark:text-gray-100 border-gray-400';
+      : 'bg-irmin_green text-irmin_black dark:text-gray-200 border-gray-400';
 
   const selectClasses = `${baseSelectClasses} ${classes} ${selectClass}`;
   return (
