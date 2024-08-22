@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 
+import { MdOutlineSupportAgent } from 'react-icons/md';
+
 import Button from '@/components/common/button/Button';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -35,21 +37,24 @@ export default function SelectConnector({
       <div className='grid grid-cols-3 gap-4 p-6'>
         {connectors.map((connector, index) => (
           <Button
-            className='flex flex-col items-center justify-center rounded-lg border p-4 transition duration-300 hover:shadow-lg'
+            variant='solid'
+            colorScheme='light'
+            size='md'
+            className='w-full justify-start'
+            icon={
+              <Image
+                src={connector.logo}
+                alt={connector.name}
+                className='h-8 w-8 object-contain'
+                width={32}
+                height={32}
+              />
+            }
             key={`connector-choice-${index}`}
             onClick={() => handleConnectorClick(connector)}
             ariaLabel={`${dict.workflow.connection.create.select} ${connector.name} ${dict.workflow.connection.create.connector}`}
           >
-            <>
-              <Image
-                src={connector.logo}
-                alt={connector.name}
-                className='mb-2 h-[40px]'
-                width={40}
-                height={40}
-              />
-              <span className='text-sm'>{connector.name}</span>
-            </>
+            {connector.name}
           </Button>
         ))}
       </div>
@@ -57,7 +62,7 @@ export default function SelectConnector({
       <div className='mt-auto flex items-center justify-between border-t px-6 py-4'>
         <Button
           variant='solid'
-          colorScheme='primary'
+          colorScheme='light'
           size='sm'
           onClick={() => {
             irminAlert(
@@ -71,8 +76,9 @@ export default function SelectConnector({
         </Button>
         <Button
           variant='link'
-          colorScheme='primary'
-          size='sm'
+          colorScheme='gray'
+          size='md'
+          icon={<MdOutlineSupportAgent />}
           href='/contact'
           target='_blank'
           ariaLabel='Go to support page'

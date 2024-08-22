@@ -22,10 +22,13 @@ const Input = ({
   className = '',
   ariaLabel = '',
   type = 'text',
+  multiple = false,
   id = '',
   required = false,
   maxLength = 100,
   longtext,
+  min,
+  max,
 }: {
   variant?: 'solid' | 'outline' | 'underline';
   colorScheme?: 'primary' | 'secondary' | 'tertiary' | 'gray' | 'black';
@@ -40,13 +43,24 @@ const Input = ({
   icon?: React.ReactNode;
   className?: string;
   ariaLabel?: string;
-  type?: 'text' | 'password' | 'email' | 'number';
+  type?:
+    | 'text'
+    | 'password'
+    | 'email'
+    | 'number'
+    | 'file'
+    | 'datetime-local'
+    | 'date'
+    | 'time';
+  multiple?: boolean;
   id?: string;
   required?: boolean;
   maxLength?: number;
   longtext?: {
     rows: number;
   };
+  min?: number | string;
+  max?: number | string;
 }) => {
   const baseClasses =
     'relative inline-flex items-center justify-center rounded-lg transition-all outline-none border-opacity-60';
@@ -142,6 +156,9 @@ const Input = ({
         defaultValue={defaultValue}
         value={value}
         maxLength={maxLength}
+        multiple={multiple}
+        min={min}
+        max={max}
       />
       {loading && (
         <div className='absolute right-3'>

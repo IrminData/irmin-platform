@@ -1,16 +1,23 @@
 import IrminCore from '@/services/core/IrminCore';
 
-import {
-  ConnectionDetailsAndSettings,
-  ConnectionDetailsAndSettingsFields,
-} from '@/types/api/Connector';
+import fake from '@/utils/prepareFakeResponse';
+
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import exampleDynamicFields from '@/types/examples/exampleDynamicFields';
+import {
+  DynamicFields,
+  DynamicFieldValues,
+} from '@/types/internal/DynamicField';
+
+const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
+const isDevelopment =
+  process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
 
 /**
  * Connection details and settings API response type
  */
-interface ConnectionDetailsAndSettingsAPIResponse extends IrminAPIResponse {
-  data: ConnectionDetailsAndSettingsFields;
+interface ConnectionFieldsAPIResponse extends IrminAPIResponse {
+  data: DynamicFields;
 }
 
 /**
@@ -48,20 +55,24 @@ class ConnectionWorkflowService {
    */
   async fetchNewConnectionDetails(
     connectorID: number
-  ): Promise<ConnectionDetailsAndSettingsAPIResponse> {
+  ): Promise<ConnectionFieldsAPIResponse> {
     try {
+      if (isOfflineMode)
+        return fake(exampleDynamicFields) as ConnectionFieldsAPIResponse;
       const response = await this.irminCore.fetch(
         `/v1/connections/create/details?connector=${connectorID}`,
         {
           method: 'GET',
         }
       );
-      return response as ConnectionDetailsAndSettingsAPIResponse;
+      return response as ConnectionFieldsAPIResponse;
     } catch (error) {
       console.error(
         (error as Error).message,
         'Failed to fetch new Connection Workflow details'
       );
+      if (isDevelopment)
+        return fake(exampleDynamicFields) as ConnectionFieldsAPIResponse;
       throw error;
     }
   }
@@ -75,9 +86,14 @@ class ConnectionWorkflowService {
    */
   async testConnectionWithDetails(
     connectorID: number,
-    connectionDetails: ConnectionDetailsAndSettings
+    connectionDetails: DynamicFieldValues
   ): Promise<ConnectionTestAPIResponse> {
     try {
+      if (isOfflineMode)
+        return fake({
+          connected: true,
+        }) as ConnectionTestAPIResponse;
+
       // Construct the query parameters from connectionDetails
       const params = new URLSearchParams({
         connector: connectorID.toString(),
@@ -97,6 +113,10 @@ class ConnectionWorkflowService {
         (error as Error).message,
         'Failed to test new Connection Workflow'
       );
+      if (isDevelopment)
+        return fake({
+          connected: true,
+        }) as ConnectionTestAPIResponse;
       throw error;
     }
   }
@@ -110,9 +130,12 @@ class ConnectionWorkflowService {
    */
   async fetchNewConnectionSettings(
     connectorID: number,
-    connectionDetails: ConnectionDetailsAndSettings
-  ): Promise<ConnectionDetailsAndSettingsAPIResponse> {
+    connectionDetails: DynamicFieldValues
+  ): Promise<ConnectionFieldsAPIResponse> {
     try {
+      if (isOfflineMode)
+        return fake(exampleDynamicFields) as ConnectionFieldsAPIResponse;
+
       // Construct the query parameters from connectionDetails
       const params = new URLSearchParams({
         connector: connectorID.toString(),
@@ -126,12 +149,14 @@ class ConnectionWorkflowService {
           method: 'GET',
         }
       );
-      return response as ConnectionDetailsAndSettingsAPIResponse;
+      return response as ConnectionFieldsAPIResponse;
     } catch (error) {
       console.error(
         (error as Error).message,
         'Failed to fetch new Connection Workflow settings'
       );
+      if (isDevelopment)
+        return fake(exampleDynamicFields) as ConnectionFieldsAPIResponse;
       throw error;
     }
   }
@@ -158,13 +183,15 @@ class ConnectionWorkflowService {
     cron_syntax,
   }: {
     connectorID: number;
-    connectionDetails: ConnectionDetailsAndSettings;
-    connectionSettings: ConnectionDetailsAndSettings;
+    connectionDetails: DynamicFieldValues;
+    connectionSettings: DynamicFieldValues;
     name: string;
     description: string;
     cron_syntax: string;
   }) {
     try {
+      if (isOfflineMode) return fake();
+
       const formData = new FormData();
 
       // Export Workflow properties
@@ -191,6 +218,7 @@ class ConnectionWorkflowService {
         (error as Error).message,
         'Failed to create Connection Workflow'
       );
+      if (isDevelopment) return fake();
       throw error;
     }
   }

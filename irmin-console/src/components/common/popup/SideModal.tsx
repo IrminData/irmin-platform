@@ -71,7 +71,8 @@ export default function SideModal({
               }`}
             >
               <div className='flex h-full flex-col justify-start'>
-                <div className='z-10 flex w-full justify-end pr-4 pt-[44px]'>
+                <div className='z-10 flex w-full items-center justify-between gap-4 px-4 pt-[44px]'>
+                  <h3 className='text-xl font-semibold'>{title}</h3>
                   <Button
                     variant='icon'
                     colorScheme='primary'
@@ -81,19 +82,16 @@ export default function SideModal({
                     <IoClose size={30} />
                   </Button>
                 </div>
-                <div className='flex h-14 items-center justify-between border-b px-6 py-4'>
-                  <h3 className='text-xl font-semibold'>{title}</h3>
-                </div>
                 <div className='flex items-center justify-between space-x-4 px-6 py-4'>
                   {steps.map((step, index) => (
                     <div
-                      className={`flex flex-col items-center lg:flex-row ${
+                      className={`flex flex-col items-center justify-center text-center sm:flex-row ${
                         index === steps.length - 1 ? '' : 'mr-0'
                       }`}
                       key={step}
                     >
                       <div
-                        className={`lg-4 mr-2 flex h-6 w-6 items-center justify-center rounded-full text-sm text-white lg:mb-0 ${
+                        className={`mr-2 flex h-6 w-6 items-center justify-center rounded-full text-sm text-white ${
                           currentStep >= index + 1
                             ? 'bg-irmin_green-500'
                             : 'bg-gray-300'
@@ -102,7 +100,7 @@ export default function SideModal({
                         {index + 1}
                       </div>
                       <span
-                        className={`text-xs ${
+                        className={`mt-2 text-xs sm:mt-0 ${
                           currentStep >= index + 1
                             ? 'text-irmin_green-500'
                             : 'text-gray-500'
@@ -114,7 +112,7 @@ export default function SideModal({
                   ))}
                 </div>
                 <hr className='border-t shadow-sm' />
-                <div className='grow overflow-y-scroll pb-12 pt-0 lg:pt-[38px]'>
+                <div className='grow overflow-y-scroll pb-12 pt-0 lg:pt-4'>
                   {children}
                 </div>
               </div>

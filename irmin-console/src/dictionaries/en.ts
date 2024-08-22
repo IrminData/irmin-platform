@@ -223,7 +223,7 @@ const en = {
       selectConnector: 'Select a connector',
       establishConnection: 'Establish connection',
       configureSettings: 'Configure settings',
-      configureWorkflow: 'Configure Connection Workflow',
+      configureWorkflow: 'Configure workflow',
       createNewConnectionWorkflow: 'Create new Connection',
       create: {
         select: 'Select',

@@ -1,8 +1,6 @@
-import {
-  ConnectionDetailsAndSettings,
-  ConnectionDetailsAndSettingsFields,
-  Connector,
-} from '@/types/api/Connector';
+import { Connector } from '@/types/api/Connector';
+
+import { DynamicFields, DynamicFieldValues } from './DynamicField';
 
 /**
  * Connection setup object
@@ -20,8 +18,8 @@ export interface ConnectionSetup {
   cron: string;
   description: string;
   connector: null | Connector;
-  connectionDetailsFields: null | ConnectionDetailsAndSettingsFields;
-  connectionSettingsFields: null | ConnectionDetailsAndSettingsFields;
-  connectionDetails: null | ConnectionDetailsAndSettings;
-  connectionSettings: null | ConnectionDetailsAndSettings;
+  connectionDetailsFields: null | DynamicFields;
+  connectionSettingsFields: null | DynamicFields;
+  connectionDetails: null | DynamicFieldValues;
+  connectionSettings: null | DynamicFieldValues;
 }

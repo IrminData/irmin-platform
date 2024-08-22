@@ -1,0 +1,126 @@
+import { DynamicFields } from '@/types/internal/DynamicField';
+
+const exampleDynamicFields: DynamicFields = {
+  username: {
+    type: 'text',
+    label: 'Username',
+    required: true,
+    help_text: 'Enter your username',
+    example: 'john_doe',
+    default: 'guest',
+  },
+  email: {
+    type: 'email',
+    label: 'Email',
+    required: true,
+    help_text: 'Enter your email address',
+    example: 'john.doe@gmail.com',
+    default: '',
+  },
+  password: {
+    type: 'password',
+    label: 'Password',
+    required: true,
+    help_text: 'Enter a strong password',
+    example: 'password123',
+    default: '',
+  },
+  bio: {
+    type: 'textarea',
+    label: 'Bio',
+    help_text: 'Tell us about yourself',
+    example: 'I am a software developer...',
+    default: '',
+  },
+  age: {
+    type: 'integer',
+    label: 'Age',
+    min: 18,
+    max: 99,
+    required: true,
+    example: '25',
+    help_text: 'Enter your age',
+    default: 25,
+  },
+  rating: {
+    type: 'float',
+    label: 'Rating',
+    min: 0.0,
+    max: 5.0,
+    example: '4.5',
+    help_text: 'Enter your rating',
+    default: 5,
+  },
+  gender: {
+    type: 'radio',
+    label: 'Gender',
+    options: [
+      { key: 'male', value: 'Male' },
+      { key: 'female', value: 'Female' },
+      { key: 'other', value: 'Other' },
+    ],
+    required: true,
+    help_text: 'Select your gender',
+    default: 'male',
+  },
+  customise_things: {
+    type: 'checkbox',
+    label: 'Customise things?',
+    help_text: 'Check this box to customise things',
+    default: false,
+  },
+  favourite_color: {
+    type: 'text',
+    label: 'Favourite Color',
+    required_with: ['customise_things'],
+    example: '#ff0000',
+    help_text: 'Enter your favourite color as a hex code',
+    default: '',
+  },
+  interests: {
+    type: 'select',
+    label: 'Interests',
+    options: [
+      { key: 'sports', value: 'Sports' },
+      { key: 'music', value: 'Music' },
+      { key: 'movies', value: 'Movies' },
+      { key: 'books', value: 'Books' },
+    ],
+    multiple: true,
+    required_with: ['customise_things'],
+    help_text: 'Select your interests',
+    default: ['sports'],
+  },
+  profile_picture: {
+    type: 'file',
+    label: 'Profile Picture',
+    help_text: 'Upload your profile picture',
+  },
+  birthdate: {
+    type: 'date',
+    label: 'Birthdate',
+    required: true,
+  },
+  appointment_time: {
+    type: 'time',
+    label: 'Appointment Time',
+    example: '14:30',
+  },
+  event_datetime: {
+    type: 'datetime',
+    label: 'Event Date and Time',
+    example: '2023-10-01T14:30',
+  },
+  country: {
+    type: 'select',
+    label: 'Country',
+    options: [
+      { key: 'us', value: 'United States' },
+      { key: 'ca', value: 'Canada' },
+      { key: 'uk', value: 'United Kingdom' },
+    ],
+    required: true,
+  },
+};
+
+export default exampleDynamicFields;

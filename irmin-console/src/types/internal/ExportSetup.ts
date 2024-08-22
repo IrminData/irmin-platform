@@ -1,4 +1,4 @@
-import { ConnectionDetailsAndSettings } from '@/types/api/Connector';
+import { DynamicFieldValues } from "./DynamicField";
 
 /**
  * Export setup object
@@ -10,6 +10,6 @@ import { ConnectionDetailsAndSettings } from '@/types/api/Connector';
 export interface ExportSetup {
   connectionID: null | number;
   name: string;
-  settings: ConnectionDetailsAndSettings;
+  settings: DynamicFieldValues;
   cron: string;
 }

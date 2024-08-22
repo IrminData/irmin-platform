@@ -7,14 +7,14 @@ import Image from 'next/image';
 import IrminCore from '@/services/core/IrminCore';
 
 import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import DynamicFormField from '@/components/common/DynamicFormField';
 import LoadingSpinner from '@/components/common/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { ConnectionDetailsAndSettings } from '@/types/api/Connector';
 import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
+import { DynamicFieldValues, FieldValue } from '@/types/internal/DynamicField';
 
 export default function DefineSettings({
   connectionData,
@@ -29,8 +29,8 @@ export default function DefineSettings({
   const { irminAlert } = usePopup();
   const { connectionService } = useMemo(() => new IrminCore(locale), [locale]);
   const [loading, setLoading] = useState(false);
-  const [initialLoadingDone, setInitialLoadingDone] = useState(false);
 
+  const initialLoadingDone = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const fetchConnectionSettings = useCallback(async () => {
@@ -39,7 +39,7 @@ export default function DefineSettings({
       !connectionData.connector ||
       !connectionData.connectionDetails ||
       connectionData.connectionSettingsFields ||
-      initialLoadingDone
+      initialLoadingDone.current
     )
       return;
 
@@ -50,30 +50,17 @@ export default function DefineSettings({
         connectionData.connector.id,
         connectionData.connectionDetails
       );
-      if (
-        Object.prototype.hasOwnProperty.call(response.data, 'settings') &&
-        !response.data.settings
-      ) {
-        // Settings are not required
-        setConnectionData((prev: ConnectionSetup) => ({
-          ...prev,
-          connectionSettingsFields: {
-            settings: 'text',
-          },
-          connectionSettings: {
-            settings: '',
-          },
-        }));
-        setInitialLoadingDone(true);
-        setCurrentStep(4);
-      } else {
-        // Settings are required
-        setConnectionData((prev: ConnectionSetup) => ({
-          ...prev,
-          connectionSettingsFields: response.data,
-        }));
-        setInitialLoadingDone(true);
-      }
+      const data = Object.fromEntries(
+        Object.keys(response.data).map((key) => [
+          key,
+          response.data[key].default ?? null,
+        ])
+      );
+      setConnectionData((prev: ConnectionSetup) => ({
+        ...prev,
+        connectionSettingsFields: response.data,
+        connectionSettings: data,
+      }));
     } catch (error) {
       console.error('Fetch new connection settings error:', error);
       irminAlert(
@@ -81,17 +68,17 @@ export default function DefineSettings({
         (error as Error)?.message ?? 'Failed to fetch new connection settings'
       );
     }
+
+    initialLoadingDone.current = true;
+    setLoading(false);
   }, [
     connectionService,
     connectionData.connector,
     connectionData.connectionDetails,
+    connectionData.connectionSettingsFields,
     irminAlert,
     loading,
-    initialLoadingDone,
-    setInitialLoadingDone,
-    connectionData.connectionSettingsFields,
     setConnectionData,
-    setCurrentStep,
   ]);
 
   useEffect(() => {
@@ -114,7 +101,7 @@ export default function DefineSettings({
       try {
         // Get the data from the form
         const formData = new FormData(formRef.current!);
-        const data: ConnectionDetailsAndSettings = {};
+        const data: DynamicFieldValues = {};
         formData.forEach((value, key) => {
           if (key !== 'irmin_connection_name') {
             const fieldKey = Object.keys(
@@ -124,11 +111,7 @@ export default function DefineSettings({
             const field = (connectionData.connectionSettingsFields ?? {})[
               fieldKey ?? ''
             ];
-            if (
-              field === 'number' ||
-              field === 'integer' ||
-              field === 'float'
-            ) {
+            if (field.type === 'integer' || field.type === 'float') {
               data[fieldKey] = parseFloat(value as string);
             } else {
               data[fieldKey] = value as string;
@@ -165,76 +148,45 @@ export default function DefineSettings({
     ]
   );
 
+  const updateValues = (key: string, value: FieldValue | FieldValue[]) => {
+    setConnectionData({
+      ...connectionData,
+      connectionSettings: {
+        ...connectionData.connectionSettings,
+        [key]: value,
+      },
+    });
+  };
+
   if (connectionData.connectionSettingsFields === null) {
     return <LoadingSpinner />;
   }
 
   return (
-    <div className='p-6'>
-      <div className='mb-8 flex'>
+    <div className='p-4 pb-6'>
+      <div className='flex flex-row items-center gap-4 border-b pb-4'>
         <Image
           src={connectionData?.connector?.logo ?? '/irmin-logo.svg'}
           alt={connectionData.connector?.name ?? 'Connector'}
-          className='mb-2 h-[40px]'
-          width={40}
-          height={40}
+          className='h-12 w-12 object-contain'
+          width={48}
+          height={48}
         />
-        <span className='mt-1 text-xl text-irmin_teal'>
+        <span className='text-lg text-irmin_blue dark:text-irmin_light_green'>
           {connectionData.connector?.name ?? 'Connector'}
         </span>
       </div>
 
       <form ref={formRef}>
         {Object.entries(connectionData.connectionSettingsFields).map(
-          ([key, value], idx) => (
-            <div
-              key={`connection-settings-field-${key.toLowerCase()}-${idx}`}
-              className='mb-6'
-            >
-              <label className='mb-2 block font-light text-irmin_black'>
-                {key} *
-              </label>
-              {value === 'password' ? (
-                <Input
-                  variant='outline'
-                  colorScheme='black'
-                  className='mt-2 w-full'
-                  type='password'
-                  placeholder={key}
-                  name={key.toLowerCase()}
-                  required
-                />
-              ) : value === 'number' || value === 'integer' ? (
-                <Input
-                  variant='outline'
-                  colorScheme='black'
-                  className='mt-2 w-full'
-                  type={'number'}
-                  placeholder={key}
-                  name={key.toLowerCase()}
-                  required
-                />
-              ) : value === 'float' ? (
-                <Input
-                  variant='outline'
-                  colorScheme='black'
-                  className='mt-2 w-full'
-                  type={'number'}
-                  placeholder={key}
-                  name={key.toLowerCase()}
-                  required
-                />
-              ) : (
-                <Input
-                  variant='outline'
-                  colorScheme='black'
-                  className='mt-2 w-full'
-                  type={value}
-                  placeholder={key}
-                  name={key.toLowerCase()}
-                  required
-                />
-              )}
+          ([key, field], idx) => (
+            <div key={`connection-settings-field-${key.toLowerCase()}-${idx}`}>
+              <DynamicFormField
+                name={key}
+                field={field}
+                values={connectionData.connectionSettings}
+                updateValues={updateValues}
+              />
             </div>
           )
         )}

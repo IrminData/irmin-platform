@@ -9,24 +9,30 @@ export default function Select({
   currentValue,
   defaultValue,
   options,
+  name = '',
   variant = 'default',
   selectClass = '',
   labelClass = '',
+  required = false,
+  multiple = false,
 }: {
   label: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   loading: boolean;
-  currentValue: string;
+  currentValue?: string;
   defaultValue: string;
   options: { value: string; label: string }[];
+  name?: string;
   variant?: 'default' | 'on-dark-bg';
   selectClass?: string;
   labelClass?: string;
+  required?: boolean;
+  multiple?: boolean;
 }) {
   const labelClasses = `-mb-2 mx-2 z-10 text-xs w-fit ${variant === 'on-dark-bg' ? 'text-gray-300 bg-irmin_black' : 'text-irmin_black bg-white dark:text-gray-300 dark:bg-irmin_black'} ${labelClass}`;
 
   const baseSelectClasses =
-    'block w-full cursor-pointer rounded-lg border bg-opacity-0 text-sm font-light transition-all hover:bg-opacity-10';
+    'block w-full cursor-pointer rounded-lg border bg-opacity-0 text-sm font-light transition-all hover:bg-opacity-10 px-2 py-1 min-h-8 text-xs font-light lg:px-3 lg:text-sm lg:min-h-10';
 
   const classes =
     variant === 'on-dark-bg'
@@ -50,6 +56,9 @@ export default function Select({
               disabled={loading}
               onChange={onChange}
               aria-label={label}
+              multiple={multiple}
+              required={required}
+              name={name}
             >
               {options?.map((w, i) => (
                 <option key={`select-option-${w.value}-${i}`} value={w.value}>
