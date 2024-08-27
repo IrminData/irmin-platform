@@ -32,7 +32,7 @@ const RepositoryTableReferenceList = () => {
     irminAlert(
       'info',
       <div>
-        <p className='m-0 text-xs font-light text-irmin_black'>
+        <p className='m-0 text-xs font-normal text-irmin_black'>
           {dict.repository.referenceRepository.toReferenceTheTable}{' '}
           <span className='font-medium text-irmin_blue'>{table}</span>{' '}
           {dict.repository.referenceRepository.fromTheRepository}{' '}
@@ -49,7 +49,7 @@ const RepositoryTableReferenceList = () => {
   return (
     <div
       id='repository-table-reference-list'
-      className='flex-grow overflow-auto border-t p-2 text-irmin_black'
+      className='flex-grow overflow-auto border-t p-2 text-irmin_black dark:border-gray-800 dark:text-gray-300'
     >
       <p className='px-4 pb-2 text-sm'>
         {dict.portalNavigation.links.repositories}
@@ -62,12 +62,14 @@ const RepositoryTableReferenceList = () => {
           (repo) =>
             repo.tables.length > 0 && (
               <li key={`repo-${repo.id}`} className='px-4 py-2'>
-                <p className='border-t pt-2 font-normal'>{repo.name}</p>
-                <ul className='list-item font-light'>
+                <p className='border-t pt-2 font-normal dark:border-gray-800'>
+                  {repo.name}
+                </p>
+                <ul className='list-item font-normal'>
                   {repo.tables.map((table, i) => (
                     <li
                       key={`repo-${repo.id}-table-${i}`}
-                      className='cursor-pointer px-2 pt-3 transition-colors hover:text-irmin_green'
+                      className='cursor-pointer pl-4 pr-2 pt-3 opacity-80 transition-colors hover:text-irmin_green hover:opacity-100'
                       onClick={() => selectDBTable(repo, table)}
                       aria-label={`Click to get the reference snippet for the table ${table} from ${repo.name}`}
                     >

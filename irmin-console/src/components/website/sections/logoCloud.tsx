@@ -45,7 +45,7 @@ export default async function WebsiteLogoCloudSection({
   return (
     <WebsiteSectionWrapper id='website-logo-cloud-section'>
       <div className='container mx-auto max-w-7xl px-4'>
-        <h3 className='mb-8 text-center text-lg font-light leading-6 text-white'>
+        <h3 className='mb-8 text-center text-lg font-normal leading-6 text-white'>
           {section.title}
         </h3>
         <div className='-mx-4 flex flex-wrap justify-center'>

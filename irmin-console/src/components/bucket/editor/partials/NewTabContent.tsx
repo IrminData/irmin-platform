@@ -9,30 +9,31 @@ import { useLocale } from '@/context/LocaleContext';
 const NewTabContent = ({ addNewTab }: { addNewTab: () => void }) => {
   const { dict } = useLocale();
   return (
-    <div className='flex h-full flex-col items-center justify-center gap-8 px-4 py-8 sm:flex-row sm:items-stretch'>
+    <div className='flex h-full max-h-96 flex-col items-center justify-center gap-8 px-4 py-8 sm:flex-row sm:items-stretch'>
       <button
-        className='flex w-96 max-w-full cursor-pointer flex-col items-center justify-center rounded-lg border bg-white p-4 text-center shadow transition-all hover:opacity-40 md:p-6 md:py-12 dark:shadow-gray-800'
         onClick={addNewTab}
         aria-label={'Create new editor tab'}
+        className='flex w-96 max-w-full cursor-pointer flex-col items-center justify-center rounded-lg border bg-white p-4 text-center text-irmin_blue shadow transition-all hover:opacity-40 md:p-6 md:py-12 dark:bg-gray-800 dark:text-white dark:shadow-gray-800'
       >
-        <FiDatabase className='text-2xl text-irmin_blue lg:text-4xl' />
-        <h2 className='mt-4 text-base font-medium text-irmin_blue lg:mt-8 lg:text-lg'>
+        <FiDatabase className='text-2xl lg:text-4xl' />
+        <h2 className='mt-4 text-base font-medium lg:mt-8 lg:text-lg'>
           {dict.editor.createNewScript}
         </h2>
-        <p className='mt-2 text-xs text-gray-600 lg:mt-4 lg:text-sm'>
+        <p className='mt-2 text-xs text-gray-600 lg:mt-4 lg:text-sm dark:text-gray-400'>
           {dict.editor.startExploringData}
         </p>
       </button>
 
       <button
+        onClick={() => null}
         aria-label='Take me to HazAI'
-        className='flex w-96 max-w-full cursor-pointer flex-col items-center justify-center rounded-lg border bg-white p-4 text-center shadow transition-all hover:opacity-40 md:p-6 md:py-12 dark:shadow-gray-800'
+        className='flex w-96 max-w-full cursor-pointer flex-col items-center justify-center rounded-lg border bg-white p-4 text-center text-irmin_blue shadow transition-all hover:opacity-40 md:p-6 md:py-12 dark:bg-gray-800 dark:text-white dark:shadow-gray-800'
       >
-        <FiUser className='text-2xl text-irmin_blue lg:text-4xl' />
-        <h2 className='mt-4 text-base font-medium text-irmin_blue lg:mt-8 lg:text-lg'>
+        <FiUser className='text-2xl lg:text-4xl' />
+        <h2 className='mt-4 text-base font-medium lg:mt-8 lg:text-lg'>
           {dict.editor.hazAITitle}
         </h2>
-        <p className='mt-2 text-xs text-gray-600 lg:mt-4 lg:text-sm'>
+        <p className='mt-2 text-xs text-gray-600 lg:mt-4 lg:text-sm dark:text-gray-400'>
           {dict.editor.hazAISubtitle}
         </p>
       </button>

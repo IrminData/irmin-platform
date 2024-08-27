@@ -69,7 +69,7 @@ export default function Tabs({ tabs }: { tabs: TabsType }) {
             <Button
               ariaLabel={`Switch to ${tab.name} tab`}
               size='sm'
-              variant='outline'
+              variant='link'
               colorScheme={activeTab === tab.slug ? 'primary' : 'gray'}
               className={`justify-start rounded-none text-xs shadow-none hover:bg-transparent hover:no-underline`}
               onClick={() => {

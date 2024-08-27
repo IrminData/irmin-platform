@@ -17,6 +17,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        body: ['var(--font-inter)'],
+        display: ['var(--font-big-shoulders-display)'],
+      },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic':

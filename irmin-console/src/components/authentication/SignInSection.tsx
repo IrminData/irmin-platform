@@ -44,14 +44,14 @@ const SignInSection = () => {
             <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
               {dict.auth.signIn.title}
             </h3>
-            <p className='text-lg font-light text-irmin_black'>
+            <p className='text-lg font-normal text-irmin_black'>
               {dict.auth.signIn.subtitle}
             </p>
           </div>
           <form onSubmit={handleSubmit}>
             <div className='mb-6'>
               <label
-                className='mb-2 block font-light text-irmin_black'
+                className='mb-2 block font-normal text-irmin_black'
                 htmlFor='email'
               >
                 {dict.auth.signIn.email}
@@ -72,7 +72,7 @@ const SignInSection = () => {
             </div>
             <div className='mb-4'>
               <label
-                className='mb-2 block font-light text-irmin_black'
+                className='mb-2 block font-normal text-irmin_black'
                 htmlFor='password'
               >
                 {dict.auth.signIn.password}
@@ -103,7 +103,7 @@ const SignInSection = () => {
                     value=''
                     className='h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500'
                   />
-                  <label className='ms-2 text-sm font-light text-irmin_black'>
+                  <label className='ms-2 text-sm font-normal text-irmin_black'>
                     {dict.auth.signIn.rememberMe}
                   </label>
                 </div>
@@ -131,7 +131,7 @@ const SignInSection = () => {
               {dict.auth.signIn.signIn}
             </Button>
             <div className='flex w-full items-center justify-center'>
-              <span className='text-sm font-light'>
+              <span className='text-sm font-normal'>
                 {dict.auth.signIn.dontHaveAccount}{' '}
               </span>
               <Button

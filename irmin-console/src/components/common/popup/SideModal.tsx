@@ -64,7 +64,7 @@ export default function SideModal({
         <div className='fixed inset-0 z-50 flex items-center justify-center'>
           <div className='relative h-full w-full'>
             <div
-              className={`absolute bottom-0 right-0 top-0 h-full w-full bg-white shadow-lg transition-transform duration-200 md:w-3/4 lg:w-1/2 xl:w-2/5 ${
+              className={`absolute bottom-0 right-0 top-0 h-full w-full border-l bg-white shadow-lg transition-transform duration-200 md:w-3/4 lg:w-1/2 xl:w-2/5 dark:border-gray-800 dark:bg-irmin_black ${
                 isRealOpen && isAnimating
                   ? 'animate-slideIn'
                   : 'animate-slideOut'
@@ -72,7 +72,7 @@ export default function SideModal({
             >
               <div className='flex h-full flex-col justify-start'>
                 <div className='z-10 flex w-full items-center justify-between gap-4 px-4 pt-[44px]'>
-                  <h3 className='text-xl font-semibold'>{title}</h3>
+                  <h3 className='text-xl font-bold'>{title}</h3>
                   <Button
                     variant='icon'
                     colorScheme='primary'
@@ -94,7 +94,7 @@ export default function SideModal({
                         className={`mr-2 flex h-6 w-6 items-center justify-center rounded-full text-sm text-white ${
                           currentStep >= index + 1
                             ? 'bg-irmin_green-500'
-                            : 'bg-gray-300'
+                            : 'bg-gray-300 dark:bg-gray-400'
                         }`}
                       >
                         {index + 1}
@@ -111,7 +111,7 @@ export default function SideModal({
                     </div>
                   ))}
                 </div>
-                <hr className='border-t shadow-sm' />
+                <hr className='border-t shadow-sm dark:border-gray-800' />
                 <div className='grow overflow-y-scroll pb-12 pt-0 lg:pt-4'>
                   {children}
                 </div>

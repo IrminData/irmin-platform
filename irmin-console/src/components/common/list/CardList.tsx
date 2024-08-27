@@ -72,7 +72,7 @@ const CardList = ({ rows, loading = false }: ListProps) => {
                           ariaLabel={action.label}
                           href={action.href}
                           onClick={action.onClick}
-                          className={`w-max ${action.primary ? 'min-w-24 py-2' : ''}`}
+                          className={`w-max ${action.primary ? 'min-w-24 py-2' : 'dark:text-gray-400'}`}
                         >
                           {action.label}
                         </Button>

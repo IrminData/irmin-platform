@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
-import Select from '@/components/common/select/Select';
+import ReactSelect, { SingleValue } from 'react-select';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -39,14 +39,22 @@ export default function PortalNavigationWorkspaceSwitcher({
     workspaceSlug &&
     currentWorkspace?.slug &&
     workspaceSlug === currentWorkspace.slug
-      ? currentWorkspace.slug
-      : 'select-workspace';
+      ? { value: currentWorkspace.slug, label: currentWorkspace.name }
+      : {
+          value: 'select-workspace',
+          label: dict.workspaceSwitcher.selectWorkspace,
+        };
 
-  const onChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const onChange = async (
+    selectedOption: SingleValue<{
+      value: string;
+      label: string;
+    }>
+  ) => {
     try {
-      e.preventDefault();
+      if (!selectedOption || !selectedOption.value) return;
       setProcessing(true);
-      const value = e.target.value;
+      const value = selectedOption.value;
       if (value === 'create-new' || value === 'select-workspace') {
         router.push('/portal/manage-workspaces');
         setIsMenuOpen(false);
@@ -73,29 +81,36 @@ export default function PortalNavigationWorkspaceSwitcher({
     }
   };
 
+  const options = [
+    {
+      value: 'select-workspace',
+      label: dict.workspaceSwitcher.selectWorkspace,
+    },
+    ...(workspaces?.map((w) => ({
+      value: w.slug,
+      label: w.name,
+    })) ?? []),
+    {
+      value: 'create-new',
+      label: dict.workspaceSwitcher.createNewWorkspace,
+    },
+  ];
+
   return (
-    <div className='mt-4' id='portal-nav-workspace-switcher'>
-      <Select
-        label={dict.workspaceSwitcher.selectWorkspace}
+    <div className='mt-2' id='portal-nav-workspace-switcher'>
+      <ReactSelect
+        options={options}
         onChange={onChange}
-        loading={loading}
-        currentValue={currentValue}
-        defaultValue={'select-workspace'}
-        labelClass='text-[10px] font-medium uppercase text-gray-400'
-        options={[
-          {
-            value: 'select-workspace',
-            label: dict.workspaceSwitcher.selectWorkspace,
-          },
-          ...(workspaces?.map((w) => ({
-            value: w.slug,
-            label: w.name,
-          })) ?? []),
-          {
-            value: 'create-new',
-            label: dict.workspaceSwitcher.createNewWorkspace,
-          },
-        ]}
+        isLoading={loading}
+        isClearable={false}
+        value={currentValue}
+        defaultValue={{
+          value: 'select-workspace',
+          label: dict.workspaceSwitcher.selectWorkspace,
+        }}
+        noOptionsMessage={() => dict.misc.noOptionsMessage}
+        className='react-select-container'
+        classNamePrefix='react-select'
       />
     </div>
   );

@@ -27,7 +27,7 @@ export interface BucketFolder {
 /**
  * Available extensions for files on Irmin
  */
-export const irminFileTypes = ['js', 'py', 'sql'];
+export const irminFileTypes = ['js', 'py', 'sql', 'php'];
 export type IrminFileType = (typeof irminFileTypes)[number];
 
 /**

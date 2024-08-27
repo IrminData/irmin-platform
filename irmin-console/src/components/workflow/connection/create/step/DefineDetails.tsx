@@ -183,22 +183,22 @@ export default function DefineDetails({
 
   return (
     <div className='p-4 pb-6'>
-      <div className='flex flex-row items-center gap-4 border-b pb-4'>
+      <div className='flex flex-row items-center gap-4 border-b pb-4 dark:border-gray-800'>
         <Image
           src={connectionData?.connector?.logo ?? '/irmin-logo.svg'}
           alt={connectionData.connector?.name ?? 'Connector'}
-          className='h-12 w-12 object-contain'
+          className='mr-2 h-12 w-12 object-contain grayscale'
           width={48}
           height={48}
         />
-        <span className='text-lg text-irmin_blue dark:text-irmin_light_green'>
+        <span className='text-lg text-irmin_blue dark:text-white'>
           {connectionData.connector?.name ?? 'Connector'}
         </span>
       </div>
 
       <form ref={formRef}>
-        <div className='my-4 border-b pb-4'>
-          <label className='mb-1 block'>
+        <div className='my-4 border-b pb-4 dark:border-gray-800'>
+          <label className='mb-1 block dark:text-gray-400'>
             {dict.workflow.connection.create.workflowName}
             <span className='ml-2 text-red-500'>*</span>
           </label>

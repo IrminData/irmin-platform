@@ -22,13 +22,13 @@ export default function WebsiteNumbersSection({
     <WebsiteSectionWrapper id='website-numbers-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='text-center'>
-          <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-light uppercase leading-5 text-white'>
+          <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-normal uppercase leading-5 text-white'>
             {section.subtitle}
           </span>
           <h3 className='mb-4 text-4xl font-bold tracking-tighter text-irmin_black md:text-5xl'>
             {section.title}
           </h3>
-          <p className='mb-16 text-sm font-light text-irmin_black md:text-base'>
+          <p className='mb-16 text-sm font-normal text-irmin_black md:text-base'>
             {section.description}
           </p>
           <div className='-mx-4 flex flex-wrap justify-center'>
@@ -40,7 +40,7 @@ export default function WebsiteNumbersSection({
                 <h2 className='mb-2 text-4xl font-bold tracking-tighter text-irmin_black md:text-5xl'>
                   {metric.title}
                 </h2>
-                <p className='text-sm font-light text-irmin_black md:text-base'>
+                <p className='text-sm font-normal text-irmin_black md:text-base'>
                   {metric.description}
                 </p>
               </div>

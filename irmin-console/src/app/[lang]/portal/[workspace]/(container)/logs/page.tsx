@@ -6,7 +6,7 @@
 export default function LogsPage() {
   return (
     <div className='w-full gap-2 p-4 py-8 text-center'>
-      <h1 className='text-xl'>Home page for logs</h1>
+      <h1 className='font-display text-xl'>Home page for logs</h1>
       <p className='text-sm'>One day there will something beautiful here...</p>
     </div>
   );

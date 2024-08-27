@@ -1,7 +1,12 @@
+'use client';
+
 import { javascript } from '@codemirror/lang-javascript';
+import { php } from '@codemirror/lang-php';
 import { python } from '@codemirror/lang-python';
 import { sql } from '@codemirror/lang-sql';
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror from '@uiw/react-codemirror';
+import { useTheme } from 'next-themes';
 
 interface CodeMirrorEditorProps {
   language: string;
@@ -12,6 +17,7 @@ interface CodeMirrorEditorProps {
       writeYourPython: string;
       writeYourJS: string;
       writeYourSQL: string;
+      writeYourPHP: string;
     };
   };
   updateTabContent: (value: string) => void;
@@ -31,12 +37,16 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   updateTabContent,
   ...props
 }) => {
+  const { theme } = useTheme();
+
   const getExtensions = () => {
     switch (language) {
       case 'py':
         return [python()];
       case 'js':
         return [javascript()];
+      case 'php':
+        return [php({ plain: true })];
       case 'sql':
       default:
         return [sql()];
@@ -51,10 +61,16 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         return dict.editor.writeYourJS;
       case 'sql':
         return dict.editor.writeYourSQL;
+      case 'php':
+        return dict.editor.writeYourPHP;
       default:
         return '';
     }
   };
+
+  if (!theme) return <></>;
+
+  const editorTheme = theme === 'dark' ? githubDark : githubLight;
 
   return (
     <CodeMirror
@@ -62,6 +78,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       height={editorHeight}
       extensions={getExtensions()}
       placeholder={getPlaceholder()}
+      theme={editorTheme}
       onChange={(value) => updateTabContent(value)}
       {...props}
     />

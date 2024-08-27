@@ -39,13 +39,13 @@ export default function WebsiteContactSection({
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='lg:mb-18 mb-24 flex flex-wrap items-center justify-between'>
           <div className='mb-10 w-full lg:mb-0 lg:w-1/2'>
-            <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-light uppercase leading-5 text-white shadow-sm'>
+            <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-normal uppercase leading-5 text-white shadow-sm'>
               {section.subtitle}
             </span>
             <h3 className='mb-4 text-4xl font-bold leading-tight tracking-tighter text-irmin_black md:text-5xl'>
               {section.title}
             </h3>
-            <p className='mb-4 text-sm font-light text-irmin_black md:text-base'>
+            <p className='mb-4 text-sm font-normal text-irmin_black md:text-base'>
               {section.description}
             </p>
             <div className='max-w-md'>
@@ -105,7 +105,7 @@ export default function WebsiteContactSection({
                       <h3 className='text-lg font-bold leading-9 text-irmin_black'>
                         {contact.title}
                       </h3>
-                      <p className='text-lg font-light text-irmin_black hover:text-irmin_black md:text-xl'>
+                      <p className='text-lg font-normal text-irmin_black hover:text-irmin_black md:text-xl'>
                         {contact.detail}
                       </p>
                     </div>
@@ -118,7 +118,7 @@ export default function WebsiteContactSection({
             <div className='rounded-xl bg-green-50 px-4 py-8 md:p-10'>
               <form>
                 <div className='mb-6'>
-                  <label className='mb-2 block font-light leading-6 text-irmin_black'>
+                  <label className='mb-2 block font-normal leading-6 text-irmin_black'>
                     {dict.website.sections.contact.email}
                   </label>
                   <Input
@@ -131,7 +131,7 @@ export default function WebsiteContactSection({
                 </div>
                 <div className='mb-6'>
                   <label
-                    className='mb-2 block font-light leading-6 text-irmin_black'
+                    className='mb-2 block font-normal leading-6 text-irmin_black'
                     htmlFor=''
                   >
                     {dict.website.sections.contact.message}

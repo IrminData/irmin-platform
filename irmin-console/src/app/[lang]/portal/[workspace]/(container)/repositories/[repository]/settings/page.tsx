@@ -33,15 +33,15 @@ export default function RepositorySettingsPage({
   };
 
   return (
-    <div className='mx-2 md:mx-4'>
-      <div className='w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-4 py-4 shadow-md md:mx-4 dark:shadow-gray-800'>
+    <div className='w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-4 py-4 shadow-md md:mx-4 dark:bg-irmin_black-600'>
+      <div className='my-8 px-4'>
         <h2 className='mb-4 text-2xl font-normal'>
           {dict.repository.tabs.settings}
         </h2>
         <div className='pb-8'>
           <form onSubmit={handleUpdateRepository}>
             <div>
-              <label className='mb-2 block text-xs text-gray-700 md:text-sm'>
+              <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
                 {dict.repository.settings.name}
               </label>
               <Input
@@ -66,14 +66,14 @@ export default function RepositorySettingsPage({
             </Button>
           </form>
           <div className='mt-8'>
-            <p className='text-sm font-normal text-red-800 md:text-xl'>
+            <p className='text-sm font-normal text-red-800 md:text-xl dark:text-red-400'>
               {dict.repository.settings.dangerZone}
             </p>
-            <p className='mt-2 text-xs text-gray-700 md:text-base'>
+            <p className='mt-2 text-xs text-gray-700 md:text-base dark:text-gray-200'>
               {dict.repository.settings.deletionNote}
             </p>
             <Button
-              className='mt-4'
+              className='mt-4 dark:bg-gray-800 dark:text-white'
               size='sm'
               colorScheme='secondary'
               variant='outline'

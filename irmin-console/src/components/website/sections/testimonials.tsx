@@ -114,7 +114,7 @@ export default function WebsiteTestimonialsSection({
                   <h3 className='mb-2 text-xl font-semibold md:text-2xl'>
                     {testimonials[currentTestimonial].name}
                   </h3>
-                  <span className='text-lg font-light text-irmin_black'>
+                  <span className='text-lg font-normal text-irmin_black'>
                     {testimonials[currentTestimonial].title}
                   </span>
                 </div>

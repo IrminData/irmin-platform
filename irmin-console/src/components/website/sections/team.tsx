@@ -61,7 +61,7 @@ export default async function WebsiteTeamSection({
               <h3 className='mb-4 text-4xl font-bold tracking-tighter md:text-5xl'>
                 {section.title}
               </h3>
-              <p className='text-sm font-light text-irmin_black md:text-base'>
+              <p className='text-sm font-normal text-irmin_black md:text-base'>
                 {section.description}
               </p>
             </div>

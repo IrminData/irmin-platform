@@ -89,7 +89,7 @@ export default function AssistantPopup() {
                 }`}
               >
                 <div
-                  className={`my-1 max-w-xs rounded-lg p-2 font-light ${
+                  className={`my-1 max-w-xs rounded-lg p-2 font-normal${
                     message.sender === 'user'
                       ? 'rounded-bl-none bg-irmin_light_green dark:bg-irmin_blue'
                       : 'rounded-br-none bg-irmin_green-300 dark:bg-irmin_blue-800'

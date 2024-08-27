@@ -62,7 +62,7 @@ const WorkspaceCard = ({ workspace }: { workspace: Workspace }) => {
         <h3 className='mt-2 block text-base font-normal leading-tight md:text-lg'>
           {workspace.name}
         </h3>
-        <p className='mb-4 mt-2 text-xs font-light leading-tight opacity-60'>
+        <p className='mb-4 mt-2 text-xs font-normal leading-tight opacity-60'>
           {workspace.description ?? '-'}
         </p>
         <div className='flex-grow'></div>

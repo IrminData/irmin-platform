@@ -50,7 +50,7 @@ export default function ConfigureExport({
         />
       </div>
       <div className='mb-6'>
-        <label className='mb-2 block font-light text-irmin_black' htmlFor=''>
+        <label className='mb-2 block font-normal text-irmin_black' htmlFor=''>
           {dict.workflow.export.create.syncIntervalLabel}
         </label>
         <Input

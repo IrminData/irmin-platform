@@ -1,8 +1,7 @@
 'use client';
 
-import { languages, Locale } from '@/dictionaries';
-
-import Select from '@/components/common/select/Select';
+import { languages } from '@/dictionaries';
+import ReactSelect from 'react-select';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -16,25 +15,32 @@ import { useLocale } from '@/context/LocaleContext';
  * It allows users to change the language of the application.
  * It uses the LocaleContext to switch the language. See {@link useLocale}
  */
-export default function LanguageSwitcher({
-  variant = 'default',
-}: {
-  variant?: 'default' | 'on-dark-bg';
-}) {
+export default function LanguageSwitcher() {
   const { locale, dict, switchLocale } = useLocale();
 
+  const currentLanguage = languages.find((lang) => lang.code === locale);
+
   return (
-    <Select
-      currentValue={locale as string}
-      onChange={(e) => switchLocale(e.target.value as Locale)}
+    <ReactSelect
+      value={{
+        value: currentLanguage?.code,
+        label: currentLanguage?.name,
+      }}
+      onChange={(val) => {
+        if (val && val.value) {
+          switchLocale(val.value);
+        }
+      }}
       options={languages.map((lang) => ({
         value: lang.code,
         label: lang.name,
       }))}
-      loading={false}
-      label={dict.misc.selectLanguage}
-      defaultValue=''
-      variant={variant}
+      isSearchable={false}
+      isClearable={false}
+      placeholder={dict.misc.selectLanguage}
+      noOptionsMessage={() => dict.misc.noOptionsMessage}
+      className='react-select-container'
+      classNamePrefix='react-select'
     />
   );
 }

@@ -1,6 +1,8 @@
 const exampleActionFiles = {
   findTop100AdClickingUsers: `
-    SELECT user_id, COUNT(*) as clicks FROM $[app-usage-data.ad_clicks] GROUP BY user_id ORDER BY clicks DESC LIMIT 100 JOIN $[app-usage-data.users] ON $[app-usage-data.ad_clicks].user_id = $[app-usage-data.users].id;
+    SELECT user_id, COUNT(*) as clicks FROM $[app-usage-data.ad_clicks] 
+    GROUP BY user_id ORDER BY clicks DESC LIMIT 100 JOIN $[app-usage-data.users] 
+    ON $[app-usage-data.ad_clicks].user_id = $[app-usage-data.users].id;
   `,
   sendReceiptOnOrder: `
     const irmin = require('irmin');
@@ -72,6 +74,10 @@ const exampleActionFiles = {
             irmin.log("error", "Error in fetchAppUsageData execution: " + error.message);
         }
     })();
+    `,
+  helloWorldPhp: `
+        $message = "Hello, world!";
+        echo $message;
     `,
 };
 export default exampleActionFiles;

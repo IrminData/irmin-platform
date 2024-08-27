@@ -25,13 +25,13 @@ export default function WebsiteFaqsSection({
     <WebsiteSectionWrapper id='faq-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='max-w-4xl'>
-          <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-light uppercase leading-5 text-white shadow-sm'>
+          <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-normal uppercase leading-5 text-white shadow-sm'>
             {section.subtitle}
           </span>
           <h2 className='mb-4 text-4xl font-bold leading-tight tracking-tighter text-irmin_black md:text-5xl'>
             {section.title}
           </h2>
-          <p className='mb-8 text-sm font-light text-irmin_black md:text-base'>
+          <p className='mb-8 text-sm font-normal text-irmin_black md:text-base'>
             {section.description}
           </p>
         </div>
@@ -57,7 +57,7 @@ export default function WebsiteFaqsSection({
                   </h3>
                 </div>
 
-                <p className='font-light text-irmin_black'>
+                <p className='font-normal text-irmin_black'>
                   {question.description}
                 </p>
               </div>

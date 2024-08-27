@@ -79,7 +79,7 @@ const Button = ({
   const variantClasses = {
     solid: {
       primary:
-        'bg-irmin_green text-white shadow shadow-gray-300 dark:shadow-black',
+        'bg-irmin_green text-white shadow shadow-gray-300 dark:shadow-black dark:bg-irmin_green-600',
       secondary:
         'bg-irmin_blue text-white shadow shadow-gray-300 dark:shadow-black',
       tertiary:
@@ -92,20 +92,20 @@ const Button = ({
     },
     outline: {
       primary:
-        'border border-irmin_green text-irmin_green shadow shadow-gray-300 dark:shadow-black',
+        'border border-solid border-irmin_green text-irmin_green shadow shadow-gray-300 dark:shadow-black dark:border-irmin_green-600',
       secondary:
-        'border border-irmin_blue text-irmin_blue shadow shadow-gray-300 dark:shadow-black',
+        'border border-solid border-irmin_blue text-irmin_blue shadow shadow-gray-300 dark:shadow-black',
       tertiary:
-        'border border-irmin_teal text-irmin_teal shadow shadow-gray-300 dark:shadow-black',
-      gray: 'border border-gray-500 text-gray-500 shadow shadow-gray-300 dark:shadow-black',
+        'border border-solid border-irmin_teal text-irmin_teal shadow shadow-gray-300 dark:shadow-black',
+      gray: 'border border-solid border-gray-500 text-gray-500 shadow shadow-gray-300 dark:shadow-black',
       black:
-        'border border-irmin_black text-irmin_black shadow shadow-gray-300 dark:border-gray-50 dark:text-gray-50 dark:shadow-black',
+        'border border-solid border-irmin_black text-irmin_black shadow shadow-gray-300 dark:border-gray-50 dark:text-gray-50 dark:shadow-black',
       light:
-        'border border-gray-200 text-gray-100 dark:border-gray-800 dark:text-gray-200 shadow shadow-gray-300 dark:shadow-black',
+        'border border-solid border-gray-200 text-gray-100 dark:border-gray-800 dark:text-gray-200 shadow shadow-gray-300 dark:shadow-black',
     },
     gradient: {
       primary:
-        'bg-gradient-to-r from-irmin_green-600 to-irmin_green-400 text-white shadow shadow-gray-300 dark:shadow-black',
+        'bg-gradient-to-r from-irmin_green-600 to-irmin_green-400 text-white shadow shadow-gray-300 dark:shadow-black dark:from-irmin_green-800 dark:to-irmin_green-600',
       secondary:
         'bg-gradient-to-r from-irmin_blue to-irmin_blue-400 text-white shadow shadow-gray-300 dark:shadow-black',
       tertiary:
@@ -118,7 +118,7 @@ const Button = ({
     },
     icon: {
       primary:
-        'text-irmin_green rounded-full rounded-full shadow-none dark:shadow-none border-none',
+        'text-irmin_green rounded-full rounded-full shadow-none dark:shadow-none border-none dark:text-irmin_green-600',
       secondary:
         'text-irmin_blue rounded-full rounded-full shadow-none dark:shadow-none border-none',
       tertiary:
@@ -130,7 +130,8 @@ const Button = ({
         'text-gray-200 dark:text-gray-800 rounded-full shadow-none dark:shadow-none border-none',
     },
     link: {
-      primary: 'text-irmin_green hover:underline shadow-none dark:shadow-none',
+      primary:
+        'text-irmin_green hover:underline shadow-none dark:shadow-none dark:text-irmin_green-600',
       secondary: 'text-irmin_blue hover:underline shadow-none dark:shadow-none',
       tertiary: 'text-irmin_teal hover:underline shadow-none dark:shadow-none',
       gray: 'text-gray-500 hover:underline shadow-none dark:shadow-none',
@@ -142,7 +143,7 @@ const Button = ({
   };
 
   const sizeClasses = {
-    sm: 'px-2 py-1 w-fit min-h-8 text-xs font-light lg:px-3 lg:text-sm lg:min-h-10',
+    sm: 'px-2 py-1 w-fit min-h-8 text-xs font-normal lg:px-3 lg:text-sm lg:min-h-10',
     md: 'px-3 py-1 w-fit min-h-11 text-sm font-normal lg:px-4 lg:text-base lg:min-h-14',
     lg: 'px-4 py-2 w-fit min-h-14 text-base font-normal lg:px-6 lg:min-h-16',
   };

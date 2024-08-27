@@ -101,7 +101,7 @@ const Input = ({
   };
 
   const sizeClasses = {
-    sm: 'px-2 py-1 min-h-8 text-xs font-light lg:px-3 lg:text-sm lg:min-h-10',
+    sm: 'px-2 py-1 min-h-8 text-xs font-normal lg:px-3 lg:text-sm lg:min-h-10',
     md: 'px-3 py-1 min-h-11 text-sm font-normal lg:px-4 lg:text-base lg:min-h-14',
     lg: 'px-4 py-2 min-h-14 text-base font-normal lg:px-6 lg:min-h-16',
   };

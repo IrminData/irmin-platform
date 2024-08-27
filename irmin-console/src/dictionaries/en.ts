@@ -75,6 +75,7 @@ const en = {
     tryAgain: 'Try again',
     success: 'Success',
     info: 'Info',
+    noOptionsMessage: 'No options',
   },
   auth: {
     signIn: {
@@ -323,6 +324,7 @@ const en = {
     writeYourSQL: 'Write your SQL query here...',
     writeYourJS: 'Write your JavaScript script here...',
     writeYourPython: 'Write your Python script here...',
+    writeYourPHP: 'Write your PHP script here...',
     createNewScript: 'Create a new script',
     startExploringData:
       'Start exploring your data by jumping into the code editor',

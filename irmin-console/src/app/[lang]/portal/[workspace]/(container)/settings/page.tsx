@@ -165,7 +165,7 @@ const GeneralSettings = () => {
       <div className='pb-8'>
         <form onSubmit={handleUpdateWorkspace}>
           <div>
-            <label className='mb-2 block text-xs text-gray-700 md:text-sm'>
+            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-200 dark:text-gray-600'>
               {dict.workspace.workspaceName}
             </label>
             <Input
@@ -181,7 +181,7 @@ const GeneralSettings = () => {
             />
           </div>
           <div className='mt-4'>
-            <label className='mb-2 block text-xs text-gray-700 md:text-sm'>
+            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-200 dark:text-gray-600'>
               {dict.workspace.workspaceDescription}
             </label>
             <Input
@@ -215,11 +215,11 @@ const GeneralSettings = () => {
           <p className='text-sm font-normal text-red-800 md:text-xl dark:text-red-400'>
             {dict.workspace.dangerZone}
           </p>
-          <p className='mt-2 text-xs text-gray-500 md:text-base'>
+          <p className='mt-2 text-xs text-gray-700 md:text-base dark:text-gray-200'>
             {dict.workspace.deletionNote}
           </p>
           <Button
-            className='mt-4 shadow-none'
+            className='mt-4 dark:bg-gray-800 dark:text-white'
             onClick={confirmDeletion}
             size='sm'
             colorScheme='black'

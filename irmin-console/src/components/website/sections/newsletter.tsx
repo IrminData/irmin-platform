@@ -52,7 +52,7 @@ export default function WebsiteNewsletterSection({
           <h3 className='mb-4 text-3xl font-bold leading-tight tracking-tighter text-irmin_black md:text-4xl'>
             {section.title}
           </h3>
-          <p className='mb-8 text-sm font-light text-irmin_black md:text-base'>
+          <p className='mb-8 text-sm font-normal text-irmin_black md:text-base'>
             {section.subtitle}
           </p>
           <div className='mx-auto text-left md:max-w-md'>
@@ -76,7 +76,7 @@ export default function WebsiteNewsletterSection({
                 {dict.website.sections.newsletter.subscribe}
               </Button>
             </div>
-            <span className='text-xs font-light text-irmin_black'>
+            <span className='text-xs font-normal text-irmin_black'>
               <span> {dict.website.sections.newsletter.privacy_notice} </span>
               <Link
                 className='text-irmin_green-500 hover:text-irmin_green-600'

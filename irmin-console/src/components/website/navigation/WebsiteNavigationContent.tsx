@@ -41,7 +41,7 @@ const NavLink = ({
   return (
     <li className='group relative' id={linkKey}>
       <Link
-        className={`flex h-full min-h-14 items-center overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-light transition-all hover:bg-white group-hover:bg-white lg:text-sm dark:hover:bg-gray-800 dark:group-hover:bg-gray-800 ${isActive ? 'text-irmin_green underline dark:text-irmin_light_green' : 'text-irmin_black dark:text-gray-200'}`}
+        className={`flex h-full min-h-14 items-center overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-normal transition-all hover:bg-white group-hover:bg-white lg:text-sm dark:hover:bg-gray-800 dark:group-hover:bg-gray-800 ${isActive ? 'text-irmin_green underline dark:text-irmin_light_green' : 'text-irmin_black dark:text-gray-200'}`}
         aria-label={link.label}
         href={link.href}
       >
@@ -54,7 +54,7 @@ const NavLink = ({
               key={`website-desktop-navigation-link-sublink-${idx}-${linkKey}`}
             >
               <Link
-                className={`block overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-light transition-all hover:bg-gray-200 lg:text-sm dark:hover:bg-gray-800 ${isActive ? 'text-irmin_green underline dark:text-irmin_black' : 'text-irmin_black dark:text-gray-200'}`}
+                className={`block overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-normal transition-all hover:bg-gray-200 lg:text-sm dark:hover:bg-gray-800 ${isActive ? 'text-irmin_green underline dark:text-irmin_black' : 'text-irmin_black dark:text-gray-200'}`}
                 aria-label={subpage.label}
                 href={subpage.href}
               >
@@ -95,7 +95,7 @@ const MobileNavLink = ({
   return (
     <li className='relative' id={linkKey}>
       <div
-        className={`block w-full ${!isOpen && 'border-b'} flex items-center justify-between text-nowrap rounded border-gray-200 px-4 py-2 pb-4 text-base font-light dark:border-gray-800 ${isActive ? 'text-irmin_green underline dark:text-irmin_black' : 'text-irmin_black dark:text-gray-200'}`}
+        className={`block w-full ${!isOpen && 'border-b'} flex items-center justify-between text-nowrap rounded border-gray-200 px-4 py-2 pb-4 text-base font-normal dark:border-gray-800 ${isActive ? 'text-irmin_green underline dark:text-irmin_black' : 'text-irmin_black dark:text-gray-200'}`}
         aria-label={link.label}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -113,7 +113,7 @@ const MobileNavLink = ({
               key={`website-mobile-navigation-link-sublink-${idx}-${linkKey}`}
             >
               <Link
-                className='block text-nowrap rounded px-2 py-2 text-base font-light transition-all hover:bg-gray-200 dark:hover:bg-gray-800'
+                className='block text-nowrap rounded px-2 py-2 text-base font-normal transition-all hover:bg-gray-200 dark:hover:bg-gray-800'
                 aria-label={subpage.label}
                 href={subpage.href}
                 onClick={closeMenu}
@@ -239,7 +239,7 @@ export default function WebsiteNavigationContent({
                         size='sm'
                         variant='gradient'
                         colorScheme='light'
-                        className='min-w-32 py-2 pl-6 pr-3 text-xs font-light md:text-sm xl:text-sm'
+                        className='min-w-32 py-2 pl-6 pr-3 text-xs font-normal md:text-sm xl:text-sm'
                         href='/portal'
                         iconFirst={false}
                         icon={<IoEnterOutline size={24} className='ml-1' />}
@@ -253,7 +253,7 @@ export default function WebsiteNavigationContent({
                         size='sm'
                         variant='gradient'
                         colorScheme='light'
-                        className='min-w-32 py-2 text-xs font-light md:text-sm xl:text-sm'
+                        className='min-w-32 py-2 text-xs font-normal md:text-sm xl:text-sm'
                         href='/sign-in'
                         onClick={closeMenu}
                       >
@@ -263,7 +263,7 @@ export default function WebsiteNavigationContent({
                         size='sm'
                         variant='gradient'
                         colorScheme='secondary'
-                        className='min-w-32 py-2 pl-6 pr-3 text-xs font-light md:text-sm xl:text-sm'
+                        className='min-w-32 py-2 pl-6 pr-3 text-xs font-normal md:text-sm xl:text-sm'
                         href='/sign-up'
                         onClick={closeMenu}
                         iconFirst={false}

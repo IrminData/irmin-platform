@@ -71,18 +71,21 @@ const QueryResults = ({
   }, [filterText]);
 
   return (
-    <div className='flex flex-1 flex-col overflow-hidden' id='query-results'>
+    <div
+      className='flex flex-1 flex-col overflow-hidden bg-white dark:bg-irmin_black'
+      id='query-results'
+    >
       {/* Tab Buttons */}
-      <div className='mb-0 mt-4 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b'>
+      <div className='mb-0 mt-1 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b dark:border-gray-800'>
         <div
-          className={`border-irmin_green bg-white ${activeTab === 'data' ? 'border-b-2' : ''}`}
+          className={`border-irmin_green ${activeTab === 'data' ? 'border-b-2' : ''}`}
         >
           <Button
             ariaLabel={`Switch to data viewer tab`}
             size='sm'
-            variant='outline'
+            variant='link'
             colorScheme={activeTab === 'data' ? 'secondary' : 'gray'}
-            className={`justify-start rounded-none text-xs shadow-none hover:no-underline`}
+            className={`justify-start rounded-none text-xs shadow-none hover:no-underline dark:text-white`}
             onClick={() => setActiveTab('data')}
             icon={<TbTable />}
           >
@@ -91,12 +94,12 @@ const QueryResults = ({
         </div>
         {actionWorkflow && (
           <div
-            className={`border-irmin_green bg-white ${activeTab === 'documentation' ? 'border-b-2' : ''}`}
+            className={`border-irmin_green ${activeTab === 'documentation' ? 'border-b-2' : ''}`}
           >
             <Button
               ariaLabel={`Switch to documentation tab`}
               size='sm'
-              variant='outline'
+              variant='link'
               colorScheme={activeTab === 'documentation' ? 'secondary' : 'gray'}
               className={`justify-start rounded-none text-xs shadow-none hover:no-underline`}
               onClick={() => setActiveTab('documentation')}
@@ -154,25 +157,28 @@ const QueryResults = ({
       {activeTab === 'data' && (
         <>
           {/* Title, metadata and actions */}
-          <div className='flex items-center justify-start border px-4 py-1 text-xs'>
-            <p className='ml-0 inline text-gray-400'>{title}</p>
-            <p className='inline text-irmin_blue md:ml-auto md:pl-2'>
+          <div className='flex items-center justify-start px-4 py-1 text-xs'>
+            <p className='ml-0 hidden text-xs text-gray-400 lg:inline'>
+              {title}
+            </p>
+            <p className='inline text-[8px] text-irmin_blue md:ml-auto md:pl-2 lg:text-xs dark:text-irmin_green'>
               {`${placeholderData.length} ${dict.query.rowsReturnedIn} 1.5s`}
             </p>
             <div className='flex-grow'></div>
-            <div className='ml-auto flex flex-row gap-2'>
+            <div className='ml-auto flex flex-row items-center gap-2'>
               <Button
                 icon={<AiOutlineDownload />}
                 colorScheme='secondary'
                 variant='link'
                 size='sm'
+                className='hidden lg:inline-flex dark:text-white'
                 onClick={() => downloadCSV(placeholderData, title)}
               >
                 {dict.query.exportTable}
               </Button>
               <input
                 type='text'
-                className='h-8 w-48 rounded-md px-2 py-1 text-xs shadow focus:outline-none'
+                className='h-8 w-48 rounded-md border border-solid border-gray-400 px-2 py-1 text-xs focus:outline-none dark:border-gray-800'
                 placeholder={dict.query.search}
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}

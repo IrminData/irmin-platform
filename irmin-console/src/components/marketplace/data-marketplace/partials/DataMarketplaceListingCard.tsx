@@ -51,7 +51,7 @@ export default function DataMarketplaceListingCard({
         {dict.marketplace.source}: {repository.source}
       </div>
       <div className='flex items-center justify-between'>
-        <span className={`font-lighter text-irmin_black dark:text-white`}>
+        <span className={`font-normal text-irmin_black dark:text-white`}>
           {repository.price} € {dict.marketplace.pricePostfix}
         </span>
         <div>

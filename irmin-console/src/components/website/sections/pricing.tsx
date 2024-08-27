@@ -45,20 +45,20 @@ export default function WebsitePricingSection({
     <WebsiteSectionWrapper id='website-pricing-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='text-center'>
-          <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-light uppercase leading-5 text-white shadow-sm'>
+          <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-normal uppercase leading-5 text-white shadow-sm'>
             {section.subtitle}
           </span>
           <h3 className='mb-6 text-3xl font-bold tracking-tighter text-irmin_black md:text-5xl'>
             {section.title}
           </h3>
           {section.description.length > 0 && (
-            <p className='mb-12 text-lg font-light text-irmin_black'>
+            <p className='mb-12 text-lg font-normal text-irmin_black'>
               {section.description}
             </p>
           )}
           <div className='mb-12 flex w-full items-center justify-center'>
             <button
-              className={`mr-4 inline-block text-lg font-light md:text-xl ${billingCycle === 'monthly' ? 'text-irmin_black' : 'text-gray-400'}`}
+              className={`mr-4 inline-block text-lg font-normal md:text-xl ${billingCycle === 'monthly' ? 'text-irmin_black' : 'text-gray-400'}`}
               onClick={() => setBillingCycle('monthly')}
             >
               {dict.website.sections.pricing.billedMonthly}
@@ -85,7 +85,7 @@ export default function WebsitePricingSection({
               </div>
             </label>
             <button
-              className={`ml-4 inline-flex items-center text-lg font-light md:text-xl ${billingCycle === 'annual' ? 'text-irmin_black' : 'text-gray-400'}`}
+              className={`ml-4 inline-flex items-center text-lg font-normal md:text-xl ${billingCycle === 'annual' ? 'text-irmin_black' : 'text-gray-400'}`}
               onClick={() => setBillingCycle('annual')}
             >
               {dict.website.sections.pricing.billedAnnually}
@@ -103,7 +103,7 @@ export default function WebsitePricingSection({
                   <h3 className='mb-2 text-3xl font-semibold tracking-tighter text-irmin_black md:text-4xl'>
                     {price.title}
                   </h3>
-                  <p className='mb-6 font-light text-irmin_black'>
+                  <p className='mb-6 font-normal text-irmin_black'>
                     {price.subtitle}
                   </p>
                   <div className='mb-6'>
@@ -135,7 +135,7 @@ export default function WebsitePricingSection({
                 <ul className='self-start px-8'>
                   {price.bullet_points.map((bullet, index) => (
                     <li
-                      className='mb-4 flex items-center font-light text-irmin_black'
+                      className='mb-4 flex items-center font-normal text-irmin_black'
                       key={index}
                     >
                       <Image

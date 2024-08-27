@@ -50,8 +50,8 @@ export default function RepositoryPage({
   return (
     <>
       <div className='mb-4 flex w-full flex-col items-start gap-1 px-2 md:flex-row md:gap-2 md:px-4'>
-        <div className='h-full w-max max-w-80 rounded border bg-white pb-4 shadow-sm md:px-4 md:py-2 dark:shadow-gray-800'>
-          <p className='mb-0 p-2 text-sm text-irmin_blue md:mb-2'>
+        <div className='h-full w-max max-w-80 rounded border bg-white pb-4 shadow-sm md:px-4 md:py-2 dark:border-gray-900 dark:bg-gray-800'>
+          <p className='mb-0 p-2 text-sm text-irmin_blue md:mb-2 dark:text-irmin_light_green'>
             {dict.repository.dataTables}
           </p>
           <TableSelector
@@ -60,7 +60,7 @@ export default function RepositoryPage({
             setSelectedTable={setSelectedTable}
           />
         </div>
-        <div className='relative w-full max-w-full overflow-hidden rounded border bg-white shadow-sm md:px-4 md:py-2 dark:shadow-gray-800'>
+        <div className='relative w-full max-w-full overflow-hidden rounded border bg-white text-black shadow-sm md:px-4 md:py-2'>
           <div className='h-full' id='code-editor'>
             <p className='mb-0 p-2 text-sm text-irmin_blue md:mb-2 md:p-0'>
               {dict.repository.sqlQuery}
@@ -79,7 +79,7 @@ export default function RepositoryPage({
           <Button
             colorScheme='primary'
             variant='solid'
-            className='float-end m-2'
+            className='float-end m-2 shadow-none'
             size='sm'
             icon={<AiOutlinePlayCircle />}
           >

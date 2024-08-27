@@ -226,7 +226,7 @@ export default function PortalWrapper({
                     >
                       <div className={`flex w-full items-center justify-start`}>
                         <div className={'mr-1 text-sm'}>{link.icon}</div>
-                        <p className={'text-xs font-light'}>{link.title}</p>
+                        <p className={'text-xs font-normal'}>{link.title}</p>
                       </div>
                     </Link>
                   ))}
@@ -280,7 +280,7 @@ export default function PortalWrapper({
                   />
                   <button
                     type='button'
-                    className='invisible absolute bottom-0 right-0 top-0 rounded-full bg-gray-50 px-4 py-3 text-xs font-light text-gray-800 opacity-0 transition-all hover:bg-gray-100 focus:outline-none group-focus-within:visible group-focus-within:opacity-100 md:visible md:text-sm md:opacity-100 dark:bg-irmin_black dark:text-white dark:hover:bg-gray-800'
+                    className='invisible absolute bottom-0 right-0 top-0 rounded-full bg-gray-50 px-4 py-3 text-xs font-normal text-gray-800 opacity-0 transition-all hover:bg-gray-100 focus:outline-none group-focus-within:visible group-focus-within:opacity-100 md:visible md:text-sm md:opacity-100 dark:bg-irmin_black dark:text-white dark:hover:bg-gray-800'
                   >
                     {dict.portalNavigation.search}
                   </button>
@@ -291,7 +291,7 @@ export default function PortalWrapper({
           {/* Portal content */}
           <div
             id='portal-content'
-            className='pattern-bg relative overflow-y-scroll bg-white bg-contain bg-top bg-no-repeat dark:bg-irmin_black'
+            className='pattern-bg relative min-h-[calc(100vh-4rem)] overflow-y-scroll bg-white bg-contain bg-top bg-no-repeat dark:bg-irmin_black'
           >
             {children}
           </div>
@@ -303,13 +303,11 @@ export default function PortalWrapper({
         className='fixed left-4 top-[8px] z-50 block lg:hidden'
       >
         <button
-          className='relative aspect-square h-10 w-10 rounded-full bg-white bg-opacity-80 focus:outline-none'
+          className='relative aspect-square h-10 w-10 rounded-full bg-white bg-opacity-80 focus:outline-none dark:bg-irmin_blue'
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           <div
-            className={`absolute left-4 top-1/2 block w-5 -translate-x-1/2 -translate-y-1/2 transform ${
-              isMenuOpen ? 'text-irmin_blue' : 'text-irmin_blue'
-            }`}
+            className={`absolute left-4 top-1/2 block w-5 -translate-x-1/2 -translate-y-1/2 transform text-irmin_blue dark:text-white`}
           >
             <span
               className={`absolute block h-0.5 w-7 transform bg-current transition duration-500 ease-in-out ${

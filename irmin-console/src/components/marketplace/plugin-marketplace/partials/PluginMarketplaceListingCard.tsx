@@ -41,7 +41,7 @@ const PluginMarketplaceListingCard: React.FC<{ plugin: MarketplacePlugin }> = ({
         {dict.marketplace.provider}: {plugin.provider}
       </div>
       <div className='flex items-center justify-between'>
-        <span className={`font-lighter text-irmin_black dark:text-white`}>
+        <span className={`font-normal text-irmin_black dark:text-white`}>
           {plugin.price} € / month
         </span>
         <div>

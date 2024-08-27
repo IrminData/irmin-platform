@@ -17,7 +17,7 @@ export default function PortalNavigationLink({
   setIsMenuOpen: (_value: boolean) => void;
 }) {
   const menuIconStyles = `text-lg ${isMenuFolded ? 'ml-1' : 'mr-2'}`;
-  const menuLinkStyles = `text-xs font-light md:text-sm ${
+  const menuLinkStyles = `text-xs font-normal md:text-sm ${
     isMenuFolded ? 'hidden' : 'block'
   }`;
 

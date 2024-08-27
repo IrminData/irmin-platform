@@ -101,7 +101,7 @@ const AcceptInviteSection = () => {
                   <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
                     {dict.auth.invite.invalid}
                   </h3>
-                  <p className='text-lg font-light text-irmin_black'>
+                  <p className='text-lg font-normal text-irmin_black'>
                     {dict.auth.invite.invalidMessage}
                   </p>
                 </div>
@@ -113,7 +113,7 @@ const AcceptInviteSection = () => {
             <div className='w-full md:w-1/2 md:pl-4'>
               <div className='bg-irmin_black-50 flex h-full items-center justify-center px-8 py-14'>
                 <div className='mx-auto text-center md:max-w-xl'>
-                  <span className='relative z-10 mb-4 inline-block rounded-full bg-irmin_green-100 px-2 py-px text-xs font-light uppercase leading-5 text-irmin_green-500 shadow-sm dark:shadow-gray-800'>
+                  <span className='relative z-10 mb-4 inline-block rounded-full bg-irmin_green-100 px-2 py-px text-xs font-normal uppercase leading-5 text-irmin_green-500 shadow-sm dark:shadow-gray-800'>
                     Quotes
                   </span>
                   <div className='relative mb-16'>
@@ -131,7 +131,7 @@ const AcceptInviteSection = () => {
                       width={142}
                       height={98}
                     />
-                    <h3 className='relative text-xl font-light leading-tight text-irmin_black md:text-3xl'>
+                    <h3 className='relative text-xl font-normal leading-tight text-irmin_black md:text-3xl'>
                       Love the simplicity of the service and the prompt customer
                       support. We can&apos;t imagine working without it.
                     </h3>
@@ -164,7 +164,7 @@ const AcceptInviteSection = () => {
                 <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
                   {dict.auth.invite.title}
                 </h3>
-                <p className='text-lg font-light text-irmin_black'>
+                <p className='text-lg font-normal text-irmin_black'>
                   {dict.auth.invite.subtitle}
                 </p>
               </div>
@@ -179,7 +179,7 @@ const AcceptInviteSection = () => {
                 >
                   <div className='mb-6'>
                     <label
-                      className='mb-2 block font-light text-irmin_black'
+                      className='mb-2 block font-normal text-irmin_black'
                       htmlFor='company'
                     >
                       {dict.auth.invite.company}*
@@ -200,7 +200,7 @@ const AcceptInviteSection = () => {
                   </div>
                   <div className='mb-4'>
                     <label
-                      className='mb-2 block font-light text-irmin_black'
+                      className='mb-2 block font-normal text-irmin_black'
                       htmlFor='password'
                     >
                       {dict.auth.invite.password} *
@@ -221,7 +221,7 @@ const AcceptInviteSection = () => {
                   </div>
                   <div className='mb-4'>
                     <label
-                      className='mb-2 block font-light text-irmin_black'
+                      className='mb-2 block font-normal text-irmin_black'
                       htmlFor='passwordConfirmation'
                     >
                       {dict.auth.invite.confirmPassword} *
@@ -246,7 +246,7 @@ const AcceptInviteSection = () => {
                       type='checkbox'
                       className='h-6 w-6 rounded border-gray-300 bg-gray-100'
                     />
-                    <label className='ms-2 text-xs font-light text-irmin_black'>
+                    <label className='ms-2 text-xs font-normal text-irmin_black'>
                       {dict.auth.accept.accept}{' '}
                       <Link
                         className='text-irmin_blue-500 hover:text-irmin_blue-600'

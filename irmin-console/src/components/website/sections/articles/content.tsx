@@ -149,7 +149,7 @@ export default function WebsiteArticlesSectionContent({
               <h3 className='mb-4 inline-block text-2xl font-bold leading-tight text-irmin_black'>
                 {article.title}
               </h3>
-              <p className='mb-4 text-xs font-light text-irmin_black md:text-sm'>
+              <p className='mb-4 text-xs font-normal text-irmin_black md:text-sm'>
                 {article.excerpt}
               </p>
             </Link>

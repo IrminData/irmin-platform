@@ -29,6 +29,7 @@ function getLanguageFromFilename(filename: string): IrminFileType {
   if (extension === 'sql') return extension;
   if (extension === 'js') return extension;
   if (extension === 'py') return extension;
+  if (extension === 'php') return extension;
   return 'sql';
 }
 
@@ -317,9 +318,9 @@ const EditorWithTabs = ({
       ?.contents ?? '') === currentTabContent;
 
   return (
-    <div>
+    <>
       {openFileTabs.length > 0 && (
-        <div className='mb-0 flex items-center justify-between gap-1 border-b border-gray-200 pb-1 pr-2'>
+        <div className='mb-0 flex items-center justify-between gap-1 border-b border-gray-200 pb-0 pr-2 dark:border-irmin_black'>
           <div className='scrollbar-hide flex items-center overflow-x-auto'>
             {openFileTabs.map((tab, index) => (
               <div
@@ -360,9 +361,9 @@ const EditorWithTabs = ({
               <IoAdd size={18} />
             </Button>
           </div>
-          <div className='flex flex-row items-center justify-end gap-2'>
+          <div className='flex flex-row items-center justify-end gap-2 py-1'>
             <select
-              className='mt-2 hidden rounded-lg border-r-2 border-white px-2 py-2 text-xs text-irmin_blue shadow focus:outline-none md:block xl:text-sm dark:shadow-gray-800'
+              className='mt-2 hidden min-w-28 rounded-lg border-r-2 border-white px-2 py-2 text-xs text-irmin_blue focus:outline-none md:block dark:text-white'
               value={getLanguageFromFilename(openFileTabs[activeTab] ?? '')}
               onChange={(e) => {
                 e.preventDefault();
@@ -372,13 +373,14 @@ const EditorWithTabs = ({
               <option value={'sql'}>SQL</option>
               <option value={'js'}>JavaScript</option>
               <option value={'py'}>Python</option>
+              <option value={'php'}>PHP</option>
             </select>
             <Button
               disabled={!enableSaveButton}
               size='sm'
               variant='solid'
-              colorScheme='primary'
-              className='mt-2 px-2 py-2 text-xs'
+              colorScheme='secondary'
+              className='px-2 py-2 text-xs'
               ariaLabel='Save file'
               onClick={() => saveActiveTabAsFile()}
             >
@@ -389,7 +391,10 @@ const EditorWithTabs = ({
       )}
       {currentTabContentForRef.current !== openFileTabs[activeTab] &&
       openFileTabs.length > 0 ? (
-        <div className='w-full bg-white' style={{ height: editorHeight }} />
+        <div
+          className='w-full bg-white dark:bg-irmin_black'
+          style={{ height: editorHeight }}
+        />
       ) : (
         <>
           {openFileTabs.length > 0 ? (
@@ -405,7 +410,7 @@ const EditorWithTabs = ({
           )}
         </>
       )}
-    </div>
+    </>
   );
 };
 

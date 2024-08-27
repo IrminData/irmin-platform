@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { Inter } from 'next/font/google';
+import { Big_Shoulders_Display, Inter } from 'next/font/google';
 
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 import 'react-datasheet-grid/dist/style.css';
@@ -11,7 +11,11 @@ import { LocaleProvider } from '@/context/LocaleContext';
 
 import './globals.scss';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const bigShouldersDisplay = Big_Shoulders_Display({
+  subsets: ['latin'],
+  variable: '--font-big-shoulders-display',
+});
 
 /**
  * SEO metadata for the root layout of the application
@@ -48,7 +52,9 @@ export default function RootLayout({
 
   return (
     <html suppressHydrationWarning>
-      <body className={`${inter.className} scrollbar-hide`}>
+      <body
+        className={`${inter.variable} ${bigShouldersDisplay.variable} scrollbar-hide`}
+      >
         <DarkModeProvider>
           <LocaleProvider>
             <IAMProvider locale={lang}>{children}</IAMProvider>

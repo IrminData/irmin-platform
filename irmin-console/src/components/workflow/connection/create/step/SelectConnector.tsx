@@ -39,15 +39,15 @@ export default function SelectConnector({
           <Button
             variant='solid'
             colorScheme='light'
-            size='md'
-            className='w-full justify-start'
+            size='sm'
+            className='w-full justify-start py-1'
             icon={
               <Image
                 src={connector.logo}
                 alt={connector.name}
-                className='h-8 w-8 object-contain'
-                width={32}
-                height={32}
+                className='mr-2 h-12 w-12 object-contain grayscale'
+                width={48}
+                height={48}
               />
             }
             key={`connector-choice-${index}`}
@@ -59,7 +59,7 @@ export default function SelectConnector({
         ))}
       </div>
       <div className='flex-grow'></div>
-      <div className='mt-auto flex items-center justify-between border-t px-6 py-4'>
+      <div className='mt-auto flex items-center justify-between border-t px-6 py-4 dark:border-gray-800'>
         <Button
           variant='solid'
           colorScheme='light'

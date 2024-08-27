@@ -1,7 +1,12 @@
+'use client';
+
 import React from 'react';
 
+import ReactSelect from 'react-select';
+
 import Input from '@/components/common/form/Input';
-import Select from '@/components/common/select/Select';
+
+import { useLocale } from '@/context/LocaleContext';
 
 import {
   DynamicField,
@@ -25,6 +30,14 @@ export default function DynamicFormField({
   values: DynamicFieldValues | null;
   updateValues: (key: string, value: FieldValue | FieldValue[]) => void;
 }) {
+  const { dict } = useLocale();
+
+  const options =
+    field.options?.map((option) => ({
+      value: option.key,
+      label: option.value,
+    })) ?? [];
+
   const renderField = () => {
     switch (field.type) {
       case 'integer':
@@ -76,21 +89,42 @@ export default function DynamicFormField({
           </label>
         );
       case 'select':
-        return (
-          <Select
-            label={field.label}
-            defaultValue={field.default as string}
-            required={field.required}
-            multiple={field.multiple}
-            loading={false}
+        return field.multiple ? (
+          <ReactSelect
+            placeholder={field.label}
+            defaultValue={options.find(
+              (option) => option.value === field.default
+            )}
+            isMulti={true}
+            isLoading={false}
             name={name}
-            onChange={(e) => updateValues(name, e.target.value)}
-            options={
-              field.options?.map((option) => ({
-                value: option.key,
-                label: option.value,
-              })) ?? []
-            }
+            onChange={(selectedOption) => {
+              const values = selectedOption.map((option) => option.value);
+              updateValues(name, values);
+            }}
+            options={options}
+            required={field.required}
+            noOptionsMessage={() => dict.misc.noOptionsMessage}
+            className='react-select-container'
+            classNamePrefix='react-select'
+          />
+        ) : (
+          <ReactSelect
+            placeholder={field.label}
+            defaultValue={options.find(
+              (option) => option.value === field.default
+            )}
+            isMulti={false}
+            isLoading={false}
+            name={name}
+            onChange={(selectedOption) => {
+              updateValues(name, selectedOption?.value ?? '');
+            }}
+            options={options}
+            required={field.required}
+            noOptionsMessage={() => dict.misc.noOptionsMessage}
+            className='react-select-container'
+            classNamePrefix='react-select'
           />
         );
       case 'radio':
@@ -191,9 +225,9 @@ export default function DynamicFormField({
   }
 
   return (
-    <div className='my-4 border-b pb-4'>
+    <div className='my-4 border-b pb-4 dark:border-gray-800'>
       {field.type !== 'checkbox' && (
-        <label className='mb-1 block'>
+        <label className='mb-1 block dark:text-gray-400'>
           {field.label}
           {field.required && <span className='ml-2 text-red-500'>*</span>}
         </label>

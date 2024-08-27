@@ -56,7 +56,12 @@ const CodeEditor = ({
   };
 
   return (
-    <div style={{ minHeight: editorHeight }} ref={editorRef} id='code-editor'>
+    <div
+      style={{ minHeight: editorHeight }}
+      ref={editorRef}
+      id='code-editor'
+      className='bg-gray-200 text-xs lg:text-sm dark:bg-irmin_black'
+    >
       <CodeMirrorEditor
         language={language}
         content={content}
@@ -65,7 +70,7 @@ const CodeEditor = ({
         updateTabContent={updateTabContent}
       />
       <div
-        className='resizer h-1 cursor-ns-resize bg-gray-200'
+        className='resizer h-1 cursor-ns-resize bg-gray-200 dark:bg-irmin_blue'
         onMouseDown={handleMouseDown}
       ></div>
     </div>

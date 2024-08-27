@@ -75,7 +75,7 @@ export default function WebsiteCareersSection({
           <h3 className='mb-4 text-3xl font-bold leading-tight tracking-tighter md:text-4xl'>
             {section.title}
           </h3>
-          <p className='mb-4 text-sm font-light text-irmin_black md:text-base'>
+          <p className='mb-4 text-sm font-normal text-irmin_black md:text-base'>
             {section.description}
           </p>
         </div>
@@ -161,7 +161,7 @@ export default function WebsiteCareersSection({
               <h3 className='mb-2 text-lg font-semibold md:text-xl'>
                 {position.role}
               </h3>
-              <p className='text-sm font-light text-irmin_black'>
+              <p className='text-sm font-normal text-irmin_black'>
                 {position.description}
               </p>
             </div>

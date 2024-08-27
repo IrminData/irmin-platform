@@ -144,6 +144,7 @@ export default function AddNewFileModal({
             <option value='sql'>SQL</option>
             <option value='js'>JavaScript</option>
             <option value='py'>Python</option>
+            <option value='php'>PHP</option>
           </select>
         </div>
       </div>

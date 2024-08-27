@@ -83,7 +83,7 @@ const GeneralSettings: React.FC = () => {
 
       <form onSubmit={handleSaveChanges} className='pb-8 text-sm md:text-base'>
         <div className='mb-4'>
-          <label className='block text-xs text-gray-700 md:text-sm'>
+          <label className='block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
             {dict.profile.name}
           </label>
           {profile && (
@@ -100,7 +100,7 @@ const GeneralSettings: React.FC = () => {
           )}
         </div>
         <div className='mb-4'>
-          <label className='block text-xs text-gray-700 md:text-sm'>
+          <label className='block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
             {dict.profile.email}
           </label>
           {profile && (
@@ -117,7 +117,7 @@ const GeneralSettings: React.FC = () => {
           )}
         </div>
         <div className='mb-4'>
-          <label className='block text-xs text-gray-700 md:text-sm'>
+          <label className='block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
             {dict.profile.company}
           </label>
           {profile && (
@@ -168,7 +168,7 @@ const ChangePasswordSettings: React.FC = () => {
       </h2>
       <form onSubmit={handleChangePassword} className='text-sm md:text-base'>
         <div className='mb-4'>
-          <label className='block text-xs text-gray-700 md:text-sm'>
+          <label className='block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
             {dict.profile.currentPassword}
           </label>
           <Input
@@ -180,7 +180,7 @@ const ChangePasswordSettings: React.FC = () => {
           />
         </div>
         <div className='mb-4'>
-          <label className='block text-xs text-gray-700 md:text-sm'>
+          <label className='block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
             {dict.profile.newPassword}
           </label>
           <Input
@@ -192,7 +192,7 @@ const ChangePasswordSettings: React.FC = () => {
           />
         </div>
         <div className='mb-4'>
-          <label className='block text-xs text-gray-700 md:text-sm'>
+          <label className='block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
             {dict.profile.confirmNewPassword}
           </label>
           <Input

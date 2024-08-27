@@ -42,13 +42,13 @@ export default async function WebsiteContentSection({
         <div
           className={`max-w-xl md:w-1/2 ${section.image_first ? 'order-2' : 'order-1'}`}
         >
-          <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-light leading-5 text-white shadow-sm'>
+          <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-normal leading-5 text-white shadow-sm'>
             {section.subtitle}
           </span>
           <h3 className='mb-6 text-4xl font-bold leading-tight tracking-tighter text-irmin_black md:text-5xl'>
             {section.title}
           </h3>
-          <p className='mb-12 text-sm font-light text-irmin_black md:text-base'>
+          <p className='mb-12 text-sm font-normal text-irmin_black md:text-base'>
             {section.description}
           </p>
           {section.features.map((feature, index) => (
@@ -63,7 +63,7 @@ export default async function WebsiteContentSection({
                 <h3 className='mb-2 text-lg font-normal leading-tight text-irmin_black md:text-xl'>
                   {feature.title}
                 </h3>
-                <p className='font-light text-irmin_black'>
+                <p className='font-normal text-irmin_black'>
                   {feature.description}
                 </p>
               </div>

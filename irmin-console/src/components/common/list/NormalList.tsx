@@ -31,14 +31,14 @@ const NormalList: React.FC<ListProps> = ({
   return (
     <div className='scrollbar-hide h-full w-full overflow-scroll p-4' id='list'>
       <div
-        className={`grid grid-cols-${totalColumns} box-border h-full w-full min-w-max items-center overflow-hidden rounded-lg bg-white text-left text-xs font-light shadow-sm transition-all md:text-sm dark:bg-irmin_black-600`}
+        className={`grid grid-cols-${totalColumns} box-border h-full w-full min-w-max items-center overflow-hidden rounded-lg bg-white text-left text-xs font-normal shadow-sm transition-all md:text-sm dark:bg-irmin_black-600`}
       >
         {!hideHeaders && (
           <div className='contents'>
             {headers.map((header, index) => (
               <div
                 key={`list-header-${index}`}
-                className={`col-span-1 border-b border-gray-200 bg-gray-100 p-2 py-4 dark:border-irmin_black dark:bg-irmin_black-800 ${index === headers.length - 1 ? 'text-right' : ''}`}
+                className={`col-span-1 border-b border-gray-200 bg-gray-100 p-2 py-4 dark:border-gray-800 dark:bg-irmin_black-800 ${index === headers.length - 1 ? 'text-right' : ''}`}
               >
                 <div className='font-medium'>{header}</div>
               </div>
@@ -91,7 +91,7 @@ const NormalList: React.FC<ListProps> = ({
                         ariaLabel={action.label}
                         href={action.href}
                         onClick={action.onClick}
-                        className={`w-max ${action.primary ? 'min-w-24 py-2' : ''}`}
+                        className={`w-max ${action.primary ? 'min-w-24 py-2' : 'dark:text-gray-400'}`}
                       >
                         {action.label}
                       </Button>
@@ -141,7 +141,7 @@ const NormalList: React.FC<ListProps> = ({
             return (
               <div key={`list-row-${rowIndex}`} className={`contents`}>
                 {rowRendered}
-                <div className='col-span-full border-b border-gray-200 dark:border-irmin_black'></div>
+                <div className='col-span-full border-b border-gray-200 dark:border-gray-800'></div>
               </div>
             );
           })

@@ -30,7 +30,7 @@ export default function WebsiteCTADarkSection({
             <h3 className='mb-2 text-2xl font-bold leading-tight tracking-tighter text-irmin_green md:text-5xl'>
               {section.title}
             </h3>
-            <p className='mb-6 text-sm font-light text-gray-100 md:text-base'>
+            <p className='mb-6 text-sm font-normal text-gray-100 md:text-base'>
               {section.description}
             </p>
             <div className='flex flex-wrap gap-4'>

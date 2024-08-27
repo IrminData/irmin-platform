@@ -71,7 +71,7 @@ export default function RepositoryLayoutWrapper({
             {dict.repository.repository}
           </span>
           <div className='flex flex-wrap items-center gap-2'>
-            <h1 className='text-lg font-normal text-irmin_black md:text-2xl'>
+            <h1 className='text-lg font-normal text-irmin_black md:text-2xl dark:text-white'>
               {currentWorkspace.slug}/{repoSlug}
             </h1>
             <StatusBadge accessStatus={'private'} statusLabel={'Private'} />
@@ -83,7 +83,7 @@ export default function RepositoryLayoutWrapper({
           size='sm'
           variant='icon'
           colorScheme='black'
-          className='aspect-square h-auto w-auto rounded-full bg-gray-100'
+          className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-900'
           href={`/${locale}/portal/${workspaceSlug}/repositories`}
           ariaLabel='Back to Repositories'
         >

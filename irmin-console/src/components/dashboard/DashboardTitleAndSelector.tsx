@@ -1,8 +1,8 @@
 'use client';
 
-import { IoAdd } from 'react-icons/io5';
+import ReactSelect from 'react-select';
 
-import Select from '@/components/common/select/Select';
+import { IoAdd } from 'react-icons/io5';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -44,9 +44,9 @@ function DashboardTitleAndSelector({
       className='flex items-center justify-between pb-8 pr-4 pt-6 md:pb-8 md:pt-8'
     >
       <div
-        className={`px-4 text-lg font-medium text-irmin_black text-opacity-80 md:text-3xl dark:text-white`}
+        className={`px-4 text-lg font-bold text-irmin_black text-opacity-80 md:text-3xl lg:text-5xl dark:text-white`}
       >
-        <h1>{title}</h1>
+        <h1 className='font-display'>{title}</h1>
       </div>
       <div className='ml-auto flex max-w-[50%] flex-row justify-end gap-4'>
         <button
@@ -58,14 +58,11 @@ function DashboardTitleAndSelector({
           </span>
         </button>
         <div id='dashboard-selector w-max min-w-28'>
-          <Select
-            label={dict.dashboard.dashboard}
-            onChange={(e) => {
-              processSelectionChange(e.target.value);
+          <ReactSelect
+            value={{
+              value: selected?.slug.toString() ?? '',
+              label: selected?.name ?? '',
             }}
-            loading={false}
-            currentValue={selected?.slug.toString() ?? ''}
-            defaultValue={''}
             options={[
               { value: 'create-new', label: dict.dashboard.createNewDashboard },
               ...(options.map((option) => ({
@@ -73,6 +70,16 @@ function DashboardTitleAndSelector({
                 label: option.name,
               })) ?? []),
             ]}
+            onChange={(e) => {
+              if (!e) return;
+              processSelectionChange(e.value);
+            }}
+            isLoading={false}
+            isClearable={false}
+            placeholder={dict.dashboard.dashboard}
+            noOptionsMessage={() => dict.misc.noOptionsMessage}
+            className='react-select-container'
+            classNamePrefix='react-select'
           />
         </div>
       </div>

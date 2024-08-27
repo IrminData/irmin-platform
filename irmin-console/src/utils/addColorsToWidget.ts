@@ -11,7 +11,14 @@ export function addColorsToWidget(widgetData: ChartOrTableWidgetData): {
     backgroundColor?: string | string[];
   }[];
 } {
-  const defaultColors = ['#462255', '#313B72', '#62A87C', '#7EE081', '#C3F3C0'];
+  const defaultColors = [
+    '#FF0099',
+    '#FF9900',
+    '#66CC00',
+    '#9900FF',
+    '#0099FF',
+    '#00CC66',
+  ];
 
   const newWidgetData = { ...widgetData };
   newWidgetData.datasets = widgetData.datasets.map((dataset) => ({

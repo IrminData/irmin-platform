@@ -98,41 +98,41 @@ export default function DefineSync({
   );
 
   return (
-    <div className='p-6'>
-      <div className='mb-8 flex'>
+    <div className='p-4 pb-6'>
+      <div className='flex flex-row items-center gap-4 border-b pb-4 dark:border-gray-800'>
         <Image
           src={connectionData?.connector?.logo ?? '/irmin-logo.svg'}
           alt={connectionData.connector?.name ?? 'Connector'}
-          className='mb-2 h-[40px]'
-          width={40}
-          height={40}
+          className='mr-2 h-12 w-12 object-contain grayscale'
+          width={48}
+          height={48}
         />
-        <span className='mt-1 text-xl text-irmin_teal'>
+        <span className='text-lg text-irmin_blue dark:text-white'>
           {connectionData.connector?.name ?? 'Connector'}
         </span>
       </div>
-      <div className='mb-6'>
-        <label className='mb-2 block font-light text-irmin_black' htmlFor=''>
+      <div className='my-4 border-b pb-4 dark:border-gray-800'>
+        <label className='mb-1 block dark:text-gray-400'>
           {dict.workflow.connection.create.syncIntervalLabel}
         </label>
         <Input
           variant='outline'
-          colorScheme='black'
+          colorScheme='gray'
           className='mt-2 w-full'
-          placeholder={dict.workflow.connection.create.syncIntervalPlaceholder}
           defaultValue={cronValue}
+          placeholder={dict.workflow.connection.create.syncIntervalPlaceholder}
           onChange={(e) => {
             setCronValue(e.target.value);
           }}
         />
       </div>
-      <div className='mb-6'>
-        <label className='mb-2 block font-light text-irmin_black' htmlFor=''>
+      <div className='my-4 border-b pb-4 dark:border-gray-800'>
+        <label className='mb-1 block dark:text-gray-400'>
           {dict.workflow.connection.create.workflowDescription}
         </label>
         <Input
           variant='outline'
-          colorScheme='black'
+          colorScheme='gray'
           className='mt-2 w-full'
           defaultValue={connectionData.description}
           onChange={(e) => {
@@ -140,6 +140,9 @@ export default function DefineSync({
               ...prev,
               description: e.target.value ?? '',
             }));
+          }}
+          longtext={{
+            rows: 4,
           }}
         />
       </div>

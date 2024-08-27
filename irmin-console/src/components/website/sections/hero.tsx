@@ -45,9 +45,9 @@ export default async function WebsiteHeroSection({
       : section.video;
   return (
     <WebsiteSectionWrapper id='website-hero-section'>
-      <div className='container mx-auto flex min-h-[60vh] max-w-7xl items-end justify-center px-4 pb-12 lg:pb-24'>
+      <div className='container mx-auto flex h-[60vh] min-h-[600px] max-w-7xl items-end justify-center px-4 pb-12 lg:pb-24'>
         <div className='w-full max-w-3xl text-center'>
-          <h1 className='mb-6 text-4xl font-bold leading-tight tracking-tighter md:text-6xl'>
+          <h1 className='font-display mb-6 text-4xl font-bold md:text-8xl'>
             {section.title_parts.map((titlePart, index) => (
               <span
                 key={`title-part-${index}`}
@@ -61,7 +61,7 @@ export default async function WebsiteHeroSection({
               </span>
             ))}
           </h1>
-          <p className='mx-auto mb-8 max-w-3xl text-sm font-light text-irmin_black md:text-base dark:text-gray-500'>
+          <p className='mx-auto mb-8 max-w-3xl text-sm font-normal text-irmin_black md:text-base dark:text-gray-200'>
             {section.description}
           </p>
           <div className='flex flex-wrap justify-center'>

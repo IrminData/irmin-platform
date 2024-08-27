@@ -60,7 +60,7 @@ export default function PortalNavigationProfile({
           )}
         </div>
         <div className='w-auto overflow-hidden p-1'>
-          <p className='text-sm font-normal text-irmin_black dark:text-irmin_green'>
+          <p className='text-sm font-normal text-irmin_black dark:text-gray-200'>
             {profile.name ?? ''}
           </p>
         </div>

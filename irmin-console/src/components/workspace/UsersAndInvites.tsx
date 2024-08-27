@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 
+import ReactSelect from 'react-select';
+
 import { IoExit, IoKey, IoMailOpenOutline } from 'react-icons/io5';
 
 import Button from '@/components/common/button/Button';
@@ -15,8 +17,6 @@ import { useWorkspace } from '@/context/workspace';
 
 import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
 import { WorkspaceUser } from '@/types/api/Workspace';
-
-import Select from '../common/select/Select';
 
 type WorkspaceUsersAndPermissionsUser = {
   inviteId?: number;
@@ -395,13 +395,24 @@ const UsersAndInvites: React.FC = () => {
                   {currentWorkspace.owner_id === user.id ? (
                     dict.usersPermissions.owner
                   ) : (
-                    <Select
-                      label={dict.usersPermissions.role}
-                      onChange={(e) => {
+                    <ReactSelect
+                      value={
+                        user.roles && user.roles.length > 0
+                          ? {
+                              value: user.roles[0].name,
+                              label: user.roles[0].label,
+                            }
+                          : {
+                              value: 'no-role',
+                              label: dict.usersPermissions.noRole,
+                            }
+                      }
+                      onChange={(val) => {
+                        if (!val || !val.value) return;
                         const desiredRole = irminRoles.find(
-                          (role) => role.name === e.target.value
+                          (role) => role.name === val.value
                         )!;
-                        if (!desiredRole || e.target.value === 'no-role') {
+                        if (!desiredRole || val.value === 'no-role') {
                           irminAlert('error', 'Invalid role');
                           return;
                         }
@@ -413,27 +424,15 @@ const UsersAndInvites: React.FC = () => {
                           handleChangeRole(user.id, desiredRole);
                         }
                       }}
-                      loading={loading}
-                      defaultValue={
-                        !user.roles || user.roles.length === 0
-                          ? 'no-role'
-                          : user.roles[0].name
-                      }
-                      currentValue={
-                        !user.roles || user.roles.length === 0
-                          ? 'no-role'
-                          : user.roles[0].name
-                      }
-                      options={[
-                        {
-                          value: 'no-role',
-                          label: dict.usersPermissions.noRole,
-                        },
-                        ...irminRoles.map((role) => ({
-                          value: role.name,
-                          label: role.label,
-                        })),
-                      ]}
+                      options={irminRoles.map((role) => ({
+                        value: role.name,
+                        label: role.label,
+                      }))}
+                      isLoading={loading}
+                      isSearchable={false}
+                      isClearable={false}
+                      className='react-select-container'
+                      classNamePrefix='react-select'
                     />
                   )}
                 </td>
@@ -511,77 +510,97 @@ const UsersAndInvites: React.FC = () => {
           title={dict.usersPermissions.inviteUser}
           onClose={() => setIsInviteModalOpen(false)}
         >
-          <div className='mb-4'>
-            <label className='block text-gray-700'>
-              {dict.usersPermissions.name}
-            </label>
-            <Input
-              variant='solid'
-              colorScheme='black'
-              className='mt-2 w-full'
-              type='text'
-              placeholder='John Doe'
-              defaultValue={inviteName}
-              onChange={(e) => setInviteName(e.target.value)}
-              disabled={loading}
-            />
+          <div className='pb-4'>
+            <div className='mb-4'>
+              <label className='block text-gray-700'>
+                {dict.usersPermissions.name}
+              </label>
+              <Input
+                variant='solid'
+                colorScheme='gray'
+                className='mt-2 w-full'
+                size='sm'
+                type='text'
+                placeholder='John Doe'
+                defaultValue={inviteName}
+                onChange={(e) => setInviteName(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+            <div className='mb-4'>
+              <label className='block text-gray-700'>
+                {dict.usersPermissions.email}
+              </label>
+              <Input
+                variant='solid'
+                colorScheme='gray'
+                className='mt-2 w-full'
+                size='sm'
+                type='email'
+                placeholder='johndoe@example.com'
+                defaultValue={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+            <div className='mb-4'>
+              <label className='block text-gray-700'>
+                {dict.usersPermissions.role}
+              </label>
+              <div className='mt-2 w-full'>
+                <ReactSelect
+                  value={
+                    inviteRole
+                      ? {
+                          value: inviteRole,
+                          label: irminRoles.find((a) => a.name === inviteRole)
+                            ?.label,
+                        }
+                      : {
+                          value: irminRoles[0].name,
+                          label: irminRoles[0].label,
+                        }
+                  }
+                  onChange={(val) => {
+                    if (!val || !val.value) return;
+                    setInviteRole(val.value);
+                  }}
+                  options={irminRoles.map((role) => ({
+                    value: role.name,
+                    label: role.label,
+                  }))}
+                  isLoading={loading}
+                  isSearchable={false}
+                  isClearable={false}
+                  className='react-select-container'
+                  classNamePrefix='react-select'
+                />
+              </div>
+            </div>
+            <div className='flex flex-row gap-2'>
+              <Button
+                size='sm'
+                variant='link'
+                colorScheme='primary'
+                onClick={() => setIsInviteModalOpen(false)}
+              >
+                {dict.usersPermissions.cancel}
+              </Button>
+              <Button
+                size='sm'
+                className='ml-auto min-w-32'
+                variant='solid'
+                colorScheme='primary'
+                onClick={handleInvite}
+                disabled={loading}
+              >
+                {dict.usersPermissions.invite}
+              </Button>
+            </div>
+            {inviteError && inviteError.length > 0 && (
+              <p className='mt-4 text-red-800'>{inviteError}</p>
+            )}
           </div>
-          <div className='mb-4'>
-            <label className='block text-gray-700'>
-              {dict.usersPermissions.email}
-            </label>
-            <Input
-              variant='solid'
-              colorScheme='black'
-              className='mt-2 w-full'
-              type='email'
-              placeholder='johndoe@example.com'
-              defaultValue={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-          <div className='mb-4'>
-            <label className='block text-gray-700'>
-              {dict.usersPermissions.role}
-            </label>
-            <select
-              className='mt-2 w-full rounded-lg border p-2'
-              value={inviteRole ?? irminRoles[0]?.name ?? null}
-              onChange={(e) => setInviteRole(e.target.value as IrminRoleNames)}
-              disabled={loading}
-            >
-              {irminRoles.map((role) => (
-                <option key={role.name} value={role.name}>
-                  {role.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className='flex justify-end gap-2'>
-            <Button
-              size='md'
-              variant='outline'
-              colorScheme='gray'
-              onClick={() => setIsInviteModalOpen(false)}
-              className='w-1/2'
-            >
-              {dict.usersPermissions.cancel}
-            </Button>
-            <Button
-              size='md'
-              variant='solid'
-              colorScheme='primary'
-              onClick={handleInvite}
-              className='w-1/2'
-              disabled={loading}
-            >
-              {dict.usersPermissions.invite}
-            </Button>
-          </div>
-          {inviteError && inviteError.length > 0 && (
-            <p className='mt-4 text-red-800'>{inviteError}</p>
-          )}
         </Modal>
       )}
     </div>

@@ -164,15 +164,15 @@ export default function DefineSettings({
 
   return (
     <div className='p-4 pb-6'>
-      <div className='flex flex-row items-center gap-4 border-b pb-4'>
+      <div className='flex flex-row items-center gap-4 border-b pb-4 dark:border-gray-800'>
         <Image
           src={connectionData?.connector?.logo ?? '/irmin-logo.svg'}
           alt={connectionData.connector?.name ?? 'Connector'}
-          className='h-12 w-12 object-contain'
+          className='mr-2 h-12 w-12 object-contain grayscale'
           width={48}
           height={48}
         />
-        <span className='text-lg text-irmin_blue dark:text-irmin_light_green'>
+        <span className='text-lg text-irmin_blue dark:text-white'>
           {connectionData.connector?.name ?? 'Connector'}
         </span>
       </div>

@@ -38,13 +38,13 @@ export default async function WebsiteFeaturesSection({
     <WebsiteSectionWrapper id='website-features-section'>
       <div className='container mx-auto max-w-7xl px-4'>
         <div className='mb-12 md:max-w-4xl'>
-          <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-light uppercase leading-5 text-white shadow-sm'>
+          <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-normal uppercase leading-5 text-white shadow-sm'>
             {section.subtitle}
           </span>
-          <h1 className='mb-4 text-3xl font-bold leading-tight tracking-tighter md:text-4xl'>
+          <h1 className='font-display mb-4 text-3xl font-bold leading-tight tracking-tighter md:text-4xl'>
             {section.title}
           </h1>
-          <p className='text-sm font-light text-irmin_black md:text-base'>
+          <p className='text-sm font-normal text-irmin_black md:text-base'>
             {section.description}
           </p>
         </div>
@@ -62,7 +62,7 @@ export default async function WebsiteFeaturesSection({
                   <h3 className='mb-2 text-lg font-normal leading-tight text-irmin_black md:text-xl'>
                     {feature.title}
                   </h3>
-                  <p className='font-light text-irmin_black'>
+                  <p className='font-normal text-irmin_black'>
                     {feature.description}
                   </p>
                 </div>

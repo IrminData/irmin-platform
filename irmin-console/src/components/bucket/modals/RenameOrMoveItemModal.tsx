@@ -172,6 +172,7 @@ export default function RenameOrMoveItemModal({
               <option value='sql'>SQL</option>
               <option value='js'>JavaScript</option>
               <option value='py'>Python</option>
+              <option value='php'>PHP</option>
             </select>
           </div>
           <p className='mt-1 pl-1 text-xs text-gray-400'>

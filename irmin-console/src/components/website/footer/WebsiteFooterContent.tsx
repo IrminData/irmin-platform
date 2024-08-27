@@ -38,7 +38,7 @@ const FooterLinkSection = ({
       {section.links.map((link, idx) => (
         <li className='mb-2' key={`${linkKey}-footer-link-${idx}`}>
           <Link
-            className='inline-block text-sm font-light text-white text-opacity-40 transition-colors duration-200 hover:text-irmin_green'
+            className='inline-block text-sm font-normal text-white text-opacity-60 transition-colors duration-200 hover:text-irmin_green'
             href={link.href}
           >
             {link.label}
@@ -75,11 +75,11 @@ export default function WebsiteFooterContent({
                   height={100}
                 />
               </div>
-              <p className='mb-8 w-full max-w-64 text-left text-xs font-light text-white text-opacity-40'>
+              <p className='mb-8 w-full max-w-64 text-left text-xs text-white text-opacity-60'>
                 {dict.website.footer.description}
               </p>
-              <div className='w-full max-w-40'>
-                <LanguageSwitcher variant='on-dark-bg' />
+              <div className='dark w-full max-w-40'>
+                <LanguageSwitcher />
               </div>
             </div>
           </div>
@@ -102,7 +102,7 @@ export default function WebsiteFooterContent({
                 <h3 className='mb-3 text-left text-lg font-medium text-white text-opacity-80'>
                   {dict.website.footer.newsletter.title}
                 </h3>
-                <p className='mb-5 text-left text-xs text-white text-opacity-40'>
+                <p className='mb-5 text-left text-xs text-white text-opacity-60'>
                   {dict.website.footer.newsletter.subtitle}
                 </p>
               </div>
@@ -131,19 +131,19 @@ export default function WebsiteFooterContent({
         <div className='mt-8 flex w-full flex-col items-center gap-4 py-2 md:pr-2 lg:items-end'>
           <div className='flex flex-row items-center gap-4'>
             <Link
-              className='inline-block text-xs font-light text-white text-opacity-40 transition-all duration-200 hover:underline'
+              className='inline-block text-xs font-normal text-white text-opacity-60 transition-all duration-200 hover:underline'
               href='/legal/privacy-policy'
             >
               {dict.website.footer.privacy}
             </Link>
             <Link
-              className='inline-block text-xs font-light text-white text-opacity-40 transition-all duration-200 hover:underline'
+              className='inline-block text-xs font-normal text-white text-opacity-60 transition-all duration-200 hover:underline'
               href='/legal/terms-of-use'
             >
               {dict.website.footer.terms}
             </Link>
           </div>
-          <p className='text-xs font-light text-white text-opacity-40'>
+          <p className='text-xs font-normal text-white text-opacity-60'>
             &copy; {new Date().getFullYear()} Irmin.{' '}
             {dict.website.footer.allRightsReserved}
           </p>

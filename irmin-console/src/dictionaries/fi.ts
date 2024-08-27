@@ -75,6 +75,7 @@ const fi = {
     tryAgain: 'Yritä uudelleen',
     success: 'Onnistui',
     info: 'Info',
+    noOptionsMessage: 'Ei vaihtoehtoja',
   },
   auth: {
     signIn: {
@@ -320,6 +321,7 @@ const fi = {
     writeYourSQL: 'Kirjoita SQL-kyselysi tähän...',
     writeYourJS: 'Kirjoita JavaScript-koodisi tähän...',
     writeYourPython: 'Kirjoita Python-koodisi tähän...',
+    writeYourPHP: 'Kirjoita PHP-koodisi tähän...',
     createNewScript: 'Luo uusi skripti',
     startExploringData: 'Aloita datasi tutkiminen hyppäämällä koodieditoriin',
     hazAITitle: 'Tapaa Haz, Data-asiantuntijasi!',

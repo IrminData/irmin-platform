@@ -33,7 +33,7 @@ const TableSelector = ({
           size='sm'
           colorScheme='gray'
           variant={selectedTable === table ? 'outline' : 'link'}
-          className='h-auto min-h-6 w-full justify-start rounded px-0 py-0 pl-2 text-xs font-light shadow-none lg:min-h-6 lg:px-2 lg:text-xs'
+          className='h-auto min-h-6 w-full justify-start rounded px-0 py-0 pl-2 text-xs font-normal shadow-none lg:min-h-6 lg:px-2 lg:text-xs dark:text-gray-200'
           key={`${repository.slug}-data-table-${idx}`}
           aria-label={`Select table ${table}`}
           onClick={() =>
