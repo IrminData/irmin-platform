@@ -14,6 +14,8 @@ import TableSelector from '@/components/repository/viewer/TableSelector';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
+import { placeholderData } from '@/types/examples/datatableData';
+
 import { RepositoryRouteParams } from './layout';
 
 /**
@@ -91,6 +93,14 @@ export default function RepositoryPage({
         <div className='flex max-w-full flex-col overflow-x-auto'>
           <QueryResults
             title={`${currentWorkspace.slug} / ${repository.slug} / ${selectedTable}`}
+            data={placeholderData}
+            metadata={{ rowsReturned: placeholderData.length, timeTaken: 0.1 }}
+            onSave={() => {
+              // TODO: Implement save functionality
+            }}
+            onRun={() => {
+              // TODO: Implement run functionality
+            }}
           />
         </div>
       )}

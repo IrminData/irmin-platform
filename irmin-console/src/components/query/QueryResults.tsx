@@ -17,7 +17,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { downloadCSV } from '@/utils/csv';
 
 import { ActionWorkflow } from '@/types/api/Workflow';
-import { placeholderData } from '@/types/examples/datatableData';
+import { DatatableRow } from '@/types/internal/Datatable';
 
 /**
  * Query Results component
@@ -26,30 +26,41 @@ import { placeholderData } from '@/types/examples/datatableData';
  */
 const QueryResults = ({
   title,
-  actionWorkflow,
+  data,
+  metadata,
+  onSave,
+  onRun,
+  workflow,
 }: {
   title: string;
-  actionWorkflow?: ActionWorkflow;
+  data: DatatableRow[];
+  metadata?: {
+    rowsReturned: number;
+    timeTaken: number;
+  };
+  onSave?: () => void;
+  onRun?: () => void;
+  workflow?: ActionWorkflow;
 }) => {
   const { dict } = useLocale();
 
   const [activeTab, setActiveTab] = useState('data');
 
   const [currentDocumentation, setCurrentDocumentation] = useState(
-    actionWorkflow?.documentation ?? ''
+    workflow?.documentation ?? ''
   );
   const [documentationTab, setDocumentationTab] = useState<'mdx' | 'plain'>(
     'mdx'
   );
 
   const [filterText, setFilterText] = useState('');
-  const [filteredItems, setFilteredItems] = useState(placeholderData);
+  const [filteredItems, setFilteredItems] = useState(data);
 
   // Update the filtered items when the filter text changes
   useEffect(() => {
     const timer = setTimeout(() => {
       if (filterText && filterText.length > 0) {
-        const newData = placeholderData.filter((item) => {
+        const newData = data.filter((item) => {
           return Object.keys(item).some((key) => {
             const value =
               key in item ? item[key as keyof typeof item] : undefined;
@@ -61,14 +72,14 @@ const QueryResults = ({
         });
         setFilteredItems(newData);
       } else {
-        setFilteredItems(placeholderData);
+        setFilteredItems(data);
       }
     }, 300);
 
     return () => {
       clearTimeout(timer);
     };
-  }, [filterText]);
+  }, [filterText, data]);
 
   return (
     <div
@@ -92,7 +103,7 @@ const QueryResults = ({
             {dict.query.results}
           </Button>
         </div>
-        {actionWorkflow && (
+        {workflow && (
           <div
             className={`border-irmin_green ${activeTab === 'documentation' ? 'border-b-2' : ''}`}
           >
@@ -134,24 +145,28 @@ const QueryResults = ({
                 : dict.documentation.switchToMarkdownEditor}
             </Button>
           )}
-          <Button
-            icon={<AiOutlineSave />}
-            colorScheme='light'
-            variant='solid'
-            size='sm'
-            className='text-xs'
-          >
-            {dict.query.save}
-          </Button>
-          <Button
-            icon={<MdPlayArrow />}
-            colorScheme='primary'
-            variant='solid'
-            size='sm'
-            className='text-xs'
-          >
-            {dict.query.run}
-          </Button>
+          {onSave && (
+            <Button
+              icon={<AiOutlineSave />}
+              colorScheme='light'
+              variant='solid'
+              size='sm'
+              className='text-xs'
+            >
+              {dict.query.save}
+            </Button>
+          )}
+          {onRun && (
+            <Button
+              icon={<MdPlayArrow />}
+              colorScheme='primary'
+              variant='solid'
+              size='sm'
+              className='text-xs'
+            >
+              {dict.query.run}
+            </Button>
+          )}
         </div>
       </div>
       {activeTab === 'data' && (
@@ -162,7 +177,10 @@ const QueryResults = ({
               {title}
             </p>
             <p className='inline text-[8px] text-irmin_blue md:ml-auto md:pl-2 lg:text-xs dark:text-irmin_green'>
-              {`${placeholderData.length} ${dict.query.rowsReturnedIn} 1.5s`}
+              {metadata &&
+                `
+                ${metadata.rowsReturned} ${dict.query.rowsReturnedIn} ${metadata.timeTaken}s
+              `}
             </p>
             <div className='flex-grow'></div>
             <div className='ml-auto flex flex-row items-center gap-2'>
@@ -172,7 +190,7 @@ const QueryResults = ({
                 variant='link'
                 size='sm'
                 className='hidden lg:inline-flex dark:text-white'
-                onClick={() => downloadCSV(placeholderData, title)}
+                onClick={() => downloadCSV(data, title)}
               >
                 {dict.query.exportTable}
               </Button>
