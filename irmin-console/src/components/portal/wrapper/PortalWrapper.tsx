@@ -130,7 +130,7 @@ export default function PortalWrapper({
               {!workspaceSlug && (
                 <div id='portal-sidebar-links-no-workspace'>
                   <p
-                    className={`mb-2 px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 ${
+                    className={`mb-2 px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 dark:text-gray-600 ${
                       foldMenu ? 'hidden opacity-0' : 'opacity-100'
                     }`}
                   >
@@ -153,7 +153,7 @@ export default function PortalWrapper({
               {workspaceSlug && (
                 <div id='portal-sidebar-links-workspace'>
                   <p
-                    className={`mb-2 px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 ${
+                    className={`mb-2 px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 dark:text-gray-600 ${
                       foldMenu ? 'hidden opacity-0' : 'opacity-100'
                     }`}
                   >
@@ -175,7 +175,7 @@ export default function PortalWrapper({
               {/* Settings links */}
               <div id='portal-sidebar-links-settings'>
                 <p
-                  className={`mb-2 px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 ${
+                  className={`mb-2 px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 dark:text-gray-600 ${
                     foldMenu ? 'hidden opacity-0' : 'opacity-100'
                   }`}
                 >
@@ -208,7 +208,7 @@ export default function PortalWrapper({
                 id='portal-sidebar-useful-links'
               >
                 <p
-                  className={`px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 ${
+                  className={`px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 dark:text-gray-600 ${
                     foldMenu ? 'hidden opacity-0' : 'opacity-100'
                   }`}
                 >
@@ -218,7 +218,7 @@ export default function PortalWrapper({
                   {links.useful.map((link, index) => (
                     <Link
                       key={`Portal-nav-useful-${index}`}
-                      className='mb-2 text-left text-gray-500 transition-colors hover:text-gray-700'
+                      className='mb-2 text-left text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-100'
                       href={link.href ?? ''}
                       onClick={() => setIsMenuOpen(false)}
                       aria-label={link.title}
