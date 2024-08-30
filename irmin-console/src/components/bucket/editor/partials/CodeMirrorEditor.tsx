@@ -8,19 +8,13 @@ import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror from '@uiw/react-codemirror';
 import { useTheme } from 'next-themes';
 
+import { useLocale } from '@/context/LocaleContext';
+
 interface CodeMirrorEditorProps {
   language: string;
   content: string;
   editorHeight: string;
-  dict: {
-    editor: {
-      writeYourPython: string;
-      writeYourJS: string;
-      writeYourSQL: string;
-      writeYourPHP: string;
-    };
-  };
-  updateTabContent: (value: string) => void;
+  updateEditorContent: (value: string) => void;
   [key: string]: unknown; // For other props
 }
 
@@ -33,10 +27,10 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   language,
   content,
   editorHeight,
-  dict,
-  updateTabContent,
+  updateEditorContent,
   ...props
 }) => {
+  const { dict } = useLocale();
   const { theme } = useTheme();
 
   const getExtensions = () => {
@@ -79,7 +73,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       extensions={getExtensions()}
       placeholder={getPlaceholder()}
       theme={editorTheme}
-      onChange={(value) => updateTabContent(value)}
+      onChange={(value) => updateEditorContent(value)}
       {...props}
     />
   );

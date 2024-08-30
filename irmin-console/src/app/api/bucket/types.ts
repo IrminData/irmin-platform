@@ -1,7 +1,4 @@
-import { transformBucketToFileNavItem } from '@/utils/bucket';
-
 import { Bucket } from '@/types/api/Bucket';
-import { exampleBucket } from '@/types/examples/core';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
@@ -38,8 +35,12 @@ export interface BucketProxyResponse {
  */
 export const emptyBucketProxyResponse: BucketProxyResponse = {
   data: {
-    bucket: exampleBucket,
-    fileNavItems: transformBucketToFileNavItem(exampleBucket),
+    bucket: {
+      slug: '',
+      files: [],
+      folders: [],
+    },
+    fileNavItems: [],
   },
   metadata: {
     errors: [],

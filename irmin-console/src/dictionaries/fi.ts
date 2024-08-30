@@ -190,7 +190,7 @@ const fi = {
   },
   repository: {
     repository: 'Tietovarasto',
-    dataTables: 'Tietotaulut',
+    dataTables: 'Taulukot',
     noDataTables: 'Ei tietotauluja tässä tietovarastossa',
     rowsReturnedIn: 'riviä palautettu ajassa',
     sqlQuery: 'SQL Kysely',

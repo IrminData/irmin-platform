@@ -6,6 +6,8 @@ import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 
 import RepositoryTableReferenceList from '@/components/repository/RepositoryTableReferenceList';
 
+import { DataProvider } from '@/context/DataContext';
+
 /**
  * Component to wrap the query pages in.
  * Provides a sidebar with file navigator and other tools.
@@ -50,7 +52,7 @@ export default function EditorLayoutWrapper({
       </div>
       <div className='ml-10 flex-1 flex-shrink overflow-x-hidden lg:ml-0'>
         <div className='flex h-full w-full flex-col' id='query-page-content'>
-          {children}
+          <DataProvider>{children}</DataProvider>
         </div>
       </div>
     </div>

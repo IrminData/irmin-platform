@@ -1,14 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-
 import EditorWithTabs from '@/components/bucket/editor/partials/EditorWithTabs';
 import QueryResults from '@/components/query/QueryResults';
 
 import { useBucket } from '@/context/BucketContext';
+import { useData } from '@/context/DataContext';
+import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
-
-import { placeholderData } from '@/types/examples/datatableData';
 
 /**
  * Editor Section, provides UI for the Editor Page.
@@ -17,24 +15,29 @@ import { placeholderData } from '@/types/examples/datatableData';
 export default function EditorSection() {
   const { dict } = useLocale();
   const { openFileTabs } = useBucket();
-  const [editorHeight, setEditorHeight] = useState('400px');
+  const { currentEditor } = useEditor();
+  const { fetchActionSingleResults, dataResults } = useData();
 
   return (
     <>
-      <EditorWithTabs
-        editorHeight={editorHeight}
-        setEditorHeight={setEditorHeight}
-      />
+      <EditorWithTabs />
       {openFileTabs.length > 0 && (
         <QueryResults
           title={dict.editor.actionResults}
-          data={placeholderData}
-          metadata={{ rowsReturned: placeholderData.length, timeTaken: 0.1 }}
-          onSave={() => {
+          data={dataResults?.result ?? []}
+          metadata={{
+            rowsReturned: dataResults?.metadata?.rowsReturned,
+            timeTaken: dataResults?.metadata?.timeTaken,
+          }}
+          onSave={async () => {
             // TODO: Implement save functionality
           }}
-          onRun={() => {
-            // TODO: Implement run functionality
+          onRun={async () => {
+            if (!currentEditor || !currentEditor.contents) return;
+            await fetchActionSingleResults({
+              type: currentEditor.language ?? 'sql',
+              content: currentEditor.contents ?? '',
+            });
           }}
         />
       )}

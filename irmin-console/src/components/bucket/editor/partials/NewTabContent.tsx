@@ -13,7 +13,7 @@ const NewTabContent = ({ addNewTab }: { addNewTab: () => void }) => {
       <button
         onClick={addNewTab}
         aria-label={'Create new editor tab'}
-        className='flex w-96 max-w-full cursor-pointer flex-col items-center justify-center rounded-lg border bg-white p-4 text-center text-irmin_blue shadow transition-all hover:opacity-40 md:p-6 md:py-12 dark:bg-gray-800 dark:text-white dark:shadow-gray-800'
+        className='flex w-96 max-w-full cursor-pointer flex-col items-center justify-center rounded-lg border bg-white p-4 text-center text-irmin_blue shadow transition-all hover:opacity-40 md:p-6 md:py-12 dark:bg-gray-800 dark:text-white dark:shadow-gray-700'
       >
         <FiDatabase className='text-2xl lg:text-4xl' />
         <h2 className='mt-4 text-base font-medium lg:mt-8 lg:text-lg'>
@@ -27,7 +27,7 @@ const NewTabContent = ({ addNewTab }: { addNewTab: () => void }) => {
       <button
         onClick={() => null}
         aria-label='Take me to HazAI'
-        className='flex w-96 max-w-full cursor-pointer flex-col items-center justify-center rounded-lg border bg-white p-4 text-center text-irmin_blue shadow transition-all hover:opacity-40 md:p-6 md:py-12 dark:bg-gray-800 dark:text-white dark:shadow-gray-800'
+        className='flex w-96 max-w-full cursor-pointer flex-col items-center justify-center rounded-lg border bg-white p-4 text-center text-irmin_blue shadow transition-all hover:opacity-40 md:p-6 md:py-12 dark:bg-gray-800 dark:text-white dark:shadow-gray-700'
       >
         <FiUser className='text-2xl lg:text-4xl' />
         <h2 className='mt-4 text-base font-medium lg:mt-8 lg:text-lg'>

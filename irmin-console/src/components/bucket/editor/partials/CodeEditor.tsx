@@ -1,7 +1,5 @@
 import React, { useCallback, useRef } from 'react';
 
-import { useLocale } from '@/context/LocaleContext';
-
 import { IrminFileType } from '@/types/api/Bucket';
 
 import CodeMirrorEditor from './CodeMirrorEditor';
@@ -33,7 +31,6 @@ const CodeEditor = ({
   editorHeight: string;
   setEditorHeight: (_height: string) => void;
 }) => {
-  const { dict } = useLocale();
   const editorRef = useRef<HTMLDivElement>(null);
 
   const handleMouseMove = useCallback(
@@ -66,8 +63,7 @@ const CodeEditor = ({
         language={language}
         content={content}
         editorHeight={editorHeight}
-        dict={dict}
-        updateTabContent={updateTabContent}
+        updateEditorContent={updateTabContent}
       />
       <div
         className='resizer h-1 cursor-ns-resize bg-gray-200 dark:bg-irmin_blue'

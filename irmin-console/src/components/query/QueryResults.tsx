@@ -9,6 +9,7 @@ import { MdPlayArrow } from 'react-icons/md';
 import { TbFileText, TbTable } from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
+import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 import MDXEditor from '@/components/common/markdown-editor/MDXEditor';
 import AdvancedDatatable from '@/components/query/datatables/AdvancedDatatable';
 
@@ -33,13 +34,13 @@ const QueryResults = ({
   workflow,
 }: {
   title: string;
-  data: DatatableRow[];
-  metadata?: {
-    rowsReturned: number;
-    timeTaken: number;
+  data: DatatableRow[] | null;
+  metadata: {
+    rowsReturned?: number;
+    timeTaken?: number;
   };
-  onSave?: () => void;
-  onRun?: () => void;
+  onSave?: () => Promise<void>;
+  onRun?: () => Promise<void>;
   workflow?: ActionWorkflow;
 }) => {
   const { dict } = useLocale();
@@ -56,20 +57,27 @@ const QueryResults = ({
   const [filterText, setFilterText] = useState('');
   const [filteredItems, setFilteredItems] = useState(data);
 
+  const [processingSave, setProcessingSave] = useState(false);
+  const [processingRun, setProcessingRun] = useState(false);
+
   // Update the filtered items when the filter text changes
   useEffect(() => {
     const timer = setTimeout(() => {
       if (filterText && filterText.length > 0) {
-        const newData = data.filter((item) => {
-          return Object.keys(item).some((key) => {
-            const value =
-              key in item ? item[key as keyof typeof item] : undefined;
-            return (
-              value &&
-              value.toString().toLowerCase().includes(filterText.toLowerCase())
-            );
-          });
-        });
+        const newData =
+          data?.filter((item) => {
+            return Object.keys(item).some((key) => {
+              const value =
+                key in item ? item[key as keyof typeof item] : undefined;
+              return (
+                value &&
+                value
+                  .toString()
+                  .toLowerCase()
+                  .includes(filterText.toLowerCase())
+              );
+            });
+          }) ?? [];
         setFilteredItems(newData);
       } else {
         setFilteredItems(data);
@@ -152,6 +160,13 @@ const QueryResults = ({
               variant='solid'
               size='sm'
               className='text-xs'
+              loading={processingSave}
+              onClick={() => {
+                setProcessingSave(true);
+                onSave().finally(() => {
+                  setProcessingSave(false);
+                });
+              }}
             >
               {dict.query.save}
             </Button>
@@ -163,6 +178,13 @@ const QueryResults = ({
               variant='solid'
               size='sm'
               className='text-xs'
+              loading={processingRun}
+              onClick={() => {
+                setProcessingRun(true);
+                onRun().finally(() => {
+                  setProcessingRun(false);
+                });
+              }}
             >
               {dict.query.run}
             </Button>
@@ -177,23 +199,26 @@ const QueryResults = ({
               {title}
             </p>
             <p className='inline text-[8px] text-irmin_blue md:ml-auto md:pl-2 lg:text-xs dark:text-irmin_green'>
-              {metadata &&
-                `
+              {metadata && metadata.rowsReturned && metadata.timeTaken
+                ? `
                 ${metadata.rowsReturned} ${dict.query.rowsReturnedIn} ${metadata.timeTaken}s
-              `}
+              `
+                : ``}
             </p>
             <div className='flex-grow'></div>
             <div className='ml-auto flex flex-row items-center gap-2'>
-              <Button
-                icon={<AiOutlineDownload />}
-                colorScheme='secondary'
-                variant='link'
-                size='sm'
-                className='hidden lg:inline-flex dark:text-white'
-                onClick={() => downloadCSV(data, title)}
-              >
-                {dict.query.exportTable}
-              </Button>
+              {data && (
+                <Button
+                  icon={<AiOutlineDownload />}
+                  colorScheme='secondary'
+                  variant='link'
+                  size='sm'
+                  className='hidden lg:inline-flex dark:text-white'
+                  onClick={() => downloadCSV(data ?? [], title)}
+                >
+                  {dict.query.exportTable}
+                </Button>
+              )}
               <input
                 type='text'
                 className='h-8 w-48 rounded-md border border-solid border-gray-400 px-2 py-1 text-xs focus:outline-none dark:border-gray-800'
@@ -204,8 +229,9 @@ const QueryResults = ({
             </div>
           </div>
           {/* Table */}
-          <div className='flex h-0 flex-1 overflow-hidden'>
-            {!filteredItems || filteredItems.length === 0 ? (
+          <div className='flex h-0 flex-1 flex-col overflow-hidden'>
+            {processingRun ? <LoadingSkeleton /> : <></>}
+            {!data || !filteredItems || filteredItems.length === 0 ? (
               <div className='w-full px-4 py-12 text-center text-gray-400'>
                 {dict.query.noResults}
               </div>

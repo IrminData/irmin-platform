@@ -34,10 +34,10 @@ const Modal = ({
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 z-50 flex animate-fadeIn items-center justify-center bg-gray-200 bg-opacity-30 backdrop-blur-[2px]'>
+    <div className='fixed inset-0 z-50 flex animate-fadeIn items-center justify-center bg-gray-200 bg-opacity-30 backdrop-blur-[2px] dark:bg-irmin_black dark:bg-opacity-30'>
       <div className='w-[500px] max-w-[90vw] pt-[40px]'>
-        <div className='rounded-lg border-2 border-irmin_green bg-gray-50 shadow-lg'>
-          <div className='align-center flex flex-row justify-between border-b px-4 pb-2 pt-4'>
+        <div className='rounded-lg border border-irmin_green bg-gray-50 shadow-lg dark:bg-irmin_black'>
+          <div className='align-center flex flex-row justify-between border-b px-4 pb-4 pt-4 dark:border-b-gray-800'>
             <h2 className='text-lg font-normal'>{title}</h2>
             <button
               className='ml-4 transition-all hover:opacity-50'

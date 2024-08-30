@@ -44,10 +44,14 @@ const Alert = ({
       className='fixed bottom-[20px] z-50 flex w-screen animate-slideInUp justify-center p-4 align-middle'
     >
       <div
-        className={`flex w-[400px] max-w-[90vw] flex-row items-start justify-between rounded-lg border-2 bg-gray-50 p-4 shadow-md ${
-          type === 'success' ? 'border-green-500 text-green-700' : ''
-        } ${type === 'error' ? 'border-red-500 text-red-700' : ''} ${
-          type === 'info' ? 'border-blue-500 text-blue-700' : ''
+        className={`flex w-[400px] max-w-[90vw] flex-row items-start justify-between rounded-lg border bg-gray-50 p-4 shadow-md dark:bg-irmin_black ${
+          type === 'success'
+            ? 'border-green-500 text-irmin_green-600 dark:text-irmin_green-400'
+            : ''
+        } ${type === 'error' ? 'border-red-500 text-red-700 dark:text-red-400' : ''} ${
+          type === 'info'
+            ? 'border-blue-500 text-irmin_blue dark:text-gray-200'
+            : ''
         }`}
       >
         <div>
@@ -61,10 +65,10 @@ const Alert = ({
               {type === 'info' && infoTitle}
             </h2>
           </div>
-          <p className='pb-4 text-sm font-normal'>{message}</p>
+          <p className='pb-4 text-base font-normal'>{message}</p>
         </div>
         <button
-          className='ml-4 transition-all hover:opacity-50'
+          className='ml-4 text-irmin_black transition-all hover:opacity-50 dark:text-gray-200'
           onClick={onClose}
           aria-label='Close alert popup'
         >

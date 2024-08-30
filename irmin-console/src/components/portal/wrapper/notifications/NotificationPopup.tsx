@@ -156,7 +156,7 @@ const NotificationPopup = ({
         <div className='absolute -top-[16px] left-auto right-[16px] z-50 -translate-x-1/2 transform text-white md:left-[22px] md:right-auto dark:text-irmin_black-800'>
           <IoTriangle size={20} />
         </div>
-        <div className='sticky top-0 z-10 bg-white py-2 shadow-sm dark:bg-irmin_black-800 dark:shadow-gray-800'>
+        <div className='sticky top-0 z-10 bg-white py-2 shadow-sm dark:bg-irmin_black-800 dark:shadow-gray-700'>
           <div
             className={`px-3 ${isScrolled ? 'pt-2' : 'pt-0'} transition-all`}
           >

@@ -5,9 +5,8 @@ import { useState } from 'react';
 import CodeEditor from '@/components/bucket/editor/partials/CodeEditor';
 import QueryResults from '@/components/query/QueryResults';
 
+import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
-
-import { placeholderData } from '@/types/examples/datatableData';
 
 /**
  * Query Section, provides UI for the Query Page.
@@ -17,6 +16,8 @@ export default function QuerySection() {
   const { dict } = useLocale();
   const [editorHeight, setEditorHeight] = useState('200px');
   const [query, setQuery] = useState('');
+  const { fetchActionSingleResults, dataResults } = useData();
+
   return (
     <>
       <CodeEditor
@@ -28,13 +29,20 @@ export default function QuerySection() {
       />
       <QueryResults
         title={dict.query.queryResults}
-        data={placeholderData}
-        metadata={{ rowsReturned: placeholderData.length, timeTaken: 0.1 }}
-        onSave={() => {
+        data={dataResults?.result ?? []}
+        metadata={{
+          rowsReturned: dataResults?.metadata?.rowsReturned,
+          timeTaken: dataResults?.metadata?.timeTaken,
+        }}
+        onSave={async () => {
           // TODO: Implement save functionality
         }}
-        onRun={() => {
-          // TODO: Implement run functionality
+        onRun={async () => {
+          if (!query || query.length < 3) return;
+          await fetchActionSingleResults({
+            type: 'sql',
+            content: query,
+          });
         }}
       />
     </>

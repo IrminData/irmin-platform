@@ -37,6 +37,7 @@ To access the internal PHPDoc documentation of the API, the user is `irmin`, and
   - [Core Services](#core-services)
     - [Fake data](#fake-data)
   - [Proxy Services](#proxy-services)
+  - [Data Services](#data-services)
   - [Wordpress Service](#wordpress-service)
 - [Internationalisation](#internationalisation)
 - [Contexts](#contexts)
@@ -276,6 +277,12 @@ Proxy services are used to call the internal API routes. The proxy services are 
 See [src/services/proxies/workspace.ts](src/services/proxies/workspace.ts) for an example of a proxy service.
 
 Note that proxy services do not need to handle example objects or offline mode, since they are only used to call the internal API routes. Those rely on other API Services, which handle the example objects and offline mode.
+
+## Data Services
+
+Data services are used to fetch data from the Workspace's data from Irmin Data Lakehouse or other data stores. The data services are located in the `src/services/data` directory.
+
+See [src/services/data/action.ts](src/services/data/action.ts) for an example of a data service.
 
 ### Wordpress Service
 

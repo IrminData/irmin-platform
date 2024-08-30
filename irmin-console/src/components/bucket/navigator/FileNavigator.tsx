@@ -169,7 +169,7 @@ const FileNavigator = ({
               {item.current.name}
             </span>
             <button
-              className='ml-auto cursor-pointer hover:bg-gray-100'
+              className='ml-auto cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700'
               aria-label={`Open context menu for ${item.current.name}`}
               onClick={(e) => {
                 handleContextMenu(e, item);
@@ -217,7 +217,7 @@ const FileNavigator = ({
       {contextMenu && contextMenu.visible && (
         <ul
           id='file-navigator-context-menu'
-          className='absolute left-2 right-2 rounded-lg bg-white px-4 py-2 shadow dark:shadow-gray-800'
+          className='absolute left-2 right-2 rounded-lg bg-white px-4 py-2 shadow dark:bg-gray-800 dark:shadow-gray-700'
           style={{ top: `${contextMenu.top}px` }}
         >
           <button
@@ -233,7 +233,7 @@ const FileNavigator = ({
           {contextMenu.item.type === 'file' && (
             <>
               <li
-                className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100'
+                className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
                 onClick={() => {
                   if (contextMenu.item.type === 'file') {
                     closeContextMenu();
@@ -246,7 +246,7 @@ const FileNavigator = ({
             </>
           )}
           <li
-            className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100'
+            className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
             onClick={() => {
               closeContextMenu();
               onMove(contextMenu.item);
@@ -255,7 +255,7 @@ const FileNavigator = ({
             {dict.fileNavigator.move}
           </li>
           <li
-            className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100'
+            className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
             onClick={() => {
               closeContextMenu();
               onRename(contextMenu.item);
@@ -264,7 +264,7 @@ const FileNavigator = ({
             {dict.fileNavigator.rename}
           </li>
           <li
-            className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100'
+            className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
             onClick={() => {
               closeContextMenu();
               onDelete(contextMenu.item);

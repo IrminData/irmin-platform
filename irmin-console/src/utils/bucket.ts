@@ -14,31 +14,31 @@ import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
  * Make sure the name is alphanumeric and has the correct extension
  * @param name The name of the file
  * @param type The type of the object (file or folder)
- * @param desiredExtension The desired extension of the file (sql, js, py)
+ * @param desiredExtension The desired extension of the file
  * @returns The correct name with extension and without extension
  */
 export const getCorrectNameWithExtension = (
   name: string,
   type: 'file' | 'folder',
   desiredExtension?: IrminFileType
-): {
-  withExtension: string;
-  withoutExtension: string;
-} => {
-  // Remove all existing extensions from the name, regex searching .sql, .js, .py and (.*) and replacing with empty string
-  const nameWithoutExtensions = name.replace(/\.(sql|js|py)(.*)$/, '');
+): string => {
+  // Remove all existing extensions from the name, regex searching .sql, .js, .py, .php and (.*) and replacing with empty string
+  const nameWithoutExtensions = name.replace(/\.(sql|js|py|php)(.*)$/, '');
   // Replace all non-alphanumeric characters with underscores, except for dots
   const formattedName = nameWithoutExtensions
     .replace(/[^a-zA-Z0-9.]/g, '_')
     .trim();
   // Skip if not a file
-  if (type !== 'file')
-    return { withExtension: formattedName, withoutExtension: formattedName };
+  if (type !== 'file') return formattedName;
   // Add extension to the name
-  return {
-    withExtension: `${formattedName}.${desiredExtension ?? 'sql'}`,
-    withoutExtension: formattedName,
-  };
+  return `${formattedName}.${desiredExtension ?? 'sql'}`;
+};
+
+export const getNameWithoutExtension = (name: string): string => {
+  // Remove all existing extensions from the name, regex searching .sql, .js, .py, .php and (.*) and replacing with empty string
+  const nameWithoutExtensions = name.replace(/\.(sql|js|py|php)(.*)$/, '');
+
+  return nameWithoutExtensions;
 };
 
 /**
@@ -73,7 +73,7 @@ export const itemCanBeCreated = function (
   if (type === 'file' && !extension)
     return { canCreate: false, reason: dict.fileNavigator.errors.noExtension };
   // Make sure extension is valid, if file
-  if (type === 'file' && !irminFileTypes.includes(extension ?? ''))
+  if (type === 'file' && !irminFileTypes.find((a) => a.extension === extension))
     return {
       canCreate: false,
       reason: dict.fileNavigator.errors.invalidExtension,
@@ -85,7 +85,7 @@ export const itemCanBeCreated = function (
   if (nameWithoutExtensions.length > 255)
     return { canCreate: false, reason: dict.fileNavigator.errors.longName };
   // Make sure name is correct
-  const { withExtension: correctName } = getCorrectNameWithExtension(
+  const correctName = getCorrectNameWithExtension(
     name,
     type,
     extension as IrminFileType

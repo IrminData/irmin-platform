@@ -13,6 +13,7 @@ import { usePopup } from '@/context/PopupContext';
 import {
   getCorrectNameWithExtension,
   getCorrectPath,
+  getNameWithoutExtension,
   itemCanBeCreated,
 } from '@/utils/bucket';
 
@@ -61,14 +62,11 @@ export default function AddNewFolderModal({
       return;
     }
     // Clean the name and add the extension
-    const { withExtension, withoutExtension } = getCorrectNameWithExtension(
-      nameInputValue,
-      'folder'
-    );
+    const withExtension = getCorrectNameWithExtension(nameInputValue, 'folder');
     // Get the updated path
     const newPath = getCorrectPath(pathInputValue, withExtension);
     // Set the correct input values
-    nameInputRef.current!.value = withoutExtension;
+    nameInputRef.current!.value = getNameWithoutExtension(withExtension);
     pathInputRef.current!.value = newPath;
     // Update the state with the new info
     setNewItemData({
@@ -125,15 +123,13 @@ export default function AddNewFolderModal({
         <label className='text-xs'>{dict.fileNavigator.newFolderName}</label>
         <input
           ref={nameInputRef}
-          id='name-input'
           disabled={loading}
           type='text'
-          className='w-full rounded border p-2 text-sm placeholder:text-gray-400'
+          className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
           placeholder='my_folder_name'
-          defaultValue={
+          defaultValue={getNameWithoutExtension(
             getCorrectNameWithExtension(newItemData.name, 'folder')
-              .withoutExtension
-          }
+          )}
           onChange={() => processChange()}
         />
       </div>
@@ -142,17 +138,16 @@ export default function AddNewFolderModal({
         <div className='flex'>
           <input
             ref={pathInputRef}
-            id='path-input'
             disabled={true}
             type='text'
-            className='w-full rounded border bg-gray-100 p-2 text-sm'
+            className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
             value={newItemData.path}
           />
           <Button
             variant='icon'
             colorScheme='secondary'
             size='sm'
-            className='m-0 ml-auto p-0 pl-2'
+            className='m-0 ml-auto p-0 pl-2 dark:text-gray-100'
             ariaLabel='Toggle the path selector'
             onClick={() => setShowPathSelector(!showPathSelector)}
             disabled={loading}

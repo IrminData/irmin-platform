@@ -7,6 +7,7 @@ import { IoChevronBack } from 'react-icons/io5';
 import Button from '@/components/common/button/Button';
 import StatusBadge from '@/components/common/status/StatusBadge';
 
+import { DataProvider } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
@@ -103,7 +104,9 @@ export default function RepositoryLayoutWrapper({
           </Button>
         ))}
       </div>
-      <div>{children}</div>
+      <div>
+        <DataProvider>{children}</DataProvider>
+      </div>
     </>
   );
 }

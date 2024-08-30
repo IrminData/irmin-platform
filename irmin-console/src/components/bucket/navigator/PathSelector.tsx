@@ -104,17 +104,17 @@ const PathSelector = ({
       return (
         <div key={item.current.path} className='my-1'>
           <div
-            className={`flex items-center justify-normal rounded-md p-1 text-sm ${item.current.path === selectedPath ? 'bg-gray-200' : ''}`}
+            className={`flex items-center justify-normal rounded-md p-1 text-sm ${item.current.path === selectedPath ? 'bg-gray-200 dark:bg-gray-800' : ''}`}
             onClick={() => handleItemClick(item)}
           >
             {openFolders[item.current.name] ? (
               <FiChevronDown
-                className='inline-block cursor-pointer hover:bg-gray-100'
+                className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
                 aria-label={`Close folder ${item.current.name} in the file navigator`}
               />
             ) : (
               <FiChevronRight
-                className='inline-block cursor-pointer hover:bg-gray-100'
+                className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
                 aria-label={`Open folder ${item.current.name} in the file navigator`}
               />
             )}
@@ -142,11 +142,11 @@ const PathSelector = ({
   return (
     <div
       id='path-selector'
-      className='relative max-h-36 overflow-y-scroll border-b pb-4'
+      className='relative mb-2 max-h-36 overflow-y-scroll border-b pb-4 dark:border-b-gray-800'
     >
       <div className='my-1'>
         <button
-          className={`flex items-center justify-normal rounded-md p-1 text-sm ${rootSelected ? 'bg-gray-200' : ''}`}
+          className={`flex items-center justify-normal rounded-md p-1 text-sm ${rootSelected ? 'bg-gray-200 dark:bg-gray-800' : ''}`}
           onClick={() => handleItemClick()}
         >
           <span className='ml-2'>

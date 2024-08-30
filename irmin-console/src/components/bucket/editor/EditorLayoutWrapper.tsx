@@ -11,6 +11,8 @@ import FileNavigator from '@/components/bucket/navigator/FileNavigator';
 import RepositoryTableReferenceList from '@/components/repository/RepositoryTableReferenceList';
 
 import { useBucket } from '@/context/BucketContext';
+import { DataProvider } from '@/context/DataContext';
+import { EditorContextProvider } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -177,7 +179,9 @@ export default function EditorLayoutWrapper({
           className='flex h-full w-full flex-col bg-white dark:bg-irmin_black'
           id='editor-page-content'
         >
-          {children}
+          <EditorContextProvider>
+            <DataProvider>{children}</DataProvider>
+          </EditorContextProvider>
         </div>
       </div>
     </div>

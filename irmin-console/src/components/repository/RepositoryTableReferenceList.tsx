@@ -32,14 +32,18 @@ const RepositoryTableReferenceList = () => {
     irminAlert(
       'info',
       <div>
-        <p className='m-0 text-xs font-normal text-irmin_black'>
+        <p className='m-0 text-sm font-normal'>
           {dict.repository.referenceRepository.toReferenceTheTable}{' '}
-          <span className='font-medium text-irmin_blue'>{table}</span>{' '}
+          <span className='font-medium text-irmin_blue dark:text-irmin_green'>
+            {table}
+          </span>{' '}
           {dict.repository.referenceRepository.fromTheRepository}{' '}
-          <span className='font-medium text-irmin_blue'>{repo.name}</span>{' '}
-          {dict.repository.referenceRepository.inTheEditor}
+          <span className='font-medium text-irmin_blue dark:text-irmin_green'>
+            {repo.name}
+          </span>{' '}
+          {dict.repository.referenceRepository.inTheEditor}{' '}
         </p>
-        <p className='my-2 text-sm font-normal text-irmin_blue'>
+        <p className='mt-4 text-lg font-normal text-black dark:text-white'>
           {formattedTable}
         </p>
       </div>

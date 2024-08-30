@@ -78,7 +78,7 @@ export default function AssistantPopup() {
       {open && (
         <div
           id='ai-assistant-window'
-          className='fixed bottom-8 right-2 z-10 max-h-[70vh] w-11/12 rounded-xl rounded-br-none border-t-2 bg-white p-4 shadow-lg md:bottom-6 md:right-16 md:w-1/3 lg:bottom-10 lg:right-24 lg:w-2/5 xl:w-1/4 dark:border-irmin_blue dark:bg-irmin_black-600 dark:shadow-gray-800'
+          className='fixed bottom-8 right-2 z-10 max-h-[70vh] w-11/12 rounded-xl rounded-br-none border-t-2 bg-white p-4 shadow-lg md:bottom-6 md:right-16 md:w-1/3 lg:bottom-10 lg:right-24 lg:w-2/5 xl:w-1/4 dark:border-irmin_blue dark:bg-irmin_black-600 dark:shadow-gray-700'
         >
           <div className='mb-4 h-2/3 max-h-[calc(70vh-200px)] overflow-y-auto'>
             {messages.map((message) => (
@@ -143,7 +143,7 @@ export default function AssistantPopup() {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              className='block h-32 w-full appearance-none rounded-lg border bg-gray-50 p-3 leading-5 text-irmin_black shadow-md dark:bg-gray-800 dark:text-gray-300 dark:shadow-gray-800'
+              className='block h-32 w-full appearance-none rounded-lg border bg-gray-50 p-3 leading-5 text-irmin_black shadow-md dark:bg-gray-800 dark:text-gray-300 dark:shadow-gray-700'
               placeholder={dict.haz.writeYourMessage}
             />
             <Button

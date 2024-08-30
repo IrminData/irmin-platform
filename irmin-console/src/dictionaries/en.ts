@@ -190,7 +190,7 @@ const en = {
   },
   repository: {
     repository: 'Repository',
-    dataTables: 'Data Tables',
+    dataTables: 'Tables',
     noDataTables: 'No tables found in this repository',
     rowsReturnedIn: 'rows returned in',
     sqlQuery: 'SQL Query',

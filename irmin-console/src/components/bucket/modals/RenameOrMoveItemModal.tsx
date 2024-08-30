@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+
+import ReactSelect, { SelectInstance } from 'react-select';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
@@ -13,10 +15,18 @@ import { usePopup } from '@/context/PopupContext';
 import {
   getCorrectNameWithExtension,
   getCorrectPath,
+  getNameWithoutExtension,
   itemCanBeCreated,
 } from '@/utils/bucket';
 
-import { Bucket, BucketFile, BucketFolder } from '@/types/api/Bucket';
+import {
+  Bucket,
+  BucketFile,
+  BucketFolder,
+  IrminFileType,
+  irminFileTypes,
+  IrminFileTypeWithDetails,
+} from '@/types/api/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
@@ -58,25 +68,38 @@ export default function RenameOrMoveItemModal({
   });
   const type = item.type;
 
-  const extenstionSelectRef = React.useRef<HTMLSelectElement>(null);
-  const nameInputRef = React.useRef<HTMLInputElement>(null);
-  const pathInputRef = React.useRef<HTMLInputElement>(null);
+  const extenstionInputRef =
+    useRef<SelectInstance<IrminFileTypeWithDetails>>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const pathInputRef = useRef<HTMLInputElement>(null);
 
   /**
    * Process the change in the inputs and update the state
    */
-  const processChange = () => {
+  const processChange = (newExtensionValue?: IrminFileType) => {
     // Get the current values
-    const extensionInputValue = extenstionSelectRef.current?.value;
-    const nameInputValue = nameInputRef.current?.value;
+    const nameInputValue = nameInputRef.current?.value ?? newItemData.name;
     const pathInputValue = pathInputRef.current?.value ?? newItemData.path;
+    // Get the correct extension value
+    let extensionInputValue: IrminFileType = newItemData.extension;
+    if (!newExtensionValue) {
+      // Use value based on the ref if not provided in props
+      const extensionInputValues =
+        extenstionInputRef.current?.getValue() ?? null;
+      extensionInputValues?.forEach((value) => {
+        extensionInputValue = value.extension as IrminFileType;
+      });
+    } else {
+      // Use the extension value from props if provided
+      extensionInputValue = newExtensionValue;
+    }
     // Check that the values are not null
-    if (!extensionInputValue || !nameInputValue) {
+    if (!nameInputValue) {
       pathInputRef.current!.value = '';
       return;
     }
     // Clean the name and add the extension
-    const { withExtension, withoutExtension } = getCorrectNameWithExtension(
+    const withExtension = getCorrectNameWithExtension(
       nameInputValue,
       type,
       type === 'file'
@@ -86,7 +109,7 @@ export default function RenameOrMoveItemModal({
     // Get the updated path
     const newPath = getCorrectPath(pathInputValue, withExtension);
     // Set the correct input values
-    nameInputRef.current!.value = withoutExtension;
+    nameInputRef.current!.value = getNameWithoutExtension(withExtension);
     pathInputRef.current!.value = newPath;
     // Update the state with the new info
     setNewItemData({
@@ -159,22 +182,25 @@ export default function RenameOrMoveItemModal({
     <div>
       {type === 'file' && (
         <div className='pb-2'>
-          <div className='w-[150px] rounded border'>
-            <select
-              ref={extenstionSelectRef}
-              id='type-select'
-              disabled={loading}
-              className='h-6 w-[146px] rounded border border-r-4 border-white bg-white px-2 py-1 text-xs'
-              aria-label='Select the type of the file'
-              defaultValue={newItemData.extension}
-              onChange={() => processChange()}
-            >
-              <option value='sql'>SQL</option>
-              <option value='js'>JavaScript</option>
-              <option value='py'>Python</option>
-              <option value='php'>PHP</option>
-            </select>
-          </div>
+          <ReactSelect
+            ref={extenstionInputRef}
+            aria-label='Select the type of the file'
+            isDisabled={loading}
+            defaultValue={
+              irminFileTypes.find(
+                (a) => a.extension === newItemData.extension
+              ) ?? irminFileTypes[0]
+            }
+            onChange={(newValue) => {
+              if (!newValue) return;
+              processChange(newValue.extension);
+            }}
+            options={irminFileTypes}
+            getOptionLabel={(option) => option.name}
+            getOptionValue={(option) => option.extension}
+            className='react-select-container'
+            classNamePrefix='react-select'
+          />
           <p className='mt-1 pl-1 text-xs text-gray-400'>
             {dict.fileNavigator.original}:{' '}
             {(item.original as BucketFile)?.type ?? ''}
@@ -189,18 +215,17 @@ export default function RenameOrMoveItemModal({
         </label>
         <input
           ref={nameInputRef}
-          id='name-input'
           disabled={loading}
           type='text'
-          className='w-full rounded border p-2 text-sm placeholder:text-gray-400'
+          className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
           placeholder='example'
-          defaultValue={
+          defaultValue={getNameWithoutExtension(
             getCorrectNameWithExtension(
               newItemData.name,
               type,
               newItemData.extension
-            ).withoutExtension
-          }
+            )
+          )}
           onChange={() => processChange()}
         />
         <p className='mt-1 pl-1 text-xs text-gray-400'>
@@ -216,17 +241,16 @@ export default function RenameOrMoveItemModal({
         <div className='flex'>
           <input
             ref={pathInputRef}
-            id='path-input'
             disabled={true}
             type='text'
-            className='w-full rounded border bg-gray-100 p-2 text-sm'
+            className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
             value={newItemData.path}
           />
           <Button
             variant='icon'
             colorScheme='secondary'
             size='sm'
-            className='m-0 ml-auto p-0 pl-2'
+            className='m-0 ml-auto p-0 pl-2 dark:text-gray-100'
             ariaLabel='Toggle the path selector'
             onClick={() => setShowPathSelector(!showPathSelector)}
             disabled={loading}

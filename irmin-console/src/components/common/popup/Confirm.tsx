@@ -40,16 +40,18 @@ const Confirm = ({
       className='fixed bottom-[20px] z-50 flex w-screen animate-slideInUp justify-center p-4 align-middle'
     >
       <div
-        className={`flex w-[400px] max-w-[90vw] flex-col items-start justify-between rounded-lg border-2 bg-gray-50 p-4 shadow-md ${type === 'warning' ? 'border-red-500 text-red-700' : ''} ${
-          type === 'info' ? 'border-irmin_blue text-irmin_blue' : ''
+        className={`flex w-[400px] max-w-[90vw] flex-col items-start justify-between rounded-lg border bg-gray-50 p-4 shadow-md dark:bg-irmin_black ${type === 'warning' ? 'border-red-500 text-red-700 dark:text-red-400' : ''} ${
+          type === 'info'
+            ? 'border-irmin_blue text-irmin_blue dark:text-gray-200'
+            : ''
         }`}
       >
-        <div className='flex flex-row items-start justify-between'>
+        <div className='flex w-full flex-row items-start justify-between'>
           <div className='flex-1'>
-            <p className='pb-4 text-sm'>{message}</p>
+            <p className='pb-4 text-base font-normal'>{message}</p>
           </div>
           <button
-            className='ml-4 text-irmin_black transition-all hover:opacity-50'
+            className='ml-auto text-irmin_black transition-all hover:opacity-50 dark:text-gray-200'
             onClick={() => onSelect(false)}
             aria-label='Close confirmation popup'
           >

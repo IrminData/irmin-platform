@@ -58,7 +58,7 @@ export async function GET(req: Request) {
     return new Response('Not authorised for this workspace', { status: 404 });
   }
 
-  // Build the response, don't assign correct type yet, to prevent massive switch blocks later
+  // Create an empty response object
   const bucketProxyRes: BucketProxyResponse = {
     ...emptyBucketProxyResponse,
     metadata: {
