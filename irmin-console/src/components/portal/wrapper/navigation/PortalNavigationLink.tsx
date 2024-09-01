@@ -25,7 +25,7 @@ export default function PortalNavigationLink({
     return (
       <li>
         <Link
-          className={`flex items-center justify-between rounded-md p-3 py-3 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 ${
+          className={`flex items-center justify-between rounded-md p-3 py-3 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 ${
             link.active ? 'bg-gray-200 dark:bg-gray-800' : ''
           } overflow-hidden transition-all ${isMenuFolded ? 'w-12' : 'w-full'}`}
           href={link.href}
@@ -44,7 +44,7 @@ export default function PortalNavigationLink({
     return (
       <li>
         <button
-          className={`flex items-center justify-between rounded-md p-3 py-3 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 ${
+          className={`flex items-center justify-between rounded-md p-3 py-3 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 ${
             link.active ? 'bg-gray-200 dark:bg-gray-800' : ''
           } overflow-hidden transition-all ${isMenuFolded ? 'w-12' : 'w-full'}`}
           onClick={() => {
