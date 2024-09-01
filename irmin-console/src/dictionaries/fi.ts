@@ -423,7 +423,11 @@ const fi = {
     switchToMarkdownEditor: 'Markdown muokkaaja',
     startTypingDocumentation:
       'Aloita dokumentaation ja muistiinpanojen kirjoittaminen tähän...',
-    schema: 'Skeema',
+    schema: 'Rakenne',
+    downloadPDF: 'Lataa PDF',
+    timestamp: 'Aikaleima',
+    workspace: 'Työtila',
+    createdBy: 'Luonut',
   },
   widget: {
     create: {

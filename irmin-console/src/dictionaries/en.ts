@@ -427,6 +427,10 @@ const en = {
     startTypingDocumentation:
       'Start typing your documentation and notes here...',
     schema: 'Schema',
+    downloadPDF: 'Download PDF',
+    timestamp: 'Timestamp',
+    workspace: 'Workspace',
+    createdBy: 'Created by',
   },
   widget: {
     create: {
