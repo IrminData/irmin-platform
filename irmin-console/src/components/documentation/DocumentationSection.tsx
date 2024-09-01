@@ -110,7 +110,7 @@ export default function DocumentationSection({
           </p>
         </div>
         {repositories.length > 0 && (
-          <div className='flex flex-col border-b-2 py-4 dark:border-gray-800'>
+          <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
             <h2 className='font-display text-2xl font-bold text-irmin_black dark:text-white'>
               {dict.documentation.sections.repositories}
             </h2>
@@ -118,7 +118,7 @@ export default function DocumentationSection({
               {repositories.map((item, i) => (
                 <div
                   key={`repository-${i}`}
-                  className='flex flex-col gap-2 border-b py-4 dark:border-gray-800'
+                  className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
                 >
                   <div className='flex flex-row justify-between gap-2'>
                     <h3 className='text-xl text-irmin_black dark:text-white'>
@@ -145,8 +145,8 @@ export default function DocumentationSection({
                       {item.owner.name}
                     </span>
                   </p>
-                  <p className='text-sm text-gray-600 dark:text-gray-400'>
-                    {dict.documentation.tables}:{' '}
+                  <p className='flex flex-wrap text-sm text-gray-600 dark:text-gray-400'>
+                    <span className='pr-4'>{dict.documentation.tables}: </span>
                     {item.tables.map((table, index) => (
                       <span
                         key={`item-${item.id}-${i}-tables-${index}`}
@@ -166,15 +166,15 @@ export default function DocumentationSection({
           </div>
         )}
         {connections.length > 0 && (
-          <div className='flex flex-col border-b-2 py-4 dark:border-gray-800'>
+          <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
             <h2 className='font-display text-2xl font-bold text-irmin_black dark:text-white'>
               {dict.documentation.sections.connections}
             </h2>
             <div className='w-full pl-4'>
               {connections.map((item, i) => (
                 <div
-                  key={`repository-${i}`}
-                  className='flex flex-col gap-2 border-b py-4 dark:border-gray-800'
+                  key={`connection-${i}`}
+                  className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
                 >
                   <div className='flex flex-row justify-between gap-2'>
                     <h3 className='text-xl text-irmin_black dark:text-white'>
@@ -211,15 +211,15 @@ export default function DocumentationSection({
           </div>
         )}
         {exports.length > 0 && (
-          <div className='flex flex-col border-b-2 py-4 dark:border-gray-800'>
+          <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
             <h2 className='font-display text-2xl font-bold text-irmin_black dark:text-white'>
               {dict.documentation.sections.exports}
             </h2>
             <div className='w-full pl-4'>
               {exports.map((item, i) => (
                 <div
-                  key={`repository-${i}`}
-                  className='flex flex-col gap-2 border-b py-4 dark:border-gray-800'
+                  key={`export-${i}`}
+                  className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
                 >
                   <div className='flex flex-row justify-between gap-2'>
                     <h3 className='text-xl text-irmin_black dark:text-white'>
@@ -256,15 +256,15 @@ export default function DocumentationSection({
           </div>
         )}
         {actions.length > 0 && (
-          <div className='flex flex-col border-b-2 py-4 dark:border-gray-800'>
+          <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
             <h2 className='font-display text-2xl font-bold text-irmin_black dark:text-white'>
               {dict.documentation.sections.actions}
             </h2>
             <div className='w-full pl-4'>
               {actions.map((item, i) => (
                 <div
-                  key={`repository-${i}`}
-                  className='flex flex-col gap-2 border-b py-4 dark:border-gray-800'
+                  key={`actions-${i}`}
+                  className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
                 >
                   <div className='flex flex-row justify-between gap-2'>
                     <h3 className='text-xl text-irmin_black dark:text-white'>
