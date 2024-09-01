@@ -1,3 +1,6 @@
+/**
+ * Layout for the Workspaces pages in the Portal using a container
+ */
 export default function PortalWorkspaceContainerLayout({
   children,
 }: {

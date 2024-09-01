@@ -157,6 +157,8 @@ const fi = {
       actions: 'Toiminnot',
       connections: 'Yhteydet',
       exports: 'Viennit',
+      logs: 'Lokit',
+      documentation: 'Dokumentaatio',
       workspaceSettings: 'Työtilan asetukset',
       marketplace: 'Markkinapaikka',
       workspaces: 'Työtilat',
@@ -421,6 +423,18 @@ const fi = {
     switchToMarkdownEditor: 'Markdown muokkaaja',
     startTypingDocumentation:
       'Aloita dokumentaation ja muistiinpanojen kirjoittaminen tähän...',
+    schema: 'Rakenne',
+    downloadPDF: 'Lataa PDF',
+    timestamp: 'Aikaleima',
+    workspace: 'Työtila',
+    createdBy: 'Luonut',
+    tables: 'Taulukot',
+    sections: {
+      actions: 'Toiminnot',
+      connections: 'Yhteydet',
+      exports: 'Viennit',
+      repositories: 'Tietovarastot',
+    },
   },
   widget: {
     create: {

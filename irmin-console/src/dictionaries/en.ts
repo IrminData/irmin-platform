@@ -157,6 +157,8 @@ const en = {
       actions: 'Actions',
       connections: 'Connections',
       exports: 'Exports',
+      logs: 'Logs',
+      documentation: 'Documentation',
       workspaceSettings: 'Workspace settings',
       marketplace: 'Marketplace',
       workspaces: 'Workspaces',
@@ -424,6 +426,18 @@ const en = {
     switchToMarkdownEditor: 'Markdown editor',
     startTypingDocumentation:
       'Start typing your documentation and notes here...',
+    schema: 'Schema',
+    downloadPDF: 'Download PDF',
+    timestamp: 'Timestamp',
+    workspace: 'Workspace',
+    createdBy: 'Created by',
+    tables: 'Tables',
+    sections: {
+      actions: 'Actions',
+      connections: 'Connections',
+      exports: 'Exports',
+      repositories: 'Repositories',
+    },
   },
   widget: {
     create: {

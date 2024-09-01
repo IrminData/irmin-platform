@@ -1,6 +1,6 @@
 'use client';
 
-import { MarketplaceLayoutParams } from '@/app/[lang]/portal/[workspace]/(container)/marketplace/layout';
+import { WorkspaceLayoutParams } from '@/app/[lang]/portal/[workspace]/layout';
 
 import { BsPlugin } from 'react-icons/bs';
 import { FiDatabase, FiList } from 'react-icons/fi';
@@ -17,7 +17,7 @@ export default function PortalMarketplaceLayoutWrapper({
   params,
   children,
 }: {
-  params: MarketplaceLayoutParams;
+  params: WorkspaceLayoutParams;
   children: React.ReactNode;
 }) {
   const { dict } = useLocale();

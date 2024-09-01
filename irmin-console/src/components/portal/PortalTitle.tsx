@@ -36,6 +36,8 @@ const PortalTitle: React.FC<{
             className='hidden h-8 w-auto md:hidden dark:block dark:md:hidden'
             src='/irmin-logo-light.svg'
             alt='Irmin logo'
+            width={100}
+            height={100}
           />
         </>
       )}

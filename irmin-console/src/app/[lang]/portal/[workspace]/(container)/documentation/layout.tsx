@@ -2,10 +2,10 @@ import { Metadata } from 'next';
 
 import { WorkspaceLayoutParams } from '@/app/[lang]/portal/[workspace]/layout';
 
-import PortalWorkflowsLayoutWrapper from '@/components/workflow/PortalWorkflowsLayoutWrapper';
+import DocumentationLayoutWrapper from '@/components/documentation/DocumentationLayoutWrapper';
 
 /**
- * SEO metadata for the Workflows pages
+ * SEO metadata for the Documentation pages
  */
 export async function generateMetadata({
   params,
@@ -14,23 +14,23 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
-    title: `Workflows | ${formattedWorkspace} | IRMIN Portal`,
+    title: `Documentation | ${formattedWorkspace} | IRMIN Portal`,
   };
 }
 
 /**
- * Layout for the Workflows pages in the Portal
+ * Layout for the Documentations pages in the Portal
  */
-export default function PortalWorkflowsLayout({
+export default function PortalDocumentationLayout({
   params,
   children,
-}: Readonly<{
+}: {
   params: WorkspaceLayoutParams;
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <PortalWorkflowsLayoutWrapper params={params}>
+    <DocumentationLayoutWrapper params={params}>
       {children}
-    </PortalWorkflowsLayoutWrapper>
+    </DocumentationLayoutWrapper>
   );
 }

@@ -195,8 +195,9 @@ input[type='radio'] {
   }
 }
 
-/* Markdown editor styles */
-.mdxeditor {
+/* Markdown editor and viewer styles */
+.mdxeditor,
+.mdx-viewer {
   font-family: 'Helvetica Neue', Arial, sans-serif;
   font-size: 14px;
   line-height: 1.6;
@@ -212,34 +213,62 @@ input[type='radio'] {
     margin-bottom: 0.5em;
     line-height: 1.25;
     letter-spacing: -0.05em;
+    @media screen and (max-width: 768px) {
+      margin-bottom: 0.25em;
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
   }
 
   h1 {
     font-size: 2em;
+    @media screen and (max-width: 768px) {
+      font-size: 1.5em;
+    }
   }
 
   h2 {
     font-size: 1.75em;
+    @media screen and (max-width: 768px) {
+      font-size: 1.25em;
+    }
   }
 
   h3 {
     font-size: 1.5em;
+    @media screen and (max-width: 768px) {
+      font-size: 1em;
+    }
   }
 
   h4 {
     font-size: 1.25em;
+    @media screen and (max-width: 768px) {
+      font-size: 0.9em;
+    }
   }
 
   h5 {
     font-size: 1em;
+    @media screen and (max-width: 768px) {
+      font-size: 0.8em;
+    }
   }
 
   h6 {
     font-size: 0.875em;
+    @media screen and (max-width: 768px) {
+      font-size: 0.7em;
+    }
   }
 
   p {
+    font-size: 1em;
     margin-bottom: 1em;
+    @media screen and (max-width: 768px) {
+      font-size: 0.8em;
+      margin-bottom: 0.5em;
+    }
   }
 
   a {
@@ -304,7 +333,8 @@ input[type='radio'] {
     background-color: #f9f9f9;
   }
 }
-.dark .mdxeditor {
+.dark .mdxeditor,
+.dark .mdx-viewer {
   background-color: #01161e;
   color: #fff;
 
@@ -342,4 +372,7 @@ input[type='radio'] {
   th {
     background-color: #333;
   }
+}
+.mdx-viewer {
+  background-color: transparent !important;
 }

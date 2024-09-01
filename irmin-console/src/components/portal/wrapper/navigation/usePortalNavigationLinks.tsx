@@ -15,7 +15,9 @@ import {
   TbDatabase,
   TbFile,
   TbLogout,
+  TbLogs,
   TbRun,
+  TbSchema,
   TbSettings,
   TbSql,
   TbUser,
@@ -83,6 +85,16 @@ const usePortalNavigationLinks = (): {
       title: dict.portalNavigation.links.workflows,
       href: `/${locale}/portal/${workspaceSlug}/workflows`,
       icon: <TbRun />,
+    },
+    {
+      title: dict.portalNavigation.links.logs,
+      href: `/${locale}/portal/${workspaceSlug}/logs`,
+      icon: <TbLogs />,
+    },
+    {
+      title: dict.portalNavigation.links.documentation,
+      href: `/${locale}/portal/${workspaceSlug}/documentation`,
+      icon: <TbSchema />,
     },
     {
       title: dict.portalNavigation.links.workspaceSettings,

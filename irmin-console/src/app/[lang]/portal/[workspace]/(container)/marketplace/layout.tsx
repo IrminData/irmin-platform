@@ -1,19 +1,8 @@
 import { Metadata } from 'next';
 
-import { Locale } from '@/dictionaries';
+import { WorkspaceLayoutParams } from '@/app/[lang]/portal/[workspace]/layout';
 
 import PortalMarketplaceLayoutWrapper from '@/components/marketplace/PortalMarketplaceLayoutWrapper';
-
-/**
- * URL parameters for the Marketplace layout
- *
- * @param lang - The language of the user
- * @param workspace - The slug of the current workspace
- */
-export type MarketplaceLayoutParams = {
-  lang: Locale;
-  workspace: string;
-};
 
 /**
  * SEO metadata for the Marketplace layout
@@ -21,7 +10,7 @@ export type MarketplaceLayoutParams = {
 export async function generateMetadata({
   params,
 }: {
-  params: MarketplaceLayoutParams;
+  params: WorkspaceLayoutParams;
 }): Promise<Metadata> {
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
@@ -36,7 +25,7 @@ export default function PortalMarketplaceLayout({
   params,
   children,
 }: Readonly<{
-  params: MarketplaceLayoutParams;
+  params: WorkspaceLayoutParams;
   children: React.ReactNode;
 }>) {
   return (
