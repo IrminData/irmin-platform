@@ -1,6 +1,6 @@
 'use client';
 
-import { WorkflowsLayoutParams } from '@/app/[lang]/portal/[workspace]/(container)/workflows/layout';
+import { WorkspaceLayoutParams } from '@/app/[lang]/portal/[workspace]/layout';
 
 import {
   TbDatabaseExport,
@@ -20,7 +20,7 @@ export default function PortalWorkflowsLayoutWrapper({
   params,
   children,
 }: {
-  params: WorkflowsLayoutParams;
+  params: WorkspaceLayoutParams;
   children: React.ReactNode;
 }) {
   const { dict } = useLocale();

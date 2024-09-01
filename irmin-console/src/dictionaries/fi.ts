@@ -423,6 +423,7 @@ const fi = {
     switchToMarkdownEditor: 'Markdown muokkaaja',
     startTypingDocumentation:
       'Aloita dokumentaation ja muistiinpanojen kirjoittaminen tähän...',
+    schema: 'Skeema',
   },
   widget: {
     create: {

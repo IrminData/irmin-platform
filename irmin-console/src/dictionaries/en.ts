@@ -426,6 +426,7 @@ const en = {
     switchToMarkdownEditor: 'Markdown editor',
     startTypingDocumentation:
       'Start typing your documentation and notes here...',
+    schema: 'Schema',
   },
   widget: {
     create: {

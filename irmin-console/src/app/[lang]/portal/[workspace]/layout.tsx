@@ -4,7 +4,7 @@ import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 
 import { BucketProvider } from '@/context/BucketContext';
 
-type LayoutParams = {
+export type WorkspaceLayoutParams = {
   lang: Locale;
   workspace: string;
 };
@@ -15,7 +15,7 @@ type LayoutParams = {
 export async function generateMetadata({
   params,
 }: {
-  params: LayoutParams;
+  params: WorkspaceLayoutParams;
 }): Promise<Metadata> {
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
@@ -32,7 +32,7 @@ export default function PortalWorkspaceLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: LayoutParams;
+  params: WorkspaceLayoutParams;
 }) {
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
   const currentWorkspace = params.workspace;
