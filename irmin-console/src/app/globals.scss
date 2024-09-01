@@ -195,8 +195,9 @@ input[type='radio'] {
   }
 }
 
-/* Markdown editor styles */
-.mdxeditor {
+/* Markdown editor and viewer styles */
+.mdxeditor,
+.mdx-viewer {
   font-family: 'Helvetica Neue', Arial, sans-serif;
   font-size: 14px;
   line-height: 1.6;
@@ -304,7 +305,8 @@ input[type='radio'] {
     background-color: #f9f9f9;
   }
 }
-.dark .mdxeditor {
+.dark .mdxeditor,
+.dark .mdx-viewer {
   background-color: #01161e;
   color: #fff;
 
@@ -342,4 +344,7 @@ input[type='radio'] {
   th {
     background-color: #333;
   }
+}
+.mdx-viewer {
+  background-color: transparent !important;
 }

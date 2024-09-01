@@ -431,6 +431,7 @@ const en = {
     timestamp: 'Timestamp',
     workspace: 'Workspace',
     createdBy: 'Created by',
+    tables: 'Tables',
     sections: {
       actions: 'Actions',
       connections: 'Connections',
