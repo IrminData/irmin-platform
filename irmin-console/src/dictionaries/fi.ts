@@ -157,6 +157,7 @@ const fi = {
       actions: 'Toiminnot',
       connections: 'Yhteydet',
       exports: 'Viennit',
+      documentation: 'Dokumentaatio',
       workspaceSettings: 'Työtilan asetukset',
       marketplace: 'Markkinapaikka',
       workspaces: 'Työtilat',
