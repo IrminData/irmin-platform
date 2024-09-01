@@ -304,3 +304,42 @@ input[type='radio'] {
     background-color: #f9f9f9;
   }
 }
+.dark .mdxeditor {
+  background-color: #01161e;
+  color: #fff;
+
+  .mdxeditor-toolbar {
+    color: #01161e;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p {
+    color: #fff;
+  }
+
+  a {
+    color: #1a73e8;
+  }
+
+  blockquote {
+    border-left: 4px solid #666;
+    color: #ccc;
+  }
+
+  code {
+    background-color: #333;
+  }
+
+  pre {
+    background-color: #333;
+  }
+
+  th {
+    background-color: #333;
+  }
+}

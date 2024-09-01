@@ -2,6 +2,9 @@
 
 import React, { useState } from 'react';
 
+import { BsFileEarmarkRichtext } from 'react-icons/bs';
+import { CiTextAlignLeft } from 'react-icons/ci';
+
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
 import MDXEditor from '@/components/common/markdown-editor/MDXEditor';
@@ -38,38 +41,44 @@ const DocumentationEditor = ({ repository }: { repository: Repository }) => {
           variant='link'
           colorScheme={'gray'}
           size='sm'
-          className='p-0 text-xs'
+          className='text-xs dark:text-gray-200'
+          icon={
+            documentationEditorType === 'mdx' ? (
+              <BsFileEarmarkRichtext />
+            ) : (
+              <CiTextAlignLeft />
+            )
+          }
         >
           {documentationEditorType === 'mdx'
             ? dict.documentation.switchToPlainText
             : dict.documentation.switchToMarkdownEditor}
         </Button>
       </div>
-      {documentationEditorType === 'plain' && (
-        <Input
-          size='sm'
-          colorScheme='gray'
-          variant='outline'
-          className='h-full w-full border-gray-300 p-2 focus:outline-none'
-          placeholder={dict.documentation.startTypingDocumentation}
-          value={currentDocumentation}
-          longtext={{ rows: 20 }}
-          onChange={(e) => {
-            setCurrentDocumentation(e.target.value);
-          }}
-        />
-      )}
-      {documentationEditorType === 'mdx' && (
-        <div className='h-full min-h-80 w-full rounded-lg border border-gray-300 bg-white shadow'>
-          <MDXEditor
+      <div className='flex h-0 flex-1 flex-col overflow-scroll px-2 pt-2'>
+        {documentationEditorType === 'plain' && (
+          <textarea
+            className='h-full w-full bg-gray-200 p-2 text-irmin_black focus:outline-none dark:bg-irmin_black dark:text-gray-200'
             placeholder={dict.documentation.startTypingDocumentation}
-            markdown={currentDocumentation}
-            onChange={(markdown) => {
-              setCurrentDocumentation(markdown);
+            value={currentDocumentation}
+            onChange={(e) => {
+              setCurrentDocumentation(e.target.value);
             }}
+            rows={20}
           />
-        </div>
-      )}
+        )}
+        {documentationEditorType === 'mdx' && (
+          <div className='h-full max-h-full min-h-80 w-full overflow-y-scroll rounded-lg border border-gray-300 bg-white dark:border-gray-800 dark:bg-irmin_black'>
+            <MDXEditor
+              placeholder={dict.documentation.startTypingDocumentation}
+              markdown={currentDocumentation}
+              onChange={(markdown) => {
+                setCurrentDocumentation(markdown);
+              }}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

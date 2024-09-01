@@ -104,7 +104,7 @@ const QueryResults = ({
             size='sm'
             variant='link'
             colorScheme={activeTab === 'data' ? 'secondary' : 'gray'}
-            className={`justify-start rounded-none text-xs shadow-none hover:no-underline dark:text-white`}
+            className={`justify-start rounded-none text-xs shadow-none hover:no-underline dark:text-gray-200`}
             onClick={() => setActiveTab('data')}
             icon={<TbTable />}
           >
@@ -120,7 +120,7 @@ const QueryResults = ({
               size='sm'
               variant='link'
               colorScheme={activeTab === 'documentation' ? 'secondary' : 'gray'}
-              className={`justify-start rounded-none text-xs shadow-none hover:no-underline`}
+              className={`justify-start rounded-none text-xs shadow-none hover:no-underline dark:text-gray-200`}
               onClick={() => setActiveTab('documentation')}
               icon={<TbFileText />}
             >
@@ -139,7 +139,7 @@ const QueryResults = ({
               variant='link'
               colorScheme={'gray'}
               size='sm'
-              className='min-w-48 p-0 text-xs'
+              className='text-xs dark:text-gray-200'
               icon={
                 documentationTab === 'mdx' ? (
                   <BsFileEarmarkRichtext />
@@ -240,21 +240,20 @@ const QueryResults = ({
         </>
       )}
       {activeTab === 'documentation' && (
-        <>
+        <div className='flex h-0 flex-1 flex-col overflow-scroll px-2 pt-2'>
           {documentationTab === 'plain' && (
             <textarea
-              className='h-full w-full p-2 focus:outline-none'
+              className='h-full w-full bg-gray-200 p-2 text-irmin_black focus:outline-none dark:bg-irmin_black dark:text-gray-200'
               placeholder={dict.documentation.startTypingDocumentation}
               value={currentDocumentation}
               onChange={(e) => {
                 setCurrentDocumentation(e.target.value);
               }}
+              rows={20}
             />
           )}
           {documentationTab === 'mdx' && (
             <MDXEditor
-              className='h-full w-full focus:outline-none'
-              contentEditableClassName='h-full w-full p-2 focus:outline-none'
               placeholder={dict.documentation.startTypingDocumentation}
               markdown={currentDocumentation}
               onChange={(markdown) => {
@@ -262,7 +261,7 @@ const QueryResults = ({
               }}
             />
           )}
-        </>
+        </div>
       )}
     </div>
   );
