@@ -68,7 +68,7 @@ To access the internal PHPDoc documentation of the API, the user is `irmin`, and
 
 Ensure you have the following installed:
 
-- Node.js (>=v18.x)
+- Node.js (20.x)
 - Yarn v2. See [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration details.
 
 In the web app we use TypeScript, Next.js (React framework) with the App Router enabled, and Tailwind (styles).
@@ -437,14 +437,14 @@ To quickly migrate, you can use the following commands:
 1. Set Yarn to use version 2:
 
    ```bash
-   yarn set version 4.3.0
+   yarn set version 4.4.1
    ```
 
 2. Create or update the `.yarnrc.yml` file in your project root:
 
    ```yaml
    nodeLinker: node-modules
-   yarnPath: .yarn/releases/yarn-4.3.0.cjs
+   yarnPath: .yarn/releases/yarn-4.4.1.cjs
    ```
 
 3. Install dependencies using Yarn v2:
