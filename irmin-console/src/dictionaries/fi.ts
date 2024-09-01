@@ -428,6 +428,12 @@ const fi = {
     timestamp: 'Aikaleima',
     workspace: 'Työtila',
     createdBy: 'Luonut',
+    sections: {
+      actions: 'Toiminnot',
+      connections: 'Yhteydet',
+      exports: 'Viennit',
+      repositories: 'Tietovarastot',
+    },
   },
   widget: {
     create: {

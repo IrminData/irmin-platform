@@ -431,6 +431,12 @@ const en = {
     timestamp: 'Timestamp',
     workspace: 'Workspace',
     createdBy: 'Created by',
+    sections: {
+      actions: 'Actions',
+      connections: 'Connections',
+      exports: 'Exports',
+      repositories: 'Repositories',
+    },
   },
   widget: {
     create: {

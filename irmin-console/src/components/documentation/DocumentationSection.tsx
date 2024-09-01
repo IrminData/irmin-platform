@@ -64,7 +64,10 @@ export default function DocumentationSection({
         className='flex flex-col bg-white px-2 py-4 md:px-4 dark:bg-irmin_black'
         ref={targetRef}
       >
-        <div ref={pdfHeaderRef} className='hidden'>
+        <div
+          ref={pdfHeaderRef}
+          className='hidden border-b-2 py-4 dark:border-gray-800'
+        >
           <div className='flex w-full flex-row items-center justify-between pb-4'>
             <h1 className='font-display text-2xl font-bold text-irmin_black sm:text-3xl lg:text-5xl dark:text-white'>
               {dict.documentation.documentation}
@@ -99,6 +102,54 @@ export default function DocumentationSection({
             </p>
           </div>
         </div>
+        {repositories.length > 0 && (
+          <div className='flex flex-col border-b-2 py-4 dark:border-gray-800'>
+            <h2 className='font-display text-xl font-bold text-irmin_black dark:text-white'>
+              {dict.documentation.sections.repositories}
+            </h2>
+            <ul className='list-disc pl-4'>
+              {repositories.map((item, index) => (
+                <li key={index}>{item.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {connections.length > 0 && (
+          <div className='flex flex-col border-b-2 py-4 dark:border-gray-800'>
+            <h2 className='font-display text-xl font-bold text-irmin_black dark:text-white'>
+              {dict.documentation.sections.connections}
+            </h2>
+            <ul className='list-disc pl-4'>
+              {connections.map((item, index) => (
+                <li key={index}>{item.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {exports.length > 0 && (
+          <div className='flex flex-col border-b-2 py-4 dark:border-gray-800'>
+            <h2 className='font-display text-xl font-bold text-irmin_black dark:text-white'>
+              {dict.documentation.sections.exports}
+            </h2>
+            <ul className='list-disc pl-4'>
+              {exports.map((item, index) => (
+                <li key={index}>{item.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {actions.length > 0 && (
+          <div className='flex flex-col border-b-2 py-4 dark:border-gray-800'>
+            <h2 className='font-display text-xl font-bold text-irmin_black dark:text-white'>
+              {dict.documentation.sections.actions}
+            </h2>
+            <ul className='list-disc pl-4'>
+              {actions.map((item, index) => (
+                <li key={index}>{item.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
