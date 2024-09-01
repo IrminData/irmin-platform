@@ -157,6 +157,7 @@ const en = {
       actions: 'Actions',
       connections: 'Connections',
       exports: 'Exports',
+      logs: 'Logs',
       documentation: 'Documentation',
       workspaceSettings: 'Workspace settings',
       marketplace: 'Marketplace',
