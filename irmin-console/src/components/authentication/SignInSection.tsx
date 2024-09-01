@@ -41,17 +41,17 @@ const SignInSection = () => {
       <div className='container mx-auto max-w-7xl px-4 py-16 md:py-28'>
         <div className='mx-auto max-w-sm'>
           <div className='mb-6 text-center'>
-            <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
+            <h1 className='mb-2 font-display text-2xl font-bold md:text-3xl lg:text-5xl'>
               {dict.auth.signIn.title}
-            </h3>
-            <p className='text-lg font-normal text-irmin_black'>
+            </h1>
+            <p className='text-lg font-normal text-irmin_black dark:text-gray-200'>
               {dict.auth.signIn.subtitle}
             </p>
           </div>
           <form onSubmit={handleSubmit}>
             <div className='mb-6'>
               <label
-                className='mb-2 block font-normal text-irmin_black'
+                className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
                 htmlFor='email'
               >
                 {dict.auth.signIn.email}
@@ -72,7 +72,7 @@ const SignInSection = () => {
             </div>
             <div className='mb-4'>
               <label
-                className='mb-2 block font-normal text-irmin_black'
+                className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
                 htmlFor='password'
               >
                 {dict.auth.signIn.password}
@@ -103,7 +103,7 @@ const SignInSection = () => {
                     value=''
                     className='h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500'
                   />
-                  <label className='ms-2 text-sm font-normal text-irmin_black'>
+                  <label className='ms-2 text-sm font-normal text-irmin_black dark:text-gray-200'>
                     {dict.auth.signIn.rememberMe}
                   </label>
                 </div>
@@ -139,7 +139,7 @@ const SignInSection = () => {
                 href='/sign-up'
                 size='md'
                 colorScheme='secondary'
-                className='my-0 py-0'
+                className='my-0 py-0 dark:text-irmin_green'
               >
                 {dict.auth.signIn.signUp}
               </Button>

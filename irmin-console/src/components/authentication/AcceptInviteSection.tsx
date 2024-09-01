@@ -161,10 +161,10 @@ const AcceptInviteSection = () => {
             </div>
             <div className='w-full md:w-1/2 md:pr-4'>
               <div className='mb-6 text-center'>
-                <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
+                <h1 className='mb-2 font-display text-2xl font-bold md:text-3xl lg:text-5xl'>
                   {dict.auth.invite.title}
-                </h3>
-                <p className='text-lg font-normal text-irmin_black'>
+                </h1>
+                <p className='text-lg font-normal text-irmin_black dark:text-gray-200'>
                   {dict.auth.invite.subtitle}
                 </p>
               </div>
@@ -179,7 +179,7 @@ const AcceptInviteSection = () => {
                 >
                   <div className='mb-6'>
                     <label
-                      className='mb-2 block font-normal text-irmin_black'
+                      className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
                       htmlFor='company'
                     >
                       {dict.auth.invite.company}*
@@ -200,7 +200,7 @@ const AcceptInviteSection = () => {
                   </div>
                   <div className='mb-4'>
                     <label
-                      className='mb-2 block font-normal text-irmin_black'
+                      className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
                       htmlFor='password'
                     >
                       {dict.auth.invite.password} *
@@ -221,7 +221,7 @@ const AcceptInviteSection = () => {
                   </div>
                   <div className='mb-4'>
                     <label
-                      className='mb-2 block font-normal text-irmin_black'
+                      className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
                       htmlFor='passwordConfirmation'
                     >
                       {dict.auth.invite.confirmPassword} *
@@ -246,10 +246,10 @@ const AcceptInviteSection = () => {
                       type='checkbox'
                       className='h-6 w-6 rounded border-gray-300 bg-gray-100'
                     />
-                    <label className='ms-2 text-xs font-normal text-irmin_black'>
+                    <label className='ms-2 text-xs font-normal text-irmin_black dark:text-gray-200'>
                       {dict.auth.accept.accept}{' '}
                       <Link
-                        className='text-irmin_blue-500 hover:text-irmin_blue-600'
+                        className='dark:text-irmin_light text-irmin_blue-500 hover:text-irmin_blue-600 dark:hover:text-irmin_green'
                         href='/legal/terms-of-use'
                         target='_blank'
                       >
@@ -257,7 +257,7 @@ const AcceptInviteSection = () => {
                       </Link>{' '}
                       {dict.auth.accept.and}{' '}
                       <Link
-                        className='text-irmin_blue-500 hover:text-irmin_blue-600'
+                        className='dark:text-irmin_light text-irmin_blue-500 hover:text-irmin_blue-600 dark:hover:text-irmin_green'
                         href='/legal/privacy-policy'
                         target='_blank'
                       >

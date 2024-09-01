@@ -1,14 +1,21 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+
 import { javascript } from '@codemirror/lang-javascript';
 import { php } from '@codemirror/lang-php';
 import { python } from '@codemirror/lang-python';
 import { sql } from '@codemirror/lang-sql';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
-import CodeMirror from '@uiw/react-codemirror';
 import { useTheme } from 'next-themes';
 
+import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+
 import { useLocale } from '@/context/LocaleContext';
+
+const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
+  loading: () => <LoadingSkeleton />,
+});
 
 interface CodeMirrorEditorProps {
   language: string;
@@ -62,7 +69,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
     }
   };
 
-  if (!theme) return <></>;
+  if (!theme) return <LoadingSkeleton />;
 
   const editorTheme = theme === 'dark' ? githubDark : githubLight;
 

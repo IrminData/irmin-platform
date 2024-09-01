@@ -50,7 +50,7 @@ const EditorWithTabs = () => {
             {openFileTabs.map((tab, index) => (
               <div
                 key={index}
-                className={`flex h-fit items-center ${
+                className={`flex h-fit max-h-8 w-40 items-center justify-between ${
                   activeTab === index ? 'border-b-2 border-irmin_green' : ''
                 } `}
               >
@@ -58,7 +58,7 @@ const EditorWithTabs = () => {
                   size='sm'
                   variant='link'
                   colorScheme='black'
-                  className={`min-w-20 px-2 py-1 hover:no-underline`}
+                  className={`min-w-20 max-w-32 overflow-x-hidden whitespace-nowrap px-2 py-1 hover:no-underline lg:text-xs`}
                   onClick={() => setActiveTab(index)}
                   ariaLabel={`Switch to tab ${tab}`}
                 >
