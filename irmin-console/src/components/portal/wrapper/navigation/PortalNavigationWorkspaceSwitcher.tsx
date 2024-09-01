@@ -2,13 +2,20 @@
 
 import React, { useState } from 'react';
 
+import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 
-import ReactSelect, { SingleValue } from 'react-select';
+import { SingleValue } from 'react-select';
+
+import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
+
+const ReactSelect = dynamic(() => import('react-select'), {
+  loading: () => <LoadingSkeleton className='h-8' />,
+});
 
 /**
  * Workspace switcher UI for the portal navigation sidebar
@@ -20,6 +27,7 @@ export default function PortalNavigationWorkspaceSwitcher({
 }) {
   const { dict } = useLocale();
   const {
+    workspaceLoading,
     workspaces: {
       currentWorkspace,
       workspaces,
@@ -33,17 +41,7 @@ export default function PortalNavigationWorkspaceSwitcher({
   const { workspace: workspaceSlug } = useParams();
 
   const [processing, setProcessing] = useState(false);
-  const loading = workspacesLoading || processing;
-
-  const currentValue =
-    workspaceSlug &&
-    currentWorkspace?.slug &&
-    workspaceSlug === currentWorkspace.slug
-      ? { value: currentWorkspace.slug, label: currentWorkspace.name }
-      : {
-          value: 'select-workspace',
-          label: dict.workspaceSwitcher.selectWorkspace,
-        };
+  const loading = workspacesLoading || workspaceLoading;
 
   const onChange = async (
     selectedOption: SingleValue<{
@@ -95,23 +93,38 @@ export default function PortalNavigationWorkspaceSwitcher({
       label: dict.workspaceSwitcher.createNewWorkspace,
     },
   ];
+  const currentValue =
+    workspaceSlug &&
+    currentWorkspace?.slug &&
+    workspaceSlug === currentWorkspace.slug
+      ? { value: currentWorkspace.slug, label: currentWorkspace.name }
+      : {
+          value: 'select-workspace',
+          label: dict.workspaceSwitcher.selectWorkspace,
+        };
 
   return (
     <div className='mt-2' id='portal-nav-workspace-switcher'>
-      <ReactSelect
-        options={options}
-        onChange={onChange}
-        isLoading={loading}
-        isClearable={false}
-        value={currentValue}
-        defaultValue={{
-          value: 'select-workspace',
-          label: dict.workspaceSwitcher.selectWorkspace,
-        }}
-        noOptionsMessage={() => dict.misc.noOptionsMessage}
-        className='react-select-container'
-        classNamePrefix='react-select'
-      />
+      {loading || !workspaces ? (
+        <></>
+      ) : (
+        <ReactSelect
+          options={options}
+          onChange={(newValue) => {
+            onChange(newValue as SingleValue<{ value: string; label: string }>);
+          }}
+          isLoading={processing}
+          isClearable={false}
+          value={currentValue}
+          defaultValue={{
+            value: 'select-workspace',
+            label: dict.workspaceSwitcher.selectWorkspace,
+          }}
+          noOptionsMessage={() => dict.misc.noOptionsMessage}
+          className='react-select-container'
+          classNamePrefix='react-select'
+        />
+      )}
     </div>
   );
 }
