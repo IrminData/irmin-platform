@@ -16,32 +16,6 @@ const TreeChart = dynamic(() => import('./TreeChart'), {
   loading: () => <LoadingSkeleton />,
 });
 
-// const orgChart = {
-//   name: 'CEO',
-//   children: [
-//     {
-//       name: 'Manager',
-//       attributes: {
-//         department: 'Production',
-//       },
-//       children: [
-//         {
-//           name: 'Foreman',
-//           attributes: {
-//             department: 'Fabrication',
-//           },
-//         },
-//         {
-//           name: 'Foreman',
-//           attributes: {
-//             department: 'Assembly',
-//           },
-//         },
-//       ],
-//     },
-//   ],
-// };
-
 /**
  * Page UI to show the schema for the workspace as a tree chart.
  */
