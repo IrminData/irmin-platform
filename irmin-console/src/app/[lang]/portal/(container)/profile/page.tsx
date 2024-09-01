@@ -71,12 +71,12 @@ const GeneralSettings: React.FC = () => {
   };
 
   return (
-    <div className='px-4'>
-      <div className='flex w-full flex-wrap items-center justify-between gap-2'>
-        <h2 className='mb-4 text-xl font-normal md:text-2xl'>
+    <div className='my-8 px-4'>
+      <div className='mb-8 mt-4 flex w-full flex-wrap items-center justify-between gap-2'>
+        <h2 className='font-display text-xl font-bold sm:text-2xl lg:text-3xl'>
           {dict.profile.generalSettings}
         </h2>
-        <div className='my-4 max-w-40'>
+        <div className='max-w-40'>
           <LanguageSwitcher />
         </div>
       </div>
@@ -163,7 +163,7 @@ const ChangePasswordSettings: React.FC = () => {
 
   return (
     <div className='my-8 px-4'>
-      <h2 className='mb-8 text-xl font-normal md:text-2xl'>
+      <h2 className='mb-8 font-display text-xl font-bold sm:text-2xl lg:text-3xl'>
         {dict.profile.changePassword}
       </h2>
       <form onSubmit={handleChangePassword} className='text-sm md:text-base'>

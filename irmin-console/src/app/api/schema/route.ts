@@ -1,21 +1,18 @@
+import { type NextRequest } from 'next/server';
+
 import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
-import { placeholderData } from '@/types/examples/datatableData';
+import { repositorySchemaExample } from '@/types/examples/datatableSchema';
 
-import {
-  ActionSingleRunRequest,
-  ActionSingleRunResponse,
-  emptyActionSingleRunResponse,
-} from './types';
+import { emptySchemaResponse, SchemaResponse } from './types';
 
 /**
- * POST /api/action-single-run
- * Body: {@link ActionSingleRunRequest}
+ * GET /api/schema?table=table1&table=table2
  *
- * Endpoint to run an action once and receive the results
+ * Endpoint to get the schema for a single table or a collection of tables
  */
-export async function POST(req: Request) {
+export async function GET(req: NextRequest) {
   // Get the token from the Authorization header
   const token = req.headers.get('Authorization');
   if (!token || !token.startsWith('Bearer ') || token === 'Bearer ') {
@@ -54,16 +51,22 @@ export async function POST(req: Request) {
   }
 
   // Get the request properties
-  const runRequest: ActionSingleRunRequest = await req.json();
-  if (!runRequest || !runRequest.content || !runRequest.type) {
+  const searchParams = req.nextUrl.searchParams;
+  const schemaRequestTables = searchParams.getAll('table');
+  if (
+    !searchParams ||
+    !schemaRequestTables ||
+    schemaRequestTables.length === 0
+  ) {
     return new Response('Invalid request', { status: 400 });
   }
 
   // Create an empty response object
-  const actionSingleRunRes: ActionSingleRunResponse = {
-    ...emptyActionSingleRunResponse,
+  const schemaRes: SchemaResponse = {
+    ...emptySchemaResponse,
     metadata: {
       errors: [],
+      tables: schemaRequestTables,
       workspace: workspaceSlug,
     },
   };
@@ -72,15 +75,12 @@ export async function POST(req: Request) {
     // Set users current workspace to what was passed in the headers
     await workspaceService.switchWorkspace(workspaceSlug);
 
-    // TODO: Run the action and get the results
+    // TODO: Get the schema for the requested tables from the API
     // For now, just set some fake data
-    actionSingleRunRes.data.result = placeholderData;
-    actionSingleRunRes.data.metadata.timeTaken = 0.1;
-    actionSingleRunRes.data.metadata.rowsReturned = placeholderData.length;
-    actionSingleRunRes.data.metadata.message = 'Placeholder data returned';
+    schemaRes.data.tables = [...repositorySchemaExample];
   } catch (error) {
     // Log the error, but don't throw it
-    console.error('POST /api/action-single-run error', error);
+    console.error('GET /api/schema', error);
   } finally {
     // Switch back to the original workspace
     if (profile?.data?.workspace?.slug)
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
   }
 
   // Return the full data as JSON
-  return new Response(JSON.stringify(actionSingleRunRes), {
+  return new Response(JSON.stringify(schemaRes), {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
     },

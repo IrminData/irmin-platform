@@ -191,7 +191,9 @@ const en = {
   repository: {
     repository: 'Repository',
     dataTables: 'Tables',
+    tableColumns: 'Columns',
     noDataTables: 'No tables found in this repository',
+    noTableColumns: 'No columns found for selected table',
     rowsReturnedIn: 'rows returned in',
     sqlQuery: 'SQL Query',
     runQuery: 'Run query',
@@ -204,7 +206,9 @@ const en = {
       deleteRepository: 'Delete Repository',
     },
     tabs: {
-      dataViewer: 'Data Viewer',
+      structure: 'Structure',
+      dataViewer: 'Data',
+      commits: 'Commits',
       documentation: 'Documentation',
       workflows: 'Workflows',
       settings: 'Settings',

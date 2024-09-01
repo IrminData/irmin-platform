@@ -1,7 +1,6 @@
 'use client';
 
 import PortalTitle from '@/components/portal/PortalTitle';
-import DocumentationEditor from '@/components/repository/viewer/DocumentationEditor';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
@@ -9,12 +8,9 @@ import { useWorkspace } from '@/context/workspace';
 import { RepositoryRouteParams } from '../layout';
 
 /**
- * Page for the Repository documentation
- *
- * @param props0 - The page properties
- * @param props0.params - The page parameters from Next JS router
+ * Page for the Repository structure viewing, like the schema.
  */
-export default function RepositoryDocumentationPage({
+export default function RepositoryStructurePage({
   params,
 }: {
   params: RepositoryRouteParams;
@@ -33,8 +29,7 @@ export default function RepositoryDocumentationPage({
   return (
     <>
       <div className='px-2 md:px-4'>
-        <PortalTitle title={dict.repository.tabs.documentation} />
-        <DocumentationEditor repository={repository} />
+        <PortalTitle title={dict.repository.tabs.structure} />
       </div>
     </>
   );

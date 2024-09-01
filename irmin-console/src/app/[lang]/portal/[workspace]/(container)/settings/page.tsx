@@ -159,13 +159,13 @@ const GeneralSettings = () => {
 
   return (
     <div className='my-8 px-4'>
-      <h2 className='mb-4 text-2xl font-normal'>
+      <h2 className='mb-8 font-display text-xl font-bold sm:text-2xl lg:text-3xl'>
         {dict.workspace.generalSettings}
       </h2>
       <div className='pb-8'>
         <form onSubmit={handleUpdateWorkspace}>
           <div>
-            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-200 dark:text-gray-600'>
+            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
               {dict.workspace.workspaceName}
             </label>
             <Input
@@ -181,7 +181,7 @@ const GeneralSettings = () => {
             />
           </div>
           <div className='mt-4'>
-            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-200 dark:text-gray-600'>
+            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
               {dict.workspace.workspaceDescription}
             </label>
             <Input
@@ -247,7 +247,7 @@ const BillingSettings: React.FC = () => {
   const { dict } = useLocale();
   return (
     <div className='my-8 px-4'>
-      <h2 className='mb-4 text-2xl font-normal'>
+      <h2 className='mb-8 font-display text-xl font-bold sm:text-2xl lg:text-3xl'>
         {dict.workspace.billingSettings}
       </h2>
       <p className='mb-4 font-normal text-gray-500'>

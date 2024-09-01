@@ -32,8 +32,6 @@ export interface ActionSingleRunData {
  * @typeParam data - The fetched data {@link ActionSingleRunData}
  * @typeParam metadata - Additional data about the fetch
  * @typeParam metadata.errors - Errors that occurred during the fetch
- * @typeParam metadata.errors.error - The error object
- * @typeParam metadata.errors.object - The object that the error occurred on
  * @typeParam metadata.workspace - Slug of the workspace data was fetched for
  */
 export interface ActionSingleRunResponse {

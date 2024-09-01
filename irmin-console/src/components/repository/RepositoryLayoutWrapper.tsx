@@ -3,6 +3,14 @@
 import { usePathname } from 'next/navigation';
 
 import { IoChevronBack } from 'react-icons/io5';
+import {
+  TbDatabase,
+  TbFileText,
+  TbHistory,
+  TbRun,
+  TbSchema,
+  TbSettings,
+} from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
 import StatusBadge from '@/components/common/status/StatusBadge';
@@ -40,13 +48,23 @@ export default function RepositoryLayoutWrapper({
       active:
         currentPath ===
         `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}`,
+      icon: <TbDatabase size={14} />,
     },
     {
-      title: dict.repository.tabs.documentation,
-      href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/documentation`,
+      title: dict.repository.tabs.structure,
+      href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/structure`,
       active:
         currentPath ===
-        `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/documentation`,
+        `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/structure`,
+      icon: <TbSchema size={14} />,
+    },
+    {
+      title: dict.repository.tabs.commits,
+      href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/commits`,
+      active:
+        currentPath ===
+        `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/commits`,
+      icon: <TbHistory size={14} />,
     },
     {
       title: dict.repository.tabs.workflows,
@@ -54,6 +72,15 @@ export default function RepositoryLayoutWrapper({
       active:
         currentPath ===
         `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/workflows`,
+      icon: <TbRun size={14} />,
+    },
+    {
+      title: dict.repository.tabs.documentation,
+      href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/documentation`,
+      active:
+        currentPath ===
+        `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/documentation`,
+      icon: <TbFileText size={14} />,
     },
     {
       title: dict.repository.tabs.settings,
@@ -61,6 +88,7 @@ export default function RepositoryLayoutWrapper({
       active:
         currentPath ===
         `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/settings`,
+      icon: <TbSettings size={14} />,
     },
   ];
 
@@ -93,12 +121,13 @@ export default function RepositoryLayoutWrapper({
         {tabs.map((tab, idx) => (
           <Button
             key={`data-repo-tab-${idx}`}
-            className={`rounded-none border-irmin_green hover:no-underline ${tab.active ? 'border-b-2' : 'border-0'}`}
+            className={`rounded-none border-irmin_green px-2 hover:no-underline lg:px-0 ${tab.active ? 'border-b-2' : 'border-0'}`}
             size='sm'
             variant='link'
             colorScheme={tab.active ? 'primary' : 'gray'}
             href={tab.href}
             ariaLabel={`Open ${tab.title} for ${repoSlug}`}
+            icon={tab.icon}
           >
             {tab.title}
           </Button>

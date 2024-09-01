@@ -191,7 +191,9 @@ const fi = {
   repository: {
     repository: 'Tietovarasto',
     dataTables: 'Taulukot',
+    tableColumns: 'Kolumnit',
     noDataTables: 'Ei tietotauluja tässä tietovarastossa',
+    noTableColumns: 'Ei kolumneja valitussa taulukossa',
     rowsReturnedIn: 'riviä palautettu ajassa',
     sqlQuery: 'SQL Kysely',
     runQuery: 'Ajaa kysely',
@@ -204,9 +206,11 @@ const fi = {
       deleteRepository: 'Poista Tietovarasto',
     },
     tabs: {
-      dataViewer: 'Tietokatselu',
-      documentation: 'Dokumentaatio',
+      structure: 'Struktuuri',
+      dataViewer: 'Tieto',
+      commits: 'Muutokset',
       workflows: 'Prosessit',
+      documentation: 'Dokumentaatio',
       settings: 'Asetukset',
     },
     referenceRepository: {

@@ -20,7 +20,7 @@ export const repositories = (last = false): Repository[] => [
     description:
       'This is an example of a Repository that has been created manually.',
     documentation:
-      '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
+      '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
       'excel-kpis.sales.0',
       'management-data-from-excel.inventory.0',
@@ -41,7 +41,7 @@ export const repositories = (last = false): Repository[] => [
     description:
       'This is an example of a Repository that has been created by the Google Analytics Connection Workflow.',
     documentation:
-      '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
+      '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
       'main-google-analytics.sessions.0',
       'main-google-analytics.users.0',
@@ -61,7 +61,7 @@ export const repositories = (last = false): Repository[] => [
     description:
       'This is an example of a Repository that has been created by an Action Workflow.',
     documentation:
-      '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
+      '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
       'app-usage-data.users.0',
       'app-usage-data.downloads.0',
@@ -83,7 +83,7 @@ export const repositories = (last = false): Repository[] => [
     description:
       'This is an example of a Repository that has been created by a Connection Workflow.',
     documentation:
-      '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
+      '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
       'excel-kpis.sales.0',
       'excel-kpis.expenses.0',
@@ -102,7 +102,7 @@ export const repositories = (last = false): Repository[] => [
     description:
       'This is an example of a Repository that has been created by a Connection Workflow.',
     documentation:
-      '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
+      '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
       'management-data-from-excel.inventory.0',
       'management-data-from-excel.employees.0',
@@ -120,7 +120,7 @@ export const repositories = (last = false): Repository[] => [
     description:
       'This is an example of a Repository that has been created by a Connection Workflow.',
     documentation:
-      '#Explain here what this repository is\n\n##Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
+      '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
       'google-sheets-kpis.sales.0',
       'google-sheets-kpis.inventory.0',

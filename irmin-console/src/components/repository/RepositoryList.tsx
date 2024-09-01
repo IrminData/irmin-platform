@@ -83,7 +83,7 @@ const RepositoryList = ({
           {item.tables.map((table, index) => (
             <li
               key={`item-${item.id}-${i}-tables-${index}`}
-              className='border-b border-gray-100 py-2 text-xs'
+              className='border-b border-gray-100 py-2 text-xs dark:border-gray-800'
             >
               {/* Only show part of the table name between first and last dots */}
               {table.split('.').slice(1, -1).join('.')}

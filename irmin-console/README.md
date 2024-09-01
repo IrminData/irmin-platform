@@ -280,9 +280,7 @@ Note that proxy services do not need to handle example objects or offline mode, 
 
 ## Data Services
 
-Data services are used to fetch data from the Workspace's data from Irmin Data Lakehouse or other data stores. The data services are located in the `src/services/data` directory.
-
-See [src/services/data/action.ts](src/services/data/action.ts) for an example of a data service.
+Data services are used to fetch data from the Workspace's data from Irmin Data Lakehouse or other data stores. The data services are located in the `src/services/data.tsx` file.
 
 ### Wordpress Service
 

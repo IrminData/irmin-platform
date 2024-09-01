@@ -1,19 +1,13 @@
 'use client';
 
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, { createContext, useCallback, useContext, useState } from 'react';
 
 import {
   ActionSingleRunData,
   ActionSingleRunRequest,
 } from '@/app/api/action-single-run/types';
-import { fetchSingle } from '@/services/data/action';
+import { SchemaResponse } from '@/app/api/schema/types';
+import { fetchSchema, fetchSingle } from '@/services/data';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -23,14 +17,17 @@ import { useWorkspace } from '@/context/workspace';
 /**
  * Data context properties
  *
- * @typeParam loading - Loading state of data operations
+ * @typeParam loadingData - Loading state of data operations
  * @typeParam dataResults - Data results from the data lakehouse
  * @typeParam fetchActionSingleResults - Fetch single action results from the data lakehouse
  */
 interface DataContextProps {
-  loading: boolean;
+  loadingData: boolean;
   dataResults: ActionSingleRunData | null;
+  loadingSchema: boolean;
+  schemaResults: SchemaResponse | null;
   fetchActionSingleResults: (request: ActionSingleRunRequest) => Promise<void>;
+  fetchSchemaForTables: (tables: string[]) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
@@ -51,13 +48,17 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     workspaces: { currentWorkspace },
   } = useWorkspace();
 
-  const [loading, setLoading] = useState<boolean>(false);
+  // Data state
+  const [loadingData, setLoadingData] = useState<boolean>(false);
   const [dataResults, setDataResults] = useState<ActionSingleRunData | null>(
     null
   );
 
-  // Ref to check which workspace the data was fetched for
-  const dataFetchedForRef = useRef<string | null>(null);
+  // Schema state
+  const [loadingSchema, setLoadingSchema] = useState<boolean>(false);
+  const [schemaResults, setSchemaResults] = useState<SchemaResponse | null>(
+    null
+  );
 
   /**
    * Fetch single action results from the data lakehouse
@@ -67,7 +68,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchActionSingleResults = useCallback(
     async (request: ActionSingleRunRequest) => {
       if (!request) return;
-      setLoading(true);
+      setLoadingData(true);
       try {
         // Fetch data action results
         const response = await fetchSingle({
@@ -86,26 +87,51 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
           (error as Error)?.message ?? 'Failed to fetch action results'
         );
       } finally {
-        setLoading(false);
+        setLoadingData(false);
       }
     },
     [locale, token, currentWorkspace, irminAlert]
   );
 
   /**
-   * Hook to fetch data when the workspace changes
+   * Fetch the schema for a list of tables, for example a repository
+   *
+   * @param tables - List of tables to fetch the schema for
    */
-  useEffect(() => {
-    if (currentWorkspace?.slug !== dataFetchedForRef.current) {
-      dataFetchedForRef.current = currentWorkspace?.slug ?? '';
-    }
-  }, [currentWorkspace]);
+  const fetchSchemaForTables = useCallback(
+    async (tables: string[]) => {
+      if (!tables || tables.length === 0) return;
+      setLoadingSchema(true);
+      try {
+        // Fetch data action results
+        const response = await fetchSchema({
+          locale,
+          token: token ?? '',
+          workspace: currentWorkspace?.slug ?? '',
+          tables: tables,
+        });
+        setSchemaResults(response);
+      } catch (error) {
+        console.error('DataContext fetchRepositorySchema error', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to fetch schema results'
+        );
+      } finally {
+        setLoadingSchema(false);
+      }
+    },
+    [locale, token, currentWorkspace, irminAlert]
+  );
 
   return (
     <DataContext.Provider
       value={{
-        loading,
+        loadingData,
         dataResults,
+        loadingSchema,
+        schemaResults,
+        fetchSchemaForTables,
         fetchActionSingleResults,
       }}
     >

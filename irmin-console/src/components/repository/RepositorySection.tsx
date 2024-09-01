@@ -93,7 +93,7 @@ export default function RepositorySection({
             editorHeight='100px'
             updateEditorContent={updateQuery}
             placeholder={dict.editor.writeYourSQL}
-            className='h-full w-full text-base outline-none'
+            className='h-full w-full text-sm outline-none md:text-sm lg:text-base'
           />
         </div>
       </div>
@@ -104,9 +104,6 @@ export default function RepositorySection({
           metadata={{
             rowsReturned: dataResults?.metadata?.rowsReturned,
             timeTaken: dataResults?.metadata?.timeTaken,
-          }}
-          onSave={async () => {
-            // TODO: Implement save functionality
           }}
         />
       </div>
