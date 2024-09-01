@@ -6,7 +6,6 @@ import { BsFileEarmarkRichtext } from 'react-icons/bs';
 import { CiTextAlignLeft } from 'react-icons/ci';
 
 import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
 import MDXEditor from '@/components/common/markdown-editor/MDXEditor';
 
 import { useLocale } from '@/context/LocaleContext';
