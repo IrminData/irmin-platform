@@ -175,7 +175,7 @@ export default function WebsiteNavigationContent({
   return (
     <>
       <div className='fixed z-40 max-h-[80px] w-full bg-white bg-opacity-70 backdrop-blur-md dark:bg-irmin_black dark:bg-opacity-70 dark:backdrop-blur-md'>
-        <div className='container mx-auto max-w-7xl px-2 md:px-4 xl:px-0'>
+        <div className='container mx-auto max-w-96 px-0 md:max-w-7xl md:px-4 xl:px-0'>
           <nav className='flex justify-between'>
             <div className='flex w-full items-center justify-between gap-2'>
               <div className='flex items-center justify-start gap-6'>

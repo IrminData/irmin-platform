@@ -61,10 +61,10 @@ export default function WebsiteFooterContent({
 
   return (
     <section className='mt-12 bg-irmin_black dark:bg-black'>
-      <div className='container mx-auto max-w-7xl px-2 md:px-4 xl:px-0'>
+      <div className='container mx-auto max-w-96 px-0 md:max-w-7xl md:px-4 xl:px-0'>
         <div className='flex flex-wrap justify-center gap-y-12 py-6 md:flex-row md:items-start md:justify-start md:pt-12 xl:pt-24'>
           {/* Logo, description and language switcher */}
-          <div className='order-1 min-w-72 sm:w-[40%] md:w-1/4 md:pl-2 xl:w-1/6 xl:min-w-96'>
+          <div className='order-1 min-w-96 sm:w-[40%] md:w-1/4 md:pl-2 xl:w-1/6 xl:min-w-96'>
             <div className='flex flex-col items-start'>
               <div className='mb-8 inline-block'>
                 <Image
@@ -84,7 +84,7 @@ export default function WebsiteFooterContent({
             </div>
           </div>
           {/* Footer links */}
-          <div className='order-2 min-w-72 sm:w-full md:w-fit md:max-w-[50%] xl:min-w-96 xl:max-w-[62%]'>
+          <div className='order-2 min-w-96 sm:w-full md:w-fit md:max-w-[50%] xl:min-w-96 xl:max-w-[62%]'>
             <div className='flex flex-wrap justify-between gap-4 sm:justify-center'>
               {sections.map((section, idx) => (
                 <FooterLinkSection
@@ -96,7 +96,7 @@ export default function WebsiteFooterContent({
             </div>
           </div>
           {/* Newsletter subscription form */}
-          <div className='order-3 min-w-72 overflow-hidden sm:w-[40%] md:ml-auto md:w-1/4 md:pr-2 lg:order-3 xl:w-1/6 xl:min-w-96'>
+          <div className='order-3 min-w-96 overflow-hidden sm:w-[40%] md:ml-auto md:w-1/4 md:pr-2 lg:order-3 xl:w-1/6 xl:min-w-96'>
             <div className='flex flex-col items-start'>
               <div className='max-w-64'>
                 <h3 className='mb-3 text-left text-lg font-medium text-white text-opacity-80'>
