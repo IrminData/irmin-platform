@@ -377,44 +377,7 @@ input[type='radio'] {
   background-color: transparent !important;
 }
 
-/* React D3 Tree styles */
-#treeWrapper {
-  .rd3t-label {
-    .rd3t-label__title {
-      font-size: 1em;
-      line-height: 1.5em;
-      fill: #01161e;
-    }
-    .rd3t-label__attributes {
-      font-size: 0.8em;
-      line-height: 1em;
-      fill: #4f5050;
-    }
-  }
-  .rd3t-link {
-    stroke: #124559;
-    stroke-width: 2;
-  }
-  .node__root > circle {
-    fill: #124559;
-  }
-  .node__branch > circle {
-    fill: #aec3b0;
-  }
-  .node__leaf > circle {
-    fill: #aec3b0;
-  }
-}
-.dark #treeWrapper {
-  .rd3t-label {
-    .rd3t-label__title {
-      fill: #ffffff;
-    }
-    .rd3t-label__attributes {
-      fill: #d5d5d5;
-    }
-  }
-  .rd3t-link {
-    stroke: #aec3b0;
-  }
+/* ReactFlow styles */
+#tree-chart .react-flow {
+  background: transparent !important;
 }

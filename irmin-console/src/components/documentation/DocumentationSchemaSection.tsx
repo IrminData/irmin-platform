@@ -4,13 +4,11 @@ import { useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic';
 
-import { RawNodeDatum } from 'react-d3-tree';
-
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
-import PortalTitle from '@/components/portal/PortalTitle';
 
-import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
+
+import { TreeNode } from './TreeChart';
 
 const TreeChart = dynamic(() => import('./TreeChart'), {
   loading: () => <LoadingSkeleton />,
@@ -20,9 +18,10 @@ const TreeChart = dynamic(() => import('./TreeChart'), {
  * Page UI to show the schema for the workspace as a tree chart.
  */
 export default function DocumentationSchemaSection() {
-  const { dict } = useLocale();
-  const [tree, setTree] = useState<RawNodeDatum>({
-    name: 'Workspace',
+  const [tree, setTree] = useState<TreeNode>({
+    id: 'workspace',
+    label: 'Workspace',
+    children: [],
   });
 
   const {
@@ -37,66 +36,104 @@ export default function DocumentationSchemaSection() {
   useEffect(() => {
     // Build the tree from the workspace's data.
     if (currentWorkspace) {
-      const newTree: RawNodeDatum = {
-        name: currentWorkspace.name,
-        attributes: {
-          type: 'Workspace',
-        },
+      const newTree: TreeNode = {
+        id: `workspace-${currentWorkspace.slug}`,
+        label: currentWorkspace.name,
+        children: [],
+      };
+
+      // Create empty workflows node.
+      const workflowsNode: TreeNode = {
+        id: `workspace-${currentWorkspace.slug}-workflows`,
+        label: 'Workflows',
         children: [],
       };
 
       // Add connections.
       if (connections) {
-        const connectionsNode = {
-          name: 'Connections',
+        const connectionsNode: TreeNode = {
+          id: `connection-workflows`,
+          label: 'Connections',
           children: connections.map((connection) => ({
-            name: connection.name,
-            attributes: {
-              type: 'Connection',
-            },
+            id: `workflow-connection-${connection.id}`,
+            label: connection.name,
+            children: connection.repository
+              ? [
+                  {
+                    id: `repository-${connection.repository.id}`,
+                    label: `Repository: ${connection.repository.name}`,
+                    children: connection.repository.tables.map((table) => ({
+                      id: `repository-${connection.repository?.id}-table-${table}`,
+                      label: table,
+                    })),
+                  },
+                ]
+              : [],
           })),
         };
-        newTree.children?.push(connectionsNode);
+        workflowsNode.children?.push(connectionsNode);
       }
 
       // Add exports.
       if (exports) {
         const exportsNode = {
-          name: 'Exports',
+          id: 'export-workflows',
+          label: 'Exports',
           children: exports.map((export_) => ({
-            name: export_.name,
-            attributes: {
-              type: 'Export',
-            },
+            id: `workflow-export-${export_.id}`,
+            label: export_.name,
+            links: [
+              `repository-${export_.workflowable?.source?.id ?? ''}`,
+              `workflow-connection-${export_.workflowable?.destination?.id ?? ''}`,
+            ],
           })),
         };
-        newTree.children?.push(exportsNode);
+        workflowsNode.children?.push(exportsNode);
       }
 
       // Add actions.
       if (actions) {
         const actionsNode = {
-          name: 'Actions',
+          id: 'action-workflows',
+          label: 'Actions',
           children: actions.map((action) => ({
+            id: `workflow-action-${action.id}`,
             name: action.name,
-            attributes: {
-              type: 'Action',
-            },
+            children: action.repository
+              ? [
+                  {
+                    id: `repository-${action.repository.id}`,
+                    label: `Repository: ${action.repository.name}`,
+                    children: action.repository.tables.map((table) => ({
+                      id: `repository-${action.repository?.id}-table-${table}`,
+                      label: table,
+                    })),
+                  },
+                ]
+              : [],
           })),
         };
-        newTree.children?.push(actionsNode);
+        workflowsNode.children?.push(actionsNode);
       }
 
-      // Add repositories.
+      // Add workflows node to the tree.
+      newTree.children?.push(workflowsNode);
+
+      // Add repositories. Only add non-workflow repositories.
       if (repositories) {
         const repositoriesNode = {
-          name: 'Repositories',
-          children: repositories.map((repository) => ({
-            name: repository.name,
-            attributes: {
-              type: 'Repository',
-            },
-          })),
+          id: 'repositories',
+          label: 'Repositories',
+          children: repositories
+            .filter((item) => !item.workflow)
+            .map((repository) => ({
+              id: `repository-${repository.id}`,
+              label: repository.name,
+              children: repository.tables.map((table) => ({
+                id: `repository-${repository.id}-table-${table}`,
+                label: table,
+              })),
+            })),
         };
         newTree.children?.push(repositoriesNode);
       }
@@ -115,9 +152,6 @@ export default function DocumentationSchemaSection() {
 
   return (
     <>
-      <div className='mb-4 px-2 md:px-4'>
-        <PortalTitle title={dict.documentation.schema} />
-      </div>
       {loading && <LoadingSkeleton />}
       {!loading && <TreeChart tree={tree} />}
     </>

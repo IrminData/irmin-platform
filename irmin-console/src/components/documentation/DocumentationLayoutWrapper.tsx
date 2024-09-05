@@ -38,7 +38,7 @@ export default function DocumentationLayoutWrapper({
           },
         ]}
       />
-      <div className='relative'>{children}</div>
+      {children}
     </div>
   );
 }
