@@ -22,22 +22,24 @@ export default function DocumentationLayoutWrapper({
   const { dict } = useLocale();
   return (
     <div id='portal-documentation-layout-wrapper'>
-      <Tabs
-        tabs={[
-          {
-            icon: <IoDocumentText />,
-            name: dict.documentation.documentation,
-            slug: 'documentation',
-            link: `/${params.lang}/portal/${params.workspace}/documentation`,
-          },
-          {
-            icon: <TbSchema />,
-            name: dict.documentation.schema,
-            slug: 'schemas',
-            link: `/${params.lang}/portal/${params.workspace}/documentation/schema`,
-          },
-        ]}
-      />
+      <div className='container relative mx-auto max-w-6xl'>
+        <Tabs
+          tabs={[
+            {
+              icon: <IoDocumentText />,
+              name: dict.documentation.documentation,
+              slug: 'documentation',
+              link: `/${params.lang}/portal/${params.workspace}/documentation`,
+            },
+            {
+              icon: <TbSchema />,
+              name: dict.documentation.schema,
+              slug: 'schemas',
+              link: `/${params.lang}/portal/${params.workspace}/documentation/schema`,
+            },
+          ]}
+        />
+      </div>
       {children}
     </div>
   );
