@@ -5,10 +5,12 @@ import { DatatableRow } from '@/types/internal/Datatable';
  * The type of body request to the `POST /api/action-single-run` route
  * @typeParam type - The type of file to run the action on
  * @typeParam content - The content of the file to run the action on
+ * @typeParam branch - The branch to run the action on
  */
 export type ActionSingleRunRequest = {
   type: IrminFileType;
   content: string;
+  branch: string | null;
 };
 
 /**

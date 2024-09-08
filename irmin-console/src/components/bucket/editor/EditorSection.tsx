@@ -37,6 +37,7 @@ export default function EditorSection() {
             await fetchActionSingleResults({
               type: currentEditor.language ?? 'sql',
               content: currentEditor.contents ?? '',
+              branch: 'main',
             });
           }}
         />

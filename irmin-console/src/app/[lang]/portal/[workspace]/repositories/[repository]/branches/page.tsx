@@ -2,18 +2,16 @@
 
 import { useMemo } from 'react';
 
-import RepositorySection from '@/components/repository/RepositorySection';
+import RepositoryBranchesSection from '@/components/repository/RepositoryBranchesSection';
 
 import { useWorkspace } from '@/context/workspace';
 
-import { RepositoryRouteParams } from './layout';
+import { RepositoryRouteParams } from '../layout';
 
 /**
- * Page for the Repository viewer
- *
- * Uses {@link RepositorySection} to display the Repository viewer
+ * Page for the Repository branches.
  */
-export default function RepositoryPage({
+export default function RepositoryBranchesPage({
   params,
 }: {
   params: RepositoryRouteParams;
@@ -21,9 +19,13 @@ export default function RepositoryPage({
   const {
     repositories: { repositories },
   } = useWorkspace();
+
   const repository = useMemo(
     () => repositories.find((repo) => repo.slug === params.repository),
     [params.repository, repositories]
   );
-  return <RepositorySection repository={repository} />;
+
+  if (!repository) return <></>;
+
+  return <RepositoryBranchesSection repository={repository} />;
 }

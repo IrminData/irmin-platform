@@ -22,7 +22,7 @@ export default function DatatableColumnsTable({
   return (
     <div className='overflow-scroll p-2 text-[8px]'>
       <p className='mb-2 text-xs text-irmin_blue dark:text-white'>
-        "{schema.table}" {dict.repository.schema.tableSchema}
+        {schema.table} - {dict.repository.schema.tableSchema}
       </p>
       <table className='border-seperate w-full table-auto gap-2 text-left'>
         <thead>

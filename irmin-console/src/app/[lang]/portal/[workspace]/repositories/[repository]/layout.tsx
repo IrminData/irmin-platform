@@ -4,6 +4,8 @@ import { Locale } from '@/dictionaries';
 
 import RepositoryLayoutWrapper from '@/components/repository/RepositoryLayoutWrapper';
 
+import { DataProvider } from '@/context/DataContext';
+
 /**
  * Route parameter types for the Repository routes
  * eg. /[lang]/portal/[workspace]/repositories/[repository]/whatever
@@ -45,8 +47,10 @@ export default function RepositoryLayoutWithContainer({
   params: RepositoryRouteParams;
 }) {
   return (
-    <RepositoryLayoutWrapper repoSlug={params.repository}>
-      {children}
-    </RepositoryLayoutWrapper>
+    <DataProvider>
+      <RepositoryLayoutWrapper repoSlug={params.repository}>
+        {children}
+      </RepositoryLayoutWrapper>
+    </DataProvider>
   );
 }

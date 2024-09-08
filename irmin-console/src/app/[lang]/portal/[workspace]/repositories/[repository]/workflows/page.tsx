@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import PortalTitle from '@/components/portal/PortalTitle';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -25,8 +27,9 @@ export default function RepositoryWorkflowsPage({
     repositories: { repositories },
   } = useWorkspace();
 
-  const repository = repositories.find(
-    (repo) => repo.slug === params.repository
+  const repository = useMemo(
+    () => repositories.find((repo) => repo.slug === params.repository),
+    [params.repository, repositories]
   );
 
   if (!repository) return <></>;

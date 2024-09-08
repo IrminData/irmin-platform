@@ -26,8 +26,10 @@ interface DataContextProps {
   dataResults: ActionSingleRunData | null;
   loadingSchema: boolean;
   schemaResults: SchemaResponse | null;
+  currentBranch: string | null;
   fetchActionSingleResults: (request: ActionSingleRunRequest) => Promise<void>;
   fetchSchemaForTables: (tables: string[]) => Promise<void>;
+  setCurrentBranch: (branch: string | null) => void;
 }
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
@@ -59,6 +61,9 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   const [schemaResults, setSchemaResults] = useState<SchemaResponse | null>(
     null
   );
+
+  // Branch state
+  const [currentBranch, setCurrentBranch] = useState<string | null>(null);
 
   /**
    * Fetch single action results from the data lakehouse
@@ -131,8 +136,10 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
         dataResults,
         loadingSchema,
         schemaResults,
+        currentBranch,
         fetchSchemaForTables,
         fetchActionSingleResults,
+        setCurrentBranch,
       }}
     >
       {children}

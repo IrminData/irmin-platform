@@ -34,6 +34,7 @@ export default function RepositorySection({
     dataResults,
     fetchSchemaForTables,
     schemaResults,
+    currentBranch,
   } = useData();
 
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
@@ -46,10 +47,11 @@ export default function RepositorySection({
     fetchActionSingleResults({
       type: 'sql',
       content: query,
+      branch: currentBranch ?? 'main',
     }).finally(() => {
       setLoadingData(false);
     });
-  }, [query, fetchActionSingleResults]);
+  }, [query, fetchActionSingleResults, currentBranch]);
 
   const updateQuery = useCallback(
     (value: string) => {
@@ -62,7 +64,7 @@ export default function RepositorySection({
   useEffect(() => {
     if (!repository || !repository.tables) return;
     fetchSchemaForTables(repository.tables);
-  }, [repository]);
+  }, [repository, fetchSchemaForTables]);
 
   useEffect(() => {
     if (!selectedTable) return;

@@ -42,6 +42,7 @@ export default function QuerySection() {
           await fetchActionSingleResults({
             type: 'sql',
             content: query,
+            branch: 'main',
           });
         }}
       />

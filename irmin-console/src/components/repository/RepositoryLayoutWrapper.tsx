@@ -1,11 +1,14 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import { usePathname } from 'next/navigation';
 
 import { IoChevronBack } from 'react-icons/io5';
 import {
   TbDatabase,
   TbFileText,
+  TbGitBranch,
   TbHistory,
   TbRun,
   TbSchema,
@@ -15,9 +18,11 @@ import {
 import Button from '@/components/common/button/Button';
 import StatusBadge from '@/components/common/status/StatusBadge';
 
-import { DataProvider } from '@/context/DataContext';
+import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
+
+import BranchSelector from './BranchSelector';
 
 /**
  * Component to wrap the Repository pages in.
@@ -35,8 +40,16 @@ export default function RepositoryLayoutWrapper({
   const currentPath = usePathname();
   const { locale, dict } = useLocale();
   const {
+    repositories: { repositories },
     workspaces: { currentWorkspace },
   } = useWorkspace();
+
+  const repository = useMemo(
+    () => repositories.find((repo) => repo.slug === repoSlug),
+    [repoSlug, repositories]
+  );
+
+  const { currentBranch, setCurrentBranch } = useData();
 
   if (!currentWorkspace) return <></>;
 
@@ -67,6 +80,14 @@ export default function RepositoryLayoutWrapper({
       icon: <TbHistory size={14} />,
     },
     {
+      title: dict.repository.tabs.branches,
+      href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/branches`,
+      active:
+        currentPath ===
+        `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/branches`,
+      icon: <TbGitBranch size={14} />,
+    },
+    {
       title: dict.repository.tabs.workflows,
       href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/workflows`,
       active:
@@ -92,6 +113,8 @@ export default function RepositoryLayoutWrapper({
     },
   ];
 
+  if (!repository) return <></>;
+
   return (
     <>
       <div className='container relative mx-auto max-w-6xl'>
@@ -105,6 +128,18 @@ export default function RepositoryLayoutWrapper({
                 {currentWorkspace.slug}/{repoSlug}
               </h1>
               <StatusBadge accessStatus={'private'} statusLabel={'Private'} />
+              <div className='ml-auto'>
+                <BranchSelector
+                  branches={repository.branches.map((branch) => ({
+                    label: branch,
+                    value: branch,
+                  }))}
+                  currentBranch={currentBranch ?? repository.branches[0]}
+                  onChangeBranch={(branch) => {
+                    setCurrentBranch(branch.value);
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -135,9 +170,7 @@ export default function RepositoryLayoutWrapper({
           ))}
         </div>
       </div>
-      <div>
-        <DataProvider>{children}</DataProvider>
-      </div>
+      <div>{children}</div>
     </>
   );
 }

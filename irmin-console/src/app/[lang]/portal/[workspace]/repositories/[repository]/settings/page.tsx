@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
 
@@ -21,8 +23,9 @@ export default function RepositorySettingsPage({
     repositories: { repositories },
   } = useWorkspace();
 
-  const repository = repositories.find(
-    (repo) => repo.slug === params.repository
+  const repository = useMemo(
+    () => repositories.find((repo) => repo.slug === params.repository),
+    [params.repository, repositories]
   );
 
   if (!repository) return <></>;

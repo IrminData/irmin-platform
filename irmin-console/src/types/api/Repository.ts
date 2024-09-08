@@ -30,6 +30,7 @@ export interface Repository {
   is_immutable: boolean;
   owner: WorkspaceUser;
   tables: string[];
+  branches: string[];
   created_at: string;
   updated_at: string;
 }
