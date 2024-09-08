@@ -221,6 +221,12 @@ const en = {
       fromTheRepository: 'from the repository',
       inTheEditor: 'in the editor, use the following syntax:',
     },
+    schema: {
+      tableSchema: 'table schema',
+      column: 'Column',
+      type: 'Type',
+      constraints: 'Constraints',
+    },
   },
   workflow: {
     allWorkflows: 'All Workflows',

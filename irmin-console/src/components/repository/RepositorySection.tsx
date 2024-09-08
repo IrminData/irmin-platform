@@ -15,6 +15,8 @@ import { useWorkspace } from '@/context/workspace';
 
 import { Repository } from '@/types/api/Repository';
 
+import DatatableColumnsTable from './DatatableColumnsTable';
+
 /**
  * Repository viewer section, provides UI for the Repository viewer Page.
  */
@@ -27,7 +29,12 @@ export default function RepositorySection({
   const {
     workspaces: { currentWorkspace },
   } = useWorkspace();
-  const { fetchActionSingleResults, dataResults } = useData();
+  const {
+    fetchActionSingleResults,
+    dataResults,
+    fetchSchemaForTables,
+    schemaResults,
+  } = useData();
 
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [query, setQuery] = useState<string>('');
@@ -44,15 +51,28 @@ export default function RepositorySection({
     });
   }, [query, fetchActionSingleResults]);
 
-  const updateQuery = (value: string) => {
-    if (loadingData) return;
-    setQuery(value);
-  };
+  const updateQuery = useCallback(
+    (value: string) => {
+      if (loadingData) return;
+      setQuery(value);
+    },
+    [loadingData]
+  );
+
+  useEffect(() => {
+    if (!repository || !repository.tables) return;
+    fetchSchemaForTables(repository.tables);
+  }, [repository]);
 
   useEffect(() => {
     if (!selectedTable) return;
     setQuery(`SELECT * FROM $[${selectedTable}]`);
   }, [selectedTable]);
+
+  const selectedTableSchema =
+    schemaResults?.data.tables.find((a) => {
+      return a.table === selectedTable;
+    }) ?? schemaResults?.data.tables[0];
 
   if (!repository || !currentWorkspace) return <></>;
 
@@ -69,6 +89,14 @@ export default function RepositorySection({
             setSelectedTable={setSelectedTable}
           />
         </div>
+        {selectedTableSchema && (
+          <div className='h-full w-max min-w-64 max-w-96 rounded-lg border bg-white pb-4 shadow-sm md:px-4 md:py-2 dark:border-gray-900 dark:bg-gray-800'>
+            <DatatableColumnsTable
+              schema={selectedTableSchema}
+              hideConstraints={true}
+            />
+          </div>
+        )}
         <div className='w-full max-w-full overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-900 dark:bg-gray-800'>
           <div className='flex w-full flex-row items-center justify-between px-4'>
             <p className='mb-0 text-lg'>{dict.repository.sqlQuery}</p>

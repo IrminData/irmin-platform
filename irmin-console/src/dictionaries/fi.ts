@@ -221,6 +221,12 @@ const fi = {
       fromTheRepository: 'tietovarastosta',
       inTheEditor: 'editorissa, käytä seuraavaa syntaksia:',
     },
+    schema: {
+      tableSchema: 'taulukon rakenne',
+      column: 'Kolumni',
+      type: 'Tyyppi',
+      constraints: 'Rajoitteet',
+    },
   },
   workflow: {
     allWorkflows: 'Kaikki prosessit',
