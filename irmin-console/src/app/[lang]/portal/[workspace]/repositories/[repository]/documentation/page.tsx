@@ -1,6 +1,7 @@
 'use client';
 
 import PortalTitle from '@/components/portal/PortalTitle';
+import DocumentationEditor from '@/components/repository/DocumentationEditor';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
@@ -8,14 +9,12 @@ import { useWorkspace } from '@/context/workspace';
 import { RepositoryRouteParams } from '../layout';
 
 /**
- * Page for the Repository workflows.
+ * Page for the Repository documentation
  *
- * @remarks
- *
- * @todo Show a list of workflows that are used to create this repository (connections, actions).
- * @todo Show a list of workflows that depend on this repository (export syncs, actions).
+ * @param props0 - The page properties
+ * @param props0.params - The page parameters from Next JS router
  */
-export default function RepositoryWorkflowsPage({
+export default function RepositoryDocumentationPage({
   params,
 }: {
   params: RepositoryRouteParams;
@@ -32,10 +31,11 @@ export default function RepositoryWorkflowsPage({
   if (!repository) return <></>;
 
   return (
-    <>
+    <div className='container relative mx-auto max-w-6xl'>
       <div className='px-2 md:px-4'>
-        <PortalTitle title={dict.repository.tabs.workflows} />
+        <PortalTitle title={dict.repository.tabs.documentation} />
+        <DocumentationEditor repository={repository} />
       </div>
-    </>
+    </div>
   );
 }

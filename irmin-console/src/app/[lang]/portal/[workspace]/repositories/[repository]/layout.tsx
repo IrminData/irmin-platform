@@ -32,12 +32,12 @@ export async function generateMetadata({
 }
 
 /**
- * Layout for the Repository pages in the Portal
+ * Layout for the Repository pages in the Portal (with container)
  * @param props0 - The layout properties
  * @param props0.params - The layout parameters from Next JS router
  * @param props0.children - The children to render
  */
-export default function RepositoryLayout({
+export default function RepositoryLayoutWithContainer({
   children,
   params,
 }: {

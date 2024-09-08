@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { AiOutlinePlayCircle } from 'react-icons/ai';
 
 import CodeMirrorEditor from '@/components/bucket/editor/partials/CodeMirrorEditor';
 import Button from '@/components/common/button/Button';
 import QueryResults from '@/components/query/QueryResults';
-import TableSelector from '@/components/repository/viewer/TableSelector';
+import TableSelector from '@/components/repository/TableSelector';
 
 import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -17,9 +17,6 @@ import { Repository } from '@/types/api/Repository';
 
 /**
  * Repository viewer section, provides UI for the Repository viewer Page.
- *
- * @todo Repositories consist of multiple tables. This component should have a way to switch between tables.
- * @todo Fetch real data from Workspace DB based on the Repository
  */
 export default function RepositorySection({
   repository,
@@ -36,7 +33,7 @@ export default function RepositorySection({
   const [query, setQuery] = useState<string>('');
   const [loadingData, setLoadingData] = useState<boolean>(false);
 
-  const runCurrentQuery = () => {
+  const runCurrentQuery = useCallback(() => {
     if (!query || query.length < 3) return;
     setLoadingData(true);
     fetchActionSingleResults({
@@ -45,7 +42,7 @@ export default function RepositorySection({
     }).finally(() => {
       setLoadingData(false);
     });
-  };
+  }, [query, fetchActionSingleResults]);
 
   const updateQuery = (value: string) => {
     if (loadingData) return;
@@ -60,7 +57,7 @@ export default function RepositorySection({
   if (!repository || !currentWorkspace) return <></>;
 
   return (
-    <>
+    <div className='container relative mx-auto max-w-6xl'>
       <div className='mb-4 flex w-full flex-col items-start gap-1 px-2 md:flex-row md:gap-2 md:px-4'>
         <div className='h-full w-max min-w-64 max-w-96 rounded-lg border bg-white pb-4 shadow-sm md:px-4 md:py-2 dark:border-gray-900 dark:bg-gray-800'>
           <p className='mb-0 p-2 text-sm text-irmin_blue md:mb-2 dark:text-irmin_light_green'>
@@ -97,7 +94,7 @@ export default function RepositorySection({
           />
         </div>
       </div>
-      <div className='flex h-[500px]'>
+      <div className='flex h-[calc(100vh-400px)] min-h-96'>
         <QueryResults
           title={`${currentWorkspace.slug} / ${repository.slug} ${selectedTable ? `/ ${selectedTable}` : ''}`}
           data={dataResults?.result ?? []}
@@ -107,6 +104,6 @@ export default function RepositorySection({
           }}
         />
       </div>
-    </>
+    </div>
   );
 }

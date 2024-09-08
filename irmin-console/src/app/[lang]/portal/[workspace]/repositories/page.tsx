@@ -23,12 +23,12 @@ export default function RepositoriesPage() {
   const loading = workspaceLoading || repositories.isLoading;
 
   return (
-    <>
+    <div className='container relative mx-auto max-w-6xl'>
       <PortalTitle title={dict.portalNavigation.links.repositories} />
       <RepositoryList
         loading={loading}
         repositories={repositories.repositories}
       />
-    </>
+    </div>
   );
 }

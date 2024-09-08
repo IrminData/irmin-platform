@@ -1,8 +1,13 @@
+/**
+ * Interface for defining a single row in a data set.
+ */
 export interface DatatableRow {
   [key: string]: string | number | boolean;
 }
 
-// Updated interface for a column in the datatable
+/**
+ * Interface for defining a column in a datatable.
+ */
 export interface DatatableColumn {
   name: string;
   type:
@@ -29,7 +34,9 @@ export interface DatatableColumn {
   foreignKey?: ForeignKeyRelation; // Optional: Defines a foreign key relation
 }
 
-// Interface for defining foreign key relations
+/**
+ * Interface for defining a foreign key relation.
+ */
 export interface ForeignKeyRelation {
   referencedTable: string; // The table being referenced
   referencedColumn: string; // The column in the referenced table
@@ -37,18 +44,22 @@ export interface ForeignKeyRelation {
   onUpdate?: 'CASCADE' | 'RESTRICT'; // Optional: What happens on update?
 }
 
-// Updated interface for the datatable schema
-export interface DatatableSchema {
-  table: string; // Name of the table
-  columns: DatatableColumn[]; // List of columns
-  indexes?: string[]; // Optional: List of indexes on the table
-  relations?: TableRelation[]; // Optional: Defines relationships to other tables
-}
-
-// Interface for defining table relations
+/**
+ * Interface for defining a relation between two tables.
+ */
 export interface TableRelation {
   relationType: 'one-to-one' | 'one-to-many' | 'many-to-one' | 'many-to-many'; // Type of relation
   relatedTable: string; // The related table
   columns: string[]; // Columns involved in the relationship
   relatedColumns: string[]; // Corresponding columns in the related table
+}
+
+/**
+ * Interface for defining the schema of a datatable.
+ */
+export interface DatatableSchema {
+  table: string; // Name of the table
+  columns: DatatableColumn[]; // List of columns
+  indexes?: string[]; // Optional: List of indexes on the table
+  relations?: TableRelation[]; // Optional: Defines relationships to other tables
 }

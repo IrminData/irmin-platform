@@ -8,9 +8,14 @@ import { useWorkspace } from '@/context/workspace';
 import { RepositoryRouteParams } from '../layout';
 
 /**
- * Page for the Repository structure viewing, like the schema.
+ * Page for the Repository workflows.
+ *
+ * @remarks
+ *
+ * @todo Show a list of workflows that are used to create this repository (connections, actions).
+ * @todo Show a list of workflows that depend on this repository (export syncs, actions).
  */
-export default function RepositoryStructurePage({
+export default function RepositoryWorkflowsPage({
   params,
 }: {
   params: RepositoryRouteParams;
@@ -27,10 +32,10 @@ export default function RepositoryStructurePage({
   if (!repository) return <></>;
 
   return (
-    <>
+    <div className='container relative mx-auto max-w-6xl'>
       <div className='px-2 md:px-4'>
-        <PortalTitle title={dict.repository.tabs.structure} />
+        <PortalTitle title={dict.repository.tabs.workflows} />
       </div>
-    </>
+    </div>
   );
 }

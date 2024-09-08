@@ -64,7 +64,7 @@ export default function DocumentationSchemaSection() {
                     label: `Repository: ${connection.repository.name}`,
                     children: connection.repository.tables.map((table) => ({
                       id: `repository-${connection.repository?.id}-table-${table}`,
-                      label: table,
+                      label: table.split('.').slice(1, -1).join('.'), // Only show part of the table name between first and last dots
                     })),
                   },
                 ]
@@ -106,7 +106,7 @@ export default function DocumentationSchemaSection() {
                     label: `Repository: ${action.repository.name}`,
                     children: action.repository.tables.map((table) => ({
                       id: `repository-${action.repository?.id}-table-${table}`,
-                      label: table,
+                      label: table.split('.').slice(1, -1).join('.'), // Only show part of the table name between first and last dots
                     })),
                   },
                 ]
@@ -131,7 +131,7 @@ export default function DocumentationSchemaSection() {
               label: repository.name,
               children: repository.tables.map((table) => ({
                 id: `repository-${repository.id}-table-${table}`,
-                label: table,
+                label: table.split('.').slice(1, -1).join('.'), // Only show part of the table name between first and last dots
               })),
             })),
         };

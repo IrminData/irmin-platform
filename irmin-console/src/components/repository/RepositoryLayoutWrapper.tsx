@@ -94,44 +94,46 @@ export default function RepositoryLayoutWrapper({
 
   return (
     <>
-      <div className='mx-auto w-full px-2 md:px-4'>
-        <div className='flex flex-col gap-2 py-4'>
-          <span className='text-sm text-gray-400'>
-            {dict.repository.repository}
-          </span>
-          <div className='flex flex-wrap items-center gap-2'>
-            <h1 className='text-lg font-normal text-irmin_black md:text-2xl dark:text-white'>
-              {currentWorkspace.slug}/{repoSlug}
-            </h1>
-            <StatusBadge accessStatus={'private'} statusLabel={'Private'} />
+      <div className='container relative mx-auto max-w-6xl'>
+        <div className='mx-auto w-full px-2 md:px-4'>
+          <div className='flex flex-col gap-2 py-4'>
+            <span className='text-sm text-gray-400'>
+              {dict.repository.repository}
+            </span>
+            <div className='flex flex-wrap items-center gap-2'>
+              <h1 className='text-lg font-normal text-irmin_black md:text-2xl dark:text-white'>
+                {currentWorkspace.slug}/{repoSlug}
+              </h1>
+              <StatusBadge accessStatus={'private'} statusLabel={'Private'} />
+            </div>
           </div>
         </div>
-      </div>
-      <div className='scrollbar-hide mb-6 flex w-full max-w-2xl justify-start gap-2 overflow-y-scroll px-4 md:gap-4'>
-        <Button
-          size='sm'
-          variant='icon'
-          colorScheme='black'
-          className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-900'
-          href={`/${locale}/portal/${workspaceSlug}/repositories`}
-          ariaLabel='Back to Repositories'
-        >
-          <IoChevronBack size={24} />
-        </Button>
-        {tabs.map((tab, idx) => (
+        <div className='scrollbar-hide mb-6 flex w-full max-w-2xl justify-start gap-2 overflow-y-scroll px-4 md:gap-4'>
           <Button
-            key={`data-repo-tab-${idx}`}
-            className={`rounded-none border-irmin_green px-2 hover:no-underline lg:px-0 ${tab.active ? 'border-b-2' : 'border-0'}`}
             size='sm'
-            variant='link'
-            colorScheme={tab.active ? 'primary' : 'gray'}
-            href={tab.href}
-            ariaLabel={`Open ${tab.title} for ${repoSlug}`}
-            icon={tab.icon}
+            variant='icon'
+            colorScheme='black'
+            className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-900'
+            href={`/${locale}/portal/${workspaceSlug}/repositories`}
+            ariaLabel='Back to Repositories'
           >
-            {tab.title}
+            <IoChevronBack size={24} />
           </Button>
-        ))}
+          {tabs.map((tab, idx) => (
+            <Button
+              key={`data-repo-tab-${idx}`}
+              className={`rounded-none border-irmin_green px-2 hover:no-underline lg:px-0 ${tab.active ? 'border-b-2' : 'border-0'}`}
+              size='sm'
+              variant='link'
+              colorScheme={tab.active ? 'primary' : 'gray'}
+              href={tab.href}
+              ariaLabel={`Open ${tab.title} for ${repoSlug}`}
+              icon={tab.icon}
+            >
+              {tab.title}
+            </Button>
+          ))}
+        </div>
       </div>
       <div>
         <DataProvider>{children}</DataProvider>
