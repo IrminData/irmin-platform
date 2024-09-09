@@ -49,7 +49,8 @@ export default function RepositoryLayoutWrapper({
     [repoSlug, repositories]
   );
 
-  const { currentBranch, setCurrentBranch } = useData();
+  const { currentBranch, setCurrentBranch, branchesResults, loadingBranches } =
+    useData();
 
   if (!currentWorkspace) return <></>;
 
@@ -129,16 +130,24 @@ export default function RepositoryLayoutWrapper({
               </h1>
               <StatusBadge accessStatus={'private'} statusLabel={'Private'} />
               <div className='ml-auto'>
-                <BranchSelector
-                  branches={repository.branches.map((branch) => ({
-                    label: branch,
-                    value: branch,
-                  }))}
-                  currentBranch={currentBranch ?? repository.branches[0]}
-                  onChangeBranch={(branch) => {
-                    setCurrentBranch(branch.value);
-                  }}
-                />
+                {branchesResults && !loadingBranches && (
+                  <BranchSelector
+                    branches={branchesResults.data.branches.map((branch) => ({
+                      label: branch.name,
+                      value: branch.name,
+                    }))}
+                    currentBranch={
+                      currentBranch ??
+                      branchesResults.data.branches.filter(
+                        (branch) => branch.default
+                      )[0].name ??
+                      'main'
+                    }
+                    onChangeBranch={(branch) => {
+                      setCurrentBranch(branch.value);
+                    }}
+                  />
+                )}
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 
@@ -9,64 +9,80 @@ import NormalList from '@/components/common/list/NormalList';
 import StatusBadge from '@/components/common/status/StatusBadge';
 import PortalTitle from '@/components/portal/PortalTitle';
 
+import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { Repository } from '@/types/api/Repository';
 import { GridRow } from '@/types/internal/ListProps';
 
 import CreateBranchModalContent from './CreateBranchModalContent';
 
 /**
  * Section to display the branches of a repository.
- * @param repository Repository to display branches for.
  */
-export default function RepositoryBranchesSection({
-  repository,
-}: {
-  repository?: Repository;
-}) {
+export default function RepositoryBranchesSection() {
   const { dict } = useLocale();
   const { irminAlert, irminModal } = usePopup();
+  const { branchesResults, loadingBranches } = useData();
 
-  const deleteBranch = (branch: string) => {
-    if (branch === 'main') {
-      irminAlert('error', dict.repository.cannotDeleteMainBranch);
-      return;
-    }
-    // TODO: Implement delete branch functionality
-    console.log('Delete branch', branch);
-  };
+  const deleteBranch = useCallback(
+    (branch: string) => {
+      if (branch === 'main') {
+        irminAlert('error', dict.repository.cannotDeleteMainBranch);
+        return;
+      }
+      // TODO: Implement delete branch functionality
+      console.log('Delete branch', branch);
+    },
+    [irminAlert, dict.repository.cannotDeleteMainBranch]
+  );
 
   const createBranch = useCallback(() => {
+    if (!branchesResults) return;
     irminModal.show(
       dict.repository.createBranch,
-      <CreateBranchModalContent branches={repository?.branches ?? []} />
+      <CreateBranchModalContent
+        branches={
+          branchesResults.data.branches.map((branch) => branch.name) ?? []
+        }
+      />
     );
-  }, [irminModal, dict.repository.createBranch, repository?.branches]);
+  }, [irminModal, dict.repository.createBranch, branchesResults]);
 
-  const rows: GridRow[] =
-    repository?.branches.map((branch, i) => {
-      return {
-        columns: [
-          <div key={`branch-${i}-name`} className='inline-flex flex-row gap-4'>
-            <p className='text-base'>{branch}</p>
-            {branch === 'main' && (
-              <StatusBadge statusLabel={dict.repository.primary} />
-            )}
-          </div>,
-        ],
-        actions: [
-          {
-            label: dict.list.delete,
-            primary: false,
-            onClick: () => {
-              deleteBranch(branch);
+  const rows: GridRow[] = useMemo(() => {
+    if (!branchesResults) return [];
+    return (
+      branchesResults.data.branches.map((branch, i) => {
+        return {
+          columns: [
+            <div
+              key={`branch-${i}-name`}
+              className='inline-flex flex-row gap-4'
+            >
+              <p className='text-base'>{branch.name}</p>
+              {branch.default && (
+                <StatusBadge statusLabel={dict.repository.primary} />
+              )}
+            </div>,
+          ],
+          actions: [
+            {
+              label: dict.list.delete,
+              primary: false,
+              onClick: () => {
+                deleteBranch(branch.name);
+              },
             },
-          },
-        ],
-      };
-    }) ?? [];
+          ],
+        };
+      }) ?? []
+    );
+  }, [
+    branchesResults,
+    dict.repository.primary,
+    dict.list.delete,
+    deleteBranch,
+  ]);
 
   return (
     <div className='container relative mx-auto max-w-6xl'>
@@ -87,7 +103,7 @@ export default function RepositoryBranchesSection({
       <NormalList
         headers={[dict.list.name, dict.list.actions]}
         hideHeaders={false}
-        loading={false}
+        loading={loadingBranches}
         rows={rows}
       />
     </div>

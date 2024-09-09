@@ -180,7 +180,9 @@ export default function EditorLayoutWrapper({
           id='editor-page-content'
         >
           <EditorContextProvider>
-            <DataProvider>{children}</DataProvider>
+            <DataProvider initialRepository={null} initialBranch={'main'}>
+              {children}
+            </DataProvider>
           </EditorContextProvider>
         </div>
       </div>

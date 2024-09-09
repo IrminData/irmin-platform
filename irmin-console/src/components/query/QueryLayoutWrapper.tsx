@@ -52,7 +52,9 @@ export default function EditorLayoutWrapper({
       </div>
       <div className='ml-10 flex-1 flex-shrink overflow-x-hidden lg:ml-0'>
         <div className='flex h-full w-full flex-col' id='query-page-content'>
-          <DataProvider>{children}</DataProvider>
+          <DataProvider initialRepository={null} initialBranch={'main'}>
+            {children}
+          </DataProvider>
         </div>
       </div>
     </div>

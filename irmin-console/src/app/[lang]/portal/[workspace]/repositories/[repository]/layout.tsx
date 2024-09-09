@@ -47,7 +47,7 @@ export default function RepositoryLayoutWithContainer({
   params: RepositoryRouteParams;
 }) {
   return (
-    <DataProvider>
+    <DataProvider initialRepository={params.repository} initialBranch={'main'}>
       <RepositoryLayoutWrapper repoSlug={params.repository}>
         {children}
       </RepositoryLayoutWrapper>

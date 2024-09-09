@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AiOutlinePlayCircle } from 'react-icons/ai';
 
@@ -31,25 +31,22 @@ export default function RepositorySection({
   } = useWorkspace();
   const {
     fetchActionSingleResults,
+    loadingData,
     dataResults,
-    fetchSchemaForTables,
+    loadingSchema,
     schemaResults,
     currentBranch,
   } = useData();
 
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [query, setQuery] = useState<string>('');
-  const [loadingData, setLoadingData] = useState<boolean>(false);
 
   const runCurrentQuery = useCallback(() => {
     if (!query || query.length < 3) return;
-    setLoadingData(true);
     fetchActionSingleResults({
       type: 'sql',
       content: query,
       branch: currentBranch ?? 'main',
-    }).finally(() => {
-      setLoadingData(false);
     });
   }, [query, fetchActionSingleResults, currentBranch]);
 
@@ -62,21 +59,18 @@ export default function RepositorySection({
   );
 
   useEffect(() => {
-    if (!repository || !repository.tables) return;
-    fetchSchemaForTables(repository.tables);
-  }, [repository, fetchSchemaForTables]);
-
-  useEffect(() => {
     if (!selectedTable) return;
     setQuery(`SELECT * FROM $[${selectedTable}]`);
   }, [selectedTable]);
 
-  const selectedTableSchema =
-    schemaResults?.data.tables.find((a) => {
-      return a.table === selectedTable;
-    }) ?? schemaResults?.data.tables[0];
-
-  if (!repository || !currentWorkspace) return <></>;
+  const selectedTableSchema = useMemo(() => {
+    if (loadingSchema) return;
+    return (
+      schemaResults?.data.tables.find((a) => {
+        return a.table === selectedTable;
+      }) ?? schemaResults?.data.tables[0]
+    );
+  }, [schemaResults, selectedTable, loadingSchema]);
 
   return (
     <div className='container relative mx-auto max-w-6xl'>
@@ -85,11 +79,13 @@ export default function RepositorySection({
           <p className='mb-0 p-2 text-sm text-irmin_blue md:mb-2 dark:text-irmin_light_green'>
             {dict.repository.dataTables}
           </p>
-          <TableSelector
-            repository={repository}
-            selectedTable={selectedTable}
-            setSelectedTable={setSelectedTable}
-          />
+          {repository && (
+            <TableSelector
+              repository={repository}
+              selectedTable={selectedTable}
+              setSelectedTable={setSelectedTable}
+            />
+          )}
         </div>
         {selectedTableSchema && (
           <div className='h-full w-max min-w-64 max-w-96 rounded-lg border bg-white pb-4 shadow-sm md:px-4 md:py-2 dark:border-gray-900 dark:bg-gray-800'>
@@ -126,12 +122,17 @@ export default function RepositorySection({
       </div>
       <div className='flex h-[calc(100vh-400px)] min-h-96'>
         <QueryResults
-          title={`${currentWorkspace.slug} / ${repository.slug} ${selectedTable ? `/ ${selectedTable}` : ''}`}
+          title={
+            currentWorkspace && repository
+              ? `${currentWorkspace.slug} / ${repository.slug} ${selectedTable ? `/ ${selectedTable}` : ''}`
+              : ''
+          }
           data={dataResults?.result ?? []}
           metadata={{
             rowsReturned: dataResults?.metadata?.rowsReturned,
             timeTaken: dataResults?.metadata?.timeTaken,
           }}
+          loading={loadingData}
         />
       </div>
     </div>

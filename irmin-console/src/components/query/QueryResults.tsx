@@ -29,6 +29,7 @@ const QueryResults = ({
   title,
   data,
   metadata,
+  loading,
   onSave,
   onRun,
   workflow,
@@ -39,6 +40,7 @@ const QueryResults = ({
     rowsReturned?: number;
     timeTaken?: number;
   };
+  loading?: boolean;
   onSave?: () => Promise<void>;
   onRun?: () => Promise<void>;
   workflow?: ActionWorkflow;
@@ -178,7 +180,7 @@ const QueryResults = ({
               variant='solid'
               size='sm'
               className='text-xs'
-              loading={processingRun}
+              loading={processingRun || loading}
               onClick={() => {
                 setProcessingRun(true);
                 onRun().finally(() => {
@@ -228,13 +230,13 @@ const QueryResults = ({
           </div>
           {/* Table */}
           <div className='flex h-0 flex-1 flex-col overflow-hidden'>
-            {processingRun ? <LoadingSkeleton /> : <></>}
+            {processingRun || loading ? <LoadingSkeleton /> : <></>}
             {!data || !filteredItems || filteredItems.length === 0 ? (
               <div className='w-full px-4 py-12 text-center text-gray-400'>
                 {dict.query.noResults}
               </div>
             ) : (
-              <AdvancedDatatable items={filteredItems} />
+              <AdvancedDatatable items={!loading ? filteredItems : []} />
             )}
           </div>
         </>

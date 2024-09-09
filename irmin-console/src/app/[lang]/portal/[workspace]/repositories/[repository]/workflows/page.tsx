@@ -1,13 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
-
 import PortalTitle from '@/components/portal/PortalTitle';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
-
-import { RepositoryRouteParams } from '../layout';
 
 /**
  * Page for the Repository workflows.
@@ -17,22 +12,8 @@ import { RepositoryRouteParams } from '../layout';
  * @todo Show a list of workflows that are used to create this repository (connections, actions).
  * @todo Show a list of workflows that depend on this repository (export syncs, actions).
  */
-export default function RepositoryWorkflowsPage({
-  params,
-}: {
-  params: RepositoryRouteParams;
-}) {
+export default function RepositoryWorkflowsPage() {
   const { dict } = useLocale();
-  const {
-    repositories: { repositories },
-  } = useWorkspace();
-
-  const repository = useMemo(
-    () => repositories.find((repo) => repo.slug === params.repository),
-    [params.repository, repositories]
-  );
-
-  if (!repository) return <></>;
 
   return (
     <div className='container relative mx-auto max-w-6xl'>
