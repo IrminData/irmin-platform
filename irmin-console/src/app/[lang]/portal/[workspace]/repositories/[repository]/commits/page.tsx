@@ -1,5 +1,3 @@
-'use client';
-
 import RepositoryCommitsSection from '@/components/repository/RepositoryCommitsSection';
 
 /**

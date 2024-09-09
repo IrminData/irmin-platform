@@ -8,7 +8,7 @@ import AddNewFileModal from '@/components/bucket/modals/AddNewFileModal';
 import AddNewFolderModal from '@/components/bucket/modals/AddNewFolderModal';
 import RenameOrMoveItemModal from '@/components/bucket/modals/RenameOrMoveItemModal';
 import FileNavigator from '@/components/bucket/navigator/FileNavigator';
-import RepositoryTableReferenceList from '@/components/repository/RepositoryTableReferenceList';
+import RepositoryTableReferenceList from '@/components/repository/partials/RepositoryTableReferenceList';
 
 import { useBucket } from '@/context/BucketContext';
 import { DataProvider } from '@/context/DataContext';

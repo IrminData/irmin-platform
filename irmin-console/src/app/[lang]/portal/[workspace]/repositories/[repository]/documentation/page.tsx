@@ -2,10 +2,8 @@
 
 import { useMemo } from 'react';
 
-import PortalTitle from '@/components/portal/PortalTitle';
-import DocumentationEditor from '@/components/repository/DocumentationEditor';
+import RepositoryDocumentationSection from '@/components/repository/RepositoryDocumentationSection';
 
-import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 import { RepositoryRouteParams } from '../layout';
@@ -21,7 +19,6 @@ export default function RepositoryDocumentationPage({
 }: {
   params: RepositoryRouteParams;
 }) {
-  const { dict } = useLocale();
   const {
     repositories: { repositories },
   } = useWorkspace();
@@ -33,12 +30,5 @@ export default function RepositoryDocumentationPage({
 
   if (!repository) return <></>;
 
-  return (
-    <div className='container relative mx-auto max-w-6xl'>
-      <div className='px-2 md:px-4'>
-        <PortalTitle title={dict.repository.tabs.documentation} />
-        <DocumentationEditor repository={repository} />
-      </div>
-    </div>
-  );
+  return <RepositoryDocumentationSection repository={repository} />;
 }

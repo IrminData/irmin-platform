@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import Select from 'react-select';
+import ReactSelect from 'react-select';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -38,8 +38,11 @@ export default function BranchSelector({
   );
 
   return (
-    <div className='w-60'>
-      <Select
+    <div className='flex w-60 flex-col'>
+      <span className='z-10 -mb-2 px-2 text-xs text-gray-400 dark:text-gray-600'>
+        {dict.repository.branch}
+      </span>
+      <ReactSelect
         value={selectedBranch}
         onChange={(selectedOption) => {
           if (selectedOption) {

@@ -6,9 +6,9 @@ import { Edge, Node, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useTheme } from 'next-themes';
 
-import { DatatableSchema } from '@/types/internal/Datatable';
+import DatatableColumnsTable from '@/components/repository/partials/DatatableColumnsTable';
 
-import DatatableColumnsTable from './DatatableColumnsTable';
+import { DatatableSchema } from '@/types/internal/Datatable';
 
 /**
  * Generates nodes and edges for a database schema visualization.

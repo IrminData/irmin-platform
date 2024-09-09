@@ -58,8 +58,8 @@ const RepositoryList = ({
           </span>
           <p className='text-base'>
             {item.name}
-            {item.workflow && (
-              <span className='ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-3 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+            {(item.workflow || item.is_immutable) && (
+              <span className='ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
                 {item.is_immutable
                   ? dict.list.immutable
                   : dict.list.managedByWorkflow}

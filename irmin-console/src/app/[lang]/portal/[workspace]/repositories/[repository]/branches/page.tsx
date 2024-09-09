@@ -1,5 +1,3 @@
-'use client';
-
 import RepositoryBranchesSection from '@/components/repository/RepositoryBranchesSection';
 
 /**

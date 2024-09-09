@@ -5,7 +5,6 @@ import React, { useEffect, useState } from 'react';
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
 import WrappedTabs from '@/components/common/tabs/WrappedTabs';
-import PortalTitle from '@/components/portal/PortalTitle';
 import UsersAndInvites from '@/components/workspace/UsersAndInvites';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -26,8 +25,7 @@ import { Workspace } from '@/types/api/Workspace';
 export default function WorkspaceSettingsPage() {
   const { dict } = useLocale();
   return (
-    <>
-      <PortalTitle title={dict.workspace.workspaceSettings} />
+    <div className='my-8'>
       <WrappedTabs
         tabs={[
           {
@@ -47,7 +45,7 @@ export default function WorkspaceSettingsPage() {
           },
         ]}
       />
-    </>
+    </div>
   );
 }
 
@@ -159,7 +157,7 @@ const GeneralSettings = () => {
 
   return (
     <div className='my-8 px-4'>
-      <h2 className='mb-8 font-display text-xl font-bold sm:text-2xl lg:text-3xl'>
+      <h2 className='mb-8 font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
         {dict.workspace.generalSettings}
       </h2>
       <div className='pb-8'>
@@ -243,11 +241,11 @@ const GeneralSettings = () => {
  *
  * Currently Billing is not implemented, thus it only shows a contact us button.
  */
-const BillingSettings: React.FC = () => {
+const BillingSettings = () => {
   const { dict } = useLocale();
   return (
     <div className='my-8 px-4'>
-      <h2 className='mb-8 font-display text-xl font-bold sm:text-2xl lg:text-3xl'>
+      <h2 className='mb-8 font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
         {dict.workspace.billingSettings}
       </h2>
       <p className='mb-4 font-normal text-gray-500'>

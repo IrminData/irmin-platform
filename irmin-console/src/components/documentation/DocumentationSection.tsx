@@ -138,8 +138,8 @@ export default function DocumentationSection({
                       <div className='flex flex-row justify-between gap-2'>
                         <h3 className='text-xl text-irmin_black dark:text-white'>
                           {item.name}
-                          {item.workflow && (
-                            <span className='ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-3 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+                          {(item.workflow || item.is_immutable) && (
+                            <span className='l ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
                               {item.is_immutable
                                 ? dict.list.immutable
                                 : dict.list.managedByWorkflow}

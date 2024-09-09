@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 
-import RepositoryTableReferenceList from '@/components/repository/RepositoryTableReferenceList';
+import RepositoryTableReferenceList from '@/components/repository/partials/RepositoryTableReferenceList';
 
 import { DataProvider } from '@/context/DataContext';
 

@@ -199,19 +199,34 @@ const fi = {
     rowsReturnedIn: 'riviä palautettu ajassa',
     sqlQuery: 'SQL Kysely',
     runQuery: 'Ajaa kysely',
+    branch: 'Haaara',
     createBranch: 'Luo haara',
     primary: 'Päähaara',
     cannotDeleteMainBranch: 'Päähaaraa ei voi poistaa',
     newBranchName: 'Uuden haaran nimi',
     fromBranch: 'Haarasta',
     commitHash: 'Commit hash',
+    immutableDescription:
+      'Tämä tietovarasto on muuttumaton ja sitä ei voi muokata.',
     settings: {
+      manageTables: 'Hallinnoi taulukoita',
+      generalSettings: 'Yleiset asetukset',
       name: 'Nimi',
+      description: 'Kuvaus',
+      owner: 'Omistaja',
       saveChanges: 'Tallenna',
+      repositoryUpdated: 'Tietovarasto päivitetty onnistuneesti.',
+      errorUpdatingRepository: 'Virhe päivitettäessä tietovarastoa.',
+      repositoryOwnerChanged: 'Tietovaraston omistaja vaihdettu onnistuneesti.',
       dangerZone: 'Vaaravyöhyke',
       deletionNote:
         'Tietovaraston poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
       deleteRepository: 'Poista Tietovarasto',
+      areYouSureYouWantToDelete:
+        'Oletko varma, että haluat poistaa tämän tietovaraston?',
+      selectTableToAdd: 'Valitse taulukko lisättäväksi',
+      addTable: 'Lisää taulukko',
+      remove: 'Poista',
     },
     tabs: {
       structure: 'Struktuuri',
@@ -498,7 +513,6 @@ const fi = {
     saveChanges: 'Tallenna muutokset',
   },
   workspace: {
-    workspaceSettings: 'Työtilan asetukset',
     general: 'Yleiset',
     users: 'Käyttäjät',
     billing: 'Laskutus',

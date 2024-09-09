@@ -81,6 +81,9 @@ input[type='radio'] {
     border-radius: 0.5rem;
     font-size: 12px;
     line-height: 14px;
+    .react-select__input-container {
+      color: #01161e;
+    }
     .react-select__single-value {
       color: #0d1e25;
     }
@@ -125,6 +128,9 @@ input[type='radio'] {
       background-color: #01161e;
       border-color: #232323;
       color: white;
+      .react-select__input-container {
+        color: white;
+      }
       .react-select__single-value {
         color: #cfcece;
       }

@@ -7,7 +7,6 @@ import { AiOutlinePlayCircle } from 'react-icons/ai';
 import CodeMirrorEditor from '@/components/bucket/editor/partials/CodeMirrorEditor';
 import Button from '@/components/common/button/Button';
 import QueryResults from '@/components/query/QueryResults';
-import TableSelector from '@/components/repository/TableSelector';
 
 import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -15,7 +14,8 @@ import { useWorkspace } from '@/context/workspace';
 
 import { Repository } from '@/types/api/Repository';
 
-import DatatableColumnsTable from './DatatableColumnsTable';
+import DatatableColumnsTable from './partials/DatatableColumnsTable';
+import TableSelector from './partials/TableSelector';
 
 /**
  * Repository viewer section, provides UI for the Repository viewer Page.

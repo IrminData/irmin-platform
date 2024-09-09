@@ -2,16 +2,16 @@
 
 import { useMemo } from 'react';
 
-import RepositoryWorkflowsSection from '@/components/repository/RepositoryWorkflowsSection';
+import RepositoryTableSettingsSection from '@/components/repository/RepositoryTableSettingsSection';
 
 import { useWorkspace } from '@/context/workspace';
 
-import { RepositoryRouteParams } from '../layout';
+import { RepositoryRouteParams } from '../../layout';
 
 /**
- * Page for the Repository workflows.
+ * Page for the Repository tables settings
  */
-export default function RepositoryWorkflowsPage({
+export default function RepositoryTablesSettingsPage({
   params,
 }: {
   params: RepositoryRouteParams;
@@ -25,7 +25,5 @@ export default function RepositoryWorkflowsPage({
     [params.repository, repositories]
   );
 
-  if (!repository) return <></>;
-
-  return <RepositoryWorkflowsSection repository={repository} />;
+  return <RepositoryTableSettingsSection repository={repository} />;
 }

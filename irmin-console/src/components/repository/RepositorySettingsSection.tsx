@@ -1,0 +1,207 @@
+'use client';
+
+import { useCallback, useState } from 'react';
+
+import ReactSelect from 'react-select';
+
+import Button from '@/components/common/button/Button';
+import Input from '@/components/common/form/Input';
+
+import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
+import { useWorkspace } from '@/context/workspace';
+
+import { Repository } from '@/types/api/Repository';
+
+/**
+ * Section UI for the Repository settings
+ *
+ * @param repository - The repository to display and edit the settings for
+ */
+export default function RepositorySettingsSection({
+  repository,
+}: {
+  repository: Repository | undefined;
+}) {
+  const { dict, locale } = useLocale();
+  const { irminConfirm, irminAlert } = usePopup();
+  const {
+    workspaces: { currentWorkspace },
+    repositories: { updateRepository, deleteRepository, reassignRepository },
+  } = useWorkspace();
+
+  const [nameField, setNameField] = useState(repository?.name ?? '');
+  const [descriptionField, setDescriptionField] = useState(
+    repository?.description ?? ''
+  );
+  const [ownerField, setOwnerField] = useState(repository?.owner ?? null);
+
+  const handleUpdateRepository = useCallback(() => {
+    try {
+      if (!repository) return;
+      if (ownerField && ownerField?.id !== repository.owner.id) {
+        // Change the owner of the repository if it's different
+        reassignRepository(repository, ownerField);
+        irminAlert('success', dict.repository.settings.repositoryOwnerChanged);
+      }
+      // Update other repository details
+      const name = nameField.trim();
+      const description = descriptionField.trim();
+      if (
+        name &&
+        description &&
+        (name !== repository.name || description !== repository.description)
+      ) {
+        updateRepository(repository.slug, {
+          ...repository,
+          name,
+          description,
+        });
+        irminAlert('success', dict.repository.settings.repositoryUpdated);
+      }
+    } catch (error) {
+      irminAlert(
+        'error',
+        (error as Error)?.message ??
+          dict.repository.settings.errorUpdatingRepository
+      );
+    }
+  }, [
+    repository,
+    updateRepository,
+    reassignRepository,
+    nameField,
+    descriptionField,
+    ownerField,
+    irminAlert,
+    dict,
+  ]);
+
+  const handleDeleteRepository = useCallback(() => {
+    try {
+      if (!repository) return;
+      irminConfirm(
+        'warning',
+        dict.repository.settings.areYouSureYouWantToDelete,
+        (confirmed) => {
+          if (confirmed) {
+            deleteRepository(repository.slug);
+            irminAlert('success', dict.repository.settings.repositoryUpdated);
+          }
+        }
+      );
+    } catch (error) {
+      irminAlert(
+        'error',
+        (error as Error)?.message ??
+          dict.repository.settings.errorUpdatingRepository
+      );
+    }
+  }, [repository, irminConfirm, deleteRepository, irminAlert, dict]);
+
+  return (
+    <div className='container relative mx-auto max-w-6xl'>
+      <div className='w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-4 py-4 shadow-md md:mx-4 dark:bg-irmin_black-600'>
+        <div className='my-8 px-4'>
+          <div className='mb-8 flex flex-row items-center justify-between px-2'>
+            <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
+              {dict.repository.tabs.settings}
+            </h2>
+            <Button
+              size='sm'
+              variant='outline'
+              colorScheme='gray'
+              href={`/${locale}/portal/${currentWorkspace?.slug ?? ''}/repositories/${repository?.slug ?? ''}/settings/tables`}
+            >
+              {dict.repository.settings.manageTables}
+            </Button>
+          </div>
+          {repository?.is_immutable && (
+            <p className='text-sm font-normal text-red-800 md:text-xl dark:text-red-400'>
+              {dict.repository.immutableDescription}
+            </p>
+          )}
+          {repository && !repository?.is_immutable && (
+            <div className='flex flex-col gap-4'>
+              <div>
+                <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+                  {dict.repository.settings.name}
+                </label>
+                <Input
+                  size='sm'
+                  variant='outline'
+                  colorScheme='gray'
+                  required
+                  className='h-11 w-full'
+                  type='text'
+                  name='name'
+                  defaultValue={nameField}
+                  onChange={(e) => setNameField(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+                  {dict.repository.settings.description}
+                </label>
+                <Input
+                  size='sm'
+                  variant='outline'
+                  colorScheme='gray'
+                  required
+                  className='h-11 w-full'
+                  type='text'
+                  name='name'
+                  defaultValue={descriptionField}
+                  onChange={(e) => setDescriptionField(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+                  {dict.repository.settings.owner}
+                </label>
+                <ReactSelect
+                  value={ownerField}
+                  onChange={(newValue) => {
+                    if (!newValue) return;
+                    setOwnerField(newValue);
+                  }}
+                  options={currentWorkspace?.users ?? []}
+                  getOptionLabel={(option) => option.email}
+                  className='react-select-container'
+                  classNamePrefix='react-select'
+                />
+              </div>
+              <Button
+                className='h-11 w-full'
+                type='submit'
+                size='sm'
+                colorScheme='light'
+                variant='solid'
+                onClick={handleUpdateRepository}
+              >
+                {dict.repository.settings.saveChanges}
+              </Button>
+              <div>
+                <p className='text-sm font-normal text-red-800 md:text-xl dark:text-red-400'>
+                  {dict.repository.settings.dangerZone}
+                </p>
+                <p className='mt-2 text-xs text-gray-700 md:text-base dark:text-gray-200'>
+                  {dict.repository.settings.deletionNote}
+                </p>
+                <Button
+                  className='mt-4 dark:bg-gray-800 dark:text-white'
+                  size='sm'
+                  colorScheme='secondary'
+                  variant='outline'
+                  onClick={handleDeleteRepository}
+                >
+                  {dict.repository.settings.deleteRepository}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

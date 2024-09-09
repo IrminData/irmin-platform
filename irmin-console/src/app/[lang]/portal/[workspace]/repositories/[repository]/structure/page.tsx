@@ -1,5 +1,3 @@
-'use client';
-
 import RepositoryStructureSection from '@/components/repository/RepositoryStructureSection';
 
 /**
