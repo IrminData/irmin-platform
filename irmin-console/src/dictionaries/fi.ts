@@ -204,6 +204,7 @@ const fi = {
     cannotDeleteMainBranch: 'Päähaaraa ei voi poistaa',
     newBranchName: 'Uuden haaran nimi',
     fromBranch: 'Haarasta',
+    commitHash: 'Commit hash',
     settings: {
       name: 'Nimi',
       saveChanges: 'Tallenna',

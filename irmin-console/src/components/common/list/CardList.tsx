@@ -20,7 +20,7 @@ import { ListProps } from '@/types/internal/ListProps';
  *
  * The component is responsive and can be used in any layout.
  */
-const CardList = ({ rows, loading = false }: ListProps) => {
+const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
   const [openDetails, setOpenDetails] = useState<number[]>([]);
 
   return (
@@ -51,7 +51,7 @@ const CardList = ({ rows, loading = false }: ListProps) => {
                   </div>
                 ))}
               </div>
-              {card.actions && card.actions.length > 0 && (
+              {card.actions && card.actions.length > 0 && !noActions && (
                 <div className='mt-4 flex items-center justify-end space-x-2'>
                   <div className='flex-card flex justify-start'>
                     {card.actions

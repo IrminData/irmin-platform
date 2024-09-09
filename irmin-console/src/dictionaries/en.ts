@@ -204,6 +204,7 @@ const en = {
     cannotDeleteMainBranch: 'Cannot delete main branch',
     newBranchName: 'New branch name',
     fromBranch: 'From branch',
+    commitHash: 'Commit hash',
     settings: {
       name: 'Name',
       saveChanges: 'Save changes',
