@@ -29,7 +29,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
-    title: `Workflow ${params.workflow ?? ''} | ${formattedWorkspace} | IRMIN Portal`,
+    title: `Workflow | ${formattedWorkspace} | IRMIN Portal`,
   };
 }
 

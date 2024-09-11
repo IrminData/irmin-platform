@@ -25,7 +25,7 @@ export default function PortalWorkflowsLayoutWrapper({
 }) {
   const { dict } = useLocale();
   return (
-    <div id='portal-workflows-layout-wrapper'>
+    <div className='container relative mx-auto max-w-6xl'>
       <Tabs
         tabs={[
           {

@@ -2,16 +2,15 @@
 
 import { useEffect, useMemo } from 'react';
 
+import NormalList from '@/components/common/list/NormalList';
 import StatusBadge from '@/components/common/status/StatusBadge';
+import PortalTitle from '@/components/portal/PortalTitle';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 import { Workflow } from '@/types/api/Workflow';
 import { GridRow } from '@/types/internal/ListProps';
-
-import NormalList from '../common/list/NormalList';
-import PortalTitle from '../portal/PortalTitle';
 
 /**
  * Workflow Runs section component to show a list of runs for a workflow
@@ -23,11 +22,7 @@ const WorkflowRunsSection = ({ workflow }: { workflow: Workflow }) => {
   const { dict, locale } = useLocale();
   const {
     workspaces: { currentWorkspace },
-    workflows: {
-      workflowRuns,
-      workflowRunsLoading,
-      fetchWorkflowRunsByWorkflow,
-    },
+    workflows: { workflowRuns, fetchWorkflowRunsByWorkflow },
   } = useWorkspace();
 
   useEffect(() => {
@@ -94,7 +89,6 @@ const WorkflowRunsSection = ({ workflow }: { workflow: Workflow }) => {
           dict.list.actions,
         ]}
         hideHeaders={false}
-        loading={workflowRunsLoading}
         rows={rows}
       />
     </div>

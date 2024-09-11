@@ -112,10 +112,10 @@ export default function WorkflowLayoutWrapperContent({
         <div className='mx-auto w-full px-2 md:px-4'>
           <div className='flex flex-col py-4'>
             <div className='flex flex-row items-center divide-x divide-gray-300 dark:divide-gray-700'>
-              <span className='pr-2 text-sm text-gray-400'>
-                {dict.workflow.workflow}
-              </span>
-              <div className='px-2'>
+              <div className='flex flex-row items-center gap-2 pr-2'>
+                <span className='text-sm text-gray-400'>
+                  {dict.workflow.workflow}
+                </span>
                 <span className='rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
                   {workflow?.workflowable_type}
                 </span>
