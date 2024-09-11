@@ -269,6 +269,21 @@ const en = {
       saveChanges: 'Save changes',
       workflowUpdated: 'Workflow updated successfully.',
       errorUpdatingWorkflow: 'Error updating workflow.',
+      generalSettings: 'General Settings',
+      name: 'Name',
+      description: 'Description',
+      owner: 'Owner',
+      workflowOwnerChanged: 'Workflow owner changed successfully.',
+      dangerZone: 'Danger Zone',
+      deletionNote:
+        'Deleting this workflow will remove all data associated with it. This action is irreversible.',
+      deleteRepository: 'Delete Workflow',
+      areYouSureYouWantToDelete:
+        'Are you sure you want to delete this workflow?',
+      resumeWorkflow: 'Resume',
+      pauseWorkflow: 'Pause',
+      workflowPaused: 'Workflow paused successfully.',
+      workflowResumed: 'Workflow resumed successfully.',
     },
     connection: {
       connection: 'Connection',

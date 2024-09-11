@@ -12,7 +12,7 @@ import {
   Workflow,
   WorkflowRun,
 } from '@/types/api/Workflow';
-import { Workspace } from '@/types/api/Workspace';
+import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
 
 /**
  * Hook to update a workflow
@@ -79,6 +79,91 @@ export const useUpdateWorkflow = (
             )
           );
           break;
+      }
+      // Return the response
+      return response;
+    },
+    [
+      locale,
+      actions,
+      setActions,
+      connections,
+      setConnections,
+      exports,
+      setExports,
+    ]
+  );
+
+/**
+ * Hook to reassign a workflow
+ *
+ * @param locale - The current locale.
+ * @param actions - The list of Action Workflows
+ * @param setActions - Function to update the Action Workflows
+ * @param connections - The list of Connection Workflows
+ * @param setConnections - Function to update the Connection Workflows
+ * @param exports - The list of Export Workflows
+ * @param setExports - Function to update the Export Workflows
+ */
+export const useReassignWorkflow = (
+  locale: Locale,
+  actions: ActionWorkflow[],
+  setActions: (actions: ActionWorkflow[]) => void,
+  connections: ConnectionWorkflow[],
+  setConnections: (connections: ConnectionWorkflow[]) => void,
+  exports: ExportWorkflow[],
+  setExports: (exports: ExportWorkflow[]) => void
+) =>
+  useCallback(
+    /**
+     * Reassign a workflow using the {@link IrminCore}.
+     * Update the local context state accordingly.
+     *
+     * @param workflowId - The ID of the workflow to reassign
+     * @param newOwner - The new owner of the workflow
+     */
+    async (workflowId: number, newOwner: WorkspaceUser) => {
+      // Reassign the workflow using the workflow service
+      const { workflowService } = new IrminCore(locale);
+      const response = await workflowService.reassignWorkflow(
+        workflowId,
+        newOwner
+      );
+      // Update the local state based on the reassigned workflow and it's type
+      const reassignedWorkflow =
+        actions.find((action) => action.id === workflowId) ??
+        connections.find((connection) => connection.id === workflowId) ??
+        exports.find((exportWorkflow) => exportWorkflow.id === workflowId);
+      if (reassignedWorkflow) {
+        switch (reassignedWorkflow.workflowable_type) {
+          case 'action':
+            setActions(
+              actions.map((action) =>
+                action.id === workflowId
+                  ? { ...action, owner: newOwner }
+                  : action
+              )
+            );
+            break;
+          case 'connection':
+            setConnections(
+              connections.map((connection) =>
+                connection.id === workflowId
+                  ? { ...connection, owner: newOwner }
+                  : connection
+              )
+            );
+            break;
+          case 'export':
+            setExports(
+              exports.map((exportWorkflow) =>
+                exportWorkflow.id === workflowId
+                  ? { ...exportWorkflow, owner: newOwner }
+                  : exportWorkflow
+              )
+            );
+            break;
+        }
       }
       // Return the response
       return response;

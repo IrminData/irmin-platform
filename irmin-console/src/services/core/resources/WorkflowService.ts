@@ -191,15 +191,15 @@ class WorkflowService {
    * Reassign a Workflow to a new owner
    * {@link https://api.irmin.dev/docs#workflows-POSTv1-workflows-reassign | Irmin API docs}
    *
-   * @param workflow - The workflow to reassign
+   * @param workflowId - The ID of the workflow to reassign
    * @param newOwner - The new owner of the workflow
    *
    */
-  async reassignWorkflow(workflow: Workflow, newOwner: WorkspaceUser) {
+  async reassignWorkflow(workflowId: number, newOwner: WorkspaceUser) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-      formData.append('workflow', workflow.id.toString());
+      formData.append('workflow', workflowId.toString());
       formData.append('assignee', newOwner.id.toString());
 
       const response = await this.irminCore.fetch(`/v1/workflows/reassign`, {

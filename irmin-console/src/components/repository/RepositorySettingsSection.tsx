@@ -83,6 +83,11 @@ export default function RepositorySettingsSection({
     dict,
   ]);
 
+  /**
+   * Deletes the repository after confirming with the user
+   * Uses {@link deleteRepository} to delete the repository
+   * Shows {@link irminAlert} on success or error
+   */
   const handleDeleteRepository = useCallback(() => {
     try {
       if (!repository) return;

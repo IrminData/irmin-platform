@@ -9,6 +9,7 @@ import {
   useFetchWorkflowRuns,
   useFetchWorkflowRunsByWorkflow,
   usePauseWorkflow,
+  useReassignWorkflow,
   useResumeWorkflow,
   useUpdateWorkflow,
 } from '@/context/workspace/hooks/workflows';
@@ -113,6 +114,19 @@ const useWorkflows = ({
   );
 
   /**
+   * Hook to reassign a workflow
+   */
+  const reassignWorkflow = useReassignWorkflow(
+    locale,
+    actions,
+    setActions,
+    connections,
+    setConnections,
+    exports,
+    setExports
+  );
+
+  /**
    * Hook to delete a workflow
    */
   const deleteWorkflow = useDeleteWorkflow(
@@ -158,6 +172,7 @@ const useWorkflows = ({
     fetchWorkflowRuns,
     fetchWorkflowRunsByWorkflow,
     updateWorkflow,
+    reassignWorkflow,
     deleteWorkflow,
     pauseWorkflow,
     resumeWorkflow,

@@ -270,6 +270,21 @@ const fi = {
       saveChanges: 'Tallenna muutokset',
       workflowUpdated: 'Prosessi päivitetty onnistuneesti.',
       errorUpdatingWorkflow: 'Virhe päivitettäessä prosessia.',
+      generalSettings: 'Yleiset asetukset',
+      name: 'Nimi',
+      description: 'Kuvaus',
+      owner: 'Omistaja',
+      workflowOwnerChanged: 'Prosessin omistaja vaihdettu onnistuneesti.',
+      dangerZone: 'Vaaravyöhyke',
+      deletionNote:
+        'Prosessin poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
+      deleteRepository: 'Poista Prosessi',
+      areYouSureYouWantToDelete:
+        'Oletko varma, että haluat poistaa tämän prosessin?',
+      resumeWorkflow: 'Jatka',
+      pauseWorkflow: 'Pysäytä',
+      workflowPaused: 'Prosessi pysäytetty onnistuneesti.',
+      workflowResumed: 'Prosessi jatkettu onnistuneesti.',
     },
     connection: {
       connection: 'Yhteys',

@@ -109,6 +109,10 @@ const WorkspaceContext = createContext<{
       _workflowId: number,
       _updatedWorkflow: Workflow
     ) => Promise<IrminAPIResponse>;
+    reassignWorkflow: (
+      _workflowId: number,
+      _newOwner: WorkspaceUser
+    ) => Promise<IrminAPIResponse>;
     deleteWorkflow: (_workflowId: number) => Promise<IrminAPIResponse>;
     pauseWorkflow: (_workflowId: number) => Promise<IrminAPIResponse>;
     resumeWorkflow: (_workflowId: number) => Promise<IrminAPIResponse>;
@@ -179,6 +183,7 @@ const WorkspaceContext = createContext<{
     fetchWorkflowRuns: () => {},
     fetchWorkflowRunsByWorkflow: () => {},
     updateWorkflow: () => Promise.resolve({}),
+    reassignWorkflow: () => Promise.resolve({}),
     deleteWorkflow: () => Promise.resolve({}),
     pauseWorkflow: () => Promise.resolve({}),
     resumeWorkflow: () => Promise.resolve({}),
