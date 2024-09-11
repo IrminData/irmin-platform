@@ -263,7 +263,7 @@ const fi = {
       structure: 'Struktuuri',
       documentation: 'Dokumentaatio',
       data: 'Tieto',
-      repositories: 'Tietaovarastot',
+      logs: 'Lokit',
       settings: 'Asetukset',
     },
     settings: {

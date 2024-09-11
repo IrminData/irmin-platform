@@ -13,7 +13,7 @@ export default function WorkflowLogsPage({
   return (
     <div className='w-full gap-2 p-4 py-8 text-center'>
       <h1 className='font-display text-xl'>
-        Workflow logs for ID: {params.workflow ?? 'no workflow'}
+        Workflow logs for: {params.workflow ?? 'no workflow'}
       </h1>
       <p className='text-sm'>One day there will be logs here...</p>
     </div>

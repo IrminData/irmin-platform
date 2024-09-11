@@ -17,10 +17,10 @@ import WorkflowLayoutWrapperContent from './WorkflowLayoutWrapperContent';
  */
 export default function WorkflowLayoutWrapper({
   children,
-  workflowId,
+  workflowSlug,
 }: {
   children: React.ReactNode;
-  workflowId: number;
+  workflowSlug: string;
 }) {
   const {
     workspaces: { currentWorkspace },
@@ -29,8 +29,8 @@ export default function WorkflowLayoutWrapper({
   } = useWorkspace();
 
   const workflow = useMemo(
-    () => allWorkflows.find((item) => item.id === workflowId),
-    [workflowId, allWorkflows]
+    () => allWorkflows.find((item) => item.slug === workflowSlug),
+    [workflowSlug, allWorkflows]
   );
   const repository = useMemo(
     () =>

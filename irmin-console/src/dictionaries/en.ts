@@ -262,7 +262,7 @@ const en = {
       structure: 'Structure',
       documentation: 'Documentation',
       data: 'Data',
-      repositories: 'Repositories',
+      logs: 'Logs',
       settings: 'Settings',
     },
     settings: {

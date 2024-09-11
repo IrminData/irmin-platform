@@ -11,7 +11,7 @@ import WorkflowLayoutWrapper from '@/components/workflow/WorkflowLayoutWrapper';
  *
  * @param lang - The language of the user
  * @param workspace - The slug of the current workspace
- * @param workflow - The ID of the workflow to show logs for
+ * @param workflow - The slug of the workflow to show
  */
 export type SingleWorkflowLayoutParams = {
   lang: Locale;
@@ -29,7 +29,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
-    title: `Workflow | ${formattedWorkspace} | IRMIN Portal`,
+    title: `Workflow ${params.workflow} | ${formattedWorkspace} | IRMIN Portal`,
   };
 }
 
@@ -43,12 +43,12 @@ export default function WorkflowLayout({
   children: React.ReactNode;
   params: SingleWorkflowLayoutParams;
 }>) {
-  const workflowId = parseInt(params.workflow, 10);
-  if (Number.isNaN(workflowId)) {
+  const workflow = params.workflow;
+  if (!workflow || workflow.length === 0) {
     return notFound();
   }
   return (
-    <WorkflowLayoutWrapper workflowId={workflowId}>
+    <WorkflowLayoutWrapper workflowSlug={workflow}>
       {children}
     </WorkflowLayoutWrapper>
   );

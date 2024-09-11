@@ -31,7 +31,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
-    title: `${params.repository} | ${formattedWorkspace} | IRMIN Portal`,
+    title: `Repository ${params.repository} | ${formattedWorkspace} | IRMIN Portal`,
   };
 }
 

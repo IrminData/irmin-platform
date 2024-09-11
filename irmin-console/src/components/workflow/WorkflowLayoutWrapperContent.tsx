@@ -8,6 +8,7 @@ import { IoChevronBack } from 'react-icons/io5';
 import {
   TbDatabase,
   TbFileText,
+  TbLogs,
   TbRun,
   TbSchema,
   TbSettings,
@@ -54,19 +55,19 @@ export default function WorkflowLayoutWrapperContent({
     () => [
       {
         title: dict.workflow.tabs.runs,
-        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}`,
+        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}`,
+          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}`,
         icon: <TbRun size={14} />,
         hide: false,
       },
       {
         title: dict.repository.tabs.structure,
-        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/structure`,
+        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/structure`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/structure`,
+          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/structure`,
         icon: <TbSchema size={14} />,
       },
       {
@@ -78,19 +79,27 @@ export default function WorkflowLayoutWrapperContent({
         icon: <TbDatabase size={14} />,
       },
       {
-        title: dict.repository.tabs.documentation,
-        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/documentation`,
+        title: dict.workflow.tabs.documentation,
+        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/documentation`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/documentation`,
+          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/documentation`,
         icon: <TbFileText size={14} />,
       },
       {
-        title: dict.repository.tabs.settings,
-        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/settings`,
+        title: dict.workflow.tabs.logs,
+        href: `/portal/${workspaceSlug}/logs/workflow/${workflow?.slug}`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/settings`,
+          `/portal/${workspaceSlug}/logs/workflow/${workflow?.slug}`,
+        icon: <TbLogs size={14} />,
+      },
+      {
+        title: dict.repository.tabs.settings,
+        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/settings`,
+        active:
+          currentPath ===
+          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/settings`,
         icon: <TbSettings size={14} />,
       },
     ],

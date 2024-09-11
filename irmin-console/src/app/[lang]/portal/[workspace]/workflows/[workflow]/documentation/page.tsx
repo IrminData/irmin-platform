@@ -19,14 +19,14 @@ export default function WorkflowDocumentationPage({
 }: {
   params: SingleWorkflowLayoutParams;
 }) {
-  const workflowId = parseInt(params.workflow, 10);
+  const workflowSlug = params.workflow;
 
   const {
     workflows: { allWorkflows },
   } = useWorkspace();
   const workflow = useMemo(
-    () => allWorkflows.find((item) => item.id === workflowId),
-    [workflowId, allWorkflows]
+    () => allWorkflows.find((item) => item.slug === workflowSlug),
+    [workflowSlug, allWorkflows]
   );
   if (!workflow) return <></>;
 
