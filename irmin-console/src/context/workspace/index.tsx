@@ -100,6 +100,7 @@ const WorkspaceContext = createContext<{
     ) => Promise<IrminAPIResponse>;
   };
   workflows: {
+    allWorkflows: Workflow[];
     workflowRuns: WorkflowRun[];
     workflowRunsLoading: boolean;
     fetchWorkflowRuns: (_forceFetch?: boolean) => void;
@@ -172,6 +173,7 @@ const WorkspaceContext = createContext<{
     reassignRepository: () => Promise.resolve({}),
   },
   workflows: {
+    allWorkflows: [],
     workflowRuns: [],
     workflowRunsLoading: false,
     fetchWorkflowRuns: () => {},

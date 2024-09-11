@@ -130,6 +130,7 @@ export const WorkspaceProvider = ({
 
   // Workflows and Workflow Runs (common logic for all workflow types)
   const {
+    allWorkflows,
     workflowRuns,
     workflowRunsLoading,
     fetchWorkflowRuns,
@@ -324,6 +325,7 @@ export const WorkspaceProvider = ({
         workflows: {
           workflowRuns,
           workflowRunsLoading,
+          allWorkflows,
           fetchWorkflowRuns,
           fetchWorkflowRunsByWorkflow,
           updateWorkflow,

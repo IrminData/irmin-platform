@@ -254,6 +254,20 @@ const fi = {
   },
   workflow: {
     allWorkflows: 'Kaikki prosessit',
+    workflow: 'Prosessi',
+    tabs: {
+      runs: 'Ajot',
+      structure: 'Struktuuri',
+      documentation: 'Dokumentaatio',
+      data: 'Tieto',
+      repositories: 'Tietaovarastot',
+      settings: 'Asetukset',
+    },
+    settings: {
+      saveChanges: 'Tallenna muutokset',
+      workflowUpdated: 'Prosessi päivitetty onnistuneesti.',
+      errorUpdatingWorkflow: 'Virhe päivitettäessä prosessia.',
+    },
     connection: {
       connection: 'Yhteys',
       connections: 'Yhteydet',

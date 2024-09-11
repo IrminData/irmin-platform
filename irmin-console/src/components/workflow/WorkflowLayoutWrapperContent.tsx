@@ -7,9 +7,8 @@ import { usePathname } from 'next/navigation';
 import { IoChevronBack } from 'react-icons/io5';
 import {
   TbDatabase,
+  TbFile,
   TbFileText,
-  TbGitBranch,
-  TbHistory,
   TbRun,
   TbSchema,
   TbSettings,
@@ -21,100 +20,90 @@ import BranchSelector from '@/components/repository/partials/BranchSelector';
 
 import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+
+import { Repository } from '@/types/api/Repository';
+import { Workflow } from '@/types/api/Workflow';
+import { Workspace } from '@/types/api/Workspace';
 
 /**
- * Component to wrap the Repository pages in.
- * Provides tabs and title for the repository.
+ * Component to wrap the single Workflows pages in.
+ * Provides tabs, title and other info for the workflow.
  *
  * @param children - The children to render
  */
-export default function RepositoryLayoutWrapper({
+export default function WorkflowLayoutWrapperContent({
   children,
-  repoSlug,
+  workflow,
+  repository,
+  currentWorkspace,
 }: {
   children: React.ReactNode;
-  repoSlug: string;
+  workflow: Workflow | undefined;
+  repository: Repository | undefined;
+  currentWorkspace: Workspace | null;
 }) {
   const currentPath = usePathname();
   const { locale, dict } = useLocale();
-  const {
-    repositories: { repositories },
-    workspaces: { currentWorkspace },
-  } = useWorkspace();
-
-  const repository = useMemo(
-    () => repositories.find((repo) => repo.slug === repoSlug),
-    [repoSlug, repositories]
-  );
-
   const { currentBranch, setCurrentBranch, branchesResults } = useData();
 
   const workspaceSlug = useMemo(
     () => currentWorkspace?.slug ?? '',
     [currentWorkspace]
   );
+
   const tabs = useMemo(
     () => [
       {
-        title: dict.repository.tabs.dataViewer,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}`,
+        title: dict.workflow.tabs.runs,
+        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}`,
-        icon: <TbDatabase size={14} />,
+          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}`,
+        icon: <TbRun size={14} />,
+        hide: false,
       },
       {
         title: dict.repository.tabs.structure,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/structure`,
+        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/structure`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/structure`,
+          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/structure`,
         icon: <TbSchema size={14} />,
       },
       {
-        title: dict.repository.tabs.commits,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/commits`,
+        title: dict.workflow.tabs.data,
+        href: `/${locale}/portal/${workspaceSlug}/repositories/${repository?.slug}`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/commits`,
-        icon: <TbHistory size={14} />,
+          `/${locale}/portal/${workspaceSlug}/repositories/${repository?.slug}`,
+        icon: <TbFile size={14} />,
       },
       {
-        title: dict.repository.tabs.branches,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/branches`,
+        title: dict.workflow.tabs.repositories,
+        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/repositories`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/branches`,
-        icon: <TbGitBranch size={14} />,
-      },
-      {
-        title: dict.repository.tabs.workflows,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/workflows`,
-        active:
-          currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/workflows`,
-        icon: <TbRun size={14} />,
+          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/repositories`,
+        icon: <TbDatabase size={14} />,
       },
       {
         title: dict.repository.tabs.documentation,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/documentation`,
+        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/documentation`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/documentation`,
+          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/documentation`,
         icon: <TbFileText size={14} />,
       },
       {
         title: dict.repository.tabs.settings,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/settings`,
+        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/settings`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/settings`,
+          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/settings`,
         icon: <TbSettings size={14} />,
-        hide: repository?.is_immutable,
       },
     ],
-    [currentPath, dict, locale, repository, repoSlug, workspaceSlug]
+    [currentPath, dict, locale, workflow, repository, workspaceSlug]
   );
 
   return (
@@ -124,26 +113,29 @@ export default function RepositoryLayoutWrapper({
           <div className='flex flex-col py-4'>
             <div className='flex flex-row items-center divide-x divide-gray-300 dark:divide-gray-700'>
               <span className='pr-2 text-sm text-gray-400'>
-                {dict.repository.repository}
+                {dict.workflow.workflow}
               </span>
-              {(repository?.workflow || repository?.is_immutable) && (
-                <div className='px-2'>
-                  <span className='rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
-                    {repository.is_immutable
-                      ? dict.list.immutable
-                      : dict.list.managedByWorkflow}
-                  </span>
-                </div>
-              )}
+              <div className='px-2'>
+                <span className='rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+                  {workflow?.workflowable_type}
+                </span>
+              </div>
               <span className='px-2 text-sm text-gray-400'>
                 {dict.list.owner}: {repository?.owner.name}
               </span>
             </div>
             <div className='flex flex-wrap items-center gap-2'>
               <h1 className='text-lg font-normal text-irmin_black md:text-2xl dark:text-white'>
-                {currentWorkspace?.slug ?? '-'}/{repository?.slug ?? '-'}
+                {workflow?.name ?? '-'}
               </h1>
-              <StatusBadge accessStatus={'private'} statusLabel={'Private'} />
+              {workflow ? (
+                <StatusBadge
+                  runStatus={workflow.status}
+                  statusLabel={workflow.status}
+                />
+              ) : (
+                <></>
+              )}
               <div className='ml-auto'>
                 <BranchSelector
                   branches={
@@ -176,8 +168,8 @@ export default function RepositoryLayoutWrapper({
             variant='icon'
             colorScheme='black'
             className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-700'
-            href={`/${locale}/portal/${workspaceSlug}/repositories`}
-            ariaLabel='Back to Repositories'
+            href={`/${locale}/portal/${workspaceSlug}/workflows`}
+            ariaLabel='Back to Workflows'
           >
             <IoChevronBack size={24} />
           </Button>
@@ -192,7 +184,6 @@ export default function RepositoryLayoutWrapper({
                   variant='link'
                   colorScheme={tab.active ? 'primary' : 'gray'}
                   href={tab.href}
-                  ariaLabel={`Open ${tab.title} for ${repoSlug}`}
                   icon={tab.icon}
                 >
                   {tab.title}

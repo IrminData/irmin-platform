@@ -253,6 +253,20 @@ const en = {
   },
   workflow: {
     allWorkflows: 'All Workflows',
+    workflow: 'Workflow',
+    tabs: {
+      runs: 'Runs',
+      structure: 'Structure',
+      documentation: 'Documentation',
+      data: 'Data',
+      repositories: 'Repositories',
+      settings: 'Settings',
+    },
+    settings: {
+      saveChanges: 'Save changes',
+      workflowUpdated: 'Workflow updated successfully.',
+      errorUpdatingWorkflow: 'Error updating workflow.',
+    },
     connection: {
       connection: 'Connection',
       connections: 'Connections',

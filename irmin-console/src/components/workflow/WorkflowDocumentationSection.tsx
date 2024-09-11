@@ -13,56 +13,52 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Repository } from '@/types/api/Repository';
+import { Workflow } from '@/types/api/Workflow';
 
 /**
- * Repository Documentation section component for displaying and updating the documentation
+ * Workflow Documentation section component for displaying and updating the documentation
  *
  * @param props0 - The props
- * @param props0.repository - The repository to edit the documentation for
+ * @param props0.workflow - The workflow to editor the documentation for
  */
-const RepositoryDocumentationSection = ({
-  repository,
-}: {
-  repository: Repository;
-}) => {
+const WorkflowDocumentationSection = ({ workflow }: { workflow: Workflow }) => {
   const { irminAlert } = usePopup();
   const { dict } = useLocale();
   const {
-    repositories: { updateRepository },
+    workflows: { updateWorkflow },
   } = useWorkspace();
 
   const [currentDocumentation, setCurrentDocumentation] = useState(
-    repository.documentation ?? ''
+    workflow.documentation ?? ''
   );
   const [documentationEditorType, setDocumentationEditorType] = useState<
     'mdx' | 'plain'
   >('mdx');
 
   /**
-   * Updates the repository with the new documentation provided
-   * Uses {@link updateRepository} to update the repository details
+   * Updates the workflow with the new documentation provided
+   * Uses {@link updateWorkflow} to update the workflow details
    * Shows {@link irminAlert} on success or error
    */
-  const handleUpdateRepositoryDocumentation = useCallback(async () => {
+  const handleUpdateWorkflowDocumentation = useCallback(async () => {
     try {
-      if (!repository) return;
+      if (!workflow) return;
       const documentation = currentDocumentation.trim();
-      if (documentation && documentation !== repository.documentation) {
-        await updateRepository(repository.slug, {
-          ...repository,
+      if (documentation && documentation !== workflow.documentation) {
+        await updateWorkflow(workflow.id, {
+          ...workflow,
           documentation,
         });
-        irminAlert('success', dict.repository.settings.repositoryUpdated);
+        irminAlert('success', dict.workflow.settings.workflowUpdated);
       }
     } catch (error) {
       irminAlert(
         'error',
         (error as Error)?.message ??
-          dict.repository.settings.errorUpdatingRepository
+          dict.workflow.settings.errorUpdatingWorkflow
       );
     }
-  }, [repository, currentDocumentation, dict, irminAlert, updateRepository]);
+  }, [workflow, currentDocumentation, dict, irminAlert, updateWorkflow]);
 
   return (
     <div className='container relative mx-auto max-w-6xl'>
@@ -70,7 +66,7 @@ const RepositoryDocumentationSection = ({
         <div className='flex w-full flex-col gap-2 px-2'>
           <div className='my-4 flex flex-row items-center justify-between gap-4'>
             <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
-              {dict.repository.tabs.documentation}
+              {dict.workflow.tabs.documentation}
             </h2>
             <div className='flex flex-row items-center gap-2'>
               <Button
@@ -99,10 +95,10 @@ const RepositoryDocumentationSection = ({
                 size='sm'
                 colorScheme='primary'
                 variant='solid'
-                onClick={handleUpdateRepositoryDocumentation}
+                onClick={handleUpdateWorkflowDocumentation}
                 icon={<TbFile />}
               >
-                {dict.repository.settings.saveChanges}
+                {dict.workflow.settings.saveChanges}
               </Button>
             </div>
           </div>
@@ -136,4 +132,4 @@ const RepositoryDocumentationSection = ({
   );
 };
 
-export default RepositoryDocumentationSection;
+export default WorkflowDocumentationSection;

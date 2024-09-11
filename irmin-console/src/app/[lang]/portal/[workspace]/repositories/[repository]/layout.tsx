@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
 
+import { notFound } from 'next/navigation';
+
 import { Locale } from '@/dictionaries';
 
 import RepositoryLayoutWrapper from '@/components/repository/RepositoryLayoutWrapper';
@@ -46,6 +48,13 @@ export default function RepositoryLayoutWithContainer({
   children: React.ReactNode;
   params: RepositoryRouteParams;
 }) {
+  if (
+    !params.repository ||
+    params.repository === '' ||
+    params.repository === 'undefined'
+  ) {
+    return notFound();
+  }
   return (
     <DataProvider initialRepository={params.repository} initialBranch={'main'}>
       <RepositoryLayoutWrapper repoSlug={params.repository}>

@@ -34,17 +34,16 @@ const WorkflowList = ({
   }
 
   const rows: GridRow[] = items.map((item, i) => {
-    const type = `${item.workflowable_type}s`;
     const tableActions = [
       {
         label: dict.list.view,
         primary: true,
-        href: `/portal/${workspace}/workflows/${type}/${item.id}`,
+        href: `/portal/${workspace}/workflows/${item.id}`,
       },
       {
         label: dict.list.edit,
         primary: false,
-        href: `/portal/${workspace}/workflows/${type}/${item.id}/settings`,
+        href: `/portal/${workspace}/workflows/${item.id}/settings`,
       },
       {
         label: dict.list.logs,

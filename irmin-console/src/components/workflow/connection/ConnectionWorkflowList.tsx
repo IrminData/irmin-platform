@@ -38,12 +38,12 @@ const ConnectionWorkflowList = ({
       {
         label: dict.list.view,
         primary: true,
-        href: `/portal/${workspace}/workflows/connections/${item.id}`,
+        href: `/portal/${workspace}/workflows/${item.id}`,
       },
       {
         label: dict.list.edit,
         primary: false,
-        href: `/portal/${workspace}/workflows/connections/${item.id}/settings`,
+        href: `/portal/${workspace}/workflows/${item.id}/settings`,
       },
       {
         label: dict.list.logs,

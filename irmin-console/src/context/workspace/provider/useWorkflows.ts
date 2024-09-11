@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
@@ -66,6 +66,14 @@ const useWorkflows = ({
   const [workflowRunsFetchedFor, setWorkflowRunsFetchedFor] = useState<
     string | null
   >(null);
+
+  /**
+   * A list of all workflows (actions, connections, exports) sorted by ID.
+   */
+  const allWorkflows = useMemo(
+    () => [...actions, ...connections, ...exports].sort((a, b) => a.id - b.id),
+    [actions, connections, exports]
+  );
 
   /**
    * Hook to fetch the Workflow Runs for the current workspace.
@@ -142,6 +150,7 @@ const useWorkflows = ({
   );
 
   return {
+    allWorkflows,
     workflowRuns,
     workflowRunsLoading,
     fetchWorkflowRuns,
