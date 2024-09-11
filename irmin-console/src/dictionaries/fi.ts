@@ -255,6 +255,9 @@ const fi = {
   workflow: {
     allWorkflows: 'Kaikki prosessit',
     workflow: 'Prosessi',
+    runTime: 'Ajoaika',
+    startedAt: 'Aloitettu',
+    finishedAt: 'Valmis',
     tabs: {
       runs: 'Ajot',
       structure: 'Struktuuri',

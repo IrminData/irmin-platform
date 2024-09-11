@@ -254,6 +254,9 @@ const en = {
   workflow: {
     allWorkflows: 'All Workflows',
     workflow: 'Workflow',
+    runTime: 'Run time',
+    startedAt: 'Started at',
+    finishedAt: 'Finished at',
     tabs: {
       runs: 'Runs',
       structure: 'Structure',

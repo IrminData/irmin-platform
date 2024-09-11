@@ -390,11 +390,15 @@ export const useFetchWorkflowRuns = (
 /**
  * Hook to fetch the list of Workflow Runs for a specific workflow.
  *
+ * @param workflowRuns - The list of the current Workflow Runs
+ * @param setWorkflowRuns - Function to update the Workflow Runs state.
  * @param loading - Loading state to prevent multiple simultaneous fetches.
  * @param setLoading - Function to update the loading state.
  * @param locale - The current locale.
  */
 export const useFetchWorkflowRunsByWorkflow = (
+  workflowRuns: WorkflowRun[],
+  setWorkflowRuns: React.Dispatch<React.SetStateAction<WorkflowRun[]>>,
   loading: boolean,
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   locale: Locale
@@ -415,11 +419,23 @@ export const useFetchWorkflowRunsByWorkflow = (
         const { workflowService } = new IrminCore(locale);
         // Fetch the workflow runs for the current workspace
         const response = await workflowService.fetchRunsByWorkflow(workflowId);
-        setLoading(false);
-        return response.data;
+        // Update the local state with the fetched workflow runs
+        const fetchedRuns = response.data;
+        const newWorkflowRuns = [...workflowRuns];
+        // Remove the fetched runs from the current list
+        fetchedRuns.forEach((run) => {
+          const index = newWorkflowRuns.findIndex((r) => r.id === run.id);
+          if (index !== -1) {
+            newWorkflowRuns.splice(index, 1);
+          }
+        });
+        // Add the fetched runs to the current list
+        newWorkflowRuns.push(...fetchedRuns);
+        // Sort the list by ID and update the state
+        setWorkflowRuns(newWorkflowRuns.sort((a, b) => a.id - b.id));
       } finally {
         setLoading(false);
       }
     },
-    [loading, setLoading, locale]
+    [workflowRuns, setWorkflowRuns, loading, setLoading, locale]
   );

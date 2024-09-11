@@ -1,30 +1,102 @@
 'use client';
 
+import { useEffect, useMemo } from 'react';
+
+import StatusBadge from '@/components/common/status/StatusBadge';
+
 import { useLocale } from '@/context/LocaleContext';
+import { useWorkspace } from '@/context/workspace';
 
 import { Workflow } from '@/types/api/Workflow';
+import { GridRow } from '@/types/internal/ListProps';
+
+import NormalList from '../common/list/NormalList';
+import PortalTitle from '../portal/PortalTitle';
 
 /**
- * Workflow Runs section component
+ * Workflow Runs section component to show a list of runs for a workflow
  *
  * @param props0 - The props
  * @param props0.workflow - The workflow to editor the documentation for
- *
- * @todo Implement this component
  */
 const WorkflowRunsSection = ({ workflow }: { workflow: Workflow }) => {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
+  const {
+    workspaces: { currentWorkspace },
+    workflows: {
+      workflowRuns,
+      workflowRunsLoading,
+      fetchWorkflowRunsByWorkflow,
+    },
+  } = useWorkspace();
+
+  useEffect(() => {
+    fetchWorkflowRunsByWorkflow(workflow.id);
+  }, [workflow, fetchWorkflowRunsByWorkflow]);
+
+  const rows: GridRow[] = useMemo(() => {
+    if (!workflowRuns) return [];
+    const filteredRuns = workflowRuns
+      .filter((run) => run.workflow_id === workflow.id)
+      .sort(
+        (a, b) =>
+          new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+      );
+    return (
+      filteredRuns.map((run, i) => {
+        return {
+          columns: [
+            <div key={`run-${i}-time`} className='inline-flex flex-col gap-2'>
+              <p className='text-xs'>
+                {dict.workflow.startedAt}
+                {': '}
+                {new Date(run.started_at).toLocaleString(locale)}
+              </p>
+              {run.finished_at && (
+                <p className='text-xs'>
+                  {dict.workflow.finishedAt}
+                  {': '}
+                  {new Date(run.finished_at).toLocaleString(locale)}
+                </p>
+              )}
+            </div>,
+            <div key={`run-${i}-owner`} className='inline-flex flex-col gap-2'>
+              <p className='text-xs'>
+                {dict.list.owner}: {run.owner.name}
+              </p>
+            </div>,
+            <div key={`run-${i}-status`} className='inline-flex flex-col gap-2'>
+              <StatusBadge runStatus={run.status} statusLabel={run.status} />
+            </div>,
+          ],
+          actions: [
+            {
+              label: dict.list.logs,
+              primary: false,
+              href: `/portal/${currentWorkspace?.slug}/logs/workflow/${workflow.id}`,
+            },
+          ],
+        };
+      }) ?? []
+    );
+  }, [workflowRuns, currentWorkspace, workflow, locale, dict]);
 
   return (
     <div className='container relative mx-auto max-w-6xl'>
-      <div className='px-2 md:px-4'>
-        <div className='flex w-full flex-col gap-2 px-2'>
-          <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
-            {dict.workflow.workflow} {dict.workflow.tabs.runs}
-          </h2>
-          <p>{workflow.name}</p>
-        </div>
-      </div>
+      <PortalTitle
+        title={`${dict.workflow.workflow} ${dict.workflow.tabs.runs}`}
+      />
+      <NormalList
+        headers={[
+          dict.workflow.runTime,
+          dict.list.owner,
+          dict.list.status,
+          dict.list.actions,
+        ]}
+        hideHeaders={false}
+        loading={workflowRunsLoading}
+        rows={rows}
+      />
     </div>
   );
 };

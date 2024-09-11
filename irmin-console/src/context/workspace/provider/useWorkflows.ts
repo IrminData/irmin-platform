@@ -92,6 +92,8 @@ const useWorkflows = ({
    * Hook to fetch the workflowRuns for a specific workflow.
    */
   const fetchWorkflowRunsByWorkflow = useFetchWorkflowRunsByWorkflow(
+    workflowRuns,
+    setWorkflowRuns,
     workflowRunsLoading,
     setWorkflowRunsLoading,
     locale
