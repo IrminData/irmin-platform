@@ -384,8 +384,10 @@ input[type='radio'] {
 }
 
 /* ReactFlow styles */
-#tree-chart .react-flow,
-#db-schema-chart .react-flow {
+#tree-chart .react-flow {
+  background: transparent !important;
+}
+#workflow-schema-chart .react-flow {
   background: transparent !important;
   .react-flow__node-input,
   .react-flow__node-default,

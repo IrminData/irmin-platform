@@ -4,7 +4,6 @@ import { useEffect, useMemo } from 'react';
 
 import NormalList from '@/components/common/list/NormalList';
 import StatusBadge from '@/components/common/status/StatusBadge';
-import PortalTitle from '@/components/portal/PortalTitle';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
@@ -78,9 +77,35 @@ const WorkflowRunsSection = ({ workflow }: { workflow: Workflow }) => {
 
   return (
     <div className='container relative mx-auto max-w-6xl'>
-      <PortalTitle
-        title={`${dict.workflow.workflow} ${dict.workflow.tabs.runs}`}
-      />
+      <div className='my-8 px-4'>
+        <div className='mb-8 flex flex-row items-center justify-between px-2'>
+          <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
+            {dict.workflow.workflow} {dict.workflow.tabs.runs}
+          </h2>
+          <div className='flex flex-col gap-1 text-sm text-gray-400 lg:text-base'>
+            <p>
+              {dict.list.syncInterval}:{' '}
+              {workflow.cron_syntax
+                ? workflow.cron_syntax
+                : dict.list.notScheduled}
+            </p>
+            <p>
+              {dict.list.prevSync}
+              {': '}
+              {workflow.last_run_at
+                ? new Date(workflow.last_run_at).toLocaleString(locale)
+                : '-'}
+            </p>
+            <p>
+              {dict.list.nextSync}
+              {': '}
+              {workflow.next_run_at
+                ? new Date(workflow.next_run_at).toLocaleString(locale)
+                : '-'}
+            </p>
+          </div>
+        </div>
+      </div>
       <NormalList
         headers={[
           dict.workflow.runTime,

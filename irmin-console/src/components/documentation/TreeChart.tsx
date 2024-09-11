@@ -91,17 +91,29 @@ const generateFlowData = (tree: TreeNode): { nodes: Node[]; edges: Edge[] } => {
 /**
  * Component to visualise a tree chart using `ReactFlow`.
  *
- * @param tree - The tree data to visualise.
+ * @param props - The component props.
+ * @param props.tree - The tree data to visualise.
+ * @param props.className - Optional class name for the container.
+ *
  * @returns A React component displaying the tree chart.
  */
-export default function TreeChart({ tree }: { tree: TreeNode }) {
+export default function TreeChart({
+  tree,
+  className,
+}: {
+  tree: TreeNode;
+  className?: string;
+}) {
   const { theme } = useTheme();
 
   // Generate flow data from the tree data structure
   const { nodes, edges } = useMemo(() => generateFlowData(tree), [tree]);
 
   return (
-    <div className='h-[calc(100vh-120px)] w-full' id='tree-chart'>
+    <div
+      className={className ?? 'h-[calc(100vh-120px)] w-full'}
+      id='tree-chart'
+    >
       <ReactFlow
         defaultNodes={nodes}
         defaultEdges={edges}
