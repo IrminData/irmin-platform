@@ -22,17 +22,19 @@ const googleSheetsKPIsConnection = (last = false): ConnectionWorkflow => ({
   description:
     'This an example Connection Workflow for syncing KPIs from Google Sheets',
   documentation:
-    'This workflow is not scheduled and should be ran manually when needed. It is used as the destination for the Export Workflow example.',
+    '# Some docs here...  \n This workflow is not scheduled and should be ran manually when needed. It is used as the destination for the Export Workflow example.',
   cron_syntax: null,
   last_run_at: getRandomDateTimeString(10, 'past', 2),
   next_run_at: null,
   status: 'paused',
-  repository: !last ? repositories(true)[5] : undefined,
+  repository: !last
+    ? repositories(true).find((a) => a.slug === 'google-sheets-kpis')
+    : undefined,
   workflowable_type: 'connection',
   workflowable: {
-    details: "{googleApiKey:'pk-123123',username:'admin'}",
-    settings: "{path:'/business/financials/KPIs.xlsx'}",
-    connector: connectors()[4],
+    details: JSON.stringify({ googleApiKey: 'pk-123123', username: 'admin' }),
+    settings: JSON.stringify({ path: '/business/financials/KPIs.xlsx' }),
+    connector: connectors().find((c) => c.name === 'Google Sheets')!,
   },
   created_at: getRandomDateTimeString(500, 'past', 60),
   updated_at: getRandomDateTimeString(50, 'past', 10),
@@ -53,19 +55,24 @@ export const workflows = (last = false): Workflow[] => [
     owner: workspaceUsers()[0],
     description:
       'This an example Connection Workflow for syncing Google Analytics data to a Repository.',
-    documentation: '#Hello World!',
+    documentation: '# Hello World! \n This is a test documentation.',
     cron_syntax: '2 * 0 0 0',
     last_run_at: getRandomDateTimeString(2, 'past', 0),
     next_run_at: getRandomDateTimeString(2, 'future', 0),
     status: 'running',
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
-    repository: !last ? repositories(true)[1] : undefined,
+    repository: !last
+      ? repositories(true).find((a) => a.slug === 'main-google-analytics')
+      : undefined,
     workflowable_type: 'connection',
     workflowable: {
-      details: "{googleApiKey:'pk-13123123',username:'admin'}",
-      settings: "{views:'sessions,users,pageviews,events'}",
-      connector: connectors()[5],
+      details: JSON.stringify({
+        googleApiKey: 'pk-13123123',
+        username: 'admin',
+      }),
+      settings: JSON.stringify({ views: 'sessions,users,pageviews,events' }),
+      connector: connectors().find((c) => c.name === 'Google Analytics')!,
     },
   },
   {
@@ -75,14 +82,18 @@ export const workflows = (last = false): Workflow[] => [
     owner: workspaceUsers()[1],
     description:
       'This an example Export Workflow for exporting a Repository to Google Sheets Connection.',
-    documentation: '#Hello World!',
+    documentation: '# Hello World! \n This is a test documentation.',
     cron_syntax: '2 * 0 0 0',
     last_run_at: getRandomDateTimeString(2, 'past', 0),
     next_run_at: getRandomDateTimeString(2, 'future', 0),
     status: 'running',
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
-    repository: !last ? repositories(true)[6] : undefined,
+    repository: !last
+      ? repositories(true).find(
+          (a) => a.slug === 'export-kpis-to-google-sheets'
+        )
+      : undefined,
     workflowable_type: 'export',
     workflowable: {
       destination: googleSheetsKPIsConnection(true),
@@ -96,14 +107,16 @@ export const workflows = (last = false): Workflow[] => [
     owner: workspaceUsers()[2],
     description:
       'This an example of an Action Workflow for fetching app usage data and storing results in a Repository.',
-    documentation: '#Hello World!',
+    documentation: '# Hello World! \n This is a test documentation.',
     cron_syntax: '2 * 0 0 0',
     last_run_at: getRandomDateTimeString(2, 'past', 0),
     next_run_at: getRandomDateTimeString(2, 'future', 0),
     status: 'running',
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
-    repository: !last ? repositories(true)[2] : undefined,
+    repository: !last
+      ? repositories(true).find((a) => a.slug === 'app-usage-data')
+      : undefined,
     workflowable_type: 'action',
     workflowable: {
       path: '/fetch-app-usage-data.js',
@@ -116,11 +129,13 @@ export const workflows = (last = false): Workflow[] => [
     owner: workspaceUsers()[0],
     description:
       'This an example of an Action Workflow for sending receipts on orders. Results in no Repository.',
-    documentation: '#Hello World!',
+    documentation: '# Hello World! \n This is a test documentation.',
     cron_syntax: '2 * 0 0 0',
     next_run_at: getRandomDateTimeString(2, 'future', 0),
     status: 'error',
-    repository: !last ? repositories(true)[7] : undefined,
+    repository: !last
+      ? repositories(true).find((a) => a.slug === 'send-receipt-on-order')
+      : undefined,
     workflowable_type: 'action',
     workflowable: {
       path: '/send-receipt-on-order.js',
@@ -136,17 +151,19 @@ export const workflows = (last = false): Workflow[] => [
     description:
       'This an example Connection Workflow for syncing an Excel Sheet to a Repository.',
     documentation:
-      'Manually imported Excel file with KPIs and performance metrics. This workflow is not scheduled and should be ran manually when needed.',
+      '# Excel import explanation. \n Manually imported Excel file with KPIs and performance metrics. This workflow is not scheduled and should be ran manually when needed.',
     cron_syntax: null,
     last_run_at: getRandomDateTimeString(40, 'past', 10),
     next_run_at: null,
     status: 'running',
-    repository: !last ? repositories(true)[4] : undefined,
+    repository: !last
+      ? repositories(true).find((a) => a.slug === 'kpis-from-excel')
+      : undefined,
     workflowable_type: 'connection',
     workflowable: {
-      details: "{file: 'kpis.xlsx'}",
+      details: JSON.stringify({ file: 'kpis.xlsx' }),
       settings: '{}',
-      connector: connectors()[6],
+      connector: connectors().find((c) => c.name === 'Excel')!,
     },
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
@@ -163,12 +180,14 @@ export const workflows = (last = false): Workflow[] => [
     cron_syntax: '2 * 0 0 0',
     next_run_at: getRandomDateTimeString(2, 'future', 0),
     status: 'running',
-    repository: !last ? repositories(true)[4] : undefined,
+    repository: !last
+      ? repositories(true).find((a) => a.slug === 'management-data-from-excel')
+      : undefined,
     workflowable_type: 'connection',
     workflowable: {
-      details: "{file: 'management-and-hr.xlsx'}",
+      details: JSON.stringify({ file: 'management-and-hr.xlsx' }),
       settings: '{}',
-      connector: connectors()[6],
+      connector: connectors().find((c) => c.name === 'Excel')!,
     },
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
@@ -181,12 +200,14 @@ export const workflows = (last = false): Workflow[] => [
     owner: workspaceUsers()[3],
     description:
       'This is an example Action Workflow for querying top 100 ad clicking users.',
-    documentation: '#Hello World!',
+    documentation: '# Hello World! \n This is a test documentation.',
     cron_syntax: '2 * 0 0 0',
     last_run_at: getRandomDateTimeString(2, 'past', 0),
     next_run_at: getRandomDateTimeString(2, 'future', 0),
     status: 'running',
-    repository: !last ? repositories(true)[8] : undefined,
+    repository: !last
+      ? repositories(true).find((a) => a.slug === 'top-100-ad-clicking-users')
+      : undefined,
     workflowable_type: 'action',
     workflowable: {
       path: '/find-top-100-ad-clicking-users.sql',

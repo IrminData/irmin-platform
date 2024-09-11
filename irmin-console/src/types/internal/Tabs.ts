@@ -7,6 +7,7 @@ export interface TabDetails {
   icon?: React.JSX.Element;
   content?: React.JSX.Element;
   link?: string;
+  hidden?: boolean;
 }
 
 /**

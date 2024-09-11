@@ -84,12 +84,6 @@ const WorkflowRunsSection = ({ workflow }: { workflow: Workflow }) => {
           </h2>
           <div className='flex flex-col gap-1 text-sm text-gray-400 lg:text-base'>
             <p>
-              {dict.list.syncInterval}:{' '}
-              {workflow.cron_syntax
-                ? workflow.cron_syntax
-                : dict.list.notScheduled}
-            </p>
-            <p>
               {dict.list.prevSync}
               {': '}
               {workflow.last_run_at

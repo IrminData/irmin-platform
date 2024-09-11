@@ -53,18 +53,12 @@ export default function RepositorySettingsSection({
       // Update other repository details
       const name = nameField.trim();
       const description = descriptionField.trim();
-      if (
-        name &&
-        description &&
-        (name !== repository.name || description !== repository.description)
-      ) {
-        await updateRepository(repository.slug, {
-          ...repository,
-          name,
-          description,
-        });
-        irminAlert('success', dict.repository.settings.repositoryUpdated);
-      }
+      await updateRepository(repository.slug, {
+        ...repository,
+        name,
+        description,
+      });
+      irminAlert('success', dict.repository.settings.repositoryUpdated);
     } catch (error) {
       irminAlert(
         'error',
@@ -111,7 +105,7 @@ export default function RepositorySettingsSection({
   }, [repository, irminConfirm, deleteRepository, irminAlert, dict]);
 
   return (
-    <div className='container relative mx-auto max-w-6xl'>
+    <div className='container relative mx-auto my-8 max-w-6xl'>
       <div className='w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-4 py-4 shadow-md md:mx-4 dark:bg-irmin_black-600'>
         <div className='my-8 px-4'>
           <div className='mb-8 flex flex-row items-center justify-between px-2'>
@@ -120,7 +114,7 @@ export default function RepositorySettingsSection({
             </h2>
             <Button
               size='sm'
-              variant='outline'
+              variant='link'
               colorScheme='gray'
               href={`/${locale}/portal/${currentWorkspace?.slug ?? ''}/repositories/${repository?.slug ?? ''}/settings/tables`}
             >
@@ -195,7 +189,7 @@ export default function RepositorySettingsSection({
               >
                 {dict.repository.settings.saveChanges}
               </Button>
-              <div>
+              <div className='mt-8'>
                 <p className='text-sm font-normal text-red-800 md:text-xl dark:text-red-400'>
                   {dict.repository.settings.dangerZone}
                 </p>

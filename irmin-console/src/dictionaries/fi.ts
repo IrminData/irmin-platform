@@ -267,13 +267,31 @@ const fi = {
       settings: 'Asetukset',
     },
     settings: {
+      general: 'Yleiset',
+      connection: 'Yhteysprosessi',
+      action: 'Toimintoprosessi',
+      export: 'Vientiprosessi',
       saveChanges: 'Tallenna muutokset',
       workflowUpdated: 'Prosessi päivitetty onnistuneesti.',
       errorUpdatingWorkflow: 'Virhe päivitettäessä prosessia.',
       generalSettings: 'Yleiset asetukset',
+      connectionDetails: 'Yhteyden tiedot',
+      actionDetails: 'Toiminnon tiedot',
+      exportDetails: 'Viennin tiedot',
       name: 'Nimi',
+      syncInterval: 'Synkronointiväli',
       description: 'Kuvaus',
       owner: 'Omistaja',
+      actionProps: {
+        executable: 'Suoritettava tiedosto',
+      },
+      connectionProps: {
+        connector: 'Yhdistin',
+      },
+      exportProps: {
+        sourceRepository: 'Lähde Tietovarasto',
+        destinationConnection: 'Kohde Yhteys',
+      },
       workflowOwnerChanged: 'Prosessin omistaja vaihdettu onnistuneesti.',
       dangerZone: 'Vaaravyöhyke',
       deletionNote:

@@ -68,13 +68,11 @@ export default function RepositoryTableSettingsSection({
         setTables(uniqueTables);
       }
       // Update repository tables
-      if (uniqueTables && uniqueTables.length > 0) {
-        await updateRepository(repository.slug, {
-          ...repository,
-          tables: uniqueTables,
-        });
-        irminAlert('success', dict.repository.settings.repositoryUpdated);
-      }
+      await updateRepository(repository.slug, {
+        ...repository,
+        tables: uniqueTables,
+      });
+      irminAlert('success', dict.repository.settings.repositoryUpdated);
     } catch (error) {
       irminAlert(
         'error',
@@ -85,7 +83,7 @@ export default function RepositoryTableSettingsSection({
   }, [repository, updateRepository, tables, irminAlert, dict]);
 
   return (
-    <div className='container relative mx-auto max-w-6xl'>
+    <div className='container relative mx-auto my-8 max-w-6xl'>
       <div className='w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-4 py-4 shadow-md md:mx-4 dark:bg-irmin_black-600'>
         <div className='my-8 px-4'>
           <div className='mb-8 flex flex-row items-center justify-between px-2'>
@@ -94,7 +92,7 @@ export default function RepositoryTableSettingsSection({
             </h2>
             <Button
               size='sm'
-              variant='outline'
+              variant='link'
               colorScheme='gray'
               href={`/${locale}/portal/${currentWorkspace?.slug ?? ''}/repositories/${repository?.slug ?? ''}/settings`}
             >
@@ -108,7 +106,7 @@ export default function RepositoryTableSettingsSection({
           )}
           {repository && !repository?.is_immutable && (
             <div className='flex flex-col'>
-              <span className='px-2 text-xs text-gray-400 dark:text-gray-600'>
+              <span className='pb-2 text-xs text-gray-400 dark:text-gray-600'>
                 {dict.repository.settings.selectTableToAdd}
               </span>
               <div className='flex w-full flex-row items-center justify-normal gap-2'>
@@ -131,7 +129,7 @@ export default function RepositoryTableSettingsSection({
                 <Button
                   className='min-w-24'
                   size='sm'
-                  colorScheme='gray'
+                  colorScheme='secondary'
                   variant='solid'
                   onClick={() => {
                     if (newTable) setTables([...tables, newTable]);

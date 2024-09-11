@@ -266,13 +266,31 @@ const en = {
       settings: 'Settings',
     },
     settings: {
+      general: 'General',
+      connection: 'Connection',
+      action: 'Action',
+      export: 'Export',
       saveChanges: 'Save changes',
       workflowUpdated: 'Workflow updated successfully.',
       errorUpdatingWorkflow: 'Error updating workflow.',
       generalSettings: 'General Settings',
+      connectionDetails: 'Connection Details',
+      actionDetails: 'Action Details',
+      exportDetails: 'Export Details',
       name: 'Name',
+      syncInterval: 'Sync interval',
       description: 'Description',
       owner: 'Owner',
+      actionProps: {
+        executable: 'Executable file',
+      },
+      connectionProps: {
+        connector: 'Connector',
+      },
+      exportProps: {
+        sourceRepository: 'Source Repository',
+        destinationConnection: 'Destination Connection',
+      },
       workflowOwnerChanged: 'Workflow owner changed successfully.',
       dangerZone: 'Danger Zone',
       deletionNote:

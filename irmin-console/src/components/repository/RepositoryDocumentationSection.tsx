@@ -48,13 +48,11 @@ const RepositoryDocumentationSection = ({
     try {
       if (!repository) return;
       const documentation = currentDocumentation.trim();
-      if (documentation && documentation !== repository.documentation) {
-        await updateRepository(repository.slug, {
-          ...repository,
-          documentation,
-        });
-        irminAlert('success', dict.repository.settings.repositoryUpdated);
-      }
+      await updateRepository(repository.slug, {
+        ...repository,
+        documentation,
+      });
+      irminAlert('success', dict.repository.settings.repositoryUpdated);
     } catch (error) {
       irminAlert(
         'error',

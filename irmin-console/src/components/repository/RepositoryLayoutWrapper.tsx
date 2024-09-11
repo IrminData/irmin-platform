@@ -107,9 +107,9 @@ export default function RepositoryLayoutWrapper({
       {
         title: dict.repository.tabs.settings,
         href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/settings`,
-        active:
-          currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/settings`,
+        active: currentPath.includes(
+          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/settings`
+        ),
         icon: <TbSettings size={14} />,
         hide: repository?.is_immutable,
       },

@@ -98,7 +98,7 @@ export default function DatabaseSchemaChart({
   const { nodes, edges } = useMemo(() => generateFlowData(schema), [schema]);
 
   return (
-    <div className='h-[calc(100vh-230px)] w-full' id='db-schema-chart'>
+    <div className='h-[calc(100vh-230px)] w-full' id='repository-schema-chart'>
       <ReactFlow
         defaultNodes={nodes}
         defaultEdges={edges}

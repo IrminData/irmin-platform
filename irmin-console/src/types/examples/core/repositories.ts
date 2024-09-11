@@ -79,15 +79,15 @@ export const repositories = (last = false): Repository[] => [
   {
     id: 3,
     name: 'Excel KPIs',
-    slug: 'excel-kpis',
+    slug: 'kpis-from-excel',
     description:
       'This is an example of a Repository that has been created by a Connection Workflow.',
     documentation:
       '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     tables: [
-      'excel-kpis.sales.0',
-      'excel-kpis.expenses.0',
-      'excel-kpis.profit_by_month.0',
+      'kpis-from-excel.sales.0',
+      'kpis-from-excel.expenses.0',
+      'kpis-from-excel.profit_by_month.0',
     ],
     owner: workspaceUsers()[2],
     workflow: !last ? workflows(true)[4] : undefined,

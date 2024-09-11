@@ -384,16 +384,20 @@ input[type='radio'] {
 }
 
 /* ReactFlow styles */
-#tree-chart .react-flow {
-  background: transparent !important;
-}
-#workflow-schema-chart .react-flow {
+.react-flow {
   background: transparent !important;
   .react-flow__node-input,
   .react-flow__node-default,
   .react-flow__node-output,
   .react-flow__node-group {
-    padding: 0 !important;
     width: auto !important;
+  }
+}
+#repository-schema-chart .react-flow {
+  .react-flow__node-input,
+  .react-flow__node-default,
+  .react-flow__node-output,
+  .react-flow__node-group {
+    padding: 0 !important;
   }
 }
