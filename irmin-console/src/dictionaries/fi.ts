@@ -208,6 +208,8 @@ const fi = {
     commitHash: 'Commit hash',
     immutableDescription:
       'Tämä tietovarasto on muuttumaton ja sitä ei voi muokata.',
+    createNewRepository: 'Luo uusi tietovarasto',
+    repositoryCreated: 'Tietovarasto luotu onnistuneesti.',
     settings: {
       manageTables: 'Hallinnoi taulukoita',
       generalSettings: 'Yleiset asetukset',

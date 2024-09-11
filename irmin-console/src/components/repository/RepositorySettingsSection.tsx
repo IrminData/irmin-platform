@@ -36,12 +36,18 @@ export default function RepositorySettingsSection({
   );
   const [ownerField, setOwnerField] = useState(repository?.owner ?? null);
 
-  const handleUpdateRepository = useCallback(() => {
+  /**
+   * Updates the repository with the new details provided
+   * Uses {@link updateRepository} to update the repository details
+   * Uses {@link reassignRepository} to change the owner of the repository
+   * Shows {@link irminAlert} on success or error
+   */
+  const handleUpdateRepository = useCallback(async () => {
     try {
       if (!repository) return;
       if (ownerField && ownerField?.id !== repository.owner.id) {
         // Change the owner of the repository if it's different
-        reassignRepository(repository, ownerField);
+        await reassignRepository(repository, ownerField);
         irminAlert('success', dict.repository.settings.repositoryOwnerChanged);
       }
       // Update other repository details
@@ -52,7 +58,7 @@ export default function RepositorySettingsSection({
         description &&
         (name !== repository.name || description !== repository.description)
       ) {
-        updateRepository(repository.slug, {
+        await updateRepository(repository.slug, {
           ...repository,
           name,
           description,
@@ -148,11 +154,14 @@ export default function RepositorySettingsSection({
                   variant='outline'
                   colorScheme='gray'
                   required
-                  className='h-11 w-full'
+                  className='w-full'
                   type='text'
                   name='name'
                   defaultValue={descriptionField}
                   onChange={(e) => setDescriptionField(e.target.value)}
+                  longtext={{
+                    rows: 3,
+                  }}
                 />
               </div>
               <div>
@@ -175,7 +184,7 @@ export default function RepositorySettingsSection({
                 className='h-11 w-full'
                 type='submit'
                 size='sm'
-                colorScheme='light'
+                colorScheme='primary'
                 variant='solid'
                 onClick={handleUpdateRepository}
               >

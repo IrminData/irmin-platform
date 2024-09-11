@@ -48,13 +48,18 @@ export default function RepositoryTableSettingsSection({
           repositories
             .map((repo) => repo.tables)
             .flat()
-            .filter((table) => !repository?.tables.includes(table))
+            .filter((table) => tables.includes(table))
         )
       ),
-    [repositories, repository]
+    [repositories, tables]
   );
 
-  const handleUpdateRepository = useCallback(() => {
+  /**
+   * Updates the repository with the new tables provided
+   * Uses {@link updateRepository} to update the repository details
+   * Shows {@link irminAlert} on success or error
+   */
+  const handleUpdateRepository = useCallback(async () => {
     try {
       if (!repository) return;
       // Remove duplicate tables
@@ -63,8 +68,8 @@ export default function RepositoryTableSettingsSection({
         setTables(uniqueTables);
       }
       // Update repository tables
-      if (tables) {
-        updateRepository(repository.slug, {
+      if (uniqueTables && uniqueTables.length > 0) {
+        await updateRepository(repository.slug, {
           ...repository,
           tables: uniqueTables,
         });
@@ -126,7 +131,7 @@ export default function RepositoryTableSettingsSection({
                 <Button
                   className='min-w-24'
                   size='sm'
-                  colorScheme='primary'
+                  colorScheme='gray'
                   variant='solid'
                   onClick={() => {
                     if (newTable) setTables([...tables, newTable]);
@@ -160,7 +165,7 @@ export default function RepositoryTableSettingsSection({
                 className='h-11 w-full'
                 type='submit'
                 size='sm'
-                colorScheme='light'
+                colorScheme='primary'
                 variant='solid'
                 onClick={handleUpdateRepository}
               >

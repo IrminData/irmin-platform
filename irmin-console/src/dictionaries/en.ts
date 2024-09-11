@@ -207,6 +207,8 @@ const en = {
     fromBranch: 'From branch',
     commitHash: 'Commit hash',
     immutableDescription: 'This repository is immutable and cannot be edited.',
+    createNewRepository: 'Create new repository',
+    repositoryCreated: 'Repository created successfully.',
     settings: {
       manageTables: 'Manage Tables',
       generalSettings: 'General Settings',
