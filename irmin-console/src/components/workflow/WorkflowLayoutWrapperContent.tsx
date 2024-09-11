@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation';
 import { IoChevronBack } from 'react-icons/io5';
 import {
   TbDatabase,
-  TbFile,
   TbFileText,
   TbRun,
   TbSchema,
@@ -76,14 +75,6 @@ export default function WorkflowLayoutWrapperContent({
         active:
           currentPath ===
           `/${locale}/portal/${workspaceSlug}/repositories/${repository?.slug}`,
-        icon: <TbFile size={14} />,
-      },
-      {
-        title: dict.workflow.tabs.repositories,
-        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/repositories`,
-        active:
-          currentPath ===
-          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.id}/repositories`,
         icon: <TbDatabase size={14} />,
       },
       {
