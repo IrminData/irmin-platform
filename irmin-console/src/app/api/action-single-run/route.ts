@@ -1,7 +1,7 @@
 import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
-import { placeholderData } from '@/types/examples/datatableData';
+import { exampleCollectionData } from '@/types/examples/collectionData';
 
 import {
   ActionSingleRunRequest,
@@ -74,10 +74,11 @@ export async function POST(req: Request) {
 
     // TODO: Run the action and get the results
     // For now, just set some fake data
-    actionSingleRunRes.data.result = placeholderData;
+    actionSingleRunRes.data.result = exampleCollectionData;
     actionSingleRunRes.data.metadata.timeTaken = 0.1;
-    actionSingleRunRes.data.metadata.rowsReturned = placeholderData.length;
-    actionSingleRunRes.data.metadata.message = 'Placeholder data returned';
+    actionSingleRunRes.data.metadata.rowsReturned =
+      exampleCollectionData.length;
+    actionSingleRunRes.data.metadata.message = 'Example data returned';
   } catch (error) {
     // Log the error, but don't throw it
     console.error('POST /api/action-single-run error', error);

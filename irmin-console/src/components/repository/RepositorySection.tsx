@@ -14,8 +14,8 @@ import { useWorkspace } from '@/context/workspace';
 
 import { Repository } from '@/types/api/Repository';
 
-import DatatableColumnsTable from './partials/DatatableColumnsTable';
-import TableSelector from './partials/TableSelector';
+import CollectionColumnsTable from './partials/CollectionColumnsTable';
+import CollectionSelector from './partials/CollectionSelector';
 
 /**
  * Repository viewer section, provides UI for the Repository viewer Page.
@@ -38,7 +38,9 @@ export default function RepositorySection({
     currentBranch,
   } = useData();
 
-  const [selectedTable, setSelectedTable] = useState<string | null>(null);
+  const [selectedCollection, setSelectedCollection] = useState<string | null>(
+    null
+  );
   const [query, setQuery] = useState<string>('');
 
   const runCurrentQuery = useCallback(() => {
@@ -59,38 +61,38 @@ export default function RepositorySection({
   );
 
   useEffect(() => {
-    if (!selectedTable) return;
-    setQuery(`SELECT * FROM $[${selectedTable}]`);
-  }, [selectedTable]);
+    if (!selectedCollection) return;
+    setQuery(`SELECT * FROM $[${selectedCollection}]`);
+  }, [selectedCollection]);
 
-  const selectedTableSchema = useMemo(() => {
+  const selectedCollectionSchema = useMemo(() => {
     if (loadingSchema) return;
     return (
-      schemaResults?.data.tables.find((a) => {
-        return a.table === selectedTable;
-      }) ?? schemaResults?.data.tables[0]
+      schemaResults?.data.collections.find((schema) => {
+        return schema.name === selectedCollection;
+      }) ?? schemaResults?.data.collections[0]
     );
-  }, [schemaResults, selectedTable, loadingSchema]);
+  }, [schemaResults, selectedCollection, loadingSchema]);
 
   return (
     <div className='container relative mx-auto max-w-6xl'>
       <div className='mb-4 flex w-full flex-col items-start gap-1 px-2 md:flex-row md:gap-2 md:px-4'>
         <div className='h-full w-max min-w-64 max-w-96 rounded-lg border bg-white pb-4 shadow-sm md:px-4 md:py-2 dark:border-gray-900 dark:bg-gray-800'>
           <p className='mb-0 p-2 text-sm text-irmin_blue md:mb-2 dark:text-irmin_light_green'>
-            {dict.repository.dataTables}
+            {dict.repository.collections}
           </p>
           {repository && (
-            <TableSelector
+            <CollectionSelector
               repository={repository}
-              selectedTable={selectedTable}
-              setSelectedTable={setSelectedTable}
+              selectedCollection={selectedCollection}
+              setSelectedCollection={setSelectedCollection}
             />
           )}
         </div>
-        {selectedTableSchema && (
+        {selectedCollectionSchema && (
           <div className='h-full w-max min-w-64 max-w-96 rounded-lg border bg-white pb-4 shadow-sm md:px-4 md:py-2 dark:border-gray-900 dark:bg-gray-800'>
-            <DatatableColumnsTable
-              schema={selectedTableSchema}
+            <CollectionColumnsTable
+              schema={selectedCollectionSchema}
               hideConstraints={true}
             />
           </div>
@@ -124,7 +126,7 @@ export default function RepositorySection({
         <QueryResults
           title={
             currentWorkspace && repository
-              ? `${currentWorkspace.slug} / ${repository.slug} ${selectedTable ? `/ ${selectedTable}` : ''}`
+              ? `${currentWorkspace.slug} / ${repository.slug} ${selectedCollection ? `/ ${selectedCollection}` : ''}`
               : ''
           }
           data={dataResults?.result ?? []}

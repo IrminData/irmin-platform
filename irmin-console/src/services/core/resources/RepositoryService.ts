@@ -85,8 +85,8 @@ class RepositoryService {
       formData.append('name', repository.name);
       formData.append('description', repository.description ?? '');
       formData.append('documentation', repository.documentation ?? '');
-      repository.tables.forEach((table: string) => {
-        formData.append('tables', table);
+      repository.collections.forEach((item: string) => {
+        formData.append('collections', item);
       });
 
       const response = (await this.irminCore.fetch(`/v1/repositories/create`, {
@@ -185,8 +185,8 @@ class RepositoryService {
       formData.append('name', updatedRepository.name);
       formData.append('description', updatedRepository.description ?? '');
       formData.append('documentation', updatedRepository.documentation ?? '');
-      updatedRepository.tables.forEach((table: string) => {
-        formData.append('tables', table);
+      updatedRepository.collections.forEach((item: string) => {
+        formData.append('collections', item);
       });
 
       const response = await this.irminCore.fetch(

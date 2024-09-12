@@ -17,7 +17,7 @@ import {
 
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
-import { DatatableRow } from '@/types/internal/Datatable';
+import { CollectionRow } from '@/types/internal/Collection';
 
 const DataSheet = dynamic(() => import('./DataSheet'), {
   loading: () => <LoadingSkeleton />,
@@ -32,12 +32,12 @@ const DataSheet = dynamic(() => import('./DataSheet'), {
 export default function AdvancedDatatable({
   items,
 }: {
-  items: DatatableRow[];
+  items: CollectionRow[];
 }) {
   const dataSheetRef = useRef<DataSheetGridRef>(null);
 
   const [columns, setColumns] = useState<
-    Partial<Column<DatatableRow>>[] | undefined
+    Partial<Column<CollectionRow>>[] | undefined
   >(undefined);
 
   // Create columns from the properties

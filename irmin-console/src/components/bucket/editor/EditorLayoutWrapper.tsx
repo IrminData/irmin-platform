@@ -8,7 +8,7 @@ import AddNewFileModal from '@/components/bucket/modals/AddNewFileModal';
 import AddNewFolderModal from '@/components/bucket/modals/AddNewFolderModal';
 import RenameOrMoveItemModal from '@/components/bucket/modals/RenameOrMoveItemModal';
 import FileNavigator from '@/components/bucket/navigator/FileNavigator';
-import RepositoryTableReferenceList from '@/components/repository/partials/RepositoryTableReferenceList';
+import RepositoryCollectionReferenceList from '@/components/repository/partials/RepositoryCollectionReferenceList';
 
 import { useBucket } from '@/context/BucketContext';
 import { DataProvider } from '@/context/DataContext';
@@ -171,7 +171,7 @@ export default function EditorLayoutWrapper({
             }}
             items={items}
           />
-          <RepositoryTableReferenceList />
+          <RepositoryCollectionReferenceList />
         </div>
       </div>
       <div className='ml-10 flex-1 flex-shrink overflow-hidden lg:ml-0'>

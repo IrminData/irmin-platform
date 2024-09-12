@@ -62,17 +62,18 @@ const WorkflowStructureSection = ({ workflow }: { workflow: Workflow }) => {
         newTree.children?.push({
           id: `repository-${repository.slug}`,
           label: `Repository: ${repository.name}`,
-          children: repository.tables.map((table) => ({
-            id: `table-${repository.slug}-${table}`,
-            label: `Table: ${table}`,
+          children: repository.collections.map((collection) => ({
+            id: `collection-${repository.slug}-${collection}`,
+            label: collection,
           })),
         });
       }
-      // Find all repositories referencing this workflow in their tables
+      // Find all repositories referencing this workflow in their collections
       const referencingRepositories = repositories.filter(
         (repo) =>
-          repo.tables.find((table) => table.startsWith(`${workflow.slug}.`)) &&
-          repo.slug !== repository?.slug
+          repo.collections.find((collection) =>
+            collection.startsWith(`${workflow.slug}.`)
+          ) && repo.slug !== repository?.slug
       );
       const referencingReposTree: TreeNode = {
         id: 'referencing-repositories',
@@ -80,15 +81,15 @@ const WorkflowStructureSection = ({ workflow }: { workflow: Workflow }) => {
         children: [],
       };
       referencingRepositories.forEach((repo) => {
-        const tables = repo.tables.filter((table) =>
-          table.startsWith(`${workflow.slug}.`)
+        const collections = repo.collections.filter((collection) =>
+          collection.startsWith(`${workflow.slug}.`)
         );
         referencingReposTree.children?.push({
           id: `ref-repository-${repo.slug}`,
           label: `Repository: ${repo.name}`,
-          children: tables.map((table) => ({
-            id: `ref-table-${repo.slug}-${table}`,
-            label: `Table: ${table}`,
+          children: collections.map((collection) => ({
+            id: `ref-collection-${repo.slug}-${collection}`,
+            label: collection,
           })),
         });
       });

@@ -1,7 +1,7 @@
-import { DatatableSchema } from '@/types/internal/Datatable';
+import { CollectionSchema } from '@/types/internal/Collection';
 
-export const usersTableSchema: DatatableSchema = {
-  table: 'users',
+export const usersTableSchema: CollectionSchema = {
+  name: 'users',
   columns: [
     { name: 'id', type: 'int', isPrimaryKey: true, isNullable: false },
     { name: 'username', type: 'string', isNullable: false, isUnique: true },
@@ -27,8 +27,8 @@ export const usersTableSchema: DatatableSchema = {
   indexes: ['username', 'email'], // Indexes on username and email for faster querying
 };
 
-export const rolesTableSchema: DatatableSchema = {
-  table: 'roles',
+export const rolesTableSchema: CollectionSchema = {
+  name: 'roles',
   columns: [
     { name: 'id', type: 'int', isPrimaryKey: true, isNullable: false },
     {
@@ -41,8 +41,8 @@ export const rolesTableSchema: DatatableSchema = {
   ],
 };
 
-export const postsTableSchema: DatatableSchema = {
-  table: 'posts',
+export const postsTableSchema: CollectionSchema = {
+  name: 'posts',
   columns: [
     { name: 'id', type: 'int', isPrimaryKey: true, isNullable: false },
     { name: 'title', type: 'string', length: 255, isNullable: false },
@@ -68,8 +68,8 @@ export const postsTableSchema: DatatableSchema = {
   indexes: ['title', 'author_id'], // Indexes on title and author_id for faster querying
 };
 
-export const orderItemsTableSchema: DatatableSchema = {
-  table: 'order_items',
+export const orderItemsTableSchema: CollectionSchema = {
+  name: 'order_items',
   columns: [
     { name: 'id', type: 'int', isPrimaryKey: true, isNullable: false },
     {
@@ -122,8 +122,8 @@ export const orderItemsTableSchema: DatatableSchema = {
   ],
 };
 
-export const ordersTableSchema: DatatableSchema = {
-  table: 'orders',
+export const ordersTableSchema: CollectionSchema = {
+  name: 'orders',
   columns: [
     { name: 'id', type: 'int', isPrimaryKey: true, isNullable: false },
     {
@@ -156,7 +156,7 @@ export const ordersTableSchema: DatatableSchema = {
   ],
 };
 
-export const repositorySchemaExample: DatatableSchema[] = [
+export const exampleRepositorySchema: CollectionSchema[] = [
   usersTableSchema,
   rolesTableSchema,
   postsTableSchema,

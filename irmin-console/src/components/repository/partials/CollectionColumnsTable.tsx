@@ -4,25 +4,25 @@ import React from 'react';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { DatatableSchema } from '@/types/internal/Datatable';
+import { CollectionSchema } from '@/types/internal/Collection';
 
 /**
- * Component for displaying a table of columns from a database table schema.
+ * Component for displaying a table of columns from a database collection schema.
  *
  * @param schema - The schema to display.
  */
-export default function DatatableColumnsTable({
+export default function CollectionColumnsTable({
   schema,
   hideConstraints = false,
 }: {
-  schema: DatatableSchema;
+  schema: CollectionSchema;
   hideConstraints?: boolean;
 }) {
   const { dict } = useLocale();
   return (
     <div className='overflow-scroll p-2 text-xs text-gray-600 dark:text-gray-400'>
       <p className='mb-2 text-xs text-irmin_blue dark:text-white'>
-        {schema.table} - {dict.repository.schema.tableSchema}
+        {schema.name} - {dict.repository.schema.schema}
       </p>
       <table className='border-seperate w-full table-auto gap-2 text-left'>
         <thead>

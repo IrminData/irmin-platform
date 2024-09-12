@@ -23,7 +23,7 @@ export default function RepositoryStructureSection() {
     <>
       {!schemaResults || (loadingSchema && <LoadingSkeleton />)}
       {schemaResults && !loadingSchema && (
-        <DatatableSchemaChart schema={schemaResults?.data?.tables ?? []} />
+        <DatatableSchemaChart schema={schemaResults?.data?.collections ?? []} />
       )}
     </>
   );

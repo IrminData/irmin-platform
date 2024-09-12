@@ -47,7 +47,7 @@ interface DataContextProps {
   // Data schema state
   loadingSchema: boolean;
   schemaResults: SchemaResponse | null;
-  fetchSchema: (tables: string[]) => Promise<void>;
+  fetchSchema: (collections: string[]) => Promise<void>;
   // Branches state
   loadingBranches: boolean;
   branchesResults: BranchesResponse | null;
@@ -155,13 +155,13 @@ export const DataProvider = ({
   );
 
   /**
-   * Fetch the schema for a list of tables, for example a repository
+   * Fetch the schema for a list of collections, for example a repository
    *
-   * @param tables - List of tables to fetch the schema for
+   * @param collections - List of collections to fetch the schema for
    */
   const fetchSchema = useCallback(
-    async (tables: string[]) => {
-      if (!tables || tables.length === 0) return;
+    async (collections: string[]) => {
+      if (!collections || collections.length === 0) return;
       setLoadingSchema(true);
       try {
         // Fetch data action results
@@ -169,7 +169,7 @@ export const DataProvider = ({
           locale,
           token: token ?? '',
           workspace: currentWorkspace?.slug ?? '',
-          tables: tables,
+          collections: collections,
         });
         setSchemaResults(response);
       } catch (error) {

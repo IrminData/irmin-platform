@@ -43,7 +43,7 @@ export const fetchSingleService = async ({
 };
 
 /**
- * Service to call internal API endpoint to fetch schema for a collection of tables.
+ * Service to call internal API endpoint to fetch schema for collections.
  *
  * `GET /api/schema` route, which can be found in `src/app/api/schema/route.ts`
  *
@@ -51,21 +51,23 @@ export const fetchSingleService = async ({
  * @param props0.locale - The locale to use for the request
  * @param props0.token - The API token to use for the request
  * @param props0.workspace - The slug of the workspace to run the action on
- * @param props0.tables - The list of tables to fetch the schema for
+ * @param props0.collections - The list of collections to fetch the schema for
  */
 export const fetchSchemaService = async ({
   locale,
   token,
   workspace,
-  tables,
+  collections,
 }: {
   locale: Locale;
   token: string;
   workspace: string;
-  tables: string[];
+  collections: string[];
 }): Promise<SchemaResponse> => {
   const urlParams = new URLSearchParams();
-  tables.forEach((table) => urlParams.append('table', table));
+  collections.forEach((collection) =>
+    urlParams.append('collection', collection)
+  );
   const response = await fetch(`/api/schema?${urlParams.toString()}`, {
     method: 'GET',
     headers: {

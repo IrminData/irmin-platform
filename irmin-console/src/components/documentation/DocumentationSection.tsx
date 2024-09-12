@@ -162,15 +162,15 @@ export default function DocumentationSection({
                       </p>
                       <p className='flex flex-wrap text-sm text-gray-600 dark:text-gray-400'>
                         <span className='pr-4'>
-                          {dict.documentation.tables}:{' '}
+                          {dict.documentation.collections}:{' '}
                         </span>
-                        {item.tables.map((table, index) => (
+                        {item.collections.map((collection, index) => (
                           <span
-                            key={`item-${item.id}-${i}-tables-${index}`}
+                            key={`item-${item.id}-${i}-collection-${index}`}
                             className='pr-4 text-gray-800 dark:text-gray-200'
                           >
-                            {/* Only show part of the table name between first and last dots */}
-                            {table.split('.').slice(1, -1).join('.')}
+                            {/* Only show part of the collection name between first and last dots */}
+                            {collection.split('.').slice(1, -1).join('.')}
                           </span>
                         ))}
                       </p>

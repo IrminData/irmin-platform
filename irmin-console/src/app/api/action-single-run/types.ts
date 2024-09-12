@@ -1,5 +1,5 @@
 import { IrminFileType } from '@/types/api/Bucket';
-import { DatatableRow } from '@/types/internal/Datatable';
+import { CollectionRow } from '@/types/internal/Collection';
 
 /**
  * The type of body request to the `POST /api/action-single-run` route
@@ -21,7 +21,7 @@ export type ActionSingleRunRequest = {
  * @typeParam metadata.rowsReturned - The number of rows returned
  */
 export interface ActionSingleRunData {
-  result: DatatableRow[];
+  result: CollectionRow[];
   metadata: {
     message: string;
     timeTaken: number;

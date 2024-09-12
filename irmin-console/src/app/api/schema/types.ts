@@ -1,10 +1,10 @@
-import { DatatableSchema } from '@/types/internal/Datatable';
+import { CollectionSchema } from '@/types/internal/Collection';
 
 /**
- * @typeParam tables - The fetched schemas for the tables
+ * @typeParam collections - The fetched schemas for the collections
  */
 export interface SchemaResult {
-  tables: DatatableSchema[];
+  collections: CollectionSchema[];
 }
 
 /**
@@ -12,14 +12,14 @@ export interface SchemaResult {
  * @typeParam data - The fetched schema {@link SchemaResult}
  * @typeParam metadata - Additional data about the fetch
  * @typeParam metadata.errors - Errors that occurred during the fetch
- * @typeParam metadata.tables - List of tables that schemas were fetched for
+ * @typeParam metadata.collections - List of collections that schemas were fetched for
  * @typeParam metadata.workspace - Slug of the workspace data was fetched for
  */
 export interface SchemaResponse {
   data: SchemaResult;
   metadata: {
     errors: string[];
-    tables: string[];
+    collections: string[];
     workspace: string;
   };
 }
@@ -29,11 +29,11 @@ export interface SchemaResponse {
  */
 export const emptySchemaResponse: SchemaResponse = {
   data: {
-    tables: [],
+    collections: [],
   },
   metadata: {
     errors: [],
-    tables: [],
+    collections: [],
     workspace: '',
   },
 };

@@ -7,35 +7,35 @@ import { useWorkspace } from '@/context/workspace';
 import { Repository } from '@/types/api/Repository';
 
 /**
- * Component to display a list of repositories and their tables.
+ * Component to display a list of repositories and their collections.
  *
  * Used in the sidebar of the query tool and editor.
  *
- * When a table is selected, a reference snippet is generated and
+ * When a collection is selected, a reference snippet is generated and
  * displayed to the user.
  *
- * @returns The repository table reference list component
+ * @returns The repository collection reference list component
  */
-const RepositoryTableReferenceList = () => {
+const RepositoryCollectionReferenceList = () => {
   const { irminAlert } = usePopup();
   const { dict } = useLocale();
   const { repositories: repos } = useWorkspace();
 
   /**
-   * When a repository table is selected, format the table name
+   * When a repository collection is selected, format the collection name
    * and insert it into the query.
    */
-  const selectDBTable = (repo: Repository, table: string) => {
-    // Format the table name
-    const formattedTable = ` $[${table}]`;
-    // Alert the table name to the user
+  const selectCollection = (repo: Repository, collection: string) => {
+    // Format the collection name
+    const formattedName = ` $[${collection}]`;
+    // Show the collection name to the user
     irminAlert(
       'info',
       <div>
         <p className='m-0 text-sm font-normal'>
-          {dict.repository.referenceRepository.toReferenceTheTable}{' '}
+          {dict.repository.referenceRepository.toReferenceTheCollection}{' '}
           <span className='font-medium text-irmin_blue dark:text-irmin_green'>
-            {table}
+            {collection}
           </span>{' '}
           {dict.repository.referenceRepository.fromTheRepository}{' '}
           <span className='font-medium text-irmin_blue dark:text-irmin_green'>
@@ -44,7 +44,7 @@ const RepositoryTableReferenceList = () => {
           {dict.repository.referenceRepository.inTheEditor}{' '}
         </p>
         <p className='mt-4 text-lg font-normal text-black dark:text-white'>
-          {formattedTable}
+          {formattedName}
         </p>
       </div>
     );
@@ -52,33 +52,32 @@ const RepositoryTableReferenceList = () => {
 
   return (
     <div
-      id='repository-table-reference-list'
+      id='repository-collection-reference-list'
       className='flex-grow overflow-auto border-t p-2 text-irmin_black dark:border-gray-800 dark:text-gray-300'
     >
       <p className='px-4 pb-2 text-sm'>
         {dict.portalNavigation.links.repositories}
       </p>
       <p className='px-4 text-xs text-gray-400'>
-        {dict.repository.referenceRepository.clickOnATable}
+        {dict.repository.referenceRepository.clickOnCollection}
       </p>
       <ul className='text-xs'>
         {repos.repositories.map(
           (repo) =>
-            repo.tables.length > 0 && (
+            repo.collections.length > 0 && (
               <li key={`repo-${repo.id}`} className='px-4 py-2'>
                 <p className='border-t pt-2 font-normal dark:border-gray-800'>
                   {repo.name}
                 </p>
                 <ul className='list-item font-normal'>
-                  {repo.tables.map((table, i) => (
+                  {repo.collections.map((item, i) => (
                     <li
-                      key={`repo-${repo.id}-table-${i}`}
+                      key={`repo-${repo.id}-item-${i}`}
                       className='cursor-pointer pl-4 pr-2 pt-3 opacity-80 transition-colors hover:text-irmin_green hover:opacity-100'
-                      onClick={() => selectDBTable(repo, table)}
-                      aria-label={`Click to get the reference snippet for the table ${table} from ${repo.name}`}
+                      onClick={() => selectCollection(repo, item)}
                     >
-                      {/** Only show part of the table name between first and last dots */}
-                      {table.split('.').slice(1, -1).join('.')}
+                      {/** Only show part of the collection name between first and last dots */}
+                      {item.split('.').slice(1, -1).join('.')}
                     </li>
                   ))}
                 </ul>
@@ -90,4 +89,4 @@ const RepositoryTableReferenceList = () => {
   );
 };
 
-export default RepositoryTableReferenceList;
+export default RepositoryCollectionReferenceList;

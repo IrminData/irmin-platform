@@ -13,11 +13,11 @@ import { useWorkspace } from '@/context/workspace';
 import { Repository } from '@/types/api/Repository';
 
 /**
- * Section UI for selecting tables which should be part of this repository
+ * Section UI for selecting collections which should be part of this repository
  *
  * @param repository - The repository to display and edit the settings for
  */
-export default function RepositoryTableSettingsSection({
+export default function RepositoryCollectionsSettingsSection({
   repository,
 }: {
   repository: Repository | undefined;
@@ -29,48 +29,50 @@ export default function RepositoryTableSettingsSection({
     repositories: { repositories, updateRepository },
   } = useWorkspace();
 
-  const [newTable, setNewTable] = useState<string | null>(null);
-  const [tables, setTables] = useState<string[]>(repository?.tables ?? []);
+  const [newCollection, setNewCollection] = useState<string | null>(null);
+  const [collections, setCollections] = useState<string[]>(
+    repository?.collections ?? []
+  );
 
   useEffect(() => {
-    if (tables.length === 0) setTables(repository?.tables ?? []);
-  }, [repository, tables.length]);
+    if (collections.length === 0) setCollections(repository?.collections ?? []);
+  }, [repository, collections.length]);
 
   /**
-   * Calculates all available tables for the repository table settings section.
+   * Calculates all available collections for the repository collection settings section.
    *
-   * @returns An array of unique tables that are not included in the current repository's tables.
+   * @returns An array of unique collections that are not included in the current repository's collections.
    */
-  const allAvailableTables = useMemo(
+  const allAvailableCollections = useMemo(
     () =>
       Array.from(
         new Set(
           repositories
-            .map((repo) => repo.tables)
+            .map((repo) => repo.collections)
             .flat()
-            .filter((table) => tables.includes(table))
+            .filter((item) => collections.includes(item))
         )
       ),
-    [repositories, tables]
+    [repositories, collections]
   );
 
   /**
-   * Updates the repository with the new tables provided
+   * Updates the repository with the new collections provided
    * Uses {@link updateRepository} to update the repository details
    * Shows {@link irminAlert} on success or error
    */
   const handleUpdateRepository = useCallback(async () => {
     try {
       if (!repository) return;
-      // Remove duplicate tables
-      const uniqueTables = Array.from(new Set(tables));
-      if (uniqueTables.length !== tables.length) {
-        setTables(uniqueTables);
+      // Remove duplicate collections
+      const uniqueCollections = Array.from(new Set(collections));
+      if (uniqueCollections.length !== collections.length) {
+        setCollections(uniqueCollections);
       }
-      // Update repository tables
+      // Update repository collections
       await updateRepository(repository.slug, {
         ...repository,
-        tables: uniqueTables,
+        collections: uniqueCollections,
       });
       irminAlert('success', dict.repository.settings.repositoryUpdated);
     } catch (error) {
@@ -80,7 +82,7 @@ export default function RepositoryTableSettingsSection({
           dict.repository.settings.errorUpdatingRepository
       );
     }
-  }, [repository, updateRepository, tables, irminAlert, dict]);
+  }, [repository, updateRepository, collections, irminAlert, dict]);
 
   return (
     <div className='container relative mx-auto my-8 max-w-6xl'>
@@ -88,7 +90,7 @@ export default function RepositoryTableSettingsSection({
         <div className='my-8 px-4'>
           <div className='mb-8 flex flex-row items-center justify-between px-2'>
             <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
-              {dict.repository.settings.manageTables}
+              {dict.repository.settings.manageCollections}
             </h2>
             <Button
               size='sm'
@@ -107,20 +109,20 @@ export default function RepositoryTableSettingsSection({
           {repository && !repository?.is_immutable && (
             <div className='flex flex-col'>
               <span className='pb-2 text-xs text-gray-400 dark:text-gray-600'>
-                {dict.repository.settings.selectTableToAdd}
+                {dict.repository.settings.selectCollectionToAdd}
               </span>
               <div className='flex w-full flex-row items-center justify-normal gap-2'>
-                {/* Form to add more tables to this repository */}
+                {/* Form to add more collections to this repository */}
                 <div className='w-full'>
                   <ReactSelect
-                    value={{ value: newTable, label: newTable }}
+                    value={{ value: newCollection, label: newCollection }}
                     onChange={(newValue) => {
                       if (!newValue) return;
-                      setNewTable(newValue.value);
+                      setNewCollection(newValue.value);
                     }}
-                    options={allAvailableTables.map((table) => ({
-                      value: table,
-                      label: table,
+                    options={allAvailableCollections.map((item) => ({
+                      value: item,
+                      label: item,
                     }))}
                     className='react-select-container w-full'
                     classNamePrefix='react-select'
@@ -132,26 +134,27 @@ export default function RepositoryTableSettingsSection({
                   colorScheme='secondary'
                   variant='solid'
                   onClick={() => {
-                    if (newTable) setTables([...tables, newTable]);
+                    if (newCollection)
+                      setCollections([...collections, newCollection]);
                   }}
                 >
-                  {dict.repository.settings.addTable}
+                  {dict.repository.settings.addCollection}
                 </Button>
               </div>
               <div className='my-8'>
-                {/* List of current tables in the repository */}
-                {tables.map((table, idx) => (
+                {/* List of current collections in the repository */}
+                {collections.map((item, idx) => (
                   <div
-                    key={`table-${table}-${idx}`}
+                    key={`collection-${item}-${idx}`}
                     className='flex w-full flex-row items-center justify-between'
                   >
-                    <div className='text-xs opacity-80'>{table}</div>
+                    <div className='text-xs opacity-80'>{item}</div>
                     <Button
                       size='sm'
                       colorScheme='gray'
                       variant='link'
                       onClick={() => {
-                        setTables(tables.filter((t) => t !== table));
+                        setCollections(collections.filter((t) => t !== item));
                       }}
                     >
                       {dict.repository.settings.remove}

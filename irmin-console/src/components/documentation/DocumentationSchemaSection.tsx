@@ -64,9 +64,9 @@ export default function DocumentationSchemaSection() {
                   {
                     id: `repository-${connection.repository.id}`,
                     label: `Repository: ${connection.repository.name}`,
-                    children: connection.repository.tables.map((table) => ({
-                      id: `repository-${connection.repository?.id}-table-${table}`,
-                      label: table.split('.').slice(1, -1).join('.'), // Only show part of the table name between first and last dots
+                    children: connection.repository.collections.map((item) => ({
+                      id: `repository-${connection.repository?.id}-collection-${item}`,
+                      label: item.split('.').slice(1, -1).join('.'), // Only show part of the collection name between first and last dots
                     })),
                   },
                 ]
@@ -106,9 +106,9 @@ export default function DocumentationSchemaSection() {
                   {
                     id: `repository-${action.repository.id}`,
                     label: `Repository: ${action.repository.name}`,
-                    children: action.repository.tables.map((table) => ({
-                      id: `repository-${action.repository?.id}-table-${table}`,
-                      label: table.split('.').slice(1, -1).join('.'), // Only show part of the table name between first and last dots
+                    children: action.repository.collections.map((item) => ({
+                      id: `repository-${action.repository?.id}-collection-${item}`,
+                      label: item.split('.').slice(1, -1).join('.'), // Only show part of the collection name between first and last dots
                     })),
                   },
                 ]
@@ -131,9 +131,9 @@ export default function DocumentationSchemaSection() {
             .map((repository) => ({
               id: `repository-${repository.id}`,
               label: repository.name,
-              children: repository.tables.map((table) => ({
-                id: `repository-${repository.id}-table-${table}`,
-                label: table.split('.').slice(1, -1).join('.'), // Only show part of the table name between first and last dots
+              children: repository.collections.map((item) => ({
+                id: `repository-${repository?.id}-collection-${item}`,
+                label: item.split('.').slice(1, -1).join('.'), // Only show part of the collection name between first and last dots
               })),
             })),
         };

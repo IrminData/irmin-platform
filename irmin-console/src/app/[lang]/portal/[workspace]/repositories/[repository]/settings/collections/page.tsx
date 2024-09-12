@@ -2,16 +2,17 @@
 
 import { useMemo } from 'react';
 
-import RepositoryTableSettingsSection from '@/components/repository/RepositoryTableSettingsSection';
+import RepositoryCollectionsSettingsSection from '@/components/repository/RepositoryCollectionsSettingsSection';
 
 import { useWorkspace } from '@/context/workspace';
 
 import { RepositoryRouteParams } from '../../layout';
 
 /**
- * Page for the Repository tables settings
+ * Page for the Repository collections settings.
+ * Select which collections are part of the repository.
  */
-export default function RepositoryTablesSettingsPage({
+export default function RepositoryCollectionsSettingsPage({
   params,
 }: {
   params: RepositoryRouteParams;
@@ -25,5 +26,5 @@ export default function RepositoryTablesSettingsPage({
     [params.repository, repositories]
   );
 
-  return <RepositoryTableSettingsSection repository={repository} />;
+  return <RepositoryCollectionsSettingsSection repository={repository} />;
 }

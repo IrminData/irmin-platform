@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 
-import RepositoryTableReferenceList from '@/components/repository/partials/RepositoryTableReferenceList';
+import RepositoryCollectionReferenceList from '@/components/repository/partials/RepositoryCollectionReferenceList';
 
 import { DataProvider } from '@/context/DataContext';
 
@@ -47,7 +47,7 @@ export default function EditorLayoutWrapper({
           id='query-sidebar'
           className={`flex h-full max-h-full w-full flex-col gap-4 transition-all lg:visible lg:ml-0 ${!sidebarOpen ? 'invisible -ml-72' : 'visible ml-0'}`}
         >
-          <RepositoryTableReferenceList />
+          <RepositoryCollectionReferenceList />
         </div>
       </div>
       <div className='ml-10 flex-1 flex-shrink overflow-x-hidden lg:ml-0'>

@@ -6,9 +6,9 @@ import { Edge, Node, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useTheme } from 'next-themes';
 
-import DatatableColumnsTable from '@/components/repository/partials/DatatableColumnsTable';
+import CollectionColumnsTable from '@/components/repository/partials/CollectionColumnsTable';
 
-import { DatatableSchema } from '@/types/internal/Datatable';
+import { CollectionSchema } from '@/types/internal/Collection';
 
 /**
  * Generates nodes and edges for a database schema visualization.
@@ -17,7 +17,7 @@ import { DatatableSchema } from '@/types/internal/Datatable';
  * @returns Object containing `nodes` and `edges` arrays for ReactFlow.
  */
 const generateFlowData = (
-  schema: DatatableSchema[]
+  schema: CollectionSchema[]
 ): { nodes: Node[]; edges: Edge[] } => {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
@@ -26,8 +26,8 @@ const generateFlowData = (
   let xPos = 0;
   let yPos = 0;
 
-  schema.forEach((tableSchema, index) => {
-    const nodeId = `table-${tableSchema.table}`;
+  schema.forEach((schema, index) => {
+    const nodeId = `table-${schema.name}`;
 
     // Create a node for each table
     nodes.push({
@@ -36,7 +36,7 @@ const generateFlowData = (
       data: {
         label: (
           <div>
-            <DatatableColumnsTable schema={tableSchema} />
+            <CollectionColumnsTable schema={schema} />
           </div>
         ),
       },
@@ -50,10 +50,10 @@ const generateFlowData = (
     }
 
     // Create edges for foreign key relations
-    tableSchema.columns.forEach((column) => {
+    schema.columns.forEach((column) => {
       if (column.foreignKey) {
         edges.push({
-          id: `fk-${tableSchema.table}-${column.name}-${column.foreignKey.referencedTable}`,
+          id: `fk-${schema.name}-${column.name}-${column.foreignKey.referencedTable}`,
           source: nodeId,
           target: `table-${column.foreignKey.referencedTable}`,
           animated: true,
@@ -63,11 +63,11 @@ const generateFlowData = (
     });
 
     // Create edges for defined relations
-    if (tableSchema.relations) {
-      tableSchema.relations.forEach((relation) => {
+    if (schema.relations) {
+      schema.relations.forEach((relation) => {
         relation.columns.forEach((col, idx) => {
           edges.push({
-            id: `rel-${tableSchema.table}-${relation.relatedTable}-${col}-${relation.relatedColumns[idx]}`,
+            id: `rel-${schema.name}-${relation.relatedTable}-${col}-${relation.relatedColumns[idx]}`,
             source: nodeId,
             target: `table-${relation.relatedTable}`,
             animated: true,
@@ -90,7 +90,7 @@ const generateFlowData = (
 export default function DatabaseSchemaChart({
   schema,
 }: {
-  schema: DatatableSchema[];
+  schema: CollectionSchema[];
 }) {
   const { theme } = useTheme();
 

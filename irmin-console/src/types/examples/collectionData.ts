@@ -1,9 +1,9 @@
-import { DatatableRow } from '@/types/internal/Datatable';
+import { CollectionRow } from '@/types/internal/Collection';
 
 /**
- * Placeholder data for the table
+ * Example data for a collection of rows.
  */
-export const placeholderData: DatatableRow[] = [
+export const exampleCollectionData: CollectionRow[] = [
   {
     name: 'John Doe',
     age: 25,

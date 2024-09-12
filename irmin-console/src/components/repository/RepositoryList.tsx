@@ -80,13 +80,13 @@ const RepositoryList = ({
       ],
       details: (
         <ul>
-          {item.tables.map((table, index) => (
+          {item.collections.map((collection, index) => (
             <li
-              key={`item-${item.id}-${i}-tables-${index}`}
+              key={`item-${item.id}-${i}-collection-${index}`}
               className='border-b border-gray-100 py-2 text-xs dark:border-gray-800'
             >
-              {/* Only show part of the table name between first and last dots */}
-              {table.split('.').slice(1, -1).join('.')}
+              {/* Only show part of the collection name between first and last dots */}
+              {collection.split('.').slice(1, -1).join('.')}
             </li>
           ))}
         </ul>

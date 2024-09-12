@@ -4,7 +4,7 @@ import { WorkspaceUser } from '@/types/api/Workspace';
 /**
  * Repository type
  *
- * Repositories are collections of data tables from the Workspace DB. They can be created manually or by a Workflow.
+ * Repositories consist of collections, which can be for example tables in the Lakehouse. They can be created manually or by a Workflow.
  * All workflows will create a Repository, even Export Workflows - not sure what this will be used for.
  * Workflow created Repositories will be immutable by default, this might change in the future.
  *
@@ -16,7 +16,7 @@ import { WorkspaceUser } from '@/types/api/Workspace';
  * @typeParam workflow - The workflow (with workflowable) that has created this Repository. If created manually, this will be null.
  * @typeParam is_immutable - If the Repository is_immutable, it cannot be changed or updated
  * @typeParam owner - The user within the workspace that owns the Repository and is responsible for it
- * @typeParam tables - A list of human readable table names that are part of this Repository
+ * @typeParam collections - A list of human readable table names that are part of this Repository
  * @typeParam created_at - Timestamp of the creation of the Repository
  * @typeParam updated_at - Timestamp of the last update of the Repository
  */
@@ -29,7 +29,7 @@ export interface Repository {
   workflow?: Workflow | null;
   is_immutable: boolean;
   owner: WorkspaceUser;
-  tables: string[];
+  collections: string[];
   created_at: string;
   updated_at: string;
 }

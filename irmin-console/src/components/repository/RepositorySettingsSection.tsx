@@ -116,9 +116,9 @@ export default function RepositorySettingsSection({
               size='sm'
               variant='link'
               colorScheme='gray'
-              href={`/${locale}/portal/${currentWorkspace?.slug ?? ''}/repositories/${repository?.slug ?? ''}/settings/tables`}
+              href={`/${locale}/portal/${currentWorkspace?.slug ?? ''}/repositories/${repository?.slug ?? ''}/settings/collections`}
             >
-              {dict.repository.settings.manageTables}
+              {dict.repository.settings.manageCollections}
             </Button>
           </div>
           {repository?.is_immutable && (

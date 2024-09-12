@@ -21,7 +21,7 @@ export const repositories = (last = false): Repository[] => [
       'This is an example of a Repository that has been created manually.',
     documentation:
       '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
-    tables: [
+    collections: [
       'excel-kpis.sales.0',
       'management-data-from-excel.inventory.0',
       'excel-kpis.expenses.0',
@@ -42,7 +42,7 @@ export const repositories = (last = false): Repository[] => [
       'This is an example of a Repository that has been created by the Google Analytics Connection Workflow.',
     documentation:
       '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
-    tables: [
+    collections: [
       'main-google-analytics.sessions.0',
       'main-google-analytics.users.0',
       'main-google-analytics.pageviews.0',
@@ -62,7 +62,7 @@ export const repositories = (last = false): Repository[] => [
       'This is an example of a Repository that has been created by an Action Workflow.',
     documentation:
       '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
-    tables: [
+    collections: [
       'app-usage-data.users.0',
       'app-usage-data.downloads.0',
       'app-usage-data.sessions.0',
@@ -84,7 +84,7 @@ export const repositories = (last = false): Repository[] => [
       'This is an example of a Repository that has been created by a Connection Workflow.',
     documentation:
       '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
-    tables: [
+    collections: [
       'kpis-from-excel.sales.0',
       'kpis-from-excel.expenses.0',
       'kpis-from-excel.profit_by_month.0',
@@ -103,7 +103,7 @@ export const repositories = (last = false): Repository[] => [
       'This is an example of a Repository that has been created by a Connection Workflow.',
     documentation:
       '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
-    tables: [
+    collections: [
       'management-data-from-excel.inventory.0',
       'management-data-from-excel.employees.0',
     ],
@@ -121,7 +121,7 @@ export const repositories = (last = false): Repository[] => [
       'This is an example of a Repository that has been created by a Connection Workflow.',
     documentation:
       '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
-    tables: [
+    collections: [
       'google-sheets-kpis.sales.0',
       'google-sheets-kpis.inventory.0',
       'google-sheets-kpis.expenses.0',
@@ -140,7 +140,7 @@ export const repositories = (last = false): Repository[] => [
     slug: 'export-kpis-to-google-sheets',
     description: '',
     documentation: '',
-    tables: [],
+    collections: [],
     workflow: !last ? workflows(true)[1] : undefined,
     is_immutable: true,
     owner: workspaceUsers()[1],
@@ -153,7 +153,7 @@ export const repositories = (last = false): Repository[] => [
     slug: 'send-receipt-on-order',
     description: '',
     documentation: '',
-    tables: [],
+    collections: [],
     workflow: !last ? workflows(true)[3] : undefined,
     is_immutable: true,
     owner: workspaceUsers()[2],
@@ -166,7 +166,7 @@ export const repositories = (last = false): Repository[] => [
     slug: 'top-100-ad-clicking-users',
     description: '',
     documentation: '',
-    tables: ['top-100-ad-clicking-users.top-100-ad-clicking-users.0'],
+    collections: ['top-100-ad-clicking-users.top-100-ad-clicking-users.0'],
     workflow: !last ? workflows(true)[7] : undefined,
     is_immutable: true,
     owner: workspaceUsers()[2],
@@ -180,7 +180,7 @@ export const repositories = (last = false): Repository[] => [
     description: 'Example of a repository with ad click and sales trends',
     documentation:
       'This repository contains data on ad clicks and sales trends',
-    tables: [
+    collections: [
       'top-100-ad-clicking-users.top-100-ad-clicking-users.0',
       'google-sheets-kpis.sales.0',
       'app-usage-data.purchase_events.0',

@@ -33,25 +33,25 @@ export default function RepositoryCreateSection() {
     repositories: { repositories, createRepository },
   } = useWorkspace();
 
-  const [newTable, setNewTable] = useState<string | null>(null);
-  const [tables, setTables] = useState<string[]>([]);
+  const [newCollection, setNewCollection] = useState<string | null>(null);
+  const [collections, setCollections] = useState<string[]>([]);
 
   /**
-   * Calculates all available tables for the repository table settings section.
+   * Calculates all available collections for the repository collection settings section.
    *
-   * @returns An array of unique tables that are not included in the current repository's tables.
+   * @returns An array of unique collections that are not included in the current repository's collections.
    */
-  const allAvailableTables = useMemo(
+  const allAvailableCollections = useMemo(
     () =>
       Array.from(
         new Set(
           repositories
-            .map((repo) => repo.tables)
+            .map((repo) => repo.collections)
             .flat()
-            .filter((table) => !tables.includes(table))
+            .filter((collection) => !collections.includes(collection))
         )
       ),
-    [repositories, tables]
+    [repositories, collections]
   );
 
   /**
@@ -63,23 +63,23 @@ export default function RepositoryCreateSection() {
     try {
       const name = nameField.trim();
       const description = descriptionField.trim();
-      // Remove duplicate tables
-      const uniqueTables = Array.from(new Set(tables));
-      if (uniqueTables.length !== tables.length) {
-        setTables(uniqueTables);
+      // Remove duplicate collections
+      const uniqueCollections = Array.from(new Set(collections));
+      if (uniqueCollections.length !== collections.length) {
+        setCollections(uniqueCollections);
       }
       // Check if all required fields are filled
       if (
         name &&
         description &&
-        uniqueTables &&
+        uniqueCollections &&
         name.length > 0 &&
-        uniqueTables.length > 0
+        uniqueCollections.length > 0
       ) {
         await createRepository({
           name: name,
           description: description,
-          tables: tables,
+          collections: collections,
           documentation: '',
         } as Repository);
         irminAlert('success', dict.repository.repositoryCreated);
@@ -95,7 +95,7 @@ export default function RepositoryCreateSection() {
   }, [
     nameField,
     descriptionField,
-    tables,
+    collections,
     irminAlert,
     createRepository,
     router,
@@ -154,20 +154,20 @@ export default function RepositoryCreateSection() {
             />
           </div>
           <span className='px-2 text-xs text-gray-400 dark:text-gray-600'>
-            {dict.repository.settings.selectTableToAdd}
+            {dict.repository.settings.selectCollectionToAdd}
           </span>
           <div className='flex w-full flex-row items-center justify-normal gap-2'>
-            {/* Form to add more tables to this repository */}
+            {/* Form to add more collections to this repository */}
             <div className='w-full'>
               <ReactSelect
-                value={{ value: newTable, label: newTable }}
+                value={{ value: newCollection, label: newCollection }}
                 onChange={(newValue) => {
                   if (!newValue) return;
-                  setNewTable(newValue.value);
+                  setNewCollection(newValue.value);
                 }}
-                options={allAvailableTables.map((table) => ({
-                  value: table,
-                  label: table,
+                options={allAvailableCollections.map((collection) => ({
+                  value: collection,
+                  label: collection,
                 }))}
                 className='react-select-container w-full'
                 classNamePrefix='react-select'
@@ -179,26 +179,27 @@ export default function RepositoryCreateSection() {
               colorScheme='gray'
               variant='solid'
               onClick={() => {
-                if (newTable) setTables([...tables, newTable]);
+                if (newCollection)
+                  setCollections([...collections, newCollection]);
               }}
             >
-              {dict.repository.settings.addTable}
+              {dict.repository.settings.addCollection}
             </Button>
           </div>
           <div>
-            {/* List of current tables in the repository */}
-            {tables.map((table, idx) => (
+            {/* List of current collections in the repository */}
+            {collections.map((collection, idx) => (
               <div
-                key={`table-${table}-${idx}`}
+                key={`collection-${collection}-${idx}`}
                 className='mx-2 flex w-full flex-row items-center justify-between'
               >
-                <div className='text-xs opacity-80'>{table}</div>
+                <div className='text-xs opacity-80'>{collection}</div>
                 <Button
                   size='sm'
                   colorScheme='gray'
                   variant='link'
                   onClick={() => {
-                    setTables(tables.filter((t) => t !== table));
+                    setCollections(collections.filter((t) => t !== collection));
                   }}
                 >
                   {dict.repository.settings.remove}

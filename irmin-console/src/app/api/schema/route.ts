@@ -3,14 +3,14 @@ import { type NextRequest } from 'next/server';
 import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
-import { repositorySchemaExample } from '@/types/examples/datatableSchema';
+import { exampleRepositorySchema } from '@/types/examples/collectionSchema';
 
 import { emptySchemaResponse, SchemaResponse } from './types';
 
 /**
- * GET /api/schema?table=table1&table=table2
+ * GET /api/schema?collection=abc&collection=xyz
  *
- * Endpoint to get the schema for a single table or a collection of tables
+ * Endpoint to get the schema for collections
  */
 export async function GET(req: NextRequest) {
   // Get the token from the Authorization header
@@ -52,11 +52,11 @@ export async function GET(req: NextRequest) {
 
   // Get the request properties
   const searchParams = req.nextUrl.searchParams;
-  const schemaRequestTables = searchParams.getAll('table');
+  const schemaRequestCollections = searchParams.getAll('collection');
   if (
     !searchParams ||
-    !schemaRequestTables ||
-    schemaRequestTables.length === 0
+    !schemaRequestCollections ||
+    schemaRequestCollections.length === 0
   ) {
     return new Response('Invalid request', { status: 400 });
   }
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     ...emptySchemaResponse,
     metadata: {
       errors: [],
-      tables: schemaRequestTables,
+      collections: schemaRequestCollections,
       workspace: workspaceSlug,
     },
   };
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
 
     // TODO: Get the schema for the requested tables from the API
     // For now, just set some fake data
-    schemaRes.data.tables = [...repositorySchemaExample];
+    schemaRes.data.collections = [...exampleRepositorySchema];
   } catch (error) {
     // Log the error, but don't throw it
     console.error('GET /api/schema', error);

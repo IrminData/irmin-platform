@@ -1,14 +1,14 @@
 /**
  * Interface for defining a single row in a data set.
  */
-export interface DatatableRow {
+export interface CollectionRow {
   [key: string]: string | number | boolean;
 }
 
 /**
  * Interface for defining a column in a datatable.
  */
-export interface DatatableColumn {
+export interface CollectionColumn {
   name: string;
   type:
     | 'int'
@@ -57,9 +57,9 @@ export interface TableRelation {
 /**
  * Interface for defining the schema of a datatable.
  */
-export interface DatatableSchema {
-  table: string; // Name of the table
-  columns: DatatableColumn[]; // List of columns
+export interface CollectionSchema {
+  name: string; // Name of the table
+  columns: CollectionColumn[]; // List of columns
   indexes?: string[]; // Optional: List of indexes on the table
   relations?: TableRelation[]; // Optional: Defines relationships to other tables
 }

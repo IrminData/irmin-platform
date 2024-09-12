@@ -192,10 +192,8 @@ const fi = {
   },
   repository: {
     repository: 'Tietovarasto',
-    dataTables: 'Taulukot',
-    tableColumns: 'Kolumnit',
-    noDataTables: 'Ei tietotauluja tässä tietovarastossa',
-    noTableColumns: 'Ei kolumneja valitussa taulukossa',
+    collections: 'Kokoelmat',
+    noCollections: 'Ei kokoelmia tässä tietovarastossa',
     rowsReturnedIn: 'riviä palautettu ajassa',
     sqlQuery: 'SQL Kysely',
     runQuery: 'Ajaa kysely',
@@ -211,7 +209,7 @@ const fi = {
     createNewRepository: 'Luo uusi tietovarasto',
     repositoryCreated: 'Tietovarasto luotu onnistuneesti.',
     settings: {
-      manageTables: 'Hallinnoi taulukoita',
+      manageCollections: 'Hallinnoi kokoelmia',
       generalSettings: 'Yleiset asetukset',
       name: 'Nimi',
       description: 'Kuvaus',
@@ -223,11 +221,11 @@ const fi = {
       dangerZone: 'Vaaravyöhyke',
       deletionNote:
         'Tietovaraston poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
-      deleteRepository: 'Poista Tietovarasto',
+      deleteRepository: 'Poista tietovarasto',
       areYouSureYouWantToDelete:
         'Oletko varma, että haluat poistaa tämän tietovaraston?',
-      selectTableToAdd: 'Valitse taulukko lisättäväksi',
-      addTable: 'Lisää taulukko',
+      selectCollectionToAdd: 'Valitse kokoelma lisättäväksi',
+      addCollection: 'Lisää kokoelma',
       remove: 'Poista',
     },
     tabs: {
@@ -240,13 +238,13 @@ const fi = {
       settings: 'Asetukset',
     },
     referenceRepository: {
-      clickOnATable: 'Klikkaa taulukkoa viitataksesi siihen',
-      toReferenceTheTable: 'Käyttääksesi taulukkoa',
+      clickOnCollection: 'Klikkaa kokoelmaa viitataksesi siihen',
+      toReferenceTheCollection: 'Käyttääksesi kokoelmaa',
       fromTheRepository: 'tietovarastosta',
-      inTheEditor: 'editorissa, käytä seuraavaa syntaksia:',
+      inTheEditor: ', käytä seuraavaa syntaksia:',
     },
     schema: {
-      tableSchema: 'taulukon rakenne',
+      schema: 'taulukon rakenne',
       column: 'Kolumni',
       type: 'Tyyppi',
       constraints: 'Rajoitteet',
@@ -509,7 +507,7 @@ const fi = {
     timestamp: 'Aikaleima',
     workspace: 'Työtila',
     createdBy: 'Luonut',
-    tables: 'Taulukot',
+    collections: 'Kokoelmat',
     sections: {
       actions: 'Toiminnot',
       connections: 'Yhteydet',
