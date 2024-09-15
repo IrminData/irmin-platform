@@ -34,7 +34,6 @@ export async function GET(req: Request) {
   const {
     profileService,
     workspaceService,
-    dashboardService,
     workflowService,
     repositoryService,
     userService,
@@ -77,7 +76,6 @@ export async function GET(req: Request) {
 
     // Construct an array of promises to fetch all the data
     const promises = {
-      dashboards: dashboardService.fetchDashboards,
       connections: workflowService.fetchConnections,
       exports: workflowService.fetchExports,
       actions: workflowService.fetchActions,

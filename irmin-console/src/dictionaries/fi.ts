@@ -149,7 +149,7 @@ const fi = {
       relatedWorkspace: 'Työtila',
     },
     links: {
-      dashboards: 'Datapaneeli',
+      home: 'Koti',
       repositories: 'Tietovarastot',
       query: 'Kyselyt',
       editor: 'Editori',
@@ -182,13 +182,6 @@ const fi = {
     switchedTo: 'Työtila vaihdettu',
     failedToSwitch: 'Työtilan vaihto epäonnistui',
     workspace: 'Työtila',
-  },
-  dashboard: {
-    dashboard: 'Datapaneeli',
-    createNewDashboard: 'Luo uusi datapaneeli',
-    noDashboards: 'Ei datapaneeleja',
-    existingWidgets: 'Olemassa olevat widgetit',
-    addNewWidget: 'Lisää uusi widgetit',
   },
   repository: {
     repository: 'Tietovarasto',
@@ -513,19 +506,6 @@ const fi = {
       connections: 'Yhteydet',
       exports: 'Viennit',
       repositories: 'Tietovarastot',
-    },
-  },
-  widget: {
-    create: {
-      table: 'Taulukko',
-      bar: 'Palkki',
-      line: 'Viiva',
-      metric: 'Mittari',
-      widgetName: 'Widgetin nimi',
-      saveToDashboard: 'Tallenna kojelautaan',
-      selectDashboard: 'Valitse kojelauta',
-      widgetType: 'Widgetin tyyppi',
-      createWidget: 'Luo widgetti',
     },
   },
   usersPermissions: {

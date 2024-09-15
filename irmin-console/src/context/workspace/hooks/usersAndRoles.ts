@@ -46,7 +46,7 @@ export const useFetchRoles = (
  * @param setUsers - Function to update the users state.
  * @param loading - Loading state to prevent multiple simultaneous fetches.
  * @param setLoading - Function to update the loading state.
- * @param fetchedFor - The slug of the workspace dashboards are fetched for.
+ * @param fetchedFor - The slug of the workspace users are already fetched for.
  * @param setFetchedFor - Function to update fetched for state.
  * @param locale - The current locale.
  */

@@ -9,7 +9,6 @@ import { Locale } from '@/dictionaries';
 import { WorkspaceContext } from '@/context/workspace';
 import useActions from '@/context/workspace/provider/useActions';
 import useConnections from '@/context/workspace/provider/useConnections';
-import useDashboards from '@/context/workspace/provider/useDashboards';
 import useExports from '@/context/workspace/provider/useExports';
 import useInvite from '@/context/workspace/provider/useInvite';
 import useRepositories from '@/context/workspace/provider/useRepositories';
@@ -75,13 +74,6 @@ export const WorkspaceProvider = ({
     currentWorkspace,
     locale,
   });
-
-  // Dashboards
-  const { dashboards, dashboardsLoading, setDashboards, fetchDashboards } =
-    useDashboards({
-      currentWorkspace,
-      locale,
-    });
 
   // Repositories
   const {
@@ -163,7 +155,6 @@ export const WorkspaceProvider = ({
       setWorkspaceLoading(true);
       // Empty workspace slug = reset the context data
       if (!workspaceSlug) {
-        setDashboards([]);
         setConnections([]);
         setExports([]);
         setActions([]);
@@ -176,7 +167,6 @@ export const WorkspaceProvider = ({
         // Fetch the full data for the current workspace
         const res = await fetchFullCurrentWorkspace(workspaceSlug);
         // Set the states
-        setDashboards(res.data.dashboards);
         setConnections(res.data.connections);
         setExports(res.data.exports);
         setActions(res.data.actions);
@@ -192,7 +182,6 @@ export const WorkspaceProvider = ({
     },
     [
       fetchFullCurrentWorkspace,
-      setDashboards,
       setConnections,
       setExports,
       setActions,
@@ -293,11 +282,6 @@ export const WorkspaceProvider = ({
           resendInvite,
           cancelInvite,
           changeInvite,
-        },
-        dashboards: {
-          dashboards,
-          isLoading: dashboardsLoading,
-          fetchDashboards,
         },
         connections: {
           connections,

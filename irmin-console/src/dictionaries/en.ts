@@ -149,7 +149,7 @@ const en = {
       relatedWorkspace: 'Workspace',
     },
     links: {
-      dashboards: 'Dashboards',
+      home: 'Home',
       repositories: 'Repositories',
       query: 'Query',
       editor: 'Editor',
@@ -182,13 +182,6 @@ const en = {
     switchedTo: 'Switched to',
     failedToSwitch: 'Failed to switch workspace',
     workspace: 'Workspace',
-  },
-  dashboard: {
-    dashboard: 'Dashboard',
-    createNewDashboard: 'Create new dashboard',
-    noDashboards: 'No dashboards found',
-    existingWidgets: 'Existing widgets',
-    addNewWidget: 'Add new widget',
   },
   repository: {
     repository: 'Repository',
@@ -515,19 +508,6 @@ const en = {
       connections: 'Connections',
       exports: 'Exports',
       repositories: 'Repositories',
-    },
-  },
-  widget: {
-    create: {
-      table: 'Table',
-      bar: 'Bar',
-      line: 'Line',
-      metric: 'Metric',
-      widgetName: 'Widget name',
-      saveToDashboard: 'Save to dashboard',
-      selectDashboard: 'Select dashboard',
-      widgetType: 'Widget type',
-      createWidget: 'Create widget',
     },
   },
   usersPermissions: {

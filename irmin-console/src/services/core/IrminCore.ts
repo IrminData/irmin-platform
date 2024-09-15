@@ -9,14 +9,12 @@ import AuthService from './resources/AuthService';
 import BucketService from './resources/BucketService';
 import ConnectionWorkflowService from './resources/ConnectionWorkflowService';
 import ConnectorService from './resources/ConnectorService';
-import DashboardService from './resources/DashboardService';
 import ExportWorkflowService from './resources/ExportWorkflowService';
 import InviteService from './resources/InviteService';
 import ProfileService from './resources/ProfileService';
 import RepositoryService from './resources/RepositoryService';
 import RoleService from './resources/RoleService';
 import UserService from './resources/UserService';
-import WidgetService from './resources/WidgetService';
 import WorkflowService from './resources/WorkflowService';
 import WorkspaceService from './resources/WorkspaceService';
 
@@ -39,14 +37,12 @@ class IrminCore {
   public bucketService: BucketService;
   public connectionService: ConnectionWorkflowService;
   public connectorService: ConnectorService;
-  public dashboardService: DashboardService;
   public repositoryService: RepositoryService;
   public exportService: ExportWorkflowService;
   public inviteService: InviteService;
   public profileService: ProfileService;
   public userService: UserService;
   public roleService: RoleService;
-  public widgetService: WidgetService;
   public workflowService: WorkflowService;
   public workspaceService: WorkspaceService;
 
@@ -62,14 +58,12 @@ class IrminCore {
     this.bucketService = new BucketService(this);
     this.connectionService = new ConnectionWorkflowService(this);
     this.connectorService = new ConnectorService(this);
-    this.dashboardService = new DashboardService(this);
     this.repositoryService = new RepositoryService(this);
     this.exportService = new ExportWorkflowService(this);
     this.inviteService = new InviteService(this);
     this.profileService = new ProfileService(this);
     this.userService = new UserService(this);
     this.roleService = new RoleService(this);
-    this.widgetService = new WidgetService(this);
     this.workflowService = new WorkflowService(this);
     this.workspaceService = new WorkspaceService(this);
   }

@@ -200,9 +200,9 @@ export const useSwitchWorkspace = (
           await workspaceService.switchWorkspace(workspaceSlug);
         if (newWorkspace) {
           setCurrentWorkspace(newWorkspace.data);
-          // If router not already on a workspace page, redirect to the dashboards page
+          // If router not already on a workspace page, redirect to the workspace
           if (!pathname.includes(`/portal/${workspaceSlug}`)) {
-            router.push(`/portal/${workspaceSlug}/dashboards`);
+            router.push(`/portal/${workspaceSlug}/home`);
           }
         } else {
           throw new Error('Switching workspace failed');

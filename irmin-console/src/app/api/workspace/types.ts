@@ -1,4 +1,3 @@
-import { Dashboard } from '@/types/api/Dashboard';
 import { Invite } from '@/types/api/Invite';
 import { Repository } from '@/types/api/Repository';
 import {
@@ -9,7 +8,6 @@ import {
 import { WorkspaceUser } from '@/types/api/Workspace';
 
 /**
- * @typeParam dashboards - {@link Dashboard} objects
  * @typeParam connections - {@link ConnectionWorkflow} objects
  * @typeParam exports - {@link ExportWorkflow} objects
  * @typeParam actions - {@link ActionWorkflow} objects
@@ -18,7 +16,6 @@ import { WorkspaceUser } from '@/types/api/Workspace';
  * @typeParam invites - {@link Invite} objects
  */
 export interface WorkspaceProxyData {
-  dashboards: Dashboard[];
   connections: ConnectionWorkflow[];
   exports: ExportWorkflow[];
   actions: ActionWorkflow[];
@@ -53,7 +50,6 @@ export interface WorkspaceProxyResponse {
  */
 export const emptyWorkspaceProxyResponse: WorkspaceProxyResponse = {
   data: {
-    dashboards: [],
     connections: [],
     exports: [],
     actions: [],

@@ -16,7 +16,7 @@ import { Workspace } from '@/types/api/Workspace';
  * @param setInvites - Function to update the invites state.
  * @param loading - Loading state to prevent multiple simultaneous fetches.
  * @param setLoading - Function to update the loading state.
- * @param fetchedFor - The slug of the workspace dashboards are fetched for.
+ * @param fetchedFor - The slug of the workspace invites are already fetched for.
  * @param setFetchedFor - Function to update fetched for state.
  * @param locale - The current locale.
  */

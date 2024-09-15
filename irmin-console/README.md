@@ -390,13 +390,11 @@ In addition, it provides the application with logic to communicate with:
 - [Action Workflow API Service](src/services/core/resources/ActionWorkflowService.ts)
 - [Connection Workflow API Service](src/services/core/resources/ConnectionWorkflowService.ts)
 - [Connector API Service](src/services/core/resources/ConnectorService.ts)
-- [Dashboard API Service](src/services/core/resources/DashboardService.ts)
 - [Repository API Service](src/services/core/resources/RepositoryService.ts)
 - [Export Workflow API Service](src/services/core/resources/ExportWorkflowService.ts)
 - [Invite API Service](src/services/core/resources/InviteService.ts)
 - [User API Service](src/services/core/resources/UserService.ts)
 - [Role API Service](src/services/core/resources/RoleService.ts)
-- [Widget API Service](src/services/core/resources/WidgetService.ts)
 - [Workflow API Service](src/services/core/resources/WorkflowService.ts)
 - [Workspace API Service](src/services/core/resources/WorkspaceService.ts)
 

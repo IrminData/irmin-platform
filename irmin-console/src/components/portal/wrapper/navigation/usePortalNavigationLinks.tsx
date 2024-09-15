@@ -14,6 +14,7 @@ import {
   TbDashboard,
   TbDatabase,
   TbFile,
+  TbHome,
   TbLogout,
   TbLogs,
   TbRun,
@@ -62,9 +63,9 @@ const usePortalNavigationLinks = (): {
 
   const workspaceLinks = [
     {
-      title: dict.portalNavigation.links.dashboards,
-      href: `/${locale}/portal/${workspaceSlug}/dashboards`,
-      icon: <TbDashboard />,
+      title: dict.portalNavigation.links.home,
+      href: `/${locale}/portal/${workspaceSlug}/home`,
+      icon: <TbHome />,
     },
     {
       title: dict.portalNavigation.links.repositories,

@@ -4,7 +4,6 @@ import { createContext, useContext } from 'react';
 
 import { WorkspaceProvider } from '@/context/workspace/WorkspaceProvider';
 
-import { Dashboard } from '@/types/api/Dashboard';
 import { Invite } from '@/types/api/Invite';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
@@ -63,11 +62,6 @@ const WorkspaceContext = createContext<{
       _inviteId: number,
       _role: IrminRole
     ) => Promise<IrminAPIResponse>;
-  };
-  dashboards: {
-    dashboards: Dashboard[];
-    isLoading: boolean;
-    fetchDashboards: (_forceFetch?: boolean) => void;
   };
   connections: {
     connections: ConnectionWorkflow[];
@@ -146,11 +140,6 @@ const WorkspaceContext = createContext<{
     resendInvite: () => Promise.resolve({}),
     cancelInvite: () => Promise.resolve({}),
     changeInvite: () => Promise.resolve({}),
-  },
-  dashboards: {
-    dashboards: [],
-    isLoading: false,
-    fetchDashboards: () => {},
   },
   connections: {
     connections: [],

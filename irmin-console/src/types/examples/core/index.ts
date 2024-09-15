@@ -9,7 +9,6 @@ import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 
 import { bucket } from './bucket';
 import { connectors } from './connectors';
-import { dashboards } from './dashboards';
 import { files } from './files';
 import { folders } from './folders';
 import { invites } from './invites';
@@ -17,7 +16,6 @@ import { profile } from './profile';
 import { repositories } from './repositories';
 import { roles } from './roles';
 import { workspaceUsers } from './users';
-import { widgets } from './widgets';
 import { workflowRuns } from './workflowRuns';
 import { actions, connections, exports, workflows } from './workflows';
 import { workspaces } from './workspaces';
@@ -39,16 +37,6 @@ export const exampleAPIResponse: IrminAPIResponse = {
     ],
   },
 };
-
-/**
- * Fake {@link widgets}
- */
-export const exampleWidgets = widgets();
-
-/**
- * Fake {@link dashboards}
- */
-export const exampleDashboards = dashboards();
 
 /**
  * Fake {@link roles}
