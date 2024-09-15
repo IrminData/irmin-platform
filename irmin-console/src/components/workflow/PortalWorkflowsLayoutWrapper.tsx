@@ -31,25 +31,25 @@ export default function PortalWorkflowsLayoutWrapper({
           {
             icon: <TbRun />,
             name: dict.workflow.allWorkflows,
-            slug: 'marketplace-home',
+            slug: 'all-workflows',
             link: `/${params.lang}/portal/${params.workspace}/workflows`,
           },
           {
             icon: <TbPlayerPlay />,
             name: dict.portalNavigation.links.actions,
-            slug: 'data-marketplace',
+            slug: 'action-workflows',
             link: `/${params.lang}/portal/${params.workspace}/workflows/actions`,
           },
           {
             icon: <TbDatabaseImport />,
             name: dict.portalNavigation.links.connections,
-            slug: 'plugin-marketplace',
+            slug: 'connection-workflows',
             link: `/${params.lang}/portal/${params.workspace}/workflows/connections`,
           },
           {
             icon: <TbDatabaseExport />,
             name: dict.portalNavigation.links.exports,
-            slug: 'my-listings',
+            slug: 'export-workflows',
             link: `/${params.lang}/portal/${params.workspace}/workflows/exports`,
           },
         ]}

@@ -9,7 +9,6 @@ import {
 } from 'react-icons/md';
 import {
   TbBook,
-  TbBuildingStore,
   TbChevronLeft,
   TbDashboard,
   TbDatabase,
@@ -101,11 +100,6 @@ const usePortalNavigationLinks = (): {
       title: dict.portalNavigation.links.workspaceSettings,
       href: `/${locale}/portal/${workspaceSlug}/settings`,
       icon: <TbSettings />,
-    },
-    {
-      title: dict.portalNavigation.links.marketplace,
-      href: `/${locale}/portal/${workspaceSlug}/marketplace`,
-      icon: <TbBuildingStore />,
     },
   ].map((link) => ({
     ...link,
