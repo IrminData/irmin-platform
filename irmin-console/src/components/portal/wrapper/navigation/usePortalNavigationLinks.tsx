@@ -20,7 +20,6 @@ import {
   TbRun,
   TbSchema,
   TbSettings,
-  TbSql,
   TbUser,
 } from 'react-icons/tb';
 
@@ -73,16 +72,6 @@ const usePortalNavigationLinks = (): {
       icon: <TbDatabase />,
     },
     {
-      title: dict.portalNavigation.links.query,
-      href: `/${locale}/portal/${workspaceSlug}/query`,
-      icon: <TbSql />,
-    },
-    {
-      title: dict.portalNavigation.links.editor,
-      href: `/${locale}/portal/${workspaceSlug}/editor`,
-      icon: <TbFile />,
-    },
-    {
       title: dict.portalNavigation.links.connections,
       href: `/${locale}/portal/${workspaceSlug}/connections`,
       icon: <GoWorkflow />,
@@ -91,6 +80,11 @@ const usePortalNavigationLinks = (): {
       title: dict.portalNavigation.links.workflows,
       href: `/${locale}/portal/${workspaceSlug}/workflows`,
       icon: <TbRun />,
+    },
+    {
+      title: dict.portalNavigation.links.editor,
+      href: `/${locale}/portal/${workspaceSlug}/editor`,
+      icon: <TbFile />,
     },
     {
       title: dict.portalNavigation.links.logs,

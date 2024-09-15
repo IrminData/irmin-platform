@@ -151,7 +151,6 @@ const fi = {
     links: {
       home: 'Työtilan koti',
       repositories: 'Tietovarastot',
-      query: 'Kyselyt',
       editor: 'Editori',
       connections: 'Yhteydet',
       workflows: 'Prosessit',
@@ -348,14 +347,8 @@ const fi = {
     newScriptTitle: 'Luo uusi skripti',
     newScriptSubtitle:
       'Kirjoita skripti valitsemallasi kielellä ja tallenna se toimintoprosessiksi',
-    queryTitle: 'Ajaa kyselyitä tietovarastoissasi',
-    querySubtitle:
-      'Kirjoita Irmin SQL-kysely ja suorita se valitsemassasi tietovarastossa',
-    setupNewConnection: 'Aseta uusi yhteys',
-    actionResults: 'Toiminnon Tulokset',
   },
   query: {
-    queryResults: 'Kyselyn tulokset',
     results: 'Tulokset',
     save: 'Tallenna',
     run: 'Suorita',

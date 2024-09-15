@@ -151,7 +151,6 @@ const en = {
     links: {
       home: 'Workspace home',
       repositories: 'Repositories',
-      query: 'Query',
       editor: 'Editor',
       connections: 'Connections',
       workflows: 'Workflows',
@@ -347,13 +346,8 @@ const en = {
     newScriptTitle: 'Create a new script',
     newScriptSubtitle:
       'Start writing your script in your preferred language and save it as a workflow',
-    queryTitle: 'Query data from your repositories',
-    querySubtitle: 'Use Irmin SQL to query your data and get the results',
-    setupNewConnection: 'Setup new connection',
-    actionResults: 'Action Results',
   },
   query: {
-    queryResults: 'Query Results',
     results: 'Results',
     save: 'Save',
     run: 'Run',

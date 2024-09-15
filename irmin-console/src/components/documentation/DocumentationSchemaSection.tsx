@@ -86,7 +86,7 @@ export default function DocumentationSchemaSection() {
       if (imports) {
         const importsNode: TreeNode = {
           id: `import-workflows`,
-          label: 'Import Workflows',
+          label: 'Imports',
           children: imports.map((importSync) => ({
             id: `workflow-import-${importSync.id}`,
             label: importSync.name,

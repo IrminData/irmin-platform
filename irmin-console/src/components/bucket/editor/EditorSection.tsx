@@ -23,7 +23,7 @@ export default function EditorSection() {
       <EditorWithTabs />
       {openFileTabs.length > 0 && (
         <QueryResults
-          title={dict.editor.actionResults}
+          title={dict.query.results}
           data={dataResults?.result ?? []}
           metadata={{
             rowsReturned: dataResults?.metadata?.rowsReturned,
