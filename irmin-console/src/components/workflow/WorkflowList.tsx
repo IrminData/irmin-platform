@@ -38,17 +38,17 @@ const WorkflowList = ({
       {
         label: dict.list.view,
         primary: true,
-        href: `/portal/${workspace}/workflows/${item.slug}`,
+        href: `/${locale}/portal/${workspace}/workflows/${item.slug}`,
       },
       {
         label: dict.list.edit,
         primary: false,
-        href: `/portal/${workspace}/workflows/${item.slug}/settings`,
+        href: `/${locale}/portal/${workspace}/workflows/${item.slug}/settings`,
       },
       {
         label: dict.list.logs,
         primary: false,
-        href: `/portal/${workspace}/logs/workflow/${item.slug}`,
+        href: `/${locale}/portal/${workspace}/logs/workflow/${item.slug}`,
       },
     ];
     return {

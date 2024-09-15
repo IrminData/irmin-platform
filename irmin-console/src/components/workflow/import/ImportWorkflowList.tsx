@@ -7,20 +7,20 @@ import StatusBadge from '@/components/common/status/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { ConnectionWorkflow } from '@/types/api/Workflow';
+import { ImportWorkflow } from '@/types/api/Workflow';
 import { GridRow } from '@/types/internal/ListProps';
 
 /**
- * Table UI to display a list of Connection Workflows
+ * Table UI to display a list of Import Workflows
  *
  * Uses {@link CardOrNormalList} and {@link StatusBadge}
  */
-const ConnectionWorkflowList = ({
+const ImportWorkflowList = ({
   loading,
-  connectionWorkflows: items,
+  importWorkflows: items,
 }: {
   loading: boolean;
-  connectionWorkflows: ConnectionWorkflow[];
+  importWorkflows: ImportWorkflow[];
 }) => {
   const { dict, locale } = useLocale();
   const { workspace } = useParams();
@@ -28,7 +28,7 @@ const ConnectionWorkflowList = ({
   if (!loading && (!items || items.length === 0)) {
     return (
       <div className='px-4 py-12 text-center text-sm text-irmin_black'>
-        {dict.list.noConnectionsFound}
+        {dict.list.noImportWorkflowsFound}
       </div>
     );
   }
@@ -38,17 +38,17 @@ const ConnectionWorkflowList = ({
       {
         label: dict.list.view,
         primary: true,
-        href: `/portal/${workspace}/workflows/${item.slug}`,
+        href: `/${locale}/portal/${workspace}/workflows/${item.slug}`,
       },
       {
         label: dict.list.edit,
         primary: false,
-        href: `/portal/${workspace}/workflows/${item.slug}/settings`,
+        href: `/${locale}/portal/${workspace}/workflows/${item.slug}/settings`,
       },
       {
         label: dict.list.logs,
         primary: false,
-        href: `/portal/${workspace}/logs/workflow/${item.slug}`,
+        href: `/${locale}/portal/${workspace}/logs/workflow/${item.slug}`,
       },
     ];
 
@@ -119,4 +119,4 @@ const ConnectionWorkflowList = ({
   );
 };
 
-export default ConnectionWorkflowList;
+export default ImportWorkflowList;

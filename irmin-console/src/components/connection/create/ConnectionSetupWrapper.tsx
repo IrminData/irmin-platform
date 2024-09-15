@@ -12,14 +12,13 @@ import { usePopup } from '@/context/PopupContext';
 import { Connector } from '@/types/api/Connector';
 import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 
+import ConfigureConnection from './step/ConfigureConnection';
 import DefineDetails from './step/DefineDetails';
 import DefineSettings from './step/DefineSettings';
-import DefineSync from './step/DefineSync';
 import SelectConnector from './step/SelectConnector';
 
 const initialConnectionData: ConnectionSetup = {
   name: '',
-  cron: '0 0 * * *',
   description: '',
   connector: null,
   connectionDetailsFields: null,
@@ -113,7 +112,7 @@ const ConnectionSetupWrapper = ({
         />
       )}
       {currentStep === 4 && connectionData.connector && (
-        <DefineSync
+        <ConfigureConnection
           connectionData={connectionData}
           setConnectionData={setConnectionData}
           setCurrentStep={setCurrentStep}

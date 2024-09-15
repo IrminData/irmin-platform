@@ -28,7 +28,7 @@ const ActionWorkflowList = ({
   if (!loading && (!items || items.length === 0)) {
     return (
       <div className='px-4 py-12 text-center text-xl text-irmin_black'>
-        {dict.list.noActionsFound}
+        {dict.list.noActionWorkflowsFound}
       </div>
     );
   }
@@ -38,17 +38,17 @@ const ActionWorkflowList = ({
       {
         label: dict.list.view,
         primary: true,
-        href: `/portal/${workspace}/workflows/${item.slug}`,
+        href: `/${locale}/portal/${workspace}/workflows/${item.slug}`,
       },
       {
         label: dict.list.edit,
         primary: false,
-        href: `/portal/${workspace}/workflows/${item.slug}/settings`,
+        href: `/${locale}/portal/${workspace}/workflows/${item.slug}/settings`,
       },
       {
         label: dict.list.logs,
         primary: false,
-        href: `/portal/${workspace}/logs/workflow/${item.slug}`,
+        href: `/${locale}/portal/${workspace}/logs/workflow/${item.slug}`,
       },
     ];
     return {

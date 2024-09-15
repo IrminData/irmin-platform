@@ -9,15 +9,7 @@ import { Repository } from '@/types/api/Repository';
 import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
 
 /**
- * Hook to fetch the list of Repositories for the current workspace.
- *
- * @param currentWorkspace - The current workspace
- * @param setRepositories - Function to update the repositories state.
- * @param loading - Loading state to prevent multiple simultaneous fetches.
- * @param setLoading - Function to update the loading state.
- * @param fetchedFor - The slug of the workspace workflows are fetched for.
- * @param setFetchedFor - Function to update fetched for state.
- * @param locale - The current locale.
+ * Hook to fetch the list of Repositories for the current workspace using the {@link IrminCore}.
  */
 export const useFetchRepositories = (
   currentWorkspace: Workspace | null,
@@ -29,11 +21,6 @@ export const useFetchRepositories = (
   locale: Locale
 ) =>
   useCallback(
-    /**
-     * Fetch and update context for Repositories of the current workspace using the {@link IrminCore}.
-     *
-     * @param forceFetch - If true, will refetch even if already fetched
-     */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
       if (!forceFetch) {
@@ -71,11 +58,7 @@ export const useFetchRepositories = (
   );
 
 /**
- * Hook to create a new Repository.
- *
- * @param repositories - The current list of Repositories
- * @param setRepositories - Function to update the repositories state.
- * @param locale - The current locale.
+ * Hook to create a new Repository using the {@link IrminCore}.
  */
 export const useCreateRepository = (
   repositories: Repository[],
@@ -83,12 +66,6 @@ export const useCreateRepository = (
   locale: Locale
 ) =>
   useCallback(
-    /**
-     * Create a new Repository using the {@link IrminCore}.
-     * Updates the context state accordingly.
-     *
-     * @param repository - The Repository object to create with data being the new Repository
-     */
     async (repository: Repository) => {
       // Create the repository
       const { repositoryService } = new IrminCore(locale);
@@ -104,11 +81,7 @@ export const useCreateRepository = (
   );
 
 /**
- * Hook to update a Repository.
- *
- * @param repositories - The current list of Repositories
- * @param setRepositories - Function to update the repositories state.
- * @param locale - The current locale.
+ * Hook to update a Repository using the {@link IrminCore}.
  */
 export const useUpdateRepository = (
   repositories: Repository[],
@@ -116,23 +89,16 @@ export const useUpdateRepository = (
   locale: Locale
 ) =>
   useCallback(
-    /**
-     * Update a Repository using the {@link IrminCore}.
-     * Updates the context state accordingly.
-     *
-     * @param dataRepoSlug - The slug of the Repository to update
-     * @param updatedRepository - The updated Repository object
-     */
-    async (dataRepoSlug: string, updatedRepository: Repository) => {
+    async (repositorySlug: string, updatedRepository: Repository) => {
       // Update the repository
       const { repositoryService } = new IrminCore(locale);
       const response = await repositoryService.updateRepository(
-        dataRepoSlug,
+        repositorySlug,
         updatedRepository
       );
       // Update the local state with the updated repository
       const updatedRepositories = repositories.map((repo) =>
-        repo.slug === dataRepoSlug ? { ...repo, ...updatedRepository } : repo
+        repo.slug === repositorySlug ? { ...repo, ...updatedRepository } : repo
       );
       setRepositories(updatedRepositories);
       // Return the response from the API
@@ -142,11 +108,7 @@ export const useUpdateRepository = (
   );
 
 /**
- * Hook to delete a Repository.
- *
- * @param repositories - The current list of Repositories
- * @param setRepositories - Function to update the repositories state.
- * @param locale - The current locale.
+ * Hook to delete a Repository using the {@link IrminCore}.
  */
 export const useDeleteRepository = (
   repositories: Repository[],
@@ -154,19 +116,13 @@ export const useDeleteRepository = (
   locale: Locale
 ) =>
   useCallback(
-    /**
-     * Delete a Repository using the {@link IrminCore}.
-     * Updates the context state accordingly.
-     *
-     * @param dataRepoSlug - The slug of the Repository to delete
-     */
-    async (dataRepoSlug: string) => {
+    async (repositorySlug: string) => {
       // Delete the repository
       const { repositoryService } = new IrminCore(locale);
-      const response = await repositoryService.deleteRepository(dataRepoSlug);
+      const response = await repositoryService.deleteRepository(repositorySlug);
       // Update the local state by removing the deleted repository
       const updatedRepositories = repositories.filter(
-        (repo) => repo.slug !== dataRepoSlug
+        (repo) => repo.slug !== repositorySlug
       );
       setRepositories(updatedRepositories);
       // Return the response from the API
@@ -176,11 +132,7 @@ export const useDeleteRepository = (
   );
 
 /**
- * Hook to reassign a Repository to a new owner.
- *
- * @param repositories - The current list of Repositories
- * @param setRepositories - Function to update the repositories state.
- * @param locale - The current locale.
+ * Hook to reassign a Repository to a new owner using the {@link IrminCore}.
  */
 export const useReassignRepository = (
   repositories: Repository[],
@@ -188,13 +140,6 @@ export const useReassignRepository = (
   locale: Locale
 ) =>
   useCallback(
-    /**
-     * Reassign Repository ownership using the {@link IrminCore}.
-     * Updates the context state accordingly.
-     *
-     * @param repository - The Repository object to reassign ownership over
-     * @param newOwner - The Workspace User object for the new owner
-     */
     async (repository: Repository, newOwner: WorkspaceUser) => {
       // Reassign the Repositories
       const { repositoryService } = new IrminCore(locale);

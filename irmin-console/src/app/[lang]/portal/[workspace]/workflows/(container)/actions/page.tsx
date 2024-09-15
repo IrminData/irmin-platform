@@ -7,18 +7,14 @@ import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 /**
- * Portal actions page
- *
- * @remarks
- *
- * This page is used to manage actions in the portal.
- * It shows a list of actions that are available in the workspace.
- *
- * It uses the WorkspaceContext to fetch and manage action data.
+ * Page to list and manage Action Workflows
  */
-export default function ActionsPage() {
+export default function ActionWorkflowsPage() {
   const { dict } = useLocale();
-  const { workspaceLoading, actions } = useWorkspace();
+  const {
+    workspaceLoading,
+    workflows: { actions },
+  } = useWorkspace();
 
   const loading = workspaceLoading || actions.isLoading;
 

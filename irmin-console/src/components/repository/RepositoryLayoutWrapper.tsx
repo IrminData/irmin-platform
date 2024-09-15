@@ -10,7 +10,6 @@ import {
   TbFileText,
   TbGitBranch,
   TbHistory,
-  TbRun,
   TbSchema,
   TbSettings,
 } from 'react-icons/tb';
@@ -87,14 +86,6 @@ export default function RepositoryLayoutWrapper({
           currentPath ===
           `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/branches`,
         icon: <TbGitBranch size={14} />,
-      },
-      {
-        title: dict.repository.tabs.workflows,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/workflows`,
-        active:
-          currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/workflows`,
-        icon: <TbRun size={14} />,
       },
       {
         title: dict.repository.tabs.documentation,

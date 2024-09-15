@@ -18,17 +18,21 @@ import { useWorkspace } from '@/context/workspace';
  */
 export default function WorkflowsPage() {
   const { dict } = useLocale();
-  const { workspaceLoading, actions, connections, exports } = useWorkspace();
+  const { workspaceLoading, workflows: {
+    actions,
+    imports,
+    exports,
+  } } = useWorkspace();
 
   const loading =
     workspaceLoading ||
     actions.isLoading ||
-    connections.isLoading ||
+    imports.isLoading ||
     exports.isLoading;
 
   const workflows = [
     ...actions.actions,
-    ...connections.connections,
+    ...imports.imports,
     ...exports.exports,
   ].sort((a, b) => (a.updated_at > b.updated_at ? -1 : 1));
 

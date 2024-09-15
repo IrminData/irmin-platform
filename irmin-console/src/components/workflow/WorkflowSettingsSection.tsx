@@ -8,74 +8,20 @@ import { FaPause, FaPlay } from 'react-icons/fa6';
 
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
-import WrappedTabs from '@/components/common/tabs/WrappedTabs';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import {
-  ActionWorkflow,
-  ConnectionWorkflow,
-  ExportWorkflow,
-  Workflow,
-} from '@/types/api/Workflow';
+import { Workflow } from '@/types/api/Workflow';
 
 /**
  * Workflow Settings section component
  *
  * @param props0 - The props
- * @param props0.workflow - The workflow to editor the documentation for
- *
- * @todo Implement this component
+ * @param props0.workflow - The workflow to view and edit settings for
  */
 const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
-  const { dict } = useLocale();
-  return (
-    <div className='container relative mx-auto my-8 max-w-6xl'>
-      <WrappedTabs
-        tabs={[
-          {
-            slug: 'general',
-            name: dict.workflow.settings.general,
-            content: <GeneralWorkflowSettings workflow={workflow} />,
-          },
-          {
-            slug: 'connection',
-            name: dict.workflow.settings.connection,
-            content: (
-              <ConnectionWorkflowDetails
-                workflow={workflow as ConnectionWorkflow}
-              />
-            ),
-            hidden: workflow.workflowable_type !== 'connection',
-          },
-          {
-            slug: 'action',
-            name: dict.workflow.settings.action,
-            content: (
-              <ActionWorkflowDetails workflow={workflow as ActionWorkflow} />
-            ),
-            hidden: workflow.workflowable_type !== 'action',
-          },
-          {
-            slug: 'export',
-            name: dict.workflow.settings.export,
-            content: (
-              <ExportWorkflowDetails workflow={workflow as ExportWorkflow} />
-            ),
-            hidden: workflow.workflowable_type !== 'export',
-          },
-        ]}
-      />
-    </div>
-  );
-};
-
-/**
- * General Workflow Settings tab content
- */
-const GeneralWorkflowSettings = ({ workflow }: { workflow: Workflow }) => {
   const { dict } = useLocale();
   const { irminConfirm, irminAlert } = usePopup();
   const {
@@ -190,248 +136,132 @@ const GeneralWorkflowSettings = ({ workflow }: { workflow: Workflow }) => {
   }, [workflow, pauseWorkflow, resumeWorkflow, irminAlert, dict]);
 
   return (
-    <div className='my-8 px-4'>
-      <div className='mb-8 flex flex-row items-center justify-between px-2'>
-        <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
-          {dict.workflow.tabs.settings}
-        </h2>
-        {workflow.status === 'paused' ? (
-          <Button
-            size='sm'
-            colorScheme='gray'
-            variant='solid'
-            icon={<FaPlay size={14} />}
-            onClick={handlePauseOrResume}
-          >
-            {dict.workflow.settings.resumeWorkflow}
-          </Button>
-        ) : (
-          <Button
-            size='sm'
-            colorScheme='gray'
-            variant='solid'
-            icon={<FaPause size={14} />}
-            onClick={handlePauseOrResume}
-          >
-            {dict.workflow.settings.pauseWorkflow}
-          </Button>
-        )}
-      </div>
-      <div className='flex flex-col gap-4'>
-        <div>
-          <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
-            {dict.workflow.settings.name}
-          </label>
-          <Input
-            size='sm'
-            variant='outline'
-            colorScheme='gray'
-            required
-            className='h-11 w-full'
-            type='text'
-            name='name'
-            defaultValue={nameField}
-            onChange={(e) => setNameField(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
-            {dict.workflow.settings.description}
-          </label>
-          <Input
-            size='sm'
-            variant='outline'
-            colorScheme='gray'
-            required
-            className='w-full'
-            type='text'
-            name='name'
-            defaultValue={descriptionField}
-            onChange={(e) => setDescriptionField(e.target.value)}
-            longtext={{
-              rows: 3,
-            }}
-          />
-        </div>
-        <div>
-          <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
-            {dict.workflow.settings.syncInterval}
-          </label>
-          <Input
-            size='sm'
-            variant='outline'
-            colorScheme='gray'
-            required
-            className='h-11 w-full'
-            type='text'
-            name='cron'
-            defaultValue={cronField}
-            onChange={(e) => setCronField(e.target.value)}
-            placeholder={
-              dict.workflow.connection.create.syncIntervalPlaceholder
-            }
-          />
-        </div>
-        <div>
-          <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
-            {dict.workflow.settings.owner}
-          </label>
-          <ReactSelect
-            value={ownerField}
-            onChange={(newValue) => {
-              if (!newValue) return;
-              setOwnerField(newValue);
-            }}
-            options={currentWorkspace?.users ?? []}
-            getOptionLabel={(option) => option.email}
-            className='react-select-container'
-            classNamePrefix='react-select'
-          />
-        </div>
-        <Button
-          className='h-11 w-full'
-          type='submit'
-          size='sm'
-          colorScheme='primary'
-          variant='solid'
-          onClick={handleUpdateWorkflow}
-        >
-          {dict.workflow.settings.saveChanges}
-        </Button>
-        <div className='mt-8'>
-          <p className='text-sm font-normal text-red-800 md:text-xl dark:text-red-400'>
-            {dict.workflow.settings.dangerZone}
-          </p>
-          <p className='mt-2 text-xs text-gray-700 md:text-base dark:text-gray-200'>
-            {dict.workflow.settings.deletionNote}
-          </p>
-          <Button
-            className='mt-4 dark:bg-gray-800 dark:text-white'
-            size='sm'
-            colorScheme='secondary'
-            variant='outline'
-            onClick={handleDeleteWorkflow}
-          >
-            {dict.workflow.settings.deleteRepository}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/**
- * Show the details of a Connection Workflow
- */
-const ConnectionWorkflowDetails = ({
-  workflow,
-}: {
-  workflow: ConnectionWorkflow;
-}) => {
-  const { dict } = useLocale();
-
-  let details = {};
-  let settings = {};
-  try {
-    details = JSON.parse(workflow.workflowable.details ?? '{}');
-    settings = JSON.parse(workflow.workflowable.settings ?? '{}');
-  } catch (error) {
-    console.error('Error parsing workflow details or settings:', error);
-  }
-
-  return (
-    <div className='my-8 px-4'>
-      <div className='mb-8 flex flex-row items-center justify-between px-2'>
-        <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
-          {dict.workflow.settings.connectionDetails}
-        </h2>
-      </div>
-      <table className='w-full text-sm lg:text-lg'>
-        <tbody>
-          <tr className='border-b border-gray-200 dark:border-gray-700'>
-            <td className='p-3 font-bold'>
-              {dict.workflow.settings.connectionProps.connector}
-            </td>
-            <td className='p-3'>{workflow.workflowable.connector.name}</td>
-          </tr>
-          {Object.entries(details).map(([key, value]) => (
-            <tr
-              key={`details-${key}`}
-              className='border-b border-gray-200 dark:border-gray-700'
+    <div className='container relative mx-auto my-12 max-w-6xl px-4'>
+      <div className='min-h-96 w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-3 py-8 shadow-md dark:bg-irmin_black-600 dark:shadow-black'>
+        <div className='mb-8 flex flex-row items-center justify-between px-2'>
+          <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
+            {dict.workflow.tabs.settings}
+          </h2>
+          {workflow.status === 'paused' ? (
+            <Button
+              size='sm'
+              colorScheme='gray'
+              variant='solid'
+              icon={<FaPlay size={14} />}
+              onClick={handlePauseOrResume}
             >
-              <td className='p-3 font-bold capitalize'>{key}</td>
-              <td className='p-3'>{`${value}`}</td>
-            </tr>
-          ))}
-          {Object.entries(settings).map(([key, value]) => (
-            <tr
-              key={`settings-${key}`}
-              className='border-b border-gray-200 dark:border-gray-700'
+              {dict.workflow.settings.resumeWorkflow}
+            </Button>
+          ) : (
+            <Button
+              size='sm'
+              colorScheme='gray'
+              variant='solid'
+              icon={<FaPause size={14} />}
+              onClick={handlePauseOrResume}
             >
-              <td className='p-3 font-bold capitalize'>{key}</td>
-              <td className='p-3'>{`${value}`}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-/**
- * Show the details of an Action Workflow
- */
-const ActionWorkflowDetails = ({ workflow }: { workflow: ActionWorkflow }) => {
-  const { dict } = useLocale();
-  return (
-    <div className='my-8 px-4'>
-      <div className='mb-8 flex flex-row items-center justify-between px-2'>
-        <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
-          {dict.workflow.settings.actionDetails}
-        </h2>
+              {dict.workflow.settings.pauseWorkflow}
+            </Button>
+          )}
+        </div>
+        <div className='flex flex-col gap-4'>
+          <div>
+            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+              {dict.workflow.settings.name}
+            </label>
+            <Input
+              size='sm'
+              variant='outline'
+              colorScheme='gray'
+              required
+              className='h-11 w-full'
+              type='text'
+              name='name'
+              defaultValue={nameField}
+              onChange={(e) => setNameField(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+              {dict.workflow.settings.description}
+            </label>
+            <Input
+              size='sm'
+              variant='outline'
+              colorScheme='gray'
+              required
+              className='w-full'
+              type='text'
+              name='name'
+              defaultValue={descriptionField}
+              onChange={(e) => setDescriptionField(e.target.value)}
+              longtext={{
+                rows: 3,
+              }}
+            />
+          </div>
+          <div>
+            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+              {dict.workflow.settings.syncInterval}
+            </label>
+            <Input
+              size='sm'
+              variant='outline'
+              colorScheme='gray'
+              required
+              className='h-11 w-full'
+              type='text'
+              name='cron'
+              defaultValue={cronField}
+              onChange={(e) => setCronField(e.target.value)}
+              placeholder={dict.workflow.settings.syncIntervalPlaceholder}
+            />
+          </div>
+          <div>
+            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+              {dict.workflow.settings.owner}
+            </label>
+            <ReactSelect
+              value={ownerField}
+              onChange={(newValue) => {
+                if (!newValue) return;
+                setOwnerField(newValue);
+              }}
+              options={currentWorkspace?.users ?? []}
+              getOptionLabel={(option) => option.email}
+              className='react-select-container'
+              classNamePrefix='react-select'
+            />
+          </div>
+          <Button
+            className='h-11 w-full'
+            type='submit'
+            size='sm'
+            colorScheme='primary'
+            variant='solid'
+            onClick={handleUpdateWorkflow}
+          >
+            {dict.workflow.settings.saveChanges}
+          </Button>
+          <div className='mt-8'>
+            <p className='text-sm font-normal text-red-800 md:text-xl dark:text-red-400'>
+              {dict.workflow.settings.dangerZone}
+            </p>
+            <p className='mt-2 text-xs text-gray-700 md:text-base dark:text-gray-200'>
+              {dict.workflow.settings.deletionNote}
+            </p>
+            <Button
+              className='mt-4 dark:bg-gray-800 dark:text-white'
+              size='sm'
+              colorScheme='secondary'
+              variant='outline'
+              onClick={handleDeleteWorkflow}
+            >
+              {dict.workflow.settings.delete}
+            </Button>
+          </div>
+        </div>
       </div>
-      <table className='w-full'>
-        <tbody>
-          <tr className='border-b border-gray-200 dark:border-gray-700'>
-            <td className='p-3 font-bold'>
-              {dict.workflow.settings.actionProps.executable}
-            </td>
-            <td className='p-3'>{workflow.workflowable.path}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-/**
- * Show the details of an Export Workflow
- */
-const ExportWorkflowDetails = ({ workflow }: { workflow: ExportWorkflow }) => {
-  const { dict } = useLocale();
-  return (
-    <div className='my-8 px-4'>
-      <div className='mb-8 flex flex-row items-center justify-between px-2'>
-        <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
-          {dict.workflow.settings.exportDetails}
-        </h2>
-      </div>
-      <table className='w-full'>
-        <tbody>
-          <tr className='border-b border-gray-200 dark:border-gray-700'>
-            <td className='p-3 font-bold'>
-              {dict.workflow.settings.exportProps.sourceRepository}
-            </td>
-            <td className='p-3'>{workflow.workflowable.source.name}</td>
-          </tr>
-          <tr className='border-b border-gray-200 dark:border-gray-700'>
-            <td className='p-3 font-bold'>
-              {dict.workflow.settings.exportProps.destinationConnection}
-            </td>
-            <td className='p-3'>{workflow.workflowable.destination.name}</td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   );
 };

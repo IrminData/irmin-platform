@@ -385,18 +385,7 @@ Attempts to set the current workspace on initial load. Attempts to switch to the
 
 It uses the [Workspace Proxy Service](src/services/proxies/workspace.ts) to fetch the initial workspace data for the current workspace. The workspace data is stored in the context and can be accessed by the components that are wrapped in the WorkspaceProvider.
 
-In addition, it provides the application with logic to communicate with:
-
-- [Action Workflow API Service](src/services/core/resources/ActionWorkflowService.ts)
-- [Connection Workflow API Service](src/services/core/resources/ConnectionWorkflowService.ts)
-- [Connector API Service](src/services/core/resources/ConnectorService.ts)
-- [Repository API Service](src/services/core/resources/RepositoryService.ts)
-- [Export Workflow API Service](src/services/core/resources/ExportWorkflowService.ts)
-- [Invite API Service](src/services/core/resources/InviteService.ts)
-- [User API Service](src/services/core/resources/UserService.ts)
-- [Role API Service](src/services/core/resources/RoleService.ts)
-- [Workflow API Service](src/services/core/resources/WorkflowService.ts)
-- [Workspace API Service](src/services/core/resources/WorkspaceService.ts)
+In addition, it provides the application with logic to use workflows, connections, repositories and other workspace related data.
 
 The context, hooks, provider etc. are split into multiple files for clarity and to avoid any single file becoming too large.
 

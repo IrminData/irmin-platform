@@ -2,7 +2,10 @@ import IrminCore from '@/services/core/IrminCore';
 
 import fake from '@/utils/prepareFakeResponse';
 
+import { Connection } from '@/types/api/Connection';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import { WorkspaceUser } from '@/types/api/Workspace';
+import { exampleConnections } from '@/types/examples/core';
 import exampleDynamicFields from '@/types/examples/exampleDynamicFields';
 import {
   DynamicFields,
@@ -12,6 +15,13 @@ import {
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
+
+/**
+ * Connection API response type
+ */
+interface ConnectionsAPIResponse extends IrminAPIResponse {
+  data: Connection[];
+}
 
 /**
  * Connection details and settings API response type
@@ -30,16 +40,20 @@ interface ConnectionTestAPIResponse extends IrminAPIResponse {
 }
 
 /**
- * Connection Workflow API service
+ * Connection API service
  *
- * Responsible for all Connection Workflow specific API calls.
+ * Responsible for all Connection specific API calls.
  */
-class ConnectionWorkflowService {
+class ConnectionService {
   private irminCore: IrminCore;
 
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
+    this.fetchConnections = this.fetchConnections.bind(this);
+    this.updateConnection = this.updateConnection.bind(this);
+    this.reassignConnection = this.reassignConnection.bind(this);
+    this.deleteConnection = this.deleteConnection.bind(this);
     this.fetchNewConnectionDetails = this.fetchNewConnectionDetails.bind(this);
     this.testConnectionWithDetails = this.testConnectionWithDetails.bind(this);
     this.fetchNewConnectionSettings =
@@ -48,8 +62,110 @@ class ConnectionWorkflowService {
   }
 
   /**
+   * Fetch all Connections for the current workspace
+   * @todo Provide link to Irmin API docs
+   */
+  async fetchConnections(): Promise<ConnectionsAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleConnections) as ConnectionsAPIResponse;
+    try {
+      const response = (await this.irminCore.fetch(`/v1/connections`, {
+        method: 'GET',
+      })) as ConnectionsAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch connections error');
+      if (isDevelopment)
+        return fake(exampleConnections) as ConnectionsAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Update a Connection
+   * @todo Provide link to Irmin API docs
+   *
+   * @param connectionID - The ID of the Connection to update
+   * @param connection - The updated Connection object
+   *
+   */
+  async updateConnection(connectionID: number, connection: Connection) {
+    if (isOfflineMode) return fake();
+    try {
+      const formData = new FormData();
+      formData.append('_method', 'PATCH');
+      formData.append('connection', connectionID.toString());
+
+      formData.append('name', connection.name);
+      formData.append('description', connection.description ?? '');
+      formData.append('documentation', connection.documentation ?? '');
+
+      const response = await this.irminCore.fetch(`/v1/connections/update`, {
+        method: 'POST',
+      });
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Update connection error');
+      if (isDevelopment) return fake();
+      throw error;
+    }
+  }
+
+  /**
+   * Reassign a Connection to a new owner
+   * @todo Provide link to Irmin API docs
+   * @param connectionID - The ID of the Connection to reassign
+   * @param newOwner - The new owner of the Connection
+   */
+  async reassignConnection(connectionID: number, newOwner: WorkspaceUser) {
+    if (isOfflineMode) return fake();
+    try {
+      const formData = new FormData();
+      formData.append('connection', connectionID.toString());
+      formData.append('assignee', newOwner.id.toString());
+
+      const response = await this.irminCore.fetch(`/v1/connections/reassign`, {
+        method: 'POST',
+      });
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Reassign connection error');
+      if (isDevelopment) return fake();
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a Connection by ID
+   * @todo Provide link to Irmin API docs
+   *
+   * @param connectionID - The ID of the connection to delete
+   */
+  async deleteConnection(connectionID: number) {
+    if (isOfflineMode) return fake();
+    try {
+      const formData = new FormData();
+
+      formData.append('_method', 'DELETE');
+      formData.append('connection', connectionID.toString());
+
+      const response = await this.irminCore.fetch(`/v1/connections/delete`, {
+        method: 'POST',
+      });
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Delete connection error');
+      if (isDevelopment) return fake();
+      throw error;
+    }
+  }
+
+  /**
    * Fetch connection details for a new connection.
-   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-details | Irmin API docs}
+   * @todo Provide link to Irmin API docs
    * @param connectorID - The ID of the connector to fetch
    * @returns required details fields to create a connection
    */
@@ -69,7 +185,7 @@ class ConnectionWorkflowService {
     } catch (error) {
       console.error(
         (error as Error).message,
-        'Failed to fetch new Connection Workflow details'
+        'Failed to fetch new Connection details'
       );
       if (isDevelopment)
         return fake(exampleDynamicFields) as ConnectionFieldsAPIResponse;
@@ -79,7 +195,7 @@ class ConnectionWorkflowService {
 
   /**
    * Test a connection with the provided connection details
-   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-test-connection | Irmin API docs}
+   * @todo Provide link to Irmin API docs
    * @param connectorID - The ID of the connector
    * @param connectionDetails - The connection details to test
    * @returns whether the connection was successful or not
@@ -109,10 +225,7 @@ class ConnectionWorkflowService {
       );
       return response as ConnectionTestAPIResponse;
     } catch (error) {
-      console.error(
-        (error as Error).message,
-        'Failed to test new Connection Workflow'
-      );
+      console.error((error as Error).message, 'Failed to test new Connection');
       if (isDevelopment)
         return fake({
           connected: true,
@@ -123,7 +236,7 @@ class ConnectionWorkflowService {
 
   /**
    * Fetch connection settings for a new connection.
-   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections-create-settings | Irmin API docs}
+   * @todo Provide link to Irmin API docs
    * @param connectorID - The ID of the connector to fetch
    * @param connectionDetails - The connection details to fetch settings for
    * @returns required settings fields to create a connection
@@ -153,7 +266,7 @@ class ConnectionWorkflowService {
     } catch (error) {
       console.error(
         (error as Error).message,
-        'Failed to fetch new Connection Workflow settings'
+        'Failed to fetch new Connection settings'
       );
       if (isDevelopment)
         return fake(exampleDynamicFields) as ConnectionFieldsAPIResponse;
@@ -163,15 +276,13 @@ class ConnectionWorkflowService {
 
   /**
    * Create a new connection and start sync with the provided details and settings for a workspace
-   * {@link https://api.irmin.dev/docs#workflows-POSTv1-connections-create | Irmin API docs}
-   *
+   * @todo Provide link to Irmin API docs
    * @param connectionProps - The new connection data
    * @param connectionProps.connectorID - The ID of the connector
    * @param connectionProps.connectionDetails - The connection details
    * @param connectionProps.connectionSettings - The connection settings
-   * @param connectionProps.name - Name of the workflow
-   * @param connectionProps.description - Description of the workflow
-   * @param connectionProps.cron_syntax - Cron syntax for the workflow, leave empty for manual run
+   * @param connectionProps.name - Name of the connection
+   * @param connectionProps.description - Description of the connection
    *
    */
   async createConnection({
@@ -180,21 +291,18 @@ class ConnectionWorkflowService {
     connectionSettings,
     name,
     description,
-    cron_syntax,
   }: {
     connectorID: number;
     connectionDetails: DynamicFieldValues;
     connectionSettings: DynamicFieldValues;
     name: string;
     description: string;
-    cron_syntax: string;
   }) {
     try {
       if (isOfflineMode) return fake();
 
       const formData = new FormData();
 
-      // Export Workflow properties
       formData.append('connector', connectorID.toString());
       Object.keys(connectionDetails).forEach((key) => {
         formData.append(`details[${key}]`, connectionDetails[key] as string);
@@ -202,11 +310,8 @@ class ConnectionWorkflowService {
       Object.keys(connectionSettings).forEach((key) => {
         formData.append(`settings[${key}]`, connectionSettings[key] as string);
       });
-
-      // Workflow properties
       formData.append('name', name);
       formData.append('description', description);
-      formData.append('cron_syntax', cron_syntax);
 
       const res = await this.irminCore.fetch(`/v1/connections/create`, {
         method: 'POST',
@@ -216,7 +321,7 @@ class ConnectionWorkflowService {
     } catch (error) {
       console.error(
         (error as Error).message,
-        'Failed to create Connection Workflow'
+        'Failed to create new Connection'
       );
       if (isDevelopment) return fake();
       throw error;
@@ -224,4 +329,4 @@ class ConnectionWorkflowService {
   }
 }
 
-export default ConnectionWorkflowService;
+export default ConnectionService;

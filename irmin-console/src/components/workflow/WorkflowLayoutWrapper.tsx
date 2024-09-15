@@ -10,7 +10,6 @@ import {
   TbFileText,
   TbLogs,
   TbRun,
-  TbSchema,
   TbSettings,
 } from 'react-icons/tb';
 
@@ -20,6 +19,8 @@ import StatusBadge from '@/components/common/status/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
+
+import { ExportWorkflow, ImportWorkflow } from '@/types/api/Workflow';
 
 /**
  * Component to wrap the single Workflow pages in.
@@ -45,15 +46,22 @@ export default function WorkflowLayoutWrapper({
     () => allWorkflows.find((item) => item.slug === workflowSlug),
     [workflowSlug, allWorkflows]
   );
-  const repository = useMemo(
-    () =>
-      repositories.find((repo) =>
-        workflow?.repository
-          ? repo.slug === workflow?.repository.slug
-          : undefined
-      ),
-    [workflow, repositories]
-  );
+
+  const repository = useMemo(() => {
+    if (workflow?.workflowable_type === 'action') return undefined;
+    if (workflow?.workflowable_type === 'import')
+      return repositories.find(
+        (repo) =>
+          repo.slug ===
+          (workflow as ImportWorkflow).workflowable.repository.slug
+      );
+    if (workflow?.workflowable_type === 'export')
+      return repositories.find(
+        (repo) =>
+          repo.slug ===
+          (workflow as ExportWorkflow).workflowable.repository.slug
+      );
+  }, [workflow, repositories]);
 
   const workspaceSlug = useMemo(
     () => currentWorkspace?.slug ?? '',
@@ -72,20 +80,13 @@ export default function WorkflowLayoutWrapper({
         hide: false,
       },
       {
-        title: dict.repository.tabs.structure,
-        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/structure`,
-        active:
-          currentPath ===
-          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/structure`,
-        icon: <TbSchema size={14} />,
-      },
-      {
         title: dict.workflow.tabs.data,
         href: `/${locale}/portal/${workspaceSlug}/repositories/${repository?.slug}`,
         active:
           currentPath ===
           `/${locale}/portal/${workspaceSlug}/repositories/${repository?.slug}`,
         icon: <TbDatabase size={14} />,
+        hide: workflow?.workflowable_type === 'action',
       },
       {
         title: dict.workflow.tabs.documentation,
@@ -94,14 +95,16 @@ export default function WorkflowLayoutWrapper({
           currentPath ===
           `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/documentation`,
         icon: <TbFileText size={14} />,
+        hide: false,
       },
       {
         title: dict.workflow.tabs.logs,
-        href: `/portal/${workspaceSlug}/logs/workflow/${workflow?.slug}`,
+        href: `/${locale}/portal/${workspaceSlug}/logs/workflow/${workflow?.slug}`,
         active:
           currentPath ===
-          `/portal/${workspaceSlug}/logs/workflow/${workflow?.slug}`,
+          `/${locale}/portal/${workspaceSlug}/logs/workflow/${workflow?.slug}`,
         icon: <TbLogs size={14} />,
+        hide: false,
       },
       {
         title: dict.repository.tabs.settings,
@@ -110,6 +113,7 @@ export default function WorkflowLayoutWrapper({
           currentPath ===
           `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/settings`,
         icon: <TbSettings size={14} />,
+        hide: false,
       },
     ],
     [currentPath, dict, locale, workflow, repository, workspaceSlug]

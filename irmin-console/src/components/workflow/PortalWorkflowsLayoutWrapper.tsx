@@ -42,9 +42,9 @@ export default function PortalWorkflowsLayoutWrapper({
           },
           {
             icon: <TbDatabaseImport />,
-            name: dict.portalNavigation.links.connections,
-            slug: 'connection-workflows',
-            link: `/${params.lang}/portal/${params.workspace}/workflows/connections`,
+            name: dict.portalNavigation.links.imports,
+            slug: 'import-workflows',
+            link: `/${params.lang}/portal/${params.workspace}/workflows/imports`,
           },
           {
             icon: <TbDatabaseExport />,

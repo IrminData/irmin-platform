@@ -6,17 +6,15 @@ import { useParams } from 'next/navigation';
 
 import { Locale } from '@/dictionaries';
 
-import { WorkspaceContext } from '@/context/workspace';
-import useActions from '@/context/workspace/provider/useActions';
-import useConnections from '@/context/workspace/provider/useConnections';
-import useExports from '@/context/workspace/provider/useExports';
-import useInvite from '@/context/workspace/provider/useInvite';
-import useRepositories from '@/context/workspace/provider/useRepositories';
-import useUsersAndRoles from '@/context/workspace/provider/useUsersAndRoles';
-import useWorkflows from '@/context/workspace/provider/useWorkflows';
-import useWorkspaces from '@/context/workspace/provider/useWorkspaces';
-
 import { getCookie, setCookie } from '@/utils/cookie';
+
+import { WorkspaceContext } from './index';
+import useConnections from './useConnections';
+import useInvite from './useInvite';
+import useRepositories from './useRepositories';
+import useUsersAndRoles from './useUsersAndRoles';
+import useWorkflows from './useWorkflows';
+import useWorkspaces from './useWorkspaces';
 
 /**
  * Provider for the workspace context to handle workspace data.
@@ -31,114 +29,34 @@ export const WorkspaceProvider = ({
   children: React.ReactNode;
   locale: Locale;
 }) => {
+  // URL params
   const params = useParams();
 
-  // Ref to check if the component has been initialised
+  // Workspace context state objects
   const initialisedRef = useRef(false);
-
-  // Ref to check if the workspace is loading and which workspace is fetched
   const workspaceFetchedRef = useRef<string | null>(null);
-
-  // Workspace loading state
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
 
-  // Workspaces
-  const {
-    workspaces,
-    workspacesLoading,
-    currentWorkspace,
-    switchWorkspace,
-    deleteCurrentWorkspace,
-    transferOwnership,
-    fetchWorkspaces,
-    fetchFullCurrentWorkspace,
-    createWorkspace,
-    updateWorkspace,
-  } = useWorkspaces({ locale });
-
-  // Actions
-  const { actions, actionsLoading, fetchActions, setActions } = useActions({
+  // Other context hooks
+  const workspaces = useWorkspaces({ locale });
+  const currentWorkspace = workspaces.currentWorkspace;
+  const connections = useConnections({
     currentWorkspace,
     locale,
   });
-
-  // Connections
-  const { connections, connectionsLoading, fetchConnections, setConnections } =
-    useConnections({
-      currentWorkspace,
-      locale,
-    });
-
-  // Exports
-  const { exports, exportsLoading, fetchExports, setExports } = useExports({
+  const repositories = useRepositories({
     currentWorkspace,
     locale,
   });
-
-  // Repositories
-  const {
-    repositories,
-    dataRepositoriesLoading,
-    setRepositories,
-    fetchRepositories,
-    createRepository,
-    updateRepository,
-    deleteRepository,
-    reassignRepository,
-  } = useRepositories({
+  const usersAndRoles = useUsersAndRoles({
     currentWorkspace,
     locale,
   });
-
-  // Users and roles
-  const {
-    irminRoles,
-    fetchRoles,
-    users,
-    usersLoading,
-    setUsers,
-    fetchUsers,
-    deleteUser,
-    changeUserRole,
-  } = useUsersAndRoles({
+  const invites = useInvite({
     currentWorkspace,
     locale,
   });
-
-  // Invites
-  const {
-    invites,
-    invitesLoading,
-    setInvites,
-    fetchInvites,
-    sendInvite,
-    resendInvite,
-    cancelInvite,
-    changeInvite,
-  } = useInvite({
-    currentWorkspace,
-    locale,
-  });
-
-  // Workflows and Workflow Runs (common logic for all workflow types)
-  const {
-    allWorkflows,
-    workflowRuns,
-    workflowRunsLoading,
-    fetchWorkflowRuns,
-    fetchWorkflowRunsByWorkflow,
-    updateWorkflow,
-    reassignWorkflow,
-    deleteWorkflow,
-    pauseWorkflow,
-    resumeWorkflow,
-  } = useWorkflows({
-    actions,
-    setActions,
-    connections,
-    setConnections,
-    exports,
-    setExports,
+  const workflows = useWorkflows({
     currentWorkspace,
     locale,
   });
@@ -155,24 +73,26 @@ export const WorkspaceProvider = ({
       setWorkspaceLoading(true);
       // Empty workspace slug = reset the context data
       if (!workspaceSlug) {
-        setConnections([]);
-        setExports([]);
-        setActions([]);
-        setRepositories([]);
-        setUsers([]);
-        setInvites([]);
+        connections.setConnections([]);
+        workflows.setImports([]);
+        workflows.setExports([]);
+        workflows.setActions([]);
+        repositories.setRepositories([]);
+        usersAndRoles.setUsers([]);
+        invites.setInvites([]);
         return;
       }
       try {
         // Fetch the full data for the current workspace
-        const res = await fetchFullCurrentWorkspace(workspaceSlug);
-        // Set the states
-        setConnections(res.data.connections);
-        setExports(res.data.exports);
-        setActions(res.data.actions);
-        setRepositories(res.data.repositories);
-        setUsers(res.data.users);
-        setInvites(res.data.invites);
+        const res = await workspaces.fetchFullCurrentWorkspace(workspaceSlug);
+        // Set the states for the fetched data
+        connections.setConnections(res.data.connections);
+        workflows.setImports(res.data.imports);
+        workflows.setExports(res.data.exports);
+        workflows.setActions(res.data.actions);
+        repositories.setRepositories(res.data.repositories);
+        usersAndRoles.setUsers(res.data.users);
+        invites.setInvites(res.data.invites);
       } catch (error) {
         console.error('Failed to fetch initial workspace data:', error);
       } finally {
@@ -180,15 +100,7 @@ export const WorkspaceProvider = ({
         setWorkspaceLoading(false);
       }
     },
-    [
-      fetchFullCurrentWorkspace,
-      setConnections,
-      setExports,
-      setActions,
-      setRepositories,
-      setUsers,
-      setInvites,
-    ]
+    [workspaces, connections, workflows, repositories, usersAndRoles, invites]
   );
 
   /**
@@ -221,7 +133,7 @@ export const WorkspaceProvider = ({
         if (initialisedRef.current) return;
         initialisedRef.current = true;
         // Fetch roles
-        await fetchRoles();
+        await usersAndRoles.fetchRoles();
         // Check if path is provided with workspace
         const pathHasWorkspace =
           Object.prototype.hasOwnProperty.call(params, 'workspace') &&
@@ -229,7 +141,7 @@ export const WorkspaceProvider = ({
           params.workspace.length > 0;
         if (pathHasWorkspace) {
           // Attempt to switch to the workspace provided in the path
-          await switchWorkspace(params.workspace as string);
+          await workspaces.switchWorkspace(params.workspace as string);
         } else {
           // Attempt to switch to the workspace stored in localStorage
           const currentWorkspaceSlug = getCookie('currentWorkspaceSlug');
@@ -237,87 +149,62 @@ export const WorkspaceProvider = ({
             // Remove the workspace slug from localStorage
             setCookie('currentWorkspaceSlug', '', -1);
             // Switch to the cached workspace
-            await switchWorkspace(currentWorkspaceSlug);
+            await workspaces.switchWorkspace(currentWorkspaceSlug);
           } else {
             // Set workspace to null
-            await switchWorkspace(null);
+            await workspaces.switchWorkspace(null);
           }
         }
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
         // Set workspace to null
-        await switchWorkspace(null);
+        await workspaces.switchWorkspace(null);
       }
     })();
-  }, [fetchRoles, switchWorkspace, params]);
+  }, [usersAndRoles, workspaces, params]);
 
   return (
     <WorkspaceContext.Provider
       value={{
         workspaceLoading,
-        irminRoles,
-        workspaces: {
-          workspaces,
-          currentWorkspace,
-          switchWorkspace,
-          deleteCurrentWorkspace,
-          transferOwnership,
-          fetchWorkspaces,
-          workspacesLoading,
-          createWorkspace,
-          updateWorkspace,
-        },
+        irminRoles: usersAndRoles.irminRoles,
+        workspaces,
         users: {
-          users,
-          isLoading: usersLoading,
-          fetchUsers,
-          deleteUser,
-          changeUserRole,
+          users: usersAndRoles.users,
+          isLoading: usersAndRoles.usersLoading,
+          fetchUsers: usersAndRoles.fetchUsers,
+          deleteUser: usersAndRoles.deleteUser,
+          changeUserRole: usersAndRoles.changeUserRole,
         },
-        invites: {
-          invites,
-          isLoading: invitesLoading,
-          fetchInvites,
-          sendInvite,
-          resendInvite,
-          cancelInvite,
-          changeInvite,
-        },
-        connections: {
-          connections,
-          isLoading: connectionsLoading,
-          fetchConnections,
-        },
-        exports: {
-          exports,
-          isLoading: exportsLoading,
-          fetchExports,
-        },
-        actions: {
-          actions,
-          isLoading: actionsLoading,
-          fetchActions,
-        },
-        repositories: {
-          repositories,
-          isLoading: dataRepositoriesLoading,
-          fetchRepositories,
-          createRepository,
-          updateRepository,
-          deleteRepository,
-          reassignRepository,
-        },
+        invites,
+        connections,
+        repositories,
         workflows: {
-          workflowRuns,
-          workflowRunsLoading,
-          allWorkflows,
-          fetchWorkflowRuns,
-          fetchWorkflowRunsByWorkflow,
-          updateWorkflow,
-          reassignWorkflow,
-          deleteWorkflow,
-          pauseWorkflow,
-          resumeWorkflow,
+          imports: {
+            imports: workflows.imports,
+            isLoading: workflows.importsLoading,
+            fetchImports: workflows.fetchImports,
+          },
+          exports: {
+            exports: workflows.exports,
+            isLoading: workflows.exportsLoading,
+            fetchExports: workflows.fetchExports,
+          },
+          actions: {
+            actions: workflows.actions,
+            isLoading: workflows.actionsLoading,
+            fetchActions: workflows.fetchActions,
+          },
+          allWorkflows: workflows.allWorkflows,
+          workflowRuns: workflows.workflowRuns,
+          workflowRunsLoading: workflows.workflowRunsLoading,
+          fetchWorkflowRuns: workflows.fetchWorkflowRuns,
+          fetchWorkflowRunsByWorkflow: workflows.fetchWorkflowRunsByWorkflow,
+          updateWorkflow: workflows.updateWorkflow,
+          reassignWorkflow: workflows.reassignWorkflow,
+          deleteWorkflow: workflows.deleteWorkflow,
+          pauseWorkflow: workflows.pauseWorkflow,
+          resumeWorkflow: workflows.resumeWorkflow,
         },
       }}
     >

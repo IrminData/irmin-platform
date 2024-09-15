@@ -4,14 +4,15 @@ import { createContext, useContext } from 'react';
 
 import { WorkspaceProvider } from '@/context/workspace/WorkspaceProvider';
 
+import { Connection } from '@/types/api/Connection';
 import { Invite } from '@/types/api/Invite';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
 import { Repository } from '@/types/api/Repository';
 import {
   ActionWorkflow,
-  ConnectionWorkflow,
   ExportWorkflow,
+  ImportWorkflow,
   Workflow,
   WorkflowRun,
 } from '@/types/api/Workflow';
@@ -64,19 +65,18 @@ const WorkspaceContext = createContext<{
     ) => Promise<IrminAPIResponse>;
   };
   connections: {
-    connections: ConnectionWorkflow[];
+    connections: Connection[];
     isLoading: boolean;
     fetchConnections: (_forceFetch?: boolean) => void;
-  };
-  exports: {
-    exports: ExportWorkflow[];
-    isLoading: boolean;
-    fetchExports: (_forceFetch?: boolean) => void;
-  };
-  actions: {
-    actions: ActionWorkflow[];
-    isLoading: boolean;
-    fetchActions: (_forceFetch?: boolean) => void;
+    updateConnection: (
+      _connectionID: number,
+      _updatedConnection: Connection
+    ) => Promise<IrminAPIResponse>;
+    reassignConnection: (
+      _connectionID: number,
+      _newOwner: WorkspaceUser
+    ) => Promise<IrminAPIResponse>;
+    deleteConnection: (_connectionID: number) => Promise<IrminAPIResponse>;
   };
   repositories: {
     repositories: Repository[];
@@ -94,6 +94,21 @@ const WorkspaceContext = createContext<{
     ) => Promise<IrminAPIResponse>;
   };
   workflows: {
+    imports: {
+      imports: ImportWorkflow[];
+      isLoading: boolean;
+      fetchImports: (_forceFetch?: boolean) => void;
+    };
+    exports: {
+      exports: ExportWorkflow[];
+      isLoading: boolean;
+      fetchExports: (_forceFetch?: boolean) => void;
+    };
+    actions: {
+      actions: ActionWorkflow[];
+      isLoading: boolean;
+      fetchActions: (_forceFetch?: boolean) => void;
+    };
     allWorkflows: Workflow[];
     workflowRuns: WorkflowRun[];
     workflowRunsLoading: boolean;
@@ -145,16 +160,9 @@ const WorkspaceContext = createContext<{
     connections: [],
     isLoading: false,
     fetchConnections: () => {},
-  },
-  exports: {
-    exports: [],
-    isLoading: false,
-    fetchExports: () => {},
-  },
-  actions: {
-    actions: [],
-    isLoading: false,
-    fetchActions: () => {},
+    updateConnection: () => Promise.resolve({}),
+    reassignConnection: () => Promise.resolve({}),
+    deleteConnection: () => Promise.resolve({}),
   },
   repositories: {
     repositories: [],
@@ -166,6 +174,21 @@ const WorkspaceContext = createContext<{
     reassignRepository: () => Promise.resolve({}),
   },
   workflows: {
+    imports: {
+      imports: [],
+      isLoading: false,
+      fetchImports: () => {},
+    },
+    exports: {
+      exports: [],
+      isLoading: false,
+      fetchExports: () => {},
+    },
+    actions: {
+      actions: [],
+      isLoading: false,
+      fetchActions: () => {},
+    },
     allWorkflows: [],
     workflowRuns: [],
     workflowRunsLoading: false,

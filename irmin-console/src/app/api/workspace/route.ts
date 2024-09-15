@@ -34,6 +34,7 @@ export async function GET(req: Request) {
   const {
     profileService,
     workspaceService,
+    connectionService,
     workflowService,
     repositoryService,
     userService,
@@ -76,9 +77,10 @@ export async function GET(req: Request) {
 
     // Construct an array of promises to fetch all the data
     const promises = {
-      connections: workflowService.fetchConnections,
-      exports: workflowService.fetchExports,
-      actions: workflowService.fetchActions,
+      imports: workflowService.fetchImportWorkflows,
+      exports: workflowService.fetchExportWorkflows,
+      actions: workflowService.fetchActionWorkflows,
+      connections: connectionService.fetchConnections,
       repositories: repositoryService.fetchRepositories,
       users: userService.fetchWorkspaceUsers,
       invites: () =>

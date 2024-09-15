@@ -5,7 +5,6 @@ import { DynamicFields, DynamicFieldValues } from './DynamicField';
 /**
  * Connection setup object
  * @typeParam name - Connection name
- * @typeParam cron - Connection cron, interval at which the connection should sync
  * @typeParam description - Connection description
  * @typeParam connector - Which connector to use
  * @typeParam connectionDetailsFields - Connection details fields
@@ -15,7 +14,6 @@ import { DynamicFields, DynamicFieldValues } from './DynamicField';
  */
 export interface ConnectionSetup {
   name: string;
-  cron: string;
   description: string;
   connector: null | Connector;
   connectionDetailsFields: null | DynamicFields;

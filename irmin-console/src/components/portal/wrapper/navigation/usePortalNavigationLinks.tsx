@@ -2,6 +2,7 @@
 
 import { useParams, usePathname } from 'next/navigation';
 
+import { GoWorkflow } from 'react-icons/go';
 import {
   MdCode,
   MdOutlinePrivacyTip,
@@ -82,6 +83,11 @@ const usePortalNavigationLinks = (): {
       icon: <TbFile />,
     },
     {
+      title: dict.portalNavigation.links.connections,
+      href: `/${locale}/portal/${workspaceSlug}/connections`,
+      icon: <GoWorkflow />,
+    },
+    {
       title: dict.portalNavigation.links.workflows,
       href: `/${locale}/portal/${workspaceSlug}/workflows`,
       icon: <TbRun />,
@@ -109,7 +115,7 @@ const usePortalNavigationLinks = (): {
   const noWorkspaceLinks = [
     {
       title: dict.portalNavigation.links.workspaces,
-      href: `/portal/manage-workspaces`,
+      href: `/${locale}/portal/manage-workspaces`,
       icon: <TbDashboard />,
     },
     {

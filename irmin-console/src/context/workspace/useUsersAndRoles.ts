@@ -4,22 +4,18 @@ import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
+import { IrminRole } from '@/types/api/IrminRole';
+import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
+
 import {
   useChangeUserRole,
   useDeleteUser,
   useFetchRoles,
   useFetchUsers,
-} from '@/context/workspace/hooks/usersAndRoles';
-
-import { IrminRole } from '@/types/api/IrminRole';
-import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
+} from './hooks/usersAndRoles';
 
 /**
- * Combined hook for users and roles to be used in the Workspace Provider
- *
- * @param workspaceProps - The workspace properties
- * @param workspaceProps.currentWorkspace - The current workspace
- * @param workspaceProps.locale - The locale to use for the API calls
+ * Hook for users and roles to be used in the Workspace Provider
  */
 const useUsersAndRoles = ({
   currentWorkspace,

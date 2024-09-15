@@ -8,6 +8,7 @@
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 
 import { bucket } from './bucket';
+import { connections } from './connections';
 import { connectors } from './connectors';
 import { files } from './files';
 import { folders } from './folders';
@@ -17,7 +18,7 @@ import { repositories } from './repositories';
 import { roles } from './roles';
 import { workspaceUsers } from './users';
 import { workflowRuns } from './workflowRuns';
-import { actions, connections, exports, workflows } from './workflows';
+import { actions, exports, imports, workflows } from './workflows';
 import { workspaces } from './workspaces';
 
 /**
@@ -74,22 +75,27 @@ export const exampleConnectors = connectors();
 export const exampleRepositories = repositories();
 
 /**
- * Fake workflows {@link workflows}
- */
-export const exampleWorkflows = workflows();
-
-/**
- * Fake actions {@link actions}
- */
-export const exampleActions = actions();
-
-/**
  * Fake connections {@link connections}
  */
 export const exampleConnections = connections();
 
 /**
- * Fake exports {@link exports}
+ * Fake workflows {@link workflows}
+ */
+export const exampleWorkflows = workflows();
+
+/**
+ * Fake action workflows {@link actions}
+ */
+export const exampleActions = actions();
+
+/**
+ * Fake import workflows {@link imports}
+ */
+export const exampleImports = imports();
+
+/**
+ * Fake export workflows {@link exports}
  */
 export const exampleExports = exports();
 

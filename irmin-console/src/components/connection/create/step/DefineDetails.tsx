@@ -139,10 +139,10 @@ export default function DefineDetails({
         );
         if (res.data.connected) {
           // Proceed to the next step
-          irminAlert('success', dict.workflow.connection.create.success);
+          irminAlert('success', dict.connections.create.success);
           setCurrentStep(3);
         } else {
-          irminAlert('error', dict.workflow.connection.create.failed);
+          irminAlert('error', dict.connections.create.failed);
         }
       } catch (error) {
         console.error('Test connection error:', error);
@@ -199,7 +199,7 @@ export default function DefineDetails({
       <form ref={formRef}>
         <div className='my-4 border-b pb-4 dark:border-gray-800'>
           <label className='mb-1 block dark:text-gray-400'>
-            {dict.workflow.connection.create.workflowName}
+            {dict.connections.create.connectionName}
             <span className='ml-2 text-red-500'>*</span>
           </label>
           <Input
@@ -207,7 +207,7 @@ export default function DefineDetails({
             colorScheme='gray'
             className='mt-2 w-full'
             name='irmin_connection_name'
-            placeholder={dict.workflow.connection.create.workflowName}
+            placeholder={dict.connections.create.connectionNamePlaceholder}
             required
           />
         </div>
@@ -232,7 +232,7 @@ export default function DefineDetails({
           size='md'
           onClick={continueAndTestConnection}
         >
-          {dict.workflow.connection.create.continueAndTest}
+          {dict.connections.create.continueAndTest}
         </Button>
         <Button
           className='mb-6 inline-block w-full'
@@ -244,7 +244,7 @@ export default function DefineDetails({
             setCurrentStep((currentStep) => currentStep - 1);
           }}
         >
-          {dict.workflow.connection.create.goBack}
+          {dict.connections.create.goBack}
         </Button>
       </form>
     </div>

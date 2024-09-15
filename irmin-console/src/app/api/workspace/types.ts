@@ -1,24 +1,28 @@
+import { Connection } from '@/types/api/Connection';
 import { Invite } from '@/types/api/Invite';
 import { Repository } from '@/types/api/Repository';
 import {
   ActionWorkflow,
-  ConnectionWorkflow,
   ExportWorkflow,
+  ImportWorkflow,
 } from '@/types/api/Workflow';
 import { WorkspaceUser } from '@/types/api/Workspace';
 
 /**
- * @typeParam connections - {@link ConnectionWorkflow} objects
+ * Data object for the workspace proxy response
+ * @typeParam imports - {@link ImportWorkflow} objects
  * @typeParam exports - {@link ExportWorkflow} objects
  * @typeParam actions - {@link ActionWorkflow} objects
+ * @typeParam connections - {@link Connection} objects
  * @typeParam repositories - {@link Repository} objects
  * @typeParam users - {@link WorkspaceUser} objects
  * @typeParam invites - {@link Invite} objects
  */
 export interface WorkspaceProxyData {
-  connections: ConnectionWorkflow[];
+  imports: ImportWorkflow[];
   exports: ExportWorkflow[];
   actions: ActionWorkflow[];
+  connections: Connection[];
   repositories: Repository[];
   users: WorkspaceUser[];
   invites: Invite[];
@@ -50,9 +54,10 @@ export interface WorkspaceProxyResponse {
  */
 export const emptyWorkspaceProxyResponse: WorkspaceProxyResponse = {
   data: {
-    connections: [],
+    imports: [],
     exports: [],
     actions: [],
+    connections: [],
     repositories: [],
     users: [],
     invites: [],

@@ -5,6 +5,9 @@ import { useState } from 'react';
 import { Locale } from '@/dictionaries';
 
 import { useIAM } from '@/context/IAMContext';
+
+import { Workspace } from '@/types/api/Workspace';
+
 import {
   useCreateWorkspace,
   useDeleteCurrentWorkspace,
@@ -13,15 +16,10 @@ import {
   useSwitchWorkspace,
   useTransferOwnership,
   useUpdateWorkspace,
-} from '@/context/workspace/hooks/workspaces';
-
-import { Workspace } from '@/types/api/Workspace';
+} from './hooks/workspaces';
 
 /**
- * Combined hook for workspaces to be used in the Workspace Provider
- *
- * @param props - The workspace properties
- * @param props.locale - The locale to use for the API calls
+ * Hook for Workspaces to be used in the Workspace Provider.
  */
 const useWorkspaces = ({ locale }: { locale: Locale }) => {
   // Get token from IAM context

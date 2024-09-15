@@ -10,15 +10,7 @@ import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
 import { Workspace } from '@/types/api/Workspace';
 
 /**
- * Hook to fetch the list of invites for the current workspace.
- *
- * @param currentWorkspace - The current workspace
- * @param setInvites - Function to update the invites state.
- * @param loading - Loading state to prevent multiple simultaneous fetches.
- * @param setLoading - Function to update the loading state.
- * @param fetchedFor - The slug of the workspace invites are already fetched for.
- * @param setFetchedFor - Function to update fetched for state.
- * @param locale - The current locale.
+ * Hook to fetch and update context for Invites of the current workspace using the {@link IrminCore}.
  */
 export const useFetchInvites = (
   currentWorkspace: Workspace | null,
@@ -30,11 +22,6 @@ export const useFetchInvites = (
   locale: Locale
 ) =>
   useCallback(
-    /**
-     * Fetch and update context for Invites of the current workspace using the {@link IrminCore}.
-     *
-     * @param forceFetch - If true, will refetch even if already fetched
-     */
     async (forceFetch?: boolean) => {
       // Check if the connections are already fetched for the current workspace
       if (!forceFetch) {
@@ -74,11 +61,7 @@ export const useFetchInvites = (
   );
 
 /**
- * Hook to send an invite to a user.
- *
- * @param currentWorkspace - The current workspace.
- * @param setInvites - Function to update the invites state.
- * @param locale - The current locale.
+ * Hook to send an invite to a user and update the context state using the {@link IrminCore}.
  */
 export const useSendInvite = (
   currentWorkspace: Workspace | null,
@@ -86,15 +69,6 @@ export const useSendInvite = (
   locale: Locale
 ) =>
   useCallback(
-    /**
-     * Send an invite to a user and update the context state
-     * using the {@link IrminCore}.
-     *
-     *
-     * @param name - The name of the user to invite.
-     * @param email - The email of the user to invite.
-     * @param role - The role to assign to the user.
-     */
     async (name: string, email: string, role: IrminRoleNames) => {
       // Make sure there is a current workspace
       if (!currentWorkspace) throw new Error('No current workspace');
@@ -119,18 +93,10 @@ export const useSendInvite = (
   );
 
 /**
- * Hook to resend an invite to a user.
- *
- * @param locale - The current locale.
+ * Hook to resend an invite to a user and update the context state using the {@link IrminCore}.
  */
 export const useResendInvite = (locale: Locale) =>
   useCallback(
-    /**
-     * Resend an invite to a user and update the context state
-     * using the {@link IrminCore}.
-     *
-     * @param invite - The ID of the invite to resend.
-     */
     async (invite: number) => {
       // Get the invite service
       const { inviteService } = new IrminCore(locale);
@@ -143,11 +109,7 @@ export const useResendInvite = (locale: Locale) =>
   );
 
 /**
- * Hook to cancel an invite to a user.
- *
- * @param invites - The list of workspace invites.
- * @param setInvites - Function to update the invites state.
- * @param locale - The current locale.
+ * Hook to cancel an invite to a user and update the context state using the {@link IrminCore}.
  */
 export const useCancelInvite = (
   invites: Invite[],
@@ -155,12 +117,6 @@ export const useCancelInvite = (
   locale: Locale
 ) =>
   useCallback(
-    /**
-     * Cancel an invite to a user and update the context state
-     * using the {@link IrminCore}.
-     *
-     * @param invite - The ID of the invite to cancel.
-     */
     async (invite: number) => {
       // Get the invite service
       const { inviteService } = new IrminCore(locale);
@@ -175,11 +131,7 @@ export const useCancelInvite = (
   );
 
 /**
- * Hook to change an invite to a user.
- *
- * @param invites - The list of workspace invites.
- * @param setInvites - Function to update the invites state.
- * @param locale - The current locale.
+ * Hook to change an invite to a user and update the context state using the {@link IrminCore}.
  */
 export const useChangeInvite = (
   invites: Invite[],
@@ -187,13 +139,6 @@ export const useChangeInvite = (
   locale: Locale
 ) =>
   useCallback(
-    /**
-     * Change an invite to a user and update the context state
-     * using the {@link IrminCore}.
-     *
-     * @param invite - The ID of the invite to change.
-     * @param role - The role to assign to the user.
-     */
     async (invite: number, role: IrminRole) => {
       // Get the invite service
       const { inviteService } = new IrminCore(locale);

@@ -1,4 +1,4 @@
-import { Connector } from '@/types/api/Connector';
+import { Connection } from '@/types/api/Connection';
 import { Repository } from '@/types/api/Repository';
 import { WorkspaceUser } from '@/types/api/Workspace';
 
@@ -6,7 +6,7 @@ import { WorkspaceUser } from '@/types/api/Workspace';
  * Types of workflows that can be created
  * Source app/Enums/WorkflowType.php
  */
-type WorkflowableType = 'connection' | 'action' | 'export';
+type WorkflowableType = 'import' | 'action' | 'export';
 
 /**
  * Workflow type
@@ -22,7 +22,6 @@ type WorkflowableType = 'connection' | 'action' | 'export';
  * @typeParam status - Status of the workflow
  * @typeParam description - Workflow description
  * @typeParam documentation - Workflow documentation as a markdown string
- * @typeParam repository - Result of the workflow. If a workspace results in data, it will be grouped as a Repository.
  * @typeParam created_at - Workflow creation date
  * @typeParam updated_at - Workflow update date
  */
@@ -32,26 +31,25 @@ export interface Workflow {
   slug: string;
   owner: WorkspaceUser;
   workflowable_type: WorkflowableType;
-  workflowable: Connection | Action | ExportSync;
+  workflowable: Import | Action | Export;
   cron_syntax: string | null;
   last_run_at?: string | null;
   next_run_at?: string | null;
   status: WorkflowStatus;
   description: string;
   documentation: string;
-  repository?: Repository | null;
   created_at: string;
   updated_at: string;
 }
 
 /**
- * Workflow of type Connection
+ * Workflow of type Import
  */
-export type ConnectionWorkflow = Workflow & { workflowable: Connection };
+export type ImportWorkflow = Workflow & { workflowable: Import };
 /**
  * Workflow of type Export
  */
-export type ExportWorkflow = Workflow & { workflowable: ExportSync };
+export type ExportWorkflow = Workflow & { workflowable: Export };
 /**
  * Workflow of type Action
  */
@@ -89,33 +87,37 @@ export type WorkflowStatus =
   | 'error';
 
 /**
- * Connection object - workflowable for the Workflow
+ * Import object - workflowable for the Workflow
  *
- * @typeParam details - String which contains a JSON object
- * @typeParam settings - String which contains a JSON object
- * @typeParam connector - Connector object
+ * @typeParam connection - Connection object of where to import from
+ * @typeParam repository - Repository object of where to store the imported data
+ * @typeParam path - Where in the repository to store the imported data
  */
-interface Connection {
-  details: string;
-  settings: string;
-  connector: Connector;
+interface Import {
+  connection: Connection;
+  repository: Repository;
+  path: '/';
 }
 
 /**
  * Export object - workflowable for the Workflow
  *
- * @typeParam destination - Connection Workflow object of where to export
- * @typeParam source - Repository object of what to export
+ * @typeParam connection - Export destination, Connection object of where to export to
+ * @typeParam repository - Repository object of what to export
+ * @typeParam path - What in the repository to export
+ * @typeParam recursive - If the export should be recursive
  */
-interface ExportSync {
-  destination: ConnectionWorkflow;
-  source: Repository;
+interface Export {
+  connection: Connection;
+  repository: Repository;
+  path: '/';
+  recursive: false;
 }
 
 /**
  * Action object - workflowable for the Workflow
  *
- * @typeParam path - Path to the action
+ * @typeParam path - Path to the script file to be executed as an action workflow
  */
 interface Action {
   path: string;

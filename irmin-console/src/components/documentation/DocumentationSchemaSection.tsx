@@ -30,8 +30,11 @@ export default function DocumentationSchemaSection() {
     workspaceLoading,
     workspaces: { currentWorkspace, workspacesLoading },
     connections: { connections, isLoading: connectionsLoading },
-    exports: { exports, isLoading: exportsLoading },
-    actions: { actions, isLoading: actionsLoading },
+    workflows: {
+      imports: { imports, isLoading: importsLoading },
+      exports: { exports, isLoading: exportsLoading },
+      actions: { actions, isLoading: actionsLoading },
+    },
     repositories: { repositories, isLoading: repositoriesLoading },
   } = useWorkspace();
 
@@ -44,6 +47,34 @@ export default function DocumentationSchemaSection() {
         children: [],
       };
 
+      // Create connections node.
+      const connectionsNode: TreeNode = {
+        id: `workspace-${currentWorkspace.slug}-connections`,
+        label: 'Connections',
+        children: [],
+      };
+      if (connections) {
+        connectionsNode.children = connections.map((connection) => ({
+          id: `connection-${connection.slug}`,
+          label: connection.name,
+        }));
+      }
+      newTree.children?.push(connectionsNode);
+
+      // Create repositories node.
+      const repositoriesNode: TreeNode = {
+        id: `workspace-${currentWorkspace.slug}-repositories`,
+        label: 'Repositories',
+        children: [],
+      };
+      if (repositories) {
+        repositoriesNode.children = repositories.map((repository) => ({
+          id: `repository-${repository.slug}`,
+          label: repository.name,
+        }));
+      }
+      newTree.children?.push(repositoriesNode);
+
       // Create empty workflows node.
       const workflowsNode: TreeNode = {
         id: `workspace-${currentWorkspace.slug}-workflows`,
@@ -51,49 +82,33 @@ export default function DocumentationSchemaSection() {
         children: [],
       };
 
-      // Add connections.
-      if (connections) {
-        const connectionsNode: TreeNode = {
-          id: `connection-workflows`,
-          label: 'Connections',
-          children: connections.map((connection) => ({
-            id: `workflow-connection-${connection.id}`,
-            label: connection.name,
-            children: connection.repository
-              ? [
-                  {
-                    id: `repository-${connection.repository.id}`,
-                    label: `Repository: ${connection.repository.name}`,
-                    children: connection.repository.collections.map((item) => ({
-                      id: `repository-${connection.repository?.id}-collection-${item}`,
-                      label: item.split('.').slice(1, -1).join('.'), // Only show part of the collection name between first and last dots
-                    })),
-                  },
-                ]
-              : [],
+      // Add import workflows.
+      if (imports) {
+        const importsNode: TreeNode = {
+          id: `import-workflows`,
+          label: 'Import Workflows',
+          children: imports.map((importSync) => ({
+            id: `workflow-import-${importSync.id}`,
+            label: importSync.name,
           })),
         };
-        workflowsNode.children?.push(connectionsNode);
+        workflowsNode.children?.push(importsNode);
       }
 
-      // Add exports.
+      // Add export workflows.
       if (exports) {
         const exportsNode = {
           id: 'export-workflows',
           label: 'Exports',
-          children: exports.map((export_) => ({
-            id: `workflow-export-${export_.id}`,
-            label: export_.name,
-            links: [
-              `repository-${export_.workflowable?.source?.id ?? ''}`,
-              `workflow-connection-${export_.workflowable?.destination?.id ?? ''}`,
-            ],
+          children: exports.map((exportSync) => ({
+            id: `workflow-export-${exportSync.id}`,
+            label: exportSync.name,
           })),
         };
         workflowsNode.children?.push(exportsNode);
       }
 
-      // Add actions.
+      // Add action workflows.
       if (actions) {
         const actionsNode = {
           id: 'action-workflows',
@@ -101,18 +116,6 @@ export default function DocumentationSchemaSection() {
           children: actions.map((action) => ({
             id: `workflow-action-${action.id}`,
             name: action.name,
-            children: action.repository
-              ? [
-                  {
-                    id: `repository-${action.repository.id}`,
-                    label: `Repository: ${action.repository.name}`,
-                    children: action.repository.collections.map((item) => ({
-                      id: `repository-${action.repository?.id}-collection-${item}`,
-                      label: item.split('.').slice(1, -1).join('.'), // Only show part of the collection name between first and last dots
-                    })),
-                  },
-                ]
-              : [],
           })),
         };
         workflowsNode.children?.push(actionsNode);
@@ -121,35 +124,17 @@ export default function DocumentationSchemaSection() {
       // Add workflows node to the tree.
       newTree.children?.push(workflowsNode);
 
-      // Add repositories. Only add non-workflow repositories.
-      if (repositories) {
-        const repositoriesNode = {
-          id: 'repositories',
-          label: 'Repositories',
-          children: repositories
-            .filter((item) => !item.workflow)
-            .map((repository) => ({
-              id: `repository-${repository.id}`,
-              label: repository.name,
-              children: repository.collections.map((item) => ({
-                id: `repository-${repository?.id}-collection-${item}`,
-                label: item.split('.').slice(1, -1).join('.'), // Only show part of the collection name between first and last dots
-              })),
-            })),
-        };
-        newTree.children?.push(repositoriesNode);
-      }
-
       setTree(newTree);
     }
-  }, [currentWorkspace, connections, exports, actions, repositories]);
+  }, [currentWorkspace, connections, imports, exports, actions, repositories]);
 
   const loading =
     workspaceLoading ||
     workspacesLoading ||
-    connectionsLoading ||
+    importsLoading ||
     exportsLoading ||
     actionsLoading ||
+    connectionsLoading ||
     repositoriesLoading;
 
   return (

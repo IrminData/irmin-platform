@@ -22,7 +22,7 @@ const RepositoryList = ({
   loading: boolean;
   repositories: Repository[];
 }) => {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const { workspace } = useParams();
 
   if (!loading && (!items || items.length === 0)) {
@@ -38,12 +38,12 @@ const RepositoryList = ({
       {
         label: dict.list.view,
         primary: true,
-        href: `/portal/${workspace}/repositories/${item.slug}`,
+        href: `/${locale}/portal/${workspace}/repositories/${item.slug}`,
       },
       {
         label: dict.list.edit,
         primary: false,
-        href: `/portal/${workspace}/repositories/${item.slug}/settings`,
+        href: `/${locale}/portal/${workspace}/repositories/${item.slug}/settings`,
       },
     ];
 

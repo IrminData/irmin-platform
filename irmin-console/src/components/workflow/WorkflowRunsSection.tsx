@@ -67,7 +67,7 @@ const WorkflowRunsSection = ({ workflow }: { workflow: Workflow }) => {
             {
               label: dict.list.logs,
               primary: false,
-              href: `/portal/${currentWorkspace?.slug}/logs/workflow/${workflow.slug}`,
+              href: `/${locale}/portal/${currentWorkspace?.slug}/logs/workflow/${workflow.slug}`,
             },
           ],
         };

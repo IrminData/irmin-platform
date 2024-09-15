@@ -4,23 +4,19 @@ import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
+import { Invite } from '@/types/api/Invite';
+import { Workspace } from '@/types/api/Workspace';
+
 import {
   useCancelInvite,
   useChangeInvite,
   useFetchInvites,
   useResendInvite,
   useSendInvite,
-} from '@/context/workspace/hooks/invite';
-
-import { Invite } from '@/types/api/Invite';
-import { Workspace } from '@/types/api/Workspace';
+} from './hooks/invite';
 
 /**
- * Combined hook for connections to be used in the Workspace Provider
- *
- * @param workspaceProps - The workspace properties
- * @param workspaceProps.currentWorkspace - The current workspace
- * @param workspaceProps.locale - The locale to use for the API calls
+ * Hook for Invites to be used in the Workspace Provider
  */
 const useInvite = ({
   currentWorkspace,
@@ -31,7 +27,7 @@ const useInvite = ({
 }) => {
   // Invites
   const [invites, setInvites] = useState<Invite[]>([]);
-  const [invitesLoading, setInvitesLoading] = useState(false);
+  const [isLoading, setLoading] = useState(false);
   const [invitesFetchedFor, setInvitesFetchedFor] = useState<string | null>(
     null
   );
@@ -42,8 +38,8 @@ const useInvite = ({
   const fetchInvites = useFetchInvites(
     currentWorkspace,
     setInvites,
-    invitesLoading,
-    setInvitesLoading,
+    isLoading,
+    setLoading,
     invitesFetchedFor,
     setInvitesFetchedFor,
     locale
@@ -75,7 +71,7 @@ const useInvite = ({
 
   return {
     invites,
-    invitesLoading,
+    isLoading,
     setInvites,
     fetchInvites,
     sendInvite,

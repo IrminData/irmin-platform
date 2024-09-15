@@ -5,16 +5,16 @@ import fake from '@/utils/prepareFakeResponse';
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 import {
   ActionWorkflow,
-  ConnectionWorkflow,
   ExportWorkflow,
+  ImportWorkflow,
   Workflow,
   WorkflowRun,
 } from '@/types/api/Workflow';
 import { WorkspaceUser } from '@/types/api/Workspace';
 import {
   exampleActions,
-  exampleConnections,
   exampleExports,
+  exampleImports,
   exampleWorkflowRuns,
 } from '@/types/examples/core';
 
@@ -29,10 +29,10 @@ interface WorkflowRunsAPIResponse extends IrminAPIResponse {
   data: WorkflowRun[];
 }
 /**
- * Connection Workflows API response type
+ * Import Workflows API response type
  */
-interface ConnectionsAPIResponse extends IrminAPIResponse {
-  data: ConnectionWorkflow[];
+interface ImportsAPIResponse extends IrminAPIResponse {
+  data: ImportWorkflow[];
 }
 /**
  * Export Workflows API response type
@@ -50,9 +50,7 @@ interface ActionsAPIResponse extends IrminAPIResponse {
 /**
  * Workflow API service
  *
- * Responsible for all workflow related API calls,
- * except for what is Workflow type specific. Those are handled by the specific services,
- * like ConnectionWorkflowService, ExportService, and ActionService.
+ * Responsible for all workflow related API calls.
  */
 class WorkflowService {
   private irminCore: IrminCore;
@@ -67,9 +65,12 @@ class WorkflowService {
     this.reassignWorkflow = this.reassignWorkflow.bind(this);
     this.fetchRuns = this.fetchRuns.bind(this);
     this.fetchRunsByWorkflow = this.fetchRunsByWorkflow.bind(this);
-    this.fetchConnections = this.fetchConnections.bind(this);
-    this.fetchExports = this.fetchExports.bind(this);
-    this.fetchActions = this.fetchActions.bind(this);
+    this.fetchImportWorkflows = this.fetchImportWorkflows.bind(this);
+    this.fetchExportWorkflows = this.fetchExportWorkflows.bind(this);
+    this.fetchActionWorkflows = this.fetchActionWorkflows.bind(this);
+    this.createImportWorkflow = this.createImportWorkflow.bind(this);
+    this.createExportWorkflow = this.createExportWorkflow.bind(this);
+    this.createActionWorkflow = this.createActionWorkflow.bind(this);
   }
 
   /**
@@ -238,7 +239,6 @@ class WorkflowService {
 
   /**
    * Fetch Workflow Runs by Workflow ID
-   *
    * @todo Provide link to Irmin API docs
    *
    * @param workflowId - The ID of the workflow to fetch the runs for
@@ -269,21 +269,19 @@ class WorkflowService {
   }
 
   /**
-   * Fetch all Connection Workflows
-   * {@link https://api.irmin.dev/docs#workflows-GETv1-connections | Irmin API docs}
+   * Fetch all Import Workflows
+   * @todo Provide link to Irmin API docs
    */
-  async fetchConnections(): Promise<ConnectionsAPIResponse> {
-    if (isOfflineMode)
-      return fake(exampleConnections) as ConnectionsAPIResponse;
+  async fetchImportWorkflows(): Promise<ImportsAPIResponse> {
+    if (isOfflineMode) return fake(exampleImports) as ImportsAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/connections`, {
+      const response = (await this.irminCore.fetch(`/v1/workflows/imports`, {
         method: 'GET',
-      })) as ConnectionsAPIResponse;
+      })) as ImportsAPIResponse;
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Fetch connections error');
-      if (isDevelopment)
-        return fake(exampleConnections) as ConnectionsAPIResponse;
+      console.error((error as Error).message, 'Fetch import workflows error');
+      if (isDevelopment) return fake(exampleImports) as ImportsAPIResponse;
       throw error;
     }
   }
@@ -292,16 +290,16 @@ class WorkflowService {
    * Fetch all Export Workflows
    * @todo Provide link to Irmin API docs
    */
-  async fetchExports(): Promise<ExportsAPIResponse> {
+  async fetchExportWorkflows(): Promise<ExportsAPIResponse> {
     if (isOfflineMode) return fake(exampleExports) as ExportsAPIResponse;
 
     try {
-      const response = (await this.irminCore.fetch(`/v1/exports`, {
+      const response = (await this.irminCore.fetch(`/v1/workflows/exports`, {
         method: 'GET',
       })) as ExportsAPIResponse;
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Fetch exports error');
+      console.error((error as Error).message, 'Fetch export workflows error');
       if (isDevelopment) return fake(exampleExports) as ExportsAPIResponse;
       throw error;
     }
@@ -311,16 +309,174 @@ class WorkflowService {
    * Fetch all Action Workflows
    * @todo Provide link to Irmin API docs
    */
-  async fetchActions(): Promise<ActionsAPIResponse> {
+  async fetchActionWorkflows(): Promise<ActionsAPIResponse> {
     if (isOfflineMode) return fake(exampleActions) as ActionsAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/actions`, {
+      const response = (await this.irminCore.fetch(`/v1/workflows/actions`, {
         method: 'GET',
       })) as ActionsAPIResponse;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch actions error');
       if (isDevelopment) return fake(exampleActions) as ActionsAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new Import Workflow
+   * @todo Provide link to Irmin API docs
+   *
+   * @param props - Workflow properties
+   * @param props.connectionID - ID of the connection to import data from
+   * @param props.repositoryID - ID of the repository to import data to
+   * @param props.path - Path in the repository to store the imported data in (default '/')
+   * @param props.name - Name of the workflow
+   * @param props.description - Description of the workflow
+   * @param props.cron_syntax - Cron syntax for the workflow, leave empty for manual run
+   */
+  public async createImportWorkflow({
+    connectionID,
+    repositoryID,
+    path,
+    name,
+    description,
+    cron_syntax,
+  }: {
+    connectionID: number;
+    repositoryID: number;
+    path: string;
+    name: string;
+    description: string;
+    cron_syntax: string;
+  }) {
+    try {
+      const formData = new FormData();
+
+      // Import Workflow properties
+      formData.append('connection', connectionID.toString());
+      formData.append('repository', repositoryID.toString());
+      formData.append('path', path);
+
+      // Workflow properties
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('cron_syntax', cron_syntax);
+
+      const res = await this.irminCore.fetch(`/v1/workflows/imports/create`, {
+        method: 'POST',
+        body: formData,
+      });
+      return res;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Failed to create Import Workflow'
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new Export Workflow
+   * @todo Provide link to Irmin API docs
+   *
+   * @param props - Workflow properties
+   * @param props.connectionID - ID of the connection to export data to
+   * @param props.repositoryID - ID of the repository to export data from
+   * @param props.path - Path in the repository to export the data from (default '/')
+   * @param props.recursive - Whether to export recursively or not (default false)
+   * @param props.name - Name of the workflow
+   * @param props.description - Description of the workflow
+   * @param props.cron_syntax - Cron syntax for the workflow, leave empty for manual run
+   */
+  public async createExportWorkflow({
+    connectionID,
+    repositoryID,
+    path,
+    recursive,
+    name,
+    description,
+    cron_syntax,
+  }: {
+    connectionID: number;
+    repositoryID: number;
+    path: string;
+    recursive: boolean;
+    name: string;
+    description: string;
+    cron_syntax: string;
+  }) {
+    try {
+      const formData = new FormData();
+
+      // Export Workflow properties
+      formData.append('connection', connectionID.toString());
+      formData.append('repository', repositoryID.toString());
+      formData.append('path', path);
+      formData.append('recursive', recursive.toString());
+
+      // Workflow properties
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('cron_syntax', cron_syntax);
+
+      const res = await this.irminCore.fetch(`/v1/workflows/exports/create`, {
+        method: 'POST',
+        body: formData,
+      });
+      return res;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Failed to create Export Workflow'
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new Action Workflow
+   * @todo Provide link to Irmin API docs
+   *
+   * @param props - Workflow properties
+   * @param props.path - Path to the script file to be executed
+   * @param props.name - Name of the workflow
+   * @param props.description - Description of the workflow
+   * @param props.cron_syntax - Cron syntax for the workflow, leave empty for manual run
+   */
+  public async createActionWorkflow({
+    path,
+    name,
+    description,
+    cron_syntax,
+  }: {
+    path: string;
+    name: string;
+    description: string;
+    cron_syntax: string;
+  }) {
+    try {
+      const formData = new FormData();
+
+      // Action Workflow properties
+      formData.append('source', path.toString());
+
+      // Workflow properties
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('cron_syntax', cron_syntax);
+
+      const res = await this.irminCore.fetch(`/v1/workflows/actions/create`, {
+        method: 'POST',
+        body: formData,
+      });
+      return res;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Failed to create Action Workflow'
+      );
       throw error;
     }
   }

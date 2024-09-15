@@ -13,12 +13,7 @@ import { setCookie } from '@/utils/cookie';
 import { Workspace } from '@/types/api/Workspace';
 
 /**
- * Hook to fetch the list of workspaces.
- *
- * @param setWorkspaces - Function to update the workspaces state.
- * @param workspaceLoading - Loading state to prevent multiple simultaneous fetches.
- * @param setWorkspaceLoading - Function to update the workspace loading state.
- * @param locale - The current locale.
+ * Hook to fetch the list of workspaces available to the user using the {@link IrminCore}.
  */
 export const useFetchWorkspaces = (
   setWorkspaces: React.Dispatch<React.SetStateAction<Workspace[]>>,
@@ -26,48 +21,29 @@ export const useFetchWorkspaces = (
   setWorkspaceLoading: React.Dispatch<React.SetStateAction<boolean>>,
   locale: Locale
 ) =>
-  useCallback(
-    /**
-     * Fetch and update context for workspaces using the {@link IrminCore}.
-     *
-     * @returns List of workspaces from the API, or throws an error.
-     */
-    async () => {
-      // Get the workspace service
-      const { workspaceService } = new IrminCore(locale);
-      // Prevent multiple simultaneous fetches
-      if (workspaceLoading) return;
-      setWorkspaceLoading(true);
-      try {
-        // Fetch the workspaces
-        const data = await workspaceService.fetchWorkspaces();
-        setWorkspaces(data.data ?? []);
-        setWorkspaceLoading(false);
-        return data.data;
-      } finally {
-        setWorkspaceLoading(false);
-      }
-    },
-    [setWorkspaces, workspaceLoading, setWorkspaceLoading, locale]
-  );
+  useCallback(async () => {
+    // Get the workspace service
+    const { workspaceService } = new IrminCore(locale);
+    // Prevent multiple simultaneous fetches
+    if (workspaceLoading) return;
+    setWorkspaceLoading(true);
+    try {
+      // Fetch the workspaces
+      const data = await workspaceService.fetchWorkspaces();
+      setWorkspaces(data.data ?? []);
+      setWorkspaceLoading(false);
+      return data.data;
+    } finally {
+      setWorkspaceLoading(false);
+    }
+  }, [setWorkspaces, workspaceLoading, setWorkspaceLoading, locale]);
 
 /**
- * Hook to fetch the full data for the current workspace.
- *
- * @param locale - The current locale.
- * @param token - The API token to use for the request.
+ * Hook to fetch the full data for the current workspace using the {@link fetchWorkspaceProxy}.
+ * Used to avoid fetching Core Irmin API on the client side.
  */
 export const useFetchFullCurrentWorkspace = (locale: Locale, token: string) =>
   useCallback(
-    /**
-     * Fetch the full data for the current workspace using
-     * {@link fetchWorkspaceProxy} instead of fetching
-     * Core Irmin API on the client side.
-     *
-     * @param workspace - The slug of the workspace to fetch data for.
-     *
-     * @returns Response object with data and metadata
-     */
     async (workspace: string) => {
       // Fetch the full data for the current workspace
       const data = await fetchWorkspaceProxy({
@@ -81,18 +57,10 @@ export const useFetchFullCurrentWorkspace = (locale: Locale, token: string) =>
   );
 
 /**
- * Hook to create a new workspace.
- *
- * @param locale - The current locale.
+ * Hook to create a new workspace using the {@link IrminCore}.
  */
 export const useCreateWorkspace = (locale: Locale) =>
   useCallback(
-    /**
-     * Create new workspace using the {@link IrminCore}.
-     *
-     * @param newWorkspaceName - The name of the new workspace.
-     * @param newWorkspaceDescription - The description of the new workspace.
-     */
     async (newWorkspaceName: string, newWorkspaceDescription: string) => {
       // Get the workspace service
       const { workspaceService } = new IrminCore(locale);
@@ -107,17 +75,10 @@ export const useCreateWorkspace = (locale: Locale) =>
   );
 
 /**
- * Hook to update the current workspace data.
- *
- * @param locale - The current locale.
+ * Hook to update the current workspace data using the {@link IrminCore}.
  */
 export const useUpdateWorkspace = (locale: Locale) =>
   useCallback(
-    /**
-     * Update exisiting workspace using the {@link IrminCore}.
-     *
-     * @param workspace - The workspace data to update.
-     */
     async (workspace: Workspace) => {
       // Get the workspace service
       const { workspaceService } = new IrminCore(locale);
@@ -129,18 +90,8 @@ export const useUpdateWorkspace = (locale: Locale) =>
   );
 
 /**
- * Hook to switch to a workspace.
- *
- * @remarks
- *
- * It updates localStorage and the current workspace state, fetches the new workspace data,
- * calls API /switch endpoint, redirects to the new workspace, and shows a success or error popup message.
- *
- * @param setCurrentWorkspace - Function to update the current workspace state.
- * @param workspaceLoading - Loading state to prevent multiple simultaneous switches.
- * @param setWorkspaceLoading - Function to update the workspace loading state.
- * @param fetchWorkspaces - Function to fetch the list of workspaces.
- * @param locale - The current locale.
+ * Hook to switch the currently active workspace using the {@link IrminCore}.
+ * Refetches and sets the state of the current workspace.
  */
 export const useSwitchWorkspace = (
   setCurrentWorkspace: React.Dispatch<React.SetStateAction<Workspace | null>>,
@@ -152,12 +103,6 @@ export const useSwitchWorkspace = (
   const router = useRouter();
   const pathname = usePathname();
   return useCallback(
-    /**
-     * Switch user to a different workspace using the {@link IrminCore}.
-     * Refetches and sets the state of the current workspace.
-     *
-     * @param workspaceSlug - The slug of the workspace to switch to.
-     */
     async (workspaceSlug: string | null) => {
       // Prevent multiple simultaneous switches
       if (workspaceLoading) return;
@@ -202,7 +147,7 @@ export const useSwitchWorkspace = (
           setCurrentWorkspace(newWorkspace.data);
           // If router not already on a workspace page, redirect to the workspace
           if (!pathname.includes(`/portal/${workspaceSlug}`)) {
-            router.push(`/portal/${workspaceSlug}/home`);
+            router.push(`/${locale}/portal/${workspaceSlug}/home`);
           }
         } else {
           throw new Error('Switching workspace failed');
@@ -234,16 +179,7 @@ export const useSwitchWorkspace = (
 };
 
 /**
- * Hook to transfer ownership of a workspace.
- *
- * @param currentWorkspace - The current workspace.
- * @param setCurrentWorkspace - Function to update the current workspace state.
- * @param locale - The current locale.
- *
- * @remarks
- *
- * It transfers the ownership of the workspace using the workspace service and updates the current workspace owner.
- * It also updates the currentWorkspace context state with the new owner.
+ * Hook to transfer ownership of the current workspace to a new owner using the {@link IrminCore}.
  */
 export const useTransferOwnership = (
   currentWorkspace: Workspace | null,
@@ -251,10 +187,6 @@ export const useTransferOwnership = (
   locale: Locale
 ) =>
   useCallback(
-    /**
-     * Transfer ownership of the current workspace to a new owner using the {@link IrminCore}.
-     * @param newOwner - The ID of the new owner.
-     */
     async (newOwner: number) => {
       // Get the workspace service
       const { workspaceService } = new IrminCore(locale);
@@ -272,16 +204,7 @@ export const useTransferOwnership = (
   );
 
 /**
- * Hook to delete a workspace.
- *
- * @param switchWorkspace - Function to switch to a workspace.
- * @param fetchWorkspaces - Function to fetch the list of workspaces.
- * @param locale - The current locale.
- *
- * @remarks
- *
- * It deletes the workspace using the workspace service, updates the list of workspaces,
- * and resets the current workspace to null.
+ * Hook to delete the current workspace using the {@link IrminCore}.
  */
 export const useDeleteCurrentWorkspace = (
   switchWorkspace: (
@@ -291,17 +214,11 @@ export const useDeleteCurrentWorkspace = (
   fetchWorkspaces: () => Promise<Workspace[] | undefined>,
   locale: Locale
 ) =>
-  useCallback(
-    /**
-     * Delete the current workspace and update the context state using the {@link IrminCore}.
-     */
-    async () => {
-      const { workspaceService } = new IrminCore(locale);
-      const response = await workspaceService.deleteWorkspace();
-      await switchWorkspace(null, true);
-      await fetchWorkspaces();
+  useCallback(async () => {
+    const { workspaceService } = new IrminCore(locale);
+    const response = await workspaceService.deleteWorkspace();
+    await switchWorkspace(null, true);
+    await fetchWorkspaces();
 
-      return response;
-    },
-    [switchWorkspace, fetchWorkspaces, locale]
-  );
+    return response;
+  }, [switchWorkspace, fetchWorkspaces, locale]);

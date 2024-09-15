@@ -3,24 +3,15 @@
 import { useState } from 'react';
 
 import SideModal from '@/components/common/popup/SideModal';
+import ConnectionList from '@/components/connection/ConnectionList';
+import ConnectionSetupWrapper from '@/components/connection/create/ConnectionSetupWrapper';
 import PortalTitle from '@/components/portal/PortalTitle';
-import ConnectionWorkflowList from '@/components/workflow/connection/ConnectionWorkflowList';
-import ConnectionSetupWrapper from '@/components/workflow/connection/create/ConnectionSetupWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 /**
- * Portal connections page
- *
- * @remarks
- *
- * This page is used to manage connections in the portal.
- * It shows a list of connections that are available in the workspace.
- *
- * It uses the WorkspaceContext to fetch and manage connection data.
- *
- * It uses SideModal to create a new connection.
+ * Page to list and manage Connections
  */
 export default function ConnectionsPage() {
   const { dict } = useLocale();
@@ -39,12 +30,12 @@ export default function ConnectionsPage() {
         setIsOpen={setIsOpen}
         currentStep={currentStep}
         steps={[
-          dict.workflow.connection.selectConnector,
-          dict.workflow.connection.establishConnection,
-          dict.workflow.connection.configureSettings,
-          dict.workflow.connection.configureWorkflow,
+          dict.connections.create.selectConnector,
+          dict.connections.create.establishConnection,
+          dict.connections.create.configureSettings,
+          dict.connections.create.configureConnection,
         ]}
-        title={dict.workflow.connection.createNewConnectionWorkflow}
+        title={dict.connections.create.createNewConnection}
       >
         <ConnectionSetupWrapper
           isOpen={isOpen}
@@ -53,10 +44,7 @@ export default function ConnectionsPage() {
           setCurrentStep={setCurrentStep}
         />
       </SideModal>
-      <ConnectionWorkflowList
-        loading={loading}
-        connectionWorkflows={connections.connections}
-      />
+      <ConnectionList loading={loading} connections={connections.connections} />
     </>
   );
 }

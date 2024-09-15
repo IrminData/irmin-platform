@@ -36,8 +36,11 @@ export default function DocumentationSection({
     workspaceLoading,
     workspaces: { currentWorkspace, workspacesLoading },
     connections: { connections, isLoading: connectionsLoading },
-    exports: { exports, isLoading: exportsLoading },
-    actions: { actions, isLoading: actionsLoading },
+    workflows: {
+      exports: { exports, isLoading: exportsLoading },
+      actions: { actions, isLoading: actionsLoading },
+      imports: { imports, isLoading: importsLoading },
+    },
     repositories: { repositories, isLoading: repositoriesLoading },
   } = useWorkspace();
 
@@ -53,6 +56,7 @@ export default function DocumentationSection({
     workspaceLoading ||
     workspacesLoading ||
     connectionsLoading ||
+    importsLoading ||
     exportsLoading ||
     actionsLoading ||
     repositoriesLoading;
@@ -193,6 +197,43 @@ export default function DocumentationSection({
                       key={`connection-${i}`}
                       className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
                     >
+                      <h3 className='text-xl text-irmin_black dark:text-white'>
+                        {item.name}
+                      </h3>
+                      <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
+                        {item.description}
+                      </p>
+                      <p className='text-sm text-gray-600 dark:text-gray-400'>
+                        {dict.list.owner}:{' '}
+                        <span className='text-gray-800 dark:text-gray-200'>
+                          {item.owner.name}
+                        </span>
+                      </p>
+                      <p className='text-sm text-gray-600 dark:text-gray-400'>
+                        {dict.list.connector}:{' '}
+                        <span className='text-gray-800 dark:text-gray-200'>
+                          {item.connector.name}
+                        </span>
+                      </p>
+                      <div className='rounded-md bg-gray-200 p-4 dark:bg-irmin_black-600'>
+                        <MDXViewer content={item.documentation} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {imports.length > 0 && (
+              <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
+                <h2 className='font-display text-2xl font-bold text-irmin_black dark:text-white'>
+                  {dict.documentation.sections.importWorkflows}
+                </h2>
+                <div className='w-full pl-4'>
+                  {imports.map((item, i) => (
+                    <div
+                      key={`connection-${i}`}
+                      className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
+                    >
                       <div className='flex flex-row justify-between gap-2'>
                         <h3 className='text-xl text-irmin_black dark:text-white'>
                           {item.name}
@@ -230,7 +271,7 @@ export default function DocumentationSection({
             {exports.length > 0 && (
               <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
                 <h2 className='font-display text-2xl font-bold text-irmin_black dark:text-white'>
-                  {dict.documentation.sections.exports}
+                  {dict.documentation.sections.exportWorkflows}
                 </h2>
                 <div className='w-full pl-4'>
                   {exports.map((item, i) => (
@@ -275,7 +316,7 @@ export default function DocumentationSection({
             {actions.length > 0 && (
               <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
                 <h2 className='font-display text-2xl font-bold text-irmin_black dark:text-white'>
-                  {dict.documentation.sections.actions}
+                  {dict.documentation.sections.actionWorkflows}
                 </h2>
                 <div className='w-full pl-4'>
                   {actions.map((item, i) => (

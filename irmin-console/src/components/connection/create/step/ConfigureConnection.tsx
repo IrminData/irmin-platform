@@ -14,7 +14,7 @@ import { usePopup } from '@/context/PopupContext';
 
 import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 
-export default function DefineSync({
+export default function ConfigureConnection({
   connectionData,
   setConnectionData,
   setCurrentStep,
@@ -30,24 +30,18 @@ export default function DefineSync({
 
   const { irminAlert } = usePopup();
 
-  const [cronValue, setCronValue] = useState(connectionData.cron);
   const [processing, setProcessing] = useState(false);
 
-  const startWorkflow = useCallback(
+  const createConnection = useCallback(
     async (e: React.MouseEvent) => {
       e.preventDefault();
       // Prevent if already loading
       if (processing) return;
       setProcessing(true);
-      // Save the cron value to the connection data
-      setConnectionData((prev: ConnectionSetup) => ({
-        ...prev,
-        cron: cronValue,
-      }));
       // Validate all required fields are filled
       if (
         !connectionData.name ||
-        !connectionData.cron ||
+        !connectionData.description ||
         !connectionData.connector ||
         !connectionData.connectionDetails ||
         !connectionData.connectionSettings
@@ -67,7 +61,6 @@ export default function DefineSync({
           connectionSettings: connectionData.connectionSettings,
           name: connectionData.name,
           description: connectionData.description,
-          cron_syntax: connectionData.cron,
         });
         // Inform that sync has started
         irminAlert(
@@ -87,13 +80,11 @@ export default function DefineSync({
     },
     [
       processing,
-      cronValue,
       connectionData,
       connectionService,
       irminAlert,
       setIsOpen,
       setProcessing,
-      setConnectionData,
     ]
   );
 
@@ -113,28 +104,14 @@ export default function DefineSync({
       </div>
       <div className='my-4 border-b pb-4 dark:border-gray-800'>
         <label className='mb-1 block dark:text-gray-400'>
-          {dict.workflow.connection.create.syncIntervalLabel}
-        </label>
-        <Input
-          variant='outline'
-          colorScheme='gray'
-          className='mt-2 w-full'
-          defaultValue={cronValue}
-          placeholder={dict.workflow.connection.create.syncIntervalPlaceholder}
-          onChange={(e) => {
-            setCronValue(e.target.value);
-          }}
-        />
-      </div>
-      <div className='my-4 border-b pb-4 dark:border-gray-800'>
-        <label className='mb-1 block dark:text-gray-400'>
-          {dict.workflow.connection.create.workflowDescription}
+          {dict.connections.create.connectionDescription}
         </label>
         <Input
           variant='outline'
           colorScheme='gray'
           className='mt-2 w-full'
           defaultValue={connectionData.description}
+          placeholder={dict.connections.create.connectionDescriptionPlaceholder}
           onChange={(e) => {
             setConnectionData((prev: ConnectionSetup) => ({
               ...prev,
@@ -151,9 +128,9 @@ export default function DefineSync({
         variant='solid'
         colorScheme='primary'
         size='md'
-        onClick={startWorkflow}
+        onClick={createConnection}
       >
-        {dict.workflow.connection.create.startWorkflow}
+        {dict.connections.create.createConnection}
       </Button>
       <Button
         className='mb-6 inline-block w-full'
@@ -165,7 +142,7 @@ export default function DefineSync({
           setCurrentStep((currentStep) => currentStep - 1);
         }}
       >
-        {dict.workflow.connection.create.goBack}
+        {dict.connections.create.goBack}
       </Button>
     </div>
   );

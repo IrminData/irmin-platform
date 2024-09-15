@@ -52,7 +52,7 @@ export default function SelectConnector({
             }
             key={`connector-choice-${index}`}
             onClick={() => handleConnectorClick(connector)}
-            ariaLabel={`${dict.workflow.connection.create.select} ${connector.name} ${dict.workflow.connection.create.connector}`}
+            ariaLabel={`${dict.connections.create.select} ${connector.name} ${dict.connections.create.connector}`}
           >
             {connector.name}
           </Button>
@@ -72,7 +72,7 @@ export default function SelectConnector({
           }}
           ariaLabel='Add custom connector'
         >
-          {dict.workflow.connection.create.addCustomConnector}
+          {dict.connections.create.addCustomConnector}
         </Button>
         <Button
           variant='link'
@@ -83,7 +83,7 @@ export default function SelectConnector({
           target='_blank'
           ariaLabel='Go to support page'
         >
-          {dict.workflow.connection.create.contactSupport}
+          {dict.connections.create.contactSupport}
         </Button>
       </div>
     </div>

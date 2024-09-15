@@ -198,7 +198,7 @@ export default function DefineSettings({
           size='md'
           onClick={continueCreateConnection}
         >
-          {dict.workflow.connection.create.continue}
+          {dict.connections.create.continue}
         </Button>
         <Button
           className='mb-6 inline-block w-full'
@@ -210,7 +210,7 @@ export default function DefineSettings({
             setCurrentStep((currentStep) => currentStep - 1);
           }}
         >
-          {dict.workflow.connection.create.goBack}
+          {dict.connections.create.goBack}
         </Button>
       </form>
     </div>

@@ -4,12 +4,10 @@ import removeCircularJSON from '@/utils/removeCircularJSON';
 
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 
-import ActionWorkflowService from './resources/ActionWorkflowService';
 import AuthService from './resources/AuthService';
 import BucketService from './resources/BucketService';
-import ConnectionWorkflowService from './resources/ConnectionWorkflowService';
+import ConnectionService from './resources/ConnectionService';
 import ConnectorService from './resources/ConnectorService';
-import ExportWorkflowService from './resources/ExportWorkflowService';
 import InviteService from './resources/InviteService';
 import ProfileService from './resources/ProfileService';
 import RepositoryService from './resources/RepositoryService';
@@ -32,13 +30,11 @@ class IrminCore {
   private locale: Locale;
   private token: string;
 
-  public actionService: ActionWorkflowService;
   public authService: AuthService;
   public bucketService: BucketService;
-  public connectionService: ConnectionWorkflowService;
+  public connectionService: ConnectionService;
   public connectorService: ConnectorService;
   public repositoryService: RepositoryService;
-  public exportService: ExportWorkflowService;
   public inviteService: InviteService;
   public profileService: ProfileService;
   public userService: UserService;
@@ -53,13 +49,11 @@ class IrminCore {
 
     // Create a new instance of each service class
     // Pass the current IrminCore instance to each service class
-    this.actionService = new ActionWorkflowService(this);
     this.authService = new AuthService(this);
     this.bucketService = new BucketService(this);
-    this.connectionService = new ConnectionWorkflowService(this);
+    this.connectionService = new ConnectionService(this);
     this.connectorService = new ConnectorService(this);
     this.repositoryService = new RepositoryService(this);
-    this.exportService = new ExportWorkflowService(this);
     this.inviteService = new InviteService(this);
     this.profileService = new ProfileService(this);
     this.userService = new UserService(this);

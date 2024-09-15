@@ -4,23 +4,19 @@ import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
+import { Repository } from '@/types/api/Repository';
+import { Workspace } from '@/types/api/Workspace';
+
 import {
   useCreateRepository,
   useDeleteRepository,
   useFetchRepositories,
   useReassignRepository,
   useUpdateRepository,
-} from '@/context/workspace/hooks/repositories';
-
-import { Repository } from '@/types/api/Repository';
-import { Workspace } from '@/types/api/Workspace';
+} from './hooks/repositories';
 
 /**
- * Combined hook for Repositories to be used in the Workspace Provider
- *
- * @param workspaceProps - The workspace properties
- * @param workspaceProps.currentWorkspace - The current workspace
- * @param workspaceProps.locale - The locale to use for the API calls
+ * Hook for Repositories to be used in the Workspace Provider
  */
 const useRepositories = ({
   currentWorkspace,
@@ -31,10 +27,8 @@ const useRepositories = ({
 }) => {
   // Repositories
   const [repositories, setRepositories] = useState<Repository[]>([]);
-  const [dataRepositoriesLoading, setRepositoriesLoading] = useState(false);
-  const [dataRepositoriesFetchedFor, setRepositoriesFetchedFor] = useState<
-    string | null
-  >(null);
+  const [loading, setLoading] = useState(false);
+  const [fetchedFor, setFetchedFor] = useState<string | null>(null);
 
   /**
    * Hook to fetch the repositories for the current workspace.
@@ -42,10 +36,10 @@ const useRepositories = ({
   const fetchRepositories = useFetchRepositories(
     currentWorkspace,
     setRepositories,
-    dataRepositoriesLoading,
-    setRepositoriesLoading,
-    dataRepositoriesFetchedFor,
-    setRepositoriesFetchedFor,
+    loading,
+    setLoading,
+    fetchedFor,
+    setFetchedFor,
     locale
   );
 
@@ -87,7 +81,7 @@ const useRepositories = ({
 
   return {
     repositories,
-    dataRepositoriesLoading,
+    isLoading: loading,
     setRepositories,
     fetchRepositories,
     createRepository,

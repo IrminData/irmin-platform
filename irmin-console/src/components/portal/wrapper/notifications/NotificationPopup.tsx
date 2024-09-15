@@ -188,7 +188,7 @@ const NotificationPopup = ({
                 <Link
                   href={
                     notification.relatedWorkspaceSlug
-                      ? `/portal/${notification.relatedWorkspaceSlug}/${notification.path}`
+                      ? `/${locale}/portal/${notification.relatedWorkspaceSlug}/${notification.path}`
                       : notification.path
                   }
                   key={`notification-${index}-${notification.id}`}
