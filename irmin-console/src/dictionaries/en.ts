@@ -371,12 +371,11 @@ const en = {
     writeYourJS: 'Write your JavaScript script here...',
     writeYourPython: 'Write your Python script here...',
     writeYourPHP: 'Write your PHP script here...',
-    createNewScript: 'Create a new script',
-    startExploringData:
-      'Start exploring your data by jumping into the code editor',
-    hazAITitle: 'Meet Haz, Your Data Expert!',
-    hazAISubtitle:
-      'Haz, your AI assistant, is here to lend a hand with SQL queries, scripts and more!',
+    newScriptTitle: 'Create a new script',
+    newScriptSubtitle:
+      'Start writing your script in your preferred language and save it as a workflow',
+    queryTitle: 'Query data from your repositories',
+    querySubtitle: 'Use Irmin SQL to query your data and get the results',
     setupNewConnection: 'Setup new connection',
     actionResults: 'Action Results',
   },

@@ -369,13 +369,14 @@ const fi = {
     writeYourJS: 'Kirjoita JavaScript-koodisi tähän...',
     writeYourPython: 'Kirjoita Python-koodisi tähän...',
     writeYourPHP: 'Kirjoita PHP-koodisi tähän...',
-    createNewScript: 'Luo uusi skripti',
-    startExploringData: 'Aloita datasi tutkiminen hyppäämällä koodieditoriin',
-    hazAITitle: 'Tapaa Haz, Data-asiantuntijasi!',
-    hazAISubtitle:
-      'Haz, AI-avustajasi, on täällä auttamassa SQL-kyselyiden, skriptien ja paljon muun kanssa!',
+    newScriptTitle: 'Luo uusi skripti',
+    newScriptSubtitle:
+      'Kirjoita skripti valitsemallasi kielellä ja tallenna se toimintoprosessiksi',
+    queryTitle: 'Ajaa kyselyitä tietovarastoissasi',
+    querySubtitle:
+      'Kirjoita Irmin SQL-kysely ja suorita se valitsemassasi tietovarastossa',
     setupNewConnection: 'Aseta uusi yhteys',
-    actionResults: 'Action Results',
+    actionResults: 'Toiminnon Tulokset',
   },
   query: {
     queryResults: 'Kyselyn tulokset',

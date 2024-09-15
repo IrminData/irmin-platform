@@ -8,7 +8,6 @@ import { useParams } from 'next/navigation';
 
 import { TbChevronLeft, TbChevronRight, TbSearch } from 'react-icons/tb';
 
-import AssistantPopup from '@/components/assistant/AssistantPopup';
 import ThemeSwitch from '@/components/common/ThemeSwitch';
 import PortalNavigationLink from '@/components/portal/wrapper/navigation/PortalNavigationLink';
 import PortalNavigationProfile from '@/components/portal/wrapper/navigation/PortalNavigationProfile';
@@ -326,10 +325,6 @@ export default function PortalWrapper({
             ></span>
           </div>
         </button>
-      </div>
-      {/* Portal AI Assistant popup */}
-      <div id='portal-assistant-popup'>
-        <AssistantPopup />
       </div>
     </div>
   );
