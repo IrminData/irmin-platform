@@ -149,7 +149,7 @@ const en = {
       relatedWorkspace: 'Workspace',
     },
     links: {
-      home: 'Home',
+      home: 'Workspace home',
       repositories: 'Repositories',
       query: 'Query',
       editor: 'Editor',
@@ -172,6 +172,21 @@ const en = {
       termsOfUse: 'Terms of Use',
       termsAndPrivacy: 'Terms & Privacy',
     },
+  },
+  portalHome: {
+    welcomeToWorkspace: 'Get started on Irmin with these quick actions:',
+    createNewConnection: 'Create new connection',
+    createNewConnectionDescription:
+      'Connect a new data source or export destination for your workspace',
+    runScriptOnData: 'Run script on data',
+    runScriptOnDataDescription:
+      'Write and run scripts on your data to automate tasks or find insights',
+    setupWorkflow: 'Setup a workflow',
+    setupWorkflowDescription:
+      'Automate data tasks with workflows. Data ingestion, transformation, and export',
+    browseRepositories: 'Data and repositories',
+    browseRepositoriesDescription:
+      'Browse, query, and manage your data, in a Git-like environment',
   },
   workspaceSwitcher: {
     manageWorkspaces: 'Manage Workspaces',

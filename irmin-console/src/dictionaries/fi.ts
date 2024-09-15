@@ -149,7 +149,7 @@ const fi = {
       relatedWorkspace: 'Työtila',
     },
     links: {
-      home: 'Koti',
+      home: 'Työtilan koti',
       repositories: 'Tietovarastot',
       query: 'Kyselyt',
       editor: 'Editori',
@@ -172,6 +172,21 @@ const fi = {
       termsOfUse: 'Käyttöehdot',
       termsAndPrivacy: 'Käyttöehdot ja tietosuoja',
     },
+  },
+  portalHome: {
+    welcomeToWorkspace: 'Aloita työskentely valitsemalla näillä toiminnoilla:',
+    createNewConnection: 'Luo uusi yhteys',
+    createNewConnectionDescription:
+      'Yhdistä työtilallesi uusi tietolähde tai vientikohde ja aloita datan siirtäminen',
+    runScriptOnData: 'Suorita skripti',
+    runScriptOnDataDescription:
+      'Kirjoita ja suorita skpripti, automatisoidaksesi tehtäviä',
+    setupWorkflow: 'Luo prosessi',
+    setupWorkflowDescription:
+      'Automatisoi tehtäviä prosessien avulla. Tietojen käsittely, muuntaminen ja vienti',
+    browseRepositories: 'Tietovarastot',
+    browseRepositoriesDescription:
+      'Selaa, tee kyselyitä ja hallinnoi tietojasi Git-tyyppisessä ympäristössä',
   },
   workspaceSwitcher: {
     manageWorkspaces: 'Hallinnoi työtiloja',

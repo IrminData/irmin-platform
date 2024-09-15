@@ -46,33 +46,28 @@ const EditorWithTabs = () => {
     <>
       {openFileTabs.length > 0 && (
         <div className='mb-0 flex items-center justify-between gap-1 border-b border-gray-200 pb-0 pr-2 dark:border-irmin_black'>
-          <div className='scrollbar-hide flex items-center overflow-x-auto'>
+          <div className='scrollbar-hide flex h-full items-center overflow-x-auto'>
             {openFileTabs.map((tab, index) => (
               <div
                 key={index}
-                className={`flex h-fit max-h-8 w-40 items-center justify-between ${
+                className={`flex h-full w-40 items-center justify-between ${
                   activeTab === index ? 'border-b-2 border-irmin_green' : ''
                 } `}
               >
-                <Button
-                  size='sm'
-                  variant='link'
-                  colorScheme='black'
-                  className={`min-w-20 max-w-32 overflow-x-hidden whitespace-nowrap px-2 py-1 hover:no-underline lg:text-xs`}
+                <button
+                  type='button'
+                  className={`scrollbar-hide min-w-20 max-w-32 overflow-x-scroll whitespace-nowrap px-2 py-1 text-xs hover:no-underline`}
                   onClick={() => setActiveTab(index)}
-                  ariaLabel={`Switch to tab ${tab}`}
                 >
                   {tab ?? 'Untitled'}
-                </Button>
-                <Button
-                  size='sm'
-                  variant='icon'
-                  colorScheme='black'
+                </button>
+                <button
+                  type='button'
                   className={`border-none px-1 py-1`}
                   onClick={() => closeTab(tab)}
                 >
                   <IoClose size={12} />
-                </Button>
+                </button>
               </div>
             ))}
             <Button
