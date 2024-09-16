@@ -231,7 +231,7 @@ const en = {
       areYouSureYouWantToDelete:
         'Are you sure you want to delete this repository?',
       selectCollectionToAdd: 'Select collection to add',
-      addCollection: 'Add collection',
+      add: 'Add',
       remove: 'Remove',
     },
     tabs: {

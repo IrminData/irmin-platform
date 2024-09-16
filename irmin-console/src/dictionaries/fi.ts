@@ -232,7 +232,7 @@ const fi = {
       areYouSureYouWantToDelete:
         'Oletko varma, että haluat poistaa tämän tietovaraston?',
       selectCollectionToAdd: 'Valitse kokoelma lisättäväksi',
-      addCollection: 'Lisää kokoelma',
+      add: 'Lisää',
       remove: 'Poista',
     },
     tabs: {

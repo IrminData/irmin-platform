@@ -6,24 +6,24 @@ import { IoAdd } from 'react-icons/io5';
 
 import Button from '@/components/common/button/Button';
 import SideModal from '@/components/common/popup/SideModal';
-import ConnectionList from '@/components/connection/ConnectionList';
-import ConnectionCreateSection from '@/components/connection/create/ConnectionCreateSection';
+import CreateRepositoryModalContent from '@/components/repository/CreateRepositoryModalContent';
+import RepositoryList from '@/components/repository/RepositoryList';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 /**
- * UI component to list and manage Connections in the workspace
+ * UI component to list and manage Repositories in the workspace
  *
- * Uses {@link ConnectionList} to display the list of Connections
- * Uses {@link SideModal} and {@link ConnectionCreateSection} to provide UI for new Connection creation
+ * Uses {@link RepositoryList} to display the list of Repositories
+ * Uses {@link SideModal} and {@link CreateRepositoryModalContent} to provide UI for new Repository creation
  *
  * @param props0 - The props
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  * @param props0.onModalOpen - Callback when the modal is opened
  * @param props0.onModalClose - Callback when the modal is closed
  */
-export default function ConnectionsSection({
+export default function RepositoriesSection({
   sideModalOpen = false,
   onModalOpen,
   onModalClose,
@@ -33,12 +33,11 @@ export default function ConnectionsSection({
   onModalClose?: () => void;
 }) {
   const { dict } = useLocale();
-  const { workspaceLoading, connections } = useWorkspace();
+  const { workspaceLoading, repositories } = useWorkspace();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
-  const [currentStep, setCurrentStep] = useState(1);
 
-  const loading = workspaceLoading || connections.isLoading;
+  const loading = workspaceLoading || repositories.isLoading;
 
   const closeModal = () => {
     if (onModalClose) {
@@ -52,7 +51,6 @@ export default function ConnectionsSection({
       onModalOpen();
     } else {
       setIsOpen(true);
-      setCurrentStep(1);
     }
   };
 
@@ -60,7 +58,7 @@ export default function ConnectionsSection({
     <div className='container relative mx-auto max-w-6xl py-8'>
       <div className='my-4 flex flex-row items-center justify-between gap-4 px-4'>
         <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
-          {dict.portalNavigation.links.connections}
+          {dict.portalNavigation.links.repositories}
         </h2>
         <Button
           colorScheme='primary'
@@ -68,29 +66,20 @@ export default function ConnectionsSection({
           onClick={() => openModal()}
           icon={<IoAdd size={25} />}
         >
-          {dict.connections.create.createNewConnection}
+          {dict.repository.createNewRepository}
         </Button>
       </div>
       <SideModal
         isOpen={isOpen}
         closeModal={closeModal}
-        currentStep={currentStep}
-        steps={[
-          dict.connections.create.selectConnector,
-          dict.connections.create.establishConnection,
-          dict.connections.create.configureSettings,
-          dict.connections.create.configureConnection,
-        ]}
-        title={dict.connections.create.createNewConnection}
+        title={dict.repository.createNewRepository}
       >
-        <ConnectionCreateSection
-          isOpen={isOpen}
-          closeModal={closeModal}
-          currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
-        />
+        <CreateRepositoryModalContent closeModal={closeModal} />
       </SideModal>
-      <ConnectionList loading={loading} connections={connections.connections} />
+      <RepositoryList
+        loading={loading}
+        repositories={repositories.repositories}
+      />
     </div>
   );
 }

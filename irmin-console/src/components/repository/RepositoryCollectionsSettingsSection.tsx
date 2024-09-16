@@ -138,7 +138,7 @@ export default function RepositoryCollectionsSettingsSection({
                       setCollections([...collections, newCollection]);
                   }}
                 >
-                  {dict.repository.settings.addCollection}
+                  {dict.repository.settings.add}
                 </Button>
               </div>
               <div className='my-8'>
