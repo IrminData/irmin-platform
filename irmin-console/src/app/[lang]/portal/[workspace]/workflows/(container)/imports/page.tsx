@@ -1,30 +1,29 @@
 'use client';
 
-import PortalTitle from '@/components/portal/PortalTitle';
-import ImportWorkflowList from '@/components/workflow/import/ImportWorkflowList';
+import { useRouter } from 'next/navigation';
 
-import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+import ImportWorkflowsSection from '@/components/workflow/ImportWorkflowsSection';
 
 /**
- * Page to list and manage Import Workflows
+ * Import Workflows page in the workspace
+ *
+ * Uses {@link ImportWorkflowsSection} to provide UI to list import workflows
+ *
+ * @remarks
+ *
+ * The creation side modal is not closed by default and when the user
+ * clicks on the create button, it navigates to the create page, where
+ * the side modal is pre-opened.
  */
 export default function ImportWorkflowsPage() {
-  const { dict } = useLocale();
-  const {
-    workspaceLoading,
-    workflows: { imports },
-  } = useWorkspace();
-
-  const loading = workspaceLoading || imports.isLoading;
-
+  const router = useRouter();
   return (
-    <>
-      <PortalTitle title={dict.portalNavigation.links.imports} />
-      <ImportWorkflowList
-        loading={loading}
-        importWorkflows={imports.imports}
-      />
-    </>
+    <ImportWorkflowsSection
+      sideModalOpen={false}
+      onModalOpen={() => {
+        router.push('imports/create');
+      }}
+      onModalClose={() => {}}
+    />
   );
 }

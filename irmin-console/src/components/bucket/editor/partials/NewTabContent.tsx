@@ -5,8 +5,7 @@ import { TbDatabase, TbFile } from 'react-icons/tb';
 import { useLocale } from '@/context/LocaleContext';
 
 /**
- * Script editor, when no file is selected
- * Shows two cards to create a new script or use HazAI
+ * Script editor content, when no file is selected
  */
 const NewTabContent = ({ addNewTab }: { addNewTab: () => void }) => {
   const { dict } = useLocale();

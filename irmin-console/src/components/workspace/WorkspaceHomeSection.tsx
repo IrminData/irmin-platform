@@ -29,7 +29,7 @@ const WorkspaceHomeSection = () => {
         </div>
         <div className='flex w-full flex-wrap items-center justify-center gap-8'>
           <Link
-            href='connections'
+            href='connections/create'
             className='flex w-96 max-w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-lg bg-white p-4 text-center text-irmin_blue shadow transition-all hover:opacity-80 md:p-6 md:py-8 dark:bg-gray-800 dark:text-white dark:shadow-gray-700'
           >
             <div className='aspect-square rounded-full bg-gray-200 p-4 dark:bg-gray-700'>
@@ -59,7 +59,7 @@ const WorkspaceHomeSection = () => {
           </Link>
 
           <Link
-            href='workflows'
+            href='workflows/create'
             className='flex w-96 max-w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-lg bg-white p-4 text-center text-irmin_blue shadow transition-all hover:opacity-80 md:p-6 md:py-8 dark:bg-gray-800 dark:text-white dark:shadow-gray-700'
           >
             <div className='aspect-square rounded-full bg-gray-200 p-4 dark:bg-gray-700'>

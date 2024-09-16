@@ -1,45 +1,29 @@
 'use client';
 
-import PortalTitle from '@/components/portal/PortalTitle';
-import WorkflowList from '@/components/workflow/WorkflowList';
+import { useRouter } from 'next/navigation';
 
-import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+import WorkflowsSection from '@/components/workflow/WorkflowsSection';
 
 /**
- * Portal workflows page
+ * Workflows page in the workspace
+ *
+ * Uses {@link WorkflowsSection} to provide UI to list workflows
  *
  * @remarks
  *
- * This page is used to manage actions in the portal.
- * It shows a list of actions that are available in the workspace.
- *
- * It uses the WorkspaceContext to fetch and manage action data.
+ * The creation side modal is not closed by default and when the user
+ * clicks on the create button, it navigates to the create page, where
+ * the side modal is pre-opened.
  */
 export default function WorkflowsPage() {
-  const { dict } = useLocale();
-  const { workspaceLoading, workflows: {
-    actions,
-    imports,
-    exports,
-  } } = useWorkspace();
-
-  const loading =
-    workspaceLoading ||
-    actions.isLoading ||
-    imports.isLoading ||
-    exports.isLoading;
-
-  const workflows = [
-    ...actions.actions,
-    ...imports.imports,
-    ...exports.exports,
-  ].sort((a, b) => (a.updated_at > b.updated_at ? -1 : 1));
-
+  const router = useRouter();
   return (
-    <>
-      <PortalTitle title={dict.portalNavigation.links.workflows} />
-      <WorkflowList loading={loading} workflows={workflows} />
-    </>
+    <WorkflowsSection
+      sideModalOpen={false}
+      onModalOpen={() => {
+        router.push('workflows/create');
+      }}
+      onModalClose={() => {}}
+    />
   );
 }

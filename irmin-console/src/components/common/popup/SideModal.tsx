@@ -59,7 +59,7 @@ export default function SideModal({
               </Button>
             </div>
             {steps && currentStep && steps.length > 1 && (
-              <div className='flex items-center justify-between space-x-4 px-6 py-4'>
+              <div className='flex items-center justify-start space-x-4 px-6 py-4'>
                 {steps.map((step, index) => (
                   <div
                     className={`flex flex-col items-center justify-center gap-2 text-center sm:flex-row sm:text-left ${

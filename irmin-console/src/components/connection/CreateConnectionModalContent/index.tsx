@@ -116,7 +116,7 @@ const CreateConnectionModalContent = ({
   }
   return (
     <>
-      {currentStep === 1 && connectors.length > 0 && (
+      {currentStep === 1 && (
         <SelectConnector
           connectors={connectors}
           connectionData={connectionData}
@@ -124,21 +124,21 @@ const CreateConnectionModalContent = ({
           setCurrentStep={setCurrentStep}
         />
       )}
-      {currentStep === 2 && connectionData.connector && (
+      {currentStep === 2 && (
         <DefineDetails
           connectionData={connectionData}
           setConnectionData={setConnectionData}
           setCurrentStep={setCurrentStep}
         />
       )}
-      {currentStep === 3 && connectionData.connector && (
+      {currentStep === 3 && (
         <DefineSettings
           connectionData={connectionData}
           setConnectionData={setConnectionData}
           setCurrentStep={setCurrentStep}
         />
       )}
-      {currentStep === 4 && connectionData.connector && (
+      {currentStep === 4 && (
         <ConfigureConnection
           connectionData={connectionData}
           setConnectionData={setConnectionData}

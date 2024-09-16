@@ -167,7 +167,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
         <div className='flex flex-col gap-4'>
           <div>
             <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-              {dict.workflow.settings.name}
+              {dict.workflow.name}
             </label>
             <Input
               size='sm'
@@ -183,7 +183,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
           </div>
           <div>
             <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-              {dict.workflow.settings.description}
+              {dict.workflow.description}
             </label>
             <Input
               size='sm'
@@ -202,7 +202,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
           </div>
           <div>
             <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-              {dict.workflow.settings.syncInterval}
+              {dict.workflow.syncInterval}
             </label>
             <Input
               size='sm'
@@ -211,15 +211,16 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
               required
               className='h-11 w-full'
               type='text'
-              name='cron'
               defaultValue={cronField}
               onChange={(e) => setCronField(e.target.value)}
-              placeholder={dict.workflow.settings.syncIntervalPlaceholder}
             />
+            <span className='text-xs opacity-60'>
+              {dict.workflow.syncIntervalDescription}
+            </span>
           </div>
           <div>
             <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-              {dict.workflow.settings.owner}
+              {dict.workflow.owner}
             </label>
             <ReactSelect
               value={ownerField}

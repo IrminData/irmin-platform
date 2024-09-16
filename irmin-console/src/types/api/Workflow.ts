@@ -6,7 +6,7 @@ import { WorkspaceUser } from '@/types/api/Workspace';
  * Types of workflows that can be created
  * Source app/Enums/WorkflowType.php
  */
-type WorkflowableType = 'import' | 'action' | 'export';
+export type WorkflowableType = 'import' | 'action' | 'export';
 
 /**
  * Workflow type

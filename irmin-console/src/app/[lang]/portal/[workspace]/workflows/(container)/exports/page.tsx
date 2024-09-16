@@ -1,27 +1,29 @@
 'use client';
 
-import PortalTitle from '@/components/portal/PortalTitle';
-import ExportWorkflowList from '@/components/workflow/export/ExportWorkflowList';
+import { useRouter } from 'next/navigation';
 
-import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+import ExportWorkflowsSection from '@/components/workflow/ExportWorkflowsSection';
 
 /**
- * Page to list and manage Export Workflows
+ * Export Workflows page in the workspace
+ *
+ * Uses {@link ExportWorkflowsSection} to provide UI to list export workflows
+ *
+ * @remarks
+ *
+ * The creation side modal is not closed by default and when the user
+ * clicks on the create button, it navigates to the create page, where
+ * the side modal is pre-opened.
  */
 export default function ExportWorkflowsPage() {
-  const { dict } = useLocale();
-  const {
-    workspaceLoading,
-    workflows: { exports },
-  } = useWorkspace();
-
-  const loading = workspaceLoading || exports.isLoading;
-
+  const router = useRouter();
   return (
-    <>
-      <PortalTitle title={dict.portalNavigation.links.exports} />
-      <ExportWorkflowList loading={loading} exportWorkflows={exports.exports} />
-    </>
+    <ExportWorkflowsSection
+      sideModalOpen={false}
+      onModalOpen={() => {
+        router.push('exports/create');
+      }}
+      onModalClose={() => {}}
+    />
   );
 }

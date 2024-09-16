@@ -1,27 +1,29 @@
 'use client';
 
-import PortalTitle from '@/components/portal/PortalTitle';
-import ActionWorkflowList from '@/components/workflow/action/ActionWorkflowList';
+import { useRouter } from 'next/navigation';
 
-import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+import ActionWorkflowsSection from '@/components/workflow/ActionWorkflowsSection';
 
 /**
- * Page to list and manage Action Workflows
+ * Action Workflows page in the workspace
+ *
+ * Uses {@link ActionWorkflowsSection} to provide UI to list action workflows
+ *
+ * @remarks
+ *
+ * The creation side modal is not closed by default and when the user
+ * clicks on the create button, it navigates to the create page, where
+ * the side modal is pre-opened.
  */
 export default function ActionWorkflowsPage() {
-  const { dict } = useLocale();
-  const {
-    workspaceLoading,
-    workflows: { actions },
-  } = useWorkspace();
-
-  const loading = workspaceLoading || actions.isLoading;
-
+  const router = useRouter();
   return (
-    <>
-      <PortalTitle title={dict.portalNavigation.links.actions} />
-      <ActionWorkflowList loading={loading} actionWorkflows={actions.actions} />
-    </>
+    <ActionWorkflowsSection
+      sideModalOpen={false}
+      onModalOpen={() => {
+        router.push('actions/create');
+      }}
+      onModalClose={() => {}}
+    />
   );
 }

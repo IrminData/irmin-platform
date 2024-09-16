@@ -343,14 +343,19 @@ class WorkflowService {
     description,
     cron_syntax,
   }: {
-    connectionID: number;
-    repositoryID: number;
+    connectionID: number | undefined;
+    repositoryID: number | undefined;
     path: string;
     name: string;
     description: string;
     cron_syntax: string;
   }) {
+    if (isOfflineMode) return fake();
     try {
+      // Make sure the connection and repository IDs are provided
+      if (!connectionID || !repositoryID) return;
+
+      // Create a new FormData object
       const formData = new FormData();
 
       // Import Workflow properties
@@ -373,6 +378,7 @@ class WorkflowService {
         (error as Error).message,
         'Failed to create Import Workflow'
       );
+      if (isDevelopment) return fake();
       throw error;
     }
   }
@@ -399,15 +405,20 @@ class WorkflowService {
     description,
     cron_syntax,
   }: {
-    connectionID: number;
-    repositoryID: number;
+    connectionID: number | undefined;
+    repositoryID: number | undefined;
     path: string;
     recursive: boolean;
     name: string;
     description: string;
     cron_syntax: string;
   }) {
+    if (isOfflineMode) return fake();
     try {
+      // Make sure the connection and repository IDs are provided
+      if (!connectionID || !repositoryID) return;
+
+      // Create a new FormData object
       const formData = new FormData();
 
       // Export Workflow properties
@@ -431,6 +442,7 @@ class WorkflowService {
         (error as Error).message,
         'Failed to create Export Workflow'
       );
+      if (isDevelopment) return fake();
       throw error;
     }
   }
@@ -456,7 +468,9 @@ class WorkflowService {
     description: string;
     cron_syntax: string;
   }) {
+    if (isOfflineMode) return fake();
     try {
+      // Create a new FormData object
       const formData = new FormData();
 
       // Action Workflow properties
@@ -477,6 +491,7 @@ class WorkflowService {
         (error as Error).message,
         'Failed to create Action Workflow'
       );
+      if (isDevelopment) return fake();
       throw error;
     }
   }

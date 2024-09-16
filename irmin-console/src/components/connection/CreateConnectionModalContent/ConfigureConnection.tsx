@@ -66,14 +66,14 @@ export default function ConfigureConnection({
         // Inform that sync has started
         irminAlert(
           'success',
-          res.metadata?.message ?? 'Sync has started successfully'
+          res.metadata?.message ?? 'Connection create successfully'
         );
         closeModal();
       } catch (error) {
-        console.error('Failed to start the sync', error);
+        console.error('Failed to create connection', error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to start the sync'
+          (error as Error)?.message ?? 'Failed to create connection'
         );
       } finally {
         setProcessing(false);
