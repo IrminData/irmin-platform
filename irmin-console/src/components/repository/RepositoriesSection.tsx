@@ -6,11 +6,12 @@ import { IoAdd } from 'react-icons/io5';
 
 import Button from '@/components/common/button/Button';
 import SideModal from '@/components/common/popup/SideModal';
-import CreateRepositoryModalContent from '@/components/repository/CreateRepositoryModalContent';
-import RepositoryList from '@/components/repository/RepositoryList';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
+
+import CreateRepositoryModalContent from './CreateRepositoryModalContent';
+import RepositoryList from './RepositoryList';
 
 /**
  * UI component to list and manage Repositories in the workspace

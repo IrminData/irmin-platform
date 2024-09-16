@@ -14,8 +14,8 @@ import { useWorkspace } from '@/context/workspace';
 
 import { Repository } from '@/types/api/Repository';
 
-import CollectionColumnsTable from './partials/CollectionColumnsTable';
-import CollectionSelector from './partials/CollectionSelector';
+import CollectionColumnsTable from './CollectionColumnsTable';
+import CollectionSelector from './CollectionSelector';
 
 /**
  * Repository viewer section, provides UI for the Repository viewer Page.

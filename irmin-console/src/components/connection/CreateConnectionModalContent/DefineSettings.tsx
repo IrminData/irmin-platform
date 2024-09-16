@@ -9,7 +9,6 @@ import IrminCore from '@/services/core/IrminCore';
 
 import Button from '@/components/common/button/Button';
 import DynamicFormField from '@/components/common/DynamicFormField';
-import Input from '@/components/common/form/Input';
 import LoadingSpinner from '@/components/common/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -17,9 +16,9 @@ import { usePopup } from '@/context/PopupContext';
 
 import { DynamicFieldValues, FieldValue } from '@/types/internal/DynamicField';
 
-import { ConnectionSetup } from '../ConnectionCreateSection';
+import { ConnectionSetup } from '.';
 
-export default function DefineDetails({
+export default function DefineSettings({
   connectionData,
   setConnectionData,
   setCurrentStep,
@@ -30,17 +29,18 @@ export default function DefineDetails({
 }) {
   const { locale, dict } = useLocale();
   const { irminAlert } = usePopup();
-  const [loading, setLoading] = useState(false);
   const { connectionService } = useMemo(() => new IrminCore(locale), [locale]);
+  const [loading, setLoading] = useState(false);
 
   const initialLoadingDone = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const fetchConnectionDetails = useCallback(async () => {
+  const fetchConnectionSettings = useCallback(async () => {
     if (
       loading ||
       !connectionData.connector ||
-      connectionData.connectionDetailsFields ||
+      !connectionData.connectionDetails ||
+      connectionData.connectionSettingsFields ||
       initialLoadingDone.current
     )
       return;
@@ -48,8 +48,9 @@ export default function DefineDetails({
     setLoading(true);
 
     try {
-      const response = await connectionService.fetchNewConnectionDetails(
-        connectionData.connector.id
+      const response = await connectionService.fetchNewConnectionSettings(
+        connectionData.connector.id,
+        connectionData.connectionDetails
       );
       const data = Object.fromEntries(
         Object.keys(response.data).map((key) => [
@@ -59,14 +60,14 @@ export default function DefineDetails({
       );
       setConnectionData((prev: ConnectionSetup) => ({
         ...prev,
-        connectionDetailsFields: response.data,
-        connectionDetails: data,
+        connectionSettingsFields: response.data,
+        connectionSettings: data,
       }));
     } catch (error) {
-      console.error('Fetch connection details error:', error);
+      console.error('Fetch new connection settings error:', error);
       irminAlert(
         'error',
-        (error as Error)?.message ?? 'Failed to fetch connection details'
+        (error as Error)?.message ?? 'Failed to fetch new connection settings'
       );
     }
 
@@ -75,22 +76,23 @@ export default function DefineDetails({
   }, [
     connectionService,
     connectionData.connector,
-    connectionData.connectionDetailsFields,
+    connectionData.connectionDetails,
+    connectionData.connectionSettingsFields,
     irminAlert,
     loading,
     setConnectionData,
   ]);
 
   useEffect(() => {
-    fetchConnectionDetails();
-  }, [fetchConnectionDetails]);
+    fetchConnectionSettings();
+  }, [fetchConnectionSettings]);
 
-  const continueAndTestConnection = useCallback(
+  const continueCreateConnection = useCallback(
     async (e: React.MouseEvent) => {
       e.preventDefault();
       // Validate form and continue
       if (
-        !connectionData.connectionDetailsFields ||
+        !connectionData.connectionSettingsFields ||
         !connectionData.connector ||
         !formRef.current
       )
@@ -102,50 +104,31 @@ export default function DefineDetails({
         // Get the data from the form
         const formData = new FormData(formRef.current!);
         const data: DynamicFieldValues = {};
-        let irminConnectionName: string | null = null;
-
         formData.forEach((value, key) => {
           if (key !== 'irmin_connection_name') {
             const fieldKey = Object.keys(
-              connectionData.connectionDetailsFields ?? {}
+              connectionData.connectionSettingsFields ?? {}
             ).find((field) => field.toLowerCase() === key);
-
             if (!fieldKey) return;
-
-            const field = (connectionData.connectionDetailsFields ?? {})[
+            const field = (connectionData.connectionSettingsFields ?? {})[
               fieldKey ?? ''
             ];
-
             if (field.type === 'integer' || field.type === 'float') {
               data[fieldKey] = parseFloat(value as string);
             } else {
               data[fieldKey] = value as string;
             }
-          } else {
-            irminConnectionName = value as string;
           }
         });
 
         // Update the connection data state
-        const connectorName = connectionData.connector.name;
         setConnectionData((prev: ConnectionSetup) => ({
           ...prev,
-          name: irminConnectionName ?? `${connectorName} ${Date.now()}`,
-          connectionDetails: data,
+          connectionSettings: data,
         }));
 
-        // Test the connection
-        const res = await connectionService.testConnectionWithDetails(
-          connectionData.connector.id,
-          data
-        );
-        if (res.data.connected) {
-          // Proceed to the next step
-          irminAlert('success', dict.connections.create.success);
-          setCurrentStep(3);
-        } else {
-          irminAlert('error', dict.connections.create.failed);
-        }
+        // Proceed to the next step
+        setCurrentStep(4);
       } catch (error) {
         console.error('Test connection error:', error);
         irminAlert(
@@ -157,29 +140,27 @@ export default function DefineDetails({
       }
     },
     [
-      connectionData.connectionDetailsFields,
+      connectionData.connectionSettingsFields,
       connectionData.connector,
       formRef,
       setLoading,
       setConnectionData,
       setCurrentStep,
-      connectionService,
       irminAlert,
-      dict,
     ]
   );
 
   const updateValues = (key: string, value: FieldValue | FieldValue[]) => {
     setConnectionData({
       ...connectionData,
-      connectionDetails: {
-        ...connectionData.connectionDetails,
+      connectionSettings: {
+        ...connectionData.connectionSettings,
         [key]: value,
       },
     });
   };
 
-  if (connectionData.connectionDetailsFields === null) {
+  if (connectionData.connectionSettingsFields === null) {
     return <LoadingSpinner />;
   }
 
@@ -225,28 +206,13 @@ export default function DefineDetails({
         </div>
       )}
       <form ref={formRef}>
-        <div className='my-4 border-b pb-4 dark:border-gray-800'>
-          <label className='mb-1 block dark:text-gray-400'>
-            {dict.connections.create.connectionName}
-            <span className='ml-2 text-red-500'>*</span>
-          </label>
-          <Input
-            variant='outline'
-            colorScheme='gray'
-            className='mt-2 w-full'
-            name='irmin_connection_name'
-            placeholder={dict.connections.create.connectionNamePlaceholder}
-            required
-          />
-        </div>
-
-        {Object.entries(connectionData.connectionDetailsFields).map(
+        {Object.entries(connectionData.connectionSettingsFields).map(
           ([key, field], idx) => (
-            <div key={`connection-details-field-${key.toLowerCase()}-${idx}`}>
+            <div key={`connection-settings-field-${key.toLowerCase()}-${idx}`}>
               <DynamicFormField
                 name={key}
                 field={field}
-                values={connectionData.connectionDetails}
+                values={connectionData.connectionSettings}
                 updateValues={updateValues}
               />
             </div>
@@ -258,9 +224,9 @@ export default function DefineDetails({
           variant='solid'
           colorScheme='primary'
           size='md'
-          onClick={continueAndTestConnection}
+          onClick={continueCreateConnection}
         >
-          {dict.connections.create.continueAndTest}
+          {dict.connections.create.continue}
         </Button>
         <Button
           className='mb-6 inline-block w-full'

@@ -5,7 +5,7 @@ import { useWorkspace } from '@/context/workspace';
 
 import { Connection } from '@/types/api/Connection';
 
-import WorkflowList from '../workflow/WorkflowList';
+import WorkflowList from '@/components/workflow/WorkflowList';
 
 /**
  * Connection Settings section component

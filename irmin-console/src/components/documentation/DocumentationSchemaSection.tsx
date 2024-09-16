@@ -5,16 +5,14 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
-import { TreeNode } from '@/components/documentation/TreeChart';
 
 import { useWorkspace } from '@/context/workspace';
 
-const TreeChart = dynamic(
-  () => import('@/components/documentation/TreeChart'),
-  {
-    loading: () => <LoadingSkeleton />,
-  }
-);
+import { TreeNode } from './TreeChart';
+
+const TreeChart = dynamic(() => import('./TreeChart'), {
+  loading: () => <LoadingSkeleton />,
+});
 
 /**
  * Page UI to show the schema for the workspace as a tree chart.

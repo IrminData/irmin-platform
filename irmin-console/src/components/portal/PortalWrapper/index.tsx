@@ -9,14 +9,15 @@ import { useParams } from 'next/navigation';
 import { TbChevronLeft, TbChevronRight, TbSearch } from 'react-icons/tb';
 
 import ThemeSwitch from '@/components/common/ThemeSwitch';
-import PortalNavigationLink from '@/components/portal/wrapper/navigation/PortalNavigationLink';
-import PortalNavigationProfile from '@/components/portal/wrapper/navigation/PortalNavigationProfile';
-import PortalNavigationWorkspaceSwitcher from '@/components/portal/wrapper/navigation/PortalNavigationWorkspaceSwitcher';
-import usePortalNavigationLinks from '@/components/portal/wrapper/navigation/usePortalNavigationLinks';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import { useBreakpoint } from '@/utils/tw';
+
+import PortalNavigationLink from './PortalNavigationLink';
+import PortalNavigationProfile from './PortalNavigationProfile';
+import PortalNavigationWorkspaceSwitcher from './PortalNavigationWorkspaceSwitcher';
+import usePortalNavigationLinks from './usePortalNavigationLinks';
 
 /**
  * Portal navigation component

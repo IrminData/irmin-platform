@@ -15,7 +15,7 @@ import { usePopup } from '@/context/PopupContext';
 
 import { GridRow } from '@/types/internal/ListProps';
 
-import CreateBranchModalContent from './partials/CreateBranchModalContent';
+import CreateBranchModalContent from './CreateBranchModalContent';
 
 /**
  * Section to display the branches of a repository.

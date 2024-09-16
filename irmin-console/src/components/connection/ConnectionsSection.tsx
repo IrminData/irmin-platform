@@ -6,17 +6,18 @@ import { IoAdd } from 'react-icons/io5';
 
 import Button from '@/components/common/button/Button';
 import SideModal from '@/components/common/popup/SideModal';
-import ConnectionList from '@/components/connection/ConnectionList';
-import ConnectionCreateSection from '@/components/connection/create/ConnectionCreateSection';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
+
+import ConnectionList from './ConnectionList';
+import CreateConnectionModalContent from './CreateConnectionModalContent';
 
 /**
  * UI component to list and manage Connections in the workspace
  *
  * Uses {@link ConnectionList} to display the list of Connections
- * Uses {@link SideModal} and {@link ConnectionCreateSection} to provide UI for new Connection creation
+ * Uses {@link SideModal} and {@link CreateConnectionModalContent} to provide UI for new Connection creation
  *
  * @param props0 - The props
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
@@ -83,7 +84,7 @@ export default function ConnectionsSection({
         ]}
         title={dict.connections.create.createNewConnection}
       >
-        <ConnectionCreateSection
+        <CreateConnectionModalContent
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}

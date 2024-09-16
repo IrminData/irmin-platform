@@ -13,7 +13,7 @@ import Input from '@/components/common/form/Input';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { ConnectionSetup } from '../ConnectionCreateSection';
+import { ConnectionSetup } from '.';
 
 export default function ConfigureConnection({
   connectionData,

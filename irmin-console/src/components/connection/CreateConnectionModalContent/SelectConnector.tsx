@@ -14,7 +14,7 @@ import { usePopup } from '@/context/PopupContext';
 
 import { Connector } from '@/types/api/Connector';
 
-import { ConnectionSetup } from '../ConnectionCreateSection';
+import { ConnectionSetup } from '.';
 
 export default function SelectConnector({
   connectors,

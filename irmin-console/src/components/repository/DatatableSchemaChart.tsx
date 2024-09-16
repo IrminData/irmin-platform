@@ -6,9 +6,9 @@ import { Edge, Node, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useTheme } from 'next-themes';
 
-import CollectionColumnsTable from '@/components/repository/partials/CollectionColumnsTable';
-
 import { CollectionSchema } from '@/types/internal/Collection';
+
+import CollectionColumnsTable from './CollectionColumnsTable';
 
 /**
  * Generates nodes and edges for a database schema visualization.

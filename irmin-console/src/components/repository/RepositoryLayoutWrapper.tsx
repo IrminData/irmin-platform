@@ -16,11 +16,12 @@ import {
 
 import Button from '@/components/common/button/Button';
 import StatusBadge from '@/components/common/status/StatusBadge';
-import BranchSelector from '@/components/repository/partials/BranchSelector';
 
 import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
+
+import BranchSelector from './BranchSelector';
 
 /**
  * Component to wrap the Repository pages in.

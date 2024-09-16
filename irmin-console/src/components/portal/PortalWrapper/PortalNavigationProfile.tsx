@@ -7,9 +7,10 @@ import Link from 'next/link';
 
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 import ProfileImagePlaceholder from '@/components/common/ProfileImagePlaceholder';
-import NotificationButton from '@/components/portal/wrapper/notifications/NotificationButton';
 
 import { useIAM } from '@/context/IAMContext';
+
+import NotificationButton from './NotificationButton';
 
 /**
  * Profile UI for the portal navigation

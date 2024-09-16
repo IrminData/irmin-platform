@@ -5,7 +5,7 @@ import { createContext, useContext, useState } from 'react';
 import Alert from '@/components/common/popup/Alert';
 import Confirm from '@/components/common/popup/Confirm';
 import Modal from '@/components/common/popup/Modal';
-import NotificationPopup from '@/components/portal/wrapper/notifications/NotificationPopup';
+import NotificationPopup from '@/components/common/popup/NotificationPopup';
 
 /**
  * Context to use and show alerts, confirmations, notifications and modals

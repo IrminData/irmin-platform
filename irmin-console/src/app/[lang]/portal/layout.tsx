@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 
 import ProtectedRouteWrapper from '@/components/authentication/ProtectedRouteWrapper';
-import PortalWrapper from '@/components/portal/wrapper/PortalWrapper';
+import PortalWrapper from '@/components/portal/PortalWrapper';
 
 import { PopupProvider } from '@/context/PopupContext';
 import { WorkspaceProvider } from '@/context/workspace';

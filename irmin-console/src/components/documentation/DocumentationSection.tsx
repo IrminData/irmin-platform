@@ -12,12 +12,13 @@ import { BsFilePdf } from 'react-icons/bs';
 import Button from '@/components/common/button/Button';
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 import StatusBadge from '@/components/common/status/StatusBadge';
-import MDXViewer from '@/components/documentation/MDXViewer';
 import PortalTitle from '@/components/portal/PortalTitle';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
+
+import MDXViewer from './MDXViewer';
 
 /**
  * Page UI to show the full documentation for the workspace

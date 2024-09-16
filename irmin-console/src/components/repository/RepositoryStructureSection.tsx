@@ -6,12 +6,9 @@ import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
 import { useData } from '@/context/DataContext';
 
-const DatatableSchemaChart = dynamic(
-  () => import('./partials/DatatableSchemaChart'),
-  {
-    loading: () => <LoadingSkeleton />,
-  }
-);
+const DatatableSchemaChart = dynamic(() => import('./DatatableSchemaChart'), {
+  loading: () => <LoadingSkeleton />,
+});
 
 /**
  * Page UI to show the structure of a selected repository, like the tables and their columns.

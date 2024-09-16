@@ -15,10 +15,10 @@ import {
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';
 
-import ConfigureConnection from './step/ConfigureConnection';
-import DefineDetails from './step/DefineDetails';
-import DefineSettings from './step/DefineSettings';
-import SelectConnector from './step/SelectConnector';
+import ConfigureConnection from './ConfigureConnection';
+import DefineDetails from './DefineDetails';
+import DefineSettings from './DefineSettings';
+import SelectConnector from './SelectConnector';
 
 /**
  * Connection setup object
@@ -67,7 +67,7 @@ const initialConnectionData: ConnectionSetup = {
  * This component fetches all available connectors and is responsible
  * for maanging the state of the connection creation process.
  */
-const ConnectionCreateSection = ({
+const CreateConnectionModalContent = ({
   isOpen,
   closeModal,
   currentStep,
@@ -150,4 +150,4 @@ const ConnectionCreateSection = ({
   );
 };
 
-export default ConnectionCreateSection;
+export default CreateConnectionModalContent;
