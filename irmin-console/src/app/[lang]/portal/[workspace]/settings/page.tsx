@@ -163,7 +163,7 @@ const GeneralSettings = () => {
       <div className='pb-8'>
         <form onSubmit={handleUpdateWorkspace}>
           <div>
-            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
               {dict.workspace.workspaceName}
             </label>
             <Input
@@ -179,7 +179,7 @@ const GeneralSettings = () => {
             />
           </div>
           <div className='mt-4'>
-            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
               {dict.workspace.workspaceDescription}
             </label>
             <Input

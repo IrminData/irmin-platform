@@ -177,7 +177,7 @@ export default function RepositoryLayoutWrapper({
               if (tab.hide) return null;
               return (
                 <Button
-                  key={`data-repo-tab-${idx}`}
+                  key={`repository-tab-${idx}`}
                   className={`rounded-none border-irmin_green px-2 hover:no-underline lg:px-0 ${tab.active ? 'border-b-2' : 'border-0'}`}
                   size='sm'
                   variant='link'

@@ -39,7 +39,6 @@ export default function WorkflowLayoutWrapper({
   const {
     workspaces: { currentWorkspace },
     workflows: { allWorkflows },
-    repositories: { repositories },
   } = useWorkspace();
 
   const workflow = useMemo(
@@ -47,21 +46,13 @@ export default function WorkflowLayoutWrapper({
     [workflowSlug, allWorkflows]
   );
 
-  const repository = useMemo(() => {
+  const repositorySlug = useMemo(() => {
     if (workflow?.workflowable_type === 'action') return undefined;
     if (workflow?.workflowable_type === 'import')
-      return repositories.find(
-        (repo) =>
-          repo.slug ===
-          (workflow as ImportWorkflow).workflowable.repository.slug
-      );
+      return (workflow as ImportWorkflow).workflowable.repository.slug;
     if (workflow?.workflowable_type === 'export')
-      return repositories.find(
-        (repo) =>
-          repo.slug ===
-          (workflow as ExportWorkflow).workflowable.repository.slug
-      );
-  }, [workflow, repositories]);
+      return (workflow as ExportWorkflow).workflowable.repository.slug;
+  }, [workflow]);
 
   const workspaceSlug = useMemo(
     () => currentWorkspace?.slug ?? '',
@@ -81,12 +72,12 @@ export default function WorkflowLayoutWrapper({
       },
       {
         title: dict.workflow.tabs.data,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repository?.slug}`,
+        href: `/${locale}/portal/${workspaceSlug}/repositories/${repositorySlug ?? 'undefined'}`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repository?.slug}`,
+          `/${locale}/portal/${workspaceSlug}/repositories/${repositorySlug ?? 'undefined'}`,
         icon: <TbDatabase size={14} />,
-        hide: workflow?.workflowable_type === 'action',
+        hide: !repositorySlug,
       },
       {
         title: dict.workflow.tabs.documentation,
@@ -107,7 +98,7 @@ export default function WorkflowLayoutWrapper({
         hide: false,
       },
       {
-        title: dict.repository.tabs.settings,
+        title: dict.workflow.tabs.settings,
         href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/settings`,
         active:
           currentPath ===
@@ -116,10 +107,10 @@ export default function WorkflowLayoutWrapper({
         hide: false,
       },
     ],
-    [currentPath, dict, locale, workflow, repository, workspaceSlug]
+    [currentPath, dict, locale, workflow, repositorySlug, workspaceSlug]
   );
 
-  if (!repository || !workflow) {
+  if (!workflow) {
     return <LoadingSkeleton />;
   }
 
@@ -130,15 +121,15 @@ export default function WorkflowLayoutWrapper({
           <div className='flex flex-col gap-2 py-4'>
             <div className='flex flex-row items-center divide-x divide-gray-300 dark:divide-gray-700'>
               <div className='flex flex-row items-center gap-2 pr-2'>
-                <span className='text-sm text-gray-400'>
+                <span className='text-xs text-gray-400 md:text-sm lg:text-base'>
                   {dict.workflow.workflow}
                 </span>
-                <span className='rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+                <span className='ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-3 text-irmin_black md:text-sm lg:text-base'>
                   {workflow?.workflowable_type}
                 </span>
               </div>
-              <span className='px-2 text-sm text-gray-400'>
-                {dict.list.owner}: {repository?.owner.name}
+              <span className='px-2 text-xs text-gray-400 md:text-sm lg:text-base'>
+                {dict.list.owner}: {workflow?.owner.name}
               </span>
             </div>
             <div className='flex flex-wrap items-center gap-2'>
@@ -154,9 +145,7 @@ export default function WorkflowLayoutWrapper({
                 <></>
               )}
             </div>
-            <div className='text-xs text-gray-400'>
-              {repository?.description}
-            </div>
+            <div className='text-xs text-gray-400'>{workflow?.description}</div>
           </div>
         </div>
         <div className='scrollbar-hide mb-6 flex w-full max-w-3xl justify-start gap-2 overflow-y-scroll px-4 md:gap-4'>
@@ -175,7 +164,7 @@ export default function WorkflowLayoutWrapper({
               if (tab.hide) return null;
               return (
                 <Button
-                  key={`data-repo-tab-${idx}`}
+                  key={`workflow-tab-${idx}`}
                   className={`rounded-none border-irmin_green px-2 hover:no-underline lg:px-0 ${tab.active ? 'border-b-2' : 'border-0'}`}
                   size='sm'
                   variant='link'

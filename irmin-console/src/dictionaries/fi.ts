@@ -257,6 +257,14 @@ const fi = {
     },
   },
   connections: {
+    connection: 'Yhteys',
+    configuration: 'Konfiguraatio',
+    workflows: 'Prosessit',
+    tabs: {
+      overview: 'Yleiskatsaus',
+      documentation: 'Dokumentaatio',
+      settings: 'Asetukset',
+    },
     settings: {
       title: 'Yhteyden asetukset',
       connector: 'Yhdistin',

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 
-import { FiDatabase } from 'react-icons/fi';
-import { TbDatabase } from 'react-icons/tb';
+import { TbDatabase, TbFile } from 'react-icons/tb';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -20,7 +19,7 @@ const NewTabContent = ({ addNewTab }: { addNewTab: () => void }) => {
           className='flex w-96 max-w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-lg bg-white p-4 text-center text-irmin_blue shadow transition-all hover:opacity-80 md:p-6 md:py-8 dark:bg-gray-800 dark:text-white dark:shadow-gray-700'
         >
           <div className='aspect-square rounded-full bg-gray-200 p-4 dark:bg-gray-700'>
-            <FiDatabase className='text-2xl lg:text-4xl' />
+            <TbFile className='text-2xl lg:text-4xl' />
           </div>
           <h2 className='text-base font-medium lg:text-lg'>
             {dict.editor.newScriptTitle}

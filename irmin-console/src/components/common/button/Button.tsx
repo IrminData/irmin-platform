@@ -123,7 +123,7 @@ const Button = ({
         'text-irmin_blue rounded-full rounded-full shadow-none dark:shadow-none border-none',
       tertiary:
         'text-irmin_teal-500 rounded-full rounded-full shadow-none dark:shadow-none border-none',
-      gray: 'text-gray-500 rounded-full shadow-none dark:shadow-none border-none',
+      gray: 'text-gray-700 dark:text-gray-300 rounded-full shadow-none dark:shadow-none border-none',
       black:
         'text-irmin_black dark:text-gray-200 rounded-full shadow-none dark:shadow-none border-none',
       light:
@@ -134,7 +134,7 @@ const Button = ({
         'text-irmin_green hover:underline shadow-none dark:shadow-none dark:text-irmin_green-600',
       secondary: 'text-irmin_blue hover:underline shadow-none dark:shadow-none',
       tertiary: 'text-irmin_teal hover:underline shadow-none dark:shadow-none',
-      gray: 'text-gray-500 hover:underline shadow-none dark:shadow-none',
+      gray: 'text-gray-700 dark:text-gray-300 hover:underline shadow-none dark:shadow-none',
       black:
         'text-irmin_black dark:text-gray-200 hover:underline shadow-none dark:shadow-none',
       light:

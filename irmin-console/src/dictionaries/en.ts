@@ -256,6 +256,14 @@ const en = {
     },
   },
   connections: {
+    connection: 'Connection',
+    configuration: 'Configuration',
+    workflows: 'Workflows',
+    tabs: {
+      overview: 'Overview',
+      documentation: 'Documentation',
+      settings: 'Settings',
+    },
     settings: {
       title: 'Connection settings',
       connector: 'Connector',

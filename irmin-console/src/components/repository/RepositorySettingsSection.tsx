@@ -129,7 +129,7 @@ export default function RepositorySettingsSection({
           {repository && !repository?.is_immutable && (
             <div className='flex flex-col gap-4'>
               <div>
-                <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+                <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
                   {dict.repository.settings.name}
                 </label>
                 <Input
@@ -145,7 +145,7 @@ export default function RepositorySettingsSection({
                 />
               </div>
               <div>
-                <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+                <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
                   {dict.repository.settings.description}
                 </label>
                 <Input
@@ -164,7 +164,7 @@ export default function RepositorySettingsSection({
                 />
               </div>
               <div>
-                <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+                <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
                   {dict.repository.settings.owner}
                 </label>
                 <ReactSelect

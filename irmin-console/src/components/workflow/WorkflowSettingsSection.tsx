@@ -166,7 +166,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
         </div>
         <div className='flex flex-col gap-4'>
           <div>
-            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
               {dict.workflow.settings.name}
             </label>
             <Input
@@ -182,7 +182,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
             />
           </div>
           <div>
-            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
               {dict.workflow.settings.description}
             </label>
             <Input
@@ -201,7 +201,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
             />
           </div>
           <div>
-            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
               {dict.workflow.settings.syncInterval}
             </label>
             <Input
@@ -218,7 +218,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
             />
           </div>
           <div>
-            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
               {dict.workflow.settings.owner}
             </label>
             <ReactSelect

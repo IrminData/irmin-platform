@@ -36,26 +36,21 @@ export default function SelectConnector({
     <div className='flex h-[70vh] flex-col justify-between'>
       <div className='grid grid-cols-3 gap-4 p-6'>
         {connectors.map((connector, index) => (
-          <Button
-            variant='solid'
-            colorScheme='light'
-            size='sm'
-            className='w-full justify-start py-1'
-            icon={
-              <Image
-                src={connector.logo}
-                alt={connector.name}
-                className='mr-2 h-12 w-12 object-contain grayscale'
-                width={48}
-                height={48}
-              />
-            }
+          <button
+            type='button'
+            className='flex w-full flex-col items-center justify-center gap-1 rounded-lg bg-gray-100 py-2 text-irmin_black shadow transition-all hover:opacity-80 dark:bg-gray-800 dark:text-gray-200'
             key={`connector-choice-${index}`}
             onClick={() => handleConnectorClick(connector)}
-            ariaLabel={`${dict.connections.create.select} ${connector.name} ${dict.connections.create.connector}`}
           >
+            <Image
+              src={connector.logo}
+              alt={connector.name}
+              className='h-12 w-12 object-contain'
+              width={48}
+              height={48}
+            />
             {connector.name}
-          </Button>
+          </button>
         ))}
       </div>
       <div className='flex-grow'></div>

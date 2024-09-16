@@ -62,7 +62,7 @@ const WorkflowList = ({
           </span>
           <p className='text-base'>
             {item.name}
-            <span className='ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-3 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+            <span className='ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-3 text-irmin_black md:text-sm lg:text-base'>
               {item.workflowable_type}
             </span>
           </p>

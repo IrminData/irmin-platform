@@ -15,7 +15,7 @@ import { GridRow } from '@/types/internal/ListProps';
  * Workflow Runs section component to show a list of runs for a workflow
  *
  * @param props0 - The props
- * @param props0.workflow - The workflow to editor the documentation for
+ * @param props0.workflow - The workflow to show and edit the runs for
  */
 const WorkflowRunsSection = ({ workflow }: { workflow: Workflow }) => {
   const { dict, locale } = useLocale();

@@ -28,8 +28,9 @@ export async function generateMetadata({
   params: SingleWorkflowLayoutParams;
 }): Promise<Metadata> {
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
+  const formattedWorkflow = params.workflow.replace(/-/g, ' ');
   return {
-    title: `Workflow ${params.workflow} | ${formattedWorkspace} | IRMIN Portal`,
+    title: `Workflow ${formattedWorkflow} | ${formattedWorkspace} | IRMIN Portal`,
   };
 }
 

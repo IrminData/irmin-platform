@@ -108,7 +108,7 @@ export default function RepositoryCollectionsSettingsSection({
           )}
           {repository && !repository?.is_immutable && (
             <div className='flex flex-col'>
-              <span className='pb-2 text-xs text-gray-400 dark:text-gray-600'>
+              <span className='pb-2 text-xs text-gray-600 dark:text-gray-400'>
                 {dict.repository.settings.selectCollectionToAdd}
               </span>
               <div className='flex w-full flex-row items-center justify-normal gap-2'>

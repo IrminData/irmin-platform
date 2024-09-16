@@ -103,15 +103,6 @@ const ConnectionSettingsSection = ({
     }
   }, [connection, irminConfirm, deleteConnection, irminAlert, dict]);
 
-  let details = {};
-  let settings = {};
-  try {
-    details = JSON.parse(connection.details ?? '{}');
-    settings = JSON.parse(connection.settings ?? '{}');
-  } catch (error) {
-    console.error('Error parsing connection details or settings:', error);
-  }
-
   return (
     <div className='container relative mx-auto my-12 max-w-6xl px-4'>
       <div className='min-h-96 w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-3 py-8 shadow-md dark:bg-irmin_black-600 dark:shadow-black'>
@@ -121,36 +112,8 @@ const ConnectionSettingsSection = ({
           </h2>
         </div>
         <div className='flex flex-col gap-4'>
-          <table className='w-full text-sm lg:text-lg'>
-            <tbody>
-              <tr className='border-b border-gray-200 dark:border-gray-700'>
-                <td className='p-3 font-bold'>
-                  {dict.connections.settings.connector}
-                </td>
-                <td className='p-3'>{connection.connector.name}</td>
-              </tr>
-              {Object.entries(details).map(([key, value]) => (
-                <tr
-                  key={`details-${key}`}
-                  className='border-b border-gray-200 dark:border-gray-700'
-                >
-                  <td className='p-3 font-bold capitalize'>{key}</td>
-                  <td className='p-3'>{`${value}`}</td>
-                </tr>
-              ))}
-              {Object.entries(settings).map(([key, value]) => (
-                <tr
-                  key={`settings-${key}`}
-                  className='border-b border-gray-200 dark:border-gray-700'
-                >
-                  <td className='p-3 font-bold capitalize'>{key}</td>
-                  <td className='p-3'>{`${value}`}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
           <div>
-            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
               {dict.connections.settings.name}
             </label>
             <Input
@@ -166,7 +129,7 @@ const ConnectionSettingsSection = ({
             />
           </div>
           <div>
-            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
               {dict.connections.settings.description}
             </label>
             <Input
@@ -185,7 +148,7 @@ const ConnectionSettingsSection = ({
             />
           </div>
           <div>
-            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
               {dict.connections.settings.owner}
             </label>
             <ReactSelect

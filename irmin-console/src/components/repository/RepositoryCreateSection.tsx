@@ -119,7 +119,7 @@ export default function RepositoryCreateSection() {
             <PortalTitle title={dict.repository.createNewRepository} />
           </div>
           <div>
-            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
               {dict.repository.settings.name}
             </label>
             <Input
@@ -135,7 +135,7 @@ export default function RepositoryCreateSection() {
             />
           </div>
           <div>
-            <label className='mb-2 block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
+            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
               {dict.repository.settings.description}
             </label>
             <Input
@@ -153,7 +153,7 @@ export default function RepositoryCreateSection() {
               }}
             />
           </div>
-          <span className='px-2 text-xs text-gray-400 dark:text-gray-600'>
+          <span className='-mb-2 px-2 text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
             {dict.repository.settings.selectCollectionToAdd}
           </span>
           <div className='flex w-full flex-row items-center justify-normal gap-2'>

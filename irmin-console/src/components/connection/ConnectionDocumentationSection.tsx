@@ -13,52 +13,56 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Workflow } from '@/types/api/Workflow';
+import { Connection } from '@/types/api/Connection';
 
 /**
- * Workflow Documentation section component for displaying and updating the documentation
+ * Connection Documentation section component for displaying and updating the documentation
  *
  * @param props0 - The props
- * @param props0.workflow - The workflow to show and edit the documentation for
+ * @param props0.connection - The connection to show and edit the documentation for
  */
-const WorkflowDocumentationSection = ({ workflow }: { workflow: Workflow }) => {
+const ConnectionDocumentationSection = ({
+  connection,
+}: {
+  connection: Connection;
+}) => {
   const { irminAlert } = usePopup();
   const { dict } = useLocale();
   const {
-    workflows: { updateWorkflow },
+    connections: { updateConnection },
   } = useWorkspace();
 
   const [currentDocumentation, setCurrentDocumentation] = useState(
-    workflow.documentation ?? ''
+    connection.documentation ?? ''
   );
   const [documentationEditorType, setDocumentationEditorType] = useState<
     'mdx' | 'plain'
   >('mdx');
 
   /**
-   * Updates the workflow with the new documentation provided
-   * Uses {@link updateWorkflow} to update the workflow details
+   * Updates the connection with the new documentation provided
+   * Uses {@link updateConnection} to update the connection details
    * Shows {@link irminAlert} on success or error
    */
-  const handleUpdateWorkflowDocumentation = useCallback(async () => {
+  const handleUpdateConnectionDocumentation = useCallback(async () => {
     try {
-      if (!workflow) return;
+      if (!connection) return;
       const documentation = currentDocumentation.trim();
-      if (documentation && documentation !== workflow.documentation) {
-        await updateWorkflow(workflow.id, {
-          ...workflow,
+      if (documentation && documentation !== connection.documentation) {
+        await updateConnection(connection.id, {
+          ...connection,
           documentation,
         });
-        irminAlert('success', dict.workflow.settings.workflowUpdated);
+        irminAlert('success', dict.connections.settings.connectionUpdated);
       }
     } catch (error) {
       irminAlert(
         'error',
         (error as Error)?.message ??
-          dict.workflow.settings.errorUpdatingWorkflow
+          dict.connections.settings.errorUpdatingConnection
       );
     }
-  }, [workflow, currentDocumentation, dict, irminAlert, updateWorkflow]);
+  }, [connection, currentDocumentation, dict, irminAlert, updateConnection]);
 
   return (
     <div className='container relative mx-auto max-w-6xl'>
@@ -66,7 +70,7 @@ const WorkflowDocumentationSection = ({ workflow }: { workflow: Workflow }) => {
         <div className='flex w-full flex-col gap-2 px-2'>
           <div className='my-4 flex flex-row items-center justify-between gap-4'>
             <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
-              {dict.workflow.tabs.documentation}
+              {dict.connections.tabs.documentation}
             </h2>
             <div className='flex flex-row items-center gap-2'>
               <Button
@@ -95,10 +99,10 @@ const WorkflowDocumentationSection = ({ workflow }: { workflow: Workflow }) => {
                 size='sm'
                 colorScheme='primary'
                 variant='solid'
-                onClick={handleUpdateWorkflowDocumentation}
+                onClick={handleUpdateConnectionDocumentation}
                 icon={<TbFile />}
               >
-                {dict.workflow.settings.saveChanges}
+                {dict.connections.settings.saveChanges}
               </Button>
             </div>
           </div>
@@ -132,4 +136,4 @@ const WorkflowDocumentationSection = ({ workflow }: { workflow: Workflow }) => {
   );
 };
 
-export default WorkflowDocumentationSection;
+export default ConnectionDocumentationSection;

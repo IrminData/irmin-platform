@@ -53,7 +53,7 @@ export default function SideModal({
         onClick={() => setIsOpen(true)}
         aria-label={title}
       >
-        <p className='-mr-4 flex items-center justify-center rounded-l-full py-2 pl-2 pr-6 text-xs text-gray-500 opacity-0 shadow transition-all group-hover:opacity-100'>
+        <p className='-mr-4 flex items-center justify-center rounded-l-full py-2 pl-2 pr-6 text-xs text-gray-600 opacity-0 shadow transition-all group-hover:opacity-100 dark:text-gray-400'>
           {title}
         </p>
         <p className='flex h-10 w-10 items-center justify-center rounded-full bg-irmin_green text-white transition-all group-hover:bg-irmin_green-600'>
@@ -72,7 +72,7 @@ export default function SideModal({
             >
               <div className='flex h-full flex-col justify-start'>
                 <div className='z-10 flex w-full items-center justify-between gap-4 px-4 pt-[44px]'>
-                  <h3 className='text-xl font-bold'>{title}</h3>
+                  <h3 className='text-xl'>{title}</h3>
                   <Button
                     variant='icon'
                     colorScheme='primary'
@@ -93,17 +93,17 @@ export default function SideModal({
                       <div
                         className={`mr-2 flex h-6 w-6 items-center justify-center rounded-full text-sm text-white ${
                           currentStep >= index + 1
-                            ? 'bg-irmin_green-500'
-                            : 'bg-gray-300 dark:bg-gray-400'
+                            ? 'bg-irmin_green'
+                            : 'bg-gray-300 dark:bg-gray-600'
                         }`}
                       >
                         {index + 1}
                       </div>
                       <span
-                        className={`mt-2 text-xs sm:mt-0 ${
+                        className={`mt-2 text-xs sm:mt-0 lg:text-sm ${
                           currentStep >= index + 1
-                            ? 'text-irmin_green-500'
-                            : 'text-gray-500'
+                            ? 'text-irmin_green'
+                            : 'text-gray-700 dark:text-gray-300'
                         }`}
                       >
                         {step}

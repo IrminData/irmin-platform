@@ -23,7 +23,7 @@ export default function ConnectionsPage() {
   const loading = workspaceLoading || connections.isLoading;
 
   return (
-    <>
+    <div className='container relative mx-auto max-w-6xl'>
       <PortalTitle title={dict.portalNavigation.links.connections} />
       <SideModal
         isOpen={isOpen}
@@ -45,6 +45,6 @@ export default function ConnectionsPage() {
         />
       </SideModal>
       <ConnectionList loading={loading} connections={connections.connections} />
-    </>
+    </div>
   );
 }
