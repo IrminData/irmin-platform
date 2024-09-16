@@ -21,6 +21,7 @@ import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
+import LoadingSkeleton from '../common/loading/LoadingSkeleton';
 import BranchSelector from './BranchSelector';
 
 /**
@@ -109,6 +110,10 @@ export default function RepositoryLayoutWrapper({
     [currentPath, dict, locale, repository, repoSlug, workspaceSlug]
   );
 
+  if (!repository || !currentWorkspace) {
+    return <LoadingSkeleton />;
+  }
+
   return (
     <>
       <div className='container relative mx-auto max-w-6xl'>
@@ -119,7 +124,7 @@ export default function RepositoryLayoutWrapper({
                 <span className='text-sm text-gray-400'>
                   {dict.repository.repository}
                 </span>
-                {(repository?.workflow || repository?.is_immutable) && (
+                {(repository.workflow || repository.is_immutable) && (
                   <span className='rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
                     {repository.is_immutable
                       ? dict.list.immutable
@@ -128,12 +133,14 @@ export default function RepositoryLayoutWrapper({
                 )}
               </div>
               <span className='px-2 text-sm text-gray-400'>
-                {dict.list.owner}: {repository?.owner.name}
+                {dict.list.owner}: {repository.owner.name}
               </span>
             </div>
             <div className='flex flex-wrap items-center gap-2'>
               <h1 className='text-lg font-normal text-irmin_black md:text-2xl dark:text-white'>
-                {currentWorkspace?.slug ?? '-'}/{repository?.slug ?? '-'}
+                {currentWorkspace.slug}
+                {' / '}
+                {repository.slug}
               </h1>
               <StatusBadge accessStatus={'private'} statusLabel={'Private'} />
               <div className='ml-auto'>
@@ -157,9 +164,9 @@ export default function RepositoryLayoutWrapper({
                 />
               </div>
             </div>
-            <div className='text-xs text-gray-400'>
-              {repository?.description}
-            </div>
+            <p className='max-w-lg text-xs text-gray-400 lg:text-sm'>
+              {repository.description}
+            </p>
           </div>
         </div>
         <div className='scrollbar-hide mb-6 flex w-full max-w-3xl justify-start gap-2 overflow-y-scroll px-4 md:gap-4'>
@@ -169,7 +176,6 @@ export default function RepositoryLayoutWrapper({
             colorScheme='black'
             className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-700'
             href={`/${locale}/portal/${workspaceSlug}/repositories`}
-            ariaLabel='Back to Repositories'
           >
             <IoChevronBack size={24} />
           </Button>

@@ -157,7 +157,7 @@ const GeneralSettings = () => {
 
   return (
     <div className='my-8 px-4'>
-      <h2 className='mb-8 font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
+      <h2 className='mb-8 font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
         {dict.workspace.generalSettings}
       </h2>
       <div className='pb-8'>
@@ -245,7 +245,7 @@ const BillingSettings = () => {
   const { dict } = useLocale();
   return (
     <div className='my-8 px-4'>
-      <h2 className='mb-8 font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
+      <h2 className='mb-8 font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
         {dict.workspace.billingSettings}
       </h2>
       <p className='mb-4 font-normal text-gray-500'>

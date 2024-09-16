@@ -14,7 +14,6 @@ import {
   ExportWorkflow,
   ImportWorkflow,
   Workflow,
-  WorkflowRun,
 } from '@/types/api/Workflow';
 import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
 
@@ -110,10 +109,6 @@ const WorkspaceContext = createContext<{
       fetchActions: (_forceFetch?: boolean) => void;
     };
     allWorkflows: Workflow[];
-    workflowRuns: WorkflowRun[];
-    workflowRunsLoading: boolean;
-    fetchWorkflowRuns: (_forceFetch?: boolean) => void;
-    fetchWorkflowRunsByWorkflow: (_workflowId: number) => void;
     updateWorkflow: (
       _workflowId: number,
       _updatedWorkflow: Workflow
@@ -190,10 +185,6 @@ const WorkspaceContext = createContext<{
       fetchActions: () => {},
     },
     allWorkflows: [],
-    workflowRuns: [],
-    workflowRunsLoading: false,
-    fetchWorkflowRuns: () => {},
-    fetchWorkflowRunsByWorkflow: () => {},
     updateWorkflow: () => Promise.resolve({}),
     reassignWorkflow: () => Promise.resolve({}),
     deleteWorkflow: () => Promise.resolve({}),

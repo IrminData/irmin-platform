@@ -63,9 +63,9 @@ export default function ActionWorkflowsSection({
   const loading = workspaceLoading || workflowsLoading;
 
   return (
-    <div className='container relative mx-auto max-w-6xl py-8'>
-      <div className='my-4 flex flex-row items-center justify-between gap-4 px-4'>
-        <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
+    <div className='container relative mx-auto max-w-6xl px-4 py-8'>
+      <div className='my-4 flex flex-row items-center justify-between gap-4'>
+        <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
           {dict.workflow.actionWorkflows}
         </h2>
         <Button
@@ -95,7 +95,9 @@ export default function ActionWorkflowsSection({
           workflowType={'action'}
         />
       </SideModal>
-      <ActionWorkflowList loading={loading} actionWorkflows={actions} />
+      <div className='py-4'>
+        <ActionWorkflowList loading={loading} actionWorkflows={actions} />
+      </div>
     </div>
   );
 }

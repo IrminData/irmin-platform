@@ -1,6 +1,6 @@
 /**
  * Generates a random date-time string within a specified range of days in the past or future,
- * with an optional offset in days.
+ * with an optional offset in days. The time of the day is also randomised.
  *
  * @param {number} daysRange - The range of days within which to generate the random date.
  * @param {'past' | 'future'} direction - Specifies whether the date should be in the past or future.
@@ -30,5 +30,20 @@ export function getRandomDateTimeString(
     direction === 'past'
       ? new Date(currentDate.setDate(currentDate.getDate() - totalDays))
       : new Date(currentDate.setDate(currentDate.getDate() + totalDays));
+
+  // Randomise time
+  const randomHours = Math.floor(Math.random() * 24);
+  const randomMinutes = Math.floor(Math.random() * 60);
+  const randomSeconds = Math.floor(Math.random() * 60);
+  const randomMilliseconds = Math.floor(Math.random() * 1000);
+
+  // Set random time
+  adjustedDate.setHours(
+    randomHours,
+    randomMinutes,
+    randomSeconds,
+    randomMilliseconds
+  );
+
   return adjustedDate.toISOString();
 }

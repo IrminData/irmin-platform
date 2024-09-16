@@ -161,7 +161,7 @@ export default function ConfigureWorkflow({
         </div>
         <div>
           <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-            {dict.workflow.syncInterval}
+            {dict.workflow.runInterval}
           </label>
           <Input
             size='sm'
@@ -179,7 +179,7 @@ export default function ConfigureWorkflow({
             }
           />
           <span className='text-xs opacity-60'>
-            {dict.workflow.syncIntervalDescription}
+            {dict.workflow.runIntervalDescription}
           </span>
         </div>
       </div>

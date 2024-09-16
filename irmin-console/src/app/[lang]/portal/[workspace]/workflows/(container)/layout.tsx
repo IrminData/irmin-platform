@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 
 import { WorkspaceLayoutParams } from '@/app/[lang]/portal/[workspace]/layout';
 
-import PortalWorkflowsLayoutWrapper from '@/components/workflow/PortalWorkflowsLayoutWrapper';
+import WorkflowsLayoutWrapper from '@/components/workflow/WorkflowsLayoutWrapper';
 
 /**
  * SEO metadata for the Workflows pages
@@ -29,8 +29,6 @@ export default function PortalWorkflowsLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <PortalWorkflowsLayoutWrapper params={params}>
-      {children}
-    </PortalWorkflowsLayoutWrapper>
+    <WorkflowsLayoutWrapper params={params}>{children}</WorkflowsLayoutWrapper>
   );
 }

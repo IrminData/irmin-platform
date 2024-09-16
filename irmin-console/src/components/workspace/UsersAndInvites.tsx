@@ -325,7 +325,7 @@ const UsersAndInvites: React.FC = () => {
   return (
     <div className='my-8 px-2'>
       <div className='mb-8 flex flex-row items-center justify-between px-2'>
-        <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
+        <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
           {dict.usersPermissions.usersAndPermissions}
         </h2>
         <Button

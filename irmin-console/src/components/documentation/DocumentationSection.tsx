@@ -254,7 +254,7 @@ export default function DocumentationSection({
                         </span>
                       </p>
                       <p className='text-sm text-gray-600 dark:text-gray-400'>
-                        {dict.list.syncInterval}:{' '}
+                        {dict.list.runInterval}:{' '}
                         <span className='text-gray-800 dark:text-gray-200'>
                           {item.cron_syntax
                             ? item.cron_syntax
@@ -299,7 +299,7 @@ export default function DocumentationSection({
                         </span>
                       </p>
                       <p className='text-sm text-gray-600 dark:text-gray-400'>
-                        {dict.list.syncInterval}:{' '}
+                        {dict.list.runInterval}:{' '}
                         <span className='text-gray-800 dark:text-gray-200'>
                           {item.cron_syntax
                             ? item.cron_syntax
@@ -344,7 +344,7 @@ export default function DocumentationSection({
                         </span>
                       </p>
                       <p className='text-sm text-gray-600 dark:text-gray-400'>
-                        {dict.list.syncInterval}:{' '}
+                        {dict.list.runInterval}:{' '}
                         <span className='text-gray-800 dark:text-gray-200'>
                           {item.cron_syntax
                             ? item.cron_syntax

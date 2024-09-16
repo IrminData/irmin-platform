@@ -63,7 +63,6 @@ class WorkflowService {
     this.pauseWorkflow = this.pauseWorkflow.bind(this);
     this.resumeWorkflow = this.resumeWorkflow.bind(this);
     this.reassignWorkflow = this.reassignWorkflow.bind(this);
-    this.fetchRuns = this.fetchRuns.bind(this);
     this.fetchRunsByWorkflow = this.fetchRunsByWorkflow.bind(this);
     this.fetchImportWorkflows = this.fetchImportWorkflows.bind(this);
     this.fetchExportWorkflows = this.fetchExportWorkflows.bind(this);
@@ -211,28 +210,6 @@ class WorkflowService {
     } catch (error) {
       console.error((error as Error).message, 'Reassign workflow error');
       if (isDevelopment) return fake();
-      throw error;
-    }
-  }
-
-  /**
-   * Fetch all Workflow Runs
-   *
-   * @todo Provide link to Irmin API docs
-   *
-   */
-  async fetchRuns(): Promise<WorkflowRunsAPIResponse> {
-    if (isOfflineMode)
-      return fake(exampleWorkflowRuns) as WorkflowRunsAPIResponse;
-    try {
-      const response = (await this.irminCore.fetch(`/v1/workflows/runs`, {
-        method: 'GET',
-      })) as WorkflowRunsAPIResponse;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Fetch workflow runs error');
-      if (isDevelopment)
-        return fake(exampleWorkflowRuns) as WorkflowRunsAPIResponse;
       throw error;
     }
   }

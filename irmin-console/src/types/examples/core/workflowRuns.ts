@@ -12,34 +12,157 @@ const runs: Array<{
 }> = [
   {
     status: 'running',
-    started_at: getRandomDateTimeString(2, 'past', 0),
-  },
-  {
-    status: 'complete',
-    started_at: getRandomDateTimeString(2, 'past', 0),
-    finished_at: getRandomDateTimeString(1, 'past', 0),
-  },
-  {
-    status: 'error',
-    started_at: getRandomDateTimeString(2, 'past', 0),
-    finished_at: getRandomDateTimeString(1, 'past', 0),
-  },
-  {
-    status: 'pending',
-    started_at: getRandomDateTimeString(2, 'past', 0),
-  },
-  {
-    status: 'paused',
-    started_at: getRandomDateTimeString(2, 'past', 0),
-  },
-  {
-    status: 'initiating',
     started_at: getRandomDateTimeString(1, 'past', 0),
   },
   {
     status: 'complete',
-    started_at: getRandomDateTimeString(2, 'past', 1),
-    finished_at: getRandomDateTimeString(1, 'past', 0),
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'error',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'error',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'error',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'error',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'error',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'error',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
+  },
+  {
+    status: 'complete',
+    started_at: getRandomDateTimeString(4, 'past', 1),
+    finished_at: getRandomDateTimeString(4, 'past', 1),
   },
 ];
 

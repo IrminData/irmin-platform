@@ -30,7 +30,7 @@ const NormalList: React.FC<ListProps> = ({
   const [openDetails, setOpenDetails] = useState<number[]>([]);
   const totalColumns = headers.length;
   return (
-    <div className='scrollbar-hide h-full w-full overflow-scroll p-4' id='list'>
+    <div className='scrollbar-hide h-full w-full overflow-scroll' id='list'>
       <div
         className={`grid grid-cols-${totalColumns} box-border h-full w-full min-w-max items-center overflow-hidden rounded-lg bg-white text-left text-xs font-normal shadow-sm transition-all md:text-sm dark:bg-irmin_black-600`}
       >
@@ -88,7 +88,7 @@ const NormalList: React.FC<ListProps> = ({
                         size={'sm'}
                         key={`list-row-${rowIndex}-actions-${index}`}
                         variant={action.primary ? 'solid' : 'link'}
-                        colorScheme='secondary'
+                        colorScheme={action.primary ? 'light' : 'black'}
                         ariaLabel={action.label}
                         href={action.href}
                         onClick={action.onClick}
@@ -99,10 +99,10 @@ const NormalList: React.FC<ListProps> = ({
                     ))}
                     {row.details && (
                       <Button
-                        size='md'
+                        size='lg'
                         variant='link'
-                        colorScheme='secondary'
-                        className='ml-2 mt-1'
+                        colorScheme='black'
+                        className='ml-2 mt-1 px-0'
                         onClick={() => {
                           if (openDetails.includes(rowIndex)) {
                             setOpenDetails(
@@ -133,7 +133,7 @@ const NormalList: React.FC<ListProps> = ({
               rowRendered.push(
                 <div
                   key={`list-row-${rowIndex}-details`}
-                  className={`col-span-full px-10 py-2 shadow-inner ${openDetails.includes(rowIndex) ? '' : 'hidden'}`}
+                  className={`col-span-full px-2 py-2 shadow-inner ${openDetails.includes(rowIndex) ? '' : 'hidden'}`}
                 >
                   {row.details}
                 </div>

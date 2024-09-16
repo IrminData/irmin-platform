@@ -10,7 +10,6 @@ import {
   ExportWorkflow,
   ImportWorkflow,
   Workflow,
-  WorkflowRun,
 } from '@/types/api/Workflow';
 import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
 
@@ -444,94 +443,4 @@ export const useDeleteWorkflow = (
       return response;
     },
     [locale, actions, setActions, imports, setImports, exports, setExports]
-  );
-
-/**
- * Hook to fetch the list of Workflow Runs for the current workspace using the {@link IrminCore}.
- */
-export const useFetchWorkflowRuns = (
-  currentWorkspace: Workspace | null,
-  setWorkflowRuns: React.Dispatch<React.SetStateAction<WorkflowRun[]>>,
-  loading: boolean,
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  fetchedFor: string | null,
-  setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
-  locale: Locale
-) =>
-  useCallback(
-    async (forceFetch?: boolean) => {
-      // Check if the imports are already fetched for the current workspace
-      if (!forceFetch) {
-        if (!fetchedFor && !currentWorkspace) return;
-        if (fetchedFor === currentWorkspace?.slug) return;
-      }
-      setFetchedFor(currentWorkspace?.slug ?? null);
-      // Prevent multiple simultaneous fetches
-      if (loading) return;
-      setLoading(true);
-      try {
-        // Get the workflow service
-        const { workflowService } = new IrminCore(locale);
-        // If the current workspace is not set, clear the imports
-        if (!currentWorkspace) {
-          setWorkflowRuns([]);
-          return;
-        }
-        // Fetch the workflow runs for the current workspace
-        const response = await workflowService.fetchRuns();
-        setWorkflowRuns(response.data);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [
-      currentWorkspace,
-      setWorkflowRuns,
-      loading,
-      setLoading,
-      fetchedFor,
-      setFetchedFor,
-      locale,
-    ]
-  );
-
-/**
- * Hook to fetch the list of Workflow Runs for a specific workflow using the {@link IrminCore}.
- */
-export const useFetchWorkflowRunsByWorkflow = (
-  workflowRuns: WorkflowRun[],
-  setWorkflowRuns: React.Dispatch<React.SetStateAction<WorkflowRun[]>>,
-  loading: boolean,
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  locale: Locale
-) =>
-  useCallback(
-    async (workflowId: number) => {
-      // Prevent multiple simultaneous fetches
-      if (loading) return;
-      setLoading(true);
-      try {
-        // Get the workflow service
-        const { workflowService } = new IrminCore(locale);
-        // Fetch the workflow runs for the current workspace
-        const response = await workflowService.fetchRunsByWorkflow(workflowId);
-        // Update the local state with the fetched workflow runs
-        const fetchedRuns = response.data;
-        const newWorkflowRuns = [...workflowRuns];
-        // Remove the fetched runs from the current list
-        fetchedRuns.forEach((run) => {
-          const index = newWorkflowRuns.findIndex((r) => r.id === run.id);
-          if (index !== -1) {
-            newWorkflowRuns.splice(index, 1);
-          }
-        });
-        // Add the fetched runs to the current list
-        newWorkflowRuns.push(...fetchedRuns);
-        // Sort the list by ID and update the state
-        setWorkflowRuns(newWorkflowRuns.sort((a, b) => a.id - b.id));
-      } finally {
-        setLoading(false);
-      }
-    },
-    [workflowRuns, setWorkflowRuns, loading, setLoading, locale]
   );

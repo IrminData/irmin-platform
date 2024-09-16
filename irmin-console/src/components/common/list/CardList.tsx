@@ -25,7 +25,7 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
 
   return (
     <div className='scrollbar-hide h-full w-full overflow-scroll' id='list'>
-      <div className='grid grid-cols-1 items-start gap-2 p-4 sm:grid-cols-2 lg:grid-cols-3'>
+      <div className='grid grid-cols-1 items-start gap-2 sm:grid-cols-2 lg:grid-cols-3'>
         {loading ? (
           <div id='card-list-loading' className='contents'>
             {[...Array(8)].map((_, index) => (
@@ -39,7 +39,7 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
           rows.map((card, rowIndex) => (
             <div
               key={`list-card-${rowIndex}`}
-              className='flex flex-col gap-1 rounded-lg border border-gray-200 bg-white px-2 py-4 text-xs shadow-sm md:text-sm xl:text-base dark:border-gray-900 dark:bg-irmin_black-600'
+              className='flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-4 text-xs md:text-sm xl:text-base dark:border-gray-900 dark:bg-irmin_black-600'
             >
               <div className='flex flex-wrap items-center justify-between gap-4'>
                 {card.columns.map((column, index) => (
@@ -52,7 +52,7 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
                 ))}
               </div>
               {card.actions && card.actions.length > 0 && !noActions && (
-                <div className='mt-4 flex items-center justify-end space-x-2'>
+                <div className='mt-4 flex items-center justify-between space-x-2'>
                   <div className='flex-card flex justify-start'>
                     {card.actions
                       .slice()
@@ -65,10 +65,10 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
                       )
                       .map((action, index) => (
                         <Button
-                          size={'sm'}
+                          size={'md'}
                           key={`list-card-${rowIndex}-actions-${index}`}
                           variant={action.primary ? 'solid' : 'link'}
-                          colorScheme='secondary'
+                          colorScheme={action.primary ? 'light' : 'black'}
                           ariaLabel={action.label}
                           href={action.href}
                           onClick={action.onClick}
@@ -81,10 +81,9 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
                   {card.details && (
                     <div>
                       <Button
-                        size='md'
+                        size='lg'
                         variant='link'
-                        colorScheme='secondary'
-                        className='m-0 p-0'
+                        colorScheme='black'
                         onClick={() => {
                           if (openDetails.includes(rowIndex)) {
                             setOpenDetails(
@@ -111,9 +110,7 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
                 </div>
               )}
               {card.details && openDetails.includes(rowIndex) && (
-                <div className='mt-0 rounded-lg bg-gray-50 p-4 shadow-inner'>
-                  {card.details}
-                </div>
+                <div className='mt-0 rounded-lg'>{card.details}</div>
               )}
             </div>
           ))

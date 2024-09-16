@@ -109,7 +109,7 @@ export default function RepositorySettingsSection({
       <div className='w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-4 py-4 shadow-md md:mx-4 dark:bg-irmin_black-600'>
         <div className='my-8 px-4'>
           <div className='mb-8 flex flex-row items-center justify-between px-2'>
-            <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
+            <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
               {dict.repository.tabs.settings}
             </h2>
             <Button

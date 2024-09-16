@@ -16,7 +16,7 @@ import { useLocale } from '@/context/LocaleContext';
 /**
  * Layout for the Workflow pages in the Portal
  */
-export default function PortalWorkflowsLayoutWrapper({
+export default function WorkflowsLayoutWrapper({
   params,
   children,
 }: {

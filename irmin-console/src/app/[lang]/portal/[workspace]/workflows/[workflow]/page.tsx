@@ -2,19 +2,19 @@
 
 import { useMemo } from 'react';
 
-import WorkflowRunsSection from '@/components/workflow/WorkflowRunsSection';
+import WorkflowSection from '@/components/workflow/WorkflowSection';
 
 import { useWorkspace } from '@/context/workspace';
 
 import { SingleWorkflowLayoutParams } from './layout';
 
 /**
- * Page for the Workflow structure
+ * Single workflow page
  *
  * @param props0 - The page properties
  * @param props0.params - The page parameters from Next JS router
  */
-export default function WorkflowRunsPage({
+export default function WorkflowPage({
   params,
 }: {
   params: SingleWorkflowLayoutParams;
@@ -30,5 +30,5 @@ export default function WorkflowRunsPage({
   );
   if (!workflow) return <></>;
 
-  return <WorkflowRunsSection workflow={workflow} />;
+  return <WorkflowSection workflow={workflow} />;
 }

@@ -73,9 +73,9 @@ export default function SelectConnector({
             {dict.connections.create.selectedConnector}:
           </p>
           <div className='flex w-full flex-row items-center gap-4'>
-            <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-gray-100 px-4 py-2 text-left text-sm text-irmin_black shadow dark:bg-gray-800 dark:text-gray-200'>
+            <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-gray-50 px-4 py-2 text-left text-sm text-irmin_black shadow dark:bg-gray-800 dark:text-gray-200'>
               <Image
-                src={connectionData.connector.logo ?? '/irmin-logo.svg'}
+                src={connectionData.connector.logo}
                 alt={connectionData.connector.name}
                 className='h-12 w-12 object-contain'
                 width={48}
@@ -94,7 +94,7 @@ export default function SelectConnector({
               </p>
               {connectionData.connector.url && (
                 <Link
-                  className='text-sm text-irmin_blue dark:text-irmin_green'
+                  className='text-sm text-irmin_blue transition-all duration-200 hover:underline dark:text-irmin_green'
                   target='_blank'
                   rel='noopener noreferrer'
                   href={connectionData.connector.url}

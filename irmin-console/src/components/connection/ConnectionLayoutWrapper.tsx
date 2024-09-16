@@ -91,21 +91,21 @@ export default function ConnectionLayoutWrapper({
                   {dict.connections.connection}
                 </span>
                 <span className='rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
-                  {connection?.connector.name}
+                  {connection.connector.name}
                 </span>
               </div>
               <span className='px-2 text-sm text-gray-400'>
-                {dict.list.owner}: {connection?.owner.name}
+                {dict.list.owner}: {connection.owner.name}
               </span>
             </div>
             <div className='flex flex-wrap items-center gap-2'>
               <h1 className='text-lg font-normal text-irmin_black md:text-2xl dark:text-white'>
-                {connection?.name ?? '-'}
+                {connection.name}
               </h1>
             </div>
-            <div className='text-xs text-gray-400'>
-              {connection?.description}
-            </div>
+            <p className='max-w-lg text-xs text-gray-400 lg:text-sm'>
+              {connection.description}
+            </p>
           </div>
         </div>
         <div className='scrollbar-hide mb-6 flex w-full max-w-3xl justify-start gap-2 overflow-y-scroll px-4 md:gap-4'>
@@ -115,7 +115,6 @@ export default function ConnectionLayoutWrapper({
             colorScheme='black'
             className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-700'
             href={`/${locale}/portal/${workspaceSlug}/connections`}
-            ariaLabel='Back to Connections'
           >
             <IoChevronBack size={24} />
           </Button>

@@ -1,11 +1,14 @@
 'use client';
 
+import Image from 'next/image';
+import Link from 'next/link';
+
+import WorkflowList from '@/components/workflow/WorkflowList';
+
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 import { Connection } from '@/types/api/Connection';
-
-import WorkflowList from '@/components/workflow/WorkflowList';
 
 /**
  * Connection Settings section component
@@ -40,42 +43,57 @@ const ConnectionSection = ({ connection }: { connection: Connection }) => {
   }
 
   return (
-    <div className='container relative mx-auto my-12 max-w-6xl px-4'>
-      <h2 className='mb-4 px-4 font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
-        {dict.connections.configuration}
-      </h2>
-      <table className='mx-4 mb-12 w-full max-w-lg text-sm lg:text-lg'>
-        <tbody>
-          <tr className='border-b border-gray-200 dark:border-gray-700'>
-            <td className='p-2 font-bold'>
-              {dict.connections.settings.connector}
-            </td>
-            <td className='p-2'>{connection.connector.name}</td>
-          </tr>
+    <div className='container relative mx-auto max-w-6xl'>
+      <div className='my-4 flex flex-col gap-4 p-4'>
+        <div className='flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg bg-gray-100 p-4 text-sm text-irmin_black lg:text-lg dark:bg-irmin_black-800 dark:text-gray-100'>
+          <div className='flex w-full flex-row items-center gap-4'>
+            <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-gray-50 px-4 py-2 text-left text-sm text-irmin_black shadow dark:bg-gray-800 dark:text-gray-200'>
+              <Image
+                src={connection.connector.logo}
+                alt={connection.connector.name}
+                className='h-12 w-12 object-contain'
+                width={48}
+                height={48}
+              />
+              <div className='flex flex-col justify-start gap-1'>
+                <span className='w-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+                  {connection.connector.category}
+                </span>
+                <p>{connection.connector.name}</p>
+              </div>
+            </div>
+            <div className='flex max-w-64 flex-col gap-1'>
+              <p className='text-sm opacity-80'>
+                {connection.connector.description}
+              </p>
+              {connection.connector.url && (
+                <Link
+                  className='text-sm text-irmin_blue transition-all duration-200 hover:underline dark:text-irmin_green'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  href={connection.connector.url}
+                >
+                  {dict.connections.create.learnMore}
+                </Link>
+              )}
+            </div>
+          </div>
+          <hr className='w-full border-b dark:border-gray-800' />
           {Object.entries(details).map(([key, value]) => (
-            <tr
-              key={`details-${key}`}
-              className='border-b border-gray-200 dark:border-gray-700'
-            >
-              <td className='p-2 font-bold capitalize'>{key}</td>
-              <td className='p-2'>{`${value}`}</td>
-            </tr>
+            <div className='flex flex-col gap-1' key={`details-${key}`}>
+              <p className='text-sm opacity-60'>{key}</p>
+              <p className='text-base'>{`${value}`}</p>
+            </div>
           ))}
           {Object.entries(settings).map(([key, value]) => (
-            <tr
-              key={`settings-${key}`}
-              className='border-b border-gray-200 dark:border-gray-700'
-            >
-              <td className='p-2 font-bold capitalize'>{key}</td>
-              <td className='p-2'>{`${value}`}</td>
-            </tr>
+            <div className='flex flex-col gap-1' key={`settings-${key}`}>
+              <p className='text-sm opacity-60'>{key}</p>
+              <p className='text-base'>{`${value}`}</p>
+            </div>
           ))}
-        </tbody>
-      </table>
-      <h2 className='mb-0 px-4 font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
-        {dict.connections.workflows}
-      </h2>
-      <WorkflowList workflows={relatedWorkflows} loading={loading} />
+        </div>
+        <WorkflowList workflows={relatedWorkflows} loading={loading} />
+      </div>
     </div>
   );
 };

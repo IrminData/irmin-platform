@@ -139,7 +139,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
     <div className='container relative mx-auto my-12 max-w-6xl px-4'>
       <div className='min-h-96 w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-3 py-8 shadow-md dark:bg-irmin_black-600 dark:shadow-black'>
         <div className='mb-8 flex flex-row items-center justify-between px-2'>
-          <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
+          <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
             {dict.workflow.tabs.settings}
           </h2>
           {workflow.status === 'paused' ? (
@@ -202,7 +202,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
           </div>
           <div>
             <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-              {dict.workflow.syncInterval}
+              {dict.workflow.runInterval}
             </label>
             <Input
               size='sm'
@@ -215,7 +215,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
               onChange={(e) => setCronField(e.target.value)}
             />
             <span className='text-xs opacity-60'>
-              {dict.workflow.syncIntervalDescription}
+              {dict.workflow.runIntervalDescription}
             </span>
           </div>
           <div>

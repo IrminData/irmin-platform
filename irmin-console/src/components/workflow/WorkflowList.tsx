@@ -53,73 +53,76 @@ const WorkflowList = ({
     ];
     return {
       columns: [
-        <div
-          key={`item-${i}-name-description-owner`}
-          className='inline-flex flex-col gap-1'
-        >
-          <span className='text-xs text-gray-400'>
-            {dict.list.owner}: {item.owner.name}
-          </span>
+        <div key={`name-and-owner-${i}`} className='inline-flex flex-col gap-1'>
           <p className='text-base'>
             {item.name}
-            <span className='ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-3 text-irmin_black md:text-sm lg:text-base'>
-              {item.workflowable_type}
+            <span className='ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+              {item.workflowable_type === 'action' && dict.workflow.action}
+              {item.workflowable_type === 'import' && dict.workflow.import}
+              {item.workflowable_type === 'export' && dict.workflow.export}
             </span>
           </p>
-          {item.description && item.description.length > 0 && (
-            <p className='max-w-72 text-xs text-gray-400'>
-              {item.description.substring(0, 120).trim()}
-            </p>
-          )}
+          <span className='text-sm text-gray-400'>
+            {dict.list.owner}: {item.owner.name}
+          </span>
         </div>,
         <div
-          key={`item-${item.id}-${i}-schedule-and-status`}
-          className='inline-flex flex-row items-center justify-between gap-2 md:flex-row-reverse'
+          key={`status-${i}`}
+          className='inline-flex flex-row items-center gap-2'
         >
-          <div className='hidden flex-col gap-1 md:inline-flex'>
-            <span className='text-xs text-gray-400'>
-              {dict.list.syncInterval}:{' '}
-              {item.cron_syntax ? item.cron_syntax : dict.list.notScheduled}
-            </span>
-            <span className='text-xs text-gray-400'>
-              {dict.list.prevSync}
-              {': '}
-              {item.last_run_at
-                ? new Date(item.last_run_at).toLocaleString(locale)
-                : '-'}
-            </span>
-            <span className='text-xs text-gray-400'>
-              {dict.list.nextSync}
-              {': '}
-              {item.next_run_at
-                ? new Date(item.next_run_at).toLocaleString(locale)
-                : '-'}
-            </span>
+          <StatusBadge runStatus={item.status} statusLabel={item.status} />
+          <div className='flex flex-col'>
+            {item.cron_syntax && item.cron_syntax.length > 0 ? (
+              <>
+                <span className='text-xs text-gray-400'>
+                  {dict.list.nextRun}
+                  {': '}
+                  {item.next_run_at
+                    ? new Date(item.next_run_at).toLocaleString(locale)
+                    : '-'}
+                </span>
+                <span className='text-xs text-gray-400'>
+                  {dict.list.prevRun}
+                  {': '}
+                  {item.last_run_at
+                    ? new Date(item.last_run_at).toLocaleString(locale)
+                    : '-'}
+                </span>
+              </>
+            ) : (
+              <span className='text-xs text-gray-400'>
+                {dict.list.notScheduled}
+              </span>
+            )}
           </div>
-          <StatusBadge
-            key={`item-${item.id}-${i}-status`}
-            runStatus={item.status}
-            statusLabel={item.status}
-          />
         </div>,
       ],
       actions: tableActions,
+      details: (
+        <div className='flex max-w-sm flex-col text-gray-400'>
+          <p className='pb-4 text-sm'>{item.description}</p>
+          <p className='pb-1 text-xs'>
+            {dict.list.lastUpdated}
+            {': '}
+            {new Date(item.updated_at).toLocaleString(locale)}
+          </p>
+          <p className='text-xs'>
+            {dict.list.createdAt}
+            {': '}
+            {new Date(item.created_at).toLocaleString(locale)}
+          </p>
+        </div>
+      ),
     };
   });
 
   return (
-    <div className='pb-28'>
-      <CardOrNormalList
-        loading={loading}
-        headers={[
-          dict.list.name,
-          `${dict.list.runs} & ${dict.list.status}`,
-          dict.list.actions,
-        ]}
-        rows={rows}
-        hideHeaders={false}
-      />
-    </div>
+    <CardOrNormalList
+      loading={loading}
+      headers={[dict.list.name, dict.list.status, dict.list.actions]}
+      rows={rows}
+      hideHeaders={false}
+    />
   );
 };
 

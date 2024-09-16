@@ -93,7 +93,7 @@ export type WorkflowStatus =
  * @typeParam repository - Repository object of where to store the imported data
  * @typeParam path - Where in the repository to store the imported data
  */
-interface Import {
+export interface Import {
   connection: Connection;
   repository: Repository;
   path: '/';
@@ -107,7 +107,7 @@ interface Import {
  * @typeParam path - What in the repository to export
  * @typeParam recursive - If the export should be recursive
  */
-interface Export {
+export interface Export {
   connection: Connection;
   repository: Repository;
   path: '/';
@@ -119,6 +119,6 @@ interface Export {
  *
  * @typeParam path - Path to the script file to be executed as an action workflow
  */
-interface Action {
+export interface Action {
   path: string;
 }

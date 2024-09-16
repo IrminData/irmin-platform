@@ -40,22 +40,11 @@ const RepositoryList = ({
         primary: true,
         href: `/${locale}/portal/${workspace}/repositories/${item.slug}`,
       },
-      {
-        label: dict.list.edit,
-        primary: false,
-        href: `/${locale}/portal/${workspace}/repositories/${item.slug}/settings`,
-      },
     ];
 
     return {
       columns: [
-        <div
-          key={`item-${i}-name-description-owner`}
-          className='inline-flex flex-col gap-1'
-        >
-          <span className='text-xs text-gray-400'>
-            {dict.list.owner}: {item.owner.name}
-          </span>
+        <div key={`name-and-owner-${i}`} className='inline-flex flex-col gap-1'>
           <p className='text-base'>
             {item.name}
             {(item.workflow || item.is_immutable) && (
@@ -66,44 +55,45 @@ const RepositoryList = ({
               </span>
             )}
           </p>
-          {item.description && item.description.length > 0 && (
-            <p className='max-w-72 text-xs text-gray-400'>
-              {item.description.substring(0, 120).trim()}
-            </p>
-          )}
+          <span className='text-sm text-gray-600 dark:text-gray-400'>
+            {dict.list.owner}: {item.owner.name}
+          </span>
         </div>,
-        <StatusBadge
-          key={`item-${i}-status`}
-          accessStatus={'private'}
-          statusLabel={'Private'}
-        />,
+        <div
+          key={`status-${i}`}
+          className='inline-flex flex-row items-center gap-2'
+        >
+          <StatusBadge accessStatus={'private'} statusLabel={'Private'} />
+          <div className='flex flex-col'>
+            <span className='text-xs text-gray-600 dark:text-gray-400'>
+              {dict.list.lastUpdated}
+              {': '}
+              {new Date(item.updated_at).toLocaleString(locale)}
+            </span>
+            <span className='text-xs text-gray-600 dark:text-gray-400'>
+              {dict.list.createdAt}
+              {': '}
+              {new Date(item.created_at).toLocaleString(locale)}
+            </span>
+          </div>
+        </div>,
       ],
-      details: (
-        <ul>
-          {item.collections.map((collection, index) => (
-            <li
-              key={`item-${item.id}-${i}-collection-${index}`}
-              className='border-b border-gray-100 py-2 text-xs dark:border-gray-800'
-            >
-              {/* Only show part of the collection name between first and last dots */}
-              {collection.split('.').slice(1, -1).join('.')}
-            </li>
-          ))}
-        </ul>
-      ),
       actions,
+      details: (
+        <p className='max-w-sm pb-4 text-sm text-gray-600 dark:text-gray-400'>
+          {item.description}
+        </p>
+      ),
     };
   });
 
   return (
-    <div className='pb-28'>
-      <CardOrNormalList
-        loading={loading}
-        headers={[dict.list.name, dict.list.status, dict.list.actions]}
-        rows={rows}
-        hideHeaders={false}
-      />
-    </div>
+    <CardOrNormalList
+      loading={loading}
+      headers={[dict.list.name, dict.list.status, dict.list.actions]}
+      rows={rows}
+      hideHeaders={false}
+    />
   );
 };
 

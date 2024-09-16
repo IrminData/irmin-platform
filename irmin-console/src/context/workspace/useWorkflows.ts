@@ -8,7 +8,6 @@ import {
   ActionWorkflow,
   ExportWorkflow,
   ImportWorkflow,
-  WorkflowRun,
 } from '@/types/api/Workflow';
 import { Workspace } from '@/types/api/Workspace';
 
@@ -17,8 +16,6 @@ import {
   useFetchActions,
   useFetchExports,
   useFetchImports,
-  useFetchWorkflowRuns,
-  useFetchWorkflowRunsByWorkflow,
   usePauseWorkflow,
   useReassignWorkflow,
   useResumeWorkflow,
@@ -35,13 +32,6 @@ const useWorkflows = ({
   currentWorkspace: Workspace | null;
   locale: Locale;
 }) => {
-  // Workflow Runs
-  const [workflowRuns, setWorkflowRuns] = useState<WorkflowRun[]>([]);
-  const [workflowRunsLoading, setWorkflowRunsLoading] = useState(false);
-  const [workflowRunsFetchedFor, setWorkflowRunsFetchedFor] = useState<
-    string | null
-  >(null);
-
   // Import workflows
   const [imports, setImports] = useState<ImportWorkflow[]>([]);
   const [importsLoading, setImportsLoading] = useState(false);
@@ -94,24 +84,6 @@ const useWorkflows = ({
   const allWorkflows = useMemo(
     () => [...actions, ...imports, ...exports].sort((a, b) => a.id - b.id),
     [actions, imports, exports]
-  );
-
-  // Workflow Runs
-  const fetchWorkflowRuns = useFetchWorkflowRuns(
-    currentWorkspace,
-    setWorkflowRuns,
-    workflowRunsLoading,
-    setWorkflowRunsLoading,
-    workflowRunsFetchedFor,
-    setWorkflowRunsFetchedFor,
-    locale
-  );
-  const fetchWorkflowRunsByWorkflow = useFetchWorkflowRunsByWorkflow(
-    workflowRuns,
-    setWorkflowRuns,
-    workflowRunsLoading,
-    setWorkflowRunsLoading,
-    locale
   );
 
   // Hooks for updating, reassigning, deleting, pausing and resuming workflows
@@ -175,10 +147,6 @@ const useWorkflows = ({
     fetchActions,
     setActions,
     allWorkflows,
-    workflowRuns,
-    workflowRunsLoading,
-    fetchWorkflowRuns,
-    fetchWorkflowRunsByWorkflow,
     updateWorkflow,
     reassignWorkflow,
     deleteWorkflow,

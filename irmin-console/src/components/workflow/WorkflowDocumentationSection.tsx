@@ -65,7 +65,7 @@ const WorkflowDocumentationSection = ({ workflow }: { workflow: Workflow }) => {
       <div className='px-2 md:px-4'>
         <div className='flex w-full flex-col gap-2 px-2'>
           <div className='my-4 flex flex-row items-center justify-between gap-4'>
-            <h2 className='font-display text-2xl font-bold text-opacity-80 sm:text-3xl lg:text-5xl'>
+            <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
               {dict.workflow.tabs.documentation}
             </h2>
             <div className='flex flex-row items-center gap-2'>
