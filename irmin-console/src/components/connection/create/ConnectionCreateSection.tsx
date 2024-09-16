@@ -10,13 +10,39 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { Connector } from '@/types/api/Connector';
-import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
+import {
+  DynamicFields,
+  DynamicFieldValues,
+} from '@/types/internal/DynamicField';
 
 import ConfigureConnection from './step/ConfigureConnection';
 import DefineDetails from './step/DefineDetails';
 import DefineSettings from './step/DefineSettings';
 import SelectConnector from './step/SelectConnector';
 
+/**
+ * Connection setup object
+ * @typeParam name - Connection name
+ * @typeParam description - Connection description
+ * @typeParam connector - Which connector to use
+ * @typeParam connectionDetailsFields - Connection details fields
+ * @typeParam connectionSettingsFields - Connection settings fields
+ * @typeParam connectionDetails - Connection details with user input
+ * @typeParam connectionSettings - Connection settings with user input
+ */
+export interface ConnectionSetup {
+  name: string;
+  description: string;
+  connector: null | Connector;
+  connectionDetailsFields: null | DynamicFields;
+  connectionSettingsFields: null | DynamicFields;
+  connectionDetails: null | DynamicFieldValues;
+  connectionSettings: null | DynamicFieldValues;
+}
+
+/**
+ * Empty connection setup data
+ */
 const initialConnectionData: ConnectionSetup = {
   name: '',
   description: '',
@@ -41,14 +67,14 @@ const initialConnectionData: ConnectionSetup = {
  * This component fetches all available connectors and is responsible
  * for maanging the state of the connection creation process.
  */
-const ConnectionSetupWrapper = ({
+const ConnectionCreateSection = ({
   isOpen,
-  setIsOpen,
+  closeModal,
   currentStep,
   setCurrentStep,
 }: {
   isOpen: boolean;
-  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  closeModal: () => void;
   currentStep: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) => {
@@ -93,6 +119,7 @@ const ConnectionSetupWrapper = ({
       {currentStep === 1 && connectors.length > 0 && (
         <SelectConnector
           connectors={connectors}
+          connectionData={connectionData}
           setConnectionData={setConnectionData}
           setCurrentStep={setCurrentStep}
         />
@@ -116,11 +143,11 @@ const ConnectionSetupWrapper = ({
           connectionData={connectionData}
           setConnectionData={setConnectionData}
           setCurrentStep={setCurrentStep}
-          setIsOpen={setIsOpen}
+          closeModal={closeModal}
         />
       )}
     </>
   );
 };
 
-export default ConnectionSetupWrapper;
+export default ConnectionCreateSection;

@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
 import IrminCore from '@/services/core/IrminCore';
 
@@ -12,18 +13,18 @@ import Input from '@/components/common/form/Input';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
+import { ConnectionSetup } from '../ConnectionCreateSection';
 
 export default function ConfigureConnection({
   connectionData,
   setConnectionData,
   setCurrentStep,
-  setIsOpen,
+  closeModal,
 }: {
   connectionData: ConnectionSetup;
   setConnectionData: React.Dispatch<React.SetStateAction<ConnectionSetup>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  closeModal: () => void;
 }) {
   const { locale, dict } = useLocale();
   const { connectionService } = useMemo(() => new IrminCore(locale), [locale]);
@@ -67,7 +68,7 @@ export default function ConfigureConnection({
           'success',
           res.metadata?.message ?? 'Sync has started successfully'
         );
-        setIsOpen(false);
+        closeModal();
       } catch (error) {
         console.error('Failed to start the sync', error);
         irminAlert(
@@ -83,25 +84,52 @@ export default function ConfigureConnection({
       connectionData,
       connectionService,
       irminAlert,
-      setIsOpen,
+      closeModal,
       setProcessing,
     ]
   );
 
   return (
     <div className='p-4 pb-6'>
-      <div className='flex flex-row items-center gap-4 border-b pb-4 dark:border-gray-800'>
-        <Image
-          src={connectionData?.connector?.logo ?? '/irmin-logo.svg'}
-          alt={connectionData.connector?.name ?? 'Connector'}
-          className='mr-2 h-12 w-12 object-contain grayscale'
-          width={48}
-          height={48}
-        />
-        <span className='text-lg text-irmin_blue dark:text-white'>
-          {connectionData.connector?.name ?? 'Connector'}
-        </span>
-      </div>
+      {connectionData.connector && (
+        <div className='flex flex-col justify-center border-b py-4 dark:border-gray-800'>
+          <p className='mb-2 text-sm opacity-80'>
+            {dict.connections.create.selectedConnector}:
+          </p>
+          <div className='flex w-full flex-row items-center gap-4'>
+            <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-gray-100 px-4 py-2 text-left text-sm text-irmin_black shadow dark:bg-gray-800 dark:text-gray-200'>
+              <Image
+                src={connectionData.connector.logo ?? '/irmin-logo.svg'}
+                alt={connectionData.connector.name}
+                className='h-12 w-12 object-contain'
+                width={48}
+                height={48}
+              />
+              <div className='flex flex-col justify-start gap-1'>
+                <span className='w-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+                  {connectionData.connector.category}
+                </span>
+                <p>{connectionData.connector.name}</p>
+              </div>
+            </div>
+            <div className='flex max-w-64 flex-col gap-1'>
+              <p className='text-sm opacity-80'>
+                {connectionData.connector.description}
+              </p>
+              {connectionData.connector.url && (
+                <Link
+                  className='text-sm text-irmin_blue dark:text-irmin_green'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  href={connectionData.connector.url}
+                >
+                  {dict.connections.create.learnMore}
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <div className='my-4 border-b pb-4 dark:border-gray-800'>
         <label className='mb-1 block dark:text-gray-400'>
           {dict.connections.create.connectionDescription}
