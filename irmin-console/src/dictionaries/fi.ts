@@ -423,7 +423,6 @@ const fi = {
     owner: 'Omistaja',
     lastUpdated: 'Päivitetty',
     createdAt: 'Luotu',
-    managedByWorkflow: 'Hallinnoitu tehtävällä',
     immutable: 'Muuttumaton',
     source: 'Lähde',
     destination: 'Kohde',

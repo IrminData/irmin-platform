@@ -14,8 +14,8 @@ import { useWorkspace } from '@/context/workspace';
 
 import { Repository } from '@/types/api/Repository';
 
-import CollectionColumnsTable from './CollectionColumnsTable';
 import CollectionSelector from './CollectionSelector';
+import TableColumns from './TableColumns';
 
 /**
  * Repository viewer section, provides UI for the Repository viewer Page.
@@ -65,7 +65,7 @@ export default function RepositorySection({
     setQuery(`SELECT * FROM $[${selectedCollection}]`);
   }, [selectedCollection]);
 
-  const selectedCollectionSchema = useMemo(() => {
+  const selectedTableSchema = useMemo(() => {
     if (loadingSchema) return;
     return (
       schemaResults?.data.collections.find((schema) => {
@@ -89,12 +89,9 @@ export default function RepositorySection({
             />
           )}
         </div>
-        {selectedCollectionSchema && (
+        {selectedTableSchema && (
           <div className='h-full w-max min-w-64 max-w-96 rounded-lg border bg-white pb-4 shadow-sm md:px-4 md:py-2 dark:border-gray-900 dark:bg-gray-800'>
-            <CollectionColumnsTable
-              schema={selectedCollectionSchema}
-              hideConstraints={true}
-            />
+            <TableColumns schema={selectedTableSchema} hideConstraints={true} />
           </div>
         )}
         <div className='w-full max-w-full overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-900 dark:bg-gray-800'>

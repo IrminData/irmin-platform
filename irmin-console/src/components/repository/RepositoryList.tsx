@@ -47,11 +47,9 @@ const RepositoryList = ({
         <div key={`name-and-owner-${i}`} className='inline-flex flex-col gap-1'>
           <p className='text-base'>
             {item.name}
-            {(item.workflow || item.is_immutable) && (
+            {item.is_immutable && (
               <span className='ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
-                {item.is_immutable
-                  ? dict.list.immutable
-                  : dict.list.managedByWorkflow}
+                {dict.list.immutable}
               </span>
             )}
           </p>

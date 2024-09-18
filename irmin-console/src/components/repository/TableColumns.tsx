@@ -4,18 +4,18 @@ import React from 'react';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { CollectionSchema } from '@/types/internal/Collection';
+import { TableSchema } from '@/types/internal/TableCollection';
 
 /**
  * Component for displaying a table of columns from a database collection schema.
  *
  * @param schema - The schema to display.
  */
-export default function CollectionColumnsTable({
+export default function TableColumns({
   schema,
   hideConstraints = false,
 }: {
-  schema: CollectionSchema;
+  schema: TableSchema;
   hideConstraints?: boolean;
 }) {
   const { dict } = useLocale();

@@ -18,7 +18,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { downloadCSV } from '@/utils/csv';
 
 import { ActionWorkflow } from '@/types/api/Workflow';
-import { CollectionRow } from '@/types/internal/Collection';
+import { TableRow } from '@/types/internal/TableCollection';
 
 /**
  * Query Results component
@@ -35,7 +35,7 @@ const QueryResults = ({
   workflow,
 }: {
   title: string;
-  data: CollectionRow[] | null;
+  data: TableRow[] | null;
   metadata: {
     rowsReturned?: number;
     timeTaken?: number;

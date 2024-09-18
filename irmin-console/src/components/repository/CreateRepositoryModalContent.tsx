@@ -11,6 +11,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
+import { Collection } from '@/types/api/Collection';
 import { Repository } from '@/types/api/Repository';
 
 /**
@@ -35,7 +36,7 @@ export default function CreateRepositoryModalContent({
   } = useWorkspace();
 
   const [newCollection, setNewCollection] = useState<string | null>(null);
-  const [collections, setCollections] = useState<string[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
 
   /**
    * Calculates all available collections for the repository collection settings section.
@@ -49,7 +50,10 @@ export default function CreateRepositoryModalContent({
           repositories
             .map((repo) => repo.collections)
             .flat()
-            .filter((collection) => !collections.includes(collection))
+            .filter(
+              (a) =>
+                !collections.find((b) => b.formatted_name === a.formatted_name)
+            )
         )
       ),
     [repositories, collections]
@@ -152,9 +156,9 @@ export default function CreateRepositoryModalContent({
               if (!newValue) return;
               setNewCollection(newValue.value);
             }}
-            options={allAvailableCollections.map((collection) => ({
-              value: collection,
-              label: collection,
+            options={allAvailableCollections.map((item) => ({
+              value: item.formatted_name,
+              label: item.formatted_name,
             }))}
             className='react-select-container w-full'
             classNamePrefix='react-select'
@@ -166,7 +170,18 @@ export default function CreateRepositoryModalContent({
           colorScheme='gray'
           variant='solid'
           onClick={() => {
-            if (newCollection) setCollections([...collections, newCollection]);
+            if (!newCollection) return;
+            // Check if collection is already added
+            if (collections.find((c) => c.formatted_name === newCollection))
+              return;
+            // Add the new collection to the list of collections
+            setCollections([
+              ...collections,
+              allAvailableCollections.find(
+                (c) => c.formatted_name === newCollection
+              ) as Collection,
+            ]);
+            setNewCollection(null);
           }}
         >
           {dict.repository.settings.add}
@@ -179,13 +194,19 @@ export default function CreateRepositoryModalContent({
             key={`collection-${collection}-${idx}`}
             className='mx-2 flex w-full flex-row items-center justify-between'
           >
-            <div className='text-xs opacity-80'>{collection}</div>
+            <div className='text-xs opacity-80'>
+              {collection.formatted_name}
+            </div>
             <Button
               size='sm'
               colorScheme='gray'
               variant='link'
               onClick={() => {
-                setCollections(collections.filter((t) => t !== collection));
+                setCollections(
+                  collections.filter(
+                    (t) => t.formatted_name !== collection.formatted_name
+                  )
+                );
               }}
             >
               {dict.repository.settings.remove}

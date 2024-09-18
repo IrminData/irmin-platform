@@ -422,7 +422,6 @@ const en = {
     owner: 'Owner',
     lastUpdated: 'Last updated',
     createdAt: 'Created at',
-    managedByWorkflow: 'Managed by workflow',
     immutable: 'Immutable',
     source: 'Source',
     destination: 'Destination',

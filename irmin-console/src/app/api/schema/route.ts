@@ -3,7 +3,7 @@ import { type NextRequest } from 'next/server';
 import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
-import { exampleRepositorySchema } from '@/types/examples/collectionSchema';
+import { exampleRepositorySchema } from '@/types/examples/tableSchema';
 
 import { emptySchemaResponse, SchemaResponse } from './types';
 

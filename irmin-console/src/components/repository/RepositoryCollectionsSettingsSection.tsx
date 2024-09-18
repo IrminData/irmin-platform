@@ -10,6 +10,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
+import { Collection } from '@/types/api/Collection';
 import { Repository } from '@/types/api/Repository';
 
 /**
@@ -30,13 +31,11 @@ export default function RepositoryCollectionsSettingsSection({
   } = useWorkspace();
 
   const [newCollection, setNewCollection] = useState<string | null>(null);
-  const [collections, setCollections] = useState<string[]>(
-    repository?.collections ?? []
-  );
+  const [collections, setCollections] = useState<Collection[]>([]);
 
   useEffect(() => {
-    if (collections.length === 0) setCollections(repository?.collections ?? []);
-  }, [repository, collections.length]);
+    setCollections(repository?.collections ?? []);
+  }, [repository]);
 
   /**
    * Calculates all available collections for the repository collection settings section.
@@ -50,7 +49,10 @@ export default function RepositoryCollectionsSettingsSection({
           repositories
             .map((repo) => repo.collections)
             .flat()
-            .filter((item) => collections.includes(item))
+            .filter(
+              (a) =>
+                !collections.find((b) => b.formatted_name === a.formatted_name)
+            )
         )
       ),
     [repositories, collections]
@@ -121,8 +123,8 @@ export default function RepositoryCollectionsSettingsSection({
                       setNewCollection(newValue.value);
                     }}
                     options={allAvailableCollections.map((item) => ({
-                      value: item,
-                      label: item,
+                      value: item.formatted_name,
+                      label: item.formatted_name,
                     }))}
                     className='react-select-container w-full'
                     classNamePrefix='react-select'
@@ -134,8 +136,22 @@ export default function RepositoryCollectionsSettingsSection({
                   colorScheme='secondary'
                   variant='solid'
                   onClick={() => {
-                    if (newCollection)
-                      setCollections([...collections, newCollection]);
+                    if (!newCollection) return;
+                    // Check if collection is already added
+                    if (
+                      collections.find(
+                        (c) => c.formatted_name === newCollection
+                      )
+                    )
+                      return;
+                    // Add the new collection to the list of collections
+                    setCollections([
+                      ...collections,
+                      allAvailableCollections.find(
+                        (c) => c.formatted_name === newCollection
+                      ) as Collection,
+                    ]);
+                    setNewCollection(null);
                   }}
                 >
                   {dict.repository.settings.add}
@@ -148,13 +164,19 @@ export default function RepositoryCollectionsSettingsSection({
                     key={`collection-${item}-${idx}`}
                     className='flex w-full flex-row items-center justify-between'
                   >
-                    <div className='text-xs opacity-80'>{item}</div>
+                    <div className='text-xs opacity-80'>
+                      {item.formatted_name}
+                    </div>
                     <Button
                       size='sm'
                       colorScheme='gray'
                       variant='link'
                       onClick={() => {
-                        setCollections(collections.filter((t) => t !== item));
+                        setCollections(
+                          collections.filter(
+                            (t) => t.formatted_name !== item.formatted_name
+                          )
+                        );
                       }}
                     >
                       {dict.repository.settings.remove}

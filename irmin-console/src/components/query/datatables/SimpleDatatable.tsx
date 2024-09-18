@@ -5,7 +5,7 @@ import DataTable from 'react-data-table-component';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { CollectionRow } from '@/types/internal/Collection';
+import { TableRow } from '@/types/internal/TableCollection';
 
 /**
  * Simple datatable component for displaying data in a table.
@@ -20,11 +20,11 @@ export default function SimpleDatatable({
   items,
   handleRowsSelected,
 }: {
-  items: CollectionRow[];
+  items: TableRow[];
   handleRowsSelected: (selected: {
     allSelected: boolean;
     selectedCount: number;
-    selectedRows: CollectionRow[];
+    selectedRows: TableRow[];
   }) => void;
 }) {
   const theme = useTheme();
@@ -41,7 +41,7 @@ export default function SimpleDatatable({
     name: key,
     sortable: true,
     reorder: true,
-    selector: (e: CollectionRow) =>
+    selector: (e: TableRow) =>
       typeof e[key] === 'boolean' ? (e[key] ? 'TRUE' : 'FALSE') : e[key],
   }));
 

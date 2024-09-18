@@ -74,10 +74,11 @@ const RepositoryCollectionReferenceList = () => {
                     <li
                       key={`repo-${repo.id}-item-${i}`}
                       className='cursor-pointer pl-4 pr-2 pt-3 opacity-80 transition-colors hover:text-irmin_green hover:opacity-100'
-                      onClick={() => selectCollection(repo, item)}
+                      onClick={() =>
+                        selectCollection(repo, item.formatted_name)
+                      }
                     >
-                      {/** Only show part of the collection name between first and last dots */}
-                      {item.split('.').slice(1, -1).join('.')}
+                      {item.name}
                     </li>
                   ))}
                 </ul>

@@ -17,7 +17,7 @@ import {
 
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
-import { CollectionRow } from '@/types/internal/Collection';
+import { TableRow } from '@/types/internal/TableCollection';
 
 const DataSheet = dynamic(() => import('./DataSheet'), {
   loading: () => <LoadingSkeleton />,
@@ -29,15 +29,11 @@ const DataSheet = dynamic(() => import('./DataSheet'), {
  * Uses the `react-datasheet-grid` library {@link DataSheet}.
  * This component is used to display a more advanced datatable.
  */
-export default function AdvancedDatatable({
-  items,
-}: {
-  items: CollectionRow[];
-}) {
+export default function AdvancedDatatable({ items }: { items: TableRow[] }) {
   const dataSheetRef = useRef<DataSheetGridRef>(null);
 
   const [columns, setColumns] = useState<
-    Partial<Column<CollectionRow>>[] | undefined
+    Partial<Column<TableRow>>[] | undefined
   >(undefined);
 
   // Create columns from the properties

@@ -32,17 +32,22 @@ const CollectionSelector = ({
         <Button
           size='sm'
           colorScheme='gray'
-          variant={selectedCollection === item ? 'outline' : 'link'}
+          variant={
+            selectedCollection === item.formatted_name ? 'outline' : 'link'
+          }
           className='h-auto min-h-6 w-full justify-start rounded px-0 py-0 pl-2 text-xs font-normal shadow-none lg:min-h-6 lg:px-2 dark:text-gray-200'
           key={`${repository.slug}-collection-${idx}`}
-          aria-label={`Select collection ${item}`}
+          aria-label={`Select collection ${item.formatted_name}`}
           onClick={() =>
-            setSelectedCollection(selectedCollection === item ? null : item)
+            setSelectedCollection(
+              selectedCollection === item.formatted_name
+                ? null
+                : item.formatted_name
+            )
           }
           icon={<CiViewTable />}
         >
-          {/* Only show part of the collection name between first and last dots */}
-          {item.split('.').slice(1, -1).join('.')}
+          {item.formatted_name}
         </Button>
       ))}
       {repository.collections.length === 0 && (

@@ -8,6 +8,7 @@
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 
 import { bucket } from './bucket';
+import { collections } from './collections';
 import { connections } from './connections';
 import { connectors } from './connectors';
 import { files } from './files';
@@ -73,6 +74,11 @@ export const exampleConnectors = connectors();
  * Fake repositories {@link repositories}
  */
 export const exampleRepositories = repositories();
+
+/**
+ * Fake collections {@link collections}
+ */
+export const exampleCollections = collections();
 
 /**
  * Fake connections {@link connections}

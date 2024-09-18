@@ -9,9 +9,5 @@ import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
  * it shows this loading UI element
  */
 export default function PortalLoading() {
-  return (
-    <div className='px-4' id='portal-loading-skeleton'>
-      <LoadingSkeleton className='min-h-[80vh]' />;
-    </div>
-  );
+  return <LoadingSkeleton className='min-h-[80vh]' />;
 }

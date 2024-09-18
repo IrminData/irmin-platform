@@ -124,11 +124,9 @@ export default function RepositoryLayoutWrapper({
                 <span className='text-sm text-gray-400'>
                   {dict.repository.repository}
                 </span>
-                {(repository.workflow || repository.is_immutable) && (
+                {repository.is_immutable && (
                   <span className='rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
-                    {repository.is_immutable
-                      ? dict.list.immutable
-                      : dict.list.managedByWorkflow}
+                    {dict.list.immutable}
                   </span>
                 )}
               </div>

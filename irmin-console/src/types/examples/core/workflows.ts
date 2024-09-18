@@ -34,7 +34,7 @@ export const workflows = (): Workflow[] => [
       connection: connections().find(
         (c) => c.slug === 'main-google-analytics'
       )!,
-      repository: repositories(true).find(
+      repository: repositories().find(
         (a) => a.slug === 'main-google-analytics'
       ),
       path: '/',
@@ -57,7 +57,7 @@ export const workflows = (): Workflow[] => [
     workflowable_type: 'export',
     workflowable: {
       connection: connections().find((c) => c.slug === 'google-sheets-kpis')!,
-      repository: repositories(true).find(
+      repository: repositories().find(
         (a) => a.slug === 'kpi-and-performance-metrics'
       ),
       path: '/',
@@ -119,7 +119,7 @@ export const workflows = (): Workflow[] => [
     workflowable_type: 'import',
     workflowable: {
       connection: connections().find((c) => c.slug === 'kpis-spreadsheet')!,
-      repository: repositories(true).find((a) => a.slug === 'kpis-from-excel'),
+      repository: repositories().find((a) => a.slug === 'kpis-from-excel'),
       path: '/',
     },
     created_at: getRandomDateTimeString(500, 'past', 60),
@@ -140,7 +140,7 @@ export const workflows = (): Workflow[] => [
     workflowable_type: 'import',
     workflowable: {
       connection: connections().find((c) => c.slug === 'hr-spreadsheet')!,
-      repository: repositories(true).find(
+      repository: repositories().find(
         (a) => a.slug === 'management-data-from-excel'
       ),
       path: '/',

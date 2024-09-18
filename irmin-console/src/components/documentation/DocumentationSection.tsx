@@ -143,11 +143,9 @@ export default function DocumentationSection({
                       <div className='flex flex-row justify-between gap-2'>
                         <h3 className='text-xl text-irmin_black dark:text-white'>
                           {item.name}
-                          {(item.workflow || item.is_immutable) && (
+                          {item.is_immutable && (
                             <span className='l ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
-                              {item.is_immutable
-                                ? dict.list.immutable
-                                : dict.list.managedByWorkflow}
+                              {dict.list.immutable}
                             </span>
                           )}
                         </h3>
@@ -174,8 +172,7 @@ export default function DocumentationSection({
                             key={`item-${item.id}-${i}-collection-${index}`}
                             className='pr-4 text-gray-800 dark:text-gray-200'
                           >
-                            {/* Only show part of the collection name between first and last dots */}
-                            {collection.split('.').slice(1, -1).join('.')}
+                            {collection.name}
                           </span>
                         ))}
                       </p>

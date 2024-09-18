@@ -1,4 +1,4 @@
-import { Workflow } from '@/types/api/Workflow';
+import { Collection } from '@/types/api/Collection';
 import { WorkspaceUser } from '@/types/api/Workspace';
 
 /**
@@ -13,10 +13,9 @@ import { WorkspaceUser } from '@/types/api/Workspace';
  * @typeParam slug - Slug of the Repository. Used by App router and to parse Queries
  * @typeParam description - Short description of the Repository
  * @typeParam documentation - Markdown documentation of the Repository. Allows for users to add explanations, examples, etc.
- * @typeParam workflow - The workflow (with workflowable) that has created this Repository. If created manually, this will be null.
  * @typeParam is_immutable - If the Repository is_immutable, it cannot be changed or updated
  * @typeParam owner - The user within the workspace that owns the Repository and is responsible for it
- * @typeParam collections - A list of human readable table names that are part of this Repository
+ * @typeParam collections - A list collections which are part of the Repository
  * @typeParam created_at - Timestamp of the creation of the Repository
  * @typeParam updated_at - Timestamp of the last update of the Repository
  */
@@ -26,10 +25,9 @@ export interface Repository {
   slug: string;
   description: string;
   documentation: string;
-  workflow?: Workflow | null;
   is_immutable: boolean;
   owner: WorkspaceUser;
-  collections: string[];
+  collections: Collection[];
   created_at: string;
   updated_at: string;
 }

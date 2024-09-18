@@ -35,7 +35,7 @@ export const WorkspaceProvider = ({
   // Workspace context state objects
   const initialisedRef = useRef(false);
   const workspaceFetchedRef = useRef<string | null>(null);
-  const [workspaceLoading, setWorkspaceLoading] = useState(false);
+  const workspaceLoadingRef = useRef<boolean>(false);
 
   // Other context hooks
   const workspaces = useWorkspaces({ locale });
@@ -67,22 +67,23 @@ export const WorkspaceProvider = ({
    */
   const updateFullWorkspaceData = useCallback(
     async (workspaceSlug: string | null) => {
+      // Prevent multiple simultaneous fetches
+      if (workspaceLoadingRef.current) return;
+      workspaceLoadingRef.current = true;
       // Set the fetched workspace slug
       workspaceFetchedRef.current = workspaceSlug;
-      // Set the loading state
-      setWorkspaceLoading(true);
-      // Empty workspace slug = reset the context data
-      if (!workspaceSlug) {
-        connections.setConnections([]);
-        workflows.setImports([]);
-        workflows.setExports([]);
-        workflows.setActions([]);
-        repositories.setRepositories([]);
-        usersAndRoles.setUsers([]);
-        invites.setInvites([]);
-        return;
-      }
       try {
+        // Empty workspace slug = reset the context data
+        if (!workspaceSlug) {
+          connections.setConnections([]);
+          workflows.setImports([]);
+          workflows.setExports([]);
+          workflows.setActions([]);
+          repositories.setRepositories([]);
+          usersAndRoles.setUsers([]);
+          invites.setInvites([]);
+          return;
+        }
         // Fetch the full data for the current workspace
         const res = await workspaces.fetchFullCurrentWorkspace(workspaceSlug);
         // Set the states for the fetched data
@@ -96,8 +97,7 @@ export const WorkspaceProvider = ({
       } catch (error) {
         console.error('Failed to fetch initial workspace data:', error);
       } finally {
-        // Reset the loading state
-        setWorkspaceLoading(false);
+        workspaceLoadingRef.current = false;
       }
     },
     [workspaces, connections, workflows, repositories, usersAndRoles, invites]
@@ -109,6 +109,8 @@ export const WorkspaceProvider = ({
   useEffect(() => {
     // Check if the current workspace is set
     if (!currentWorkspace) {
+      // If workspace is already empty, no need to reset the workspace data
+      if (!workspaceFetchedRef.current) return;
       // Reset the workspace data
       updateFullWorkspaceData(null);
       return;
@@ -166,7 +168,7 @@ export const WorkspaceProvider = ({
   return (
     <WorkspaceContext.Provider
       value={{
-        workspaceLoading,
+        workspaceLoading: workspaceLoadingRef.current,
         irminRoles: usersAndRoles.irminRoles,
         workspaces,
         users: {

@@ -1,9 +1,9 @@
-import { CollectionRow } from '@/types/internal/Collection';
+import { TableRow } from '@/types/internal/TableCollection';
 
 /**
  * Example data for a collection of rows.
  */
-export const exampleCollectionData: CollectionRow[] = [
+export const exampleTableRows: TableRow[] = [
   {
     name: 'John Doe',
     age: 25,

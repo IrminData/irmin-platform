@@ -1,10 +1,10 @@
-import { CollectionSchema } from '@/types/internal/Collection';
+import { TableSchema } from '@/types/internal/TableCollection';
 
 /**
  * @typeParam collections - The fetched schemas for the collections
  */
 export interface SchemaResult {
-  collections: CollectionSchema[];
+  collections: TableSchema[];
 }
 
 /**

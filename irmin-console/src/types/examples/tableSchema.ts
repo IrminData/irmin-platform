@@ -1,6 +1,6 @@
-import { CollectionSchema } from '@/types/internal/Collection';
+import { TableSchema } from '@/types/internal/TableCollection';
 
-export const usersTableSchema: CollectionSchema = {
+export const usersTableSchema: TableSchema = {
   name: 'users',
   columns: [
     { name: 'id', type: 'int', isPrimaryKey: true, isNullable: false },
@@ -27,7 +27,7 @@ export const usersTableSchema: CollectionSchema = {
   indexes: ['username', 'email'], // Indexes on username and email for faster querying
 };
 
-export const rolesTableSchema: CollectionSchema = {
+export const rolesTableSchema: TableSchema = {
   name: 'roles',
   columns: [
     { name: 'id', type: 'int', isPrimaryKey: true, isNullable: false },
@@ -41,7 +41,7 @@ export const rolesTableSchema: CollectionSchema = {
   ],
 };
 
-export const postsTableSchema: CollectionSchema = {
+export const postsTableSchema: TableSchema = {
   name: 'posts',
   columns: [
     { name: 'id', type: 'int', isPrimaryKey: true, isNullable: false },
@@ -68,7 +68,7 @@ export const postsTableSchema: CollectionSchema = {
   indexes: ['title', 'author_id'], // Indexes on title and author_id for faster querying
 };
 
-export const orderItemsTableSchema: CollectionSchema = {
+export const orderItemsTableSchema: TableSchema = {
   name: 'order_items',
   columns: [
     { name: 'id', type: 'int', isPrimaryKey: true, isNullable: false },
@@ -122,7 +122,7 @@ export const orderItemsTableSchema: CollectionSchema = {
   ],
 };
 
-export const ordersTableSchema: CollectionSchema = {
+export const ordersTableSchema: TableSchema = {
   name: 'orders',
   columns: [
     { name: 'id', type: 'int', isPrimaryKey: true, isNullable: false },
@@ -156,7 +156,7 @@ export const ordersTableSchema: CollectionSchema = {
   ],
 };
 
-export const exampleRepositorySchema: CollectionSchema[] = [
+export const exampleRepositorySchema: TableSchema[] = [
   usersTableSchema,
   rolesTableSchema,
   postsTableSchema,

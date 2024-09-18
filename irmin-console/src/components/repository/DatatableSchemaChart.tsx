@@ -6,9 +6,9 @@ import { Edge, Node, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useTheme } from 'next-themes';
 
-import { CollectionSchema } from '@/types/internal/Collection';
+import { TableSchema } from '@/types/internal/TableCollection';
 
-import CollectionColumnsTable from './CollectionColumnsTable';
+import TableColumns from './TableColumns';
 
 /**
  * Generates nodes and edges for a database schema visualization.
@@ -17,7 +17,7 @@ import CollectionColumnsTable from './CollectionColumnsTable';
  * @returns Object containing `nodes` and `edges` arrays for ReactFlow.
  */
 const generateFlowData = (
-  schema: CollectionSchema[]
+  schema: TableSchema[]
 ): { nodes: Node[]; edges: Edge[] } => {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
@@ -36,7 +36,7 @@ const generateFlowData = (
       data: {
         label: (
           <div>
-            <CollectionColumnsTable schema={schema} />
+            <TableColumns schema={schema} />
           </div>
         ),
       },
@@ -90,7 +90,7 @@ const generateFlowData = (
 export default function DatabaseSchemaChart({
   schema,
 }: {
-  schema: CollectionSchema[];
+  schema: TableSchema[];
 }) {
   const { theme } = useTheme();
 
