@@ -9,8 +9,8 @@ import React, {
 } from 'react';
 
 import {
-  ActionSingleRunData,
   ActionSingleRunRequest,
+  ActionSingleRunResult,
 } from '@/app/api/action-single-run/types';
 import { BranchesResponse } from '@/app/api/branches/types';
 import { CommitsResponse } from '@/app/api/commits/types';
@@ -42,7 +42,7 @@ interface DataContextProps {
   setCurrentBranch: (branch: string | null) => void;
   // Data state
   loadingData: boolean;
-  dataResults: ActionSingleRunData | null;
+  dataResults: ActionSingleRunResult | null;
   fetchActionSingleResults: (request: ActionSingleRunRequest) => Promise<void>;
   // Data schema state
   loadingSchema: boolean;
@@ -100,7 +100,7 @@ export const DataProvider = ({
 
   // Data state
   const [loadingData, setLoadingData] = useState<boolean>(false);
-  const [dataResults, setDataResults] = useState<ActionSingleRunData | null>(
+  const [dataResults, setDataResults] = useState<ActionSingleRunResult | null>(
     null
   );
 

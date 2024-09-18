@@ -3,7 +3,7 @@ import { type NextRequest } from 'next/server';
 import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
-import { exampleRepositorySchema } from '@/types/examples/tableSchema';
+import { exampleRepositorySchema } from '@/types/examples/core';
 
 import { emptySchemaResponse, SchemaResponse } from './types';
 
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
 
     // TODO: Get the schema for the requested tables from the API
     // For now, just set some fake data
-    schemaRes.data.collections = [...exampleRepositorySchema];
+    schemaRes.data = exampleRepositorySchema;
   } catch (error) {
     // Log the error, but don't throw it
     console.error('GET /api/schema', error);

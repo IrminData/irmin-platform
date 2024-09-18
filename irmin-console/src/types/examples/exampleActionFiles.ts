@@ -1,8 +1,8 @@
 const exampleActionFiles = {
   findTop100AdClickingUsers: `
-    SELECT user_id, COUNT(*) as clicks FROM $[app-usage-data.ad_clicks] 
-    GROUP BY user_id ORDER BY clicks DESC LIMIT 100 JOIN $[app-usage-data.users] 
-    ON $[app-usage-data.ad_clicks].user_id = $[app-usage-data.users].id;
+    SELECT user_id, COUNT(*) as clicks FROM $[app-data.ad_clicks] 
+    GROUP BY user_id ORDER BY clicks DESC LIMIT 100 JOIN $[app-data.users] 
+    ON $[app-data.ad_clicks].user_id = $[app-data.users].id;
   `,
   sendReceiptOnOrder: `
     const irmin = require('irmin');
@@ -11,7 +11,7 @@ const exampleActionFiles = {
     async function sendReceipts() {
         try {
             // Fetch orders where receipt_sent is false
-            const result = await irmin.query("SELECT * FROM $[app-usage-data.purchase_events] WHERE receipt_sent = false");
+            const result = await irmin.query("SELECT * FROM $[app-data.purchase_events] WHERE receipt_sent = false");
             const orders = result.rows;
 
             for (const order of orders) {
@@ -57,7 +57,7 @@ const exampleActionFiles = {
     async function fetchAppUsageData() {
         try {
             // Fetch app usage data from API
-            const response = await fetch('https://api.example.com/app-usage-data');
+            const response = await fetch('https://api.example.com/app-data');
             const data = await response.json();
 
             // Return the data to create a Repository based on this action

@@ -8,7 +8,14 @@
 import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
 
 import { bucket } from './bucket';
-import { collections } from './collections';
+import {
+  collections,
+  fileCollectionData,
+  folderCollectionData,
+  repositorySchema,
+  streamCollectionData,
+  tableCollectionData,
+} from './collections';
 import { connections } from './connections';
 import { connectors } from './connectors';
 import { files } from './files';
@@ -79,6 +86,31 @@ export const exampleRepositories = repositories();
  * Fake collections {@link collections}
  */
 export const exampleCollections = collections();
+
+/**
+ * Fake repository schema {@link repositorySchema}
+ */
+export const exampleRepositorySchema = repositorySchema();
+
+/**
+ * Fake table collection data {@link tableCollectionData}
+ */
+export const exampleTableCollectionData = tableCollectionData();
+
+/**
+ * Fake stream collection data {@link streamCollectionData}
+ */
+export const exampleStreamCollectionData = streamCollectionData();
+
+/**
+ * Fake folder collection data {@link folderCollectionData}
+ */
+export const exampleFolderCollectionData = folderCollectionData();
+
+/**
+ * Fake file collection data {@link fileCollectionData}
+ */
+export const exampleFileCollectionData = fileCollectionData();
 
 /**
  * Fake connections {@link connections}

@@ -9,29 +9,28 @@ import { TableSchema } from '@/types/internal/TableCollection';
 /**
  * Component for displaying a table of columns from a database collection schema.
  *
- * @param schema - The schema to display.
+ * @param props - The component props
+ * @param props.name - The name of the table to display
+ * @param props.schema - The table schema to display
  */
 export default function TableColumns({
+  name,
   schema,
-  hideConstraints = false,
 }: {
+  name: string;
   schema: TableSchema;
-  hideConstraints?: boolean;
 }) {
   const { dict } = useLocale();
   return (
     <div className='overflow-scroll p-2 text-xs text-gray-600 dark:text-gray-400'>
       <p className='mb-2 text-xs text-irmin_blue dark:text-white'>
-        {schema.name} - {dict.repository.schema.schema}
+        {name} - {dict.repository.schema.schema}
       </p>
       <table className='border-seperate w-full table-auto gap-2 text-left'>
         <thead>
           <tr className='border-b border-gray-200 dark:border-gray-700'>
             <th className='p-1'>{dict.repository.schema.column}</th>
             <th className='p-1'>{dict.repository.schema.type}</th>
-            {!hideConstraints && (
-              <th className='p-1'>{dict.repository.schema.constraints}</th>
-            )}
           </tr>
         </thead>
         <tbody>
@@ -42,14 +41,6 @@ export default function TableColumns({
             >
               <td className='p-1'>{column.name}</td>
               <td className='p-1'>{column.type}</td>
-              {!hideConstraints && (
-                <td className='p-1'>
-                  {column.isPrimaryKey ? 'PK ' : ''}
-                  {column.isUnique ? 'Unique ' : ''}
-                  {column.isNullable ? 'Nullable ' : ''}
-                  {column.foreignKey ? 'FK ' : ''}
-                </td>
-              )}
             </tr>
           ))}
         </tbody>

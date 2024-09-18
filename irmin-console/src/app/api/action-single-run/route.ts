@@ -1,7 +1,7 @@
 import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
-import { exampleTableRows } from '@/types/examples/tableData';
+import { exampleTableCollectionData } from '@/types/examples/core';
 
 import {
   ActionSingleRunRequest,
@@ -74,9 +74,12 @@ export async function POST(req: Request) {
 
     // TODO: Run the action and get the results
     // For now, just set some fake data
-    actionSingleRunRes.data.result = exampleTableRows;
+
+    // TODO: Now, this always returns table data, but actually this could be any other type of data as well
+    actionSingleRunRes.data.result = exampleTableCollectionData;
     actionSingleRunRes.data.metadata.timeTaken = 0.1;
-    actionSingleRunRes.data.metadata.rowsReturned = exampleTableRows.length;
+    actionSingleRunRes.data.metadata.rowsReturned =
+      exampleTableCollectionData.rows.length;
     actionSingleRunRes.data.metadata.message = 'Example data returned';
   } catch (error) {
     // Log the error, but don't throw it

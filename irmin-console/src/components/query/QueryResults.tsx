@@ -1,29 +1,37 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-import { AiOutlineDownload, AiOutlineSave } from 'react-icons/ai';
+import { AiOutlineSave } from 'react-icons/ai';
 import { BsFileEarmarkRichtext } from 'react-icons/bs';
 import { CiTextAlignLeft } from 'react-icons/ci';
 import { MdPlayArrow } from 'react-icons/md';
 import { TbFileText, TbTable } from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 import MDXEditor from '@/components/common/markdown-editor/MDXEditor';
-import AdvancedDatatable from '@/components/query/datatables/AdvancedDatatable';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { downloadCSV } from '@/utils/csv';
-
+import { CollectionData } from '@/types/api/Collection';
 import { ActionWorkflow } from '@/types/api/Workflow';
-import { TableRow } from '@/types/internal/TableCollection';
+
+import TableData from './TableData';
 
 /**
  * Query Results component
  *
- * Used by different pages to display  results of files, actions, queries, etc.
+ * Used by different pages to display results of actions, queries, etc.
+ * Will determine the which component to use based on the data type.
+ *
+ * @param props - The props to pass to the component
+ * @param props.title - Title of the query results
+ * @param props.data - Data to display
+ * @param props.metadata - Additional metadata about the data
+ * @param props.loading - Whether to show a loading skeleton
+ * @param props.onSave - Function to save the data
+ * @param props.onRun - Function to run the data
+ * @param props.workflow - Workflow object
  */
 const QueryResults = ({
   title,
@@ -35,7 +43,7 @@ const QueryResults = ({
   workflow,
 }: {
   title: string;
-  data: TableRow[] | null;
+  data: CollectionData | null;
   metadata: {
     rowsReturned?: number;
     timeTaken?: number;
@@ -56,40 +64,10 @@ const QueryResults = ({
     'mdx'
   );
 
-  const [filterText, setFilterText] = useState('');
-  const [filteredItems, setFilteredItems] = useState(data);
-
   const [processingSave, setProcessingSave] = useState(false);
   const [processingRun, setProcessingRun] = useState(false);
 
-  // Update the filtered items when the filter text changes
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (filterText && filterText.length > 0) {
-        const newData =
-          data?.filter((item) => {
-            return Object.keys(item).some((key) => {
-              const value =
-                key in item ? item[key as keyof typeof item] : undefined;
-              return (
-                value &&
-                value
-                  .toString()
-                  .toLowerCase()
-                  .includes(filterText.toLowerCase())
-              );
-            });
-          }) ?? [];
-        setFilteredItems(newData);
-      } else {
-        setFilteredItems(data);
-      }
-    }, 300);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [filterText, data]);
+  const showLoadingOnData = loading || processingRun;
 
   return (
     <div
@@ -193,53 +171,21 @@ const QueryResults = ({
           )}
         </div>
       </div>
-      {activeTab === 'data' && (
-        <>
-          {/* Title, metadata and actions */}
-          <div className='flex items-center justify-start px-4 py-1 text-xs'>
-            <p className='ml-0 hidden text-gray-400 lg:inline'>{title}</p>
-            <p className='inline text-[8px] text-irmin_blue md:ml-auto md:pl-2 lg:text-xs dark:text-irmin_green'>
-              {metadata && metadata.rowsReturned && metadata.timeTaken
-                ? `
-                ${metadata.rowsReturned} ${dict.query.rowsReturnedIn} ${metadata.timeTaken}s
-              `
-                : ``}
-            </p>
-            <div className='flex-grow'></div>
-            <div className='ml-auto flex flex-row items-center gap-2'>
-              {data && (
-                <Button
-                  icon={<AiOutlineDownload />}
-                  colorScheme='secondary'
-                  variant='link'
-                  size='sm'
-                  className='hidden lg:inline-flex dark:text-white'
-                  onClick={() => downloadCSV(data ?? [], title)}
-                >
-                  {dict.query.exportTable}
-                </Button>
-              )}
-              <input
-                type='text'
-                className='h-8 w-48 rounded-md border border-solid border-gray-400 px-2 py-1 text-xs focus:outline-none dark:border-gray-800'
-                placeholder={dict.query.search}
-                value={filterText}
-                onChange={(e) => setFilterText(e.target.value)}
-              />
-            </div>
+      {activeTab === 'data' && data?.type === 'table' && (
+        <TableData
+          title={title}
+          data={data}
+          metadata={metadata}
+          loading={showLoadingOnData}
+        />
+      )}
+      {activeTab === 'data' && data?.type !== 'table' && (
+        <div className='flex h-0 flex-1 flex-col overflow-scroll px-2 pt-2'>
+          {/* TODO: Implement visualisation of other collection data */}
+          <div className='w-full px-4 py-12 text-center text-gray-400'>
+            {dict.query.noResults}
           </div>
-          {/* Table */}
-          <div className='flex h-0 flex-1 flex-col overflow-hidden'>
-            {processingRun || loading ? <LoadingSkeleton /> : <></>}
-            {!data || !filteredItems || filteredItems.length === 0 ? (
-              <div className='w-full px-4 py-12 text-center text-gray-400'>
-                {dict.query.noResults}
-              </div>
-            ) : (
-              <AdvancedDatatable items={!loading ? filteredItems : []} />
-            )}
-          </div>
-        </>
+        </div>
       )}
       {activeTab === 'documentation' && (
         <div className='flex h-0 flex-1 flex-col overflow-scroll px-2 pt-2'>

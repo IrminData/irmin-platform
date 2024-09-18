@@ -69,7 +69,7 @@ export const workflows = (): Workflow[] => [
   {
     id: 2,
     name: 'App usage data',
-    slug: 'app-usage-data',
+    slug: 'app-data',
     owner: workspaceUsers()[2],
     description:
       'This an example of an Action Workflow for fetching app usage data and storing results in a Repository.',
@@ -80,7 +80,7 @@ export const workflows = (): Workflow[] => [
     status: 'running',
     workflowable_type: 'action',
     workflowable: {
-      path: '/fetch-app-usage-data.js',
+      path: '/fetch-app-data.js',
     },
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),

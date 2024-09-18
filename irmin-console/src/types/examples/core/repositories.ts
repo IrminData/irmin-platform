@@ -54,15 +54,15 @@ export const repositories = (): Repository[] => [
   },
   {
     id: 2,
-    name: 'App usage data',
-    slug: 'app-usage-data',
+    name: 'App data',
+    slug: 'app-data',
     description:
       'This is an example of a Repository that has been created by an Action Workflow.',
     documentation:
       '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     collections: [
       ...collections().filter(
-        (item) => item.original_repository === 'app-usage-data'
+        (item) => item.original_repository === 'app-data'
       ),
     ],
     owner: workspaceUsers()[1],
@@ -153,7 +153,7 @@ export const repositories = (): Repository[] => [
           item.formatted_name ===
             'top-100-ad-clicking-users.top-100-ad-clicking-users' ||
           item.formatted_name === 'google-sheets-kpis.sales' ||
-          item.formatted_name === 'app-usage-data.purchase_events'
+          item.formatted_name === 'app-data.purchase_events'
       ),
     ],
     is_immutable: false,

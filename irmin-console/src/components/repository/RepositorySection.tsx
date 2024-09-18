@@ -65,12 +65,12 @@ export default function RepositorySection({
     setQuery(`SELECT * FROM $[${selectedCollection}]`);
   }, [selectedCollection]);
 
-  const selectedTableSchema = useMemo(() => {
+  const selectedCollectionSchema = useMemo(() => {
     if (loadingSchema) return;
     return (
-      schemaResults?.data.collections.find((schema) => {
+      schemaResults?.data.find((schema) => {
         return schema.name === selectedCollection;
-      }) ?? schemaResults?.data.collections[0]
+      }) ?? schemaResults?.data[0]
     );
   }, [schemaResults, selectedCollection, loadingSchema]);
 
@@ -89,11 +89,15 @@ export default function RepositorySection({
             />
           )}
         </div>
-        {selectedTableSchema && (
-          <div className='h-full w-max min-w-64 max-w-96 rounded-lg border bg-white pb-4 shadow-sm md:px-4 md:py-2 dark:border-gray-900 dark:bg-gray-800'>
-            <TableColumns schema={selectedTableSchema} hideConstraints={true} />
-          </div>
-        )}
+        {selectedCollectionSchema &&
+          selectedCollectionSchema.schema.type === 'table' && (
+            <div className='h-full w-max min-w-64 max-w-96 rounded-lg border bg-white pb-4 shadow-sm md:px-4 md:py-2 dark:border-gray-900 dark:bg-gray-800'>
+              <TableColumns
+                schema={selectedCollectionSchema.schema}
+                name={selectedCollectionSchema.name}
+              />
+            </div>
+          )}
         <div className='w-full max-w-full overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-900 dark:bg-gray-800'>
           <div className='flex w-full flex-row items-center justify-between px-4'>
             <p className='mb-0 text-lg'>{dict.repository.sqlQuery}</p>
@@ -123,14 +127,13 @@ export default function RepositorySection({
         <QueryResults
           title={
             currentWorkspace && repository
-              ? `${currentWorkspace.slug} / ${repository.slug} ${selectedCollection ? `/ ${selectedCollection}` : ''}`
+              ? `${currentWorkspace.slug} / ${repository.slug} ${
+                  selectedCollection ? `/ ${selectedCollection}` : ''
+                }`
               : ''
           }
-          data={dataResults?.result ?? []}
-          metadata={{
-            rowsReturned: dataResults?.metadata?.rowsReturned,
-            timeTaken: dataResults?.metadata?.timeTaken,
-          }}
+          data={dataResults?.result ?? null}
+          metadata={dataResults?.metadata ?? {}}
           loading={loadingData}
         />
       </div>

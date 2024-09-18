@@ -42,8 +42,8 @@ export const files: () => BucketFile[] = () => [
   },
   {
     bucket: 'example-bucket',
-    name: 'fetch-app-usage-data.js',
-    path: '/fetch-app-usage-data.js',
+    name: 'fetch-app-data.js',
+    path: '/fetch-app-data.js',
     type: 'js',
     contents: exampleActionFiles.fetchAppUsageData.trim(),
     is_draft: false,

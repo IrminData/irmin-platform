@@ -1,5 +1,5 @@
 import { IrminFileType } from '@/types/api/Bucket';
-import { TableRow } from '@/types/internal/TableCollection';
+import { CollectionData } from '@/types/api/Collection';
 
 /**
  * The type of body request to the `POST /api/action-single-run` route
@@ -20,8 +20,8 @@ export type ActionSingleRunRequest = {
  * @typeParam metadata.timeTaken - The time taken to fetch the data in seconds
  * @typeParam metadata.rowsReturned - The number of rows returned
  */
-export interface ActionSingleRunData {
-  result: TableRow[];
+export interface ActionSingleRunResult {
+  result: CollectionData | null;
   metadata: {
     message: string;
     timeTaken: number;
@@ -31,13 +31,13 @@ export interface ActionSingleRunData {
 
 /**
  * Response object type for the `POST /api/action-single-run` route
- * @typeParam data - The fetched data {@link ActionSingleRunData}
+ * @typeParam data - The fetched data {@link ActionSingleRunResult}
  * @typeParam metadata - Additional data about the fetch
  * @typeParam metadata.errors - Errors that occurred during the fetch
  * @typeParam metadata.workspace - Slug of the workspace data was fetched for
  */
 export interface ActionSingleRunResponse {
-  data: ActionSingleRunData;
+  data: ActionSingleRunResult;
   metadata: {
     errors: string[];
     workspace: string;
@@ -49,7 +49,7 @@ export interface ActionSingleRunResponse {
  */
 export const emptyActionSingleRunResponse: ActionSingleRunResponse = {
   data: {
-    result: [],
+    result: null,
     metadata: {
       message: 'Data fetched successfully',
       timeTaken: 0,

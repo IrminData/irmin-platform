@@ -24,7 +24,7 @@ export default function EditorSection() {
       {openFileTabs.length > 0 && (
         <QueryResults
           title={dict.query.results}
-          data={dataResults?.result ?? []}
+          data={dataResults?.result ?? null}
           metadata={{
             rowsReturned: dataResults?.metadata?.rowsReturned,
             timeTaken: dataResults?.metadata?.timeTaken,
