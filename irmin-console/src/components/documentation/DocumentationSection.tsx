@@ -161,6 +161,7 @@ export default function DocumentationSection({
                         {dict.list.owner}:{' '}
                         <span className='text-gray-800 dark:text-gray-200'>
                           {item.owner.name}
+                          {item.owner.company ? ` (${item.owner.company})` : ''}
                         </span>
                       </p>
                       <p className='flex flex-wrap text-sm text-gray-600 dark:text-gray-400'>
@@ -205,6 +206,7 @@ export default function DocumentationSection({
                         {dict.list.owner}:{' '}
                         <span className='text-gray-800 dark:text-gray-200'>
                           {item.owner.name}
+                          {item.owner.company ? ` (${item.owner.company})` : ''}
                         </span>
                       </p>
                       <p className='text-sm text-gray-600 dark:text-gray-400'>
@@ -248,6 +250,7 @@ export default function DocumentationSection({
                         {dict.list.owner}:{' '}
                         <span className='text-gray-800 dark:text-gray-200'>
                           {item.owner.name}
+                          {item.owner.company ? ` (${item.owner.company})` : ''}
                         </span>
                       </p>
                       <p className='text-sm text-gray-600 dark:text-gray-400'>
@@ -293,6 +296,7 @@ export default function DocumentationSection({
                         {dict.list.owner}:{' '}
                         <span className='text-gray-800 dark:text-gray-200'>
                           {item.owner.name}
+                          {item.owner.company ? ` (${item.owner.company})` : ''}
                         </span>
                       </p>
                       <p className='text-sm text-gray-600 dark:text-gray-400'>
@@ -338,6 +342,7 @@ export default function DocumentationSection({
                         {dict.list.owner}:{' '}
                         <span className='text-gray-800 dark:text-gray-200'>
                           {item.owner.name}
+                          {item.owner.company ? ` (${item.owner.company})` : ''}
                         </span>
                       </p>
                       <p className='text-sm text-gray-600 dark:text-gray-400'>

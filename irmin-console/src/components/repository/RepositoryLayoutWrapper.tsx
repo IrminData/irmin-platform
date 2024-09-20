@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { IoChevronBack } from 'react-icons/io5';
 import {
   TbDatabase,
+  TbDownload,
   TbFileText,
   TbGitBranch,
   TbHistory,
@@ -50,6 +51,11 @@ export default function RepositoryLayoutWrapper({
   );
 
   const { currentBranch, setCurrentBranch, branchesResults } = useData();
+
+  // Handle download repository as ZIP
+  const handleDownload = () => {
+    // TODO: Download the repository from the server
+  };
 
   const workspaceSlug = useMemo(
     () => currentWorkspace?.slug ?? '',
@@ -117,8 +123,8 @@ export default function RepositoryLayoutWrapper({
   return (
     <>
       <div className='container relative mx-auto max-w-6xl'>
-        <div className='mx-auto w-full px-2 md:px-4'>
-          <div className='flex flex-col py-4'>
+        <div className='mx-auto my-4 flex w-full flex-col px-2 md:px-4 lg:flex-row lg:items-center'>
+          <div className='flex flex-1 flex-col gap-2 py-4'>
             <div className='flex flex-row items-center divide-x divide-gray-300 dark:divide-gray-700'>
               <div className='flex flex-row items-center gap-2 pr-2'>
                 <span className='text-sm text-gray-400'>
@@ -132,39 +138,50 @@ export default function RepositoryLayoutWrapper({
               </div>
               <span className='px-2 text-sm text-gray-400'>
                 {dict.list.owner}: {repository.owner.name}
+                {repository.owner.company
+                  ? ` (${repository.owner.company})`
+                  : ''}
               </span>
             </div>
             <div className='flex flex-wrap items-center gap-2'>
               <h1 className='text-lg font-normal text-irmin_black md:text-2xl dark:text-white'>
-                {currentWorkspace.slug}
-                {' / '}
-                {repository.slug}
+                {repository.name}
               </h1>
               <StatusBadge accessStatus={'private'} statusLabel={'Private'} />
-              <div className='ml-auto'>
-                <BranchSelector
-                  branches={
-                    branchesResults?.data.branches.map((branch) => ({
-                      label: branch.name,
-                      value: branch.name,
-                    })) ?? []
-                  }
-                  currentBranch={
-                    currentBranch ??
-                    branchesResults?.data.branches.filter(
-                      (branch) => branch.default
-                    )[0].name ??
-                    'main'
-                  }
-                  onChangeBranch={(branch) => {
-                    setCurrentBranch(branch.value);
-                  }}
-                />
-              </div>
             </div>
             <p className='max-w-lg text-xs text-gray-400 lg:text-sm'>
               {repository.description}
             </p>
+          </div>
+          <div className='flex min-w-60 flex-col gap-2'>
+            <BranchSelector
+              branches={
+                branchesResults?.data.branches.map((branch) => ({
+                  label: branch.name,
+                  value: branch.name,
+                })) ?? []
+              }
+              currentBranch={
+                currentBranch ??
+                branchesResults?.data.branches.filter(
+                  (branch) => branch.default
+                )[0].name ??
+                'main'
+              }
+              onChangeBranch={(branch) => {
+                setCurrentBranch(branch.value);
+              }}
+            />
+            <Button
+              onClick={handleDownload}
+              className='w-full'
+              colorScheme='light'
+              variant='solid'
+              size='sm'
+              icon={<TbDownload />}
+            >
+              {dict.repository.download}
+            </Button>
           </div>
         </div>
         <div className='scrollbar-hide mb-6 flex w-full max-w-3xl justify-start gap-2 overflow-y-scroll px-4 md:gap-4'>

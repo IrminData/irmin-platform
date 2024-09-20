@@ -36,6 +36,13 @@ const RepositoryList = ({
   const rows: GridRow[] = items.map((item, i) => {
     const actions = [
       {
+        label: dict.repository.download,
+        primary: false,
+        onClick: () => {
+          // TODO: Download the repository from the server
+        },
+      },
+      {
         label: dict.list.view,
         primary: true,
         href: `/${locale}/portal/${workspace}/repositories/${item.slug}`,
@@ -55,6 +62,7 @@ const RepositoryList = ({
           </p>
           <span className='text-sm text-gray-600 dark:text-gray-400'>
             {dict.list.owner}: {item.owner.name}
+            {item.owner.company ? ` (${item.owner.company})` : ''}
           </span>
         </div>,
         <div

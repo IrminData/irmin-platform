@@ -7,9 +7,8 @@ import '@xyflow/react/dist/style.css';
 import { useTheme } from 'next-themes';
 
 import { RepositorySchema } from '@/types/api/Collection';
-import { TableSchema } from '@/types/internal/TableCollection';
 
-import TableColumns from './TableColumns';
+import CollectionSchema from './CollectionSchema';
 
 /**
  * Generates nodes and edges for a repository schema visualization.
@@ -30,29 +29,24 @@ const generateFlowData = (
   repository.forEach((collection, index) => {
     const nodeId = `${collection.type}-${collection.formatted_name}`;
 
-    if (collection.type === 'table') {
-      // Create a node for the table
-      nodes.push({
-        id: nodeId,
-        position: { x: xPos, y: yPos },
-        data: {
-          label: (
-            <div>
-              <TableColumns
-                name={collection.name}
-                schema={collection.schema as TableSchema}
-              />
-            </div>
-          ),
-        },
-      });
-    }
+    // Create a node for the schema
+    nodes.push({
+      id: nodeId,
+      position: { x: xPos, y: yPos },
+      data: {
+        label: (
+          <div>
+            <CollectionSchema collection={collection} name={collection.name} />
+          </div>
+        ),
+      },
+    });
 
     // Update position for next table
-    xPos += 300; // Move next table to the right
-    if ((index + 1) % 3 === 0) {
+    xPos += 150; // Move next table to the right
+    if ((index + 1) % 4 === 0) {
       xPos = 0;
-      yPos += 300; // Move next row down
+      yPos += 150; // Move next row down
     }
   });
 

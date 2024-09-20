@@ -58,6 +58,7 @@ const ImportWorkflowList = ({
           <p className='text-base'>{item.name}</p>
           <span className='text-sm text-gray-600 dark:text-gray-400'>
             {dict.list.owner}: {item.owner.name}
+            {item.owner.company ? ` (${item.owner.company})` : ''}
           </span>
         </div>,
         <div

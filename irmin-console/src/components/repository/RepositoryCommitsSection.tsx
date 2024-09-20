@@ -3,7 +3,6 @@
 import { useMemo } from 'react';
 
 import NormalList from '@/components/common/list/NormalList';
-import PortalTitle from '@/components/portal/PortalTitle';
 
 import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -52,10 +51,14 @@ export default function RepositoryCommitsSection() {
   }, [commitsResults, locale]);
 
   return (
-    <div className='container relative mx-auto max-w-6xl'>
-      <PortalTitle title={dict.repository.tabs.commits} />
+    <div className='container relative mx-auto max-w-6xl px-2 md:px-4'>
+      <div className='mb-4 flex flex-row items-center justify-between gap-4'>
+        <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
+          {dict.repository.tabs.commits}
+        </h2>
+      </div>
       <NormalList
-        headers={[dict.list.name, dict.repository.commitHash, dict.list.owner]}
+        headers={[dict.list.name, dict.repository.commitHash, dict.list.author]}
         hideHeaders={false}
         noActions={true}
         loading={loadingCommits}

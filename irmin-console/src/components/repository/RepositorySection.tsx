@@ -10,12 +10,11 @@ import QueryResults from '@/components/query/QueryResults';
 
 import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
 
 import { Repository } from '@/types/api/Repository';
 
+import CollectionSchema from './CollectionSchema';
 import CollectionSelector from './CollectionSelector';
-import TableColumns from './TableColumns';
 
 /**
  * Repository viewer section, provides UI for the Repository viewer Page.
@@ -26,9 +25,7 @@ export default function RepositorySection({
   repository?: Repository;
 }) {
   const { dict } = useLocale();
-  const {
-    workspaces: { currentWorkspace },
-  } = useWorkspace();
+
   const {
     fetchActionSingleResults,
     loadingData,
@@ -42,6 +39,7 @@ export default function RepositorySection({
     null
   );
   const [query, setQuery] = useState<string>('');
+  const [queryChanged, setQueryChanged] = useState(false);
 
   const runCurrentQuery = useCallback(() => {
     if (!query || query.length < 3) return;
@@ -55,6 +53,7 @@ export default function RepositorySection({
   const updateQuery = useCallback(
     (value: string) => {
       if (loadingData) return;
+      setQueryChanged(true);
       setQuery(value);
     },
     [loadingData]
@@ -62,25 +61,24 @@ export default function RepositorySection({
 
   useEffect(() => {
     if (!selectedCollection) return;
+    if (queryChanged) return;
     setQuery(`SELECT * FROM $[${selectedCollection}]`);
-  }, [selectedCollection]);
+  }, [selectedCollection, queryChanged]);
 
   const selectedCollectionSchema = useMemo(() => {
     if (loadingSchema) return;
-    return (
-      schemaResults?.data.find((schema) => {
-        return schema.name === selectedCollection;
-      }) ?? schemaResults?.data[0]
-    );
+    if (!schemaResults) return;
+    if (!selectedCollection) return;
+    console.log(schemaResults);
+    return schemaResults?.data.find((schema) => {
+      return schema.formatted_name === selectedCollection;
+    });
   }, [schemaResults, selectedCollection, loadingSchema]);
 
   return (
-    <div className='container relative mx-auto max-w-6xl'>
-      <div className='mb-4 flex w-full flex-col items-start gap-1 px-2 md:flex-row md:gap-2 md:px-4'>
-        <div className='h-full w-max min-w-64 max-w-96 rounded-lg border bg-white pb-4 shadow-sm md:px-4 md:py-2 dark:border-gray-900 dark:bg-gray-800'>
-          <p className='mb-0 p-2 text-sm text-irmin_blue md:mb-2 dark:text-irmin_light_green'>
-            {dict.repository.collections}
-          </p>
+    <>
+      <div className='container relative mx-auto mb-4 flex max-w-6xl flex-col gap-4 px-2 md:px-4'>
+        <div className='flex w-full flex-col items-start gap-1 md:flex-row md:gap-2'>
           {repository && (
             <CollectionSelector
               repository={repository}
@@ -88,19 +86,18 @@ export default function RepositorySection({
               setSelectedCollection={setSelectedCollection}
             />
           )}
-        </div>
-        {selectedCollectionSchema &&
-          selectedCollectionSchema.schema.type === 'table' && (
-            <div className='h-full w-max min-w-64 max-w-96 rounded-lg border bg-white pb-4 shadow-sm md:px-4 md:py-2 dark:border-gray-900 dark:bg-gray-800'>
-              <TableColumns
-                schema={selectedCollectionSchema.schema}
-                name={selectedCollectionSchema.name}
-              />
-            </div>
+          {selectedCollectionSchema && (
+            <CollectionSchema
+              collection={selectedCollectionSchema}
+              name={selectedCollectionSchema.name}
+            />
           )}
-        <div className='w-full max-w-full overflow-hidden rounded-lg border bg-white shadow-sm dark:border-gray-900 dark:bg-gray-800'>
-          <div className='flex w-full flex-row items-center justify-between px-4'>
-            <p className='mb-0 text-lg'>{dict.repository.sqlQuery}</p>
+        </div>
+        <div className='w-full max-w-full overflow-hidden rounded-md border border-gray-100 bg-white dark:border-gray-800 dark:bg-irmin_black'>
+          <div className='flex w-full flex-row items-center justify-between bg-gray-100 pl-4 dark:bg-gray-800'>
+            <div className='py-2 text-sm font-semibold'>
+              {dict.repository.sqlQuery}
+            </div>
             <Button
               colorScheme='primary'
               variant='solid'
@@ -125,18 +122,12 @@ export default function RepositorySection({
       </div>
       <div className='flex h-[calc(100vh-400px)] min-h-96'>
         <QueryResults
-          title={
-            currentWorkspace && repository
-              ? `${currentWorkspace.slug} / ${repository.slug} ${
-                  selectedCollection ? `/ ${selectedCollection}` : ''
-                }`
-              : ''
-          }
+          title={dict.query.queryResults}
           data={dataResults?.result ?? null}
           metadata={dataResults?.metadata ?? {}}
           loading={loadingData}
         />
       </div>
-    </div>
+    </>
   );
 }

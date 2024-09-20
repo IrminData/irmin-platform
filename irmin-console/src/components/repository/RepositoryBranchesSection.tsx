@@ -7,7 +7,6 @@ import { IoAdd } from 'react-icons/io5';
 import Button from '@/components/common/button/Button';
 import NormalList from '@/components/common/list/NormalList';
 import StatusBadge from '@/components/common/status/StatusBadge';
-import PortalTitle from '@/components/portal/PortalTitle';
 
 import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -85,9 +84,11 @@ export default function RepositoryBranchesSection() {
   ]);
 
   return (
-    <div className='container relative mx-auto max-w-6xl'>
-      <div className='flex flex-row items-center justify-between gap-4 px-2 md:px-4'>
-        <PortalTitle title={dict.repository.tabs.branches} />
+    <div className='container relative mx-auto max-w-6xl px-2 md:px-4'>
+      <div className='mb-4 flex flex-row items-center justify-between gap-4'>
+        <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
+          {dict.repository.tabs.branches}
+        </h2>
         <Button
           variant='solid'
           colorScheme='primary'

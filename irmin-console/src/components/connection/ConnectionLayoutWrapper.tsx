@@ -83,7 +83,7 @@ export default function ConnectionLayoutWrapper({
   return (
     <>
       <div className='container relative mx-auto max-w-6xl'>
-        <div className='mx-auto w-full px-2 md:px-4'>
+        <div className='mx-auto my-4 flex w-full flex-col px-2 md:px-4 lg:flex-row lg:items-center'>
           <div className='flex flex-col gap-2 py-4'>
             <div className='flex flex-row items-center divide-x divide-gray-300 dark:divide-gray-700'>
               <div className='flex flex-row items-center gap-2 pr-2'>
@@ -96,6 +96,9 @@ export default function ConnectionLayoutWrapper({
               </div>
               <span className='px-2 text-sm text-gray-400'>
                 {dict.list.owner}: {connection.owner.name}
+                {connection.owner.company
+                  ? ` (${connection.owner.company})`
+                  : ''}
               </span>
             </div>
             <div className='flex flex-wrap items-center gap-2'>

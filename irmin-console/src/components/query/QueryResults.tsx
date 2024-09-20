@@ -197,7 +197,7 @@ const QueryResults = ({
               onChange={(e) => {
                 setCurrentDocumentation(e.target.value);
               }}
-              rows={20}
+              rows={40}
             />
           )}
           {documentationTab === 'mdx' && (

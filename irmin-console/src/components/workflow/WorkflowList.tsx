@@ -64,6 +64,7 @@ const WorkflowList = ({
           </p>
           <span className='text-sm text-gray-400'>
             {dict.list.owner}: {item.owner.name}
+            {item.owner.company ? ` (${item.owner.company})` : ''}
           </span>
         </div>,
         <div
