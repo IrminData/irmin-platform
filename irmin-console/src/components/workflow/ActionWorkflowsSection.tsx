@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
+import { TbSearch } from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
 import SideModal from '@/components/common/popup/SideModal';
@@ -43,6 +44,29 @@ export default function ActionWorkflowsSection({
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
   const [currentStep, setCurrentStep] = useState(1);
+
+  const [filteredItems, setFilteredItems] = useState(actions);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter items based on search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (actions) {
+        setFilteredItems(
+          actions.filter((item) =>
+            item.name
+              .trim()
+              .replace(/\s+/g, '')
+              .toLowerCase()
+              .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
+          )
+        );
+      }
+    }, 300);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery, actions]);
 
   const closeModal = () => {
     if (onModalClose) {
@@ -96,7 +120,17 @@ export default function ActionWorkflowsSection({
         />
       </SideModal>
       <div className='py-4'>
-        <ActionWorkflowList loading={loading} actionWorkflows={actions} />
+        <div className='mb-4 flex w-full items-center gap-2 rounded-md bg-gray-100 p-2 text-gray-900 focus:outline-none dark:bg-gray-800 dark:text-gray-200'>
+          <TbSearch />
+          <input
+            type='text'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className='w-full bg-transparent p-2'
+            placeholder={dict.list.searchPlaceholder}
+          />
+        </div>
+        <ActionWorkflowList loading={loading} actionWorkflows={filteredItems} />
       </div>
     </div>
   );

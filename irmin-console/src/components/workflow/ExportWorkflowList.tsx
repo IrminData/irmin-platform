@@ -27,14 +27,6 @@ const ExportWorkflowList = ({
   const { workspace } = useParams();
   const { dict, locale } = useLocale();
 
-  if (!loading && (!items || items.length === 0)) {
-    return (
-      <div className='px-4 py-12 text-center text-xl text-irmin_black'>
-        {dict.list.noExportWorkflowsFound}
-      </div>
-    );
-  }
-
   const rows: GridRow[] = items.map((item, i) => {
     const actions = [
       {

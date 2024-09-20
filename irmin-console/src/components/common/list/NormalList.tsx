@@ -7,6 +7,8 @@ import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5';
 import Button from '@/components/common/button/Button';
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { ListProps } from '@/types/internal/ListProps';
 
 /**
@@ -27,6 +29,7 @@ const NormalList: React.FC<ListProps> = ({
   loading = false,
   noActions = false,
 }) => {
+  const { dict } = useLocale();
   const [openDetails, setOpenDetails] = useState<number[]>([]);
   const totalColumns = headers.length;
   return (
@@ -39,9 +42,9 @@ const NormalList: React.FC<ListProps> = ({
             {headers.map((header, index) => (
               <div
                 key={`list-header-${index}`}
-                className={`col-span-1 border-b border-gray-200 bg-gray-100 p-2 py-4 dark:border-gray-800 dark:bg-irmin_black-800 ${!noActions && index === headers.length - 1 ? 'text-right' : ''}`}
+                className={`col-span-1 border-b border-gray-200 bg-gray-50 p-2 py-4 dark:border-gray-800 dark:bg-irmin_black-800 ${!noActions && index === headers.length - 1 ? 'text-right' : ''}`}
               >
-                <div className='font-medium'>{header}</div>
+                <div className='opacity-60'>{header}</div>
               </div>
             ))}
           </div>
@@ -146,6 +149,11 @@ const NormalList: React.FC<ListProps> = ({
               </div>
             );
           })
+        )}
+        {!loading && rows.length === 0 && (
+          <div className='col-span-full p-4 py-8 text-center text-sm text-gray-600 lg:text-base dark:text-white'>
+            {dict.list.noItemsFound}
+          </div>
         )}
       </div>
     </div>

@@ -25,14 +25,6 @@ const WorkflowList = ({
   const { dict, locale } = useLocale();
   const { workspace } = useParams();
 
-  if (!loading && (!items || items.length === 0)) {
-    return (
-      <div className='px-4 py-12 text-center text-xl text-irmin_black'>
-        {dict.list.noWorkflowsFound}
-      </div>
-    );
-  }
-
   const rows: GridRow[] = items.map((item, i) => {
     const tableActions = [
       {

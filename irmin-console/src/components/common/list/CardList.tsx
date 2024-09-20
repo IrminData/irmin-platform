@@ -7,6 +7,8 @@ import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5';
 import Button from '@/components/common/button/Button';
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { ListProps } from '@/types/internal/ListProps';
 
 /**
@@ -21,6 +23,7 @@ import { ListProps } from '@/types/internal/ListProps';
  * The component is responsive and can be used in any layout.
  */
 const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
+  const { dict } = useLocale();
   const [openDetails, setOpenDetails] = useState<number[]>([]);
 
   return (
@@ -116,6 +119,11 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
           ))
         )}
       </div>
+      {!loading && rows.length === 0 && (
+        <div className='col-span-full p-4 py-8 text-center text-sm text-gray-600 lg:text-base dark:text-white'>
+          {dict.list.noItemsFound}
+        </div>
+      )}
     </div>
   );
 };

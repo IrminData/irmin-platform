@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
+import { TbSearch } from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
 import SideModal from '@/components/common/popup/SideModal';
@@ -37,6 +38,29 @@ export default function RepositoriesSection({
   const { workspaceLoading, repositories } = useWorkspace();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
+
+  const [filteredItems, setFilteredItems] = useState(repositories.repositories);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter items based on search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (repositories.repositories) {
+        setFilteredItems(
+          repositories.repositories.filter((item) =>
+            item.name
+              .trim()
+              .replace(/\s+/g, '')
+              .toLowerCase()
+              .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
+          )
+        );
+      }
+    }, 300);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery, repositories]);
 
   const loading = workspaceLoading || repositories.isLoading;
 
@@ -78,10 +102,17 @@ export default function RepositoriesSection({
         <CreateRepositoryModalContent closeModal={closeModal} />
       </SideModal>
       <div className='py-4'>
-        <RepositoryList
-          loading={loading}
-          repositories={repositories.repositories}
-        />
+        <div className='mb-4 flex w-full items-center gap-2 rounded-md bg-gray-100 p-2 text-gray-900 focus:outline-none dark:bg-gray-800 dark:text-gray-200'>
+          <TbSearch />
+          <input
+            type='text'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className='w-full bg-transparent p-2'
+            placeholder={dict.list.searchPlaceholder}
+          />
+        </div>
+        <RepositoryList loading={loading} repositories={filteredItems} />
       </div>
     </div>
   );
