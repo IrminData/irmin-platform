@@ -10,7 +10,7 @@ import Input from '@/components/common/form/Input';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 import { WorkflowSetup } from '.';
 
@@ -40,6 +40,8 @@ export default function ConfigureWorkflow({
   const { irminAlert } = usePopup();
   const [processing, setProcessing] = useState(false);
 
+  const { workflowService } = useMemo(() => new IrminCore(locale), [locale]);
+
   const handleCreate = useMemo(
     () => async () => {
       try {
@@ -56,7 +58,6 @@ export default function ConfigureWorkflow({
           return;
         }
         // Create the workflow
-        const { workflowService } = new IrminCore(locale);
         let result: IrminAPIResponse | undefined;
         if (workflowData.type === 'action') {
           result = await workflowService.createActionWorkflow({
@@ -110,7 +111,7 @@ export default function ConfigureWorkflow({
         setProcessing(false);
       }
     },
-    [processing, workflowData, locale, dict, irminAlert, closeModal]
+    [processing, workflowService, workflowData, dict, irminAlert, closeModal]
   );
 
   return (

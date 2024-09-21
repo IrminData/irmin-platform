@@ -1,5 +1,5 @@
-import { Collection } from '@/types/api/Collection';
-import { WorkspaceUser } from '@/types/api/Workspace';
+import { Collection } from '@/types/core/Collection';
+import { WorkspaceUser } from '@/types/core/Workspace';
 
 /**
  * Repository type

@@ -2,6 +2,8 @@
 
 import { useCallback, useMemo } from 'react';
 
+import IrminCore from '@/services/core/IrminCore';
+
 import { IoAdd } from 'react-icons/io5';
 
 import Button from '@/components/common/button/Button';
@@ -20,38 +22,104 @@ import CreateBranchModalContent from './CreateBranchModalContent';
  * Section to display the branches of a repository.
  */
 export default function RepositoryBranchesSection() {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const { irminAlert, irminModal } = usePopup();
-  const { branchesResults, loadingBranches } = useData();
+  const { branches, fetchBranches, currentRepository, loadingBranches } =
+    useData();
+
+  const { branchService } = useMemo(() => new IrminCore(locale), [locale]);
 
   const deleteBranch = useCallback(
-    (branch: string) => {
-      if (branch === 'main') {
+    async (branch: string) => {
+      if (!currentRepository) return;
+      const currentDefaultBranch = branches?.find((b) => b.default)?.name;
+      if (branch === currentDefaultBranch) {
         irminAlert('error', dict.repository.cannotDeleteMainBranch);
         return;
       }
-      // TODO: Implement delete branch functionality
-      console.log('Delete branch', branch);
+      try {
+        // Delete the branch
+        const result = await branchService.deleteBranch(
+          branch,
+          currentRepository
+        );
+        irminAlert('success', result.message ?? dict.repository.branchDeleted);
+        fetchBranches(currentRepository);
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? dict.repository.branchDeleteFailed
+        );
+      }
     },
-    [irminAlert, dict.repository.cannotDeleteMainBranch]
+    [
+      branches,
+      irminAlert,
+      dict,
+      currentRepository,
+      branchService,
+      fetchBranches,
+    ]
+  );
+
+  const handleCreateBranch = useCallback(
+    async (branchName: string, fromBranch: string) => {
+      irminModal.close();
+
+      if (!currentRepository) return;
+      const exists = branches?.find((b) => b.name === branchName);
+      const fromExists = branches?.find((b) => b.name === fromBranch);
+      if (
+        exists ||
+        !fromExists ||
+        branchName.length === 0 ||
+        fromBranch.length === 0
+      ) {
+        irminAlert('error', dict.repository.branchCreateFailed);
+        return;
+      }
+      try {
+        // Delete the branch
+        const result = await branchService.createBranch(
+          branchName,
+          fromBranch,
+          currentRepository
+        );
+        irminAlert('success', result.message ?? dict.repository.branchCreated);
+        fetchBranches(currentRepository);
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? dict.repository.branchCreateFailed
+        );
+      }
+    },
+    [
+      branches,
+      irminModal,
+      irminAlert,
+      dict,
+      currentRepository,
+      fetchBranches,
+      branchService,
+    ]
   );
 
   const createBranch = useCallback(() => {
-    if (!branchesResults) return;
+    if (!branches) return;
     irminModal.show(
       dict.repository.createBranch,
       <CreateBranchModalContent
-        branches={
-          branchesResults.data.branches.map((branch) => branch.name) ?? []
-        }
+        branches={branches.map((branch) => branch.name) ?? []}
+        createBranch={handleCreateBranch}
       />
     );
-  }, [irminModal, dict.repository.createBranch, branchesResults]);
+  }, [irminModal, dict, handleCreateBranch, branches]);
 
   const rows: GridRow[] = useMemo(() => {
-    if (!branchesResults) return [];
+    if (!branches) return [];
     return (
-      branchesResults.data.branches.map((branch, i) => {
+      branches.map((branch, i) => {
         return {
           columns: [
             <div
@@ -76,12 +144,7 @@ export default function RepositoryBranchesSection() {
         };
       }) ?? []
     );
-  }, [
-    branchesResults,
-    dict.repository.primary,
-    dict.list.delete,
-    deleteBranch,
-  ]);
+  }, [branches, dict.repository.primary, dict.list.delete, deleteBranch]);
 
   return (
     <div className='container relative mx-auto max-w-6xl px-2 md:px-4'>

@@ -2,20 +2,24 @@
 
 import { useState } from 'react';
 
+import { QueryAPIResponse } from '@/services/core/resources/QueryService';
+
 import { AiOutlineSave } from 'react-icons/ai';
 import { BsFileEarmarkRichtext } from 'react-icons/bs';
 import { CiTextAlignLeft } from 'react-icons/ci';
 import { MdPlayArrow } from 'react-icons/md';
-import { TbFileText, TbTable } from 'react-icons/tb';
+import { TbExclamationCircle, TbFileText, TbTable } from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
 import MDXEditor from '@/components/common/markdown-editor/MDXEditor';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { CollectionData } from '@/types/api/Collection';
-import { ActionWorkflow } from '@/types/api/Workflow';
+import { ActionWorkflow } from '@/types/core/Workflow';
 
+import ErrorList from './ErrorList';
+import FolderAndFileData from './FolderAndFileData';
+import StreamData from './StreamData';
 import TableData from './TableData';
 
 /**
@@ -26,8 +30,7 @@ import TableData from './TableData';
  *
  * @param props - The props to pass to the component
  * @param props.title - Title of the query results
- * @param props.data - Data to display
- * @param props.metadata - Additional metadata about the data
+ * @param props.result - The result data to display
  * @param props.loading - Whether to show a loading skeleton
  * @param props.onSave - Function to save the data
  * @param props.onRun - Function to run the data
@@ -35,19 +38,14 @@ import TableData from './TableData';
  */
 const QueryResults = ({
   title,
-  data,
-  metadata,
+  result,
   loading,
   onSave,
   onRun,
   workflow,
 }: {
   title: string;
-  data: CollectionData | null;
-  metadata: {
-    rowsReturned?: number;
-    timeTaken?: number;
-  };
+  result: QueryAPIResponse | null;
   loading?: boolean;
   onSave?: () => Promise<void>;
   onRun?: () => Promise<void>;
@@ -68,10 +66,11 @@ const QueryResults = ({
   const [processingRun, setProcessingRun] = useState(false);
 
   const showLoadingOnData = loading || processingRun;
+  const errors = result?.errors ?? {};
 
   return (
     <div
-      className='flex flex-1 flex-col overflow-hidden bg-white dark:bg-irmin_black'
+      className='flex flex-1 flex-col overflow-hidden border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-irmin_black'
       id='query-results'
     >
       {/* Tab Buttons */}
@@ -80,10 +79,9 @@ const QueryResults = ({
           className={`border-irmin_green ${activeTab === 'data' ? 'border-b-2' : ''}`}
         >
           <Button
-            ariaLabel={`Switch to data viewer tab`}
             size='sm'
             variant='link'
-            colorScheme={activeTab === 'data' ? 'secondary' : 'gray'}
+            colorScheme={activeTab === 'data' ? 'primary' : 'gray'}
             className={`justify-start rounded-none text-xs shadow-none hover:no-underline dark:text-gray-200`}
             onClick={() => setActiveTab('data')}
             icon={<TbTable />}
@@ -91,15 +89,29 @@ const QueryResults = ({
             {dict.query.results}
           </Button>
         </div>
+        <div
+          className={`border-irmin_green ${activeTab === 'errors' ? 'border-b-2' : ''}`}
+        >
+          <Button
+            size='sm'
+            variant='link'
+            colorScheme={activeTab === 'errors' ? 'primary' : 'gray'}
+            className={`justify-start rounded-none text-xs shadow-none hover:no-underline dark:text-gray-200`}
+            onClick={() => setActiveTab('errors')}
+            icon={<TbExclamationCircle />}
+          >
+            {dict.query.errors}{' '}
+            {result?.errors ? `(${Object.keys(result.errors).length})` : ''}
+          </Button>
+        </div>
         {workflow && (
           <div
             className={`border-irmin_green ${activeTab === 'documentation' ? 'border-b-2' : ''}`}
           >
             <Button
-              ariaLabel={`Switch to documentation tab`}
               size='sm'
               variant='link'
-              colorScheme={activeTab === 'documentation' ? 'secondary' : 'gray'}
+              colorScheme={activeTab === 'documentation' ? 'primary' : 'gray'}
               className={`justify-start rounded-none text-xs shadow-none hover:no-underline dark:text-gray-200`}
               onClick={() => setActiveTab('documentation')}
               icon={<TbFileText />}
@@ -171,22 +183,44 @@ const QueryResults = ({
           )}
         </div>
       </div>
-      {activeTab === 'data' && data?.type === 'table' && (
+      {activeTab === 'data' && result?.data?.type === 'table' && (
         <TableData
           title={title}
-          data={data}
-          metadata={metadata}
+          data={result.data}
+          metadata={{
+            rowsReturned: parseInt(result.metadata.itemsReturned),
+            timeTaken: parseInt(result.metadata.timeTaken),
+          }}
           loading={showLoadingOnData}
         />
       )}
-      {activeTab === 'data' && data?.type !== 'table' && (
-        <div className='flex h-0 flex-1 flex-col overflow-scroll px-2 pt-2'>
-          {/* TODO: Implement visualisation of other collection data */}
-          <div className='w-full px-4 py-12 text-center text-gray-400'>
-            {dict.query.noResults}
-          </div>
+      {activeTab === 'data' && result?.data?.type === 'folder' && (
+        <FolderAndFileData
+          title={title}
+          data={result.data}
+          loading={showLoadingOnData}
+        />
+      )}
+      {activeTab === 'data' && result?.data?.type === 'file' && (
+        <FolderAndFileData
+          title={title}
+          data={result.data}
+          loading={showLoadingOnData}
+        />
+      )}
+      {activeTab === 'data' && result?.data?.type === 'stream' && (
+        <StreamData
+          title={title}
+          data={result.data}
+          loading={showLoadingOnData}
+        />
+      )}
+      {activeTab === 'data' && !result?.data && (
+        <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
+          {dict.query.noResults}
         </div>
       )}
+      {activeTab === 'errors' && <ErrorList errors={errors} dict={dict} />}
       {activeTab === 'documentation' && (
         <div className='flex h-0 flex-1 flex-col overflow-scroll px-2 pt-2'>
           {documentationTab === 'plain' && (

@@ -5,7 +5,7 @@ import {
   ExportWorkflow,
   ImportWorkflow,
   Workflow,
-} from '@/types/api/Workflow';
+} from '@/types/core/Workflow';
 
 import { connections } from './connections';
 import { repositories } from './repositories';

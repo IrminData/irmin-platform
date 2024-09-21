@@ -1,6 +1,6 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { WorkflowRun, WorkflowStatus } from '@/types/api/Workflow';
+import { WorkflowRun, WorkflowStatus } from '@/types/core/Workflow';
 
 import { workflows } from './workflows';
 

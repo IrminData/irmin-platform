@@ -6,7 +6,7 @@ import { Locale } from '@/dictionaries';
 
 import { useIAM } from '@/context/IAMContext';
 
-import { Workspace } from '@/types/api/Workspace';
+import { Workspace } from '@/types/core/Workspace';
 
 import {
   useCreateWorkspace,

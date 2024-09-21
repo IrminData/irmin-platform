@@ -8,7 +8,7 @@ import Button from '@/components/common/button/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { TableSchema } from '@/types/internal/TableCollection';
+import { TableSchema } from '@/types/core/TableCollection';
 
 /**
  * Component for displaying the schema for a table collection.
@@ -39,10 +39,7 @@ export default function TableCollectionSchema({
         </thead>
         <tbody>
           {schema.columns.map((column) => (
-            <tr
-              key={column.name}
-              className='gap-2 divide-x divide-gray-200 dark:divide-gray-700'
-            >
+            <tr key={column.name} className='gap-2'>
               <td className='p-1'>{column.name}</td>
               <td className='p-1'>{column.type}</td>
             </tr>

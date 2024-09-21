@@ -7,11 +7,9 @@ import { usePathname } from 'next/navigation';
 import { IoChevronBack } from 'react-icons/io5';
 import {
   TbDatabase,
-  TbDownload,
   TbFileText,
   TbGitBranch,
   TbHistory,
-  TbSchema,
   TbSettings,
 } from 'react-icons/tb';
 
@@ -50,12 +48,7 @@ export default function RepositoryLayoutWrapper({
     [repoSlug, repositories]
   );
 
-  const { currentBranch, setCurrentBranch, branchesResults } = useData();
-
-  // Handle download repository as ZIP
-  const handleDownload = () => {
-    // TODO: Download the repository from the server
-  };
+  const { currentBranch, setCurrentBranch, branches } = useData();
 
   const workspaceSlug = useMemo(
     () => currentWorkspace?.slug ?? '',
@@ -70,14 +63,6 @@ export default function RepositoryLayoutWrapper({
           currentPath ===
           `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}`,
         icon: <TbDatabase size={14} />,
-      },
-      {
-        title: dict.repository.tabs.structure,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/structure`,
-        active:
-          currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/structure`,
-        icon: <TbSchema size={14} />,
       },
       {
         title: dict.repository.tabs.commits,
@@ -156,32 +141,20 @@ export default function RepositoryLayoutWrapper({
           <div className='flex min-w-60 flex-col gap-2'>
             <BranchSelector
               branches={
-                branchesResults?.data.branches.map((branch) => ({
+                branches?.map((branch) => ({
                   label: branch.name,
                   value: branch.name,
                 })) ?? []
               }
               currentBranch={
                 currentBranch ??
-                branchesResults?.data.branches.filter(
-                  (branch) => branch.default
-                )[0].name ??
+                branches?.filter((branch) => branch.default)[0].name ??
                 'main'
               }
               onChangeBranch={(branch) => {
                 setCurrentBranch(branch.value);
               }}
             />
-            <Button
-              onClick={handleDownload}
-              className='w-full'
-              colorScheme='light'
-              variant='solid'
-              size='sm'
-              icon={<TbDownload />}
-            >
-              {dict.repository.download}
-            </Button>
           </div>
         </div>
         <div className='scrollbar-hide mb-6 flex w-full max-w-3xl justify-start gap-2 overflow-y-scroll px-4 md:gap-4'>

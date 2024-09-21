@@ -2,16 +2,21 @@ import { defaultLocale, Locale } from '@/dictionaries';
 
 import removeCircularJSON from '@/utils/removeCircularJSON';
 
-import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 import AuthService from './resources/AuthService';
+import BranchService from './resources/BranchService';
 import BucketService from './resources/BucketService';
+import CollectionService from './resources/CollectionService';
+import CommitService from './resources/CommitService';
 import ConnectionService from './resources/ConnectionService';
 import ConnectorService from './resources/ConnectorService';
 import InviteService from './resources/InviteService';
 import ProfileService from './resources/ProfileService';
+import QueryService from './resources/QueryService';
 import RepositoryService from './resources/RepositoryService';
 import RoleService from './resources/RoleService';
+import SchemaService from './resources/SchemaService';
 import UserService from './resources/UserService';
 import WorkflowService from './resources/WorkflowService';
 import WorkspaceService from './resources/WorkspaceService';
@@ -35,12 +40,17 @@ class IrminCore {
   public connectionService: ConnectionService;
   public connectorService: ConnectorService;
   public repositoryService: RepositoryService;
+  public branchService: BranchService;
+  public commitService: CommitService;
+  public collectionService: CollectionService;
+  public schemaService: SchemaService;
   public inviteService: InviteService;
   public profileService: ProfileService;
   public userService: UserService;
   public roleService: RoleService;
   public workflowService: WorkflowService;
   public workspaceService: WorkspaceService;
+  public queryService: QueryService;
 
   constructor(locale: Locale, apiToken?: string) {
     // Set locale and token
@@ -54,12 +64,17 @@ class IrminCore {
     this.connectionService = new ConnectionService(this);
     this.connectorService = new ConnectorService(this);
     this.repositoryService = new RepositoryService(this);
+    this.branchService = new BranchService(this);
+    this.commitService = new CommitService(this);
+    this.collectionService = new CollectionService(this);
+    this.schemaService = new SchemaService(this);
     this.inviteService = new InviteService(this);
     this.profileService = new ProfileService(this);
     this.userService = new UserService(this);
     this.roleService = new RoleService(this);
     this.workflowService = new WorkflowService(this);
     this.workspaceService = new WorkspaceService(this);
+    this.queryService = new QueryService(this);
   }
 
   public fetch = async (

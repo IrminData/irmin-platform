@@ -15,7 +15,7 @@ import Button from '@/components/common/button/Button';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { WorkflowableType } from '@/types/api/Workflow';
+import { WorkflowableType } from '@/types/core/Workflow';
 
 /**
  * Select the workflow type modal content and direct to the next step

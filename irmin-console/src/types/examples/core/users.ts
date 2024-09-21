@@ -1,4 +1,4 @@
-import { WorkspaceUser } from '@/types/api/Workspace';
+import { WorkspaceUser } from '@/types/core/Workspace';
 
 import { profile } from './profile';
 import { roles } from './roles';

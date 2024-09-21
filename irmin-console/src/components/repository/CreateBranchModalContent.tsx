@@ -9,18 +9,15 @@ import { useLocale } from '@/context/LocaleContext';
 
 export default function CreateBranchModalContent({
   branches,
+  createBranch,
 }: {
   branches: string[];
+  createBranch: (branchName: string, fromBranch: string) => void;
 }) {
   const { dict } = useLocale();
 
   const [branchName, setBranchName] = useState('');
   const [fromBranch, setFromBranch] = useState('main');
-
-  const createBranch = () => {
-    // TODO: Implement create branch functionality
-    console.log('Create branch', branchName, fromBranch);
-  };
 
   return (
     <div className='mb-4 flex flex-col gap-4'>
@@ -70,7 +67,7 @@ export default function CreateBranchModalContent({
         size='sm'
         className='w-full'
         onClick={() => {
-          createBranch();
+          createBranch(branchName, fromBranch);
         }}
       >
         {dict.repository.createBranch}

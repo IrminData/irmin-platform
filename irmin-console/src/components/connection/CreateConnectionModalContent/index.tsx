@@ -9,7 +9,7 @@ import LoadingSpinner from '@/components/common/loading/LoadingSpinner';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { Connector } from '@/types/api/Connector';
+import { Connector } from '@/types/core/Connector';
 import {
   DynamicFields,
   DynamicFieldValues,

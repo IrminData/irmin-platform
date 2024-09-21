@@ -11,7 +11,7 @@ import Button from '@/components/common/button/Button';
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { irminFileTypes } from '@/types/api/Bucket';
+import { irminFileTypes } from '@/types/core/Bucket';
 
 import CodeEditor from './CodeEditor';
 import NewTabContent from './NewTabContent';

@@ -1,4 +1,4 @@
-import { Bucket } from '@/types/api/Bucket';
+import { Bucket } from '@/types/core/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AiOutlinePlayCircle } from 'react-icons/ai';
+import { TbDownload, TbUpload } from 'react-icons/tb';
 
 import CodeMirrorEditor from '@/components/bucket/editor/partials/CodeMirrorEditor';
 import Button from '@/components/common/button/Button';
@@ -11,7 +12,7 @@ import QueryResults from '@/components/query/QueryResults';
 import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { Repository } from '@/types/api/Repository';
+import { Repository } from '@/types/core/Repository';
 
 import CollectionSchema from './CollectionSchema';
 import CollectionSelector from './CollectionSelector';
@@ -27,13 +28,23 @@ export default function RepositorySection({
   const { dict } = useLocale();
 
   const {
-    fetchActionSingleResults,
-    loadingData,
-    dataResults,
+    runScript,
+    runningScript,
+    scriptResult,
     loadingSchema,
-    schemaResults,
+    schema,
     currentBranch,
   } = useData();
+
+  // Handle download repository as ZIP
+  const handleDownload = () => {
+    // TODO: Download the repository from the server
+  };
+
+  // Handle upload collection to the repository
+  const handleUpload = () => {
+    // TODO: Upload collection to the repository
+  };
 
   const [selectedCollection, setSelectedCollection] = useState<string | null>(
     null
@@ -43,20 +54,23 @@ export default function RepositorySection({
 
   const runCurrentQuery = useCallback(() => {
     if (!query || query.length < 3) return;
-    fetchActionSingleResults({
-      type: 'sql',
-      content: query,
-      branch: currentBranch ?? 'main',
-    });
-  }, [query, fetchActionSingleResults, currentBranch]);
+    runScript(
+      'sql',
+      query,
+      currentBranch ?? 'main',
+      repository?.collections.find(
+        (collection) => collection.formatted_name === selectedCollection
+      )
+    );
+  }, [query, runScript, currentBranch, selectedCollection, repository]);
 
   const updateQuery = useCallback(
     (value: string) => {
-      if (loadingData) return;
+      if (runningScript) return;
       setQueryChanged(true);
       setQuery(value);
     },
-    [loadingData]
+    [runningScript]
   );
 
   useEffect(() => {
@@ -67,17 +81,38 @@ export default function RepositorySection({
 
   const selectedCollectionSchema = useMemo(() => {
     if (loadingSchema) return;
-    if (!schemaResults) return;
+    if (!schema) return;
     if (!selectedCollection) return;
-    console.log(schemaResults);
-    return schemaResults?.data.find((schema) => {
+    return schema.find((schema) => {
       return schema.formatted_name === selectedCollection;
     });
-  }, [schemaResults, selectedCollection, loadingSchema]);
+  }, [schema, selectedCollection, loadingSchema]);
 
   return (
     <>
       <div className='container relative mx-auto mb-4 flex max-w-6xl flex-col gap-4 px-2 md:px-4'>
+        <div className='flex w-full flex-col items-center gap-2 md:flex-row md:gap-4'>
+          <Button
+            onClick={handleDownload}
+            className='w-full'
+            colorScheme='light'
+            variant='solid'
+            size='sm'
+            icon={<TbDownload />}
+          >
+            {dict.repository.download}
+          </Button>
+          <Button
+            onClick={handleUpload}
+            className='w-full'
+            colorScheme='light'
+            variant='solid'
+            size='sm'
+            icon={<TbUpload />}
+          >
+            {dict.repository.uploadCollection}
+          </Button>
+        </div>
         <div className='flex w-full flex-col items-start gap-1 md:flex-row md:gap-2'>
           {repository && (
             <CollectionSelector
@@ -104,7 +139,7 @@ export default function RepositorySection({
               className='float-end m-2 shadow-none'
               size='sm'
               icon={<AiOutlinePlayCircle />}
-              loading={loadingData}
+              loading={runningScript}
               onClick={runCurrentQuery}
             >
               {dict.repository.runQuery}
@@ -120,14 +155,15 @@ export default function RepositorySection({
           />
         </div>
       </div>
-      <div className='flex h-[calc(100vh-400px)] min-h-96'>
-        <QueryResults
-          title={dict.query.queryResults}
-          data={dataResults?.result ?? null}
-          metadata={dataResults?.metadata ?? {}}
-          loading={loadingData}
-        />
-      </div>
+      {scriptResult && (
+        <div className='flex h-[calc(100vh-400px)] min-h-96'>
+          <QueryResults
+            title={dict.query.queryResults}
+            result={scriptResult}
+            loading={runningScript}
+          />
+        </div>
+      )}
     </>
   );
 }

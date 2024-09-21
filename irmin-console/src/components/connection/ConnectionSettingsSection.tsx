@@ -11,7 +11,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Connection } from '@/types/api/Connection';
+import { Connection } from '@/types/core/Connection';
 
 /**
  * Connection Settings section component

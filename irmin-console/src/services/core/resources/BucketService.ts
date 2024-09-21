@@ -2,8 +2,8 @@ import IrminCore from '@/services/core/IrminCore';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { Bucket } from '@/types/api/Bucket';
-import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import { Bucket } from '@/types/core/Bucket';
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { exampleBucket } from '@/types/examples/core';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
@@ -75,7 +75,6 @@ class BucketService {
       body.append('contents', fileNavigatorItem.current.contents);
       const response = await this.irminCore.fetch(`/v1/buckets/files`, {
         method: 'POST',
-
         body,
       });
       return response;

@@ -1,6 +1,6 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { Invite } from '@/types/api/Invite';
+import { Invite } from '@/types/core/Invite';
 
 import { roles } from './roles';
 

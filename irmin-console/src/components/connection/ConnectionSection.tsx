@@ -8,7 +8,7 @@ import WorkflowList from '@/components/workflow/WorkflowList';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Connection } from '@/types/api/Connection';
+import { Connection } from '@/types/core/Connection';
 
 /**
  * Connection Settings section component

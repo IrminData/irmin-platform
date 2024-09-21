@@ -4,8 +4,8 @@ import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
-import { Invite } from '@/types/api/Invite';
-import { Workspace } from '@/types/api/Workspace';
+import { Invite } from '@/types/core/Invite';
+import { Workspace } from '@/types/core/Workspace';
 
 import {
   useCancelInvite,

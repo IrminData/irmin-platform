@@ -15,8 +15,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
-import { WorkspaceUser } from '@/types/api/Workspace';
+import { IrminRole, IrminRoleNames } from '@/types/core/IrminRole';
+import { WorkspaceUser } from '@/types/core/Workspace';
 
 type WorkspaceUsersAndPermissionsUser = {
   inviteId?: number;

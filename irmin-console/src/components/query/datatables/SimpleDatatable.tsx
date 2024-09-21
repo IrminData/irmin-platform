@@ -5,7 +5,7 @@ import DataTable from 'react-data-table-component';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { TableRow } from '@/types/internal/TableCollection';
+import { TableRow } from '@/types/core/TableCollection';
 
 /**
  * Simple datatable component for displaying data in a table.

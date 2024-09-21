@@ -10,8 +10,8 @@ import {
   ExportWorkflow,
   ImportWorkflow,
   Workflow,
-} from '@/types/api/Workflow';
-import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
+} from '@/types/core/Workflow';
+import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
 
 /**
  * Hook to fetch and update context for Import Workflows of the current workspace using the {@link IrminCore}.

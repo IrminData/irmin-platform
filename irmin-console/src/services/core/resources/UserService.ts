@@ -2,9 +2,9 @@ import IrminCore from '@/services/core/IrminCore';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
-import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
-import { WorkspaceUser } from '@/types/api/Workspace';
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import { IrminRole, IrminRoleNames } from '@/types/core/IrminRole';
+import { WorkspaceUser } from '@/types/core/Workspace';
 import { exampleRoles, exampleWorkspaceUsers } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';

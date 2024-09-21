@@ -12,7 +12,7 @@ import Button from '@/components/common/button/Button';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { Connector } from '@/types/api/Connector';
+import { Connector } from '@/types/core/Connector';
 
 import { ConnectionSetup } from '.';
 

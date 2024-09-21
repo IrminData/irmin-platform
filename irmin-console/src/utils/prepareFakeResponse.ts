@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import removeCircularJSON from '@/utils/removeCircularJSON';
 
-import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { exampleAPIResponse } from '@/types/examples/core';
 
 /**

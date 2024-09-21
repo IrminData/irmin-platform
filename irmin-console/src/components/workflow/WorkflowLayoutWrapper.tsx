@@ -20,7 +20,7 @@ import StatusBadge from '@/components/common/status/StatusBadge';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { ExportWorkflow, ImportWorkflow } from '@/types/api/Workflow';
+import { ExportWorkflow, ImportWorkflow } from '@/types/core/Workflow';
 
 /**
  * Component to wrap the single Workflow pages in.

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -41,7 +41,7 @@ const AcceptInviteSection = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const { inviteService } = new IrminCore(locale);
+  const { inviteService } = useMemo(() => new IrminCore(locale), [locale]);
 
   const handleAcceptInvite = async () => {
     setLoading(true);

@@ -17,7 +17,7 @@ import { usePopup } from '@/context/PopupContext';
 
 import { getCorrectPath } from '@/utils/bucket';
 
-import { Bucket, BucketFile, IrminFileType } from '@/types/api/Bucket';
+import { Bucket, BucketFile, IrminFileType } from '@/types/core/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**

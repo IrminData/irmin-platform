@@ -5,8 +5,8 @@ import { useCallback } from 'react';
 import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
-import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
-import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
+import { IrminRole, IrminRoleNames } from '@/types/core/IrminRole';
+import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
 
 /**
  * Hook to fetch the list of roles available on Irmin using the {@link IrminCore}.

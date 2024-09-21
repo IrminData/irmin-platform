@@ -5,8 +5,8 @@ import { useCallback } from 'react';
 import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
-import { Repository } from '@/types/api/Repository';
-import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
+import { Repository } from '@/types/core/Repository';
+import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
 
 /**
  * Hook to fetch the list of Repositories for the current workspace using the {@link IrminCore}.

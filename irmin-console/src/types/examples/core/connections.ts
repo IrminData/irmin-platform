@@ -1,6 +1,6 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { Connection } from '@/types/api/Connection';
+import { Connection } from '@/types/core/Connection';
 
 import { connectors } from './connectors';
 import { workspaceUsers } from './users';

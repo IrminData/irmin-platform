@@ -1,6 +1,6 @@
-import { Connection } from '@/types/api/Connection';
-import { Repository } from '@/types/api/Repository';
-import { WorkspaceUser } from '@/types/api/Workspace';
+import { Connection } from '@/types/core/Connection';
+import { Repository } from '@/types/core/Repository';
+import { WorkspaceUser } from '@/types/core/Workspace';
 
 /**
  * Types of workflows that can be created

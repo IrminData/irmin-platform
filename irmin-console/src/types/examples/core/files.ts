@@ -1,6 +1,6 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { BucketFile } from '@/types/api/Bucket';
+import { BucketFile } from '@/types/core/Bucket';
 
 import exampleActionFiles from '../exampleActionFiles';
 

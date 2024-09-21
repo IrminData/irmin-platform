@@ -1,6 +1,6 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { BucketFolder } from '@/types/api/Bucket';
+import { BucketFolder } from '@/types/core/Bucket';
 
 /**
  * Get example BucketFolder objects

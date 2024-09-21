@@ -7,7 +7,7 @@ import StatusBadge from '@/components/common/status/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { ExportWorkflow } from '@/types/api/Workflow';
+import { ExportWorkflow } from '@/types/core/Workflow';
 import { GridRow } from '@/types/internal/ListProps';
 
 /**

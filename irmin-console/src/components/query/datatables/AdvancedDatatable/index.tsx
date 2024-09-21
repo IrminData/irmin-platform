@@ -1,14 +1,12 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic';
 
 import {
   checkboxColumn,
   Column,
-  DataSheetGridRef,
-  dateColumn,
   floatColumn,
   intColumn,
   keyColumn,
@@ -17,7 +15,11 @@ import {
 
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
-import { TableRow } from '@/types/internal/TableCollection';
+import { useLocale } from '@/context/LocaleContext';
+
+import { StreamEntry } from '@/types/core/StreamCollection';
+import { TableRow } from '@/types/core/TableCollection';
+import { RenderableRow } from '@/types/internal/RenderableRow';
 
 const DataSheet = dynamic(() => import('./DataSheet'), {
   loading: () => <LoadingSkeleton />,
@@ -29,20 +31,30 @@ const DataSheet = dynamic(() => import('./DataSheet'), {
  * Uses the `react-datasheet-grid` library {@link DataSheet}.
  * This component is used to display a more advanced datatable.
  */
-export default function AdvancedDatatable({ items }: { items: TableRow[] }) {
-  const dataSheetRef = useRef<DataSheetGridRef>(null);
+export default function AdvancedDatatable({
+  items,
+}: {
+  items: (TableRow | StreamEntry)[];
+}) {
+  const { locale } = useLocale();
 
+  const [renderItems, setRenderItems] = useState<RenderableRow[]>([]);
   const [columns, setColumns] = useState<
-    Partial<Column<TableRow>>[] | undefined
+    Partial<Column<RenderableRow>>[] | undefined
   >(undefined);
 
-  // Create columns from the properties
+  // Create columns and render items from the properties
   useEffect(() => {
     // Get all properties from the items to use as columns
     const allProperties = items
       .map((item) => Object.keys(item))
       .flat()
       .filter((value, index, self) => self.indexOf(value) === index);
+
+    // Store the matched types of the columns
+    const columnsWithTypes: {
+      [key: string]: 'string' | 'float' | 'int' | 'boolean' | 'date';
+    } = {};
 
     // Create columns from the properties
     const newColumns = allProperties.map((key) => {
@@ -52,33 +64,75 @@ export default function AdvancedDatatable({ items }: { items: TableRow[] }) {
       // Determine the type of the column
       if (typeof exampleValue === 'number') {
         if (Number.isInteger(exampleValue)) {
+          columnsWithTypes[key] = 'int';
           return { ...keyColumn(key, intColumn), title: key };
         }
+        columnsWithTypes[key] = 'float';
         return { ...keyColumn(key, floatColumn), title: key };
       }
       if (typeof exampleValue === 'boolean') {
+        columnsWithTypes[key] = 'boolean';
         return { ...keyColumn(key, checkboxColumn), title: key };
       }
       if (
         typeof exampleValue === 'string' &&
         new Date(exampleValue).toString() !== 'Invalid Date'
       ) {
-        return { ...keyColumn(key, dateColumn), title: key };
+        columnsWithTypes[key] = 'date';
+        return { ...keyColumn(key, textColumn), title: key };
       }
       // If nothing else matches, use text column
+      columnsWithTypes[key] = 'string';
       return { ...keyColumn(key, textColumn), title: key };
     });
 
-    setColumns(newColumns);
-  }, [items]);
+    // Make sure values in the data are matching the columns
+    const newItems = items.map((item) => {
+      const newItem: RenderableRow = { ...item };
+      Object.keys(columnsWithTypes).map((key) => {
+        try {
+          if (!newItem[key]) {
+            newItem[key] = '';
+          }
+          const type = columnsWithTypes[key];
+          if (type === 'int') {
+            newItem[key] = parseInt(newItem[key] as string);
+          }
+          if (type === 'float') {
+            newItem[key] = parseFloat(newItem[key] as string);
+          }
+          if (type === 'boolean' && typeof newItem[key] !== 'boolean') {
+            newItem[key] = newItem[key] === 'true';
+          }
+          if (type === 'date') {
+            newItem[key] = new Date(newItem[key] as string).toLocaleString(
+              locale
+            );
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      });
+      return newItem;
+    });
 
-  if (!columns || !items || columns.length === 0) return <LoadingSkeleton />;
+    setColumns(newColumns);
+    setRenderItems(newItems);
+  }, [items, locale]);
+
+  if (
+    !columns ||
+    columns.length === 0 ||
+    !renderItems ||
+    renderItems.length === 0
+  )
+    return <LoadingSkeleton />;
 
   return (
     <div className='h-full w-full overflow-scroll' id='advanced-datatable'>
       <div className='relative h-full w-full'>
         <div className='absolute h-full w-full'>
-          <DataSheet ref={dataSheetRef} items={items} columns={columns} />
+          <DataSheet items={renderItems} columns={columns} />
         </div>
       </div>
     </div>

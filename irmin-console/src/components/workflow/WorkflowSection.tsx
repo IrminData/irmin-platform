@@ -18,7 +18,7 @@ import {
   ImportWorkflow,
   Workflow,
   WorkflowRun,
-} from '@/types/api/Workflow';
+} from '@/types/core/Workflow';
 import { GridRow } from '@/types/internal/ListProps';
 
 /**
@@ -37,10 +37,11 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
   const [workflowRuns, setWorkflowRuns] = useState<WorkflowRun[]>([]);
   const [loadingWorkflowRuns, setLoadingWorkflowRuns] = useState(true);
 
+  const { workflowService } = useMemo(() => new IrminCore(locale), [locale]);
+
   useEffect(() => {
     (async () => {
       try {
-        const { workflowService } = new IrminCore(locale);
         const result = await workflowService.fetchRunsByWorkflow(workflow.id);
         setWorkflowRuns(result.data);
       } catch (error) {
@@ -49,7 +50,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
         setLoadingWorkflowRuns(false);
       }
     })();
-  }, [locale, workflow]);
+  }, [workflowService, workflow]);
 
   const runRows: GridRow[] = useMemo(() => {
     return (

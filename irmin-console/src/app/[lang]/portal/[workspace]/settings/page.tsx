@@ -11,7 +11,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Workspace } from '@/types/api/Workspace';
+import { Workspace } from '@/types/core/Workspace';
 
 /**
  * Portal Workspace settings page

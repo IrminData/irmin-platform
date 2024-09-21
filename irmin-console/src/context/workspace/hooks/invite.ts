@@ -5,9 +5,9 @@ import { useCallback } from 'react';
 import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
-import { Invite } from '@/types/api/Invite';
-import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
-import { Workspace } from '@/types/api/Workspace';
+import { Invite } from '@/types/core/Invite';
+import { IrminRole, IrminRoleNames } from '@/types/core/IrminRole';
+import { Workspace } from '@/types/core/Workspace';
 
 /**
  * Hook to fetch and update context for Invites of the current workspace using the {@link IrminCore}.

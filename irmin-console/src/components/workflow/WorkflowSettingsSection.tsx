@@ -13,7 +13,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Workflow } from '@/types/api/Workflow';
+import { Workflow } from '@/types/core/Workflow';
 
 /**
  * Workflow Settings section component

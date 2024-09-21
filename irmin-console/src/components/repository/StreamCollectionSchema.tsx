@@ -8,7 +8,7 @@ import Button from '@/components/common/button/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { StreamSchema } from '@/types/internal/StreamCollection';
+import { StreamSchema } from '@/types/core/StreamCollection';
 
 /**
  * Component for displaying the schema for a stream collection.
@@ -31,7 +31,9 @@ export default function StreamCollectionSchema({
   return (
     <div className='space-y-2'>
       <div className='flex gap-2 p-1'>
-        <div className='font-bold'>{dict.repository.schema.streamType}</div>
+        <div className='w-20 font-bold'>
+          {dict.repository.schema.streamType}
+        </div>
         <div>
           {schema.isLive
             ? dict.repository.schema.live
@@ -47,10 +49,7 @@ export default function StreamCollectionSchema({
         </thead>
         <tbody>
           {schema.fields.map((field, index) => (
-            <tr
-              key={index}
-              className='gap-2 divide-x divide-gray-200 dark:divide-gray-700'
-            >
+            <tr key={index} className='gap-2'>
               <td className='p-1'>{field.name}</td>
               <td className='p-1'>{field.type}</td>
             </tr>

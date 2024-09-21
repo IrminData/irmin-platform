@@ -47,9 +47,10 @@ export interface FolderSchema {
 /**
  * Type of folder item, which can be a file or a folder with content provided for files.
  */
-type FolerItemWithContent =
-  | (FolderItemFile & { content: FileCollectionData['content'] })
-  | FolderItemFolder;
+interface FolerItemFileWithContent extends FolderItemFile {
+  content: FileCollectionData['content'];
+}
+export type FolderItemWithContent = FolerItemFileWithContent | FolderItemFolder;
 
 /**
  * Interface for defining the data in a folder collection.
@@ -59,5 +60,6 @@ type FolerItemWithContent =
  */
 export interface FolderCollectionData {
   type: 'folder';
-  items: FolerItemWithContent[];
+  name: string;
+  items: FolderItemWithContent[];
 }

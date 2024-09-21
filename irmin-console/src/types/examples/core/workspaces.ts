@@ -1,6 +1,6 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { Workspace } from '@/types/api/Workspace';
+import { Workspace } from '@/types/core/Workspace';
 
 import { workspaceUsers } from './users';
 

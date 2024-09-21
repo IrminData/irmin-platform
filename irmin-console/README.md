@@ -173,7 +173,7 @@ The project is written in TypeScript. When developing, try to always define type
 
 Types can be found in the `types` directory. If you need to create a new type, add it to the `types` directory under the correct subdirectory and import it where needed.
 
-`types/api` contains types for API responses. `types/website` contains types for website components and Wordpress API. `types/internal` contains types used by the portal internally.
+`types/core` contains types for API responses. `types/website` contains types for website components and Wordpress API. `types/internal` contains types used by the portal internally.
 
 Avoid creating types inside components. Instead, create them in the `types` directory and import them where needed. If you still decide to create a type inside a component, ensure it is only used within that component and not exported.
 
@@ -268,7 +268,7 @@ Examples:
 
 - [src/types/examples/core](src/types/examples/core/index.ts) -> contains example API objects of certain types. These objects are used in development when the API request fails or if Offline Mode is enabled
 
-- [src/types/api/Bucket.ts](src/types/api/Bucket.ts) -> contains types for Bucket resources, which the BucketService and ExampleObject refer to.
+- [src/types/core/Bucket.ts](src/types/core/Bucket.ts) -> contains types for Bucket resources, which the BucketService and ExampleObject refer to.
 
 ### Proxy Services
 

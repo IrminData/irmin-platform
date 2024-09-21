@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 
-import { Connection } from '@/types/api/Connection';
-import { Repository } from '@/types/api/Repository';
-import { WorkflowableType } from '@/types/api/Workflow';
+import { Connection } from '@/types/core/Connection';
+import { Repository } from '@/types/core/Repository';
+import { WorkflowableType } from '@/types/core/Workflow';
 
 import ConfigureWorkflow from './ConfigureWorkflow';
 import ConfigureWorkflowable from './ConfigureWorkflowable';

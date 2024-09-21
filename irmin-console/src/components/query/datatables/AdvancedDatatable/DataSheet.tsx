@@ -2,7 +2,7 @@ import React, { ForwardedRef, forwardRef } from 'react';
 
 import { Column, DataSheetGrid, DataSheetGridRef } from 'react-datasheet-grid';
 
-import { TableRow } from '@/types/internal/TableCollection';
+import { RenderableRow } from '@/types/internal/RenderableRow';
 
 /**
  * DataSheet component for displaying data in a table.
@@ -14,8 +14,8 @@ const DataSheet = forwardRef(
       items,
       columns,
     }: {
-      items: TableRow[];
-      columns: Partial<Column<TableRow>>[] | undefined;
+      items: RenderableRow[];
+      columns: Partial<Column<RenderableRow>>[] | undefined;
     },
     ref: ForwardedRef<DataSheetGridRef>
   ) => {

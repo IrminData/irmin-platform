@@ -4,18 +4,18 @@ import { createContext, useContext } from 'react';
 
 import { WorkspaceProvider } from '@/context/workspace/WorkspaceProvider';
 
-import { Connection } from '@/types/api/Connection';
-import { Invite } from '@/types/api/Invite';
-import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
-import { IrminRole, IrminRoleNames } from '@/types/api/IrminRole';
-import { Repository } from '@/types/api/Repository';
+import { Connection } from '@/types/core/Connection';
+import { Invite } from '@/types/core/Invite';
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import { IrminRole, IrminRoleNames } from '@/types/core/IrminRole';
+import { Repository } from '@/types/core/Repository';
 import {
   ActionWorkflow,
   ExportWorkflow,
   ImportWorkflow,
   Workflow,
-} from '@/types/api/Workflow';
-import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
+} from '@/types/core/Workflow';
+import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
 
 /**
  * Context for the workspace

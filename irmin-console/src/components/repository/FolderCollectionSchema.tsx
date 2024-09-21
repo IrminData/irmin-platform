@@ -12,7 +12,7 @@ import {
   FolderItemFile,
   FolderItemFolder,
   FolderSchema,
-} from '@/types/internal/FolderCollection';
+} from '@/types/core/FolderCollection';
 
 import FileCollectionSchema from './FileCollectionSchema';
 
@@ -61,7 +61,7 @@ export default function FolderCollectionSchema({
   };
 
   return (
-    <div className='flex flex-col gap-2'>
+    <div className='flex w-full flex-col gap-2'>
       {(folderHistory.length > 0 || selectedFile) && (
         <Button
           onClick={handleBackClick}

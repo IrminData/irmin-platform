@@ -1,5 +1,5 @@
-import { Connector } from '@/types/api/Connector';
-import { WorkspaceUser } from '@/types/api/Workspace';
+import { Connector } from '@/types/core/Connector';
+import { WorkspaceUser } from '@/types/core/Workspace';
 
 /**
  * Connection object - used to store information on data sources and destinations

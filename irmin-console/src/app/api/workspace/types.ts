@@ -1,12 +1,12 @@
-import { Connection } from '@/types/api/Connection';
-import { Invite } from '@/types/api/Invite';
-import { Repository } from '@/types/api/Repository';
+import { Connection } from '@/types/core/Connection';
+import { Invite } from '@/types/core/Invite';
+import { Repository } from '@/types/core/Repository';
 import {
   ActionWorkflow,
   ExportWorkflow,
   ImportWorkflow,
-} from '@/types/api/Workflow';
-import { WorkspaceUser } from '@/types/api/Workspace';
+} from '@/types/core/Workflow';
+import { WorkspaceUser } from '@/types/core/Workspace';
 
 /**
  * Data object for the workspace proxy response

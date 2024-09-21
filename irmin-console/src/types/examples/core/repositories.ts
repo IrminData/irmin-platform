@@ -1,6 +1,6 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { Repository } from '@/types/api/Repository';
+import { Repository } from '@/types/core/Repository';
 
 import { collections } from './collections';
 import { workspaceUsers } from './users';

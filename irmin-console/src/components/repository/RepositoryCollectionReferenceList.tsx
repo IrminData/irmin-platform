@@ -4,7 +4,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Repository } from '@/types/api/Repository';
+import { Repository } from '@/types/core/Repository';
 
 /**
  * Component to display a list of repositories and their collections.

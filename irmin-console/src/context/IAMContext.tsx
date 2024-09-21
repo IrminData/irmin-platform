@@ -20,7 +20,7 @@ import { usePopup } from '@/context/PopupContext';
 
 import { setCookie } from '@/utils/cookie';
 
-import { Profile } from '@/types/api/Profile';
+import { Profile } from '@/types/core/Profile';
 
 const IAMContext = createContext<{
   profile: Profile | null;

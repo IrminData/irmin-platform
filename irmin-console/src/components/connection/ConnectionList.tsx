@@ -7,7 +7,7 @@ import CardOrNormalList from '@/components/common/list/CardOrNormalList';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { Connection } from '@/types/api/Connection';
+import { Connection } from '@/types/core/Connection';
 import { GridRow } from '@/types/internal/ListProps';
 
 /**

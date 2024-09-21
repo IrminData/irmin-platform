@@ -26,7 +26,7 @@ import {
   IrminFileType,
   irminFileTypes,
   IrminFileTypeWithDetails,
-} from '@/types/api/Bucket';
+} from '@/types/core/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**

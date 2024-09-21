@@ -10,7 +10,7 @@ import { fetchWorkspaceProxy } from '@/services/proxies/workspace';
 
 import { setCookie } from '@/utils/cookie';
 
-import { Workspace } from '@/types/api/Workspace';
+import { Workspace } from '@/types/core/Workspace';
 
 /**
  * Hook to fetch the list of workspaces available to the user using the {@link IrminCore}.

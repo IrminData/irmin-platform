@@ -11,44 +11,38 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { downloadCSV } from '@/utils/csv';
 
-import { TableCollectionData } from '@/types/core/TableCollection';
+import { StreamCollectionData } from '@/types/core/StreamCollection';
 
 import AdvancedDatatable from './datatables/AdvancedDatatable';
 
 /**
- * Show the content of a table collection, eg. {@link TableCollectionData}.
+ * Show the content of a stream collection, eg. {@link StreamCollectionData}.
  *
  * @param props - The props to pass to the component
- * @param props.title - The title of the table
- * @param props.data - The data to display in the table
- * @param props.metadata - Additional metadata about the run
+ * @param props.title - The title of the stream
+ * @param props.data - The data to display
  * @param props.loading - Whether to show a loading skeleton
  */
-const TableData = ({
+const StreamData = ({
   title,
   data,
-  metadata,
   loading,
 }: {
   title: string;
-  data: TableCollectionData | null;
-  metadata: {
-    rowsReturned?: number;
-    timeTaken?: number;
-  };
+  data: StreamCollectionData | null;
   loading?: boolean;
 }) => {
   const { dict } = useLocale();
 
   const [filterText, setFilterText] = useState('');
-  const [filteredItems, setFilteredItems] = useState(data?.rows ?? []);
+  const [filteredItems, setFilteredItems] = useState(data?.entries ?? []);
 
   // Update the filtered items when the filter text changes
   useEffect(() => {
     const timer = setTimeout(() => {
       if (filterText && filterText.length > 0) {
         const newData =
-          data?.rows.filter((item) => {
+          data?.entries.filter((item) => {
             return Object.keys(item).some((key) => {
               const value =
                 key in item ? item[key as keyof typeof item] : undefined;
@@ -63,7 +57,7 @@ const TableData = ({
           }) ?? [];
         setFilteredItems(newData);
       } else {
-        setFilteredItems(data?.rows ?? []);
+        setFilteredItems(data?.entries ?? []);
       }
     }, 300);
 
@@ -78,11 +72,9 @@ const TableData = ({
       <div className='flex items-center justify-start px-4 py-1 text-xs'>
         <p className='ml-0 hidden text-gray-400 lg:inline'>{title}</p>
         <p className='inline text-[8px] text-irmin_blue md:ml-auto md:pl-2 lg:text-xs dark:text-irmin_green'>
-          {metadata && metadata.rowsReturned && metadata.timeTaken
-            ? `
-          ${metadata.rowsReturned} ${dict.query.rowsReturnedIn} ${metadata.timeTaken}ms
-        `
-            : ``}
+          {data?.isLive
+            ? dict.repository.schema.live
+            : dict.repository.schema.historical}
         </p>
         <div className='flex-grow'></div>
         <div className='ml-auto flex flex-row items-center gap-2'>
@@ -93,9 +85,9 @@ const TableData = ({
               variant='link'
               size='sm'
               className='hidden lg:inline-flex dark:text-white'
-              onClick={() => downloadCSV(data.rows ?? [], title)}
+              onClick={() => downloadCSV(data.entries ?? [], title)}
             >
-              {dict.query.exportTable}
+              {dict.repository.download}
             </Button>
           )}
           <input
@@ -122,4 +114,4 @@ const TableData = ({
   );
 };
 
-export default TableData;
+export default StreamData;

@@ -16,7 +16,7 @@ export default function EditorSection() {
   const { dict } = useLocale();
   const { openFileTabs } = useBucket();
   const { currentEditor } = useEditor();
-  const { fetchActionSingleResults, dataResults } = useData();
+  const { runScript, scriptResult } = useData();
 
   return (
     <>
@@ -24,21 +24,17 @@ export default function EditorSection() {
       {openFileTabs.length > 0 && (
         <QueryResults
           title={dict.query.results}
-          data={dataResults?.result ?? null}
-          metadata={{
-            rowsReturned: dataResults?.metadata?.rowsReturned,
-            timeTaken: dataResults?.metadata?.timeTaken,
-          }}
+          result={scriptResult}
           onSave={async () => {
             // TODO: Implement save functionality
           }}
           onRun={async () => {
             if (!currentEditor || !currentEditor.contents) return;
-            await fetchActionSingleResults({
-              type: currentEditor.language ?? 'sql',
-              content: currentEditor.contents ?? '',
-              branch: 'main',
-            });
+            await runScript(
+              currentEditor.language ?? 'sql',
+              currentEditor.contents ?? '',
+              'main'
+            )
           }}
         />
       )}

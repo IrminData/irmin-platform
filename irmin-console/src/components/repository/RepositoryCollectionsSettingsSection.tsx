@@ -10,8 +10,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Collection } from '@/types/api/Collection';
-import { Repository } from '@/types/api/Repository';
+import { Collection } from '@/types/core/Collection';
+import { Repository } from '@/types/core/Repository';
 
 /**
  * Section UI for selecting collections which should be part of this repository

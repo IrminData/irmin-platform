@@ -13,7 +13,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Repository } from '@/types/api/Repository';
+import { Repository } from '@/types/core/Repository';
 
 /**
  * Repository Documentation section component for displaying and updating the documentation

@@ -1,4 +1,4 @@
-import { Connector } from '@/types/api/Connector';
+import { Connector } from '@/types/core/Connector';
 
 /**
  * Get example connectors

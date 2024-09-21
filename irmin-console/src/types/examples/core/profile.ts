@@ -1,6 +1,6 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { Profile } from '@/types/api/Profile';
+import { Profile } from '@/types/core/Profile';
 
 import { roles } from './roles';
 import { workspaces } from './workspaces';

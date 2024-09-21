@@ -1,4 +1,4 @@
-import { WorkflowStatus } from '@/types/api/Workflow';
+import { WorkflowStatus } from '@/types/core/Workflow';
 
 /**
  * Status element

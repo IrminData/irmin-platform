@@ -14,12 +14,12 @@ import { GridRow } from '@/types/internal/ListProps';
  */
 export default function RepositoryCommitsSection() {
   const { dict, locale } = useLocale();
-  const { commitsResults, loadingCommits } = useData();
+  const { commits, loadingCommits } = useData();
 
   const rows: GridRow[] = useMemo(() => {
-    if (!commitsResults) return [];
+    if (!commits) return [];
     return (
-      commitsResults.data.commits.map((commit, i) => {
+      commits.map((commit, i) => {
         return {
           columns: [
             <div
@@ -48,7 +48,7 @@ export default function RepositoryCommitsSection() {
         };
       }) ?? []
     );
-  }, [commitsResults, locale]);
+  }, [commits, locale]);
 
   return (
     <div className='container relative mx-auto max-w-6xl px-2 md:px-4'>

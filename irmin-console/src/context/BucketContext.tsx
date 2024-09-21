@@ -18,7 +18,7 @@ import { usePopup } from '@/context/PopupContext';
 
 import { transformBucketToFileNavItem } from '@/utils/bucket';
 
-import { Bucket, BucketFile, BucketFolder } from '@/types/api/Bucket';
+import { Bucket, BucketFile, BucketFolder } from '@/types/core/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 import { useIAM } from './IAMContext';

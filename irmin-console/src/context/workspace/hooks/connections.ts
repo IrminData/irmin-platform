@@ -5,8 +5,8 @@ import { useCallback } from 'react';
 import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
-import { Connection } from '@/types/api/Connection';
-import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
+import { Connection } from '@/types/core/Connection';
+import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
 
 /**
  * Hook to fetch and update context for Connections of the current workspace using the {@link IrminCore}.

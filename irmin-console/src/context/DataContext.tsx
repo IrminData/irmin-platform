@@ -5,34 +5,24 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
-import {
-  ActionSingleRunRequest,
-  ActionSingleRunResult,
-} from '@/app/api/action-single-run/types';
-import { BranchesResponse } from '@/app/api/branches/types';
-import { CommitsResponse } from '@/app/api/commits/types';
-import { SchemaResponse } from '@/app/api/schema/types';
-import {
-  fetchBranchesService,
-  fetchCommitsService,
-  fetchSchemaService,
-  fetchSingleService,
-} from '@/services/data';
+import IrminCore from '@/services/core/IrminCore';
+import { QueryAPIResponse } from '@/services/core/resources/QueryService';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
+
+import { Branch } from '@/types/core/Branch';
+import { IrminFileType } from '@/types/core/Bucket';
+import { Collection, RepositorySchema } from '@/types/core/Collection';
+import { Commit } from '@/types/core/Commit';
 
 /**
  * Data context properties
- *
- * @typeParam loadingData - Loading state of data operations
- * @typeParam dataResults - Data results from the data lakehouse
- * @typeParam fetchActionSingleResults - Fetch single action results from the data lakehouse
  */
 interface DataContextProps {
   // Active data context state
@@ -41,20 +31,25 @@ interface DataContextProps {
   currentBranch: string | null;
   setCurrentBranch: (branch: string | null) => void;
   // Data state
-  loadingData: boolean;
-  dataResults: ActionSingleRunResult | null;
-  fetchActionSingleResults: (request: ActionSingleRunRequest) => Promise<void>;
+  runningScript: boolean;
+  scriptResult: QueryAPIResponse | null;
+  runScript: (
+    type: IrminFileType,
+    content: string,
+    branch: string,
+    collection?: Collection
+  ) => Promise<void>;
   // Data schema state
   loadingSchema: boolean;
-  schemaResults: SchemaResponse | null;
+  schema: RepositorySchema | null;
   fetchSchema: (collections: string[]) => Promise<void>;
   // Branches state
   loadingBranches: boolean;
-  branchesResults: BranchesResponse | null;
+  branches: Branch[] | null;
   fetchBranches: (repository: string) => Promise<void>;
   // Commits state
   loadingCommits: boolean;
-  commitsResults: CommitsResponse | null;
+  commits: Commit[] | null;
   fetchCommits: (repository: string, branch: string) => Promise<void>;
 }
 
@@ -86,9 +81,11 @@ export const DataProvider = ({
   const { irminAlert } = usePopup();
   const { token } = useIAM();
   const { locale } = useLocale();
-  const {
-    workspaces: { currentWorkspace },
-  } = useWorkspace();
+
+  const { branchService, commitService, schemaService, queryService } = useMemo(
+    () => new IrminCore(locale, token ?? ''),
+    [locale, token]
+  );
 
   // Active data context props
   const [currentRepository, setCurrentRepository] = useState<string | null>(
@@ -99,79 +96,68 @@ export const DataProvider = ({
   );
 
   // Data state
-  const [loadingData, setLoadingData] = useState<boolean>(false);
-  const [dataResults, setDataResults] = useState<ActionSingleRunResult | null>(
+  const [runningScript, setRunningScript] = useState<boolean>(false);
+  const [scriptResult, setScriptResult] = useState<QueryAPIResponse | null>(
     null
   );
 
   // Schema state
   const [loadingSchema, setLoadingSchema] = useState<boolean>(false);
-  const [schemaResults, setSchemaResults] = useState<SchemaResponse | null>(
-    null
-  );
+  const [schema, setSchema] = useState<RepositorySchema | null>(null);
 
   // Branches state
   const [loadingBranches, setLoadingBranches] = useState<boolean>(false);
-  const [branchesResults, setBranchesResults] =
-    useState<BranchesResponse | null>(null);
+  const [branches, setBranches] = useState<Branch[] | null>(null);
 
   // Commits state
   const [loadingCommits, setLoadingCommits] = useState<boolean>(false);
-  const [commitsResults, setCommitsResults] = useState<CommitsResponse | null>(
-    null
-  );
+  const [commits, setCommits] = useState<Commit[] | null>(null);
 
   /**
-   * Fetch single action results from the data lakehouse
+   * Execute a script
    *
-   * @param actionId - ID of the action to fetch results for
+   * The script can be either Irmin SQL query or a script to be executed in the Action Wrapper.
    */
-  const fetchActionSingleResults = useCallback(
-    async (request: ActionSingleRunRequest) => {
-      if (!request) return;
-      setLoadingData(true);
+  const runScript = useCallback(
+    async (
+      type: IrminFileType,
+      content: string,
+      branch: string,
+      collection?: Collection
+    ) => {
+      setRunningScript(true);
       try {
-        // Fetch data action results
-        const response = await fetchSingleService({
-          locale,
-          token: token ?? '',
-          workspace: currentWorkspace?.slug ?? '',
-          request: request,
-        });
-
-        if (!response || !response.data) return;
-        setDataResults(response.data);
+        const response = await queryService.runScript(
+          type,
+          content,
+          branch,
+          collection
+        );
+        setScriptResult(response);
       } catch (error) {
-        console.error('DataContext fetchActionSingleResults error', error);
+        console.error('DataContext runScript error', error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to fetch action results'
+          (error as Error)?.message ?? 'Failed to run script'
         );
       } finally {
-        setLoadingData(false);
+        setRunningScript(false);
       }
     },
-    [locale, token, currentWorkspace, irminAlert]
+    [queryService, irminAlert]
   );
 
   /**
-   * Fetch the schema for a list of collections, for example a repository
+   * Fetch the schema for a list of collections, for example repositories
    *
    * @param collections - List of collections to fetch the schema for
    */
   const fetchSchema = useCallback(
     async (collections: string[]) => {
-      if (!collections || collections.length === 0) return;
       setLoadingSchema(true);
       try {
-        // Fetch data action results
-        const response = await fetchSchemaService({
-          locale,
-          token: token ?? '',
-          workspace: currentWorkspace?.slug ?? '',
-          collections: collections,
-        });
-        setSchemaResults(response);
+        const response = await schemaService.fetchSchema(collections);
+        setSchema(response.data);
       } catch (error) {
         console.error('DataContext fetchSchema error', error);
         irminAlert(
@@ -182,7 +168,7 @@ export const DataProvider = ({
         setLoadingSchema(false);
       }
     },
-    [locale, token, currentWorkspace, irminAlert]
+    [schemaService, irminAlert]
   );
 
   /**
@@ -195,14 +181,8 @@ export const DataProvider = ({
       if (!repository) return;
       setLoadingBranches(true);
       try {
-        // Fetch data action results
-        const response = await fetchBranchesService({
-          locale,
-          token: token ?? '',
-          workspace: currentWorkspace?.slug ?? '',
-          repository: repository,
-        });
-        setBranchesResults(response);
+        const response = await branchService.fetchBranches(repository);
+        setBranches(response.data);
       } catch (error) {
         console.error('DataContext fetchBranches error', error);
         irminAlert(
@@ -213,7 +193,7 @@ export const DataProvider = ({
         setLoadingBranches(false);
       }
     },
-    [locale, token, currentWorkspace, irminAlert]
+    [branchService, irminAlert]
   );
 
   /**
@@ -227,15 +207,8 @@ export const DataProvider = ({
       if (!repository || !branch) return;
       setLoadingCommits(true);
       try {
-        // Fetch data action results
-        const response = await fetchCommitsService({
-          locale,
-          token: token ?? '',
-          workspace: currentWorkspace?.slug ?? '',
-          repository: repository,
-          branch: branch,
-        });
-        setCommitsResults(response);
+        const response = await commitService.fetchCommits(repository, branch);
+        setCommits(response.data);
       } catch (error) {
         console.error('DataContext fetchCommits error', error);
         irminAlert(
@@ -246,7 +219,7 @@ export const DataProvider = ({
         setLoadingCommits(false);
       }
     },
-    [locale, token, currentWorkspace, irminAlert]
+    [commitService, irminAlert]
   );
 
   /**
@@ -277,20 +250,20 @@ export const DataProvider = ({
         currentBranch,
         setCurrentBranch,
         // Data state
-        loadingData,
-        dataResults,
-        fetchActionSingleResults,
+        runningScript,
+        scriptResult,
+        runScript,
         // Schema state
         loadingSchema,
-        schemaResults,
+        schema,
         fetchSchema,
         // Branches state
         loadingBranches,
-        branchesResults,
+        branches,
         fetchBranches,
         // Commits state
         loadingCommits,
-        commitsResults,
+        commits,
         fetchCommits,
       }}
     >

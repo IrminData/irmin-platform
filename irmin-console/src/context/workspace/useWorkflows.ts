@@ -8,8 +8,8 @@ import {
   ActionWorkflow,
   ExportWorkflow,
   ImportWorkflow,
-} from '@/types/api/Workflow';
-import { Workspace } from '@/types/api/Workspace';
+} from '@/types/core/Workflow';
+import { Workspace } from '@/types/core/Workspace';
 
 import {
   useDeleteWorkflow,

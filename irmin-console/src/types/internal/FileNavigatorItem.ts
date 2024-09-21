@@ -1,4 +1,4 @@
-import { BucketFile, BucketFolder } from '@/types/api/Bucket';
+import { BucketFile, BucketFolder } from '@/types/core/Bucket';
 
 /**
  * File navigator item properties.

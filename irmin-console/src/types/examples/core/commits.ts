@@ -1,6 +1,6 @@
-import { Commit } from '@/types/internal/Commit';
+import { Commit } from '@/types/core/Commit';
 
-export const exampleCommits: Commit[] = [
+export const commits: () => Commit[] = () => [
   {
     hash: 'abc123',
     message: 'Initial commit',

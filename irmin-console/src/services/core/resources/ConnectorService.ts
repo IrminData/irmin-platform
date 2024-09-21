@@ -2,8 +2,8 @@ import IrminCore from '@/services/core/IrminCore';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { Connector } from '@/types/api/Connector';
-import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import { Connector } from '@/types/core/Connector';
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { exampleConnectors } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';

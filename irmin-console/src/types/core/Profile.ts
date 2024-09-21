@@ -1,5 +1,5 @@
-import { IrminRole } from '@/types/api/IrminRole';
-import { Workspace } from '@/types/api/Workspace';
+import { IrminRole } from '@/types/core/IrminRole';
+import { Workspace } from '@/types/core/Workspace';
 
 /**
  * Irmin user profile type

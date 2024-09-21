@@ -2,8 +2,8 @@ import IrminCore from '@/services/core/IrminCore';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
-import { Workspace } from '@/types/api/Workspace';
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import { Workspace } from '@/types/core/Workspace';
 import { exampleWorkspaces } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';

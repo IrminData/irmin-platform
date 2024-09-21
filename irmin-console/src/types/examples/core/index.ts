@@ -5,8 +5,9 @@
  * Used to simulate API responses, testing, working offline,
  * planning, development, and more
  */
-import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
+import { branches } from './branches';
 import { bucket } from './bucket';
 import {
   collections,
@@ -16,6 +17,7 @@ import {
   streamCollectionData,
   tableCollectionData,
 } from './collections';
+import { commits } from './commits';
 import { connections } from './connections';
 import { connectors } from './connectors';
 import { files } from './files';
@@ -38,12 +40,16 @@ import { workspaces } from './workspaces';
 export const exampleAPIResponse: IrminAPIResponse = {
   metadata: {
     allGood: 'yes',
+    itemsReturned: '12',
+    timeTaken: '1234',
   },
   message: 'This is example for IrminAPIResponse',
   errors: {
     everythingIsBroken: [
       'You are seeing an example response, instead of the real thing',
+      'This is because the API is not available',
     ],
+    offlineMode: ['You might also be in offline mode'],
   },
 };
 
@@ -81,6 +87,16 @@ export const exampleConnectors = connectors();
  * Fake repositories {@link repositories}
  */
 export const exampleRepositories = repositories();
+
+/**
+ * Fake branches {@link branches}
+ */
+export const exampleBranches = branches();
+
+/**
+ * Fake commits {@link commits}
+ */
+export const exampleCommits = commits();
 
 /**
  * Fake collections {@link collections}

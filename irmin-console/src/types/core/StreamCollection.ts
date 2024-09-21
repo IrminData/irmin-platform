@@ -1,7 +1,7 @@
 /**
  * Interface for defining a single entry in a stream.
  */
-interface StreamEntry {
+export interface StreamEntry {
   [key: string]: string | number | boolean;
 }
 
@@ -11,7 +11,7 @@ interface StreamEntry {
  * @typeParam type - Type of the data, always 'stream' for StreamCollectionData
  * @typeParam entries - List of entries in the stream
  */
-export interface StreamCollectionData {
+export interface StreamCollectionData extends StreamSchema {
   type: 'stream';
   entries: StreamEntry[];
 }

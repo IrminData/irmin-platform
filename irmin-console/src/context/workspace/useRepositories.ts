@@ -4,8 +4,8 @@ import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
-import { Repository } from '@/types/api/Repository';
-import { Workspace } from '@/types/api/Workspace';
+import { Repository } from '@/types/core/Repository';
+import { Workspace } from '@/types/core/Workspace';
 
 import {
   useCreateRepository,

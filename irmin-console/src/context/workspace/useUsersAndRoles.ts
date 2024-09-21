@@ -4,8 +4,8 @@ import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
-import { IrminRole } from '@/types/api/IrminRole';
-import { Workspace, WorkspaceUser } from '@/types/api/Workspace';
+import { IrminRole } from '@/types/core/IrminRole';
+import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
 
 import {
   useChangeUserRole,

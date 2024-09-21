@@ -2,15 +2,15 @@ import IrminCore from '@/services/core/IrminCore';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import {
   ActionWorkflow,
   ExportWorkflow,
   ImportWorkflow,
   Workflow,
   WorkflowRun,
-} from '@/types/api/Workflow';
-import { WorkspaceUser } from '@/types/api/Workspace';
+} from '@/types/core/Workflow';
+import { WorkspaceUser } from '@/types/core/Workspace';
 import {
   exampleActions,
   exampleExports,

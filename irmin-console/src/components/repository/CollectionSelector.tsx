@@ -3,8 +3,9 @@
 import { TbFile, TbFolder, TbTable } from 'react-icons/tb';
 
 import { useLocale } from '@/context/LocaleContext';
+import { useWorkspace } from '@/context/workspace';
 
-import { Repository } from '@/types/api/Repository';
+import { Repository } from '@/types/core/Repository';
 
 /**
  * Component for selecting repository collections styled like GitHub file browser
@@ -24,6 +25,10 @@ const CollectionSelector = ({
   setSelectedCollection: (collection: string | null) => void;
 }) => {
   const { dict } = useLocale();
+
+  const {
+    workflows: { allWorkflows },
+  } = useWorkspace();
 
   const getIconByType = (type: string) => {
     switch (type) {
@@ -49,7 +54,7 @@ const CollectionSelector = ({
         {repository.collections.map((item, idx) => (
           <div
             key={`${repository.slug}-collection-${idx}`}
-            className={`flex cursor-pointer flex-wrap items-center justify-between px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 ${
+            className={`flex cursor-pointer flex-row items-center justify-between rounded px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 ${
               selectedCollection === item.formatted_name
                 ? 'bg-gray-200 dark:bg-gray-700'
                 : ''
@@ -62,18 +67,24 @@ const CollectionSelector = ({
               )
             }
           >
-            <div className='flex items-center space-x-2'>
+            <div className='flex w-full items-center space-x-2'>
               {getIconByType(item.type)}
               <span className='text-sm'>{item.name}</span>
             </div>
-            <div className='text-xs text-gray-400'>
+            <div className='flex w-1/2 min-w-80 flex-col text-xs text-gray-400'>
               {dict.repository.schema.type}: {item.type}
+              {item.workflow && (
+                <p>
+                  {dict.repository.workflow}:{' '}
+                  {allWorkflows.find((w) => w.id === item.workflow)?.name}
+                </p>
+              )}
+              {item.original_repository !== repository.slug && (
+                <p>
+                  {dict.repository.collectionFrom}: {item.original_repository}
+                </p>
+              )}
             </div>
-            {item.original_repository !== repository.slug && (
-              <div className='w-full text-xs text-gray-400'>
-                {dict.repository.collectionFrom}: {item.original_repository}
-              </div>
-            )}
           </div>
         ))}
         {repository.collections.length === 0 && (

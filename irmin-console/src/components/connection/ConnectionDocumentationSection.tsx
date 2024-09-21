@@ -13,7 +13,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Connection } from '@/types/api/Connection';
+import { Connection } from '@/types/core/Connection';
 
 /**
  * Connection Documentation section component for displaying and updating the documentation

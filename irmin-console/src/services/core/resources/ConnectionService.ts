@@ -2,9 +2,9 @@ import IrminCore from '@/services/core/IrminCore';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { Connection } from '@/types/api/Connection';
-import { IrminAPIResponse } from '@/types/api/IrminAPIResponse';
-import { WorkspaceUser } from '@/types/api/Workspace';
+import { Connection } from '@/types/core/Connection';
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import { WorkspaceUser } from '@/types/core/Workspace';
 import { exampleConnections } from '@/types/examples/core';
 import exampleDynamicFields from '@/types/examples/exampleDynamicFields';
 import {

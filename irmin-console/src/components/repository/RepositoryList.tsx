@@ -7,7 +7,7 @@ import StatusBadge from '@/components/common/status/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { Repository } from '@/types/api/Repository';
+import { Repository } from '@/types/core/Repository';
 import { GridRow } from '@/types/internal/ListProps';
 
 /**

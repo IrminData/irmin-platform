@@ -1,5 +1,6 @@
 /**
  * Repository commit type
+ *
  * @typeParam hash - Hash of the commit
  * @typeParam message - Commit message
  * @typeParam description - Commit description

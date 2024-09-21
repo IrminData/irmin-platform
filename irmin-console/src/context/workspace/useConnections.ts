@@ -4,8 +4,8 @@ import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
-import { Connection } from '@/types/api/Connection';
-import { Workspace } from '@/types/api/Workspace';
+import { Connection } from '@/types/core/Connection';
+import { Workspace } from '@/types/core/Workspace';
 
 import {
   useDeleteConnection,

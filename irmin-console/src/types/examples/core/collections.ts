@@ -1,20 +1,14 @@
-import { Collection, RepositorySchema } from '@/types/api/Collection';
-import {
-  FileCollectionData,
-  FileSchema,
-} from '@/types/internal/FileCollection';
+import { Collection, RepositorySchema } from '@/types/core/Collection';
+import { FileCollectionData, FileSchema } from '@/types/core/FileCollection';
 import {
   FolderCollectionData,
   FolderSchema,
-} from '@/types/internal/FolderCollection';
+} from '@/types/core/FolderCollection';
 import {
   StreamCollectionData,
   StreamSchema,
-} from '@/types/internal/StreamCollection';
-import {
-  TableCollectionData,
-  TableSchema,
-} from '@/types/internal/TableCollection';
+} from '@/types/core/StreamCollection';
+import { TableCollectionData, TableSchema } from '@/types/core/TableCollection';
 
 /**
  * Get example Repository Collections
@@ -49,6 +43,7 @@ export const collections = (): Collection[] => [
     original_repository: 'main-google-analytics',
     formatted_name: 'main-google-analytics.sessions',
     type: 'table',
+    workflow: 0,
   },
   {
     id: 4,
@@ -56,6 +51,7 @@ export const collections = (): Collection[] => [
     original_repository: 'main-google-analytics',
     formatted_name: 'main-google-analytics.users',
     type: 'table',
+    workflow: 0,
   },
   {
     id: 5,
@@ -63,6 +59,7 @@ export const collections = (): Collection[] => [
     original_repository: 'main-google-analytics',
     formatted_name: 'main-google-analytics.pageviews',
     type: 'table',
+    workflow: 0,
   },
   {
     id: 6,
@@ -70,6 +67,7 @@ export const collections = (): Collection[] => [
     original_repository: 'main-google-analytics',
     formatted_name: 'main-google-analytics.events',
     type: 'table',
+    workflow: 0,
   },
   {
     id: 7,
@@ -77,6 +75,7 @@ export const collections = (): Collection[] => [
     original_repository: 'app-data',
     formatted_name: 'app-data.users',
     type: 'table',
+    workflow: 2,
   },
   {
     id: 8,
@@ -84,6 +83,7 @@ export const collections = (): Collection[] => [
     original_repository: 'app-data',
     formatted_name: 'app-data.downloads',
     type: 'table',
+    workflow: 2,
   },
   {
     id: 9,
@@ -91,6 +91,7 @@ export const collections = (): Collection[] => [
     original_repository: 'app-data',
     formatted_name: 'app-data.sessions',
     type: 'table',
+    workflow: 2,
   },
   {
     id: 10,
@@ -98,6 +99,7 @@ export const collections = (): Collection[] => [
     original_repository: 'app-data',
     formatted_name: 'app-data.purchase_events',
     type: 'table',
+    workflow: 2,
   },
   {
     id: 11,
@@ -105,13 +107,15 @@ export const collections = (): Collection[] => [
     original_repository: 'app-data',
     formatted_name: 'app-data.ad_clicks',
     type: 'table',
+    workflow: 2,
   },
   {
     id: 12,
     name: 'ad_impressions',
-    original_repository: 'app-use-data',
+    original_repository: 'app-data',
     formatted_name: 'app-data.ad_impressions',
     type: 'table',
+    workflow: 2,
   },
   {
     id: 13,
@@ -119,6 +123,7 @@ export const collections = (): Collection[] => [
     original_repository: 'kpis-from-excel',
     formatted_name: 'kpis-from-excel.sales',
     type: 'table',
+    workflow: 4,
   },
   {
     id: 14,
@@ -126,6 +131,7 @@ export const collections = (): Collection[] => [
     original_repository: 'kpis-from-excel',
     formatted_name: 'kpis-from-excel.expenses',
     type: 'table',
+    workflow: 4,
   },
   {
     id: 15,
@@ -133,6 +139,7 @@ export const collections = (): Collection[] => [
     original_repository: 'kpis-from-excel',
     formatted_name: 'kpis-from-excel.profit_by_month',
     type: 'table',
+    workflow: 4,
   },
   {
     id: 16,
@@ -196,6 +203,7 @@ export const collections = (): Collection[] => [
     original_repository: 'app-data',
     formatted_name: 'app-data.profile-images',
     type: 'folder',
+    workflow: 2,
   },
   {
     id: 25,
@@ -203,6 +211,7 @@ export const collections = (): Collection[] => [
     original_repository: 'app-data',
     formatted_name: 'app-data.audit-log',
     type: 'stream',
+    workflow: 2,
   },
   {
     id: 26,
@@ -210,6 +219,7 @@ export const collections = (): Collection[] => [
     original_repository: 'app-data',
     formatted_name: 'app-data.error-log',
     type: 'stream',
+    workflow: 2,
   },
   {
     id: 27,
@@ -217,6 +227,7 @@ export const collections = (): Collection[] => [
     original_repository: 'app-data',
     formatted_name: 'app-data.app-docker-file',
     type: 'file',
+    workflow: 2,
   },
 ];
 
@@ -487,50 +498,52 @@ const streamSchema = (): StreamSchema => ({
 /**
  * Get example {@link StreamCollectionData} object
  */
-export const streamCollectionData = (): StreamCollectionData => ({
-  type: 'stream',
-  entries: [
-    {
-      timestamp: '2021-10-01T12:00:00Z',
-      level: 'info',
-      message: 'This is an info message',
-    },
-    {
-      timestamp: '2021-10-01T12:01:00Z',
-      level: 'warning',
-      message: 'This is a warning message',
-    },
-    {
-      timestamp: '2021-10-01T12:02:00Z',
-      level: 'error',
-      message: 'This is an error message',
-    },
-    {
-      timestamp: '2021-10-01T12:03:00Z',
-      level: 'info',
-      message: 'This is another info message',
-    },
-    {
-      timestamp: '2021-10-01T12:04:00Z',
-      level: 'warning',
-      message: 'This is another warning message',
-    },
-    {
-      timestamp: '2021-10-01T12:05:00Z',
-      level: 'error',
-      message: 'This is another error message',
-    },
-  ],
-});
+export const streamCollectionData = (): StreamCollectionData => {
+  const schema = streamSchema();
+  return {
+    ...schema,
+    entries: [
+      {
+        timestamp: '2021-10-01T12:00:00Z',
+        level: 'info',
+        message: 'This is an info message',
+      },
+      {
+        timestamp: '2021-10-01T12:01:00Z',
+        level: 'warning',
+        message: 'This is a warning message',
+      },
+      {
+        timestamp: '2021-10-01T12:02:00Z',
+        level: 'error',
+        message: 'This is an error message',
+      },
+      {
+        timestamp: '2021-10-01T12:03:00Z',
+        level: 'info',
+        message: 'This is another info message',
+      },
+      {
+        timestamp: '2021-10-01T12:04:00Z',
+        level: 'warning',
+        message: 'This is another warning message',
+      },
+      {
+        timestamp: '2021-10-01T12:05:00Z',
+        level: 'error',
+        message: 'This is another error message',
+      },
+    ],
+  };
+};
 
 /**
  * Get exampe {@link FileSchema} object
  */
 const fileSchema = (): FileSchema => ({
   type: 'file',
-  name: 'example.jpg',
-  size: 1024,
-  extension: 'jpg',
+  name: 'example.png',
+  size: 23910,
   created_at: '2021-10-01T12:00:00Z',
   modified_at: '2021-10-01T12:00:00Z',
   metadata: {
@@ -541,10 +554,14 @@ const fileSchema = (): FileSchema => ({
 /**
  * Get example {@link FileCollectionData} object
  */
-export const fileCollectionData = (): FileCollectionData => ({
-  type: 'file',
-  content: 'This is example content of a file',
-});
+export const fileCollectionData = (): FileCollectionData => {
+  const schema = fileSchema();
+  return {
+    ...schema,
+    content:
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAADMElEQVR4nOzVwQnAIBQFQYXff81RUkQCOyDj1YOPnbXWPmeTRef+/3O/OyBjzh3CD95BfqICMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMO0TAAD//2Anhf4QtqobAAAAAElFTkSuQmCC',
+  };
+};
 
 /**
  * Get example {@link FolderSchema} object
@@ -577,18 +594,22 @@ const folderSchema = (): FolderSchema => ({
 /**
  * Get example {@link FolderCollectionData} object
  */
-export const folderCollectionData = (): FolderCollectionData => ({
-  type: 'folder',
-  items: folderSchema().items.map((item) => {
-    if (item.type === 'file') {
-      return {
-        ...item,
-        content: fileCollectionData().content,
-      };
-    }
-    return item;
-  }),
-});
+export const folderCollectionData = (): FolderCollectionData => {
+  const schema = folderSchema();
+  return {
+    ...schema,
+    name: 'example-folder',
+    items: folderSchema().items.map((item) => {
+      if (item.type === 'file') {
+        return {
+          ...item,
+          content: fileCollectionData().content,
+        };
+      }
+      return item;
+    }),
+  };
+};
 
 /**
  * Get example {@link RepositorySchema} object
