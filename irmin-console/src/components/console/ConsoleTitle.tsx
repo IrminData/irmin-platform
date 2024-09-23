@@ -21,7 +21,7 @@ const ConsoleTitle: React.FC<{
 }> = ({ title, showLogo }) => {
   return (
     <div
-      className={`px-4 pb-4 pt-8 text-center text-2xl font-bold text-irmin_black text-opacity-80 sm:text-3xl md:pb-8 md:pt-8 md:text-left lg:text-5xl dark:text-white`}
+      className={`px-4 pb-4 pt-12 text-center text-2xl font-bold text-irmin_black text-opacity-80 sm:text-3xl md:pb-8 md:pt-8 md:text-left lg:text-5xl dark:text-white`}
     >
       {showLogo && (
         <>

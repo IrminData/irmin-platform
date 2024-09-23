@@ -96,7 +96,10 @@ export default function WebsiteFooterContent({
             </div>
           </div>
           {/* Newsletter subscription form */}
-          <div className='order-3 min-w-96 overflow-hidden sm:w-[40%] md:ml-auto md:w-1/4 md:pr-2 lg:order-3 xl:w-1/6 xl:min-w-96'>
+          <div
+            id='footer-newsletter-form'
+            className='order-3 min-w-96 overflow-hidden sm:w-[40%] md:ml-auto md:w-1/4 md:pr-2 lg:order-3 xl:w-1/6 xl:min-w-96'
+          >
             <div className='flex flex-col items-start'>
               <div className='max-w-64'>
                 <h3 className='mb-3 text-left text-lg font-medium text-white text-opacity-80'>

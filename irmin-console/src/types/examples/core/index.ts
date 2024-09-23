@@ -49,6 +49,7 @@ export const exampleAPIResponse: IrminAPIResponse = {
       This is a fake response, not the real thing.
       You might also be in offline mode.
     `,
+    message: 'This is example for IrminAPIResponse',
   },
   message: 'This is example for IrminAPIResponse',
   errors: {

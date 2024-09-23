@@ -56,3 +56,10 @@ package-lock.json
 
 # Generated TypeDoc documentation
 /public/frontend-docs
+
+# Playwright e2e test results
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

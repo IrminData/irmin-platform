@@ -83,13 +83,20 @@ Create a `.env` file in the project root. Add the following environment variable
 
 ```text
 NEXT_PUBLIC_BASE_URL=https://irmin.dev  # Base URL of the application
+NEXT_PUBLIC_ENVIRONMENT_TYPE=development  # Environment type
+NEXT_PUBLIC_API_URL=https://api.irmin.dev  # API endpoint URL
+NEXT_PUBLIC_WORDPRESS_URL=https://cms.irmin.dev  # WordPress CMS URL
+
+NEXT_PUBLIC_TOKEN_MAX_AGE=1800 # 30 minutes, how long are the token and profile data valid, before they are refetched
+
 REQUIRE_ENV_AUTH=true  # Enable environment-specific authentication
 ENV_PASSWORD=devpassword  # Password for environment authentication
-NEXT_PUBLIC_API_URL=https://api.irmin.dev  # API endpoint URL
+
 NEXT_PUBLIC_OFFLINE_MODE=false  # Toggle offline mode
-NEXT_PUBLIC_WORDPRESS_URL=https://cms.irmin.dev  # WordPress CMS URL
-NEXT_PUBLIC_ENVIRONMENT_TYPE=development  # Environment type
-NEXT_PUBLIC_TOKEN_MAX_AGE=1800 # 30 minutes, how long are the token and profile data valid, before they are refetched
+
+TEST_USER_EMAIL=example@example.com # Irmin user email to run tests with
+TEST_USER_PASSWORD=12345678 # Irmin user password to run tests with
+TEST_USER_WORKSPACE=Demo # Workspace available for the test user
 ```
 
 ## Running the Project
