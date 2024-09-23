@@ -30,17 +30,17 @@ const WorkflowList = ({
       {
         label: dict.list.view,
         primary: true,
-        href: `/${locale}/portal/${workspace}/workflows/${item.slug}`,
+        href: `/${locale}/console/${workspace}/workflows/${item.slug}`,
       },
       {
         label: dict.list.edit,
         primary: false,
-        href: `/${locale}/portal/${workspace}/workflows/${item.slug}/settings`,
+        href: `/${locale}/console/${workspace}/workflows/${item.slug}/settings`,
       },
       {
         label: dict.list.logs,
         primary: false,
-        href: `/${locale}/portal/${workspace}/logs/workflow/${item.slug}`,
+        href: `/${locale}/console/${workspace}/logs/workflow/${item.slug}`,
       },
     ];
     return {

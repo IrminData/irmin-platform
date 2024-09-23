@@ -98,7 +98,7 @@ export default function RepositoryCollectionsSettingsSection({
               size='sm'
               variant='link'
               colorScheme='gray'
-              href={`/${locale}/portal/${currentWorkspace?.slug ?? ''}/repositories/${repository?.slug ?? ''}/settings`}
+              href={`/${locale}/console/${currentWorkspace?.slug ?? ''}/repositories/${repository?.slug ?? ''}/settings`}
             >
               {dict.repository.settings.generalSettings}
             </Button>

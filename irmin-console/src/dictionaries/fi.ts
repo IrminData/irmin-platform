@@ -10,7 +10,7 @@ const fi = {
   },
   website: {
     navigation: {
-      goToPortal: 'Portal',
+      goToConsole: 'Konsoli',
       getStarted: 'Aloita',
     },
     footer: {
@@ -71,7 +71,7 @@ const fi = {
     weEncounteredError: 'Kohtasimme virheen',
     tryAgainOrContactSupport: 'Yritä uudelleen tai ota yhteyttä tukeen',
     goBackHome: 'Mene takaisin kotisivulle',
-    goBackPortal: 'Palaa Irmin-sovellukseen',
+    goBackConsole: 'Palaa Irmin-konsoliin',
     back: 'Takaisin',
     tryAgain: 'Yritä uudelleen',
     success: 'Onnistui',
@@ -137,10 +137,10 @@ const fi = {
         'Sinun on hyväksyttävä käyttöehdot ja tietosuojaseloste jatkaaksesi.',
     },
   },
-  portalNavigation: {
+  consoleNavigation: {
     search: 'Hae',
     searchPlaceholder: 'Etsi tietoja ja muuta',
-    irminPortal: 'Irmin-sovellus',
+    irminConsole: 'Irmin-konsoli',
     workspace: 'Työtila',
     settings: 'Asetukset',
     usefulLinks: 'Hyödylliset linkit',
@@ -176,7 +176,7 @@ const fi = {
       termsAndPrivacy: 'Käyttöehdot ja tietosuoja',
     },
   },
-  portalHome: {
+  consoleHome: {
     welcomeToWorkspace: 'Aloita työskentely valitsemalla näillä toiminnoilla:',
     createNewConnection: 'Luo uusi yhteys',
     createNewConnectionDescription:

@@ -25,12 +25,12 @@ import {
  *
  * @remarks
  *
- * This component is used to display a file navigator in the portal.
+ * This component is used to display a file navigator in the console.
  * It displays a list of files and folders in a tree structure.
  *
  * It includes a context menu to open, delete, and rename files.
  *
- * The file navigator is used to browse and manage files in the portal.
+ * The file navigator is used to browse and manage files in the console.
  *
  * @param fileNavigatorProps - The props for the file navigator
  * @param fileNavigatorProps.items - The items to display in the file navigator

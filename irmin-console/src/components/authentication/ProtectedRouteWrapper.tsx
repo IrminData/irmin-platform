@@ -16,7 +16,7 @@ import { useIAM } from '@/context/IAMContext';
  * This component is used to protect routes that require authentication.
  * It checks if the user is authenticated and redirects to the sign-in page if not.
  *
- * It is used by the portal layout to wrap routes.
+ * It is used by the console layout to wrap routes.
  *
  * Uses {@link useIAM} to interact with the user's identity and APIs.
  *

@@ -4,7 +4,7 @@ import { useCallback, useRef } from 'react';
 
 import Image from 'next/image';
 
-import { WorkspaceLayoutParams } from '@/app/[lang]/portal/[workspace]/layout';
+import { WorkspaceLayoutParams } from '@/app/[lang]/console/[workspace]/layout';
 import { usePDF } from 'react-to-pdf';
 
 import { BsFilePdf } from 'react-icons/bs';
@@ -12,7 +12,7 @@ import { BsFilePdf } from 'react-icons/bs';
 import Button from '@/components/common/button/Button';
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 import StatusBadge from '@/components/common/status/StatusBadge';
-import PortalTitle from '@/components/portal/PortalTitle';
+import ConsoleTitle from '@/components/console/ConsoleTitle';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -66,7 +66,7 @@ export default function DocumentationSection({
     <div className='container relative mx-auto max-w-6xl'>
       <div className='flex flex-col px-2 md:px-4'>
         <div className='flex flex-row items-center justify-between'>
-          <PortalTitle title={dict.documentation.documentation} />
+          <ConsoleTitle title={dict.documentation.documentation} />
           <Button
             variant='solid'
             colorScheme='primary'

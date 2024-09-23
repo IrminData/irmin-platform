@@ -60,41 +60,41 @@ export default function RepositoryLayoutWrapper({
     () => [
       {
         title: dict.repository.tabs.dataViewer,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}`,
+        href: `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}`,
+          `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}`,
         icon: <TbDatabase size={14} />,
       },
       {
         title: dict.repository.tabs.commits,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/commits`,
+        href: `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}/commits`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/commits`,
+          `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}/commits`,
         icon: <TbHistory size={14} />,
       },
       {
         title: dict.repository.tabs.branches,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/branches`,
+        href: `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}/branches`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/branches`,
+          `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}/branches`,
         icon: <TbGitBranch size={14} />,
       },
       {
         title: dict.repository.tabs.documentation,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/documentation`,
+        href: `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}/documentation`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/documentation`,
+          `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}/documentation`,
         icon: <TbFileText size={14} />,
       },
       {
         title: dict.repository.tabs.settings,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/settings`,
+        href: `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}/settings`,
         active: currentPath.includes(
-          `/${locale}/portal/${workspaceSlug}/repositories/${repoSlug}/settings`
+          `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}/settings`
         ),
         icon: <TbSettings size={14} />,
         hide: repository?.is_immutable,
@@ -165,7 +165,7 @@ export default function RepositoryLayoutWrapper({
             variant='icon'
             colorScheme='black'
             className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-700'
-            href={`/${locale}/portal/${workspaceSlug}/repositories`}
+            href={`/${locale}/console/${workspaceSlug}/repositories`}
           >
             <IoChevronBack size={24} />
           </Button>

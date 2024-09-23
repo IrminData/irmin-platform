@@ -30,12 +30,12 @@ const ConnectionList = ({
       {
         label: dict.list.view,
         primary: true,
-        href: `/${locale}/portal/${workspace}/connections/${item.slug}`,
+        href: `/${locale}/console/${workspace}/connections/${item.slug}`,
       },
       {
         label: dict.list.edit,
         primary: false,
-        href: `/${locale}/portal/${workspace}/connections/${item.slug}/settings`,
+        href: `/${locale}/console/${workspace}/connections/${item.slug}/settings`,
       },
     ];
 

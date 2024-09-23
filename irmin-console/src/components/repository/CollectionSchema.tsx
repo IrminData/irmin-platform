@@ -81,7 +81,7 @@ export default function CollectionSchema({
             colorScheme='light'
             variant='solid'
             className='w-full'
-            href={`/${locale}/portal/${currentWorkspace?.slug}/workflows/${matchedWorkflow.slug}`}
+            href={`/${locale}/console/${currentWorkspace?.slug}/workflows/${matchedWorkflow.slug}`}
           >
             {dict.repository.viewWorkflow}
           </Button>

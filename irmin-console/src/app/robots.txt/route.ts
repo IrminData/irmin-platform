@@ -7,7 +7,7 @@
  * about which pages to crawl and which to avoid.
  *
  * Currently, the route is set to allow all pages to be crawled
- * except for the API routes, docs, Irmin Portal and Next.js files.
+ * except for the API routes, docs, Irmin Console and Next.js files.
  *
  * @returns response - text file with instructions for web crawlers
  */
@@ -20,7 +20,7 @@ export async function GET() {
     Disallow: /api/
     Disallow: /_next/
     Disallow: /frontend-docs/
-    Disallow: /portal/
+    Disallow: /console/
     
     # Sitemaps
     Sitemap: ${app_base}/sitemap.xml

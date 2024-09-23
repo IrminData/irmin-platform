@@ -37,7 +37,7 @@ const RepositoryList = ({
       {
         label: dict.list.view,
         primary: true,
-        href: `/${locale}/portal/${workspace}/repositories/${item.slug}`,
+        href: `/${locale}/console/${workspace}/repositories/${item.slug}`,
       },
     ];
 

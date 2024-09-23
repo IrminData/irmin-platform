@@ -14,7 +14,7 @@ import { useWorkspace } from '@/context/workspace';
  *
  * @remarks
  *
- * This component is used to manage workspaces in the portal.
+ * This component is used to manage workspaces in the console.
  * Here, users can create new workspaces and navigate to existing ones.
  *
  * It uses the {@link useWorkspace} Context to fetch and manage workspace data.

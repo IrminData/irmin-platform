@@ -63,46 +63,46 @@ export default function WorkflowLayoutWrapper({
     () => [
       {
         title: dict.workflow.tabs.overview,
-        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}`,
+        href: `/${locale}/console/${workspaceSlug}/workflows/${workflow?.slug}`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}`,
+          `/${locale}/console/${workspaceSlug}/workflows/${workflow?.slug}`,
         icon: <TbRun size={14} />,
         hide: false,
       },
       {
         title: dict.workflow.tabs.data,
-        href: `/${locale}/portal/${workspaceSlug}/repositories/${repositorySlug ?? ''}`,
+        href: `/${locale}/console/${workspaceSlug}/repositories/${repositorySlug ?? ''}`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/repositories/${repositorySlug ?? ''}`,
+          `/${locale}/console/${workspaceSlug}/repositories/${repositorySlug ?? ''}`,
         icon: <TbDatabase size={14} />,
         hide: !repositorySlug,
       },
       {
         title: dict.workflow.tabs.documentation,
-        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/documentation`,
+        href: `/${locale}/console/${workspaceSlug}/workflows/${workflow?.slug}/documentation`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/documentation`,
+          `/${locale}/console/${workspaceSlug}/workflows/${workflow?.slug}/documentation`,
         icon: <TbFileText size={14} />,
         hide: false,
       },
       {
         title: dict.workflow.tabs.logs,
-        href: `/${locale}/portal/${workspaceSlug}/logs/workflow/${workflow?.slug}`,
+        href: `/${locale}/console/${workspaceSlug}/logs/workflow/${workflow?.slug}`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/logs/workflow/${workflow?.slug}`,
+          `/${locale}/console/${workspaceSlug}/logs/workflow/${workflow?.slug}`,
         icon: <TbLogs size={14} />,
         hide: false,
       },
       {
         title: dict.workflow.tabs.settings,
-        href: `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/settings`,
+        href: `/${locale}/console/${workspaceSlug}/workflows/${workflow?.slug}/settings`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/workflows/${workflow?.slug}/settings`,
+          `/${locale}/console/${workspaceSlug}/workflows/${workflow?.slug}/settings`,
         icon: <TbSettings size={14} />,
         hide: false,
       },
@@ -162,7 +162,7 @@ export default function WorkflowLayoutWrapper({
             variant='icon'
             colorScheme='black'
             className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-700'
-            href={`/${locale}/portal/${workspaceSlug}/workflows`}
+            href={`/${locale}/console/${workspaceSlug}/workflows`}
           >
             <IoChevronBack size={24} />
           </Button>

@@ -36,10 +36,10 @@ const NewTabContent = ({ addNewTab }: { addNewTab: () => void }) => {
             <TbDatabase className='text-2xl lg:text-4xl' />
           </div>
           <h2 className='text-base font-medium lg:text-lg'>
-            {dict.portalHome.browseRepositories}
+            {dict.consoleHome.browseRepositories}
           </h2>
           <p className='text-xs text-gray-600 lg:text-sm dark:text-gray-400'>
-            {dict.portalHome.browseRepositoriesDescription}
+            {dict.consoleHome.browseRepositoriesDescription}
           </p>
         </Link>
       </div>

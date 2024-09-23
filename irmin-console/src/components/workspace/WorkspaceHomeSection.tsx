@@ -24,7 +24,7 @@ const WorkspaceHomeSection = () => {
             {currentWorkspace?.name}
           </h2>
           <p className='text-center text-sm opacity-80'>
-            {dict.portalHome.welcomeToWorkspace}
+            {dict.consoleHome.welcomeToWorkspace}
           </p>
         </div>
         <div className='flex w-full flex-wrap items-center justify-center gap-8'>
@@ -36,10 +36,10 @@ const WorkspaceHomeSection = () => {
               <GoWorkflow className='text-2xl lg:text-4xl' />
             </div>
             <h2 className='text-base font-medium lg:text-lg'>
-              {dict.portalHome.createNewConnection}
+              {dict.consoleHome.createNewConnection}
             </h2>
             <p className='text-xs text-gray-600 lg:text-sm dark:text-gray-400'>
-              {dict.portalHome.createNewConnectionDescription}
+              {dict.consoleHome.createNewConnectionDescription}
             </p>
           </Link>
 
@@ -51,10 +51,10 @@ const WorkspaceHomeSection = () => {
               <TbPlayerPlay className='text-2xl lg:text-4xl' />
             </div>
             <h2 className='text-base font-medium lg:text-lg'>
-              {dict.portalHome.runScriptOnData}
+              {dict.consoleHome.runScriptOnData}
             </h2>
             <p className='text-xs text-gray-600 lg:text-sm dark:text-gray-400'>
-              {dict.portalHome.runScriptOnDataDescription}
+              {dict.consoleHome.runScriptOnDataDescription}
             </p>
           </Link>
 
@@ -66,10 +66,10 @@ const WorkspaceHomeSection = () => {
               <TbRun className='text-2xl lg:text-4xl' />
             </div>
             <h2 className='text-base font-medium lg:text-lg'>
-              {dict.portalHome.setupWorkflow}
+              {dict.consoleHome.setupWorkflow}
             </h2>
             <p className='text-xs text-gray-600 lg:text-sm dark:text-gray-400'>
-              {dict.portalHome.setupWorkflowDescription}
+              {dict.consoleHome.setupWorkflowDescription}
             </p>
           </Link>
 
@@ -81,10 +81,10 @@ const WorkspaceHomeSection = () => {
               <TbDatabase className='text-2xl lg:text-4xl' />
             </div>
             <h2 className='text-base font-medium lg:text-lg'>
-              {dict.portalHome.browseRepositories}
+              {dict.consoleHome.browseRepositories}
             </h2>
             <p className='text-xs text-gray-600 lg:text-sm dark:text-gray-400'>
-              {dict.portalHome.browseRepositoriesDescription}
+              {dict.consoleHome.browseRepositoriesDescription}
             </p>
           </Link>
         </div>

@@ -16,7 +16,7 @@ import ProfileImagePlaceholder from '../common/ProfileImagePlaceholder';
  * @remarks
  *
  * This component is used to display a workspace card in the workspace switcher
- * on the portal home page. It displays the workspace name and some details.
+ * on the console home page. It displays the workspace name and some details.
  *
  * It allows users to switch to the workspace by clicking on the card.
  */

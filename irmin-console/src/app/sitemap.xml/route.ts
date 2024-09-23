@@ -12,7 +12,7 @@ import { getURL } from '@/utils/wordpress';
  *
  * The sitemap includes all static pages, posts and pages fetched from the WordPress API.
  *
- * Note that the sitemap does not include the API, docs or Irmin Portal routes.
+ * Note that the sitemap does not include the API, docs or Irmin Console routes.
  *
  * @returns XML sitemap for the website
  */

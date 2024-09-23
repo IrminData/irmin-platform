@@ -81,7 +81,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
           {
             label: dict.list.logs,
             primary: false,
-            href: `/${locale}/portal/${currentWorkspace?.slug}/logs/workflow/${workflow.slug}/run/${run.id}`,
+            href: `/${locale}/console/${currentWorkspace?.slug}/logs/workflow/${workflow.slug}/run/${run.id}`,
           },
         ],
       })) ?? []
@@ -125,7 +125,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`/${locale}/portal/${currentWorkspace?.slug}/connections/${(workflow as ImportWorkflow).workflowable.connection.slug}`}
+                href={`/${locale}/console/${currentWorkspace?.slug}/connections/${(workflow as ImportWorkflow).workflowable.connection.slug}`}
               >
                 <p className='text-base'>
                   {(workflow as ImportWorkflow).workflowable.connection.name}
@@ -140,7 +140,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`/${locale}/portal/${currentWorkspace?.slug}/repositories/${(workflow as ImportWorkflow).workflowable.repository.slug}`}
+                href={`/${locale}/console/${currentWorkspace?.slug}/repositories/${(workflow as ImportWorkflow).workflowable.repository.slug}`}
               >
                 <p className='text-base'>
                   {(workflow as ImportWorkflow).workflowable.repository.name}
@@ -165,7 +165,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`/${locale}/portal/${currentWorkspace?.slug}/connections/${(workflow as ExportWorkflow).workflowable.connection.slug}`}
+                href={`/${locale}/console/${currentWorkspace?.slug}/connections/${(workflow as ExportWorkflow).workflowable.connection.slug}`}
               >
                 <p className='text-base'>
                   {(workflow as ExportWorkflow).workflowable.connection.name}
@@ -180,7 +180,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`/${locale}/portal/${currentWorkspace?.slug}/repositories/${(workflow as ExportWorkflow).workflowable.repository.slug}`}
+                href={`/${locale}/console/${currentWorkspace?.slug}/repositories/${(workflow as ExportWorkflow).workflowable.repository.slug}`}
               >
                 <p className='text-base'>
                   {(workflow as ExportWorkflow).workflowable.repository.name}

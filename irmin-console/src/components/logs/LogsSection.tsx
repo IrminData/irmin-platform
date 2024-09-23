@@ -92,7 +92,7 @@ export default function LogsSection({ workflow }: { workflow?: string }) {
               <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
                 <Link
                   className='hover:underline'
-                  href={`/${locale}/portal/${workspaceSlug}/workflows/${workflow}`}
+                  href={`/${locale}/console/${workspaceSlug}/workflows/${workflow}`}
                 >
                   {selectedWorkflow.name}
                 </Link>

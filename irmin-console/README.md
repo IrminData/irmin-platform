@@ -156,7 +156,7 @@ Components are located in the `src/components` directory. Components are split i
 General components are:
 
 - `src/components/website/...` -> Components specific to the website pages
-- `src/components/portal/...` -> Components specific to the portal pages
+- `src/components/console/...` -> Components specific to the console pages
 - `src/components/common/...` -> Components that are used in multiple places, like popups, buttons, lists etc.
 
  If a component is used only in a specific feature, it should be placed in the feature directory grouped by features, purposes or domains. 
@@ -173,7 +173,7 @@ The project is written in TypeScript. When developing, try to always define type
 
 Types can be found in the `types` directory. If you need to create a new type, add it to the `types` directory under the correct subdirectory and import it where needed.
 
-`types/core` contains types for API responses. `types/website` contains types for website components and Wordpress API. `types/internal` contains types used by the portal internally.
+`types/core` contains types for API responses. `types/website` contains types for website components and Wordpress API. `types/internal` contains types used by the console internally.
 
 Avoid creating types inside components. Instead, create them in the `types` directory and import them where needed. If you still decide to create a type inside a component, ensure it is only used within that component and not exported.
 
@@ -359,7 +359,7 @@ See (Internationalisation)[#internationalisation] for more information.
 
 [PopupContext](src/context/PopupContext.tsx)
 
-PopupContext is used to manage the popup state across the application. It provides functions to open and close different popups. PopupProvider is wrapping the [Portal Layout](src/app/[lang]/portal/layout.tsx) of the application, since it is only used in the portal.
+PopupContext is used to manage the popup state across the application. It provides functions to open and close different popups. PopupProvider is wrapping the [Console Layout](src/app/[lang]/console/layout.tsx) of the application, since it is only used in the console.
 
 The context is not using any API Services and exists mostly for convinience and to render the popups on top of other UIs.
 
@@ -371,9 +371,9 @@ The popup UIs can be found in the `src/components/common/popup` directory.
 
 BucketContext is used to manage the bucket and file navigator state across the application. It provides the bucket data, file navigator data, and a lot of functions around them.
 
-BucketProvider is wrapping the [Workspace Layout](src/app/[lang]/portal/[workspace]/layout.tsx) of the application, since it only relates to a specific workspace.
+BucketProvider is wrapping the [Workspace Layout](src/app/[lang]/console/[workspace]/layout.tsx) of the application, since it only relates to a specific workspace.
 
-See [Bucket API Service](src/services/core/resources/BucketService.ts) and [the Editor](src/app/[lang]/portal/[workspace]/editor/layout.tsx) for more information.
+See [Bucket API Service](src/services/core/resources/BucketService.ts) and [the Editor](src/app/[lang]/console/[workspace]/editor/layout.tsx) for more information.
 
 ### WorkspaceContext
 

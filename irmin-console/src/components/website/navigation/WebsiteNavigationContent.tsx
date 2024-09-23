@@ -212,7 +212,7 @@ export default function WebsiteNavigationContent({
                   (profile ? (
                     <>
                       <Link
-                        href='/portal/profile'
+                        href='/console/profile'
                         className='flex max-w-44 flex-row items-center gap-2 overflow-hidden pr-4 transition-all hover:opacity-40 lg:max-w-56'
                       >
                         {profile.profile_picture ? (
@@ -238,11 +238,11 @@ export default function WebsiteNavigationContent({
                         variant='gradient'
                         colorScheme='light'
                         className='min-w-32 py-2 pl-6 pr-3 text-xs font-normal md:text-sm xl:text-sm'
-                        href='/portal'
+                        href='/console'
                         iconFirst={false}
                         icon={<IoEnterOutline size={24} className='ml-1' />}
                       >
-                        {dict.website.navigation.goToPortal}
+                        {dict.website.navigation.goToConsole}
                       </Button>
                     </>
                   ) : (
@@ -321,7 +321,7 @@ export default function WebsiteNavigationContent({
                 {!isLoading &&
                   (profile ? (
                     <Button
-                      href='/portal'
+                      href='/console'
                       size='md'
                       colorScheme='light'
                       variant='gradient'
@@ -329,7 +329,7 @@ export default function WebsiteNavigationContent({
                       onClick={closeMenu}
                       icon={<IoEnterOutline size={24} className='ml-1' />}
                     >
-                      {dict.website.navigation.goToPortal}
+                      {dict.website.navigation.goToConsole}
                     </Button>
                   ) : (
                     <div className='flex w-full flex-col items-center justify-stretch gap-2'>
@@ -359,7 +359,7 @@ export default function WebsiteNavigationContent({
 
                 {!isLoading && profile && (
                   <Link
-                    href='/portal/profile'
+                    href='/console/profile'
                     className='mt-6 flex w-full flex-row items-center justify-center gap-2 overflow-hidden transition-all hover:opacity-40'
                   >
                     {profile.profile_picture ? (

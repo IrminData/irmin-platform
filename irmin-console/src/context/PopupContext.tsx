@@ -16,7 +16,7 @@ import NotificationPopup from '@/components/common/popup/NotificationPopup';
  * {@link Alert}, {@link Confirm} and {@link Modal} components.
  *
  * When shown, these components will be rendered on top of the current view,
- * in the portal layout.
+ * in the console layout.
  *
  * @param irminAlert - Function to show an alert
  * @param irminConfirm - Function to show a confirmation popup

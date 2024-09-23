@@ -1,0 +1,332 @@
+'use client';
+
+import React, { ComponentPropsWithoutRef } from 'react';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+
+import { TbChevronLeft, TbChevronRight, TbSearch } from 'react-icons/tb';
+
+import ThemeSwitch from '@/components/common/ThemeSwitch';
+
+import { useLocale } from '@/context/LocaleContext';
+
+import { useBreakpoint } from '@/utils/tw';
+
+import ConsoleNavigationLink from './ConsoleNavigationLink';
+import ConsoleNavigationProfile from './ConsoleNavigationProfile';
+import ConsoleNavigationWorkspaceSwitcher from './ConsoleNavigationWorkspaceSwitcher';
+import useConsoleNavigationLinks from './useConsoleNavigationLinks';
+
+/**
+ * Console navigation component
+ *
+ * @remarks
+ *
+ * This component is used to display the console navigation sidebar and top bar.
+ *
+ * The sidebar can be folded or unfolded. It contains the navigation links,
+ * {@link ConsoleNavigationProfile}, and {@link ConsoleNavigationWorkspaceSwitcher}.
+ *
+ * Console navigation component also contains the search bar and the notifications button.
+ *
+ * Links are fetched from {@link useConsoleNavigationLinks} context and displayed using {@link ConsoleNavigationLink}.
+ */
+export default function ConsoleWrapper({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  const { dict } = useLocale();
+  const { workspace: workspaceSlug } = useParams();
+
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isMenuFolded, setIsMenuFolded] = React.useState(false);
+
+  const links = useConsoleNavigationLinks();
+
+  const isLargeScreen = useBreakpoint('lg');
+  const foldMenu = isLargeScreen ? isMenuFolded : false;
+
+  return (
+    <div className='contents' id='console-wrapper'>
+      {/* Console wrapper structure */}
+      <div className='flex w-screen flex-row items-start justify-start gap-0'>
+        {/* Console navigation sidebar */}
+        <div
+          id='console-sidebar-wrapper'
+          className={`scrollbar-hide h-screen overflow-y-scroll border-r bg-white transition-all duration-300 dark:border-gray-800 dark:bg-irmin_black ${
+            isMenuOpen ? 'absolute z-10 block' : 'hidden lg:relative lg:block'
+          } ${foldMenu ? 'w-20' : 'w-60'}`}
+        >
+          <div
+            id='console-sidebar'
+            className={`relative flex h-full w-full flex-col justify-between`}
+          >
+            <div
+              id='console-sidebar-main-content'
+              className={`mt-12 flex flex-col justify-start ${foldMenu ? 'mt-24 gap-0' : 'gap-6'} md:mt-1`}
+            >
+              {/* Logo, notifications and fold button */}
+              <div
+                id='console-sidebar-header'
+                className='z-40 flex w-full items-center justify-start gap-4 px-4 pt-4 md:pl-6'
+              >
+                <div
+                  className={`block transition-all duration-300 ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}`}
+                >
+                  <Link href='/' aria-label='Go to website home page'>
+                    <Image
+                      className={'block h-[24px] dark:hidden'}
+                      src='/irmin-logo.svg'
+                      alt='Irmin logo'
+                      width={100}
+                      height={100}
+                    />
+                    <Image
+                      className={'hidden h-[24px] dark:block'}
+                      src='/irmin-logo-light.svg'
+                      alt='Irmin logo'
+                      width={100}
+                      height={100}
+                    />
+                  </Link>
+                </div>
+                {!foldMenu && (
+                  <div className='pl-4'>
+                    <ThemeSwitch />
+                  </div>
+                )}
+                <button
+                  className={`hover:irmin_teal absolute top-[16px] hidden text-irmin_blue transition-all hover:text-irmin_teal lg:top-[15px] lg:block dark:text-irmin_teal dark:hover:text-irmin_blue ${
+                    !foldMenu ? 'right-2' : 'left-6'
+                  }`}
+                  aria-label='Fold the side navigation'
+                  onClick={() => setIsMenuFolded(!foldMenu)}
+                >
+                  {foldMenu ? (
+                    <TbChevronRight className='text-3xl' />
+                  ) : (
+                    <TbChevronLeft className='text-3xl' />
+                  )}
+                </button>
+              </div>
+
+              {/* Profile and workspace switcher */}
+              <div
+                id='console-sidebar-profile-and-workspace'
+                className={`transition-all ${foldMenu ? 'hidden w-0' : 'block w-full'}`}
+              >
+                <div className='w-full min-w-36 px-4'>
+                  <ConsoleNavigationProfile setIsMenuOpen={setIsMenuOpen} />
+                  <ConsoleNavigationWorkspaceSwitcher
+                    setIsMenuOpen={setIsMenuOpen}
+                  />
+                </div>
+              </div>
+
+              {foldMenu && <div className='mb-12'></div>}
+
+              {/* No workspace links */}
+              {!workspaceSlug && (
+                <div id='console-sidebar-links-no-workspace'>
+                  <p
+                    className={`mb-2 px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 dark:text-gray-600 ${
+                      foldMenu ? 'hidden opacity-0' : 'opacity-100'
+                    }`}
+                  >
+                    {dict.consoleNavigation.irminConsole}
+                  </p>
+                  <ul className='px-4'>
+                    {links.noWorkspace.map((link, index) => (
+                      <ConsoleNavigationLink
+                        key={`Console-nav-noWorkspace-${index}`}
+                        link={link}
+                        isMenuFolded={foldMenu}
+                        setIsMenuOpen={setIsMenuOpen}
+                      />
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Workspace links */}
+              {workspaceSlug && (
+                <div id='console-sidebar-links-workspace'>
+                  <p
+                    className={`mb-2 px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 dark:text-gray-600 ${
+                      foldMenu ? 'hidden opacity-0' : 'opacity-100'
+                    }`}
+                  >
+                    {dict.consoleNavigation.workspace}
+                  </p>
+                  <ul className='px-4'>
+                    {links.hasWorkspace.map((link, index) => (
+                      <ConsoleNavigationLink
+                        key={`Console-nav-hasWorkspace-${index}`}
+                        link={link}
+                        isMenuFolded={foldMenu}
+                        setIsMenuOpen={setIsMenuOpen}
+                      />
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Settings links */}
+              <div id='console-sidebar-links-settings'>
+                <p
+                  className={`mb-2 px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 dark:text-gray-600 ${
+                    foldMenu ? 'hidden opacity-0' : 'opacity-100'
+                  }`}
+                >
+                  {dict.consoleNavigation.settings}
+                </p>
+                <ul className='px-4'>
+                  {links.settings.map((link, index) => (
+                    <ConsoleNavigationLink
+                      key={`Console-nav-hasWorkspace-${index}`}
+                      link={link}
+                      isMenuFolded={foldMenu}
+                      setIsMenuOpen={setIsMenuOpen}
+                    />
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className='flex-grow'></div>
+            {foldMenu && (
+              <div className='mx-auto mb-8 mt-auto'>
+                <ThemeSwitch />
+              </div>
+            )}
+            <div
+              id='console-sidebar-footer'
+              className={`mt-auto transition-all ${foldMenu ? 'hidden w-0' : 'block w-full'}`}
+            >
+              <div
+                className='w-full min-w-64 pt-8'
+                id='console-sidebar-useful-links'
+              >
+                <p
+                  className={`px-8 text-xs font-medium uppercase text-gray-400 transition-all duration-300 dark:text-gray-600 ${
+                    foldMenu ? 'hidden opacity-0' : 'opacity-100'
+                  }`}
+                >
+                  {dict.consoleNavigation.usefulLinks}
+                </p>
+                <div className='flex flex-col p-4 pl-8'>
+                  {links.useful.map((link, index) => (
+                    <Link
+                      key={`Console-nav-useful-${index}`}
+                      className='mb-2 text-left text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-100'
+                      href={link.href ?? ''}
+                      onClick={() => setIsMenuOpen(false)}
+                      aria-label={link.title}
+                      {...(link.props as ComponentPropsWithoutRef<'a'>)}
+                    >
+                      <div className={`flex w-full items-center justify-start`}>
+                        <div className={'mr-1 text-sm'}>{link.icon}</div>
+                        <p className={'text-xs font-normal'}>{link.title}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Console content to the right of the sidebar */}
+        <div
+          id='console-content-wrapper'
+          className={`flex h-screen flex-1 flex-col gap-0 transition-all duration-300 ${isMenuOpen ? 'w-screen blur-sm lg:blur-none' : ''} max-w-full overflow-scroll`}
+        >
+          {/* Top menu bar */}
+          <div
+            id='console-top-bar'
+            className={`z-10 w-full border-b bg-white dark:border-gray-800 dark:bg-irmin_black ${isMenuOpen ? 'pl-0' : 'pl-12 lg:pl-0'}`}
+          >
+            <div className='group flex h-14 w-full items-center px-4 py-1 xl:px-6'>
+              <div
+                className={`py-2 pr-4 group-focus-within:hidden ${foldMenu ? 'lg:block' : 'lg:hidden'}`}
+              >
+                <Image
+                  className={
+                    'block h-full max-h-4 object-contain md:max-h-6 dark:hidden'
+                  }
+                  src='/irmin-logo.svg'
+                  alt='Irmin logo'
+                  width={100}
+                  height={26}
+                />
+                <Image
+                  className={
+                    'hidden h-full max-h-4 object-contain md:max-h-6 dark:block'
+                  }
+                  src='/irmin-logo-light.svg'
+                  alt='Irmin logo'
+                  width={100}
+                  height={26}
+                />
+              </div>
+              <form className='ml-auto w-full max-w-24 rounded-full border border-gray-200 transition-all focus-within:max-w-full md:max-w-sm lg:max-w-md dark:border-gray-800'>
+                <div className='relative'>
+                  <div className='pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3'>
+                    <TbSearch className='text-gray-500' />
+                  </div>
+                  <input
+                    type='search'
+                    className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible focus:outline-none group-focus-within:placeholder:visible md:text-sm md:placeholder:visible dark:bg-irmin_black dark:text-white'
+                    placeholder={dict.consoleNavigation.searchPlaceholder}
+                  />
+                  <button
+                    type='button'
+                    className='invisible absolute bottom-0 right-0 top-0 rounded-full bg-gray-50 px-4 py-3 text-xs font-normal text-gray-800 opacity-0 transition-all hover:bg-gray-100 focus:outline-none group-focus-within:visible group-focus-within:opacity-100 md:visible md:text-sm md:opacity-100 dark:bg-irmin_black dark:text-white dark:hover:bg-gray-800'
+                  >
+                    {dict.consoleNavigation.search}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+          {/* Console content */}
+          <div
+            id='console-content'
+            className='pattern-bg relative min-h-[calc(100vh-4rem)] overflow-y-scroll bg-white bg-contain bg-top bg-no-repeat dark:bg-irmin_black'
+          >
+            {children}
+          </div>
+        </div>
+      </div>
+      {/* Console navigation toggle on mobile */}
+      <div
+        id='console-navigation-toggle-mobile'
+        className='fixed left-4 top-[8px] z-50 block lg:hidden'
+      >
+        <button
+          className='relative aspect-square h-10 w-10 rounded-full bg-white bg-opacity-80 focus:outline-none dark:bg-irmin_blue'
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          <div
+            className={`absolute left-4 top-1/2 block w-5 -translate-x-1/2 -translate-y-1/2 transform text-irmin_blue dark:text-white`}
+          >
+            <span
+              className={`absolute block h-0.5 w-7 transform bg-current transition duration-500 ease-in-out ${
+                isMenuOpen ? 'rotate-45' : '-translate-y-1.5'
+              }`}
+            ></span>
+            <span
+              className={`absolute block h-0.5 w-5 transform bg-current transition duration-500 ease-in-out ${
+                isMenuOpen ? 'opacity-0' : ''
+              }`}
+            ></span>
+            <span
+              className={`absolute block h-0.5 w-7 transform bg-current transition duration-500 ease-in-out ${
+                isMenuOpen ? '-rotate-45' : 'translate-y-1.5'
+              }`}
+            ></span>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+}

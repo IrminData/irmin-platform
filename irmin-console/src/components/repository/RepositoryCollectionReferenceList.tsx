@@ -56,7 +56,7 @@ const RepositoryCollectionReferenceList = () => {
       className='flex-grow overflow-auto border-t p-2 text-irmin_black dark:border-gray-800 dark:text-gray-300'
     >
       <p className='px-4 pb-2 text-sm'>
-        {dict.portalNavigation.links.repositories}
+        {dict.consoleNavigation.links.repositories}
       </p>
       <p className='px-4 text-xs text-gray-400'>
         {dict.repository.referenceRepository.clickOnCollection}

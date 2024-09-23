@@ -237,8 +237,8 @@ export const IAMProvider = ({
         );
         // Refetch the profile data
         await fetchProfile();
-        // Redirect to the portal
-        router.push('/portal/manage-workspaces');
+        // Redirect to the console
+        router.push('/console/manage-workspaces');
       } catch (error) {
         const message = (error as Error).message ?? 'Failed to sign in';
         setError(message);
@@ -281,8 +281,8 @@ export const IAMProvider = ({
         );
         // Refetch the profile data
         await fetchProfile();
-        // Redirect to the portal
-        router.push('/portal/manage-workspaces');
+        // Redirect to the console
+        router.push('/console/manage-workspaces');
       } catch (error) {
         const message = (error as Error).message ?? 'Failed to sign up';
         setError(message);

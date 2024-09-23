@@ -47,28 +47,28 @@ export default function ConnectionLayoutWrapper({
     () => [
       {
         title: dict.connections.tabs.overview,
-        href: `/${locale}/portal/${workspaceSlug}/connections/${connection?.slug}`,
+        href: `/${locale}/console/${workspaceSlug}/connections/${connection?.slug}`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/connections/${connection?.slug}`,
+          `/${locale}/console/${workspaceSlug}/connections/${connection?.slug}`,
         icon: <GoWorkflow size={14} />,
         hide: false,
       },
       {
         title: dict.connections.tabs.documentation,
-        href: `/${locale}/portal/${workspaceSlug}/connections/${connection?.slug}/documentation`,
+        href: `/${locale}/console/${workspaceSlug}/connections/${connection?.slug}/documentation`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/connections/${connection?.slug}/documentation`,
+          `/${locale}/console/${workspaceSlug}/connections/${connection?.slug}/documentation`,
         icon: <TbFileText size={14} />,
         hide: false,
       },
       {
         title: dict.connections.tabs.settings,
-        href: `/${locale}/portal/${workspaceSlug}/connections/${connection?.slug}/settings`,
+        href: `/${locale}/console/${workspaceSlug}/connections/${connection?.slug}/settings`,
         active:
           currentPath ===
-          `/${locale}/portal/${workspaceSlug}/connections/${connection?.slug}/settings`,
+          `/${locale}/console/${workspaceSlug}/connections/${connection?.slug}/settings`,
         icon: <TbSettings size={14} />,
         hide: false,
       },
@@ -117,7 +117,7 @@ export default function ConnectionLayoutWrapper({
             variant='icon'
             colorScheme='black'
             className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-700'
-            href={`/${locale}/portal/${workspaceSlug}/connections`}
+            href={`/${locale}/console/${workspaceSlug}/connections`}
           >
             <IoChevronBack size={24} />
           </Button>

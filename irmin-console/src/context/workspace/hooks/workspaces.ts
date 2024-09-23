@@ -120,13 +120,13 @@ export const useSwitchWorkspace = (
           setCookie('currentWorkspaceSlug', '', -1);
           // Clear the current workspace
           setCurrentWorkspace(null);
-          // Make sure the user is not on a workspace page eg. /portal/{workspace-slug}/*
+          // Make sure the user is not on a workspace page eg. /console/{workspace-slug}/*
           if (
-            pathname.includes('/portal/') &&
-            !pathname.includes('/portal/manage-workspaces') &&
-            !pathname.includes('/portal/profile')
+            pathname.includes('/console/') &&
+            !pathname.includes('/console/manage-workspaces') &&
+            !pathname.includes('/console/profile')
           ) {
-            router.push('/portal/manage-workspaces');
+            router.push('/console/manage-workspaces');
           }
           return;
         }
@@ -146,21 +146,21 @@ export const useSwitchWorkspace = (
         if (newWorkspace) {
           setCurrentWorkspace(newWorkspace.data);
           // If router not already on a workspace page, redirect to the workspace
-          if (!pathname.includes(`/portal/${workspaceSlug}`)) {
-            router.push(`/${locale}/portal/${workspaceSlug}/home`);
+          if (!pathname.includes(`/console/${workspaceSlug}`)) {
+            router.push(`/${locale}/console/${workspaceSlug}/home`);
           }
         } else {
           throw new Error('Switching workspace failed');
         }
       } catch (e) {
         console.error('Switching workspace failed:', e);
-        // Make sure the user is not on a workspace page eg. /portal/{workspace-slug}/*
+        // Make sure the user is not on a workspace page eg. /console/{workspace-slug}/*
         if (
-          pathname.includes('/portal/') &&
-          !pathname.includes('/portal/manage-workspaces') &&
-          !pathname.includes('/portal/profile')
+          pathname.includes('/console/') &&
+          !pathname.includes('/console/manage-workspaces') &&
+          !pathname.includes('/console/profile')
         ) {
-          router.push('/portal/manage-workspaces');
+          router.push('/console/manage-workspaces');
         }
       } finally {
         setWorkspaceLoading(false);

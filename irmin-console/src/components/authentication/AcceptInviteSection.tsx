@@ -57,8 +57,8 @@ const AcceptInviteSection = () => {
       );
       if (response.metadata?.message) {
         setSuccess(response.metadata.message);
-        // Redirect to portal on success
-        router.push('/portal/manage-workspaces');
+        // Redirect to console on success
+        router.push('/console/manage-workspaces');
       } else {
         throw new Error(response.message || 'Accepting invite failed');
       }

@@ -162,7 +162,7 @@ const NotificationPopup = ({
           >
             <div className='flex items-center justify-between'>
               <div className='text-base font-semibold'>
-                {dict.portalNavigation.notifications.notifications}
+                {dict.consoleNavigation.notifications.notifications}
               </div>
               <Button
                 onClick={clearNotifications}
@@ -170,7 +170,7 @@ const NotificationPopup = ({
                 colorScheme='primary'
                 size='sm'
               >
-                {dict.portalNavigation.notifications.clearAll}
+                {dict.consoleNavigation.notifications.clearAll}
               </Button>
             </div>
           </div>
@@ -188,7 +188,7 @@ const NotificationPopup = ({
                 <Link
                   href={
                     notification.relatedWorkspaceSlug
-                      ? `/${locale}/portal/${notification.relatedWorkspaceSlug}/${notification.path}`
+                      ? `/${locale}/console/${notification.relatedWorkspaceSlug}/${notification.path}`
                       : notification.path
                   }
                   key={`notification-${index}-${notification.id}`}
@@ -202,7 +202,7 @@ const NotificationPopup = ({
                     <div className='font-normal'>{notification.title}</div>
                     {notification.relatedWorkspaceName && (
                       <div className='text-[8px] text-irmin_green'>
-                        {dict.portalNavigation.notifications.relatedWorkspace}
+                        {dict.consoleNavigation.notifications.relatedWorkspace}
                         {': '}
                         {notification.relatedWorkspaceName}
                       </div>
@@ -215,7 +215,7 @@ const NotificationPopup = ({
               ))
           ) : (
             <div className='px-3 py-2 text-sm text-gray-700'>
-              {dict.portalNavigation.notifications.noNotifications}
+              {dict.consoleNavigation.notifications.noNotifications}
             </div>
           )}
         </div>

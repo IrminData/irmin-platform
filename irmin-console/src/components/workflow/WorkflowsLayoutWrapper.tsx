@@ -1,6 +1,6 @@
 'use client';
 
-import { WorkspaceLayoutParams } from '@/app/[lang]/portal/[workspace]/layout';
+import { WorkspaceLayoutParams } from '@/app/[lang]/console/[workspace]/layout';
 
 import {
   TbDatabaseExport,
@@ -14,7 +14,7 @@ import Tabs from '@/components/common/tabs/Tabs';
 import { useLocale } from '@/context/LocaleContext';
 
 /**
- * Layout for the Workflow pages in the Portal
+ * Layout for the Workflow pages in the Console
  */
 export default function WorkflowsLayoutWrapper({
   params,
@@ -32,25 +32,25 @@ export default function WorkflowsLayoutWrapper({
             icon: <TbRun />,
             name: dict.workflow.allWorkflows,
             slug: 'all-workflows',
-            link: `/${params.lang}/portal/${params.workspace}/workflows`,
+            link: `/${params.lang}/console/${params.workspace}/workflows`,
           },
           {
             icon: <TbPlayerPlay />,
-            name: dict.portalNavigation.links.actions,
+            name: dict.consoleNavigation.links.actions,
             slug: 'action-workflows',
-            link: `/${params.lang}/portal/${params.workspace}/workflows/actions`,
+            link: `/${params.lang}/console/${params.workspace}/workflows/actions`,
           },
           {
             icon: <TbDatabaseImport />,
-            name: dict.portalNavigation.links.imports,
+            name: dict.consoleNavigation.links.imports,
             slug: 'import-workflows',
-            link: `/${params.lang}/portal/${params.workspace}/workflows/imports`,
+            link: `/${params.lang}/console/${params.workspace}/workflows/imports`,
           },
           {
             icon: <TbDatabaseExport />,
-            name: dict.portalNavigation.links.exports,
+            name: dict.consoleNavigation.links.exports,
             slug: 'export-workflows',
-            link: `/${params.lang}/portal/${params.workspace}/workflows/exports`,
+            link: `/${params.lang}/console/${params.workspace}/workflows/exports`,
           },
         ]}
       />

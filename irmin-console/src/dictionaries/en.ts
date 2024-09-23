@@ -10,7 +10,7 @@ const en = {
   },
   website: {
     navigation: {
-      goToPortal: 'Portal',
+      goToConsole: 'Console',
       getStarted: 'Get started',
     },
     footer: {
@@ -71,7 +71,7 @@ const en = {
     weEncounteredError: 'We encountered an error',
     tryAgainOrContactSupport: 'Please try again or contact support',
     goBackHome: 'Go back to the home page',
-    goBackPortal: 'Go back to Irmin Portal',
+    goBackConsole: 'Go back to Irmin Console',
     back: 'Back',
     tryAgain: 'Try again',
     success: 'Success',
@@ -137,10 +137,10 @@ const en = {
         'You must accept the terms and conditions and the privacy policy to continue.',
     },
   },
-  portalNavigation: {
+  consoleNavigation: {
     search: 'Search',
     searchPlaceholder: 'Search for data and more',
-    irminPortal: 'Irmin Portal',
+    irminConsole: 'Irmin Console',
     workspace: 'Workspace',
     settings: 'Settings',
     usefulLinks: 'Useful links',
@@ -176,7 +176,7 @@ const en = {
       termsAndPrivacy: 'Terms & Privacy',
     },
   },
-  portalHome: {
+  consoleHome: {
     welcomeToWorkspace: 'Get started on Irmin with these quick actions:',
     createNewConnection: 'Create new connection',
     createNewConnectionDescription:
