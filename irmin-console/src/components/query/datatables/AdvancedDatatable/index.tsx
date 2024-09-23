@@ -28,7 +28,7 @@ const DataSheet = dynamic(() => import('./DataSheet'), {
 /**
  * Advanced datatable component for displaying data in a table.
  *
- * Uses the `react-datasheet-grid` library {@link DataSheet}.
+ * Uses the `react-datasheet-grid` library using the `DataSheet` component.
  * This component is used to display a more advanced datatable.
  */
 export default function AdvancedDatatable({

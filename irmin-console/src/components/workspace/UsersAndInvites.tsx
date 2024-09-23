@@ -33,7 +33,7 @@ type WorkspaceUsersAndPermissionsUser = {
  * It includes the ability to invite new users, change roles, and remove users from the workspace.
  *
  * This component shows both regular users and invited users that have not yet accepted the invite as
- * entities on the list. Invites and Users are converted to {@link WorkspaceUsersAndPermissionsUser} type.
+ * entities on the list.
  */
 const UsersAndInvites: React.FC = () => {
   const { dict } = useLocale();

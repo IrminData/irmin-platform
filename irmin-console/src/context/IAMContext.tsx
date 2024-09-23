@@ -65,7 +65,7 @@ const IAMContext = createContext<{
  *
  * @remarks
  *
- * Provider for {@link IAMContext} to handle user profile data and authentication.
+ * Provider for `IAMContext` to handle user profile data and authentication.
  * Uses the {@link IrminCore} and the {@link IrminCore} to interact with the API.
  */
 export const IAMProvider = ({
@@ -343,9 +343,6 @@ export const IAMProvider = ({
   );
 };
 
-/**
- * Hook to use the {@link IAMContext}
- */
 export const useIAM = () => {
   const context = useContext(IAMContext);
   if (!context) {

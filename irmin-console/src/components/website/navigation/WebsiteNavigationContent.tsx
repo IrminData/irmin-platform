@@ -140,8 +140,6 @@ const MobileNavLink = ({
  *
  * It handles animations and opening/closing the mobile navigation.
  *
- * For links {@link NavLink} and {@link MobileNavLink} are used.
- *
  * This component is used by the WebsiteNavigation component.
  */
 export default function WebsiteNavigationContent({

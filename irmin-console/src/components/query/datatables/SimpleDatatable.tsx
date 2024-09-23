@@ -10,7 +10,7 @@ import { TableRow } from '@/types/core/TableCollection';
 /**
  * Simple datatable component for displaying data in a table.
  *
- * Uses the `react-data-table-component` library {@link DataTable}.
+ * Uses the `react-data-table-component` library.
  *
  * @param params - The parameters for the component
  * @param params.items - The items to display in the table
