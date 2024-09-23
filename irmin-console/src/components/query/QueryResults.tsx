@@ -8,10 +8,16 @@ import { AiOutlineSave } from 'react-icons/ai';
 import { BsFileEarmarkRichtext } from 'react-icons/bs';
 import { CiTextAlignLeft } from 'react-icons/ci';
 import { MdPlayArrow } from 'react-icons/md';
-import { TbExclamationCircle, TbFileText, TbTable } from 'react-icons/tb';
+import {
+  TbExclamationCircle,
+  TbFileText,
+  TbLogs,
+  TbTable,
+} from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
 import MDXEditor from '@/components/common/markdown-editor/MDXEditor';
+import LogFeed from '@/components/logs/LogFeed';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -67,6 +73,7 @@ const QueryResults = ({
 
   const showLoadingOnData = loading || processingRun;
   const errors = result?.errors ?? {};
+  const logs = result?.metadata.logs ?? '';
 
   return (
     <div
@@ -87,6 +94,20 @@ const QueryResults = ({
             icon={<TbTable />}
           >
             {dict.query.results}
+          </Button>
+        </div>
+        <div
+          className={`border-irmin_green ${activeTab === 'logs' ? 'border-b-2' : ''}`}
+        >
+          <Button
+            size='sm'
+            variant='link'
+            colorScheme={activeTab === 'logs' ? 'primary' : 'gray'}
+            className={`justify-start rounded-none text-xs shadow-none hover:no-underline dark:text-gray-200`}
+            onClick={() => setActiveTab('logs')}
+            icon={<TbLogs />}
+          >
+            {dict.query.logs}
           </Button>
         </div>
         <div
@@ -221,6 +242,17 @@ const QueryResults = ({
         </div>
       )}
       {activeTab === 'errors' && <ErrorList errors={errors} dict={dict} />}
+      {activeTab === 'logs' && (
+        <>
+          {logs && logs.length > 0 ? (
+            <LogFeed text={logs} />
+          ) : (
+            <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
+              {dict.logs.noLogsFound}
+            </div>
+          )}
+        </>
+      )}
       {activeTab === 'documentation' && (
         <div className='flex h-0 flex-1 flex-col overflow-scroll px-2 pt-2'>
           {documentationTab === 'plain' && (

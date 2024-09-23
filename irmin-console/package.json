@@ -19,6 +19,7 @@
     "@codemirror/lang-sql": "^6.7.1",
     "@codemirror/view": "^6.33.0",
     "@mdxeditor/editor": "^3.11.5",
+    "@melloware/react-logviewer": "^5.2.2",
     "@radix-ui/react-icons": "^1.3.0",
     "@uiw/codemirror-theme-github": "^4.23.3",
     "@uiw/react-codemirror": "^4.23.3",

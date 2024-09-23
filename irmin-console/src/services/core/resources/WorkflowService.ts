@@ -29,6 +29,12 @@ interface WorkflowRunsAPIResponse extends IrminAPIResponse {
   data: WorkflowRun[];
 }
 /**
+ * Workflow Run API response type
+ */
+interface WorkflowRunAPIResponse extends IrminAPIResponse {
+  data: WorkflowRun;
+}
+/**
  * Import Workflows API response type
  */
 interface ImportsAPIResponse extends IrminAPIResponse {
@@ -63,6 +69,7 @@ class WorkflowService {
     this.pauseWorkflow = this.pauseWorkflow.bind(this);
     this.resumeWorkflow = this.resumeWorkflow.bind(this);
     this.reassignWorkflow = this.reassignWorkflow.bind(this);
+    this.fetchWorkflowRunByID = this.fetchWorkflowRunByID.bind(this);
     this.fetchRunsByWorkflow = this.fetchRunsByWorkflow.bind(this);
     this.fetchImportWorkflows = this.fetchImportWorkflows.bind(this);
     this.fetchExportWorkflows = this.fetchExportWorkflows.bind(this);
@@ -215,20 +222,19 @@ class WorkflowService {
   }
 
   /**
-   * Fetch Workflow Runs by Workflow ID
+   * Fetch Workflow Runs by Workflow
    * @todo Provide link to Irmin API docs
    *
-   * @param workflowId - The ID of the workflow to fetch the runs for
-   *
+   * @param workflow - The slug of the workflow to fetch the runs for
    */
   async fetchRunsByWorkflow(
-    workflowId: number
+    workflow: number
   ): Promise<WorkflowRunsAPIResponse> {
     if (isOfflineMode)
       return fake(exampleWorkflowRuns) as WorkflowRunsAPIResponse;
     try {
       const response = (await this.irminCore.fetch(
-        `/v1/workflows/${workflowId}/runs`,
+        `/v1/workflows/${workflow}/runs`,
         {
           method: 'GET',
         }
@@ -241,6 +247,36 @@ class WorkflowService {
       );
       if (isDevelopment)
         return fake(exampleWorkflowRuns) as WorkflowRunsAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch Workflow Run by Workflow and Run ID
+   * @todo Provide link to Irmin API docs
+   *
+   * @param workflow - The slug of the workflow to fetch the runs for
+   * @param workflowRun - The ID of the workflow run to fetch
+   */
+  async fetchWorkflowRunByID(
+    workflow: string,
+    workflowRun: string
+  ): Promise<WorkflowRunAPIResponse> {
+    const exampleRun =
+      exampleWorkflowRuns.find((run) => run.id === parseInt(workflowRun)) ??
+      exampleWorkflowRuns[0];
+    if (isOfflineMode) return fake(exampleRun) as WorkflowRunAPIResponse;
+    try {
+      const response = (await this.irminCore.fetch(
+        `/v1/workflows/${workflow}/runs/${workflowRun}`,
+        {
+          method: 'GET',
+        }
+      )) as WorkflowRunAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch workflow run by id error');
+      if (isDevelopment) return fake(exampleRun) as WorkflowRunAPIResponse;
       throw error;
     }
   }

@@ -23,6 +23,7 @@ import { connectors } from './connectors';
 import { files } from './files';
 import { folders } from './folders';
 import { invites } from './invites';
+import { logEvents, workflowRunLogs } from './logs';
 import { profile } from './profile';
 import { repositories } from './repositories';
 import { roles } from './roles';
@@ -42,6 +43,12 @@ export const exampleAPIResponse: IrminAPIResponse = {
     allGood: 'yes',
     itemsReturned: '12',
     timeTaken: '1234',
+    logs: `
+      This is an example response from the API.
+      You are seeing this because the API is not available.
+      This is a fake response, not the real thing.
+      You might also be in offline mode.
+    `,
   },
   message: 'This is example for IrminAPIResponse',
   errors: {
@@ -172,3 +179,13 @@ export const exampleFiles = files();
  * Fake bucket {@link bucket}
  */
 export const exampleBucket = bucket();
+
+/**
+ * Fake log events {@link logEvents}
+ */
+export const exampleLogEvents = logEvents();
+
+/**
+ * Fake workflow run logs {@link workflowRunLogs}
+ */
+export const exampleWorkflowRunLogs = workflowRunLogs();

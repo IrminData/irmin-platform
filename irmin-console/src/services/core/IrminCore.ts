@@ -12,6 +12,7 @@ import CommitService from './resources/CommitService';
 import ConnectionService from './resources/ConnectionService';
 import ConnectorService from './resources/ConnectorService';
 import InviteService from './resources/InviteService';
+import LogService from './resources/LogService';
 import ProfileService from './resources/ProfileService';
 import QueryService from './resources/QueryService';
 import RepositoryService from './resources/RepositoryService';
@@ -51,6 +52,7 @@ class IrminCore {
   public workflowService: WorkflowService;
   public workspaceService: WorkspaceService;
   public queryService: QueryService;
+  public logService: LogService;
 
   constructor(locale: Locale, apiToken?: string) {
     // Set locale and token
@@ -75,6 +77,7 @@ class IrminCore {
     this.workflowService = new WorkflowService(this);
     this.workspaceService = new WorkspaceService(this);
     this.queryService = new QueryService(this);
+    this.logService = new LogService(this);
   }
 
   public fetch = async (

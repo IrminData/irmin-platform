@@ -341,6 +341,7 @@ const en = {
     import: 'Import',
     action: 'Action',
     export: 'Export',
+    run: 'run',
     startedAt: 'Started at',
     finishedAt: 'Finished at',
     notScheduled: 'Not scheduled',
@@ -418,6 +419,7 @@ const en = {
   query: {
     results: 'Results',
     errors: 'Errors',
+    logs: 'Logs',
     noErrors: 'No errors',
     queryResults: 'Query results',
     save: 'Save',
@@ -566,6 +568,13 @@ const en = {
     billingNote:
       'You can currently only manage billing by contacting our team.',
     contactUs: 'Contact Us',
+  },
+  logs: {
+    workspaceLogs: 'Workspace logs',
+    workflowLogs: 'Workflow logs',
+    workflowRunLogs: 'Workflow run logs',
+    noLogsFound: 'No logs found',
+    system: 'System',
   },
 };
 export default en;

@@ -29,6 +29,8 @@ class BranchService {
     this.irminCore = irminCore;
     // Bind methods
     this.fetchBranches = this.fetchBranches.bind(this);
+    this.createBranch = this.createBranch.bind(this);
+    this.deleteBranch = this.deleteBranch.bind(this);
   }
 
   /**

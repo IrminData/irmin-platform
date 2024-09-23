@@ -54,38 +54,39 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
 
   const runRows: GridRow[] = useMemo(() => {
     return (
-      workflowRuns.map((run, i) => {
-        return {
-          columns: [
-            <div
-              key={`run-${i}-start-time`}
-              className='inline-flex flex-col gap-2'
-            >
-              <p className='text-xs lg:text-sm'>
-                {new Date(run.started_at).toLocaleString(locale)}
-              </p>
-            </div>,
-            <div
-              key={`run-${i}-finished-time`}
-              className='inline-flex flex-col gap-2'
-            >
-              <p className='text-xs lg:text-sm'>
-                {run.finished_at
-                  ? new Date(run.finished_at).toLocaleString(locale)
-                  : '-'}
-              </p>
-            </div>,
-            <div key={`run-${i}-owner`} className='inline-flex flex-col gap-2'>
-              <p className='text-xs lg:text-sm'>{run.owner.name}</p>
-            </div>,
-            <div key={`run-${i}-status`} className='inline-flex flex-col gap-2'>
-              <StatusBadge runStatus={run.status} statusLabel={run.status} />
-            </div>,
-          ],
-        };
-      }) ?? []
+      workflowRuns.map((run, i) => ({
+        columns: [
+          <div key={`run-${i}`} className='inline-flex flex-col gap-2'>
+            <p className='text-xs lg:text-sm'>
+              {dict.workflow.startedAt}
+              {': '}
+              {new Date(run.started_at).toLocaleString(locale)}
+            </p>
+            <p className='text-xs lg:text-sm'>
+              {dict.workflow.finishedAt}
+              {': '}
+              {run.finished_at
+                ? new Date(run.finished_at).toLocaleString(locale)
+                : '-'}
+            </p>
+          </div>,
+          <div key={`run-${i}-owner`} className='inline-flex flex-col gap-2'>
+            <p className='text-xs lg:text-sm'>{run.owner.name}</p>
+          </div>,
+          <div key={`run-${i}-status`} className='inline-flex flex-col gap-2'>
+            <StatusBadge runStatus={run.status} statusLabel={run.status} />
+          </div>,
+        ],
+        actions: [
+          {
+            label: dict.list.logs,
+            primary: false,
+            href: `/${locale}/portal/${currentWorkspace?.slug}/logs/workflow/${workflow.slug}/run/${run.id}`,
+          },
+        ],
+      })) ?? []
     );
-  }, [workflowRuns, locale]);
+  }, [workflowRuns, locale, currentWorkspace, workflow, dict]);
 
   return (
     <div className='container relative mx-auto max-w-6xl'>
@@ -212,14 +213,13 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
         </div>
         <NormalList
           headers={[
-            dict.workflow.startedAt,
-            dict.workflow.finishedAt,
+            dict.workflow.run,
             dict.list.owner,
             dict.list.status,
+            dict.list.actions,
           ]}
           loading={loadingWorkflowRuns}
           hideHeaders={false}
-          noActions={true}
           rows={runRows}
         />
       </div>

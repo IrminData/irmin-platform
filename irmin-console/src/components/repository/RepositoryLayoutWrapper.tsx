@@ -27,7 +27,9 @@ import BranchSelector from './BranchSelector';
  * Component to wrap the Repository pages in.
  * Provides tabs and title for the repository.
  *
- * @param children - The children to render
+ * @param props - The component properties
+ * @param props.children - The children to render
+ * @param props.repoSlug - The repository slug
  */
 export default function RepositoryLayoutWrapper({
   children,

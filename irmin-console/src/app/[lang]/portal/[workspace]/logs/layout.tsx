@@ -2,6 +2,8 @@ import { Metadata } from 'next';
 
 import { WorkspaceLayoutParams } from '@/app/[lang]/portal/[workspace]/layout';
 
+import LogsLayoutWrapper from '@/components/logs/LogsLayoutWrapper';
+
 /**
  * SEO metadata for the Logs pages
  */
@@ -25,5 +27,5 @@ export default function PortalLogsLayout({
   params: WorkspaceLayoutParams;
   children: React.ReactNode;
 }>) {
-  return <div className='container relative mx-auto max-w-6xl'>{children}</div>;
+  return <LogsLayoutWrapper>{children}</LogsLayoutWrapper>;
 }

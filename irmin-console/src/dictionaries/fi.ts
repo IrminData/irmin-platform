@@ -342,6 +342,7 @@ const fi = {
     import: 'Tuonti',
     action: 'Toiminto',
     export: 'Vienti',
+    run: 'ajo',
     startedAt: 'Aloitettu',
     finishedAt: 'Valmis',
     notScheduled: 'Ei ajasteettu',
@@ -419,6 +420,7 @@ const fi = {
   query: {
     results: 'Tulokset',
     errors: 'Virheet',
+    logs: 'Lokit',
     noErrors: 'Ei virheitä',
     queryResults: 'Kyselyn tulokset',
     save: 'Tallenna',
@@ -569,6 +571,13 @@ const fi = {
     billingNote:
       'Voit tällä hetkellä hallita laskutusta vain ottamalla yhteyttä tiimiimme.',
     contactUs: 'Ota yhteyttä',
+  },
+  logs: {
+    workspaceLogs: 'Työtilan lokit',
+    workflowLogs: 'Prosessin lokit',
+    workflowRunLogs: 'Prosessin ajon lokit',
+    noLogsFound: 'Ei lokeja löytynyt',
+    system: 'Järjestelmä',
   },
 };
 

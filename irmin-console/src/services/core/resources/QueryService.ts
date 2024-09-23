@@ -24,6 +24,7 @@ export interface QueryAPIResponse extends IrminAPIResponse {
   metadata: {
     itemsReturned: string; // Number of items returned
     executionTime: string; // Time taken to execute the script in milliseconds
+    logs: string; // Logs from the script execution
     [key: string]: string;
   };
 }

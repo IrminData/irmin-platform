@@ -3,16 +3,18 @@ import { Metadata } from 'next';
 import { Locale } from '@/dictionaries';
 
 /**
- * URL parameters for the Workflow Logs layout
+ * URL parameters for the Workflow Run Logs layout
  *
  * @param lang - The language of the user
  * @param workspace - The slug of the current workspace
  * @param workflow - The slug of the workflow to show logs for
+ * @param run - The ID of the workflow run to show logs for
  */
-export type WorkflowLogsLayoutParams = {
+export type WorkflowRunLogsLayoutParams = {
   lang: Locale;
   workspace: string;
   workflow: string;
+  run: string;
 };
 
 /**
@@ -21,24 +23,24 @@ export type WorkflowLogsLayoutParams = {
 export async function generateMetadata({
   params,
 }: {
-  params: WorkflowLogsLayoutParams;
+  params: WorkflowRunLogsLayoutParams;
 }): Promise<Metadata> {
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   const formattedWorkflow = params.workflow.replace(/-/g, ' ');
   return {
-    title: `Workflow ${formattedWorkflow} logs | ${formattedWorkspace} | IRMIN Portal`,
+    title: `Workflow run ${params.run} ${formattedWorkflow} logs | ${formattedWorkspace} | IRMIN Portal`,
   };
 }
 
 /**
- * Layout for the Workflow Logs pages in the Portal
+ * Layout for the Workflow Run Logs pages in the Portal
  * @param children - The children to render
  */
-export default function WorkflowLogsLayout({
+export default function WorkflowRunLogsLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-  params: WorkflowLogsLayoutParams;
+  params: WorkflowRunLogsLayoutParams;
 }>) {
   return children;
 }
