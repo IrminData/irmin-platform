@@ -87,7 +87,7 @@ const StreamData = ({
               className='hidden lg:inline-flex dark:text-white'
               onClick={() => downloadCSV(data.entries ?? [], title)}
             >
-              {dict.repository.download}
+              {dict.repository.download.download}
             </Button>
           )}
           <input

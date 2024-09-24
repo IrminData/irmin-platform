@@ -15,18 +15,16 @@ import { FileSchema } from '@/types/core/FileCollection';
  *
  * @param props - The component props
  * @param props.schema - The file collection to display
+ * @param props.downloadUrl - (optional) The download URL for the object
  */
 export default function FileCollectionSchema({
   schema,
+  downloadUrl,
 }: {
   schema: FileSchema;
+  downloadUrl?: string;
 }) {
   const { dict, locale } = useLocale();
-
-  // Handle download file
-  const handleDownload = () => {
-    // TODO: Download the file from the server
-  };
 
   return (
     <div className='flex w-full flex-col gap-4'>
@@ -60,16 +58,18 @@ export default function FileCollectionSchema({
           </tr>
         </tbody>
       </table>
-      <Button
-        onClick={handleDownload}
-        className='w-full'
-        colorScheme='black'
-        variant='link'
-        size='sm'
-        icon={<TbDownload />}
-      >
-        {dict.repository.download}
-      </Button>
+      {downloadUrl && (
+        <Button
+          size='sm'
+          colorScheme='light'
+          variant='solid'
+          className='w-full'
+          icon={<TbDownload />}
+          href={downloadUrl}
+        >
+          {dict.repository.download.download}
+        </Button>
+      )}
     </div>
   );
 }

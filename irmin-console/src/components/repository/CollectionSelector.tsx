@@ -54,7 +54,7 @@ const CollectionSelector = ({
         {repository.collections.map((item, idx) => (
           <div
             key={`${repository.slug}-collection-${idx}`}
-            className={`flex cursor-pointer flex-row items-center justify-between rounded px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 ${
+            className={`flex cursor-pointer flex-col justify-between gap-2 rounded px-2 py-2 hover:bg-gray-100 lg:flex-row lg:items-center lg:px-4 dark:hover:bg-gray-800 ${
               selectedCollection === item.formatted_name
                 ? 'bg-gray-200 dark:bg-gray-700'
                 : ''
@@ -71,7 +71,7 @@ const CollectionSelector = ({
               {getIconByType(item.type)}
               <span className='text-sm'>{item.name}</span>
             </div>
-            <div className='flex w-1/2 min-w-80 flex-col text-xs text-gray-400'>
+            <div className='flex w-full max-w-80 flex-col text-xs text-gray-400'>
               {dict.repository.schema.type}: {item.type}
               {item.workflow && (
                 <p>

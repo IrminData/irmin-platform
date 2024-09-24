@@ -11,11 +11,13 @@ import QueryResults from '@/components/query/QueryResults';
 
 import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
 
 import { Repository } from '@/types/core/Repository';
 
 import CollectionSchema from './CollectionSchema';
 import CollectionSelector from './CollectionSelector';
+import UploadCollectionModalContent from './UploadCollectionModalContent';
 
 /**
  * Repository viewer section, provides UI for the Repository viewer Page.
@@ -34,16 +36,20 @@ export default function RepositorySection({
     loadingSchema,
     schema,
     currentBranch,
+    currentRepository,
   } = useData();
 
-  // Handle download repository as ZIP
-  const handleDownload = () => {
-    // TODO: Download the repository from the server
-  };
+  const { irminModal } = usePopup();
 
   // Handle upload collection to the repository
   const handleUpload = () => {
-    // TODO: Upload collection to the repository
+    irminModal.show(
+      dict.repository.uploadCollection,
+      <UploadCollectionModalContent
+        currentRepository={currentRepository}
+        currentBranch={currentBranch}
+      />
+    );
   };
 
   const [selectedCollection, setSelectedCollection] = useState<string | null>(
@@ -91,27 +97,27 @@ export default function RepositorySection({
   return (
     <>
       <div className='container relative mx-auto mb-4 flex max-w-6xl flex-col gap-4 px-2 md:px-4'>
-        <div className='flex w-full flex-col items-center gap-2 md:flex-row md:gap-4'>
+        <div className='flex w-full flex-wrap items-center justify-end gap-2 md:gap-4'>
           <Button
-            onClick={handleDownload}
-            className='w-full'
             colorScheme='light'
             variant='solid'
             size='sm'
             icon={<TbDownload />}
+            href={`${repository?.slug}/download`}
           >
-            {dict.repository.download}
+            {dict.repository.download.download}
           </Button>
-          <Button
-            onClick={handleUpload}
-            className='w-full'
-            colorScheme='light'
-            variant='solid'
-            size='sm'
-            icon={<TbUpload />}
-          >
-            {dict.repository.uploadCollection}
-          </Button>
+          {repository && !repository.is_immutable && (
+            <Button
+              onClick={handleUpload}
+              colorScheme='light'
+              variant='solid'
+              size='sm'
+              icon={<TbUpload />}
+            >
+              {dict.repository.uploadCollection}
+            </Button>
+          )}
         </div>
         <div className='flex w-full flex-col items-start gap-1 md:flex-row md:gap-2'>
           {repository && (

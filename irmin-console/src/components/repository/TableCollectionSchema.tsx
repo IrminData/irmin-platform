@@ -15,21 +15,19 @@ import { TableSchema } from '@/types/core/TableCollection';
  *
  * @param props - The component props
  * @param props.schema - The table schema to display
+ * @param props.downloadUrl - (optional) The download URL for the object
  */
 export default function TableCollectionSchema({
   schema,
+  downloadUrl,
 }: {
   schema: TableSchema;
+  downloadUrl?: string;
 }) {
   const { dict } = useLocale();
 
-  // Handle download table as CSV
-  const handleDownload = () => {
-    // TODO: Download the table as CSV from the server
-  };
-
   return (
-    <div className='space-y-2'>
+    <div className='space-y-4'>
       <table className='border-seperate w-full table-auto gap-2 text-left'>
         <thead>
           <tr className='border-b border-gray-300 dark:border-gray-700'>
@@ -46,16 +44,18 @@ export default function TableCollectionSchema({
           ))}
         </tbody>
       </table>
-      <Button
-        onClick={handleDownload}
-        className='w-full'
-        colorScheme='black'
-        variant='link'
-        size='sm'
-        icon={<TbDownload />}
-      >
-        {dict.repository.download}
-      </Button>
+      {downloadUrl && (
+        <Button
+          size='sm'
+          colorScheme='light'
+          variant='solid'
+          className='w-full'
+          icon={<TbDownload />}
+          href={downloadUrl}
+        >
+          {dict.repository.download.download}
+        </Button>
+      )}
     </div>
   );
 }

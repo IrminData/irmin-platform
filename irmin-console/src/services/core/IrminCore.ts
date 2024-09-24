@@ -36,6 +36,9 @@ class IrminCore {
   private locale: Locale;
   private token: string;
 
+  public apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev';
+  public appBase = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+
   public authService: AuthService;
   public bucketService: BucketService;
   public connectionService: ConnectionService;
@@ -84,8 +87,8 @@ class IrminCore {
     url: string,
     options: RequestInit
   ): Promise<IrminAPIResponse> => {
-    const api_base = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev';
-    const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+    const api_base = this.apiBase;
+    const app_base = this.appBase;
 
     // Use the token if it is set
     if (this.token && this.token.length > 0) {

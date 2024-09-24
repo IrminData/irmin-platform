@@ -28,11 +28,9 @@ const RepositoryList = ({
   const rows: GridRow[] = items.map((item, i) => {
     const actions = [
       {
-        label: dict.repository.download,
+        label: dict.repository.download.download,
         primary: false,
-        onClick: () => {
-          // TODO: Download the repository from the server
-        },
+        href: `/${locale}/console/${workspace}/repositories/${item.slug}/download`,
       },
       {
         label: dict.list.view,

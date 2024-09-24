@@ -41,6 +41,9 @@ class RepositoryService {
     this.reassignRepository = this.reassignRepository.bind(this);
     this.deleteRepository = this.deleteRepository.bind(this);
     this.updateRepository = this.updateRepository.bind(this);
+    this.getDownloadLink = this.getDownloadLink.bind(this);
+    this.uploadCollection = this.uploadCollection.bind(this);
+    this.deleteCollection = this.deleteCollection.bind(this);
   }
 
   /**
@@ -201,6 +204,136 @@ class RepositoryService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update Repository error');
+      if (isDevelopment) return fake();
+      throw error;
+    }
+  }
+
+  /**
+   * Get a link to download the repository
+   *
+   * @todo Provide link to Irmin API docs
+   *
+   * @param repository - The repository to download
+   * @param branch - The branch to download
+   * @param path - The path within the repository to download
+   * @param redirectToSuccess - The URL to redirect the user to after download success
+   * @param redirectToFailed - The URL to redirect the user to after download failure
+   *
+   * @returns The download URL to redirect the user to
+   */
+  async getDownloadLink(
+    repository: string,
+    branch: string,
+    path?: string,
+    redirectToSuccess?: string,
+    redirectToFailed?: string
+  ): Promise<string> {
+    try {
+      // Construct the query parameters from the props
+      const params = new URLSearchParams({
+        branch,
+        path: path ?? '',
+        onSuccess: redirectToSuccess ?? this.irminCore.appBase,
+        onFailed: redirectToFailed ?? this.irminCore.appBase,
+      });
+
+      // Construct the download URL
+      const downloadUrl = `${this.irminCore.apiBase}/v1/repositories/${repository}/download?${params}`;
+
+      // Return the download URL
+      return downloadUrl;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Repository Download link creation error'
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Upload a collection to the repository
+   *
+   * @todo Provide link to Irmin API docs
+   *
+   * Upload the files to the lakehouse, index them in the repository
+   * and create a new collection.
+   *
+   * @param repository - The repository to upload the collection to
+   * @param branch - The branch to upload the collection to
+   * @param name - The name of the new collection
+   * @param files - The files to upload
+   * @param path - The path within the repository to upload the files to
+   */
+  async uploadCollection(
+    repository: string,
+    branch: string,
+    name: string,
+    files: FileList,
+    path: string
+  ): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return fake();
+    try {
+      const formData = new FormData();
+
+      formData.append('name', name);
+      formData.append('branch', branch);
+      formData.append('path', path);
+
+      for (let i = 0; i < files.length; i++) {
+        formData.append('files[]', files[i]);
+      }
+
+      const response = await this.irminCore.fetch(
+        `/v1/repositories/${repository}/collection/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Upload Collection error');
+      if (isDevelopment) return fake();
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a collection from the repository
+   *
+   * @todo Provide link to Irmin API docs
+   *
+   * @param repository - The repository to delete the collection from
+   * @param branch - The branch to delete the collection from
+   * @param collection - The collection to delete
+   */
+  async deleteCollection(
+    repository: string,
+    branch: string,
+    collection: string
+  ): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return fake();
+    try {
+      const formData = new FormData();
+
+      formData.append('_method', 'DELETE');
+      formData.append('branch', branch);
+      formData.append('collection', collection);
+
+      const response = await this.irminCore.fetch(
+        `/v1/repositories/${repository}/collection/delete`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Delete Collection error');
       if (isDevelopment) return fake();
       throw error;
     }

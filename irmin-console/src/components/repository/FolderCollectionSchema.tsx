@@ -21,11 +21,14 @@ import FileCollectionSchema from './FileCollectionSchema';
  *
  * @param props - The component props
  * @param props.schema - The folder schema to display
+ * @param props.downloadUrl - (optional) The download URL for the object
  */
 export default function FolderCollectionSchema({
   schema,
+  downloadUrl,
 }: {
   schema: FolderSchema;
+  downloadUrl?: string;
 }) {
   const { dict } = useLocale();
   const [currentFolder, setCurrentFolder] = useState<FolderSchema>(schema);
@@ -55,13 +58,8 @@ export default function FolderCollectionSchema({
     setSelectedFile(file);
   };
 
-  // Handle download folder
-  const handleDownload = () => {
-    // TODO: Download the folder from the server
-  };
-
   return (
-    <div className='flex w-full flex-col gap-2'>
+    <div className='flex w-full flex-col gap-4'>
       {(folderHistory.length > 0 || selectedFile) && (
         <Button
           onClick={handleBackClick}
@@ -76,7 +74,10 @@ export default function FolderCollectionSchema({
       )}
 
       {selectedFile ? (
-        <FileCollectionSchema schema={selectedFile.file} />
+        <FileCollectionSchema
+          schema={selectedFile.file}
+          downloadUrl={downloadUrl}
+        />
       ) : (
         <div className='flex flex-col'>
           {currentFolder.items.map((item, index) => (
@@ -110,16 +111,16 @@ export default function FolderCollectionSchema({
         </div>
       )}
 
-      {!selectedFile && (
+      {!selectedFile && downloadUrl && (
         <Button
-          onClick={handleDownload}
-          className='w-full'
-          colorScheme='black'
-          variant='link'
           size='sm'
+          colorScheme='light'
+          variant='solid'
+          className='w-full'
           icon={<TbDownload />}
+          href={downloadUrl}
         >
-          {dict.repository.download}
+          {dict.repository.download.download}
         </Button>
       )}
     </div>

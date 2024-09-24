@@ -79,6 +79,7 @@ const en = {
     noOptionsMessage: 'No options',
     yes: 'Yes',
     no: 'No',
+    fieldRequired: 'This field is required',
   },
   auth: {
     signIn: {
@@ -224,8 +225,27 @@ const en = {
     workflow: 'Workflow',
     viewWorkflow: 'View workflow',
     collectionFrom: 'From',
-    download: 'Download',
     uploadCollection: 'Upload collection',
+    deleteCollection: 'Delete collection',
+    delete: {
+      confirm: 'Are you sure you want to delete this collection?',
+      success: 'Collection deleted successfully.',
+      failed: 'Failed to delete collection.',
+    },
+    download: {
+      download: 'Download',
+      success: 'Your download has been successful!',
+      failed: 'Your download has failed!',
+    },
+    upload: {
+      targetRepository: 'Target repository',
+      collectionName: 'New collection name',
+      filesToUpload: 'Files to upload',
+      pathInRepository: 'Path in the repository',
+      uploadNewCollection: 'Upload new collection',
+      success: 'Your upload has been successful!',
+      failed: 'Your upload has failed!',
+    },
     settings: {
       manageCollections: 'Manage collections',
       generalSettings: 'General settings',

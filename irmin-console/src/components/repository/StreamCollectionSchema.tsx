@@ -15,21 +15,19 @@ import { StreamSchema } from '@/types/core/StreamCollection';
  *
  * @param props - The component props
  * @param props.schema - The stream schema to display
+ * @param props.downloadUrl - (optional) The download URL for the object
  */
 export default function StreamCollectionSchema({
   schema,
+  downloadUrl,
 }: {
   schema: StreamSchema;
+  downloadUrl?: string;
 }) {
   const { dict } = useLocale();
 
-  // Handle download stream
-  const handleDownload = () => {
-    // TODO: Download the item from the server
-  };
-
   return (
-    <div className='space-y-2'>
+    <div className='space-y-4'>
       <div className='flex gap-2 p-1'>
         <div className='w-20 font-bold'>
           {dict.repository.schema.streamType}
@@ -56,16 +54,18 @@ export default function StreamCollectionSchema({
           ))}
         </tbody>
       </table>
-      <Button
-        onClick={handleDownload}
-        className='w-full'
-        colorScheme='black'
-        variant='link'
-        size='sm'
-        icon={<TbDownload />}
-      >
-        {dict.repository.download}
-      </Button>
+      {downloadUrl && (
+        <Button
+          size='sm'
+          colorScheme='light'
+          variant='solid'
+          className='w-full'
+          icon={<TbDownload />}
+          href={downloadUrl}
+        >
+          {dict.repository.download.download}
+        </Button>
+      )}
     </div>
   );
 }

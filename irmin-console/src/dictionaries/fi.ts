@@ -79,6 +79,7 @@ const fi = {
     noOptionsMessage: 'Ei vaihtoehtoja',
     yes: 'Kyllä',
     no: 'Ei',
+    fieldRequired: 'Kenttä on pakollinen',
   },
   auth: {
     signIn: {
@@ -225,8 +226,27 @@ const fi = {
     workflow: 'Prosessi',
     viewWorkflow: 'Katso prosessi',
     collectionFrom: 'Lähde',
-    download: 'Lataa',
     uploadCollection: 'Lisää kokoelma',
+    deleteCollection: 'Poista kokoelma',
+    delete: {
+      confirm: 'Oletko varma, että haluat poistaa tämän kokoelman?',
+      success: 'Kokoelma poistettu onnistuneesti.',
+      failed: 'Kokoelman poisto epäonnistui.',
+    },
+    download: {
+      download: 'Lataa',
+      success: 'Latauksesi onnistui!',
+      failed: 'Latauksesi epäonnistui',
+    },
+    upload: {
+      targetRepository: 'Kohdetietovarasto',
+      collectionName: 'Uuden kokoelman nimi',
+      filesToUpload: 'Tiedostot ladattavaksi',
+      pathInRepository: 'Polku tietovarastossa',
+      uploadNewCollection: 'Lataa uusi kokoelma',
+      success: 'Kokoelman lataus onnistui!',
+      failed: 'Kokoelman lataus epäonnistui!',
+    },
     settings: {
       manageCollections: 'Hallinnoi kokoelmia',
       generalSettings: 'Yleiset asetukset',
