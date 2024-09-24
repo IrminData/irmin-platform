@@ -30,7 +30,7 @@ export const invites: () => Invite[] = () => [
     id: 2,
     name: 'Juha Sipilä',
     email: 'juha@example.com',
-    role: roles()[4],
+    role: roles()[3],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },

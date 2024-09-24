@@ -6,9 +6,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
-import { TbChevronLeft, TbChevronRight, TbSearch } from 'react-icons/tb';
+import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
 import ThemeSwitch from '@/components/common/ThemeSwitch';
+import ConsoleSearch from '@/components/console/ConsoleSearch';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -243,7 +244,7 @@ export default function ConsoleWrapper({
           {/* Top menu bar */}
           <div
             id='console-top-bar'
-            className={`z-10 w-full border-b bg-white dark:border-gray-800 dark:bg-irmin_black ${isMenuOpen ? 'pl-0' : 'pl-12 lg:pl-0'}`}
+            className={`z-20 w-full border-b bg-white dark:border-gray-800 dark:bg-irmin_black ${isMenuOpen ? 'pl-0' : 'pl-12 lg:pl-0'}`}
           >
             <div className='group flex h-14 w-full items-center px-4 py-1 xl:px-6'>
               <div
@@ -268,24 +269,9 @@ export default function ConsoleWrapper({
                   height={26}
                 />
               </div>
-              <form className='ml-auto w-full max-w-24 rounded-full border border-gray-200 transition-all focus-within:max-w-full md:max-w-sm lg:max-w-md dark:border-gray-800'>
-                <div className='relative'>
-                  <div className='pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3'>
-                    <TbSearch className='text-gray-500' />
-                  </div>
-                  <input
-                    type='search'
-                    className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible focus:outline-none group-focus-within:placeholder:visible md:text-sm md:placeholder:visible dark:bg-irmin_black dark:text-white'
-                    placeholder={dict.consoleNavigation.searchPlaceholder}
-                  />
-                  <button
-                    type='button'
-                    className='invisible absolute bottom-0 right-0 top-0 rounded-full bg-gray-50 px-4 py-3 text-xs font-normal text-gray-800 opacity-0 transition-all hover:bg-gray-100 focus:outline-none group-focus-within:visible group-focus-within:opacity-100 md:visible md:text-sm md:opacity-100 dark:bg-irmin_black dark:text-white dark:hover:bg-gray-800'
-                  >
-                    {dict.consoleNavigation.search}
-                  </button>
-                </div>
-              </form>
+              <div className='ml-auto w-full max-w-24 transition-all focus-within:max-w-full md:max-w-sm lg:max-w-md'>
+                <ConsoleSearch />
+              </div>
             </div>
           </div>
           {/* Console content */}
