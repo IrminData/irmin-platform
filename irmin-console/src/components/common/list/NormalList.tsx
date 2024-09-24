@@ -143,7 +143,11 @@ const NormalList: React.FC<ListProps> = ({
               );
             }
             return (
-              <div key={`list-row-${rowIndex}`} className={`contents`}>
+              <div
+                key={`list-row-${rowIndex}`}
+                id='list-row'
+                className={`contents`}
+              >
                 {rowRendered}
                 <div className='col-span-full border-b border-gray-200 dark:border-gray-800'></div>
               </div>

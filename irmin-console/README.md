@@ -94,9 +94,15 @@ ENV_PASSWORD=devpassword  # Password for environment authentication
 
 NEXT_PUBLIC_OFFLINE_MODE=false  # Toggle offline mode
 
+# Environmant variables for testing
+
 TEST_USER_EMAIL=example@example.com # Irmin user email to run tests with
 TEST_USER_PASSWORD=12345678 # Irmin user password to run tests with
-TEST_USER_WORKSPACE=Demo # Workspace available for the test user
+TEST_USER_WORKSPACE="Example Core" # Workspace available for the test user
+TEST_USER_WORKSPACE_SLUG="example-core" # Slug of the workspace available for the test user
+TEST_USER_REPOSITORY="KPIs and Performance Metrics" # Repository available for the test user
+TEST_USER_REPOSITORY_SLUG="kpi-and-performance-metrics" # Slug of the repository available for the test user
+
 ```
 
 ## Running the Project

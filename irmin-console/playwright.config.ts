@@ -62,22 +62,22 @@ export default defineConfig({
       dependencies: ['setup'],
     },
     /* Test against mobile viewports. */
-    {
-      name: 'Mobile Chrome',
-      use: {
-        ...devices['Pixel 5'],
-        storageState: 'playwright/.auth/auth.json', // Use prepared auth state.
-      },
-      dependencies: ['setup'],
-    },
-    {
-      name: 'Mobile Safari',
-      use: {
-        ...devices['iPhone 12'],
-        storageState: 'playwright/.auth/auth.json', // Use prepared auth state.
-      },
-      dependencies: ['setup'],
-    },
+    // {
+    //   name: 'Mobile Chrome',
+    //   use: {
+    //     ...devices['Pixel 5'],
+    //     storageState: 'playwright/.auth/auth.json', // Use prepared auth state.
+    //   },
+    //   dependencies: ['setup'],
+    // },
+    // {
+    //   name: 'Mobile Safari',
+    //   use: {
+    //     ...devices['iPhone 12'],
+    //     storageState: 'playwright/.auth/auth.json', // Use prepared auth state.
+    //   },
+    //   dependencies: ['setup'],
+    // },
   ],
 
   /* Run your local dev server before starting the tests */

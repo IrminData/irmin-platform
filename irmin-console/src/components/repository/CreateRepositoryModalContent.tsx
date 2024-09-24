@@ -108,7 +108,10 @@ export default function CreateRepositoryModalContent({
   ]);
 
   return (
-    <div className='flex flex-col gap-4 p-4 pb-6'>
+    <div
+      className='flex flex-col gap-4 p-4 pb-6'
+      id='create-repository-modal-content'
+    >
       <div>
         <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
           {dict.repository.settings.name}

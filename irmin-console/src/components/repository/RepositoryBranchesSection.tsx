@@ -164,12 +164,14 @@ export default function RepositoryBranchesSection() {
           {dict.repository.createBranch}
         </Button>
       </div>
-      <NormalList
-        headers={[dict.list.name, dict.list.actions]}
-        hideHeaders={false}
-        loading={loadingBranches}
-        rows={rows}
-      />
+      <div id='branches-list'>
+        <NormalList
+          headers={[dict.list.name, dict.list.actions]}
+          hideHeaders={false}
+          loading={loadingBranches}
+          rows={rows}
+        />
+      </div>
     </div>
   );
 }

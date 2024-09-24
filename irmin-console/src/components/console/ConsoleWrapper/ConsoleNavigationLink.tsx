@@ -23,14 +23,13 @@ export default function ConsoleNavigationLink({
 
   if (link.href) {
     return (
-      <li>
+      <li id='console-navigation-link'>
         <Link
           className={`flex items-center justify-between rounded-md p-3 py-3 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 ${
             link.active ? 'bg-gray-200 dark:bg-gray-800' : ''
           } overflow-hidden transition-all ${isMenuFolded ? 'w-12' : 'w-full'}`}
           href={link.href}
           onClick={() => setIsMenuOpen(false)}
-          aria-label={link.title}
           {...(link.props as ComponentPropsWithoutRef<'a'>)}
         >
           <div className={`flex w-full min-w-36 items-center justify-start`}>
@@ -42,7 +41,7 @@ export default function ConsoleNavigationLink({
     );
   } else {
     return (
-      <li>
+      <li id='console-navigation-link'>
         <button
           className={`flex items-center justify-between rounded-md p-3 py-3 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 ${
             link.active ? 'bg-gray-200 dark:bg-gray-800' : ''
@@ -51,7 +50,6 @@ export default function ConsoleNavigationLink({
             setIsMenuOpen(false);
             if (link.action) link.action();
           }}
-          aria-label={link.title}
           {...(link.props as ComponentPropsWithoutRef<'button'>)}
         >
           <div className={`flex w-full min-w-36 items-center justify-start`}>

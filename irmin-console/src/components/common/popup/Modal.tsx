@@ -34,7 +34,10 @@ const Modal = ({
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 z-50 flex animate-fadeIn items-center justify-center bg-gray-200 bg-opacity-30 backdrop-blur-[2px] dark:bg-irmin_black dark:bg-opacity-30'>
+    <div
+      id='irmin-modal'
+      className='fixed inset-0 z-50 flex animate-fadeIn items-center justify-center bg-gray-200 bg-opacity-30 backdrop-blur-[2px] dark:bg-irmin_black dark:bg-opacity-30'
+    >
       <div className='w-[500px] max-w-[90vw] pt-[40px]'>
         <div className='rounded-lg border border-irmin_green bg-gray-50 shadow-lg dark:bg-irmin_black'>
           <div className='align-center flex flex-row justify-between border-b px-4 pb-4 pt-4 dark:border-b-gray-800'>

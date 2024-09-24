@@ -38,7 +38,7 @@ export default function BranchSelector({
   );
 
   return (
-    <div className='flex flex-col'>
+    <div className='flex flex-col' id='branch-selector'>
       <span className='z-10 -mb-2 px-2 text-xs text-gray-600 dark:text-gray-400'>
         {dict.repository.branch}
       </span>

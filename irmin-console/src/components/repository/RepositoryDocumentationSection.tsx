@@ -107,6 +107,7 @@ const RepositoryDocumentationSection = ({
           <textarea
             className='h-full w-full bg-gray-200 p-2 text-irmin_black focus:outline-none dark:bg-irmin_black dark:text-gray-200'
             placeholder={dict.documentation.startTypingDocumentation}
+            id='plain-text-documentation-editor'
             value={currentDocumentation}
             onChange={(e) => {
               setCurrentDocumentation(e.target.value);
@@ -115,7 +116,10 @@ const RepositoryDocumentationSection = ({
           />
         )}
         {documentationEditorType === 'mdx' && (
-          <div className='h-full max-h-full min-h-80 w-full overflow-y-scroll rounded-lg border border-gray-300 bg-white dark:border-gray-800 dark:bg-irmin_black'>
+          <div
+            id='mdx-documentation-editor'
+            className='h-full max-h-full min-h-80 w-full overflow-y-scroll rounded-lg border border-gray-300 bg-white dark:border-gray-800 dark:bg-irmin_black'
+          >
             <MDXEditor
               placeholder={dict.documentation.startTypingDocumentation}
               markdown={currentDocumentation}

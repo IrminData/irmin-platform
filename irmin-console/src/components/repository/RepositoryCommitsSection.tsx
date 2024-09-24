@@ -57,13 +57,19 @@ export default function RepositoryCommitsSection() {
           {dict.repository.tabs.commits}
         </h2>
       </div>
-      <NormalList
-        headers={[dict.list.name, dict.repository.commitHash, dict.list.author]}
-        hideHeaders={false}
-        noActions={true}
-        loading={loadingCommits}
-        rows={rows}
-      />
+      <div id='commits-list'>
+        <NormalList
+          headers={[
+            dict.list.name,
+            dict.repository.commitHash,
+            dict.list.author,
+          ]}
+          hideHeaders={false}
+          noActions={true}
+          loading={loadingCommits}
+          rows={rows}
+        />
+      </div>
     </div>
   );
 }

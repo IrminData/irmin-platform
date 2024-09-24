@@ -42,6 +42,7 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
           rows.map((card, rowIndex) => (
             <div
               key={`list-card-${rowIndex}`}
+              id='list-card'
               className='flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-4 text-xs md:text-sm xl:text-base dark:border-gray-900 dark:bg-irmin_black-600'
             >
               <div className='flex flex-wrap items-center justify-between gap-4'>

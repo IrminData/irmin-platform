@@ -155,7 +155,7 @@ export default function RepositorySettingsSection({
                   required
                   className='w-full'
                   type='text'
-                  name='name'
+                  name='description'
                   defaultValue={descriptionField}
                   onChange={(e) => setDescriptionField(e.target.value)}
                   longtext={{

@@ -180,7 +180,7 @@ export default function RepositoryLayoutWrapper({
                   variant='link'
                   colorScheme={tab.active ? 'primary' : 'gray'}
                   href={tab.href}
-                  ariaLabel={`Open ${tab.title} for ${repoSlug}`}
+                  ariaLabel={`Tab ${tab.title}`}
                   icon={tab.icon}
                 >
                   {tab.title}
