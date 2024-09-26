@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 
+import * as Sentry from '@sentry/nextjs';
+
 import WebsiteError from '@/components/website/websiteError';
 
 /**
@@ -17,7 +19,7 @@ export default function WebsiteErrorPage({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    Sentry.captureException(error);
   }, [error]);
 
   return <WebsiteError error={error} reset={reset} />;

@@ -45,49 +45,47 @@ export default async function WebsiteHeroSection({
       : section.video;
   return (
     <WebsiteSectionWrapper id='website-hero-section'>
-      <div className='container mx-auto flex h-[60vh] min-h-[500px] max-w-7xl items-end justify-center px-4 pb-12 lg:pb-24'>
-        <div className='w-full max-w-3xl text-center'>
-          <h1 className='mb-6 font-display text-6xl font-bold md:text-8xl'>
-            {section.title_parts.map((titlePart, index) => (
-              <span
-                key={`title-part-${index}`}
-                className={`${
-                  !titlePart.green
-                    ? 'text-irmin_black dark:text-gray-300'
-                    : 'text-irmin_green'
-                }`}
-              >
-                {titlePart.title}
-              </span>
-            ))}
-          </h1>
-          <p className='mx-auto mb-8 max-w-3xl text-sm font-normal text-gray-700 md:text-base dark:text-gray-200'>
+      <div className='container mx-auto mt-12 flex min-h-[70vh] max-w-7xl flex-col items-center justify-center px-4 text-center'>
+        <h1 className='mb-8 font-display text-6xl font-bold tracking-tight sm:text-8xl lg:text-9xl'>
+          {section.title_parts.map((titlePart, index) => (
+            <span
+              key={`title-part-${index}`}
+              className={`${
+                !titlePart.green
+                  ? 'text-irmin_black dark:text-gray-300'
+                  : 'text-irmin_green'
+              }`}
+            >
+              {titlePart.title}
+            </span>
+          ))}
+        </h1>
+        {section.description.length > 0 && (
+          <p className='mx-auto mb-8 max-w-3xl text-base font-normal leading-5 text-gray-700 sm:text-lg dark:text-gray-200'>
             {section.description}
           </p>
-          <div className='flex flex-wrap justify-center'>
-            {section.buttons.map((button, index) => (
-              <div
-                className='w-full py-1 md:mr-4 md:w-auto md:py-0'
-                key={`button-${index}`}
+        )}
+        <div className='flex flex-wrap justify-center'>
+          {section.buttons.map((button, index) => (
+            <div
+              className='w-full py-1 md:mr-4 md:w-auto md:py-0'
+              key={`button-${index}`}
+            >
+              <Button
+                size='lg'
+                variant={button.variant}
+                colorScheme={button.color_scheme}
+                icon={
+                  button.icon ? <DynamicFaIcon name={button.icon} /> : undefined
+                }
+                className='w-full'
+                ariaLabel={button.text}
+                href={getURL(button.link)}
               >
-                <Button
-                  size='lg'
-                  variant={button.variant}
-                  colorScheme={button.color_scheme}
-                  icon={
-                    button.icon ? (
-                      <DynamicFaIcon name={button.icon} />
-                    ) : undefined
-                  }
-                  className='w-full'
-                  ariaLabel={button.text}
-                  href={getURL(button.link)}
-                >
-                  {button.text}
-                </Button>
-              </div>
-            ))}
-          </div>
+                {button.text}
+              </Button>
+            </div>
+          ))}
         </div>
       </div>
       <div className='container mx-auto max-w-7xl px-4 pb-8'>

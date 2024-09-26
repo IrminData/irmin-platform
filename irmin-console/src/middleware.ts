@@ -125,6 +125,7 @@ export function middleware(req: NextRequest) {
  * - ui-assets (UI assets)
  * - _next/static (static files)
  * - _next/image (image optimisation files)
+ * - monitoring (sentry tunnel route)
  * Or specific files:
  * - all .svg, .png, .jpg, .webp and .jpeg files
  * - sitemap.xml
@@ -134,6 +135,6 @@ export function middleware(req: NextRequest) {
  */
 export const config = {
   matcher: [
-    '/((?!api|ui-assets|_next/static|_next/image|favicon.ico|[^/]+\\.svg|[^/]+\\.png|[^/]+\\.jpg|[^/]+\\.webp|[^/]+\\.jpeg|sitemap\\.xml|robots\\.txt).*)',
+    '/((?!api|ui-assets|_next/static|_next/image|monitoring|favicon.ico|[^/]+\\.svg|[^/]+\\.png|[^/]+\\.jpg|[^/]+\\.webp|[^/]+\\.jpeg|sitemap\\.xml|robots\\.txt).*)',
   ],
 };

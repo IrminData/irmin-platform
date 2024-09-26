@@ -1,4 +1,4 @@
-import { DynamicFieldValues } from "./DynamicField";
+import { DynamicFieldValues } from './DynamicField';
 
 /**
  * Export setup object

@@ -58,6 +58,7 @@ export default async function Page({ params }: PageProps) {
         full_width={page.acf?.full_width ?? false}
       />
       <PageSections sections={page.acf?.sections ?? []} lang={lang} />
+      <div className='h-12'></div>
     </>
   );
 }

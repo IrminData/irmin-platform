@@ -34,7 +34,7 @@ export default function EditorSection() {
               currentEditor.language ?? 'sql',
               currentEditor.contents ?? '',
               'main'
-            )
+            );
           }}
         />
       )}

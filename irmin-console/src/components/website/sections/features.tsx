@@ -41,7 +41,7 @@ export default async function WebsiteFeaturesSection({
           <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-normal uppercase leading-5 text-white shadow-sm'>
             {section.subtitle}
           </span>
-          <h1 className='font-display mb-4 text-3xl font-bold leading-tight tracking-tighter md:text-4xl'>
+          <h1 className='mb-4 font-display text-3xl font-bold leading-tight tracking-tighter md:text-4xl'>
             {section.title}
           </h1>
           <p className='text-sm font-normal text-irmin_black md:text-base'>

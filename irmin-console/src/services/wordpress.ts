@@ -8,7 +8,7 @@ import {
 } from '@/types/examples/wordpressObjects';
 import { Media, Menu, WPPost } from '@/types/website/Wordpress';
 
-const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
+const offlineMode = process.env.NEXT_PUBLIC_CMS_OFFLINE_MODE === 'true';
 
 /**
  * WordPress API service

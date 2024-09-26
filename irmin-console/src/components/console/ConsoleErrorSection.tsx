@@ -14,7 +14,7 @@ function ConsoleErrorSection({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   return (
     <div className='container relative z-10 mx-auto px-4 py-16 text-center'>
       <div className='py-16'>
@@ -34,7 +34,7 @@ function ConsoleErrorSection({
               variant='solid'
               colorScheme='primary'
               size='md'
-              href='/console/manage-workspaces'
+              href={`/${locale}/console/manage-workspaces`}
             >
               {dict.misc.goBackConsole}
             </Button>

@@ -60,8 +60,8 @@ export default function WebsiteFooterContent({
   const sections = footerLinks[locale] ?? [];
 
   return (
-    <section className='mt-12 bg-irmin_black dark:bg-black'>
-      <div className='container mx-auto max-w-96 px-0 md:max-w-7xl md:px-4 xl:px-0'>
+    <section className='bg-irmin_black dark:bg-black'>
+      <div className='container mx-auto max-w-96 px-0 sm:max-w-7xl sm:px-4 xl:px-0'>
         <div className='flex flex-wrap justify-center gap-y-12 py-6 md:flex-row md:items-start md:justify-start md:pt-12 xl:pt-24'>
           {/* Logo, description and language switcher */}
           <div className='order-1 min-w-96 sm:w-[40%] md:w-1/4 md:pl-2 xl:w-1/6 xl:min-w-96'>
@@ -131,7 +131,7 @@ export default function WebsiteFooterContent({
             </div>
           </div>
         </div>
-        <div className='mt-8 flex w-full flex-col items-center gap-4 py-2 md:pr-2 lg:items-end'>
+        <div className='mb-4 mt-8 flex w-full flex-col items-center gap-4 py-2 md:pr-2 lg:items-end'>
           <div className='flex flex-row items-center gap-4'>
             <Link
               className='inline-block text-xs font-normal text-white text-opacity-60 transition-all duration-200 hover:underline'

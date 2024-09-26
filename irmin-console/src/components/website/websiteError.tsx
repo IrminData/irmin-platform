@@ -36,14 +36,14 @@ export default function WebsiteError({
         width={600}
         height={700}
       />
-      <div className='container relative z-10 mx-auto px-4'>
+      <div className='container relative z-10 mx-auto min-h-[80vh] px-4'>
         <div className='flex flex-wrap py-16 md:py-40 lg:py-72'>
           <div className='ml-auto w-full text-center md:w-1/2 md:text-left'>
             <div className='md:max-w-xl'>
               <span className='mb-4 inline-block rounded-full bg-irmin_green px-2 py-px text-xs font-medium leading-5 text-white shadow-sm'>
                 {dict.misc.error} {pageNotFound ? '404' : '500'}
               </span>
-              <h2 className='mb-4 text-4xl font-bold leading-tight tracking-tighter md:text-5xl'>
+              <h2 className='mb-8 font-display text-6xl font-bold tracking-tight sm:text-8xl lg:text-9xl'>
                 {dict.misc.ohNo}{' '}
                 {pageNotFound
                   ? dict.misc.pageNotFound

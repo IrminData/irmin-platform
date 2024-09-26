@@ -18,7 +18,9 @@ export default function removeCircularJSON(target: any) {
   }
 
   // Clone the target object to avoid modifying the original object
-  const obj = Array.isArray(target) ? [...target].filter(Boolean) : { ...target };
+  const obj = Array.isArray(target)
+    ? [...target].filter(Boolean)
+    : { ...target };
 
   // Recursively remove circular references and falsy elements
   const seen = new Map<any, any>();

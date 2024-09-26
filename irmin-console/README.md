@@ -92,7 +92,10 @@ NEXT_PUBLIC_TOKEN_MAX_AGE=1800 # 30 minutes, how long are the token and profile 
 REQUIRE_ENV_AUTH=true  # Enable environment-specific authentication
 ENV_PASSWORD=devpassword  # Password for environment authentication
 
-NEXT_PUBLIC_OFFLINE_MODE=false  # Toggle offline mode
+SENTRY_AUTH_TOKEN=sntryu_xxxxx  # Sentry token for error tracking
+
+NEXT_PUBLIC_OFFLINE_MODE=false  # Toggle offline mode for the Irmin API
+NEXT_PUBLIC_CMS_OFFLINE_MODE=false  # Toggle offline mode for the Irmin CMS
 
 # Environmant variables for testing
 
@@ -138,9 +141,9 @@ Components are the building blocks of the application. They are reusable pieces 
 
 ### /app directory
 
-[Pages and Layouts](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts) are used to provide the route content. They are located in the `/app` directory. 
+[Pages and Layouts](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts) are used to provide the route content. They are located in the `/app` directory.
 
-We generally try to avoid using the `app` directory for anything other than defining the routes, layouts and SEO.  The actual content should be in the `/components` directory.
+We generally try to avoid using the `app` directory for anything other than defining the routes, layouts and SEO. The actual content should be in the `/components` directory.
 
 It is also okay to handle certain data fetching in the `app` directory components. This could be used as a sort of cache layer for generic data. Fetching user/workspace specific data, or large amounts of data this way, can be problematic.
 
@@ -150,11 +153,11 @@ See [Server side actions](#server-side-actions) for more information.
 
 ### Naming conventions
 
-If a component is used to provide a route Layout, it should say `LayoutWrapper` eg. `EditorLayoutWrapper`, corresponding layout for this component should be `EditorLayout`. 
+If a component is used to provide a route Layout, it should say `LayoutWrapper` eg. `EditorLayoutWrapper`, corresponding layout for this component should be `EditorLayout`.
 
 If a component is used to provide a route Page content, it should say `Section`, eg. `EditorSection`, corresponding page for this component should be `EditorPage`.
 
-Components should be named in PascalCase and should be descriptive of their purpose. 
+Components should be named in PascalCase and should be descriptive of their purpose.
 
 ### No logic in /components
 
@@ -172,9 +175,9 @@ General components are:
 - `src/components/console/...` -> Components specific to the console pages
 - `src/components/common/...` -> Components that are used in multiple places, like popups, buttons, lists etc.
 
- If a component is used only in a specific feature, it should be placed in the feature directory grouped by features, purposes or domains. 
+If a component is used only in a specific feature, it should be placed in the feature directory grouped by features, purposes or domains.
 
-For example: 
+For example:
 
 - `src/components/workflow/...` -> Components related to Workflows
 - `src/components/workflow/action/...` -> Components related to Action Workflows
@@ -206,15 +209,17 @@ The offline mode exists to enable smooth development process in situations with 
 
 When offline mode is enabled something is always returned for API requests in API Services. The offline mode returns objects from example objects eg. [src/types/examples/core](src/types/examples/core/index.ts) depending on what would be the APIs expected return type.
 
+`NEXT_PUBLIC_CMS_OFFLINE_MODE` environment variable can be used to enable offline mode for the Wordpress CMS.
+
 Note! It is not meant for anything but local use.
 
 ## Server side actions
 
 Next.js allows for many ways of running server-side code. See [Next.js documentation](https://nextjs.org/docs/app) for more information.
 
-Since Irmin API authorises the user with a cookie, the API cannot be called directly on the server side. 
+Since Irmin API authorises the user with a cookie, the API cannot be called directly on the server side.
 
-Whenever the API is called on the server side, the token is used instead of the cookie. The token needs to be passed to the server side action from the client side. 
+Whenever the API is called on the server side, the token is used instead of the cookie. The token needs to be passed to the server side action from the client side.
 
 The token is stored in the [IAMContext](src/context/IAMContext.tsx). See [Irmin API authorisation](#irmin-api-authorisation) for more information.
 
@@ -261,7 +266,7 @@ In the future, more data fetching will be done on the server side, and the token
 
 IrminCore can be found in `src/services/core/IrminCore.ts`.
 
-To interact with the Irmin API, we utilise the `IrminCore` Class, which centralises all individual API services. 
+To interact with the Irmin API, we utilise the `IrminCore` Class, which centralises all individual API services.
 
 API services leverage the `fetch`-function, provided by the `IrminCore`, to make API calls. This class manages the API call process, including default properties, request locale, and request token.
 
@@ -285,7 +290,7 @@ Examples:
 
 ### Proxy Services
 
-Proxy services are used to call the internal API routes. The proxy services are located in the `src/services/proxies` directory. 
+Proxy services are used to call the internal API routes. The proxy services are located in the `src/services/proxies` directory.
 
 See [src/services/proxies/workspace.ts](src/services/proxies/workspace.ts) for an example of a proxy service.
 
@@ -302,7 +307,6 @@ Data services are used to fetch data from the Workspace's data from Irmin Data L
 The Wordpress Service is used to communicate with the Wordpress API.
 
 Wordpress Service uses fake data when needed. See [Static data](#static-data) section of this README for more information. Example Worpdress objects can be found here: [src/types/examples/wordpressObjects.ts](src/types/examples/wordpressObjects.ts)
-
 
 See [Wordpress CMS](#wordpress-cms) for more information.
 
@@ -343,9 +347,9 @@ When creating a new context, ensure it follows the same structure as the existin
 
 [IAMContext](src/context/IAMContext.tsx)
 
-IAMContext is used to manage the user profile state across the application. It provides the user profile data, function to refetch and update the user profile data. It also provides functions to login, register and logout the user. 
+IAMContext is used to manage the user profile state across the application. It provides the user profile data, function to refetch and update the user profile data. It also provides functions to login, register and logout the user.
 
-Profile information, except for token will be stored in cookies as well, to simplify some server side rendering and avoid making every component with profile info client side rendered. 
+Profile information, except for token will be stored in cookies as well, to simplify some server side rendering and avoid making every component with profile info client side rendered.
 
 IAMContext also fetches and stores the users API token. This token and the profile data are valid for NEXT_PUBLIC_TOKEN_MAX_AGE seconds. If the token is expired, the application will automatically refetch the token and profile data. If no profile data is available, the application will automatically log the user out.
 

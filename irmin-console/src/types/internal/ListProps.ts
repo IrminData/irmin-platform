@@ -25,7 +25,7 @@ export type GridRow = {
 /**
  * Props for the NormalList and CardList UI components
  * @example used for displaying a list of connections, actions, exports, repositories, etc.
- * 
+ *
  * @typeParam loading - Whether the list is loading
  * @typeParam rows - Rows of the list
  * @typeParam headers - Headers of the list

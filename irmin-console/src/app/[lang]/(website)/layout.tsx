@@ -36,10 +36,10 @@ export default function WebsiteLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <>
+    <div className='flex flex-col'>
       <WebsiteNavigation />
       {children}
       <WebsiteFooter />
-    </>
+    </div>
   );
 }

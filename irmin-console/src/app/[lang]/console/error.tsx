@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 
+import * as Sentry from '@sentry/nextjs';
+
 import ConsoleErrorSection from '@/components/console/ConsoleErrorSection';
 
 /**
@@ -24,7 +26,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    Sentry.captureException(error);
   }, [error]);
 
   return <ConsoleErrorSection error={error} reset={reset} />;
