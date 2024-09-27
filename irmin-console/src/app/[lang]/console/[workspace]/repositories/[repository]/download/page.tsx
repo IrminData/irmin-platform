@@ -23,7 +23,7 @@ export default function RepositoryDownloadPage({
   const searchParams = useSearchParams();
   const collection = searchParams.get('collection') ?? '';
 
-  const { downloadRepository, currentBranch } = useData();
+  const { downloadRepository } = useData();
   const downloaded = useRef(false);
 
   useEffect(() => {
@@ -31,7 +31,6 @@ export default function RepositoryDownloadPage({
       params.repository &&
       params.workspace &&
       params.lang &&
-      currentBranch &&
       !downloaded.current
     ) {
       // Make sure the repository is only downloaded once
@@ -46,7 +45,7 @@ export default function RepositoryDownloadPage({
       // Redirect the user to the previous page
       router.back();
     }
-  }, [params, downloadRepository, currentBranch, router, collection]);
+  }, [params, downloadRepository, router, collection]);
 
-  return <LoadingSkeleton />;
+  return <LoadingSkeleton className='h-96' />;
 }

@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test('website opens and has content', async ({ page }) => {
   await page.goto('/en');
   await expect(page.locator('#website-hero-section')).toBeVisible();
-  await expect(page.locator('h1')).toContainText(
+  await expect(page.locator('h1').first()).toContainText(
     'Just like GitHub for your Data'
   );
 });

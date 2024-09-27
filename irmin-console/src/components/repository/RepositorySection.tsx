@@ -132,7 +132,7 @@ export default function RepositorySection({
               variant='solid'
               size='sm'
               icon={<TbDownload />}
-              href={`${repository?.slug}/download`}
+              href={`/${locale}/console/${currentWorkspace?.slug}/repositories/${repository?.slug}/download`}
             >
               {dict.repository.download.download}
             </Button>

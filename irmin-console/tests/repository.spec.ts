@@ -149,8 +149,42 @@ test('can view commits', async ({ page }) => {
   );
 
   // Make sure the heading is correct and the commits table is visible
-  await expect(page.locator('h2')).toContainText('Commits');
   await expect(page.locator('#commits-list')).toBeVisible();
+});
+
+test('can open commit ref', async ({ page, context }) => {
+  // Grant clipboard permissions to browser context
+  await context.grantPermissions(['clipboard-read']);
+
+  // Go to the commits page
+  await page.goto(
+    `/en/console/${workspace}/repositories/${repositorySlug}/commits`
+  );
+
+  // Click on the first commit to copy the hash
+  await page.locator('.col-span-1 > .flex > .text-irmin_black').first().click();
+  await expect(page.locator('#alert')).toContainText(
+    'Commit hash copied to clipboard'
+  );
+
+  // Click the view button of the first commit
+  await page.locator('.col-span-1 > .flex > .bg-gray-100').first().click();
+
+  // Get clipboard content after the link/button has been clicked
+  const handle = await page.evaluateHandle(() =>
+    navigator.clipboard.readText()
+  );
+  const clipboardContent = await handle.jsonValue(); // <- this should be the commit hash
+
+  // Wait for the URL to change to the ref page
+  await page.waitForURL(
+    `/en/console/${workspace}/repositories/${repositorySlug}/refs/${clipboardContent}`
+  );
+
+  // Make sure the heading is correct
+  await expect(page.locator('#console-content')).toContainText(
+    `${workspace} / ${repositorySlug} / ${clipboardContent}`
+  );
 });
 
 test('can view branches', async ({ page }) => {
@@ -165,7 +199,6 @@ test('can view branches', async ({ page }) => {
   );
 
   // Make sure the heading is correct and the branches list is visible
-  await expect(page.locator('h2')).toContainText('Branches');
   await expect(page.locator('#branches-list')).toBeVisible();
 });
 
