@@ -52,13 +52,17 @@ class QueryService {
    *
    * @param type - type of the script. Can be for example `sql`. See {@link IrminFileType}
    * @param content - content of the script
-   * @param branch - branch to execute the script on, for example `main`
-   * @param collection - collection to execute the script on (optional)
+   * @param repository - (optional) The repository to run the script on
+   * @param branch - (optional) The branch to run the script on
+   * @param ref - (optional) The ref to run the script on
+   * @param collection - (optional) collection to run the script on
    */
   async runScript(
     type: IrminFileType,
     content: string,
-    branch: string,
+    repository?: string,
+    branch?: string,
+    ref?: string,
     collection?: Collection
   ): Promise<QueryAPIResponse> {
     if (isOfflineMode) {
@@ -78,10 +82,10 @@ class QueryService {
       const body = new FormData();
       body.append('type', type);
       body.append('content', content);
-      body.append('branch', branch);
-      if (collection) {
-        body.append('collection', collection.formatted_name);
-      }
+      if (repository) body.append('repository', repository);
+      if (branch) body.append('branch', branch);
+      if (ref) body.append('ref', ref);
+      if (collection) body.append('collection', collection.formatted_name);
       const response = (await this.irminCore.fetch(`/v1/api/query`, {
         method: 'POST',
         body,

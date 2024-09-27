@@ -215,31 +215,34 @@ class RepositoryService {
    * @todo Provide link to Irmin API docs
    *
    * @param repository - The repository to download
-   * @param branch - The branch to download
-   * @param path - The path within the repository to download
-   * @param redirectToSuccess - The URL to redirect the user to after download success
-   * @param redirectToFailed - The URL to redirect the user to after download failure
+   * @param branch - (optional) The branch to download
+   * @param ref - (optional) The ref to download
+   * @param path - (optional) The path within the repository to download
+   * @param redirectToSuccess - (optional) The URL to redirect the user to after download success
+   * @param redirectToFailed - (optional) The URL to redirect the user to after download failure
    *
    * @returns The download URL to redirect the user to
    */
   async getDownloadLink(
     repository: string,
-    branch: string,
+    branch?: string,
+    ref?: string,
     path?: string,
     redirectToSuccess?: string,
     redirectToFailed?: string
   ): Promise<string> {
     try {
       // Construct the query parameters from the props
-      const params = new URLSearchParams({
-        branch,
-        path: path ?? '',
-        onSuccess: redirectToSuccess ?? this.irminCore.appBase,
-        onFailed: redirectToFailed ?? this.irminCore.appBase,
-      });
+      const urlParams = new URLSearchParams();
+      urlParams.append('repository', repository);
+      if (branch) urlParams.append('branch', branch);
+      if (ref) urlParams.append('ref', ref);
+      if (path) urlParams.append('path', path);
+      if (redirectToSuccess) urlParams.append('onSuccess', redirectToSuccess);
+      if (redirectToFailed) urlParams.append('onFailed', redirectToFailed);
 
       // Construct the download URL
-      const downloadUrl = `${this.irminCore.apiBase}/v1/repositories/${repository}/download?${params}`;
+      const downloadUrl = `${this.irminCore.apiBase}/v1/repositories/${repository}/download?${urlParams.toString()}`;
 
       // Return the download URL
       return downloadUrl;

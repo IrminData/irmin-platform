@@ -6,6 +6,8 @@ import { Locale } from '@/dictionaries';
 
 import WorkflowLayoutWrapper from '@/components/workflow/WorkflowLayoutWrapper';
 
+import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
+
 /**
  * URL parameters for the single Workflow pages layout
  *
@@ -45,8 +47,8 @@ export default function WorkflowLayout({
   params: SingleWorkflowLayoutParams;
 }>) {
   const workflow = params.workflow;
-  if (!workflow || workflow.length === 0) {
-    return notFound();
+  if (isInvalidRouteProp(workflow)) {
+    notFound();
   }
   return (
     <WorkflowLayoutWrapper workflowSlug={workflow}>

@@ -35,17 +35,23 @@ class CommitService {
    * Fetch all available commits for a repository and branch
    * @todo Provide link to Irmin API docs
    *
-   * @param repository - slug of the repository to fetch commits for
-   * @param branch - branch to fetch commits for
+   * @param repository -  The repository to get commits from
+   * @param branch - (optional) The branch to get commits from
+   * @param ref - (optional) The ref to get commits from
    */
   async fetchCommits(
     repository: string,
-    branch: string
+    branch?: string,
+    ref?: string
   ): Promise<CommitsAPIResponse> {
     if (isOfflineMode) return fake(exampleCommits) as CommitsAPIResponse;
     try {
+      const urlParams = new URLSearchParams();
+      urlParams.append('repository', repository);
+      if (branch) urlParams.append('branch', branch);
+      if (ref) urlParams.append('ref', ref);
       const response = (await this.irminCore.fetch(
-        `/v1/commits?repository=${repository}&branch=${branch}`,
+        `/v1/commits?${urlParams.toString()}`,
         {
           method: 'GET',
         }

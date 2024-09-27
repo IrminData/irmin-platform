@@ -32,8 +32,7 @@ export default function EditorSection() {
             if (!currentEditor || !currentEditor.contents) return;
             await runScript(
               currentEditor.language ?? 'sql',
-              currentEditor.contents ?? '',
-              'main'
+              currentEditor.contents ?? ''
             );
           }}
         />

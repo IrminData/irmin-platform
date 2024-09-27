@@ -12,6 +12,7 @@ import { usePopup } from '@/context/PopupContext';
 
 interface UploadFormValues {
   repository: string;
+  branch: string;
   name: string;
   files: FileList;
   path: string;
@@ -31,8 +32,8 @@ export default function UploadCollectionModalContent({
   currentRepository,
   currentBranch,
 }: {
-  currentRepository: string | null;
-  currentBranch: string | null;
+  currentRepository?: string;
+  currentBranch?: string;
 }) {
   const { irminAlert, irminModal } = usePopup();
   const { dict, locale } = useLocale();
@@ -56,7 +57,7 @@ export default function UploadCollectionModalContent({
       const { repositoryService } = new IrminCore(locale);
       await repositoryService.uploadCollection(
         data.repository,
-        currentBranch ?? 'main',
+        data.branch,
         data.name,
         data.files,
         data.path
@@ -88,6 +89,19 @@ export default function UploadCollectionModalContent({
         />
         {errors.repository && (
           <p className='text-red-800'>{errors.repository.message}</p>
+        )}
+      </div>
+      <div className='pb-3'>
+        <label className='text-xs'>{dict.repository.upload.targetBranch}</label>
+        <input
+          type='text'
+          {...register('branch')}
+          value={currentBranch ?? ''}
+          disabled={!!currentBranch}
+          className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
+        />
+        {errors.branch && (
+          <p className='text-red-800'>{errors.branch.message}</p>
         )}
       </div>
       <div className='pb-3'>

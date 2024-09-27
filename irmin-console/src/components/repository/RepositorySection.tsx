@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Link from 'next/link';
+
 import { AiOutlinePlayCircle } from 'react-icons/ai';
 import { TbDownload, TbUpload } from 'react-icons/tb';
 
@@ -12,6 +14,7 @@ import QueryResults from '@/components/query/QueryResults';
 import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useWorkspace } from '@/context/workspace';
 
 import { Repository } from '@/types/core/Repository';
 
@@ -24,11 +27,16 @@ import UploadCollectionModalContent from './UploadCollectionModalContent';
  */
 export default function RepositorySection({
   repository,
+  immutable,
 }: {
   repository?: Repository;
+  immutable?: boolean;
 }) {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
 
+  const {
+    workspaces: { currentWorkspace },
+  } = useWorkspace();
   const {
     runScript,
     runningScript,
@@ -36,6 +44,7 @@ export default function RepositorySection({
     loadingSchema,
     schema,
     currentBranch,
+    currentRef,
     currentRepository,
   } = useData();
 
@@ -63,12 +72,11 @@ export default function RepositorySection({
     runScript(
       'sql',
       query,
-      currentBranch ?? 'main',
       repository?.collections.find(
         (collection) => collection.formatted_name === selectedCollection
       )
     );
-  }, [query, runScript, currentBranch, selectedCollection, repository]);
+  }, [query, runScript, selectedCollection, repository]);
 
   const updateQuery = useCallback(
     (value: string) => {
@@ -97,27 +105,49 @@ export default function RepositorySection({
   return (
     <>
       <div className='container relative mx-auto mb-4 flex max-w-6xl flex-col gap-4 px-2 md:px-4'>
-        <div className='flex w-full flex-wrap items-center justify-end gap-2 md:gap-4'>
-          <Button
-            colorScheme='light'
-            variant='solid'
-            size='sm'
-            icon={<TbDownload />}
-            href={`${repository?.slug}/download`}
-          >
-            {dict.repository.download.download}
-          </Button>
-          {repository && !repository.is_immutable && (
+        <div className='flex w-full flex-wrap items-center justify-between gap-4'>
+          <div className='inline max-w-full overflow-x-scroll whitespace-nowrap text-xs text-gray-600 lg:text-sm dark:text-gray-400'>
+            <Link
+              className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
+              href={`/${locale}/console/${currentWorkspace?.slug}/repositories`}
+            >
+              {currentWorkspace?.slug}
+            </Link>
+            {' / '}
+            <Link
+              className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
+              href={`/${locale}/console/${currentWorkspace?.slug}/repositories/${repository?.slug}`}
+            >
+              {repository?.slug}
+            </Link>
+            {currentRef
+              ? ` / ${currentRef}`
+              : currentBranch
+                ? ` / ${currentBranch}`
+                : ''}
+          </div>
+          <div className='flex items-center gap-2 md:gap-4'>
             <Button
-              onClick={handleUpload}
               colorScheme='light'
               variant='solid'
               size='sm'
-              icon={<TbUpload />}
+              icon={<TbDownload />}
+              href={`${repository?.slug}/download`}
             >
-              {dict.repository.uploadCollection}
+              {dict.repository.download.download}
             </Button>
-          )}
+            {repository && !repository.is_immutable && !immutable && (
+              <Button
+                onClick={handleUpload}
+                colorScheme='light'
+                variant='solid'
+                size='sm'
+                icon={<TbUpload />}
+              >
+                {dict.repository.uploadCollection}
+              </Button>
+            )}
+          </div>
         </div>
         <div className='flex w-full flex-col items-start gap-1 md:flex-row md:gap-2'>
           {repository && (

@@ -271,7 +271,7 @@ const fi = {
     branchCreated: 'Haara luotu onnistuneesti',
     branchCreateFailed: 'Haaran luonti epäonnistui',
     primary: 'Päähaara',
-    cannotDeleteMainBranch: 'Päähaaraa ei voi poistaa',
+    cannotDeletePrimaryBranch: 'Päähaaraa ei voi poistaa',
     newBranchName: 'Uuden haaran nimi',
     fromBranch: 'Haarasta',
     commitHash: 'Commit hash',
@@ -284,6 +284,9 @@ const fi = {
     collectionFrom: 'Lähde',
     uploadCollection: 'Lisää kokoelma',
     deleteCollection: 'Poista kokoelma',
+    currentBranch: 'Nykyinen',
+    copyHash: 'Kopioi hash',
+    commitHashCopied: 'Commit hash kopioitu leikepöydälle',
     delete: {
       confirm: 'Oletko varma, että haluat poistaa tämän kokoelman?',
       success: 'Kokoelma poistettu onnistuneesti.',
@@ -296,6 +299,7 @@ const fi = {
     },
     upload: {
       targetRepository: 'Kohdetietovarasto',
+      targetBranch: 'Kohdehaara',
       collectionName: 'Uuden kokoelman nimi',
       filesToUpload: 'Tiedostot ladattavaksi',
       pathInRepository: 'Polku tietovarastossa',

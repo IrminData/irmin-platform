@@ -7,17 +7,22 @@ import RepositorySection from '@/components/repository/RepositorySection';
 import { useData } from '@/context/DataContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { RepositoryRouteParams } from './layout';
+import { RepositoryRefRouteParams } from './layout';
 
 /**
- * Page for the Repository viewer
+ * Page for the Repository ref data viewer, like tag or specific commit.
  *
  * Uses {@link RepositorySection} to display the Repository viewer
+ *
+ * The repository section is set to immutable, in order to prevent
+ * for example collection uploads.
+ *
+ * The ref is set in the data context from the route params.
  */
-export default function RepositoryPage({
+export default function RepositoryRefPage({
   params,
 }: {
-  params: RepositoryRouteParams;
+  params: RepositoryRefRouteParams;
 }) {
   const {
     repositories: { repositories },
@@ -27,11 +32,11 @@ export default function RepositoryPage({
     [params.repository, repositories]
   );
 
-  // Reset the current data context when changing the repository
+  // Set the current ref in the data context
   const { setCurrentRef } = useData();
   useEffect(() => {
-    setCurrentRef();
-  }, [setCurrentRef]);
+    setCurrentRef(params.ref);
+  }, [setCurrentRef, params.ref]);
 
-  return <RepositorySection repository={repository} />;
+  return <RepositorySection repository={repository} immutable={true} />;
 }

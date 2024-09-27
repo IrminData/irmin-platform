@@ -271,7 +271,7 @@ const en = {
     branchCreated: 'Branch created successfully.',
     branchCreateFailed: 'Failed to create branch',
     primary: 'Primary',
-    cannotDeleteMainBranch: 'Cannot delete main branch',
+    cannotDeletePrimaryBranch: 'Cannot delete primary branch',
     newBranchName: 'New branch name',
     fromBranch: 'From branch',
     commitHash: 'Commit hash',
@@ -283,6 +283,9 @@ const en = {
     collectionFrom: 'From',
     uploadCollection: 'Upload collection',
     deleteCollection: 'Delete collection',
+    currentBranch: 'Current',
+    copyHash: 'Copy hash',
+    commitHashCopied: 'Commit hash copied to clipboard',
     delete: {
       confirm: 'Are you sure you want to delete this collection?',
       success: 'Collection deleted successfully.',
@@ -295,6 +298,7 @@ const en = {
     },
     upload: {
       targetRepository: 'Target repository',
+      targetBranch: 'Target branch',
       collectionName: 'New collection name',
       filesToUpload: 'Files to upload',
       pathInRepository: 'Path in the repository',

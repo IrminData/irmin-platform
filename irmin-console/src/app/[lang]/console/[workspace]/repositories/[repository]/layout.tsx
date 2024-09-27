@@ -8,6 +8,8 @@ import RepositoryLayoutWrapper from '@/components/repository/RepositoryLayoutWra
 
 import { DataProvider } from '@/context/DataContext';
 
+import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
+
 /**
  * Route parameter types for the Repository routes
  * eg. /[lang]/console/[workspace]/repositories/[repository]/whatever
@@ -48,15 +50,12 @@ export default function RepositoryLayoutWithContainer({
   children: React.ReactNode;
   params: RepositoryRouteParams;
 }) {
-  if (
-    !params.repository ||
-    params.repository === '' ||
-    params.repository === 'undefined'
-  ) {
-    return notFound();
+  if (isInvalidRouteProp(params.repository)) {
+    notFound();
   }
+
   return (
-    <DataProvider initialRepository={params.repository} initialBranch={'main'}>
+    <DataProvider initialRepository={params.repository}>
       <RepositoryLayoutWrapper repoSlug={params.repository}>
         {children}
       </RepositoryLayoutWrapper>

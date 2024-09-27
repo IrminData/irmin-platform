@@ -6,6 +6,8 @@ import { Locale } from '@/dictionaries';
 
 import ConnectionLayoutWrapper from '@/components/connection/ConnectionLayoutWrapper';
 
+import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
+
 /**
  * URL parameters for the single Connection pages layout
  *
@@ -45,8 +47,8 @@ export default function ConnectionPagesLayout({
   params: SingleConnectionLayoutParams;
 }>) {
   const connection = params.connection;
-  if (!connection || connection.length === 0) {
-    return notFound();
+  if (isInvalidRouteProp(connection)) {
+    notFound();
   }
   return (
     <ConnectionLayoutWrapper connectionSlug={connection}>

@@ -36,7 +36,7 @@ export default async function WebsiteArticlesSection({
   });
 
   if (!posts) {
-    return notFound();
+    notFound();
   }
 
   const articles: WebsiteArticle[] = [];

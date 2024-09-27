@@ -42,13 +42,7 @@ export default function RepositoryDownloadPage({
       const redirectSuccessUrl = `${appBaseUrl}/${params.lang}/console/${params.workspace}/repositories/${params.repository}/download/success`;
       const redirectFailedUrl = `${appBaseUrl}/${params.lang}/console/${params.workspace}/repositories/${params.repository}/download/failed`;
       // Download the repository from the server
-      downloadRepository(
-        params.repository,
-        currentBranch,
-        collection,
-        redirectSuccessUrl,
-        redirectFailedUrl
-      );
+      downloadRepository(collection, redirectSuccessUrl, redirectFailedUrl);
       // Redirect the user to the previous page
       router.back();
     }

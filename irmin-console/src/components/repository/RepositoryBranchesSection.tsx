@@ -2,13 +2,14 @@
 
 import { useCallback, useMemo } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import IrminCore from '@/services/core/IrminCore';
 
 import { IoAdd } from 'react-icons/io5';
 
 import Button from '@/components/common/button/Button';
 import NormalList from '@/components/common/list/NormalList';
-import StatusBadge from '@/components/common/status/StatusBadge';
 
 import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -22,10 +23,17 @@ import CreateBranchModalContent from './CreateBranchModalContent';
  * Section to display the branches of a repository.
  */
 export default function RepositoryBranchesSection() {
+  const router = useRouter();
   const { dict, locale } = useLocale();
   const { irminAlert, irminModal } = usePopup();
-  const { branches, fetchBranches, currentRepository, loadingBranches } =
-    useData();
+  const {
+    branches,
+    fetchBranches,
+    currentRepository,
+    loadingBranches,
+    currentBranch,
+    setCurrentBranch,
+  } = useData();
 
   const { branchService } = useMemo(() => new IrminCore(locale), [locale]);
 
@@ -34,7 +42,7 @@ export default function RepositoryBranchesSection() {
       if (!currentRepository) return;
       const currentDefaultBranch = branches?.find((b) => b.default)?.name;
       if (branch === currentDefaultBranch) {
-        irminAlert('error', dict.repository.cannotDeleteMainBranch);
+        irminAlert('error', dict.repository.cannotDeletePrimaryBranch);
         return;
       }
       try {
@@ -44,7 +52,10 @@ export default function RepositoryBranchesSection() {
           currentRepository
         );
         irminAlert('success', result.message ?? dict.repository.branchDeleted);
-        fetchBranches(currentRepository);
+        // Change to the primary branch just in case
+        if (currentDefaultBranch) setCurrentBranch(currentDefaultBranch);
+        // Refetch the branches
+        fetchBranches();
       } catch (error) {
         irminAlert(
           'error',
@@ -54,6 +65,7 @@ export default function RepositoryBranchesSection() {
     },
     [
       branches,
+      setCurrentBranch,
       irminAlert,
       dict,
       currentRepository,
@@ -86,7 +98,7 @@ export default function RepositoryBranchesSection() {
           currentRepository
         );
         irminAlert('success', result.message ?? dict.repository.branchCreated);
-        fetchBranches(currentRepository);
+        fetchBranches();
       } catch (error) {
         irminAlert(
           'error',
@@ -124,15 +136,30 @@ export default function RepositoryBranchesSection() {
           columns: [
             <div
               key={`branch-${i}-name`}
-              className='inline-flex flex-row gap-4'
+              className='inline-flex flex-row items-center gap-2'
             >
               <p className='text-base'>{branch.name}</p>
               {branch.default && (
-                <StatusBadge statusLabel={dict.repository.primary} />
+                <span className='h-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+                  {dict.repository.primary}
+                </span>
+              )}
+              {branch.name === currentBranch && (
+                <span className='h-max rounded-lg bg-gray-300 px-1 text-xs leading-4 text-irmin_black dark:bg-gray-600 dark:text-white'>
+                  {dict.repository.currentBranch}
+                </span>
               )}
             </div>,
           ],
           actions: [
+            {
+              label: dict.list.view,
+              primary: true,
+              onClick: () => {
+                setCurrentBranch(branch.name);
+                router.push('./');
+              },
+            },
             {
               label: dict.list.delete,
               primary: false,
@@ -144,14 +171,11 @@ export default function RepositoryBranchesSection() {
         };
       }) ?? []
     );
-  }, [branches, dict.repository.primary, dict.list.delete, deleteBranch]);
+  }, [branches, dict, router, currentBranch, setCurrentBranch, deleteBranch]);
 
   return (
     <div className='container relative mx-auto max-w-6xl px-2 md:px-4'>
-      <div className='mb-4 flex flex-row items-center justify-between gap-4'>
-        <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
-          {dict.repository.tabs.branches}
-        </h2>
+      <div className='mb-4 flex flex-row items-center justify-end gap-4'>
         <Button
           variant='solid'
           colorScheme='primary'
