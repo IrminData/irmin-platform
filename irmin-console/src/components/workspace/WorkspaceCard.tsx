@@ -2,13 +2,13 @@
 
 import Image from 'next/image';
 
+import ProfileImagePlaceholder from '@/components/common/ProfileImagePlaceholder';
+
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
 import { Workspace } from '@/types/core/Workspace';
-
-import ProfileImagePlaceholder from '../common/ProfileImagePlaceholder';
 
 /**
  * Workspace card component

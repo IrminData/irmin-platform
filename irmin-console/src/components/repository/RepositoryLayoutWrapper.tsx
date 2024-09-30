@@ -9,13 +9,13 @@ import { IoChevronBack } from 'react-icons/io5';
 import { TbDatabase, TbFileText, TbSettings } from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
+import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 import StatusBadge from '@/components/common/status/StatusBadge';
 
 import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
-import LoadingSkeleton from '../common/loading/LoadingSkeleton';
 import BranchSelector from './BranchSelector';
 
 /**

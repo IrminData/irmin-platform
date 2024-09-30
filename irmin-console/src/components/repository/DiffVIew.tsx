@@ -7,6 +7,7 @@ import IrminCore from '@/services/core/IrminCore';
 import { GoChevronDown, GoChevronUp } from 'react-icons/go';
 
 import Button from '@/components/common/button/Button';
+import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -14,7 +15,6 @@ import { usePopup } from '@/context/PopupContext';
 import { ChangeType, Diff } from '@/types/core/Diff';
 import { IrminAPIUnstructuredResponse } from '@/types/core/IrminAPIResponse';
 
-import LoadingSkeleton from '../common/loading/LoadingSkeleton';
 import CommitList from './CommitList';
 import ContentDiff from './ContentDiff';
 import NoDiffWarning from './NoDiffWarning';

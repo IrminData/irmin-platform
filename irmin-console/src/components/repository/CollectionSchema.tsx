@@ -4,6 +4,8 @@ import IrminCore from '@/services/core/IrminCore';
 
 import { TbRun, TbTrash } from 'react-icons/tb';
 
+import Button from '@/components/common/button/Button';
+
 import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -15,7 +17,6 @@ import { FolderSchema } from '@/types/core/FolderCollection';
 import { StreamSchema } from '@/types/core/StreamCollection';
 import { TableSchema } from '@/types/core/TableCollection';
 
-import Button from '../common/button/Button';
 import FileCollectionSchema from './FileCollectionSchema';
 import FolderCollectionSchema from './FolderCollectionSchema';
 import StreamCollectionSchema from './StreamCollectionSchema';
