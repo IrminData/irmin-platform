@@ -20,7 +20,7 @@ import { WorkspaceUser } from '@/types/core/Workspace';
  * @typeParam updated_at - Timestamp of the last update of the Repository
  */
 export interface Repository {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   description: string;

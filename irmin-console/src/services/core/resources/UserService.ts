@@ -64,7 +64,7 @@ class UserService {
    * {@link https://api.irmin.dev/docs#roles-GETv1-users-roles | Irmin API docs}
    * @param user - User ID
    */
-  async fetchUserRoles(user: number): Promise<RolesAPIResponse> {
+  async fetchUserRoles(user: string): Promise<RolesAPIResponse> {
     if (isOfflineMode) return fake(exampleRoles) as RolesAPIResponse;
     try {
       const response = (await this.irminCore.fetch(
@@ -89,7 +89,7 @@ class UserService {
    * @param currentRole - The current role or null if user has no role
    */
   async changeUserRole(
-    user: number,
+    user: string,
     newRole: IrminRoleNames,
     currentRole: IrminRoleNames | null
   ) {
@@ -97,7 +97,7 @@ class UserService {
     try {
       const formData = new FormData();
       formData.append('_method', 'PATCH');
-      formData.append('user', user.toString());
+      formData.append('user', user);
       formData.append('roles[]', newRole);
       if (currentRole) {
         formData.append('roles[]', currentRole);
@@ -120,12 +120,12 @@ class UserService {
    * {@link https://api.irmin.dev/docs#workspaces-DELETEv1-users-remove | Irmin API docs}
    * @param user - The ID of the user to remove
    */
-  async removeUserFromWorkspace(user: number) {
+  async removeUserFromWorkspace(user: string) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
       formData.append('_method', 'DELETE');
-      formData.append('user', user.toString());
+      formData.append('user', user);
 
       const response = await this.irminCore.fetch(`/v1/users/remove`, {
         method: 'POST',

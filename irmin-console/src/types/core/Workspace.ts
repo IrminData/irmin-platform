@@ -13,10 +13,10 @@ import { IrminRole } from '@/types/core/IrminRole';
  * @typeParam updated_at - Timestamp of workspace update
  */
 export interface Workspace {
-  id: number;
+  id: string;
   name: string;
   slug: string;
-  owner_id: number;
+  owner_id: string;
   description?: string | null;
   users?: WorkspaceUser[] | null;
   created_at: string;
@@ -39,7 +39,7 @@ export interface Workspace {
  * @typeParam roles - Array of IrminRole objects assigned to the user
  */
 export interface WorkspaceUser {
-  id: number;
+  id: string;
   name: string;
   company?: string | null;
   email: string;

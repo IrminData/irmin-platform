@@ -28,7 +28,7 @@ const WorkspaceContext = createContext<{
     fetchWorkspaces: () => Promise<Workspace[] | undefined>;
     switchWorkspace: (_workspaceSlug: string | null) => void;
     deleteCurrentWorkspace: () => Promise<IrminAPIResponse>;
-    transferOwnership: (_userId: number) => Promise<IrminAPIResponse>;
+    transferOwnership: (_userId: string) => Promise<IrminAPIResponse>;
     createWorkspace: (
       _name: string,
       _description: string
@@ -41,9 +41,9 @@ const WorkspaceContext = createContext<{
     users: WorkspaceUser[];
     isLoading: boolean;
     fetchUsers: (_forceFetch?: boolean) => void;
-    deleteUser: (_userId: number) => Promise<IrminAPIResponse>;
+    deleteUser: (_userId: string) => Promise<IrminAPIResponse>;
     changeUserRole: (
-      _userId: number,
+      _userId: string,
       _role: IrminRoleNames
     ) => Promise<IrminAPIResponse>;
   };
@@ -56,10 +56,10 @@ const WorkspaceContext = createContext<{
       _email: string,
       _role: IrminRoleNames
     ) => Promise<IrminAPIResponse>;
-    resendInvite: (_inviteId: number) => Promise<IrminAPIResponse>;
-    cancelInvite: (_inviteId: number) => Promise<IrminAPIResponse>;
+    resendInvite: (_inviteId: string) => Promise<IrminAPIResponse>;
+    cancelInvite: (_inviteId: string) => Promise<IrminAPIResponse>;
     changeInvite: (
-      _inviteId: number,
+      _inviteId: string,
       _role: IrminRole
     ) => Promise<IrminAPIResponse>;
   };

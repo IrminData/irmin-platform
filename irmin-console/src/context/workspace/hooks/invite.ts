@@ -97,7 +97,7 @@ export const useSendInvite = (
  */
 export const useResendInvite = (locale: Locale) =>
   useCallback(
-    async (invite: number) => {
+    async (invite: string) => {
       // Get the invite service
       const { inviteService } = new IrminCore(locale);
       // Resend the invite
@@ -117,7 +117,7 @@ export const useCancelInvite = (
   locale: Locale
 ) =>
   useCallback(
-    async (invite: number) => {
+    async (invite: string) => {
       // Get the invite service
       const { inviteService } = new IrminCore(locale);
       // Cancel the invite
@@ -139,7 +139,7 @@ export const useChangeInvite = (
   locale: Locale
 ) =>
   useCallback(
-    async (invite: number, role: IrminRole) => {
+    async (invite: string, role: IrminRole) => {
       // Get the invite service
       const { inviteService } = new IrminCore(locale);
       // Change the invite

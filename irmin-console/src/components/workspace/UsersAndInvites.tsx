@@ -19,7 +19,7 @@ import { IrminRole, IrminRoleNames } from '@/types/core/IrminRole';
 import { WorkspaceUser } from '@/types/core/Workspace';
 
 type WorkspaceUsersAndPermissionsUser = {
-  inviteId?: number;
+  inviteId?: string;
 } & WorkspaceUser;
 
 /**
@@ -78,8 +78,7 @@ const UsersAndInvites: React.FC = () => {
       ...workspaceInvites.map(
         (invite, inviteCount) =>
           ({
-            id:
-              Math.max(...workspaceUsers.map((a) => a.id)) + (inviteCount + 1),
+            id: `invite-${inviteCount}`,
             name: invite.name,
             email: invite.email,
             inviteId: invite.id,
@@ -178,7 +177,7 @@ const UsersAndInvites: React.FC = () => {
     }
   };
 
-  const handleRemoveUser = async (id: number) => {
+  const handleRemoveUser = async (id: string) => {
     // Confirm removal
     irminConfirm(
       'info',
@@ -213,7 +212,7 @@ const UsersAndInvites: React.FC = () => {
     );
   };
 
-  const handleTransferOwnership = async (id: number) => {
+  const handleTransferOwnership = async (id: string) => {
     // Confirm transfer
     irminConfirm(
       'warning',
@@ -248,7 +247,7 @@ const UsersAndInvites: React.FC = () => {
     );
   };
 
-  const handleChangeRole = async (id: number, newRole: IrminRole) => {
+  const handleChangeRole = async (id: string, newRole: IrminRole) => {
     try {
       // Prevent if something is loading and set processing state
       if (loading) return;
@@ -284,7 +283,7 @@ const UsersAndInvites: React.FC = () => {
   };
 
   const handleChangeInviteRole = async (
-    inviteId: number,
+    inviteId: string,
     newRole: IrminRole
   ) => {
     try {

@@ -32,7 +32,7 @@ const AcceptInviteSection = () => {
   const { dict, locale } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const inviteId = parseInt(searchParams.get('invite') || '-1', 10);
+  const inviteId = searchParams.get('invite') ?? '';
 
   const [company, setCompany] = useState('');
   const [password, setPassword] = useState('');
@@ -93,7 +93,7 @@ const AcceptInviteSection = () => {
   return (
     <WebsiteSectionWrapper id='accept-invite-section'>
       <div className='pt-16 md:py-32'>
-        {!inviteId || inviteId === -1 ? (
+        {!inviteId ? (
           <div className='container mx-auto mb-16 max-w-7xl px-4 md:mb-0'>
             <div className='w-full md:pr-4'>
               <div className='mx-auto max-w-sm'>

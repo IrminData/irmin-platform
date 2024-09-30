@@ -19,7 +19,7 @@ import { Workspace } from '@/types/core/Workspace';
  * @typeParam api_token - API token for the user
  */
 export interface Profile {
-  id: number;
+  id: string;
   name: string;
   company?: string | null;
   email: string;

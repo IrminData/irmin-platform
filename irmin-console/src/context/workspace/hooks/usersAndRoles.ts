@@ -87,7 +87,7 @@ export const useDeleteUser = (
   locale: Locale
 ) =>
   useCallback(
-    async (id: number) => {
+    async (id: string) => {
       // Get the User and Role service
       const { userService } = new IrminCore(locale);
       // Remove user from workspace
@@ -109,7 +109,7 @@ export const useChangeUserRole = (
   locale: Locale
 ) =>
   useCallback(
-    async (id: number, role: IrminRoleNames) => {
+    async (id: string, role: IrminRoleNames) => {
       // Get the User and Role service
       const { userService } = new IrminCore(locale);
       // Find the user to get current role

@@ -182,7 +182,7 @@ export const workflowRuns = () => {
     for (let runIdx = 0; runIdx < runs.length; runIdx++) {
       const run = runs[runIdx];
       const fullRun = {
-        id: fullRuns.length + 1,
+        id: (fullRuns.length + 1).toString(),
         workflow_id: workflowId,
         owner: { ...owner },
         status: run.status,

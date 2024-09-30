@@ -11,7 +11,7 @@ import { IrminRole } from '@/types/core/IrminRole';
  * @typeParam role - Invite role
  */
 export interface Invite {
-  id: number;
+  id: string;
   name: string;
   email: string;
   created_at: string;

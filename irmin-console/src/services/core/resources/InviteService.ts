@@ -75,12 +75,12 @@ class InviteService {
    * {@link https://api.irmin.dev/docs#invites-POSTv1-invites-resend | Irmin API docs}
    * @param invite - The invite's ID.
    */
-  async resendUserInvite(invite: number) {
+  async resendUserInvite(invite: string) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
 
-      formData.append('invite', invite.toString());
+      formData.append('invite', invite);
 
       const response = await this.irminCore.fetch(`/v1/invites/resend`, {
         method: 'POST',
@@ -98,11 +98,11 @@ class InviteService {
    * {@link https://api.irmin.dev/docs#invites-DELETEv1-invites-cancel | Irmin API docs}
    * @param invite - The invite's ID.
    */
-  async cancelUserInvite(invite: number) {
+  async cancelUserInvite(invite: string) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-      formData.append('invite', invite.toString());
+      formData.append('invite', invite);
       formData.append('_method', 'DELETE');
 
       const response = await this.irminCore.fetch(`/v1/invites/cancel`, {
@@ -122,11 +122,11 @@ class InviteService {
    * @param invite - The invite's ID.
    * @param role - The role slug.
    */
-  async changeUserInviteRole(invite: number, role: IrminRoleNames) {
+  async changeUserInviteRole(invite: string, role: IrminRoleNames) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-      formData.append('invite', invite.toString());
+      formData.append('invite', invite);
       formData.append('role', role);
       formData.append('_method', 'PATCH');
 
@@ -171,7 +171,7 @@ class InviteService {
    * {@link https://api.irmin.dev/docs#invites-GETv1-invites | Irmin API docs}
    * @param user - The user's ID
    */
-  async fetchInvitesByUser(user: number): Promise<InvitesAPIResponse> {
+  async fetchInvitesByUser(user: string): Promise<InvitesAPIResponse> {
     if (isOfflineMode) return fake(exampleInvites) as InvitesAPIResponse;
     try {
       const response = (await this.irminCore.fetch(`/v1/invites?user=${user}`, {
@@ -195,7 +195,7 @@ class InviteService {
    * @param company - The user's company.
    */
   async acceptInvite(
-    invite: number,
+    invite: string,
     password: string | null,
     password_confirmation: string | null,
     company: string | null
@@ -203,7 +203,7 @@ class InviteService {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-      formData.append('invite', invite.toString());
+      formData.append('invite', invite);
       formData.append('company', company ?? '');
       formData.append('password', password ?? '');
       formData.append('password_confirmation', password_confirmation ?? '');
@@ -224,11 +224,11 @@ class InviteService {
    * {@link https://api.irmin.dev/docs#invites-DELETEv1-invites-decline | Irmin API docs}
    * @param invite - The ID of the invite to decline
    */
-  async declineInvite(invite: number) {
+  async declineInvite(invite: string) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-      formData.append('invite', invite.toString());
+      formData.append('invite', invite);
       formData.append('_method', 'DELETE');
 
       const response = await this.irminCore.fetch(`/v1/invites/decline`, {

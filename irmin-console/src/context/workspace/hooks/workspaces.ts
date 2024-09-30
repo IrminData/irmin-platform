@@ -187,7 +187,7 @@ export const useTransferOwnership = (
   locale: Locale
 ) =>
   useCallback(
-    async (newOwner: number) => {
+    async (newOwner: string) => {
       // Get the workspace service
       const { workspaceService } = new IrminCore(locale);
       // Transfer ownership

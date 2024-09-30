@@ -12,7 +12,7 @@ import { workspaceUsers } from './users';
  */
 export const repositories = (): Repository[] => [
   {
-    id: 0,
+    id: '0',
     name: 'KPIs and Performance Metrics',
     slug: 'kpi-and-performance-metrics',
     description:
@@ -35,7 +35,7 @@ export const repositories = (): Repository[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: 1,
+    id: '1',
     name: 'Main Google Analytics',
     slug: 'main-google-analytics',
     description:
@@ -53,7 +53,7 @@ export const repositories = (): Repository[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: 2,
+    id: '2',
     name: 'App data',
     slug: 'app-data',
     description:
@@ -69,7 +69,7 @@ export const repositories = (): Repository[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: 3,
+    id: '3',
     name: 'Excel KPIs',
     slug: 'kpis-from-excel',
     description:
@@ -85,7 +85,7 @@ export const repositories = (): Repository[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: 4,
+    id: '4',
     name: 'Management data from Excel',
     slug: 'management-data-from-excel',
     description:
@@ -103,7 +103,7 @@ export const repositories = (): Repository[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: 5,
+    id: '5',
     name: 'Google Sheets KPIs',
     slug: 'google-sheets-kpis',
     description:
@@ -121,7 +121,7 @@ export const repositories = (): Repository[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: 6,
+    id: '6',
     name: 'Top 100 Ad Clicking Users',
     slug: 'top-100-ad-clicking-users',
     description: '',
@@ -137,7 +137,7 @@ export const repositories = (): Repository[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: 7,
+    id: '7',
     name: 'Whale behaviour and Sales trends',
     slug: 'whale-behaviour-and-sales-trends',
     description: 'Example of a repository with ad click and sales trends',

@@ -7,7 +7,7 @@ import { Connector } from '@/types/core/Connector';
  */
 export const connectors: () => Connector[] = () => [
   {
-    id: 0,
+    id: '0',
     name: 'PostgreSQL',
     logo: '/ui-assets/brands/postgres-logo.svg',
     description: 'Sync data to and from PostgreSQL databases',
@@ -15,7 +15,7 @@ export const connectors: () => Connector[] = () => [
     url: 'https://postgresql.org',
   },
   {
-    id: 1,
+    id: '1',
     name: 'MySQL',
     logo: '/ui-assets/brands/mysql-logo.svg',
     description: 'Sync data to and from MySQL databases',
@@ -23,7 +23,7 @@ export const connectors: () => Connector[] = () => [
     url: 'https://mysql.org',
   },
   {
-    id: 2,
+    id: '2',
     name: 'MongoDB',
     logo: '/ui-assets/brands/mongodb-logo.svg',
     description: 'Sync data to and from MongoDB databases',
@@ -31,7 +31,7 @@ export const connectors: () => Connector[] = () => [
     url: 'https://mongodb.org',
   },
   {
-    id: 3,
+    id: '3',
     name: 'Google Sheets',
     logo: '/ui-assets/brands/google-logo.svg',
     description: 'Sync data to and from Google Sheets',
@@ -39,7 +39,7 @@ export const connectors: () => Connector[] = () => [
     url: 'https://sheets.google.com',
   },
   {
-    id: 4,
+    id: '4',
     name: 'Google Analytics',
     logo: '/ui-assets/brands/google-analytics-logo.svg',
     description: 'Sync data from Google Analytics',
@@ -47,7 +47,7 @@ export const connectors: () => Connector[] = () => [
     url: 'https://analytics.google.com',
   },
   {
-    id: 5,
+    id: '5',
     name: 'Excel',
     logo: '/ui-assets/brands/microsoft-logo.svg',
     description: 'Upload a local Excel file to Irmin',
@@ -55,7 +55,7 @@ export const connectors: () => Connector[] = () => [
     url: 'https://microsoft.com/excel',
   },
   {
-    id: 6,
+    id: '6',
     name: 'Pipedrive',
     logo: '/ui-assets/brands/pipedrive-logo.svg',
     description: 'Sync data to and from Pipedrive CRM',
@@ -63,7 +63,7 @@ export const connectors: () => Connector[] = () => [
     url: 'https://pipedrive.com',
   },
   {
-    id: 7,
+    id: '7',
     name: 'HubSpot',
     logo: '/ui-assets/brands/hubspot-logo.svg',
     description: 'Sync data to and from HubSpot CRM',
@@ -71,7 +71,7 @@ export const connectors: () => Connector[] = () => [
     url: 'https://hubspot.com',
   },
   {
-    id: 8,
+    id: '8',
     name: 'Microsoft Dynamics',
     logo: '/ui-assets/brands/microsoft-logo.svg',
     description: 'Sync data to and from Microsoft Dynamics CRM',
@@ -79,7 +79,7 @@ export const connectors: () => Connector[] = () => [
     url: 'https://microsoft.com/dynamics',
   },
   {
-    id: 9,
+    id: '9',
     name: 'Salesforce',
     logo: '/ui-assets/brands/salesforce-logo.svg',
     description: 'Sync data to and from Salesforce CRM',
@@ -87,7 +87,7 @@ export const connectors: () => Connector[] = () => [
     url: 'https://salesforce.com',
   },
   {
-    id: 10,
+    id: '10',
     name: 'Shopify',
     logo: '/ui-assets/brands/shopify-logo.svg',
     description: 'Sync data to and from Shopify',
@@ -95,7 +95,7 @@ export const connectors: () => Connector[] = () => [
     url: 'https://shopify.com',
   },
   {
-    id: 11,
+    id: '11',
     name: 'Stripe',
     logo: '/ui-assets/brands/stripe-logo.svg',
     description: 'Sync data to and from Stripe',
@@ -103,7 +103,7 @@ export const connectors: () => Connector[] = () => [
     url: 'https://stripe.com',
   },
   {
-    id: 12,
+    id: '12',
     name: 'Mailchimp',
     logo: '/ui-assets/brands/mailchimp-logo.svg',
     description: 'Sync data to and from Mailchimp',
@@ -111,7 +111,7 @@ export const connectors: () => Connector[] = () => [
     url: 'https://mailchimp.com',
   },
   {
-    id: 13,
+    id: '13',
     name: 'SendGrid',
     logo: '/ui-assets/brands/sendgrid-logo.svg',
     description: 'Sync data to and from SendGrid',

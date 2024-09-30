@@ -99,11 +99,11 @@ class WorkspaceService {
    * {@link https://api.irmin.dev/docs#workspaces-POSTv1-workspaces-transfer-ownership | Irmin API docs}
    * @param user - The ID of the user to transfer the ownership to
    */
-  async transferWorkspaceOwnership(user: number) {
+  async transferWorkspaceOwnership(user: string) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-      formData.append('user', user.toString());
+      formData.append('user', user);
 
       const response = await this.irminCore.fetch(
         `/v1/workspaces/transfer-ownership`,

@@ -9,7 +9,7 @@
  * @typeParam url - URL to read more and the connector documentation
  */
 export interface Connector {
-  id: number;
+  id: string;
   name: string;
   logo: string;
   description: string;

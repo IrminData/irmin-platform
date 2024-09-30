@@ -11,7 +11,7 @@ import { roles } from './roles';
  */
 export const invites: () => Invite[] = () => [
   {
-    id: 0,
+    id: '0',
     name: 'Petteri Orpo',
     email: 'petteri@example.com',
     role: roles()[2],
@@ -19,7 +19,7 @@ export const invites: () => Invite[] = () => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: 1,
+    id: '1',
     name: 'Sanna Marin',
     email: 'sanna@example.com',
     role: roles()[1],
@@ -27,7 +27,7 @@ export const invites: () => Invite[] = () => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: 2,
+    id: '2',
     name: 'Juha Sipilä',
     email: 'juha@example.com',
     role: roles()[3],

@@ -169,7 +169,7 @@ class ConnectionService {
    * @returns required details fields to create a connection
    */
   async fetchNewConnectionDetails(
-    connectorID: number
+    connectorID: string
   ): Promise<ConnectionFieldsAPIResponse> {
     try {
       if (isOfflineMode)
@@ -200,7 +200,7 @@ class ConnectionService {
    * @returns whether the connection was successful or not
    */
   async testConnectionWithDetails(
-    connectorID: number,
+    connectorID: string,
     connectionDetails: DynamicFieldValues
   ): Promise<ConnectionTestAPIResponse> {
     try {
@@ -241,7 +241,7 @@ class ConnectionService {
    * @returns required settings fields to create a connection
    */
   async fetchNewConnectionSettings(
-    connectorID: number,
+    connectorID: string,
     connectionDetails: DynamicFieldValues
   ): Promise<ConnectionFieldsAPIResponse> {
     try {
@@ -291,7 +291,7 @@ class ConnectionService {
     name,
     description,
   }: {
-    connectorID: number;
+    connectorID: string;
     connectionDetails: DynamicFieldValues;
     connectionSettings: DynamicFieldValues;
     name: string;

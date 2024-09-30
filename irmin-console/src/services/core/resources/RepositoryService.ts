@@ -119,7 +119,7 @@ class RepositoryService {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-      formData.append('assignee', newOwner.id.toString());
+      formData.append('assignee', newOwner.id);
 
       const response = await this.irminCore.fetch(
         `/v1/repositories/${repository.slug}/reassign`,

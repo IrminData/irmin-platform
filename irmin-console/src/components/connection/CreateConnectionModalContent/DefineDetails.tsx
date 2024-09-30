@@ -37,7 +37,7 @@ export default function DefineDetails({
   const formRef = useRef<HTMLFormElement>(null);
 
   const fetchConnectionDetails = useCallback(
-    async (connectorID: number) => {
+    async (connectorID: string) => {
       if (loading || initialLoadingDone.current) return;
       setLoading(true);
       try {

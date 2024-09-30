@@ -65,7 +65,7 @@ export type ActionWorkflow = Workflow & { workflowable: Action };
  * @typeParam finished_at - Timestamp of when the workflow run finished
  */
 export interface WorkflowRun {
-  id: number;
+  id: string;
   workflow_id: string;
   owner: WorkspaceUser;
   status: WorkflowStatus;

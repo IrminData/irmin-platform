@@ -13,7 +13,7 @@ import { workspaces } from './workspaces';
  * @param last - If true, the item will avoid having children
  */
 export const profile = (last = false): Profile => ({
-  id: 0,
+  id: '0',
   name: 'Joe Biden',
   company: 'Example Inc.',
   email: 'joe.biden@example.com',

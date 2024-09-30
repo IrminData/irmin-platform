@@ -206,8 +206,8 @@ class WorkflowService {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-      formData.append('workflow', workflowID.toString());
-      formData.append('assignee', newOwner.id.toString());
+      formData.append('workflow', workflowID);
+      formData.append('assignee', newOwner.id);
 
       const response = await this.irminCore.fetch(`/v1/workflows/reassign`, {
         method: 'POST',
@@ -263,7 +263,7 @@ class WorkflowService {
     workflowRun: string
   ): Promise<WorkflowRunAPIResponse> {
     const exampleRun =
-      exampleWorkflowRuns.find((run) => run.id === parseInt(workflowRun)) ??
+      exampleWorkflowRuns.find((run) => run.id === workflowRun) ??
       exampleWorkflowRuns[0];
     if (isOfflineMode) return fake(exampleRun) as WorkflowRunAPIResponse;
     try {

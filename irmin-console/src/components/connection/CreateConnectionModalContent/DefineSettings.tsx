@@ -36,7 +36,7 @@ export default function DefineSettings({
   const formRef = useRef<HTMLFormElement>(null);
 
   const fetchConnectionSettings = useCallback(
-    async (connectorID: number, connectionDetails: DynamicFieldValues) => {
+    async (connectorID: string, connectionDetails: DynamicFieldValues) => {
       if (loading || initialLoadingDone.current) return;
       setLoading(true);
       try {
