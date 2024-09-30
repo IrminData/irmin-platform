@@ -52,7 +52,6 @@ class QueryService {
    * @param type - type of the script. Can be for example `sql`. See {@link IrminFileType}
    * @param content - content of the script
    * @param repository - (optional) The repository to run the script on
-   * @param branch - (optional) The branch to run the script on
    * @param ref - (optional) The ref to run the script on
    * @param collection - (optional) collection to run the script on
    */
@@ -60,7 +59,6 @@ class QueryService {
     type: IrminFileType,
     content: string,
     repository?: string,
-    branch?: string,
     ref?: string,
     collection?: Collection
   ): Promise<QueryAPIResponse> {
@@ -80,7 +78,6 @@ class QueryService {
       body.append('type', type);
       body.append('content', content);
       if (repository) body.append('repository', repository);
-      if (branch) body.append('branch', branch);
       if (ref) body.append('ref', ref);
       if (collection) body.append('collection', collection.formatted_name);
       const response = (await this.irminCore.fetch(`/v1/api/query`, {

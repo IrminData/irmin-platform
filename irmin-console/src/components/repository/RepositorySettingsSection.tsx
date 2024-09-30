@@ -23,7 +23,7 @@ export default function RepositorySettingsSection({
 }: {
   repository: Repository | undefined;
 }) {
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
   const { irminConfirm, irminAlert } = usePopup();
   const {
     workspaces: { currentWorkspace },
@@ -112,14 +112,6 @@ export default function RepositorySettingsSection({
             <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
               {dict.repository.tabs.settings}
             </h2>
-            <Button
-              size='sm'
-              variant='link'
-              colorScheme='gray'
-              href={`/${locale}/console/${currentWorkspace?.slug ?? ''}/repositories/${repository?.slug ?? ''}/settings/collections`}
-            >
-              {dict.repository.settings.manageCollections}
-            </Button>
           </div>
           {repository?.is_immutable && (
             <p className='text-sm font-normal text-red-800 md:text-xl dark:text-red-400'>

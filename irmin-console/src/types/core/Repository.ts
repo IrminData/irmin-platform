@@ -1,4 +1,3 @@
-import { Collection } from '@/types/core/Collection';
 import { WorkspaceUser } from '@/types/core/Workspace';
 
 /**
@@ -15,7 +14,6 @@ import { WorkspaceUser } from '@/types/core/Workspace';
  * @typeParam documentation - Markdown documentation of the Repository. Allows for users to add explanations, examples, etc.
  * @typeParam is_immutable - If the Repository is_immutable, it cannot be changed or updated
  * @typeParam owner - The user within the workspace that owns the Repository and is responsible for it
- * @typeParam collections - A list collections which are part of the Repository
  * @typeParam created_at - Timestamp of the creation of the Repository
  * @typeParam updated_at - Timestamp of the last update of the Repository
  */
@@ -27,7 +25,6 @@ export interface Repository {
   documentation: string;
   is_immutable: boolean;
   owner: WorkspaceUser;
-  collections: Collection[];
   created_at: string;
   updated_at: string;
 }

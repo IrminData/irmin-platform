@@ -35,12 +35,10 @@ class SchemaService {
    * @todo Provide link to Irmin API docs
    *
    * @param collections - The collections to fetch schema for
-   * @param repository - (optional) The repository to fetch schema for
    * @param ref - (optional) The ref to fetch schema for
    */
   async fetchSchema(
     collections: string[],
-    repository?: string,
     ref?: string
   ): Promise<SchemaAPIResponse> {
     if (isOfflineMode)
@@ -50,7 +48,6 @@ class SchemaService {
       collections.forEach((collection) =>
         urlParams.append('collection', collection)
       );
-      if (repository) urlParams.append('repository', repository);
       if (ref) urlParams.append('ref', ref);
 
       const response = (await this.irminCore.fetch(

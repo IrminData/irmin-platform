@@ -19,9 +19,9 @@ export type CollectionType = 'table' | 'folder' | 'file';
  * @typeParam name - Name of the Collection
  * @typeParam formatted_name - Formatted name of the Collection, to be used in queries (ref can be added)
  * @typeParam repository - Slug of the repository of the Collection is part of
- * @typeParam branches - Branches the collection is present in
  * @typeParam type - Type of the Collection. Eg. 'table', 'folder', 'file'
- * @typeParam workflow - (optional) Hash ID of the workflow associated with the Collection
+ * @typeParam is_immutable -  If the Collection is_immutable, it cannot be changed or updated manually
+ * @typeParam workflow - (optional) ID of the workflow associated with the Collection
  */
 export interface Collection {
   id: string;
@@ -29,7 +29,7 @@ export interface Collection {
   formatted_name: string;
   repository: string;
   type: CollectionType;
-  branches: string[];
+  is_immutable: boolean;
   workflow?: string;
 }
 

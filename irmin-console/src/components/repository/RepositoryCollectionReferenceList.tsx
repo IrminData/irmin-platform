@@ -1,9 +1,14 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
+import IrminCore from '@/services/core/IrminCore';
+
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
+import { Collection } from '@/types/core/Collection';
 import { Repository } from '@/types/core/Repository';
 
 /**
@@ -18,33 +23,59 @@ import { Repository } from '@/types/core/Repository';
  */
 const RepositoryCollectionReferenceList = () => {
   const { irminAlert } = usePopup();
-  const { dict } = useLocale();
-  const { repositories: repos } = useWorkspace();
+  const { dict, locale } = useLocale();
+  const {
+    repositories: { repositories },
+  } = useWorkspace();
+
+  const [collections, setCollections] = useState<Collection[]>([]);
+
+  useEffect(() => {
+    try {
+      (async () => {
+        const { collectionService } = new IrminCore(locale);
+        const res = await collectionService.fetchCollections();
+        setCollections(res.data);
+      })();
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch Collections error');
+    }
+  }, [locale]);
 
   /**
    * When a repository collection is selected, format the collection name
    * and insert it into the query.
+   *
+   * @param repository - The repository to reference
+   * @param collection - The collection to reference
    */
-  const selectCollection = (repo: Repository, collection: string) => {
+  const selectCollection = (repository: Repository, collection: string) => {
     // Format the collection name
-    const formattedName = ` $[${collection}]`;
+    const collectionSnippet = ` $["${repository.slug}.${collection}"]`;
+    const collectionSnippetWithRef = ` $["${repository.slug}.${collection}@main"]`;
     // Show the collection name to the user
     irminAlert(
       'info',
       <div>
-        <p className='m-0 text-sm font-normal'>
+        <p className='m-0 text-sm font-normal opacity-70'>
           {dict.repository.referenceRepository.toReferenceTheCollection}{' '}
           <span className='font-medium text-irmin_blue dark:text-irmin_green'>
             {collection}
           </span>{' '}
           {dict.repository.referenceRepository.fromTheRepository}{' '}
           <span className='font-medium text-irmin_blue dark:text-irmin_green'>
-            {repo.name}
+            {repository.name}
           </span>{' '}
           {dict.repository.referenceRepository.inTheEditor}{' '}
         </p>
-        <p className='mt-4 text-lg font-normal text-black dark:text-white'>
-          {formattedName}
+        <p className='my-2 pl-4 text-lg font-normal text-black dark:text-white'>
+          {collectionSnippet}
+        </p>
+        <p className='m-0 text-sm font-normal opacity-70'>
+          {dict.repository.referenceRepository.orForSpecificRef}
+        </p>
+        <p className='my-2 pl-4 text-lg font-normal text-black dark:text-white'>
+          {collectionSnippetWithRef}
         </p>
       </div>
     );
@@ -62,29 +93,30 @@ const RepositoryCollectionReferenceList = () => {
         {dict.repository.referenceRepository.clickOnCollection}
       </p>
       <ul className='text-xs'>
-        {repos.repositories.map(
-          (repo) =>
-            repo.collections.length > 0 && (
-              <li key={`repo-${repo.id}`} className='px-4 py-2'>
-                <p className='border-t pt-2 font-normal dark:border-gray-800'>
-                  {repo.name}
-                </p>
-                <ul className='list-item font-normal'>
-                  {repo.collections.map((item, i) => (
-                    <li
-                      key={`repo-${repo.id}-item-${i}`}
-                      className='cursor-pointer pl-4 pr-2 pt-3 opacity-80 transition-colors hover:text-irmin_green hover:opacity-100'
-                      onClick={() =>
-                        selectCollection(repo, item.formatted_name)
-                      }
-                    >
-                      {item.name}
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            )
-        )}
+        {repositories.map((repository) => {
+          const matchedCollections = collections
+            .filter((item) => item.repository === repository.slug)
+            .sort((a, b) => a.name.localeCompare(b.name));
+          if (matchedCollections.length === 0) return;
+          return (
+            <li key={`repository-${repository.id}`} className='px-4 py-2'>
+              <p className='border-t pt-2 font-normal dark:border-gray-800'>
+                {repository.name}
+              </p>
+              <ul className='list-item font-normal'>
+                {matchedCollections.map((item, i) => (
+                  <li
+                    key={`repository-${repository.id}-item-${i}`}
+                    className='cursor-pointer pl-4 pr-2 pt-3 opacity-80 transition-colors hover:text-irmin_green hover:opacity-100'
+                    onClick={() => selectCollection(repository, item.name)}
+                  >
+                    {item.name}
+                  </li>
+                ))}
+              </ul>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

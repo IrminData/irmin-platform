@@ -55,7 +55,7 @@ export default function RepositoryLayoutWithContainer({
   }
 
   return (
-    <DataProvider initialRepository={params.repository}>
+    <DataProvider currentRepository={params.repository}>
       <RepositoryLayoutWrapper repoSlug={params.repository}>
         {children}
       </RepositoryLayoutWrapper>

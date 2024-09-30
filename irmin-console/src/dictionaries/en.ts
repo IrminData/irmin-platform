@@ -340,7 +340,6 @@ const en = {
       failed: 'Your upload has failed!',
     },
     settings: {
-      manageCollections: 'Manage collections',
       generalSettings: 'General settings',
       name: 'Name',
       description: 'Description',
@@ -355,9 +354,6 @@ const en = {
       deleteRepository: 'Delete repository',
       areYouSureYouWantToDelete:
         'Are you sure you want to delete this repository?',
-      selectCollectionToAdd: 'Select collection to add',
-      add: 'Add',
-      remove: 'Remove',
     },
     tabs: {
       structure: 'Structure',
@@ -373,6 +369,8 @@ const en = {
       toReferenceTheCollection: 'To reference the collection',
       fromTheRepository: 'from the repository',
       inTheEditor: ', use the following syntax:',
+      orForSpecificRef:
+        'Or to reference a specific ref (branch, tag, commit), use:',
     },
     schema: {
       schema: 'Schema',

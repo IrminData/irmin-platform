@@ -41,8 +41,7 @@ export default function RepositoryLayoutWrapper({
     workspaces: { currentWorkspace },
   } = useWorkspace();
 
-  const { currentBranch, setCurrentBranch, branches, defaultBranch } =
-    useData();
+  const { currentRef, setCurrentRef, branches, defaultBranch } = useData();
 
   const workspaceSlug = useMemo(
     () => currentWorkspace?.slug,
@@ -163,9 +162,9 @@ export default function RepositoryLayoutWrapper({
               !pathname.includes('/branches') && (
                 <BranchSelector
                   branches={branches ?? []}
-                  currentBranch={currentBranch ?? defaultBranch}
-                  onChangeBranch={(branch) => {
-                    setCurrentBranch(branch.value);
+                  currentRef={currentRef ?? defaultBranch}
+                  onSelect={(branch) => {
+                    setCurrentRef(branch.value);
                   }}
                 />
               )}

@@ -12,7 +12,7 @@ import { usePopup } from '@/context/PopupContext';
 
 interface UploadFormValues {
   repository: string;
-  branch: string;
+  ref: string;
   name: string;
   files: FileList;
   path: string;
@@ -26,14 +26,14 @@ interface UploadFormValues {
  *
  * @param props - The component props
  * @param props.currentRepository - The current repository slug
- * @param props.currentBranch - The current branch name
+ * @param props.currentRef - The current ref (eg. branch)
  */
 export default function UploadCollectionModalContent({
   currentRepository,
-  currentBranch,
+  currentRef,
 }: {
   currentRepository?: string;
-  currentBranch?: string;
+  currentRef?: string;
 }) {
   const { irminAlert, irminModal } = usePopup();
   const { dict, locale } = useLocale();
@@ -58,7 +58,7 @@ export default function UploadCollectionModalContent({
       // Upload the collection
       await repositoryService.uploadCollection(
         data.repository,
-        data.branch,
+        data.ref,
         data.name,
         data.files,
         data.path
@@ -96,14 +96,12 @@ export default function UploadCollectionModalContent({
         <label className='text-xs'>{dict.repository.upload.targetBranch}</label>
         <input
           type='text'
-          {...register('branch')}
-          value={currentBranch ?? ''}
-          disabled={!!currentBranch}
+          {...register('ref')}
+          value={currentRef ?? ''}
+          disabled={!!currentRef}
           className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
         />
-        {errors.branch && (
-          <p className='text-red-800'>{errors.branch.message}</p>
-        )}
+        {errors.ref && <p className='text-red-800'>{errors.ref.message}</p>}
       </div>
       <div className='pb-3'>
         <label className='text-xs'>

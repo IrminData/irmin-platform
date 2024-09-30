@@ -342,7 +342,6 @@ const fi = {
       failed: 'Kokoelman lataus epäonnistui!',
     },
     settings: {
-      manageCollections: 'Hallinnoi kokoelmia',
       generalSettings: 'Yleiset asetukset',
       name: 'Nimi',
       description: 'Kuvaus',
@@ -357,9 +356,6 @@ const fi = {
       deleteRepository: 'Poista tietovarasto',
       areYouSureYouWantToDelete:
         'Oletko varma, että haluat poistaa tämän tietovaraston?',
-      selectCollectionToAdd: 'Valitse kokoelma lisättäväksi',
-      add: 'Lisää',
-      remove: 'Poista',
     },
     tabs: {
       structure: 'Struktuuri',
@@ -375,6 +371,8 @@ const fi = {
       toReferenceTheCollection: 'Käyttääksesi kokoelmaa',
       fromTheRepository: 'tietovarastosta',
       inTheEditor: ', käytä seuraavaa syntaksia:',
+      orForSpecificRef:
+        'tai viitataksesi tiettyyn haaraan, tagiin tai commitiin, käytä:',
     },
     schema: {
       schema: 'Rakenne',

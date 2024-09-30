@@ -46,8 +46,8 @@ export default function SideModal({
           }`}
         >
           <div className='flex h-full flex-col justify-start'>
-            <div className='z-10 flex w-full items-center justify-between gap-4 px-4 pt-16'>
-              <h3 className='text-xl'>{title}</h3>
+            <div className='z-10 mb-2 flex w-full items-center justify-between gap-4 px-4 pt-16'>
+              <h3 className='text-lg font-semibold lg:text-xl'>{title}</h3>
               <Button
                 size='sm'
                 variant='icon'

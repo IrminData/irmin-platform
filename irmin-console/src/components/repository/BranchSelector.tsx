@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import ReactSelect from 'react-select';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -12,33 +14,38 @@ import { Branch } from '@/types/core/Branch';
  * @param props0 - BranchSelector props
  * @param props0.branches - List of branches to display
  * @param props0.label - (optional) Label for the branch selector
- * @param props0.currentBranch - (optional) The currently selected branch
- * @param props0.onChangeBranch - (optional) Callback when branch is changed
+ * @param props0.currentRef - (optional) The currently selected ref (eg. branch)
+ * @param props0.onSelect - (optional) Callback when branch is changed
  *
  * @returns BranchSelector component UI
  */
 export default function BranchSelector({
   branches,
   label,
-  currentBranch,
-  onChangeBranch,
+  currentRef,
+  onSelect,
 }: {
   branches: Branch[]; // List of branches to display
   label?: string; // Label for the branch selector
-  currentBranch?: string; // The currently selected branch
-  onChangeBranch?: (branch: { label: string; value: string }) => void; // Callback when branch is changed
+  currentRef?: string; // The currently selected branch
+  onSelect?: (branch: { label: string; value: string }) => void; // Callback when branch is changed
 }) {
   const { dict } = useLocale();
 
   // Convert branches to options
-  const options = branches.map((branch) => ({
-    label: branch.name,
-    value: branch.name,
-  }));
+  const options = useMemo(
+    () =>
+      branches.map((branch) => ({
+        label: branch.name,
+        value: branch.name,
+      })),
+    [branches]
+  );
 
   // Find the currently selected branch
-  const selectedBranch = options.find(
-    (option) => option.value === currentBranch
+  const selectedBranch = useMemo(
+    () => options.find((option) => option.value === currentRef),
+    [currentRef, options]
   );
 
   return (
@@ -52,8 +59,8 @@ export default function BranchSelector({
       <ReactSelect
         value={selectedBranch}
         onChange={(selectedOption) => {
-          if (selectedOption && onChangeBranch) {
-            onChangeBranch(selectedOption);
+          if (selectedOption && onSelect) {
+            onSelect(selectedOption);
           }
         }}
         options={options}

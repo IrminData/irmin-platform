@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -14,7 +15,6 @@ import { QueryAPIResponse } from '@/services/core/resources/QueryService';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
 
 import { Branch } from '@/types/core/Branch';
 import { IrminFileType } from '@/types/core/Bucket';
@@ -27,11 +27,12 @@ import { Commit } from '@/types/core/Commit';
 interface DataContextProps {
   // Active data context state
   currentRepository?: string;
-  setCurrentRepository: (repository?: string) => void;
-  currentBranch?: string;
-  setCurrentBranch: (branch?: string) => void;
   currentRef?: string;
   setCurrentRef: (ref?: string) => void;
+  // Collection state
+  loadingCollections: boolean;
+  collections: Collection[];
+  fetchCollections?: (repository: string, ref?: string) => Promise<void>;
   // Data state
   runningScript: boolean;
   scriptResult: QueryAPIResponse | null;
@@ -66,45 +67,36 @@ const DataContext = createContext<DataContextProps | undefined>(undefined);
  *
  * @param config - Data context provider configuration
  * @param config.children - Child components
- * @param config.initialRepository - (optional) Initial active repository to set
- * @param config.initialBranch - (optional) Initial active branch to set
- * @param config.initialRef - (optional) Initial active ref to set (eg. commit, tag)
+ * @param config.currentRepository - (optional) Initial active repository to set
+ * @param config.initialRef - (optional) Initial active ref to set (eg. branch, commit, tag)
  *
  * @returns Data context provider
  */
 export const DataProvider = ({
   children,
-  initialRepository,
-  initialBranch,
+  currentRepository,
   initialRef,
 }: {
   children: React.ReactNode;
-  initialRepository?: string;
-  initialBranch?: string;
+  currentRepository?: string;
   initialRef?: string;
 }) => {
   const { irminAlert } = usePopup();
   const { locale } = useLocale();
   const {
-    repositories: { repositories },
-  } = useWorkspace();
-  const { branchService, commitService, schemaService, queryService } = useMemo(
-    () => new IrminCore(locale),
-    [locale]
-  );
-
-  // Active data context repository
-  const [currentRepository, setCurrentRepository] = useState<
-    string | undefined
-  >(initialRepository);
-
-  // Active data context branch
-  const [currentBranch, setCurrentBranch] = useState<string | undefined>(
-    initialBranch
-  );
+    branchService,
+    commitService,
+    schemaService,
+    queryService,
+    collectionService,
+  } = useMemo(() => new IrminCore(locale), [locale]);
 
   // Active data context ref (eg. branch, commit, tag)
   const [currentRef, setCurrentRef] = useState<string | undefined>(initialRef);
+
+  // Collections state
+  const [loadingCollections, setLoadingCollections] = useState(false);
+  const [collections, setCollections] = useState<Collection[]>([]);
 
   // Data state
   const [runningScript, setRunningScript] = useState<boolean>(false);
@@ -124,33 +116,54 @@ export const DataProvider = ({
   const [loadingCommits, setLoadingCommits] = useState<boolean>(false);
   const [commits, setCommits] = useState<Commit[] | null>(null);
 
+  // Default branch of the current repository
+  const defaultBranch = useMemo(() => {
+    return branches?.filter((branch) => branch.default)[0]?.name;
+  }, [branches]);
+
   /**
-   * Fetch the schema for a list of collections
-   *
-   * @param collections - List of collections to fetch the schema for
+   * Fetch the currennt collections
    */
-  const fetchSchema = useCallback(
-    async (collections: string[]) => {
-      setLoadingSchema(true);
-      try {
-        const response = await schemaService.fetchSchema(
-          collections,
-          currentRepository,
-          currentRef ?? currentBranch
-        );
-        setSchema(response.data);
-      } catch (error) {
-        console.error('DataContext fetchSchema error', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to fetch schema'
-        );
-      } finally {
-        setLoadingSchema(false);
-      }
-    },
-    [currentRepository, currentBranch, currentRef, schemaService, irminAlert]
-  );
+  const fetchCollections = useCallback(async () => {
+    setLoadingCollections(true);
+    try {
+      const response = await collectionService.fetchCollections(
+        currentRepository ?? '',
+        currentRef
+      );
+      setCollections(response.data);
+    } catch (error) {
+      console.error('DataContext fetchCollections error', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to fetch collections'
+      );
+    } finally {
+      setLoadingCollections(false);
+    }
+  }, [collectionService, irminAlert, currentRepository, currentRef]);
+
+  /**
+   * Fetch the schema
+   */
+  const fetchSchema = useCallback(async () => {
+    setLoadingSchema(true);
+    try {
+      const response = await schemaService.fetchSchema(
+        collections.map((collection) => collection.formatted_name),
+        currentRef
+      );
+      setSchema(response.data);
+    } catch (error) {
+      console.error('DataContext fetchSchema error', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to fetch schema'
+      );
+    } finally {
+      setLoadingSchema(false);
+    }
+  }, [currentRef, schemaService, collections, irminAlert]);
 
   /**
    * Fetch the current branches
@@ -181,7 +194,6 @@ export const DataProvider = ({
       if (!currentRepository) return;
       const response = await commitService.fetchCommits(
         currentRepository,
-        currentBranch,
         currentRef
       );
       setCommits(response.data);
@@ -194,7 +206,7 @@ export const DataProvider = ({
     } finally {
       setLoadingCommits(false);
     }
-  }, [currentRepository, currentBranch, currentRef, commitService, irminAlert]);
+  }, [currentRepository, currentRef, commitService, irminAlert]);
 
   /**
    * Execute a script
@@ -209,7 +221,6 @@ export const DataProvider = ({
           type,
           content,
           currentRepository,
-          currentBranch,
           currentRef,
           collection
         );
@@ -224,42 +235,74 @@ export const DataProvider = ({
         setRunningScript(false);
       }
     },
-    [queryService, currentRepository, currentBranch, currentRef, irminAlert]
+    [queryService, currentRepository, currentRef, irminAlert]
   );
 
-  // Default branch for the current repository
-  const defaultBranch = useMemo(() => {
-    return branches?.filter((branch) => branch.default)[0]?.name;
-  }, [branches]);
+  // Track the fetch for the initial values
+  const initialFetchFor = useRef<string | null>(null);
+  const schemaFetchFor = useRef<string | null>(null);
 
   /**
-   * Hook to fetch schema, branches and commits for the current repository and branch when they change
+   * Fetch the collections, branches and commits when the repository or ref changes
    */
   useEffect(() => {
-    const currentRepositoryCollections = repositories
-      .filter((repo) => repo.name === currentRepository)
-      .flatMap((repo) => repo.collections);
-    fetchSchema(currentRepositoryCollections.map((c) => c.formatted_name));
+    // Don't fetch if repository is not set
+    if (!currentRepository) return;
+    // Don't fetch if already fetched for the current repository and ref
+    const fetchFor = `${currentRepository}-${currentRef}`;
+    if (initialFetchFor.current === fetchFor) return;
+    initialFetchFor.current = fetchFor;
+    fetchCollections();
     fetchBranches();
     fetchCommits();
   }, [
     currentRepository,
-    repositories,
-    fetchSchema,
+    currentRef,
+    fetchCollections,
     fetchBranches,
     fetchCommits,
   ]);
+
+  /**
+   * Fetch the schema, branches and commits on initial load
+   */
+  useEffect(() => {
+    // Don't fetch schema if collections are loading or empty
+    if (loadingCollections || collections.length === 0) return;
+    // Don't fetch schema if already fetched for the current repository and ref
+    const fetchFor = `${currentRepository}-${currentRef}`;
+    if (schemaFetchFor.current === fetchFor) return;
+    schemaFetchFor.current = fetchFor;
+    // Fetch the schema
+    fetchSchema();
+  }, [
+    loadingCollections,
+    collections,
+    currentRepository,
+    currentRef,
+    fetchSchema,
+  ]);
+
+  /**
+   * Set the current ref to the default branch if non is set
+   */
+  useEffect(() => {
+    if (!currentRef) {
+      setCurrentRef(defaultBranch);
+    }
+  }, [currentRef, defaultBranch, setCurrentRef]);
 
   return (
     <DataContext.Provider
       value={{
         // Active data context state
         currentRepository,
-        setCurrentRepository,
-        currentBranch,
-        setCurrentBranch,
         currentRef,
         setCurrentRef,
+        // Collection state
+        loadingCollections,
+        collections,
+        fetchCollections,
         // Data state
         runningScript,
         scriptResult,

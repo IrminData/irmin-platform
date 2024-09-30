@@ -30,15 +30,13 @@ export default function RepositoryCompareSection() {
   const {
     branches,
     loadingBranches,
-    currentBranch,
+    currentRef,
     currentRepository,
     defaultBranch,
   } = useData();
 
   const [baseRef, setBaseRef] = useState<string | undefined>(defaultBranch);
-  const [compareRef, setCompareRef] = useState<string | undefined>(
-    currentBranch
-  );
+  const [compareRef, setCompareRef] = useState<string | undefined>(currentRef);
 
   const [diff, setDiff] = useState<Diff | null>(null);
   const [loadingDiff, setLoadingDiff] = useState<boolean>(false);
@@ -145,8 +143,8 @@ export default function RepositoryCompareSection() {
             <BranchSelector
               branches={branches ?? []}
               label={dict.repository.compare.baseBranch}
-              currentBranch={baseRef}
-              onChangeBranch={(branch) => {
+              currentRef={baseRef}
+              onSelect={(branch) => {
                 setBaseRef(branch.value);
               }}
             />
@@ -168,8 +166,8 @@ export default function RepositoryCompareSection() {
             <BranchSelector
               branches={branches ?? []}
               label={dict.repository.compare.compareBranch}
-              currentBranch={compareRef}
-              onChangeBranch={(branch) => {
+              currentRef={compareRef}
+              onSelect={(branch) => {
                 setCompareRef(branch.value);
               }}
             />

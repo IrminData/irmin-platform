@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from 'react';
 
+import IrminCore from '@/services/core/IrminCore';
+
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
+import { Collection } from '@/types/core/Collection';
 import {
   ConsoleSearchItem,
   ConsoleSearchItemType,
@@ -30,6 +33,20 @@ export function useConsoleSearchItems() {
     connections: { connections },
     repositories: { repositories },
   } = useWorkspace();
+
+  const [collections, setCollections] = useState<Collection[]>([]);
+
+  useEffect(() => {
+    try {
+      (async () => {
+        const { collectionService } = new IrminCore(locale);
+        const res = await collectionService.fetchCollections();
+        setCollections(res.data);
+      })();
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch Collections error');
+    }
+  }, [locale]);
 
   useEffect(() => {
     // Return if workspace is loading
@@ -255,10 +272,7 @@ export function useConsoleSearchItems() {
       });
 
       // Add collections
-      const allCollections = repositories.flatMap(
-        (repository) => repository.collections
-      );
-      allCollections.forEach((collection) => {
+      collections.forEach((collection) => {
         if (newItems.some((item) => item.title === collection.formatted_name))
           return;
         const typeLabel =
@@ -289,6 +303,7 @@ export function useConsoleSearchItems() {
     connections,
     users,
     invites,
+    collections,
     dict,
     locale,
   ]);

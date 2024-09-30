@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 
@@ -9,6 +9,7 @@ import { TbDownload, TbUpload } from 'react-icons/tb';
 
 import CodeMirrorEditor from '@/components/bucket/editor/partials/CodeMirrorEditor';
 import Button from '@/components/common/button/Button';
+import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 import QueryResults from '@/components/query/QueryResults';
 
 import { useData } from '@/context/DataContext';
@@ -43,61 +44,68 @@ export default function RepositorySection({
     runScript,
     runningScript,
     scriptResult,
-    schema,
-    currentBranch,
     currentRef,
     currentRepository,
     defaultBranch,
     setCurrentRef,
+    loadingCollections,
+    collections,
   } = useData();
 
   const { irminModal } = usePopup();
 
-  const [selectedCollection, setSelectedCollection] = useState<string | null>(
-    null
+  const [selectedCollectionID, setSelectedCollectionID] = useState<
+    string | null
+  >(null);
+  const selectedCollection = useMemo(
+    () => collections?.find((item) => item.id === selectedCollectionID),
+    [selectedCollectionID, collections]
   );
   const [query, setQuery] = useState<string>('');
   const [queryChanged, setQueryChanged] = useState(false);
 
+  /**
+   * Set the initial query when the selected collection changes.
+   * Skip if the query has been changed by the user or if there is no selected collection.
+   */
   useEffect(() => {
     if (!selectedCollection) return;
     if (queryChanged) return;
-    setQuery(`SELECT * FROM $[${selectedCollection}]`);
-  }, [selectedCollection, queryChanged]);
+    setQuery(
+      `SELECT * FROM $["${selectedCollection.formatted_name}${currentRef ? `@${currentRef}` : ''}"]`
+    );
+  }, [selectedCollection, queryChanged, currentRef]);
 
   useEffect(() => {
     setCurrentRef(initialRef);
   }, [initialRef, setCurrentRef]);
 
-  const handleUpload = () => {
+  const handleUpload = useCallback(() => {
     irminModal.show(
       dict.repository.uploadCollection,
       <UploadCollectionModalContent
         currentRepository={currentRepository}
-        currentBranch={currentBranch}
+        currentRef={currentRef}
       />
     );
-  };
+  }, [currentRef, currentRepository, dict, irminModal]);
 
-  const runCurrentQuery = () => {
+  const runCurrentQuery = useCallback(() => {
     if (!query || query.length < 3) return;
     runScript(
       'sql',
       query,
-      repository?.collections.find(
-        (collection) => collection.formatted_name === selectedCollection
-      )
+      collections.find((item) => item.id === selectedCollectionID)
     );
-  };
+  }, [query, runScript, selectedCollectionID, collections]);
 
-  const updateQuery = (value: string) => {
-    if (runningScript) return;
-    setQueryChanged(true);
-    setQuery(value);
-  };
-
-  const selectedCollectionSchema = schema?.find(
-    (schema) => schema.formatted_name === selectedCollection
+  const updateQuery = useCallback(
+    (value: string) => {
+      if (runningScript) return;
+      setQueryChanged(true);
+      setQuery(value);
+    },
+    [runningScript]
   );
 
   return (
@@ -118,11 +126,7 @@ export default function RepositorySection({
             >
               {repository?.slug}
             </Link>
-            {currentRef
-              ? ` / ${currentRef}`
-              : currentBranch
-                ? ` / ${currentBranch}`
-                : ` / ${defaultBranch}`}
+            {currentRef ? ` @ ${currentRef}` : ` @ ${defaultBranch}`}
           </div>
           <div className='flex items-center gap-2 md:gap-4'>
             <Button
@@ -147,21 +151,26 @@ export default function RepositorySection({
             )}
           </div>
         </div>
-        <div className='flex w-full flex-col items-start gap-1 md:flex-row md:gap-2'>
-          {repository && (
-            <CollectionSelector
-              repository={repository}
-              selectedCollection={selectedCollection}
-              setSelectedCollection={setSelectedCollection}
-            />
-          )}
-          {selectedCollectionSchema && (
-            <CollectionSchema
-              collection={selectedCollectionSchema}
-              name={selectedCollectionSchema.name}
-            />
-          )}
-        </div>
+        {loadingCollections ? (
+          <LoadingSkeleton className='h-96' />
+        ) : (
+          <div className='flex w-full flex-col items-start gap-1 md:flex-row md:gap-2'>
+            {repository && (
+              <CollectionSelector
+                repository={repository}
+                collections={collections}
+                selectedCollectionID={selectedCollectionID}
+                setSelectedCollectionID={setSelectedCollectionID}
+              />
+            )}
+            {selectedCollectionID && (
+              <CollectionSchema
+                collectionID={selectedCollectionID}
+                immutable={immutable ?? repository?.is_immutable ?? false}
+              />
+            )}
+          </div>
+        )}
         <div className='w-full max-w-full overflow-hidden rounded-md border border-gray-100 bg-white dark:border-gray-800 dark:bg-irmin_black'>
           <div className='flex w-full flex-row items-center justify-between bg-gray-100 pl-4 dark:bg-gray-800'>
             <div className='py-2 text-sm font-semibold'>

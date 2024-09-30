@@ -18,7 +18,7 @@ export const collections = (): Collection[] => [
     repository: 'excel-kpis',
     formatted_name: 'excel-kpis.sales',
     type: 'table',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '1',
@@ -26,7 +26,7 @@ export const collections = (): Collection[] => [
     repository: 'excel-kpis',
     formatted_name: 'excel-kpis.expenses',
     type: 'table',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '2',
@@ -34,7 +34,7 @@ export const collections = (): Collection[] => [
     repository: 'excel-kpis',
     formatted_name: 'excel-kpis.profit_by_month',
     type: 'table',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '3',
@@ -43,7 +43,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'main-google-analytics.sessions',
     type: 'table',
     workflow: '0',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '4',
@@ -52,7 +52,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'main-google-analytics.users',
     type: 'table',
     workflow: '0',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '5',
@@ -61,7 +61,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'main-google-analytics.pageviews',
     type: 'table',
     workflow: '0',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '6',
@@ -70,7 +70,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'main-google-analytics.events',
     type: 'table',
     workflow: '0',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '7',
@@ -79,7 +79,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'app-data.users',
     type: 'table',
     workflow: '2',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '8',
@@ -88,7 +88,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'app-data.downloads',
     type: 'table',
     workflow: '2',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '9',
@@ -97,7 +97,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'app-data.sessions',
     type: 'table',
     workflow: '2',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '10',
@@ -106,7 +106,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'app-data.purchase_events',
     type: 'table',
     workflow: '2',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '11',
@@ -115,7 +115,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'app-data.ad_clicks',
     type: 'table',
     workflow: '2',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '12',
@@ -124,7 +124,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'app-data.ad_impressions',
     type: 'table',
     workflow: '2',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '13',
@@ -133,7 +133,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'kpis-from-excel.sales',
     type: 'table',
     workflow: '4',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '14',
@@ -142,7 +142,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'kpis-from-excel.expenses',
     type: 'table',
     workflow: '4',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '15',
@@ -151,7 +151,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'kpis-from-excel.profit_by_month',
     type: 'table',
     workflow: '4',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '16',
@@ -159,7 +159,7 @@ export const collections = (): Collection[] => [
     repository: 'management-data-from-excel',
     formatted_name: 'management-data-from-excel.inventory',
     type: 'table',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: false,
   },
   {
     id: '17',
@@ -167,7 +167,7 @@ export const collections = (): Collection[] => [
     repository: 'management-data-from-excel',
     formatted_name: 'management-data-from-excel.employees',
     type: 'table',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: false,
   },
   {
     id: '18',
@@ -175,7 +175,7 @@ export const collections = (): Collection[] => [
     repository: 'google-sheets-kpis',
     formatted_name: 'google-sheets-kpis.sales',
     type: 'table',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: false,
   },
   {
     id: '19',
@@ -183,7 +183,7 @@ export const collections = (): Collection[] => [
     repository: 'google-sheets-kpis',
     formatted_name: 'google-sheets-kpis.inventory',
     type: 'table',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: false,
   },
   {
     id: '20',
@@ -191,7 +191,7 @@ export const collections = (): Collection[] => [
     repository: 'google-sheets-kpis',
     formatted_name: 'google-sheets-kpis.expenses',
     type: 'table',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: false,
   },
   {
     id: '21',
@@ -199,7 +199,7 @@ export const collections = (): Collection[] => [
     repository: 'google-sheets-kpis',
     formatted_name: 'google-sheets-kpis.profit_by_month',
     type: 'table',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: false,
   },
   {
     id: '22',
@@ -207,7 +207,7 @@ export const collections = (): Collection[] => [
     repository: 'google-sheets-kpis',
     formatted_name: 'google-sheets-kpis.employees',
     type: 'table',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: false,
   },
   {
     id: '23',
@@ -215,7 +215,7 @@ export const collections = (): Collection[] => [
     repository: 'top-100-ad-clicking-users',
     formatted_name: 'top-100-ad-clicking-users.top-100-ad-clicking-users',
     type: 'table',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: false,
   },
   {
     id: '24',
@@ -224,7 +224,7 @@ export const collections = (): Collection[] => [
     formatted_name: 'app-data.profile-images',
     type: 'folder',
     workflow: '2',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: true,
   },
   {
     id: '25',
@@ -232,8 +232,7 @@ export const collections = (): Collection[] => [
     repository: 'app-data',
     formatted_name: 'app-data.app-docker-file',
     type: 'file',
-    workflow: '2',
-    branches: ['main', 'dev', 'staging'],
+    is_immutable: false,
   },
 ];
 

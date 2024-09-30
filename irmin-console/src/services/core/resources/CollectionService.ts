@@ -39,17 +39,29 @@ class CollectionService {
   }
 
   /**
-   * Fetch all available collections for a repository or workspace
+   * Fetch all available collections for a repository and ref.
    * @todo Provide link to Irmin API docs
    *
-   * @param repository - slug of the repository to fetch collections for. Leave empty to fetch all collections for the workspace
+   * If no repository is provided, fetch all collections.
+   * If no ref is provided, fetch the collections from the default branch.
+   *
+   * @param repository - (optional) slug of the repository to fetch collections for
+   * @param ref - (optional) ref to fetch the collections from, eg. branch, tag, commit hash
    */
-  async fetchCollections(repository?: string): Promise<CollectionsAPIResponse> {
-    if (isOfflineMode)
-      return fake(exampleCollections) as CollectionsAPIResponse;
+  async fetchCollections(
+    repository?: string,
+    ref?: string
+  ): Promise<CollectionsAPIResponse> {
+    const examples = repository
+      ? exampleCollections.filter(
+          (collection) => collection.repository === repository
+        )
+      : exampleCollections;
+    if (isOfflineMode) return fake(examples) as CollectionsAPIResponse;
     try {
       const urlParams = new URLSearchParams();
       if (repository) urlParams.append('repository', repository);
+      if (ref) urlParams.append('ref', ref);
       const response = (await this.irminCore.fetch(
         `/v1/collections?${urlParams.toString()}`,
         {
@@ -60,8 +72,7 @@ class CollectionService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Collections error');
-      if (isDevelopment)
-        return fake(exampleCollections) as CollectionsAPIResponse;
+      if (isDevelopment) return fake(examples) as CollectionsAPIResponse;
       throw error;
     }
   }

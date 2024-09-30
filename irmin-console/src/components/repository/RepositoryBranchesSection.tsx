@@ -31,8 +31,8 @@ export default function RepositoryBranchesSection() {
     fetchBranches,
     currentRepository,
     loadingBranches,
-    currentBranch,
-    setCurrentBranch,
+    currentRef,
+    setCurrentRef,
     defaultBranch,
   } = useData();
 
@@ -52,7 +52,7 @@ export default function RepositoryBranchesSection() {
       );
       irminAlert('success', result.message ?? dict.repository.branchDeleted);
       // Change to the primary branch just in case
-      if (defaultBranch) setCurrentBranch(defaultBranch);
+      if (defaultBranch) setCurrentRef(defaultBranch);
       // Refetch the branches
       fetchBranches();
     } catch (error) {
@@ -119,7 +119,7 @@ export default function RepositoryBranchesSection() {
               {dict.repository.primary}
             </span>
           )}
-          {branch.name === currentBranch && (
+          {branch.name === currentRef && (
             <span className='h-max rounded-lg bg-gray-300 px-1 text-xs leading-4 text-irmin_black dark:bg-gray-600 dark:text-white'>
               {dict.repository.currentBranch}
             </span>
@@ -131,7 +131,7 @@ export default function RepositoryBranchesSection() {
           label: dict.list.view,
           primary: true,
           onClick: () => {
-            setCurrentBranch(branch.name);
+            setCurrentRef(branch.name);
             router.push('./');
           },
         },

@@ -41,7 +41,6 @@ class RepositoryService {
     this.reassignRepository = this.reassignRepository.bind(this);
     this.deleteRepository = this.deleteRepository.bind(this);
     this.updateRepository = this.updateRepository.bind(this);
-    this.getDownloadLink = this.getDownloadLink.bind(this);
     this.uploadCollection = this.uploadCollection.bind(this);
     this.deleteCollection = this.deleteCollection.bind(this);
   }
@@ -88,9 +87,6 @@ class RepositoryService {
       formData.append('name', repository.name);
       formData.append('description', repository.description ?? '');
       formData.append('documentation', repository.documentation ?? '');
-      repository.collections.forEach((item) => {
-        formData.append('collections', item.formatted_name);
-      });
 
       const response = (await this.irminCore.fetch(`/v1/repositories/create`, {
         method: 'POST',
@@ -190,9 +186,6 @@ class RepositoryService {
       formData.append('name', updatedRepository.name);
       formData.append('description', updatedRepository.description ?? '');
       formData.append('documentation', updatedRepository.documentation ?? '');
-      updatedRepository.collections.forEach((item) => {
-        formData.append('collections', item.formatted_name);
-      });
 
       const response = await this.irminCore.fetch(
         `/v1/repositories/${repositorySlug}/update`,
@@ -211,52 +204,6 @@ class RepositoryService {
   }
 
   /**
-   * Get a link to download the repository
-   *
-   * @todo Provide link to Irmin API docs
-   *
-   * @param repository - The repository to download
-   * @param branch - (optional) The branch to download
-   * @param ref - (optional) The ref to download
-   * @param path - (optional) The path within the repository to download
-   * @param redirectToSuccess - (optional) The URL to redirect the user to after download success
-   * @param redirectToFailed - (optional) The URL to redirect the user to after download failure
-   *
-   * @returns The download URL to redirect the user to
-   */
-  async getDownloadLink(
-    repository: string,
-    branch?: string,
-    ref?: string,
-    path?: string,
-    redirectToSuccess?: string,
-    redirectToFailed?: string
-  ): Promise<string> {
-    try {
-      // Construct the query parameters from the props
-      const urlParams = new URLSearchParams();
-      urlParams.append('repository', repository);
-      if (branch) urlParams.append('branch', branch);
-      if (ref) urlParams.append('ref', ref);
-      if (path) urlParams.append('path', path);
-      if (redirectToSuccess) urlParams.append('onSuccess', redirectToSuccess);
-      if (redirectToFailed) urlParams.append('onFailed', redirectToFailed);
-
-      // Construct the download URL
-      const downloadUrl = `${this.irminCore.apiBase}/v1/repositories/${repository}/download?${urlParams.toString()}`;
-
-      // Return the download URL
-      return downloadUrl;
-    } catch (error) {
-      console.error(
-        (error as Error).message,
-        'Repository Download link creation error'
-      );
-      throw error;
-    }
-  }
-
-  /**
    * Upload a collection to the repository
    *
    * @todo Provide link to Irmin API docs
@@ -265,14 +212,14 @@ class RepositoryService {
    * and create a new collection.
    *
    * @param repository - The repository to upload the collection to
-   * @param branch - The branch to upload the collection to
+   * @param ref - The ref to upload the collection to (eg. branch)
    * @param name - The name of the new collection
    * @param files - The files to upload
    * @param path - The path within the repository to upload the files to
    */
   async uploadCollection(
     repository: string,
-    branch: string,
+    ref: string,
     name: string,
     files: FileList,
     path: string
@@ -282,7 +229,7 @@ class RepositoryService {
       const formData = new FormData();
 
       formData.append('name', name);
-      formData.append('branch', branch);
+      formData.append('ref', ref);
       formData.append('path', path);
 
       for (let i = 0; i < files.length; i++) {
@@ -311,12 +258,12 @@ class RepositoryService {
    * @todo Provide link to Irmin API docs
    *
    * @param repository - The repository to delete the collection from
-   * @param branch - The branch to delete the collection from
+   * @param ref - The ref to delete the collection from
    * @param collection - The collection to delete
    */
   async deleteCollection(
     repository: string,
-    branch: string,
+    ref: string,
     collection: string
   ): Promise<IrminAPIResponse> {
     if (isOfflineMode) return fake();
@@ -324,7 +271,7 @@ class RepositoryService {
       const formData = new FormData();
 
       formData.append('_method', 'DELETE');
-      formData.append('branch', branch);
+      formData.append('ref', ref);
       formData.append('collection', collection);
 
       const response = await this.irminCore.fetch(

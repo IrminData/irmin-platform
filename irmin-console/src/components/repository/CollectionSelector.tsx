@@ -5,24 +5,28 @@ import { TbFile, TbFolder, TbTable } from 'react-icons/tb';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
+import { Collection } from '@/types/core/Collection';
 import { Repository } from '@/types/core/Repository';
 
 /**
  * Component for selecting repository collections styled like GitHub file browser
  *
- * @param props0 - The props
- * @param props0.repository - The repository to display data for
- * @param props0.selectedCollection - The currently selected collection
- * @param props0.setSelectedCollection - The function to set the selected collection
+ * @param props - The props
+ * @param props.repository - The repository to display data for
+ * @param props.collections - The collections to display
+ * @param props.selectedCollectionID - The currently selected collection
+ * @param props.setSelectedCollectionID - The function to set the selected collection
  */
 const CollectionSelector = ({
   repository,
-  selectedCollection,
-  setSelectedCollection,
+  collections,
+  selectedCollectionID,
+  setSelectedCollectionID,
 }: {
   repository: Repository;
-  selectedCollection: string | null;
-  setSelectedCollection: (collection: string | null) => void;
+  collections: Collection[];
+  selectedCollectionID: string | null;
+  setSelectedCollectionID: (collection: string | null) => void;
 }) => {
   const { dict } = useLocale();
 
@@ -49,19 +53,17 @@ const CollectionSelector = ({
         {dict.repository.collections}
       </div>
       <div className='p-2' id='collection-selector'>
-        {repository.collections.map((item, idx) => (
+        {collections.map((item, idx) => (
           <div
             key={`${repository.slug}-collection-${idx}`}
             className={`flex cursor-pointer flex-col justify-between gap-2 rounded px-2 py-2 hover:bg-gray-100 lg:flex-row lg:items-center lg:px-4 dark:hover:bg-gray-800 ${
-              selectedCollection === item.formatted_name
+              selectedCollectionID === item.id
                 ? 'bg-gray-200 dark:bg-gray-700'
                 : ''
             }`}
             onClick={() =>
-              setSelectedCollection(
-                selectedCollection === item.formatted_name
-                  ? null
-                  : item.formatted_name
+              setSelectedCollectionID(
+                selectedCollectionID === item.id ? null : item.id
               )
             }
           >
@@ -80,7 +82,7 @@ const CollectionSelector = ({
             </div>
           </div>
         ))}
-        {repository.collections.length === 0 && (
+        {collections.length === 0 && (
           <p className='py-4 text-center text-xs text-gray-400'>
             {dict.repository.noCollections}
           </p>
