@@ -1,7 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
-
 import RepositoryDocumentationSection from '@/components/repository/RepositoryDocumentationSection';
 
 import { useWorkspace } from '@/context/workspace';
@@ -23,9 +21,8 @@ export default function RepositoryDocumentationPage({
     repositories: { repositories },
   } = useWorkspace();
 
-  const repository = useMemo(
-    () => repositories.find((repo) => repo.slug === params.repository),
-    [params.repository, repositories]
+  const repository = repositories.find(
+    (item) => item.slug === params.repository
   );
 
   if (!repository) return <></>;

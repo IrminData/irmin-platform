@@ -101,7 +101,7 @@ const StreamData = ({
       </div>
       {/* Table */}
       <div className='flex h-0 flex-1 flex-col overflow-hidden'>
-        {loading ? <LoadingSkeleton /> : <></>}
+        {loading ? <LoadingSkeleton className='h-96' /> : <></>}
         {!data || !filteredItems || filteredItems.length === 0 ? (
           <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
             {dict.query.noResults}

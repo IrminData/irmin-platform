@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
@@ -320,24 +321,31 @@ export const EditorContextProvider = ({
   }, [activeTab, openFileTabs, currentTabContent, openTabsContents, bucket]);
 
   /** Check if the save button should be enabled or not, based on whether the state is up to date **/
-  const enableSaveButton =
-    (openTabsContents.find((a) => a.path === openFileTabs[activeTab])
-      ?.contents ?? '') === currentTabContent;
+  const enableSaveButton = useMemo(
+    () =>
+      (openTabsContents.find((a) => a.path === openFileTabs[activeTab])
+        ?.contents ?? '') === currentTabContent,
+    [openTabsContents, openFileTabs, activeTab, currentTabContent]
+  );
 
   /**
    * Get the current editor content based on the active tab
    * Returns {@link FileContents} or undefined if the tab is not found
    */
-  const currentEditor = openTabsContents.find(
-    (a) => a.path === openFileTabs[activeTab]
+  const currentEditor = useMemo(
+    () => openTabsContents.find((a) => a.path === openFileTabs[activeTab]),
+    [openTabsContents, openFileTabs, activeTab]
   );
 
   /**
    * Check if the content is loading in order to show a loading state
    */
-  const loadingEditorContent =
-    currentTabContentForRef.current !== openFileTabs[activeTab] &&
-    openFileTabs.length > 0;
+  const loadingEditorContent = useMemo(
+    () =>
+      currentTabContentForRef.current !== openFileTabs[activeTab] &&
+      openFileTabs.length > 0,
+    [currentTabContentForRef, openFileTabs, activeTab]
+  );
 
   return (
     <EditorContext.Provider

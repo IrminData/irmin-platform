@@ -91,10 +91,7 @@ export const BucketProvider = ({
   const [activeTab, setActiveTab] = useState<number>(0);
   const [openFileTabs, setOpenFileTabs] = useState<string[]>([]);
 
-  const { bucketService } = useMemo(
-    () => new IrminCore(locale, token ?? ''),
-    [locale, token]
-  );
+  const { bucketService } = useMemo(() => new IrminCore(locale), [locale]);
 
   // Ref to check which workspace the files were fetched for
   const filesFetchedForRef = useRef<string | null>(null);
@@ -132,7 +129,7 @@ export const BucketProvider = ({
     } finally {
       setLoading(false);
     }
-  }, [token, locale, currentWorkspace, irminAlert]);
+  }, [currentWorkspace, locale, token, setCurrentBucket, setItems, irminAlert]);
 
   /**
    * Hook to fetch the bucket when the workspace changes
@@ -149,11 +146,11 @@ export const BucketProvider = ({
    * @param bucket - Bucket object
    * @internal
    */
-  const updateStateWithBucket = (bucket: Bucket) => {
+  const updateStateWithBucket = useCallback((bucket: Bucket) => {
     const fileItems = transformBucketToFileNavItem(bucket);
     setCurrentBucket(bucket);
     setItems(fileItems);
-  };
+  }, []);
 
   /**
    * Construct the updated bucket for a folder
@@ -166,45 +163,48 @@ export const BucketProvider = ({
    * @param folder - File navigator item
    * @returns Updated bucket
    */
-  const constructUpdatedBucketForFolder = (folder: FileNavigatorItem) => {
-    if (!currentBucket) throw new Error('Bucket not found');
-    // Construct the updated bucket
-    const updatedBucket = { ...currentBucket };
-    updatedBucket.folders = updatedBucket.folders?.map((f) => {
-      // Update the folder item in the bucket
-      if (f.path === folder.original?.path) {
-        return folder.current as BucketFolder;
-      }
-      // Update children of the folder to reflect the path change
-      if (folder.original?.path && f.path?.startsWith(folder.original.path)) {
-        const newPath = f.path.replace(
-          folder.original?.path ?? '',
-          folder.current?.path ?? ''
-        );
-        return f.path === newPath ? f : { ...f, path: newPath };
-      }
-      return f;
-    });
-    // Update the files in the bucket to reflect the path change
-    updatedBucket.files = updatedBucket.files?.map((f) => {
-      if (f.path?.startsWith(folder.original?.path ?? '')) {
-        const newPath = f.path.replace(
-          folder.original?.path ?? '',
-          folder.current?.path ?? ''
-        );
-        return f.path === newPath ? f : { ...f, path: newPath };
-      }
-      return f;
-    });
-    // Return the updated bucket
-    return updatedBucket;
-  };
+  const constructUpdatedBucketForFolder = useCallback(
+    (folder: FileNavigatorItem) => {
+      if (!currentBucket) throw new Error('Bucket not found');
+      // Construct the updated bucket
+      const updatedBucket = { ...currentBucket };
+      updatedBucket.folders = updatedBucket.folders?.map((f) => {
+        // Update the folder item in the bucket
+        if (f.path === folder.original?.path) {
+          return folder.current as BucketFolder;
+        }
+        // Update children of the folder to reflect the path change
+        if (folder.original?.path && f.path?.startsWith(folder.original.path)) {
+          const newPath = f.path.replace(
+            folder.original?.path ?? '',
+            folder.current?.path ?? ''
+          );
+          return f.path === newPath ? f : { ...f, path: newPath };
+        }
+        return f;
+      });
+      // Update the files in the bucket to reflect the path change
+      updatedBucket.files = updatedBucket.files?.map((f) => {
+        if (f.path?.startsWith(folder.original?.path ?? '')) {
+          const newPath = f.path.replace(
+            folder.original?.path ?? '',
+            folder.current?.path ?? ''
+          );
+          return f.path === newPath ? f : { ...f, path: newPath };
+        }
+        return f;
+      });
+      // Return the updated bucket
+      return updatedBucket;
+    },
+    [currentBucket]
+  );
 
   /**
    * Open a new tab in the editor
    * Does not update the bucket or the item list, only the editor tabs
    */
-  const openNewTab = () => {
+  const openNewTab = useCallback(() => {
     if (!currentBucket) throw new Error('Bucket not found');
     // Create a new tab with a random file name and switch to it
     const prevOpenFileTabs = [...openFileTabs];
@@ -228,7 +228,7 @@ export const BucketProvider = ({
 
     // Update the newly created tab with the untitled file path
     setOpenFileTabs([...prevOpenFileTabs, untitledPath]);
-  };
+  }, [currentBucket, openFileTabs]);
 
   /**
    * Update file contents, documentation etc.
@@ -242,34 +242,37 @@ export const BucketProvider = ({
    *
    * @param file - The file to update
    */
-  const updateFileContents = async (file: BucketFile) => {
-    try {
-      if (!currentBucket) throw new Error('Bucket not found');
-      // Update the context state
-      const updatedBucket = { ...currentBucket };
-      updatedBucket.files = updatedBucket.files.map((f) =>
-        f.path === file.path ? file : f
-      );
-      updateStateWithBucket(updatedBucket);
-      // Update the file in the bucket
-      const response = await bucketService.updateFile({
-        original: file,
-        current: file,
-        type: 'file',
-      });
-      // Show success alert
-      irminAlert(
-        'success',
-        response.metadata?.message ?? response.message ?? 'File updated'
-      );
-    } catch (error) {
-      console.error('Update file contents error:', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to update file contents'
-      );
-    }
-  };
+  const updateFileContents = useCallback(
+    async (file: BucketFile) => {
+      try {
+        if (!currentBucket) throw new Error('Bucket not found');
+        // Update the context state
+        const updatedBucket = { ...currentBucket };
+        updatedBucket.files = updatedBucket.files.map((f) =>
+          f.path === file.path ? file : f
+        );
+        updateStateWithBucket(updatedBucket);
+        // Update the file in the bucket
+        const response = await bucketService.updateFile({
+          original: file,
+          current: file,
+          type: 'file',
+        });
+        // Show success alert
+        irminAlert(
+          'success',
+          response.metadata?.message ?? response.message ?? 'File updated'
+        );
+      } catch (error) {
+        console.error('Update file contents error:', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to update file contents'
+        );
+      }
+    },
+    [currentBucket, bucketService, irminAlert, updateStateWithBucket]
+  );
 
   /**
    * Create a new file in the bucket
@@ -281,25 +284,31 @@ export const BucketProvider = ({
    *
    * @param file - File navigator item
    */
-  const createFile = async (file: FileNavigatorItem) => {
-    try {
-      if (!currentBucket) throw new Error('Bucket not found');
-      // Update the context state
-      const updatedBucket = { ...currentBucket };
-      updatedBucket.files.push(file.current as BucketFile);
-      updateStateWithBucket(updatedBucket);
-      // Create the file in the bucket
-      const response = await bucketService.createFile(file);
-      // Show success alert
-      irminAlert(
-        'success',
-        response.metadata?.message ?? response.message ?? 'File updated'
-      );
-    } catch (error) {
-      console.error('Create file error:', error);
-      irminAlert('error', (error as Error)?.message ?? 'Failed to create file');
-    }
-  };
+  const createFile = useCallback(
+    async (file: FileNavigatorItem) => {
+      try {
+        if (!currentBucket) throw new Error('Bucket not found');
+        // Update the context state
+        const updatedBucket = { ...currentBucket };
+        updatedBucket.files.push(file.current as BucketFile);
+        updateStateWithBucket(updatedBucket);
+        // Create the file in the bucket
+        const response = await bucketService.createFile(file);
+        // Show success alert
+        irminAlert(
+          'success',
+          response.metadata?.message ?? response.message ?? 'File updated'
+        );
+      } catch (error) {
+        console.error('Create file error:', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to create file'
+        );
+      }
+    },
+    [currentBucket, bucketService, updateStateWithBucket, irminAlert]
+  );
 
   /**
    * Update a file in the bucket
@@ -312,33 +321,45 @@ export const BucketProvider = ({
    *
    * @param file - File navigator item
    */
-  const updateFile = async (file: FileNavigatorItem) => {
-    try {
-      if (!currentBucket) throw new Error('Bucket not found');
-      // Update the context state
-      const updatedBucket = { ...currentBucket };
-      updatedBucket.files = updatedBucket.files.map((f) =>
-        f.path === file.original?.path ? (file.current as BucketFile) : f
-      );
-      updateStateWithBucket(updatedBucket);
-      // Update the open file tabs
-      setOpenFileTabs(
-        openFileTabs.map((path) =>
-          path === file.original?.path ? (file.current?.path ?? '') : path
-        )
-      );
-      // Update the file in the bucket
-      const response = await bucketService.updateFile(file);
-      // Show success alert
-      irminAlert(
-        'success',
-        response.metadata?.message ?? response.message ?? 'File updated'
-      );
-    } catch (error) {
-      console.error('Update file error:', error);
-      irminAlert('error', (error as Error)?.message ?? 'Failed to update file');
-    }
-  };
+  const updateFile = useCallback(
+    async (file: FileNavigatorItem) => {
+      try {
+        if (!currentBucket) throw new Error('Bucket not found');
+        // Update the context state
+        const updatedBucket = { ...currentBucket };
+        updatedBucket.files = updatedBucket.files.map((f) =>
+          f.path === file.original?.path ? (file.current as BucketFile) : f
+        );
+        updateStateWithBucket(updatedBucket);
+        // Update the open file tabs
+        setOpenFileTabs(
+          openFileTabs.map((path) =>
+            path === file.original?.path ? (file.current?.path ?? '') : path
+          )
+        );
+        // Update the file in the bucket
+        const response = await bucketService.updateFile(file);
+        // Show success alert
+        irminAlert(
+          'success',
+          response.metadata?.message ?? response.message ?? 'File updated'
+        );
+      } catch (error) {
+        console.error('Update file error:', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to update file'
+        );
+      }
+    },
+    [
+      currentBucket,
+      updateStateWithBucket,
+      bucketService,
+      openFileTabs,
+      irminAlert,
+    ]
+  );
 
   /**
    * Delete a file from the bucket
@@ -353,32 +374,45 @@ export const BucketProvider = ({
    *
    * @param file - File navigator item
    */
-  const deleteFile = async (file: FileNavigatorItem) => {
-    try {
-      if (!currentBucket) throw new Error('Bucket not found');
-      // Update the context state
-      const updatedBucket = { ...currentBucket };
-      updatedBucket.files = updatedBucket.files.filter(
-        (f) => f.path !== file.current?.path
-      );
-      updateStateWithBucket(updatedBucket);
-      // Update the open file tabs
-      if (openFileTabs[activeTab] === file.current?.path) setActiveTab(0);
-      setOpenFileTabs(
-        openFileTabs.filter((path) => path !== file.current?.path)
-      );
-      // Delete the file from the bucket
-      const response = await bucketService.deleteFile(file);
-      // Show success alert
-      irminAlert(
-        'success',
-        response.metadata?.message ?? response.message ?? 'File deleted'
-      );
-    } catch (error) {
-      console.error('Delete file error:', error);
-      irminAlert('error', (error as Error)?.message ?? 'Failed to delete file');
-    }
-  };
+  const deleteFile = useCallback(
+    async (file: FileNavigatorItem) => {
+      try {
+        if (!currentBucket) throw new Error('Bucket not found');
+        // Update the context state
+        const updatedBucket = { ...currentBucket };
+        updatedBucket.files = updatedBucket.files.filter(
+          (f) => f.path !== file.current?.path
+        );
+        updateStateWithBucket(updatedBucket);
+        // Update the open file tabs
+        if (openFileTabs[activeTab] === file.current?.path) setActiveTab(0);
+        setOpenFileTabs(
+          openFileTabs.filter((path) => path !== file.current?.path)
+        );
+        // Delete the file from the bucket
+        const response = await bucketService.deleteFile(file);
+        // Show success alert
+        irminAlert(
+          'success',
+          response.metadata?.message ?? response.message ?? 'File deleted'
+        );
+      } catch (error) {
+        console.error('Delete file error:', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to delete file'
+        );
+      }
+    },
+    [
+      currentBucket,
+      bucketService,
+      updateStateWithBucket,
+      openFileTabs,
+      activeTab,
+      irminAlert,
+    ]
+  );
 
   /**
    * Create a new folder in the bucket
@@ -390,28 +424,31 @@ export const BucketProvider = ({
    *
    * @param folder - File navigator item
    */
-  const createFolder = async (folder: FileNavigatorItem) => {
-    try {
-      if (!currentBucket) throw new Error('Bucket not found');
-      // Update the context state
-      const updatedBucket = { ...currentBucket };
-      updatedBucket.folders.push(folder.current as BucketFolder);
-      updateStateWithBucket(updatedBucket);
-      // Create the folder in the bucket
-      const response = await bucketService.createFolder(folder);
-      // Show success alert
-      irminAlert(
-        'success',
-        response.metadata?.message ?? response.message ?? 'Folder created'
-      );
-    } catch (error) {
-      console.error('Create folder error:', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to create folder'
-      );
-    }
-  };
+  const createFolder = useCallback(
+    async (folder: FileNavigatorItem) => {
+      try {
+        if (!currentBucket) throw new Error('Bucket not found');
+        // Update the context state
+        const updatedBucket = { ...currentBucket };
+        updatedBucket.folders.push(folder.current as BucketFolder);
+        updateStateWithBucket(updatedBucket);
+        // Create the folder in the bucket
+        const response = await bucketService.createFolder(folder);
+        // Show success alert
+        irminAlert(
+          'success',
+          response.metadata?.message ?? response.message ?? 'Folder created'
+        );
+      } catch (error) {
+        console.error('Create folder error:', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to create folder'
+        );
+      }
+    },
+    [currentBucket, bucketService, updateStateWithBucket, irminAlert]
+  );
 
   /**
    * Update a folder in the bucket
@@ -424,40 +461,49 @@ export const BucketProvider = ({
    *
    * @param folder - File navigator item
    */
-  const updateFolder = async (folder: FileNavigatorItem) => {
-    try {
-      // Construct the updated bucket
-      const updatedBucket = constructUpdatedBucketForFolder(folder);
-      if (!updatedBucket)
-        throw new Error('Bucket failed to construct for folder');
-      // Update the context state
-      updateStateWithBucket(updatedBucket);
-      // Update the open file tabs
-      setOpenFileTabs(
-        openFileTabs.map((path) =>
-          path?.startsWith(folder.original?.path ?? '')
-            ? path.replace(
-                folder.original?.path ?? '',
-                folder.current?.path ?? ''
-              )
-            : path
-        )
-      );
-      // Update the folder in the bucket
-      const response = await bucketService.updateFolder(folder);
-      // Show success alert
-      irminAlert(
-        'success',
-        response.metadata?.message ?? response.message ?? 'Folder updated'
-      );
-    } catch (error) {
-      console.error('Update folder error:', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to update folder'
-      );
-    }
-  };
+  const updateFolder = useCallback(
+    async (folder: FileNavigatorItem) => {
+      try {
+        // Construct the updated bucket
+        const updatedBucket = constructUpdatedBucketForFolder(folder);
+        if (!updatedBucket)
+          throw new Error('Bucket failed to construct for folder');
+        // Update the context state
+        updateStateWithBucket(updatedBucket);
+        // Update the open file tabs
+        setOpenFileTabs(
+          openFileTabs.map((path) =>
+            path?.startsWith(folder.original?.path ?? '')
+              ? path.replace(
+                  folder.original?.path ?? '',
+                  folder.current?.path ?? ''
+                )
+              : path
+          )
+        );
+        // Update the folder in the bucket
+        const response = await bucketService.updateFolder(folder);
+        // Show success alert
+        irminAlert(
+          'success',
+          response.metadata?.message ?? response.message ?? 'Folder updated'
+        );
+      } catch (error) {
+        console.error('Update folder error:', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to update folder'
+        );
+      }
+    },
+    [
+      constructUpdatedBucketForFolder,
+      updateStateWithBucket,
+      bucketService,
+      openFileTabs,
+      irminAlert,
+    ]
+  );
 
   /**
    * Delete a folder from the bucket
@@ -472,42 +518,52 @@ export const BucketProvider = ({
    *
    * @param folder - File navigator item
    */
-  const deleteFolder = async (folder: FileNavigatorItem) => {
-    try {
-      if (!currentBucket) throw new Error('Bucket not found');
-      // Remove the folder and its children from the context state
-      const updatedBucket = { ...currentBucket };
-      updatedBucket.folders = updatedBucket.folders.filter(
-        (f) => !f.path?.startsWith(folder.original?.path ?? '')
-      );
-      updatedBucket.files = updatedBucket.files.filter(
-        (f) => !f.path?.startsWith(folder.original?.path ?? '')
-      );
-      updateStateWithBucket(updatedBucket);
-      // Update the open file tabs
-      if (openFileTabs[activeTab]?.startsWith(folder.original?.path ?? '')) {
-        setActiveTab(0);
+  const deleteFolder = useCallback(
+    async (folder: FileNavigatorItem) => {
+      try {
+        if (!currentBucket) throw new Error('Bucket not found');
+        // Remove the folder and its children from the context state
+        const updatedBucket = { ...currentBucket };
+        updatedBucket.folders = updatedBucket.folders.filter(
+          (f) => !f.path?.startsWith(folder.original?.path ?? '')
+        );
+        updatedBucket.files = updatedBucket.files.filter(
+          (f) => !f.path?.startsWith(folder.original?.path ?? '')
+        );
+        updateStateWithBucket(updatedBucket);
+        // Update the open file tabs
+        if (openFileTabs[activeTab]?.startsWith(folder.original?.path ?? '')) {
+          setActiveTab(0);
+        }
+        setOpenFileTabs(
+          openFileTabs.filter(
+            (path) => !path?.startsWith(folder.original?.path ?? '')
+          )
+        );
+        // Delete the folder from the bucket
+        const response = await bucketService.deleteFolder(folder);
+        // Show success alert
+        irminAlert(
+          'success',
+          response.metadata?.message ?? response.message ?? 'Folder deleted'
+        );
+      } catch (error) {
+        console.error('Delete folder error:', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to delete folder'
+        );
       }
-      setOpenFileTabs(
-        openFileTabs.filter(
-          (path) => !path?.startsWith(folder.original?.path ?? '')
-        )
-      );
-      // Delete the folder from the bucket
-      const response = await bucketService.deleteFolder(folder);
-      // Show success alert
-      irminAlert(
-        'success',
-        response.metadata?.message ?? response.message ?? 'Folder deleted'
-      );
-    } catch (error) {
-      console.error('Delete folder error:', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to delete folder'
-      );
-    }
-  };
+    },
+    [
+      currentBucket,
+      updateStateWithBucket,
+      openFileTabs,
+      activeTab,
+      bucketService,
+      irminAlert,
+    ]
+  );
 
   return (
     <BucketContext.Provider

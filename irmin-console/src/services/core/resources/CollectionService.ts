@@ -3,8 +3,14 @@ import IrminCore from '@/services/core/IrminCore';
 import fake from '@/utils/prepareFakeResponse';
 
 import { Collection } from '@/types/core/Collection';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { exampleCollections } from '@/types/examples/core';
+import {
+  IrminAPIResponse,
+  IrminAPIUnstructuredResponse,
+} from '@/types/core/IrminAPIResponse';
+import {
+  exampleAPIUnstructuredResponse,
+  exampleCollections,
+} from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment =
@@ -29,6 +35,7 @@ class CollectionService {
     this.irminCore = irminCore;
     // Bind methods
     this.fetchCollections = this.fetchCollections.bind(this);
+    this.fetchCollectionContent = this.fetchCollectionContent.bind(this);
   }
 
   /**
@@ -41,8 +48,10 @@ class CollectionService {
     if (isOfflineMode)
       return fake(exampleCollections) as CollectionsAPIResponse;
     try {
+      const urlParams = new URLSearchParams();
+      if (repository) urlParams.append('repository', repository);
       const response = (await this.irminCore.fetch(
-        `/v1/collections${repository ? `?repository=${repository}` : ''}`,
+        `/v1/collections?${urlParams.toString()}`,
         {
           method: 'GET',
         }
@@ -53,6 +62,40 @@ class CollectionService {
       console.error((error as Error).message, 'Fetch Collections error');
       if (isDevelopment)
         return fake(exampleCollections) as CollectionsAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch content of a specific collection
+   * @todo Provide link to Irmin API docs
+   *
+   * @param collection - The ID of the collection to fetch
+   * @param repository - (optional) The repository the collection is in
+   * @param ref - (optional) The ref to fetch the collection from
+   */
+  async fetchCollectionContent(
+    collection: number,
+    repository?: string,
+    ref?: string
+  ): Promise<IrminAPIUnstructuredResponse> {
+    if (isOfflineMode) return await exampleAPIUnstructuredResponse();
+    try {
+      // Construct the query parameters from the props
+      const urlParams = new URLSearchParams();
+      if (repository) urlParams.append('repository', repository);
+      if (ref) urlParams.append('ref', ref);
+      // Fetch the collection content from the API
+      const response = await this.irminCore.fetchUnstructured(
+        `/v1/collections/${collection}/content?${urlParams.toString()}`,
+        {
+          method: 'GET',
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch Collection Content error');
+      if (isDevelopment) return await exampleAPIUnstructuredResponse();
       throw error;
     }
   }

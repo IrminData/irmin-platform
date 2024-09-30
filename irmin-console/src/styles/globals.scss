@@ -101,6 +101,9 @@ input[type='radio'] {
     .react-select__indicator-separator {
       display: none;
     }
+    .react-select__placeholder {
+      color: #c3c3c3;
+    }
   }
   .react-select__menu {
     color: #01161e;
@@ -141,6 +144,9 @@ input[type='radio'] {
       &.react-select__control--is-focused,
       &.react-select__control--menu-is-open {
         border-color: #515151 !important;
+      }
+      .react-select__placeholder {
+        color: #424242;
       }
     }
     .react-select__menu {
@@ -399,5 +405,16 @@ input[type='radio'] {
   .react-flow__node-output,
   .react-flow__node-group {
     padding: 0 !important;
+  }
+}
+
+/* ReactDocViewer styles */
+#react-doc-viewer {
+  background: transparent;
+  * {
+    background: transparent;
+  }
+  #header-bar {
+    display: none;
   }
 }

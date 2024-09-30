@@ -201,20 +201,20 @@ export default function AddNewFileModal({
           />
           <Button
             variant='icon'
-            colorScheme='secondary'
+            colorScheme='light'
             size='sm'
-            className='m-0 ml-auto p-0 pl-2 dark:text-gray-100'
+            className='m-0 ml-2 rounded-lg p-0 pl-2'
             ariaLabel='Toggle the path selector'
             onClick={() => setShowPathSelector(!showPathSelector)}
             disabled={loading}
-          >
-            {!showPathSelector && (
-              <IoChevronDown className='inline-block' size={24} />
-            )}
-            {showPathSelector && (
-              <IoChevronUp className='inline-block' size={24} />
-            )}
-          </Button>
+            icon={
+              showPathSelector ? (
+                <IoChevronUp className='inline-block' size={24} />
+              ) : (
+                <IoChevronDown className='inline-block' size={24} />
+              )
+            }
+          />
         </div>
       </div>
       {showPathSelector && (

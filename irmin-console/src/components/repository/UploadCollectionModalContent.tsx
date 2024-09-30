@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import IrminCore from '@/services/core/IrminCore';
 import { useForm } from 'react-hook-form';
@@ -41,6 +41,8 @@ export default function UploadCollectionModalContent({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const { repositoryService } = useMemo(() => new IrminCore(locale), [locale]);
+
   const {
     register,
     handleSubmit,
@@ -54,7 +56,6 @@ export default function UploadCollectionModalContent({
     setError('');
     try {
       // Upload the collection
-      const { repositoryService } = new IrminCore(locale);
       await repositoryService.uploadCollection(
         data.repository,
         data.branch,

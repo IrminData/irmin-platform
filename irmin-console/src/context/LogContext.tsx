@@ -1,6 +1,6 @@
 'use client';
 
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
@@ -10,7 +10,6 @@ import React, {
 
 import IrminCore from '@/services/core/IrminCore';
 
-import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -45,13 +44,7 @@ const LogContext = createContext<LogContextProps | undefined>(undefined);
  */
 export const LogProvider = ({ children }: { children: React.ReactNode }) => {
   const { irminAlert } = usePopup();
-  const { token } = useIAM();
   const { locale } = useLocale();
-
-  const { logService } = useMemo(
-    () => new IrminCore(locale, token ?? ''),
-    [locale, token]
-  );
 
   // Log events state
   const [loadingLogEvents, setLoadingLogEvents] = useState<boolean>(false);
@@ -62,6 +55,8 @@ export const LogProvider = ({ children }: { children: React.ReactNode }) => {
     useState<boolean>(false);
   const [workflowRunLogs, setWorkflowRunLogs] =
     useState<WorkflowRunLogs | null>(null);
+
+  const { logService } = useMemo(() => new IrminCore(locale), [locale]);
 
   /**
    * Fetch log events

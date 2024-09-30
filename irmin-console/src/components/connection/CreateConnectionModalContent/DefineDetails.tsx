@@ -36,138 +36,113 @@ export default function DefineDetails({
   const initialLoadingDone = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const fetchConnectionDetails = useCallback(async () => {
-    if (
-      loading ||
-      !connectionData.connector ||
-      connectionData.connectionDetailsFields ||
-      initialLoadingDone.current
-    )
-      return;
-
-    setLoading(true);
-
-    try {
-      const response = await connectionService.fetchNewConnectionDetails(
-        connectionData.connector.id
-      );
-      const data = Object.fromEntries(
-        Object.keys(response.data).map((key) => [
-          key,
-          response.data[key].default ?? null,
-        ])
-      );
-      setConnectionData((prev: ConnectionSetup) => ({
-        ...prev,
-        connectionDetailsFields: response.data,
-        connectionDetails: data,
-      }));
-    } catch (error) {
-      console.error('Fetch connection details error:', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to fetch connection details'
-      );
-    }
-
-    initialLoadingDone.current = true;
-    setLoading(false);
-  }, [
-    connectionService,
-    connectionData.connector,
-    connectionData.connectionDetailsFields,
-    irminAlert,
-    loading,
-    setConnectionData,
-  ]);
-
-  useEffect(() => {
-    fetchConnectionDetails();
-  }, [fetchConnectionDetails]);
-
-  const continueAndTestConnection = useCallback(
-    async (e: React.MouseEvent) => {
-      e.preventDefault();
-      // Validate form and continue
-      if (
-        !connectionData.connectionDetailsFields ||
-        !connectionData.connector ||
-        !formRef.current
-      )
-        return;
-
+  const fetchConnectionDetails = useCallback(
+    async (connectorID: number) => {
+      if (loading || initialLoadingDone.current) return;
       setLoading(true);
-
       try {
-        // Get the data from the form
-        const formData = new FormData(formRef.current!);
-        const data: DynamicFieldValues = {};
-        let irminConnectionName: string | null = null;
-
-        formData.forEach((value, key) => {
-          if (key !== 'irmin_connection_name') {
-            const fieldKey = Object.keys(
-              connectionData.connectionDetailsFields ?? {}
-            ).find((field) => field.toLowerCase() === key);
-
-            if (!fieldKey) return;
-
-            const field = (connectionData.connectionDetailsFields ?? {})[
-              fieldKey ?? ''
-            ];
-
-            if (field.type === 'integer' || field.type === 'float') {
-              data[fieldKey] = parseFloat(value as string);
-            } else {
-              data[fieldKey] = value as string;
-            }
-          } else {
-            irminConnectionName = value as string;
-          }
-        });
-
-        // Update the connection data state
-        const connectorName = connectionData.connector.name;
+        const response =
+          await connectionService.fetchNewConnectionDetails(connectorID);
+        const data = Object.fromEntries(
+          Object.keys(response.data).map((key) => [
+            key,
+            response.data[key].default ?? null,
+          ])
+        );
         setConnectionData((prev: ConnectionSetup) => ({
           ...prev,
-          name: irminConnectionName ?? `${connectorName} ${Date.now()}`,
+          connectionDetailsFields: response.data,
           connectionDetails: data,
         }));
-
-        // Test the connection
-        const res = await connectionService.testConnectionWithDetails(
-          connectionData.connector.id,
-          data
-        );
-        if (res.data.connected) {
-          // Proceed to the next step
-          irminAlert('success', dict.connections.create.success);
-          setCurrentStep(3);
-        } else {
-          irminAlert('error', dict.connections.create.failed);
-        }
+        initialLoadingDone.current = true;
       } catch (error) {
-        console.error('Test connection error:', error);
+        console.error('Fetch connection details error:', error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to test connection'
+          (error as Error)?.message ?? 'Failed to fetch connection details'
         );
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     },
     [
-      connectionData.connectionDetailsFields,
-      connectionData.connector,
-      formRef,
-      setLoading,
-      setConnectionData,
-      setCurrentStep,
+      loading,
+      initialLoadingDone,
       connectionService,
+      setConnectionData,
       irminAlert,
-      dict,
     ]
   );
+
+  useEffect(() => {
+    const connectorID = connectionData.connector?.id;
+    if (!connectorID) return;
+    fetchConnectionDetails(connectorID);
+  }, [connectionData, fetchConnectionDetails]);
+
+  const continueAndTestConnection = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!formRef.current) return;
+    const connectorName = connectionData.connector?.name;
+    const connectorID = connectionData.connector?.id;
+    if (!connectorID || !connectorName) return;
+    setLoading(true);
+    try {
+      // Get the data from the form
+      const formData = new FormData(formRef.current!);
+      const data: DynamicFieldValues = {};
+      let irminConnectionName: string | null = null;
+
+      formData.forEach((value, key) => {
+        if (key !== 'irmin_connection_name') {
+          const fieldKey = Object.keys(
+            connectionData.connectionDetailsFields ?? {}
+          ).find((field) => field.toLowerCase() === key);
+
+          if (!fieldKey) return;
+
+          const field = (connectionData.connectionDetailsFields ?? {})[
+            fieldKey ?? ''
+          ];
+
+          if (field.type === 'integer' || field.type === 'float') {
+            data[fieldKey] = parseFloat(value as string);
+          } else {
+            data[fieldKey] = value as string;
+          }
+        } else {
+          irminConnectionName = value as string;
+        }
+      });
+
+      // Update the connection data state
+      setConnectionData((prev: ConnectionSetup) => ({
+        ...prev,
+        name: irminConnectionName ?? `${connectorName} ${Date.now()}`,
+        connectionDetails: data,
+      }));
+
+      // Test the connection
+      const res = await connectionService.testConnectionWithDetails(
+        connectorID,
+        data
+      );
+      if (res.data.connected) {
+        // Proceed to the next step
+        irminAlert('success', dict.connections.create.success);
+        setCurrentStep(3);
+      } else {
+        irminAlert('error', dict.connections.create.failed);
+      }
+    } catch (error) {
+      console.error('Test connection error:', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to test connection'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateValues = (key: string, value: FieldValue | FieldValue[]) => {
     setConnectionData({

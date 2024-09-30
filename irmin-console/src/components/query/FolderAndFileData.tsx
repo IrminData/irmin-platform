@@ -34,7 +34,7 @@ const FolderAndFileData = ({
       <div className='w-full px-4 py-4 text-center text-lg text-gray-400'>
         {title}
       </div>
-      {loading ? <LoadingSkeleton /> : null}
+      {loading ? <LoadingSkeleton className='h-96' /> : null}
       {!data ? (
         <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
           {dict.query.noResults}

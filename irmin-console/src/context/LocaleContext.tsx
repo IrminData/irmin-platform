@@ -3,6 +3,7 @@
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -42,15 +43,13 @@ const LocaleContext = createContext<{
  */
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-
   const params = useParams() as { lang: Locale };
-  const requestPathLang = params.lang;
 
   const [locale, setLocale] = useState<Locale>(
-    dictionaries[requestPathLang] ? requestPathLang : defaultLocale
+    dictionaries[params.lang] ? params.lang : defaultLocale
   );
   const [dict, setDict] = useState<Dictionary>(
-    dictionaries[requestPathLang] ?? dictionaries[defaultLocale]
+    dictionaries[params.lang] ?? dictionaries[defaultLocale]
   );
 
   useEffect(() => {
@@ -58,25 +57,25 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     setDict(dictionary);
   }, [locale]);
 
-  const switchLocale = (newLocale: Locale) => {
-    setLocale(newLocale);
-    setCookie('locale', newLocale, 365);
-    setCookie('currentWorkspaceSlug', '', -1);
-    // Redirect to the new locale
-    window.open(`/${newLocale}${pathname.substring(3)}`, '_self');
-  };
+  const switchLocale = useCallback(
+    (newLocale: Locale) => {
+      setLocale(newLocale);
+      setCookie('locale', newLocale, 365);
+      setCookie('currentWorkspaceSlug', '', -1);
+      // Redirect to the new locale
+      window.open(`/${newLocale}${pathname.substring(3)}`, '_self');
+    },
+    [pathname]
+  );
 
   useEffect(() => {
-    if (requestPathLang !== locale) {
-      setLocale(requestPathLang);
-      setCookie('locale', requestPathLang, 365);
+    if (params.lang !== locale) {
+      setLocale(params.lang);
+      setCookie('locale', params.lang, 365);
     }
-  }, [requestPathLang, locale]);
+  }, [params.lang, locale]);
 
-  if (!dict) {
-    return <></>;
-  }
-
+  if (!dict) return;
   return (
     <LocaleContext.Provider value={{ locale, dict, switchLocale }}>
       {children}

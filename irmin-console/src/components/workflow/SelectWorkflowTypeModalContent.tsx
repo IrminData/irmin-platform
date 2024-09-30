@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -28,24 +28,22 @@ export default function SelectWorkflowTypeModalContent() {
   const [workflowableType, setWorkflowableType] =
     useState<WorkflowableType | null>(null);
 
-  const handleContinue = useMemo(() => {
-    return () => {
-      if (!workflowableType) {
-        irminAlert('error', dict.workflow.create.error.selectWorkflowType);
-        return;
-      }
-      // Direct to the next step
-      if (workflowableType === 'action') {
-        router.push('../workflows/actions/create');
-      }
-      if (workflowableType === 'import') {
-        router.push('../workflows/imports/create');
-      }
-      if (workflowableType === 'export') {
-        router.push('../workflows/exports/create');
-      }
-    };
-  }, [workflowableType, irminAlert, router, dict]);
+  const handleContinue = () => {
+    if (!workflowableType) {
+      irminAlert('error', dict.workflow.create.error.selectWorkflowType);
+      return;
+    }
+    // Direct to the next step
+    if (workflowableType === 'action') {
+      router.push('../workflows/actions/create');
+    }
+    if (workflowableType === 'import') {
+      router.push('../workflows/imports/create');
+    }
+    if (workflowableType === 'export') {
+      router.push('../workflows/exports/create');
+    }
+  };
 
   const workflowTypeOptions: {
     type: WorkflowableType;

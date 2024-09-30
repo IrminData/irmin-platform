@@ -4,14 +4,9 @@ import { useMemo } from 'react';
 
 import { usePathname } from 'next/navigation';
 
+import { GoGitBranch, GoGitCommit, GoGitCompare } from 'react-icons/go';
 import { IoChevronBack } from 'react-icons/io5';
-import {
-  TbDatabase,
-  TbFileText,
-  TbGitBranch,
-  TbHistory,
-  TbSettings,
-} from 'react-icons/tb';
+import { TbDatabase, TbFileText, TbSettings } from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
 import StatusBadge from '@/components/common/status/StatusBadge';
@@ -40,22 +35,24 @@ export default function RepositoryLayoutWrapper({
 }) {
   const currentPath = usePathname();
   const { locale, dict } = useLocale();
+  const pathname = usePathname();
   const {
     repositories: { repositories },
     workspaces: { currentWorkspace },
   } = useWorkspace();
 
-  const repository = useMemo(
-    () => repositories.find((repo) => repo.slug === repoSlug),
-    [repoSlug, repositories]
-  );
-
-  const { currentBranch, setCurrentBranch, branches } = useData();
+  const { currentBranch, setCurrentBranch, branches, defaultBranch } =
+    useData();
 
   const workspaceSlug = useMemo(
-    () => currentWorkspace?.slug ?? '',
+    () => currentWorkspace?.slug,
     [currentWorkspace]
   );
+  const repository = useMemo(
+    () => repositories.find((repo) => repo.slug === repoSlug),
+    [repositories, repoSlug]
+  );
+
   const tabs = useMemo(
     () => [
       {
@@ -72,7 +69,7 @@ export default function RepositoryLayoutWrapper({
         active:
           currentPath ===
           `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}/commits`,
-        icon: <TbHistory size={14} />,
+        icon: <GoGitCommit size={14} />,
       },
       {
         title: dict.repository.tabs.branches,
@@ -80,7 +77,15 @@ export default function RepositoryLayoutWrapper({
         active:
           currentPath ===
           `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}/branches`,
-        icon: <TbGitBranch size={14} />,
+        icon: <GoGitBranch size={14} />,
+      },
+      {
+        title: dict.repository.tabs.compare,
+        href: `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}/compare`,
+        active:
+          currentPath ===
+          `/${locale}/console/${workspaceSlug}/repositories/${repoSlug}/compare`,
+        icon: <GoGitCompare size={14} />,
       },
       {
         title: dict.repository.tabs.documentation,
@@ -100,11 +105,22 @@ export default function RepositoryLayoutWrapper({
         hide: repository?.is_immutable,
       },
     ],
-    [currentPath, dict, locale, repository, repoSlug, workspaceSlug]
+    [
+      currentPath,
+      dict,
+      locale,
+      repoSlug,
+      repository?.is_immutable,
+      workspaceSlug,
+    ]
   );
 
   if (!repository || !currentWorkspace) {
-    return <LoadingSkeleton />;
+    return (
+      <div className='container relative mx-auto max-w-6xl py-12'>
+        <LoadingSkeleton className='h-96' />
+      </div>
+    );
   }
 
   return (
@@ -141,41 +157,36 @@ export default function RepositoryLayoutWrapper({
             </p>
           </div>
           <div className='flex min-w-60 flex-col gap-2'>
-            <BranchSelector
-              branches={
-                branches?.map((branch) => ({
-                  label: branch.name,
-                  value: branch.name,
-                })) ?? []
-              }
-              currentBranch={
-                currentBranch ??
-                branches?.filter((branch) => branch.default)[0].name ??
-                'main'
-              }
-              onChangeBranch={(branch) => {
-                setCurrentBranch(branch.value);
-              }}
-            />
+            {!pathname.includes('/compare') &&
+              !pathname.includes('/settings') &&
+              !pathname.includes('/ref') &&
+              !pathname.includes('/branches') && (
+                <BranchSelector
+                  branches={branches ?? []}
+                  currentBranch={currentBranch ?? defaultBranch}
+                  onChangeBranch={(branch) => {
+                    setCurrentBranch(branch.value);
+                  }}
+                />
+              )}
           </div>
         </div>
-        <div className='scrollbar-hide mb-6 flex w-full max-w-3xl justify-start gap-2 overflow-y-scroll px-4 md:gap-4'>
+        <div className='scrollbar-hide mb-6 flex w-full max-w-3xl justify-start gap-2 overflow-y-scroll px-4'>
           <Button
             size='sm'
             variant='icon'
-            colorScheme='black'
-            className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-700'
+            colorScheme='light'
+            className='bg-gray-100 dark:bg-gray-700'
+            icon={<IoChevronBack size={24} />}
             href={`/${locale}/console/${workspaceSlug}/repositories`}
-          >
-            <IoChevronBack size={24} />
-          </Button>
+          />
           {tabs
             .map((tab, idx) => {
               if (tab.hide) return null;
               return (
                 <Button
                   key={`repository-tab-${idx}`}
-                  className={`rounded-none border-irmin_green px-2 hover:no-underline lg:px-0 ${tab.active ? 'border-b-2' : 'border-0'}`}
+                  className={`rounded-none border-irmin_green px-2 hover:no-underline lg:px-1 ${tab.active ? 'border-b-2' : 'border-0'}`}
                   size='sm'
                   variant='link'
                   colorScheme={tab.active ? 'primary' : 'gray'}

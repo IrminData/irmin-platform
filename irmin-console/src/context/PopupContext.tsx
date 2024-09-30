@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 
 import Alert from '@/components/common/popup/Alert';
 import Confirm from '@/components/common/popup/Confirm';
@@ -95,15 +95,18 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   const [confirmOnSelect, setConfirmOnSelect] = useState<
     null | ((_confirmed: boolean) => void)
   >(null);
-  const irminConfirm = (
-    type: 'warning' | 'info',
-    message: string,
-    onSelect: (_confirmed: boolean) => void
-  ) => {
-    setConfirmType(type);
-    setConfirmOnSelect(() => onSelect);
-    setConfirmMessage(message);
-  };
+  const irminConfirm = useCallback(
+    (
+      type: 'warning' | 'info',
+      message: string,
+      onSelect: (_confirmed: boolean) => void
+    ) => {
+      setConfirmType(type);
+      setConfirmOnSelect(() => onSelect);
+      setConfirmMessage(message);
+    },
+    []
+  );
 
   // Handle notifications
   const [notificationsPopupOpen, setNotificationsPopupOpen] = useState(false);
@@ -111,12 +114,13 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     x: number;
     y: number;
   } | null>(null);
-  const toggleNotificationsPopup = (
-    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => {
-    setNotificationsClickPosition({ x: e.clientX, y: e.clientY });
-    setNotificationsPopupOpen(!notificationsPopupOpen);
-  };
+  const toggleNotificationsPopup = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+      setNotificationsClickPosition({ x: e.clientX, y: e.clientY });
+      setNotificationsPopupOpen(!notificationsPopupOpen);
+    },
+    [notificationsPopupOpen]
+  );
 
   // Handle modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -125,22 +129,21 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     null
   );
   const [modalOnClose, setModalOnClose] = useState<null | (() => void)>(null);
-  const showIrminModal = (
-    title: string,
-    content: React.JSX.Element,
-    onClose?: () => void
-  ) => {
-    setModalTitle(title);
-    setModalContent(content);
-    if (onClose) setModalOnClose(() => onClose);
-    setModalOpen(true);
-  };
-  const closeModal = () => {
+  const showIrminModal = useCallback(
+    (title: string, content: React.JSX.Element, onClose?: () => void) => {
+      setModalTitle(title);
+      setModalContent(content);
+      if (onClose) setModalOnClose(() => onClose);
+      setModalOpen(true);
+    },
+    []
+  );
+  const closeModal = useCallback(() => {
     setModalOpen(false);
     if (modalOnClose) {
       modalOnClose();
     }
-  };
+  }, [modalOnClose]);
 
   return (
     <PopupContext.Provider

@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import Tabs from '@/components/common/tabs/Tabs';
 
 import { TabsType } from '@/types/internal/Tabs';
@@ -13,7 +11,7 @@ import { TabsType } from '@/types/internal/Tabs';
  * Used on various settings pages.
  */
 export default function WrappedTabs({ tabs }: { tabs: TabsType }) {
-  const filteredTabs = useMemo(() => tabs.filter((tab) => !tab.hidden), [tabs]);
+  const filteredTabs = tabs.filter((tab) => !tab.hidden);
   if (filteredTabs.length === 0) return <></>;
   return (
     <div

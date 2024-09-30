@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react';
 
+import { notFound } from 'next/navigation';
+
 import WorkflowSection from '@/components/workflow/WorkflowSection';
 
 import { useWorkspace } from '@/context/workspace';
@@ -24,11 +26,12 @@ export default function WorkflowPage({
   const {
     workflows: { allWorkflows },
   } = useWorkspace();
+
   const workflow = useMemo(
     () => allWorkflows.find((item) => item.slug === workflowSlug),
-    [workflowSlug, allWorkflows]
+    [allWorkflows, workflowSlug]
   );
-  if (!workflow) return <></>;
+  if (!workflow) notFound();
 
   return <WorkflowSection workflow={workflow} />;
 }

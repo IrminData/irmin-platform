@@ -9,5 +9,9 @@ import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
  * it shows this loading UI element
  */
 export default function ConsoleLoading() {
-  return <LoadingSkeleton className='min-h-[80vh]' />;
+  return (
+    <div className='container relative mx-auto max-w-6xl py-12'>
+      <LoadingSkeleton className='h-96' />
+    </div>
+  );
 }

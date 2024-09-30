@@ -1,7 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
-
 import RepositorySettingsSection from '@/components/repository/RepositorySettingsSection';
 
 import { useWorkspace } from '@/context/workspace';
@@ -20,9 +18,8 @@ export default function RepositorySettingsPage({
     repositories: { repositories },
   } = useWorkspace();
 
-  const repository = useMemo(
-    () => repositories.find((repo) => repo.slug === params.repository),
-    [params.repository, repositories]
+  const repository = repositories.find(
+    (item) => item.slug === params.repository
   );
 
   return <RepositorySettingsSection repository={repository} />;

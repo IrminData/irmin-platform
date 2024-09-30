@@ -2,13 +2,17 @@ import { defaultLocale, Locale } from '@/dictionaries';
 
 import removeCircularJSON from '@/utils/removeCircularJSON';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import {
+  IrminAPIResponse,
+  IrminAPIUnstructuredResponse,
+} from '@/types/core/IrminAPIResponse';
 
 import AuthService from './resources/AuthService';
 import BranchService from './resources/BranchService';
 import BucketService from './resources/BucketService';
 import CollectionService from './resources/CollectionService';
 import CommitService from './resources/CommitService';
+import CompareService from './resources/CompareService';
 import ConnectionService from './resources/ConnectionService';
 import ConnectorService from './resources/ConnectorService';
 import InviteService from './resources/InviteService';
@@ -56,6 +60,7 @@ class IrminCore {
   public workspaceService: WorkspaceService;
   public queryService: QueryService;
   public logService: LogService;
+  public compareService: CompareService;
 
   constructor(locale: Locale, apiToken?: string) {
     // Set locale and token
@@ -81,12 +86,13 @@ class IrminCore {
     this.workspaceService = new WorkspaceService(this);
     this.queryService = new QueryService(this);
     this.logService = new LogService(this);
+    this.compareService = new CompareService(this);
   }
 
-  public fetch = async (
+  private _fetch = async (
     url: string,
     options: RequestInit
-  ): Promise<IrminAPIResponse> => {
+  ): Promise<Response> => {
     const api_base = this.apiBase;
     const app_base = this.appBase;
 
@@ -109,18 +115,88 @@ class IrminCore {
         ...options.headers,
       },
     });
-    const data = await response.json();
 
-    // Handle errors
+    // Handle response errors
     if (!response.ok) {
-      // Get the error message from the response
-      const errorMessage = data.message || 'Request failed';
+      let errorMessage = `HTTP Error: ${response.status} ${response.statusText}`;
+
+      // Check the Content-Type header to determine the type of response
+      const contentType = response.headers.get('Content-Type');
+
+      // Handle JSON error response
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.message || JSON.stringify(errorData) || errorMessage;
+        } catch (jsonError) {
+          console.warn('Failed to parse error response as JSON:', jsonError);
+        }
+      }
+      // Handle text error response
+      else if (contentType && contentType.includes('text')) {
+        try {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        } catch (textError) {
+          console.warn('Failed to parse error response as text:', textError);
+        }
+      }
+      // Fallback for unknown content types or empty body
+      else {
+        errorMessage = await response.text().catch(() => errorMessage);
+      }
+
       throw new Error(errorMessage);
     }
 
-    // Return the response as JSON
-    const nonCircularData = removeCircularJSON(data);
-    return nonCircularData as IrminAPIResponse;
+    return response;
+  };
+
+  public fetch = async (
+    url: string,
+    options: RequestInit
+  ): Promise<IrminAPIResponse> => {
+    // Call the Irmin API using the internal fetch method
+    const response = await this._fetch(url, options);
+
+    // Parse the response as JSON
+    const data = await response.json();
+
+    // Return the response as JSON removing circular references
+    return removeCircularJSON(data) as IrminAPIResponse;
+  };
+
+  public fetchUnstructured = async (
+    url: string,
+    options: RequestInit
+  ): Promise<IrminAPIUnstructuredResponse> => {
+    // Call the Irmin API using the internal _fetch method
+    const response = await this._fetch(url, options);
+
+    // Check the Content-Type of the response to determine how to process it
+    const contentType = response.headers.get('Content-Type');
+
+    // Parse the response based on response data
+    try {
+      return await response.blob();
+    } catch (error) {
+      console.warn('Failed to parse response as Blob:', error);
+    }
+    try {
+      return await response.json();
+    } catch (error) {
+      console.warn('Failed to parse response as text:', error);
+    }
+    try {
+      const arrayBuffer = await response.arrayBuffer();
+      // Convert the ArrayBuffer to Blob
+      return new Blob([arrayBuffer], { type: contentType ?? '' });
+    } catch (error) {
+      console.warn('Failed to parse response as ArrayBuffer:', error);
+    }
+    // Parse and return the response as plain text if nothing else matches
+    return await response.text();
   };
 }
 

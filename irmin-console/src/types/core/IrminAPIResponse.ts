@@ -1,3 +1,5 @@
+import { JSONValue } from '@/types/internal/GenericJSON';
+
 /**
  * Interface for the response from Core Irmin API
  *
@@ -14,5 +16,10 @@ export interface IrminAPIResponse {
   errors?: {
     [key: string]: string[];
   };
-  data?: unknown[] | unknown;
+  data?: unknown;
 }
+
+/**
+ * Type for the unstructured response from Core Irmin API
+ */
+export type IrminAPIUnstructuredResponse = JSONValue | Blob;

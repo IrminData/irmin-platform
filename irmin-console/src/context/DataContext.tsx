@@ -1,6 +1,6 @@
 'use client';
 
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
@@ -12,7 +12,6 @@ import React, {
 import IrminCore from '@/services/core/IrminCore';
 import { QueryAPIResponse } from '@/services/core/resources/QueryService';
 
-import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
@@ -48,6 +47,7 @@ interface DataContextProps {
   // Branches state
   loadingBranches: boolean;
   branches: Branch[] | null;
+  defaultBranch: string | undefined;
   fetchBranches: () => Promise<void>;
   // Commits state
   loadingCommits: boolean;
@@ -90,7 +90,6 @@ export const DataProvider = ({
   initialRef?: string;
 }) => {
   const { irminAlert } = usePopup();
-  const { token } = useIAM();
   const { locale } = useLocale();
   const {
     repositories: { repositories },
@@ -101,7 +100,7 @@ export const DataProvider = ({
     schemaService,
     queryService,
     repositoryService,
-  } = useMemo(() => new IrminCore(locale, token ?? ''), [locale, token]);
+  } = useMemo(() => new IrminCore(locale), [locale]);
 
   // Active data context repository
   const [currentRepository, setCurrentRepository] = useState<
@@ -135,6 +134,79 @@ export const DataProvider = ({
   const [commits, setCommits] = useState<Commit[] | null>(null);
 
   /**
+   * Fetch the schema for a list of collections
+   *
+   * @param collections - List of collections to fetch the schema for
+   */
+  const fetchSchema = useCallback(
+    async (collections: string[]) => {
+      setLoadingSchema(true);
+      try {
+        const response = await schemaService.fetchSchema(
+          collections,
+          currentRepository,
+          currentBranch,
+          currentRef
+        );
+        setSchema(response.data);
+      } catch (error) {
+        console.error('DataContext fetchSchema error', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to fetch schema'
+        );
+      } finally {
+        setLoadingSchema(false);
+      }
+    },
+    [currentRepository, currentBranch, currentRef, schemaService, irminAlert]
+  );
+
+  /**
+   * Fetch the current branches
+   */
+  const fetchBranches = useCallback(async () => {
+    setLoadingBranches(true);
+    try {
+      if (!currentRepository) return;
+      const response = await branchService.fetchBranches(currentRepository);
+      setBranches(response.data);
+    } catch (error) {
+      console.error('DataContext fetchBranches error', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to fetch branches'
+      );
+    } finally {
+      setLoadingBranches(false);
+    }
+  }, [currentRepository, branchService, irminAlert]);
+
+  /**
+   * Fetch the current commits
+   */
+  const fetchCommits = useCallback(async () => {
+    setLoadingCommits(true);
+    try {
+      if (!currentRepository) return;
+      const response = await commitService.fetchCommits(
+        currentRepository,
+        currentBranch,
+        currentRef
+      );
+      setCommits(response.data);
+    } catch (error) {
+      console.error('DataContext fetchCommits error', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to fetch commits'
+      );
+    } finally {
+      setLoadingCommits(false);
+    }
+  }, [currentRepository, currentBranch, currentRef, commitService, irminAlert]);
+
+  /**
    * Execute a script
    *
    * The script can be either Irmin SQL query or a script to be executed in the Action Wrapper.
@@ -164,79 +236,6 @@ export const DataProvider = ({
     },
     [queryService, currentRepository, currentBranch, currentRef, irminAlert]
   );
-
-  /**
-   * Fetch the schema for a list of collections
-   *
-   * @param collections - List of collections to fetch the schema for
-   */
-  const fetchSchema = useCallback(
-    async (collections: string[]) => {
-      setLoadingSchema(true);
-      try {
-        const response = await schemaService.fetchSchema(
-          collections,
-          currentRepository,
-          currentBranch,
-          currentRef
-        );
-        setSchema(response.data);
-      } catch (error) {
-        console.error('DataContext fetchSchema error', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to fetch schema'
-        );
-      } finally {
-        setLoadingSchema(false);
-      }
-    },
-    [schemaService, currentRepository, currentBranch, currentRef, irminAlert]
-  );
-
-  /**
-   * Fetch the current branches
-   */
-  const fetchBranches = useCallback(async () => {
-    setLoadingBranches(true);
-    try {
-      if (!currentRepository) return;
-      const response = await branchService.fetchBranches(currentRepository);
-      setBranches(response.data);
-    } catch (error) {
-      console.error('DataContext fetchBranches error', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to fetch branches'
-      );
-    } finally {
-      setLoadingBranches(false);
-    }
-  }, [branchService, currentRepository, irminAlert]);
-
-  /**
-   * Fetch the current commits
-   */
-  const fetchCommits = useCallback(async () => {
-    setLoadingCommits(true);
-    try {
-      if (!currentRepository) return;
-      const response = await commitService.fetchCommits(
-        currentRepository,
-        currentBranch,
-        currentRef
-      );
-      setCommits(response.data);
-    } catch (error) {
-      console.error('DataContext fetchCommits error', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to fetch commits'
-      );
-    } finally {
-      setLoadingCommits(false);
-    }
-  }, [commitService, currentRepository, currentBranch, currentRef, irminAlert]);
 
   /**
    * Download the current repository to the client's local file system
@@ -278,13 +277,18 @@ export const DataProvider = ({
       }
     },
     [
-      repositoryService,
       currentRepository,
       currentBranch,
       currentRef,
+      repositoryService,
       irminAlert,
     ]
   );
+
+  // Default branch for the current repository
+  const defaultBranch = useMemo(() => {
+    return branches?.filter((branch) => branch.default)[0]?.name;
+  }, [branches]);
 
   /**
    * Hook to fetch schema, branches and commits for the current repository and branch when they change
@@ -325,6 +329,7 @@ export const DataProvider = ({
         // Branches state
         loadingBranches,
         branches,
+        defaultBranch,
         fetchBranches,
         // Commits state
         loadingCommits,

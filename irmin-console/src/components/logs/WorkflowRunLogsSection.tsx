@@ -58,15 +58,9 @@ export default function WorkflowRunLogsSection({
       });
   }, [workflow, workflowRunId, fetchWorkflowRunLogs, workflowService]);
 
-  const selectedWorkflow = useMemo(
-    () => allWorkflows.find((w) => w.slug === workflow),
-    [allWorkflows, workflow]
-  );
+  const selectedWorkflow = allWorkflows.find((w) => w.slug === workflow);
 
-  const workspaceSlug = useMemo(
-    () => currentWorkspace?.slug ?? '',
-    [currentWorkspace]
-  );
+  const workspaceSlug = currentWorkspace?.slug;
 
   return (
     <div className='flex flex-col px-2 pt-12 md:px-4'>
@@ -75,8 +69,9 @@ export default function WorkflowRunLogsSection({
           <Button
             size='sm'
             variant='icon'
-            colorScheme='black'
-            className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-700'
+            colorScheme='light'
+            className='bg-gray-100 dark:bg-gray-700'
+            icon={<IoChevronBack size={24} />}
             onClick={() => router.back()}
           >
             <IoChevronBack size={24} />

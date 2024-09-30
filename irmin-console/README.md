@@ -32,6 +32,7 @@ To access the internal PHPDoc documentation of the API, the user is `irmin`, and
 - [Server side actions](#server-side-actions)
   - [Middleware](#middleware)
   - [Route handlers](#route-handlers)
+- [Sentry and error tracking](#sentry-and-error-tracking)
 - [Services](#services)
   - [Irmin API authorisation](#irmin-api-authorisation)
   - [Core Services](#core-services)
@@ -83,7 +84,8 @@ Create a `.env` file in the project root. Add the following environment variable
 
 ```text
 NEXT_PUBLIC_BASE_URL=https://irmin.dev  # Base URL of the application
-NEXT_PUBLIC_ENVIRONMENT_TYPE=development  # Environment type
+NEXT_PUBLIC_ENVIRONMENT_TYPE=development  # Environment type. Can be development, staging or production.
+
 NEXT_PUBLIC_API_URL=https://api.irmin.dev  # API endpoint URL
 NEXT_PUBLIC_WORDPRESS_URL=https://cms.irmin.dev  # WordPress CMS URL
 
@@ -247,6 +249,14 @@ In Irmin, we use route handlers for multiple purposes:
   - Some of the API routes are used to proxy requests to Irmin API or other internal services.
   - This is done to improve security, minimise amount of requests on the client side and improve performance.
   - See [Proxy Services](#proxy-services) for information on how these routes are used in the frontend.
+
+## Sentry and error tracking
+
+When the `NEXT_PUBLIC_ENVIRONMENT_TYPE` is set to `development`, Sentry is not enabled. This is to avoid sending error reports to Sentry when developing. Use this mainly for local development.
+
+Sentry is used to track errors and exceptions in the application. The Sentry token is set in the `.env` file.
+
+See [Sentry Next.js guide](https://docs.sentry.io/platforms/javascript/guides/nextjs/) for more information.
 
 ## Services
 

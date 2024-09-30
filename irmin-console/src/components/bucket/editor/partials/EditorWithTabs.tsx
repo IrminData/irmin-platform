@@ -70,16 +70,14 @@ const EditorWithTabs = () => {
                 </button>
               </div>
             ))}
-            <Button
-              variant='icon'
-              size='sm'
-              className={`border-none px-1 py-1`}
-              colorScheme='black'
+            <button
+              type='button'
+              className={`border-none px-1 py-1 hover:opacity-70`}
               onClick={() => openNewTab()}
-              ariaLabel='Add new tab'
+              aria-label='Add new tab'
             >
               <IoAdd size={18} />
-            </Button>
+            </button>
           </div>
           <div className='flex flex-row items-center justify-end gap-2 py-1'>
             <ReactSelect

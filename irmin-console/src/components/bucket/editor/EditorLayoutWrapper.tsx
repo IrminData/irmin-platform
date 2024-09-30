@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 
@@ -50,20 +50,22 @@ export default function EditorLayoutWrapper({
   /**
    * Open the modal to create a new file
    */
-  const addNewFile = () =>
+  const addNewFile = useCallback(() => {
     irminModal.show(
       dict.fileNavigator.createFile,
       <AddNewFileModal bucket={bucket} createFile={createFile} />
     );
+  }, [irminModal, dict, bucket, createFile]);
 
   /**
    * Open the modal to create a new folder
    */
-  const addNewFolder = () =>
+  const addNewFolder = useCallback(() => {
     irminModal.show(
       dict.fileNavigator.createFolder,
       <AddNewFolderModal bucket={bucket} createFolder={createFolder} />
     );
+  }, [irminModal, dict, bucket, createFolder]);
 
   /**
    * Open the modal to rename or move a file or folder.
@@ -72,19 +74,22 @@ export default function EditorLayoutWrapper({
    *
    * @param item The item to change
    */
-  const renameOrMoveItem = (item: FileNavigatorItem) => {
-    irminModal.show(
-      item.type === 'file'
-        ? dict.fileNavigator.updateFile
-        : dict.fileNavigator.updateFolder,
-      <RenameOrMoveItemModal
-        item={item}
-        bucket={bucket}
-        updateFile={updateFile}
-        updateFolder={updateFolder}
-      />
-    );
-  };
+  const renameOrMoveItem = useCallback(
+    (item: FileNavigatorItem) => {
+      irminModal.show(
+        item.type === 'file'
+          ? dict.fileNavigator.updateFile
+          : dict.fileNavigator.updateFolder,
+        <RenameOrMoveItemModal
+          item={item}
+          bucket={bucket}
+          updateFile={updateFile}
+          updateFolder={updateFolder}
+        />
+      );
+    },
+    [irminModal, dict, bucket, updateFile, updateFolder]
+  );
 
   /**
    * Delete a file or folder.
@@ -93,30 +98,33 @@ export default function EditorLayoutWrapper({
    *
    * @param item The item to delete
    */
-  const deleteItem = (item: FileNavigatorItem) => {
-    if (item.type == 'file') {
-      irminConfirm(
-        'warning',
-        `${dict.fileNavigator.deleteConfirmation} ${item.current?.name ?? 'this file'}?`,
-        (confirmed) => {
-          if (confirmed) {
-            deleteFile(item);
+  const deleteItem = useCallback(
+    (item: FileNavigatorItem) => {
+      if (item.type == 'file') {
+        irminConfirm(
+          'warning',
+          `${dict.fileNavigator.deleteConfirmation} ${item.current?.name ?? 'this file'}?`,
+          (confirmed) => {
+            if (confirmed) {
+              deleteFile(item);
+            }
           }
-        }
-      );
-    }
-    if (item.type === 'folder') {
-      irminConfirm(
-        'warning',
-        `${dict.fileNavigator.deleteConfirmation} ${item.current?.name ?? 'this file'}? ${dict.fileNavigator.deleteFolderWarning}.`,
-        (confirmed) => {
-          if (confirmed) {
-            deleteFolder(item);
+        );
+      }
+      if (item.type === 'folder') {
+        irminConfirm(
+          'warning',
+          `${dict.fileNavigator.deleteConfirmation} ${item.current?.name ?? 'this file'}? ${dict.fileNavigator.deleteFolderWarning}.`,
+          (confirmed) => {
+            if (confirmed) {
+              deleteFolder(item);
+            }
           }
-        }
-      );
-    }
-  };
+        );
+      }
+    },
+    [irminConfirm, dict, deleteFile, deleteFolder]
+  );
 
   return (
     <div

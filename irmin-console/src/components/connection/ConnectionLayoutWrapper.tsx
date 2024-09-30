@@ -22,63 +22,62 @@ import { useWorkspace } from '@/context/workspace';
 export default function ConnectionLayoutWrapper({
   children,
   connectionSlug,
+  workspaceSlug,
 }: {
   children: React.ReactNode;
   connectionSlug: string;
+  workspaceSlug: string;
 }) {
   const currentPath = usePathname();
   const { dict, locale } = useLocale();
   const {
     connections: { connections },
-    workspaces: { currentWorkspace },
   } = useWorkspace();
 
   const connection = useMemo(
     () => connections.find((item) => item.slug === connectionSlug),
-    [connectionSlug, connections]
-  );
-
-  const workspaceSlug = useMemo(
-    () => currentWorkspace?.slug ?? '',
-    [currentWorkspace]
+    [connections, connectionSlug]
   );
 
   const tabs = useMemo(
     () => [
       {
         title: dict.connections.tabs.overview,
-        href: `/${locale}/console/${workspaceSlug}/connections/${connection?.slug}`,
+        href: `/${locale}/console/${workspaceSlug}/connections/${connectionSlug}`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/connections/${connection?.slug}`,
+          `/${locale}/console/${workspaceSlug}/connections/${connectionSlug}`,
         icon: <GoWorkflow size={14} />,
         hide: false,
       },
       {
         title: dict.connections.tabs.documentation,
-        href: `/${locale}/console/${workspaceSlug}/connections/${connection?.slug}/documentation`,
+        href: `/${locale}/console/${workspaceSlug}/connections/${connectionSlug}/documentation`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/connections/${connection?.slug}/documentation`,
+          `/${locale}/console/${workspaceSlug}/connections/${connectionSlug}/documentation`,
         icon: <TbFileText size={14} />,
         hide: false,
       },
       {
         title: dict.connections.tabs.settings,
-        href: `/${locale}/console/${workspaceSlug}/connections/${connection?.slug}/settings`,
+        href: `/${locale}/console/${workspaceSlug}/connections/${connectionSlug}/settings`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/connections/${connection?.slug}/settings`,
+          `/${locale}/console/${workspaceSlug}/connections/${connectionSlug}/settings`,
         icon: <TbSettings size={14} />,
         hide: false,
       },
     ],
-    [currentPath, dict, locale, connection, workspaceSlug]
+    [currentPath, locale, dict, workspaceSlug, connectionSlug]
   );
 
-  if (!connection) {
-    return <LoadingSkeleton />;
-  }
+  if (!connection)
+    return (
+      <div className='container relative mx-auto max-w-6xl'>
+        <LoadingSkeleton className='h-96' />
+      </div>
+    );
 
   return (
     <>
@@ -111,12 +110,13 @@ export default function ConnectionLayoutWrapper({
             </p>
           </div>
         </div>
-        <div className='scrollbar-hide mb-6 flex w-full max-w-3xl justify-start gap-2 overflow-y-scroll px-4 md:gap-4'>
+        <div className='scrollbar-hide mb-6 flex w-full max-w-3xl justify-start gap-2 overflow-y-scroll px-4'>
           <Button
             size='sm'
             variant='icon'
-            colorScheme='black'
-            className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-700'
+            colorScheme='light'
+            className='bg-gray-100 dark:bg-gray-700'
+            icon={<IoChevronBack size={24} />}
             href={`/${locale}/console/${workspaceSlug}/connections`}
           >
             <IoChevronBack size={24} />
@@ -127,7 +127,7 @@ export default function ConnectionLayoutWrapper({
               return (
                 <Button
                   key={`connection-tab-${idx}`}
-                  className={`rounded-none border-irmin_green px-2 hover:no-underline lg:px-0 ${tab.active ? 'border-b-2' : 'border-0'}`}
+                  className={`rounded-none border-irmin_green px-2 hover:no-underline lg:px-1 ${tab.active ? 'border-b-2' : 'border-0'}`}
                   size='sm'
                   variant='link'
                   colorScheme={tab.active ? 'primary' : 'gray'}

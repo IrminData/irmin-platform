@@ -1,10 +1,7 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
-
 import RepositorySection from '@/components/repository/RepositorySection';
 
-import { useData } from '@/context/DataContext';
 import { useWorkspace } from '@/context/workspace';
 
 import { RepositoryRefRouteParams } from './layout';
@@ -27,16 +24,16 @@ export default function RepositoryRefPage({
   const {
     repositories: { repositories },
   } = useWorkspace();
-  const repository = useMemo(
-    () => repositories.find((repo) => repo.slug === params.repository),
-    [params.repository, repositories]
+
+  const repository = repositories.find(
+    (item) => item.slug === params.repository
   );
 
-  // Set the current ref in the data context
-  const { setCurrentRef } = useData();
-  useEffect(() => {
-    setCurrentRef(params.ref);
-  }, [setCurrentRef, params.ref]);
-
-  return <RepositorySection repository={repository} immutable={true} />;
+  return (
+    <RepositorySection
+      repository={repository}
+      initialRef={params.ref}
+      immutable={true}
+    />
+  );
 }

@@ -47,5 +47,9 @@ export default function RepositoryDownloadPage({
     }
   }, [params, downloadRepository, router, collection]);
 
-  return <LoadingSkeleton className='h-96' />;
+  return (
+    <div className='container relative mx-auto max-w-6xl py-12'>
+      <LoadingSkeleton className='h-96' />
+    </div>
+  );
 }

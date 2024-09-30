@@ -1,7 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
-
 import ConnectionSection from '@/components/connection/ConnectionSection';
 
 import { useWorkspace } from '@/context/workspace';
@@ -24,10 +22,8 @@ export default function ConnectionOverviewPage({
   const {
     connections: { connections },
   } = useWorkspace();
-  const connection = useMemo(
-    () => connections.find((item) => item.slug === connectionSlug),
-    [connectionSlug, connections]
-  );
+
+  const connection = connections.find((item) => item.slug === connectionSlug);
   if (!connection) return <></>;
 
   return <ConnectionSection connection={connection} />;

@@ -94,7 +94,6 @@ class RepositoryService {
 
       const response = (await this.irminCore.fetch(`/v1/repositories/create`, {
         method: 'POST',
-
         body: formData,
       })) as RepositoryAPIResponse;
 
@@ -196,7 +195,6 @@ class RepositoryService {
         `/v1/repositories/${dataRepoSlug}/update`,
         {
           method: 'POST',
-
           body: formData,
         }
       );

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import IrminCore from '@/services/core/IrminCore';
 
@@ -48,7 +48,9 @@ export default function CollectionSchema({
 
   const [processingDelete, setProcessingDelete] = useState(false);
 
-  const typeScpecificLabel = useMemo(() => {
+  const { repositoryService } = useMemo(() => new IrminCore(locale), [locale]);
+
+  const typeScpecificLabel = () => {
     if (collection.type === 'table') {
       return dict.repository.schema.table;
     }
@@ -62,17 +64,12 @@ export default function CollectionSchema({
       return dict.repository.schema.stream;
     }
     return collection.type;
-  }, [collection, dict]);
+  };
 
-  const matchedWorkflow = useMemo(
-    () => allWorkflows.find((workflow) => workflow.id === collection.workflow),
-    [allWorkflows, collection.workflow]
+  const matchedWorkflow = allWorkflows.find(
+    (workflow) => workflow.id === collection.workflow
   );
-  const downloadUrl = useMemo(
-    () =>
-      `/${locale}/console/${currentWorkspace?.slug}/repositories/${currentRepository}/download?collection=${collection.name}`,
-    [locale, currentWorkspace, collection, currentRepository]
-  );
+  const downloadUrl = `/${locale}/console/${currentWorkspace?.slug}/repositories/${currentRepository}/download?collection=${collection.name}`;
 
   // Handle delete collection from the repository
   const handleDeleteCollection = () => {
@@ -90,7 +87,6 @@ export default function CollectionSchema({
         setProcessingDelete(true);
         try {
           // Upload the collection
-          const { repositoryService } = new IrminCore(locale);
           await repositoryService.deleteCollection(
             currentRepository,
             currentBranch,
@@ -114,7 +110,7 @@ export default function CollectionSchema({
   return (
     <div className='flex w-max min-w-72 flex-col overflow-scroll rounded-md border border-gray-100 bg-white text-xs dark:border-gray-800 dark:bg-irmin_black'>
       <div className='bg-gray-100 px-4 py-2 text-sm font-semibold dark:bg-gray-800'>
-        {typeScpecificLabel} {`"${name}"`}
+        {typeScpecificLabel()} {`"${name}"`}
       </div>
       <div className='p-2'>
         {collection.type === 'table' && (

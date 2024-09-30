@@ -69,7 +69,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
     }
   };
 
-  if (!theme) return <LoadingSkeleton />;
+  if (!theme) return <LoadingSkeleton className='h-96' />;
 
   const editorTheme = theme === 'dark' ? githubDark : githubLight;
 

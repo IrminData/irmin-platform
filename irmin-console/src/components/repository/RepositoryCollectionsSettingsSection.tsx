@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import ReactSelect from 'react-select';
 
@@ -21,7 +21,7 @@ import { Repository } from '@/types/core/Repository';
 export default function RepositoryCollectionsSettingsSection({
   repository,
 }: {
-  repository: Repository | undefined;
+  repository?: Repository;
 }) {
   const { dict, locale } = useLocale();
   const { irminAlert } = usePopup();
@@ -31,39 +31,23 @@ export default function RepositoryCollectionsSettingsSection({
   } = useWorkspace();
 
   const [newCollection, setNewCollection] = useState<string | null>(null);
-  const [collections, setCollections] = useState<Collection[]>([]);
-
-  useEffect(() => {
-    setCollections(repository?.collections ?? []);
-  }, [repository]);
-
-  /**
-   * Calculates all available collections for the repository collection settings section.
-   *
-   * @returns An array of unique collections that are not included in the current repository's collections.
-   */
-  const allAvailableCollections = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          repositories
-            .map((repo) => repo.collections)
-            .flat()
-            .filter(
-              (a) =>
-                !collections.find((b) => b.formatted_name === a.formatted_name)
-            )
-        )
-      ),
-    [repositories, collections]
+  const [collections, setCollections] = useState<Collection[]>(
+    repository?.collections ?? []
   );
 
-  /**
-   * Updates the repository with the new collections provided
-   * Uses {@link updateRepository} to update the repository details
-   * Shows {@link irminAlert} on success or error
-   */
-  const handleUpdateRepository = useCallback(async () => {
+  // Calculates all available collections for the repository collection settings section.
+  const allAvailableCollections = Array.from(
+    new Set(
+      repositories
+        .map((repo) => repo.collections)
+        .flat()
+        .filter(
+          (a) => !collections.find((b) => b.formatted_name === a.formatted_name)
+        )
+    )
+  );
+
+  const handleUpdateRepository = async () => {
     try {
       if (!repository) return;
       // Remove duplicate collections
@@ -84,7 +68,7 @@ export default function RepositoryCollectionsSettingsSection({
           dict.repository.settings.errorUpdatingRepository
       );
     }
-  }, [repository, updateRepository, collections, irminAlert, dict]);
+  };
 
   return (
     <div className='container relative mx-auto my-8 max-w-6xl'>

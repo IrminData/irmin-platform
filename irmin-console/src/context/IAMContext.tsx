@@ -79,24 +79,20 @@ export const IAMProvider = ({
   const { irminAlert } = usePopup();
   const router = useRouter();
 
-  // Get the needed services
-  const { profileService, authService } = useMemo(
-    () => new IrminCore(locale),
-    [locale]
-  );
-
-  // Ref to check if the component has been initialised
-  const initialisedRef = useRef(false);
-
-  // Profile data
   const [profile, setProfile] = useState<Profile | null>(null);
 
   // Loading state, used only for the UI. Don't prevent IAM loads with this
   const [isLoading, setIsLoading] = useState(true);
+  const initialisedRef = useRef(false);
 
   // Profile's API token and timestamp
   const [token, setToken] = useState<string | null>(null);
   const [tokenTimestamp, setTokenTimestamp] = useState<string | null>(null);
+
+  const { profileService, authService } = useMemo(
+    () => new IrminCore(locale),
+    [locale]
+  );
 
   /**
    * Fetch the profile data from the API and set the profile state accordingly
@@ -178,12 +174,7 @@ export const IAMProvider = ({
         setIsLoading(false);
       }
     },
-    [
-      profileService,
-      fetchProfile,
-      irminAlert,
-      dict.profile.profileUpdatedSuccessfully,
-    ]
+    [profileService, fetchProfile, irminAlert, dict]
   );
 
   /**
@@ -214,7 +205,7 @@ export const IAMProvider = ({
     } finally {
       setIsLoading(false);
     }
-  }, [authService, fetchProfile, irminAlert]);
+  }, [authService, irminAlert, fetchProfile]);
 
   /**
    * Login the user and refetch the profile data
@@ -310,16 +301,6 @@ export const IAMProvider = ({
     const interval = setInterval(() => {
       // Do not run if the component is not initialised
       if (!initialisedRef.current) return;
-      // Check if token and tokenTimestamp
-      if (token && tokenTimestamp) {
-        const tokenMaxAge = parseInt(
-          process.env.NEXT_PUBLIC_TOKEN_MAX_AGE ?? '3600'
-        ); // Default to 1 hour if not set
-        const tokenAge = (Date.now() - parseInt(tokenTimestamp)) / 1000 / 60;
-        if (tokenAge > tokenMaxAge) {
-          fetchProfile();
-        }
-      }
     }, 60000); // Check every minute
 
     return () => clearInterval(interval); // Cleanup interval on component unmount

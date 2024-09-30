@@ -106,14 +106,17 @@ const Input = ({
     lg: 'px-4 py-2 min-h-14 text-base font-normal lg:px-6 lg:min-h-16',
   };
 
-  let combinedClasses = `${baseClasses} ${sizeClasses[size]} ${icon ? 'min-w-32 ' : ''}${disabled ? 'opacity-50 cursor-not-allowed ' : ''} ${className}`;
+  let combinedClasses = `${baseClasses} ${sizeClasses[size]} ${icon ? 'min-w-32 ' : ''}${disabled ? 'opacity-50 cursor-not-allowed ' : ''}`;
   if (variant) {
     if (colorScheme) {
-      combinedClasses = `${variantClasses[variant][colorScheme]} ${combinedClasses}`;
+      combinedClasses = `${combinedClasses} ${variantClasses[variant][colorScheme]} ${className}`;
     } else {
-      combinedClasses = `${variantClasses[variant].primary} ${combinedClasses}`;
+      combinedClasses = `${combinedClasses} ${variantClasses[variant].primary} ${className}`;
     }
+  } else {
+    combinedClasses = `${combinedClasses} ${className}`;
   }
+
   if (longtext) {
     return (
       <div className={cn(combinedClasses.split(' '))}>

@@ -49,14 +49,14 @@ export default function SideModal({
             <div className='z-10 flex w-full items-center justify-between gap-4 px-4 pt-16'>
               <h3 className='text-xl'>{title}</h3>
               <Button
+                size='sm'
                 variant='icon'
                 colorScheme='primary'
                 onClick={() => closeModal()}
                 ariaLabel='Close modal'
                 className='cursor-pointer'
-              >
-                <IoClose size={30} />
-              </Button>
+                icon={<IoClose size={22} />}
+              ></Button>
             </div>
             {steps && currentStep && steps.length > 1 && (
               <div className='flex items-center justify-start space-x-4 px-6 py-4'>

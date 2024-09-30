@@ -51,7 +51,10 @@ export default function ConnectionPagesLayout({
     notFound();
   }
   return (
-    <ConnectionLayoutWrapper connectionSlug={connection}>
+    <ConnectionLayoutWrapper
+      connectionSlug={connection}
+      workspaceSlug={params.workspace}
+    >
       {children}
     </ConnectionLayoutWrapper>
   );

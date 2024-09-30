@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -59,15 +59,9 @@ export default function LogsSection({ workflow }: { workflow?: string }) {
     };
   }, [searchQuery, logEvents]);
 
-  const selectedWorkflow = useMemo(
-    () => allWorkflows.find((w) => w.slug === workflow),
-    [allWorkflows, workflow]
-  );
+  const selectedWorkflow = allWorkflows.find((w) => w.slug === workflow);
 
-  const workspaceSlug = useMemo(
-    () => currentWorkspace?.slug ?? '',
-    [currentWorkspace]
-  );
+  const workspaceSlug = currentWorkspace?.slug;
 
   return (
     <div className='container relative mx-auto max-w-6xl'>
@@ -77,8 +71,9 @@ export default function LogsSection({ workflow }: { workflow?: string }) {
             <Button
               size='sm'
               variant='icon'
-              colorScheme='black'
-              className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-700'
+              colorScheme='light'
+              className='bg-gray-100 dark:bg-gray-700'
+              icon={<IoChevronBack size={24} />}
               onClick={() => router.back()}
             >
               <IoChevronBack size={24} />

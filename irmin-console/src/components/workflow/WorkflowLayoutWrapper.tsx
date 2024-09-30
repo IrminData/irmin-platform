@@ -20,7 +20,7 @@ import StatusBadge from '@/components/common/status/StatusBadge';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { ExportWorkflow, ImportWorkflow } from '@/types/core/Workflow';
+import { Import } from '@/types/core/Workflow';
 
 /**
  * Component to wrap the single Workflow pages in.
@@ -29,44 +29,39 @@ import { ExportWorkflow, ImportWorkflow } from '@/types/core/Workflow';
  */
 export default function WorkflowLayoutWrapper({
   children,
+  workspaceSlug,
   workflowSlug,
+  locale,
 }: {
   children: React.ReactNode;
+  workspaceSlug: string;
   workflowSlug: string;
+  locale: string;
 }) {
   const currentPath = usePathname();
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
   const {
-    workspaces: { currentWorkspace },
     workflows: { allWorkflows },
   } = useWorkspace();
 
   const workflow = useMemo(
     () => allWorkflows.find((item) => item.slug === workflowSlug),
-    [workflowSlug, allWorkflows]
+    [allWorkflows, workflowSlug]
   );
 
-  const repositorySlug = useMemo(() => {
-    if (workflow?.workflowable_type === 'action') return undefined;
-    if (workflow?.workflowable_type === 'import')
-      return (workflow as ImportWorkflow).workflowable.repository.slug;
-    if (workflow?.workflowable_type === 'export')
-      return (workflow as ExportWorkflow).workflowable.repository.slug;
-  }, [workflow]);
-
-  const workspaceSlug = useMemo(
-    () => currentWorkspace?.slug ?? '',
-    [currentWorkspace]
+  const repositorySlug = useMemo(
+    () => (workflow?.workflowable as Import)?.repository?.slug ?? null,
+    [workflow]
   );
 
   const tabs = useMemo(
     () => [
       {
         title: dict.workflow.tabs.overview,
-        href: `/${locale}/console/${workspaceSlug}/workflows/${workflow?.slug}`,
+        href: `/${locale}/console/${workspaceSlug}/workflows/${workflowSlug}`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/workflows/${workflow?.slug}`,
+          `/${locale}/console/${workspaceSlug}/workflows/${workflowSlug}`,
         icon: <TbRun size={14} />,
         hide: false,
       },
@@ -81,38 +76,41 @@ export default function WorkflowLayoutWrapper({
       },
       {
         title: dict.workflow.tabs.documentation,
-        href: `/${locale}/console/${workspaceSlug}/workflows/${workflow?.slug}/documentation`,
+        href: `/${locale}/console/${workspaceSlug}/workflows/${workflowSlug}/documentation`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/workflows/${workflow?.slug}/documentation`,
+          `/${locale}/console/${workspaceSlug}/workflows/${workflowSlug}/documentation`,
         icon: <TbFileText size={14} />,
         hide: false,
       },
       {
         title: dict.workflow.tabs.logs,
-        href: `/${locale}/console/${workspaceSlug}/logs/workflow/${workflow?.slug}`,
+        href: `/${locale}/console/${workspaceSlug}/logs/workflow/${workflowSlug}`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/logs/workflow/${workflow?.slug}`,
+          `/${locale}/console/${workspaceSlug}/logs/workflow/${workflowSlug}`,
         icon: <TbLogs size={14} />,
         hide: false,
       },
       {
         title: dict.workflow.tabs.settings,
-        href: `/${locale}/console/${workspaceSlug}/workflows/${workflow?.slug}/settings`,
+        href: `/${locale}/console/${workspaceSlug}/workflows/${workflowSlug}/settings`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/workflows/${workflow?.slug}/settings`,
+          `/${locale}/console/${workspaceSlug}/workflows/${workflowSlug}/settings`,
         icon: <TbSettings size={14} />,
         hide: false,
       },
     ],
-    [currentPath, dict, locale, workflow, repositorySlug, workspaceSlug]
+    [currentPath, locale, dict, workspaceSlug, workflowSlug, repositorySlug]
   );
 
-  if (!workflow) {
-    return <LoadingSkeleton />;
-  }
+  if (!workflow)
+    return (
+      <div className='container relative mx-auto max-w-6xl py-12'>
+        <LoadingSkeleton className='h-96' />
+      </div>
+    );
 
   return (
     <>
@@ -156,12 +154,13 @@ export default function WorkflowLayoutWrapper({
             </p>
           </div>
         </div>
-        <div className='scrollbar-hide mb-6 flex w-full max-w-3xl justify-start gap-2 overflow-y-scroll px-4 md:gap-4'>
+        <div className='scrollbar-hide mb-6 flex w-full max-w-3xl justify-start gap-2 overflow-y-scroll px-4'>
           <Button
             size='sm'
             variant='icon'
-            colorScheme='black'
-            className='aspect-square h-auto w-auto rounded-full bg-gray-100 dark:bg-gray-700'
+            colorScheme='light'
+            className='bg-gray-100 dark:bg-gray-700'
+            icon={<IoChevronBack size={24} />}
             href={`/${locale}/console/${workspaceSlug}/workflows`}
           >
             <IoChevronBack size={24} />
@@ -172,7 +171,7 @@ export default function WorkflowLayoutWrapper({
               return (
                 <Button
                   key={`workflow-tab-${idx}`}
-                  className={`rounded-none border-irmin_green px-2 hover:no-underline lg:px-0 ${tab.active ? 'border-b-2' : 'border-0'}`}
+                  className={`rounded-none border-irmin_green px-2 hover:no-underline lg:px-1 ${tab.active ? 'border-b-2' : 'border-0'}`}
                   size='sm'
                   variant='link'
                   colorScheme={tab.active ? 'primary' : 'gray'}

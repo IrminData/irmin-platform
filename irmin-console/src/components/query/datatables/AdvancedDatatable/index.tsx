@@ -120,13 +120,12 @@ export default function AdvancedDatatable({
     setRenderItems(newItems);
   }, [items, locale]);
 
-  if (
-    !columns ||
-    columns.length === 0 ||
-    !renderItems ||
-    renderItems.length === 0
-  )
-    return <LoadingSkeleton />;
+  if (!columns || !renderItems)
+    return (
+      <div className='h-full w-full'>
+        <LoadingSkeleton className='h-96' />
+      </div>
+    );
 
   return (
     <div className='h-full w-full overflow-scroll' id='advanced-datatable'>

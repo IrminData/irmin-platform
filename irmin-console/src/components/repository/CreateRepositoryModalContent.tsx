@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import ReactSelect from 'react-select';
 
@@ -38,33 +38,19 @@ export default function CreateRepositoryModalContent({
   const [newCollection, setNewCollection] = useState<string | null>(null);
   const [collections, setCollections] = useState<Collection[]>([]);
 
-  /**
-   * Calculates all available collections for the repository collection settings section.
-   *
-   * @returns An array of unique collections that are not included in the current repository's collections.
-   */
-  const allAvailableCollections = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          repositories
-            .map((repo) => repo.collections)
-            .flat()
-            .filter(
-              (a) =>
-                !collections.find((b) => b.formatted_name === a.formatted_name)
-            )
+  // Calculates all available collections for the repository collection settings section.
+  const allAvailableCollections = Array.from(
+    new Set(
+      repositories
+        .map((repo) => repo.collections)
+        .flat()
+        .filter(
+          (a) => !collections.find((b) => b.formatted_name === a.formatted_name)
         )
-      ),
-    [repositories, collections]
+    )
   );
 
-  /**
-   * Creates a new repository with the details provided
-   * Uses {@link createNewRepository} to create the repository
-   * Shows {@link irminAlert} on success or error
-   */
-  const handleCreateRepository = useCallback(async () => {
+  const handleCreateRepository = async () => {
     try {
       const name = nameField.trim();
       const description = descriptionField.trim();
@@ -97,15 +83,7 @@ export default function CreateRepositoryModalContent({
           dict.repository.settings.errorUpdatingRepository
       );
     }
-  }, [
-    nameField,
-    descriptionField,
-    collections,
-    irminAlert,
-    createRepository,
-    closeModal,
-    dict,
-  ]);
+  };
 
   return (
     <div

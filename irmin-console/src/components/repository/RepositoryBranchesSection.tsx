@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -33,91 +33,69 @@ export default function RepositoryBranchesSection() {
     loadingBranches,
     currentBranch,
     setCurrentBranch,
+    defaultBranch,
   } = useData();
 
   const { branchService } = useMemo(() => new IrminCore(locale), [locale]);
 
-  const deleteBranch = useCallback(
-    async (branch: string) => {
-      if (!currentRepository) return;
-      const currentDefaultBranch = branches?.find((b) => b.default)?.name;
-      if (branch === currentDefaultBranch) {
-        irminAlert('error', dict.repository.cannotDeletePrimaryBranch);
-        return;
-      }
-      try {
-        // Delete the branch
-        const result = await branchService.deleteBranch(
-          branch,
-          currentRepository
-        );
-        irminAlert('success', result.message ?? dict.repository.branchDeleted);
-        // Change to the primary branch just in case
-        if (currentDefaultBranch) setCurrentBranch(currentDefaultBranch);
-        // Refetch the branches
-        fetchBranches();
-      } catch (error) {
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? dict.repository.branchDeleteFailed
-        );
-      }
-    },
-    [
-      branches,
-      setCurrentBranch,
-      irminAlert,
-      dict,
-      currentRepository,
-      branchService,
-      fetchBranches,
-    ]
-  );
+  const handleDeleteBranch = async (branch: string) => {
+    if (!currentRepository) return;
+    if (branch === defaultBranch) {
+      irminAlert('error', dict.repository.cannotDeletePrimaryBranch);
+      return;
+    }
+    try {
+      // Delete the branch
+      const result = await branchService.deleteBranch(
+        branch,
+        currentRepository
+      );
+      irminAlert('success', result.message ?? dict.repository.branchDeleted);
+      // Change to the primary branch just in case
+      if (defaultBranch) setCurrentBranch(defaultBranch);
+      // Refetch the branches
+      fetchBranches();
+    } catch (error) {
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? dict.repository.branchDeleteFailed
+      );
+    }
+  };
 
-  const handleCreateBranch = useCallback(
-    async (branchName: string, fromBranch: string) => {
-      irminModal.close();
+  const handleCreateBranch = async (branchName: string, fromBranch: string) => {
+    irminModal.close();
 
-      if (!currentRepository) return;
-      const exists = branches?.find((b) => b.name === branchName);
-      const fromExists = branches?.find((b) => b.name === fromBranch);
-      if (
-        exists ||
-        !fromExists ||
-        branchName.length === 0 ||
-        fromBranch.length === 0
-      ) {
-        irminAlert('error', dict.repository.branchCreateFailed);
-        return;
-      }
-      try {
-        // Delete the branch
-        const result = await branchService.createBranch(
-          branchName,
-          fromBranch,
-          currentRepository
-        );
-        irminAlert('success', result.message ?? dict.repository.branchCreated);
-        fetchBranches();
-      } catch (error) {
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? dict.repository.branchCreateFailed
-        );
-      }
-    },
-    [
-      branches,
-      irminModal,
-      irminAlert,
-      dict,
-      currentRepository,
-      fetchBranches,
-      branchService,
-    ]
-  );
+    if (!currentRepository) return;
+    const exists = branches?.find((b) => b.name === branchName);
+    const fromExists = branches?.find((b) => b.name === fromBranch);
+    if (
+      exists ||
+      !fromExists ||
+      branchName.length === 0 ||
+      fromBranch.length === 0
+    ) {
+      irminAlert('error', dict.repository.branchCreateFailed);
+      return;
+    }
+    try {
+      // Delete the branch
+      const result = await branchService.createBranch(
+        branchName,
+        fromBranch,
+        currentRepository
+      );
+      irminAlert('success', result.message ?? dict.repository.branchCreated);
+      fetchBranches();
+    } catch (error) {
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? dict.repository.branchCreateFailed
+      );
+    }
+  };
 
-  const createBranch = useCallback(() => {
+  const createBranch = () => {
     if (!branches) return;
     irminModal.show(
       dict.repository.createBranch,
@@ -126,52 +104,46 @@ export default function RepositoryBranchesSection() {
         createBranch={handleCreateBranch}
       />
     );
-  }, [irminModal, dict, handleCreateBranch, branches]);
+  };
 
-  const rows: GridRow[] = useMemo(() => {
-    if (!branches) return [];
-    return (
-      branches.map((branch, i) => {
-        return {
-          columns: [
-            <div
-              key={`branch-${i}-name`}
-              className='inline-flex flex-row items-center gap-2'
-            >
-              <p className='text-base'>{branch.name}</p>
-              {branch.default && (
-                <span className='h-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
-                  {dict.repository.primary}
-                </span>
-              )}
-              {branch.name === currentBranch && (
-                <span className='h-max rounded-lg bg-gray-300 px-1 text-xs leading-4 text-irmin_black dark:bg-gray-600 dark:text-white'>
-                  {dict.repository.currentBranch}
-                </span>
-              )}
-            </div>,
-          ],
-          actions: [
-            {
-              label: dict.list.view,
-              primary: true,
-              onClick: () => {
-                setCurrentBranch(branch.name);
-                router.push('./');
-              },
-            },
-            {
-              label: dict.list.delete,
-              primary: false,
-              onClick: () => {
-                deleteBranch(branch.name);
-              },
-            },
-          ],
-        };
-      }) ?? []
-    );
-  }, [branches, dict, router, currentBranch, setCurrentBranch, deleteBranch]);
+  const rows: GridRow[] =
+    branches?.map((branch, i) => ({
+      columns: [
+        <div
+          key={`branch-${i}-name`}
+          className='inline-flex flex-row items-center gap-2'
+        >
+          <p className='text-base'>{branch.name}</p>
+          {branch.default && (
+            <span className='h-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+              {dict.repository.primary}
+            </span>
+          )}
+          {branch.name === currentBranch && (
+            <span className='h-max rounded-lg bg-gray-300 px-1 text-xs leading-4 text-irmin_black dark:bg-gray-600 dark:text-white'>
+              {dict.repository.currentBranch}
+            </span>
+          )}
+        </div>,
+      ],
+      actions: [
+        {
+          label: dict.list.view,
+          primary: true,
+          onClick: () => {
+            setCurrentBranch(branch.name);
+            router.push('./');
+          },
+        },
+        {
+          label: dict.list.delete,
+          primary: false,
+          onClick: () => {
+            handleDeleteBranch(branch.name);
+          },
+        },
+      ],
+    })) ?? [];
 
   return (
     <div className='container relative mx-auto max-w-6xl px-2 md:px-4'>

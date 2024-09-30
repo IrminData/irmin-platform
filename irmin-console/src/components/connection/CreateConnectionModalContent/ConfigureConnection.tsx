@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -33,61 +33,51 @@ export default function ConfigureConnection({
 
   const [processing, setProcessing] = useState(false);
 
-  const createConnection = useCallback(
-    async (e: React.MouseEvent) => {
-      e.preventDefault();
-      // Prevent if already loading
-      if (processing) return;
-      setProcessing(true);
-      // Validate all required fields are filled
-      if (
-        !connectionData.name ||
-        !connectionData.description ||
-        !connectionData.connector ||
-        !connectionData.connectionDetails ||
-        !connectionData.connectionSettings
-      ) {
-        irminAlert(
-          'error',
-          'Fields required for creating a connection are missing'
-        );
-        setProcessing(false); // Ensure loading state is reset
-        return;
-      }
-      try {
-        // Start the sync
-        const res = await connectionService.createConnection({
-          connectorID: connectionData.connector.id,
-          connectionDetails: connectionData.connectionDetails,
-          connectionSettings: connectionData.connectionSettings,
-          name: connectionData.name,
-          description: connectionData.description,
-        });
-        // Inform that sync has started
-        irminAlert(
-          'success',
-          res.metadata?.message ?? 'Connection create successfully'
-        );
-        closeModal();
-      } catch (error) {
-        console.error('Failed to create connection', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to create connection'
-        );
-      } finally {
-        setProcessing(false);
-      }
-    },
-    [
-      processing,
-      connectionData,
-      connectionService,
-      irminAlert,
-      closeModal,
-      setProcessing,
-    ]
-  );
+  const createConnection = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    // Prevent if already loading
+    if (processing) return;
+    setProcessing(true);
+    // Validate all required fields are filled
+    if (
+      !connectionData.name ||
+      !connectionData.description ||
+      !connectionData.connector ||
+      !connectionData.connectionDetails ||
+      !connectionData.connectionSettings
+    ) {
+      irminAlert(
+        'error',
+        'Fields required for creating a connection are missing'
+      );
+      setProcessing(false); // Ensure loading state is reset
+      return;
+    }
+    try {
+      // Start the sync
+      const res = await connectionService.createConnection({
+        connectorID: connectionData.connector.id,
+        connectionDetails: connectionData.connectionDetails,
+        connectionSettings: connectionData.connectionSettings,
+        name: connectionData.name,
+        description: connectionData.description,
+      });
+      // Inform that sync has started
+      irminAlert(
+        'success',
+        res.metadata?.message ?? 'Connection create successfully'
+      );
+      closeModal();
+    } catch (error) {
+      console.error('Failed to create connection', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to create connection'
+      );
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   return (
     <div className='p-4 pb-6'>

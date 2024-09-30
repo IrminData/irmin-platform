@@ -51,7 +51,11 @@ export default function WorkflowLayout({
     notFound();
   }
   return (
-    <WorkflowLayoutWrapper workflowSlug={workflow}>
+    <WorkflowLayoutWrapper
+      workflowSlug={workflow}
+      workspaceSlug={params.workspace}
+      locale={params.lang}
+    >
       {children}
     </WorkflowLayoutWrapper>
   );

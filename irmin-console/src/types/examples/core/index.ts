@@ -20,6 +20,8 @@ import {
 import { commits } from './commits';
 import { connections } from './connections';
 import { connectors } from './connectors';
+import { content } from './content';
+import { diff } from './diff';
 import { files } from './files';
 import { folders } from './folders';
 import { invites } from './invites';
@@ -34,9 +36,7 @@ import { workspaces } from './workspaces';
 
 /**
  * Get example API response base from the Irmin Core API
- *
- *
- * Type: {@link IrminAPIResponse}
+ * {@link IrminAPIResponse}
  */
 export const exampleAPIResponse: IrminAPIResponse = {
   metadata: {
@@ -60,6 +60,11 @@ export const exampleAPIResponse: IrminAPIResponse = {
     offlineMode: ['You might also be in offline mode'],
   },
 };
+
+/**
+ * Get example unstructured API response from the Irmin Core API
+ */
+export const exampleAPIUnstructuredResponse = content;
 
 /**
  * Fake {@link roles}
@@ -190,3 +195,8 @@ export const exampleLogEvents = logEvents();
  * Fake workflow run logs {@link workflowRunLogs}
  */
 export const exampleWorkflowRunLogs = workflowRunLogs();
+
+/**
+ * Fake diff {@link diff}
+ */
+export const exampleDiff = diff();

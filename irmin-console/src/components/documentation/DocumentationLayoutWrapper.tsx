@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import { WorkspaceLayoutParams } from '@/app/[lang]/console/[workspace]/layout';
 
 import { IoDocumentText } from 'react-icons/io5';
@@ -20,25 +22,27 @@ export default function DocumentationLayoutWrapper({
   children: React.ReactNode;
 }) {
   const { dict } = useLocale();
+  const tabs = useMemo(
+    () => [
+      {
+        icon: <IoDocumentText />,
+        name: dict.documentation.documentation,
+        slug: 'documentation',
+        link: `/${params.lang}/console/${params.workspace}/documentation`,
+      },
+      {
+        icon: <TbSchema />,
+        name: dict.documentation.schema,
+        slug: 'schemas',
+        link: `/${params.lang}/console/${params.workspace}/documentation/schema`,
+      },
+    ],
+    [dict, params.lang, params.workspace]
+  );
   return (
     <div id='console-documentation-layout-wrapper'>
       <div className='container relative mx-auto max-w-6xl'>
-        <Tabs
-          tabs={[
-            {
-              icon: <IoDocumentText />,
-              name: dict.documentation.documentation,
-              slug: 'documentation',
-              link: `/${params.lang}/console/${params.workspace}/documentation`,
-            },
-            {
-              icon: <TbSchema />,
-              name: dict.documentation.schema,
-              slug: 'schemas',
-              link: `/${params.lang}/console/${params.workspace}/documentation/schema`,
-            },
-          ]}
-        />
+        <Tabs tabs={tabs} />
       </div>
       {children}
     </div>

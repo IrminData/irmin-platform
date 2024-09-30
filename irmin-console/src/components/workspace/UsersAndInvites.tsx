@@ -444,24 +444,23 @@ const UsersAndInvites: React.FC = () => {
                           <Button
                             size='sm'
                             variant='icon'
-                            colorScheme='gray'
-                            aria-label='Transfer ownership to user'
+                            colorScheme='light'
                             onClick={() => handleTransferOwnership(user.id)}
                             icon={<IoKey size={14} />}
+                            enableTooltip={true}
                           >
-                            {''}
-                            {/* {dict.usersPermissions.transferOwnership} */}
+                            {dict.usersPermissions.transferOwnership}
                           </Button>
                           <Button
                             size='sm'
                             variant='icon'
-                            colorScheme='gray'
+                            colorScheme='light'
                             aria-label='Remove user from workspace'
                             onClick={() => handleRemoveUser(user.id)}
                             icon={<IoExit size={14} />}
+                            enableTooltip={true}
                           >
-                            {''}
-                            {/* {dict.usersPermissions.removeFromWorkspace} */}
+                            {dict.usersPermissions.removeFromWorkspace}
                           </Button>
                         </>
                       ) : (
@@ -472,24 +471,24 @@ const UsersAndInvites: React.FC = () => {
                           <Button
                             size='sm'
                             variant='icon'
-                            colorScheme='gray'
+                            colorScheme='light'
                             aria-label='Resend invite'
                             icon={<IoMailOpenOutline size={14} />}
                             onClick={() => handleResend(user.email)}
+                            enableTooltip={true}
                           >
-                            {''}
-                            {/* {dict.usersPermissions.resendInvite} */}
+                            {dict.usersPermissions.resendInvite}
                           </Button>
                           <Button
                             size='sm'
                             variant='icon'
-                            colorScheme='gray'
+                            colorScheme='light'
                             aria-label='Cancel invite'
                             icon={<IoExit size={14} />}
                             onClick={() => handleCancelInvite(user.email)}
+                            enableTooltip={true}
                           >
-                            {''}
-                            {/* {dict.usersPermissions.cancelInvite} */}
+                            {dict.usersPermissions.cancelInvite}
                           </Button>
                         </>
                       ) : (

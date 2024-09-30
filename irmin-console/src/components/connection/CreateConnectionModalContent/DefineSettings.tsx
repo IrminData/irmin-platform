@@ -35,120 +35,95 @@ export default function DefineSettings({
   const initialLoadingDone = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const fetchConnectionSettings = useCallback(async () => {
-    if (
-      loading ||
-      !connectionData.connector ||
-      !connectionData.connectionDetails ||
-      connectionData.connectionSettingsFields ||
-      initialLoadingDone.current
-    )
-      return;
-
-    setLoading(true);
-
-    try {
-      const response = await connectionService.fetchNewConnectionSettings(
-        connectionData.connector.id,
-        connectionData.connectionDetails
-      );
-      const data = Object.fromEntries(
-        Object.keys(response.data).map((key) => [
-          key,
-          response.data[key].default ?? null,
-        ])
-      );
-      setConnectionData((prev: ConnectionSetup) => ({
-        ...prev,
-        connectionSettingsFields: response.data,
-        connectionSettings: data,
-      }));
-    } catch (error) {
-      console.error('Fetch new connection settings error:', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to fetch new connection settings'
-      );
-    }
-
-    initialLoadingDone.current = true;
-    setLoading(false);
-  }, [
-    connectionService,
-    connectionData.connector,
-    connectionData.connectionDetails,
-    connectionData.connectionSettingsFields,
-    irminAlert,
-    loading,
-    setConnectionData,
-  ]);
-
-  useEffect(() => {
-    fetchConnectionSettings();
-  }, [fetchConnectionSettings]);
-
-  const continueCreateConnection = useCallback(
-    async (e: React.MouseEvent) => {
-      e.preventDefault();
-      // Validate form and continue
-      if (
-        !connectionData.connectionSettingsFields ||
-        !connectionData.connector ||
-        !formRef.current
-      )
-        return;
-
+  const fetchConnectionSettings = useCallback(
+    async (connectorID: number, connectionDetails: DynamicFieldValues) => {
+      if (loading || initialLoadingDone.current) return;
       setLoading(true);
-
       try {
-        // Get the data from the form
-        const formData = new FormData(formRef.current!);
-        const data: DynamicFieldValues = {};
-        formData.forEach((value, key) => {
-          if (key !== 'irmin_connection_name') {
-            const fieldKey = Object.keys(
-              connectionData.connectionSettingsFields ?? {}
-            ).find((field) => field.toLowerCase() === key);
-            if (!fieldKey) return;
-            const field = (connectionData.connectionSettingsFields ?? {})[
-              fieldKey ?? ''
-            ];
-            if (field.type === 'integer' || field.type === 'float') {
-              data[fieldKey] = parseFloat(value as string);
-            } else {
-              data[fieldKey] = value as string;
-            }
-          }
-        });
-
-        // Update the connection data state
+        const response = await connectionService.fetchNewConnectionSettings(
+          connectorID,
+          connectionDetails
+        );
+        const data = Object.fromEntries(
+          Object.keys(response.data).map((key) => [
+            key,
+            response.data[key].default ?? null,
+          ])
+        );
         setConnectionData((prev: ConnectionSetup) => ({
           ...prev,
+          connectionSettingsFields: response.data,
           connectionSettings: data,
         }));
-
-        // Proceed to the next step
-        setCurrentStep(4);
+        initialLoadingDone.current = true;
       } catch (error) {
-        console.error('Test connection error:', error);
+        console.error('Fetch new connection settings error:', error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to test connection'
+          (error as Error)?.message ?? 'Failed to fetch new connection settings'
         );
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     },
     [
-      connectionData.connectionSettingsFields,
-      connectionData.connector,
-      formRef,
-      setLoading,
+      loading,
+      initialLoadingDone,
+      connectionService,
       setConnectionData,
-      setCurrentStep,
       irminAlert,
     ]
   );
+
+  useEffect(() => {
+    const connectorID = connectionData.connector?.id;
+    const connectionDetails = connectionData.connectionDetails;
+    if (!connectorID || !connectionDetails) return;
+    fetchConnectionSettings(connectorID, connectionDetails);
+  }, [connectionData, fetchConnectionSettings]);
+
+  const continueCreateConnection = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!formRef.current) return;
+    setLoading(true);
+    try {
+      // Get the data from the form
+      const formData = new FormData(formRef.current!);
+      const data: DynamicFieldValues = {};
+      formData.forEach((value, key) => {
+        if (key !== 'irmin_connection_name') {
+          const fieldKey = Object.keys(
+            connectionData.connectionSettingsFields ?? {}
+          ).find((field) => field.toLowerCase() === key);
+          if (!fieldKey) return;
+          const field = (connectionData.connectionSettingsFields ?? {})[
+            fieldKey ?? ''
+          ];
+          if (field.type === 'integer' || field.type === 'float') {
+            data[fieldKey] = parseFloat(value as string);
+          } else {
+            data[fieldKey] = value as string;
+          }
+        }
+      });
+
+      // Update the connection data state
+      setConnectionData((prev: ConnectionSetup) => ({
+        ...prev,
+        connectionSettings: data,
+      }));
+
+      // Proceed to the next step
+      setCurrentStep(4);
+    } catch (error) {
+      console.error('Failed to set connection settings:', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to set connection settings'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateValues = (key: string, value: FieldValue | FieldValue[]) => {
     setConnectionData({

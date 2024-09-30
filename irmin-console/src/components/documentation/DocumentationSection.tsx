@@ -80,7 +80,7 @@ export default function DocumentationSection({
           </Button>
         </div>
         {loading ? (
-          <LoadingSkeleton />
+          <LoadingSkeleton className='h-96' />
         ) : (
           <div
             className='flex flex-col bg-white px-2 py-4 md:px-4 dark:bg-irmin_black'

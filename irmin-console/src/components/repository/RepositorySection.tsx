@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
@@ -27,9 +27,11 @@ import UploadCollectionModalContent from './UploadCollectionModalContent';
  */
 export default function RepositorySection({
   repository,
+  initialRef,
   immutable,
 }: {
   repository?: Repository;
+  initialRef?: string;
   immutable?: boolean;
 }) {
   const { dict, locale } = useLocale();
@@ -41,16 +43,32 @@ export default function RepositorySection({
     runScript,
     runningScript,
     scriptResult,
-    loadingSchema,
     schema,
     currentBranch,
     currentRef,
     currentRepository,
+    defaultBranch,
+    setCurrentRef,
   } = useData();
 
   const { irminModal } = usePopup();
 
-  // Handle upload collection to the repository
+  const [selectedCollection, setSelectedCollection] = useState<string | null>(
+    null
+  );
+  const [query, setQuery] = useState<string>('');
+  const [queryChanged, setQueryChanged] = useState(false);
+
+  useEffect(() => {
+    if (!selectedCollection) return;
+    if (queryChanged) return;
+    setQuery(`SELECT * FROM $[${selectedCollection}]`);
+  }, [selectedCollection, queryChanged]);
+
+  useEffect(() => {
+    setCurrentRef(initialRef);
+  }, [initialRef, setCurrentRef]);
+
   const handleUpload = () => {
     irminModal.show(
       dict.repository.uploadCollection,
@@ -61,13 +79,7 @@ export default function RepositorySection({
     );
   };
 
-  const [selectedCollection, setSelectedCollection] = useState<string | null>(
-    null
-  );
-  const [query, setQuery] = useState<string>('');
-  const [queryChanged, setQueryChanged] = useState(false);
-
-  const runCurrentQuery = useCallback(() => {
+  const runCurrentQuery = () => {
     if (!query || query.length < 3) return;
     runScript(
       'sql',
@@ -76,31 +88,17 @@ export default function RepositorySection({
         (collection) => collection.formatted_name === selectedCollection
       )
     );
-  }, [query, runScript, selectedCollection, repository]);
+  };
 
-  const updateQuery = useCallback(
-    (value: string) => {
-      if (runningScript) return;
-      setQueryChanged(true);
-      setQuery(value);
-    },
-    [runningScript]
+  const updateQuery = (value: string) => {
+    if (runningScript) return;
+    setQueryChanged(true);
+    setQuery(value);
+  };
+
+  const selectedCollectionSchema = schema?.find(
+    (schema) => schema.formatted_name === selectedCollection
   );
-
-  useEffect(() => {
-    if (!selectedCollection) return;
-    if (queryChanged) return;
-    setQuery(`SELECT * FROM $[${selectedCollection}]`);
-  }, [selectedCollection, queryChanged]);
-
-  const selectedCollectionSchema = useMemo(() => {
-    if (loadingSchema) return;
-    if (!schema) return;
-    if (!selectedCollection) return;
-    return schema.find((schema) => {
-      return schema.formatted_name === selectedCollection;
-    });
-  }, [schema, selectedCollection, loadingSchema]);
 
   return (
     <>
@@ -124,7 +122,7 @@ export default function RepositorySection({
               ? ` / ${currentRef}`
               : currentBranch
                 ? ` / ${currentBranch}`
-                : ''}
+                : ` / ${defaultBranch}`}
           </div>
           <div className='flex items-center gap-2 md:gap-4'>
             <Button

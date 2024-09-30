@@ -35,6 +35,8 @@ type ButtonColorScheme =
  * @param buttonProps.className - The button class name, to be used for custom styling
  * @param buttonProps.ariaLabel - The button aria label
  * @param buttonProps.type - The button type, either button, submit or reset
+ * @param buttonProps.enableTooltip - Whether to enable the tooltip
+ * @param buttonProps.tooltipClassName - The tooltip class name, to be used for custom styling
  *
  * @returns The button component
  */
@@ -53,6 +55,8 @@ const Button = ({
   className = '',
   ariaLabel,
   type = 'button',
+  enableTooltip = false,
+  tooltipClassName,
 }: {
   variant?: 'solid' | 'outline' | 'gradient' | 'icon' | 'link';
   colorScheme?: ButtonColorScheme;
@@ -66,16 +70,18 @@ const Button = ({
   loading?: boolean;
   icon?: React.ReactNode;
   iconFirst?: boolean;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
   ariaLabel?: string;
   type?: 'button' | 'submit' | 'reset';
+  enableTooltip?: boolean;
+  tooltipClassName?: string;
 }) => {
   const { dict } = useLocale();
   const router = useRouter();
 
   const baseClasses =
-    'inline-flex items-center justify-center text-center rounded-lg transition-all outline-none hover:opacity-60 duration-300 hover:backdrop-blur';
+    'group relative inline-flex items-center justify-center text-center rounded-lg transition-all outline-none hover:opacity-60 duration-300 hover:backdrop-blur';
   const variantClasses = {
     solid: {
       primary:
@@ -86,7 +92,7 @@ const Button = ({
         'bg-irmin_teal text-white shadow shadow-gray-300 dark:shadow-black',
       gray: 'bg-gray-500 text-white shadow shadow-gray-300 dark:shadow-black',
       black:
-        'bg-irmin_black text-white shadow shadow-gray-300 dark:bg-gray-50 dark:shadow-black',
+        'bg-irmin_black text-white shadow shadow-gray-300 dark:bg-gray-50 dark:text-irmin_black dark:shadow-black',
       light:
         'bg-gray-100 text-black dark:bg-gray-800 dark:text-white shadow shadow-gray-300 dark:shadow-black',
     },
@@ -118,16 +124,16 @@ const Button = ({
     },
     icon: {
       primary:
-        'text-irmin_green rounded-full rounded-full shadow-none dark:shadow-none border-none dark:text-irmin_green-600',
+        'bg-irmin_green text-white shadow-none aspect-square h-auto w-auto rounded-full dark:shadow-none dark:bg-irmin_green-600',
       secondary:
-        'text-irmin_blue rounded-full rounded-full shadow-none dark:shadow-none border-none',
+        'bg-irmin_blue text-white shadow-none aspect-square h-auto w-auto rounded-full dark:shadow-none',
       tertiary:
-        'text-irmin_teal-500 rounded-full rounded-full shadow-none dark:shadow-none border-none',
-      gray: 'text-gray-700 dark:text-gray-300 rounded-full shadow-none dark:shadow-none border-none',
+        'bg-irmin_teal text-white shadow-none aspect-square h-auto w-auto rounded-full dark:shadow-none',
+      gray: 'bg-gray-500 text-white shadow-none aspect-square h-auto w-auto rounded-full dark:shadow-none',
       black:
-        'text-irmin_black dark:text-gray-200 rounded-full shadow-none dark:shadow-none border-none',
+        'bg-irmin_black text-white shadow-none aspect-square h-auto w-auto rounded-full dark:bg-gray-50 dark:text-irmin_black dark:shadow-none',
       light:
-        'text-gray-200 dark:text-gray-800 rounded-full shadow-none dark:shadow-none border-none',
+        'bg-gray-100 text-black dark:bg-gray-800 dark:text-white shadow-none aspect-square h-auto w-auto rounded-full dark:shadow-none',
     },
     link: {
       primary:
@@ -154,13 +160,21 @@ const Button = ({
     lg: 'pr-3',
   };
 
-  let combinedClasses = `${baseClasses} ${sizeClasses[size]} ${disabled ? 'opacity-50 cursor-not-allowed ' : ''} ${className}`;
+  let combinedClasses = `${baseClasses} ${sizeClasses[size]} ${disabled ? 'opacity-50 cursor-not-allowed ' : ''}`;
   if (variant) {
     if (colorScheme) {
-      combinedClasses = `${variantClasses[variant][colorScheme]} ${combinedClasses}`;
+      combinedClasses = `${combinedClasses} ${variantClasses[variant][colorScheme]} ${className}`;
     } else {
-      combinedClasses = `${variantClasses[variant].primary} ${combinedClasses}`;
+      combinedClasses = `${combinedClasses} ${variantClasses[variant].primary} ${className}`;
     }
+  } else {
+    combinedClasses = `${combinedClasses} ${className}`;
+  }
+
+  let tooltipClasses =
+    'absolute bottom-0 -mb-4 z-10 hidden w-max rounded-lg bg-white p-1 text-xs text-gray-600 group-hover:block dark:bg-black dark:text-gray-400';
+  if (tooltipClassName) {
+    tooltipClasses = `${tooltipClasses} ${tooltipClassName}`;
   }
 
   const handleClick = (
@@ -171,60 +185,70 @@ const Button = ({
     if (href && !e.defaultPrevented) router.push(href);
   };
 
-  if (href) {
+  const ButtonWrapper = ({ children }: { children: React.ReactNode }) => {
+    if (href) {
+      return (
+        <Link
+          id='irmin-button-link'
+          href={loading || disabled ? '' : href}
+          className={cn(combinedClasses.split(' '))}
+          onClick={(e) => !disabled && !loading && handleClick(e)}
+          aria-label={ariaLabel}
+          target={target}
+        >
+          {children}
+        </Link>
+      );
+    }
     return (
-      <Link
-        href={loading || disabled ? '' : href}
+      <button
+        id='irmin-button'
         className={cn(combinedClasses.split(' '))}
         onClick={(e) => !disabled && !loading && handleClick(e)}
+        disabled={disabled}
         aria-label={ariaLabel}
-        target={target}
+        type={type}
       >
-        {loading ? (
-          <>
-            <div className='mr-2 inline h-4 w-4 animate-spin rounded-full border-2 border-t-2 border-irmin_green-200 border-t-irmin_green'></div>
-            <span>{dict.misc.loading}</span>
-          </>
-        ) : (
-          <>
-            {icon && iconFirst && (
-              <span className={iconSizeClasses[size]}>{icon}</span>
-            )}
-            {children}
-            {icon && !iconFirst && (
-              <span className={iconSizeClasses[size]}>{icon}</span>
-            )}
-          </>
-        )}
-      </Link>
+        {children}
+      </button>
     );
-  }
+  };
 
   return (
-    <button
-      className={cn(combinedClasses.split(' '))}
-      onClick={(e) => !disabled && !loading && handleClick(e)}
-      disabled={disabled}
-      aria-label={ariaLabel}
-      type={type}
-    >
-      {loading ? (
-        <>
-          <div className='mr-2 inline h-4 w-4 animate-spin rounded-full border-2 border-t-2 border-irmin_green-200 border-t-irmin_green'></div>
-          <span>{dict.misc.loading}</span>
-        </>
+    <ButtonWrapper>
+      {variant === 'icon' ? (
+        <span>{icon}</span>
       ) : (
         <>
-          {icon && iconFirst && (
-            <span className={iconSizeClasses[size]}>{icon}</span>
-          )}
-          {children}
-          {icon && !iconFirst && (
-            <span className={iconSizeClasses[size]}>{icon}</span>
+          {loading ? (
+            <>
+              <div className='mr-2 inline h-4 w-4 animate-spin rounded-full border-2 border-t-2 border-irmin_green-200 border-t-irmin_green'></div>
+              <span>{dict.misc.loading}</span>
+            </>
+          ) : (
+            <>
+              {icon && iconFirst && (
+                <span className={iconSizeClasses[size]}>{icon}</span>
+              )}
+              {children}
+              {icon && !iconFirst && (
+                <span className={iconSizeClasses[size]}>{icon}</span>
+              )}
+            </>
           )}
         </>
       )}
-    </button>
+      {/* Tooltip, visible only when the button is hovered */}
+      {enableTooltip && (
+        <div
+          id='irmin-button-tooltip'
+          className={cn(tooltipClasses.split(' '))}
+        >
+          {variant === 'icon' && children}
+          {ariaLabel}
+        </div>
+      )}
+    </ButtonWrapper>
   );
 };
 

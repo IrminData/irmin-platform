@@ -42,77 +42,74 @@ export default function ConfigureWorkflow({
 
   const { workflowService } = useMemo(() => new IrminCore(locale), [locale]);
 
-  const handleCreate = useMemo(
-    () => async () => {
-      try {
-        // Prevent if already processing
-        if (processing) return;
-        setProcessing(true);
-        // Validate the workflow fields
-        if (workflowData.name === '') {
-          irminAlert('error', dict.workflow.create.error.enterName);
-          return;
-        }
-        if (workflowData.description === '') {
-          irminAlert('error', dict.workflow.create.error.enterDescription);
-          return;
-        }
-        // Create the workflow
-        let result: IrminAPIResponse | undefined;
-        if (workflowData.type === 'action') {
-          result = await workflowService.createActionWorkflow({
-            name: workflowData.name,
-            description: workflowData.description,
-            cron_syntax: workflowData.cron,
-            path: workflowData.path,
-          });
-        }
-        if (workflowData.type === 'import') {
-          result = await workflowService.createImportWorkflow({
-            name: workflowData.name,
-            description: workflowData.description,
-            cron_syntax: workflowData.cron,
-            path: workflowData.path,
-            repositoryID: workflowData.repository?.id,
-            connectionID: workflowData.connection?.id,
-          });
-        }
-        if (workflowData.type === 'export') {
-          result = await workflowService.createExportWorkflow({
-            name: workflowData.name,
-            description: workflowData.description,
-            cron_syntax: workflowData.cron,
-            path: workflowData.path,
-            repositoryID: workflowData.repository?.id,
-            connectionID: workflowData.connection?.id,
-            recursive: workflowData.recursive,
-          });
-        }
-        // Show the result to the user
-        if (result) {
-          irminAlert(
-            'success',
-            result.metadata?.message ?? dict.workflow.create.success
-          );
-          closeModal();
-        } else {
-          console.log(
-            'Failed to create workflow: No result from workflow service'
-          );
-          throw new Error();
-        }
-      } catch (error) {
-        console.error('Failed to create workflow', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? dict.workflow.create.failed
-        );
-      } finally {
-        setProcessing(false);
+  const handleCreate = async () => {
+    try {
+      // Prevent if already processing
+      if (processing) return;
+      setProcessing(true);
+      // Validate the workflow fields
+      if (workflowData.name === '') {
+        irminAlert('error', dict.workflow.create.error.enterName);
+        return;
       }
-    },
-    [processing, workflowService, workflowData, dict, irminAlert, closeModal]
-  );
+      if (workflowData.description === '') {
+        irminAlert('error', dict.workflow.create.error.enterDescription);
+        return;
+      }
+      // Create the workflow
+      let result: IrminAPIResponse | undefined;
+      if (workflowData.type === 'action') {
+        result = await workflowService.createActionWorkflow({
+          name: workflowData.name,
+          description: workflowData.description,
+          cron_syntax: workflowData.cron,
+          path: workflowData.path,
+        });
+      }
+      if (workflowData.type === 'import') {
+        result = await workflowService.createImportWorkflow({
+          name: workflowData.name,
+          description: workflowData.description,
+          cron_syntax: workflowData.cron,
+          path: workflowData.path,
+          repositoryID: workflowData.repository?.id,
+          connectionID: workflowData.connection?.id,
+        });
+      }
+      if (workflowData.type === 'export') {
+        result = await workflowService.createExportWorkflow({
+          name: workflowData.name,
+          description: workflowData.description,
+          cron_syntax: workflowData.cron,
+          path: workflowData.path,
+          repositoryID: workflowData.repository?.id,
+          connectionID: workflowData.connection?.id,
+          recursive: workflowData.recursive,
+        });
+      }
+      // Show the result to the user
+      if (result) {
+        irminAlert(
+          'success',
+          result.metadata?.message ?? dict.workflow.create.success
+        );
+        closeModal();
+      } else {
+        console.log(
+          'Failed to create workflow: No result from workflow service'
+        );
+        throw new Error();
+      }
+    } catch (error) {
+      console.error('Failed to create workflow', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? dict.workflow.create.failed
+      );
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   return (
     <div className='flex w-full flex-col px-4 pb-6'>
