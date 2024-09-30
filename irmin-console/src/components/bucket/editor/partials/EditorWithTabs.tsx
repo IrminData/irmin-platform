@@ -37,7 +37,6 @@ const EditorWithTabs = () => {
     editorHeight,
     enableSaveButton,
     currentEditor,
-    loadingEditorContent,
   } = useEditor();
 
   const { dict } = useLocale();
@@ -112,25 +111,16 @@ const EditorWithTabs = () => {
           </div>
         </div>
       )}
-      {loadingEditorContent ? (
-        <div
-          className='w-full bg-white dark:bg-irmin_black'
-          style={{ height: editorHeight }}
+      {openFileTabs.length > 0 && currentEditor ? (
+        <CodeEditor
+          content={currentTabContent}
+          updateTabContent={(value) => setCurrentTabContent(value)}
+          language={currentEditor.language}
+          editorHeight={editorHeight}
+          setEditorHeight={setEditorHeight}
         />
       ) : (
-        <>
-          {openFileTabs.length > 0 && currentEditor ? (
-            <CodeEditor
-              content={currentTabContent}
-              updateTabContent={(value) => setCurrentTabContent(value)}
-              language={currentEditor.language}
-              editorHeight={editorHeight}
-              setEditorHeight={setEditorHeight}
-            />
-          ) : (
-            <NewTabContent addNewTab={() => openNewTab()} />
-          )}
-        </>
+        <NewTabContent addNewTab={() => openNewTab()} />
       )}
     </>
   );

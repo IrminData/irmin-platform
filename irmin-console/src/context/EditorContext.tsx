@@ -53,7 +53,6 @@ interface EditorContextType {
   editorHeight: string;
   enableSaveButton: boolean;
   currentEditor: FileContents | undefined;
-  loadingEditorContent: boolean;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -337,16 +336,6 @@ export const EditorContextProvider = ({
     [openTabsContents, openFileTabs, activeTab]
   );
 
-  /**
-   * Check if the content is loading in order to show a loading state
-   */
-  const loadingEditorContent = useMemo(
-    () =>
-      currentTabContentForRef.current !== openFileTabs[activeTab] &&
-      openFileTabs.length > 0,
-    [currentTabContentForRef, openFileTabs, activeTab]
-  );
-
   return (
     <EditorContext.Provider
       value={{
@@ -365,7 +354,6 @@ export const EditorContextProvider = ({
         editorHeight,
         enableSaveButton,
         currentEditor,
-        loadingEditorContent,
       }}
     >
       {children}
