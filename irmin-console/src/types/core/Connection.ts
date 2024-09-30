@@ -4,9 +4,8 @@ import { WorkspaceUser } from '@/types/core/Workspace';
 /**
  * Connection object - used to store information on data sources and destinations
  *
- * @typeParam id - Connection ID
+ * @typeParam id - Connection hash ID
  * @typeParam name - Connection name
- * @typeParam slug - Connection slug
  * @typeParam owner - The workspace user that owns this connection and is responsible for it
  * @typeParam description - Connection description
  * @typeParam documentation - Connection documentation as a markdown string
@@ -17,9 +16,8 @@ import { WorkspaceUser } from '@/types/core/Workspace';
  * @typeParam updated_at - Connection update date
  */
 export interface Connection {
-  id: number;
+  id: string;
   name: string;
-  slug: string;
   owner: WorkspaceUser;
   description: string;
   documentation: string;

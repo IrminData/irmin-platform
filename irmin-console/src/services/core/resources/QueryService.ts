@@ -8,7 +8,6 @@ import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import {
   exampleFileCollectionData,
   exampleFolderCollectionData,
-  exampleStreamCollectionData,
   exampleTableCollectionData,
 } from '@/types/examples/core';
 
@@ -73,8 +72,6 @@ class QueryService {
           return fake(exampleFileCollectionData) as QueryAPIResponse;
         if (collection.type === 'folder')
           return fake(exampleFolderCollectionData) as QueryAPIResponse;
-        if (collection.type === 'stream')
-          return fake(exampleStreamCollectionData) as QueryAPIResponse;
       }
       return fake(exampleTableCollectionData) as QueryAPIResponse;
     }

@@ -4,10 +4,6 @@ import {
   FolderCollectionData,
   FolderSchema,
 } from '@/types/core/FolderCollection';
-import {
-  StreamCollectionData,
-  StreamSchema,
-} from '@/types/core/StreamCollection';
 import { TableCollectionData, TableSchema } from '@/types/core/TableCollection';
 
 /**
@@ -17,217 +13,227 @@ import { TableCollectionData, TableSchema } from '@/types/core/TableCollection';
  */
 export const collections = (): Collection[] => [
   {
-    id: 0,
+    id: '0',
     name: 'sales',
-    original_repository: 'excel-kpis',
+    repository: 'excel-kpis',
     formatted_name: 'excel-kpis.sales',
     type: 'table',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 1,
+    id: '1',
     name: 'expenses',
-    original_repository: 'excel-kpis',
+    repository: 'excel-kpis',
     formatted_name: 'excel-kpis.expenses',
     type: 'table',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 2,
+    id: '2',
     name: 'profit_by_month',
-    original_repository: 'excel-kpis',
+    repository: 'excel-kpis',
     formatted_name: 'excel-kpis.profit_by_month',
     type: 'table',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 3,
+    id: '3',
     name: 'sessions',
-    original_repository: 'main-google-analytics',
+    repository: 'main-google-analytics',
     formatted_name: 'main-google-analytics.sessions',
     type: 'table',
-    workflow: 0,
+    workflow: '0',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 4,
+    id: '4',
     name: 'users',
-    original_repository: 'main-google-analytics',
+    repository: 'main-google-analytics',
     formatted_name: 'main-google-analytics.users',
     type: 'table',
-    workflow: 0,
+    workflow: '0',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 5,
+    id: '5',
     name: 'pageviews',
-    original_repository: 'main-google-analytics',
+    repository: 'main-google-analytics',
     formatted_name: 'main-google-analytics.pageviews',
     type: 'table',
-    workflow: 0,
+    workflow: '0',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 6,
+    id: '6',
     name: 'events',
-    original_repository: 'main-google-analytics',
+    repository: 'main-google-analytics',
     formatted_name: 'main-google-analytics.events',
     type: 'table',
-    workflow: 0,
+    workflow: '0',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 7,
+    id: '7',
     name: 'users',
-    original_repository: 'app-data',
+    repository: 'app-data',
     formatted_name: 'app-data.users',
     type: 'table',
-    workflow: 2,
+    workflow: '2',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 8,
+    id: '8',
     name: 'downloads',
-    original_repository: 'app-data',
+    repository: 'app-data',
     formatted_name: 'app-data.downloads',
     type: 'table',
-    workflow: 2,
+    workflow: '2',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 9,
+    id: '9',
     name: 'sessions',
-    original_repository: 'app-data',
+    repository: 'app-data',
     formatted_name: 'app-data.sessions',
     type: 'table',
-    workflow: 2,
+    workflow: '2',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 10,
+    id: '10',
     name: 'purchase_events',
-    original_repository: 'app-data',
+    repository: 'app-data',
     formatted_name: 'app-data.purchase_events',
     type: 'table',
-    workflow: 2,
+    workflow: '2',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 11,
+    id: '11',
     name: 'ad_clicks',
-    original_repository: 'app-data',
+    repository: 'app-data',
     formatted_name: 'app-data.ad_clicks',
     type: 'table',
-    workflow: 2,
+    workflow: '2',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 12,
+    id: '12',
     name: 'ad_impressions',
-    original_repository: 'app-data',
+    repository: 'app-data',
     formatted_name: 'app-data.ad_impressions',
     type: 'table',
-    workflow: 2,
+    workflow: '2',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 13,
+    id: '13',
     name: 'sales',
-    original_repository: 'kpis-from-excel',
+    repository: 'kpis-from-excel',
     formatted_name: 'kpis-from-excel.sales',
     type: 'table',
-    workflow: 4,
+    workflow: '4',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 14,
+    id: '14',
     name: 'expenses',
-    original_repository: 'kpis-from-excel',
+    repository: 'kpis-from-excel',
     formatted_name: 'kpis-from-excel.expenses',
     type: 'table',
-    workflow: 4,
+    workflow: '4',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 15,
+    id: '15',
     name: 'profit_by_month',
-    original_repository: 'kpis-from-excel',
+    repository: 'kpis-from-excel',
     formatted_name: 'kpis-from-excel.profit_by_month',
     type: 'table',
-    workflow: 4,
+    workflow: '4',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 16,
+    id: '16',
     name: 'inventory',
-    original_repository: 'management-data-from-excel',
+    repository: 'management-data-from-excel',
     formatted_name: 'management-data-from-excel.inventory',
     type: 'table',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 17,
+    id: '17',
     name: 'employees',
-    original_repository: 'management-data-from-excel',
+    repository: 'management-data-from-excel',
     formatted_name: 'management-data-from-excel.employees',
     type: 'table',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 18,
+    id: '18',
     name: 'sales',
-    original_repository: 'google-sheets-kpis',
+    repository: 'google-sheets-kpis',
     formatted_name: 'google-sheets-kpis.sales',
     type: 'table',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 19,
+    id: '19',
     name: 'inventory',
-    original_repository: 'google-sheets-kpis',
+    repository: 'google-sheets-kpis',
     formatted_name: 'google-sheets-kpis.inventory',
     type: 'table',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 20,
+    id: '20',
     name: 'expenses',
-    original_repository: 'google-sheets-kpis',
+    repository: 'google-sheets-kpis',
     formatted_name: 'google-sheets-kpis.expenses',
     type: 'table',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 21,
+    id: '21',
     name: 'profit_by_month',
-    original_repository: 'google-sheets-kpis',
+    repository: 'google-sheets-kpis',
     formatted_name: 'google-sheets-kpis.profit_by_month',
     type: 'table',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 22,
+    id: '22',
     name: 'employees',
-    original_repository: 'google-sheets-kpis',
+    repository: 'google-sheets-kpis',
     formatted_name: 'google-sheets-kpis.employees',
     type: 'table',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 23,
+    id: '23',
     name: 'top-100-ad-clicking-users',
-    original_repository: 'top-100-ad-clicking-users',
+    repository: 'top-100-ad-clicking-users',
     formatted_name: 'top-100-ad-clicking-users.top-100-ad-clicking-users',
     type: 'table',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 24,
+    id: '24',
     name: 'profile-images',
-    original_repository: 'app-data',
+    repository: 'app-data',
     formatted_name: 'app-data.profile-images',
     type: 'folder',
-    workflow: 2,
+    workflow: '2',
+    branches: ['main', 'dev', 'staging'],
   },
   {
-    id: 25,
-    name: 'audit-log',
-    original_repository: 'app-data',
-    formatted_name: 'app-data.audit-log',
-    type: 'stream',
-    workflow: 2,
-  },
-  {
-    id: 26,
-    name: 'error-log',
-    original_repository: 'app-data',
-    formatted_name: 'app-data.error-log',
-    type: 'stream',
-    workflow: 2,
-  },
-  {
-    id: 27,
+    id: '25',
     name: 'app-docker-file',
-    original_repository: 'app-data',
+    repository: 'app-data',
     formatted_name: 'app-data.app-docker-file',
     type: 'file',
-    workflow: 2,
+    workflow: '2',
+    branches: ['main', 'dev', 'staging'],
   },
 ];
 
@@ -474,70 +480,6 @@ export const tableCollectionData = (): TableCollectionData => ({
 });
 
 /**
- * Get example {@link StreamSchema} object
- */
-const streamSchema = (): StreamSchema => ({
-  type: 'stream',
-  fields: [
-    {
-      name: 'timestamp',
-      type: 'timestamp',
-    },
-    {
-      name: 'level',
-      type: 'string',
-    },
-    {
-      name: 'message',
-      type: 'string',
-    },
-  ],
-  isLive: true,
-});
-
-/**
- * Get example {@link StreamCollectionData} object
- */
-export const streamCollectionData = (): StreamCollectionData => {
-  const schema = streamSchema();
-  return {
-    ...schema,
-    entries: [
-      {
-        timestamp: '2021-10-01T12:00:00Z',
-        level: 'info',
-        message: 'This is an info message',
-      },
-      {
-        timestamp: '2021-10-01T12:01:00Z',
-        level: 'warning',
-        message: 'This is a warning message',
-      },
-      {
-        timestamp: '2021-10-01T12:02:00Z',
-        level: 'error',
-        message: 'This is an error message',
-      },
-      {
-        timestamp: '2021-10-01T12:03:00Z',
-        level: 'info',
-        message: 'This is another info message',
-      },
-      {
-        timestamp: '2021-10-01T12:04:00Z',
-        level: 'warning',
-        message: 'This is another warning message',
-      },
-      {
-        timestamp: '2021-10-01T12:05:00Z',
-        level: 'error',
-        message: 'This is another error message',
-      },
-    ],
-  };
-};
-
-/**
  * Get exampe {@link FileSchema} object
  */
 const fileSchema = (): FileSchema => ({
@@ -620,10 +562,8 @@ export const repositorySchema = (): RepositorySchema => [
     schema:
       collection.type === 'table'
         ? tableSchema()
-        : collection.type === 'stream'
-          ? streamSchema()
-          : collection.type === 'file'
-            ? fileSchema()
-            : folderSchema(),
+        : collection.type === 'file'
+          ? fileSchema()
+          : folderSchema(),
   })),
 ];

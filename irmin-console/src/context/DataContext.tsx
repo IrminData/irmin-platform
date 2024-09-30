@@ -53,12 +53,6 @@ interface DataContextProps {
   loadingCommits: boolean;
   commits: Commit[] | null;
   fetchCommits: () => Promise<void>;
-  // Download repository
-  downloadRepository: (
-    path?: string,
-    redirectToSuccess?: string,
-    redirectToFailed?: string
-  ) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
@@ -94,13 +88,10 @@ export const DataProvider = ({
   const {
     repositories: { repositories },
   } = useWorkspace();
-  const {
-    branchService,
-    commitService,
-    schemaService,
-    queryService,
-    repositoryService,
-  } = useMemo(() => new IrminCore(locale), [locale]);
+  const { branchService, commitService, schemaService, queryService } = useMemo(
+    () => new IrminCore(locale),
+    [locale]
+  );
 
   // Active data context repository
   const [currentRepository, setCurrentRepository] = useState<
@@ -112,7 +103,7 @@ export const DataProvider = ({
     initialBranch
   );
 
-  // Active data context ref (eg. commit, tag)
+  // Active data context ref (eg. branch, commit, tag)
   const [currentRef, setCurrentRef] = useState<string | undefined>(initialRef);
 
   // Data state
@@ -145,8 +136,7 @@ export const DataProvider = ({
         const response = await schemaService.fetchSchema(
           collections,
           currentRepository,
-          currentBranch,
-          currentRef
+          currentRef ?? currentBranch
         );
         setSchema(response.data);
       } catch (error) {
@@ -237,54 +227,6 @@ export const DataProvider = ({
     [queryService, currentRepository, currentBranch, currentRef, irminAlert]
   );
 
-  /**
-   * Download the current repository to the client's local file system
-   * @param path - The path within the repository to download
-   * @param redirectToSuccess - The URL to redirect the user to after download success
-   * @param redirectToFailed - The URL to redirect the user to after download failure
-   */
-  const downloadRepository = useCallback(
-    async (
-      path?: string,
-      redirectToSuccess?: string,
-      redirectToFailed?: string
-    ) => {
-      try {
-        if (!currentRepository) return;
-
-        // Get the URL user should be redirected to after download
-        const currentUrl = window?.location?.href ?? '';
-        const successRedirectToUrl = redirectToSuccess ?? currentUrl;
-        const failedRedirectToUrl = redirectToFailed ?? currentUrl;
-
-        // Get the download link
-        const downloadLink = await repositoryService.getDownloadLink(
-          currentRepository,
-          currentBranch,
-          currentRef,
-          path,
-          successRedirectToUrl,
-          failedRedirectToUrl
-        );
-        // Direct the user to the download link, open in new tab
-        window.open(downloadLink, '_blank');
-      } catch (error) {
-        console.error('DataContext downloadRepository error', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to download repository'
-        );
-      }
-    },
-    [
-      currentRepository,
-      currentBranch,
-      currentRef,
-      repositoryService,
-      irminAlert,
-    ]
-  );
-
   // Default branch for the current repository
   const defaultBranch = useMemo(() => {
     return branches?.filter((branch) => branch.default)[0]?.name;
@@ -335,8 +277,6 @@ export const DataProvider = ({
         loadingCommits,
         commits,
         fetchCommits,
-        // Download repository
-        downloadRepository,
       }}
     >
       {children}

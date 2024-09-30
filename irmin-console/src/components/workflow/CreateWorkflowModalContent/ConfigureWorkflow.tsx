@@ -47,15 +47,6 @@ export default function ConfigureWorkflow({
       // Prevent if already processing
       if (processing) return;
       setProcessing(true);
-      // Validate the workflow fields
-      if (workflowData.name === '') {
-        irminAlert('error', dict.workflow.create.error.enterName);
-        return;
-      }
-      if (workflowData.description === '') {
-        irminAlert('error', dict.workflow.create.error.enterDescription);
-        return;
-      }
       // Create the workflow
       let result: IrminAPIResponse | undefined;
       if (workflowData.type === 'action') {
@@ -63,6 +54,9 @@ export default function ConfigureWorkflow({
           name: workflowData.name,
           description: workflowData.description,
           cron_syntax: workflowData.cron,
+          executable: workflowData.executable,
+          repository: workflowData.repository?.slug ?? '',
+          branch: workflowData.branch,
           path: workflowData.path,
         });
       }
@@ -71,9 +65,10 @@ export default function ConfigureWorkflow({
           name: workflowData.name,
           description: workflowData.description,
           cron_syntax: workflowData.cron,
+          repository: workflowData.repository?.slug ?? '',
+          branch: workflowData.branch,
           path: workflowData.path,
-          repositoryID: workflowData.repository?.id,
-          connectionID: workflowData.connection?.id,
+          connection: workflowData.connection?.id ?? '',
         });
       }
       if (workflowData.type === 'export') {
@@ -81,9 +76,10 @@ export default function ConfigureWorkflow({
           name: workflowData.name,
           description: workflowData.description,
           cron_syntax: workflowData.cron,
+          repository: workflowData.repository?.slug ?? '',
+          branch: workflowData.branch,
           path: workflowData.path,
-          repositoryID: workflowData.repository?.id,
-          connectionID: workflowData.connection?.id,
+          connection: workflowData.connection?.id ?? '',
           recursive: workflowData.recursive,
         });
       }

@@ -11,7 +11,7 @@ export type WorkflowableType = 'import' | 'action' | 'export';
 /**
  * Workflow type
  *
- * @typeParam id - Workflow ID
+ * @typeParam id - Workflow hash ID
  * @typeParam name - Workflow name
  * @typeParam owner - The workspace user that owns this workflow and is responsible for it
  * @typeParam workflowable_type - Type of workflow
@@ -26,9 +26,8 @@ export type WorkflowableType = 'import' | 'action' | 'export';
  * @typeParam updated_at - Workflow update date
  */
 export interface Workflow {
-  id: number;
+  id: string;
   name: string;
-  slug: string;
   owner: WorkspaceUser;
   workflowable_type: WorkflowableType;
   workflowable: Import | Action | Export;
@@ -67,7 +66,7 @@ export type ActionWorkflow = Workflow & { workflowable: Action };
  */
 export interface WorkflowRun {
   id: number;
-  workflow_id: number;
+  workflow_id: string;
   owner: WorkspaceUser;
   status: WorkflowStatus;
   started_at: string;
@@ -91,12 +90,14 @@ export type WorkflowStatus =
  *
  * @typeParam connection - Connection object of where to import from
  * @typeParam repository - Repository object of where to store the imported data
+ * @typeParam branch - Branch to import to
  * @typeParam path - Where in the repository to store the imported data
  */
 export interface Import {
   connection: Connection;
   repository: Repository;
-  path: '/';
+  branch: string;
+  path: string;
 }
 
 /**
@@ -104,21 +105,29 @@ export interface Import {
  *
  * @typeParam connection - Export destination, Connection object of where to export to
  * @typeParam repository - Repository object of what to export
+ * @typeParam branch - Branch to export from
  * @typeParam path - What in the repository to export
  * @typeParam recursive - If the export should be recursive
  */
 export interface Export {
   connection: Connection;
   repository: Repository;
-  path: '/';
+  branch: string;
+  path: string;
   recursive: false;
 }
 
 /**
  * Action object - workflowable for the Workflow
  *
- * @typeParam path - Path to the script file to be executed as an action workflow
+ * @typeParam executable - Path to the script file to be executed as an action workflow
+ * @typeParam repository - (optional) Repository object of where the action results will be stored
+ * @typeParam branch - (optional) Repository branch to store the action results in
+ * @typeParam path - (optional) Path in the repository to store the action results
  */
 export interface Action {
-  path: string;
+  executable: string;
+  repository?: Repository;
+  branch?: string;
+  path?: string;
 }

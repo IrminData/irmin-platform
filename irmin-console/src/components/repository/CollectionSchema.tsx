@@ -14,12 +14,10 @@ import { useWorkspace } from '@/context/workspace';
 import { RepositoryCollection } from '@/types/core/Collection';
 import { FileSchema } from '@/types/core/FileCollection';
 import { FolderSchema } from '@/types/core/FolderCollection';
-import { StreamSchema } from '@/types/core/StreamCollection';
 import { TableSchema } from '@/types/core/TableCollection';
 
 import FileCollectionSchema from './FileCollectionSchema';
 import FolderCollectionSchema from './FolderCollectionSchema';
-import StreamCollectionSchema from './StreamCollectionSchema';
 import TableCollectionSchema from './TableCollectionSchema';
 
 /**
@@ -45,13 +43,13 @@ export default function CollectionSchema({
     workspaces: { currentWorkspace },
     workflows: { allWorkflows },
   } = useWorkspace();
-  const { currentRepository, currentBranch } = useData();
+  const { currentRepository, currentBranch, currentRef } = useData();
 
   const [processingDelete, setProcessingDelete] = useState(false);
 
   const { repositoryService } = useMemo(() => new IrminCore(locale), [locale]);
 
-  const typeScpecificLabel = () => {
+  const typeScpecificLabel = useMemo(() => {
     if (collection.type === 'table') {
       return dict.repository.schema.table;
     }
@@ -61,16 +59,26 @@ export default function CollectionSchema({
     if (collection.type === 'file') {
       return dict.repository.schema.file;
     }
-    if (collection.type === 'stream') {
-      return dict.repository.schema.stream;
-    }
     return collection.type;
-  };
+  }, [collection.type, dict]);
 
-  const matchedWorkflow = allWorkflows.find(
-    (workflow) => workflow.id === collection.workflow
-  );
-  const downloadUrl = `/${locale}/console/${currentWorkspace?.slug}/repositories/${currentRepository}/download?collection=${collection.name}`;
+  const matchedWorkflow = useMemo(() => {
+    return allWorkflows.find((workflow) => workflow.id === collection.workflow);
+  }, [allWorkflows, collection.workflow]);
+
+  const downloadUrl = useMemo(() => {
+    const urlParams = new URLSearchParams();
+    urlParams.append('collection', collection.name);
+    urlParams.append('ref', currentRef ?? currentBranch ?? '');
+    return `/${locale}/console/${currentWorkspace?.slug}/repositories/${currentRepository}/download?${urlParams.toString()}`;
+  }, [
+    currentRepository,
+    currentWorkspace,
+    currentBranch,
+    currentRef,
+    collection.name,
+    locale,
+  ]);
 
   // Handle delete collection from the repository
   const handleDeleteCollection = () => {
@@ -111,7 +119,7 @@ export default function CollectionSchema({
   return (
     <div className='flex w-max min-w-72 flex-col overflow-scroll rounded-md border border-gray-100 bg-white text-xs dark:border-gray-800 dark:bg-irmin_black'>
       <div className='bg-gray-100 px-4 py-2 text-sm font-semibold dark:bg-gray-800'>
-        {typeScpecificLabel()} {`"${name}"`}
+        {typeScpecificLabel} {`"${name}"`}
       </div>
       <div className='p-2'>
         {collection.type === 'table' && (
@@ -132,12 +140,6 @@ export default function CollectionSchema({
             downloadUrl={downloadUrl}
           />
         )}
-        {collection.type === 'stream' && (
-          <StreamCollectionSchema
-            schema={collection.schema as StreamSchema}
-            downloadUrl={downloadUrl}
-          />
-        )}
       </div>
       <div className='flex flex-col gap-2 p-2'>
         {matchedWorkflow && (
@@ -147,7 +149,7 @@ export default function CollectionSchema({
             variant='solid'
             className='w-full'
             icon={<TbRun />}
-            href={`/${locale}/console/${currentWorkspace?.slug}/workflows/${matchedWorkflow.slug}`}
+            href={`/${locale}/console/${currentWorkspace?.slug}/workflows/${matchedWorkflow.id}`}
           >
             {dict.repository.viewWorkflow}
           </Button>

@@ -68,27 +68,27 @@ const WorkspaceContext = createContext<{
     isLoading: boolean;
     fetchConnections: (_forceFetch?: boolean) => void;
     updateConnection: (
-      _connectionID: number,
+      _connectionID: string,
       _updatedConnection: Connection
     ) => Promise<IrminAPIResponse>;
     reassignConnection: (
-      _connectionID: number,
+      _connectionID: string,
       _newOwner: WorkspaceUser
     ) => Promise<IrminAPIResponse>;
-    deleteConnection: (_connectionID: number) => Promise<IrminAPIResponse>;
+    deleteConnection: (_connectionID: string) => Promise<IrminAPIResponse>;
   };
   repositories: {
     repositories: Repository[];
     isLoading: boolean;
     fetchRepositories: (_forceFetch?: boolean) => void;
-    createRepository: (_dataRepo: Repository) => Promise<IrminAPIResponse>;
+    createRepository: (_repository: Repository) => Promise<IrminAPIResponse>;
     updateRepository: (
-      _dataRepoSlug: string,
+      _repositorySlug: string,
       _updatedRepository: Repository
     ) => Promise<IrminAPIResponse>;
-    deleteRepository: (_dataRepoSlug: string) => Promise<IrminAPIResponse>;
+    deleteRepository: (_repositorySlug: string) => Promise<IrminAPIResponse>;
     reassignRepository: (
-      _dataRepo: Repository,
+      _repository: Repository,
       _newOwner: WorkspaceUser
     ) => Promise<IrminAPIResponse>;
   };
@@ -110,16 +110,16 @@ const WorkspaceContext = createContext<{
     };
     allWorkflows: Workflow[];
     updateWorkflow: (
-      _workflowId: number,
+      _workflowId: string,
       _updatedWorkflow: Workflow
     ) => Promise<IrminAPIResponse>;
     reassignWorkflow: (
-      _workflowId: number,
+      _workflowId: string,
       _newOwner: WorkspaceUser
     ) => Promise<IrminAPIResponse>;
-    deleteWorkflow: (_workflowId: number) => Promise<IrminAPIResponse>;
-    pauseWorkflow: (_workflowId: number) => Promise<IrminAPIResponse>;
-    resumeWorkflow: (_workflowId: number) => Promise<IrminAPIResponse>;
+    deleteWorkflow: (_workflowId: string) => Promise<IrminAPIResponse>;
+    pauseWorkflow: (_workflowId: string) => Promise<IrminAPIResponse>;
+    resumeWorkflow: (_workflowId: string) => Promise<IrminAPIResponse>;
   };
 }>({
   workspaceLoading: false,

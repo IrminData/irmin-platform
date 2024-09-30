@@ -44,11 +44,11 @@ export const repositories = (): Repository[] => [
       '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     collections: [
       ...collections().filter(
-        (item) => item.original_repository === 'main-google-analytics'
+        (item) => item.repository === 'main-google-analytics'
       ),
     ],
     owner: workspaceUsers()[0],
-    is_immutable: true,
+    is_immutable: false,
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -61,12 +61,10 @@ export const repositories = (): Repository[] => [
     documentation:
       '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     collections: [
-      ...collections().filter(
-        (item) => item.original_repository === 'app-data'
-      ),
+      ...collections().filter((item) => item.repository === 'app-data'),
     ],
     owner: workspaceUsers()[1],
-    is_immutable: true,
+    is_immutable: false,
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -79,12 +77,10 @@ export const repositories = (): Repository[] => [
     documentation:
       '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     collections: [
-      ...collections().filter(
-        (item) => item.original_repository === 'excel-kpis'
-      ),
+      ...collections().filter((item) => item.repository === 'excel-kpis'),
     ],
     owner: workspaceUsers()[2],
-    is_immutable: true,
+    is_immutable: false,
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -98,10 +94,10 @@ export const repositories = (): Repository[] => [
       '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     collections: [
       ...collections().filter(
-        (item) => item.original_repository === 'management-data-from-excel'
+        (item) => item.repository === 'management-data-from-excel'
       ),
     ],
-    is_immutable: true,
+    is_immutable: false,
     owner: workspaceUsers()[3],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
@@ -116,10 +112,10 @@ export const repositories = (): Repository[] => [
       '# Explain here what this repository is\n\n## Write internal data documentation here.\n\nHow was this repo created, where the data is from, how to update it, where the data from it is used etc...',
     collections: [
       ...collections().filter(
-        (item) => item.original_repository === 'google-sheets-kpis'
+        (item) => item.repository === 'google-sheets-kpis'
       ),
     ],
-    is_immutable: true,
+    is_immutable: false,
     owner: workspaceUsers()[0],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
@@ -132,10 +128,10 @@ export const repositories = (): Repository[] => [
     documentation: '',
     collections: [
       ...collections().filter(
-        (item) => item.original_repository === 'top-100-ad-clicking-users'
+        (item) => item.repository === 'top-100-ad-clicking-users'
       ),
     ],
-    is_immutable: true,
+    is_immutable: false,
     owner: workspaceUsers()[2],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),

@@ -38,8 +38,6 @@ const CollectionSelector = ({
         return <TbFile className='text-gray-500' />;
       case 'table':
         return <TbTable className='text-green-500' />;
-      case 'stream':
-        return <TbFile className='text-purple-500' />;
       default:
         return <TbFile />;
     }
@@ -77,11 +75,6 @@ const CollectionSelector = ({
                 <p>
                   {dict.repository.workflow}:{' '}
                   {allWorkflows.find((w) => w.id === item.workflow)?.name}
-                </p>
-              )}
-              {item.original_repository !== repository.slug && (
-                <p>
-                  {dict.repository.collectionFrom}: {item.original_repository}
                 </p>
               )}
             </div>

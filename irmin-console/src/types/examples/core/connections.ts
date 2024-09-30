@@ -12,9 +12,8 @@ import { workspaceUsers } from './users';
  */
 export const connections = (): Connection[] => [
   {
-    id: 0,
+    id: '0',
     name: 'Main Google Analytics',
-    slug: 'main-google-analytics',
     owner: workspaceUsers()[0],
     description: 'This an example Connection to Google Analytics.',
     documentation: '# Hello World! \n This is a test documentation.',
@@ -28,9 +27,8 @@ export const connections = (): Connection[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: 1,
+    id: '1',
     name: 'KPIs spreadsheet',
-    slug: 'kpis-spreadsheet',
     owner: workspaceUsers()[0],
     description:
       'This an example Connection for syncing to an Excel spreadheet with KPIs.',
@@ -43,9 +41,8 @@ export const connections = (): Connection[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: 2,
+    id: '2',
     name: 'HR spreadsheet',
-    slug: 'hr-spreadsheet',
     owner: workspaceUsers()[0],
     description:
       'This an example Connection for syncing to an Excel spreadheet with HR and management info.',
@@ -58,9 +55,8 @@ export const connections = (): Connection[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: 3,
+    id: '3',
     name: 'Google Sheets KPIs',
-    slug: 'google-sheets-kpis',
     owner: workspaceUsers()[0],
     description:
       'This an example Connection for syncing to an Google Sheets with KPIs.',
@@ -72,9 +68,8 @@ export const connections = (): Connection[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: 4,
+    id: '4',
     name: 'App database production',
-    slug: 'app-database-production',
     owner: workspaceUsers()[0],
     description:
       'This an example Connection for syncing to a production PostgreSQL database.',

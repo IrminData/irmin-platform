@@ -21,8 +21,10 @@ import ConfigureWorkflowable from './ConfigureWorkflowable';
  * @typeParam type - Workflow type, eg. import, action, export
  * @typeParam connection - Connection to use in the workflow
  * @typeParam path - Path to use in the workflow
+ * @typeParam branch - Branch to use in the workflow
  * @typeParam repository - Repository to use in the workflow
  * @typeParam recursive - If the workflow should be recursive
+ * @typeParam executable - Path to the script file to be executed as an action workflow
  */
 export interface WorkflowSetup {
   name: string;
@@ -31,8 +33,10 @@ export interface WorkflowSetup {
   type: WorkflowableType;
   connection: Connection | null;
   path: string;
+  branch: string;
   repository: Repository | null;
   recursive: boolean;
+  executable: string;
 }
 
 /**
@@ -45,8 +49,10 @@ export const initialWorkflowData: WorkflowSetup = {
   type: 'action',
   connection: null,
   path: '/',
+  branch: 'main',
   repository: null,
   recursive: false,
+  executable: '',
 };
 
 /**

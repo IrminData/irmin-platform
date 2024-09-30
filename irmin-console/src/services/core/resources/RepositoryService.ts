@@ -142,10 +142,10 @@ class RepositoryService {
    *
    * @todo Provide link to Irmin API docs
    *
-   * @param dataRepoSlug - The slug of the Repository to delete
+   * @param repositorySlug - The slug of the Repository to delete
    *
    */
-  async deleteRepository(dataRepoSlug: string) {
+  async deleteRepository(repositorySlug: string) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
@@ -153,7 +153,7 @@ class RepositoryService {
       formData.append('_method', 'DELETE');
 
       const response = await this.irminCore.fetch(
-        `/v1/repositories/${dataRepoSlug}/delete`,
+        `/v1/repositories/${repositorySlug}/delete`,
         {
           method: 'POST',
 
@@ -174,11 +174,14 @@ class RepositoryService {
    *
    * @todo Provide link to Irmin API docs
    *
-   * @param dataRepoSlug - The slug of the Repository to update
+   * @param repositorySlug - The slug of the Repository to update
    * @param updatedRepository - The updated Repository object
    *
    */
-  async updateRepository(dataRepoSlug: string, updatedRepository: Repository) {
+  async updateRepository(
+    repositorySlug: string,
+    updatedRepository: Repository
+  ) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
@@ -192,7 +195,7 @@ class RepositoryService {
       });
 
       const response = await this.irminCore.fetch(
-        `/v1/repositories/${dataRepoSlug}/update`,
+        `/v1/repositories/${repositorySlug}/update`,
         {
           method: 'POST',
           body: formData,

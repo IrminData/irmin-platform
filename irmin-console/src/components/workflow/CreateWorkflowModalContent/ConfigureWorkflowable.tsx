@@ -6,7 +6,6 @@ import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
 
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
 import { WorkflowSetup } from '.';
@@ -29,7 +28,6 @@ export default function ConfigureWorkflowable({
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const { dict } = useLocale();
-  const { irminAlert } = usePopup();
 
   const {
     repositories: { repositories },
@@ -37,37 +35,6 @@ export default function ConfigureWorkflowable({
   } = useWorkspace();
 
   const handleContinue = () => {
-    // Validate workflow specific fields
-    if (
-      workflowData.type === 'action' &&
-      (!workflowData.path ||
-        workflowData.path === '/' ||
-        workflowData.path === '')
-    ) {
-      irminAlert('error', dict.workflow.create.error.selectScript);
-      return;
-    }
-    if (
-      (workflowData.type === 'import' || workflowData.type === 'export') &&
-      !workflowData.connection
-    ) {
-      irminAlert('error', dict.workflow.create.error.selectConnection);
-      return;
-    }
-    if (
-      (workflowData.type === 'import' || workflowData.type === 'export') &&
-      !workflowData.repository
-    ) {
-      irminAlert('error', dict.workflow.create.error.selectRepository);
-      return;
-    }
-    if (
-      (workflowData.type === 'import' || workflowData.type === 'export') &&
-      (!workflowData.path || workflowData.path === '')
-    ) {
-      irminAlert('error', dict.workflow.create.error.selectPath);
-      return;
-    }
     // Continue to the next step
     setCurrentStep(2);
   };
@@ -76,26 +43,95 @@ export default function ConfigureWorkflowable({
     <div className='flex w-full flex-col px-4 pb-6'>
       <div className='flex flex-col gap-4 py-4'>
         {workflowData.type === 'action' && (
-          <div>
-            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-              {dict.workflow.executableScriptFile}
-            </label>
-            <Input
-              size='sm'
-              variant='outline'
-              colorScheme='gray'
-              required
-              className='h-11 w-full'
-              type='text'
-              defaultValue={workflowData.path ?? '/'}
-              onChange={(e) =>
-                setWorkflowData({
-                  ...workflowData,
-                  path: e.target.value,
-                })
-              }
-            />
-          </div>
+          <>
+            <div>
+              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
+                {dict.workflow.executableScriptFile}
+              </label>
+              <Input
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                required
+                className='h-11 w-full'
+                type='text'
+                defaultValue={workflowData.path ?? ''}
+                onChange={(e) =>
+                  setWorkflowData({
+                    ...workflowData,
+                    executable: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
+                {dict.workflow.scriptResultDestinationRepository}
+              </label>
+              <ReactSelect
+                value={{
+                  value: workflowData.repository?.slug ?? '',
+                  label: workflowData.repository?.name ?? '',
+                }}
+                onChange={(newValue) => {
+                  if (!newValue) return;
+                  setWorkflowData({
+                    ...workflowData,
+                    repository:
+                      repositories.find(
+                        (repo) => repo.slug === newValue.value
+                      ) ?? null,
+                  });
+                }}
+                options={repositories.map((repo) => ({
+                  value: repo.slug,
+                  label: repo.name,
+                }))}
+                className='react-select-container w-full'
+                classNamePrefix='react-select'
+              />
+            </div>
+            <div>
+              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
+                {dict.workflow.scriptResultDestinationBranch}
+              </label>
+              <Input
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                required
+                className='h-11 w-full'
+                type='text'
+                defaultValue={workflowData.branch ?? ''}
+                onChange={(e) =>
+                  setWorkflowData({
+                    ...workflowData,
+                    branch: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
+                {dict.workflow.scriptResultDestinationPath}
+              </label>
+              <Input
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                required
+                className='h-11 w-full'
+                type='text'
+                defaultValue={workflowData.path ?? '/'}
+                onChange={(e) =>
+                  setWorkflowData({
+                    ...workflowData,
+                    path: e.target.value,
+                  })
+                }
+              />
+            </div>
+          </>
         )}
         {workflowData.type === 'import' && (
           <>
@@ -105,7 +141,7 @@ export default function ConfigureWorkflowable({
               </label>
               <ReactSelect
                 value={{
-                  value: workflowData.connection?.slug ?? '',
+                  value: workflowData.connection?.id ?? '',
                   label: workflowData.connection?.name ?? '',
                 }}
                 onChange={(newValue) => {
@@ -113,13 +149,12 @@ export default function ConfigureWorkflowable({
                   setWorkflowData({
                     ...workflowData,
                     connection:
-                      connections.find(
-                        (conn) => conn.slug === newValue.value
-                      ) ?? null,
+                      connections.find((conn) => conn.id === newValue.value) ??
+                      null,
                   });
                 }}
                 options={connections.map((conn) => ({
-                  value: conn.slug,
+                  value: conn.id,
                   label: conn.name,
                 }))}
                 className='react-select-container w-full'
@@ -155,6 +190,26 @@ export default function ConfigureWorkflowable({
             </div>
             <div>
               <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
+                {dict.workflow.importDestinationBranch}
+              </label>
+              <Input
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                required
+                className='h-11 w-full'
+                type='text'
+                defaultValue={workflowData.branch ?? ''}
+                onChange={(e) =>
+                  setWorkflowData({
+                    ...workflowData,
+                    branch: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
                 {dict.workflow.importDestinationPath}
               </label>
               <Input
@@ -183,7 +238,7 @@ export default function ConfigureWorkflowable({
               </label>
               <ReactSelect
                 value={{
-                  value: workflowData.connection?.slug ?? '',
+                  value: workflowData.connection?.id ?? '',
                   label: workflowData.connection?.name ?? '',
                 }}
                 onChange={(newValue) => {
@@ -191,13 +246,12 @@ export default function ConfigureWorkflowable({
                   setWorkflowData({
                     ...workflowData,
                     connection:
-                      connections.find(
-                        (conn) => conn.slug === newValue.value
-                      ) ?? null,
+                      connections.find((conn) => conn.id === newValue.value) ??
+                      null,
                   });
                 }}
                 options={connections.map((conn) => ({
-                  value: conn.slug,
+                  value: conn.id,
                   label: conn.name,
                 }))}
                 className='react-select-container w-full'
@@ -229,6 +283,26 @@ export default function ConfigureWorkflowable({
                 }))}
                 className='react-select-container w-full'
                 classNamePrefix='react-select'
+              />
+            </div>
+            <div>
+              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
+                {dict.workflow.exportSourceBranch}
+              </label>
+              <Input
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                required
+                className='h-11 w-full'
+                type='text'
+                defaultValue={workflowData.branch ?? ''}
+                onChange={(e) =>
+                  setWorkflowData({
+                    ...workflowData,
+                    branch: e.target.value,
+                  })
+                }
               />
             </div>
             <div>

@@ -14,7 +14,6 @@ import {
   fileCollectionData,
   folderCollectionData,
   repositorySchema,
-  streamCollectionData,
   tableCollectionData,
 } from './collections';
 import { commits } from './commits';
@@ -125,11 +124,6 @@ export const exampleRepositorySchema = repositorySchema();
  * Fake table collection data {@link tableCollectionData}
  */
 export const exampleTableCollectionData = tableCollectionData();
-
-/**
- * Fake stream collection data {@link streamCollectionData}
- */
-export const exampleStreamCollectionData = streamCollectionData();
 
 /**
  * Fake folder collection data {@link folderCollectionData}

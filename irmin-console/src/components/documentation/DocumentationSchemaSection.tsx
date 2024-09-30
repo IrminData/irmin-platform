@@ -53,7 +53,7 @@ export default function DocumentationSchemaSection() {
       };
       if (connections) {
         connectionsNode.children = connections.map((connection) => ({
-          id: `connection-${connection.slug}`,
+          id: `connection-${connection.id}`,
           label: connection.name,
         }));
       }

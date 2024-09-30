@@ -8,6 +8,8 @@ import WorkflowSettingsSection from '@/components/workflow/WorkflowSettingsSecti
 
 import { useWorkspace } from '@/context/workspace';
 
+import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
+
 import { SingleWorkflowLayoutParams } from '../layout';
 
 /**
@@ -21,16 +23,18 @@ export default function WorkflowSettingsPage({
 }: {
   params: SingleWorkflowLayoutParams;
 }) {
-  const workflowSlug = params.workflow;
+  const workflowId = params.workflow;
+  if (isInvalidRouteProp(workflowId)) notFound();
 
   const {
     workflows: { allWorkflows },
   } = useWorkspace();
 
   const workflow = useMemo(
-    () => allWorkflows.find((item) => item.slug === workflowSlug),
-    [allWorkflows, workflowSlug]
+    () => allWorkflows.find((item) => item.id === workflowId),
+    [allWorkflows, workflowId]
   );
+
   if (!workflow) notFound();
 
   return <WorkflowSettingsSection workflow={workflow} />;

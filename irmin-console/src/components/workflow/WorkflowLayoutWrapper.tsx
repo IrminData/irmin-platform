@@ -20,37 +20,42 @@ import StatusBadge from '@/components/common/status/StatusBadge';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Import } from '@/types/core/Workflow';
-
 /**
  * Component to wrap the single Workflow pages in.
  *
- * @param children - The children to render
+ * @param props - The properties of the component
+ * @param props.children - The children to render
+ * @param props.workspaceSlug - The slug of the current workspace
+ * @param props.workflowId - The ID of the workflow to show
+ * @param props.locale - The language of the user
+ *
+ * @returns The Workflow layout wrapper
  */
 export default function WorkflowLayoutWrapper({
   children,
   workspaceSlug,
-  workflowSlug,
+  workflowId,
   locale,
 }: {
   children: React.ReactNode;
   workspaceSlug: string;
-  workflowSlug: string;
+  workflowId: string;
   locale: string;
 }) {
   const currentPath = usePathname();
   const { dict } = useLocale();
+
   const {
     workflows: { allWorkflows },
   } = useWorkspace();
 
   const workflow = useMemo(
-    () => allWorkflows.find((item) => item.slug === workflowSlug),
-    [allWorkflows, workflowSlug]
+    () => allWorkflows.find((item) => item.id === workflowId),
+    [allWorkflows, workflowId]
   );
 
   const repositorySlug = useMemo(
-    () => (workflow?.workflowable as Import)?.repository?.slug ?? null,
+    () => workflow?.workflowable?.repository?.slug ?? null,
     [workflow]
   );
 
@@ -58,10 +63,10 @@ export default function WorkflowLayoutWrapper({
     () => [
       {
         title: dict.workflow.tabs.overview,
-        href: `/${locale}/console/${workspaceSlug}/workflows/${workflowSlug}`,
+        href: `/${locale}/console/${workspaceSlug}/workflows/${workflowId}`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/workflows/${workflowSlug}`,
+          `/${locale}/console/${workspaceSlug}/workflows/${workflowId}`,
         icon: <TbRun size={14} />,
         hide: false,
       },
@@ -76,33 +81,33 @@ export default function WorkflowLayoutWrapper({
       },
       {
         title: dict.workflow.tabs.documentation,
-        href: `/${locale}/console/${workspaceSlug}/workflows/${workflowSlug}/documentation`,
+        href: `/${locale}/console/${workspaceSlug}/workflows/${workflowId}/documentation`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/workflows/${workflowSlug}/documentation`,
+          `/${locale}/console/${workspaceSlug}/workflows/${workflowId}/documentation`,
         icon: <TbFileText size={14} />,
         hide: false,
       },
       {
         title: dict.workflow.tabs.logs,
-        href: `/${locale}/console/${workspaceSlug}/logs/workflow/${workflowSlug}`,
+        href: `/${locale}/console/${workspaceSlug}/logs/workflow/${workflowId}`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/logs/workflow/${workflowSlug}`,
+          `/${locale}/console/${workspaceSlug}/logs/workflow/${workflowId}`,
         icon: <TbLogs size={14} />,
         hide: false,
       },
       {
         title: dict.workflow.tabs.settings,
-        href: `/${locale}/console/${workspaceSlug}/workflows/${workflowSlug}/settings`,
+        href: `/${locale}/console/${workspaceSlug}/workflows/${workflowId}/settings`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/workflows/${workflowSlug}/settings`,
+          `/${locale}/console/${workspaceSlug}/workflows/${workflowId}/settings`,
         icon: <TbSettings size={14} />,
         hide: false,
       },
     ],
-    [currentPath, locale, dict, workspaceSlug, workflowSlug, repositorySlug]
+    [currentPath, locale, dict, workspaceSlug, workflowId, repositorySlug]
   );
 
   if (!workflow)

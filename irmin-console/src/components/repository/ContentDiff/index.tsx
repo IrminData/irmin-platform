@@ -48,7 +48,7 @@ const ContentDiff = ({
       downloadContent(
         content,
         contentType,
-        `${item.collection.original_repository}_${item.collection.name}`
+        `${item.collection.repository}_${item.collection.name}`
       );
     },
     [item]

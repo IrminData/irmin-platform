@@ -36,13 +36,11 @@ class SchemaService {
    *
    * @param collections - The collections to fetch schema for
    * @param repository - (optional) The repository to fetch schema for
-   * @param branch - (optional) The branch to fetch schema for
    * @param ref - (optional) The ref to fetch schema for
    */
   async fetchSchema(
     collections: string[],
     repository?: string,
-    branch?: string,
     ref?: string
   ): Promise<SchemaAPIResponse> {
     if (isOfflineMode)
@@ -53,7 +51,6 @@ class SchemaService {
         urlParams.append('collection', collection)
       );
       if (repository) urlParams.append('repository', repository);
-      if (branch) urlParams.append('branch', branch);
       if (ref) urlParams.append('ref', ref);
 
       const response = (await this.irminCore.fetch(

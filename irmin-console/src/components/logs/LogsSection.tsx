@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -59,9 +59,10 @@ export default function LogsSection({ workflow }: { workflow?: string }) {
     };
   }, [searchQuery, logEvents]);
 
-  const selectedWorkflow = allWorkflows.find((w) => w.slug === workflow);
-
-  const workspaceSlug = currentWorkspace?.slug;
+  const selectedWorkflow = useMemo(
+    () => allWorkflows.find((w) => w.id === workflow),
+    [allWorkflows, workflow]
+  );
 
   return (
     <div className='container relative mx-auto max-w-6xl'>
@@ -87,7 +88,7 @@ export default function LogsSection({ workflow }: { workflow?: string }) {
               <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
                 <Link
                   className='hover:underline'
-                  href={`/${locale}/console/${workspaceSlug}/workflows/${workflow}`}
+                  href={`/${locale}/console/${currentWorkspace?.slug}/workflows/${workflow}`}
                 >
                   {selectedWorkflow.name}
                 </Link>

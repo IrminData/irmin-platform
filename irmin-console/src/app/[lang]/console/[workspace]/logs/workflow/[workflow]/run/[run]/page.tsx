@@ -12,7 +12,7 @@ export default function WorkflowRunLogsPage({
 }) {
   return (
     <WorkflowRunLogsSection
-      workflow={params.workflow}
+      workflowId={params.workflow}
       workflowRunId={params.run}
     />
   );

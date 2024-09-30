@@ -25,7 +25,6 @@ import { ActionWorkflow } from '@/types/core/Workflow';
 
 import ErrorList from './ErrorList';
 import FolderAndFileData from './FolderAndFileData';
-import StreamData from './StreamData';
 import TableData from './TableData';
 
 /**
@@ -224,13 +223,6 @@ const QueryResults = ({
       )}
       {activeTab === 'data' && result?.data?.type === 'file' && (
         <FolderAndFileData
-          title={title}
-          data={result.data}
-          loading={showLoadingOnData}
-        />
-      )}
-      {activeTab === 'data' && result?.data?.type === 'stream' && (
-        <StreamData
           title={title}
           data={result.data}
           loading={showLoadingOnData}

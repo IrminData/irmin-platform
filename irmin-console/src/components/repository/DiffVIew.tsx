@@ -58,23 +58,23 @@ const DiffView = ({ diff }: { diff: Diff }) => {
       baseRef,
       compareRef,
     }: {
-      collection: number;
+      collection: string;
       repository: string;
       baseRef: string;
       compareRef: string;
     }) => {
       const { collectionService } = new IrminCore(locale);
       const [baseContent, compareContent] = await Promise.all([
-        collectionService.fetchCollectionContent(
-          collection,
-          repository,
-          baseRef
-        ),
-        collectionService.fetchCollectionContent(
-          collection,
-          repository,
-          compareRef
-        ),
+        collectionService.fetchContent({
+          collection: collection,
+          repository: repository,
+          ref: baseRef,
+        }),
+        collectionService.fetchContent({
+          collection: collection,
+          repository: repository,
+          ref: compareRef,
+        }),
       ]);
       return {
         base: baseContent,

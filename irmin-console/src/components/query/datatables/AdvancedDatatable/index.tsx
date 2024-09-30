@@ -17,7 +17,6 @@ import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { StreamEntry } from '@/types/core/StreamCollection';
 import { TableRow } from '@/types/core/TableCollection';
 import { RenderableRow } from '@/types/internal/RenderableRow';
 
@@ -31,11 +30,7 @@ const DataSheet = dynamic(() => import('./DataSheet'), {
  * Uses the `react-datasheet-grid` library using the `DataSheet` component.
  * This component is used to display a more advanced datatable.
  */
-export default function AdvancedDatatable({
-  items,
-}: {
-  items: (TableRow | StreamEntry)[];
-}) {
+export default function AdvancedDatatable({ items }: { items: TableRow[] }) {
   const { locale } = useLocale();
 
   const [renderItems, setRenderItems] = useState<RenderableRow[]>([]);

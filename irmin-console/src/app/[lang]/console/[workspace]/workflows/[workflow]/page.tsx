@@ -21,15 +21,15 @@ export default function WorkflowPage({
 }: {
   params: SingleWorkflowLayoutParams;
 }) {
-  const workflowSlug = params.workflow;
+  const workflowId = params.workflow;
 
   const {
     workflows: { allWorkflows },
   } = useWorkspace();
 
   const workflow = useMemo(
-    () => allWorkflows.find((item) => item.slug === workflowSlug),
-    [allWorkflows, workflowSlug]
+    () => allWorkflows.find((item) => item.id === workflowId),
+    [allWorkflows, workflowId]
   );
   if (!workflow) notFound();
 

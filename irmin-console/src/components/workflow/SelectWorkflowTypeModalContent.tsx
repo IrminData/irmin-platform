@@ -13,7 +13,6 @@ import {
 import Button from '@/components/common/button/Button';
 
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
 
 import { WorkflowableType } from '@/types/core/Workflow';
 
@@ -23,16 +22,11 @@ import { WorkflowableType } from '@/types/core/Workflow';
 export default function SelectWorkflowTypeModalContent() {
   const { dict } = useLocale();
   const router = useRouter();
-  const { irminAlert } = usePopup();
 
   const [workflowableType, setWorkflowableType] =
     useState<WorkflowableType | null>(null);
 
   const handleContinue = () => {
-    if (!workflowableType) {
-      irminAlert('error', dict.workflow.create.error.selectWorkflowType);
-      return;
-    }
     // Direct to the next step
     if (workflowableType === 'action') {
       router.push('../workflows/actions/create');

@@ -21,11 +21,11 @@ import { useWorkspace } from '@/context/workspace';
  */
 export default function ConnectionLayoutWrapper({
   children,
-  connectionSlug,
+  connectionID,
   workspaceSlug,
 }: {
   children: React.ReactNode;
-  connectionSlug: string;
+  connectionID: string;
   workspaceSlug: string;
 }) {
   const currentPath = usePathname();
@@ -35,41 +35,41 @@ export default function ConnectionLayoutWrapper({
   } = useWorkspace();
 
   const connection = useMemo(
-    () => connections.find((item) => item.slug === connectionSlug),
-    [connections, connectionSlug]
+    () => connections.find((item) => item.id === connectionID),
+    [connections, connectionID]
   );
 
   const tabs = useMemo(
     () => [
       {
         title: dict.connections.tabs.overview,
-        href: `/${locale}/console/${workspaceSlug}/connections/${connectionSlug}`,
+        href: `/${locale}/console/${workspaceSlug}/connections/${connectionID}`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/connections/${connectionSlug}`,
+          `/${locale}/console/${workspaceSlug}/connections/${connectionID}`,
         icon: <GoWorkflow size={14} />,
         hide: false,
       },
       {
         title: dict.connections.tabs.documentation,
-        href: `/${locale}/console/${workspaceSlug}/connections/${connectionSlug}/documentation`,
+        href: `/${locale}/console/${workspaceSlug}/connections/${connectionID}/documentation`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/connections/${connectionSlug}/documentation`,
+          `/${locale}/console/${workspaceSlug}/connections/${connectionID}/documentation`,
         icon: <TbFileText size={14} />,
         hide: false,
       },
       {
         title: dict.connections.tabs.settings,
-        href: `/${locale}/console/${workspaceSlug}/connections/${connectionSlug}/settings`,
+        href: `/${locale}/console/${workspaceSlug}/connections/${connectionID}/settings`,
         active:
           currentPath ===
-          `/${locale}/console/${workspaceSlug}/connections/${connectionSlug}/settings`,
+          `/${locale}/console/${workspaceSlug}/connections/${connectionID}/settings`,
         icon: <TbSettings size={14} />,
         hide: false,
       },
     ],
-    [currentPath, locale, dict, workspaceSlug, connectionSlug]
+    [currentPath, locale, dict, workspaceSlug, connectionID]
   );
 
   if (!connection)

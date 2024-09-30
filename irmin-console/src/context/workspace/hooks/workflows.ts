@@ -173,7 +173,7 @@ export const useUpdateWorkflow = (
   setExports: (exports: ExportWorkflow[]) => void
 ) =>
   useCallback(
-    async (workflowId: number, updatedWorkflow: Workflow) => {
+    async (workflowId: string, updatedWorkflow: Workflow) => {
       // Update the workflow using the workflow service
       const { workflowService } = new IrminCore(locale);
       const response = await workflowService.updateWorkflow(
@@ -229,7 +229,7 @@ export const useReassignWorkflow = (
   setExports: (exports: ExportWorkflow[]) => void
 ) =>
   useCallback(
-    async (workflowId: number, newOwner: WorkspaceUser) => {
+    async (workflowId: string, newOwner: WorkspaceUser) => {
       // Reassign the workflow using the workflow service
       const { workflowService } = new IrminCore(locale);
       const response = await workflowService.reassignWorkflow(
@@ -291,7 +291,7 @@ export const usePauseWorkflow = (
   setExports: (exports: ExportWorkflow[]) => void
 ) =>
   useCallback(
-    async (workflowId: number) => {
+    async (workflowId: string) => {
       // Pause the workflow
       const { workflowService } = new IrminCore(locale);
       const response = await workflowService.pauseWorkflow(workflowId);
@@ -350,7 +350,7 @@ export const useResumeWorkflow = (
   setExports: (exports: ExportWorkflow[]) => void
 ) =>
   useCallback(
-    async (workflowId: number) => {
+    async (workflowId: string) => {
       // Resume the workflow
       const { workflowService } = new IrminCore(locale);
       const response = await workflowService.resumeWorkflow(workflowId);
@@ -409,7 +409,7 @@ export const useDeleteWorkflow = (
   setExports: (exports: ExportWorkflow[]) => void
 ) =>
   useCallback(
-    async (workflowId: number) => {
+    async (workflowId: string) => {
       // Delete the workflow
       const { workflowService } = new IrminCore(locale);
       const response = await workflowService.deleteWorkflow(workflowId);

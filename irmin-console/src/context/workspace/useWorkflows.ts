@@ -82,7 +82,7 @@ const useWorkflows = ({
 
   // Construct "all workflows" object from imports, exports and actions
   const allWorkflows = useMemo(
-    () => [...actions, ...imports, ...exports].sort((a, b) => a.id - b.id),
+    () => [...actions, ...imports, ...exports],
     [actions, imports, exports]
   );
 

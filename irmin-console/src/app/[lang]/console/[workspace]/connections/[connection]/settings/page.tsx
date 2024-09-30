@@ -17,13 +17,13 @@ export default function ConnectionSettingsPage({
 }: {
   params: SingleConnectionLayoutParams;
 }) {
-  const connectionSlug = params.connection;
+  const connectionID = params.connection;
 
   const {
     connections: { connections },
   } = useWorkspace();
 
-  const connection = connections.find((item) => item.slug === connectionSlug);
+  const connection = connections.find((item) => item.id === connectionID);
   if (!connection) return <></>;
 
   return <ConnectionSettingsSection connection={connection} />;

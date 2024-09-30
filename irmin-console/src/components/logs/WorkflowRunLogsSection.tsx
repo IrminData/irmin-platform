@@ -25,14 +25,14 @@ import LogFeed from './LogFeed';
  * Workflow Run Logs section - showing logs for a specific workflow run.
  *
  * @param props - The component properties
- * @param props.workflow - Slug of the workflow to fetch logs for
+ * @param props.workflowId - ID of the workflow to fetch logs for
  * @param props.workflowRunId - ID of the workflow run to fetch logs for
  */
 export default function WorkflowRunLogsSection({
-  workflow,
+  workflowId,
   workflowRunId,
 }: {
-  workflow?: string;
+  workflowId?: string;
   workflowRunId?: string;
 }) {
   const router = useRouter();
@@ -49,18 +49,19 @@ export default function WorkflowRunLogsSection({
   const { workflowService } = useMemo(() => new IrminCore(locale), [locale]);
 
   useEffect(() => {
-    fetchWorkflowRunLogs(workflow, workflowRunId);
-    if (!workflow || !workflowRunId) return;
+    fetchWorkflowRunLogs(workflowId, workflowRunId);
+    if (!workflowId || !workflowRunId) return;
     workflowService
-      .fetchWorkflowRunByID(workflow, workflowRunId)
+      .fetchWorkflowRunByID(workflowId, workflowRunId)
       .then((res) => {
         setRun(res.data);
       });
-  }, [workflow, workflowRunId, fetchWorkflowRunLogs, workflowService]);
+  }, [workflowId, workflowRunId, fetchWorkflowRunLogs, workflowService]);
 
-  const selectedWorkflow = allWorkflows.find((w) => w.slug === workflow);
-
-  const workspaceSlug = currentWorkspace?.slug;
+  const selectedWorkflow = useMemo(
+    () => allWorkflows.find((w) => w.id === workflowId),
+    [allWorkflows, workflowId]
+  );
 
   return (
     <div className='flex flex-col px-2 pt-12 md:px-4'>
@@ -84,7 +85,7 @@ export default function WorkflowRunLogsSection({
               <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
                 <Link
                   className='hover:underline'
-                  href={`/${locale}/console/${workspaceSlug}/workflows/${workflow}`}
+                  href={`/${locale}/console/${currentWorkspace?.slug}/workflows/${workflowId}`}
                 >
                   {selectedWorkflow.name}
                 </Link>

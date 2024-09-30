@@ -80,7 +80,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
         {
           label: dict.list.logs,
           primary: false,
-          href: `/${locale}/console/${currentWorkspace?.slug}/logs/workflow/${workflow.slug}/run/${run.id}`,
+          href: `/${locale}/console/${currentWorkspace?.slug}/logs/workflow/${workflow.id}/run/${run.id}`,
         },
       ],
     })) ?? [];
@@ -111,7 +111,38 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
                 {dict.workflow.executableScriptFile}
               </p>
               <p className='text-base'>
-                {(workflow as ActionWorkflow).workflowable.path}
+                {(workflow as ActionWorkflow).workflowable.executable}
+              </p>
+            </div>
+          )}
+          {workflow.workflowable_type === 'action' && (
+            <div className='flex flex-col gap-1'>
+              <p className='text-sm opacity-60'>
+                {dict.workflow.scriptResultDestinationRepository}
+              </p>
+              <p className='text-base'>
+                {(workflow as ActionWorkflow).workflowable.repository?.name ??
+                  '-'}
+              </p>
+            </div>
+          )}
+          {workflow.workflowable_type === 'action' && (
+            <div className='flex flex-col gap-1'>
+              <p className='text-sm opacity-60'>
+                {dict.workflow.scriptResultDestinationBranch}
+              </p>
+              <p className='text-base'>
+                {(workflow as ActionWorkflow).workflowable.branch ?? '-'}
+              </p>
+            </div>
+          )}
+          {workflow.workflowable_type === 'action' && (
+            <div className='flex flex-col gap-1'>
+              <p className='text-sm opacity-60'>
+                {dict.workflow.scriptResultDestinationPath}
+              </p>
+              <p className='text-base'>
+                {(workflow as ActionWorkflow).workflowable.path ?? '/'}
               </p>
             </div>
           )}
@@ -122,7 +153,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`/${locale}/console/${currentWorkspace?.slug}/connections/${(workflow as ImportWorkflow).workflowable.connection.slug}`}
+                href={`/${locale}/console/${currentWorkspace?.slug}/connections/${(workflow as ImportWorkflow).workflowable.connection.id}`}
               >
                 <p className='text-base'>
                   {(workflow as ImportWorkflow).workflowable.connection.name}
@@ -148,6 +179,16 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
           {workflow.workflowable_type === 'import' && (
             <div className='flex flex-col gap-1'>
               <p className='text-sm opacity-60'>
+                {dict.workflow.importDestinationBranch}
+              </p>
+              <p className='text-base'>
+                {(workflow as ImportWorkflow).workflowable.branch}
+              </p>
+            </div>
+          )}
+          {workflow.workflowable_type === 'import' && (
+            <div className='flex flex-col gap-1'>
+              <p className='text-sm opacity-60'>
                 {dict.workflow.importDestinationPath}
               </p>
               <p className='text-base'>
@@ -162,7 +203,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`/${locale}/console/${currentWorkspace?.slug}/connections/${(workflow as ExportWorkflow).workflowable.connection.slug}`}
+                href={`/${locale}/console/${currentWorkspace?.slug}/connections/${(workflow as ExportWorkflow).workflowable.connection.id}`}
               >
                 <p className='text-base'>
                   {(workflow as ExportWorkflow).workflowable.connection.name}
@@ -183,6 +224,16 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
                   {(workflow as ExportWorkflow).workflowable.repository.name}
                 </p>
               </Link>
+            </div>
+          )}
+          {workflow.workflowable_type === 'export' && (
+            <div className='flex flex-col gap-1'>
+              <p className='text-sm opacity-60'>
+                {dict.workflow.exportSourceBranch}
+              </p>
+              <p className='text-base'>
+                {(workflow as ExportWorkflow).workflowable.branch}
+              </p>
             </div>
           )}
           {workflow.workflowable_type === 'export' && (

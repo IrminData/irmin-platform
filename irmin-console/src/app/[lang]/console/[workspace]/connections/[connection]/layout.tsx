@@ -52,7 +52,7 @@ export default function ConnectionPagesLayout({
   }
   return (
     <ConnectionLayoutWrapper
-      connectionSlug={connection}
+      connectionID={connection}
       workspaceSlug={params.workspace}
     >
       {children}

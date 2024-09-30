@@ -83,17 +83,17 @@ class WorkflowService {
    * Update a Workflow
    * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-update | Irmin API docs}
    *
-   * @param workflowId - The ID of the workflow to update
+   * @param workflowID - The ID of the workflow to update
    * @param workflow - The updated workflow object
    *
    */
-  async updateWorkflow(workflowId: number, workflow: Workflow) {
+  async updateWorkflow(workflowID: string, workflow: Workflow) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
 
       formData.append('_method', 'PATCH');
-      formData.append('workflow', workflowId.toString());
+      formData.append('workflow', workflowID);
       formData.append('name', workflow.name);
       formData.append('description', workflow.description ?? '');
       formData.append('documentation', workflow.documentation ?? '');
@@ -118,15 +118,15 @@ class WorkflowService {
    *
    * @todo Provide link to Irmin API docs
    *
-   * @param workflowId - The ID of the workflow to delete
+   * @param workflowID - The ID of the workflow to delete
    */
-  async deleteWorkflow(workflowId: number) {
+  async deleteWorkflow(workflowID: string) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
 
       formData.append('_method', 'DELETE');
-      formData.append('workflow', workflowId.toString());
+      formData.append('workflow', workflowID);
 
       const response = await this.irminCore.fetch(`/v1/workflows/delete`, {
         method: 'POST',
@@ -144,16 +144,16 @@ class WorkflowService {
    * Pause a Workflow
    * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-pause | Irmin API docs}
    *
-   * @param workflowId - ID of the workflow to pause
+   * @param workflowID - ID of the workflow to pause
    *
    */
-  async pauseWorkflow(workflowId: number) {
+  async pauseWorkflow(workflowID: string) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
 
       formData.append('_method', 'PATCH');
-      formData.append('workflow', workflowId.toString());
+      formData.append('workflow', workflowID);
 
       const response = await this.irminCore.fetch(`/v1/workflows/pause`, {
         method: 'POST',
@@ -171,16 +171,16 @@ class WorkflowService {
    * Resume a Workflow
    * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-resume | Irmin API docs}
    *
-   * @param workflowId - ID of the workflow to resume
+   * @param workflowID - ID of the workflow to resume
    *
    */
-  async resumeWorkflow(workflowId: number) {
+  async resumeWorkflow(workflowID: string) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
 
       formData.append('_method', 'PATCH');
-      formData.append('workflow', workflowId.toString());
+      formData.append('workflow', workflowID);
 
       const response = await this.irminCore.fetch(`/v1/workflows/resume`, {
         method: 'POST',
@@ -198,15 +198,15 @@ class WorkflowService {
    * Reassign a Workflow to a new owner
    * {@link https://api.irmin.dev/docs#workflows-POSTv1-workflows-reassign | Irmin API docs}
    *
-   * @param workflowId - The ID of the workflow to reassign
+   * @param workflowID - The ID of the workflow to reassign
    * @param newOwner - The new owner of the workflow
    *
    */
-  async reassignWorkflow(workflowId: number, newOwner: WorkspaceUser) {
+  async reassignWorkflow(workflowID: string, newOwner: WorkspaceUser) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-      formData.append('workflow', workflowId.toString());
+      formData.append('workflow', workflowID.toString());
       formData.append('assignee', newOwner.id.toString());
 
       const response = await this.irminCore.fetch(`/v1/workflows/reassign`, {
@@ -228,7 +228,7 @@ class WorkflowService {
    * @param workflow - The slug of the workflow to fetch the runs for
    */
   async fetchRunsByWorkflow(
-    workflow: number
+    workflow: string
   ): Promise<WorkflowRunsAPIResponse> {
     if (isOfflineMode)
       return fake(exampleWorkflowRuns) as WorkflowRunsAPIResponse;
@@ -341,23 +341,26 @@ class WorkflowService {
    * @todo Provide link to Irmin API docs
    *
    * @param props - Workflow properties
-   * @param props.connectionID - ID of the connection to import data from
-   * @param props.repositoryID - ID of the repository to import data to
+   * @param props.connection - ID of the connection to import data from
+   * @param props.repository - Slug of the repository to import data to
+   * @param props.branch - Branch to import the data to
    * @param props.path - Path in the repository to store the imported data in (default '/')
    * @param props.name - Name of the workflow
    * @param props.description - Description of the workflow
    * @param props.cron_syntax - Cron syntax for the workflow, leave empty for manual run
    */
   public async createImportWorkflow({
-    connectionID,
-    repositoryID,
+    connection,
+    repository,
+    branch,
     path,
     name,
     description,
     cron_syntax,
   }: {
-    connectionID: number | undefined;
-    repositoryID: number | undefined;
+    connection: string;
+    repository: string;
+    branch: string;
     path: string;
     name: string;
     description: string;
@@ -365,15 +368,13 @@ class WorkflowService {
   }) {
     if (isOfflineMode) return fake();
     try {
-      // Make sure the connection and repository IDs are provided
-      if (!connectionID || !repositoryID) return;
-
       // Create a new FormData object
       const formData = new FormData();
 
       // Import Workflow properties
-      formData.append('connection', connectionID.toString());
-      formData.append('repository', repositoryID.toString());
+      formData.append('connection', connection);
+      formData.append('repository', repository);
+      formData.append('branch', branch);
       formData.append('path', path);
 
       // Workflow properties
@@ -401,26 +402,29 @@ class WorkflowService {
    * @todo Provide link to Irmin API docs
    *
    * @param props - Workflow properties
-   * @param props.connectionID - ID of the connection to export data to
-   * @param props.repositoryID - ID of the repository to export data from
+   * @param props.connection - ID of the connection to export data to
+   * @param props.repository - Slug of the repository to export data from
    * @param props.path - Path in the repository to export the data from (default '/')
+   * @param props.branch - Branch to export the data from
    * @param props.recursive - Whether to export recursively or not (default false)
    * @param props.name - Name of the workflow
    * @param props.description - Description of the workflow
    * @param props.cron_syntax - Cron syntax for the workflow, leave empty for manual run
    */
   public async createExportWorkflow({
-    connectionID,
-    repositoryID,
+    connection,
+    repository,
     path,
+    branch,
     recursive,
     name,
     description,
     cron_syntax,
   }: {
-    connectionID: number | undefined;
-    repositoryID: number | undefined;
+    connection: string;
+    repository: string;
     path: string;
+    branch: string;
     recursive: boolean;
     name: string;
     description: string;
@@ -428,17 +432,15 @@ class WorkflowService {
   }) {
     if (isOfflineMode) return fake();
     try {
-      // Make sure the connection and repository IDs are provided
-      if (!connectionID || !repositoryID) return;
-
       // Create a new FormData object
       const formData = new FormData();
 
       // Export Workflow properties
-      formData.append('connection', connectionID.toString());
-      formData.append('repository', repositoryID.toString());
+      formData.append('connection', connection);
+      formData.append('repository', repository);
       formData.append('path', path);
-      formData.append('recursive', recursive.toString());
+      formData.append('branch', branch);
+      formData.append('recursive', recursive ? 'true' : 'false');
 
       // Workflow properties
       formData.append('name', name);
@@ -465,21 +467,30 @@ class WorkflowService {
    * @todo Provide link to Irmin API docs
    *
    * @param props - Workflow properties
-   * @param props.path - Path to the script file to be executed
+   * @param props.executable - Path to the script file to be executed
    * @param props.name - Name of the workflow
    * @param props.description - Description of the workflow
    * @param props.cron_syntax - Cron syntax for the workflow, leave empty for manual run
+   * @param props.repository - Slug of the repository to put the action results in
+   * @param props.branch - Branch to put the action results in
+   * @param props.path - Path in the repository to put the action results in
    */
   public async createActionWorkflow({
-    path,
+    executable,
     name,
     description,
     cron_syntax,
+    repository,
+    branch,
+    path,
   }: {
-    path: string;
+    executable: string;
     name: string;
     description: string;
     cron_syntax: string;
+    repository: string;
+    branch: string;
+    path: string;
   }) {
     if (isOfflineMode) return fake();
     try {
@@ -487,7 +498,10 @@ class WorkflowService {
       const formData = new FormData();
 
       // Action Workflow properties
-      formData.append('source', path.toString());
+      formData.append('executable', executable);
+      formData.append('repository', repository);
+      formData.append('branch', branch);
+      formData.append('path', path);
 
       // Workflow properties
       formData.append('name', name);

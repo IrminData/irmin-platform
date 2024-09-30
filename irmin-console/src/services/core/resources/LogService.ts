@@ -46,7 +46,7 @@ class LogService {
    * Fetch log events for the current workspace
    * @todo Provide link to Irmin API docs
    *
-   * @param workflow - Optional. Slug of the workflow to fetch logs for
+   * @param workflow - ID of the workflow to fetch logs for
    */
   async fetchLogEvents(workflow?: string): Promise<LogEventsAPIResponse> {
     if (isOfflineMode) return fake(exampleLogEvents) as LogEventsAPIResponse;
@@ -71,8 +71,8 @@ class LogService {
    * Fetch logs for a specific workflow run
    * @todo Provide link to Irmin API docs
    *
-   * @param workflow - Optional. Slug of the workflow to fetch logs for
-   * @param workflowRunID - Optional. ID of the workflow run to fetch logs for
+   * @param workflow - ID of the workflow to fetch logs for
+   * @param workflowRunID -  ID of the workflow run to fetch logs for
    */
   async fetchWorkflowRunLogs(
     workflow?: string,

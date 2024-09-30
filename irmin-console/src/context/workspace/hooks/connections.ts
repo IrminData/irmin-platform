@@ -66,16 +66,16 @@ export const useUpdateConnection = (
   locale: Locale
 ) =>
   useCallback(
-    async (connectionID: number, updatedConnection: Connection) => {
+    async (connection: string, updatedConnection: Connection) => {
       // Update the connection
       const { connectionService } = new IrminCore(locale);
       const response = await connectionService.updateConnection(
-        connectionID,
+        connection,
         updatedConnection
       );
       // Update the local state with the updated connection
       const updateConnections = connections.map((conn) =>
-        conn.id === connectionID ? { ...conn, ...updatedConnection } : conn
+        conn.id === connection ? { ...conn, ...updatedConnection } : conn
       );
       setConnections(updateConnections);
       // Return the response from the API
@@ -93,13 +93,13 @@ export const useDeleteConnection = (
   locale: Locale
 ) =>
   useCallback(
-    async (connectionID: number) => {
+    async (connection: string) => {
       // Delete the connection
       const { connectionService } = new IrminCore(locale);
-      const response = await connectionService.deleteConnection(connectionID);
+      const response = await connectionService.deleteConnection(connection);
       // Update the local state by removing the deleted connection
       const updateConnections = connections.filter(
-        (conn) => conn.id !== connectionID
+        (conn) => conn.id !== connection
       );
       setConnections(updateConnections);
       // Return the response from the API
@@ -117,16 +117,16 @@ export const useReassignConnection = (
   locale: Locale
 ) =>
   useCallback(
-    async (connectionID: number, newOwner: WorkspaceUser) => {
+    async (connection: string, newOwner: WorkspaceUser) => {
       // Reassign the connection
       const { connectionService } = new IrminCore(locale);
       const response = await connectionService.reassignConnection(
-        connectionID,
+        connection,
         newOwner
       );
       // Update the local state by changing the owner prop to the new owner
       const updateConnections = connections.map((conn) =>
-        conn.id === connectionID ? { ...conn, owner: newOwner } : conn
+        conn.id === connection ? { ...conn, owner: newOwner } : conn
       );
       setConnections(updateConnections);
       // Return the response from the API

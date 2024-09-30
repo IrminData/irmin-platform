@@ -13,7 +13,7 @@ import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
  *
  * @param lang - The language of the user
  * @param workspace - The slug of the current workspace
- * @param workflow - The slug of the workflow to show
+ * @param workflow - The ID of the workflow to show
  */
 export type SingleWorkflowLayoutParams = {
   lang: Locale;
@@ -30,9 +30,8 @@ export async function generateMetadata({
   params: SingleWorkflowLayoutParams;
 }): Promise<Metadata> {
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  const formattedWorkflow = params.workflow.replace(/-/g, ' ');
   return {
-    title: `Workflow ${formattedWorkflow} | ${formattedWorkspace} | IRMIN Console`,
+    title: `Workflow ${params.workflow} | ${formattedWorkspace} | IRMIN Console`,
   };
 }
 
@@ -46,13 +45,12 @@ export default function WorkflowLayout({
   children: React.ReactNode;
   params: SingleWorkflowLayoutParams;
 }>) {
-  const workflow = params.workflow;
-  if (isInvalidRouteProp(workflow)) {
-    notFound();
-  }
+  const workflowId = params.workflow;
+  if (isInvalidRouteProp(workflowId)) notFound();
+
   return (
     <WorkflowLayoutWrapper
-      workflowSlug={workflow}
+      workflowId={workflowId}
       workspaceSlug={params.workspace}
       locale={params.lang}
     >

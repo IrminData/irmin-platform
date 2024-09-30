@@ -35,7 +35,7 @@ class CollectionService {
     this.irminCore = irminCore;
     // Bind methods
     this.fetchCollections = this.fetchCollections.bind(this);
-    this.fetchCollectionContent = this.fetchCollectionContent.bind(this);
+    this.fetchContent = this.fetchContent.bind(this);
   }
 
   /**
@@ -67,27 +67,43 @@ class CollectionService {
   }
 
   /**
-   * Fetch content of a specific collection
+   * Fetch content as is. This content could be of a collection or a full repository.
    * @todo Provide link to Irmin API docs
    *
-   * @param collection - The ID of the collection to fetch
-   * @param repository - (optional) The repository the collection is in
-   * @param ref - (optional) The ref to fetch the collection from
+   * This should return the content at the given ref of the collection as
+   * an unstructured response {@link IrminAPIUnstructuredResponse} eg. raw.
+   *
+   * For folders and full repositories, this should return the content as a zip file. If a path is provided,
+   * return the content from that path as a zip file.
+   *
+   * @param params - Object containing the parameters for fetching the collection content
+   * @param params.collection - (optional) The ID of the collection to fetch
+   * @param params.path - (optional) The path in the collection to fetch, if the collection is a folder
+   * @param params.repository - (optional) The repository the collection is in
+   * @param params.ref - (optional) The ref to fetch the collection from
    */
-  async fetchCollectionContent(
-    collection: number,
-    repository?: string,
-    ref?: string
-  ): Promise<IrminAPIUnstructuredResponse> {
+  async fetchContent({
+    collection,
+    path,
+    repository,
+    ref,
+  }: {
+    collection?: string;
+    path?: string;
+    repository?: string;
+    ref?: string;
+  }): Promise<IrminAPIUnstructuredResponse> {
     if (isOfflineMode) return await exampleAPIUnstructuredResponse();
     try {
       // Construct the query parameters from the props
       const urlParams = new URLSearchParams();
       if (repository) urlParams.append('repository', repository);
       if (ref) urlParams.append('ref', ref);
+      if (path) urlParams.append('path', path);
+      if (collection) urlParams.append('collection', collection);
       // Fetch the collection content from the API
       const response = await this.irminCore.fetchUnstructured(
-        `/v1/collections/${collection}/content?${urlParams.toString()}`,
+        `/v1/content?${urlParams.toString()}`,
         {
           method: 'GET',
         }

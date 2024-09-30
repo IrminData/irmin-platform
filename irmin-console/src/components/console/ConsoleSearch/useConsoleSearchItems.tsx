@@ -229,7 +229,7 @@ export function useConsoleSearchItems() {
         newItems.push({
           title: workflow.name,
           description: workflow.description ?? '-',
-          link: `/${locale}/console/${currentWorkspace.slug}/workflows/${workflow.slug}`,
+          link: `/${locale}/console/${currentWorkspace.slug}/workflows/${workflow.id}`,
           type: ConsoleSearchItemType.Workflow,
         });
       });
@@ -239,7 +239,7 @@ export function useConsoleSearchItems() {
         newItems.push({
           title: connection.name,
           description: connection.description ?? '-',
-          link: `/${locale}/console/${currentWorkspace.slug}/connections/${connection.slug}`,
+          link: `/${locale}/console/${currentWorkspace.slug}/connections/${connection.id}`,
           type: ConsoleSearchItemType.Connection,
         });
       });
@@ -264,17 +264,15 @@ export function useConsoleSearchItems() {
         const typeLabel =
           collection.type === 'table'
             ? dict.repository.schema.table
-            : collection.type === 'stream'
-              ? dict.repository.schema.stream
-              : collection.type === 'folder'
-                ? dict.repository.schema.folder
-                : collection.type === 'file'
-                  ? dict.repository.schema.file
-                  : '';
+            : collection.type === 'folder'
+              ? dict.repository.schema.folder
+              : collection.type === 'file'
+                ? dict.repository.schema.file
+                : '';
         newItems.push({
           title: collection.formatted_name,
           description: typeLabel,
-          link: `/${locale}/console/${currentWorkspace.slug}/repositories/${collection.original_repository}`,
+          link: `/${locale}/console/${currentWorkspace.slug}/repositories/${collection.repository}`,
           type: ConsoleSearchItemType.Collection,
         });
       });

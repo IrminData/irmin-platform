@@ -85,20 +85,19 @@ class ConnectionService {
    * Update a Connection
    * @todo Provide link to Irmin API docs
    *
-   * @param connectionID - The ID of the Connection to update
-   * @param connection - The updated Connection object
-   *
+   * @param connection - The ID of the Connection to update
+   * @param data - The updated Connection object
    */
-  async updateConnection(connectionID: number, connection: Connection) {
+  async updateConnection(connection: string, data: Connection) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
       formData.append('_method', 'PATCH');
-      formData.append('connection', connectionID.toString());
+      formData.append('connection', connection);
 
-      formData.append('name', connection.name);
-      formData.append('description', connection.description ?? '');
-      formData.append('documentation', connection.documentation ?? '');
+      formData.append('name', data.name);
+      formData.append('description', data.description ?? '');
+      formData.append('documentation', data.documentation ?? '');
 
       const response = await this.irminCore.fetch(`/v1/connections/update`, {
         method: 'POST',
@@ -115,14 +114,14 @@ class ConnectionService {
   /**
    * Reassign a Connection to a new owner
    * @todo Provide link to Irmin API docs
-   * @param connectionID - The ID of the Connection to reassign
+   * @param connection - The ID of the Connection to reassign
    * @param newOwner - The new owner of the Connection
    */
-  async reassignConnection(connectionID: number, newOwner: WorkspaceUser) {
+  async reassignConnection(connection: string, newOwner: WorkspaceUser) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-      formData.append('connection', connectionID.toString());
+      formData.append('connection', connection);
       formData.append('assignee', newOwner.id.toString());
 
       const response = await this.irminCore.fetch(`/v1/connections/reassign`, {
@@ -141,15 +140,15 @@ class ConnectionService {
    * Delete a Connection by ID
    * @todo Provide link to Irmin API docs
    *
-   * @param connectionID - The ID of the connection to delete
+   * @param connection - The ID of the connection to delete
    */
-  async deleteConnection(connectionID: number) {
+  async deleteConnection(connection: string) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
 
       formData.append('_method', 'DELETE');
-      formData.append('connection', connectionID.toString());
+      formData.append('connection', connection);
 
       const response = await this.irminCore.fetch(`/v1/connections/delete`, {
         method: 'POST',
