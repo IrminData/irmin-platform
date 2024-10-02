@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
+
+import { Controller, useForm } from 'react-hook-form';
 
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
@@ -10,7 +12,15 @@ import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 /**
- * Manage workspces UI
+ * Define form values type for react-hook-form
+ */
+interface CreateWorkspaceFormValues {
+  newWorkspaceName: string;
+  newWorkspaceDescription: string;
+}
+
+/**
+ * Manage workspaces UI
  *
  * @remarks
  *
@@ -21,7 +31,7 @@ import { useWorkspace } from '@/context/workspace';
  *
  * @todo The workspace card shows dummy data for now. This should be replaced with real data.
  */
-const ManageWorkspacesSection: React.FC = () => {
+const ManageWorkspacesSection = () => {
   const { dict } = useLocale();
   const {
     workspaces: {
@@ -31,8 +41,6 @@ const ManageWorkspacesSection: React.FC = () => {
       workspacesLoading,
     },
   } = useWorkspace();
-  const [newWorkspaceName, setNewWorkspaceName] = useState('');
-  const [newWorkspaceDescription, setNewWorkspaceDescription] = useState('');
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -40,23 +48,29 @@ const ManageWorkspacesSection: React.FC = () => {
 
   const loading = workspacesLoading || processing;
 
-  const handleCreateWorkspace = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Reset error and success messages
+  // Set up react-hook-form
+  const { control, handleSubmit, reset } = useForm<CreateWorkspaceFormValues>({
+    defaultValues: {
+      newWorkspaceName: '',
+      newWorkspaceDescription: '',
+    },
+  });
+
+  const handleCreateWorkspace = async (data: CreateWorkspaceFormValues) => {
     setProcessing(true);
     setError(null);
     setSuccess(null);
+
     // Create new workspace
     try {
       const response = await createWorkspace(
-        newWorkspaceName,
-        newWorkspaceDescription
+        data.newWorkspaceName,
+        data.newWorkspaceDescription
       );
       if (response.metadata?.message) {
         await fetchWorkspaces();
         setSuccess(response.metadata.message);
-        setNewWorkspaceName('');
-        setNewWorkspaceDescription('');
+        reset(); // Reset form values
       } else {
         throw new Error(response.message || 'Creation failed');
       }
@@ -69,42 +83,67 @@ const ManageWorkspacesSection: React.FC = () => {
 
   return (
     <div className='flex flex-col gap-4 px-4 pb-28 pt-4 lg:flex-row-reverse'>
+      {/* Form for creating a new workspace */}
       <div className='w-full pr-4 lg:max-w-80'>
         <div className='rounded-xl bg-white p-2 text-xs shadow sm:p-4 lg:p-4 lg:text-base dark:bg-irmin_black-600'>
           <p className='mb-4 mt-4 block text-center text-sm font-normal md:text-base lg:mt-0 lg:text-left'>
             {dict.workspaceSwitcher.createNewWorkspace}
           </p>
           <form
-            onSubmit={handleCreateWorkspace}
+            onSubmit={handleSubmit(handleCreateWorkspace)}
             className={`${loading && 'blur-sm'}`}
           >
-            <Input
-              variant='solid'
-              colorScheme='gray'
-              size='sm'
-              type='text'
-              id='newWorkspaceName'
-              placeholder={dict.workspace.workspaceName}
-              onChange={(e) => setNewWorkspaceName(e.target.value ?? '')}
-              required
-              className='mb-2 h-11 w-full md:mb-4'
-              disabled={loading}
+            <Controller
+              name='newWorkspaceName'
+              control={control}
+              rules={{ required: dict.misc.fieldRequired }}
+              render={({ field }) => (
+                <>
+                  <Input
+                    variant='solid'
+                    colorScheme='gray'
+                    size='sm'
+                    type='text'
+                    id='newWorkspaceName'
+                    placeholder={dict.workspace.workspaceName}
+                    {...field}
+                    required
+                    className='mb-2 h-11 w-full md:mb-4'
+                    disabled={loading}
+                  />
+                </>
+              )}
             />
-            <Input
-              variant='solid'
-              colorScheme='gray'
-              size='sm'
-              type='text'
-              id='newWorkspaceDescription'
-              placeholder={dict.workspace.workspaceDescription}
-              onChange={(e) => setNewWorkspaceDescription(e.target.value ?? '')}
-              maxLength={255}
-              longtext={{
-                rows: 3,
+            <Controller
+              name='newWorkspaceDescription'
+              control={control}
+              rules={{
+                required: dict.misc.fieldRequired,
+                maxLength: {
+                  value: 255,
+                  message: dict.misc.fieldInvalid,
+                },
               }}
-              required
-              className='mb-2 w-full md:mb-4'
-              disabled={loading}
+              render={({ field }) => (
+                <>
+                  <Input
+                    variant='solid'
+                    colorScheme='gray'
+                    size='sm'
+                    type='text'
+                    id='newWorkspaceDescription'
+                    placeholder={dict.workspace.workspaceDescription}
+                    {...field}
+                    maxLength={255}
+                    longtext={{
+                      rows: 3,
+                    }}
+                    required
+                    className='mb-2 w-full md:mb-4'
+                    disabled={loading}
+                  />
+                </>
+              )}
             />
             {error && <p className='mb-2 text-red-800'>{error}</p>}
             {success && <p className='mb-2 text-irmin_green'>{success}</p>}
@@ -122,6 +161,7 @@ const ManageWorkspacesSection: React.FC = () => {
           </form>
         </div>
       </div>
+      {/* Display existing workspaces */}
       {workspaces.length > 0 && (
         <div className='ml-auto flex-grow'>
           <div

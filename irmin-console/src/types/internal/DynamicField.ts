@@ -1,5 +1,5 @@
 /** Field value type */
-export type FieldValue = string | number | boolean | null;
+export type FieldValue = string | number | boolean | undefined;
 
 /**
  * Object used to define a field for user to fill in

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import IrminCore from '@/services/core/IrminCore';
+import { Controller, useForm } from 'react-hook-form';
 
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
@@ -14,19 +15,15 @@ import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
 
+// Define form values type for react-hook-form
+interface AcceptInviteFormValues {
+  company: string;
+  password: string;
+  passwordConfirmation: string;
+}
+
 /**
- * User invite UI component
- *
- * @todo This component needs to be tested and fixed. Use Signed URLs. Seperate the logic from the UI.
- *
- * @remarks
- *
- * UI for user to accept or decline an invite to join a workspace.
- *
- * New users will be prompted to enter their company name, password and confirm password.
- * The API will handle user's registration if the invite is accepted.
- *
- * Existing users will be prompted to accept or decline the invite.
+ * User invite UI component using react-hook-form
  */
 const AcceptInviteSection = () => {
   const { dict, locale } = useLocale();
@@ -34,26 +31,37 @@ const AcceptInviteSection = () => {
   const searchParams = useSearchParams();
   const inviteId = searchParams.get('invite') ?? '';
 
-  const [company, setCompany] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
   const { inviteService } = useMemo(() => new IrminCore(locale), [locale]);
 
-  const handleAcceptInvite = async () => {
-    setLoading(true);
+  // Initialize react-hook-form
+  const {
+    watch,
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<AcceptInviteFormValues>({
+    defaultValues: {
+      company: '',
+      password: '',
+      passwordConfirmation: '',
+    },
+  });
+
+  const passwordValue = watch('password');
+
+  // Handle invite acceptance
+  const handleAcceptInvite = async (data: AcceptInviteFormValues) => {
     setError(null);
     setSuccess(null);
 
     try {
       const response = await inviteService.acceptInvite(
         inviteId,
-        company,
-        password,
-        passwordConfirmation
+        data.company,
+        data.password,
+        data.passwordConfirmation
       );
       if (response.metadata?.message) {
         setSuccess(response.metadata.message);
@@ -64,13 +72,11 @@ const AcceptInviteSection = () => {
       }
     } catch (error) {
       setError((error as Error)?.message ?? 'Accepting invite failed');
-    } finally {
-      setLoading(false);
     }
   };
 
+  // Handle invite decline
   const handleDeclineInvite = async () => {
-    setLoading(true);
     setError(null);
     setSuccess(null);
 
@@ -85,8 +91,6 @@ const AcceptInviteSection = () => {
       }
     } catch (error) {
       setError((error as Error)?.message ?? 'Declining invite failed');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -171,12 +175,9 @@ const AcceptInviteSection = () => {
               <div className='mx-auto max-w-sm'>
                 {error && <p className='mb-4 text-red-800'>{error}</p>}
                 {success && <p className='mb-4 text-irmin_green'>{success}</p>}
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleAcceptInvite();
-                  }}
-                >
+                {/* Form Submission */}
+                <form onSubmit={handleSubmit(handleAcceptInvite)}>
+                  {/* Company Field */}
                   <div className='mb-6'>
                     <label
                       className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
@@ -184,20 +185,29 @@ const AcceptInviteSection = () => {
                     >
                       {dict.auth.invite.company}*
                     </label>
-                    <Input
-                      variant='solid'
-                      colorScheme='black'
-                      size='md'
-                      required
-                      className='w-full'
-                      ariaLabel='Insert your company namehere'
-                      type='text'
-                      id='company'
-                      placeholder={dict.auth.invite.companyPlaceholder}
-                      defaultValue={company}
-                      onChange={(e) => setCompany(e.target.value)}
+                    <Controller
+                      name='company'
+                      control={control}
+                      rules={{ required: dict.misc.fieldRequired }}
+                      render={({ field }) => (
+                        <Input
+                          variant='solid'
+                          colorScheme='black'
+                          size='md'
+                          className='w-full'
+                          ariaLabel='Insert your company name here'
+                          placeholder={dict.auth.invite.companyPlaceholder}
+                          {...field}
+                        />
+                      )}
                     />
+                    {errors.company && (
+                      <p className='mt-1 text-xs text-red-600'>
+                        {errors.company.message}
+                      </p>
+                    )}
                   </div>
+                  {/* Password Field */}
                   <div className='mb-4'>
                     <label
                       className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
@@ -205,20 +215,30 @@ const AcceptInviteSection = () => {
                     >
                       {dict.auth.invite.password} *
                     </label>
-                    <Input
-                      variant='solid'
-                      colorScheme='black'
-                      size='md'
-                      required
-                      className='w-full'
-                      ariaLabel='Insert your password here'
-                      type='password'
-                      id='password'
-                      placeholder={dict.auth.invite.passwordPlaceholder}
-                      defaultValue={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                    <Controller
+                      name='password'
+                      control={control}
+                      rules={{ required: dict.misc.fieldRequired }}
+                      render={({ field }) => (
+                        <Input
+                          variant='solid'
+                          colorScheme='black'
+                          size='md'
+                          className='w-full'
+                          ariaLabel='Insert your password here'
+                          type='password'
+                          placeholder={dict.auth.invite.passwordPlaceholder}
+                          {...field}
+                        />
+                      )}
                     />
+                    {errors.password && (
+                      <p className='mt-1 text-xs text-red-600'>
+                        {errors.password.message}
+                      </p>
+                    )}
                   </div>
+                  {/* Password Confirmation Field */}
                   <div className='mb-4'>
                     <label
                       className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
@@ -226,20 +246,37 @@ const AcceptInviteSection = () => {
                     >
                       {dict.auth.invite.confirmPassword} *
                     </label>
-                    <Input
-                      variant='solid'
-                      colorScheme='black'
-                      size='md'
-                      required
-                      className='w-full'
-                      ariaLabel='Repeat your password here'
-                      type='password'
-                      id='passwordConfirmation'
-                      placeholder={dict.auth.invite.confirmPasswordPlaceholder}
-                      defaultValue={passwordConfirmation}
-                      onChange={(e) => setPasswordConfirmation(e.target.value)}
+                    <Controller
+                      name='passwordConfirmation'
+                      control={control}
+                      rules={{
+                        required: dict.misc.fieldRequired,
+                        validate: (value) =>
+                          value === passwordValue ||
+                          dict.profile.passwordsDoNotMatch,
+                      }}
+                      render={({ field }) => (
+                        <Input
+                          variant='solid'
+                          colorScheme='black'
+                          size='md'
+                          className='w-full'
+                          ariaLabel='Repeat your password here'
+                          type='password'
+                          placeholder={
+                            dict.auth.invite.confirmPasswordPlaceholder
+                          }
+                          {...field}
+                        />
+                      )}
                     />
+                    {errors.passwordConfirmation && (
+                      <p className='mt-1 text-xs text-red-600'>
+                        {errors.passwordConfirmation.message}
+                      </p>
+                    )}
                   </div>
+                  {/* Terms & Conditions */}
                   <div className='mb-6 flex w-full items-center md:w-2/3'>
                     <input
                       name='accept-terms'
@@ -249,7 +286,7 @@ const AcceptInviteSection = () => {
                     <label className='ms-2 text-xs font-normal text-irmin_black dark:text-gray-200'>
                       {dict.auth.accept.accept}{' '}
                       <Link
-                        className='dark:text-irmin_light text-irmin_blue-500 hover:text-irmin_blue-600 dark:hover:text-irmin_green'
+                        className='text-irmin_blue-500 hover:text-irmin_blue-600 dark:text-irmin_light_green dark:hover:text-irmin_green'
                         href='/legal/terms-of-use'
                         target='_blank'
                       >
@@ -257,7 +294,7 @@ const AcceptInviteSection = () => {
                       </Link>{' '}
                       {dict.auth.accept.and}{' '}
                       <Link
-                        className='dark:text-irmin_light text-irmin_blue-500 hover:text-irmin_blue-600 dark:hover:text-irmin_green'
+                        className='text-irmin_blue-500 hover:text-irmin_blue-600 dark:text-irmin_light_green dark:hover:text-irmin_green'
                         href='/legal/privacy-policy'
                         target='_blank'
                       >
@@ -265,25 +302,27 @@ const AcceptInviteSection = () => {
                       </Link>
                     </label>
                   </div>
+                  {/* Submit Button */}
                   <Button
                     className='mb-6 w-full'
                     variant='gradient'
                     colorScheme='primary'
                     size='md'
-                    disabled={loading}
-                    loading={loading}
+                    disabled={isSubmitting}
+                    loading={isSubmitting}
                     type='submit'
                   >
                     {dict.auth.invite.accept}
                   </Button>
                 </form>
+                {/* Decline Button */}
                 <Button
                   className='w-full'
                   variant='outline'
                   colorScheme='secondary'
                   size='md'
                   onClick={handleDeclineInvite}
-                  disabled={loading}
+                  disabled={isSubmitting}
                 >
                   {dict.auth.invite.decline}
                 </Button>

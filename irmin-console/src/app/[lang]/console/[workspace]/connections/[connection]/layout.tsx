@@ -30,9 +30,8 @@ export async function generateMetadata({
   params: SingleConnectionLayoutParams;
 }): Promise<Metadata> {
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  const formattedConnection = params.connection.replace(/-/g, ' ');
   return {
-    title: `Connection ${formattedConnection} | ${formattedWorkspace} | IRMIN Console`,
+    title: `Connection | ${formattedWorkspace} | IRMIN Console`,
   };
 }
 

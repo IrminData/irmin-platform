@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+
+import { Controller, useForm } from 'react-hook-form';
 
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
@@ -9,31 +11,38 @@ import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
+// Define the form values type for react-hook-form
+interface SignInFormValues {
+  email: string;
+  password: string;
+}
+
 /**
  * Sign in UI component
- *
- * @remarks
- *
- * UI for the sign in form. It allows users to sign in to the application.
- * It uses the {@link useIAM} hook to interact with the user's identity and APIs.
  */
 const SignInSection = () => {
   const { dict } = useLocale();
   const { login } = useIAM();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignInFormValues>({
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    setLoading(true);
-    await login(email, password, setSuccess, setError);
-    setLoading(false);
+  // Handle form submission
+  const onSubmit = async (data: SignInFormValues) => {
+    await login(
+      data.email,
+      data.password,
+      () => {},
+      () => {}
+    );
   };
 
   return (
@@ -48,51 +57,80 @@ const SignInSection = () => {
               {dict.auth.signIn.subtitle}
             </p>
           </div>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            {/* Email Field */}
             <div className='mb-6'>
-              <label
-                className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
-                htmlFor='email'
-              >
+              <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
                 {dict.auth.signIn.email}
               </label>
-              <Input
-                variant='solid'
-                colorScheme='black'
-                size='md'
-                type='email'
-                id='email'
-                placeholder={dict.auth.signIn.emailPlaceholder}
-                defaultValue={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                ariaLabel={dict.auth.signIn.email}
-                className='w-full'
+              <Controller
+                name='email'
+                control={control}
+                rules={{
+                  required: dict.misc.fieldRequired,
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: dict.profile.invalidEmail,
+                  },
+                }}
+                render={({ field }) => (
+                  <Input
+                    variant='solid'
+                    colorScheme='black'
+                    size='md'
+                    required
+                    className='w-full'
+                    ariaLabel={dict.auth.signIn.email}
+                    type='email'
+                    id='email'
+                    placeholder={dict.auth.signIn.emailPlaceholder}
+                    {...field}
+                  />
+                )}
               />
+              {errors.email && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.email.message}
+                </p>
+              )}
             </div>
+
+            {/* Password Field */}
             <div className='mb-4'>
-              <label
-                className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
-                htmlFor='password'
-              >
+              <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
                 {dict.auth.signIn.password}
               </label>
-              <Input
-                variant='solid'
-                colorScheme='black'
-                size='md'
-                required
-                className='w-full'
-                ariaLabel={dict.auth.signIn.password}
-                type='password'
-                id='password'
-                placeholder={dict.auth.signIn.passwordPlaceholder}
-                defaultValue={password}
-                onChange={(e) => setPassword(e.target.value)}
+              <Controller
+                name='password'
+                control={control}
+                rules={{ required: dict.misc.fieldRequired }}
+                render={({ field }) => (
+                  <Input
+                    variant='solid'
+                    colorScheme='black'
+                    size='md'
+                    required
+                    className='w-full'
+                    ariaLabel={dict.auth.signIn.password}
+                    type='password'
+                    placeholder={dict.auth.signIn.passwordPlaceholder}
+                    {...field}
+                  />
+                )}
               />
+              {errors.password && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.password.message}
+                </p>
+              )}
             </div>
-            {error && <p className='mb-4 text-red-800'>{error}</p>}
-            {success && <p className='mb-4 text-irmin_green'>{success}</p>}
+
+            {/* Error Messages */}
+            {errors.email || errors.password ? (
+              <p className='mb-4 text-red-800'>{dict.misc.pleaseFixErrors}</p>
+            ) : null}
+
+            {/* Remember Me & Forgot Password */}
             <div className='mb-6 flex flex-wrap items-center justify-between'>
               <div className='w-full md:w-1/2'>
                 <div className='flex items-center'>
@@ -100,7 +138,6 @@ const SignInSection = () => {
                     name='remember-me'
                     defaultChecked
                     type='checkbox'
-                    value=''
                     className='h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500'
                   />
                   <label className='ms-2 text-sm font-normal text-irmin_black dark:text-gray-200'>
@@ -119,17 +156,21 @@ const SignInSection = () => {
                 </Button>
               </div>
             </div>
+
+            {/* Submit Button */}
             <Button
               className='mb-6 w-full'
               variant='gradient'
               colorScheme='primary'
               size='md'
-              disabled={loading}
-              loading={loading}
+              disabled={isSubmitting}
+              loading={isSubmitting}
               type='submit'
             >
               {dict.auth.signIn.signIn}
             </Button>
+
+            {/* Sign Up Link */}
             <div className='flex w-full items-center justify-center'>
               <span className='text-sm font-normal'>
                 {dict.auth.signIn.dontHaveAccount}{' '}

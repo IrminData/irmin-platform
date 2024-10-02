@@ -1,18 +1,18 @@
 'use client';
 
-import React from 'react';
-
-import ReactSelect from 'react-select';
+import ReactSelect, { MultiValue, SingleValue } from 'react-select';
 
 import Input from '@/components/common/form/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import {
-  DynamicField,
-  DynamicFieldValues,
-  FieldValue,
-} from '@/types/internal/DynamicField';
+import { DynamicField } from '@/types/internal/DynamicField';
+
+// Define a custom type for ReactSelect options
+type SelectOption = {
+  value: string;
+  label: string;
+};
 
 /**
  * Component to render a dynamic form field based on the field type
@@ -20,108 +20,96 @@ import {
  * @returns JSX.Element
  */
 export default function DynamicFormField({
-  name,
   field,
-  values,
-  updateValues,
+  fieldProps,
 }: {
-  name: string;
   field: DynamicField;
-  values: DynamicFieldValues | null;
-  updateValues: (key: string, value: FieldValue | FieldValue[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fieldProps?: any;
 }) {
   const { dict } = useLocale();
 
-  const options =
+  const options: SelectOption[] =
     field.options?.map((option) => ({
       value: option.key,
       label: option.value,
     })) ?? [];
 
+  // Map fieldProps.value to the corresponding option(s) for ReactSelect
+  const getSelectedOption = () => {
+    if (field.multiple) {
+      return options.filter((option) =>
+        (fieldProps.value ?? []).includes(option.value)
+      );
+    } else {
+      return (
+        options.find((option) => option.value === fieldProps.value) || null
+      );
+    }
+  };
+
+  // Render the appropriate input type based on the field's type
   const renderField = () => {
     switch (field.type) {
       case 'integer':
       case 'float':
         return (
           <Input
+            {...fieldProps}
             variant='outline'
             colorScheme='gray'
             className='mt-2 w-full'
-            type={'number'}
-            defaultValue={field.default as string}
+            type='number'
             placeholder={field.example}
-            required={field.required}
-            name={name}
             min={field.min ? (field.min as number) : undefined}
             max={field.max ? (field.max as number) : undefined}
-            onChange={(e) => updateValues(name, e.target.value)}
           />
         );
       case 'textarea':
         return (
           <Input
+            {...fieldProps}
             variant='outline'
             colorScheme='gray'
             className='mt-2 w-full'
-            type={'text'}
+            type='text'
             longtext={{ rows: 3 }}
-            defaultValue={field.default as string}
             placeholder={field.example}
-            required={field.required}
-            name={name}
-            onChange={(e) => updateValues(name, e.target.value)}
           />
         );
       case 'checkbox':
         return (
           <label className='mb-1 flex items-center'>
             <input
+              {...fieldProps}
               type='checkbox'
-              defaultChecked={
-                typeof field.default === 'boolean' && field.default
-              }
-              required={field.required}
-              name={name}
               className='mr-2'
-              onChange={(e) => updateValues(name, e.target.checked)}
+              checked={fieldProps.value || false}
             />
             {field.label}
           </label>
         );
       case 'select':
-        return field.multiple ? (
+        return (
           <ReactSelect
+            {...fieldProps}
+            value={getSelectedOption()}
             placeholder={field.label}
-            defaultValue={options.find(
-              (option) => option.value === field.default
-            )}
-            isMulti={true}
+            isMulti={field.multiple}
             isLoading={false}
-            name={name}
-            onChange={(selectedOption) => {
-              const values = selectedOption.map((option) => option.value);
-              updateValues(name, values);
+            onChange={(
+              selectedOption:
+                | SingleValue<SelectOption>
+                | MultiValue<SelectOption>
+            ) => {
+              const value = field.multiple
+                ? (selectedOption as MultiValue<SelectOption>).map(
+                    (option) => option.value
+                  )
+                : ((selectedOption as SingleValue<SelectOption>)?.value ?? '');
+              fieldProps?.onChange?.(value);
             }}
             options={options}
-            required={field.required}
-            noOptionsMessage={() => dict.misc.noOptionsMessage}
-            className='react-select-container'
-            classNamePrefix='react-select'
-          />
-        ) : (
-          <ReactSelect
-            placeholder={field.label}
-            defaultValue={options.find(
-              (option) => option.value === field.default
-            )}
-            isMulti={false}
-            isLoading={false}
-            name={name}
-            onChange={(selectedOption) => {
-              updateValues(name, selectedOption?.value ?? '');
-            }}
-            options={options}
-            required={field.required}
             noOptionsMessage={() => dict.misc.noOptionsMessage}
             className='react-select-container'
             classNamePrefix='react-select'
@@ -133,13 +121,11 @@ export default function DynamicFormField({
             {field.options?.map((option) => (
               <label key={option.key} className='mb-1 flex items-center'>
                 <input
+                  {...fieldProps}
                   type='radio'
                   value={option.value}
-                  defaultChecked={field.default === option.value}
-                  required={field.required}
-                  name={name}
                   className='mr-2'
-                  onChange={(e) => updateValues(name, e.target.value)}
+                  checked={fieldProps.value === option.value}
                 />
                 {option.value}
               </label>
@@ -151,6 +137,7 @@ export default function DynamicFormField({
       case 'datetime':
         return (
           <Input
+            {...fieldProps}
             variant='outline'
             colorScheme='gray'
             className='mt-2 w-full'
@@ -161,28 +148,20 @@ export default function DynamicFormField({
                   ? 'time'
                   : 'datetime-local'
             }
-            defaultValue={field.default as string}
             placeholder={field.example}
-            required={field.required}
-            name={name}
             min={field.min ? (field.min as string) : undefined}
             max={field.max ? (field.max as string) : undefined}
-            onChange={(e) => updateValues(name, e.target.value)}
           />
         );
       case 'file':
         return (
           <Input
+            {...fieldProps}
             variant='outline'
             colorScheme='gray'
             className='mt-2 w-full'
             type='file'
-            required={field.required}
             multiple={field.multiple}
-            name={name}
-            onChange={() => {
-              // TODO: Convert to base64 and store in state
-            }}
           />
         );
       case 'password':
@@ -190,6 +169,7 @@ export default function DynamicFormField({
       default:
         return (
           <Input
+            {...fieldProps}
             variant='outline'
             colorScheme='gray'
             className='mt-2 w-full'
@@ -200,41 +180,23 @@ export default function DynamicFormField({
                   ? 'email'
                   : 'text'
             }
-            defaultValue={field.default as string}
             placeholder={field.example}
-            required={field.required}
-            name={name}
-            onChange={(e) => updateValues(name, e.target.value)}
           />
         );
     }
   };
 
-  if (field.required_with && field.required_with.length > 0) {
-    const requiredWith = field.required_with;
-    const requiredWithFields = requiredWith.map((key) => {
-      if (values && typeof values[key] === 'boolean') {
-        return values[key];
-      } else {
-        return false;
-      }
-    });
-    if (!requiredWithFields.includes(true)) {
-      return null;
-    }
-  }
-
   return (
-    <div className='my-4 border-b pb-4 dark:border-gray-800'>
+    <div id='dynamic-form-field'>
       {field.type !== 'checkbox' && (
-        <label className='mb-1 block dark:text-gray-400'>
+        <label className='pl-1 dark:text-gray-400'>
           {field.label}
           {field.required && <span className='ml-2 text-red-500'>*</span>}
         </label>
       )}
       {renderField()}
       {field.help_text && (
-        <p className='mt-2 text-xs text-gray-400'>{field.help_text}</p>
+        <p className='mt-1 pl-1 text-xs text-gray-400'>{field.help_text}</p>
       )}
     </div>
   );

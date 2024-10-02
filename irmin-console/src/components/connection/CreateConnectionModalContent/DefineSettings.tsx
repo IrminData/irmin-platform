@@ -8,13 +8,13 @@ import Link from 'next/link';
 import IrminCore from '@/services/core/IrminCore';
 
 import Button from '@/components/common/button/Button';
-import DynamicFormField from '@/components/common/DynamicFormField';
+import DynamicForm from '@/components/common/form/DynamicForm';
 import LoadingSpinner from '@/components/common/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { DynamicFieldValues, FieldValue } from '@/types/internal/DynamicField';
+import { DynamicFieldValues } from '@/types/internal/DynamicField';
 
 import { ConnectionSetup } from '.';
 
@@ -30,32 +30,27 @@ export default function DefineSettings({
   const { locale, dict } = useLocale();
   const { irminAlert } = usePopup();
   const { connectionService } = useMemo(() => new IrminCore(locale), [locale]);
+
   const [loading, setLoading] = useState(false);
 
-  const initialLoadingDone = useRef(false);
-  const formRef = useRef<HTMLFormElement>(null);
+  const fetchedFields = useRef(false);
 
+  // Function to fetch connection settings from backend
   const fetchConnectionSettings = useCallback(
     async (connectorID: string, connectionDetails: DynamicFieldValues) => {
-      if (loading || initialLoadingDone.current) return;
       setLoading(true);
+      fetchedFields.current = true;
       try {
         const response = await connectionService.fetchNewConnectionSettings(
           connectorID,
           connectionDetails
         );
-        const data = Object.fromEntries(
-          Object.keys(response.data).map((key) => [
-            key,
-            response.data[key].default ?? null,
-          ])
-        );
+
+        // Update connection data state
         setConnectionData((prev: ConnectionSetup) => ({
           ...prev,
           connectionSettingsFields: response.data,
-          connectionSettings: data,
         }));
-        initialLoadingDone.current = true;
       } catch (error) {
         console.error('Fetch new connection settings error:', error);
         irminAlert(
@@ -65,82 +60,50 @@ export default function DefineSettings({
       }
       setLoading(false);
     },
-    [
-      loading,
-      initialLoadingDone,
-      connectionService,
-      setConnectionData,
-      irminAlert,
-    ]
+    [connectionService, setConnectionData, irminAlert]
   );
 
+  // Fetch settings when component is mounted or connectionData changes
   useEffect(() => {
     const connectorID = connectionData.connector?.id;
     const connectionDetails = connectionData.connectionDetails;
     if (!connectorID || !connectionDetails) return;
-    fetchConnectionSettings(connectorID, connectionDetails);
+    if (!fetchedFields.current)
+      fetchConnectionSettings(connectorID, connectionDetails);
   }, [connectionData, fetchConnectionSettings]);
 
-  const continueCreateConnection = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!formRef.current) return;
-    setLoading(true);
-    try {
-      // Get the data from the form
-      const formData = new FormData(formRef.current!);
-      const data: DynamicFieldValues = {};
-      formData.forEach((value, key) => {
-        if (key !== 'irmin_connection_name') {
-          const fieldKey = Object.keys(
-            connectionData.connectionSettingsFields ?? {}
-          ).find((field) => field.toLowerCase() === key);
-          if (!fieldKey) return;
-          const field = (connectionData.connectionSettingsFields ?? {})[
-            fieldKey ?? ''
-          ];
-          if (field.type === 'integer' || field.type === 'float') {
-            data[fieldKey] = parseFloat(value as string);
-          } else {
-            data[fieldKey] = value as string;
-          }
-        }
-      });
+  // Handle form submission to continue creating connection
+  const continueCreateConnection = useCallback(
+    async (data: DynamicFieldValues) => {
+      setLoading(true);
+      try {
+        // Update connection data state with form values
+        setConnectionData({
+          ...connectionData,
+          connectionSettings: data,
+        });
+        // Proceed to the next step
+        setCurrentStep(4);
+      } catch (error) {
+        console.error('Failed to set connection settings:', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to set connection settings'
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [connectionData, setConnectionData, setCurrentStep, irminAlert]
+  );
 
-      // Update the connection data state
-      setConnectionData((prev: ConnectionSetup) => ({
-        ...prev,
-        connectionSettings: data,
-      }));
-
-      // Proceed to the next step
-      setCurrentStep(4);
-    } catch (error) {
-      console.error('Failed to set connection settings:', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to set connection settings'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateValues = (key: string, value: FieldValue | FieldValue[]) => {
-    setConnectionData({
-      ...connectionData,
-      connectionSettings: {
-        ...connectionData.connectionSettings,
-        [key]: value,
-      },
-    });
-  };
-
-  if (connectionData.connectionSettingsFields === null) {
+  if (loading || !connectionData.connectionSettingsFields) {
     return <LoadingSpinner />;
   }
 
   return (
     <div className='p-4 pb-6'>
+      {/* Display Connector Information */}
       {connectionData.connector && (
         <div className='flex flex-col justify-center border-b py-4 dark:border-gray-800'>
           <p className='mb-2 text-sm opacity-80'>
@@ -180,42 +143,24 @@ export default function DefineSettings({
           </div>
         </div>
       )}
-      <form ref={formRef}>
-        {Object.entries(connectionData.connectionSettingsFields).map(
-          ([key, field], idx) => (
-            <div key={`connection-settings-field-${key.toLowerCase()}-${idx}`}>
-              <DynamicFormField
-                name={key}
-                field={field}
-                values={connectionData.connectionSettings}
-                updateValues={updateValues}
-              />
-            </div>
-          )
-        )}
 
-        <Button
-          className='mb-6 inline-block w-full'
-          variant='solid'
-          colorScheme='primary'
-          size='md'
-          onClick={continueCreateConnection}
-        >
-          {dict.connections.create.continue}
-        </Button>
-        <Button
-          className='mb-6 inline-block w-full'
-          variant='link'
-          colorScheme='primary'
-          size='sm'
-          onClick={(e) => {
-            e.preventDefault();
-            setCurrentStep((currentStep) => currentStep - 1);
-          }}
-        >
-          {dict.connections.create.goBack}
-        </Button>
-      </form>
+      {/* Dynamic Form Render */}
+      <DynamicForm
+        fields={connectionData.connectionSettingsFields}
+        onSubmit={continueCreateConnection}
+        submitButtonText={dict.connections.create.continue}
+      />
+
+      {/* Go Back Button */}
+      <Button
+        className='mb-6 inline-block w-full'
+        variant='link'
+        colorScheme='primary'
+        size='sm'
+        onClick={() => setCurrentStep((currentStep) => currentStep - 1)}
+      >
+        {dict.connections.create.goBack}
+      </Button>
     </div>
   );
 }

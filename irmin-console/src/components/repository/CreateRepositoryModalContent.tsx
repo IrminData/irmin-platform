@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
@@ -25,24 +25,33 @@ export default function CreateRepositoryModalContent({
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
 
-  const [nameField, setNameField] = useState('');
-  const [descriptionField, setDescriptionField] = useState('');
-
   const {
     repositories: { createRepository },
   } = useWorkspace();
 
-  const handleCreateRepository = async () => {
+  const {
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      name: '',
+      description: '',
+    },
+  });
+
+  const onSubmit = async (data: { name: string; description: string }) => {
     try {
-      const name = nameField.trim();
-      const description = descriptionField.trim();
+      const { name, description } = data;
       await createRepository({
-        name: name,
-        description: description,
+        name: name.trim(),
+        description: description.trim(),
         documentation: '',
       } as Repository);
       irminAlert('success', dict.repository.repositoryCreated);
       closeModal();
+      reset(); // Reset the form values
     } catch (error) {
       irminAlert(
         'error',
@@ -53,43 +62,68 @@ export default function CreateRepositoryModalContent({
   };
 
   return (
-    <div
-      className='flex flex-col gap-4 p-4 pb-6'
+    <form
       id='create-repository-modal-content'
+      onSubmit={handleSubmit(onSubmit)}
+      className='flex flex-col gap-4 px-4 py-8'
     >
       <div>
         <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
           {dict.repository.settings.name}
         </label>
-        <Input
-          size='sm'
-          variant='outline'
-          colorScheme='gray'
-          required
-          className='h-11 w-full'
-          type='text'
+        <Controller
           name='name'
-          defaultValue={nameField}
-          onChange={(e) => setNameField(e.target.value)}
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <>
+              <Input
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                required
+                className='h-11 w-full'
+                type='text'
+                {...field}
+              />
+              {errors.name && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.name.message}
+                </p>
+              )}
+            </>
+          )}
         />
       </div>
       <div>
         <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
           {dict.repository.settings.description}
         </label>
-        <Input
-          size='sm'
-          variant='outline'
-          colorScheme='gray'
-          required
-          className='w-full'
-          type='text'
-          name='name'
-          defaultValue={descriptionField}
-          onChange={(e) => setDescriptionField(e.target.value)}
-          longtext={{
-            rows: 3,
-          }}
+        <Controller
+          name='description'
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <>
+              <Input
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                required
+                className='w-full'
+                type='text'
+                {...field}
+                longtext={{
+                  rows: 3,
+                }}
+              />
+              {errors.description && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.description.message}
+                </p>
+              )}
+            </>
+          )}
         />
       </div>
       <Button
@@ -98,10 +132,9 @@ export default function CreateRepositoryModalContent({
         size='sm'
         colorScheme='primary'
         variant='solid'
-        onClick={handleCreateRepository}
       >
         {dict.repository.createNewRepository}
       </Button>
-    </div>
+    </form>
   );
 }

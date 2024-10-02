@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-
-import ReactSelect from 'react-select';
+import React, { useCallback } from 'react';
 
 import { FaPause, FaPlay } from 'react-icons/fa6';
 
 import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import SettingsForm, {
+  FieldConfig,
+} from '@/components/common/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -15,11 +15,21 @@ import { useWorkspace } from '@/context/workspace';
 
 import { Workflow } from '@/types/core/Workflow';
 
+interface WorkflowFormValues {
+  name: string;
+  description: string;
+  cron_syntax: string;
+  owner: string;
+}
+
 /**
  * Workflow Settings section component
  *
- * @param props0 - The props
- * @param props0.workflow - The workflow to view and edit settings for
+ * Handles workflow settings updates, reassignment, deletion, and pausing/resuming.
+ * Uses {@link SettingsForm} to show and edit the workflow settings.
+ *
+ * @param props - The props
+ * @param props.workflow - The workflow to view and edit settings for
  */
 const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
   const { dict } = useLocale();
@@ -35,60 +45,56 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
     },
   } = useWorkspace();
 
-  const [nameField, setNameField] = useState(workflow?.name ?? '');
-  const [descriptionField, setDescriptionField] = useState(
-    workflow?.description ?? ''
-  );
-  const [cronField, setCronField] = useState(workflow?.cron_syntax ?? '');
-  const [ownerField, setOwnerField] = useState(workflow?.owner ?? null);
-
   /**
    * Updates the workflow with the new details provided
-   * Uses {@link updateWorkflow} to update the workflow details
-   * Uses {@link reassignWorkflow} to change the owner of the workflow
-   * Shows {@link irminAlert} on success or error
    */
-  const handleUpdateWorkflow = useCallback(async () => {
-    try {
-      if (ownerField && ownerField?.id !== workflow.owner.id) {
-        // Change the owner of the workflow if it's different
-        await reassignWorkflow(workflow.id, ownerField);
-        irminAlert('success', dict.workflow.settings.workflowOwnerChanged);
+  const handleUpdateWorkflow = useCallback(
+    async (data: WorkflowFormValues) => {
+      try {
+        if (!workflow) return;
+
+        // Check if the owner has changed
+        if (data.owner && data.owner !== workflow.owner.id) {
+          // Find the new owner object
+          const newOwner = currentWorkspace?.users?.find(
+            (user) => user.id === data.owner
+          );
+          if (newOwner) {
+            // Change the owner if it's different and found
+            await reassignWorkflow(workflow.id, newOwner);
+            irminAlert('success', dict.workflow.settings.workflowOwnerChanged);
+          }
+        }
+
+        // Update other workflow details
+        await updateWorkflow(workflow.id, {
+          ...workflow,
+          name: data.name.trim(),
+          description: data.description.trim(),
+          cron_syntax: data.cron_syntax.trim(),
+        });
+
+        irminAlert('success', dict.workflow.settings.workflowUpdated);
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ??
+            dict.workflow.settings.errorUpdatingWorkflow
+        );
       }
-      // Update other workflow details
-      const name = nameField.trim();
-      const description = descriptionField.trim();
-      const cron_syntax = cronField.trim();
-      await updateWorkflow(workflow.id, {
-        ...workflow,
-        name: name,
-        description: description,
-        cron_syntax: cron_syntax,
-      });
-      irminAlert('success', dict.workflow.settings.workflowUpdated);
-    } catch (error) {
-      irminAlert(
-        'error',
-        (error as Error)?.message ??
-          dict.workflow.settings.errorUpdatingWorkflow
-      );
-    }
-  }, [
-    workflow,
-    updateWorkflow,
-    reassignWorkflow,
-    nameField,
-    descriptionField,
-    cronField,
-    ownerField,
-    irminAlert,
-    dict,
-  ]);
+    },
+    [
+      workflow,
+      updateWorkflow,
+      currentWorkspace,
+      reassignWorkflow,
+      irminAlert,
+      dict,
+    ]
+  );
 
   /**
    * Deletes the workflow after confirming with the user
-   * Uses {@link deleteWorkflow} to delete the workflow
-   * Shows {@link irminAlert} on success or error
    */
   const handleDeleteWorkflow = useCallback(() => {
     try {
@@ -98,7 +104,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
         (confirmed) => {
           if (confirmed) {
             deleteWorkflow(workflow.id);
-            irminAlert('success', dict.workflow.settings.workflowUpdated);
+            irminAlert('success', dict.workflow.settings.workflowDeleted);
           }
         }
       );
@@ -106,16 +112,13 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
       irminAlert(
         'error',
         (error as Error)?.message ??
-          dict.workflow.settings.errorUpdatingWorkflow
+          dict.workflow.settings.errorDeletingWorkflow
       );
     }
   }, [workflow, irminConfirm, deleteWorkflow, irminAlert, dict]);
 
   /**
    * Pauses or resumes the workflow based on the current status
-   * Uses {@link pauseWorkflow} to pause the workflow
-   * Uses {@link resumeWorkflow} to resume the workflow
-   * Shows {@link irminAlert} on success or error
    */
   const handlePauseOrResume = useCallback(async () => {
     try {
@@ -135,134 +138,81 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
     }
   }, [workflow, pauseWorkflow, resumeWorkflow, irminAlert, dict]);
 
+  // Define field configurations
+  const fieldConfiguration: FieldConfig<WorkflowFormValues>[] = [
+    {
+      name: 'name',
+      label: dict.workflow.name,
+      type: 'text',
+      placeholder: '',
+    },
+    {
+      name: 'description',
+      label: dict.workflow.description,
+      type: 'textarea',
+      placeholder: '',
+    },
+    {
+      name: 'cron_syntax',
+      label: dict.workflow.runInterval,
+      type: 'text',
+      placeholder: dict.workflow.runIntervalDescription,
+    },
+    {
+      name: 'owner',
+      label: dict.workflow.owner,
+      type: 'select',
+      options:
+        currentWorkspace?.users?.map((user) => ({
+          value: user.id,
+          label: user.email,
+        })) ?? [],
+    },
+  ];
+
   return (
-    <div className='container relative mx-auto my-12 max-w-6xl px-4'>
-      <div className='min-h-96 w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-3 py-8 shadow-md dark:bg-irmin_black-600 dark:shadow-black'>
-        <div className='mb-8 flex flex-row items-center justify-between px-2'>
-          <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
-            {dict.workflow.tabs.settings}
-          </h2>
-          {workflow.status === 'paused' ? (
-            <Button
-              size='sm'
-              colorScheme='gray'
-              variant='solid'
-              icon={<FaPlay size={14} />}
-              onClick={handlePauseOrResume}
-            >
-              {dict.workflow.settings.resumeWorkflow}
-            </Button>
-          ) : (
-            <Button
-              size='sm'
-              colorScheme='gray'
-              variant='solid'
-              icon={<FaPause size={14} />}
-              onClick={handlePauseOrResume}
-            >
-              {dict.workflow.settings.pauseWorkflow}
-            </Button>
-          )}
-        </div>
-        <div className='flex flex-col gap-4'>
-          <div>
-            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-              {dict.workflow.name}
-            </label>
-            <Input
-              size='sm'
-              variant='outline'
-              colorScheme='gray'
-              required
-              className='h-11 w-full'
-              type='text'
-              name='name'
-              defaultValue={nameField}
-              onChange={(e) => setNameField(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-              {dict.workflow.description}
-            </label>
-            <Input
-              size='sm'
-              variant='outline'
-              colorScheme='gray'
-              required
-              className='w-full'
-              type='text'
-              name='name'
-              defaultValue={descriptionField}
-              onChange={(e) => setDescriptionField(e.target.value)}
-              longtext={{
-                rows: 3,
-              }}
-            />
-          </div>
-          <div>
-            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-              {dict.workflow.runInterval}
-            </label>
-            <Input
-              size='sm'
-              variant='outline'
-              colorScheme='gray'
-              required
-              className='h-11 w-full'
-              type='text'
-              defaultValue={cronField}
-              onChange={(e) => setCronField(e.target.value)}
-            />
-            <span className='text-xs opacity-60'>
-              {dict.workflow.runIntervalDescription}
-            </span>
-          </div>
-          <div>
-            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-              {dict.workflow.owner}
-            </label>
-            <ReactSelect
-              value={ownerField}
-              onChange={(newValue) => {
-                if (!newValue) return;
-                setOwnerField(newValue);
-              }}
-              options={currentWorkspace?.users ?? []}
-              getOptionLabel={(option) => option.email}
-              className='react-select-container'
-              classNamePrefix='react-select'
-            />
-          </div>
+    <div
+      className='container relative mx-auto my-8 max-w-6xl'
+      id='workflow-settings-section'
+    >
+      <div className='mb-8 px-4'>
+        {workflow.status === 'paused' ? (
           <Button
-            className='h-11 w-full'
-            type='submit'
             size='sm'
-            colorScheme='primary'
+            colorScheme='gray'
             variant='solid'
-            onClick={handleUpdateWorkflow}
+            icon={<FaPlay size={14} />}
+            onClick={handlePauseOrResume}
           >
-            {dict.workflow.settings.saveChanges}
+            {dict.workflow.settings.resumeWorkflow}
           </Button>
-          <div className='mt-8'>
-            <p className='text-sm font-normal text-red-800 md:text-xl dark:text-red-400'>
-              {dict.workflow.settings.dangerZone}
-            </p>
-            <p className='mt-2 text-xs text-gray-700 md:text-base dark:text-gray-200'>
-              {dict.workflow.settings.deletionNote}
-            </p>
-            <Button
-              className='mt-4 dark:bg-gray-800 dark:text-white'
-              size='sm'
-              colorScheme='secondary'
-              variant='outline'
-              onClick={handleDeleteWorkflow}
-            >
-              {dict.workflow.settings.delete}
-            </Button>
-          </div>
-        </div>
+        ) : (
+          <Button
+            size='sm'
+            colorScheme='gray'
+            variant='solid'
+            icon={<FaPause size={14} />}
+            onClick={handlePauseOrResume}
+          >
+            {dict.workflow.settings.pauseWorkflow}
+          </Button>
+        )}
       </div>
+      <SettingsForm<WorkflowFormValues>
+        initialValues={{
+          name: workflow.name,
+          description: workflow.description,
+          cron_syntax: workflow.cron_syntax ?? undefined,
+          owner: workflow.owner.id,
+        }}
+        onSubmit={handleUpdateWorkflow}
+        fieldConfiguration={fieldConfiguration}
+        deleteItem={handleDeleteWorkflow}
+        itemName='Workflow'
+        submitButtonLabel={dict.workflow.settings.saveChanges}
+        deleteButtonLabel={dict.workflow.settings.delete}
+        dangerZoneMessage={dict.workflow.settings.deletionNote}
+      />
     </div>
   );
 };

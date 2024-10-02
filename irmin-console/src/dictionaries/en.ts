@@ -80,7 +80,11 @@ const en = {
     yes: 'Yes',
     no: 'No',
     fieldRequired: 'This field is required',
+    fieldInvalid: 'This field is invalid',
     refresh: 'Refresh',
+    dangerZone: 'Danger zone',
+    resetForm: 'Clear form',
+    pleaseFixErrors: 'Please fix the errors above',
   },
   auth: {
     signIn: {
@@ -338,6 +342,7 @@ const en = {
       uploadNewCollection: 'Upload new collection',
       success: 'Your upload has been successful!',
       failed: 'Your upload has failed!',
+      noFilesSelected: 'Select files to upload before submitting',
     },
     settings: {
       generalSettings: 'General settings',
@@ -347,8 +352,9 @@ const en = {
       saveChanges: 'Save changes',
       repositoryUpdated: 'Repository updated successfully.',
       errorUpdatingRepository: 'Error updating repository.',
+      repositoryDeleted: 'Repository deleted successfully.',
+      errorDeletingRepository: 'Error deleting repository.',
       repositoryOwnerChanged: 'Repository owner changed successfully.',
-      dangerZone: 'Danger zone',
       deletionNote:
         'Deleting this repository will remove all data associated with it. This action is irreversible.',
       deleteRepository: 'Delete repository',
@@ -400,11 +406,12 @@ const en = {
       saveChanges: 'Save changes',
       connectionUpdated: 'Connection updated successfully.',
       errorUpdatingConnection: 'Error updating connection.',
+      connectionDeleted: 'Connection deleted successfully.',
+      errorDeletingConnection: 'Error deleting connection.',
       name: 'Name',
       description: 'Description',
       owner: 'Owner',
       connectionOwnerChanged: 'Connection owner changed successfully.',
-      dangerZone: 'Danger zone',
       deletionNote:
         'Deleting this connection will remove all data associated with it. This action is irreversible.',
       delete: 'Delete connection',
@@ -437,6 +444,7 @@ const en = {
       success: 'Connection successful',
       failed: 'Connection failed',
       contactSupport: 'Contact support',
+      requiredFieldsMissing: 'Error! Required fields are missing',
     },
   },
   workflow: {
@@ -482,8 +490,9 @@ const en = {
       saveChanges: 'Save changes',
       workflowUpdated: 'Workflow updated successfully.',
       errorUpdatingWorkflow: 'Error updating workflow.',
+      workflowDeleted: 'Workflow deleted successfully.',
+      errorDeletingWorkflow: 'Error deleting workflow.',
       workflowOwnerChanged: 'Workflow owner changed successfully.',
-      dangerZone: 'Danger zone',
       deletionNote:
         'Deleting this workflow will remove all data associated with it. This action is irreversible.',
       delete: 'Delete workflow',
@@ -647,6 +656,8 @@ const en = {
     newPassword: 'New Password',
     confirmNewPassword: 'Confirm New Password',
     saveChanges: 'Save Changes',
+    passwordsDoNotMatch: 'Passwords do not match',
+    invalidEmail: 'Invalid email',
   },
   workspace: {
     general: 'General',
@@ -663,7 +674,6 @@ const en = {
     workspaceName: 'Workspace Name',
     workspaceDescription: 'Workspace Description',
     saveChanges: 'Save Changes',
-    dangerZone: 'Danger zone',
     deletionNote:
       'Deleting your workspace will remove all data associated with it. This action is irreversible.',
     deleteWorkspace: 'Delete Workspace',

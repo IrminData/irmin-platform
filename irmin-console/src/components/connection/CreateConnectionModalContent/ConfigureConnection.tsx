@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,16 +8,29 @@ import Link from 'next/link';
 import IrminCore from '@/services/core/IrminCore';
 
 import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import DynamicForm from '@/components/common/form/DynamicForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
+import {
+  DynamicFields,
+  DynamicFieldValues,
+} from '@/types/internal/DynamicField';
+
 import { ConnectionSetup } from '.';
 
+/**
+ * Configure connection component for finalizing the connection setup.
+ *
+ * @param props - Component props
+ * @param props.connectionData - Current state of the connection setup
+ * @param props.setConnectionData - Setter for the connection state
+ * @param props.setCurrentStep - Setter for the current step of the connection setup
+ * @param props.closeModal - Function to close the modal
+ */
 export default function ConfigureConnection({
   connectionData,
-  setConnectionData,
   setCurrentStep,
   closeModal,
 }: {
@@ -28,55 +41,65 @@ export default function ConfigureConnection({
 }) {
   const { locale, dict } = useLocale();
   const { connectionService } = useMemo(() => new IrminCore(locale), [locale]);
-
   const { irminAlert } = usePopup();
 
-  const [processing, setProcessing] = useState(false);
+  // Handle form submission to create the connection
+  const createConnection = useCallback(
+    async (data: DynamicFieldValues) => {
+      // Ensure required fields are present
+      if (
+        !connectionData.name ||
+        !data.description ||
+        !connectionData.connector ||
+        !connectionData.connectionDetails ||
+        !connectionData.connectionSettings
+      ) {
+        irminAlert('error', dict.connections.create.requiredFieldsMissing);
+        return;
+      }
 
-  const createConnection = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    // Prevent if already loading
-    if (processing) return;
-    setProcessing(true);
-    // Validate all required fields are filled
-    if (
-      !connectionData.name ||
-      !connectionData.description ||
-      !connectionData.connector ||
-      !connectionData.connectionDetails ||
-      !connectionData.connectionSettings
-    ) {
-      irminAlert(
-        'error',
-        'Fields required for creating a connection are missing'
-      );
-      setProcessing(false); // Ensure loading state is reset
-      return;
-    }
-    try {
-      // Start the sync
-      const res = await connectionService.createConnection({
-        connectorID: connectionData.connector.id,
-        connectionDetails: connectionData.connectionDetails,
-        connectionSettings: connectionData.connectionSettings,
-        name: connectionData.name,
-        description: connectionData.description,
-      });
-      // Inform that sync has started
-      irminAlert(
-        'success',
-        res.metadata?.message ?? 'Connection create successfully'
-      );
-      closeModal();
-    } catch (error) {
-      console.error('Failed to create connection', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to create connection'
-      );
-    } finally {
-      setProcessing(false);
-    }
+      try {
+        // Create connection via the connectionService
+        const res = await connectionService.createConnection({
+          connectorID: connectionData.connector.id,
+          connectionDetails: connectionData.connectionDetails,
+          connectionSettings: connectionData.connectionSettings,
+          name: connectionData.name,
+          description: data.description as string,
+        });
+
+        // Show success alert and close modal
+        irminAlert(
+          'success',
+          res.metadata?.message ?? 'Connection created successfully'
+        );
+        closeModal();
+      } catch (error) {
+        console.error('Failed to create connection', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to create connection'
+        );
+      }
+    },
+    [
+      connectionData,
+      irminAlert,
+      connectionService,
+      dict.connections.create.requiredFieldsMissing,
+      closeModal,
+    ]
+  );
+
+  // Prepare the fields for DynamicForm
+  const formFields: DynamicFields = {
+    description: {
+      type: 'textarea',
+      label: dict.connections.create.connectionDescription,
+      required: true,
+      default: connectionData.description,
+      example: dict.connections.create.connectionDescriptionPlaceholder,
+    },
   };
 
   return (
@@ -120,45 +143,21 @@ export default function ConfigureConnection({
           </div>
         </div>
       )}
-      <div className='my-4 border-b pb-4 dark:border-gray-800'>
-        <label className='mb-1 block dark:text-gray-400'>
-          {dict.connections.create.connectionDescription}
-        </label>
-        <Input
-          variant='outline'
-          colorScheme='gray'
-          className='mt-2 w-full'
-          defaultValue={connectionData.description}
-          placeholder={dict.connections.create.connectionDescriptionPlaceholder}
-          onChange={(e) => {
-            setConnectionData((prev: ConnectionSetup) => ({
-              ...prev,
-              description: e.target.value ?? '',
-            }));
-          }}
-          longtext={{
-            rows: 4,
-          }}
-        />
-      </div>
-      <Button
-        className='mb-6 inline-block w-full'
-        variant='solid'
-        colorScheme='primary'
-        size='md'
-        onClick={createConnection}
-      >
-        {dict.connections.create.createConnection}
-      </Button>
+
+      {/* Dynamic Form Render */}
+      <DynamicForm
+        fields={formFields}
+        onSubmit={createConnection}
+        submitButtonText={dict.connections.create.createConnection}
+      />
+
+      {/* Go Back Button */}
       <Button
         className='mb-6 inline-block w-full'
         variant='link'
         colorScheme='primary'
         size='sm'
-        onClick={(e) => {
-          e.preventDefault();
-          setCurrentStep((currentStep) => currentStep - 1);
-        }}
+        onClick={() => setCurrentStep((currentStep) => currentStep - 1)}
       >
         {dict.connections.create.goBack}
       </Button>

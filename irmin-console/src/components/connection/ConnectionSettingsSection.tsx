@@ -1,11 +1,10 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 
-import ReactSelect from 'react-select';
-
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import SettingsForm, {
+  FieldConfig,
+} from '@/components/common/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -13,11 +12,20 @@ import { useWorkspace } from '@/context/workspace';
 
 import { Connection } from '@/types/core/Connection';
 
+interface ConnectionFormValues {
+  name: string;
+  description: string;
+  owner: string;
+}
+
 /**
  * Connection Settings section component
  *
- * @param props0 - The props
- * @param props0.connection - The connection to view and edit settings for
+ * Handles connection settings updates, reassignment, and deletion.
+ * Uses {@link SettingsForm} to show and edit the connection settings.
+ *
+ * @param props - The props
+ * @param props.connection - The connection to view and edit settings for
  */
 const ConnectionSettingsSection = ({
   connection,
@@ -28,59 +36,61 @@ const ConnectionSettingsSection = ({
   const { irminConfirm, irminAlert } = usePopup();
   const {
     workspaces: { currentWorkspace },
-    connections: { updateConnection, deleteConnection, reassignConnection },
+    connections: { updateConnection, reassignConnection, deleteConnection },
   } = useWorkspace();
 
-  const [nameField, setNameField] = useState(connection?.name ?? '');
-  const [descriptionField, setDescriptionField] = useState(
-    connection?.description ?? ''
-  );
-  const [ownerField, setOwnerField] = useState(connection?.owner ?? null);
-
   /**
-   * Updates the workflow with the new details provided
-   * Uses {@link updateConnection} to update the connection details
-   * Uses {@link reassignConnection} to change the owner of the connection
-   * Shows {@link irminAlert} on success or error
+   * Updates the connection with the new details provided
    */
-  const handleUpdateConnection = useCallback(async () => {
-    try {
-      if (ownerField && ownerField?.id !== connection.owner.id) {
-        // Change the owner of the connection if it's different
-        await reassignConnection(connection.id, ownerField);
-        irminAlert('success', dict.connections.settings.connectionOwnerChanged);
+  const handleUpdateConnection = useCallback(
+    async (data: ConnectionFormValues) => {
+      try {
+        if (!connection) return;
+
+        // Check if the owner has changed
+        if (data.owner && data.owner !== connection.owner.id) {
+          // Find the new owner object
+          const newOwner = currentWorkspace?.users?.find(
+            (user) => user.id === data.owner
+          );
+          if (newOwner) {
+            // Change the owner if it's different and found
+            await reassignConnection(connection.id, newOwner);
+            irminAlert(
+              'success',
+              dict.connections.settings.connectionOwnerChanged
+            );
+          }
+        }
+
+        // Update other connection details
+        await updateConnection(connection.id, {
+          ...connection,
+          name: data.name.trim(),
+          description: data.description.trim(),
+        });
+
+        irminAlert('success', dict.connections.settings.connectionUpdated);
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ??
+            dict.connections.settings.errorUpdatingConnection
+        );
       }
-      // Update other details
-      const name = nameField.trim();
-      const description = descriptionField.trim();
-      await updateConnection(connection.id, {
-        ...connection,
-        name: name,
-        description: description,
-      });
-      irminAlert('success', dict.connections.settings.connectionUpdated);
-    } catch (error) {
-      irminAlert(
-        'error',
-        (error as Error)?.message ??
-          dict.connections.settings.errorUpdatingConnection
-      );
-    }
-  }, [
-    connection,
-    updateConnection,
-    reassignConnection,
-    nameField,
-    descriptionField,
-    ownerField,
-    irminAlert,
-    dict,
-  ]);
+    },
+    [
+      connection,
+      currentWorkspace,
+      updateConnection,
+      reassignConnection,
+      irminAlert,
+      dict,
+    ]
+  );
 
   /**
-   * Deletes the workflow after confirming with the user
-   * Uses {@link deleteWorkflow} to delete the workflow
-   * Shows {@link irminAlert} on success or error
+   * Deletes the connection after confirming with the user
    */
   const handleDeleteConnection = useCallback(() => {
     try {
@@ -90,7 +100,7 @@ const ConnectionSettingsSection = ({
         (confirmed) => {
           if (confirmed) {
             deleteConnection(connection.id);
-            irminAlert('success', dict.connections.settings.connectionUpdated);
+            irminAlert('success', dict.connections.settings.connectionDeleted);
           }
         }
       );
@@ -98,100 +108,56 @@ const ConnectionSettingsSection = ({
       irminAlert(
         'error',
         (error as Error)?.message ??
-          dict.connections.settings.errorUpdatingConnection
+          dict.connections.settings.errorDeletingConnection
       );
     }
   }, [connection, irminConfirm, deleteConnection, irminAlert, dict]);
 
+  // Define field configurations
+  const fieldConfiguration: FieldConfig<ConnectionFormValues>[] = [
+    {
+      name: 'name',
+      label: dict.connections.settings.name,
+      type: 'text',
+      placeholder: '',
+    },
+    {
+      name: 'description',
+      label: dict.connections.settings.description,
+      type: 'textarea',
+      placeholder: '',
+    },
+    {
+      name: 'owner',
+      label: dict.connections.settings.owner,
+      type: 'select',
+      options:
+        currentWorkspace?.users?.map((user) => ({
+          value: user.id,
+          label: user.email,
+        })) ?? [],
+    },
+  ];
+
   return (
-    <div className='container relative mx-auto my-12 max-w-6xl px-4'>
-      <div className='min-h-96 w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-3 py-8 shadow-md dark:bg-irmin_black-600 dark:shadow-black'>
-        <div className='mb-8 flex flex-row items-center justify-between px-2'>
-          <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
-            {dict.connections.settings.title}
-          </h2>
-        </div>
-        <div className='flex flex-col gap-4'>
-          <div>
-            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-              {dict.connections.settings.name}
-            </label>
-            <Input
-              size='sm'
-              variant='outline'
-              colorScheme='gray'
-              required
-              className='h-11 w-full'
-              type='text'
-              name='name'
-              defaultValue={nameField}
-              onChange={(e) => setNameField(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-              {dict.connections.settings.description}
-            </label>
-            <Input
-              size='sm'
-              variant='outline'
-              colorScheme='gray'
-              required
-              className='w-full'
-              type='text'
-              name='name'
-              defaultValue={descriptionField}
-              onChange={(e) => setDescriptionField(e.target.value)}
-              longtext={{
-                rows: 3,
-              }}
-            />
-          </div>
-          <div>
-            <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-              {dict.connections.settings.owner}
-            </label>
-            <ReactSelect
-              value={ownerField}
-              onChange={(newValue) => {
-                if (!newValue) return;
-                setOwnerField(newValue);
-              }}
-              options={currentWorkspace?.users ?? []}
-              getOptionLabel={(option) => option.email}
-              className='react-select-container'
-              classNamePrefix='react-select'
-            />
-          </div>
-          <Button
-            className='h-11 w-full'
-            type='submit'
-            size='sm'
-            colorScheme='primary'
-            variant='solid'
-            onClick={handleUpdateConnection}
-          >
-            {dict.connections.settings.saveChanges}
-          </Button>
-          <div className='mt-8'>
-            <p className='text-sm font-normal text-red-800 md:text-xl dark:text-red-400'>
-              {dict.connections.settings.dangerZone}
-            </p>
-            <p className='mt-2 text-xs text-gray-700 md:text-base dark:text-gray-200'>
-              {dict.connections.settings.deletionNote}
-            </p>
-            <Button
-              className='mt-4 dark:bg-gray-800 dark:text-white'
-              size='sm'
-              colorScheme='secondary'
-              variant='outline'
-              onClick={handleDeleteConnection}
-            >
-              {dict.connections.settings.delete}
-            </Button>
-          </div>
-        </div>
-      </div>
+    <div
+      className='container relative mx-auto my-8 max-w-6xl'
+      id='connection-settings-section'
+    >
+      <SettingsForm<ConnectionFormValues>
+        initialValues={{
+          name: connection.name,
+          description: connection.description,
+          owner: connection.owner.id,
+        }}
+        onSubmit={handleUpdateConnection}
+        fieldConfiguration={fieldConfiguration}
+        deleteItem={handleDeleteConnection}
+        itemName='Connection'
+        submitButtonLabel={dict.connections.settings.saveChanges}
+        deleteButtonLabel={dict.connections.settings.delete}
+        dangerZoneMessage={dict.connections.settings.deletionNote}
+      />
     </div>
   );
 };

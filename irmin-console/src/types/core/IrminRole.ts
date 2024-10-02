@@ -1,5 +1,5 @@
 /**
- * IrminRole
+ * Irmin role object
  *
  * @typeParam description - Human-readable description
  * @typeParam label - Human-readable name
@@ -10,4 +10,8 @@ export interface IrminRole {
   label: string;
   name: IrminRoleNames;
 }
+
+/**
+ * All currently available roles in Irmin
+ */
 export type IrminRoleNames = 'admin' | 'editor' | 'billing' | 'viewer';

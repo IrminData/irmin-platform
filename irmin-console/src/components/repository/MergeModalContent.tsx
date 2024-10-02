@@ -34,7 +34,12 @@ export default function MergeModalContent({
 }) {
   const { dict, locale } = useLocale();
   const { irminAlert } = usePopup();
-  const { handleSubmit, control, register } = useForm({
+
+  const {
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm({
     defaultValues: {
       description: '',
       mergeStrategy: 'default',
@@ -106,15 +111,26 @@ export default function MergeModalContent({
         <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
           {dict.repository.compare.mergeCommitDescription}
         </label>
-        <Input
-          size='sm'
-          variant='outline'
-          colorScheme='gray'
-          required
-          className='h-11 w-full'
-          type='text'
-          {...register('description')}
+        <Controller
+          name='description'
+          control={control}
+          render={({ field }) => (
+            <Input
+              size='sm'
+              variant='outline'
+              colorScheme='gray'
+              className='h-11 w-full'
+              type='text'
+              placeholder={dict.repository.compare.mergeCommitDescription}
+              {...field}
+            />
+          )}
         />
+        {errors.description && (
+          <p className='mt-1 text-xs text-red-600'>
+            {errors.description.message}
+          </p>
+        )}
       </div>
       <div>
         <label className='mb-1 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>

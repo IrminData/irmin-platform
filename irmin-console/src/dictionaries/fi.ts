@@ -80,7 +80,11 @@ const fi = {
     yes: 'Kyllä',
     no: 'Ei',
     fieldRequired: 'Kenttä on pakollinen',
+    fieldInvalid: 'Kenttä on virheellinen',
     refresh: 'Päivitä',
+    dangerZone: 'Vaaravyöhyke',
+    resetForm: 'Tyhjennä lomake',
+    pleaseFixErrors: 'Korjaa virheet ennen lähettämistä',
   },
   auth: {
     signIn: {
@@ -340,6 +344,7 @@ const fi = {
       uploadNewCollection: 'Lataa uusi kokoelma',
       success: 'Kokoelman lataus onnistui!',
       failed: 'Kokoelman lataus epäonnistui!',
+      noFilesSelected: 'Valitse tiedostot ladataksesi kokoelman',
     },
     settings: {
       generalSettings: 'Yleiset asetukset',
@@ -349,8 +354,9 @@ const fi = {
       saveChanges: 'Tallenna',
       repositoryUpdated: 'Tietovarasto päivitetty onnistuneesti.',
       errorUpdatingRepository: 'Virhe päivitettäessä tietovarastoa.',
+      repositoryDeleted: 'Tietovarasto poistettu onnistuneesti.',
+      errorDeletingRepository: 'Virhe poistettaessa tietovarastoa.',
       repositoryOwnerChanged: 'Tietovaraston omistaja vaihdettu onnistuneesti.',
-      dangerZone: 'Vaaravyöhyke',
       deletionNote:
         'Tietovaraston poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
       deleteRepository: 'Poista tietovarasto',
@@ -402,11 +408,14 @@ const fi = {
       saveChanges: 'Tallenna muutokset',
       connectionUpdated: 'Yhteys päivitetty onnistuneesti.',
       errorUpdatingConnection: 'Virhe päivitettäessä yhteyttä.',
+      connectionDeleted: 'Yhteys poistettu onnistuneesti.',
+      errorDeletingConnection: 'Virhe poistettaessa yhteyttä.',
+      repositoryDeleted: 'Tietovarasto poistettu onnistuneesti.',
+      errorDeletingRepository: 'Virhe poistettaessa tietovarastoa.',
       name: 'Nimi',
       description: 'Kuvaus',
       owner: 'Omistaja',
       connectionOwnerChanged: 'Yhteyden omistaja vaihdettu onnistuneesti.',
-      dangerZone: 'Vaaravyöhyke',
       deletionNote:
         'Poistamalla tämän yhteyden poistetaan kaikki siihen liittyvät tiedot. Tätä toimintoa ei voi peruuttaa.',
       delete: 'Poista yhteys',
@@ -439,6 +448,7 @@ const fi = {
       success: 'Yhteys onnistui',
       failed: 'Yhteys epäonnistui',
       contactSupport: 'Ota yhteyttä tukeen',
+      requiredFieldsMissing: 'Virhe! Pakollisia kenttiä puuttuu',
     },
   },
   workflow: {
@@ -484,8 +494,9 @@ const fi = {
       saveChanges: 'Tallenna muutokset',
       workflowUpdated: 'Prosessi päivitetty onnistuneesti.',
       errorUpdatingWorkflow: 'Virhe päivittäessä prosessia.',
+      workflowDeleted: 'Prosessi poistettu onnistuneesti.',
+      errorDeletingWorkflow: 'Virhe poistettaessa prosessia.',
       workflowOwnerChanged: 'Prosessin omistaja vaihdettu onnistuneesti.',
-      dangerZone: 'Vaaravyöhyke',
       deletionNote:
         'Poistamalla tämän prosessin poistetaan kaikki siihen liittyvät tiedot. Tätä toimintoa ei voi peruuttaa.',
       delete: 'Poista prosessi',
@@ -651,6 +662,8 @@ const fi = {
     newPassword: 'Uusi salasana',
     confirmNewPassword: 'Vahvista uusi salasana',
     saveChanges: 'Tallenna muutokset',
+    passwordsDoNotMatch: 'Salasanat eivät täsmää',
+    invalidEmail: 'Virheellinen sähköposti',
   },
   workspace: {
     general: 'Yleiset',
@@ -667,7 +680,6 @@ const fi = {
     workspaceName: 'Työtilan nimi',
     workspaceDescription: 'Työtilan kuvaus',
     saveChanges: 'Tallenna muutokset',
-    dangerZone: 'Vaaravyöhyke',
     deletionNote:
       'Työtilan poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
     deleteWorkspace: 'Poista työtila',

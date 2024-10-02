@@ -1,5 +1,6 @@
-import { useState } from 'react';
+'use client';
 
+import { Controller, useForm } from 'react-hook-form';
 import Select from 'react-select';
 
 import Button from '@/components/common/button/Button';
@@ -7,6 +8,18 @@ import Input from '@/components/common/form/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 
+interface FormValues {
+  branchName: string;
+  fromBranch: string;
+}
+
+/**
+ * Modal content to create a new branch.
+ *
+ * @param props - The props
+ * @param props.branches - The list of existing branches to create the new branch from
+ * @param props.createBranch - Callback to create a new branch
+ */
 export default function CreateBranchModalContent({
   branches,
   createBranch,
@@ -16,49 +29,89 @@ export default function CreateBranchModalContent({
 }) {
   const { dict } = useLocale();
 
-  const [branchName, setBranchName] = useState('');
-  const [fromBranch, setFromBranch] = useState('main');
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>({
+    defaultValues: {
+      branchName: '',
+      fromBranch: 'main',
+    },
+  });
+
+  const onSubmit = (data: FormValues) => {
+    createBranch(data.branchName, data.fromBranch);
+  };
 
   return (
-    <div className='mb-4 flex flex-col gap-4'>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className='flex flex-col gap-4 pb-8'
+    >
       <div className='flex flex-col gap-2'>
         <label htmlFor='branchName' className='text-xs'>
           {dict.repository.newBranchName}
         </label>
-        <Input
-          id='branchName'
-          type='text'
-          value={branchName}
-          variant='outline'
-          colorScheme='gray'
-          size='sm'
-          onChange={(e) => setBranchName(e.target.value)}
-          placeholder={dict.repository.newBranchName}
+        <Controller
+          name='branchName'
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <>
+              <Input
+                id='branchName'
+                type='text'
+                variant='outline'
+                colorScheme='gray'
+                size='sm'
+                placeholder={dict.repository.newBranchName}
+                {...field}
+              />
+              {errors.branchName && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.branchName.message}
+                </p>
+              )}
+            </>
+          )}
         />
       </div>
       <div className='flex flex-col gap-2'>
         <label htmlFor='fromBranch' className='text-xs'>
           {dict.repository.fromBranch}
         </label>
-        <Select
-          options={branches.map((branch) => ({
-            label: branch,
-            value: branch,
-          }))}
-          value={{
-            label: fromBranch,
-            value: fromBranch,
-          }}
-          onChange={(selectedOption) => {
-            if (selectedOption) {
-              setFromBranch(selectedOption.value);
-            }
-          }}
-          isSearchable
-          placeholder={dict.repository.tabs.branches}
-          noOptionsMessage={() => dict.misc.noOptionsMessage}
-          className='react-select-container'
-          classNamePrefix='react-select'
+        <Controller
+          name='fromBranch'
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <>
+              <Select
+                options={branches.map((branch) => ({
+                  label: branch,
+                  value: branch,
+                }))}
+                value={{
+                  label: field.value,
+                  value: field.value,
+                }}
+                onChange={(selectedOption) => {
+                  field.onChange(selectedOption?.value || 'main');
+                }}
+                isSearchable
+                placeholder={dict.repository.tabs.branches}
+                noOptionsMessage={() => dict.misc.noOptionsMessage}
+                className='react-select-container'
+                classNamePrefix='react-select'
+              />
+              {errors.fromBranch && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.fromBranch.message}
+                </p>
+              )}
+            </>
+          )}
         />
       </div>
       <Button
@@ -66,12 +119,10 @@ export default function CreateBranchModalContent({
         colorScheme='primary'
         size='sm'
         className='w-full'
-        onClick={() => {
-          createBranch(branchName, fromBranch);
-        }}
+        type='submit'
       >
         {dict.repository.createBranch}
       </Button>
-    </div>
+    </form>
   );
 }

@@ -3,9 +3,10 @@
 import { useMemo, useState } from 'react';
 
 import IrminCore from '@/services/core/IrminCore';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import Button from '@/components/common/button/Button';
+import Input from '@/components/common/form/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -14,7 +15,7 @@ interface UploadFormValues {
   repository: string;
   ref: string;
   name: string;
-  files: FileList;
+  files: FileList | null;
   path: string;
 }
 
@@ -26,7 +27,7 @@ interface UploadFormValues {
  *
  * @param props - The component props
  * @param props.currentRepository - The current repository slug
- * @param props.currentRef - The current ref (eg. branch)
+ * @param props.currentRef - The current ref (e.g., branch)
  */
 export default function UploadCollectionModalContent({
   currentRepository,
@@ -44,17 +45,31 @@ export default function UploadCollectionModalContent({
   const { repositoryService } = useMemo(() => new IrminCore(locale), [locale]);
 
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors },
-  } = useForm<UploadFormValues>();
+  } = useForm<UploadFormValues>({
+    defaultValues: {
+      repository: currentRepository ?? '',
+      ref: currentRef ?? '',
+      name: '',
+      files: null,
+      path: '',
+    },
+  });
 
   // Handle upload collection to the repository
   const handleUpload = async (data: UploadFormValues) => {
     if (loading) return;
     setLoading(true);
     setError('');
+
     try {
+      if (!data.files) {
+        setError(dict.repository.upload.noFilesSelected);
+        return;
+      }
+
       // Upload the collection
       await repositoryService.uploadCollection(
         data.repository,
@@ -63,9 +78,9 @@ export default function UploadCollectionModalContent({
         data.files,
         data.path
       );
-      // Close the modal
+
+      // Close the modal and show success message
       irminModal.close();
-      // Show success message
       irminAlert('success', dict.repository.upload.success);
     } catch (error) {
       console.error('Failed to upload new collection:', error);
@@ -76,66 +91,149 @@ export default function UploadCollectionModalContent({
   };
 
   return (
-    <form onSubmit={handleSubmit(handleUpload)}>
+    <form onSubmit={handleSubmit(handleUpload)} className='space-y-4'>
       <div className='pb-3'>
         <label className='text-xs'>
           {dict.repository.upload.targetRepository}
         </label>
-        <input
-          type='text'
-          {...register('repository')}
-          value={currentRepository ?? ''}
-          disabled={!!currentRepository}
-          className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
+        <Controller
+          name='repository'
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <>
+              <Input
+                type='text'
+                {...field}
+                disabled={!!currentRepository}
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                className={`w-full ${
+                  errors.repository ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder={dict.repository.upload.targetRepository}
+              />
+              {errors.repository && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.repository.message}
+                </p>
+              )}
+            </>
+          )}
         />
-        {errors.repository && (
-          <p className='text-red-800'>{errors.repository.message}</p>
-        )}
       </div>
       <div className='pb-3'>
         <label className='text-xs'>{dict.repository.upload.targetBranch}</label>
-        <input
-          type='text'
-          {...register('ref')}
-          value={currentRef ?? ''}
-          disabled={!!currentRef}
-          className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
+        <Controller
+          name='ref'
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <>
+              <Input
+                type='text'
+                {...field}
+                disabled={!!currentRef}
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                className={`w-full ${
+                  errors.ref ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder={dict.repository.upload.targetBranch}
+              />
+              {errors.ref && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.ref.message}
+                </p>
+              )}
+            </>
+          )}
         />
-        {errors.ref && <p className='text-red-800'>{errors.ref.message}</p>}
       </div>
       <div className='pb-3'>
         <label className='text-xs'>
           {dict.repository.upload.collectionName}
         </label>
-        <input
-          type='text'
-          {...register('name', { required: dict.misc.fieldRequired })}
-          className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
+        <Controller
+          name='name'
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <>
+              <Input
+                type='text'
+                {...field}
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                className={`w-full ${
+                  errors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder={dict.repository.upload.collectionName}
+              />
+              {errors.name && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.name.message}
+                </p>
+              )}
+            </>
+          )}
         />
-        {errors.name && <p className='text-red-800'>{errors.name.message}</p>}
       </div>
       <div className='pb-3'>
         <label className='text-xs'>
           {dict.repository.upload.filesToUpload}
         </label>
-        <input
-          disabled={loading}
-          type='file'
-          multiple
-          {...register('files', { required: dict.misc.fieldRequired })}
-          className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
+        <Controller
+          name='files'
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <>
+              <Input
+                type='file'
+                multiple
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                className={`w-full ${
+                  errors.files ? 'border-red-500' : 'border-gray-300'
+                }`}
+                disabled={loading}
+                onChange={(e) => {
+                  // Ensure that `field.onChange` is called with the selected files
+                  field.onChange(e.target.files);
+                }}
+              />
+              {errors.files && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.files.message}
+                </p>
+              )}
+            </>
+          )}
         />
-        {errors.files && <p className='text-red-800'>{errors.files.message}</p>}
       </div>
       <div className='pb-3'>
         <label className='text-xs'>
           {dict.repository.upload.pathInRepository}
         </label>
-        <input
-          placeholder='/example/path'
-          type='text'
-          {...register('path')}
-          className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
+        <Controller
+          name='path'
+          control={control}
+          render={({ field }) => (
+            <Input
+              type='text'
+              {...field}
+              size='sm'
+              variant='outline'
+              colorScheme='gray'
+              className='w-full'
+              placeholder='/example/path'
+            />
+          )}
         />
       </div>
       {error && <div className='py-2 text-red-800'>{error}</div>}

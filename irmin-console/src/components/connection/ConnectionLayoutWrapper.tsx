@@ -74,7 +74,7 @@ export default function ConnectionLayoutWrapper({
 
   if (!connection)
     return (
-      <div className='container relative mx-auto max-w-6xl'>
+      <div className='container relative mx-auto max-w-6xl py-12'>
         <LoadingSkeleton className='h-96' />
       </div>
     );

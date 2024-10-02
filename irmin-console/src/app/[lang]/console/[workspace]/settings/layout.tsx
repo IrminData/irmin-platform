@@ -1,9 +1,11 @@
 import { Metadata } from 'next';
 
-import { WorkspaceLayoutParams } from '@/app/[lang]/console/[workspace]/layout';
+import WorkspaceSettingsLayoutWrapper from '@/components/workspace/WorkspaceSettingsLayoutWrapper';
+
+import { WorkspaceLayoutParams } from '../layout';
 
 /**
- * SEO metadata for the Workspace Settings pages
+ * SEO metadata for the Workspace Settings layout
  */
 export async function generateMetadata({
   params,
@@ -17,13 +19,21 @@ export async function generateMetadata({
 }
 
 /**
- * Layout for the Workspace Settings pages in the Console
+ * Layout for the Workspace settings pages in the Console
+ * @param props0 - The layout properties
+ * @param props0.children - The children to render
  */
-export default function ConsoleWorkspaceSettingsLayout({
+export default function WorkspaceSettingsLayout({
   children,
-}: Readonly<{
-  params: WorkspaceLayoutParams;
+  params,
+}: {
   children: React.ReactNode;
-}>) {
-  return <div className='container relative mx-auto max-w-6xl'>{children}</div>;
+  params: WorkspaceLayoutParams;
+}) {
+  const { workspace } = params;
+  return (
+    <WorkspaceSettingsLayoutWrapper workspaceSlug={workspace}>
+      {children}
+    </WorkspaceSettingsLayoutWrapper>
+  );
 }

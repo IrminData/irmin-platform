@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
+
+import { Controller, useForm } from 'react-hook-form';
 
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
@@ -12,55 +14,77 @@ import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
+// Define the form values type for react-hook-form
+interface SignUpFormValues {
+  name: string;
+  company: string;
+  email: string;
+  emailConfirmation: string;
+  password: string;
+  passwordConfirmation: string;
+}
+
 /**
- * Sign up UI component
- *
- * @remarks
- *
- * UI for the sign up form. It allows users to sign up to the application.
- * It uses the {@link useIAM} hook to interact with the user's identity and APIs
+ * Sign Up UI component
  */
 const SignUpSection = () => {
   const { dict } = useLocale();
   const { register } = useIAM();
 
-  const [name, setName] = useState('');
-  const [company, setCompany] = useState('');
-  const [email, setEmail] = useState('');
-  const [emailConfirmation, setEmailConfirmation] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<SignUpFormValues>({
+    defaultValues: {
+      name: '',
+      company: '',
+      email: '',
+      emailConfirmation: '',
+      password: '',
+      passwordConfirmation: '',
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-    // Make sure terms are accepted
-    const acceptTerms = (
-      document.querySelector('input[name="accept-terms"]') as HTMLInputElement
-    ).checked;
-    if (!acceptTerms) {
-      setError(dict.auth.accept.error);
-      setLoading(false);
-      return;
-    }
-    // Register the user
-    await register(
-      name,
-      company,
-      email,
-      emailConfirmation,
-      password,
-      passwordConfirmation,
-      setSuccess,
-      setError
-    );
-    setLoading(false);
-  };
+  // Watch for email and password fields to validate confirmation fields
+  const emailValue = watch('email');
+  const passwordValue = watch('password');
+
+  // Handle form submission and register the user
+  const onSubmit = useCallback(
+    async (data: SignUpFormValues) => {
+      const {
+        name,
+        company,
+        email,
+        emailConfirmation,
+        password,
+        passwordConfirmation,
+      } = data;
+
+      // Make sure terms are accepted
+      const acceptTerms = (
+        document.querySelector('input[name="accept-terms"]') as HTMLInputElement
+      ).checked;
+      if (!acceptTerms) {
+        return Promise.reject(new Error(dict.auth.accept.error));
+      }
+
+      // Register the user
+      await register(
+        name,
+        company,
+        email,
+        emailConfirmation,
+        password,
+        passwordConfirmation,
+        () => console.log('User registered successfully'),
+        (error) => console.error('Registration failed:', error)
+      );
+    },
+    [register, dict]
+  );
 
   return (
     <WebsiteSectionWrapper id='sign-up-section'>
@@ -124,135 +148,209 @@ const SignUpSection = () => {
                 {dict.auth.signUp.subtitle}
               </p>
             </div>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              {/* Name Field */}
               <div className='mb-6'>
-                <label
-                  className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
-                  htmlFor='name'
-                >
+                <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
                   {dict.auth.signUp.name} *
                 </label>
-                <Input
-                  variant='solid'
-                  colorScheme='black'
-                  size='md'
-                  required
-                  className='w-full'
-                  ariaLabel={dict.auth.signUp.name}
-                  type='text'
-                  id='name'
-                  placeholder={dict.auth.signUp.namePlaceholder}
-                  defaultValue={name}
-                  onChange={(e) => setName(e.target.value)}
+                <Controller
+                  name='name'
+                  control={control}
+                  rules={{ required: dict.misc.fieldRequired }}
+                  render={({ field }) => (
+                    <Input
+                      variant='solid'
+                      colorScheme='black'
+                      size='md'
+                      required
+                      className='w-full'
+                      ariaLabel={dict.auth.signUp.name}
+                      type='text'
+                      placeholder={dict.auth.signUp.namePlaceholder}
+                      {...field}
+                    />
+                  )}
                 />
+                {errors.name && (
+                  <p className='mt-1 text-xs text-red-600'>
+                    {errors.name.message}
+                  </p>
+                )}
               </div>
+
+              {/* Company Field */}
               <div className='mb-6'>
-                <label
-                  className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
-                  htmlFor='company'
-                >
+                <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
                   {dict.auth.signUp.company} *
                 </label>
-                <Input
-                  variant='solid'
-                  colorScheme='black'
-                  size='md'
-                  required
-                  className='w-full'
-                  ariaLabel={dict.auth.signUp.company}
-                  type='text'
-                  id='company'
-                  placeholder={dict.auth.signUp.companyPlaceholder}
-                  defaultValue={company}
-                  onChange={(e) => setCompany(e.target.value)}
+                <Controller
+                  name='company'
+                  control={control}
+                  rules={{ required: dict.misc.fieldRequired }}
+                  render={({ field }) => (
+                    <Input
+                      variant='solid'
+                      colorScheme='black'
+                      size='md'
+                      required
+                      className='w-full'
+                      ariaLabel={dict.auth.signUp.company}
+                      type='text'
+                      placeholder={dict.auth.signUp.companyPlaceholder}
+                      {...field}
+                    />
+                  )}
                 />
+                {errors.company && (
+                  <p className='mt-1 text-xs text-red-600'>
+                    {errors.company.message}
+                  </p>
+                )}
               </div>
+
+              {/* Email Field */}
               <div className='mb-6'>
-                <label
-                  className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
-                  htmlFor='email'
-                >
+                <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
                   {dict.auth.signUp.email} *
                 </label>
-                <Input
-                  variant='solid'
-                  colorScheme='black'
-                  size='md'
-                  required
-                  className='w-full'
-                  ariaLabel={dict.auth.signUp.email}
-                  type='email'
-                  id='email'
-                  placeholder={dict.auth.signUp.emailPlaceholder}
-                  defaultValue={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                <Controller
+                  name='email'
+                  control={control}
+                  rules={{
+                    required: dict.misc.fieldRequired,
+                    pattern: {
+                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                      message: dict.profile.invalidEmail,
+                    },
+                  }}
+                  render={({ field }) => (
+                    <Input
+                      variant='solid'
+                      colorScheme='black'
+                      size='md'
+                      required
+                      className='w-full'
+                      ariaLabel={dict.auth.signUp.email}
+                      type='email'
+                      placeholder={dict.auth.signUp.emailPlaceholder}
+                      {...field}
+                    />
+                  )}
                 />
+                {errors.email && (
+                  <p className='mt-1 text-xs text-red-600'>
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
+
+              {/* Email Confirmation Field */}
               <div className='mb-6'>
-                <label
-                  className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
-                  htmlFor='emailConfirmation'
-                >
+                <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
                   {dict.auth.signUp.confirmEmail} *
                 </label>
-                <Input
-                  variant='solid'
-                  colorScheme='black'
-                  size='md'
-                  required
-                  className='w-full'
-                  ariaLabel={dict.auth.signUp.confirmEmail}
-                  type='email'
-                  id='emailConfirmation'
-                  placeholder={dict.auth.signUp.emailPlaceholder}
-                  defaultValue={emailConfirmation}
-                  onChange={(e) => setEmailConfirmation(e.target.value)}
+                <Controller
+                  name='emailConfirmation'
+                  control={control}
+                  rules={{
+                    required: dict.misc.fieldRequired,
+                    validate: (value) =>
+                      value === emailValue || dict.profile.invalidEmail,
+                  }}
+                  render={({ field }) => (
+                    <Input
+                      variant='solid'
+                      colorScheme='black'
+                      size='md'
+                      required
+                      className='w-full'
+                      ariaLabel={dict.auth.signUp.confirmEmail}
+                      type='email'
+                      placeholder={dict.auth.signUp.emailPlaceholder}
+                      {...field}
+                    />
+                  )}
                 />
+                {errors.emailConfirmation && (
+                  <p className='mt-1 text-xs text-red-600'>
+                    {errors.emailConfirmation.message}
+                  </p>
+                )}
               </div>
+
+              {/* Password Field */}
               <div className='mb-4'>
-                <label
-                  className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
-                  htmlFor='password'
-                >
+                <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
                   {dict.auth.signUp.password} *
                 </label>
-                <Input
-                  variant='solid'
-                  colorScheme='black'
-                  size='md'
-                  required
-                  className='w-full'
-                  ariaLabel={dict.auth.signUp.password}
-                  type='password'
-                  id='password'
-                  placeholder={dict.auth.signUp.passwordPlaceholder}
-                  defaultValue={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                <Controller
+                  name='password'
+                  control={control}
+                  rules={{
+                    required: dict.misc.fieldRequired,
+                    minLength: {
+                      value: 8,
+                      message: dict.misc.fieldInvalid,
+                    },
+                  }}
+                  render={({ field }) => (
+                    <Input
+                      variant='solid'
+                      colorScheme='black'
+                      size='md'
+                      required
+                      className='w-full'
+                      ariaLabel={dict.auth.signUp.password}
+                      type='password'
+                      placeholder={dict.auth.signUp.passwordPlaceholder}
+                      {...field}
+                    />
+                  )}
                 />
+                {errors.password && (
+                  <p className='mt-1 text-xs text-red-600'>
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
+
+              {/* Password Confirmation Field */}
               <div className='mb-4'>
-                <label
-                  className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
-                  htmlFor='passwordConfirmation'
-                >
+                <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
                   {dict.auth.signUp.confirmPassword} *
                 </label>
-                <Input
-                  variant='solid'
-                  colorScheme='black'
-                  size='md'
-                  required
-                  className='w-full'
-                  ariaLabel={dict.auth.signUp.confirmPassword}
-                  type='password'
-                  id='passwordConfirmation'
-                  placeholder={dict.auth.signUp.passwordPlaceholder}
-                  defaultValue={passwordConfirmation}
-                  onChange={(e) => setPasswordConfirmation(e.target.value)}
+                <Controller
+                  name='passwordConfirmation'
+                  control={control}
+                  rules={{
+                    required: dict.misc.fieldRequired,
+                    validate: (value) =>
+                      value === passwordValue ||
+                      dict.profile.passwordsDoNotMatch,
+                  }}
+                  render={({ field }) => (
+                    <Input
+                      variant='solid'
+                      colorScheme='black'
+                      size='md'
+                      required
+                      className='w-full'
+                      ariaLabel={dict.auth.signUp.confirmPassword}
+                      type='password'
+                      placeholder={dict.auth.signUp.passwordPlaceholder}
+                      {...field}
+                    />
+                  )}
                 />
+                {errors.passwordConfirmation && (
+                  <p className='mt-1 text-xs text-red-600'>
+                    {errors.passwordConfirmation.message}
+                  </p>
+                )}
               </div>
-              {error && <p className='mb-4 text-red-800'>{error}</p>}
-              {success && <p className='mb-4 text-irmin_green'>{success}</p>}
+
+              {/* Terms & Conditions */}
               <div className='mb-6 flex w-full items-center md:w-2/3'>
                 <input
                   name='accept-terms'
@@ -278,17 +376,21 @@ const SignUpSection = () => {
                   </Link>
                 </label>
               </div>
+
+              {/* Submit Button */}
               <Button
                 className='mb-6 w-full'
                 variant='gradient'
                 colorScheme='primary'
                 size='md'
-                disabled={loading}
-                loading={loading}
+                disabled={isSubmitting}
+                loading={isSubmitting}
                 type='submit'
               >
                 {dict.auth.signUp.signUp}
               </Button>
+
+              {/* Already have an account? */}
               <div className='flex w-full items-center justify-center'>
                 <span className='text-sm font-normal'>
                   {dict.auth.signUp.alreadyHaveAccount}{' '}

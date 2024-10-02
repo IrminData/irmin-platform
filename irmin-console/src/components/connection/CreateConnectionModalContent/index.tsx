@@ -33,11 +33,11 @@ import SelectConnector from './SelectConnector';
 export interface ConnectionSetup {
   name: string;
   description: string;
-  connector: null | Connector;
-  connectionDetailsFields: null | DynamicFields;
-  connectionSettingsFields: null | DynamicFields;
-  connectionDetails: null | DynamicFieldValues;
-  connectionSettings: null | DynamicFieldValues;
+  connector: undefined | Connector;
+  connectionDetailsFields: undefined | DynamicFields;
+  connectionSettingsFields: undefined | DynamicFields;
+  connectionDetails: undefined | DynamicFieldValues;
+  connectionSettings: undefined | DynamicFieldValues;
 }
 
 /**
@@ -46,11 +46,11 @@ export interface ConnectionSetup {
 const initialConnectionData: ConnectionSetup = {
   name: '',
   description: '',
-  connector: null,
-  connectionDetailsFields: null,
-  connectionSettingsFields: null,
-  connectionDetails: null,
-  connectionSettings: null,
+  connector: undefined,
+  connectionDetailsFields: undefined,
+  connectionSettingsFields: undefined,
+  connectionDetails: undefined,
+  connectionSettings: undefined,
 };
 
 /**
