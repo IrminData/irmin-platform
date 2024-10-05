@@ -25,15 +25,11 @@ export async function generateMetadata({
  */
 export default function WorkspaceSettingsLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
   params: WorkspaceLayoutParams;
 }) {
-  const { workspace } = params;
   return (
-    <WorkspaceSettingsLayoutWrapper workspaceSlug={workspace}>
-      {children}
-    </WorkspaceSettingsLayoutWrapper>
+    <WorkspaceSettingsLayoutWrapper>{children}</WorkspaceSettingsLayoutWrapper>
   );
 }

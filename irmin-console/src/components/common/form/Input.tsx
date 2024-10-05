@@ -1,67 +1,71 @@
 'use client';
 
-import React from 'react';
+import React, { forwardRef } from 'react';
 
 import { cn } from '@/utils/tw';
 
 /**
  * Universal input component, used across the application
  */
-const Input = ({
-  variant,
-  colorScheme,
-  size = 'md',
-  name = '',
-  placeholder,
-  value,
-  defaultValue,
-  onChange,
-  disabled = false,
-  loading = false,
-  icon,
-  className = '',
-  ariaLabel = '',
-  type = 'text',
-  multiple = false,
-  id = '',
-  required = false,
-  maxLength = 100,
-  longtext,
-  min,
-  max,
-}: {
-  variant?: 'solid' | 'outline' | 'underline';
-  colorScheme?: 'primary' | 'secondary' | 'tertiary' | 'gray' | 'black';
-  size?: 'sm' | 'md' | 'lg';
-  name?: string;
-  placeholder?: string;
-  value?: string;
-  defaultValue?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  disabled?: boolean;
-  loading?: boolean;
-  icon?: React.ReactNode;
-  className?: string;
-  ariaLabel?: string;
-  type?:
-    | 'text'
-    | 'password'
-    | 'email'
-    | 'number'
-    | 'file'
-    | 'datetime-local'
-    | 'date'
-    | 'time';
-  multiple?: boolean;
-  id?: string;
-  required?: boolean;
-  maxLength?: number;
-  longtext?: {
-    rows: number;
-  };
-  min?: number | string;
-  max?: number | string;
-}) => {
+const Input = (
+  {
+    variant,
+    colorScheme,
+    size = 'md',
+    name = '',
+    placeholder,
+    value,
+    defaultValue,
+    onChange,
+    disabled = false,
+    loading = false,
+    icon,
+    className = '',
+    ariaLabel = '',
+    type = 'text',
+    multiple = false,
+    id = '',
+    required = false,
+    maxLength = 100,
+    longtext,
+    min,
+    max,
+  }: {
+    variant?: 'solid' | 'outline' | 'underline';
+    colorScheme?: 'primary' | 'secondary' | 'tertiary' | 'gray' | 'black';
+    size?: 'sm' | 'md' | 'lg';
+    name?: string;
+    placeholder?: string;
+    value?: string;
+    defaultValue?: string;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    disabled?: boolean;
+    loading?: boolean;
+    icon?: React.ReactNode;
+    className?: string;
+    ariaLabel?: string;
+    type?:
+      | 'text'
+      | 'password'
+      | 'email'
+      | 'number'
+      | 'file'
+      | 'datetime-local'
+      | 'date'
+      | 'time';
+    multiple?: boolean;
+    id?: string;
+    required?: boolean;
+    maxLength?: number;
+    longtext?: {
+      rows: number;
+    };
+    min?: number | string;
+    max?: number | string;
+  },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ref: React.Ref<any>
+) => {
   const baseClasses =
     'relative inline-flex items-center justify-center rounded-lg transition-all outline-none border-opacity-60';
   const variantClasses = {
@@ -134,6 +138,7 @@ const Input = ({
           value={value}
           rows={longtext.rows}
           maxLength={maxLength}
+          ref={ref}
         />
         {loading && (
           <div className='absolute right-3'>
@@ -162,6 +167,7 @@ const Input = ({
         multiple={multiple}
         min={min}
         max={max}
+        ref={ref}
       />
       {loading && (
         <div className='absolute right-3'>
@@ -172,4 +178,4 @@ const Input = ({
   );
 };
 
-export default Input;
+export default forwardRef(Input);

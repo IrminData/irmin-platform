@@ -1,14 +1,13 @@
 'use client';
 
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
-import FileCollectionSchema from '@/components/repository/FileCollectionSchema';
+import FileCollectionSchema from '@/components/repository/collections/FileCollectionSchema';
+import FolderCollectionSchema from '@/components/repository/collections/FolderCollectionSchema';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import { FileCollectionData } from '@/types/core/FileCollection';
 import { FolderCollectionData } from '@/types/core/FolderCollection';
-
-import FolderCollectionSchema from '../repository/FolderCollectionSchema';
 
 /**
  * Show the content of a folder or file collection, e.g., {@link FileCollectionData} and {@link FolderCollectionData}.

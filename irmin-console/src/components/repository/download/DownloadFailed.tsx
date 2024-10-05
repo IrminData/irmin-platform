@@ -1,19 +1,19 @@
 'use client';
 
-import { AiOutlineCheckCircle } from 'react-icons/ai';
+import { AiOutlineException } from 'react-icons/ai';
 
 import { useLocale } from '@/context/LocaleContext';
 
-const DownloadSuccess = () => {
+const DownloadFailed = () => {
   const { dict } = useLocale();
   return (
     <div className='flex flex-col items-center justify-center gap-4 py-12'>
-      <AiOutlineCheckCircle className='text-irmin_green' size={60} />
+      <AiOutlineException className='text-red-600' size={60} />
       <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
-        {dict.repository.download.success}
+        {dict.misc.download.failed}
       </h2>
     </div>
   );
 };
 
-export default DownloadSuccess;
+export default DownloadFailed;

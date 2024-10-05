@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import IrminCore from '@/services/core/IrminCore';
 import { Controller, useForm } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
@@ -10,30 +9,33 @@ import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
 
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
 
 /**
  * Modal content to merge refs.
  *
  * @param props - The props
- * @param props.repository - The repository refs are in
  * @param props.baseRef - The ref to merge into (branch, tag, commit)
  * @param props.compareRef - The ref to merge (branch, tag, commit)
+ * @param props.mergeRefs - Callback to merge the refs
  * @param props.closeModal - Callback to close the modal
  */
 export default function MergeModalContent({
-  repository,
   baseRef,
   compareRef,
+  mergeRefs,
   closeModal,
 }: {
-  repository: string;
   baseRef: string;
   compareRef: string;
+  mergeRefs: (
+    baseRef: string,
+    compareRef: string,
+    description: string,
+    mergeStrategy: string
+  ) => Promise<boolean>;
   closeModal: () => void;
 }) {
-  const { dict, locale } = useLocale();
-  const { irminAlert } = usePopup();
+  const { dict } = useLocale();
 
   const {
     handleSubmit,
@@ -62,51 +64,31 @@ export default function MergeModalContent({
   );
 
   /**
-   * Merge the refs using Irmin API.
-   *
-   * @param description - The commit message
-   * @param strategy - The merge strategy (default, source-wins, dest-wins)
+   * Handle the merge refs form submission, merge one ref in to another.
    */
-  const mergeRefs = useCallback(
-    async (description: string, strategy: string) => {
+  const onSubmit = useCallback(
+    async (data: { description: string; mergeStrategy: string }) => {
       if (mergeInProgress.current) return;
-      try {
-        setLoading(true);
-        mergeInProgress.current = true;
-        const { compareService } = new IrminCore(locale);
-        const res = await compareService.mergeRefs(
-          repository,
-          baseRef,
-          compareRef,
-          description,
-          strategy
-        );
-        mergeInProgress.current = false;
-        irminAlert(
-          'success',
-          res.message ?? dict.repository.compare.mergedRefsSuccessfully
-        );
+      mergeInProgress.current = true;
+      setLoading(true);
+      const successful = await mergeRefs(
+        baseRef,
+        compareRef,
+        data.description,
+        data.mergeStrategy
+      );
+      mergeInProgress.current = false;
+      setLoading(false);
+      if (successful) {
         closeModal();
-      } catch (error) {
-        console.error(error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? dict.repository.compare.failedToMergeRefs
-        );
-      } finally {
-        setLoading(false);
       }
     },
-    [locale, dict, irminAlert, repository, baseRef, compareRef, closeModal]
+    [baseRef, compareRef, closeModal, mergeRefs]
   );
-
-  const onSubmit = (data: { description: string; mergeStrategy: string }) => {
-    mergeRefs(data.description, data.mergeStrategy);
-  };
 
   return (
     <form
-      className='flex flex-col gap-4 p-4 pb-6'
+      className='flex flex-col gap-4 pb-6'
       id='merge-modal-content'
       onSubmit={handleSubmit(onSubmit)}
     >

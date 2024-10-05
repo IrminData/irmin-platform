@@ -67,7 +67,7 @@ export default function FileCollectionSchema({
           icon={<TbDownload />}
           href={downloadUrl}
         >
-          {dict.repository.download.download}
+          {dict.misc.download.download}
         </Button>
       )}
     </div>

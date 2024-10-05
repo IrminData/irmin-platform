@@ -53,7 +53,7 @@ export default function TableCollectionSchema({
           icon={<TbDownload />}
           href={downloadUrl}
         >
-          {dict.repository.download.download}
+          {dict.misc.download.download}
         </Button>
       )}
     </div>

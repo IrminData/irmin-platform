@@ -1,6 +1,8 @@
 'use client';
 
-import { useParams, usePathname } from 'next/navigation';
+import { useCallback, useMemo } from 'react';
+
+import { usePathname } from 'next/navigation';
 
 import { GoWorkflow } from 'react-icons/go';
 import {
@@ -26,6 +28,8 @@ import {
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
+import useBaseUrl from '@/hooks/useBaseUrl';
+
 import { ConsoleNavigationLinkType } from '@/types/internal/ConsoleNavigation';
 
 /**
@@ -47,64 +51,75 @@ const useConsoleNavigationLinks = (): {
 } => {
   const { locale, dict } = useLocale();
   const { logout } = useIAM();
-  const { workspace: workspaceSlug } = useParams();
   const pathname = usePathname();
 
-  const isActiveLink = (href: string) => {
-    if (href === '/console' || !href.includes('/console'))
-      return pathname === href;
-    return pathname.startsWith(href);
-  };
+  // Check if the link is active
+  const isActiveLink = useCallback(
+    (href: string) => {
+      if (href === '/console' || !href.includes('/console'))
+        return pathname === href;
+      return pathname.startsWith(href);
+    },
+    [pathname]
+  );
 
-  const handleSignOut = async () => {
-    await logout();
-  };
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'console',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
-  const workspaceLinks = [
-    {
-      title: dict.consoleNavigation.links.home,
-      href: `/${locale}/console/${workspaceSlug}/home`,
-      icon: <TbHome />,
-    },
-    {
-      title: dict.consoleNavigation.links.repositories,
-      href: `/${locale}/console/${workspaceSlug}/repositories`,
-      icon: <TbDatabase />,
-    },
-    {
-      title: dict.consoleNavigation.links.connections,
-      href: `/${locale}/console/${workspaceSlug}/connections`,
-      icon: <GoWorkflow />,
-    },
-    {
-      title: dict.consoleNavigation.links.workflows,
-      href: `/${locale}/console/${workspaceSlug}/workflows`,
-      icon: <TbRun />,
-    },
-    {
-      title: dict.consoleNavigation.links.editor,
-      href: `/${locale}/console/${workspaceSlug}/editor`,
-      icon: <TbFile />,
-    },
-    {
-      title: dict.consoleNavigation.links.logs,
-      href: `/${locale}/console/${workspaceSlug}/logs`,
-      icon: <TbLogs />,
-    },
-    {
-      title: dict.consoleNavigation.links.documentation,
-      href: `/${locale}/console/${workspaceSlug}/documentation`,
-      icon: <TbSchema />,
-    },
-    {
-      title: dict.consoleNavigation.links.workspaceSettings,
-      href: `/${locale}/console/${workspaceSlug}/settings`,
-      icon: <TbSettings />,
-    },
-  ].map((link) => ({
-    ...link,
-    active: isActiveLink(link.href),
-  }));
+  const workspaceLinks = useMemo(
+    () =>
+      [
+        {
+          title: dict.consoleNavigation.links.home,
+          href: `${workspaceUrl}/home`,
+          icon: <TbHome />,
+        },
+        {
+          title: dict.consoleNavigation.links.repositories,
+          href: `${workspaceUrl}/repositories`,
+          icon: <TbDatabase />,
+        },
+        {
+          title: dict.consoleNavigation.links.connections,
+          href: `${workspaceUrl}/connections`,
+          icon: <GoWorkflow />,
+        },
+        {
+          title: dict.consoleNavigation.links.workflows,
+          href: `${workspaceUrl}/workflows`,
+          icon: <TbRun />,
+        },
+        {
+          title: dict.consoleNavigation.links.editor,
+          href: `${workspaceUrl}/editor`,
+          icon: <TbFile />,
+        },
+        {
+          title: dict.consoleNavigation.links.logs,
+          href: `${workspaceUrl}/logs`,
+          icon: <TbLogs />,
+        },
+        {
+          title: dict.consoleNavigation.links.documentation,
+          href: `${workspaceUrl}/documentation`,
+          icon: <TbSchema />,
+        },
+        {
+          title: dict.consoleNavigation.links.workspaceSettings,
+          href: `${workspaceUrl}/settings`,
+          icon: <TbSettings />,
+        },
+      ].map((link) => ({
+        ...link,
+        active: isActiveLink(link.href),
+      })),
+    [workspaceUrl, dict, isActiveLink]
+  );
 
   const noWorkspaceLinks = [
     {
@@ -131,7 +146,7 @@ const useConsoleNavigationLinks = (): {
     },
     {
       title: dict.consoleNavigation.links.signOut,
-      action: handleSignOut,
+      action: logout,
       icon: <TbLogout />,
       active: false,
     },

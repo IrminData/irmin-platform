@@ -49,14 +49,14 @@ export default function CreateRepositoryModalContent({
         description: description.trim(),
         documentation: '',
       } as Repository);
-      irminAlert('success', res.message ?? dict.repository.repositoryCreated);
+      irminAlert('success', res.message ?? 'Repository created successfully');
       closeModal();
       reset(); // Reset the form values
     } catch (error) {
       irminAlert(
         'error',
         (error as Error)?.message ??
-          dict.repository.settings.errorUpdatingRepository
+          'An error occurred while creating the repository'
       );
     }
   };

@@ -14,6 +14,8 @@ import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
+import useBaseUrl from '@/hooks/useBaseUrl';
+
 /**
  * Component to wrap the single Connection pages in.
  *
@@ -22,14 +24,12 @@ import { useWorkspace } from '@/context/workspace';
 export default function ConnectionLayoutWrapper({
   children,
   connectionID,
-  workspaceSlug,
 }: {
   children: React.ReactNode;
   connectionID: string;
-  workspaceSlug: string;
 }) {
-  const currentPath = usePathname();
-  const { dict, locale } = useLocale();
+  const pathname = usePathname();
+  const { dict } = useLocale();
   const {
     connections: { connections },
   } = useWorkspace();
@@ -39,37 +39,46 @@ export default function ConnectionLayoutWrapper({
     [connections, connectionID]
   );
 
+  // The base URL for the connection, eg. /en/console/workspace-slug/connections/connection-id
+  const baseUrl = useBaseUrl({
+    pathname: '',
+    segment: 'connections',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
+
+  // The base URL for the connections list page, eg. /en/console/workspace-slug/connections
+  const connectionsUrl = useBaseUrl({
+    pathname: '',
+    segment: 'connections',
+    includeSegment: true,
+  });
+
   const tabs = useMemo(
     () => [
       {
         title: dict.connections.tabs.overview,
-        href: `/${locale}/console/${workspaceSlug}/connections/${connectionID}`,
-        active:
-          currentPath ===
-          `/${locale}/console/${workspaceSlug}/connections/${connectionID}`,
+        href: `${baseUrl}`,
+        active: pathname === `${baseUrl}`,
         icon: <GoWorkflow size={14} />,
         hide: false,
       },
       {
         title: dict.connections.tabs.documentation,
-        href: `/${locale}/console/${workspaceSlug}/connections/${connectionID}/documentation`,
-        active:
-          currentPath ===
-          `/${locale}/console/${workspaceSlug}/connections/${connectionID}/documentation`,
+        href: `${baseUrl}/documentation`,
+        active: pathname === `${baseUrl}/documentation`,
         icon: <TbFileText size={14} />,
         hide: false,
       },
       {
         title: dict.connections.tabs.settings,
-        href: `/${locale}/console/${workspaceSlug}/connections/${connectionID}/settings`,
-        active:
-          currentPath ===
-          `/${locale}/console/${workspaceSlug}/connections/${connectionID}/settings`,
+        href: `${baseUrl}/settings`,
+        active: pathname === `${baseUrl}/settings`,
         icon: <TbSettings size={14} />,
         hide: false,
       },
     ],
-    [currentPath, locale, dict, workspaceSlug, connectionID]
+    [pathname, dict, baseUrl]
   );
 
   if (!connection)
@@ -117,7 +126,7 @@ export default function ConnectionLayoutWrapper({
             colorScheme='light'
             className='bg-gray-100 dark:bg-gray-700'
             icon={<IoChevronBack size={24} />}
-            href={`/${locale}/console/${workspaceSlug}/connections`}
+            href={connectionsUrl}
           >
             <IoChevronBack size={24} />
           </Button>

@@ -1,146 +1,66 @@
 'use client';
 
-import { useMemo } from 'react';
-
-import { useRouter } from 'next/navigation';
-
-import IrminCore from '@/services/core/IrminCore';
+import { useCallback } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 
 import Button from '@/components/common/button/Button';
-import NormalList from '@/components/common/list/NormalList';
 
-import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useRepository } from '@/context/RepositoryContext';
 
-import { GridRow } from '@/types/internal/ListProps';
-
-import CreateBranchModalContent from './CreateBranchModalContent';
+import BranchList from './branches/BranchList';
+import CreateBranchModalContent from './branches/CreateBranchModalContent';
 
 /**
  * Section to display the branches of a repository.
  */
 export default function RepositoryBranchesSection() {
-  const router = useRouter();
-  const { dict, locale } = useLocale();
-  const { irminAlert, irminModal } = usePopup();
+  const { dict } = useLocale();
+  const { irminModal, irminConfirm } = usePopup();
   const {
     branches,
-    fetchBranches,
-    currentRepository,
     loadingBranches,
     currentRef,
-    setCurrentRef,
-    defaultBranch,
-  } = useData();
+    createBranch,
+    deleteBranch,
+    viewRef,
+  } = useRepository();
 
-  const { branchService } = useMemo(() => new IrminCore(locale), [locale]);
-
-  const handleDeleteBranch = async (branch: string) => {
-    if (!currentRepository) return;
-    if (branch === defaultBranch) {
-      irminAlert('error', dict.repository.cannotDeletePrimaryBranch);
-      return;
-    }
-    try {
-      // Delete the branch
-      const res = await branchService.deleteBranch(branch, currentRepository);
-      irminAlert('success', res.message ?? dict.repository.branchDeleted);
-      // Change to the primary branch just in case
-      if (defaultBranch) setCurrentRef(defaultBranch);
-      // Refetch the branches
-      fetchBranches();
-    } catch (error) {
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? dict.repository.branchDeleteFailed
-      );
-    }
-  };
-
-  const handleCreateBranch = async (branchName: string, fromBranch: string) => {
-    irminModal.close();
-
-    if (!currentRepository) return;
-    const exists = branches?.find((b) => b.name === branchName);
-    const fromExists = branches?.find((b) => b.name === fromBranch);
-    if (
-      exists ||
-      !fromExists ||
-      branchName.length === 0 ||
-      fromBranch.length === 0
-    ) {
-      irminAlert('error', dict.repository.branchCreateFailed);
-      return;
-    }
-    try {
-      // Delete the branch
-      const res = await branchService.createBranch(
-        branchName,
-        fromBranch,
-        currentRepository
-      );
-      irminAlert('success', res.message ?? dict.repository.branchCreated);
-      fetchBranches();
-    } catch (error) {
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? dict.repository.branchCreateFailed
-      );
-    }
-  };
-
-  const createBranch = () => {
+  /**
+   * Show the create branch modal.
+   */
+  const showCreateBranchModal = useCallback(() => {
     if (!branches) return;
     irminModal.show(
-      dict.repository.createBranch,
+      dict.repository.branches.createBranch,
       <CreateBranchModalContent
         branches={branches.map((branch) => branch.name) ?? []}
-        createBranch={handleCreateBranch}
+        createBranch={createBranch}
       />
     );
-  };
+  }, [branches, irminModal, dict, createBranch]);
 
-  const rows: GridRow[] =
-    branches?.map((branch, i) => ({
-      columns: [
-        <div
-          key={`branch-${i}-name`}
-          className='inline-flex flex-row items-center gap-2'
-        >
-          <p className='text-base'>{branch.name}</p>
-          {branch.default && (
-            <span className='h-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
-              {dict.repository.primary}
-            </span>
-          )}
-          {branch.name === currentRef && (
-            <span className='h-max rounded-lg bg-gray-300 px-1 text-xs leading-4 text-irmin_black dark:bg-gray-600 dark:text-white'>
-              {dict.repository.currentBranch}
-            </span>
-          )}
-        </div>,
-      ],
-      actions: [
-        {
-          label: dict.list.view,
-          primary: true,
-          onClick: () => {
-            setCurrentRef(branch.name);
-            router.push('./');
-          },
-        },
-        {
-          label: dict.list.delete,
-          primary: false,
-          onClick: () => {
-            handleDeleteBranch(branch.name);
-          },
-        },
-      ],
-    })) ?? [];
+  /**
+   * Confirm the deletion of a branch and delete it.
+   *
+   * @param branch - The branch to delete
+   */
+  const handleDeleteBranch = useCallback(
+    async (branch: string) => {
+      irminConfirm(
+        'warning',
+        dict.repository.branches.confirmDeleteBranch,
+        async (confirmed) => {
+          if (!confirmed) return;
+          // Delete the branch
+          await deleteBranch(branch);
+        }
+      );
+    },
+    [irminConfirm, dict, deleteBranch]
+  );
 
   return (
     <div className='container relative mx-auto max-w-6xl px-2 md:px-4'>
@@ -151,20 +71,19 @@ export default function RepositoryBranchesSection() {
           size='sm'
           icon={<IoAdd size={18} />}
           onClick={() => {
-            createBranch();
+            showCreateBranchModal();
           }}
         >
-          {dict.repository.createBranch}
+          {dict.repository.branches.createBranch}
         </Button>
       </div>
-      <div id='branches-list'>
-        <NormalList
-          headers={[dict.list.name, dict.list.actions]}
-          hideHeaders={false}
-          loading={loadingBranches}
-          rows={rows}
-        />
-      </div>
+      <BranchList
+        currentRef={currentRef}
+        branches={branches ?? []}
+        handleViewBranch={(branch) => viewRef(branch)}
+        handleDeleteBranch={handleDeleteBranch}
+        loading={loadingBranches}
+      />
     </div>
   );
 }

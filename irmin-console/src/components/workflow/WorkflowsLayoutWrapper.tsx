@@ -2,8 +2,6 @@
 
 import { useMemo } from 'react';
 
-import { WorkspaceLayoutParams } from '@/app/[lang]/console/[workspace]/layout';
-
 import {
   TbDatabaseExport,
   TbDatabaseImport,
@@ -15,45 +13,53 @@ import Tabs from '@/components/common/tabs/Tabs';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import useBaseUrl from '@/hooks/useBaseUrl';
+
 /**
  * Layout for the Workflow pages in the Console
  */
 export default function WorkflowsLayoutWrapper({
-  params,
   children,
 }: {
-  params: WorkspaceLayoutParams;
   children: React.ReactNode;
 }) {
   const { dict } = useLocale();
+
+  // The base URL for the workflow, eg. /en/console/workspace-slug/workflows
+  const baseUrl = useBaseUrl({
+    pathname: '',
+    segment: 'workflows',
+    includeSegment: true,
+  });
+
   const tabs = useMemo(
     () => [
       {
         icon: <TbRun />,
         name: dict.workflow.allWorkflows,
         slug: 'all-workflows',
-        link: `/${params.lang}/console/${params.workspace}/workflows`,
+        link: `${baseUrl}`,
       },
       {
         icon: <TbPlayerPlay />,
         name: dict.consoleNavigation.links.actions,
         slug: 'action-workflows',
-        link: `/${params.lang}/console/${params.workspace}/workflows/actions`,
+        link: `${baseUrl}/actions`,
       },
       {
         icon: <TbDatabaseImport />,
         name: dict.consoleNavigation.links.imports,
         slug: 'import-workflows',
-        link: `/${params.lang}/console/${params.workspace}/workflows/imports`,
+        link: `${baseUrl}/imports`,
       },
       {
         icon: <TbDatabaseExport />,
         name: dict.consoleNavigation.links.exports,
         slug: 'export-workflows',
-        link: `/${params.lang}/console/${params.workspace}/workflows/exports`,
+        link: `${baseUrl}/exports`,
       },
     ],
-    [dict, params.lang, params.workspace]
+    [dict, baseUrl]
   );
   return (
     <div className='container relative mx-auto max-w-6xl'>

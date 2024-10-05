@@ -1,5 +1,7 @@
 'use client';
 
+import { forwardRef } from 'react';
+
 import ReactSelect, { MultiValue, SingleValue } from 'react-select';
 
 import Input from '@/components/common/form/Input';
@@ -16,17 +18,22 @@ type SelectOption = {
 
 /**
  * Component to render a dynamic form field based on the field type
- * @param field - Dynamic field object
+ * @param props - Dynamic field object and field properties to pass to the input
+ * @param ref - React ref for the field
  * @returns JSX.Element
  */
-export default function DynamicFormField({
-  field,
-  fieldProps,
-}: {
-  field: DynamicField;
+function DynamicFormField(
+  {
+    field,
+    fieldProps,
+  }: {
+    field: DynamicField;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fieldProps?: any;
+  },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fieldProps?: any;
-}) {
+  ref: React.Ref<any>
+) {
   const { dict } = useLocale();
 
   const options: SelectOption[] =
@@ -63,6 +70,7 @@ export default function DynamicFormField({
             placeholder={field.example}
             min={field.min ? (field.min as number) : undefined}
             max={field.max ? (field.max as number) : undefined}
+            ref={ref}
           />
         );
       case 'textarea':
@@ -75,6 +83,7 @@ export default function DynamicFormField({
             type='text'
             longtext={{ rows: 3 }}
             placeholder={field.example}
+            ref={ref}
           />
         );
       case 'checkbox':
@@ -85,6 +94,7 @@ export default function DynamicFormField({
               type='checkbox'
               className='mr-2'
               checked={fieldProps.value || false}
+              ref={ref}
             />
             {field.label}
           </label>
@@ -113,6 +123,7 @@ export default function DynamicFormField({
             noOptionsMessage={() => dict.misc.noOptionsMessage}
             className='react-select-container'
             classNamePrefix='react-select'
+            ref={ref}
           />
         );
       case 'radio':
@@ -126,6 +137,7 @@ export default function DynamicFormField({
                   value={option.value}
                   className='mr-2'
                   checked={fieldProps.value === option.value}
+                  ref={ref}
                 />
                 {option.value}
               </label>
@@ -151,6 +163,7 @@ export default function DynamicFormField({
             placeholder={field.example}
             min={field.min ? (field.min as string) : undefined}
             max={field.max ? (field.max as string) : undefined}
+            ref={ref}
           />
         );
       case 'file':
@@ -162,6 +175,7 @@ export default function DynamicFormField({
             className='mt-2 w-full'
             type='file'
             multiple={field.multiple}
+            ref={ref}
           />
         );
       case 'password':
@@ -181,6 +195,7 @@ export default function DynamicFormField({
                   : 'text'
             }
             placeholder={field.example}
+            ref={ref}
           />
         );
     }
@@ -201,3 +216,5 @@ export default function DynamicFormField({
     </div>
   );
 }
+
+export default forwardRef(DynamicFormField);

@@ -1,5 +1,7 @@
 'use client';
 
+import { useCallback } from 'react';
+
 import { TbFile } from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
@@ -9,51 +11,47 @@ import DocumentationForm, {
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useRepository } from '@/context/RepositoryContext';
 import { useWorkspace } from '@/context/workspace';
-
-import { Repository } from '@/types/core/Repository';
 
 /**
  * Repository Documentation section component for displaying and updating the documentation.
- *
- * @param props - The props.
- * @param props.repository - The repository to show and edit the documentation for.
  */
-const RepositoryDocumentationSection = ({
-  repository,
-}: {
-  repository: Repository;
-}) => {
+const RepositoryDocumentationSection = () => {
   const { irminAlert } = usePopup();
   const { dict } = useLocale();
+  const { currentRepository } = useRepository();
   const {
     repositories: { updateRepository },
   } = useWorkspace();
 
-  const handleSaveDocumentation = async (data: DocumentationFormValues) => {
-    try {
-      const documentation = data.documentation.trim();
-      const res = await updateRepository(repository.slug, {
-        ...repository,
-        documentation,
-      });
-      irminAlert(
-        'success',
-        res.message ?? dict.repository.settings.repositoryUpdated
-      );
-    } catch (error) {
-      irminAlert(
-        'error',
-        (error as Error)?.message ??
-          dict.repository.settings.errorUpdatingRepository
-      );
-    }
-  };
+  const handleSaveDocumentation = useCallback(
+    async (data: DocumentationFormValues) => {
+      try {
+        const documentation = data.documentation.trim();
+        const res = await updateRepository(currentRepository.slug, {
+          ...currentRepository,
+          documentation,
+        });
+        irminAlert(
+          'success',
+          res.message ?? 'Repository documentation updated successfully'
+        );
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ??
+            'Failed to update the repository documentation'
+        );
+      }
+    },
+    [currentRepository, updateRepository, irminAlert]
+  );
 
   return (
     <div className='mt-0 lg:-mt-6' id='repository-documentation-section'>
       <DocumentationForm
-        initialDocumentation={repository.documentation ?? ''}
+        initialDocumentation={currentRepository.documentation ?? ''}
         onSubmit={handleSaveDocumentation}
       >
         <Button

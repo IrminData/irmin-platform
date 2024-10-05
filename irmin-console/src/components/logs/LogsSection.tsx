@@ -15,6 +15,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { useLogs } from '@/context/LogContext';
 import { useWorkspace } from '@/context/workspace';
 
+import useBaseUrl from '@/hooks/useBaseUrl';
+
 import LogEventFeed from './LogEventFeed';
 
 /**
@@ -25,10 +27,9 @@ import LogEventFeed from './LogEventFeed';
  */
 export default function LogsSection({ workflow }: { workflow?: string }) {
   const router = useRouter();
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
   const { logEvents, fetchLogEvents, loadingLogEvents } = useLogs();
   const {
-    workspaces: { currentWorkspace },
     workflows: { allWorkflows },
   } = useWorkspace();
 
@@ -38,6 +39,14 @@ export default function LogsSection({ workflow }: { workflow?: string }) {
   useEffect(() => {
     fetchLogEvents(workflow);
   }, [workflow, fetchLogEvents]);
+
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'console',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
   // Filter items based on search query
   useEffect(() => {
@@ -88,7 +97,7 @@ export default function LogsSection({ workflow }: { workflow?: string }) {
               <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
                 <Link
                   className='hover:underline'
-                  href={`/${locale}/console/${currentWorkspace?.slug}/workflows/${workflow}`}
+                  href={`${workspaceUrl}/workflows/${workflow}`}
                 >
                   {selectedWorkflow.name}
                 </Link>

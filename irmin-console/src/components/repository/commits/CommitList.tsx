@@ -6,6 +6,7 @@ import NormalList from '@/components/common/list/NormalList';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useRepository } from '@/context/RepositoryContext';
 
 import { sortCommits } from '@/utils/sortCommits';
 
@@ -23,11 +24,13 @@ export default function CommitList({
   commits,
   loading,
 }: {
-  commits?: Commit[];
+  commits: Commit[];
   loading?: boolean;
 }) {
   const { dict, locale } = useLocale();
   const { irminAlert } = usePopup();
+
+  const { viewRef } = useRepository();
 
   const sortedCommits: Commit[] = useMemo(() => {
     try {
@@ -60,19 +63,19 @@ export default function CommitList({
           {
             label: dict.list.view,
             primary: true,
-            href: `./refs/${commit.hash}`,
+            onClick: () => viewRef(commit.hash),
           },
           {
-            label: dict.repository.copyHash,
+            label: dict.repository.commit.copyHash,
             primary: false,
             onClick: () => {
               navigator.clipboard.writeText(commit.hash);
-              irminAlert('success', dict.repository.commitHashCopied);
+              irminAlert('success', dict.repository.commit.commitHashCopied);
             },
           },
         ],
       })) ?? [],
-    [sortedCommits, dict, irminAlert, locale]
+    [sortedCommits, dict, irminAlert, locale, viewRef]
   );
 
   return (
@@ -80,7 +83,7 @@ export default function CommitList({
       <NormalList
         headers={[
           dict.list.description,
-          dict.repository.commitHash,
+          dict.repository.commit.commitHash,
           dict.list.actions,
         ]}
         hideHeaders={false}

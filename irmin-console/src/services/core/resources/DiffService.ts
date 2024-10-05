@@ -18,11 +18,11 @@ export interface ComparisonAPIResponse extends IrminAPIResponse {
 }
 
 /**
- * Merge and Compare API service
+ * Diff Service: Merge and Compare API
  *
  * Responsible for merging and comparing repository branches and refs.
  */
-class CompareService {
+class DiffService {
   private irminCore: IrminCore;
 
   constructor(irminCore: IrminCore) {
@@ -34,6 +34,8 @@ class CompareService {
 
   /**
    * Compare two refs in a repository and return the differences
+   *
+   * To get uncommited changes, use the latest commit as the base ref and the current branch as the compare ref
    *
    * @param repository - The repository refs are in
    * @param baseRef - The base ref to compare (branch, tag, commit)
@@ -119,4 +121,4 @@ class CompareService {
   }
 }
 
-export default CompareService;
+export default DiffService;

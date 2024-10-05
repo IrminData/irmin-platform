@@ -50,10 +50,7 @@ export default function ConnectionPagesLayout({
     notFound();
   }
   return (
-    <ConnectionLayoutWrapper
-      connectionID={connection}
-      workspaceSlug={params.workspace}
-    >
+    <ConnectionLayoutWrapper connectionID={connection}>
       {children}
     </ConnectionLayoutWrapper>
   );

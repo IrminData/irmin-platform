@@ -66,7 +66,7 @@ export default function UploadCollectionModalContent({
 
     try {
       if (!data.files) {
-        setError(dict.repository.upload.noFilesSelected);
+        setError(dict.repository.collections.upload.noFilesSelected);
         return;
       }
 
@@ -81,10 +81,10 @@ export default function UploadCollectionModalContent({
 
       // Close the modal and show success message
       irminModal.close();
-      irminAlert('success', res.message ?? dict.repository.upload.success);
+      irminAlert('success', res.message ?? 'Collection uploaded successfully');
     } catch (error) {
       console.error('Failed to upload new collection:', error);
-      setError((error as Error)?.message ?? dict.repository.upload.failed);
+      setError((error as Error)?.message ?? 'Could not upload collection');
     } finally {
       setLoading(false);
     }
@@ -94,7 +94,7 @@ export default function UploadCollectionModalContent({
     <form onSubmit={handleSubmit(handleUpload)} className='space-y-4'>
       <div className='pb-3'>
         <label className='text-xs'>
-          {dict.repository.upload.targetRepository}
+          {dict.repository.collections.upload.targetRepository}
         </label>
         <Controller
           name='repository'
@@ -112,7 +112,6 @@ export default function UploadCollectionModalContent({
                 className={`w-full ${
                   errors.repository ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder={dict.repository.upload.targetRepository}
               />
               {errors.repository && (
                 <p className='mt-1 text-xs text-red-600'>
@@ -124,7 +123,9 @@ export default function UploadCollectionModalContent({
         />
       </div>
       <div className='pb-3'>
-        <label className='text-xs'>{dict.repository.upload.targetBranch}</label>
+        <label className='text-xs'>
+          {dict.repository.collections.upload.targetBranch}
+        </label>
         <Controller
           name='ref'
           control={control}
@@ -141,7 +142,6 @@ export default function UploadCollectionModalContent({
                 className={`w-full ${
                   errors.ref ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder={dict.repository.upload.targetBranch}
               />
               {errors.ref && (
                 <p className='mt-1 text-xs text-red-600'>
@@ -154,7 +154,7 @@ export default function UploadCollectionModalContent({
       </div>
       <div className='pb-3'>
         <label className='text-xs'>
-          {dict.repository.upload.collectionName}
+          {dict.repository.collections.upload.collectionName}
         </label>
         <Controller
           name='name'
@@ -171,7 +171,6 @@ export default function UploadCollectionModalContent({
                 className={`w-full ${
                   errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder={dict.repository.upload.collectionName}
               />
               {errors.name && (
                 <p className='mt-1 text-xs text-red-600'>
@@ -184,7 +183,7 @@ export default function UploadCollectionModalContent({
       </div>
       <div className='pb-3'>
         <label className='text-xs'>
-          {dict.repository.upload.filesToUpload}
+          {dict.repository.collections.upload.filesToUpload}
         </label>
         <Controller
           name='files'
@@ -218,7 +217,7 @@ export default function UploadCollectionModalContent({
       </div>
       <div className='pb-3'>
         <label className='text-xs'>
-          {dict.repository.upload.pathInRepository}
+          {dict.repository.collections.upload.pathInRepository}
         </label>
         <Controller
           name='path'
@@ -248,7 +247,7 @@ export default function UploadCollectionModalContent({
         >
           {loading
             ? dict.misc.loading
-            : dict.repository.upload.uploadNewCollection}
+            : dict.repository.collections.uploadCollection}
         </Button>
       </div>
     </form>

@@ -36,5 +36,5 @@ export interface Diff {
   base_ref: string;
   compare_ref: string;
   items: ChangeItem[];
-  commits: Commit[];
+  commits?: Commit[];
 }

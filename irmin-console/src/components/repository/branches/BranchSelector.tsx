@@ -54,7 +54,7 @@ export default function BranchSelector({
       id='branch-selector'
     >
       <span className='absolute -top-2 z-10 w-full pl-2 pr-12 text-xs text-gray-800 dark:text-gray-400'>
-        {label ?? dict.repository.branch}
+        {label ?? dict.repository.branches.branch}
       </span>
       <ReactSelect
         value={selectedBranch}

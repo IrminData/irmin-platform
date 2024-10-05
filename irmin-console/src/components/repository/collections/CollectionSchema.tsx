@@ -9,10 +9,12 @@ import { TbRun, TbTrash } from 'react-icons/tb';
 import Button from '@/components/common/button/Button';
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
-import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useRepository } from '@/context/RepositoryContext';
 import { useWorkspace } from '@/context/workspace';
+
+import useBaseUrl from '@/hooks/useBaseUrl';
 
 import { FileSchema } from '@/types/core/FileCollection';
 import { FolderSchema } from '@/types/core/FolderCollection';
@@ -39,14 +41,28 @@ export default function CollectionSchema({
   const { dict, locale } = useLocale();
   const { irminAlert, irminConfirm } = usePopup();
 
+  const repositoryUrl = useBaseUrl({
+    pathname: '',
+    segment: 'repositories',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
+
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'console',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
+
   const {
-    workspaces: { currentWorkspace },
     workflows: { allWorkflows },
   } = useWorkspace();
 
   const { repositoryService } = useMemo(() => new IrminCore(locale), [locale]);
 
-  const { currentRepository, currentRef, schema } = useData();
+  const { currentRepository, currentRef, schema } = useRepository();
 
   // Collection schema that is associated with the collection ID
   const collection = useMemo(
@@ -82,8 +98,8 @@ export default function CollectionSchema({
     const urlParams = new URLSearchParams();
     urlParams.append('collection', collection.name);
     urlParams.append('ref', currentRef ?? '');
-    return `/${locale}/console/${currentWorkspace?.slug}/repositories/${currentRepository}/download?${urlParams.toString()}`;
-  }, [currentRepository, currentWorkspace, currentRef, collection, locale]);
+    return `${repositoryUrl}/download?${urlParams.toString()}`;
+  }, [repositoryUrl, currentRef, collection]);
 
   // Processing state for the delete action
   const [processingDelete, setProcessingDelete] = useState(false);
@@ -93,7 +109,7 @@ export default function CollectionSchema({
     // Confirm the delete action
     irminConfirm(
       'warning',
-      dict.repository.delete.confirm,
+      dict.repository.collections.deleteConfirm,
       async (confirmed) => {
         // Make sure the user confirmed the delete action
         if (!confirmed) return;
@@ -102,17 +118,20 @@ export default function CollectionSchema({
         try {
           // Upload the collection
           const res = await repositoryService.deleteCollection(
-            currentRepository ?? '',
+            currentRepository.slug,
             currentRef ?? '',
             collection.name
           );
           // Show success message
-          irminAlert('success', res.message ?? dict.repository.delete.success);
+          irminAlert(
+            'success',
+            res.message ?? 'Collection deleted successfully'
+          );
         } catch (error) {
           console.error('Failed to delete the collection:', error);
           irminAlert(
             'error',
-            (error as Error)?.message ?? dict.repository.delete.failed
+            (error as Error)?.message ?? 'Failed to delete the collection'
           );
         } finally {
           setProcessingDelete(false);
@@ -169,7 +188,7 @@ export default function CollectionSchema({
             variant='solid'
             className='w-full'
             icon={<TbRun />}
-            href={`/${locale}/console/${currentWorkspace?.slug}/workflows/${matchedWorkflow.id}`}
+            href={`${workspaceUrl}/workflows/${matchedWorkflow.id}`}
           >
             {dict.repository.viewWorkflow}
           </Button>
@@ -184,7 +203,7 @@ export default function CollectionSchema({
             disabled={processingDelete}
             onClick={handleDeleteCollection}
           >
-            {dict.repository.deleteCollection}
+            {dict.repository.collections.deleteCollection}
           </Button>
         )}
       </div>

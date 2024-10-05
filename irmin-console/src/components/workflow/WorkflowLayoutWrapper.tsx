@@ -20,30 +20,42 @@ import StatusBadge from '@/components/common/status/StatusBadge';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
+import useBaseUrl from '@/hooks/useBaseUrl';
+
 /**
  * Component to wrap the single Workflow pages in.
  *
  * @param props - The properties of the component
  * @param props.children - The children to render
- * @param props.workspaceSlug - The slug of the current workspace
  * @param props.workflowId - The ID of the workflow to show
- * @param props.locale - The language of the user
  *
  * @returns The Workflow layout wrapper
  */
 export default function WorkflowLayoutWrapper({
   children,
-  workspaceSlug,
   workflowId,
-  locale,
 }: {
   children: React.ReactNode;
-  workspaceSlug: string;
   workflowId: string;
-  locale: string;
 }) {
-  const currentPath = usePathname();
+  const pathname = usePathname();
   const { dict } = useLocale();
+
+  // The base URL for the workflow, eg. /en/console/workspace-slug/workflows/workflow-id
+  const baseUrl = useBaseUrl({
+    pathname: '',
+    segment: 'workflows',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
+
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'console',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
   const {
     workflows: { allWorkflows },
@@ -63,51 +75,41 @@ export default function WorkflowLayoutWrapper({
     () => [
       {
         title: dict.workflow.tabs.overview,
-        href: `/${locale}/console/${workspaceSlug}/workflows/${workflowId}`,
-        active:
-          currentPath ===
-          `/${locale}/console/${workspaceSlug}/workflows/${workflowId}`,
+        href: `${baseUrl}`,
+        active: pathname === `${baseUrl}`,
         icon: <TbRun size={14} />,
         hide: false,
       },
       {
         title: dict.workflow.tabs.data,
-        href: `/${locale}/console/${workspaceSlug}/repositories/${repositorySlug ?? ''}`,
-        active:
-          currentPath ===
-          `/${locale}/console/${workspaceSlug}/repositories/${repositorySlug ?? ''}`,
+        href: `${workspaceUrl}/repositories/${repositorySlug ?? ''}`,
+        active: false,
         icon: <TbDatabase size={14} />,
         hide: !repositorySlug,
       },
       {
         title: dict.workflow.tabs.documentation,
-        href: `/${locale}/console/${workspaceSlug}/workflows/${workflowId}/documentation`,
-        active:
-          currentPath ===
-          `/${locale}/console/${workspaceSlug}/workflows/${workflowId}/documentation`,
+        href: `${baseUrl}/documentation`,
+        active: pathname === `${baseUrl}/documentation`,
         icon: <TbFileText size={14} />,
         hide: false,
       },
       {
         title: dict.workflow.tabs.logs,
-        href: `/${locale}/console/${workspaceSlug}/logs/workflow/${workflowId}`,
-        active:
-          currentPath ===
-          `/${locale}/console/${workspaceSlug}/logs/workflow/${workflowId}`,
+        href: `${workspaceUrl}/logs/workflow/${workflowId}`,
+        active: false,
         icon: <TbLogs size={14} />,
         hide: false,
       },
       {
         title: dict.workflow.tabs.settings,
-        href: `/${locale}/console/${workspaceSlug}/workflows/${workflowId}/settings`,
-        active:
-          currentPath ===
-          `/${locale}/console/${workspaceSlug}/workflows/${workflowId}/settings`,
+        href: `${baseUrl}/settings`,
+        active: pathname === `${baseUrl}/settings`,
         icon: <TbSettings size={14} />,
         hide: false,
       },
     ],
-    [currentPath, locale, dict, workspaceSlug, workflowId, repositorySlug]
+    [pathname, dict, workflowId, repositorySlug, baseUrl, workspaceUrl]
   );
 
   if (!workflow)
@@ -166,7 +168,7 @@ export default function WorkflowLayoutWrapper({
             colorScheme='light'
             className='bg-gray-100 dark:bg-gray-700'
             icon={<IoChevronBack size={24} />}
-            href={`/${locale}/console/${workspaceSlug}/workflows`}
+            href={`${workspaceUrl}/workflows`}
           >
             <IoChevronBack size={24} />
           </Button>

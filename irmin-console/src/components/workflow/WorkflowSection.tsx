@@ -10,7 +10,8 @@ import NormalList from '@/components/common/list/NormalList';
 import StatusBadge from '@/components/common/status/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+
+import useBaseUrl from '@/hooks/useBaseUrl';
 
 import {
   ActionWorkflow,
@@ -31,13 +32,18 @@ import { GridRow } from '@/types/internal/ListProps';
 const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
   const { dict, locale } = useLocale();
 
-  const {
-    workspaces: { currentWorkspace },
-  } = useWorkspace();
   const [workflowRuns, setWorkflowRuns] = useState<WorkflowRun[]>([]);
   const [loadingWorkflowRuns, setLoadingWorkflowRuns] = useState(true);
 
   const { workflowService } = useMemo(() => new IrminCore(locale), [locale]);
+
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'console',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
   useEffect(() => {
     (async () => {
@@ -52,38 +58,41 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
     })();
   }, [workflowService, workflow]);
 
-  const runRows: GridRow[] =
-    workflowRuns.map((run, i) => ({
-      columns: [
-        <div key={`run-${i}`} className='inline-flex flex-col gap-2'>
-          <p className='text-xs lg:text-sm'>
-            {dict.workflow.startedAt}
-            {': '}
-            {new Date(run.started_at).toLocaleString(locale)}
-          </p>
-          <p className='text-xs lg:text-sm'>
-            {dict.workflow.finishedAt}
-            {': '}
-            {run.finished_at
-              ? new Date(run.finished_at).toLocaleString(locale)
-              : '-'}
-          </p>
-        </div>,
-        <div key={`run-${i}-owner`} className='inline-flex flex-col gap-2'>
-          <p className='text-xs lg:text-sm'>{run.owner.name}</p>
-        </div>,
-        <div key={`run-${i}-status`} className='inline-flex flex-col gap-2'>
-          <StatusBadge runStatus={run.status} statusLabel={run.status} />
-        </div>,
-      ],
-      actions: [
-        {
-          label: dict.list.logs,
-          primary: false,
-          href: `/${locale}/console/${currentWorkspace?.slug}/logs/workflow/${workflow.id}/run/${run.id}`,
-        },
-      ],
-    })) ?? [];
+  const runRows: GridRow[] = useMemo(
+    () =>
+      workflowRuns.map((run, i) => ({
+        columns: [
+          <div key={`run-${i}`} className='inline-flex flex-col gap-2'>
+            <p className='text-xs lg:text-sm'>
+              {dict.workflow.startedAt}
+              {': '}
+              {new Date(run.started_at).toLocaleString(locale)}
+            </p>
+            <p className='text-xs lg:text-sm'>
+              {dict.workflow.finishedAt}
+              {': '}
+              {run.finished_at
+                ? new Date(run.finished_at).toLocaleString(locale)
+                : '-'}
+            </p>
+          </div>,
+          <div key={`run-${i}-owner`} className='inline-flex flex-col gap-2'>
+            <p className='text-xs lg:text-sm'>{run.owner.name}</p>
+          </div>,
+          <div key={`run-${i}-status`} className='inline-flex flex-col gap-2'>
+            <StatusBadge runStatus={run.status} statusLabel={run.status} />
+          </div>,
+        ],
+        actions: [
+          {
+            label: dict.list.logs,
+            primary: false,
+            href: `${workspaceUrl}/logs/workflow/${workflow.id}/run/${run.id}`,
+          },
+        ],
+      })),
+    [dict, locale, workflowRuns, workspaceUrl, workflow.id]
+  );
 
   return (
     <div className='container relative mx-auto max-w-6xl'>
@@ -153,7 +162,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`/${locale}/console/${currentWorkspace?.slug}/connections/${(workflow as ImportWorkflow).workflowable.connection.id}`}
+                href={`${workspaceUrl}/connections/${(workflow as ImportWorkflow).workflowable.connection.id}`}
               >
                 <p className='text-base'>
                   {(workflow as ImportWorkflow).workflowable.connection.name}
@@ -168,7 +177,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`/${locale}/console/${currentWorkspace?.slug}/repositories/${(workflow as ImportWorkflow).workflowable.repository.slug}`}
+                href={`${workspaceUrl}/repositories/${(workflow as ImportWorkflow).workflowable.repository.slug}`}
               >
                 <p className='text-base'>
                   {(workflow as ImportWorkflow).workflowable.repository.name}
@@ -203,7 +212,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`/${locale}/console/${currentWorkspace?.slug}/connections/${(workflow as ExportWorkflow).workflowable.connection.id}`}
+                href={`${workspaceUrl}/connections/${(workflow as ExportWorkflow).workflowable.connection.id}`}
               >
                 <p className='text-base'>
                   {(workflow as ExportWorkflow).workflowable.connection.name}
@@ -218,7 +227,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`/${locale}/console/${currentWorkspace?.slug}/repositories/${(workflow as ExportWorkflow).workflowable.repository.slug}`}
+                href={`${workspaceUrl}/repositories/${(workflow as ExportWorkflow).workflowable.repository.slug}`}
               >
                 <p className='text-base'>
                   {(workflow as ExportWorkflow).workflowable.repository.name}

@@ -13,9 +13,9 @@ import BranchService from './resources/BranchService';
 import BucketService from './resources/BucketService';
 import CollectionService from './resources/CollectionService';
 import CommitService from './resources/CommitService';
-import CompareService from './resources/CompareService';
 import ConnectionService from './resources/ConnectionService';
 import ConnectorService from './resources/ConnectorService';
+import DiffService from './resources/DiffService';
 import InviteService from './resources/InviteService';
 import LogService from './resources/LogService';
 import ProfileService from './resources/ProfileService';
@@ -61,7 +61,7 @@ class IrminCore {
   public workspaceService: WorkspaceService;
   public queryService: QueryService;
   public logService: LogService;
-  public compareService: CompareService;
+  public diffService: DiffService;
 
   constructor(locale: Locale, apiToken?: string) {
     // Set locale and token
@@ -87,7 +87,7 @@ class IrminCore {
     this.workspaceService = new WorkspaceService(this);
     this.queryService = new QueryService(this);
     this.logService = new LogService(this);
-    this.compareService = new CompareService(this);
+    this.diffService = new DiffService(this);
   }
 
   private _fetch = async (

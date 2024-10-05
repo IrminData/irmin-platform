@@ -17,6 +17,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { useLogs } from '@/context/LogContext';
 import { useWorkspace } from '@/context/workspace';
 
+import useBaseUrl from '@/hooks/useBaseUrl';
+
 import { WorkflowRun } from '@/types/core/Workflow';
 
 import LogFeed from './LogFeed';
@@ -40,11 +42,18 @@ export default function WorkflowRunLogsSection({
   const { workflowRunLogs, fetchWorkflowRunLogs, loadingWorkflowRunLogs } =
     useLogs();
   const {
-    workspaces: { currentWorkspace },
     workflows: { allWorkflows },
   } = useWorkspace();
 
   const [run, setRun] = useState<WorkflowRun | null>(null);
+
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'console',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
   const { workflowService } = useMemo(() => new IrminCore(locale), [locale]);
 
@@ -85,7 +94,7 @@ export default function WorkflowRunLogsSection({
               <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
                 <Link
                   className='hover:underline'
-                  href={`/${locale}/console/${currentWorkspace?.slug}/workflows/${workflowId}`}
+                  href={`${workspaceUrl}/workflows/${workflowId}`}
                 >
                   {selectedWorkflow.name}
                 </Link>

@@ -29,6 +29,8 @@ class CommitService {
     this.irminCore = irminCore;
     // Bind methods
     this.fetchCommits = this.fetchCommits.bind(this);
+    this.createCommit = this.createCommit.bind(this);
+    this.revertUncommittedChanges = this.revertUncommittedChanges.bind(this);
   }
 
   /**
@@ -57,6 +59,68 @@ class CommitService {
     } catch (error) {
       console.error((error as Error).message, 'Fetch Commits error');
       if (isDevelopment) return fake(exampleCommits) as CommitsAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new commit in a repository using the uncommitted changes
+   *
+   * @param repository - The repository to commit to
+   * @param ref - The ref to commit to, eg. branch name
+   * @param message - The commit message
+   */
+  async createCommit(
+    repository: string,
+    ref: string,
+    message: string
+  ): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return fake() as IrminAPIResponse;
+    try {
+      const response = (await this.irminCore.fetch(`/v1/commits`, {
+        method: 'POST',
+        body: JSON.stringify({
+          repository,
+          ref,
+          message,
+        }),
+      })) as IrminAPIResponse;
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Create Commit error');
+      if (isDevelopment) return fake() as IrminAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Revert uncommitted changes in a repository branch
+   *
+   * @param repository - The repository to revert changes in
+   * @param ref - The ref to revert changes in, eg. branch name
+   */
+  async revertUncommittedChanges(
+    repository: string,
+    ref: string
+  ): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return fake() as IrminAPIResponse;
+    try {
+      const response = (await this.irminCore.fetch(`/v1/commits/revert`, {
+        method: 'POST',
+        body: JSON.stringify({
+          repository,
+          ref,
+        }),
+      })) as IrminAPIResponse;
+
+      return response;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Revert Uncommitted Changes error'
+      );
+      if (isDevelopment) return fake() as IrminAPIResponse;
       throw error;
     }
   }

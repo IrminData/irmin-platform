@@ -18,6 +18,7 @@
     "^react-icons/(.*)$",
     "^@/components/(.*)$",
     "^@/context/(.*)$",
+    "^@/hooks/(.*)$",
     "^@/utils/(.*)$",
     "^@/types/(.*)$",
     "^[./]"

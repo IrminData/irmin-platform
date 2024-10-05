@@ -21,7 +21,7 @@ import { Repository } from '@/types/core/Repository';
  *
  * @returns The repository collection reference list component
  */
-const RepositoryCollectionReferenceList = () => {
+const CollectionReferenceList = () => {
   const { irminAlert } = usePopup();
   const { dict, locale } = useLocale();
   const {
@@ -122,4 +122,4 @@ const RepositoryCollectionReferenceList = () => {
   );
 };
 
-export default RepositoryCollectionReferenceList;
+export default CollectionReferenceList;

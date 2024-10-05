@@ -51,7 +51,7 @@ export default function CreateBranchModalContent({
     >
       <div className='flex flex-col gap-2'>
         <label htmlFor='branchName' className='text-xs'>
-          {dict.repository.newBranchName}
+          {dict.repository.branches.newBranchName}
         </label>
         <Controller
           name='branchName'
@@ -65,7 +65,6 @@ export default function CreateBranchModalContent({
                 variant='outline'
                 colorScheme='gray'
                 size='sm'
-                placeholder={dict.repository.newBranchName}
                 {...field}
               />
               {errors.branchName && (
@@ -79,7 +78,7 @@ export default function CreateBranchModalContent({
       </div>
       <div className='flex flex-col gap-2'>
         <label htmlFor='fromBranch' className='text-xs'>
-          {dict.repository.fromBranch}
+          {dict.repository.branches.fromBranch}
         </label>
         <Controller
           name='fromBranch'
@@ -121,7 +120,7 @@ export default function CreateBranchModalContent({
         className='w-full'
         type='submit'
       >
-        {dict.repository.createBranch}
+        {dict.repository.branches.createBranch}
       </Button>
     </form>
   );

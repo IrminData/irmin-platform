@@ -8,13 +8,13 @@ import AddNewFileModal from '@/components/bucket/modals/AddNewFileModal';
 import AddNewFolderModal from '@/components/bucket/modals/AddNewFolderModal';
 import RenameOrMoveItemModal from '@/components/bucket/modals/RenameOrMoveItemModal';
 import FileNavigator from '@/components/bucket/navigator/FileNavigator';
-import RepositoryCollectionReferenceList from '@/components/repository/RepositoryCollectionReferenceList';
+import CollectionReferenceList from '@/components/repository/collections/CollectionReferenceList';
 
 import { useBucket } from '@/context/BucketContext';
-import { DataProvider } from '@/context/DataContext';
 import { EditorContextProvider } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { QueryProvider } from '@/context/QueryContext';
 
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
@@ -179,7 +179,7 @@ export default function EditorLayoutWrapper({
             }}
             items={items}
           />
-          <RepositoryCollectionReferenceList />
+          <CollectionReferenceList />
         </div>
       </div>
       <div className='ml-10 flex-1 flex-shrink overflow-hidden lg:ml-0'>
@@ -188,7 +188,7 @@ export default function EditorLayoutWrapper({
           id='editor-page-content'
         >
           <EditorContextProvider>
-            <DataProvider>{children}</DataProvider>
+            <QueryProvider>{children}</QueryProvider>
           </EditorContextProvider>
         </div>
       </div>

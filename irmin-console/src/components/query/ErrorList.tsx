@@ -30,25 +30,15 @@ export default function ErrorList({
               key={`errors-${index}`}
               className='w-full rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/20'
             >
-              <div className='mb-4 flex items-center gap-2'>
+              <div className='flex items-center gap-2'>
                 <TbAlertCircle
                   className='text-red-600 dark:text-red-400'
-                  size={24}
+                  size={18}
                 />
-                <p className='text-lg font-medium text-red-600 dark:text-red-400'>
+                <p className='text-sm font-medium text-red-600 lg:text-base dark:text-red-400'>
                   {error}
                 </p>
               </div>
-              <ul className='ml-6 list-disc space-y-2'>
-                {errors.map((err, i) => (
-                  <li
-                    key={`errors-${index}-error-${i}`}
-                    className='text-left text-sm text-red-900 dark:text-red-100'
-                  >
-                    {err}
-                  </li>
-                ))}
-              </ul>
             </div>
           ))}
         </>

@@ -49,11 +49,7 @@ export default function WorkflowLayout({
   if (isInvalidRouteProp(workflowId)) notFound();
 
   return (
-    <WorkflowLayoutWrapper
-      workflowId={workflowId}
-      workspaceSlug={params.workspace}
-      locale={params.lang}
-    >
+    <WorkflowLayoutWrapper workflowId={workflowId}>
       {children}
     </WorkflowLayoutWrapper>
   );

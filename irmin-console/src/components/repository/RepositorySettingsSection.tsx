@@ -8,26 +8,19 @@ import SettingsForm, {
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useRepository } from '@/context/RepositoryContext';
 import { useWorkspace } from '@/context/workspace';
-
-import { Repository } from '@/types/core/Repository';
 
 /**
  * Repository Settings section component
  *
  * Handles repository settings updates, reassignment, and deletion.
  * Uses {@link SettingsForm} to show and edit the repository settings.
- *
- * @param props - The props
- * @param props.repository - The repository to view and edit settings for
  */
-const RepositorySettingsSection = ({
-  repository,
-}: {
-  repository: Repository | undefined;
-}) => {
+const RepositorySettingsSection = () => {
   const { dict } = useLocale();
   const { irminConfirm, irminAlert } = usePopup();
+  const { currentRepository } = useRepository();
   const {
     workspaces: { currentWorkspace },
     repositories: { updateRepository, reassignRepository, deleteRepository },
@@ -39,49 +32,45 @@ const RepositorySettingsSection = ({
   const handleUpdateRepository = useCallback(
     async (data: { name: string; description: string; owner: string }) => {
       try {
-        if (!repository) return;
+        if (!currentRepository) return;
 
         // Check if the owner has changed
-        if (data.owner && data.owner !== repository.owner.id) {
+        if (data.owner && data.owner !== currentRepository.owner.id) {
           // Find the new owner object
           const newOwner = currentWorkspace?.users?.find(
             (user) => user.id === data.owner
           );
           if (newOwner) {
             // Change the owner if it's different and found
-            const res = await reassignRepository(repository, newOwner);
+            const res = await reassignRepository(currentRepository, newOwner);
             irminAlert(
               'success',
-              res.message ?? dict.repository.settings.repositoryOwnerChanged
+              res.message ?? 'Repository reassigned successfully'
             );
           }
         }
 
         // Update repository details
-        const res = await updateRepository(repository.slug, {
-          ...repository,
+        const res = await updateRepository(currentRepository.slug, {
+          ...currentRepository,
           name: data.name.trim(),
           description: data.description.trim(),
         });
 
-        irminAlert(
-          'success',
-          res.message ?? dict.repository.settings.repositoryUpdated
-        );
+        irminAlert('success', res.message ?? 'Repository updated successfully');
       } catch (error) {
         irminAlert(
           'error',
           (error as Error)?.message ??
-            dict.repository.settings.errorUpdatingRepository
+            'An error occurred while updating the repository'
         );
       }
     },
     [
-      repository,
+      currentRepository,
       updateRepository,
       reassignRepository,
       irminAlert,
-      dict,
       currentWorkspace,
     ]
   );
@@ -91,16 +80,15 @@ const RepositorySettingsSection = ({
    */
   const handleDeleteRepository = useCallback(() => {
     try {
-      if (!repository) return;
       irminConfirm(
         'warning',
         dict.repository.settings.areYouSureYouWantToDelete,
         async (confirmed) => {
           if (!confirmed) return;
-          const res = await deleteRepository(repository.slug);
+          const res = await deleteRepository(currentRepository.slug);
           irminAlert(
             'success',
-            res.message ?? dict.repository.settings.repositoryDeleted
+            res.message ?? 'Repository deleted successfully'
           );
         }
       );
@@ -108,10 +96,10 @@ const RepositorySettingsSection = ({
       irminAlert(
         'error',
         (error as Error)?.message ??
-          dict.repository.settings.errorDeletingRepository
+          'An error occurred while deleting the repository'
       );
     }
-  }, [repository, irminConfirm, deleteRepository, irminAlert, dict]);
+  }, [currentRepository, irminConfirm, deleteRepository, irminAlert, dict]);
 
   // Define field configurations
   const fieldConfiguration: FieldConfig<{
@@ -148,16 +136,16 @@ const RepositorySettingsSection = ({
       className='container relative mx-auto my-8 max-w-6xl'
       id='repository-settings-section'
     >
-      {repository?.is_immutable ? (
+      {currentRepository?.is_immutable ? (
         <p className='text-sm font-normal text-red-800 md:text-xl dark:text-red-400'>
           {dict.repository.immutableDescription}
         </p>
       ) : (
         <SettingsForm
           initialValues={{
-            name: repository?.name ?? '',
-            description: repository?.description ?? '',
-            owner: repository?.owner.id ?? '',
+            name: currentRepository?.name ?? '',
+            description: currentRepository?.description ?? '',
+            owner: currentRepository?.owner.id ?? '',
           }}
           onSubmit={handleUpdateRepository}
           fieldConfiguration={fieldConfiguration}

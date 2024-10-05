@@ -22,13 +22,10 @@ export async function generateMetadata({
  * Layout for the Workflows pages in the Console
  */
 export default function ConsoleWorkflowsLayout({
-  params,
   children,
 }: Readonly<{
   params: WorkspaceLayoutParams;
   children: React.ReactNode;
 }>) {
-  return (
-    <WorkflowsLayoutWrapper params={params}>{children}</WorkflowsLayoutWrapper>
-  );
+  return <WorkflowsLayoutWrapper>{children}</WorkflowsLayoutWrapper>;
 }

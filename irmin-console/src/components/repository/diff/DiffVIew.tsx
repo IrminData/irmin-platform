@@ -2,20 +2,18 @@
 
 import { useCallback, useRef, useState } from 'react';
 
-import IrminCore from '@/services/core/IrminCore';
-
 import { GoChevronDown, GoChevronUp } from 'react-icons/go';
 
 import Button from '@/components/common/button/Button';
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
+import { useRepository } from '@/context/RepositoryContext';
 
 import { ChangeType, Diff } from '@/types/core/Diff';
 import { IrminAPIUnstructuredResponse } from '@/types/core/IrminAPIResponse';
 
-import CommitList from './CommitList';
+import CommitList from '../commits/CommitList';
 import ContentDiff from './ContentDiff';
 import NoDiffWarning from './NoDiffWarning';
 
@@ -31,10 +29,23 @@ type OpenDiffContentItem = {
  *
  * @param props
  * @param props.diff - The diff object to display
+ * @param props.hideHeader - Whether to hide the header
+ * @param props.hideCommits - Whether to hide the commits
+ * @param props.noDiffWarning - The warning to display when there are no changes
  */
-const DiffView = ({ diff }: { diff: Diff }) => {
-  const { locale, dict } = useLocale();
-  const { irminAlert } = usePopup();
+const DiffView = ({
+  diff,
+  hideHeader,
+  hideCommits,
+  noDiffWarning,
+}: {
+  diff: Diff;
+  hideHeader?: boolean;
+  hideCommits?: boolean;
+  noDiffWarning?: JSX.Element;
+}) => {
+  const { dict } = useLocale();
+  const { fetchDiffContent } = useRepository();
 
   const [openItem, setOpenItem] = useState<OpenDiffContentItem | undefined>(
     undefined
@@ -43,52 +54,9 @@ const DiffView = ({ diff }: { diff: Diff }) => {
   const fetchingDiffContent = useRef(false);
 
   /**
-   * Fetch the content of the diff for a specific collection
-   *
-   * @param props - The parameters to fetch the diff content
-   * @param props.collection - The collection ID
-   * @param props.repository - The repository slug
-   * @param props.baseRef - The base ref
-   * @param props.compareRef - The compared ref
-   */
-  const fetchDiffContent = useCallback(
-    async ({
-      collection,
-      repository,
-      baseRef,
-      compareRef,
-    }: {
-      collection: string;
-      repository: string;
-      baseRef: string;
-      compareRef: string;
-    }) => {
-      const { collectionService } = new IrminCore(locale);
-      const [baseContent, compareContent] = await Promise.all([
-        collectionService.fetchContent({
-          collection: collection,
-          repository: repository,
-          ref: baseRef,
-        }),
-        collectionService.fetchContent({
-          collection: collection,
-          repository: repository,
-          ref: compareRef,
-        }),
-      ]);
-      return {
-        base: baseContent,
-        compare: compareContent,
-      };
-    },
-    [locale]
-  );
-
-  /**
    * Toggle the visibility of the diff content for a specific item
    *
    * @param index - The index of the item to toggle
-   * @returns void
    */
   const toggleItem = useCallback(
     async (index: number) => {
@@ -97,64 +65,54 @@ const DiffView = ({ diff }: { diff: Diff }) => {
         return;
       }
       if (fetchingDiffContent.current) return;
-      try {
-        const item = diff.items[index];
-        if (!item.collection) return;
 
-        fetchingDiffContent.current = true;
-        setOpenItem({
-          loading: true,
-          diffItem: index,
-          base: null,
-          compare: null,
-        });
+      const item = diff.items[index];
+      if (!item.collection) return;
 
-        const { base, compare } = await fetchDiffContent({
-          collection: item.collection.id,
-          repository: diff.repository,
-          baseRef: diff.base_ref,
-          compareRef: diff.compare_ref,
-        });
+      fetchingDiffContent.current = true;
+      setOpenItem({
+        loading: true,
+        diffItem: index,
+        base: null,
+        compare: null,
+      });
 
-        setOpenItem({
-          loading: false,
-          base: base,
-          compare: compare,
-          diffItem: index,
-        });
-      } catch (error) {
-        console.error(error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ??
-            dict.repository.compare.failedToFetchDiffContent
-        );
-      } finally {
-        fetchingDiffContent.current = false;
-      }
+      const content = await fetchDiffContent(
+        item.collection.id,
+        diff.base_ref,
+        diff.compare_ref
+      );
+      setOpenItem({
+        loading: false,
+        base: content?.base ?? null,
+        compare: content?.compare ?? null,
+        diffItem: index,
+      });
+      fetchingDiffContent.current = false;
     },
-    [diff, fetchDiffContent, irminAlert, openItem, dict]
+    [diff, fetchDiffContent, openItem]
   );
 
   return (
     <div className='w-full'>
       {/* Header Section */}
-      <div className='mb-4'>
-        <h3 className='text-sm text-gray-900 lg:text-base dark:text-gray-100'>
-          {dict.repository.compare.comparing}{' '}
-          <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
-            {diff.base_ref}
-          </span>{' '}
-          {dict.repository.compare.and}{' '}
-          <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
-            {diff.compare_ref}
-          </span>
-        </h3>
-        <p className='text-xs text-gray-600 dark:text-gray-300'>
-          {diff.repository}
-        </p>
-      </div>
-
+      {!hideHeader && (
+        <div className='mb-4'>
+          <h3 className='text-sm text-gray-900 lg:text-base dark:text-gray-100'>
+            {dict.repository.compare.comparing}{' '}
+            <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
+              {diff.base_ref}
+            </span>{' '}
+            {dict.repository.compare.and}{' '}
+            <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
+              {diff.compare_ref}
+            </span>
+          </h3>
+          <p className='text-xs text-gray-600 dark:text-gray-300'>
+            {diff.repository}
+          </p>
+        </div>
+      )}
       {/* Diff Items Section */}
       <div className='space-y-4'>
         {diff.items.map((item, index) => {
@@ -245,14 +203,14 @@ const DiffView = ({ diff }: { diff: Diff }) => {
       </div>
 
       {/* Diff Commites Section */}
-      {diff.commits.length > 0 && (
+      {diff.commits && diff.commits.length > 0 && !hideCommits && (
         <div className='mt-4'>
           <CommitList commits={diff.commits} />
         </div>
       )}
 
       {/* No changes message */}
-      {diff.items.length === 0 && <NoDiffWarning />}
+      {diff.items.length === 0 && (noDiffWarning ?? <NoDiffWarning />)}
     </div>
   );
 };

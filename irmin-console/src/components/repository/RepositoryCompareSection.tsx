@@ -2,40 +2,39 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import IrminCore from '@/services/core/IrminCore';
-
 import { GoGitMerge } from 'react-icons/go';
 import { TbArrowLeft, TbRefresh } from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 
-import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useRepository } from '@/context/RepositoryContext';
 
 import { Diff } from '@/types/core/Diff';
 
-import BranchSelector from './BranchSelector';
-import DiffView from './DiffVIew';
-import MergeModalContent from './MergeModalContent';
-import NoDiffWarning from './NoDiffWarning';
+import BranchSelector from './branches/BranchSelector';
+import DiffView from './diff/DiffVIew';
+import MergeModalContent from './diff/MergeModalContent';
+import NoDiffWarning from './diff/NoDiffWarning';
 
 /**
  * Section to display the diffs between branches of a repository and merge them.
  */
 export default function RepositoryCompareSection() {
-  const { dict, locale } = useLocale();
-  const { irminAlert, irminModal } = usePopup();
+  const { dict } = useLocale();
+  const { irminModal } = usePopup();
   const {
     branches,
     loadingBranches,
     currentRef,
-    currentRepository,
-    defaultBranch,
-  } = useData();
+    defaultRef,
+    fetchDiff,
+    mergeRefs,
+  } = useRepository();
 
-  const [baseRef, setBaseRef] = useState<string | undefined>(defaultBranch);
+  const [baseRef, setBaseRef] = useState<string | undefined>(defaultRef);
   const [compareRef, setCompareRef] = useState<string | undefined>(currentRef);
 
   const [diff, setDiff] = useState<Diff | null>(null);
@@ -47,30 +46,16 @@ export default function RepositoryCompareSection() {
   /**
    * Fetch the diff between the base and compare branches.
    */
-  const fetchDiff = useCallback(async () => {
-    try {
-      if (!currentRepository || !baseRef || !compareRef) {
-        setDiff(null);
-        return;
-      }
-      setLoadingDiff(true);
-      const { compareService } = new IrminCore(locale);
-      const res = await compareService.compareRefs(
-        currentRepository,
-        baseRef,
-        compareRef
-      );
-      setDiff(res.data);
-    } catch (error) {
-      console.error(error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? dict.repository.compare.failedToFetchDiff
-      );
-    } finally {
-      setLoadingDiff(false);
+  const handleFetchDiff = useCallback(async () => {
+    if (!baseRef || !compareRef) {
+      setDiff(null);
+      return;
     }
-  }, [currentRepository, baseRef, compareRef, irminAlert, locale, dict]);
+    setLoadingDiff(true);
+    const res = await fetchDiff(baseRef, compareRef);
+    if (res) setDiff(res);
+    setLoadingDiff(false);
+  }, [baseRef, compareRef, fetchDiff]);
 
   /**
    * Check if the branches can be merged.
@@ -87,31 +72,22 @@ export default function RepositoryCompareSection() {
    * collect the commit message and merge strategy, and then merge the branches.
    */
   const handleMerge = useCallback(() => {
-    if (!currentRepository || !baseRef || !compareRef) return;
-    if (!canMerge) return;
+    if (!baseRef || !compareRef) return;
     // Show the merge modal
     irminModal.show(
       `${dict.repository.compare.merge} ${compareRef} ${dict.repository.compare.into} ${baseRef}`,
       <MergeModalContent
-        repository={currentRepository}
         baseRef={baseRef}
         compareRef={compareRef}
+        mergeRefs={mergeRefs}
         closeModal={() => {
           // Refetch the diff when modal is closed
-          fetchDiff();
+          handleFetchDiff();
           irminModal.close();
         }}
       />
     );
-  }, [
-    irminModal,
-    compareRef,
-    baseRef,
-    dict,
-    currentRepository,
-    canMerge,
-    fetchDiff,
-  ]);
+  }, [irminModal, compareRef, baseRef, dict, handleFetchDiff, mergeRefs]);
 
   /**
    * Fetch the diff when the base or compare branches change.
@@ -124,8 +100,8 @@ export default function RepositoryCompareSection() {
       return;
     diffFetchedBase.current = baseRef;
     diffFetchedCompare.current = compareRef;
-    fetchDiff();
-  }, [fetchDiff, baseRef, compareRef]);
+    handleFetchDiff();
+  }, [handleFetchDiff, baseRef, compareRef]);
 
   if (loadingBranches)
     return (
@@ -173,14 +149,14 @@ export default function RepositoryCompareSection() {
             />
           </div>
         </div>
-        {/* Merge branches */}
+        {/* Actions */}
         <div className='flex w-max min-w-48 flex-row items-center gap-4 lg:justify-end'>
           <Button
             variant='icon'
             colorScheme='light'
             size='sm'
             icon={<TbRefresh size={18} />}
-            onClick={fetchDiff}
+            onClick={handleFetchDiff}
             enableTooltip={true}
             disabled={loadingDiff}
           >

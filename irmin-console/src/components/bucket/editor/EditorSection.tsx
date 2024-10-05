@@ -4,9 +4,9 @@ import EditorWithTabs from '@/components/bucket/editor/partials/EditorWithTabs';
 import QueryResults from '@/components/query/QueryResults';
 
 import { useBucket } from '@/context/BucketContext';
-import { useData } from '@/context/DataContext';
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
+import { useQuery } from '@/context/QueryContext';
 
 /**
  * Editor Section, provides UI for the Editor Page.
@@ -16,7 +16,7 @@ export default function EditorSection() {
   const { dict } = useLocale();
   const { openFileTabs } = useBucket();
   const { currentEditor } = useEditor();
-  const { runScript, scriptResult } = useData();
+  const query = useQuery();
 
   return (
     <>
@@ -24,13 +24,13 @@ export default function EditorSection() {
       {openFileTabs.length > 0 && (
         <QueryResults
           title={dict.query.results}
-          result={scriptResult}
+          result={query.result}
           onSave={async () => {
             // TODO: Implement save functionality
           }}
           onRun={async () => {
             if (!currentEditor || !currentEditor.contents) return;
-            await runScript(
+            await query.executeScript(
               currentEditor.language ?? 'sql',
               currentEditor.contents ?? ''
             );

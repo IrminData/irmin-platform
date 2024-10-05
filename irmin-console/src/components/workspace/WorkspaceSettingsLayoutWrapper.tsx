@@ -13,52 +13,56 @@ import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
+import useBaseUrl from '@/hooks/useBaseUrl';
+
 /**
  * Component to wrap the Workspace Settings pages in.
  * Provides tabs and title.
  *
  * @param props - The component properties
  * @param props.children - The children to render
- * @param props.workspaceSlug - The slug of the current workspace
  */
 export default function WorkspaceSettingsLayoutWrapper({
   children,
-  workspaceSlug,
 }: {
   children: React.ReactNode;
-  workspaceSlug: string;
 }) {
-  const currentPath = usePathname();
-  const { locale, dict } = useLocale();
+  const pathname = usePathname();
+  const { dict } = useLocale();
   const {
     workspaces: { currentWorkspace },
   } = useWorkspace();
+
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'console',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
   const tabs = useMemo(
     () => [
       {
         title: dict.workspace.general,
-        href: `/${locale}/console/${workspaceSlug}/settings`,
-        active: currentPath === `/${locale}/console/${workspaceSlug}/settings`,
+        href: `${workspaceUrl}/settings`,
+        active: pathname === `${workspaceUrl}/settings`,
         icon: <TbSettings size={14} />,
       },
       {
         title: dict.workspace.users,
-        href: `/${locale}/console/${workspaceSlug}/settings/users`,
-        active:
-          currentPath === `/${locale}/console/${workspaceSlug}/settings/users`,
+        href: `${workspaceUrl}/settings/users`,
+        active: pathname === `${workspaceUrl}/settings/users`,
         icon: <TbUser size={14} />,
       },
       {
         title: dict.workspace.billing,
-        href: `/${locale}/console/${workspaceSlug}/settings/billing`,
-        active:
-          currentPath ===
-          `/${locale}/console/${workspaceSlug}/settings/billing`,
+        href: `${workspaceUrl}/settings/billing`,
+        active: pathname === `${workspaceUrl}/settings/billing`,
         icon: <TbInvoice size={14} />,
       },
     ],
-    [currentPath, dict, locale, workspaceSlug]
+    [pathname, dict, workspaceUrl]
   );
 
   if (!currentWorkspace) {
@@ -87,7 +91,7 @@ export default function WorkspaceSettingsLayoutWrapper({
             colorScheme='light'
             className='bg-gray-100 dark:bg-gray-700'
             icon={<IoChevronBack size={24} />}
-            href={`/${locale}/console/${workspaceSlug}/home`}
+            href={`${workspaceUrl}/home`}
           />
           {tabs
             .map((tab, idx) => {

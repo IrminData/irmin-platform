@@ -6,7 +6,7 @@ import { Locale } from '@/dictionaries';
 
 import RepositoryLayoutWrapper from '@/components/repository/RepositoryLayoutWrapper';
 
-import { DataProvider } from '@/context/DataContext';
+import { RepositoryProvider } from '@/context/RepositoryContext';
 
 import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
 
@@ -38,7 +38,9 @@ export async function generateMetadata({
 }
 
 /**
- * Layout for the Repository pages in the Console (with container)
+ * Layout for the Repository pages in the Console.
+ * Provides the {@link RepositoryProvider} to use the repository data.
+ *
  * @param props0 - The layout properties
  * @param props0.params - The layout parameters from Next JS router
  * @param props0.children - The children to render
@@ -55,10 +57,8 @@ export default function RepositoryLayoutWithContainer({
   }
 
   return (
-    <DataProvider currentRepository={params.repository}>
-      <RepositoryLayoutWrapper repoSlug={params.repository}>
-        {children}
-      </RepositoryLayoutWrapper>
-    </DataProvider>
+    <RepositoryProvider repositorySlug={params.repository}>
+      <RepositoryLayoutWrapper>{children}</RepositoryLayoutWrapper>
+    </RepositoryProvider>
   );
 }

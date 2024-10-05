@@ -12,45 +12,32 @@ import Button from '@/components/common/button/Button';
 import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 import QueryResults from '@/components/query/QueryResults';
 
-import { useData } from '@/context/DataContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useQuery } from '@/context/QueryContext';
+import { useRepository } from '@/context/RepositoryContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Repository } from '@/types/core/Repository';
+import useBaseUrl from '@/hooks/useBaseUrl';
 
-import CollectionSchema from './CollectionSchema';
-import CollectionSelector from './CollectionSelector';
-import UploadCollectionModalContent from './UploadCollectionModalContent';
+import CollectionSchema from './collections/CollectionSchema';
+import CollectionSelector from './collections/CollectionSelector';
+import UploadCollectionModalContent from './upload/UploadCollectionModalContent';
 
 /**
  * Repository viewer section, provides UI for the Repository viewer Page.
  */
-export default function RepositorySection({
-  repository,
-  initialRef,
-  immutable,
-}: {
-  repository?: Repository;
-  initialRef?: string;
-  immutable?: boolean;
-}) {
-  const { dict, locale } = useLocale();
+export default function RepositorySection() {
+  const { dict } = useLocale();
 
   const {
     workspaces: { currentWorkspace },
   } = useWorkspace();
-  const {
-    runScript,
-    runningScript,
-    scriptResult,
-    currentRef,
-    currentRepository,
-    defaultBranch,
-    setCurrentRef,
-    loadingCollections,
-    collections,
-  } = useData();
+
+  const { currentRef, currentRepository, loadingCollections, collections } =
+    useRepository();
+
+  const query = useQuery();
 
   const { irminModal } = usePopup();
 
@@ -61,7 +48,7 @@ export default function RepositorySection({
     () => collections?.find((item) => item.id === selectedCollectionID),
     [selectedCollectionID, collections]
   );
-  const [query, setQuery] = useState<string>('');
+  const [queryField, setQueryField] = useState<string>('');
   const [queryChanged, setQueryChanged] = useState(false);
 
   /**
@@ -71,41 +58,45 @@ export default function RepositorySection({
   useEffect(() => {
     if (!selectedCollection) return;
     if (queryChanged) return;
-    setQuery(
+    setQueryField(
       `SELECT * FROM $["${selectedCollection.formatted_name}${currentRef ? `@${currentRef}` : ''}"]`
     );
   }, [selectedCollection, queryChanged, currentRef]);
 
-  useEffect(() => {
-    setCurrentRef(initialRef);
-  }, [initialRef, setCurrentRef]);
-
   const handleUpload = useCallback(() => {
     irminModal.show(
-      dict.repository.uploadCollection,
+      dict.repository.collections.uploadCollection,
       <UploadCollectionModalContent
-        currentRepository={currentRepository}
+        currentRepository={currentRepository.slug}
         currentRef={currentRef}
       />
     );
-  }, [currentRef, currentRepository, dict, irminModal]);
+  }, [currentRef, currentRepository.slug, dict, irminModal]);
 
   const runCurrentQuery = useCallback(() => {
-    if (!query || query.length < 3) return;
-    runScript(
+    if (!queryField || queryField.length < 3) return;
+    query.executeScript(
       'sql',
-      query,
+      queryField,
       collections.find((item) => item.id === selectedCollectionID)
     );
-  }, [query, runScript, selectedCollectionID, collections]);
+  }, [queryField, query, selectedCollectionID, collections]);
+
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'console',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
   const updateQuery = useCallback(
     (value: string) => {
-      if (runningScript) return;
+      if (query.loading) return;
       setQueryChanged(true);
-      setQuery(value);
+      setQueryField(value);
     },
-    [runningScript]
+    [query.loading]
   );
 
   return (
@@ -115,18 +106,18 @@ export default function RepositorySection({
           <div className='inline max-w-full overflow-x-scroll whitespace-nowrap text-xs text-gray-600 lg:text-sm dark:text-gray-400'>
             <Link
               className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
-              href={`/${locale}/console/${currentWorkspace?.slug}/repositories`}
+              href={`${workspaceUrl}/repositories`}
             >
               {currentWorkspace?.slug}
             </Link>
             {' / '}
             <Link
               className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
-              href={`/${locale}/console/${currentWorkspace?.slug}/repositories/${repository?.slug}`}
+              href={`${workspaceUrl}/repositories/${currentRepository.slug}`}
             >
-              {repository?.slug}
+              {currentRepository.slug}
             </Link>
-            {currentRef ? ` @ ${currentRef}` : ` @ ${defaultBranch}`}
+            {currentRef && ` @ ${currentRef}`}
           </div>
           <div className='flex items-center gap-2 md:gap-4'>
             <Button
@@ -134,11 +125,11 @@ export default function RepositorySection({
               variant='solid'
               size='sm'
               icon={<TbDownload />}
-              href={`/${locale}/console/${currentWorkspace?.slug}/repositories/${repository?.slug}/download`}
+              href={`${workspaceUrl}/repositories/${currentRepository.slug}/download`}
             >
-              {dict.repository.download.download}
+              {dict.misc.download.download}
             </Button>
-            {repository && !repository.is_immutable && !immutable && (
+            {!currentRepository.is_immutable && (
               <Button
                 onClick={handleUpload}
                 colorScheme='light'
@@ -146,7 +137,7 @@ export default function RepositorySection({
                 size='sm'
                 icon={<TbUpload />}
               >
-                {dict.repository.uploadCollection}
+                {dict.repository.collections.uploadCollection}
               </Button>
             )}
           </div>
@@ -155,18 +146,16 @@ export default function RepositorySection({
           <LoadingSkeleton className='h-96' />
         ) : (
           <div className='flex w-full flex-col items-start gap-1 md:flex-row md:gap-2'>
-            {repository && (
-              <CollectionSelector
-                repository={repository}
-                collections={collections}
-                selectedCollectionID={selectedCollectionID}
-                setSelectedCollectionID={setSelectedCollectionID}
-              />
-            )}
+            <CollectionSelector
+              repository={currentRepository}
+              collections={collections}
+              selectedCollectionID={selectedCollectionID}
+              setSelectedCollectionID={setSelectedCollectionID}
+            />
             {selectedCollectionID && (
               <CollectionSchema
                 collectionID={selectedCollectionID}
-                immutable={immutable ?? repository?.is_immutable ?? false}
+                immutable={currentRepository.is_immutable ?? false}
               />
             )}
           </div>
@@ -182,7 +171,7 @@ export default function RepositorySection({
               className='float-end m-2 shadow-none'
               size='sm'
               icon={<AiOutlinePlayCircle />}
-              loading={runningScript}
+              loading={query.loading}
               onClick={runCurrentQuery}
             >
               {dict.repository.runQuery}
@@ -190,7 +179,7 @@ export default function RepositorySection({
           </div>
           <CodeMirrorEditor
             language='sql'
-            content={query}
+            content={queryField}
             editorHeight='100px'
             updateEditorContent={updateQuery}
             placeholder={dict.editor.writeYourSQL}
@@ -198,12 +187,12 @@ export default function RepositorySection({
           />
         </div>
       </div>
-      {scriptResult && (
+      {query.result && (
         <div className='flex h-[calc(100vh-400px)] min-h-96'>
           <QueryResults
             title={dict.query.queryResults}
-            result={scriptResult}
-            loading={runningScript}
+            result={query.result}
+            loading={query.loading}
           />
         </div>
       )}
