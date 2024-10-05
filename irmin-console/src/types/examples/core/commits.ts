@@ -6,7 +6,7 @@ export const commits: () => Commit[] = () => [
     message: 'Initial commit of the project',
     timestamp: '2023-10-01T12:00:00Z',
     author: 'John Doe',
-    previousHash:
+    previous_hash:
       '0f0b33a557e0359a6f26cc82ee6b83c48f0ac7b7a9c07fff37487445a8f40056',
   },
   {
@@ -14,7 +14,7 @@ export const commits: () => Commit[] = () => [
     message: 'Added a new feature to the project',
     timestamp: '2023-10-02T14:30:00Z',
     author: 'Jane Smith',
-    previousHash:
+    previous_hash:
       'cef3ffefb07f6e3e9f1171004e4330df975dc398d5169a85b208b9f17f50da7a',
   },
   {
@@ -22,7 +22,7 @@ export const commits: () => Commit[] = () => [
     message: 'Fixed a bug in the project',
     timestamp: '2023-10-03T16:45:00Z',
     author: 'Alice Johnson',
-    previousHash:
+    previous_hash:
       '85cb9fcfc9227d1f49f6935e418cb92f23f514338a132ee5a1856c0863c7cfca',
   },
   {
@@ -30,7 +30,7 @@ export const commits: () => Commit[] = () => [
     message: 'Refactored the codebase for better performance',
     timestamp: '2023-10-04T10:20:00Z',
     author: 'Bob Brown',
-    previousHash:
+    previous_hash:
       '87790dad5cae2da0965bb273c5dd280db4c10f12fbce4c6a342b8d4f4672a1e5',
   },
   {
@@ -38,7 +38,7 @@ export const commits: () => Commit[] = () => [
     message: 'Updated project documentation',
     timestamp: '2023-10-05T09:15:00Z',
     author: 'Carol White',
-    previousHash:
+    previous_hash:
       'eee06730981ab5491b5e3587548b27c535ee1168c51d0c91988482e14d91cfe8',
   },
   {
@@ -46,7 +46,7 @@ export const commits: () => Commit[] = () => [
     message: 'Optimized code for better performance',
     timestamp: '2023-10-06T11:45:00Z',
     author: 'David Green',
-    previousHash:
+    previous_hash:
       '03053df277a5ab5bc574c2b458954c0c0c930413e7964e51aa029059068713ce',
   },
   {
@@ -54,7 +54,7 @@ export const commits: () => Commit[] = () => [
     message: 'Added unit tests for the project',
     timestamp: '2023-10-07T13:30:00Z',
     author: 'Eve Black',
-    previousHash:
+    previous_hash:
       '69dc50dd8cc4a29045754308d34e109c2b69929c8d1d0393063594874370f513',
   },
   {
@@ -62,6 +62,6 @@ export const commits: () => Commit[] = () => [
     message: 'Fixed a security vulnerability in the project',
     timestamp: '2023-10-08T15:00:00Z',
     author: 'Frank Blue',
-    previousHash: '',
+    previous_hash: '',
   },
 ];

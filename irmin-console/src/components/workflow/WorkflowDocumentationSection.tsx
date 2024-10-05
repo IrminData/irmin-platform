@@ -34,13 +34,14 @@ const WorkflowDocumentationSection = ({ workflow }: { workflow: Workflow }) => {
   const handleSaveDocumentation = async (data: DocumentationFormValues) => {
     try {
       const documentation = data.documentation.trim();
-      if (documentation && documentation !== workflow.documentation) {
-        await updateWorkflow(workflow.id, {
-          ...workflow,
-          documentation,
-        });
-        irminAlert('success', dict.workflow.settings.workflowUpdated);
-      }
+      const res = await updateWorkflow(workflow.id, {
+        ...workflow,
+        documentation,
+      });
+      irminAlert(
+        'success',
+        res.message ?? dict.workflow.settings.workflowUpdated
+      );
     } catch (error) {
       irminAlert(
         'error',

@@ -55,12 +55,12 @@ export default function RepositoryCompareSection() {
       }
       setLoadingDiff(true);
       const { compareService } = new IrminCore(locale);
-      const response = await compareService.compareRefs(
+      const res = await compareService.compareRefs(
         currentRepository,
         baseRef,
         compareRef
       );
-      setDiff(response.data);
+      setDiff(res.data);
     } catch (error) {
       console.error(error);
       irminAlert(

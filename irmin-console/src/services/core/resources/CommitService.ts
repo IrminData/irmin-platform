@@ -33,7 +33,6 @@ class CommitService {
 
   /**
    * Fetch all available commits for a repository and branch
-   * @todo Provide link to Irmin API docs
    *
    * @param repository -  The repository to get commits from
    * @param ref - (optional) The ref to get commits from

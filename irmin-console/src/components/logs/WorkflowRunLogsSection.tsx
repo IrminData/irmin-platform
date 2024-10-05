@@ -129,7 +129,7 @@ export default function WorkflowRunLogsSection({
         <LoadingSkeleton className='h-96 w-full' />
       ) : workflowRunLogs && workflowRunLogs.logs ? (
         <div className='h-[calc(100vh-347px)]'>
-          <LogFeed text={workflowRunLogs.logs} />
+          <LogFeed text={workflowRunLogs.logs.join('\n\n')} />
         </div>
       ) : (
         <p className='text-center text-lg text-gray-600 dark:text-gray-400'>

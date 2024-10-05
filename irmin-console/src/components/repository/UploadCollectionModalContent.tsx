@@ -71,7 +71,7 @@ export default function UploadCollectionModalContent({
       }
 
       // Upload the collection
-      await repositoryService.uploadCollection(
+      const res = await repositoryService.uploadCollection(
         data.repository,
         data.ref,
         data.name,
@@ -81,7 +81,7 @@ export default function UploadCollectionModalContent({
 
       // Close the modal and show success message
       irminModal.close();
-      irminAlert('success', dict.repository.upload.success);
+      irminAlert('success', res.message ?? dict.repository.upload.success);
     } catch (error) {
       console.error('Failed to upload new collection:', error);
       setError((error as Error)?.message ?? dict.repository.upload.failed);

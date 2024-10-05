@@ -47,7 +47,6 @@ class RepositoryService {
 
   /**
    * Fetch all available repositories
-   * @todo Provide link to Irmin API docs
    */
   async fetchRepositories(): Promise<RepositoriesAPIResponse> {
     if (isOfflineMode)
@@ -69,10 +68,7 @@ class RepositoryService {
   /**
    * Create a new Repository
    *
-   * @todo Provide link to Irmin API docs
-   *
    * @param repository - The Repository object to create
-   *
    * @returns response from the API with data being the newly created Repository
    */
   async createRepository(
@@ -105,11 +101,8 @@ class RepositoryService {
   /**
    * Reassign the ownership of a Repository
    *
-   * @todo Provide link to Irmin API docs
-   *
    * @param repository - The Repository to reassign
    * @param newOwner - The new owner of the Repository
-   *
    */
   async reassignRepository(repository: Repository, newOwner: WorkspaceUser) {
     if (isOfflineMode) return fake();
@@ -136,10 +129,7 @@ class RepositoryService {
   /**
    * Delete a Repository
    *
-   * @todo Provide link to Irmin API docs
-   *
    * @param repositorySlug - The slug of the Repository to delete
-   *
    */
   async deleteRepository(repositorySlug: string) {
     if (isOfflineMode) return fake();
@@ -168,11 +158,8 @@ class RepositoryService {
   /**
    * Update a Repository
    *
-   * @todo Provide link to Irmin API docs
-   *
    * @param repositorySlug - The slug of the Repository to update
    * @param updatedRepository - The updated Repository object
-   *
    */
   async updateRepository(
     repositorySlug: string,
@@ -205,8 +192,6 @@ class RepositoryService {
 
   /**
    * Upload a collection to the repository
-   *
-   * @todo Provide link to Irmin API docs
    *
    * Upload the files to the lakehouse, index them in the repository
    * and create a new collection.
@@ -254,8 +239,6 @@ class RepositoryService {
 
   /**
    * Delete a collection from the repository
-   *
-   * @todo Provide link to Irmin API docs
    *
    * @param repository - The repository to delete the collection from
    * @param ref - The ref to delete the collection from

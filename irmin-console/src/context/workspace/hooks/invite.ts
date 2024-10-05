@@ -41,10 +41,10 @@ export const useFetchInvites = (
           return;
         }
         // Fetch the data
-        const response = await inviteService.fetchInvitesByWorkspace(
+        const res = await inviteService.fetchInvitesByWorkspace(
           currentWorkspace.slug
         );
-        setInvites(response.data);
+        setInvites(res.data);
       } finally {
         setLoading(false);
       }
@@ -75,11 +75,7 @@ export const useSendInvite = (
       // Get the invite service
       const { inviteService } = new IrminCore(locale);
       // Send the invite
-      const response = await inviteService.inviteUserToWorkspace(
-        name,
-        email,
-        role
-      );
+      const res = await inviteService.inviteUserToWorkspace(name, email, role);
       // Refetch the invites
       const newInvites = await inviteService.fetchInvitesByWorkspace(
         currentWorkspace.slug
@@ -87,7 +83,7 @@ export const useSendInvite = (
       // Update the invites in the context state
       setInvites(newInvites.data);
 
-      return response;
+      return res;
     },
     [currentWorkspace, setInvites, locale]
   );
@@ -101,9 +97,9 @@ export const useResendInvite = (locale: Locale) =>
       // Get the invite service
       const { inviteService } = new IrminCore(locale);
       // Resend the invite
-      const response = await inviteService.resendUserInvite(invite);
+      const res = await inviteService.resendUserInvite(invite);
 
-      return response;
+      return res;
     },
     [locale]
   );
@@ -121,11 +117,11 @@ export const useCancelInvite = (
       // Get the invite service
       const { inviteService } = new IrminCore(locale);
       // Cancel the invite
-      const response = await inviteService.cancelUserInvite(invite);
+      const res = await inviteService.cancelUserInvite(invite);
       // Update the invites in the context state
       setInvites(invites.filter((i) => i.id !== invite));
 
-      return response;
+      return res;
     },
     [invites, setInvites, locale]
   );
@@ -143,16 +139,13 @@ export const useChangeInvite = (
       // Get the invite service
       const { inviteService } = new IrminCore(locale);
       // Change the invite
-      const response = await inviteService.changeUserInviteRole(
-        invite,
-        role.name
-      );
+      const res = await inviteService.changeUserInviteRole(invite, role.name);
       // Update the invites in the context state
       setInvites(
         invites.map((i) => (i.id === invite ? { ...i, role: role } : i))
       );
 
-      return response;
+      return res;
     },
     [invites, setInvites, locale]
   );

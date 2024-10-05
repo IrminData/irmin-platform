@@ -1,5 +1,6 @@
 import { defaultLocale, Locale } from '@/dictionaries';
 
+import { handleCoreAPIErrors } from '@/utils/errorParser';
 import removeCircularJSON from '@/utils/removeCircularJSON';
 
 import {
@@ -163,8 +164,13 @@ class IrminCore {
     // Parse the response as JSON
     const data = await response.json();
 
-    // Return the response as JSON removing circular references
-    return removeCircularJSON(data) as IrminAPIResponse;
+    // Create the result object removing circular references
+    const result = removeCircularJSON(data) as IrminAPIResponse;
+
+    // Throw an error if response contains errors
+    handleCoreAPIErrors(result);
+
+    return result;
   };
 
   public fetchUnstructured = async (

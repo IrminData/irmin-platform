@@ -109,13 +109,13 @@ export const BucketProvider = ({
     setLoading(true);
     try {
       // Fetch bucket data
-      const response = await fetchBucketProxy({
+      const res = await fetchBucketProxy({
         locale: locale,
         token: token ?? '',
         workspace: currentWorkspace,
       });
-      if (!response || !response.data) return;
-      const bucketProxyData = response.data;
+      if (!res || !res.data) return;
+      const bucketProxyData = res.data;
       // Update the context state
       setCurrentBucket(bucketProxyData.bucket);
       setItems(bucketProxyData.fileNavItems);
@@ -253,16 +253,13 @@ export const BucketProvider = ({
         );
         updateStateWithBucket(updatedBucket);
         // Update the file in the bucket
-        const response = await bucketService.updateFile({
+        const res = await bucketService.updateFile({
           original: file,
           current: file,
           type: 'file',
         });
         // Show success alert
-        irminAlert(
-          'success',
-          response.metadata?.message ?? response.message ?? 'File updated'
-        );
+        irminAlert('success', res.message ?? 'File updated');
       } catch (error) {
         console.error('Update file contents error:', error);
         irminAlert(
@@ -293,12 +290,9 @@ export const BucketProvider = ({
         updatedBucket.files.push(file.current as BucketFile);
         updateStateWithBucket(updatedBucket);
         // Create the file in the bucket
-        const response = await bucketService.createFile(file);
+        const res = await bucketService.createFile(file);
         // Show success alert
-        irminAlert(
-          'success',
-          response.metadata?.message ?? response.message ?? 'File updated'
-        );
+        irminAlert('success', res.message ?? 'File updated');
       } catch (error) {
         console.error('Create file error:', error);
         irminAlert(
@@ -338,12 +332,9 @@ export const BucketProvider = ({
           )
         );
         // Update the file in the bucket
-        const response = await bucketService.updateFile(file);
+        const res = await bucketService.updateFile(file);
         // Show success alert
-        irminAlert(
-          'success',
-          response.metadata?.message ?? response.message ?? 'File updated'
-        );
+        irminAlert('success', res.message ?? 'File updated');
       } catch (error) {
         console.error('Update file error:', error);
         irminAlert(
@@ -390,12 +381,9 @@ export const BucketProvider = ({
           openFileTabs.filter((path) => path !== file.current?.path)
         );
         // Delete the file from the bucket
-        const response = await bucketService.deleteFile(file);
+        const res = await bucketService.deleteFile(file);
         // Show success alert
-        irminAlert(
-          'success',
-          response.metadata?.message ?? response.message ?? 'File deleted'
-        );
+        irminAlert('success', res.message ?? 'File deleted');
       } catch (error) {
         console.error('Delete file error:', error);
         irminAlert(
@@ -433,12 +421,9 @@ export const BucketProvider = ({
         updatedBucket.folders.push(folder.current as BucketFolder);
         updateStateWithBucket(updatedBucket);
         // Create the folder in the bucket
-        const response = await bucketService.createFolder(folder);
+        const res = await bucketService.createFolder(folder);
         // Show success alert
-        irminAlert(
-          'success',
-          response.metadata?.message ?? response.message ?? 'Folder created'
-        );
+        irminAlert('success', res.message ?? 'Folder created');
       } catch (error) {
         console.error('Create folder error:', error);
         irminAlert(
@@ -482,12 +467,9 @@ export const BucketProvider = ({
           )
         );
         // Update the folder in the bucket
-        const response = await bucketService.updateFolder(folder);
+        const res = await bucketService.updateFolder(folder);
         // Show success alert
-        irminAlert(
-          'success',
-          response.metadata?.message ?? response.message ?? 'Folder updated'
-        );
+        irminAlert('success', res.message ?? 'Folder updated');
       } catch (error) {
         console.error('Update folder error:', error);
         irminAlert(
@@ -541,12 +523,9 @@ export const BucketProvider = ({
           )
         );
         // Delete the folder from the bucket
-        const response = await bucketService.deleteFolder(folder);
+        const res = await bucketService.deleteFolder(folder);
         // Show success alert
-        irminAlert(
-          'success',
-          response.metadata?.message ?? response.message ?? 'Folder deleted'
-        );
+        irminAlert('success', res.message ?? 'Folder deleted');
       } catch (error) {
         console.error('Delete folder error:', error);
         irminAlert(

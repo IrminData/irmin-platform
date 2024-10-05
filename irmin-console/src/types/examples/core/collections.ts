@@ -243,15 +243,7 @@ const tableSchema = (): TableSchema => ({
   type: 'table',
   columns: [
     {
-      name: 'id',
-      type: 'int',
-    },
-    {
       name: 'name',
-      type: 'string',
-    },
-    {
-      name: 'email',
       type: 'string',
     },
     {
@@ -259,7 +251,27 @@ const tableSchema = (): TableSchema => ({
       type: 'int',
     },
     {
-      name: 'is_active',
+      name: 'city',
+      type: 'string',
+    },
+    {
+      name: 'country',
+      type: 'string',
+    },
+    {
+      name: 'email',
+      type: 'string',
+    },
+    {
+      name: 'jobTitle',
+      type: 'string',
+    },
+    {
+      name: 'company',
+      type: 'string',
+    },
+    {
+      name: 'isActive',
       type: 'boolean',
     },
     {
@@ -284,6 +296,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Software Engineer',
       company: 'TechCorp',
       isActive: true,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'Jane Doe',
@@ -294,6 +307,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Product Manager',
       company: 'Innovatech',
       isActive: false,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'John Smith',
@@ -304,6 +318,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Data Analyst',
       company: 'DataSolve',
       isActive: true,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'Jane Smith',
@@ -314,6 +329,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Graphic Designer',
       company: 'DesignHub',
       isActive: false,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'John Johnson',
@@ -324,6 +340,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'DevOps Engineer',
       company: 'CloudBase',
       isActive: true,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'Jane Johnson',
@@ -334,6 +351,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'UX Researcher',
       company: 'UserFirst',
       isActive: false,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'John Williams',
@@ -344,6 +362,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Accountant',
       company: 'FinancePro',
       isActive: true,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'Jane Williams',
@@ -354,6 +373,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Marketing Specialist',
       company: 'BrandMakers',
       isActive: false,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'John Brown',
@@ -364,16 +384,18 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Sales Manager',
       company: 'SalesForce',
       isActive: true,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'Jane Brown',
       age: 31,
-      city: 'Moscow',
-      country: 'Russia',
+      city: 'Kyiv',
+      country: 'Ukraine',
       email: 'janebrown@example.com',
       jobTitle: 'HR Coordinator',
       company: 'PeopleOps',
       isActive: false,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'John Davis',
@@ -384,6 +406,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Business Analyst',
       company: 'BizInsights',
       isActive: true,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'Jane Davis',
@@ -394,6 +417,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Consultant',
       company: 'AdvisoryCo',
       isActive: false,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'John Miller',
@@ -404,6 +428,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Project Manager',
       company: 'PM Solutions',
       isActive: true,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'Jane Miller',
@@ -414,6 +439,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Architect',
       company: 'UrbanBuild',
       isActive: false,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'John Wilson',
@@ -424,6 +450,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Research Scientist',
       company: 'LabWorks',
       isActive: true,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'Jane Wilson',
@@ -434,6 +461,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Financial Analyst',
       company: 'FinAdvisors',
       isActive: false,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'John Moore',
@@ -444,6 +472,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Operations Manager',
       company: 'GlobalOps',
       isActive: true,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'Jane Moore',
@@ -454,6 +483,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Content Strategist',
       company: 'MediaHouse',
       isActive: false,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'John Taylor',
@@ -464,6 +494,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Engineer',
       company: 'BuildTech',
       isActive: true,
+      created_at: '2021-10-01T12:00:00Z',
     },
     {
       name: 'Jane Taylor',
@@ -474,6 +505,7 @@ export const tableCollectionData = (): TableCollectionData => ({
       jobTitle: 'Legal Advisor',
       company: 'LawFirm',
       isActive: false,
+      created_at: '2021-10-01T12:00:00Z',
     },
   ],
 });
@@ -566,3 +598,15 @@ export const repositorySchema = (): RepositorySchema => [
           : folderSchema(),
   })),
 ];
+
+/**
+ * Get example collection data
+ *
+ * @param type - (optional) Type of collection data to return
+ */
+export const collectionData = (type?: 'table' | 'file' | 'folder') => {
+  if (type === 'table') return tableCollectionData();
+  if (type === 'file') return fileCollectionData();
+  if (type === 'folder') return folderCollectionData();
+  return tableCollectionData();
+};

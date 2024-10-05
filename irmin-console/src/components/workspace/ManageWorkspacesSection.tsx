@@ -63,17 +63,13 @@ const ManageWorkspacesSection = () => {
 
     // Create new workspace
     try {
-      const response = await createWorkspace(
+      const res = await createWorkspace(
         data.newWorkspaceName,
         data.newWorkspaceDescription
       );
-      if (response.metadata?.message) {
-        await fetchWorkspaces();
-        setSuccess(response.metadata.message);
-        reset(); // Reset form values
-      } else {
-        throw new Error(response.message || 'Creation failed');
-      }
+      await fetchWorkspaces();
+      setSuccess(res.message ?? 'Workspace created successfully');
+      reset(); // Reset form values
     } catch (error) {
       setError((error as Error)?.message ?? 'Creation failed');
     } finally {

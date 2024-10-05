@@ -2,11 +2,11 @@
  * Interface for defining the data in a file collection.
  *
  * @typeParam type - Type of the data, always 'file' for FileCollectionData
- * @typeParam content - Content of the file
+ * @typeParam content - Content of the file as Base64 encoded string
  */
 export interface FileCollectionData extends FileSchema {
   type: 'file';
-  content: string | ArrayBuffer | Blob | null;
+  content: string;
 }
 
 /**

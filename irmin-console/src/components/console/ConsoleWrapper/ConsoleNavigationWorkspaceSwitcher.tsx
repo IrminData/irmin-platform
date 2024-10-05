@@ -60,10 +60,11 @@ export default function ConsoleNavigationWorkspaceSwitcher({
       }
       const newWorkspace = workspaces?.find((w) => w.slug === value);
       if (newWorkspace) {
-        await switchWorkspace(newWorkspace.slug);
+        const res = await switchWorkspace(newWorkspace.slug);
         irminAlert(
           'success',
-          `${dict.workspaceSwitcher.switchedTo} ${newWorkspace.name}`
+          res?.message ??
+            `${dict.workspaceSwitcher.switchedTo} ${newWorkspace.name}`
         );
         setIsMenuOpen(false);
       }

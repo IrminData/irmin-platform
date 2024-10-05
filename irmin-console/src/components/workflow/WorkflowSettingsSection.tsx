@@ -61,20 +61,26 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
           );
           if (newOwner) {
             // Change the owner if it's different and found
-            await reassignWorkflow(workflow.id, newOwner);
-            irminAlert('success', dict.workflow.settings.workflowOwnerChanged);
+            const res = await reassignWorkflow(workflow.id, newOwner);
+            irminAlert(
+              'success',
+              res.message ?? dict.workflow.settings.workflowOwnerChanged
+            );
           }
         }
 
         // Update other workflow details
-        await updateWorkflow(workflow.id, {
+        const res = await updateWorkflow(workflow.id, {
           ...workflow,
           name: data.name.trim(),
           description: data.description.trim(),
           cron_syntax: data.cron_syntax.trim(),
         });
 
-        irminAlert('success', dict.workflow.settings.workflowUpdated);
+        irminAlert(
+          'success',
+          res.message ?? dict.workflow.settings.workflowUpdated
+        );
       } catch (error) {
         irminAlert(
           'error',
@@ -101,11 +107,13 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
       irminConfirm(
         'warning',
         dict.workflow.settings.areYouSureYouWantToDelete,
-        (confirmed) => {
-          if (confirmed) {
-            deleteWorkflow(workflow.id);
-            irminAlert('success', dict.workflow.settings.workflowDeleted);
-          }
+        async (confirmed) => {
+          if (!confirmed) return;
+          const res = await deleteWorkflow(workflow.id);
+          irminAlert(
+            'success',
+            res.message ?? dict.workflow.settings.workflowDeleted
+          );
         }
       );
     } catch (error) {
@@ -123,11 +131,17 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
   const handlePauseOrResume = useCallback(async () => {
     try {
       if (workflow.status === 'paused') {
-        await resumeWorkflow(workflow.id);
-        irminAlert('success', dict.workflow.settings.workflowResumed);
+        const res = await resumeWorkflow(workflow.id);
+        irminAlert(
+          'success',
+          res.message ?? dict.workflow.settings.workflowResumed
+        );
       } else {
-        await pauseWorkflow(workflow.id);
-        irminAlert('success', dict.workflow.settings.workflowPaused);
+        const res = await pauseWorkflow(workflow.id);
+        irminAlert(
+          'success',
+          res.message ?? dict.workflow.settings.workflowPaused
+        );
       }
     } catch (error) {
       irminAlert(

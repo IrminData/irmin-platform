@@ -69,10 +69,7 @@ export default function ConfigureConnection({
         });
 
         // Show success alert and close modal
-        irminAlert(
-          'success',
-          res.metadata?.message ?? 'Connection created successfully'
-        );
+        irminAlert('success', res.message ?? 'Connection created successfully');
         closeModal();
       } catch (error) {
         console.error('Failed to create connection', error);

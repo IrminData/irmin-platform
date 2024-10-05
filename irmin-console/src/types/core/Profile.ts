@@ -21,11 +21,11 @@ import { Workspace } from '@/types/core/Workspace';
 export interface Profile {
   id: string;
   name: string;
-  company?: string | null;
+  company?: string;
   email: string;
-  profile_picture?: string | null;
-  email_verified_at?: string | null;
-  workspace?: Workspace | null;
-  roles?: IrminRole[] | null;
-  api_token?: string | null;
+  profile_picture?: string;
+  email_verified_at?: string;
+  workspace?: Workspace;
+  roles?: IrminRole[];
+  api_token?: string;
 }

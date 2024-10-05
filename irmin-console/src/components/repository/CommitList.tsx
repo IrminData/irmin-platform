@@ -1,9 +1,13 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import NormalList from '@/components/common/list/NormalList';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+
+import { sortCommits } from '@/utils/sortCommits';
 
 import { Commit } from '@/types/core/Commit';
 import { GridRow } from '@/types/internal/ListProps';
@@ -25,39 +29,51 @@ export default function CommitList({
   const { dict, locale } = useLocale();
   const { irminAlert } = usePopup();
 
-  const rows: GridRow[] =
-    commits?.map((commit, i) => ({
-      columns: [
-        <div
-          key={`commit-${i}-message-and-author`}
-          className='inline-flex flex-col gap-2'
-        >
-          <p className='text-sm'>{commit.message}</p>
-          <p className='text-xs'>{commit.author}</p>
-        </div>,
-        <div key={`commit-${i}-hash`} className='inline-flex flex-col gap-2'>
-          <p className='text-xs'>{commit.hash.substring(0, 30)}...</p>
-          <p className='text-xs'>
-            {new Date(commit.timestamp).toLocaleString(locale ?? 'en')}
-          </p>
-        </div>,
-      ],
-      actions: [
-        {
-          label: dict.list.view,
-          primary: true,
-          href: `./refs/${commit.hash}`,
-        },
-        {
-          label: dict.repository.copyHash,
-          primary: false,
-          onClick: () => {
-            navigator.clipboard.writeText(commit.hash);
-            irminAlert('success', dict.repository.commitHashCopied);
+  const sortedCommits: Commit[] = useMemo(() => {
+    try {
+      return sortCommits(commits ?? []);
+    } catch (error) {
+      console.error(error);
+      return commits ?? [];
+    }
+  }, [commits]);
+
+  const rows: GridRow[] = useMemo(
+    () =>
+      sortedCommits?.map((commit, i) => ({
+        columns: [
+          <div
+            key={`commit-${i}-message-and-author`}
+            className='inline-flex flex-col gap-2'
+          >
+            <p className='text-sm'>{commit.message}</p>
+            <p className='text-xs'>{commit.author}</p>
+          </div>,
+          <div key={`commit-${i}-hash`} className='inline-flex flex-col gap-2'>
+            <p className='text-xs'>{commit.hash.substring(0, 30)}...</p>
+            <p className='text-xs'>
+              {new Date(commit.timestamp).toLocaleString(locale ?? 'en')}
+            </p>
+          </div>,
+        ],
+        actions: [
+          {
+            label: dict.list.view,
+            primary: true,
+            href: `./refs/${commit.hash}`,
           },
-        },
-      ],
-    })) ?? [];
+          {
+            label: dict.repository.copyHash,
+            primary: false,
+            onClick: () => {
+              navigator.clipboard.writeText(commit.hash);
+              irminAlert('success', dict.repository.commitHashCopied);
+            },
+          },
+        ],
+      })) ?? [],
+    [sortedCommits, dict, irminAlert, locale]
+  );
 
   return (
     <div id='commits-list'>

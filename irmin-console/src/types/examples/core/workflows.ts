@@ -53,7 +53,7 @@ export const workflows = (): Workflow[] => {
         '# Excel import explanation. \n Manually imported Excel file with KPIs and performance metrics. This workflow is not scheduled and should be ran manually when needed.',
       cron_syntax: null,
       last_run_at: getRandomDateTimeString(40, 'past', 10),
-      next_run_at: null,
+      next_run_at: undefined,
       status: 'running',
       workflowable_type: 'import',
       workflowable: {

@@ -33,7 +33,7 @@ class ConnectorService {
 
   /**
    * Fetch all available connectors
-   * {@link https://api.irmin.dev/docs#connectors-GETv1-connectors | Irmin API docs}
+   *
    * @returns avalable connectors
    */
   async fetchAllConnectors(): Promise<ConnectorAPIResponse> {

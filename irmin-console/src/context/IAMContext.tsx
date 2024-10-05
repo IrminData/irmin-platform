@@ -108,11 +108,11 @@ export const IAMProvider = ({
         console.error('Error regenerating token:', error);
       }
       // Fetch the profile data
-      const response = await profileService.getProfile();
-      if (response) {
+      const res = await profileService.getProfile();
+      if (res) {
         // Update the profile's API token and timestamp if they exist
-        if (response.data.api_token) {
-          setToken(response.data.api_token ?? null);
+        if (res.data.api_token) {
+          setToken(res.data.api_token ?? null);
           setTokenTimestamp(Date.now().toString());
         } else {
           setToken(null);
@@ -122,16 +122,16 @@ export const IAMProvider = ({
         setCookie(
           'profile',
           JSON.stringify({
-            name: response.data.name,
-            company: response.data.company,
-            email: response.data.email,
-            profile_picture: response.data.profile_picture,
+            name: res.data.name,
+            company: res.data.company,
+            email: res.data.email,
+            profile_picture: res.data.profile_picture,
           }),
           1
         );
 
         // Update the profile state
-        setProfile(response.data);
+        setProfile(res.data);
       } else {
         // If no profile data is returned, reset the IAM state
         setToken(null);
@@ -156,12 +156,10 @@ export const IAMProvider = ({
     async (name: string, company: string, email: string) => {
       try {
         setIsLoading(true);
-        const result = await profileService.updateProfile(name, company, email);
+        const res = await profileService.updateProfile(name, company, email);
         irminAlert(
           'success',
-          result.message ??
-            result.metadata?.message ??
-            dict.profile.profileUpdatedSuccessfully
+          res.message ?? dict.profile.profileUpdatedSuccessfully
         );
         await fetchProfile();
       } catch (error) {
@@ -185,16 +183,14 @@ export const IAMProvider = ({
     try {
       setIsLoading(true);
       // Handle logout
-      const result = await authService.logout();
+      const res = await authService.logout();
       // Reset cookies
       setCookie('profile', '', -1);
       setCookie('workspaces', '', -1);
       // Show success message if logout was successful
       irminAlert(
         'success',
-        result.message ??
-          result.metadata?.message ??
-          "You've been signed out successfully"
+        res.message ?? "You've been signed out successfully"
       );
       // Refetch the profile data
       await fetchProfile();
@@ -220,12 +216,8 @@ export const IAMProvider = ({
       try {
         setError(null);
         setIsLoading(true);
-        const response = await authService.login(email, password);
-        setSuccess(
-          response.metadata?.message ??
-            response.message ??
-            'Signed in successfully'
-        );
+        const res = await authService.login(email, password);
+        setSuccess(res.message ?? 'Signed in successfully');
         // Refetch the profile data
         await fetchProfile();
         // Redirect to the console
@@ -257,7 +249,7 @@ export const IAMProvider = ({
       try {
         setError(null);
         setIsLoading(true);
-        const response = await authService.register(
+        const res = await authService.register(
           name,
           company,
           email,
@@ -265,11 +257,7 @@ export const IAMProvider = ({
           password,
           passwordConfirmation
         );
-        setSuccess(
-          response.metadata?.message ??
-            response.message ??
-            'Registered successfully'
-        );
+        setSuccess(res.message ?? 'Registered successfully');
         // Refetch the profile data
         await fetchProfile();
         // Redirect to the console

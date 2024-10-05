@@ -26,15 +26,15 @@ export interface ChangeItem {
  * Interface to represent the difference between two refs
  *
  * @typeParam repository - The repository the refs are in
- * @typeParam baseRef - The base ref
- * @typeParam compareRef - The ref to compare against
+ * @typeParam base_ref - The base ref
+ * @typeParam compare_ref - The ref to compare against
  * @typeParam items - The diff items
  * @typeParam commits - The commits on the compare ref that are not in the base ref
  */
 export interface Diff {
   repository: string;
-  baseRef: string;
-  compareRef: string;
+  base_ref: string;
+  compare_ref: string;
   items: ChangeItem[];
   commits: Commit[];
 }

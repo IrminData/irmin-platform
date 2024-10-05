@@ -112,8 +112,8 @@ const DiffView = ({ diff }: { diff: Diff }) => {
         const { base, compare } = await fetchDiffContent({
           collection: item.collection.id,
           repository: diff.repository,
-          baseRef: diff.baseRef,
-          compareRef: diff.compareRef,
+          baseRef: diff.base_ref,
+          compareRef: diff.compare_ref,
         });
 
         setOpenItem({
@@ -143,11 +143,11 @@ const DiffView = ({ diff }: { diff: Diff }) => {
         <h3 className='text-sm text-gray-900 lg:text-base dark:text-gray-100'>
           {dict.repository.compare.comparing}{' '}
           <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
-            {diff.baseRef}
+            {diff.base_ref}
           </span>{' '}
           {dict.repository.compare.and}{' '}
           <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
-            {diff.compareRef}
+            {diff.compare_ref}
           </span>
         </h3>
         <p className='text-xs text-gray-600 dark:text-gray-300'>

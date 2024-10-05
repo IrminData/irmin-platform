@@ -42,8 +42,8 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
   useEffect(() => {
     (async () => {
       try {
-        const result = await workflowService.fetchRunsByWorkflow(workflow.id);
-        setWorkflowRuns(result.data);
+        const res = await workflowService.fetchRunsByWorkflow(workflow.id);
+        setWorkflowRuns(res.data);
       } catch (error) {
         console.error('Error fetching workflow runs:', error);
       } finally {

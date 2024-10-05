@@ -41,7 +41,7 @@ export default function DefineSettings({
       setLoading(true);
       fetchedFields.current = true;
       try {
-        const response = await connectionService.fetchNewConnectionSettings(
+        const res = await connectionService.fetchNewConnectionSettings(
           connectorID,
           connectionDetails
         );
@@ -49,7 +49,7 @@ export default function DefineSettings({
         // Update connection data state
         setConnectionData((prev: ConnectionSetup) => ({
           ...prev,
-          connectionSettingsFields: response.data,
+          connectionSettingsFields: res.data,
         }));
       } catch (error) {
         console.error('Fetch new connection settings error:', error);

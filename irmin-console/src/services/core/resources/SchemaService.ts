@@ -32,7 +32,6 @@ class SchemaService {
   }
   /**
    * Fetch schema for a repository, workspace or specific collections
-   * @todo Provide link to Irmin API docs
    *
    * @param collections - The collections to fetch schema for
    * @param ref - (optional) The ref to fetch schema for
@@ -51,7 +50,7 @@ class SchemaService {
       if (ref) urlParams.append('ref', ref);
 
       const response = (await this.irminCore.fetch(
-        `/v1/api/schema?${urlParams.toString()}`,
+        `/v1/schema?${urlParams.toString()}`,
         {
           method: 'GET',
         }

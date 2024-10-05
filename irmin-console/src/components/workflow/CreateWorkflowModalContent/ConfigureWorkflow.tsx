@@ -48,9 +48,9 @@ export default function ConfigureWorkflow({
       if (processing) return;
       setProcessing(true);
       // Create the workflow
-      let result: IrminAPIResponse | undefined;
+      let res: IrminAPIResponse | undefined;
       if (workflowData.type === 'action') {
-        result = await workflowService.createActionWorkflow({
+        res = await workflowService.createActionWorkflow({
           name: workflowData.name,
           description: workflowData.description,
           cron_syntax: workflowData.cron,
@@ -61,7 +61,7 @@ export default function ConfigureWorkflow({
         });
       }
       if (workflowData.type === 'import') {
-        result = await workflowService.createImportWorkflow({
+        res = await workflowService.createImportWorkflow({
           name: workflowData.name,
           description: workflowData.description,
           cron_syntax: workflowData.cron,
@@ -72,7 +72,7 @@ export default function ConfigureWorkflow({
         });
       }
       if (workflowData.type === 'export') {
-        result = await workflowService.createExportWorkflow({
+        res = await workflowService.createExportWorkflow({
           name: workflowData.name,
           description: workflowData.description,
           cron_syntax: workflowData.cron,
@@ -84,18 +84,8 @@ export default function ConfigureWorkflow({
         });
       }
       // Show the result to the user
-      if (result) {
-        irminAlert(
-          'success',
-          result.metadata?.message ?? dict.workflow.create.success
-        );
-        closeModal();
-      } else {
-        console.log(
-          'Failed to create workflow: No result from workflow service'
-        );
-        throw new Error();
-      }
+      irminAlert('success', res?.message ?? dict.workflow.create.success);
+      closeModal();
     } catch (error) {
       console.error('Failed to create workflow', error);
       irminAlert(

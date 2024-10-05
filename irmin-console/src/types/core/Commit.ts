@@ -5,12 +5,12 @@
  * @typeParam message - Commit message
  * @typeParam timestamp - Commit timestamp
  * @typeParam author - Commit author
- * @typeParam previousHash - Previous commit hash, if any
+ * @typeParam previous_hash - Previous commit hash, if any
  */
 export interface Commit {
   hash: string;
   message: string;
   timestamp: string;
   author: string;
-  previousHash?: string;
+  previous_hash?: string;
 }

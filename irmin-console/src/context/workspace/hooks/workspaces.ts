@@ -29,10 +29,10 @@ export const useFetchWorkspaces = (
     setWorkspaceLoading(true);
     try {
       // Fetch the workspaces
-      const data = await workspaceService.fetchWorkspaces();
-      setWorkspaces(data.data ?? []);
+      const res = await workspaceService.fetchWorkspaces();
+      setWorkspaces(res.data ?? []);
       setWorkspaceLoading(false);
-      return data.data;
+      return res.data;
     } finally {
       setWorkspaceLoading(false);
     }
@@ -65,11 +65,11 @@ export const useCreateWorkspace = (locale: Locale) =>
       // Get the workspace service
       const { workspaceService } = new IrminCore(locale);
       // Create the workspace
-      const response = await workspaceService.createWorkspace(
+      const res = await workspaceService.createWorkspace(
         newWorkspaceName,
         newWorkspaceDescription
       );
-      return response;
+      return res;
     },
     [locale]
   );
@@ -83,8 +83,8 @@ export const useUpdateWorkspace = (locale: Locale) =>
       // Get the workspace service
       const { workspaceService } = new IrminCore(locale);
       // Update the workspace
-      const response = await workspaceService.updateWorkspace(workspace);
-      return response;
+      const res = await workspaceService.updateWorkspace(workspace);
+      return res;
     },
     [locale]
   );
@@ -149,6 +149,7 @@ export const useSwitchWorkspace = (
           if (!pathname.includes(`/console/${workspaceSlug}`)) {
             router.push(`/${locale}/console/${workspaceSlug}/home`);
           }
+          return newWorkspace;
         } else {
           throw new Error('Switching workspace failed');
         }
@@ -191,14 +192,13 @@ export const useTransferOwnership = (
       // Get the workspace service
       const { workspaceService } = new IrminCore(locale);
       // Transfer ownership
-      const response =
-        await workspaceService.transferWorkspaceOwnership(newOwner);
+      const res = await workspaceService.transferWorkspaceOwnership(newOwner);
       // Update the current workspace owner
       if (currentWorkspace) {
         setCurrentWorkspace({ ...currentWorkspace, owner_id: newOwner });
       }
 
-      return response;
+      return res;
     },
     [currentWorkspace, setCurrentWorkspace, locale]
   );
@@ -216,9 +216,9 @@ export const useDeleteCurrentWorkspace = (
 ) =>
   useCallback(async () => {
     const { workspaceService } = new IrminCore(locale);
-    const response = await workspaceService.deleteWorkspace();
+    const res = await workspaceService.deleteWorkspace();
     await switchWorkspace(null, true);
     await fetchWorkspaces();
 
-    return response;
+    return res;
   }, [switchWorkspace, fetchWorkspaces, locale]);

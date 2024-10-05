@@ -36,7 +36,7 @@ const WorkspaceSettingsSection = () => {
       if (!currentWorkspace) return;
       try {
         // Call the API to update the workspace
-        await updateWorkspace({
+        const res = await updateWorkspace({
           ...currentWorkspace,
           name: data.name.trim(),
           description: data.description.trim(),
@@ -46,7 +46,10 @@ const WorkspaceSettingsSection = () => {
         await fetchWorkspaces();
 
         // Show success message
-        irminAlert('success', dict.workspace.workspaceUpdatedSuccessfully);
+        irminAlert(
+          'success',
+          res.message ?? dict.workspace.workspaceUpdatedSuccessfully
+        );
       } catch (error) {
         console.error('Failed to update workspace:', error);
         irminAlert(
@@ -64,8 +67,11 @@ const WorkspaceSettingsSection = () => {
 
     const handleDelete = async () => {
       try {
-        await deleteCurrentWorkspace();
-        irminAlert('success', dict.workspace.workspaceDeletedSuccessfully);
+        const res = await deleteCurrentWorkspace();
+        irminAlert(
+          'success',
+          res.message ?? dict.workspace.workspaceDeletedSuccessfully
+        );
       } catch (error) {
         console.error('Failed to delete workspace:', error);
         const errorMessage = (error as Error)?.message ?? '';

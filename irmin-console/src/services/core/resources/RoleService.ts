@@ -33,7 +33,6 @@ class RoleService {
 
   /**
    * Fetch all available roles
-   * {@link https://api.irmin.dev/docs#roles-GETv1-roles | Irmin API docs}
    */
   async fetchRoles(): Promise<RolesAPIResponse> {
     if (isOfflineMode) return fake(exampleRoles) as RolesAPIResponse;

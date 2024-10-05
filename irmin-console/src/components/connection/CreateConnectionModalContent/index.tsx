@@ -96,14 +96,14 @@ const CreateConnectionModalContent = ({
   useEffect(() => {
     (async () => {
       try {
-        const response = await connectorService.fetchAllConnectors();
-        if (!response || response.data.length === 0) {
-          irminAlert('error', 'Failed to fetch connectors');
-        }
-        setConnectors(response.data);
+        const res = await connectorService.fetchAllConnectors();
+        setConnectors(res.data);
       } catch (error) {
         console.error('Fetch connectors error:', error);
-        irminAlert('error', 'Failed to fetch connectors');
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to fetch connectors'
+        );
       }
     })();
   }, [connectorService, irminAlert]);

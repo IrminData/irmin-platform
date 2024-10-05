@@ -41,7 +41,7 @@ class InviteService {
 
   /**
    * Invite a user to the workspace.
-   * {@link https://api.irmin.dev/docs#invites-POSTv1-invites-create | Irmin API docs}
+   *
    * @param name - The user's name.
    * @param email - The user's email. Can be new or existing Irmin user.
    * @param role - The user's role slug.
@@ -72,7 +72,7 @@ class InviteService {
 
   /**
    * Resend an invite.
-   * {@link https://api.irmin.dev/docs#invites-POSTv1-invites-resend | Irmin API docs}
+   *
    * @param invite - The invite's ID.
    */
   async resendUserInvite(invite: string) {
@@ -95,7 +95,7 @@ class InviteService {
 
   /**
    * Cancel a user's invite to the workspace.
-   * {@link https://api.irmin.dev/docs#invites-DELETEv1-invites-cancel | Irmin API docs}
+   *
    * @param invite - The invite's ID.
    */
   async cancelUserInvite(invite: string) {
@@ -118,7 +118,7 @@ class InviteService {
 
   /**
    * Change the invited user's role in the workspace.
-   * {@link https://api.irmin.dev/docs#invites-PATCHv1-invites-update | Irmin API docs}
+   *
    * @param invite - The invite's ID.
    * @param role - The role slug.
    */
@@ -143,7 +143,7 @@ class InviteService {
 
   /**
    * Get a list of invites to the workspace
-   * {@link https://api.irmin.dev/docs#invites-GETv1-invites | Irmin API docs}
+   *
    * @param workspace - The workspace's slug
    */
   async fetchInvitesByWorkspace(
@@ -168,7 +168,7 @@ class InviteService {
 
   /**
    * Get a list of invites for the user
-   * {@link https://api.irmin.dev/docs#invites-GETv1-invites | Irmin API docs}
+   *
    * @param user - The user's ID
    */
   async fetchInvitesByUser(user: string): Promise<InvitesAPIResponse> {
@@ -188,7 +188,7 @@ class InviteService {
 
   /**
    * Accept the invite to the workspace.
-   * {@link https://api.irmin.dev/docs#invites-POSTv1-invites-accept | Irmin API docs}
+   *
    * @param invite - The invite's ID.
    * @param password - The user's password.
    * @param password_confirmation - The user's password.
@@ -221,7 +221,7 @@ class InviteService {
 
   /**
    * Decline the invite
-   * {@link https://api.irmin.dev/docs#invites-DELETEv1-invites-decline | Irmin API docs}
+   *
    * @param invite - The ID of the invite to decline
    */
   async declineInvite(invite: string) {

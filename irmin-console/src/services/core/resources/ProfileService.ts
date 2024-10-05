@@ -35,7 +35,6 @@ class ProfileService {
 
   /**
    * Get the user's profile information
-   * {@link https://api.irmin.dev/docs#account-GETv1-account-profile | Irmin API docs}
    * @returns user's profile information or null if the user is not logged in
    */
   async getProfile(): Promise<ProfileAPIResponse | null> {
@@ -63,7 +62,6 @@ class ProfileService {
 
   /**
    * Regenerate the user's API token
-   * {@link https://api.irmin.dev/docs#miscellaneous-POSTv1-regenerate-token | Irmin API docs}
    */
   async regenerateToken() {
     if (isOfflineMode) return fake();
@@ -81,7 +79,7 @@ class ProfileService {
 
   /**
    * Update the user's profile information
-   * {@link https://api.irmin.dev/docs#account-PATCHv1-account-profile | Irmin API docs}
+   *
    * @param name - The user's name
    * @param company - The user's company
    * @param email - The user's email address

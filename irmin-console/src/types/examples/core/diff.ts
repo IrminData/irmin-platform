@@ -39,8 +39,8 @@ export const diff = ({
   // Generate diff items
   return {
     repository: repository ?? 'example-repo',
-    baseRef: base ?? 'main',
-    compareRef: compare ?? 'feature',
+    base_ref: base ?? 'main',
+    compare_ref: compare ?? 'feature',
     items: Array.from({ length: amountOfChanges }, () => ({
       collection:
         allCollections[Math.floor(Math.random() * allCollections.length)] ??

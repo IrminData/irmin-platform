@@ -23,13 +23,13 @@ const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
 
 /**
- * Workflow Runs API response type
+ * Workflow Runs API response type, for fetching a list of workflow runs
  */
 interface WorkflowRunsAPIResponse extends IrminAPIResponse {
   data: WorkflowRun[];
 }
 /**
- * Workflow Run API response type
+ * Workflow Run API response type, for fetching a single workflow run
  */
 interface WorkflowRunAPIResponse extends IrminAPIResponse {
   data: WorkflowRun;
@@ -51,6 +51,13 @@ interface ExportsAPIResponse extends IrminAPIResponse {
  */
 interface ActionsAPIResponse extends IrminAPIResponse {
   data: ActionWorkflow[];
+}
+
+/**
+ * Workflow API response type
+ */
+interface WorkflowAPIResponse extends IrminAPIResponse {
+  data: Workflow;
 }
 
 /**
@@ -81,11 +88,9 @@ class WorkflowService {
 
   /**
    * Update a Workflow
-   * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-update | Irmin API docs}
    *
    * @param workflowID - The ID of the workflow to update
    * @param workflow - The updated workflow object
-   *
    */
   async updateWorkflow(workflowID: string, workflow: Workflow) {
     if (isOfflineMode) return fake();
@@ -113,10 +118,6 @@ class WorkflowService {
 
   /**
    * Delete a Workflow by ID
-   *
-   * @todo What to do with the associated data repos, workspace DB tables, runs etc?
-   *
-   * @todo Provide link to Irmin API docs
    *
    * @param workflowID - The ID of the workflow to delete
    */
@@ -169,7 +170,6 @@ class WorkflowService {
 
   /**
    * Resume a Workflow
-   * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-resume | Irmin API docs}
    *
    * @param workflowID - ID of the workflow to resume
    *
@@ -196,7 +196,6 @@ class WorkflowService {
 
   /**
    * Reassign a Workflow to a new owner
-   * {@link https://api.irmin.dev/docs#workflows-POSTv1-workflows-reassign | Irmin API docs}
    *
    * @param workflowID - The ID of the workflow to reassign
    * @param newOwner - The new owner of the workflow
@@ -223,7 +222,6 @@ class WorkflowService {
 
   /**
    * Fetch Workflow Runs by Workflow
-   * @todo Provide link to Irmin API docs
    *
    * @param workflow - The slug of the workflow to fetch the runs for
    */
@@ -253,7 +251,6 @@ class WorkflowService {
 
   /**
    * Fetch Workflow Run by Workflow and Run ID
-   * @todo Provide link to Irmin API docs
    *
    * @param workflow - The slug of the workflow to fetch the runs for
    * @param workflowRun - The ID of the workflow run to fetch
@@ -267,15 +264,17 @@ class WorkflowService {
       exampleWorkflowRuns[0];
     if (isOfflineMode) return fake(exampleRun) as WorkflowRunAPIResponse;
     try {
+      const urlParams = new URLSearchParams();
+      if (workflowRun) urlParams.append('id', workflowRun);
       const response = (await this.irminCore.fetch(
-        `/v1/workflows/${workflow}/runs/${workflowRun}`,
+        `/v1/workflows/${workflow}/runs?${urlParams.toString()}`,
         {
           method: 'GET',
         }
       )) as WorkflowRunAPIResponse;
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Fetch workflow run by id error');
+      console.error((error as Error).message, 'Fetch workflow run by ID error');
       if (isDevelopment) return fake(exampleRun) as WorkflowRunAPIResponse;
       throw error;
     }
@@ -283,7 +282,6 @@ class WorkflowService {
 
   /**
    * Fetch all Import Workflows
-   * @todo Provide link to Irmin API docs
    */
   async fetchImportWorkflows(): Promise<ImportsAPIResponse> {
     if (isOfflineMode) return fake(exampleImports) as ImportsAPIResponse;
@@ -301,7 +299,6 @@ class WorkflowService {
 
   /**
    * Fetch all Export Workflows
-   * @todo Provide link to Irmin API docs
    */
   async fetchExportWorkflows(): Promise<ExportsAPIResponse> {
     if (isOfflineMode) return fake(exampleExports) as ExportsAPIResponse;
@@ -320,7 +317,6 @@ class WorkflowService {
 
   /**
    * Fetch all Action Workflows
-   * @todo Provide link to Irmin API docs
    */
   async fetchActionWorkflows(): Promise<ActionsAPIResponse> {
     if (isOfflineMode) return fake(exampleActions) as ActionsAPIResponse;
@@ -338,7 +334,6 @@ class WorkflowService {
 
   /**
    * Create a new Import Workflow
-   * @todo Provide link to Irmin API docs
    *
    * @param props - Workflow properties
    * @param props.connection - ID of the connection to import data from
@@ -365,8 +360,8 @@ class WorkflowService {
     name: string;
     description: string;
     cron_syntax: string;
-  }) {
-    if (isOfflineMode) return fake();
+  }): Promise<WorkflowAPIResponse> {
+    if (isOfflineMode) return fake(exampleImports[0]) as WorkflowAPIResponse;
     try {
       // Create a new FormData object
       const formData = new FormData();
@@ -382,24 +377,23 @@ class WorkflowService {
       formData.append('description', description);
       formData.append('cron_syntax', cron_syntax);
 
-      const res = await this.irminCore.fetch(`/v1/workflows/imports/create`, {
+      const res = (await this.irminCore.fetch(`/v1/workflows/imports/create`, {
         method: 'POST',
         body: formData,
-      });
+      })) as WorkflowAPIResponse;
       return res;
     } catch (error) {
       console.error(
         (error as Error).message,
         'Failed to create Import Workflow'
       );
-      if (isDevelopment) return fake();
+      if (isDevelopment) return fake(exampleImports[0]) as WorkflowAPIResponse;
       throw error;
     }
   }
 
   /**
    * Create a new Export Workflow
-   * @todo Provide link to Irmin API docs
    *
    * @param props - Workflow properties
    * @param props.connection - ID of the connection to export data to
@@ -429,8 +423,8 @@ class WorkflowService {
     name: string;
     description: string;
     cron_syntax: string;
-  }) {
-    if (isOfflineMode) return fake();
+  }): Promise<WorkflowAPIResponse> {
+    if (isOfflineMode) return fake(exampleExports[0]) as WorkflowAPIResponse;
     try {
       // Create a new FormData object
       const formData = new FormData();
@@ -447,24 +441,23 @@ class WorkflowService {
       formData.append('description', description);
       formData.append('cron_syntax', cron_syntax);
 
-      const res = await this.irminCore.fetch(`/v1/workflows/exports/create`, {
+      const res = (await this.irminCore.fetch(`/v1/workflows/exports/create`, {
         method: 'POST',
         body: formData,
-      });
+      })) as WorkflowAPIResponse;
       return res;
     } catch (error) {
       console.error(
         (error as Error).message,
         'Failed to create Export Workflow'
       );
-      if (isDevelopment) return fake();
+      if (isDevelopment) return fake(exampleExports[0]) as WorkflowAPIResponse;
       throw error;
     }
   }
 
   /**
    * Create a new Action Workflow
-   * @todo Provide link to Irmin API docs
    *
    * @param props - Workflow properties
    * @param props.executable - Path to the script file to be executed
@@ -491,8 +484,8 @@ class WorkflowService {
     repository: string;
     branch: string;
     path: string;
-  }) {
-    if (isOfflineMode) return fake();
+  }): Promise<WorkflowAPIResponse> {
+    if (isOfflineMode) return fake(exampleActions[0]) as WorkflowAPIResponse;
     try {
       // Create a new FormData object
       const formData = new FormData();
@@ -508,17 +501,17 @@ class WorkflowService {
       formData.append('description', description);
       formData.append('cron_syntax', cron_syntax);
 
-      const res = await this.irminCore.fetch(`/v1/workflows/actions/create`, {
+      const res = (await this.irminCore.fetch(`/v1/workflows/actions/create`, {
         method: 'POST',
         body: formData,
-      });
+      })) as WorkflowAPIResponse;
       return res;
     } catch (error) {
       console.error(
         (error as Error).message,
         'Failed to create Action Workflow'
       );
-      if (isDevelopment) return fake();
+      if (isDevelopment) return fake(exampleActions[0]) as WorkflowAPIResponse;
       throw error;
     }
   }

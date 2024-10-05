@@ -15,20 +15,17 @@ export default function ErrorList({
   errors,
   dict,
 }: {
-  errors: Record<string, string[]>;
+  errors: string[];
   dict: Dictionary;
 }) {
   return (
     <div className='mx-auto flex h-0 max-w-2xl flex-1 flex-col gap-4 overflow-scroll px-2 pt-2'>
-      {Object.keys(errors)?.length ? (
+      {errors.length ? (
         <>
           <p className='py-4 pt-8 text-xl font-semibold text-gray-600 dark:text-gray-300'>
-            {dict.query.errors}{' '}
-            {Object.keys(errors).length > 0
-              ? `(${Object.keys(errors).length})`
-              : ''}
+            {dict.query.errors} {errors.length > 0 ? `(${errors.length})` : ''}
           </p>
-          {Object.keys(errors).map((error, index) => (
+          {errors.map((error, index) => (
             <div
               key={`errors-${index}`}
               className='w-full rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/20'
@@ -43,7 +40,7 @@ export default function ErrorList({
                 </p>
               </div>
               <ul className='ml-6 list-disc space-y-2'>
-                {errors[error].map((err: string, i) => (
+                {errors.map((err, i) => (
                   <li
                     key={`errors-${index}-error-${i}`}
                     className='text-left text-sm text-red-900 dark:text-red-100'

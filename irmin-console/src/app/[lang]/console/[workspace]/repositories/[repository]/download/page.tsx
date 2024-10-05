@@ -65,26 +65,26 @@ export default function RepositoryDownloadPage({
         const responses = await Promise.all(fetches);
         // Download the content one by one
         for (let i = 0; i < responses.length; i++) {
-          const response = responses[i];
+          const res = responses[i];
           const collection = collections[i];
-          const textContent = convertToText(response);
-          const contentType = getContentType(response);
+          const textContent = convertToText(res);
+          const contentType = getContentType(res);
           downloadContent(
-            textContent ? textContent : (response as Blob),
+            textContent ? textContent : (res as Blob),
             contentType,
             `${params.repository}_${collection}`
           );
         }
       } else {
         // If no collections are selected, download the entire repository
-        const response = await collectionService.fetchContent({
+        const res = await collectionService.fetchContent({
           repository: params.repository,
           ref: targetRef,
         });
-        const textContent = convertToText(response);
-        const contentType = getContentType(response);
+        const textContent = convertToText(res);
+        const contentType = getContentType(res);
         downloadContent(
-          textContent ? textContent : (response as Blob),
+          textContent ? textContent : (res as Blob),
           contentType,
           `${params.repository}`
         );

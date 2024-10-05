@@ -11,7 +11,7 @@ import {
 } from 'react';
 
 import IrminCore from '@/services/core/IrminCore';
-import { QueryAPIResponse } from '@/services/core/resources/QueryService';
+import { QueryExecutionResultAPIResponse } from '@/services/core/resources/QueryService';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -35,7 +35,7 @@ interface DataContextProps {
   fetchCollections?: (repository: string, ref?: string) => Promise<void>;
   // Data state
   runningScript: boolean;
-  scriptResult: QueryAPIResponse | null;
+  scriptResult: QueryExecutionResultAPIResponse | null;
   runScript: (
     type: IrminFileType,
     content: string,
@@ -100,9 +100,8 @@ export const DataProvider = ({
 
   // Data state
   const [runningScript, setRunningScript] = useState<boolean>(false);
-  const [scriptResult, setScriptResult] = useState<QueryAPIResponse | null>(
-    null
-  );
+  const [scriptResult, setScriptResult] =
+    useState<QueryExecutionResultAPIResponse | null>(null);
 
   // Schema state
   const [loadingSchema, setLoadingSchema] = useState<boolean>(false);
@@ -127,11 +126,11 @@ export const DataProvider = ({
   const fetchCollections = useCallback(async () => {
     setLoadingCollections(true);
     try {
-      const response = await collectionService.fetchCollections(
+      const res = await collectionService.fetchCollections(
         currentRepository ?? '',
         currentRef
       );
-      setCollections(response.data);
+      setCollections(res.data);
     } catch (error) {
       console.error('DataContext fetchCollections error', error);
       irminAlert(
@@ -149,11 +148,11 @@ export const DataProvider = ({
   const fetchSchema = useCallback(async () => {
     setLoadingSchema(true);
     try {
-      const response = await schemaService.fetchSchema(
+      const res = await schemaService.fetchSchema(
         collections.map((collection) => collection.formatted_name),
         currentRef
       );
-      setSchema(response.data);
+      setSchema(res.data);
     } catch (error) {
       console.error('DataContext fetchSchema error', error);
       irminAlert(
@@ -172,8 +171,8 @@ export const DataProvider = ({
     setLoadingBranches(true);
     try {
       if (!currentRepository) return;
-      const response = await branchService.fetchBranches(currentRepository);
-      setBranches(response.data);
+      const res = await branchService.fetchBranches(currentRepository);
+      setBranches(res.data);
     } catch (error) {
       console.error('DataContext fetchBranches error', error);
       irminAlert(
@@ -192,11 +191,11 @@ export const DataProvider = ({
     setLoadingCommits(true);
     try {
       if (!currentRepository) return;
-      const response = await commitService.fetchCommits(
+      const res = await commitService.fetchCommits(
         currentRepository,
         currentRef
       );
-      setCommits(response.data);
+      setCommits(res.data);
     } catch (error) {
       console.error('DataContext fetchCommits error', error);
       irminAlert(
@@ -217,16 +216,14 @@ export const DataProvider = ({
     async (type: IrminFileType, content: string, collection?: Collection) => {
       setRunningScript(true);
       try {
-        const response = await queryService.runScript(
+        const res = await queryService.executeScript(
           type,
           content,
-          currentRepository,
-          currentRef,
-          collection
+          collection?.type
         );
-        setScriptResult(response);
+        setScriptResult(res);
       } catch (error) {
-        console.error('DataContext runScript error', error);
+        console.error('DataContext executeScript error', error);
         irminAlert(
           'error',
           (error as Error)?.message ?? 'Failed to run script'
@@ -235,7 +232,7 @@ export const DataProvider = ({
         setRunningScript(false);
       }
     },
-    [queryService, currentRepository, currentRef, irminAlert]
+    [queryService, irminAlert]
   );
 
   // Track the fetch for the initial values

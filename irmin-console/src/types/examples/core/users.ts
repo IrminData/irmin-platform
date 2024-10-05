@@ -17,8 +17,8 @@ export const workspaceUsers = (last = false): WorkspaceUser[] => [
     name: 'John Doe',
     company: 'Apple Inc.',
     email: 'john.doe@example.com',
-    profile_picture: null,
-    email_verified_at: null,
+    profile_picture: undefined,
+    email_verified_at: undefined,
     roles: !last ? [roles()[1]] : undefined,
   },
   {
@@ -26,8 +26,8 @@ export const workspaceUsers = (last = false): WorkspaceUser[] => [
     name: 'Jane Doe',
     company: 'Google Inc.',
     email: 'jane.doe@example.com',
-    profile_picture: null,
-    email_verified_at: null,
+    profile_picture: undefined,
+    email_verified_at: undefined,
     roles: !last ? [roles()[2]] : undefined,
   },
   {
@@ -36,7 +36,7 @@ export const workspaceUsers = (last = false): WorkspaceUser[] => [
     company: 'Microsoft Inc.',
     email: 'jack.doe@example.com',
     profile_picture: '/ui-assets/elements/avatar.webp',
-    email_verified_at: null,
+    email_verified_at: undefined,
     roles: !last ? [roles()[0]] : undefined,
   },
   {
@@ -44,8 +44,8 @@ export const workspaceUsers = (last = false): WorkspaceUser[] => [
     name: 'Jill Doe',
     company: 'Meta Inc.',
     email: 'jill.doe@example.com',
-    profile_picture: null,
-    email_verified_at: null,
+    profile_picture: undefined,
+    email_verified_at: undefined,
     roles: !last ? [roles()[3]] : undefined,
   },
 ];

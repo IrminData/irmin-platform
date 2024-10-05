@@ -45,8 +45,8 @@ export const useFetchImports = (
           return;
         }
         // Fetch the import workflows for the current workspace
-        const response = await workflowService.fetchImportWorkflows();
-        setImports(response.data);
+        const res = await workflowService.fetchImportWorkflows();
+        setImports(res.data);
       } finally {
         setLoading(false);
       }
@@ -94,8 +94,8 @@ export const useFetchExports = (
           return;
         }
         // Fetch the Export workflows for the current workspace
-        const response = await workflowService.fetchExportWorkflows();
-        setExports(response.data);
+        const res = await workflowService.fetchExportWorkflows();
+        setExports(res.data);
       } finally {
         setLoading(false);
       }
@@ -143,8 +143,8 @@ export const useFetchActions = (
           return;
         }
         // Fetch the Action workflows for the current workspace
-        const response = await workflowService.fetchActionWorkflows();
-        setActions(response.data);
+        const res = await workflowService.fetchActionWorkflows();
+        setActions(res.data);
       } finally {
         setLoading(false);
       }
@@ -176,7 +176,7 @@ export const useUpdateWorkflow = (
     async (workflowId: string, updatedWorkflow: Workflow) => {
       // Update the workflow using the workflow service
       const { workflowService } = new IrminCore(locale);
-      const response = await workflowService.updateWorkflow(
+      const res = await workflowService.updateWorkflow(
         workflowId,
         updatedWorkflow
       );
@@ -210,8 +210,8 @@ export const useUpdateWorkflow = (
           );
           break;
       }
-      // Return the response
-      return response;
+      // Return the res
+      return res;
     },
     [locale, actions, setActions, imports, setImports, exports, setExports]
   );
@@ -232,10 +232,7 @@ export const useReassignWorkflow = (
     async (workflowId: string, newOwner: WorkspaceUser) => {
       // Reassign the workflow using the workflow service
       const { workflowService } = new IrminCore(locale);
-      const response = await workflowService.reassignWorkflow(
-        workflowId,
-        newOwner
-      );
+      const res = await workflowService.reassignWorkflow(workflowId, newOwner);
       // Update the local state based on the reassigned workflow and it's type
       const reassignedWorkflow =
         actions.find((action) => action.id === workflowId) ??
@@ -272,8 +269,8 @@ export const useReassignWorkflow = (
             break;
         }
       }
-      // Return the response
-      return response;
+      // Return the res
+      return res;
     },
     [locale, actions, setActions, imports, setImports, exports, setExports]
   );
@@ -294,7 +291,7 @@ export const usePauseWorkflow = (
     async (workflowId: string) => {
       // Pause the workflow
       const { workflowService } = new IrminCore(locale);
-      const response = await workflowService.pauseWorkflow(workflowId);
+      const res = await workflowService.pauseWorkflow(workflowId);
       // Update the local state based on the paused workflow and it's type
       const pausedWorkflow =
         actions.find((action) => action.id === workflowId) ??
@@ -331,8 +328,8 @@ export const usePauseWorkflow = (
             break;
         }
       }
-      // Return the response
-      return response;
+      // Return the res
+      return res;
     },
     [locale, actions, setActions, imports, setImports, exports, setExports]
   );
@@ -353,7 +350,7 @@ export const useResumeWorkflow = (
     async (workflowId: string) => {
       // Resume the workflow
       const { workflowService } = new IrminCore(locale);
-      const response = await workflowService.resumeWorkflow(workflowId);
+      const res = await workflowService.resumeWorkflow(workflowId);
       // Update the local state based on the resumed workflow and it's type
       const resumedWorkflow =
         actions.find((action) => action.id === workflowId) ??
@@ -390,8 +387,8 @@ export const useResumeWorkflow = (
             break;
         }
       }
-      // Return the response
-      return response;
+      // Return the res
+      return res;
     },
     [locale, actions, setActions, imports, setImports, exports, setExports]
   );
@@ -412,7 +409,7 @@ export const useDeleteWorkflow = (
     async (workflowId: string) => {
       // Delete the workflow
       const { workflowService } = new IrminCore(locale);
-      const response = await workflowService.deleteWorkflow(workflowId);
+      const res = await workflowService.deleteWorkflow(workflowId);
       // Update the local state based on the deleted workflow and it's type
       const deletedWorkflow =
         actions.find((action) => action.id === workflowId) ??
@@ -439,8 +436,8 @@ export const useDeleteWorkflow = (
             break;
         }
       }
-      // Return the response
-      return response;
+      // Return the res
+      return res;
     },
     [locale, actions, setActions, imports, setImports, exports, setExports]
   );

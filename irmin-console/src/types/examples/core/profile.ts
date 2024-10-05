@@ -17,7 +17,7 @@ export const profile = (last = false): Profile => ({
   name: 'Joe Biden',
   company: 'Example Inc.',
   email: 'joe.biden@example.com',
-  profile_picture: null,
+  profile_picture: undefined,
   email_verified_at: getRandomDateTimeString(500, 'past', 100),
   workspace: !last ? workspaces()[0] : undefined,
   roles: !last ? [roles()[0]] : undefined,

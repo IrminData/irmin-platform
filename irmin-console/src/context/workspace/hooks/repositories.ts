@@ -40,8 +40,8 @@ export const useFetchRepositories = (
           return;
         }
         // Fetch the connections for the current workspace
-        const response = await repositoryService.fetchRepositories();
-        setRepositories(response.data);
+        const res = await repositoryService.fetchRepositories();
+        setRepositories(res.data);
       } finally {
         setLoading(false);
       }
@@ -69,13 +69,13 @@ export const useCreateRepository = (
     async (repository: Repository) => {
       // Create the repository
       const { repositoryService } = new IrminCore(locale);
-      const response = await repositoryService.createRepository(repository);
+      const res = await repositoryService.createRepository(repository);
       // Update the local state with the new repository
-      if (response.data) {
-        setRepositories([...repositories, response.data]);
+      if (res.data) {
+        setRepositories([...repositories, res.data]);
       }
-      // Return the response from the API
-      return response;
+      // Return the res from the API
+      return res;
     },
     [repositories, setRepositories, locale]
   );
@@ -92,7 +92,7 @@ export const useUpdateRepository = (
     async (repositorySlug: string, updatedRepository: Repository) => {
       // Update the repository
       const { repositoryService } = new IrminCore(locale);
-      const response = await repositoryService.updateRepository(
+      const res = await repositoryService.updateRepository(
         repositorySlug,
         updatedRepository
       );
@@ -101,8 +101,8 @@ export const useUpdateRepository = (
         repo.slug === repositorySlug ? { ...repo, ...updatedRepository } : repo
       );
       setRepositories(updatedRepositories);
-      // Return the response from the API
-      return response;
+      // Return the res from the API
+      return res;
     },
     [repositories, setRepositories, locale]
   );
@@ -119,14 +119,14 @@ export const useDeleteRepository = (
     async (repositorySlug: string) => {
       // Delete the repository
       const { repositoryService } = new IrminCore(locale);
-      const response = await repositoryService.deleteRepository(repositorySlug);
+      const res = await repositoryService.deleteRepository(repositorySlug);
       // Update the local state by removing the deleted repository
       const updatedRepositories = repositories.filter(
         (repo) => repo.slug !== repositorySlug
       );
       setRepositories(updatedRepositories);
-      // Return the response from the API
-      return response;
+      // Return the res from the API
+      return res;
     },
     [repositories, setRepositories, locale]
   );
@@ -143,7 +143,7 @@ export const useReassignRepository = (
     async (repository: Repository, newOwner: WorkspaceUser) => {
       // Reassign the Repositories
       const { repositoryService } = new IrminCore(locale);
-      const response = await repositoryService.reassignRepository(
+      const res = await repositoryService.reassignRepository(
         repository,
         newOwner
       );
@@ -152,8 +152,8 @@ export const useReassignRepository = (
         repo.slug === repository.slug ? { ...repo, owner: newOwner } : repo
       );
       setRepositories(updatedRepositories);
-      // Return the response from the API
-      return response;
+      // Return the res from the API
+      return res;
     },
     [repositories, setRepositories, locale]
   );

@@ -49,22 +49,25 @@ const RepositorySettingsSection = ({
           );
           if (newOwner) {
             // Change the owner if it's different and found
-            await reassignRepository(repository, newOwner);
+            const res = await reassignRepository(repository, newOwner);
             irminAlert(
               'success',
-              dict.repository.settings.repositoryOwnerChanged
+              res.message ?? dict.repository.settings.repositoryOwnerChanged
             );
           }
         }
 
         // Update repository details
-        await updateRepository(repository.slug, {
+        const res = await updateRepository(repository.slug, {
           ...repository,
           name: data.name.trim(),
           description: data.description.trim(),
         });
 
-        irminAlert('success', dict.repository.settings.repositoryUpdated);
+        irminAlert(
+          'success',
+          res.message ?? dict.repository.settings.repositoryUpdated
+        );
       } catch (error) {
         irminAlert(
           'error',
@@ -92,11 +95,13 @@ const RepositorySettingsSection = ({
       irminConfirm(
         'warning',
         dict.repository.settings.areYouSureYouWantToDelete,
-        (confirmed) => {
-          if (confirmed) {
-            deleteRepository(repository.slug);
-            irminAlert('success', dict.repository.settings.repositoryDeleted);
-          }
+        async (confirmed) => {
+          if (!confirmed) return;
+          const res = await deleteRepository(repository.slug);
+          irminAlert(
+            'success',
+            res.message ?? dict.repository.settings.repositoryDeleted
+          );
         }
       );
     } catch (error) {

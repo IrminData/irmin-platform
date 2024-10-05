@@ -94,10 +94,7 @@ const WorkspaceUsersAndInvitesSection: React.FC = () => {
         // Resend invite
         const res = await resendInvite(invitedUser.inviteId);
         // Inform that invite has been resent
-        irminAlert(
-          'success',
-          res.metadata?.message ?? 'Invite resent successfully'
-        );
+        irminAlert('success', res.message ?? 'Invite resent successfully');
       } catch (error) {
         console.error('Error resending invite:', error);
         irminAlert(
@@ -121,10 +118,7 @@ const WorkspaceUsersAndInvitesSection: React.FC = () => {
         const res = await cancelInvite(invitedUser.inviteId);
         // Remove user from the list
         setUsers(users.filter((user) => user.email !== email));
-        irminAlert(
-          'success',
-          res.metadata?.message ?? 'Invite canceled successfully'
-        );
+        irminAlert('success', res.message ?? 'Invite canceled successfully');
       } catch (error) {
         console.error('Error canceling invite:', error);
         irminAlert(
@@ -155,8 +149,7 @@ const WorkspaceUsersAndInvitesSection: React.FC = () => {
               setUsers(users.filter((user) => user.id !== id));
               irminAlert(
                 'success',
-                res.metadata?.message ??
-                  'User removed successfully from the workspace'
+                res.message ?? 'User removed successfully from the workspace'
               );
             } catch (error) {
               console.error('Error changing user role:', error);
@@ -192,7 +185,7 @@ const WorkspaceUsersAndInvitesSection: React.FC = () => {
               // Inform that ownership has been transferred
               irminAlert(
                 'success',
-                res.metadata?.message ?? 'Ownership transfered successfully'
+                res.message ?? 'Ownership transfered successfully'
               );
             } catch (error) {
               console.error('Error transferring ownership:', error);
@@ -237,10 +230,7 @@ const WorkspaceUsersAndInvitesSection: React.FC = () => {
           return user;
         });
         setUsers(newUsers);
-        irminAlert(
-          'success',
-          res.metadata?.message ?? 'User role changed successfully'
-        );
+        irminAlert('success', res.message ?? 'User role changed successfully');
       } catch (error) {
         console.error('Error changing user role:', error);
         irminAlert(
@@ -277,7 +267,7 @@ const WorkspaceUsersAndInvitesSection: React.FC = () => {
         // Inform that invite role has been changed
         irminAlert(
           'success',
-          res.metadata?.message ?? 'Invite role changed successfully'
+          res.message ?? 'Invite role changed successfully'
         );
       } catch (error) {
         console.error('Error changing user role:', error);

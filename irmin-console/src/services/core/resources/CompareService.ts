@@ -34,7 +34,6 @@ class CompareService {
 
   /**
    * Compare two refs in a repository and return the differences
-   * @todo Provide link to Irmin API docs
    *
    * @param repository - The repository refs are in
    * @param baseRef - The base ref to compare (branch, tag, commit)
@@ -56,8 +55,8 @@ class CompareService {
     try {
       // Construct the query parameters from the props
       const urlParams = new URLSearchParams();
-      urlParams.append('baseRef', baseRef);
-      urlParams.append('compareRef', compareRef);
+      urlParams.append('base_ref', baseRef);
+      urlParams.append('compare_ref', compareRef);
       const response = (await this.irminCore.fetch(
         `/v1/repositories/${repository}/compare?${urlParams.toString()}`,
         {
@@ -81,7 +80,6 @@ class CompareService {
 
   /**
    * Merge one ref in to another
-   * @todo Provide link to Irmin API docs
    *
    * @param repository - The repository refs are in
    * @param baseRef - The ref to merge into (branch, tag, commit)
@@ -100,8 +98,8 @@ class CompareService {
     try {
       const formData = new FormData();
 
-      formData.append('base', baseRef);
-      formData.append('compare', compareRef);
+      formData.append('base_ref', baseRef);
+      formData.append('compare_ref', compareRef);
       formData.append('description', description);
       formData.append('strategy', mergeStrategy);
 

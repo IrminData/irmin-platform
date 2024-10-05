@@ -44,12 +44,12 @@ export default function CreateRepositoryModalContent({
   const onSubmit = async (data: { name: string; description: string }) => {
     try {
       const { name, description } = data;
-      await createRepository({
+      const res = await createRepository({
         name: name.trim(),
         description: description.trim(),
         documentation: '',
       } as Repository);
-      irminAlert('success', dict.repository.repositoryCreated);
+      irminAlert('success', res.message ?? dict.repository.repositoryCreated);
       closeModal();
       reset(); // Reset the form values
     } catch (error) {

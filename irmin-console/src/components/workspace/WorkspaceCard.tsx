@@ -33,10 +33,11 @@ const WorkspaceCard = ({ workspace }: { workspace: Workspace }) => {
   ) => {
     e.preventDefault();
     try {
-      await switchWorkspace(workspace.slug);
+      const res = await switchWorkspace(workspace.slug);
       irminAlert(
         'success',
-        `${dict.workspaceSwitcher.switchedTo}: ${workspace.name}`
+        res?.message ??
+          `${dict.workspaceSwitcher.switchedTo}: ${workspace.name}`
       );
     } catch (error) {
       console.error('Failed to switch workspace: ', error);

@@ -55,22 +55,25 @@ const ConnectionSettingsSection = ({
           );
           if (newOwner) {
             // Change the owner if it's different and found
-            await reassignConnection(connection.id, newOwner);
+            const res = await reassignConnection(connection.id, newOwner);
             irminAlert(
               'success',
-              dict.connections.settings.connectionOwnerChanged
+              res.message ?? dict.connections.settings.connectionOwnerChanged
             );
           }
         }
 
         // Update other connection details
-        await updateConnection(connection.id, {
+        const res = await updateConnection(connection.id, {
           ...connection,
           name: data.name.trim(),
           description: data.description.trim(),
         });
 
-        irminAlert('success', dict.connections.settings.connectionUpdated);
+        irminAlert(
+          'success',
+          res.message ?? dict.connections.settings.connectionUpdated
+        );
       } catch (error) {
         irminAlert(
           'error',
@@ -97,11 +100,13 @@ const ConnectionSettingsSection = ({
       irminConfirm(
         'warning',
         dict.connections.settings.areYouSureYouWantToDelete,
-        (confirmed) => {
-          if (confirmed) {
-            deleteConnection(connection.id);
-            irminAlert('success', dict.connections.settings.connectionDeleted);
-          }
+        async (confirmed) => {
+          if (!confirmed) return;
+          const res = await deleteConnection(connection.id);
+          irminAlert(
+            'success',
+            res.message ?? dict.connections.settings.connectionDeleted
+          );
         }
       );
     } catch (error) {

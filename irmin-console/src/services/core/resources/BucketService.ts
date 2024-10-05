@@ -40,7 +40,6 @@ class BucketService {
 
   /**
    * Fetch the bucket for the current workspace
-   * @todo Provide link to Irmin API docs
    */
   async fetchBucket(): Promise<BucketAPIResponse> {
     if (isOfflineMode) return fake(exampleBucket) as BucketAPIResponse;
@@ -58,7 +57,7 @@ class BucketService {
 
   /**
    * Create a new file in the bucket
-   * @todo Provide link to Irmin API docs
+   *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    */
   async createFile(fileNavigatorItem: FileNavigatorItem) {
@@ -87,7 +86,7 @@ class BucketService {
 
   /**
    * Update a file in the bucket
-   * @todo Provide link to Irmin API docs
+   *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    */
   async updateFile(fileNavigatorItem: FileNavigatorItem) {
@@ -123,7 +122,7 @@ class BucketService {
 
   /**
    * Delete a file from the bucket
-   * @todo Provide link to Irmin API docs
+   *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    */
   async deleteFile(fileNavigatorItem: FileNavigatorItem) {
@@ -152,7 +151,7 @@ class BucketService {
 
   /**
    * Create a new folder in the bucket
-   * @todo Provide link to Irmin API docs
+   *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    */
   async createFolder(fileNavigatorItem: FileNavigatorItem) {
@@ -181,7 +180,7 @@ class BucketService {
 
   /**
    * Update a folder in the bucket
-   * @todo Provide link to Irmin API docs
+   *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    */
   async updateFolder(fileNavigatorItem: FileNavigatorItem) {
@@ -216,7 +215,7 @@ class BucketService {
 
   /**
    * Delete a folder from the bucket
-   * @todo Provide link to Irmin API docs
+   *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    */
   async deleteFolder(fileNavigatorItem: FileNavigatorItem) {

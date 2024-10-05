@@ -101,13 +101,13 @@ export default function CollectionSchema({
         setProcessingDelete(true);
         try {
           // Upload the collection
-          await repositoryService.deleteCollection(
+          const res = await repositoryService.deleteCollection(
             currentRepository ?? '',
             currentRef ?? '',
             collection.name
           );
           // Show success message
-          irminAlert('success', dict.repository.delete.success);
+          irminAlert('success', res.message ?? dict.repository.delete.success);
         } catch (error) {
           console.error('Failed to delete the collection:', error);
           irminAlert(

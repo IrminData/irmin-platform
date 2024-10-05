@@ -21,7 +21,7 @@ class AuthService {
   }
   /**
    * Login a user
-   * {@link https://api.irmin.dev/docs#authentication-POSTv1-login | Irmin API docs}
+   *
    * @param email - The user's email address
    * @param password - The user's password
    */
@@ -45,7 +45,6 @@ class AuthService {
 
   /**
    * Logout a user
-   * {@link https://api.irmin.dev/docs#authentication-POSTv1-logout | Irmin API docs}
    */
   async logout() {
     if (isOfflineMode) return fake();
@@ -63,7 +62,7 @@ class AuthService {
 
   /**
    * Register a user
-   * {@link https://api.irmin.dev/docs#authentication-POSTv1-register | Irmin API docs}
+   *
    * @param name - The user's name
    * @param company - The user's company
    * @param email - The user's email address

@@ -43,7 +43,6 @@ class UserService {
 
   /**
    * Fetch all users from the current workspace
-   * {@link https://api.irmin.dev/docs#workspaces-GETv1-users | Irmin API docs}
    */
   async fetchWorkspaceUsers(): Promise<UsersAPIResponse> {
     if (isOfflineMode) return fake(exampleWorkspaceUsers) as UsersAPIResponse;
@@ -61,7 +60,7 @@ class UserService {
 
   /**
    * Fetch roles for workspace user
-   * {@link https://api.irmin.dev/docs#roles-GETv1-users-roles | Irmin API docs}
+   *
    * @param user - User ID
    */
   async fetchUserRoles(user: string): Promise<RolesAPIResponse> {
@@ -83,7 +82,7 @@ class UserService {
 
   /**
    * Change the role of a user in a workspace
-   * {@link https://api.irmin.dev/docs#roles-PATCHv1-users-roles | Irmin API docs}
+   *
    * @param user - The ID of the user to change the role of
    * @param newRole - The new role to assign to the user
    * @param currentRole - The current role or null if user has no role
@@ -117,7 +116,7 @@ class UserService {
 
   /**
    * Remove a user from a workspace
-   * {@link https://api.irmin.dev/docs#workspaces-DELETEv1-users-remove | Irmin API docs}
+   *
    * @param user - The ID of the user to remove
    */
   async removeUserFromWorkspace(user: string) {

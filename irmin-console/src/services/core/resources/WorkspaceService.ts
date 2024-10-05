@@ -11,14 +11,14 @@ const isDevelopment =
   process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
 
 /**
- * Workspaces API response type
+ * Workspaces API res type
  */
 interface WorkspacesAPIResponse extends IrminAPIResponse {
   data: Workspace[];
 }
 
 /**
- * Workspace API response type
+ * Workspace API res type
  */
 interface WorkspaceAPIResponse extends IrminAPIResponse {
   data: Workspace;
@@ -47,15 +47,14 @@ class WorkspaceService {
 
   /**
    * Fetch all workspaces
-   * {@link https://api.irmin.dev/docs#workspaces-GETv1-workspaces | Irmin API docs}
    */
   async fetchWorkspaces(): Promise<WorkspacesAPIResponse> {
     if (isOfflineMode) return fake(exampleWorkspaces) as WorkspacesAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/workspaces`, {
+      const res = (await this.irminCore.fetch(`/v1/workspaces`, {
         method: 'GET',
       })) as WorkspacesAPIResponse;
-      return response;
+      return res;
     } catch (error) {
       console.error((error as Error).message, 'Fetch workspaces error');
       if (isDevelopment)
@@ -66,7 +65,6 @@ class WorkspaceService {
 
   /**
    * Fetch a single workspace by slug
-   * {@link https://api.irmin.dev/docs#workspaces-GETv1-workspaces--slug- | Irmin API docs}
    * @param workspaceSlug - The slug of the workspace to fetch
    */
   async fetchWorkspace(workspaceSlug: string): Promise<WorkspaceAPIResponse> {
@@ -76,13 +74,13 @@ class WorkspaceService {
           exampleWorkspaces[0]
       ) as WorkspaceAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(
+      const res = (await this.irminCore.fetch(
         `/v1/workspaces/${workspaceSlug}`,
         {
           method: 'GET',
         }
       )) as WorkspaceAPIResponse;
-      return response;
+      return res;
     } catch (error) {
       console.error((error as Error).message, 'Fetch workspace error');
       if (isDevelopment)
@@ -96,7 +94,6 @@ class WorkspaceService {
 
   /**
    * Transfer the ownership of the workspace to another user
-   * {@link https://api.irmin.dev/docs#workspaces-POSTv1-workspaces-transfer-ownership | Irmin API docs}
    * @param user - The ID of the user to transfer the ownership to
    */
   async transferWorkspaceOwnership(user: string) {
@@ -105,7 +102,7 @@ class WorkspaceService {
       const formData = new FormData();
       formData.append('user', user);
 
-      const response = await this.irminCore.fetch(
+      const res = await this.irminCore.fetch(
         `/v1/workspaces/transfer-ownership`,
         {
           method: 'POST',
@@ -113,7 +110,7 @@ class WorkspaceService {
         }
       );
 
-      return response;
+      return res;
     } catch (error) {
       console.error(
         (error as Error).message,
@@ -125,7 +122,6 @@ class WorkspaceService {
 
   /**
    * Create a new workspace
-   * {@link https://api.irmin.dev/docs#workspaces-POSTv1-workspaces | Irmin API docs}
    * @param name - The name of the new workspace
    * @param description - The description of the new workspace
    */
@@ -136,12 +132,12 @@ class WorkspaceService {
       formData.append('name', name);
       formData.append('description', description);
 
-      const response = await this.irminCore.fetch(`/v1/workspaces`, {
+      const res = await this.irminCore.fetch(`/v1/workspaces`, {
         method: 'POST',
         body: formData,
       });
 
-      return response;
+      return res;
     } catch (error) {
       console.error((error as Error).message, 'Create workspace error');
       throw error;
@@ -150,7 +146,6 @@ class WorkspaceService {
 
   /**
    * Update the current workspace
-   * {@link https://api.irmin.dev/docs#workspaces-PATCHv1-workspaces | Irmin API docs}
    * @param workspace - The workspace object with updated values
    */
   async updateWorkspace(workspace: Workspace) {
@@ -161,12 +156,12 @@ class WorkspaceService {
       formData.append('name', workspace.name);
       formData.append('description', workspace.description ?? '');
 
-      const response = await this.irminCore.fetch(`/v1/workspaces`, {
+      const res = await this.irminCore.fetch(`/v1/workspaces`, {
         method: 'POST',
         body: formData,
       });
 
-      return response;
+      return res;
     } catch (error) {
       console.error((error as Error).message, 'Update workspace error');
       throw error;
@@ -175,19 +170,18 @@ class WorkspaceService {
 
   /**
    * Delete the current workspace
-   * {@link https://api.irmin.dev/docs#workspaces-DELETEv1-workspaces | Irmin API docs}
    */
   async deleteWorkspace() {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
       formData.append('_method', 'DELETE');
-      const response = await this.irminCore.fetch(`/v1/workspaces`, {
+      const res = await this.irminCore.fetch(`/v1/workspaces`, {
         method: 'POST',
         body: formData,
       });
 
-      return response;
+      return res;
     } catch (error) {
       console.error((error as Error).message, 'Delete workspace error');
       throw error;
@@ -196,7 +190,6 @@ class WorkspaceService {
 
   /**
    * Switch to a Workspace
-   * {@link https://api.irmin.dev/docs#workspaces-POSTv1-workspaces-switch | Irmin API docs}
    *
    * Used by the API to know which workspace to use for the current user on future requests.
    *

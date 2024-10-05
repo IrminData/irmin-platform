@@ -65,10 +65,7 @@ const WorkspaceSendInviteModalContent = ({
 
         // Close the modal and inform that invite has been sent
         onClose(false);
-        irminAlert(
-          'success',
-          res.metadata?.message ?? 'Invite sent successfully'
-        );
+        irminAlert('success', res.message ?? 'Invite sent successfully');
       } catch (error) {
         console.error('Error inviting user:', error);
         setError('email', {

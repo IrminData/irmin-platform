@@ -10,6 +10,7 @@ import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { branches } from './branches';
 import { bucket } from './bucket';
 import {
+  collectionData,
   collections,
   fileCollectionData,
   folderCollectionData,
@@ -26,6 +27,7 @@ import { folders } from './folders';
 import { invites } from './invites';
 import { logEvents, workflowRunLogs } from './logs';
 import { profile } from './profile';
+import { queries, queryExecutionResult } from './queries';
 import { repositories } from './repositories';
 import { roles } from './roles';
 import { workspaceUsers } from './users';
@@ -39,25 +41,22 @@ import { workspaces } from './workspaces';
  */
 export const exampleAPIResponse: IrminAPIResponse = {
   metadata: {
-    allGood: 'yes',
-    itemsReturned: '12',
-    timeTaken: '1234',
-    logs: `
-      This is an example response from the API.
-      You are seeing this because the API is not available.
-      This is a fake response, not the real thing.
-      You might also be in offline mode.
-    `,
-    message: 'This is example for IrminAPIResponse',
+    status: 'This is example metadata for IrminAPIResponse',
+    total: 15,
+    per_page: 10,
+    current_page: 1,
+    last_page: 2,
+    first_page_url: 'https://example.com/api/v1/data?page=1',
+    last_page_url: 'https://example.com/api/v1/data?page=2',
+    next_page_url: 'https://example.com/api/v1/data?page=2',
+    prev_page_url: null,
   },
   message: 'This is example for IrminAPIResponse',
-  errors: {
-    everythingIsBroken: [
-      'You are seeing an example response, instead of the real thing',
-      'This is because the API is not available',
-    ],
-    offlineMode: ['You might also be in offline mode'],
-  },
+  errors: [
+    'You are seeing an example response, instead of the real thing',
+    'This is because the API is not available',
+    'Or you are working offline',
+  ],
 };
 
 /**
@@ -136,6 +135,13 @@ export const exampleFolderCollectionData = folderCollectionData();
 export const exampleFileCollectionData = fileCollectionData();
 
 /**
+ * Get example collection data
+ *
+ * @param type - Type of collection data to return
+ */
+export const exampleCollectionData = collectionData;
+
+/**
  * Fake connections {@link connections}
  */
 export const exampleConnections = connections();
@@ -194,3 +200,13 @@ export const exampleWorkflowRunLogs = workflowRunLogs();
  * Fake diff {@link diff}
  */
 export const exampleDiff = diff();
+
+/**
+ * Fake queries {@link queries}
+ */
+export const exampleQueries = queries();
+
+/**
+ * Fake example query execution result {@link queryExecutionResult}
+ */
+export const exampleQueryExecutionResult = queryExecutionResult;

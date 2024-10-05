@@ -40,7 +40,6 @@ class CollectionService {
 
   /**
    * Fetch all available collections for a repository and ref.
-   * @todo Provide link to Irmin API docs
    *
    * If no repository is provided, fetch all collections.
    * If no ref is provided, fetch the collections from the default branch.
@@ -79,7 +78,6 @@ class CollectionService {
 
   /**
    * Fetch content as is. This content could be of a collection or a full repository.
-   * @todo Provide link to Irmin API docs
    *
    * This should return the content at the given ref of the collection as
    * an unstructured response {@link IrminAPIUnstructuredResponse} eg. raw.

@@ -26,7 +26,9 @@ const WorkspaceContext = createContext<{
   workspaces: {
     workspaces: Workspace[];
     fetchWorkspaces: () => Promise<Workspace[] | undefined>;
-    switchWorkspace: (_workspaceSlug: string | null) => void;
+    switchWorkspace: (
+      _workspaceSlug: string | null
+    ) => Promise<IrminAPIResponse | undefined>;
     deleteCurrentWorkspace: () => Promise<IrminAPIResponse>;
     transferOwnership: (_userId: string) => Promise<IrminAPIResponse>;
     createWorkspace: (
@@ -126,7 +128,7 @@ const WorkspaceContext = createContext<{
   irminRoles: [],
   workspaces: {
     workspaces: [],
-    switchWorkspace: () => {},
+    switchWorkspace: () => Promise.resolve({}),
     fetchWorkspaces: () => Promise.resolve([]),
     deleteCurrentWorkspace: () => Promise.resolve({}),
     transferOwnership: () => Promise.resolve({}),

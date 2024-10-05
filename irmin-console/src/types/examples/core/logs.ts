@@ -94,62 +94,23 @@ export const logEvents: () => LogEvent[] = () => [
 ];
 
 export const workflowRunLogs: () => WorkflowRunLogs = () => ({
-  logs: `
-[1mRunning &quot;auth:google-analytics&quot; (auth) task [0m
-[32m>> [39mAuthenticated successfully with Google Analytics API.
-[32m>> [39mAccess token acquired.
-
-[1mRunning &quot;fetch:google-analytics-data&quot; (fetch) task [0m
-[32m>> [39mQuerying Google Analytics API for metrics and dimensions...
-[32m>> [39mData fetched successfully from the date range 2024-08-01 to 2024-08-31.
-Fetched 50,232 sessions, 3,100,421 page views, and 23,950 conversions.
-
-[1mRunning &quot;process:analytics-data&quot; (process) task [0m
-[32m>> [39mNormalizing Google Analytics data into structured format...
-[32m>> [39mData processing completed successfully.
-Processed 3,123,567 records.
-[32m>> [39mDetected and removed 45 duplicate records.
-
-[1mRunning &quot;validate:data-integrity&quot; (validate) task [0m
-[33mWarning: Some discrepancies detected in page view count for session IDs. [39m
-[32m>> [39mValidation completed, all other metrics match source data.
-
-[1mRunning &quot;transform:to-irmin-schema&quot; (transform) task [0m
-[32m>> [39mTransforming data into Irmin-compatible schema...
-[32m>> [39mData transformation completed. Ready to push 3,123,522 records to Irmin.
-
-[1mRunning &quot;push:irmin-database&quot; (push) task [0m
-[32m>> [39mConnecting to Irmin database...
-[32m>> [39mConnection successful.
-
-[1mRunning &quot;push:irmin-database&quot; (push) task [0m
-[32m>> [39mPushing data to Irmin...
-[32m>> [39m3,123,522 records inserted successfully.
-
-[1mRunning &quot;generate:summary-report&quot; (report) task [0m
-[32m>> [39mGenerating report for processed data...
-[32m>> [39mSummary report generated:
-- Sessions: 50,232
-- Page Views: 3,100,421
-- Conversions: 23,950
-- Processed Records: 3,123,522
-- Warnings: 1
-
-[1mRunning &quot;clean:temp-files&quot; (clean) task [0m
-[32m>> [39mCleaning up temporary files...
-[32m>> [39mRemoved 12 temporary files and cache.
-[32m>> [39mClean up complete.
-
-[1mRunning &quot;post-processing&quot; (post-process) task [0m
-[33mWarning: Data integrity check encountered minor issues with 23 records. [39m
-[33mProceeding with the next steps.
-
-[1mRunning &quot;email:notifications&quot; (email) task [0m
-[31mError: Failed to send email notifications. SMTP server not responding. [39m
-[31mError code: 503 - Service unavailable.
-
-[1mRunning &quot;retry:email-notifications&quot; (email) task [0m
-[33mRetrying email notifications in 30 seconds... [39m
-[32m>> [39mRetry succeeded. Email notifications sent to 5 recipients.
-`,
+  logs: [
+    '2024-10-05 10:00:01 [INFO] Starting workflow: FormatDataForWooCommerce',
+    '2024-10-05 10:00:02 [INFO] Fetching data from Microsoft Dynamics...',
+    '2024-10-05 10:00:05 [ERROR] Failed to fetch data: Timeout occurred while connecting to Microsoft Dynamics API.',
+    '2024-10-05 10:00:06 [INFO] Retrying data fetch... Attempt 1',
+    '2024-10-05 10:00:08 [INFO] Data fetched successfully: 500 records retrieved.',
+    '2024-10-05 10:00:09 [INFO] Formatting data for WooCommerce...',
+    "2024-10-05 10:00:10 [ERROR] Data formatting error: Missing required field 'product_id' in record with index 42.",
+    "2024-10-05 10:00:11 [ERROR] Data formatting error: Invalid price format in record with index 78. Expected a number but received 'twenty-five'.",
+    '2024-10-05 10:00:12 [INFO] Continuing with remaining records despite errors. Total valid records: 498.',
+    '2024-10-05 10:00:15 [INFO] Preparing to send formatted data to WooCommerce...',
+    '2024-10-05 10:00:16 [ERROR] API call to WooCommerce failed: 401 Unauthorized. Invalid API key.',
+    '2024-10-05 10:00:17 [INFO] Retrying API call to WooCommerce... Attempt 1',
+    '2024-10-05 10:00:19 [INFO] Data sent to WooCommerce successfully: 498 records uploaded.',
+    '2024-10-05 10:00:20 [INFO] Workflow completed: FormatDataForWooCommerce. Total processed records: 500.',
+    '2024-10-05 10:00:21 [WARNING] 2 records had formatting issues and were not uploaded.',
+    '2024-10-05 10:00:22 [INFO] Error report generated: Check log file for details.',
+    '2024-10-05 10:00:23 [INFO] Workflow run finished.',
+  ],
 });

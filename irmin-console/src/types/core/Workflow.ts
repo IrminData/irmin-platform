@@ -9,7 +9,7 @@ import { WorkspaceUser } from '@/types/core/Workspace';
 export type WorkflowableType = 'import' | 'action' | 'export';
 
 /**
- * Workflow type
+ * Workflow object
  *
  * @typeParam id - Workflow hash ID
  * @typeParam name - Workflow name
@@ -32,8 +32,8 @@ export interface Workflow {
   workflowable_type: WorkflowableType;
   workflowable: Import | Action | Export;
   cron_syntax: string | null;
-  last_run_at?: string | null;
-  next_run_at?: string | null;
+  last_run_at?: string;
+  next_run_at?: string;
   status: WorkflowStatus;
   description: string;
   documentation: string;
@@ -44,18 +44,27 @@ export interface Workflow {
 /**
  * Workflow of type Import
  */
-export type ImportWorkflow = Workflow & { workflowable: Import };
+export type ImportWorkflow = Workflow & {
+  workflowable: Import;
+  workflowable_type: 'import';
+};
 /**
  * Workflow of type Export
  */
-export type ExportWorkflow = Workflow & { workflowable: Export };
+export type ExportWorkflow = Workflow & {
+  workflowable: Export;
+  workflowable_type: 'export';
+};
 /**
  * Workflow of type Action
  */
-export type ActionWorkflow = Workflow & { workflowable: Action };
+export type ActionWorkflow = Workflow & {
+  workflowable: Action;
+  workflowable_type: 'action';
+};
 
 /**
- * Workflow run type, single execution of a workflow
+ * Workflow run object. eg. Single execution of a Workflow
  *
  * @typeParam id - Workflow run ID
  * @typeParam workflow_id - ID of the workflow that was run

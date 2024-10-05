@@ -43,13 +43,13 @@ export default function DefineDetails({
       setLoading(true);
       fetchedFields.current = true;
       try {
-        const response =
+        const res =
           await connectionService.fetchNewConnectionDetails(connectorID);
 
         // Update connection data state
         setConnectionData((prev: ConnectionSetup) => ({
           ...prev,
-          connectionDetailsFields: response.data,
+          connectionDetailsFields: res.data,
         }));
       } catch (error) {
         console.error('Fetch connection details error:', error);

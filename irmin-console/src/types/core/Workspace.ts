@@ -17,8 +17,8 @@ export interface Workspace {
   name: string;
   slug: string;
   owner_id: string;
-  description?: string | null;
-  users?: WorkspaceUser[] | null;
+  description: string;
+  users?: WorkspaceUser[];
   created_at: string;
   updated_at: string;
 }
@@ -41,9 +41,9 @@ export interface Workspace {
 export interface WorkspaceUser {
   id: string;
   name: string;
-  company?: string | null;
+  company?: string;
   email: string;
-  profile_picture?: string | null;
-  email_verified_at?: string | null;
-  roles?: IrminRole[] | null;
+  profile_picture?: string;
+  email_verified_at?: string;
+  roles?: IrminRole[];
 }

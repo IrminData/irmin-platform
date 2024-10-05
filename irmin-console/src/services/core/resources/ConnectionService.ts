@@ -63,7 +63,6 @@ class ConnectionService {
 
   /**
    * Fetch all Connections for the current workspace
-   * @todo Provide link to Irmin API docs
    */
   async fetchConnections(): Promise<ConnectionsAPIResponse> {
     if (isOfflineMode)
@@ -83,7 +82,6 @@ class ConnectionService {
 
   /**
    * Update a Connection
-   * @todo Provide link to Irmin API docs
    *
    * @param connection - The ID of the Connection to update
    * @param data - The updated Connection object
@@ -113,7 +111,7 @@ class ConnectionService {
 
   /**
    * Reassign a Connection to a new owner
-   * @todo Provide link to Irmin API docs
+   *
    * @param connection - The ID of the Connection to reassign
    * @param newOwner - The new owner of the Connection
    */
@@ -138,7 +136,6 @@ class ConnectionService {
 
   /**
    * Delete a Connection by ID
-   * @todo Provide link to Irmin API docs
    *
    * @param connection - The ID of the connection to delete
    */
@@ -164,7 +161,7 @@ class ConnectionService {
 
   /**
    * Fetch connection details for a new connection.
-   * @todo Provide link to Irmin API docs
+   *
    * @param connectorID - The ID of the connector to fetch
    * @returns required details fields to create a connection
    */
@@ -194,7 +191,6 @@ class ConnectionService {
 
   /**
    * Test a connection with the provided connection details
-   * @todo Provide link to Irmin API docs
    * @param connectorID - The ID of the connector
    * @param connectionDetails - The connection details to test
    * @returns whether the connection was successful or not
@@ -235,7 +231,7 @@ class ConnectionService {
 
   /**
    * Fetch connection settings for a new connection.
-   * @todo Provide link to Irmin API docs
+   *
    * @param connectorID - The ID of the connector to fetch
    * @param connectionDetails - The connection details to fetch settings for
    * @returns required settings fields to create a connection
@@ -275,7 +271,7 @@ class ConnectionService {
 
   /**
    * Create a new connection and start sync with the provided details and settings for a workspace
-   * @todo Provide link to Irmin API docs
+   *
    * @param connectionProps - The new connection data
    * @param connectionProps.connectorID - The ID of the connector
    * @param connectionProps.connectionDetails - The connection details

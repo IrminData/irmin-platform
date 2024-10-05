@@ -68,8 +68,8 @@ export const LogProvider = ({ children }: { children: React.ReactNode }) => {
       setLoadingLogEvents(true);
       setLogEvents(null);
       try {
-        const response = await logService.fetchLogEvents(workflow);
-        setLogEvents(response.data);
+        const res = await logService.fetchLogEvents(workflow);
+        setLogEvents(res.data);
       } catch (error) {
         console.error('LogContext fetchLogEvents error', error);
         irminAlert(
@@ -94,11 +94,11 @@ export const LogProvider = ({ children }: { children: React.ReactNode }) => {
       setLoadingWorkflowRunLogs(true);
       setWorkflowRunLogs(null);
       try {
-        const response = await logService.fetchWorkflowRunLogs(
+        const res = await logService.fetchWorkflowRunLogs(
           workflow,
           workflowRunID
         );
-        setWorkflowRunLogs(response.data);
+        setWorkflowRunLogs(res.data);
       } catch (error) {
         console.error('LogContext fetchWorkflowRunLogs error', error);
         irminAlert(

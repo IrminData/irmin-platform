@@ -41,5 +41,5 @@ export interface LogEvent {
  * @typeParam logs - Logs of the workflow run
  */
 export type WorkflowRunLogs = {
-  logs: string;
+  logs: string[];
 };

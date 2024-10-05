@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { QueryAPIResponse } from '@/services/core/resources/QueryService';
+import { QueryExecutionResultAPIResponse } from '@/services/core/resources/QueryService';
 
 import { AiOutlineSave } from 'react-icons/ai';
 import { BsFileEarmarkRichtext } from 'react-icons/bs';
@@ -50,7 +50,7 @@ const QueryResults = ({
   workflow,
 }: {
   title: string;
-  result: QueryAPIResponse | null;
+  result: QueryExecutionResultAPIResponse | null;
   loading?: boolean;
   onSave?: () => Promise<void>;
   onRun?: () => Promise<void>;
@@ -71,8 +71,8 @@ const QueryResults = ({
   const [processingRun, setProcessingRun] = useState(false);
 
   const showLoadingOnData = loading || processingRun;
-  const errors = result?.errors ?? {};
-  const logs = result?.metadata.logs ?? '';
+  const errors = result?.errors ?? [];
+  const logs = result?.data.logs ?? [];
 
   return (
     <div
@@ -203,28 +203,28 @@ const QueryResults = ({
           )}
         </div>
       </div>
-      {activeTab === 'data' && result?.data?.type === 'table' && (
+      {activeTab === 'data' && result?.data?.result.type === 'table' && (
         <TableData
           title={title}
-          data={result.data}
+          data={result.data.result}
           metadata={{
-            rowsReturned: parseInt(result.metadata.itemsReturned),
-            timeTaken: parseInt(result.metadata.timeTaken),
+            rowsReturned: result.metadata?.total,
+            timeTaken: result.data.execution_time,
           }}
           loading={showLoadingOnData}
         />
       )}
-      {activeTab === 'data' && result?.data?.type === 'folder' && (
+      {activeTab === 'data' && result?.data?.result.type === 'folder' && (
         <FolderAndFileData
           title={title}
-          data={result.data}
+          data={result.data.result}
           loading={showLoadingOnData}
         />
       )}
-      {activeTab === 'data' && result?.data?.type === 'file' && (
+      {activeTab === 'data' && result?.data?.result.type === 'file' && (
         <FolderAndFileData
           title={title}
-          data={result.data}
+          data={result.data.result}
           loading={showLoadingOnData}
         />
       )}
@@ -237,7 +237,7 @@ const QueryResults = ({
       {activeTab === 'logs' && (
         <>
           {logs && logs.length > 0 ? (
-            <LogFeed text={logs} />
+            <LogFeed text={logs.join('\n\n')} />
           ) : (
             <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
               {dict.logs.noLogsFound}

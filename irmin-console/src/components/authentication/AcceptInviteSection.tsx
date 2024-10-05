@@ -57,19 +57,15 @@ const AcceptInviteSection = () => {
     setSuccess(null);
 
     try {
-      const response = await inviteService.acceptInvite(
+      const res = await inviteService.acceptInvite(
         inviteId,
         data.company,
         data.password,
         data.passwordConfirmation
       );
-      if (response.metadata?.message) {
-        setSuccess(response.metadata.message);
-        // Redirect to console on success
-        router.push('/console/manage-workspaces');
-      } else {
-        throw new Error(response.message || 'Accepting invite failed');
-      }
+      setSuccess(res.message ?? 'Invite accepted');
+      // Redirect to console on success
+      router.push('/console/manage-workspaces');
     } catch (error) {
       setError((error as Error)?.message ?? 'Accepting invite failed');
     }
@@ -81,14 +77,10 @@ const AcceptInviteSection = () => {
     setSuccess(null);
 
     try {
-      const response = await inviteService.declineInvite(inviteId);
-      if (response.metadata?.message) {
-        setSuccess(response.metadata.message);
-        // Redirect to homepage or another page on successful decline
-        router.push('/');
-      } else {
-        throw new Error(response.message || 'Declining invite failed');
-      }
+      const res = await inviteService.declineInvite(inviteId);
+      setSuccess(res.message ?? 'Invite declined');
+      // Redirect to homepage or another page on successful decline
+      router.push('/');
     } catch (error) {
       setError((error as Error)?.message ?? 'Declining invite failed');
     }

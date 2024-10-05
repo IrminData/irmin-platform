@@ -40,8 +40,8 @@ export const useFetchConnections = (
           return;
         }
         // Fetch the connections for the current workspace
-        const response = await connectionService.fetchConnections();
-        setConnections(response.data);
+        const res = await connectionService.fetchConnections();
+        setConnections(res.data);
       } finally {
         setLoading(false);
       }
@@ -69,7 +69,7 @@ export const useUpdateConnection = (
     async (connection: string, updatedConnection: Connection) => {
       // Update the connection
       const { connectionService } = new IrminCore(locale);
-      const response = await connectionService.updateConnection(
+      const res = await connectionService.updateConnection(
         connection,
         updatedConnection
       );
@@ -78,8 +78,8 @@ export const useUpdateConnection = (
         conn.id === connection ? { ...conn, ...updatedConnection } : conn
       );
       setConnections(updateConnections);
-      // Return the response from the API
-      return response;
+      // Return the res from the API
+      return res;
     },
     [connections, setConnections, locale]
   );
@@ -96,14 +96,14 @@ export const useDeleteConnection = (
     async (connection: string) => {
       // Delete the connection
       const { connectionService } = new IrminCore(locale);
-      const response = await connectionService.deleteConnection(connection);
+      const res = await connectionService.deleteConnection(connection);
       // Update the local state by removing the deleted connection
       const updateConnections = connections.filter(
         (conn) => conn.id !== connection
       );
       setConnections(updateConnections);
-      // Return the response from the API
-      return response;
+      // Return the res from the API
+      return res;
     },
     [connections, setConnections, locale]
   );
@@ -120,7 +120,7 @@ export const useReassignConnection = (
     async (connection: string, newOwner: WorkspaceUser) => {
       // Reassign the connection
       const { connectionService } = new IrminCore(locale);
-      const response = await connectionService.reassignConnection(
+      const res = await connectionService.reassignConnection(
         connection,
         newOwner
       );
@@ -129,8 +129,8 @@ export const useReassignConnection = (
         conn.id === connection ? { ...conn, owner: newOwner } : conn
       );
       setConnections(updateConnections);
-      // Return the response from the API
-      return response;
+      // Return the res from the API
+      return res;
     },
     [connections, setConnections, locale]
   );

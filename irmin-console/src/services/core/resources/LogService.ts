@@ -44,7 +44,6 @@ class LogService {
 
   /**
    * Fetch log events for the current workspace
-   * @todo Provide link to Irmin API docs
    *
    * @param workflow - ID of the workflow to fetch logs for
    */
@@ -54,7 +53,7 @@ class LogService {
       const urlParams = new URLSearchParams();
       if (workflow) urlParams.append('workflow', workflow);
       const response = (await this.irminCore.fetch(
-        `/v1/api/logs?${urlParams.toString()}`,
+        `/v1/logs?${urlParams.toString()}`,
         {
           method: 'GET',
         }
@@ -69,7 +68,6 @@ class LogService {
 
   /**
    * Fetch logs for a specific workflow run
-   * @todo Provide link to Irmin API docs
    *
    * @param workflow - ID of the workflow to fetch logs for
    * @param workflowRunID -  ID of the workflow run to fetch logs for
@@ -85,7 +83,7 @@ class LogService {
       if (workflow) urlParams.append('workflow', workflow);
       if (workflowRunID) urlParams.append('workflow_run_id', workflowRunID);
       const response = (await this.irminCore.fetch(
-        `/v1/api/logs?${urlParams.toString()}`,
+        `/v1/logs?${urlParams.toString()}`,
         {
           method: 'GET',
         }

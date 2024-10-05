@@ -46,11 +46,8 @@ export default function RepositoryBranchesSection() {
     }
     try {
       // Delete the branch
-      const result = await branchService.deleteBranch(
-        branch,
-        currentRepository
-      );
-      irminAlert('success', result.message ?? dict.repository.branchDeleted);
+      const res = await branchService.deleteBranch(branch, currentRepository);
+      irminAlert('success', res.message ?? dict.repository.branchDeleted);
       // Change to the primary branch just in case
       if (defaultBranch) setCurrentRef(defaultBranch);
       // Refetch the branches
@@ -80,12 +77,12 @@ export default function RepositoryBranchesSection() {
     }
     try {
       // Delete the branch
-      const result = await branchService.createBranch(
+      const res = await branchService.createBranch(
         branchName,
         fromBranch,
         currentRepository
       );
-      irminAlert('success', result.message ?? dict.repository.branchCreated);
+      irminAlert('success', res.message ?? dict.repository.branchCreated);
       fetchBranches();
     } catch (error) {
       irminAlert(

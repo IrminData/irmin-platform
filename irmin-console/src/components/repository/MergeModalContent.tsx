@@ -74,7 +74,7 @@ export default function MergeModalContent({
         setLoading(true);
         mergeInProgress.current = true;
         const { compareService } = new IrminCore(locale);
-        await compareService.mergeRefs(
+        const res = await compareService.mergeRefs(
           repository,
           baseRef,
           compareRef,
@@ -82,7 +82,10 @@ export default function MergeModalContent({
           strategy
         );
         mergeInProgress.current = false;
-        irminAlert('success', dict.repository.compare.mergedRefsSuccessfully);
+        irminAlert(
+          'success',
+          res.message ?? dict.repository.compare.mergedRefsSuccessfully
+        );
         closeModal();
       } catch (error) {
         console.error(error);

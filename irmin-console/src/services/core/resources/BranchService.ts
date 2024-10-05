@@ -35,7 +35,6 @@ class BranchService {
 
   /**
    * Fetch all available branches for a repository
-   * @todo Provide link to Irmin API docs
    *
    * @param repository - slug of the repository to fetch branches for
    */
@@ -59,7 +58,6 @@ class BranchService {
 
   /**
    * Delete a branch
-   * @todo Provide link to Irmin API docs
    *
    * @param branch - The branch name to delete
    * @param repository - The repository slug to delete the branch from
@@ -73,7 +71,7 @@ class BranchService {
       formData.append('branch', branch);
       formData.append('repository', repository);
 
-      const response = await this.irminCore.fetch(`/v1/branches/delete`, {
+      const response = await this.irminCore.fetch(`/v1/branches`, {
         method: 'POST',
       });
 
@@ -87,7 +85,6 @@ class BranchService {
 
   /**
    * Create a new branch
-   * @todo Provide link to Irmin API docs
    *
    * @param name - The name of the new branch
    * @param from - The branch to create the new branch from

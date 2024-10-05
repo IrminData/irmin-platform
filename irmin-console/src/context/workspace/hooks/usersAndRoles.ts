@@ -61,8 +61,8 @@ export const useFetchUsers = (
           return;
         }
         // Fetch the data
-        const response = await userService.fetchWorkspaceUsers();
-        setUsers(response.data);
+        const res = await userService.fetchWorkspaceUsers();
+        setUsers(res.data);
       } finally {
         setLoading(false);
       }
@@ -91,11 +91,11 @@ export const useDeleteUser = (
       // Get the User and Role service
       const { userService } = new IrminCore(locale);
       // Remove user from workspace
-      const response = await userService.removeUserFromWorkspace(id);
+      const res = await userService.removeUserFromWorkspace(id);
       // Remove user from the context state
       setUsers(users.filter((user) => user.id !== id));
 
-      return response;
+      return res;
     },
     [users, setUsers, locale]
   );
@@ -118,7 +118,7 @@ export const useChangeUserRole = (
       const currentRole =
         user.roles && user.roles?.length > 0 ? user.roles[0] : null;
       // Change the user's role
-      const response = await userService.changeUserRole(
+      const res = await userService.changeUserRole(
         id,
         role,
         currentRole ? currentRole.name : null
@@ -128,7 +128,7 @@ export const useChangeUserRole = (
         users.map((user) => (user.id === id ? { ...user, role: role } : user))
       );
 
-      return response;
+      return res;
     },
     [users, setUsers, locale]
   );

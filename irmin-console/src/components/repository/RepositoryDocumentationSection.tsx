@@ -33,13 +33,14 @@ const RepositoryDocumentationSection = ({
   const handleSaveDocumentation = async (data: DocumentationFormValues) => {
     try {
       const documentation = data.documentation.trim();
-      if (documentation && documentation !== repository.documentation) {
-        await updateRepository(repository.slug, {
-          ...repository,
-          documentation,
-        });
-        irminAlert('success', dict.repository.settings.repositoryUpdated);
-      }
+      const res = await updateRepository(repository.slug, {
+        ...repository,
+        documentation,
+      });
+      irminAlert(
+        'success',
+        res.message ?? dict.repository.settings.repositoryUpdated
+      );
     } catch (error) {
       irminAlert(
         'error',

@@ -33,10 +33,14 @@ const ConnectionDocumentationSection = ({
   const handleSaveDocumentation = async (data: DocumentationFormValues) => {
     try {
       const documentation = data.documentation.trim();
-      if (documentation && documentation !== connection.documentation) {
-        await updateConnection(connection.id, { ...connection, documentation });
-        irminAlert('success', dict.connections.settings.connectionUpdated);
-      }
+      const res = await updateConnection(connection.id, {
+        ...connection,
+        documentation,
+      });
+      irminAlert(
+        'success',
+        res.message ?? dict.connections.settings.connectionUpdated
+      );
     } catch (error) {
       irminAlert(
         'error',
