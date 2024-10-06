@@ -30,6 +30,7 @@ import { profile } from './profile';
 import { queries, queryExecutionResult } from './queries';
 import { repositories } from './repositories';
 import { roles } from './roles';
+import { tags } from './tags';
 import { workspaceUsers } from './users';
 import { workflowRuns } from './workflowRuns';
 import { actions, exports, imports, workflows } from './workflows';
@@ -103,6 +104,11 @@ export const exampleRepositories = repositories();
  * Fake branches {@link branches}
  */
 export const exampleBranches = branches();
+
+/**
+ * Fake tags {@link tags}
+ */
+export const exampleTags = tags();
 
 /**
  * Fake commits {@link commits}

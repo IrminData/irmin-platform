@@ -1,7 +1,6 @@
 'use client';
 
 import { Controller, useForm } from 'react-hook-form';
-import Select from 'react-select';
 
 import Button from '@/components/common/button/Button';
 import Input from '@/components/common/form/Input';
@@ -9,23 +8,23 @@ import Input from '@/components/common/form/Input';
 import { useLocale } from '@/context/LocaleContext';
 
 interface FormValues {
-  branchName: string;
-  fromBranch: string;
+  tagName: string;
+  ref: string;
 }
 
 /**
- * Modal content to create a new branch.
+ * Modal content to create a new tag.
  *
  * @param props - The props
- * @param props.branches - The list of existing branches to create the new branch from
- * @param props.createBranch - Callback to create a new branch
+ * @param props.currentRef - The current ref to create the tag for
+ * @param props.createTag - Callback to create a new tag
  */
-export default function CreateBranchModalContent({
-  branches,
-  createBranch,
+export default function CreateTagModalContent({
+  currentRef,
+  createTag,
 }: {
-  branches: string[];
-  createBranch: (branchName: string, fromBranch: string) => Promise<void>;
+  currentRef: string;
+  createTag: (tagName: string, ref: string) => Promise<void>;
 }) {
   const { dict } = useLocale();
 
@@ -35,13 +34,13 @@ export default function CreateBranchModalContent({
     formState: { errors },
   } = useForm<FormValues>({
     defaultValues: {
-      branchName: '',
-      fromBranch: 'main',
+      tagName: '',
+      ref: currentRef,
     },
   });
 
   const onSubmit = async (data: FormValues) => {
-    await createBranch(data.branchName, data.fromBranch);
+    await createTag(data.tagName, data.ref);
   };
 
   return (
@@ -50,26 +49,26 @@ export default function CreateBranchModalContent({
       className='flex flex-col gap-4 pb-8'
     >
       <div className='flex flex-col gap-2'>
-        <label htmlFor='branchName' className='text-xs'>
-          {dict.repository.branches.newBranchName}
+        <label htmlFor='tagName' className='text-xs'>
+          {dict.repository.tags.newTagName}
         </label>
         <Controller
-          name='branchName'
+          name='tagName'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <>
               <Input
-                id='branchName'
+                id='tagName'
                 type='text'
                 variant='outline'
                 colorScheme='gray'
                 size='sm'
                 {...field}
               />
-              {errors.branchName && (
+              {errors.tagName && (
                 <p className='mt-1 text-xs text-red-600'>
-                  {errors.branchName.message}
+                  {errors.tagName.message}
                 </p>
               )}
             </>
@@ -77,36 +76,27 @@ export default function CreateBranchModalContent({
         />
       </div>
       <div className='flex flex-col gap-2'>
-        <label htmlFor='fromBranch' className='text-xs'>
-          {dict.repository.branches.fromBranch}
+        <label htmlFor='ref' className='text-xs'>
+          {dict.repository.tags.fromCommit}
         </label>
         <Controller
-          name='fromBranch'
+          name='ref'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <>
-              <Select
-                options={branches.map((branch) => ({
-                  label: branch,
-                  value: branch,
-                }))}
-                value={{
-                  label: field.value,
-                  value: field.value,
-                }}
-                onChange={(selectedOption) => {
-                  field.onChange(selectedOption?.value || 'main');
-                }}
-                isSearchable
-                placeholder={dict.repository.tabs.branches}
-                noOptionsMessage={() => dict.misc.noOptionsMessage}
-                className='react-select-container'
-                classNamePrefix='react-select'
+              <Input
+                id='ref'
+                type='text'
+                variant='outline'
+                colorScheme='gray'
+                size='sm'
+                disabled={true}
+                {...field}
               />
-              {errors.fromBranch && (
+              {errors.ref && (
                 <p className='mt-1 text-xs text-red-600'>
-                  {errors.fromBranch.message}
+                  {errors.ref.message}
                 </p>
               )}
             </>
@@ -120,7 +110,7 @@ export default function CreateBranchModalContent({
         className='w-full'
         type='submit'
       >
-        {dict.repository.branches.createBranch}
+        {dict.repository.tags.createTag}
       </Button>
     </form>
   );

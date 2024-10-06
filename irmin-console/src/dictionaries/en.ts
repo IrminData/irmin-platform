@@ -289,6 +289,15 @@ const en = {
       fromBranch: 'From branch',
       confirmDeleteBranch: 'Are you sure you want to delete this branch?',
     },
+    tags: {
+      tag: 'Tag',
+      tagDescription: 'A tag is an immutable pointer to a single commit.',
+      createTag: 'Create tag',
+      newTagName: 'New tag name',
+      fromCommit: 'From commit',
+      confirmDeleteTag: 'Are you sure you want to delete this tag?',
+      currentlyViewing: 'Currently viewing',
+    },
     commit: {
       commitHash: 'Commit hash',
       copyHash: 'Copy hash',
@@ -365,6 +374,7 @@ const en = {
     tabs: {
       structure: 'Structure',
       dataViewer: 'Data',
+      tags: 'Tags',
       commits: 'Commits',
       branches: 'Branches',
       compare: 'Compare',

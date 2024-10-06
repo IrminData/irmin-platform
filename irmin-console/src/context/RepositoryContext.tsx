@@ -27,6 +27,7 @@ import { Commit } from '@/types/core/Commit';
 import { Diff } from '@/types/core/Diff';
 import { IrminAPIUnstructuredResponse } from '@/types/core/IrminAPIResponse';
 import { Repository } from '@/types/core/Repository';
+import { Tag } from '@/types/core/Tag';
 
 import { useWorkspace } from './workspace';
 
@@ -56,6 +57,12 @@ interface RepositoryContextProps {
   fetchBranches: () => Promise<void>;
   deleteBranch: (branch: string) => Promise<void>;
   createBranch: (name: string, from: string) => Promise<void>;
+  // Tags
+  loadingTags: boolean;
+  tags: Tag[] | null;
+  fetchTags: () => Promise<void>;
+  deleteTag: (tag: string) => Promise<void>;
+  createTag: (name: string, ref: string) => Promise<void>;
   // Commits
   loadingCommits: boolean;
   commits: Commit[] | null;
@@ -113,6 +120,7 @@ export const RepositoryProvider = ({
   const {
     diffService,
     branchService,
+    tagService,
     commitService,
     schemaService,
     collectionService,
@@ -197,6 +205,10 @@ export const RepositoryProvider = ({
   const [loadingBranches, setLoadingBranches] = useState<boolean>(false);
   const [branches, setBranches] = useState<Branch[] | null>(null);
 
+  // Tags state
+  const [loadingTags, setLoadingTags] = useState<boolean>(false);
+  const [tags, setTags] = useState<Tag[] | null>(null);
+
   // Commits state
   const [loadingCommits, setLoadingCommits] = useState<boolean>(false);
   const [commits, setCommits] = useState<Commit[] | null>(null);
@@ -253,18 +265,8 @@ export const RepositoryProvider = ({
     try {
       // Fetch the branches
       const res = await branchService.fetchBranches(repositorySlug ?? '');
-
-      // Find the default branch
-      const defaultBranch = res.data?.find((b) => b.default)?.name;
-
-      // Set the correct current ref
-      if (!currentRef && defaultBranch) updateCurrentRef(defaultBranch);
-      if (!res.data.find((b) => b.name === currentRef))
-        updateCurrentRef(defaultBranch);
-
-      // Set the branches and default branch
+      // Set the branches
       setBranches(res.data);
-      setDefaultRef(defaultBranch);
     } catch (error) {
       console.error('RepositoryContext fetchBranches error', error);
       irminAlert(
@@ -274,7 +276,24 @@ export const RepositoryProvider = ({
     } finally {
       setLoadingBranches(false);
     }
-  }, [repositorySlug, branchService, irminAlert, updateCurrentRef, currentRef]);
+  }, [repositorySlug, branchService, irminAlert]);
+
+  /**
+   * Fetch the tags for the current repository
+   */
+  const fetchTags = useCallback(async () => {
+    setLoadingTags(true);
+    try {
+      // Fetch and set the tags
+      const res = await tagService.fetchTags(repositorySlug ?? '');
+      setTags(res.data);
+    } catch (error) {
+      console.error('RepositoryContext fetchTags error', error);
+      irminAlert('error', (error as Error)?.message ?? 'Failed to fetch tags');
+    } finally {
+      setLoadingTags(false);
+    }
+  }, [repositorySlug, tagService, irminAlert]);
 
   /**
    * Fetch the current commits
@@ -489,6 +508,7 @@ export const RepositoryProvider = ({
   const deleteBranch = useCallback(
     async (branch: string) => {
       try {
+        // Delete the branch
         const res = await branchService.deleteBranch(
           branch,
           repositorySlug ?? ''
@@ -515,7 +535,7 @@ export const RepositoryProvider = ({
   const createBranch = useCallback(
     async (name: string, from: string) => {
       try {
-        // Delete the branch
+        // Create the branch
         const res = await branchService.createBranch(
           name,
           from,
@@ -534,12 +554,59 @@ export const RepositoryProvider = ({
     [repositorySlug, fetchBranches, irminAlert, branchService]
   );
 
+  /**
+   * Hook to delete a tag from the repository.
+   *
+   * @param tag - The tag name to delete
+   */
+  const deleteTag = useCallback(
+    async (tag: string) => {
+      try {
+        // Delete the tag
+        const res = await tagService.deleteTag(tag, repositorySlug ?? '');
+        irminAlert('success', res.message ?? 'Tag deleted successfully');
+        // Refetch the tags
+        fetchTags();
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to delete tag'
+        );
+      }
+    },
+    [repositorySlug, fetchTags, irminAlert, tagService]
+  );
+
+  /**
+   * Hook to create a tag in the repository.
+   *
+   * @param name - The name of the new tag
+   * @param ref - The ref to create the new tag from
+   */
+  const createTag = useCallback(
+    async (name: string, ref: string) => {
+      try {
+        // Create the tag
+        const res = await tagService.createTag(name, ref, repositorySlug ?? '');
+        irminAlert('success', res.message ?? 'Tag created successfully');
+        // Refetch the tags
+        fetchTags();
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to create tag'
+        );
+      }
+    },
+    [repositorySlug, fetchTags, irminAlert, tagService]
+  );
+
   // Track the fetch for the initial values
   const initialFetchFor = useRef<string | null>(null);
   const refFetchFor = useRef<string | null>(null);
 
   /**
-   * Fetch the collections and branches when the repository changes
+   * Fetch the collections, branches and tags when the repository changes
    *
    * Only fetch if the repository is set
    */
@@ -548,10 +615,11 @@ export const RepositoryProvider = ({
     // Don't fetch if already fetched for the current repository and ref
     if (initialFetchFor.current === repositorySlug) return;
     initialFetchFor.current = repositorySlug;
-    // Fetch the collections and branches
+    // Fetch the collections, branches and tags
     fetchCollections();
     fetchBranches();
-  }, [repositorySlug, currentRef, fetchCollections, fetchBranches]);
+    fetchTags();
+  }, [repositorySlug, currentRef, fetchCollections, fetchBranches, fetchTags]);
 
   /**
    * Fetch the schema and commits on initial load, after the collections
@@ -631,6 +699,12 @@ export const RepositoryProvider = ({
         fetchBranches,
         deleteBranch,
         createBranch,
+        // Tags
+        loadingTags,
+        tags,
+        fetchTags,
+        deleteTag,
+        createTag,
         // Commits
         loadingCommits,
         commits,

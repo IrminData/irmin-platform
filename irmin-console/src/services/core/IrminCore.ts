@@ -23,6 +23,7 @@ import QueryService from './resources/QueryService';
 import RepositoryService from './resources/RepositoryService';
 import RoleService from './resources/RoleService';
 import SchemaService from './resources/SchemaService';
+import TagService from './resources/TagService';
 import UserService from './resources/UserService';
 import WorkflowService from './resources/WorkflowService';
 import WorkspaceService from './resources/WorkspaceService';
@@ -62,6 +63,7 @@ class IrminCore {
   public queryService: QueryService;
   public logService: LogService;
   public diffService: DiffService;
+  public tagService: TagService;
 
   constructor(locale: Locale, apiToken?: string) {
     // Set locale and token
@@ -88,6 +90,7 @@ class IrminCore {
     this.queryService = new QueryService(this);
     this.logService = new LogService(this);
     this.diffService = new DiffService(this);
+    this.tagService = new TagService(this);
   }
 
   private _fetch = async (

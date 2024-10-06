@@ -38,7 +38,10 @@ export default function RepositoryBranchesSection() {
       dict.repository.branches.createBranch,
       <CreateBranchModalContent
         branches={branches.map((branch) => branch.name) ?? []}
-        createBranch={createBranch}
+        createBranch={async (branchName: string, fromBranch: string) => {
+          await createBranch(branchName, fromBranch);
+          irminModal.close();
+        }}
       />
     );
   }, [branches, irminModal, dict, createBranch]);

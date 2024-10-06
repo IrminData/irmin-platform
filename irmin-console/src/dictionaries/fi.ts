@@ -290,6 +290,15 @@ const fi = {
       fromBranch: 'Haarasta',
       confirmDeleteBranch: 'Oletko varma, että haluat poistaa tämän haaran?',
     },
+    tags: {
+      tag: 'Tagi',
+      tagDescription: 'Tagi on nimetty viittaus tiettyyn commitiin',
+      createTag: 'Luo tagi',
+      newTagName: 'Uuden tagin nimi',
+      fromCommit: 'Commitista',
+      confirmDeleteTag: 'Oletko varma, että haluat poistaa tämän tagin?',
+      currentlyViewing: 'Nykyinen',
+    },
     commit: {
       commitHash: 'Commit hash',
       copyHash: 'Kopioi hash',
@@ -367,6 +376,7 @@ const fi = {
     tabs: {
       structure: 'Struktuuri',
       dataViewer: 'Tieto',
+      tags: 'Tagit',
       commits: 'Commitit',
       branches: 'Haarat',
       compare: 'Vertaa',

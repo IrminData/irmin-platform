@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 
 import { GoGitBranch, GoGitCommit, GoGitCompare } from 'react-icons/go';
 import { IoChevronBack } from 'react-icons/io5';
-import { TbDatabase, TbFileText, TbSettings } from 'react-icons/tb';
+import { TbDatabase, TbFileText, TbSettings, TbTags } from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
 import StatusBadge from '@/components/common/status/StatusBadge';
@@ -64,6 +64,12 @@ export default function RepositoryHeader() {
         href: `${baseUrl}/commits?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/commits`,
         icon: <GoGitCommit size={14} />,
+      },
+      {
+        title: dict.repository.tabs.tags,
+        href: `${baseUrl}/tags?${searchParams.toString()}`,
+        active: pathname === `${baseUrl}/tags`,
+        icon: <TbTags size={14} />,
       },
       {
         title: dict.repository.tabs.branches,
