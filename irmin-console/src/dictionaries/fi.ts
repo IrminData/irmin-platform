@@ -278,6 +278,9 @@ const fi = {
     createNewRepository: 'Luo uusi tietovarasto',
     workflow: 'Prosessi',
     viewWorkflow: 'Katso prosessi',
+    immutableWarning: 'Muuttumaton tietovarasto tai haara',
+    immutableWarningDescription:
+      'Tämä tietovarasto tai haara on muuttumaton, eikä sitä voi muokata.',
     branches: {
       currentBranch: 'Nykyinen',
       branch: 'Haaara',

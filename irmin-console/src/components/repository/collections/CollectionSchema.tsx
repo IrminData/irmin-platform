@@ -29,7 +29,7 @@ import TableCollectionSchema from './TableCollectionSchema';
  *
  * @param props - The component props
  * @param props.collectionID - The ID of the collection to display the schema for
- * @param props.immutable - Whether the repository is immutable
+ * @param props.immutable - Whether the repository or ref is immutable
  */
 export default function CollectionSchema({
   collectionID,

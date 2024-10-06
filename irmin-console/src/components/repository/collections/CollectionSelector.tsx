@@ -70,6 +70,11 @@ const CollectionSelector = ({
             <div className='flex w-full items-center space-x-2'>
               {getIconByType(item.type)}
               <span className='text-sm'>{item.name}</span>
+              {item.is_immutable && (
+                <span className='h-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+                  {dict.list.immutable}
+                </span>
+              )}
             </div>
             <div className='flex w-full max-w-80 flex-col text-xs text-gray-400'>
               {dict.repository.schema.type}: {item.type}

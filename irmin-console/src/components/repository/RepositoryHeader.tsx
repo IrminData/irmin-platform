@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 
 import { GoGitBranch, GoGitCommit, GoGitCompare } from 'react-icons/go';
 import { IoChevronBack } from 'react-icons/io5';
-import { TbDatabase, TbFileDiff, TbFileText, TbSettings } from 'react-icons/tb';
+import { TbDatabase, TbFileText, TbSettings } from 'react-icons/tb';
 
 import Button from '@/components/common/button/Button';
 import StatusBadge from '@/components/common/status/StatusBadge';
@@ -28,8 +28,13 @@ export default function RepositoryHeader() {
 
   const { dict } = useLocale();
 
-  const { currentRepository, currentRef, branches, updateCurrentRef } =
-    useRepository();
+  const {
+    currentRepository,
+    immutable,
+    currentRef,
+    branches,
+    updateCurrentRef,
+  } = useRepository();
 
   // The base URL for the repository, eg. /en/console/workspace-slug/repositories/repository-slug
   const baseUrl = useBaseUrl({
@@ -83,10 +88,10 @@ export default function RepositoryHeader() {
         href: `${baseUrl}/settings?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/settings`,
         icon: <TbSettings size={14} />,
-        hide: currentRepository?.is_immutable,
+        hide: immutable,
       },
     ],
-    [pathname, searchParams, baseUrl, dict, currentRepository.is_immutable]
+    [pathname, searchParams, baseUrl, dict, immutable]
   );
 
   return (
@@ -101,7 +106,7 @@ export default function RepositoryHeader() {
               <span className='text-sm text-gray-400'>
                 {dict.repository.repository}
               </span>
-              {currentRepository.is_immutable && (
+              {immutable && (
                 <span className='rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
                   {dict.list.immutable}
                 </span>
@@ -137,20 +142,6 @@ export default function RepositoryHeader() {
                     updateCurrentRef(branch.value);
                   }}
                 />
-                {/** Button to navigate to uncommited changes of the current branch */}
-                {!pathname.includes('/uncommited-changes') &&
-                  !currentRepository.is_immutable && (
-                    <Button
-                      variant='solid'
-                      colorScheme='light'
-                      size='sm'
-                      href={`${baseUrl}/uncommited-changes`}
-                      icon={<TbFileDiff size={18} />}
-                      className='w-full'
-                    >
-                      {dict.repository.commit.uncommitedChanges}
-                    </Button>
-                  )}
               </>
             )}
         </div>

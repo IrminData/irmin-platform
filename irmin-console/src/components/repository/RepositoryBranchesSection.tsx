@@ -26,6 +26,7 @@ export default function RepositoryBranchesSection() {
     createBranch,
     deleteBranch,
     viewRef,
+    currentRepository,
   } = useRepository();
 
   /**
@@ -83,6 +84,7 @@ export default function RepositoryBranchesSection() {
         handleViewBranch={(branch) => viewRef(branch)}
         handleDeleteBranch={handleDeleteBranch}
         loading={loadingBranches}
+        immutable={currentRepository.is_immutable}
       />
     </div>
   );

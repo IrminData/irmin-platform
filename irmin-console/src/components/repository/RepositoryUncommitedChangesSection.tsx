@@ -13,13 +13,12 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepository } from '@/context/RepositoryContext';
 
-import { sortCommits } from '@/utils/sortCommits';
-
 import { Diff } from '@/types/core/Diff';
 
 import CommitChangesModalContent from './commits/CommitChangesModalContent';
 import NoUncommitedChangesWarning from './commits/NoUncommitedChangesWarning';
 import DiffView from './diff/DiffVIew';
+import ImmutableWarning from './ImmutableWarning';
 
 /**
  * Section to view and commit uncommited changes in a repository.
@@ -27,8 +26,14 @@ import DiffView from './diff/DiffVIew';
 export default function RepositoryUncommitedChangesSection() {
   const { dict } = useLocale();
   const { irminModal, irminConfirm } = usePopup();
-  const { commits, currentRef, fetchDiff, commitChanges, revertChanges } =
-    useRepository();
+  const {
+    commits,
+    currentRef,
+    fetchDiff,
+    commitChanges,
+    revertChanges,
+    immutable,
+  } = useRepository();
 
   const [diff, setDiff] = useState<Diff | null>(null);
   const [loadingDiff, setLoadingDiff] = useState<boolean>(false);
@@ -36,10 +41,8 @@ export default function RepositoryUncommitedChangesSection() {
   const diffFetchedBase = useRef<string | undefined>();
   const diffFetchedCompare = useRef<string | undefined>();
 
-  const latestCommit = useMemo(
-    () => (commits && commits.length > 0 ? sortCommits(commits)[0] : undefined),
-    [commits]
-  );
+  // Commits are sorted in the context, so the first commit is the latest
+  const latestCommit = useMemo(() => commits?.[0], [commits]);
 
   /**
    * Fetch the diff between the base and compare branches.
@@ -93,8 +96,9 @@ export default function RepositoryUncommitedChangesSection() {
    * Fetch the diff when the base or compare branches change.
    */
   useEffect(() => {
+    if (!latestCommit || !currentRef) return;
     if (
-      latestCommit?.hash === diffFetchedBase.current &&
+      latestCommit.hash === diffFetchedBase.current &&
       currentRef === diffFetchedCompare.current
     )
       return;
@@ -110,6 +114,13 @@ export default function RepositoryUncommitedChangesSection() {
     () => diff?.items && diff?.items.length > 0,
     [diff]
   );
+
+  if (immutable)
+    return (
+      <div className='container relative mx-auto max-w-6xl px-2 py-12 pt-4 md:px-4'>
+        <ImmutableWarning />
+      </div>
+    );
 
   return (
     <div className='container relative mx-auto max-w-6xl px-2 pb-12 pt-4 md:px-4'>

@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 import { AiOutlinePlayCircle } from 'react-icons/ai';
-import { TbDownload, TbUpload } from 'react-icons/tb';
+import { TbDownload, TbFileDiff, TbUpload } from 'react-icons/tb';
 
 import CodeMirrorEditor from '@/components/bucket/editor/partials/CodeMirrorEditor';
 import Button from '@/components/common/button/Button';
@@ -28,14 +29,18 @@ import UploadCollectionModalContent from './upload/UploadCollectionModalContent'
  * Repository viewer section, provides UI for the Repository viewer Page.
  */
 export default function RepositorySection() {
+  const searchParams = useSearchParams();
   const { dict } = useLocale();
-
   const {
     workspaces: { currentWorkspace },
   } = useWorkspace();
-
-  const { currentRef, currentRepository, loadingCollections, collections } =
-    useRepository();
+  const {
+    immutable,
+    currentRef,
+    currentRepository,
+    loadingCollections,
+    collections,
+  } = useRepository();
 
   const query = useQuery();
 
@@ -82,6 +87,14 @@ export default function RepositorySection() {
     );
   }, [queryField, query, selectedCollectionID, collections]);
 
+  // The base URL for the repository, eg. /en/console/workspace-slug/repositories/repository-slug
+  const baseUrl = useBaseUrl({
+    pathname: '',
+    segment: 'repositories',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
+
   // The base URL for the workspace, eg. /en/console/workspace-slug
   const workspaceUrl = useBaseUrl({
     pathname: '',
@@ -120,16 +133,28 @@ export default function RepositorySection() {
             {currentRef && ` @ ${currentRef}`}
           </div>
           <div className='flex items-center gap-2 md:gap-4'>
+            {/** Button to navigate to uncommited changes of the current branch */}
+            {!immutable && (
+              <Button
+                colorScheme='light'
+                variant='solid'
+                size='sm'
+                href={`${baseUrl}/uncommited-changes?${searchParams.toString()}`}
+                icon={<TbFileDiff />}
+              >
+                {dict.repository.commit.uncommitedChanges}
+              </Button>
+            )}
             <Button
               colorScheme='light'
               variant='solid'
               size='sm'
               icon={<TbDownload />}
-              href={`${workspaceUrl}/repositories/${currentRepository.slug}/download`}
+              href={`${workspaceUrl}/repositories/${currentRepository.slug}/download?${searchParams.toString()}`}
             >
               {dict.misc.download.download}
             </Button>
-            {!currentRepository.is_immutable && (
+            {!immutable && (
               <Button
                 onClick={handleUpload}
                 colorScheme='light'
@@ -155,7 +180,7 @@ export default function RepositorySection() {
             {selectedCollectionID && (
               <CollectionSchema
                 collectionID={selectedCollectionID}
-                immutable={currentRepository.is_immutable ?? false}
+                immutable={immutable}
               />
             )}
           </div>

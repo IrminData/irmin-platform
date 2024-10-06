@@ -8,8 +8,6 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepository } from '@/context/RepositoryContext';
 
-import { sortCommits } from '@/utils/sortCommits';
-
 import { Commit } from '@/types/core/Commit';
 import { GridRow } from '@/types/internal/ListProps';
 
@@ -32,18 +30,9 @@ export default function CommitList({
 
   const { viewRef } = useRepository();
 
-  const sortedCommits: Commit[] = useMemo(() => {
-    try {
-      return sortCommits(commits ?? []);
-    } catch (error) {
-      console.error(error);
-      return commits ?? [];
-    }
-  }, [commits]);
-
   const rows: GridRow[] = useMemo(
     () =>
-      sortedCommits?.map((commit, i) => ({
+      commits.map((commit, i) => ({
         columns: [
           <div
             key={`commit-${i}-message-and-author`}
@@ -75,7 +64,7 @@ export default function CommitList({
           },
         ],
       })) ?? [],
-    [sortedCommits, dict, irminAlert, locale, viewRef]
+    [dict, irminAlert, locale, viewRef, commits]
   );
 
   return (

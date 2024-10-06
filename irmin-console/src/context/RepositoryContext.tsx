@@ -19,6 +19,7 @@ import { usePopup } from '@/context/PopupContext';
 
 import { constructBaseUrl } from '@/utils/constructBaseUrl';
 import { createQueryString } from '@/utils/queryParams';
+import { sortCommits } from '@/utils/sortCommits';
 
 import { Branch } from '@/types/core/Branch';
 import { Collection, RepositorySchema } from '@/types/core/Collection';
@@ -35,6 +36,7 @@ import { useWorkspace } from './workspace';
 interface RepositoryContextProps {
   // Active repository context state
   currentRepository: Repository;
+  immutable: boolean;
   currentRef?: string;
   updateCurrentRef: (ref?: string, disableRedirect?: boolean) => string;
   viewRef: (ref: string) => void;
@@ -58,6 +60,7 @@ interface RepositoryContextProps {
   loadingCommits: boolean;
   commits: Commit[] | null;
   fetchCommits: () => Promise<void>;
+  fetchCommitsForRef: (ref: string) => Promise<Commit[] | null>;
   commitChanges: (message: string) => Promise<boolean>;
   revertChanges: () => Promise<boolean>;
   // Diff
@@ -281,7 +284,9 @@ export const RepositoryProvider = ({
     try {
       if (!repositorySlug) return;
       const res = await commitService.fetchCommits(repositorySlug, currentRef);
-      setCommits(res.data);
+      // Sort the commits by hash
+      const sortedCommits = sortCommits(res.data ?? []);
+      setCommits(sortedCommits);
     } catch (error) {
       console.error('RepositoryContext fetchCommits error', error);
       irminAlert(
@@ -292,6 +297,29 @@ export const RepositoryProvider = ({
       setLoadingCommits(false);
     }
   }, [repositorySlug, currentRef, commitService, irminAlert]);
+
+  /**
+   * Hook to fetch a sorted list of commits for a specific ref
+   */
+  const fetchCommitsForRef = useCallback(
+    async (ref: string) => {
+      try {
+        if (!repositorySlug) return null;
+        const res = await commitService.fetchCommits(repositorySlug, ref);
+        // Sort the commits by hash
+        const sortedCommits = sortCommits(res.data ?? []);
+        return sortedCommits;
+      } catch (error) {
+        console.error('RepositoryContext fetchCommitsForRef error', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to fetch commits for ref'
+        );
+      }
+      return null;
+    },
+    [repositorySlug, commitService, irminAlert]
+  );
 
   /**
    * Hook to fetch the diff between two refs (eg. branches, commits)
@@ -560,6 +588,21 @@ export const RepositoryProvider = ({
     }
   }, [searchParams, currentRef, defaultRef, updateCurrentRef]);
 
+  /**
+   * Whether the currently active repository and it's ref can be modified in any way
+   */
+  const immutable = useMemo(() => {
+    // If context data not set, return false
+    if (!currentRef || !currentRepository || !branches) return true;
+    // Check if the repository as a whole is immutable
+    if (currentRepository?.is_immutable) return true;
+    // If current ref is not a branch, return false
+    const branch = branches.find((b) => b.name === currentRef);
+    if (!branch) return true;
+    // Check if the branch is immutable
+    return branch.is_immutable;
+  }, [branches, currentRepository, currentRef]);
+
   // Return nothing until the repository is set
   if (!currentRepository) return <></>;
 
@@ -568,6 +611,7 @@ export const RepositoryProvider = ({
       value={{
         // Active repository context state
         currentRepository,
+        immutable,
         currentRef,
         updateCurrentRef,
         viewRef,
@@ -591,6 +635,7 @@ export const RepositoryProvider = ({
         loadingCommits,
         commits,
         fetchCommits,
+        fetchCommitsForRef,
         commitChanges,
         revertChanges,
         // Diff
@@ -607,7 +652,7 @@ export const RepositoryProvider = ({
 /**
  * Hook to use the repository context
  */
-export const useRepository = () => {
+export const useRepository = (): RepositoryContextProps => {
   const context = useContext(RepositoryContext);
   if (!context) {
     throw new Error('useRepository must be used within a RepositoryProvider');

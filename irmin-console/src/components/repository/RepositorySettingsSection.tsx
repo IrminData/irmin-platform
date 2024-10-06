@@ -32,8 +32,6 @@ const RepositorySettingsSection = () => {
   const handleUpdateRepository = useCallback(
     async (data: { name: string; description: string; owner: string }) => {
       try {
-        if (!currentRepository) return;
-
         // Check if the owner has changed
         if (data.owner && data.owner !== currentRepository.owner.id) {
           // Find the new owner object

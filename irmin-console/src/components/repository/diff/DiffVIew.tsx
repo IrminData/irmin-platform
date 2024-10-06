@@ -29,20 +29,26 @@ type OpenDiffContentItem = {
  *
  * @param props
  * @param props.diff - The diff object to display
- * @param props.hideHeader - Whether to hide the header
- * @param props.hideCommits - Whether to hide the commits
- * @param props.noDiffWarning - The warning to display when there are no changes
+ * @param props.hideHeader - (optional) Whether to hide the header
+ * @param props.hideCommits - (optional) Whether to hide the commits
+ * @param props.noDiffWarning - (optional) The warning to display when there are no changes
+ * @param props.baseRef - (optional) The base ref to compare - used for title
+ * @param props.compareRef - (optional) The compare ref to compare - used for title
  */
 const DiffView = ({
   diff,
   hideHeader,
   hideCommits,
   noDiffWarning,
+  baseRef,
+  compareRef,
 }: {
   diff: Diff;
   hideHeader?: boolean;
   hideCommits?: boolean;
   noDiffWarning?: JSX.Element;
+  baseRef?: string;
+  compareRef?: string;
 }) => {
   const { dict } = useLocale();
   const { fetchDiffContent } = useRepository();
@@ -101,11 +107,11 @@ const DiffView = ({
           <h3 className='text-sm text-gray-900 lg:text-base dark:text-gray-100'>
             {dict.repository.compare.comparing}{' '}
             <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
-              {diff.base_ref}
+              {baseRef ?? diff.base_ref}
             </span>{' '}
             {dict.repository.compare.and}{' '}
             <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
-              {diff.compare_ref}
+              {compareRef ?? diff.compare_ref}
             </span>
           </h3>
           <p className='text-xs text-gray-600 dark:text-gray-300'>

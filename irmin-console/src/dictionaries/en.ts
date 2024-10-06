@@ -277,6 +277,9 @@ const en = {
     createNewRepository: 'Create new repository',
     workflow: 'Workflow',
     viewWorkflow: 'View workflow',
+    immutableWarning: 'Immutable repository or branch',
+    immutableWarningDescription:
+      'Current repository or selected branch are immutable and cannot be edited.',
     branches: {
       currentBranch: 'Current',
       branch: 'Branch',
