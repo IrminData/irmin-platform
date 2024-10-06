@@ -42,9 +42,9 @@ const NormalList: React.FC<ListProps> = ({
             {headers.map((header, index) => (
               <div
                 key={`list-header-${index}`}
-                className={`col-span-1 border-b border-gray-200 bg-gray-50 p-2 py-4 dark:border-gray-800 dark:bg-irmin_black-800 ${!noActions && index === headers.length - 1 ? 'text-right' : ''}`}
+                className={`col-span-1 border-b border-gray-200 bg-gray-50 p-2 py-4 dark:border-gray-800 dark:bg-irmin_black-800 ${!noActions && index === headers.length - 1 ? 'pr-4 text-right' : ''}`}
               >
-                <div className='opacity-60'>{header}</div>
+                <div className='text-xs opacity-60'>{header}</div>
               </div>
             ))}
           </div>

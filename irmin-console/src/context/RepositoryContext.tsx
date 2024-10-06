@@ -70,6 +70,7 @@ interface RepositoryContextProps {
   fetchCommitsForRef: (ref: string) => Promise<Commit[] | null>;
   commitChanges: (message: string) => Promise<boolean>;
   revertChanges: () => Promise<boolean>;
+  fetchLastModification: (collection: string) => Promise<Commit | null>;
   // Diff
   fetchDiff: (base: string, compare: string) => Promise<Diff | null>;
   fetchDiffContent: (
@@ -441,6 +442,35 @@ export const RepositoryProvider = ({
   );
 
   /**
+   * Hook to fetch the last commit which modified a collection
+   *
+   * @param collection - The collection to fetch the last commit for
+   * @returns Commit - The last commit which modified the collection
+   */
+  const fetchLastModification = useCallback(
+    async (collection: string): Promise<Commit | null> => {
+      try {
+        if (!repositorySlug || !currentRef) return null;
+        const res = await commitService.fetchLastModification(
+          repositorySlug,
+          currentRef,
+          collection
+        );
+        return res.data;
+      } catch (error) {
+        console.error('RepositoryContext fetchLastModification error', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ??
+            'Failed to fetch last commit for collection'
+        );
+      }
+      return null;
+    },
+    [repositorySlug, commitService, currentRef, irminAlert]
+  );
+
+  /**
    * Hook to revert the uncommitted changes on the current branch
    *
    * @returns boolean - True if the revert was successful, false otherwise
@@ -712,6 +742,7 @@ export const RepositoryProvider = ({
         fetchCommitsForRef,
         commitChanges,
         revertChanges,
+        fetchLastModification,
         // Diff
         fetchDiff,
         fetchDiffContent,

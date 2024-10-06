@@ -156,11 +156,16 @@ export default function CollectionSchema({
     );
 
   return (
-    <div className='flex w-max min-w-72 flex-col overflow-scroll rounded-md border border-gray-100 bg-white text-xs dark:border-gray-800 dark:bg-irmin_black'>
-      <div className='bg-gray-100 px-4 py-2 text-sm font-semibold dark:bg-gray-800'>
-        {typeScpecificLabel} {`"${collection.name}"`}
+    <div className='mb-4 flex w-max min-w-72 flex-col overflow-scroll rounded-md bg-white text-xs dark:bg-irmin_black'>
+      <div
+        className={`border-b border-gray-200 bg-gray-50 p-2 py-4 dark:border-gray-800 dark:bg-irmin_black-800`}
+      >
+        <p className='text-xs opacity-60'>
+          {typeScpecificLabel} {`"${collection.name}"`}{' '}
+          <span className='lowercase'>{dict.repository.schema.schema}</span>
+        </p>
       </div>
-      <div className='p-2'>
+      <div className='p-2 pt-3'>
         {collection.type === 'table' && (
           <TableCollectionSchema
             schema={collection.schema as TableSchema}

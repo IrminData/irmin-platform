@@ -21,6 +21,8 @@ export type CollectionType = 'table' | 'folder' | 'file';
  * @typeParam repository - Slug of the repository of the Collection is part of
  * @typeParam type - Type of the Collection. Eg. 'table', 'folder', 'file'
  * @typeParam is_immutable -  If the Collection is_immutable, it cannot be changed or updated manually
+ * @typeParam last_modified - Last modified timestamp of the Collection
+ * @typeParam size - (optional) Size of the Collection in bytes
  * @typeParam workflow - (optional) ID of the workflow associated with the Collection
  */
 export interface Collection {
@@ -30,6 +32,8 @@ export interface Collection {
   repository: string;
   type: CollectionType;
   is_immutable: boolean;
+  last_modified: string;
+  size?: number;
   workflow?: string;
 }
 

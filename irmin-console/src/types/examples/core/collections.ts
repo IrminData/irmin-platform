@@ -1,3 +1,5 @@
+import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
+
 import { Collection, RepositorySchema } from '@/types/core/Collection';
 import { FileCollectionData, FileSchema } from '@/types/core/FileCollection';
 import {
@@ -19,6 +21,8 @@ export const collections = (): Collection[] => [
     formatted_name: 'excel-kpis.sales',
     type: 'table',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 1024,
   },
   {
     id: '1',
@@ -27,6 +31,8 @@ export const collections = (): Collection[] => [
     formatted_name: 'excel-kpis.expenses',
     type: 'table',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 2048,
   },
   {
     id: '2',
@@ -35,6 +41,8 @@ export const collections = (): Collection[] => [
     formatted_name: 'excel-kpis.profit_by_month',
     type: 'table',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 4096,
   },
   {
     id: '3',
@@ -44,6 +52,8 @@ export const collections = (): Collection[] => [
     type: 'table',
     workflow: '0',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 8192,
   },
   {
     id: '4',
@@ -53,6 +63,8 @@ export const collections = (): Collection[] => [
     type: 'table',
     workflow: '0',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 16384,
   },
   {
     id: '5',
@@ -62,6 +74,8 @@ export const collections = (): Collection[] => [
     type: 'table',
     workflow: '0',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 32768,
   },
   {
     id: '6',
@@ -71,6 +85,8 @@ export const collections = (): Collection[] => [
     type: 'table',
     workflow: '0',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 65536,
   },
   {
     id: '7',
@@ -80,6 +96,8 @@ export const collections = (): Collection[] => [
     type: 'table',
     workflow: '2',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 131072,
   },
   {
     id: '8',
@@ -89,6 +107,8 @@ export const collections = (): Collection[] => [
     type: 'table',
     workflow: '2',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 262144,
   },
   {
     id: '9',
@@ -98,6 +118,8 @@ export const collections = (): Collection[] => [
     type: 'table',
     workflow: '2',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 524288,
   },
   {
     id: '10',
@@ -107,6 +129,8 @@ export const collections = (): Collection[] => [
     type: 'table',
     workflow: '2',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 1048576,
   },
   {
     id: '11',
@@ -116,6 +140,8 @@ export const collections = (): Collection[] => [
     type: 'table',
     workflow: '2',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 2097152,
   },
   {
     id: '12',
@@ -125,6 +151,8 @@ export const collections = (): Collection[] => [
     type: 'table',
     workflow: '2',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 4194304,
   },
   {
     id: '13',
@@ -134,6 +162,8 @@ export const collections = (): Collection[] => [
     type: 'table',
     workflow: '4',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 8388608,
   },
   {
     id: '14',
@@ -143,6 +173,8 @@ export const collections = (): Collection[] => [
     type: 'table',
     workflow: '4',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 16777216,
   },
   {
     id: '15',
@@ -152,6 +184,8 @@ export const collections = (): Collection[] => [
     type: 'table',
     workflow: '4',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 33554432,
   },
   {
     id: '16',
@@ -160,6 +194,8 @@ export const collections = (): Collection[] => [
     formatted_name: 'management-data-from-excel.inventory',
     type: 'table',
     is_immutable: false,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 67108864,
   },
   {
     id: '17',
@@ -168,6 +204,8 @@ export const collections = (): Collection[] => [
     formatted_name: 'management-data-from-excel.employees',
     type: 'table',
     is_immutable: false,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 134217728,
   },
   {
     id: '18',
@@ -176,6 +214,8 @@ export const collections = (): Collection[] => [
     formatted_name: 'google-sheets-kpis.sales',
     type: 'table',
     is_immutable: false,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 268435456,
   },
   {
     id: '19',
@@ -184,6 +224,8 @@ export const collections = (): Collection[] => [
     formatted_name: 'google-sheets-kpis.inventory',
     type: 'table',
     is_immutable: false,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 536870912,
   },
   {
     id: '20',
@@ -192,6 +234,8 @@ export const collections = (): Collection[] => [
     formatted_name: 'google-sheets-kpis.expenses',
     type: 'table',
     is_immutable: false,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 1073741824,
   },
   {
     id: '21',
@@ -200,6 +244,8 @@ export const collections = (): Collection[] => [
     formatted_name: 'google-sheets-kpis.profit_by_month',
     type: 'table',
     is_immutable: false,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 2147483648,
   },
   {
     id: '22',
@@ -208,6 +254,8 @@ export const collections = (): Collection[] => [
     formatted_name: 'google-sheets-kpis.employees',
     type: 'table',
     is_immutable: false,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 4294967296,
   },
   {
     id: '23',
@@ -216,6 +264,8 @@ export const collections = (): Collection[] => [
     formatted_name: 'top-100-ad-clicking-users.top-100-ad-clicking-users',
     type: 'table',
     is_immutable: false,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 8589934592,
   },
   {
     id: '24',
@@ -225,6 +275,7 @@ export const collections = (): Collection[] => [
     type: 'folder',
     workflow: '2',
     is_immutable: true,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
   },
   {
     id: '25',
@@ -233,6 +284,8 @@ export const collections = (): Collection[] => [
     formatted_name: 'app-data.app-docker-file',
     type: 'file',
     is_immutable: false,
+    last_modified: getRandomDateTimeString(60, 'past', 1),
+    size: 17179869184,
   },
 ];
 

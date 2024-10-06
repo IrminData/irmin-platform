@@ -85,6 +85,12 @@ const en = {
     dangerZone: 'Danger zone',
     resetForm: 'Clear form',
     pleaseFixErrors: 'Please fix the errors above',
+    select: 'Select',
+    selected: 'Selected',
+    lastModified: 'Last modified',
+    size: 'Size',
+    close: 'Close',
+    timestamp: 'Timestamp',
     download: {
       download: 'Download',
       success: 'Your download has been successful!',
@@ -350,6 +356,7 @@ const en = {
       deleteCollection: 'Delete collection',
       noCollections: 'No collections found in this repository',
       deleteConfirm: 'Are you sure you want to delete this collection?',
+      lastModification: 'Last modification',
       upload: {
         targetRepository: 'Target repository',
         targetBranch: 'Target branch',

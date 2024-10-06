@@ -18,6 +18,13 @@ interface CommitsAPIResponse extends IrminAPIResponse {
 }
 
 /**
+ * Commit API response type
+ */
+interface CommitAPIResponse extends IrminAPIResponse {
+  data: Commit;
+}
+
+/**
  * Commit API service
  *
  * Responsible for all repository commit related API calls
@@ -121,6 +128,38 @@ class CommitService {
         'Revert Uncommitted Changes error'
       );
       if (isDevelopment) return fake() as IrminAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch the last commit which modified a collection in a repository
+   *
+   * @param repository - The slug of the repository the collection is in
+   * @param ref - The ref the collection is on (eg. branch name)
+   * @param collection - ID of the collection to fetch the last modification for
+   */
+  async fetchLastModification(
+    repository: string,
+    ref: string,
+    collection: string
+  ): Promise<CommitAPIResponse> {
+    if (isOfflineMode) return fake(exampleCommits[0]) as CommitAPIResponse;
+    try {
+      const urlParams = new URLSearchParams();
+      urlParams.append('repository', repository);
+      urlParams.append('ref', ref);
+      urlParams.append('collection', collection);
+      const response = (await this.irminCore.fetch(
+        `/v1/commits/last?${urlParams.toString()}`,
+        {
+          method: 'GET',
+        }
+      )) as CommitAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch Last Modification error');
+      if (isDevelopment) return fake(exampleCommits[0]) as CommitAPIResponse;
       throw error;
     }
   }

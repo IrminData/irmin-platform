@@ -10,7 +10,6 @@ import { TbDownload, TbFileDiff, TbUpload } from 'react-icons/tb';
 
 import CodeMirrorEditor from '@/components/bucket/editor/partials/CodeMirrorEditor';
 import Button from '@/components/common/button/Button';
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 import QueryResults from '@/components/query/QueryResults';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -21,8 +20,8 @@ import { useWorkspace } from '@/context/workspace';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
+import CollectionList from './collections/CollectionList';
 import CollectionSchema from './collections/CollectionSchema';
-import CollectionSelector from './collections/CollectionSelector';
 import UploadCollectionModalContent from './upload/UploadCollectionModalContent';
 
 /**
@@ -114,8 +113,8 @@ export default function RepositorySection() {
 
   return (
     <>
-      <div className='container relative mx-auto mb-4 flex max-w-6xl flex-col gap-4 px-2 md:px-4'>
-        <div className='flex w-full flex-wrap items-center justify-between gap-4'>
+      <div className='container relative mx-auto mb-4 flex max-w-6xl flex-col px-2 md:px-4'>
+        <div className='mb-4 flex w-full flex-wrap items-center justify-between gap-4'>
           <div className='inline max-w-full overflow-x-scroll whitespace-nowrap text-xs text-gray-600 lg:text-sm dark:text-gray-400'>
             <Link
               className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
@@ -132,7 +131,7 @@ export default function RepositorySection() {
             </Link>
             {currentRef && ` @ ${currentRef}`}
           </div>
-          <div className='flex items-center gap-2 md:gap-4'>
+          <div className='flex items-center gap-2'>
             {/** Button to navigate to uncommited changes of the current branch */}
             {!immutable && (
               <Button
@@ -167,24 +166,22 @@ export default function RepositorySection() {
             )}
           </div>
         </div>
-        {loadingCollections ? (
-          <LoadingSkeleton className='h-96' />
-        ) : (
-          <div className='flex w-full flex-col items-start gap-1 md:flex-row md:gap-2'>
-            <CollectionSelector
-              repository={currentRepository}
+        <div className='flex w-full flex-col items-start gap-2 md:flex-row md:gap-2'>
+          <div className='max-h-[400px] w-full overflow-scroll'>
+            <CollectionList
               collections={collections}
               selectedCollectionID={selectedCollectionID}
               setSelectedCollectionID={setSelectedCollectionID}
+              loading={loadingCollections}
             />
-            {selectedCollectionID && (
-              <CollectionSchema
-                collectionID={selectedCollectionID}
-                immutable={immutable}
-              />
-            )}
           </div>
-        )}
+          {selectedCollectionID && (
+            <CollectionSchema
+              collectionID={selectedCollectionID}
+              immutable={immutable}
+            />
+          )}
+        </div>
         <div className='w-full max-w-full overflow-hidden rounded-md border border-gray-100 bg-white dark:border-gray-800 dark:bg-irmin_black'>
           <div className='flex w-full flex-row items-center justify-between bg-gray-100 pl-4 dark:bg-gray-800'>
             <div className='py-2 text-sm font-semibold'>

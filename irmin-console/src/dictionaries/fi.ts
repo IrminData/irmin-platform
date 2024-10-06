@@ -85,6 +85,12 @@ const fi = {
     dangerZone: 'Vaaravyöhyke',
     resetForm: 'Tyhjennä lomake',
     pleaseFixErrors: 'Korjaa virheet ennen lähettämistä',
+    select: 'Valitse',
+    selected: 'Valittu',
+    lastModified: 'Viimeksi muokattu',
+    size: 'Koko',
+    close: 'Sulje',
+    timestamp: 'Aikaleima',
     download: {
       download: 'Lataa',
       success: 'Latauksesi onnistui!',
@@ -352,6 +358,7 @@ const fi = {
       deleteCollection: 'Poista kokoelma',
       noCollections: 'Ei kokoelmia tässä tietovarastossa',
       deleteConfirm: 'Oletko varma, että haluat poistaa tämän kokoelman?',
+      lastModification: 'Viimeisin muokkaus',
       upload: {
         targetRepository: 'Kohde tietovarasto',
         targetBranch: 'Kohde haara',
