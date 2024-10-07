@@ -10,6 +10,10 @@ const __dirname = path.dirname(__filename);
  * Next.js configuration
  */
 const nextConfig = {
+  output: 'standalone',
+  experimental: {
+    esmExternals: false,
+  },
   sassOptions: {
     includePaths: [path.join(__dirname, 'src', 'styles')],
     silenceDeprecations: ['legacy-js-api'],
