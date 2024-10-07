@@ -540,8 +540,6 @@ const en = {
   editor: {
     writeYourSQL: 'Write your SQL query here...',
     writeYourJS: 'Write your JavaScript script here...',
-    writeYourPython: 'Write your Python script here...',
-    writeYourPHP: 'Write your PHP script here...',
     newScriptTitle: 'Create a new script',
     newScriptSubtitle:
       'Start writing your script in your preferred language and save it as a workflow',
@@ -556,9 +554,6 @@ const en = {
     run: 'Run',
     rowsReturnedIn: 'rows returned in',
     exportTable: 'export table (.csv)',
-    rowsPerPage: 'Rows per page',
-    rangeSeparator: 'of',
-    selectAllRows: 'All',
     noResults: 'No results',
     search: 'Search in results',
   },

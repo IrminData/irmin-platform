@@ -33,16 +33,8 @@ export const irminFileTypes = [
     extension: 'js',
   },
   {
-    name: 'Python',
-    extension: 'py',
-  },
-  {
     name: 'SQL',
     extension: 'sql',
-  },
-  {
-    name: 'PHP',
-    extension: 'php',
   },
 ];
 export type IrminFileTypeWithDetails = (typeof irminFileTypes)[number];

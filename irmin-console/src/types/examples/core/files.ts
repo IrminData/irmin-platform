@@ -70,14 +70,4 @@ export const files: () => BucketFile[] = () => [
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
-  {
-    bucket: 'example-bucket',
-    name: 'hello-world.php',
-    path: '/hello-world.php',
-    type: 'php',
-    contents: exampleActionFiles.helloWorldPhp.trim(),
-    is_draft: false,
-    created_at: getRandomDateTimeString(500, 'past', 60),
-    updated_at: getRandomDateTimeString(50, 'past', 10),
-  },
 ];

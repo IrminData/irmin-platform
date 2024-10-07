@@ -544,8 +544,6 @@ const fi = {
   editor: {
     writeYourSQL: 'Kirjoita SQL-kyselysi tähän...',
     writeYourJS: 'Kirjoita JavaScript-koodisi tähän...',
-    writeYourPython: 'Kirjoita Python-koodisi tähän...',
-    writeYourPHP: 'Kirjoita PHP-koodisi tähän...',
     newScriptTitle: 'Luo uusi skripti',
     newScriptSubtitle:
       'Kirjoita skripti valitsemallasi kielellä ja tallenna se toimintoprosessiksi',
@@ -560,9 +558,6 @@ const fi = {
     run: 'Suorita',
     rowsReturnedIn: 'riviä palautettu ajassa',
     exportTable: 'vie taulukko (.csv)',
-    rowsPerPage: 'Rivejä per sivu',
-    rangeSeparator: '/',
-    selectAllRows: 'Kaikki',
     noResults: 'Ei tuloksia',
     search: 'Hae tuloksista',
   },

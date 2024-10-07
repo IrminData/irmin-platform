@@ -99,8 +99,6 @@ export const EditorContextProvider = ({
     const extension = filename.split('.').pop();
     if (extension === 'sql') return extension;
     if (extension === 'js') return extension;
-    if (extension === 'py') return extension;
-    if (extension === 'php') return extension;
     return 'sql';
   };
 

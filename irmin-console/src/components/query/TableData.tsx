@@ -13,7 +13,7 @@ import { downloadCSV } from '@/utils/csv';
 
 import { TableCollectionData } from '@/types/core/TableCollection';
 
-import AdvancedDatatable from './datatables/AdvancedDatatable';
+import AdvancedDatatable from './AdvancedDatatable';
 
 /**
  * Show the content of a table collection, eg. {@link TableCollectionData}.

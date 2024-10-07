@@ -3,8 +3,6 @@
 import dynamic from 'next/dynamic';
 
 import { javascript } from '@codemirror/lang-javascript';
-import { php } from '@codemirror/lang-php';
-import { python } from '@codemirror/lang-python';
 import { sql } from '@codemirror/lang-sql';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import { useTheme } from 'next-themes';
@@ -42,12 +40,13 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
   const getExtensions = () => {
     switch (language) {
-      case 'py':
-        return [python()];
       case 'js':
-        return [javascript()];
-      case 'php':
-        return [php({ plain: true })];
+        return [
+          javascript({
+            jsx: false,
+            typescript: false,
+          }),
+        ];
       case 'sql':
       default:
         return [sql()];
@@ -56,14 +55,10 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
   const getPlaceholder = () => {
     switch (language) {
-      case 'py':
-        return dict.editor.writeYourPython;
       case 'js':
         return dict.editor.writeYourJS;
       case 'sql':
         return dict.editor.writeYourSQL;
-      case 'php':
-        return dict.editor.writeYourPHP;
       default:
         return '';
     }

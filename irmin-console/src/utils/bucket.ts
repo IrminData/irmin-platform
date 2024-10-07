@@ -22,8 +22,8 @@ export const getCorrectNameWithExtension = (
   type: 'file' | 'folder',
   desiredExtension?: IrminFileType
 ): string => {
-  // Remove all existing extensions from the name, regex searching .sql, .js, .py, .php and (.*) and replacing with empty string
-  const nameWithoutExtensions = name.replace(/\.(sql|js|py|php)(.*)$/, '');
+  // Remove all existing extensions from the name, regex searching .sql, .js and (.*) and replacing with empty string
+  const nameWithoutExtensions = name.replace(/\.(sql|js)(.*)$/, '');
   // Replace all non-alphanumeric characters with underscores, except for dots
   const formattedName = nameWithoutExtensions
     .replace(/[^a-zA-Z0-9.]/g, '_')
@@ -35,8 +35,8 @@ export const getCorrectNameWithExtension = (
 };
 
 export const getNameWithoutExtension = (name: string): string => {
-  // Remove all existing extensions from the name, regex searching .sql, .js, .py, .php and (.*) and replacing with empty string
-  const nameWithoutExtensions = name.replace(/\.(sql|js|py|php)(.*)$/, '');
+  // Remove all existing extensions from the name, regex searching .sql, .js and (.*) and replacing with empty string
+  const nameWithoutExtensions = name.replace(/\.(sql|js)(.*)$/, '');
 
   return nameWithoutExtensions;
 };

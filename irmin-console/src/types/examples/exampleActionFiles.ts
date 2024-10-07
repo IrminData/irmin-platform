@@ -75,9 +75,5 @@ const exampleActionFiles = {
         }
     })();
     `,
-  helloWorldPhp: `
-        $message = "Hello, world!";
-        echo $message;
-    `,
 };
 export default exampleActionFiles;
