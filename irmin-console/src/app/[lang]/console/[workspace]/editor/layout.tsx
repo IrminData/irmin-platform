@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 
 import { Locale } from '@/dictionaries';
 
-import EditorLayoutWrapper from '@/components/bucket/editor/EditorLayoutWrapper';
+import EditorLayoutWrapper from '@/components/bucket/EditorLayoutWrapper';
 
 /**
  * URL parameters for the Editor layout

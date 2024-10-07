@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { FaFolderTree } from 'react-icons/fa6';
 import { FiChevronDown, FiChevronRight, FiFolder } from 'react-icons/fi';
@@ -51,16 +51,26 @@ const PathSelector = ({
   );
 
   // Transform the bucket into a file navigator item
-  const items = bucket ? transformBucketToFileNavItem(bucket) : [];
+  const items = useMemo(
+    () => (bucket ? transformBucketToFileNavItem(bucket) : []),
+    [bucket]
+  );
 
-  const toggleFolder = (item: FileNavigatorItem) => {
+  /**
+   * Toggle a folder in the file navigator
+   *
+   * Will open or close the folder in the navigator
+   *
+   * @param item - The item to toggle
+   */
+  const toggleFolder = useCallback((item: FileNavigatorItem) => {
     if (item.current?.name) {
       setOpenFolders((prev) => ({
         ...prev,
         [item.current?.name ?? '']: !prev[item.current?.name ?? ''],
       }));
     }
-  };
+  }, []);
 
   /**
    * Handle click on a folder or file in the file navigator
@@ -69,75 +79,83 @@ const PathSelector = ({
    *
    * @param item - The item clicked in the file navigator, empty if root
    */
-  const handleItemClick = (item?: FileNavigatorItem) => {
-    // Handle root click
-    if (!item) {
-      setSelectedPath('');
-      const newPath = itemName ? `/${itemName}` : '/';
+  const handleItemClick = useCallback(
+    (item?: FileNavigatorItem) => {
+      // Handle root click
+      if (!item) {
+        setSelectedPath('');
+        const newPath = itemName ? `/${itemName}` : '/';
+        onSelectPath(newPath);
+        return;
+      }
+      // Handle folder click
+      if (!item.current) return;
+      if (item.type === 'folder') {
+        toggleFolder(item);
+      }
+      setSelectedPath(item.current.path);
+      // Update the parent component with the new path
+      const newPath = item.current.path + (itemName ? `/${itemName}` : '');
       onSelectPath(newPath);
-      return;
-    }
-    // Handle folder click
-    if (!item.current) return;
-    if (item.type === 'folder') {
-      toggleFolder(item);
-    }
-    setSelectedPath(item.current.path);
-    // Update the parent component with the new path
-    const newPath = item.current.path + (itemName ? `/${itemName}` : '');
-    onSelectPath(newPath);
-  };
+    },
+    [itemName, onSelectPath, toggleFolder]
+  );
 
   /**
    * Recursive function that will render all items in the file navigator
    * @param items The items to render
    */
-  const renderItems = (items: FileNavigatorItem[]) =>
-    items.map((item) => {
-      if (
-        !item.current ||
-        item.type !== 'folder' ||
-        item.current.path === originalItemPath ||
-        item.original?.path === originalItemPath
-      )
-        return;
-      return (
-        <div key={item.current.path} className='my-1'>
-          <div
-            className={`flex items-center justify-normal rounded-md p-1 text-sm ${item.current.path === selectedPath ? 'bg-gray-200 dark:bg-gray-800' : ''}`}
-            onClick={() => handleItemClick(item)}
-          >
-            {openFolders[item.current.name] ? (
-              <FiChevronDown
-                className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
-                aria-label={`Close folder ${item.current.name} in the file navigator`}
-              />
-            ) : (
-              <FiChevronRight
-                className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
-                aria-label={`Open folder ${item.current.name} in the file navigator`}
-              />
-            )}
-            <span className='ml-2'>
-              <FiFolder />
-            </span>
-            <span
-              className='ml-2 cursor-pointer hover:underline'
-              aria-label={`Open ${item.current.name} ${item.type}`}
+  const renderItems = useCallback(
+    (items: FileNavigatorItem[]) =>
+      items.map((item) => {
+        if (
+          !item.current ||
+          item.type !== 'folder' ||
+          item.current.path === originalItemPath ||
+          item.original?.path === originalItemPath
+        )
+          return;
+        return (
+          <div key={item.current.path} className='my-1'>
+            <div
+              className={`flex items-center justify-normal rounded-md p-1 text-sm ${item.current.path === selectedPath ? 'bg-gray-200 dark:bg-gray-800' : ''}`}
+              onClick={() => handleItemClick(item)}
             >
-              {item.current.name}
-            </span>
+              {openFolders[item.current.name] ? (
+                <FiChevronDown
+                  className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
+                  aria-label={`Close folder ${item.current.name} in the file navigator`}
+                />
+              ) : (
+                <FiChevronRight
+                  className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
+                  aria-label={`Open folder ${item.current.name} in the file navigator`}
+                />
+              )}
+              <span className='ml-2'>
+                <FiFolder />
+              </span>
+              <span
+                className='ml-2 cursor-pointer hover:underline'
+                aria-label={`Open ${item.current.name} ${item.type}`}
+              >
+                {item.current.name}
+              </span>
+            </div>
+            {openFolders[item.current.name] && (
+              <div className='pl-6'>{renderItems(item.children ?? [])}</div>
+            )}
           </div>
-          {openFolders[item.current.name] && (
-            <div className='pl-6'>{renderItems(item.children ?? [])}</div>
-          )}
-        </div>
-      );
-    });
+        );
+      }),
+    [selectedPath, originalItemPath, openFolders, handleItemClick]
+  );
 
   // Check if the root is selected
-  const rootSelected =
-    selectedPath === '' || selectedPath === '/' || selectedPath === null;
+  const rootSelected = useMemo(
+    () => selectedPath === '' || selectedPath === '/' || selectedPath === null,
+    [selectedPath]
+  );
 
   return (
     <div

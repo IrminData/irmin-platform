@@ -1,9 +1,5 @@
 'use client';
 
-import React from 'react';
-
-import ReactSelect from 'react-select';
-
 import { IoAdd, IoClose, IoSave } from 'react-icons/io5';
 
 import Button from '@/components/common/button/Button';
@@ -11,23 +7,24 @@ import Button from '@/components/common/button/Button';
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
 
+import { getNameFromPath } from '@/utils/bucket';
+
 import { irminFileTypes } from '@/types/core/Bucket';
 
-import CodeEditor from './CodeEditor';
 import NewTabContent from './NewTabContent';
+import ResizableCodeEditor from './ResizableCodeEditor';
 
 /**
  * File editor UI with tabs
  * Shows a tabbed editor with multiple tabs
- * Uses {@link CodeEditor} for normal editor
+ * Uses {@link ResizableCodeEditor} to render the editor
  * Uses {@link NewTabContent} when starting a new tab
  */
 const EditorWithTabs = () => {
   const {
     openFileTabs,
     activeTab,
-    currentTabContent,
-    setCurrentTabContent,
+    updateCurrentTabContent,
     setEditorHeight,
     setActiveTab,
     saveActiveTabAsFile,
@@ -55,10 +52,10 @@ const EditorWithTabs = () => {
               >
                 <button
                   type='button'
-                  className={`scrollbar-hide min-w-20 max-w-32 overflow-x-scroll whitespace-nowrap px-2 py-1 text-xs hover:no-underline`}
+                  className={`scrollbar-hide min-w-20 max-w-32 overflow-x-scroll whitespace-nowrap px-2 py-1 text-sm hover:no-underline`}
                   onClick={() => setActiveTab(index)}
                 >
-                  {tab ?? 'Untitled'}
+                  {tab ? getNameFromPath(tab) : 'Untitled'}
                 </button>
                 <button
                   type='button'
@@ -79,24 +76,22 @@ const EditorWithTabs = () => {
             </button>
           </div>
           <div className='flex flex-row items-center justify-end gap-2 py-1'>
-            <ReactSelect
+            <select
               aria-label='Select the type of the file'
-              isDisabled={!currentEditor}
-              value={
-                irminFileTypes.find(
-                  (a) => a.extension === currentEditor?.language
-                ) ?? irminFileTypes[0]
-              }
-              onChange={(newValue) => {
-                if (!newValue) return;
-                changeLanguage(newValue.extension);
+              disabled={!currentEditor}
+              value={currentEditor?.language ?? irminFileTypes[0].extension}
+              onChange={(event) => {
+                const newValue = event.target.value;
+                changeLanguage(newValue);
               }}
-              options={irminFileTypes}
-              getOptionLabel={(option) => option.name}
-              getOptionValue={(option) => option.extension}
-              className='react-select-container'
-              classNamePrefix='react-select'
-            />
+              className='py-1 pl-2 pr-8 text-xs'
+            >
+              {irminFileTypes.map((fileType) => (
+                <option key={fileType.extension} value={fileType.extension}>
+                  {fileType.name}
+                </option>
+              ))}
+            </select>
             <Button
               disabled={!enableSaveButton}
               size='sm'
@@ -111,10 +106,15 @@ const EditorWithTabs = () => {
           </div>
         </div>
       )}
+      {openFileTabs.length > 0 && currentEditor && (
+        <div className='scrollbar-hide w-full overflow-x-scroll border-b border-gray-200 px-2 py-1 dark:border-irmin_black'>
+          <p className='text-xs opacity-60'>{currentEditor.path}</p>
+        </div>
+      )}
       {openFileTabs.length > 0 && currentEditor ? (
-        <CodeEditor
-          content={currentTabContent}
-          updateTabContent={(value) => setCurrentTabContent(value)}
+        <ResizableCodeEditor
+          content={currentEditor.contents}
+          updateTabContent={(value) => updateCurrentTabContent(value)}
           language={currentEditor.language}
           editorHeight={editorHeight}
           setEditorHeight={setEditorHeight}

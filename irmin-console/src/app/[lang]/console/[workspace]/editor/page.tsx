@@ -1,4 +1,4 @@
-import EditorSection from '@/components/bucket/editor/EditorSection';
+import EditorSection from '@/components/bucket/EditorSection';
 
 /**
  * Editor page, used to edit files in the Workspace's Bucket

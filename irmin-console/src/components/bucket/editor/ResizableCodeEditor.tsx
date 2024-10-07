@@ -7,9 +7,9 @@ import { IrminFileType } from '@/types/core/Bucket';
 import CodeMirrorEditor from './CodeMirrorEditor';
 
 /**
- * Code editor component for the Editor and Query tools
+ * Resizable Code editor component for the Editor and Query tools
  *
- * Used to edit files in the Workspace's Bucket and run Irmin SQL queries on workspace data.
+ * Uses {@link CodeMirrorEditor} for the editor
  *
  * @param props - The props for the component
  * @param props.content - The content of the editor
@@ -17,10 +17,8 @@ import CodeMirrorEditor from './CodeMirrorEditor';
  * @param props.language - The language of the editor
  * @param props.editorHeight - The height of the editor
  * @param props.setEditorHeight - The function to set the height of the editor
- *
- * @returns The CodeEditor component
  */
-const CodeEditor = ({
+const ResizableCodeEditor = ({
   content,
   updateTabContent,
   language,
@@ -48,11 +46,14 @@ const CodeEditor = ({
     document.removeEventListener('mouseup', handleMouseUp);
   }, [handleMouseMove]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    e.preventDefault();
-  };
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      e.preventDefault();
+    },
+    [handleMouseMove, handleMouseUp]
+  );
 
   return (
     <div
@@ -75,4 +76,4 @@ const CodeEditor = ({
   );
 };
 
-export default CodeEditor;
+export default ResizableCodeEditor;

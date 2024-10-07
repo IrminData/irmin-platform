@@ -8,7 +8,7 @@ import { useSearchParams } from 'next/navigation';
 import { AiOutlinePlayCircle } from 'react-icons/ai';
 import { TbDownload, TbFileDiff, TbUpload } from 'react-icons/tb';
 
-import CodeMirrorEditor from '@/components/bucket/editor/partials/CodeMirrorEditor';
+import CodeMirrorEditor from '@/components/bucket/editor/CodeMirrorEditor';
 import Button from '@/components/common/button/Button';
 import QueryResults from '@/components/query/QueryResults';
 
@@ -204,7 +204,6 @@ export default function RepositorySection() {
             content={queryField}
             editorHeight='100px'
             updateEditorContent={updateQuery}
-            placeholder={dict.editor.writeYourSQL}
             className='h-full w-full text-sm outline-none md:text-sm lg:text-base'
           />
         </div>

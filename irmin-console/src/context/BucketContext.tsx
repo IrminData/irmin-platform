@@ -46,7 +46,7 @@ interface BucketContextProps {
   loading: boolean;
   openNewTab: () => void;
   fetchBucket: () => void;
-  updateFileContents: (file: BucketFile) => void;
+  saveFileContents: (file: BucketFile) => void;
   createFile: (file: FileNavigatorItem) => void;
   updateFile: (file: FileNavigatorItem) => void;
   deleteFile: (file: FileNavigatorItem) => void;
@@ -94,21 +94,15 @@ export const BucketProvider = ({
   const { bucketService } = useMemo(() => new IrminCore(locale), [locale]);
 
   // Ref to check which workspace the files were fetched for
-  const filesFetchedForRef = useRef<string | null>(null);
+  const filesFetchedForRef = useRef<string | undefined>();
 
   /*
    * Fetch files and folders from the current workspace bucket
    */
   const fetchBucket = useCallback(async () => {
-    // Don't fetch twice for the same workspace
-    if (currentWorkspace === filesFetchedForRef.current) {
-      setLoading(false);
-      return;
-    }
-    filesFetchedForRef.current = currentWorkspace;
     setLoading(true);
+    // Fetch bucket data
     try {
-      // Fetch bucket data
       const res = await fetchBucketProxy({
         locale: locale,
         token: token ?? '',
@@ -121,7 +115,7 @@ export const BucketProvider = ({
       setItems(bucketProxyData.fileNavItems);
     } catch (error) {
       console.error('BucketContext fetchBucket error', error);
-      filesFetchedForRef.current = null;
+      filesFetchedForRef.current = undefined;
       irminAlert(
         'error',
         (error as Error)?.message ?? 'Failed to fetch bucket'
@@ -130,16 +124,6 @@ export const BucketProvider = ({
       setLoading(false);
     }
   }, [currentWorkspace, locale, token, setCurrentBucket, setItems, irminAlert]);
-
-  /**
-   * Hook to fetch the bucket when the workspace changes
-   */
-  useEffect(() => {
-    // Fetch items if workspace changes
-    if (currentWorkspace !== filesFetchedForRef.current) {
-      fetchBucket();
-    }
-  }, [currentWorkspace, fetchBucket]);
 
   /**
    * Update the context state with the bucket data
@@ -155,8 +139,6 @@ export const BucketProvider = ({
   /**
    * Construct the updated bucket for a folder
    *
-   * @remarks
-   *
    * When folder is moved or renamed, the path of the folder and its children need to be updated.
    * This function constructs the updated bucket with the new paths.
    *
@@ -165,7 +147,7 @@ export const BucketProvider = ({
    */
   const constructUpdatedBucketForFolder = useCallback(
     (folder: FileNavigatorItem) => {
-      if (!currentBucket) throw new Error('Bucket not found');
+      if (!currentBucket) return;
       // Construct the updated bucket
       const updatedBucket = { ...currentBucket };
       updatedBucket.folders = updatedBucket.folders?.map((f) => {
@@ -205,7 +187,7 @@ export const BucketProvider = ({
    * Does not update the bucket or the item list, only the editor tabs
    */
   const openNewTab = useCallback(() => {
-    if (!currentBucket) throw new Error('Bucket not found');
+    if (!currentBucket) return;
     // Create a new tab with a random file name and switch to it
     const prevOpenFileTabs = [...openFileTabs];
     setOpenFileTabs([
@@ -231,21 +213,16 @@ export const BucketProvider = ({
   }, [currentBucket, openFileTabs]);
 
   /**
-   * Update file contents, documentation etc.
-   *
-   * @remarks
-   *
-   * When user updates the file contents, documentation etc in the editor,
-   * this function is called to update the file in the bucket.
+   * Update file contents in the bucket
    *
    * This function updates the file in the context state and the bucket.
    *
    * @param file - The file to update
    */
-  const updateFileContents = useCallback(
+  const saveFileContents = useCallback(
     async (file: BucketFile) => {
       try {
-        if (!currentBucket) throw new Error('Bucket not found');
+        if (!currentBucket) return;
         // Update the context state
         const updatedBucket = { ...currentBucket };
         updatedBucket.files = updatedBucket.files.map((f) =>
@@ -284,7 +261,7 @@ export const BucketProvider = ({
   const createFile = useCallback(
     async (file: FileNavigatorItem) => {
       try {
-        if (!currentBucket) throw new Error('Bucket not found');
+        if (!currentBucket) return;
         // Update the context state
         const updatedBucket = { ...currentBucket };
         updatedBucket.files.push(file.current as BucketFile);
@@ -318,7 +295,7 @@ export const BucketProvider = ({
   const updateFile = useCallback(
     async (file: FileNavigatorItem) => {
       try {
-        if (!currentBucket) throw new Error('Bucket not found');
+        if (!currentBucket) return;
         // Update the context state
         const updatedBucket = { ...currentBucket };
         updatedBucket.files = updatedBucket.files.map((f) =>
@@ -368,7 +345,7 @@ export const BucketProvider = ({
   const deleteFile = useCallback(
     async (file: FileNavigatorItem) => {
       try {
-        if (!currentBucket) throw new Error('Bucket not found');
+        if (!currentBucket) return;
         // Update the context state
         const updatedBucket = { ...currentBucket };
         updatedBucket.files = updatedBucket.files.filter(
@@ -415,7 +392,7 @@ export const BucketProvider = ({
   const createFolder = useCallback(
     async (folder: FileNavigatorItem) => {
       try {
-        if (!currentBucket) throw new Error('Bucket not found');
+        if (!currentBucket) return;
         // Update the context state
         const updatedBucket = { ...currentBucket };
         updatedBucket.folders.push(folder.current as BucketFolder);
@@ -503,7 +480,7 @@ export const BucketProvider = ({
   const deleteFolder = useCallback(
     async (folder: FileNavigatorItem) => {
       try {
-        if (!currentBucket) throw new Error('Bucket not found');
+        if (!currentBucket) return;
         // Remove the folder and its children from the context state
         const updatedBucket = { ...currentBucket };
         updatedBucket.folders = updatedBucket.folders.filter(
@@ -544,6 +521,17 @@ export const BucketProvider = ({
     ]
   );
 
+  /**
+   * Fetch the bucket when the workspace changes
+   */
+  useEffect(() => {
+    // Don't fetch twice for the same workspace
+    if (currentWorkspace === filesFetchedForRef.current) return;
+    filesFetchedForRef.current = currentWorkspace;
+    // Fetch the bucket
+    fetchBucket();
+  }, [currentWorkspace, fetchBucket]);
+
   return (
     <BucketContext.Provider
       value={{
@@ -552,7 +540,7 @@ export const BucketProvider = ({
         loading,
         openNewTab,
         fetchBucket,
-        updateFileContents,
+        saveFileContents,
         createFile,
         updateFile,
         deleteFile,

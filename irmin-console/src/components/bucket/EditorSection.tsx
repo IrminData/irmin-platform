@@ -1,12 +1,13 @@
 'use client';
 
-import EditorWithTabs from '@/components/bucket/editor/partials/EditorWithTabs';
 import QueryResults from '@/components/query/QueryResults';
 
 import { useBucket } from '@/context/BucketContext';
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useQuery } from '@/context/QueryContext';
+
+import EditorWithTabs from './editor/EditorWithTabs';
 
 /**
  * Editor Section, provides UI for the Editor Page.

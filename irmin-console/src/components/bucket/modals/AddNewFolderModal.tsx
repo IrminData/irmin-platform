@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { Controller, useForm } from 'react-hook-form';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
-import PathSelector from '@/components/bucket/navigator/PathSelector';
 import Button from '@/components/common/button/Button';
+import Input from '@/components/common/form/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -20,14 +22,13 @@ import {
 import { Bucket, BucketFolder } from '@/types/core/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
-/**
- * Content for the "Add new folder" modal
- * Allows the user to create a new folder, selecting name and path for it
- *
- * @param options - The options for the item to create
- * @param options.bucket - The bucket the item is in
- * @param options.createFolder - Function to create a new folder
- */
+import PathSelector from '../PathSelector';
+
+type FormData = {
+  name: string;
+  path: string;
+};
+
 export default function AddNewFolderModal({
   bucket,
   createFolder,
@@ -41,152 +42,195 @@ export default function AddNewFolderModal({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPathSelector, setShowPathSelector] = useState(true);
-  const [newItemData, setNewItemData] = useState({
-    name: '',
-    path: '',
+
+  const creatingNewFolderRef = useRef(false);
+
+  const {
+    handleSubmit,
+    control,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<FormData>({
+    defaultValues: {
+      name: '',
+      path: '',
+    },
   });
 
-  const nameInputRef = React.useRef<HTMLInputElement>(null);
-  const pathInputRef = React.useRef<HTMLInputElement>(null);
+  const name = watch('name');
+  const path = watch('path');
 
   /**
-   * Process the change in the inputs and update the state
+   * Update the path when the name changes
    */
-  const processChange = () => {
-    // Get the current values
-    const nameInputValue = nameInputRef.current?.value ?? newItemData.name;
-    const pathInputValue = pathInputRef.current?.value ?? newItemData.path;
-    // Check that the values are not null
-    if (!nameInputValue) {
-      pathInputRef.current!.value = '';
-      return;
-    }
-    // Clean the name and add the extension
-    const withExtension = getCorrectNameWithExtension(nameInputValue, 'folder');
-    // Get the updated path
-    const newPath = getCorrectPath(pathInputValue, withExtension);
-    // Set the correct input values
-    nameInputRef.current!.value = getNameWithoutExtension(withExtension);
-    pathInputRef.current!.value = newPath;
-    // Update the state with the new info
-    setNewItemData({
-      ...newItemData,
-      name: withExtension,
-      path: newPath,
+  const updatePath = useCallback(() => {
+    const nameWithExtension = getCorrectNameWithExtension(name, 'folder');
+    const newPath = getCorrectPath(path, nameWithExtension);
+
+    // Update the name without extension and path
+    setValue('name', getNameWithoutExtension(nameWithExtension), {
+      shouldValidate: true,
+      shouldDirty: true,
     });
-  };
+    setValue('path', newPath, { shouldValidate: true, shouldDirty: true });
+  }, [name, path, setValue]);
+
+  // Update path whenever the name changes
+  useEffect(() => {
+    updatePath();
+  }, [name, updatePath]);
 
   /**
    * Create the folder based on the values provided by the user
    */
-  const continueCreation = () => {
-    if (loading) return;
-    try {
-      setError('');
-      setLoading(true);
-      // Make sure that can be created
-      const canCreate = itemCanBeCreated(
-        newItemData.path,
-        newItemData.name,
-        'folder',
-        bucket,
-        dict
-      );
-      if (!canCreate.canCreate) {
-        throw new Error(canCreate.reason);
+  const onSubmit = useCallback(
+    async (data: FormData) => {
+      if (creatingNewFolderRef.current) return;
+      creatingNewFolderRef.current = true;
+      try {
+        setError('');
+        setLoading(true);
+
+        const nameWithExtension = getCorrectNameWithExtension(
+          data.name,
+          'folder'
+        );
+        const newPath = data.path;
+
+        // Ensure the item can be created
+        const canCreate = itemCanBeCreated(
+          newPath,
+          nameWithExtension,
+          'folder',
+          bucket,
+          dict
+        );
+        if (!canCreate.canCreate) {
+          throw new Error(canCreate.reason);
+        }
+        // Create the new folder
+        const newFolder = {
+          bucket: bucket?.slug ?? '',
+          name: nameWithExtension,
+          path: newPath,
+        } as BucketFolder;
+        createFolder({
+          original: null,
+          current: newFolder,
+          children: [],
+          type: 'folder',
+        });
+        // Close the modal after creation
+        irminModal.close();
+      } catch (error) {
+        console.error(error);
+        setError((error as Error).message);
+      } finally {
+        setLoading(false);
+        creatingNewFolderRef.current = false;
       }
-      // Create the new folder
-      const newFolder = {
-        bucket: bucket?.slug ?? '',
-        name: newItemData.name,
-        path: newItemData.path,
-      } as BucketFolder;
-      createFolder({
-        original: null,
-        current: newFolder,
-        children: [],
-        type: 'folder',
-      });
-      // Close the modal after creation
-      irminModal.close();
-    } catch (error) {
-      console.error(error);
-      setError((error as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [bucket, createFolder, dict, irminModal]
+  );
 
   return (
-    <div>
-      <div className='pb-3'>
-        <label className='text-xs'>{dict.fileNavigator.newFolderName}</label>
-        <input
-          ref={nameInputRef}
-          disabled={loading}
-          type='text'
-          className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
-          placeholder='my_folder_name'
-          defaultValue={getNameWithoutExtension(
-            getCorrectNameWithExtension(newItemData.name, 'folder')
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className='flex flex-col gap-4 pb-6'
+      id='add-new-folder-modal'
+    >
+      <div>
+        <label className='mb-2 block text-xs text-gray-600 dark:text-gray-400'>
+          {dict.fileNavigator.newFolderName}
+        </label>
+        <Controller
+          name='name'
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <Input
+              size='sm'
+              variant='outline'
+              colorScheme='gray'
+              className='h-11 w-full'
+              type='text'
+              disabled={loading}
+              {...field}
+            />
           )}
-          onChange={() => processChange()}
         />
+        {errors.name && (
+          <p className='mt-1 text-xs text-red-600'>{errors.name.message}</p>
+        )}
       </div>
-      <div className='pb-3'>
-        <label className='text-xs'>{dict.fileNavigator.newFolderPath}</label>
-        <div className='flex'>
-          <input
-            ref={pathInputRef}
-            disabled={true}
-            type='text'
-            className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
-            value={newItemData.path}
-          />
-          <Button
-            variant='icon'
-            colorScheme='light'
-            size='sm'
-            className='m-0 ml-2 rounded-lg p-0 pl-2'
-            ariaLabel='Toggle the path selector'
-            onClick={() => setShowPathSelector(!showPathSelector)}
-            disabled={loading}
-            icon={
-              showPathSelector ? (
-                <IoChevronUp className='inline-block' size={24} />
-              ) : (
-                <IoChevronDown className='inline-block' size={24} />
-              )
-            }
-          />
-        </div>
+      <div>
+        <label className='mb-2 block text-xs text-gray-600 dark:text-gray-400'>
+          {dict.fileNavigator.newFolderPath}
+        </label>
+        <Controller
+          name='path'
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <div className='flex items-center'>
+              <Input
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                className='h-11 w-full'
+                type='text'
+                disabled
+                {...field}
+              />
+              <Button
+                variant='icon'
+                colorScheme='light'
+                size='sm'
+                className='m-0 ml-2 h-11 rounded-lg p-0 pl-2'
+                ariaLabel='Toggle the path selector'
+                onClick={() => setShowPathSelector(!showPathSelector)}
+                disabled={loading}
+                icon={
+                  showPathSelector ? (
+                    <IoChevronUp className='inline-block' size={24} />
+                  ) : (
+                    <IoChevronDown className='inline-block' size={24} />
+                  )
+                }
+              />
+            </div>
+          )}
+        />
+        {errors.path && (
+          <p className='mt-1 text-xs text-red-600'>{errors.path.message}</p>
+        )}
       </div>
       {showPathSelector && (
         <PathSelector
           bucket={bucket}
-          itemName={newItemData.name}
+          itemName={getCorrectNameWithExtension(name, 'folder')}
           originalItemPath={null}
-          currentSelected={newItemData.path}
+          currentSelected={path}
           onSelectPath={(selectedPath: string) => {
-            setNewItemData({ ...newItemData, path: selectedPath });
+            setValue('path', selectedPath, {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
           }}
         />
       )}
-      {error && error.length > 0 && (
-        <div className='py-2 text-red-800'>{error}</div>
-      )}
-      <div className='pb-3'>
-        <Button
-          variant='solid'
-          colorScheme='primary'
-          size='sm'
-          className='w-full'
-          onClick={continueCreation}
-          disabled={loading}
-        >
-          {loading ? dict.misc.loading : dict.fileNavigator.createFolder}
-        </Button>
-      </div>
-    </div>
+      {error && <div className='text-red-800'>{error}</div>}
+      <Button
+        variant='solid'
+        colorScheme='primary'
+        size='sm'
+        className='w-full'
+        type='submit'
+        disabled={loading}
+      >
+        {loading ? dict.misc.loading : dict.fileNavigator.createFolder}
+      </Button>
+    </form>
   );
 }

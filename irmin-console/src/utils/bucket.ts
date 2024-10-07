@@ -22,8 +22,7 @@ export const getCorrectNameWithExtension = (
   type: 'file' | 'folder',
   desiredExtension?: IrminFileType
 ): string => {
-  // Remove all existing extensions from the name, regex searching .sql, .js and (.*) and replacing with empty string
-  const nameWithoutExtensions = name.replace(/\.(sql|js)(.*)$/, '');
+  const nameWithoutExtensions = getNameWithoutExtension(name);
   // Replace all non-alphanumeric characters with underscores, except for dots
   const formattedName = nameWithoutExtensions
     .replace(/[^a-zA-Z0-9.]/g, '_')
@@ -34,11 +33,28 @@ export const getCorrectNameWithExtension = (
   return `${formattedName}.${desiredExtension ?? 'sql'}`;
 };
 
+/**
+ * Get the name of the file without the extension
+ *
+ * @param name - The name of the file
+ * @returns The name of the file without the extension
+ */
 export const getNameWithoutExtension = (name: string): string => {
   // Remove all existing extensions from the name, regex searching .sql, .js and (.*) and replacing with empty string
   const nameWithoutExtensions = name.replace(/\.(sql|js)(.*)$/, '');
-
   return nameWithoutExtensions;
+};
+
+/**
+ * Get the name of the file from the path
+ *
+ * @param path - The path of the file
+ * @returns The name of the file
+ */
+export const getNameFromPath = (path: string): string => {
+  // Get the last part of the path
+  const name = path.split('/').pop();
+  return name || '';
 };
 
 /**
@@ -197,4 +213,48 @@ const getParentPath = (path: string, name?: string): string => {
   if (!name || pathSegments[pathSegments.length - 1] === name)
     pathSegments.pop();
   return '/' + pathSegments.join('/');
+};
+
+/**
+ * Utility function to get the language from a filename
+ * @param filename - Filename to get the language from
+ */
+export const getLanguageFromFilename = (filename: string): IrminFileType => {
+  const extension = filename.split('.').pop();
+  if (extension === 'sql' || extension === 'js')
+    return extension as IrminFileType;
+  return 'sql';
+};
+
+/**
+ * Utility function to find a file by path in the bucket
+ * @param path - Path of the file to find
+ * @param bucket - Bucket to search in
+ * @returns The file if found, undefined otherwise
+ */
+export const getFileByPath = (
+  path: string,
+  bucket: Bucket | null
+): BucketFile | undefined => {
+  if (!bucket) return;
+  return bucket.files.find((file) => file.path === path);
+};
+
+/**
+ * Recursive function to get an item by path in the file navigator
+ * @param path - Path of the item to find
+ * @param items - Items to search in
+ * @returns The item if found, undefined otherwise
+ */
+export const getItemByPath = (
+  path: string,
+  items: FileNavigatorItem[]
+): FileNavigatorItem | undefined => {
+  for (const item of items) {
+    if (item.current?.path === path) return item;
+    if (item.type === 'folder' && item.children) {
+      const found = getItemByPath(path, item.children);
+      if (found) return found;
+    }
+  }
 };

@@ -4,10 +4,6 @@ import React, { useCallback, useState } from 'react';
 
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 
-import AddNewFileModal from '@/components/bucket/modals/AddNewFileModal';
-import AddNewFolderModal from '@/components/bucket/modals/AddNewFolderModal';
-import RenameOrMoveItemModal from '@/components/bucket/modals/RenameOrMoveItemModal';
-import FileNavigator from '@/components/bucket/navigator/FileNavigator';
 import CollectionReferenceList from '@/components/repository/collections/CollectionReferenceList';
 
 import { useBucket } from '@/context/BucketContext';
@@ -17,6 +13,11 @@ import { usePopup } from '@/context/PopupContext';
 import { QueryProvider } from '@/context/QueryContext';
 
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
+
+import FileNavigator from './FileNavigator';
+import AddNewFileModal from './modals/AddNewFileModal';
+import AddNewFolderModal from './modals/AddNewFolderModal';
+import RenameOrMoveItemModal from './modals/RenameOrMoveItemModal';
 
 /**
  * Component to wrap the editor pages in.

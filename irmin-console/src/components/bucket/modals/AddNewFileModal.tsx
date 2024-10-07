@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import ReactSelect, { SelectInstance } from 'react-select';
+import { Controller, useForm } from 'react-hook-form';
+import ReactSelect from 'react-select';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
-import PathSelector from '@/components/bucket/navigator/PathSelector';
 import Button from '@/components/common/button/Button';
+import Input from '@/components/common/form/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -22,20 +23,19 @@ import {
 import {
   Bucket,
   BucketFile,
-  IrminFileType,
   irminFileTypes,
   IrminFileTypeWithDetails,
 } from '@/types/core/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
-/**
- * Content for the "Add new file" modal
- * Allows the user to create a new file, selecting type, name and path for it
- *
- * @param options - The options for the item to create
- * @param options.bucket - The bucket the item is in
- * @param options.createFile - Function to create a new file
- */
+import PathSelector from '../PathSelector';
+
+type FormData = {
+  extension: IrminFileTypeWithDetails;
+  name: string;
+  path: string;
+};
+
 export default function AddNewFileModal({
   bucket,
   createFile,
@@ -49,200 +49,230 @@ export default function AddNewFileModal({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPathSelector, setShowPathSelector] = useState(true);
-  const [newItemData, setNewItemData] = useState({
-    name: '',
-    path: '',
-    extension: 'sql',
+
+  const creatingFileRef = useRef(false);
+
+  const {
+    handleSubmit,
+    control,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<FormData>({
+    defaultValues: {
+      extension: irminFileTypes.find((a) => a.extension === 'sql')!,
+      name: '',
+      path: '',
+    },
   });
 
-  const extenstionInputRef =
-    useRef<SelectInstance<IrminFileTypeWithDetails>>(null);
-  const nameInputRef = useRef<HTMLInputElement>(null);
-  const pathInputRef = useRef<HTMLInputElement>(null);
+  const extension = watch('extension');
+  const name = watch('name');
+  const path = watch('path');
 
   /**
-   * Process the change in the inputs and update the state
+   * Update the path and name when the extension or name changes
    */
-  const processChange = (newExtensionValue?: IrminFileType) => {
-    // Get the current values
-    const nameInputValue = nameInputRef.current?.value ?? newItemData.name;
-    const pathInputValue = pathInputRef.current?.value ?? newItemData.path;
-    // Get the correct extension value
-    let extensionInputValue: IrminFileType = newItemData.extension;
-    if (!newExtensionValue) {
-      // Use value based on the ref if not provided in props
-      const extensionInputValues =
-        extenstionInputRef.current?.getValue() ?? null;
-      extensionInputValues?.forEach((value) => {
-        extensionInputValue = value.extension as IrminFileType;
-      });
-    } else {
-      // Use the extension value from props if provided
-      extensionInputValue = newExtensionValue;
-    }
-    // Check that the values are not null
-    if (!nameInputValue) {
-      pathInputRef.current!.value = '';
-      return;
-    }
-    // Clean the name and add the extension
-    const withExtension = getCorrectNameWithExtension(
-      nameInputValue,
+  const updatePathAndName = useCallback(() => {
+    const extensionValue = extension.extension;
+    const nameWithExtension = getCorrectNameWithExtension(
+      name,
       'file',
-      extensionInputValue
+      extensionValue
     );
-    // Get the updated path
-    const newPath = getCorrectPath(pathInputValue, withExtension);
-    // Set the correct input values
-    nameInputRef.current!.value = getNameWithoutExtension(withExtension);
-    pathInputRef.current!.value = newPath;
-    // Update the state with the new info
-    setNewItemData({
-      ...newItemData,
-      name: withExtension,
-      path: newPath,
-      extension: extensionInputValue ?? newItemData.extension ?? '',
+    const newPath = getCorrectPath(path, nameWithExtension);
+
+    // Update the name without extension and path
+    setValue('name', getNameWithoutExtension(nameWithExtension), {
+      shouldValidate: true,
+      shouldDirty: true,
     });
-  };
+    setValue('path', newPath, { shouldValidate: true, shouldDirty: true });
+  }, [extension, name, path, setValue]);
+
+  // Update path and name whenever extension or name changes
+  useEffect(() => {
+    updatePathAndName();
+  }, [extension, name, updatePathAndName]);
 
   /**
    * Create the file based on the values provided by the user
    */
-  const continueCreation = () => {
-    if (loading) return;
-    try {
-      setError('');
-      setLoading(true);
-      // Make sure that can be created
-      const canCreate = itemCanBeCreated(
-        newItemData.path,
-        newItemData.name,
-        'file',
-        bucket,
-        dict,
-        newItemData.extension
-      );
-      if (!canCreate.canCreate) {
-        throw new Error(canCreate.reason);
+  const onSubmit = useCallback(
+    async (data: FormData) => {
+      if (creatingFileRef.current) return;
+      creatingFileRef.current = true;
+      try {
+        setError('');
+        setLoading(true);
+
+        const extensionValue = data.extension.extension;
+        const nameWithExtension = getCorrectNameWithExtension(
+          data.name,
+          'file',
+          extensionValue
+        );
+        const newPath = data.path;
+
+        // Ensure the item can be created
+        const canCreate = itemCanBeCreated(
+          newPath,
+          nameWithExtension,
+          'file',
+          bucket,
+          dict,
+          extensionValue
+        );
+        if (!canCreate.canCreate) {
+          throw new Error(canCreate.reason);
+        }
+        // Create the new file
+        const newFile = {
+          is_draft: false,
+          bucket: bucket?.slug ?? '',
+          contents: '',
+          name: nameWithExtension,
+          path: newPath,
+          type: extensionValue,
+        } as BucketFile;
+        createFile({
+          original: null,
+          current: newFile,
+          type: 'file',
+        });
+        // Close the modal after creation
+        irminModal.close();
+      } catch (error) {
+        console.error(error);
+        setError((error as Error).message);
+      } finally {
+        setLoading(false);
+        creatingFileRef.current = false;
       }
-      // Create the new file
-      const newFile = {
-        is_draft: false,
-        bucket: bucket?.slug ?? '',
-        contents: '',
-        name: newItemData.name,
-        path: newItemData.path,
-        type: newItemData.extension,
-      } as BucketFile;
-      createFile({
-        original: null,
-        current: newFile,
-        type: 'file',
-      });
-      // Close the modal after creation
-      irminModal.close();
-    } catch (error) {
-      console.error(error);
-      setError((error as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [bucket, createFile, dict, irminModal]
+  );
 
   return (
-    <div>
-      <div className='pb-2'>
-        <ReactSelect
-          ref={extenstionInputRef}
-          aria-label='Select the type of the file'
-          isDisabled={loading}
-          defaultValue={
-            irminFileTypes.find((a) => a.extension === newItemData.extension) ??
-            irminFileTypes[0]
-          }
-          onChange={(newValue) => {
-            if (!newValue) return;
-            processChange(newValue.extension);
-          }}
-          options={irminFileTypes}
-          getOptionLabel={(option) => option.name}
-          getOptionValue={(option) => option.extension}
-          className='react-select-container'
-          classNamePrefix='react-select'
-        />
-      </div>
-      <div className='pb-3'>
-        <label className='text-xs'>{dict.fileNavigator.newFileName}</label>
-        <input
-          ref={nameInputRef}
-          disabled={loading}
-          type='text'
-          className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
-          placeholder='example'
-          defaultValue={getNameWithoutExtension(
-            getCorrectNameWithExtension(
-              newItemData.name,
-              'file',
-              newItemData.extension
-            )
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className='flex flex-col gap-4 pb-6'
+      id='add-new-file-modal'
+    >
+      <div>
+        <Controller
+          name='extension'
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <ReactSelect
+              {...field}
+              aria-label='Select the type of the file'
+              isDisabled={loading}
+              options={irminFileTypes}
+              getOptionLabel={(option) => option.name}
+              getOptionValue={(option) => option.extension}
+              className='react-select-container'
+              classNamePrefix='react-select'
+            />
           )}
-          onChange={() => processChange()}
         />
       </div>
-      <div className='pb-3'>
-        <label className='text-xs'>{dict.fileNavigator.newFilePath}</label>
-        <div className='flex'>
-          <input
-            ref={pathInputRef}
-            disabled={true}
-            type='text'
-            className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
-            value={newItemData.path}
-          />
-          <Button
-            variant='icon'
-            colorScheme='light'
-            size='sm'
-            className='m-0 ml-2 rounded-lg p-0 pl-2'
-            ariaLabel='Toggle the path selector'
-            onClick={() => setShowPathSelector(!showPathSelector)}
-            disabled={loading}
-            icon={
-              showPathSelector ? (
-                <IoChevronUp className='inline-block' size={24} />
-              ) : (
-                <IoChevronDown className='inline-block' size={24} />
-              )
-            }
-          />
-        </div>
+      <div>
+        <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
+          {dict.fileNavigator.newFileName}
+        </label>
+        <Controller
+          name='name'
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <Input
+              size='sm'
+              variant='outline'
+              colorScheme='gray'
+              className='h-11 w-full'
+              type='text'
+              disabled={loading}
+              {...field}
+            />
+          )}
+        />
+        {errors.name && (
+          <p className='mt-1 text-xs text-red-600'>{errors.name.message}</p>
+        )}
+      </div>
+      <div>
+        <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
+          {dict.fileNavigator.newFilePath}
+        </label>
+        <Controller
+          name='path'
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <div className='flex flex-row items-center'>
+              <Input
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                className='h-11 w-full'
+                type='text'
+                disabled={true}
+                {...field}
+              />
+              <Button
+                variant='icon'
+                colorScheme='light'
+                size='sm'
+                className='m-0 ml-2 h-11 rounded-lg p-0 pl-2'
+                ariaLabel='Toggle the path selector'
+                onClick={() => setShowPathSelector(!showPathSelector)}
+                disabled={loading}
+                icon={
+                  showPathSelector ? (
+                    <IoChevronUp className='inline-block' size={24} />
+                  ) : (
+                    <IoChevronDown className='inline-block' size={24} />
+                  )
+                }
+              />
+            </div>
+          )}
+        />
+        {errors.path && (
+          <p className='mt-1 text-xs text-red-600'>{errors.path.message}</p>
+        )}
       </div>
       {showPathSelector && (
         <PathSelector
           bucket={bucket}
-          itemName={newItemData.name}
+          itemName={getCorrectNameWithExtension(
+            name,
+            'file',
+            extension.extension
+          )}
           originalItemPath={null}
-          currentSelected={newItemData.path}
+          currentSelected={path}
           onSelectPath={(selectedPath: string) => {
-            setNewItemData({ ...newItemData, path: selectedPath });
+            setValue('path', selectedPath, {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
           }}
         />
       )}
-      {error && error.length > 0 && (
-        <div className='py-2 text-red-800'>{error}</div>
-      )}
-      <div className='pb-3'>
-        <Button
-          variant='solid'
-          colorScheme='primary'
-          size='sm'
-          className='w-full'
-          onClick={continueCreation}
-          disabled={loading}
-        >
-          {loading ? dict.misc.loading : dict.fileNavigator.createFile}
-        </Button>
-      </div>
-    </div>
+      {error && error.length > 0 && <div className='text-red-800'>{error}</div>}
+      <Button
+        variant='solid'
+        colorScheme='primary'
+        size='sm'
+        className='w-full'
+        type='submit'
+        disabled={loading}
+      >
+        {loading ? dict.misc.loading : dict.fileNavigator.createFile}
+      </Button>
+    </form>
   );
 }

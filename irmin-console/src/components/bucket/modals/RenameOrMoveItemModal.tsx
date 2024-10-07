@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import ReactSelect, { SelectInstance } from 'react-select';
+import { Controller, useForm } from 'react-hook-form';
+import ReactSelect from 'react-select';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
-import PathSelector from '@/components/bucket/navigator/PathSelector';
 import Button from '@/components/common/button/Button';
+import Input from '@/components/common/form/Input';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -23,15 +24,22 @@ import {
   Bucket,
   BucketFile,
   BucketFolder,
-  IrminFileType,
   irminFileTypes,
   IrminFileTypeWithDetails,
 } from '@/types/core/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
+import PathSelector from '../PathSelector';
+
+type FormData = {
+  name: string;
+  path: string;
+  extension?: IrminFileTypeWithDetails;
+};
+
 /**
  * Content for the "Rename or move item" modal
- * Allows to the user to change the name, path and type of the item
+ * Allows the user to change the name, path, and type of the item
  *
  * @param options - The options for the item to rename or move
  * @param options.item The item to rename
@@ -56,150 +64,149 @@ export default function RenameOrMoveItemModal({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPathSelector, setShowPathSelector] = useState(true);
-  const [newItemData, setNewItemData] = useState({
-    bucket: bucket?.slug ?? '',
-    name: '',
-    path: '',
-    contents: '',
-    is_draft: false,
-    extension:
-      item.type === 'file' && item.current?.type ? item.current.type : 'sql',
-    ...item.current,
-  });
-  const type = item.type;
 
-  const extenstionInputRef =
-    useRef<SelectInstance<IrminFileTypeWithDetails>>(null);
-  const nameInputRef = useRef<HTMLInputElement>(null);
-  const pathInputRef = useRef<HTMLInputElement>(null);
+  const updatingRef = useRef(false);
+
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<FormData>({
+    defaultValues: {
+      name: getNameWithoutExtension(item.current?.name || ''),
+      path: item.current?.path || '',
+      extension:
+        item.type === 'file' && item.current?.type
+          ? irminFileTypes.find((type) => type.extension === item.current?.type)
+          : undefined,
+    },
+  });
+
+  const name = watch('name');
+  const path = watch('path');
+  const extension = watch('extension');
 
   /**
-   * Process the change in the inputs and update the state
+   * Update the path and name when the extension or name changes
    */
-  const processChange = (newExtensionValue?: IrminFileType) => {
-    // Get the current values
-    const nameInputValue = nameInputRef.current?.value ?? newItemData.name;
-    const pathInputValue = pathInputRef.current?.value ?? newItemData.path;
-    // Get the correct extension value
-    let extensionInputValue: IrminFileType = newItemData.extension;
-    if (!newExtensionValue) {
-      // Use value based on the ref if not provided in props
-      const extensionInputValues =
-        extenstionInputRef.current?.getValue() ?? null;
-      extensionInputValues?.forEach((value) => {
-        extensionInputValue = value.extension as IrminFileType;
-      });
-    } else {
-      // Use the extension value from props if provided
-      extensionInputValue = newExtensionValue;
-    }
-    // Check that the values are not null
-    if (!nameInputValue) {
-      pathInputRef.current!.value = '';
-      return;
-    }
-    // Clean the name and add the extension
-    const withExtension = getCorrectNameWithExtension(
-      nameInputValue,
-      type,
-      type === 'file'
-        ? (extensionInputValue ?? newItemData.extension)
-        : undefined
+  const updatePathAndName = useCallback(() => {
+    const extensionValue =
+      item.type === 'file' ? extension?.extension : undefined;
+    const nameWithExtension = getCorrectNameWithExtension(
+      name,
+      item.type,
+      extensionValue
     );
-    // Get the updated path
-    const newPath = getCorrectPath(pathInputValue, withExtension);
-    // Set the correct input values
-    nameInputRef.current!.value = getNameWithoutExtension(withExtension);
-    pathInputRef.current!.value = newPath;
-    // Update the state with the new info
-    setNewItemData({
-      ...newItemData,
-      name: withExtension,
-      path: newPath,
-      extension: extensionInputValue ?? newItemData.extension ?? '',
+    const newPath = getCorrectPath(path, nameWithExtension);
+
+    // Update the name without extension and path
+    setValue('name', getNameWithoutExtension(nameWithExtension), {
+      shouldValidate: true,
+      shouldDirty: true,
     });
-  };
+    setValue('path', newPath, { shouldValidate: true, shouldDirty: true });
+  }, [name, path, extension, item.type, setValue]);
+
+  // Update path and name whenever name or extension changes
+  useEffect(() => {
+    updatePathAndName();
+  }, [name, extension, updatePathAndName]);
 
   /**
    * Update the file/folder based on the values provided by the user
    */
-  const continueUpdate = () => {
-    if (loading) return;
-    try {
-      setError('');
-      setLoading(true);
-      // Make sure that can be created
-      const canCreate = itemCanBeCreated(
-        newItemData.path,
-        newItemData.name,
-        type,
-        bucket,
-        dict,
-        newItemData.extension
-      );
-      if (!canCreate.canCreate) {
-        throw new Error(canCreate.reason);
+  const onSubmit = useCallback(
+    async (data: FormData) => {
+      if (updatingRef.current) return;
+      updatingRef.current = true;
+      try {
+        setError('');
+        setLoading(true);
+
+        const extensionValue =
+          item.type === 'file' ? data.extension?.extension : undefined;
+        const nameWithExtension = getCorrectNameWithExtension(
+          data.name,
+          item.type,
+          extensionValue
+        );
+        const newPath = data.path;
+
+        // Ensure the item can be created
+        const canCreate = itemCanBeCreated(
+          newPath,
+          nameWithExtension,
+          item.type,
+          bucket,
+          dict,
+          extensionValue
+        );
+        if (!canCreate.canCreate) {
+          throw new Error(canCreate.reason);
+        }
+
+        // Update the item
+        if (item.type === 'file') {
+          const newFile = {
+            ...item.current,
+            name: nameWithExtension,
+            path: newPath,
+            type: extensionValue,
+          } as BucketFile;
+          updateFile({
+            ...item,
+            current: newFile,
+          });
+        } else if (item.type === 'folder') {
+          const newFolder = {
+            ...item.current,
+            name: nameWithExtension,
+            path: newPath,
+          } as BucketFolder;
+          updateFolder({
+            ...item,
+            current: newFolder,
+          });
+        }
+
+        // Close the modal after updating
+        irminModal.close();
+      } catch (error) {
+        console.error(error);
+        setError((error as Error).message);
+      } finally {
+        setLoading(false);
+        updatingRef.current = false;
       }
-      // Update the item
-      if (type === 'file') {
-        const newFile = {
-          is_draft: newItemData.is_draft,
-          bucket: bucket?.slug ?? '',
-          contents: newItemData.contents,
-          name: newItemData.name,
-          path: newItemData.path,
-          type: newItemData.extension,
-        } as BucketFile;
-        updateFile({
-          original: item.original,
-          current: newFile,
-          type: 'file',
-        });
-      } else if (type === 'folder') {
-        const newFolder = {
-          bucket: bucket?.slug ?? '',
-          name: newItemData.name,
-          path: newItemData.path,
-        } as BucketFolder;
-        updateFolder({
-          original: item.original,
-          children: item.children ?? [],
-          current: newFolder,
-          type: 'folder',
-        });
-      }
-      // Close the modal after updating
-      irminModal.close();
-    } catch (error) {
-      console.error(error);
-      setError((error as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [item, bucket, dict, updateFile, updateFolder, irminModal]
+  );
 
   return (
-    <div>
-      {type === 'file' && (
-        <div className='pb-2'>
-          <ReactSelect
-            ref={extenstionInputRef}
-            aria-label='Select the type of the file'
-            isDisabled={loading}
-            defaultValue={
-              irminFileTypes.find(
-                (a) => a.extension === newItemData.extension
-              ) ?? irminFileTypes[0]
-            }
-            onChange={(newValue) => {
-              if (!newValue) return;
-              processChange(newValue.extension);
-            }}
-            options={irminFileTypes}
-            getOptionLabel={(option) => option.name}
-            getOptionValue={(option) => option.extension}
-            className='react-select-container'
-            classNamePrefix='react-select'
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className='flex flex-col gap-4 pb-6'
+      id='rename-or-move-item-modal'
+    >
+      {item.type === 'file' && (
+        <div>
+          <Controller
+            name='extension'
+            control={control}
+            render={({ field }) => (
+              <ReactSelect
+                {...field}
+                aria-label='Select the type of the file'
+                isDisabled={loading}
+                options={irminFileTypes}
+                getOptionLabel={(option) => option.name}
+                getOptionValue={(option) => option.extension}
+                className='react-select-container'
+                classNamePrefix='react-select'
+              />
+            )}
           />
           <p className='mt-1 pl-1 text-xs text-gray-400'>
             {dict.fileNavigator.original}:{' '}
@@ -207,62 +214,75 @@ export default function RenameOrMoveItemModal({
           </p>
         </div>
       )}
-      <div className='pb-3'>
-        <label className='text-xs'>
-          {type === 'file'
+      <div>
+        <label className='text-xs text-gray-600 dark:text-gray-400'>
+          {item.type === 'file'
             ? dict.fileNavigator.newNameOfTheFile
             : dict.fileNavigator.newNameOfTheFolder}
         </label>
-        <input
-          ref={nameInputRef}
-          disabled={loading}
-          type='text'
-          className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
-          placeholder='example'
-          defaultValue={getNameWithoutExtension(
-            getCorrectNameWithExtension(
-              newItemData.name,
-              type,
-              newItemData.extension
-            )
+        <Controller
+          name='name'
+          control={control}
+          rules={{ required: dict.misc.fieldRequired }}
+          render={({ field }) => (
+            <Input
+              {...field}
+              size='sm'
+              variant='outline'
+              colorScheme='gray'
+              className='h-11 w-full'
+              type='text'
+              disabled={loading}
+              placeholder='example'
+            />
           )}
-          onChange={() => processChange()}
         />
+        {errors.name && (
+          <p className='mt-1 text-xs text-red-600'>{errors.name.message}</p>
+        )}
         <p className='mt-1 pl-1 text-xs text-gray-400'>
           {dict.fileNavigator.original}: {item.original?.name ?? ''}
         </p>
       </div>
-      <div className='pb-3'>
-        <label className='text-xs'>
-          {type === 'file'
+      <div>
+        <label className='text-xs text-gray-600 dark:text-gray-400'>
+          {item.type === 'file'
             ? dict.fileNavigator.newPathOfTheFile
             : dict.fileNavigator.newPathOfTheFolder}
         </label>
-        <div className='flex'>
-          <input
-            ref={pathInputRef}
-            disabled={true}
-            type='text'
-            className='w-full rounded border bg-gray-100 p-2 text-sm text-irmin_black placeholder:text-gray-300 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500'
-            value={newItemData.path}
-          />
-          <Button
-            variant='icon'
-            colorScheme='light'
-            size='sm'
-            className='m-0 ml-2 rounded-lg p-0 pl-2'
-            ariaLabel='Toggle the path selector'
-            onClick={() => setShowPathSelector(!showPathSelector)}
-            disabled={loading}
-            icon={
-              showPathSelector ? (
-                <IoChevronUp className='inline-block' size={24} />
-              ) : (
-                <IoChevronDown className='inline-block' size={24} />
-              )
-            }
-          />
-        </div>
+        <Controller
+          name='path'
+          control={control}
+          render={({ field }) => (
+            <div className='flex items-center'>
+              <Input
+                {...field}
+                size='sm'
+                variant='outline'
+                colorScheme='gray'
+                className='h-11 w-full'
+                type='text'
+                disabled
+              />
+              <Button
+                variant='icon'
+                colorScheme='light'
+                size='sm'
+                className='m-0 ml-2 h-11 rounded-lg p-0 pl-2'
+                ariaLabel='Toggle the path selector'
+                onClick={() => setShowPathSelector(!showPathSelector)}
+                disabled={loading}
+                icon={
+                  showPathSelector ? (
+                    <IoChevronUp className='inline-block' size={24} />
+                  ) : (
+                    <IoChevronDown className='inline-block' size={24} />
+                  )
+                }
+              />
+            </div>
+          )}
+        />
         <p className='mt-1 pl-1 text-xs text-gray-400'>
           {dict.fileNavigator.original}: {item.original?.path ?? ''}
         </p>
@@ -270,33 +290,36 @@ export default function RenameOrMoveItemModal({
       {showPathSelector && (
         <PathSelector
           bucket={bucket}
-          itemName={newItemData.name}
+          itemName={getCorrectNameWithExtension(
+            name,
+            item.type,
+            item.type === 'file' ? extension?.extension : undefined
+          )}
           originalItemPath={item.original?.path ?? null}
-          currentSelected={newItemData.path}
+          currentSelected={path}
           onSelectPath={(selectedPath: string) => {
-            setNewItemData({ ...newItemData, path: selectedPath });
+            setValue('path', selectedPath, {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
           }}
         />
       )}
-      {error && error.length > 0 && (
-        <div className='py-2 text-red-800'>{error}</div>
-      )}
-      <div className='pb-3'>
-        <Button
-          variant='solid'
-          colorScheme='primary'
-          size='sm'
-          className='w-full'
-          onClick={continueUpdate}
-          disabled={loading}
-        >
-          {loading
-            ? dict.misc.loading
-            : newItemData.extension === 'folder'
-              ? dict.fileNavigator.updateFolder
-              : dict.fileNavigator.updateFile}
-        </Button>
-      </div>
-    </div>
+      {error && <div className='py-2 text-red-800'>{error}</div>}
+      <Button
+        variant='solid'
+        colorScheme='primary'
+        size='sm'
+        className='w-full'
+        type='submit'
+        disabled={loading}
+      >
+        {loading
+          ? dict.misc.loading
+          : item.type === 'folder'
+            ? dict.fileNavigator.updateFolder
+            : dict.fileNavigator.updateFile}
+      </Button>
+    </form>
   );
 }
