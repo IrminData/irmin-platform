@@ -2,8 +2,9 @@
 
 import ReactSelect from 'react-select';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
@@ -44,16 +45,10 @@ export default function ConfigureWorkflowable({
       <div className='flex flex-col gap-4 py-4'>
         {workflowData.type === 'action' && (
           <>
-            <div>
-              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-                {dict.workflow.executableScriptFile}
-              </label>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.executableScriptFile}</Label>
               <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
                 required
-                className='h-11 w-full'
                 type='text'
                 defaultValue={workflowData.path ?? ''}
                 onChange={(e) =>
@@ -64,10 +59,8 @@ export default function ConfigureWorkflowable({
                 }
               />
             </div>
-            <div>
-              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-                {dict.workflow.scriptResultDestinationRepository}
-              </label>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.scriptResultDestinationRepository}</Label>
               <ReactSelect
                 value={{
                   value: workflowData.repository?.slug ?? '',
@@ -91,16 +84,10 @@ export default function ConfigureWorkflowable({
                 classNamePrefix='react-select'
               />
             </div>
-            <div>
-              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-                {dict.workflow.scriptResultDestinationBranch}
-              </label>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.scriptResultDestinationBranch}</Label>
               <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
                 required
-                className='h-11 w-full'
                 type='text'
                 defaultValue={workflowData.branch ?? ''}
                 onChange={(e) =>
@@ -111,16 +98,10 @@ export default function ConfigureWorkflowable({
                 }
               />
             </div>
-            <div>
-              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-                {dict.workflow.scriptResultDestinationPath}
-              </label>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.scriptResultDestinationPath}</Label>
               <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
                 required
-                className='h-11 w-full'
                 type='text'
                 defaultValue={workflowData.path ?? '/'}
                 onChange={(e) =>
@@ -135,10 +116,8 @@ export default function ConfigureWorkflowable({
         )}
         {workflowData.type === 'import' && (
           <>
-            <div>
-              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-                {dict.workflow.importSourceConnection}
-              </label>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.importSourceConnection}</Label>
               <ReactSelect
                 value={{
                   value: workflowData.connection?.id ?? '',
@@ -161,10 +140,8 @@ export default function ConfigureWorkflowable({
                 classNamePrefix='react-select'
               />
             </div>
-            <div>
-              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-                {dict.workflow.importDestinationRepository}
-              </label>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.importDestinationRepository}</Label>
               <ReactSelect
                 value={{
                   value: workflowData.repository?.slug ?? '',
@@ -188,16 +165,10 @@ export default function ConfigureWorkflowable({
                 classNamePrefix='react-select'
               />
             </div>
-            <div>
-              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-                {dict.workflow.importDestinationBranch}
-              </label>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.importDestinationBranch}</Label>
               <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
                 required
-                className='h-11 w-full'
                 type='text'
                 defaultValue={workflowData.branch ?? ''}
                 onChange={(e) =>
@@ -208,16 +179,10 @@ export default function ConfigureWorkflowable({
                 }
               />
             </div>
-            <div>
-              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-                {dict.workflow.importDestinationPath}
-              </label>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.importDestinationPath}</Label>
               <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
                 required
-                className='h-11 w-full'
                 type='text'
                 defaultValue={workflowData.path ?? '/'}
                 onChange={(e) =>
@@ -232,10 +197,8 @@ export default function ConfigureWorkflowable({
         )}
         {workflowData.type === 'export' && (
           <>
-            <div>
-              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-                {dict.workflow.exportDestinationConnection}
-              </label>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.exportDestinationConnection}</Label>
               <ReactSelect
                 value={{
                   value: workflowData.connection?.id ?? '',
@@ -258,10 +221,8 @@ export default function ConfigureWorkflowable({
                 classNamePrefix='react-select'
               />
             </div>
-            <div>
-              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-                {dict.workflow.exportSourceRepository}
-              </label>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.exportSourceRepository}</Label>
               <ReactSelect
                 value={{
                   value: workflowData.repository?.slug ?? '',
@@ -285,16 +246,10 @@ export default function ConfigureWorkflowable({
                 classNamePrefix='react-select'
               />
             </div>
-            <div>
-              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-                {dict.workflow.exportSourceBranch}
-              </label>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.exportSourceBranch}</Label>
               <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
                 required
-                className='h-11 w-full'
                 type='text'
                 defaultValue={workflowData.branch ?? ''}
                 onChange={(e) =>
@@ -305,16 +260,10 @@ export default function ConfigureWorkflowable({
                 }
               />
             </div>
-            <div>
-              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-                {dict.workflow.exportSourcePath}
-              </label>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.exportSourcePath}</Label>
               <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
                 required
-                className='h-11 w-full'
                 type='text'
                 defaultValue={workflowData.path ?? '/'}
                 onChange={(e) =>
@@ -325,10 +274,8 @@ export default function ConfigureWorkflowable({
                 }
               />
             </div>
-            <div>
-              <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-                {dict.workflow.exportRecursive}
-              </label>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.exportRecursive}</Label>
               <ReactSelect
                 value={
                   workflowData.recursive
@@ -361,9 +308,7 @@ export default function ConfigureWorkflowable({
       <div className='mt-auto border-t pt-4 dark:border-gray-800'>
         <Button
           className='mb-6 inline-block w-full'
-          variant='solid'
-          colorScheme='primary'
-          size='md'
+          variant='default'
           onClick={handleContinue}
         >
           {dict.workflow.create.confirmAndContinue}

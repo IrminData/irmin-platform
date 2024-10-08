@@ -3,8 +3,9 @@
 import { Controller, useForm } from 'react-hook-form';
 import Select from 'react-select';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -50,23 +51,14 @@ export default function CreateBranchModalContent({
       className='flex flex-col gap-4 pb-8'
     >
       <div className='flex flex-col gap-2'>
-        <label htmlFor='branchName' className='text-xs'>
-          {dict.repository.branches.newBranchName}
-        </label>
+        <Label>{dict.repository.branches.newBranchName}</Label>
         <Controller
           name='branchName'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <>
-              <Input
-                id='branchName'
-                type='text'
-                variant='outline'
-                colorScheme='gray'
-                size='sm'
-                {...field}
-              />
+              <Input {...field} />
               {errors.branchName && (
                 <p className='mt-1 text-xs text-red-600'>
                   {errors.branchName.message}
@@ -77,9 +69,7 @@ export default function CreateBranchModalContent({
         />
       </div>
       <div className='flex flex-col gap-2'>
-        <label htmlFor='fromBranch' className='text-xs'>
-          {dict.repository.branches.fromBranch}
-        </label>
+        <Label>{dict.repository.branches.fromBranch}</Label>
         <Controller
           name='fromBranch'
           control={control}
@@ -113,13 +103,7 @@ export default function CreateBranchModalContent({
           )}
         />
       </div>
-      <Button
-        variant='solid'
-        colorScheme='primary'
-        size='sm'
-        className='w-full'
-        type='submit'
-      >
+      <Button variant='default' size='sm' className='w-full' type='submit'>
         {dict.repository.branches.createBranch}
       </Button>
     </form>

@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import NormalList from '@/components/common/list/NormalList';
+import NormalList from '@/components/ui/list/NormalList';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';

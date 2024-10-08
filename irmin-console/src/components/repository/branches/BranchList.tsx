@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react';
 
-import NormalList from '@/components/common/list/NormalList';
+import { Badge } from '@/components/ui/badge';
+import NormalList from '@/components/ui/list/NormalList';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -47,19 +48,15 @@ export default function BranchList({
           >
             <p className='text-base'>{branch.name}</p>
             {branch.default && (
-              <span className='h-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
-                {dict.repository.branches.primary}
-              </span>
+              <Badge>{dict.repository.branches.primary}</Badge>
             )}
             {branch.name === currentRef && (
-              <span className='h-max rounded-lg bg-gray-300 px-1 text-xs leading-4 text-irmin_black dark:bg-gray-600 dark:text-white'>
+              <Badge variant='secondary'>
                 {dict.repository.branches.currentBranch}
-              </span>
+              </Badge>
             )}
             {(branch.is_immutable || immutable) && (
-              <span className='h-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
-                {dict.list.immutable}
-              </span>
+              <Badge variant='secondary'>{dict.list.immutable}</Badge>
             )}
           </div>,
         ],

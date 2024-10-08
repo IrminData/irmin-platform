@@ -5,8 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GoGitMerge } from 'react-icons/go';
 import { TbArrowLeft, TbRefresh } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import Button, { ButtonWithTooltip } from '@/components/ui/Button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -180,19 +180,16 @@ export default function RepositoryCompareSection() {
               }}
             />
           </div>
-          <Button
-            variant='icon'
-            colorScheme='light'
-            size='sm'
-            icon={<TbArrowLeft size={12} />}
+          <ButtonWithTooltip
+            size='icon'
+            variant='ghost'
+            icon={<TbArrowLeft size={18} />}
             onClick={() => {
               setBaseRef(compareRef);
               setCompareRef(baseRef);
             }}
-            enableTooltip={true}
-          >
-            {dict.repository.compare.switchDirection}
-          </Button>
+            tooltip={dict.repository.compare.switchDirection}
+          />
           <div className='min-w-60'>
             <BranchSelector
               branches={branches ?? []}
@@ -206,21 +203,17 @@ export default function RepositoryCompareSection() {
         </div>
         {/* Actions */}
         <div className='flex w-max min-w-48 flex-row items-center gap-4 lg:justify-end'>
-          <Button
-            variant='icon'
-            colorScheme='light'
-            size='sm'
+          <ButtonWithTooltip
+            size='icon'
+            variant='secondary'
             icon={<TbRefresh size={18} />}
             onClick={handleFetchDiff}
-            enableTooltip={true}
+            tooltip={dict.misc.refresh}
             disabled={loadingDiff}
-          >
-            {dict.misc.refresh}
-          </Button>
+          />
           <Button
             className='w-full max-w-28'
-            variant='solid'
-            colorScheme='primary'
+            variant='default'
             size='sm'
             icon={<GoGitMerge size={18} />}
             onClick={() => {

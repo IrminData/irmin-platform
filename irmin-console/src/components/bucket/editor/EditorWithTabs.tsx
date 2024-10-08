@@ -2,7 +2,7 @@
 
 import { IoAdd, IoClose, IoSave } from 'react-icons/io5';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -47,7 +47,7 @@ const EditorWithTabs = () => {
               <div
                 key={index}
                 className={`flex h-full w-40 items-center justify-between ${
-                  activeTab === index ? 'border-b-2 border-irmin_green' : ''
+                  activeTab === index ? 'border-b-2 border-accent' : ''
                 } `}
               >
                 <button
@@ -95,10 +95,9 @@ const EditorWithTabs = () => {
             <Button
               disabled={!enableSaveButton}
               size='sm'
-              variant='solid'
-              colorScheme='secondary'
+              variant='default'
               className='px-2 py-2 text-xs'
-              ariaLabel='Save file'
+              aria-label='Save file'
               onClick={() => saveActiveTabAsFile()}
             >
               <IoSave className='mr-2 inline-block' /> {dict.query.save}

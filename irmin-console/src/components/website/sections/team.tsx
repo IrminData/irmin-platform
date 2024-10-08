@@ -2,8 +2,8 @@ import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
 
-import Button from '@/components/common/button/Button';
-import DynamicFaIcon from '@/components/common/DynamicFaIcon';
+import Button from '@/components/ui/Button';
+import DynamicFaIcon from '@/components/ui/DynamicFaIcon';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { getURL } from '@/utils/wordpress';
@@ -61,7 +61,7 @@ export default async function WebsiteTeamSection({
               <h3 className='mb-4 text-4xl font-bold tracking-tighter md:text-5xl'>
                 {section.title}
               </h3>
-              <p className='text-sm font-normal text-irmin_black md:text-base'>
+              <p className='text-sm font-normal text-foreground md:text-base'>
                 {section.description}
               </p>
             </div>
@@ -71,16 +71,15 @@ export default async function WebsiteTeamSection({
               {section.buttons.map((button, index) => (
                 <Button
                   key={`button-${index}`}
-                  className='inline-block w-full rounded-full border border-irmin_green-500 bg-irmin_green-500 px-7 py-5 text-center text-base font-medium leading-4 text-white shadow-sm hover:bg-irmin_green-600 md:text-lg'
+                  className='border-accent-500 inline-block w-full rounded-full border bg-irmin_green-500 px-7 py-5 text-center text-base font-medium leading-4 text-white shadow-sm hover:bg-irmin_green-600 md:text-lg'
                   size='lg'
                   variant={button.variant}
-                  colorScheme={button.color_scheme}
                   icon={
                     button.icon ? (
                       <DynamicFaIcon name={button.icon} />
                     ) : undefined
                   }
-                  ariaLabel={button.text}
+                  aria-label={button.text}
                   href={getURL(button.link)}
                 >
                   {button.text}
@@ -110,7 +109,7 @@ export default async function WebsiteTeamSection({
                   {person.title}
                 </span>
                 {person.description.length > 0 && (
-                  <p className='mt-2 text-base text-irmin_black'>
+                  <p className='mt-2 text-base text-foreground'>
                     {person.description}
                   </p>
                 )}

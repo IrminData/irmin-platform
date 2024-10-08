@@ -578,14 +578,12 @@ export const exampleWPPage: WPPost = {
           {
             text: 'Get Started',
             link: { title: '', url: '/sign-up', target: '' },
-            variant: 'solid',
-            color_scheme: 'primary',
+            variant: 'gradient',
           },
           {
             text: 'Schedule a demo',
             link: '',
-            variant: 'solid',
-            color_scheme: 'secondary',
+            variant: 'default',
           },
         ],
         video_placeholder: 151,

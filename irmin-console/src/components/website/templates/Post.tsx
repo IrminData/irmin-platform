@@ -52,7 +52,7 @@ export default function Post({
                 '5 min read'}
             </p>
           </div>
-          <h2 className='mb-4 text-3xl font-bold leading-tight tracking-tighter text-irmin_black md:text-5xl'>
+          <h2 className='mb-4 text-3xl font-bold leading-tight tracking-tighter text-foreground md:text-5xl'>
             {post.title.rendered ?? "Article's title"}
           </h2>
           {categories.map((category, idx) => (

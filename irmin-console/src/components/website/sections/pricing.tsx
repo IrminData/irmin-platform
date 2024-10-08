@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import Image from 'next/image';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -48,17 +48,17 @@ export default function WebsitePricingSection({
           <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-normal uppercase leading-5 text-white shadow-sm'>
             {section.subtitle}
           </span>
-          <h3 className='mb-6 text-3xl font-bold tracking-tighter text-irmin_black md:text-5xl'>
+          <h3 className='mb-6 text-3xl font-bold tracking-tighter text-foreground md:text-5xl'>
             {section.title}
           </h3>
           {section.description.length > 0 && (
-            <p className='mb-12 text-lg font-normal text-irmin_black'>
+            <p className='mb-12 text-lg font-normal text-foreground'>
               {section.description}
             </p>
           )}
           <div className='mb-12 flex w-full items-center justify-center'>
             <button
-              className={`mr-4 inline-block text-lg font-normal md:text-xl ${billingCycle === 'monthly' ? 'text-irmin_black' : 'text-gray-400'}`}
+              className={`mr-4 inline-block text-lg font-normal md:text-xl ${billingCycle === 'monthly' ? 'text-foreground' : 'text-gray-400'}`}
               onClick={() => setBillingCycle('monthly')}
             >
               {dict.website.sections.pricing.billedMonthly}
@@ -80,12 +80,12 @@ export default function WebsitePricingSection({
                   className={`block h-9 w-20 rounded-full ${billingCycle === 'annual' ? 'bg-irmin_green' : 'bg-gray-200'}`}
                 />
                 <div
-                  className={`dot absolute top-1 h-7 w-7 rounded-full bg-white shadow-lg transition ${billingCycle === 'annual' ? 'right-1' : 'left-1'}`}
+                  className={`dot absolute top-1 h-7 w-7 rounded-full bg-background shadow-lg transition ${billingCycle === 'annual' ? 'right-1' : 'left-1'}`}
                 />
               </div>
             </label>
             <button
-              className={`ml-4 inline-flex items-center text-lg font-normal md:text-xl ${billingCycle === 'annual' ? 'text-irmin_black' : 'text-gray-400'}`}
+              className={`ml-4 inline-flex items-center text-lg font-normal md:text-xl ${billingCycle === 'annual' ? 'text-foreground' : 'text-gray-400'}`}
               onClick={() => setBillingCycle('annual')}
             >
               {dict.website.sections.pricing.billedAnnually}
@@ -100,22 +100,22 @@ export default function WebsitePricingSection({
             <div className='w-full p-4 md:w-1/2 lg:w-1/3' key={index}>
               <div className='flex h-full flex-col rounded-xl bg-green-50 pb-8 pt-8 shadow-md transition duration-500 hover:scale-105'>
                 <div className='px-8 text-center'>
-                  <h3 className='mb-2 text-3xl font-semibold tracking-tighter text-irmin_black md:text-4xl'>
+                  <h3 className='mb-2 text-3xl font-semibold tracking-tighter text-foreground md:text-4xl'>
                     {price.title}
                   </h3>
-                  <p className='mb-6 font-normal text-irmin_black'>
+                  <p className='mb-6 font-normal text-foreground'>
                     {price.subtitle}
                   </p>
                   <div className='mb-6'>
-                    <span className='relative -top-10 right-1 text-3xl font-bold text-irmin_black'>
+                    <span className='relative -top-10 right-1 text-3xl font-bold text-foreground'>
                       €
                     </span>
-                    <span className='text-6xl font-semibold tracking-tighter text-irmin_black md:text-7xl'>
+                    <span className='text-6xl font-semibold tracking-tighter text-foreground md:text-7xl'>
                       {billingCycle === 'monthly'
                         ? price.monthly_price
                         : price.annual_price}
                     </span>
-                    <span className='ml-1 inline-block font-semibold text-irmin_black'>
+                    <span className='ml-1 inline-block font-semibold text-foreground'>
                       /
                       {billingCycle === 'monthly'
                         ? dict.website.sections.pricing.month
@@ -124,8 +124,7 @@ export default function WebsitePricingSection({
                   </div>
                   <Button
                     size='lg'
-                    variant='solid'
-                    colorScheme='primary'
+                    variant='default'
                     className='mb-8 inline-block w-full'
                     href={getURL(price.link)}
                   >
@@ -135,7 +134,7 @@ export default function WebsitePricingSection({
                 <ul className='self-start px-8'>
                   {price.bullet_points.map((bullet, index) => (
                     <li
-                      className='mb-4 flex items-center font-normal text-irmin_black'
+                      className='mb-4 flex items-center font-normal text-foreground'
                       key={index}
                     >
                       <Image

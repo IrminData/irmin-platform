@@ -1,14 +1,16 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 
+import { Badge } from '@/components/ui/badge';
 import WorkflowList from '@/components/workflow/WorkflowList';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 import { Connection } from '@/types/core/Connection';
+
+import Button from '../ui/Button';
 
 /**
  * Connection Settings section component
@@ -45,9 +47,9 @@ const ConnectionSection = ({ connection }: { connection: Connection }) => {
   return (
     <div className='container relative mx-auto max-w-6xl'>
       <div className='my-4 flex flex-col gap-4 p-4'>
-        <div className='flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg bg-gray-100 p-4 text-sm text-irmin_black lg:text-lg dark:bg-irmin_black-800 dark:text-gray-100'>
+        <div className='flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg bg-background p-4 text-sm text-foreground lg:text-lg'>
           <div className='flex w-full flex-row items-center gap-4'>
-            <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-gray-50 px-4 py-2 text-left text-sm text-irmin_black shadow dark:bg-gray-800 dark:text-gray-200'>
+            <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-card px-4 py-2 text-left text-sm text-card-foreground shadow'>
               <Image
                 src={connection.connector.logo}
                 alt={connection.connector.name}
@@ -56,9 +58,9 @@ const ConnectionSection = ({ connection }: { connection: Connection }) => {
                 height={48}
               />
               <div className='flex flex-col justify-start gap-1'>
-                <span className='w-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+                <Badge variant='secondary'>
                   {connection.connector.category}
-                </span>
+                </Badge>
                 <p>{connection.connector.name}</p>
               </div>
             </div>
@@ -67,14 +69,15 @@ const ConnectionSection = ({ connection }: { connection: Connection }) => {
                 {connection.connector.description}
               </p>
               {connection.connector.url && (
-                <Link
-                  className='text-sm text-irmin_blue transition-all duration-200 hover:underline dark:text-irmin_green'
+                <Button
+                  variant='link'
                   target='_blank'
+                  className='h-max p-0'
                   rel='noopener noreferrer'
                   href={connection.connector.url}
                 >
                   {dict.connections.create.learnMore}
-                </Link>
+                </Button>
               )}
             </div>
           </div>

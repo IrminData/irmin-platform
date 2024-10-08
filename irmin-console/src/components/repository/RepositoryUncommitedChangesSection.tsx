@@ -6,8 +6,8 @@ import { GoGitCommit } from 'react-icons/go';
 import { GrRevert } from 'react-icons/gr';
 import { TbRefresh } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import Button, { ButtonWithTooltip } from '@/components/ui/Button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -126,7 +126,7 @@ export default function RepositoryUncommitedChangesSection() {
     <div className='container relative mx-auto max-w-6xl px-2 pb-12 pt-4 md:px-4'>
       <div className='mb-8 flex w-full flex-wrap items-center justify-between gap-4 lg:flex-row'>
         {/* Title */}
-        <h3 className='text-sm text-gray-900 lg:text-base dark:text-gray-100'>
+        <h3 className='text-sm text-gray-900 dark:text-gray-100 lg:text-base'>
           {dict.repository.commit.showingUncommitedChangesFor}{' '}
           <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
             {currentRef}
@@ -134,31 +134,22 @@ export default function RepositoryUncommitedChangesSection() {
         </h3>
         {/* Actions */}
         <div className='flex w-max min-w-48 flex-row items-center gap-4 lg:justify-end'>
-          <Button
-            variant='icon'
-            colorScheme='light'
-            size='sm'
+          <ButtonWithTooltip
+            size='icon'
             icon={<TbRefresh size={18} />}
             onClick={handleFetchDiff}
-            enableTooltip={true}
+            tooltip={dict.misc.refresh}
             disabled={loadingDiff}
-          >
-            {dict.misc.refresh}
-          </Button>
-          <Button
-            variant='icon'
-            colorScheme='light'
-            size='sm'
+          />
+          <ButtonWithTooltip
+            size='icon'
             icon={<GrRevert size={18} />}
             onClick={handleRevertChanges}
-            enableTooltip={true}
             disabled={loadingDiff}
-          >
-            {dict.repository.commit.revertChanges}
-          </Button>
+            tooltip={dict.repository.commit.revertChanges}
+          />
           <Button
-            variant='solid'
-            colorScheme='primary'
+            variant='default'
             size='sm'
             icon={<GoGitCommit size={18} />}
             onClick={handleCommitChanges}

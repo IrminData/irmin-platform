@@ -13,7 +13,7 @@ import {
   textColumn,
 } from 'react-datasheet-grid';
 
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 

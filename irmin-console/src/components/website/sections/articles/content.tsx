@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 import { FaSearch } from 'react-icons/fa';
 
-import Input from '@/components/common/form/Input';
+import Input from '@/components/ui/Input';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -65,20 +65,16 @@ export default function WebsiteArticlesSectionContent({
           <span className='mb-4 inline-block rounded-full bg-irmin_green px-2 py-px text-xs font-medium uppercase leading-5 text-white shadow-sm'>
             {section.subtitle}
           </span>
-          <h3 className='mb-4 text-3xl font-bold leading-tight tracking-tighter text-irmin_black md:text-5xl'>
+          <h3 className='mb-4 text-3xl font-bold leading-tight tracking-tighter text-foreground md:text-5xl'>
             {section.title}
           </h3>
-          <p className='mb-10 text-base font-normal text-irmin_black md:text-lg'>
+          <p className='mb-10 text-base font-normal text-foreground md:text-lg'>
             {section.description}
           </p>
           <div className='relative mx-auto md:w-80'>
             <Input
               icon={<FaSearch />}
-              variant='outline'
-              colorScheme='black'
-              type='text'
               placeholder={dict.website.sections.articles.search}
-              className='w-full rounded-full border border-irmin_black bg-white shadow-md'
               onChange={(e) => setSearchFilter(e.target.value)}
             />
           </div>
@@ -93,7 +89,7 @@ export default function WebsiteArticlesSectionContent({
               setCategoryFilter('');
             }}
           >
-            <span className='mb-4 inline-block w-full rounded-md px-4 py-2 text-sm text-irmin_black hover:bg-gray-100 hover:text-irmin_green hover:shadow-sm md:mb-0'>
+            <span className='mb-4 inline-block w-full rounded-md px-4 py-2 text-sm text-foreground hover:bg-gray-100 hover:text-irmin_green hover:shadow-sm md:mb-0'>
               {dict.website.sections.articles.allArticles}
             </span>
           </li>
@@ -109,7 +105,7 @@ export default function WebsiteArticlesSectionContent({
                 setCategoryFilter(category.slug);
               }}
             >
-              <span className='mb-4 inline-block w-full rounded-md px-4 py-2 text-sm text-irmin_black hover:bg-gray-100 hover:text-irmin_green hover:shadow-sm md:mb-0'>
+              <span className='mb-4 inline-block w-full rounded-md px-4 py-2 text-sm text-foreground hover:bg-gray-100 hover:text-irmin_green hover:shadow-sm md:mb-0'>
                 {category.name}
               </span>
             </li>
@@ -146,10 +142,10 @@ export default function WebsiteArticlesSectionContent({
                 {new Date(article.date).toLocaleDateString(locale)} •{' '}
                 {article.misc?.['Estimated reading time']}
               </p>
-              <h3 className='mb-4 inline-block text-2xl font-bold leading-tight text-irmin_black'>
+              <h3 className='mb-4 inline-block text-2xl font-bold leading-tight text-foreground'>
                 {article.title}
               </h3>
-              <p className='mb-4 text-xs font-normal text-irmin_black md:text-sm'>
+              <p className='mb-4 text-xs font-normal text-foreground md:text-sm'>
                 {article.excerpt}
               </p>
             </Link>

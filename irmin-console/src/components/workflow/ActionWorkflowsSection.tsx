@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
-import SideModal from '@/components/common/popup/SideModal';
+import Button from '@/components/ui/Button';
+import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
@@ -93,8 +93,8 @@ export default function ActionWorkflowsSection({
           {dict.workflow.actionWorkflows}
         </h2>
         <Button
-          colorScheme='primary'
-          variant='solid'
+          variant='gradient'
+          size='lg'
           onClick={() => openModal()}
           icon={<IoAdd size={25} />}
         >

@@ -28,14 +28,11 @@ export default function ErrorList({
           {errors.map((error, index) => (
             <div
               key={`errors-${index}`}
-              className='w-full rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/20'
+              className='w-full rounded-lg border border-destructive bg-gray-50 p-4 dark:bg-red-900/20'
             >
               <div className='flex items-center gap-2'>
-                <TbAlertCircle
-                  className='text-red-600 dark:text-red-400'
-                  size={18}
-                />
-                <p className='text-sm font-medium text-red-600 lg:text-base dark:text-red-400'>
+                <TbAlertCircle className='text-destructive' size={18} />
+                <p className='text-sm font-medium text-destructive lg:text-base'>
                   {error}
                 </p>
               </div>

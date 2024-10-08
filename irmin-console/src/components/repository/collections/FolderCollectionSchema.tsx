@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 
 import { TbChevronLeft, TbDownload, TbFile, TbFolder } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -64,7 +64,6 @@ export default function FolderCollectionSchema({
         <Button
           onClick={handleBackClick}
           className='px-0 lg:px-0'
-          colorScheme='gray'
           variant='link'
           size='sm'
           icon={<TbChevronLeft />}
@@ -114,8 +113,7 @@ export default function FolderCollectionSchema({
       {!selectedFile && downloadUrl && (
         <Button
           size='sm'
-          colorScheme='light'
-          variant='solid'
+          variant='secondary'
           className='w-full'
           icon={<TbDownload />}
           href={downloadUrl}

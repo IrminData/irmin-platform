@@ -49,7 +49,7 @@ const LogEventFeed = ({
       {events.map((event) => (
         <div
           key={event.id}
-          className='flex items-center gap-4 rounded-lg border border-gray-300 bg-gray-50 p-2 dark:border-gray-800 dark:bg-irmin_black'
+          className='flex items-center gap-4 rounded-lg border border-gray-300 bg-card p-2 dark:border-gray-800'
         >
           {/* Event icon */}
           <div>{getEventIcon(event.type)}</div>

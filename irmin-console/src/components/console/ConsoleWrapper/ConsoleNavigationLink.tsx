@@ -25,8 +25,8 @@ export default function ConsoleNavigationLink({
     return (
       <li id='console-navigation-link'>
         <Link
-          className={`flex items-center justify-between rounded-md p-3 py-3 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 ${
-            link.active ? 'bg-gray-200 dark:bg-gray-800' : ''
+          className={`flex items-center justify-between rounded-md p-3 py-3 hover:bg-primary/20 ${
+            link.active ? 'bg-primary/10' : ''
           } overflow-hidden transition-all ${isMenuFolded ? 'w-12' : 'w-full'}`}
           href={link.href}
           onClick={() => setIsMenuOpen(false)}
@@ -43,8 +43,8 @@ export default function ConsoleNavigationLink({
     return (
       <li id='console-navigation-link'>
         <button
-          className={`flex items-center justify-between rounded-md p-3 py-3 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 ${
-            link.active ? 'bg-gray-200 dark:bg-gray-800' : ''
+          className={`flex items-center justify-between rounded-md p-3 py-3 hover:bg-primary/20 ${
+            link.active ? 'bg-primary/10' : ''
           } overflow-hidden transition-all ${isMenuFolded ? 'w-12' : 'w-full'}`}
           onClick={() => {
             setIsMenuOpen(false);

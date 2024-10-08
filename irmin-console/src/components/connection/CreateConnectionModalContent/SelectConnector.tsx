@@ -3,13 +3,13 @@
 import { useCallback, useState } from 'react';
 
 import Image from 'next/image';
-import Link from 'next/link';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import { MdOutlineSupportAgent } from 'react-icons/md';
+import { TbHelp } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
+import { Badge } from '@/components/ui/badge';
+import Button from '@/components/ui/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -122,7 +122,7 @@ export default function SelectConnector({
                   {dict.connections.create.selectedConnector}:
                 </p>
                 <div className='flex w-full flex-row items-center gap-4'>
-                  <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-gray-50 px-4 py-2 text-left text-sm text-irmin_black shadow dark:bg-gray-800 dark:text-gray-200'>
+                  <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-card px-4 py-2 text-left text-sm text-card-foreground shadow'>
                     <Image
                       src={field.value.logo}
                       alt={field.value.name}
@@ -131,9 +131,7 @@ export default function SelectConnector({
                       height={48}
                     />
                     <div className='flex flex-col justify-start gap-1'>
-                      <span className='w-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
-                        {field.value.category}
-                      </span>
+                      <Badge variant='secondary'>{field.value.category}</Badge>
                       <p>{field.value.name}</p>
                     </div>
                   </div>
@@ -142,14 +140,15 @@ export default function SelectConnector({
                       {field.value.description}
                     </p>
                     {field.value.url && (
-                      <Link
-                        className='text-sm text-irmin_blue transition-all duration-200 hover:underline dark:text-irmin_green'
+                      <Button
+                        variant='link'
                         target='_blank'
+                        className='h-max p-0'
                         rel='noopener noreferrer'
                         href={field.value.url}
                       >
                         {dict.connections.create.learnMore}
-                      </Link>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -158,18 +157,13 @@ export default function SelectConnector({
             {/* Category Filter */}
             <div className='flex w-full flex-wrap gap-2 border-b py-4 dark:border-gray-800'>
               {categoryFilterOptions.map((category, index) => (
-                <button
-                  type='button'
-                  className={`rounded-lg px-4 py-2 text-sm text-irmin_black shadow transition-all hover:opacity-80 dark:bg-gray-800 dark:text-gray-200 ${
-                    activeCategory === category
-                      ? 'bg-irmin_light_green text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'
-                      : 'bg-gray-100'
-                  }`}
+                <Button
+                  variant={category === activeCategory ? 'accent' : 'secondary'}
                   key={`category-${index}`}
                   onClick={() => selectCategoryFilter(category)}
                 >
                   {category}
-                </button>
+                </Button>
               ))}
             </div>
             {/* Connector Selection */}
@@ -177,7 +171,7 @@ export default function SelectConnector({
               {filteredConnectors.map((connector, index) => (
                 <button
                   type='button'
-                  className={`flex w-max max-w-[50%] flex-row items-center justify-start gap-4 rounded-lg bg-gray-100 px-4 py-2 text-left text-sm text-irmin_black shadow transition-all hover:opacity-80 dark:bg-gray-800 dark:text-gray-200 ${
+                  className={`flex w-max max-w-[50%] flex-row items-center justify-start gap-4 rounded-lg bg-gray-100 px-4 py-2 text-left text-sm text-foreground shadow transition-all hover:opacity-80 dark:bg-gray-800 dark:text-gray-200 ${
                     field.value?.id === connector.id
                       ? 'outline outline-gray-800 dark:outline-gray-200'
                       : ''
@@ -193,9 +187,7 @@ export default function SelectConnector({
                     height={48}
                   />
                   <div className='flex flex-col justify-start gap-1'>
-                    <span className='w-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
-                      {connector.category}
-                    </span>
+                    <Badge variant='secondary'>{connector.category}</Badge>
                     <p>{connector.name}</p>
                   </div>
                 </button>
@@ -208,9 +200,8 @@ export default function SelectConnector({
       <div className='mt-auto border-t pt-4 dark:border-gray-800'>
         <Button
           className='w-full'
-          variant='solid'
-          colorScheme='primary'
-          size='md'
+          size='lg'
+          variant='default'
           type='submit'
           disabled={!isDirty}
         >
@@ -219,8 +210,7 @@ export default function SelectConnector({
       </div>
       <div className='flex items-center justify-between pt-4'>
         <Button
-          variant='solid'
-          colorScheme='light'
+          variant='secondary'
           size='sm'
           onClick={() => {
             irminAlert(
@@ -228,18 +218,16 @@ export default function SelectConnector({
               'This feature is not available yet. To build and use custom connectors, please contact support.'
             );
           }}
-          ariaLabel='Add custom connector'
+          aria-label='Add custom connector'
         >
           {dict.connections.create.addCustomConnector}
         </Button>
         <Button
-          variant='link'
-          colorScheme='gray'
-          size='md'
-          icon={<MdOutlineSupportAgent />}
+          variant='ghost'
+          icon={<TbHelp size={18} />}
           href='/contact'
           target='_blank'
-          ariaLabel='Go to support page'
+          aria-label='Go to support page'
         >
           {dict.connections.create.contactSupport}
         </Button>

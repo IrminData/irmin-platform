@@ -9,7 +9,7 @@ import {
   TbRun,
 } from 'react-icons/tb';
 
-import Tabs from '@/components/common/tabs/Tabs';
+import Tabs from '@/components/ui/tabs/Tabs';
 
 import { useLocale } from '@/context/LocaleContext';
 

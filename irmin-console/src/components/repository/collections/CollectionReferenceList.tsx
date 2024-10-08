@@ -56,25 +56,19 @@ const CollectionReferenceList = () => {
     // Show the collection name to the user
     irminAlert(
       'info',
-      <div>
+      <div className='text-foreground'>
         <p className='m-0 text-sm font-normal opacity-70'>
           {dict.repository.referenceRepository.toReferenceTheCollection}{' '}
-          <span className='font-medium text-irmin_blue dark:text-irmin_green'>
-            {collection}
-          </span>{' '}
+          <span className='font-medium text-accent'>{collection}</span>{' '}
           {dict.repository.referenceRepository.fromTheRepository}{' '}
-          <span className='font-medium text-irmin_blue dark:text-irmin_green'>
-            {repository.name}
-          </span>{' '}
+          <span className='font-medium text-accent'>{repository.name}</span>{' '}
           {dict.repository.referenceRepository.inTheEditor}{' '}
         </p>
-        <p className='my-2 pl-4 text-lg font-normal text-black dark:text-white'>
-          {collectionSnippet}
-        </p>
+        <p className='my-2 pl-4 text-lg font-normal'>{collectionSnippet}</p>
         <p className='m-0 text-sm font-normal opacity-70'>
           {dict.repository.referenceRepository.orForSpecificRef}
         </p>
-        <p className='my-2 pl-4 text-lg font-normal text-black dark:text-white'>
+        <p className='my-2 pl-4 text-lg font-normal'>
           {collectionSnippetWithRef}
         </p>
       </div>
@@ -84,7 +78,7 @@ const CollectionReferenceList = () => {
   return (
     <div
       id='repository-collection-reference-list'
-      className='flex-grow overflow-auto border-t p-2 text-irmin_black dark:border-gray-800 dark:text-gray-300'
+      className='flex-grow overflow-auto border-t p-2 text-foreground dark:border-gray-800 dark:text-gray-300'
     >
       <p className='px-4 pb-2 text-sm'>
         {dict.consoleNavigation.links.repositories}

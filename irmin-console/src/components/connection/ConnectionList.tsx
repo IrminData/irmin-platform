@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import Image from 'next/image';
 
-import CardOrNormalList from '@/components/common/list/CardOrNormalList';
+import CardOrNormalList from '@/components/ui/list/CardOrNormalList';
 
 import { useLocale } from '@/context/LocaleContext';
 

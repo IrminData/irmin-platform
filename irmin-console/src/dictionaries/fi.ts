@@ -58,6 +58,12 @@ const fi = {
       },
     },
   },
+  theme: {
+    toggleTheme: 'Vaihda teemaa',
+    light: 'Vaalea',
+    dark: 'Tumma',
+    system: 'Järjestelmä',
+  },
   misc: {
     selectLanguage: 'Valitse kieli',
     loading: 'Ladataan...',
@@ -225,7 +231,7 @@ const fi = {
       relatedWorkspace: 'Työtila',
     },
     links: {
-      home: 'Työtilan koti',
+      home: 'Työtilaa',
       repositories: 'Tietovarastot',
       editor: 'Editori',
       connections: 'Yhteydet',
@@ -414,6 +420,7 @@ const fi = {
     },
   },
   connections: {
+    allConnections: 'Kaikki yhteydet',
     connection: 'Yhteys',
     tabs: {
       overview: 'Yleiskatsaus',

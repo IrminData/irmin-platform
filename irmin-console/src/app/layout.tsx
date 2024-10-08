@@ -6,9 +6,9 @@ import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 import '@/styles/globals.scss';
 import 'react-datasheet-grid/dist/style.css';
 
-import { DarkModeProvider } from '@/context/DarkModeContext';
 import { IAMProvider } from '@/context/IAMContext';
 import { LocaleProvider } from '@/context/LocaleContext';
+import { ThemeProvider } from '@/context/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const bigShouldersDisplay = Big_Shoulders_Display({
@@ -51,14 +51,22 @@ export default function RootLayout({
 
   return (
     <html suppressHydrationWarning>
+      <head />
       <body
         className={`${inter.variable} ${bigShouldersDisplay.variable} scrollbar-hide`}
       >
-        <DarkModeProvider>
-          <LocaleProvider>
-            <IAMProvider locale={lang}>{children}</IAMProvider>
-          </LocaleProvider>
-        </DarkModeProvider>
+        <LocaleProvider>
+          <IAMProvider locale={lang}>
+            <ThemeProvider
+              attribute='class'
+              defaultTheme='system'
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+            </ThemeProvider>
+          </IAMProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

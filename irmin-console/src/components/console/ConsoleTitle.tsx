@@ -21,19 +21,19 @@ const ConsoleTitle: React.FC<{
 }> = ({ title, showLogo }) => {
   return (
     <div
-      className={`px-4 pb-4 pt-12 text-center text-2xl font-bold text-irmin_black text-opacity-80 sm:text-3xl md:pb-8 md:pt-8 md:text-left lg:text-5xl dark:text-white`}
+      className={`px-4 pb-4 pt-12 text-center text-2xl font-bold text-foreground text-opacity-90 sm:text-3xl md:text-left lg:text-5xl`}
     >
       {showLogo && (
         <>
           <Image
-            className='block h-8 w-auto md:hidden dark:hidden'
+            className='block h-8 w-auto dark:hidden md:hidden'
             src='/irmin-logo.svg'
             alt='Irmin logo'
             width={100}
             height={100}
           />
           <Image
-            className='hidden h-8 w-auto md:hidden dark:block dark:md:hidden'
+            className='hidden h-8 w-auto dark:block md:hidden dark:md:hidden'
             src='/irmin-logo-light.svg'
             alt='Irmin logo'
             width={100}

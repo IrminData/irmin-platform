@@ -6,7 +6,7 @@ import ReactSelect from 'react-select';
 
 import { IoExit, IoKey, IoMailOpenOutline } from 'react-icons/io5';
 
-import Button from '@/components/common/button/Button';
+import Button, { ButtonWithTooltip } from '@/components/ui/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -15,7 +15,7 @@ import { useWorkspace } from '@/context/workspace';
 import { IrminRole } from '@/types/core/IrminRole';
 import { WorkspaceUser } from '@/types/core/Workspace';
 
-import LoadingSkeleton from '../common/loading/LoadingSkeleton';
+import LoadingSkeleton from '../ui/loading/LoadingSkeleton';
 import WorkspaceSendInviteModalContent from './WorkspaceSendInviteModalContent';
 
 type WorkspaceUsersAndPermissionsUser = {
@@ -297,7 +297,7 @@ const WorkspaceUsersAndInvitesSection: React.FC = () => {
   return (
     <div className='my-8 px-2'>
       <div className='container relative mx-auto my-8 max-w-6xl'>
-        <div className='w-full max-w-3xl rounded-lg border-b border-t border-irmin_green bg-white px-4 py-4 shadow-md md:mx-4 dark:bg-irmin_black-600'>
+        <div className='w-full max-w-3xl rounded-lg border-b border-t border-accent bg-background px-4 py-4 shadow-md md:mx-4'>
           <div className='my-8 px-4'>
             <div className='mb-8 flex flex-row items-center justify-between px-2'>
               <h2 className='text-lg font-semibold lg:text-xl'>
@@ -305,8 +305,7 @@ const WorkspaceUsersAndInvitesSection: React.FC = () => {
               </h2>
               <Button
                 size='sm'
-                variant='solid'
-                colorScheme='primary'
+                variant='default'
                 onClick={() => handleSendNewInvite()}
                 disabled={loading}
               >
@@ -374,7 +373,7 @@ const WorkspaceUsersAndInvitesSection: React.FC = () => {
                       )}
                     </td>
                     {/* Only for larger screens */}
-                    <td className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
+                    <td className='hidden px-2 py-2 text-sm text-gray-700 dark:text-gray-400 md:table-cell'>
                       {user.email}
                       {user.inviteId ? (
                         <span className='ml-2 text-xs opacity-70'>
@@ -439,59 +438,51 @@ const WorkspaceUsersAndInvitesSection: React.FC = () => {
                           user.roles.length > 0 &&
                           !user.inviteId ? (
                             <>
-                              <Button
-                                size='sm'
-                                variant='icon'
-                                colorScheme='light'
+                              <ButtonWithTooltip
+                                size='icon'
+                                variant='secondary'
                                 onClick={() => handleTransferOwnership(user.id)}
                                 icon={<IoKey size={14} />}
-                                enableTooltip={true}
+                                tooltip={
+                                  dict.usersPermissions.transferOwnership
+                                }
                                 disabled={loading}
-                              >
-                                {dict.usersPermissions.transferOwnership}
-                              </Button>
-                              <Button
-                                size='sm'
-                                variant='icon'
-                                colorScheme='light'
+                              />
+                              <ButtonWithTooltip
+                                size='icon'
+                                variant='secondary'
                                 aria-label='Remove user from workspace'
                                 onClick={() => handleRemoveUser(user.id)}
                                 icon={<IoExit size={14} />}
-                                enableTooltip={true}
+                                tooltip={
+                                  dict.usersPermissions.removeFromWorkspace
+                                }
                                 disabled={loading}
-                              >
-                                {dict.usersPermissions.removeFromWorkspace}
-                              </Button>
+                              />
                             </>
                           ) : (
                             <></>
                           )}
                           {user.inviteId ? (
                             <>
-                              <Button
-                                size='sm'
-                                variant='icon'
-                                colorScheme='light'
+                              <ButtonWithTooltip
+                                size='icon'
+                                variant='secondary'
                                 aria-label='Resend invite'
                                 icon={<IoMailOpenOutline size={14} />}
                                 onClick={() => handleResend(user.email)}
-                                enableTooltip={true}
+                                tooltip={dict.usersPermissions.resendInvite}
                                 disabled={loading}
-                              >
-                                {dict.usersPermissions.resendInvite}
-                              </Button>
-                              <Button
-                                size='sm'
-                                variant='icon'
-                                colorScheme='light'
+                              />
+                              <ButtonWithTooltip
+                                size='icon'
+                                variant='secondary'
                                 aria-label='Cancel invite'
                                 icon={<IoExit size={14} />}
                                 onClick={() => handleCancelInvite(user.email)}
-                                enableTooltip={true}
+                                tooltip={dict.usersPermissions.cancelInvite}
                                 disabled={loading}
-                              >
-                                {dict.usersPermissions.cancelInvite}
-                              </Button>
+                              />
                             </>
                           ) : (
                             <></>

@@ -5,8 +5,8 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
-import ProfileImagePlaceholder from '@/components/common/ProfileImagePlaceholder';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import ProfileImagePlaceholder from '@/components/ui/ProfileImagePlaceholder';
 
 import { useIAM } from '@/context/IAMContext';
 
@@ -61,7 +61,7 @@ export default function ConsoleNavigationProfile({
           )}
         </div>
         <div className='w-auto overflow-hidden p-1'>
-          <p className='text-sm font-normal text-irmin_black dark:text-gray-200'>
+          <p className='text-sm font-normal text-foreground dark:text-gray-200'>
             {profile.name ?? ''}
           </p>
         </div>

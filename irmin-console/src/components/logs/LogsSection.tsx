@@ -8,8 +8,8 @@ import { useRouter } from 'next/navigation';
 import { IoChevronBack } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import Button from '@/components/ui/Button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useLogs } from '@/context/LogContext';
@@ -79,10 +79,9 @@ export default function LogsSection({ workflow }: { workflow?: string }) {
         <div className='mb-12 flex items-center gap-8'>
           {workflow && (
             <Button
-              size='sm'
-              variant='icon'
-              colorScheme='light'
-              className='bg-gray-100 dark:bg-gray-700'
+              size='icon'
+              variant='gray'
+              className='rounded-full'
               icon={<IoChevronBack size={24} />}
               onClick={() => router.back()}
             >
@@ -94,7 +93,7 @@ export default function LogsSection({ workflow }: { workflow?: string }) {
               {workflow ? dict.logs.workflowLogs : dict.logs.workspaceLogs}
             </h2>
             {selectedWorkflow && (
-              <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
+              <h3 className='mt-4 text-lg text-gray-600 dark:text-gray-400 xl:text-xl'>
                 <Link
                   className='hover:underline'
                   href={`${workspaceUrl}/workflows/${workflow}`}

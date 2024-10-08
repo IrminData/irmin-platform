@@ -11,7 +11,7 @@ import {
   FiFolder,
 } from 'react-icons/fi';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -95,7 +95,7 @@ const FileNavigator = ({
     event.preventDefault();
     setContextMenu({
       visible: true,
-      top: event.clientY - 75,
+      top: event.clientY - 45,
       item,
     });
   };
@@ -169,7 +169,7 @@ const FileNavigator = ({
               {item.current.name}
             </span>
             <button
-              className='ml-auto cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700'
+              className='ml-auto cursor-pointer rounded-full py-1 hover:bg-gray-100 dark:hover:bg-gray-700'
               aria-label={`Open context menu for ${item.current.name}`}
               onClick={(e) => {
                 handleContextMenu(e, item);
@@ -189,35 +189,33 @@ const FileNavigator = ({
     <div id='file-navigator' className='relative'>
       <div className='mb-0 flex flex-row justify-stretch gap-0 border-b bg-gray-100 p-0 dark:border-gray-700 dark:bg-gray-800'>
         <Button
-          className='w-[40%] rounded-none px-2 py-2 text-xs shadow-none hover:bg-gray-200 lg:w-1/2 lg:text-xs dark:hover:bg-gray-700'
-          variant='solid'
-          colorScheme='light'
+          className='w-[40%] rounded-none px-2 py-2 text-xs shadow-none hover:bg-gray-200 dark:hover:bg-gray-700 lg:w-1/2 lg:text-xs'
+          variant='ghost'
           size='sm'
           onClick={addNewFile}
           icon={<FiFileText size={12} />}
-          ariaLabel='Create a new file'
+          aria-label='Create a new file'
         >
           {dict.fileNavigator.createFile}
         </Button>
         <Button
-          className='w-[40%] rounded-none px-2 py-2 text-xs shadow-none hover:bg-gray-200 lg:w-1/2 lg:text-xs dark:hover:bg-gray-700'
-          variant='solid'
-          colorScheme='light'
+          className='w-[40%] rounded-none px-2 py-2 text-xs shadow-none hover:bg-gray-200 dark:hover:bg-gray-700 lg:w-1/2 lg:text-xs'
+          variant='ghost'
           size='sm'
           onClick={addNewFolder}
           icon={<FiFolder size={12} />}
-          ariaLabel='Create a new folder'
+          aria-label='Create a new folder'
         >
           {dict.fileNavigator.createFolder}
         </Button>
       </div>
-      <div className='max-h-60 overflow-auto border-t px-3 py-4 xl:max-h-96 dark:border-gray-700'>
+      <div className='max-h-60 overflow-auto border-t px-3 py-4 dark:border-gray-700 xl:max-h-96'>
         {renderItems(items)}
       </div>
       {contextMenu && contextMenu.visible && (
         <ul
           id='file-navigator-context-menu'
-          className='absolute left-2 right-2 rounded-lg bg-white px-4 py-2 shadow dark:bg-gray-800 dark:shadow-gray-700'
+          className='absolute left-2 right-2 rounded-lg bg-popover px-4 py-2'
           style={{ top: `${contextMenu.top}px` }}
         >
           <button
@@ -227,7 +225,7 @@ const FileNavigator = ({
           >
             <FaTimes size={16} />
           </button>
-          <li className='p-1 pb-2 text-sm font-semibold'>
+          <li className='border-b border-border p-1 pb-2 text-sm'>
             {contextMenu.item.current?.name ?? contextMenu.item.original?.name}
           </li>
           {contextMenu.item.type === 'file' && (

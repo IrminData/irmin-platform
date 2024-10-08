@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useIAM } from '@/context/IAMContext';
 

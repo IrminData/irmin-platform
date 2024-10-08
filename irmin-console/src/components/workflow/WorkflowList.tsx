@@ -2,8 +2,9 @@
 
 import { useMemo } from 'react';
 
-import CardOrNormalList from '@/components/common/list/CardOrNormalList';
-import StatusBadge from '@/components/common/status/StatusBadge';
+import { Badge } from '@/components/ui/badge';
+import CardOrNormalList from '@/components/ui/list/CardOrNormalList';
+import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -62,11 +63,11 @@ const WorkflowList = ({
             >
               <p className='text-base'>
                 {item.name}
-                <span className='ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+                <Badge className='ml-2'>
                   {item.workflowable_type === 'action' && dict.workflow.action}
                   {item.workflowable_type === 'import' && dict.workflow.import}
                   {item.workflowable_type === 'export' && dict.workflow.export}
-                </span>
+                </Badge>
               </p>
               <span className='text-sm text-gray-400'>
                 {dict.list.owner}: {item.owner.name}
@@ -77,7 +78,7 @@ const WorkflowList = ({
               key={`status-${i}`}
               className='inline-flex flex-row items-center gap-2'
             >
-              <StatusBadge runStatus={item.status} statusLabel={item.status} />
+              <StatusBadge status={item.status} label={item.status} />
               <div className='flex flex-col'>
                 {item.cron_syntax && item.cron_syntax.length > 0 ? (
                   <>

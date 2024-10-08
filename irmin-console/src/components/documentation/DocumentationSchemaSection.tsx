@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic';
 
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useWorkspace } from '@/context/workspace';
 

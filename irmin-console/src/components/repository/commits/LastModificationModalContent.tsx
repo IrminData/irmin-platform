@@ -1,6 +1,6 @@
 'use client';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -58,8 +58,7 @@ export default function LastModificationModalContent({
       </table>
       {/* Buttons */}
       <Button
-        variant='solid'
-        colorScheme='primary'
+        variant='default'
         size='sm'
         className='w-full'
         onClick={() => {
@@ -70,8 +69,7 @@ export default function LastModificationModalContent({
         {dict.list.view}
       </Button>
       <Button
-        variant='solid'
-        colorScheme='light'
+        variant='secondary'
         size='sm'
         className='w-full'
         onClick={() => {
@@ -83,8 +81,7 @@ export default function LastModificationModalContent({
         {dict.repository.commit.copyHash}
       </Button>
       <Button
-        variant='solid'
-        colorScheme='light'
+        variant='secondary'
         size='sm'
         className='w-full'
         onClick={closeModal}

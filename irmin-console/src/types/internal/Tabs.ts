@@ -2,12 +2,13 @@
  * Tab type used by different Tabs components in the UI
  */
 export interface TabDetails {
-  slug: string;
+  slug?: string;
   name: string;
   icon?: React.JSX.Element;
   content?: React.JSX.Element;
   link?: string;
   hidden?: boolean;
+  active?: boolean;
 }
 
 /**

@@ -5,8 +5,9 @@ import { useCallback } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -77,21 +78,19 @@ const WorkspaceSendInviteModalContent = ({
   );
 
   return (
-    <form onSubmit={handleSubmit(handleInvite)} className='pb-4'>
-      <div className='mb-4'>
-        <label className='block text-gray-700'>
-          {dict.usersPermissions.name}
-        </label>
+    <form
+      onSubmit={handleSubmit(handleInvite)}
+      className='flex flex-col gap-4 pb-4'
+    >
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.usersPermissions.name}</Label>
         <Controller
           name='name'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <Input
-              variant='solid'
-              colorScheme='gray'
-              className='mt-2 w-full'
-              size='sm'
+              className='mt-2'
               type='text'
               placeholder='John Doe'
               {...field}
@@ -99,14 +98,11 @@ const WorkspaceSendInviteModalContent = ({
           )}
         />
         {errors.name && (
-          <p className='mt-1 text-red-800'>{errors.name.message}</p>
+          <p className='mt-1 text-destructive'>{errors.name.message}</p>
         )}
       </div>
-
-      <div className='mb-4'>
-        <label className='block text-gray-700'>
-          {dict.usersPermissions.email}
-        </label>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.usersPermissions.email}</Label>
         <Controller
           name='email'
           control={control}
@@ -116,10 +112,7 @@ const WorkspaceSendInviteModalContent = ({
           }}
           render={({ field }) => (
             <Input
-              variant='solid'
-              colorScheme='gray'
-              className='mt-2 w-full'
-              size='sm'
+              className='mt-2'
               type='email'
               placeholder='johndoe@example.com'
               {...field}
@@ -127,14 +120,11 @@ const WorkspaceSendInviteModalContent = ({
           )}
         />
         {errors.email && (
-          <p className='mt-1 text-red-800'>{errors.email.message}</p>
+          <p className='mt-1 text-destructive'>{errors.email.message}</p>
         )}
       </div>
-
-      <div className='mb-4'>
-        <label className='block text-gray-700'>
-          {dict.usersPermissions.role}
-        </label>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.usersPermissions.role}</Label>
         <div className='mt-2 w-full'>
           <Controller
             name='role'
@@ -169,24 +159,18 @@ const WorkspaceSendInviteModalContent = ({
           />
         </div>
         {errors.role && (
-          <p className='mt-1 text-red-800'>{errors.role.message}</p>
+          <p className='mt-1 text-destructive'>{errors.role.message}</p>
         )}
       </div>
 
       <div className='flex flex-row gap-2'>
-        <Button
-          size='sm'
-          variant='link'
-          colorScheme='primary'
-          onClick={() => onClose(false)}
-        >
+        <Button size='sm' variant='link' onClick={() => onClose(false)}>
           {dict.usersPermissions.cancel}
         </Button>
         <Button
           size='sm'
           className='ml-auto min-w-32'
-          variant='solid'
-          colorScheme='primary'
+          variant='default'
           type='submit'
         >
           {dict.usersPermissions.invite}

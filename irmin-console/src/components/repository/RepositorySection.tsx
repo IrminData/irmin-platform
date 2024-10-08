@@ -9,8 +9,8 @@ import { AiOutlinePlayCircle } from 'react-icons/ai';
 import { TbDownload, TbFileDiff, TbUpload } from 'react-icons/tb';
 
 import CodeMirrorEditor from '@/components/bucket/editor/CodeMirrorEditor';
-import Button from '@/components/common/button/Button';
 import QueryResults from '@/components/query/QueryResults';
+import Button from '@/components/ui/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -115,7 +115,7 @@ export default function RepositorySection() {
     <>
       <div className='container relative mx-auto mb-4 flex max-w-6xl flex-col px-2 md:px-4'>
         <div className='mb-4 flex w-full flex-wrap items-center justify-between gap-4'>
-          <div className='inline max-w-full overflow-x-scroll whitespace-nowrap text-xs text-gray-600 lg:text-sm dark:text-gray-400'>
+          <div className='inline max-w-full overflow-x-scroll whitespace-nowrap text-xs text-gray-600 dark:text-gray-400 lg:text-sm'>
             <Link
               className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
               href={`${workspaceUrl}/repositories`}
@@ -135,8 +135,7 @@ export default function RepositorySection() {
             {/** Button to navigate to uncommited changes of the current branch */}
             {!immutable && (
               <Button
-                colorScheme='light'
-                variant='solid'
+                variant='secondary'
                 size='sm'
                 href={`${baseUrl}/uncommited-changes?${searchParams.toString()}`}
                 icon={<TbFileDiff />}
@@ -145,8 +144,7 @@ export default function RepositorySection() {
               </Button>
             )}
             <Button
-              colorScheme='light'
-              variant='solid'
+              variant='secondary'
               size='sm'
               icon={<TbDownload />}
               href={`${workspaceUrl}/repositories/${currentRepository.slug}/download?${searchParams.toString()}`}
@@ -155,10 +153,9 @@ export default function RepositorySection() {
             </Button>
             {!immutable && (
               <Button
-                onClick={handleUpload}
-                colorScheme='light'
-                variant='solid'
+                variant='default'
                 size='sm'
+                onClick={handleUpload}
                 icon={<TbUpload />}
               >
                 {dict.repository.collections.uploadCollection}
@@ -182,14 +179,13 @@ export default function RepositorySection() {
             />
           )}
         </div>
-        <div className='w-full max-w-full overflow-hidden rounded-md border border-gray-100 bg-white dark:border-gray-800 dark:bg-irmin_black'>
+        <div className='w-full max-w-full overflow-hidden rounded-md border border-gray-100 bg-background dark:border-gray-800'>
           <div className='flex w-full flex-row items-center justify-between bg-gray-100 pl-4 dark:bg-gray-800'>
             <div className='py-2 text-sm font-semibold'>
               {dict.repository.sqlQuery}
             </div>
             <Button
-              colorScheme='primary'
-              variant='solid'
+              variant='accent'
               className='float-end m-2 shadow-none'
               size='sm'
               icon={<AiOutlinePlayCircle />}

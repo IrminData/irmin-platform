@@ -4,11 +4,10 @@ import { useMemo } from 'react';
 
 import { usePathname } from 'next/navigation';
 
-import { IoChevronBack } from 'react-icons/io5';
 import { TbInvoice, TbSettings, TbUser } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
@@ -44,20 +43,20 @@ export default function WorkspaceSettingsLayoutWrapper({
   const tabs = useMemo(
     () => [
       {
-        title: dict.workspace.general,
-        href: `${workspaceUrl}/settings`,
+        name: dict.workspace.general,
+        link: `${workspaceUrl}/settings`,
         active: pathname === `${workspaceUrl}/settings`,
         icon: <TbSettings size={14} />,
       },
       {
-        title: dict.workspace.users,
-        href: `${workspaceUrl}/settings/users`,
+        name: dict.workspace.users,
+        link: `${workspaceUrl}/settings/users`,
         active: pathname === `${workspaceUrl}/settings/users`,
         icon: <TbUser size={14} />,
       },
       {
-        title: dict.workspace.billing,
-        href: `${workspaceUrl}/settings/billing`,
+        name: dict.workspace.billing,
+        link: `${workspaceUrl}/settings/billing`,
         active: pathname === `${workspaceUrl}/settings/billing`,
         icon: <TbInvoice size={14} />,
       },
@@ -84,34 +83,11 @@ export default function WorkspaceSettingsLayoutWrapper({
             {currentWorkspace.name}
           </p>
         </div>
-        <div className='scrollbar-hide mb-6 flex w-full max-w-3xl justify-start gap-2 overflow-y-scroll px-4'>
-          <Button
-            size='sm'
-            variant='icon'
-            colorScheme='light'
-            className='bg-gray-100 dark:bg-gray-700'
-            icon={<IoChevronBack size={24} />}
-            href={`${workspaceUrl}/home`}
-          />
-          {tabs
-            .map((tab, idx) => {
-              return (
-                <Button
-                  key={`workspace-settings-tab-${idx}`}
-                  className={`rounded-none border-irmin_green px-2 hover:no-underline lg:px-1 ${tab.active ? 'border-b-2' : 'border-0'}`}
-                  size='sm'
-                  variant='link'
-                  colorScheme={tab.active ? 'primary' : 'gray'}
-                  href={tab.href}
-                  ariaLabel={`Tab ${tab.title}`}
-                  icon={tab.icon}
-                >
-                  {tab.title}
-                </Button>
-              );
-            })
-            .filter((tab) => tab)}
-        </div>
+        <TabsWithBackButton
+          backHref={`${workspaceUrl}/home`}
+          backTooltip={dict.consoleNavigation.workspace}
+          tabs={tabs}
+        />
       </div>
       <div>{children}</div>
     </>

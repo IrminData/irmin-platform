@@ -1,4 +1,4 @@
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 /**
  * Loading UI for the Console

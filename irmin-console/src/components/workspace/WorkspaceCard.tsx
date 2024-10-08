@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-import ProfileImagePlaceholder from '@/components/common/ProfileImagePlaceholder';
+import ProfileImagePlaceholder from '@/components/ui/ProfileImagePlaceholder';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -56,7 +56,7 @@ const WorkspaceCard = ({ workspace }: { workspace: Workspace }) => {
       onClick={handleWorkspaceCardClick}
       aria-label={`Go to ${workspace.name} workspace`}
     >
-      <div className='flex h-full flex-col rounded-xl bg-white p-2 text-xs shadow lg:p-4 lg:text-base dark:bg-irmin_black-600'>
+      <div className='flex h-full flex-col rounded-xl bg-card p-2 text-xs text-card-foreground shadow lg:p-4 lg:text-base'>
         <span className='md:text-normal text-xs font-semibold uppercase tracking-wide text-irmin_green'>
           {dict.workspaceSwitcher.workspace}
         </span>
@@ -69,29 +69,31 @@ const WorkspaceCard = ({ workspace }: { workspace: Workspace }) => {
         <div className='flex-grow'></div>
         {workspace.users && workspace.users.length > 0 && (
           <div className='mt-auto flex items-center justify-between gap-0'>
-            <div className='flex -space-x-2 overflow-hidden'>
-              {workspace.users
-                .slice(0, 3)
-                .map((user, idx) =>
-                  user.profile_picture ? (
-                    <Image
-                      key={`select-workspace-card-${workspace.id}-user-${idx}`}
-                      src={user.profile_picture}
-                      width={30}
-                      height={30}
-                      alt={user.name}
-                      className='inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-irmin_black-900'
-                    />
-                  ) : (
+            <div className='flex -space-x-2'>
+              {workspace.users.slice(0, 3).map((user, idx) =>
+                user.profile_picture ? (
+                  <Image
+                    key={`select-workspace-card-${workspace.id}-user-${idx}`}
+                    src={user.profile_picture}
+                    width={30}
+                    height={30}
+                    alt={user.name}
+                    className='inline-block h-6 w-6 rounded-full ring-1 ring-white dark:ring-irmin_black-900'
+                  />
+                ) : (
+                  <div
+                    key={`select-workspace-card-${workspace.id}-user-${idx}`}
+                    className='relative inline-block rounded-full bg-background text-xs ring-1 ring-white dark:ring-irmin_black-900'
+                  >
                     <ProfileImagePlaceholder
-                      key={`select-workspace-card-${workspace.id}-user-${idx}`}
                       user={user}
-                      className='inline-block h-6 w-6 rounded-full text-xs ring-2 ring-white dark:ring-irmin_black-900'
+                      className='h-6 w-6 rounded-full'
                     />
-                  )
-                )}
+                  </div>
+                )
+              )}
               {workspace.users.length > 3 && (
-                <span className='z-10 inline-block h-6 w-6 rounded-full bg-gray-200 text-center text-xs font-medium leading-6 dark:bg-gray-800'>
+                <span className='z-10 inline-block h-6 w-6 rounded-full bg-background text-center text-xs font-medium leading-6'>
                   +{workspace.users.length - 3}
                 </span>
               )}

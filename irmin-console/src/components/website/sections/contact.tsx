@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 
-import Button from '@/components/common/button/Button';
-import DynamicFaIcon from '@/components/common/DynamicFaIcon';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import DynamicFaIcon from '@/components/ui/DynamicFaIcon';
+import Input from '@/components/ui/Input';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -42,10 +42,10 @@ export default function WebsiteContactSection({
             <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-normal uppercase leading-5 text-white shadow-sm'>
               {section.subtitle}
             </span>
-            <h3 className='mb-4 text-4xl font-bold leading-tight tracking-tighter text-irmin_black md:text-5xl'>
+            <h3 className='mb-4 text-4xl font-bold leading-tight tracking-tighter text-foreground md:text-5xl'>
               {section.title}
             </h3>
-            <p className='mb-4 text-sm font-normal text-irmin_black md:text-base'>
+            <p className='mb-4 text-sm font-normal text-foreground md:text-base'>
               {section.description}
             </p>
             <div className='max-w-md'>
@@ -72,13 +72,11 @@ export default function WebsiteContactSection({
                 >
                   <Button
                     variant={button.variant}
-                    colorScheme={button.color_scheme}
                     icon={
                       button.icon ? (
                         <DynamicFaIcon name={button.icon} />
                       ) : undefined
                     }
-                    size='md'
                     className={`w-full`}
                     href={getURL(button.link)}
                   >
@@ -102,10 +100,10 @@ export default function WebsiteContactSection({
                       <DynamicFaIcon name={contact.icon} />
                     </div>
                     <div>
-                      <h3 className='text-lg font-bold leading-9 text-irmin_black'>
+                      <h3 className='text-lg font-bold leading-9 text-foreground'>
                         {contact.title}
                       </h3>
-                      <p className='text-lg font-normal text-irmin_black hover:text-irmin_black md:text-xl'>
+                      <p className='text-lg font-normal text-foreground hover:text-foreground md:text-xl'>
                         {contact.detail}
                       </p>
                     </div>
@@ -118,38 +116,27 @@ export default function WebsiteContactSection({
             <div className='rounded-xl bg-green-50 px-4 py-8 md:p-10'>
               <form>
                 <div className='mb-6'>
-                  <label className='mb-2 block font-normal leading-6 text-irmin_black'>
+                  <label className='mb-2 block font-normal leading-6 text-foreground'>
                     {dict.website.sections.contact.email}
                   </label>
-                  <Input
-                    variant='solid'
-                    colorScheme='black'
-                    type='email'
-                    placeholder='me@example.com'
-                    className='w-full'
-                  />
+                  <Input type='email' placeholder='me@example.com' />
                 </div>
                 <div className='mb-6'>
                   <label
-                    className='mb-2 block font-normal leading-6 text-irmin_black'
+                    className='mb-2 block font-normal leading-6 text-foreground'
                     htmlFor=''
                   >
                     {dict.website.sections.contact.message}
                   </label>
                   <textarea
-                    className='block h-32 w-full resize-none appearance-none rounded-lg border border-irmin_black px-3 py-2 leading-6 text-irmin_black shadow-md md:h-52'
+                    className='block h-32 w-full resize-none appearance-none rounded-lg border border-irmin_black px-3 py-2 leading-6 text-foreground shadow-md md:h-52'
                     placeholder={
                       dict.website.sections.contact.messagePlaceholder
                     }
                     defaultValue={''}
                   />
                 </div>
-                <Button
-                  size='md'
-                  className='w-full'
-                  colorScheme='primary'
-                  variant='solid'
-                >
+                <Button className='w-full' variant='default'>
                   {dict.website.sections.contact.send}
                 </Button>
               </form>

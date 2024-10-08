@@ -2,9 +2,7 @@
 
 import React, { useCallback } from 'react';
 
-import SettingsForm, {
-  FieldConfig,
-} from '@/components/common/form/SettingsForm';
+import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';

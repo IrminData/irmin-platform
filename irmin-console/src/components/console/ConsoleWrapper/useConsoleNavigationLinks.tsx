@@ -5,18 +5,14 @@ import { useCallback, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 
 import { GoWorkflow } from 'react-icons/go';
-import {
-  MdCode,
-  MdOutlinePrivacyTip,
-  MdOutlineSupportAgent,
-} from 'react-icons/md';
+import { MdCode, MdOutlinePrivacyTip } from 'react-icons/md';
 import {
   TbBook,
   TbChevronLeft,
   TbDashboard,
   TbDatabase,
   TbFile,
-  TbHome,
+  TbHelp,
   TbLogout,
   TbLogs,
   TbRun,
@@ -77,7 +73,7 @@ const useConsoleNavigationLinks = (): {
         {
           title: dict.consoleNavigation.links.home,
           href: `${workspaceUrl}/home`,
-          icon: <TbHome />,
+          icon: <TbDashboard />,
         },
         {
           title: dict.consoleNavigation.links.repositories,
@@ -174,7 +170,7 @@ const useConsoleNavigationLinks = (): {
     {
       title: dict.consoleNavigation.links.contactSupport,
       href: `/${locale}/contact`,
-      icon: <MdOutlineSupportAgent />,
+      icon: <TbHelp />,
       props: {
         target: '_blank',
       },

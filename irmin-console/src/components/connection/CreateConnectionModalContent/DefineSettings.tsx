@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
-import Link from 'next/link';
 
 import IrminCore from '@/services/core/IrminCore';
 
-import Button from '@/components/common/button/Button';
-import DynamicForm from '@/components/common/form/DynamicForm';
-import LoadingSpinner from '@/components/common/loading/LoadingSpinner';
+import { Badge } from '@/components/ui/badge';
+import Button from '@/components/ui/Button';
+import DynamicForm from '@/components/ui/form/DynamicForm';
+import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -110,7 +110,7 @@ export default function DefineSettings({
             {dict.connections.create.selectedConnector}:
           </p>
           <div className='flex w-full flex-row items-center gap-4'>
-            <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-gray-50 px-4 py-2 text-left text-sm text-irmin_black shadow dark:bg-gray-800 dark:text-gray-200'>
+            <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-card px-4 py-2 text-left text-sm text-card-foreground shadow'>
               <Image
                 src={connectionData.connector.logo}
                 alt={connectionData.connector.name}
@@ -119,9 +119,9 @@ export default function DefineSettings({
                 height={48}
               />
               <div className='flex flex-col justify-start gap-1'>
-                <span className='w-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+                <Badge variant='secondary'>
                   {connectionData.connector.category}
-                </span>
+                </Badge>
                 <p>{connectionData.connector.name}</p>
               </div>
             </div>
@@ -130,14 +130,15 @@ export default function DefineSettings({
                 {connectionData.connector.description}
               </p>
               {connectionData.connector.url && (
-                <Link
-                  className='text-sm text-irmin_blue transition-all duration-200 hover:underline dark:text-irmin_green'
+                <Button
+                  variant='link'
                   target='_blank'
+                  className='h-max p-0'
                   rel='noopener noreferrer'
                   href={connectionData.connector.url}
                 >
                   {dict.connections.create.learnMore}
-                </Link>
+                </Button>
               )}
             </div>
           </div>
@@ -154,8 +155,7 @@ export default function DefineSettings({
       {/* Go Back Button */}
       <Button
         className='mb-6 inline-block w-full'
-        variant='link'
-        colorScheme='primary'
+        variant='ghost'
         size='sm'
         onClick={() => setCurrentStep((currentStep) => currentStep - 1)}
       >

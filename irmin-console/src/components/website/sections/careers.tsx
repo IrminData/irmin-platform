@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { IoInformation, IoLocationOutline } from 'react-icons/io5';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -75,7 +75,7 @@ export default function WebsiteCareersSection({
           <h3 className='mb-4 text-3xl font-bold leading-tight tracking-tighter md:text-4xl'>
             {section.title}
           </h3>
-          <p className='mb-4 text-sm font-normal text-irmin_black md:text-base'>
+          <p className='mb-4 text-sm font-normal text-foreground md:text-base'>
             {section.description}
           </p>
         </div>
@@ -84,16 +84,12 @@ export default function WebsiteCareersSection({
             <div className='w-full px-3 md:mb-0 md:w-1/3'>
               <Input
                 icon={<FaSearch />}
-                variant='outline'
-                colorScheme='black'
-                type='text'
                 placeholder={dict.website.sections.careers.search}
-                className='w-full rounded-full border border-irmin_black bg-white shadow-md'
                 onChange={(e) => setStringFilter(e.target.value)}
               />
             </div>
             <div className='w-full px-3 md:w-1/3'>
-              <div className='relative rounded-full border border-irmin_black bg-white shadow-md'>
+              <div className='relative rounded-full border border-irmin_black bg-background shadow-md'>
                 <svg
                   className='absolute right-0 top-1/2 mr-5 -translate-y-1/2 transform'
                   width={12}
@@ -108,7 +104,7 @@ export default function WebsiteCareersSection({
                   />
                 </svg>
                 <select
-                  className='w-full appearance-none rounded-full border-0 bg-transparent px-4 py-3 leading-6 text-irmin_black outline-none hover:cursor-pointer focus:outline-none'
+                  className='w-full appearance-none rounded-full border-0 bg-transparent px-4 py-3 leading-6 text-foreground outline-none hover:cursor-pointer focus:outline-none'
                   name='location-filter'
                   onChange={(e) => setLocationFilter(e.target.value)}
                 >
@@ -122,7 +118,7 @@ export default function WebsiteCareersSection({
               </div>
             </div>
             <div className='w-full px-3 md:w-1/3'>
-              <div className='relative rounded-full border border-irmin_black bg-white shadow-md'>
+              <div className='relative rounded-full border border-irmin_black bg-background shadow-md'>
                 <svg
                   className='absolute right-0 top-1/2 mr-5 -translate-y-1/2 transform'
                   width={12}
@@ -137,7 +133,7 @@ export default function WebsiteCareersSection({
                   />
                 </svg>
                 <select
-                  className='w-full appearance-none rounded-full border-0 bg-transparent px-4 py-3 leading-6 text-irmin_black outline-none hover:cursor-pointer focus:outline-none'
+                  className='w-full appearance-none rounded-full border-0 bg-transparent px-4 py-3 leading-6 text-foreground outline-none hover:cursor-pointer focus:outline-none'
                   name='note-filter'
                   onChange={(e) => setTypeFilter(e.target.value)}
                 >
@@ -161,32 +157,31 @@ export default function WebsiteCareersSection({
               <h3 className='mb-2 text-lg font-semibold md:text-xl'>
                 {position.role}
               </h3>
-              <p className='text-sm font-normal text-irmin_black'>
+              <p className='text-sm font-normal text-foreground'>
                 {position.description}
               </p>
             </div>
             <div className='flex flex-row items-center gap-4'>
               <div className='order-2 flex w-full min-w-max flex-col gap-2 lg:order-1'>
                 <div className='inline-flex w-full items-center'>
-                  <div className='text-irmin_black'>
+                  <div className='text-foreground'>
                     <IoLocationOutline width={24} height={24} />
                   </div>
-                  <span className='ml-2 font-medium text-irmin_black'>
+                  <span className='ml-2 font-medium text-foreground'>
                     {position.location}
                   </span>
                 </div>
                 <div className='inline-flex w-full items-center'>
-                  <div className='text-irmin_black'>
+                  <div className='text-foreground'>
                     <IoInformation width={24} height={24} />
                   </div>
-                  <span className='ml-2 font-medium text-irmin_black'>
+                  <span className='ml-2 font-medium text-foreground'>
                     {position.note}
                   </span>
                 </div>
               </div>
               <Button
-                variant='solid'
-                colorScheme='primary'
+                variant='default'
                 className='order-1 w-full min-w-24 lg:order-2'
                 href={getURL(position.link)}
               >

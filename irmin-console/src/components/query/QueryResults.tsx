@@ -15,9 +15,9 @@ import {
   TbTable,
 } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
-import MDXEditor from '@/components/common/markdown-editor/MDXEditor';
 import LogFeed from '@/components/logs/LogFeed';
+import Button from '@/components/ui/Button';
+import MDXEditor from '@/components/ui/markdown-editor/MDXEditor';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -76,19 +76,18 @@ const QueryResults = ({
 
   return (
     <div
-      className='flex flex-1 flex-col overflow-hidden border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-irmin_black'
+      className='flex flex-1 flex-col overflow-hidden border-t border-gray-200 bg-background dark:border-gray-800'
       id='query-results'
     >
       {/* Tab Buttons */}
-      <div className='mb-0 mt-1 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b dark:border-gray-800'>
+      <div className='mb-0 mt-1 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 dark:border-gray-800 md:border-b'>
         <div
-          className={`border-irmin_green ${activeTab === 'data' ? 'border-b-2' : ''}`}
+          className={`border-accent ${activeTab === 'data' ? 'border-b-2' : ''}`}
         >
           <Button
             size='sm'
-            variant='link'
-            colorScheme={activeTab === 'data' ? 'primary' : 'gray'}
-            className={`justify-start rounded-none text-xs shadow-none hover:no-underline dark:text-gray-200`}
+            variant={'ghost'}
+            className={`rounded-b-none`}
             onClick={() => setActiveTab('data')}
             icon={<TbTable />}
           >
@@ -96,13 +95,12 @@ const QueryResults = ({
           </Button>
         </div>
         <div
-          className={`border-irmin_green ${activeTab === 'logs' ? 'border-b-2' : ''}`}
+          className={`border-accent ${activeTab === 'logs' ? 'border-b-2' : ''}`}
         >
           <Button
             size='sm'
-            variant='link'
-            colorScheme={activeTab === 'logs' ? 'primary' : 'gray'}
-            className={`justify-start rounded-none text-xs shadow-none hover:no-underline dark:text-gray-200`}
+            variant={'ghost'}
+            className={`rounded-b-none`}
             onClick={() => setActiveTab('logs')}
             icon={<TbLogs />}
           >
@@ -110,13 +108,12 @@ const QueryResults = ({
           </Button>
         </div>
         <div
-          className={`border-irmin_green ${activeTab === 'errors' ? 'border-b-2' : ''}`}
+          className={`border-accent ${activeTab === 'errors' ? 'border-b-2' : ''}`}
         >
           <Button
             size='sm'
-            variant='link'
-            colorScheme={activeTab === 'errors' ? 'primary' : 'gray'}
-            className={`justify-start rounded-none text-xs shadow-none hover:no-underline dark:text-gray-200`}
+            variant={'ghost'}
+            className={`rounded-b-none`}
             onClick={() => setActiveTab('errors')}
             icon={<TbExclamationCircle />}
           >
@@ -126,13 +123,12 @@ const QueryResults = ({
         </div>
         {workflow && (
           <div
-            className={`border-irmin_green ${activeTab === 'documentation' ? 'border-b-2' : ''}`}
+            className={`border-accent ${activeTab === 'documentation' ? 'border-b-2' : ''}`}
           >
             <Button
               size='sm'
-              variant='link'
-              colorScheme={activeTab === 'documentation' ? 'primary' : 'gray'}
-              className={`justify-start rounded-none text-xs shadow-none hover:no-underline dark:text-gray-200`}
+              variant={'ghost'}
+              className={`rounded-b-none`}
               onClick={() => setActiveTab('documentation')}
               icon={<TbFileText />}
             >
@@ -149,7 +145,6 @@ const QueryResults = ({
                 )
               }
               variant='link'
-              colorScheme={'gray'}
               size='sm'
               className='text-xs dark:text-gray-200'
               icon={
@@ -168,8 +163,7 @@ const QueryResults = ({
           {onSave && (
             <Button
               icon={<AiOutlineSave />}
-              colorScheme='light'
-              variant='solid'
+              variant='secondary'
               size='sm'
               className='text-xs'
               loading={processingSave}
@@ -186,8 +180,7 @@ const QueryResults = ({
           {onRun && (
             <Button
               icon={<MdPlayArrow />}
-              colorScheme='primary'
-              variant='solid'
+              variant='default'
               size='sm'
               className='text-xs'
               loading={processingRun || loading}
@@ -249,7 +242,7 @@ const QueryResults = ({
         <div className='flex h-0 flex-1 flex-col overflow-scroll px-2 pt-2'>
           {documentationTab === 'plain' && (
             <textarea
-              className='h-full w-full bg-gray-200 p-2 text-irmin_black focus:outline-none dark:bg-irmin_black dark:text-gray-200'
+              className='h-full w-full bg-gray-200 p-2 text-foreground focus:outline-none dark:text-gray-200'
               placeholder={dict.documentation.startTypingDocumentation}
               value={currentDocumentation}
               onChange={(e) => {

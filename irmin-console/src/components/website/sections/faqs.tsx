@@ -1,4 +1,4 @@
-import DynamicFaIcon from '@/components/common/DynamicFaIcon';
+import DynamicFaIcon from '@/components/ui/DynamicFaIcon';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { FAQSection } from '@/types/website/Wordpress';
@@ -28,10 +28,10 @@ export default function WebsiteFaqsSection({
           <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-normal uppercase leading-5 text-white shadow-sm'>
             {section.subtitle}
           </span>
-          <h2 className='mb-4 text-4xl font-bold leading-tight tracking-tighter text-irmin_black md:text-5xl'>
+          <h2 className='mb-4 text-4xl font-bold leading-tight tracking-tighter text-foreground md:text-5xl'>
             {section.title}
           </h2>
-          <p className='mb-8 text-sm font-normal text-irmin_black md:text-base'>
+          <p className='mb-8 text-sm font-normal text-foreground md:text-base'>
             {section.description}
           </p>
         </div>
@@ -52,12 +52,12 @@ export default function WebsiteFaqsSection({
                       className='text-white'
                     />
                   </div>
-                  <h3 className='text-xl font-bold text-irmin_black'>
+                  <h3 className='text-xl font-bold text-foreground'>
                     {question.title}
                   </h3>
                 </div>
 
-                <p className='font-normal text-irmin_black'>
+                <p className='font-normal text-foreground'>
                   {question.description}
                 </p>
               </div>

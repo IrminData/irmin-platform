@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 
 import { AiOutlineDownload } from 'react-icons/ai';
 
-import Button from '@/components/common/button/Button';
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import Button from '@/components/ui/Button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -77,7 +77,7 @@ const TableData = ({
       {/* Title, metadata and actions */}
       <div className='flex items-center justify-start px-4 py-1 text-xs'>
         <p className='ml-0 hidden text-gray-400 lg:inline'>{title}</p>
-        <p className='inline text-[8px] text-irmin_blue md:ml-auto md:pl-2 lg:text-xs dark:text-irmin_green'>
+        <p className='inline text-[8px] text-irmin_blue dark:text-irmin_green md:ml-auto md:pl-2 lg:text-xs'>
           {metadata && metadata.rowsReturned && metadata.timeTaken
             ? `
           ${metadata.rowsReturned} ${dict.query.rowsReturnedIn} ${metadata.timeTaken}ms
@@ -89,10 +89,9 @@ const TableData = ({
           {data && (
             <Button
               icon={<AiOutlineDownload />}
-              colorScheme='secondary'
               variant='link'
               size='sm'
-              className='hidden lg:inline-flex dark:text-white'
+              className='hidden lg:inline-flex'
               onClick={() => downloadCSV(data.rows ?? [], title)}
             >
               {dict.query.exportTable}

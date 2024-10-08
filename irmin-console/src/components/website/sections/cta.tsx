@@ -2,8 +2,8 @@ import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
 
-import Button from '@/components/common/button/Button';
-import DynamicFaIcon from '@/components/common/DynamicFaIcon';
+import Button from '@/components/ui/Button';
+import DynamicFaIcon from '@/components/ui/DynamicFaIcon';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { getURL } from '@/utils/wordpress';
@@ -41,7 +41,7 @@ export default async function WebsiteCTASection({
         <div className='-mx-4 flex flex-wrap'>
           <div className='mb-20 w-full px-4 md:w-1/2 lg:mb-0'>
             <div className='max-w-lg'>
-              <h2 className='font-heading md:leading-15 mb-8 text-4xl font-bold text-irmin_black md:text-5xl'>
+              <h2 className='font-heading md:leading-15 mb-8 text-4xl font-bold text-foreground md:text-5xl'>
                 {section.title}
               </h2>
               <ul className='mb-8'>
@@ -57,7 +57,7 @@ export default async function WebsiteCTASection({
                       width={26}
                       height={26}
                     />
-                    <span className='font-heading text-lg text-irmin_black md:text-xl'>
+                    <span className='font-heading text-lg text-foreground md:text-xl'>
                       {bullet.title}
                     </span>
                   </li>
@@ -69,9 +69,8 @@ export default async function WebsiteCTASection({
                     <Button
                       size='lg'
                       variant={button.variant}
-                      colorScheme={button.color_scheme}
                       className={`w-full`}
-                      ariaLabel={button.text}
+                      aria-label={button.text}
                       href={getURL(button.link)}
                       icon={
                         button.icon ? (

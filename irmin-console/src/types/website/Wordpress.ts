@@ -504,14 +504,16 @@ interface Button {
   text: string;
   link: string | WordpressLink;
   icon?: string | null;
-  variant: 'link' | 'outline' | 'solid' | 'gradient';
-  color_scheme:
-    | 'primary'
+  variant:
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'accent'
     | 'secondary'
-    | 'tertiary'
     | 'gray'
-    | 'black'
-    | 'light';
+    | 'ghost'
+    | 'link'
+    | 'gradient';
 }
 
 /**

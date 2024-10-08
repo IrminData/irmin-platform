@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -77,8 +77,7 @@ export default function RepositoryTagsSection() {
     <div className='container relative mx-auto max-w-6xl px-2 md:px-4'>
       <div className='mb-4 flex flex-row items-center justify-end gap-4'>
         <Button
-          variant='solid'
-          colorScheme='primary'
+          variant='default'
           size='sm'
           icon={<IoAdd size={18} />}
           onClick={() => {

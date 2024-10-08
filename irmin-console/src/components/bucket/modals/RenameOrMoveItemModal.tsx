@@ -7,8 +7,9 @@ import ReactSelect from 'react-select';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -214,27 +215,18 @@ export default function RenameOrMoveItemModal({
           </p>
         </div>
       )}
-      <div>
-        <label className='text-xs text-gray-600 dark:text-gray-400'>
+      <div className='flex flex-col gap-2'>
+        <Label>
           {item.type === 'file'
             ? dict.fileNavigator.newNameOfTheFile
             : dict.fileNavigator.newNameOfTheFolder}
-        </label>
+        </Label>
         <Controller
           name='name'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
-            <Input
-              {...field}
-              size='sm'
-              variant='outline'
-              colorScheme='gray'
-              className='h-11 w-full'
-              type='text'
-              disabled={loading}
-              placeholder='example'
-            />
+            <Input {...field} type='text' disabled={loading} />
           )}
         />
         {errors.name && (
@@ -244,39 +236,30 @@ export default function RenameOrMoveItemModal({
           {dict.fileNavigator.original}: {item.original?.name ?? ''}
         </p>
       </div>
-      <div>
-        <label className='text-xs text-gray-600 dark:text-gray-400'>
+      <div className='flex flex-col gap-2'>
+        <Label>
           {item.type === 'file'
             ? dict.fileNavigator.newPathOfTheFile
             : dict.fileNavigator.newPathOfTheFolder}
-        </label>
+        </Label>
         <Controller
           name='path'
           control={control}
           render={({ field }) => (
             <div className='flex items-center'>
-              <Input
-                {...field}
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                className='h-11 w-full'
-                type='text'
-                disabled
-              />
+              <Input {...field} type='text' disabled />
               <Button
-                variant='icon'
-                colorScheme='light'
-                size='sm'
-                className='m-0 ml-2 h-11 rounded-lg p-0 pl-2'
-                ariaLabel='Toggle the path selector'
+                size='icon'
+                variant='secondary'
+                className='h-11 rounded-full'
+                aria-label='Toggle the path selector'
                 onClick={() => setShowPathSelector(!showPathSelector)}
                 disabled={loading}
                 icon={
                   showPathSelector ? (
-                    <IoChevronUp className='inline-block' size={24} />
+                    <IoChevronUp className='inline-block' size={22} />
                   ) : (
-                    <IoChevronDown className='inline-block' size={24} />
+                    <IoChevronDown className='inline-block' size={22} />
                   )
                 }
               />
@@ -305,10 +288,9 @@ export default function RenameOrMoveItemModal({
           }}
         />
       )}
-      {error && <div className='py-2 text-red-800'>{error}</div>}
+      {error && <div className='py-2 text-destructive'>{error}</div>}
       <Button
-        variant='solid'
-        colorScheme='primary'
+        variant='default'
         size='sm'
         className='w-full'
         type='submit'

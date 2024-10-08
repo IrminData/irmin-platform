@@ -4,7 +4,7 @@ import React from 'react';
 
 import { TbDownload } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -61,8 +61,7 @@ export default function FileCollectionSchema({
       {downloadUrl && (
         <Button
           size='sm'
-          colorScheme='light'
-          variant='solid'
+          variant='secondary'
           className='w-full'
           icon={<TbDownload />}
           href={downloadUrl}

@@ -6,8 +6,8 @@ import Link from 'next/link';
 
 import IrminCore from '@/services/core/IrminCore';
 
-import NormalList from '@/components/common/list/NormalList';
-import StatusBadge from '@/components/common/status/StatusBadge';
+import NormalList from '@/components/ui/list/NormalList';
+import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -80,7 +80,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
             <p className='text-xs lg:text-sm'>{run.owner.name}</p>
           </div>,
           <div key={`run-${i}-status`} className='inline-flex flex-col gap-2'>
-            <StatusBadge runStatus={run.status} statusLabel={run.status} />
+            <StatusBadge status={run.status} label={run.status} />
           </div>,
         ],
         actions: [
@@ -97,7 +97,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
   return (
     <div className='container relative mx-auto max-w-6xl'>
       <div className='my-4 flex flex-col gap-4 p-4'>
-        <div className='flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg bg-gray-100 p-4 text-sm text-irmin_black lg:text-lg dark:bg-irmin_black-800 dark:text-gray-100'>
+        <div className='flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg bg-card p-4 text-sm text-foreground lg:text-lg'>
           <div className='flex flex-col gap-1'>
             <p className='text-sm opacity-60'>{dict.workflow.runInterval}</p>
             <p className='text-base'>

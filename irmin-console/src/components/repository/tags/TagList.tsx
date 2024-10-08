@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import NormalList from '@/components/common/list/NormalList';
+import NormalList from '@/components/ui/list/NormalList';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -46,7 +46,7 @@ export default function TagList({
           >
             <p className='text-base'>{tag.name}</p>
             {tag.name === currentRef && (
-              <span className='h-max rounded-lg bg-gray-300 px-1 text-xs leading-4 text-irmin_black dark:bg-gray-600 dark:text-white'>
+              <span className='h-max rounded-lg bg-gray-300 px-1 text-xs leading-4 text-foreground dark:bg-gray-600'>
                 {dict.repository.tags.currentlyViewing}
               </span>
             )}

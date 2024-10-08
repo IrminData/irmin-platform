@@ -5,8 +5,9 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -92,22 +93,15 @@ export default function MergeModalContent({
       id='merge-modal-content'
       onSubmit={handleSubmit(onSubmit)}
     >
-      <div>
-        <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-          {dict.repository.compare.mergeCommitDescription}
-        </label>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.compare.mergeCommitDescription}</Label>
         <Controller
           name='description'
           control={control}
           render={({ field }) => (
             <Input
-              size='sm'
-              variant='outline'
-              colorScheme='gray'
-              className='h-11 w-full'
-              type='text'
-              placeholder={dict.repository.compare.mergeCommitDescription}
               {...field}
+              placeholder={dict.repository.compare.mergeCommitDescription}
             />
           )}
         />
@@ -117,10 +111,8 @@ export default function MergeModalContent({
           </p>
         )}
       </div>
-      <div>
-        <label className='mb-1 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-          {dict.repository.compare.mergeStrategy}
-        </label>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.compare.mergeStrategy}</Label>
         <div className='w-full'>
           <Controller
             name='mergeStrategy'
@@ -147,8 +139,7 @@ export default function MergeModalContent({
         className='mt-4 h-11 w-full'
         type='submit'
         size='sm'
-        colorScheme='primary'
-        variant='solid'
+        variant='default'
         disabled={loading}
       >
         {dict.repository.compare.merge}

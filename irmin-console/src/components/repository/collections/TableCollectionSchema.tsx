@@ -4,7 +4,7 @@ import React from 'react';
 
 import { TbDownload } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -28,7 +28,7 @@ export default function TableCollectionSchema({
 
   return (
     <div className='space-y-4'>
-      <table className='border-seperate w-full table-auto gap-2 text-left'>
+      <table className='border-seperate mb-4 w-full table-auto gap-2 text-left'>
         <thead>
           <tr className='border-b border-gray-300 dark:border-gray-700'>
             <th className='p-1'>{dict.repository.schema.column}</th>
@@ -47,8 +47,7 @@ export default function TableCollectionSchema({
       {downloadUrl && (
         <Button
           size='sm'
-          colorScheme='light'
-          variant='solid'
+          variant='secondary'
           className='w-full'
           icon={<TbDownload />}
           href={downloadUrl}

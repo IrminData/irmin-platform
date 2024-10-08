@@ -6,8 +6,8 @@ import IrminCore from '@/services/core/IrminCore';
 
 import { TbRun, TbTrash } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import Button from '@/components/ui/Button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -150,15 +150,15 @@ export default function CollectionSchema({
 
   if (!collection)
     return (
-      <div className='rounded-md border border-gray-100 bg-white dark:border-gray-800 dark:bg-irmin_black'>
+      <div className='rounded-md border border-gray-100 bg-background dark:border-gray-800'>
         <LoadingSkeleton className='h-96 w-72' />
       </div>
     );
 
   return (
-    <div className='mb-4 flex w-max min-w-72 flex-col overflow-scroll rounded-md bg-white text-xs dark:bg-irmin_black'>
+    <div className='mb-4 flex w-max min-w-72 flex-col overflow-scroll rounded-md bg-background text-xs'>
       <div
-        className={`border-b border-gray-200 bg-gray-50 p-2 py-4 dark:border-gray-800 dark:bg-irmin_black-800`}
+        className={`border-b border-gray-200 bg-gray-100 p-2 py-4 dark:border-gray-800 dark:bg-irmin_black-800`}
       >
         <p className='text-xs opacity-60'>
           {typeScpecificLabel} {`"${collection.name}"`}{' '}
@@ -189,8 +189,7 @@ export default function CollectionSchema({
         {matchedWorkflow && (
           <Button
             size='sm'
-            colorScheme='light'
-            variant='solid'
+            variant='secondary'
             className='w-full'
             icon={<TbRun />}
             href={`${workspaceUrl}/workflows/${matchedWorkflow.id}`}
@@ -201,8 +200,7 @@ export default function CollectionSchema({
         {!immutable && !collection.is_immutable && (
           <Button
             size='sm'
-            colorScheme='light'
-            variant='solid'
+            variant='secondary'
             className='w-full'
             icon={<TbTrash />}
             disabled={processingDelete}

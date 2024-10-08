@@ -7,8 +7,10 @@ import Link from 'next/link';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import { Checkbox } from '@/components/ui/checkbox';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useIAM } from '@/context/IAMContext';
@@ -110,7 +112,7 @@ const SignUpSection = () => {
                   width={142}
                   height={98}
                 />
-                <h3 className='relative text-xl font-normal leading-tight text-irmin_black md:text-3xl'>
+                <h3 className='relative text-xl font-normal leading-tight text-foreground md:text-3xl'>
                   Love the simplicity of the service and the prompt customer
                   support. We can&apos;t imagine working without it.
                 </h3>
@@ -123,16 +125,16 @@ const SignUpSection = () => {
                   width={88}
                   height={88}
                 />
-                <h4 className='mb-2 text-lg font-semibold text-irmin_black'>
+                <h4 className='mb-2 text-lg font-semibold text-foreground'>
                   John Doe
                 </h4>
-                <span className='mb-8 block text-lg text-irmin_black'>
+                <span className='mb-8 block text-lg text-foreground'>
                   CEO &amp; Founder at Acme Inc.
                 </span>
                 <div className='flex items-center justify-center'>
-                  <span className='mr-3 h-3 w-3 rounded-full bg-irmin_light_green' />
+                  <span className='bg-irmin_light_green mr-3 h-3 w-3 rounded-full' />
                   <span className='mr-3 h-3 w-3 rounded-full bg-irmin_green' />
-                  <span className='h-3 w-3 rounded-full bg-irmin_light_green' />
+                  <span className='bg-irmin_light_green h-3 w-3 rounded-full' />
                 </div>
               </div>
             </div>
@@ -144,28 +146,21 @@ const SignUpSection = () => {
               <h1 className='mb-2 font-display text-2xl font-bold md:text-3xl lg:text-5xl'>
                 {dict.auth.signUp.title}
               </h1>
-              <p className='text-lg font-normal text-irmin_black dark:text-gray-200'>
+              <p className='text-lg font-normal text-foreground dark:text-gray-200'>
                 {dict.auth.signUp.subtitle}
               </p>
             </div>
             <form onSubmit={handleSubmit(onSubmit)}>
               {/* Name Field */}
-              <div className='mb-6'>
-                <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
-                  {dict.auth.signUp.name} *
-                </label>
+              <div className='mb-4 flex flex-col gap-2'>
+                <Label>{dict.auth.signUp.name} *</Label>
                 <Controller
                   name='name'
                   control={control}
                   rules={{ required: dict.misc.fieldRequired }}
                   render={({ field }) => (
                     <Input
-                      variant='solid'
-                      colorScheme='black'
-                      size='md'
-                      required
-                      className='w-full'
-                      ariaLabel={dict.auth.signUp.name}
+                      aria-label={dict.auth.signUp.name}
                       type='text'
                       placeholder={dict.auth.signUp.namePlaceholder}
                       {...field}
@@ -180,22 +175,15 @@ const SignUpSection = () => {
               </div>
 
               {/* Company Field */}
-              <div className='mb-6'>
-                <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
-                  {dict.auth.signUp.company} *
-                </label>
+              <div className='mb-4 flex flex-col gap-2'>
+                <Label>{dict.auth.signUp.company} *</Label>
                 <Controller
                   name='company'
                   control={control}
                   rules={{ required: dict.misc.fieldRequired }}
                   render={({ field }) => (
                     <Input
-                      variant='solid'
-                      colorScheme='black'
-                      size='md'
-                      required
-                      className='w-full'
-                      ariaLabel={dict.auth.signUp.company}
+                      aria-label={dict.auth.signUp.company}
                       type='text'
                       placeholder={dict.auth.signUp.companyPlaceholder}
                       {...field}
@@ -210,10 +198,8 @@ const SignUpSection = () => {
               </div>
 
               {/* Email Field */}
-              <div className='mb-6'>
-                <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
-                  {dict.auth.signUp.email} *
-                </label>
+              <div className='mb-4 flex flex-col gap-2'>
+                <Label>{dict.auth.signUp.email} *</Label>
                 <Controller
                   name='email'
                   control={control}
@@ -226,12 +212,7 @@ const SignUpSection = () => {
                   }}
                   render={({ field }) => (
                     <Input
-                      variant='solid'
-                      colorScheme='black'
-                      size='md'
-                      required
-                      className='w-full'
-                      ariaLabel={dict.auth.signUp.email}
+                      aria-label={dict.auth.signUp.email}
                       type='email'
                       placeholder={dict.auth.signUp.emailPlaceholder}
                       {...field}
@@ -246,10 +227,8 @@ const SignUpSection = () => {
               </div>
 
               {/* Email Confirmation Field */}
-              <div className='mb-6'>
-                <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
-                  {dict.auth.signUp.confirmEmail} *
-                </label>
+              <div className='mb-4 flex flex-col gap-2'>
+                <Label>{dict.auth.signUp.confirmEmail} *</Label>
                 <Controller
                   name='emailConfirmation'
                   control={control}
@@ -260,12 +239,7 @@ const SignUpSection = () => {
                   }}
                   render={({ field }) => (
                     <Input
-                      variant='solid'
-                      colorScheme='black'
-                      size='md'
-                      required
-                      className='w-full'
-                      ariaLabel={dict.auth.signUp.confirmEmail}
+                      aria-label={dict.auth.signUp.confirmEmail}
                       type='email'
                       placeholder={dict.auth.signUp.emailPlaceholder}
                       {...field}
@@ -280,10 +254,8 @@ const SignUpSection = () => {
               </div>
 
               {/* Password Field */}
-              <div className='mb-4'>
-                <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
-                  {dict.auth.signUp.password} *
-                </label>
+              <div className='mb-4 flex flex-col gap-2'>
+                <Label>{dict.auth.signUp.password} *</Label>
                 <Controller
                   name='password'
                   control={control}
@@ -296,12 +268,7 @@ const SignUpSection = () => {
                   }}
                   render={({ field }) => (
                     <Input
-                      variant='solid'
-                      colorScheme='black'
-                      size='md'
-                      required
-                      className='w-full'
-                      ariaLabel={dict.auth.signUp.password}
+                      aria-label={dict.auth.signUp.password}
                       type='password'
                       placeholder={dict.auth.signUp.passwordPlaceholder}
                       {...field}
@@ -316,10 +283,8 @@ const SignUpSection = () => {
               </div>
 
               {/* Password Confirmation Field */}
-              <div className='mb-4'>
-                <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
-                  {dict.auth.signUp.confirmPassword} *
-                </label>
+              <div className='mb-4 flex flex-col gap-2'>
+                <Label>{dict.auth.signUp.confirmPassword} *</Label>
                 <Controller
                   name='passwordConfirmation'
                   control={control}
@@ -331,12 +296,7 @@ const SignUpSection = () => {
                   }}
                   render={({ field }) => (
                     <Input
-                      variant='solid'
-                      colorScheme='black'
-                      size='md'
-                      required
-                      className='w-full'
-                      ariaLabel={dict.auth.signUp.confirmPassword}
+                      aria-label={dict.auth.signUp.confirmPassword}
                       type='password'
                       placeholder={dict.auth.signUp.passwordPlaceholder}
                       {...field}
@@ -352,15 +312,11 @@ const SignUpSection = () => {
 
               {/* Terms & Conditions */}
               <div className='mb-6 flex w-full items-center md:w-2/3'>
-                <input
-                  name='accept-terms'
-                  type='checkbox'
-                  className='h-6 w-6 rounded border-gray-300 bg-gray-100'
-                />
-                <label className='ms-2 text-xs font-normal text-irmin_black dark:text-gray-200'>
+                <Checkbox id='accept-terms' name='accept-terms' />
+                <Label htmlFor='accept-terms'>
                   {dict.auth.accept.accept}{' '}
                   <Link
-                    className='text-irmin_blue-500 hover:text-irmin_blue-600 dark:text-irmin_light_green dark:hover:text-irmin_green'
+                    className='dark:text-irmin_light_green text-irmin_blue-500 hover:text-irmin_blue-600 dark:hover:text-irmin_green'
                     href='/legal/terms-of-use'
                     target='_blank'
                   >
@@ -368,21 +324,19 @@ const SignUpSection = () => {
                   </Link>{' '}
                   {dict.auth.accept.and}{' '}
                   <Link
-                    className='text-irmin_blue-500 hover:text-irmin_blue-600 dark:text-irmin_light_green dark:hover:text-irmin_green'
+                    className='dark:text-irmin_light_green text-irmin_blue-500 hover:text-irmin_blue-600 dark:hover:text-irmin_green'
                     href='/legal/privacy-policy'
                     target='_blank'
                   >
                     {dict.auth.accept.privacy}
                   </Link>
-                </label>
+                </Label>
               </div>
 
               {/* Submit Button */}
               <Button
                 className='mb-6 w-full'
                 variant='gradient'
-                colorScheme='primary'
-                size='md'
                 disabled={isSubmitting}
                 loading={isSubmitting}
                 type='submit'
@@ -398,8 +352,6 @@ const SignUpSection = () => {
                 <Button
                   variant='link'
                   href='/sign-in'
-                  size='md'
-                  colorScheme='secondary'
                   className='my-0 py-0 dark:text-irmin_green'
                 >
                   {dict.auth.signUp.signIn}

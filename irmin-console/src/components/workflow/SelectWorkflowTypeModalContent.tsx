@@ -10,7 +10,7 @@ import {
   TbPlayerPlay,
 } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -68,7 +68,7 @@ export default function SelectWorkflowTypeModalContent() {
           <button
             key={`${option.type}-${key}`}
             type='button'
-            className={`flex w-full flex-row items-center justify-start gap-4 rounded-lg bg-gray-100 px-4 py-2 text-left text-sm text-irmin_black shadow transition-all hover:opacity-80 dark:bg-gray-800 dark:text-gray-200 ${
+            className={`flex w-full flex-row items-center justify-start gap-4 rounded-lg bg-background px-4 py-2 text-left text-sm text-foreground shadow transition-all hover:opacity-80 ${
               workflowableType === option.type
                 ? 'outline outline-gray-800 dark:outline-gray-200'
                 : ''
@@ -84,9 +84,7 @@ export default function SelectWorkflowTypeModalContent() {
       <div className='mt-auto border-t pt-4 dark:border-gray-800'>
         <Button
           className='mb-6 inline-block w-full'
-          variant='solid'
-          colorScheme='primary'
-          size='md'
+          variant='default'
           onClick={handleContinue}
         >
           {dict.workflow.create.confirmAndContinue}

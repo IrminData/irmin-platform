@@ -2,8 +2,9 @@
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -45,69 +46,41 @@ const ChangePassword = () => {
 
   return (
     <div className='my-8 px-4'>
-      <h2 className='mb-8 font-display text-xl font-bold sm:text-2xl lg:text-3xl'>
-        {dict.profile.changePassword}
-      </h2>
+      <h2 className='mb-4 text-lg lg:text-xl'>{dict.profile.changePassword}</h2>
       <form onSubmit={handleSubmit(onSubmit)} className='text-sm md:text-base'>
         {/* Current Password */}
-        <div className='mb-4'>
-          <label className='block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
-            {dict.profile.currentPassword}
-          </label>
+        <div className='mb-4 flex flex-col gap-2'>
+          <Label>{dict.profile.currentPassword}</Label>
           <Controller
             name='currentPassword'
             control={control}
             rules={{ required: dict.misc.fieldRequired }}
-            render={({ field }) => (
-              <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                type='password'
-                className='mt-2 w-full'
-                {...field}
-              />
-            )}
+            render={({ field }) => <Input type='password' {...field} />}
           />
           {errors.currentPassword && (
-            <p className='mt-1 text-xs text-red-600'>
+            <p className='text-xs text-red-600'>
               {errors.currentPassword.message}
             </p>
           )}
         </div>
 
         {/* New Password */}
-        <div className='mb-4'>
-          <label className='block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
-            {dict.profile.newPassword}
-          </label>
+        <div className='mb-4 flex flex-col gap-2'>
+          <Label>{dict.profile.newPassword}</Label>
           <Controller
             name='newPassword'
             control={control}
             rules={{ required: dict.misc.fieldRequired }}
-            render={({ field }) => (
-              <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                type='password'
-                className='mt-2 w-full'
-                {...field}
-              />
-            )}
+            render={({ field }) => <Input type='password' {...field} />}
           />
           {errors.newPassword && (
-            <p className='mt-1 text-xs text-red-600'>
-              {errors.newPassword.message}
-            </p>
+            <p className='text-xs text-red-600'>{errors.newPassword.message}</p>
           )}
         </div>
 
         {/* Confirm New Password */}
-        <div className='mb-4'>
-          <label className='block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
-            {dict.profile.confirmNewPassword}
-          </label>
+        <div className='mb-4 flex flex-col gap-2'>
+          <Label>{dict.profile.confirmNewPassword}</Label>
           <Controller
             name='confirmNewPassword'
             control={control}
@@ -116,32 +89,17 @@ const ChangePassword = () => {
               validate: (value) =>
                 value === newPasswordValue || dict.profile.passwordsDoNotMatch,
             }}
-            render={({ field }) => (
-              <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                type='password'
-                className='mt-2 w-full'
-                {...field}
-              />
-            )}
+            render={({ field }) => <Input type='password' {...field} />}
           />
           {errors.confirmNewPassword && (
-            <p className='mt-1 text-xs text-red-600'>
+            <p className='text-xs text-red-600'>
               {errors.confirmNewPassword.message}
             </p>
           )}
         </div>
 
         {/* Save Changes Button */}
-        <Button
-          className='mt-4 w-full'
-          type='submit'
-          size='sm'
-          colorScheme='light'
-          variant='solid'
-        >
+        <Button className='mt-4 w-full' type='submit' size='lg'>
           {dict.profile.saveChanges}
         </Button>
       </form>

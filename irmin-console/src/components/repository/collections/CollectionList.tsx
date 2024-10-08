@@ -4,7 +4,8 @@ import { useCallback, useMemo } from 'react';
 
 import { TbFile, TbFolder, TbTable } from 'react-icons/tb';
 
-import NormalList from '@/components/common/list/NormalList';
+import { Badge } from '@/components/ui/badge';
+import NormalList from '@/components/ui/list/NormalList';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -81,9 +82,7 @@ export default function CollectionList({
               <div className='flex flex-row items-center gap-1'>
                 <span className='text-sm'>{item.name}</span>
                 {item.is_immutable && (
-                  <span className='h-max w-max rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
-                    {dict.list.immutable}
-                  </span>
+                  <Badge variant='secondary'>{dict.list.immutable}</Badge>
                 )}
               </div>
               <span className='text-xs opacity-70'>

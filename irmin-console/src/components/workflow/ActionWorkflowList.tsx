@@ -2,8 +2,8 @@
 
 import { useMemo } from 'react';
 
-import CardOrNormalList from '@/components/common/list/CardOrNormalList';
-import StatusBadge from '@/components/common/status/StatusBadge';
+import CardOrNormalList from '@/components/ui/list/CardOrNormalList';
+import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -70,7 +70,7 @@ const ActionWorkflowList = ({
               key={`status-${i}`}
               className='inline-flex flex-row items-center gap-2'
             >
-              <StatusBadge runStatus={item.status} statusLabel={item.status} />
+              <StatusBadge status={item.status} label={item.status} />
               <div className='flex flex-col'>
                 {item.cron_syntax && item.cron_syntax.length > 0 ? (
                   <>

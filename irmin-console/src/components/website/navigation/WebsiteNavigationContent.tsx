@@ -9,9 +9,9 @@ import { usePathname } from 'next/navigation';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { IoEnterOutline } from 'react-icons/io5';
 
-import Button from '@/components/common/button/Button';
-import ProfileImagePlaceholder from '@/components/common/ProfileImagePlaceholder';
-import ThemeSwitch from '@/components/common/ThemeSwitch';
+import Button from '@/components/ui/Button';
+import ProfileImagePlaceholder from '@/components/ui/ProfileImagePlaceholder';
+import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -41,20 +41,20 @@ const NavLink = ({
   return (
     <li className='group relative' id={linkKey}>
       <Link
-        className={`flex h-full min-h-14 items-center overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-normal transition-all hover:bg-white group-hover:bg-white lg:text-sm dark:hover:bg-gray-800 dark:group-hover:bg-gray-800 ${isActive ? 'text-irmin_green underline dark:text-irmin_light_green' : 'text-irmin_black dark:text-gray-200'}`}
+        className={`flex h-full min-h-14 items-center overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-normal text-card-foreground transition-all hover:bg-card group-hover:bg-card lg:text-sm ${isActive ? 'underline' : ''}`}
         aria-label={link.label}
         href={link.href}
       >
         {link.label}
       </Link>
       {link.subpages.length > 0 && (
-        <ul className='absolute left-0 -mt-1 hidden w-44 overflow-hidden rounded bg-white py-4 group-hover:block dark:bg-black'>
+        <ul className='absolute left-0 -mt-1 hidden w-44 overflow-hidden rounded bg-card py-4 group-hover:block'>
           {link.subpages.map((subpage, idx) => (
             <li
               key={`website-desktop-navigation-link-sublink-${idx}-${linkKey}`}
             >
               <Link
-                className={`block overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-normal transition-all hover:bg-gray-200 lg:text-sm dark:hover:bg-gray-800 ${isActive ? 'text-irmin_green underline dark:text-irmin_black' : 'text-irmin_black dark:text-gray-200'}`}
+                className={`block overflow-hidden text-nowrap rounded px-2 py-2 text-xs font-normal text-card-foreground transition-all hover:bg-accent/20 lg:text-sm ${isActive ? 'underline' : ''}`}
                 aria-label={subpage.label}
                 href={subpage.href}
               >
@@ -95,7 +95,7 @@ const MobileNavLink = ({
   return (
     <li className='relative' id={linkKey}>
       <div
-        className={`block w-full ${!isOpen && 'border-b'} flex items-center justify-between text-nowrap rounded border-gray-200 px-4 py-2 pb-4 text-base font-normal dark:border-gray-800 ${isActive ? 'text-irmin_green underline dark:text-irmin_black' : 'text-irmin_black dark:text-gray-200'}`}
+        className={`block w-full ${!isOpen && 'border-b'} flex items-center justify-between text-nowrap rounded border-gray-200 px-4 py-2 pb-4 text-base font-normal dark:border-gray-800 ${isActive ? 'text-irmin_green underline dark:text-foreground' : 'text-foreground dark:text-gray-200'}`}
         aria-label={link.label}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -172,7 +172,7 @@ export default function WebsiteNavigationContent({
 
   return (
     <>
-      <div className='fixed z-40 max-h-[80px] w-full bg-white bg-opacity-70 backdrop-blur-md dark:bg-irmin_black dark:bg-opacity-70 dark:backdrop-blur-md'>
+      <div className='fixed z-40 max-h-[80px] w-full bg-background bg-opacity-70 backdrop-blur-md dark:bg-opacity-70 dark:backdrop-blur-md'>
         <div className='container mx-auto max-w-96 px-0 sm:max-w-7xl sm:px-4 xl:px-0'>
           <nav className='flex justify-between'>
             <div className='flex w-full items-center justify-between gap-2'>
@@ -201,7 +201,9 @@ export default function WebsiteNavigationContent({
                       link={link}
                     />
                   ))}
-                  <ThemeSwitch />
+                  <div className='py-2'>
+                    <ThemeSwitch />
+                  </div>
                 </ul>
               </div>
               <div className='flex items-center justify-end pr-14 md:hidden'>
@@ -234,23 +236,21 @@ export default function WebsiteNavigationContent({
                         </p>
                       </Link>
                       <Button
-                        size='sm'
-                        variant='gradient'
-                        colorScheme='light'
-                        className='min-w-32 py-2 pl-6 pr-3 text-xs font-normal md:text-sm xl:text-sm'
+                        size={'lg'}
                         href='/console'
-                        iconFirst={false}
-                        icon={<IoEnterOutline size={24} className='ml-1' />}
+                        variant='gradient'
+                        onClick={closeMenu}
+                        className='min-w-32 py-2 text-xs font-normal md:text-sm xl:text-sm'
                       >
+                        <IoEnterOutline size={24} className='mr-2' />
                         {dict.website.navigation.goToConsole}
                       </Button>
                     </>
                   ) : (
                     <>
                       <Button
-                        size='sm'
-                        variant='gradient'
-                        colorScheme='light'
+                        size='lg'
+                        variant='secondary'
                         className='min-w-32 py-2 text-xs font-normal md:text-sm xl:text-sm'
                         href='/sign-in'
                         onClick={closeMenu}
@@ -258,9 +258,8 @@ export default function WebsiteNavigationContent({
                         {dict.auth.signIn.signIn}
                       </Button>
                       <Button
-                        size='sm'
+                        size='lg'
                         variant='gradient'
-                        colorScheme='secondary'
                         className='min-w-32 py-2 pl-6 pr-3 text-xs font-normal md:text-sm xl:text-sm'
                         href='/sign-up'
                         onClick={closeMenu}
@@ -281,10 +280,10 @@ export default function WebsiteNavigationContent({
       {/* Mobile navigation */}
       {navbarOpen && (
         <div
-          className={`fixed right-0 top-0 z-40 h-full w-full bg-white bg-opacity-10 backdrop-blur-sm dark:bg-black dark:bg-opacity-10 dark:backdrop-blur-sm`}
+          className={`fixed right-0 top-0 z-40 h-full w-full bg-background bg-opacity-10 backdrop-blur-sm dark:bg-black dark:bg-opacity-10 dark:backdrop-blur-sm`}
         >
           <div
-            className={`fixed bottom-0 right-0 top-0 w-full max-w-full border-l border-gray-300 bg-white sm:max-w-sm dark:border-gray-800 dark:bg-black ${animate} transition-all duration-300`}
+            className={`fixed bottom-0 right-0 top-0 w-full max-w-full border-l border-gray-300 bg-background dark:border-gray-800 dark:bg-black sm:max-w-sm ${animate} transition-all duration-300`}
           >
             <nav className='relative flex h-full flex-col justify-start overflow-y-scroll px-4 pb-8 pt-24'>
               <Link
@@ -319,39 +318,36 @@ export default function WebsiteNavigationContent({
               </ul>
               <div className='mt-auto flex flex-col'>
                 {!isLoading &&
-                  (profile ? (
+                  (!profile ? (
                     <Button
                       href='/console'
-                      size='md'
-                      colorScheme='light'
                       variant='gradient'
                       className='w-full'
+                      size={'lg'}
                       onClick={closeMenu}
-                      icon={<IoEnterOutline size={24} className='ml-1' />}
                     >
+                      <IoEnterOutline size={22} className='mr-4' />
                       {dict.website.navigation.goToConsole}
                     </Button>
                   ) : (
                     <div className='flex w-full flex-col items-center justify-stretch gap-2'>
                       <Button
-                        size='md'
-                        colorScheme='light'
-                        variant='gradient'
+                        variant='secondary'
                         href='/sign-in'
                         onClick={closeMenu}
                         className='w-full'
+                        size={'lg'}
                       >
                         {dict.auth.signIn.signIn}
                       </Button>
                       <Button
                         href='/sign-up'
-                        size='md'
-                        colorScheme='secondary'
                         variant='gradient'
                         onClick={closeMenu}
                         className='w-full'
-                        icon={<IoEnterOutline size={24} className='ml-1' />}
+                        size={'lg'}
                       >
+                        <IoEnterOutline size={22} />
                         {dict.website.navigation.getStarted}
                       </Button>
                     </div>

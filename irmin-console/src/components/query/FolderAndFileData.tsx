@@ -1,8 +1,8 @@
 'use client';
 
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
 import FileCollectionSchema from '@/components/repository/collections/FileCollectionSchema';
 import FolderCollectionSchema from '@/components/repository/collections/FolderCollectionSchema';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -30,17 +30,15 @@ const FolderAndFileData = ({
 
   return (
     <div className='flex h-0 flex-1 flex-col overflow-hidden'>
-      <div className='w-full px-4 py-4 text-center text-lg text-gray-400'>
-        {title}
-      </div>
+      <div className='w-full px-4 py-4 text-center text-lg'>{title}</div>
       {loading ? <LoadingSkeleton className='h-96' /> : null}
       {!data ? (
-        <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
+        <div className='w-full px-4 py-12 text-center text-lg text-foreground/80'>
           {dict.query.noResults}
         </div>
       ) : (
-        <div className='mx-auto flex w-full min-w-72 max-w-xl flex-col overflow-scroll rounded-md border border-gray-100 bg-white text-xs dark:border-gray-800 dark:bg-irmin_black'>
-          <div className='bg-gray-100 px-4 py-2 text-sm font-semibold dark:bg-gray-800'>
+        <div className='mx-auto flex w-full min-w-72 max-w-xl flex-col overflow-scroll rounded-md border border-gray-100 bg-background text-xs dark:border-gray-800'>
+          <div className='bg-card px-4 py-2 text-sm font-semibold text-card-foreground'>
             {data?.type === 'file'
               ? dict.repository.schema.file
               : dict.repository.schema.folder}{' '}

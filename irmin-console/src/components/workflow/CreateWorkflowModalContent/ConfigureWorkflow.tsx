@@ -4,8 +4,9 @@ import { useMemo, useState } from 'react';
 
 import IrminCore from '@/services/core/IrminCore';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -100,16 +101,10 @@ export default function ConfigureWorkflow({
   return (
     <div className='flex w-full flex-col px-4 pb-6'>
       <div className='flex flex-col gap-4 py-4'>
-        <div>
-          <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-            {dict.workflow.name}
-          </label>
+        <div className='flex flex-col gap-2'>
+          <Label>{dict.workflow.name}</Label>
           <Input
-            size='sm'
-            variant='outline'
-            colorScheme='gray'
             required
-            className='h-11 w-full'
             type='text'
             defaultValue={workflowData.name}
             onChange={(e) =>
@@ -120,16 +115,10 @@ export default function ConfigureWorkflow({
             }
           />
         </div>
-        <div>
-          <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-            {dict.workflow.description}
-          </label>
+        <div className='flex flex-col gap-2'>
+          <Label>{dict.workflow.description}</Label>
           <Input
-            size='sm'
-            variant='outline'
-            colorScheme='gray'
             required
-            className='w-full'
             type='text'
             longtext={{
               rows: 3,
@@ -143,16 +132,10 @@ export default function ConfigureWorkflow({
             }
           />
         </div>
-        <div>
-          <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-            {dict.workflow.runInterval}
-          </label>
+        <div className='flex flex-col gap-2'>
+          <Label>{dict.workflow.runInterval}</Label>
           <Input
-            size='sm'
-            variant='outline'
-            colorScheme='gray'
             required
-            className='h-11 w-full'
             type='text'
             defaultValue={workflowData.cron}
             onChange={(e) =>
@@ -171,9 +154,7 @@ export default function ConfigureWorkflow({
       <div className='mt-auto border-t pt-4 dark:border-gray-800'>
         <Button
           className='mb-6 inline-block w-full'
-          variant='solid'
-          colorScheme='primary'
-          size='md'
+          variant='default'
           onClick={handleCreate}
         >
           {dict.workflow.create.confirmAndCreate}
@@ -181,7 +162,6 @@ export default function ConfigureWorkflow({
         <Button
           className='mb-6 inline-block w-full'
           variant='link'
-          colorScheme='primary'
           size='sm'
           onClick={() => setCurrentStep(1)}
         >

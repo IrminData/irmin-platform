@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -63,8 +63,7 @@ const ContentDiff = ({
               {`${dict.repository.compare.baseContent} (${getContentType(baseContent)})`}
             </p>
             <Button
-              variant='solid'
-              colorScheme='light'
+              variant='secondary'
               size='sm'
               className='ml-auto'
               onClick={() => handleDownload(baseText, baseContentType)}
@@ -77,8 +76,7 @@ const ContentDiff = ({
               {`${dict.repository.compare.comparedContent} (${getContentType(compareContent)})`}
             </p>
             <Button
-              variant='solid'
-              colorScheme='light'
+              variant='secondary'
               size='sm'
               className='ml-auto'
               onClick={() => handleDownload(compareText, compareContentType)}
@@ -101,8 +99,7 @@ const ContentDiff = ({
               {`${dict.repository.compare.baseContent} (${getContentType(baseContent)})`}
             </p>
             <Button
-              variant='solid'
-              colorScheme='light'
+              variant='secondary'
               size='sm'
               className='ml-auto'
               onClick={() =>
@@ -126,8 +123,7 @@ const ContentDiff = ({
               {`${dict.repository.compare.comparedContent} (${getContentType(compareContent)})`}
             </p>
             <Button
-              variant='solid'
-              colorScheme='light'
+              variant='secondary'
               size='sm'
               className='ml-auto'
               onClick={() =>
@@ -150,7 +146,7 @@ const ContentDiff = ({
   }
 
   return (
-    <p className='mx-auto mb-2 max-w-lg text-center text-lg text-gray-600 lg:text-2xl dark:text-gray-300'>
+    <p className='mx-auto mb-2 max-w-lg text-center text-lg text-gray-600 dark:text-gray-300 lg:text-2xl'>
       {dict.repository.compare.unsupportedContentType}
     </p>
   );

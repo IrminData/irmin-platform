@@ -58,6 +58,12 @@ const en = {
       },
     },
   },
+  theme: {
+    toggleTheme: 'Toggle theme',
+    light: 'Light',
+    dark: 'Dark',
+    system: 'System',
+  },
   misc: {
     selectLanguage: 'Select language',
     loading: 'Loading...',
@@ -225,7 +231,7 @@ const en = {
       relatedWorkspace: 'Workspace',
     },
     links: {
-      home: 'Workspace home',
+      home: 'Workspace',
       repositories: 'Repositories',
       editor: 'Editor',
       connections: 'Connections',
@@ -412,6 +418,7 @@ const en = {
     },
   },
   connections: {
+    allConnections: 'All connections',
     connection: 'Connection',
     tabs: {
       overview: 'Overview',

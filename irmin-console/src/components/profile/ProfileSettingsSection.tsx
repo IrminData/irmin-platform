@@ -1,7 +1,7 @@
 'use client';
 
-import WrappedTabs from '@/components/common/tabs/WrappedTabs';
 import ConsoleTitle from '@/components/console/ConsoleTitle';
+import WrappedTabs from '@/components/ui/tabs/WrappedTabs';
 
 import { useLocale } from '@/context/LocaleContext';
 

@@ -2,8 +2,9 @@
 
 import { useMemo } from 'react';
 
-import CardOrNormalList from '@/components/common/list/CardOrNormalList';
-import StatusBadge from '@/components/common/status/StatusBadge';
+import { Badge } from '@/components/ui/badge';
+import CardOrNormalList from '@/components/ui/list/CardOrNormalList';
+import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -59,9 +60,9 @@ const RepositoryList = ({
               <p className='text-base'>
                 {item.name}
                 {item.is_immutable && (
-                  <span className='ml-2 rounded-lg bg-irmin_light_green px-1 text-xs leading-4 text-irmin_blue dark:bg-irmin_green dark:text-irmin_black'>
+                  <Badge className='ml-2' variant='secondary'>
                     {dict.list.immutable}
-                  </span>
+                  </Badge>
                 )}
               </p>
               <span className='text-sm text-gray-600 dark:text-gray-400'>
@@ -73,7 +74,7 @@ const RepositoryList = ({
               key={`status-${i}`}
               className='inline-flex flex-row items-center gap-2'
             >
-              <StatusBadge accessStatus={'private'} statusLabel={'Private'} />
+              <StatusBadge status={'private'} label={'Private'} />
               <div className='flex flex-col'>
                 <span className='text-xs text-gray-600 dark:text-gray-400'>
                   {dict.list.lastUpdated}

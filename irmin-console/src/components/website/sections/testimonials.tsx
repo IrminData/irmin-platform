@@ -6,7 +6,7 @@ import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
 
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { TestimonialSection } from '@/types/website/Wordpress';
@@ -114,7 +114,7 @@ export default function WebsiteTestimonialsSection({
                   <h3 className='mb-2 text-xl font-semibold md:text-2xl'>
                     {testimonials[currentTestimonial].name}
                   </h3>
-                  <span className='text-lg font-normal text-irmin_black'>
+                  <span className='text-lg font-normal text-foreground'>
                     {testimonials[currentTestimonial].title}
                   </span>
                 </div>

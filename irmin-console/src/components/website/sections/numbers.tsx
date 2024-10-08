@@ -25,10 +25,10 @@ export default function WebsiteNumbersSection({
           <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-normal uppercase leading-5 text-white'>
             {section.subtitle}
           </span>
-          <h3 className='mb-4 text-4xl font-bold tracking-tighter text-irmin_black md:text-5xl'>
+          <h3 className='mb-4 text-4xl font-bold tracking-tighter text-foreground md:text-5xl'>
             {section.title}
           </h3>
-          <p className='mb-16 text-sm font-normal text-irmin_black md:text-base'>
+          <p className='mb-16 text-sm font-normal text-foreground md:text-base'>
             {section.description}
           </p>
           <div className='-mx-4 flex flex-wrap justify-center'>
@@ -37,10 +37,10 @@ export default function WebsiteNumbersSection({
                 className='mb-8 w-full px-4 md:w-1/3 lg:mb-0 lg:w-1/4'
                 key={`metric-${index}`}
               >
-                <h2 className='mb-2 text-4xl font-bold tracking-tighter text-irmin_black md:text-5xl'>
+                <h2 className='mb-2 text-4xl font-bold tracking-tighter text-foreground md:text-5xl'>
                   {metric.title}
                 </h2>
-                <p className='text-sm font-normal text-irmin_black md:text-base'>
+                <p className='text-sm font-normal text-foreground md:text-base'>
                   {metric.description}
                 </p>
               </div>

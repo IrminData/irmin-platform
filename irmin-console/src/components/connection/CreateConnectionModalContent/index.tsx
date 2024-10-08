@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import IrminCore from '@/services/core/IrminCore';
 
-import LoadingSpinner from '@/components/common/loading/LoadingSpinner';
+import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';

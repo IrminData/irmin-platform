@@ -4,9 +4,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
-import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -65,10 +66,8 @@ const GeneralSettings: React.FC = () => {
 
   return (
     <div className='my-8 px-4'>
-      <div className='mb-8 mt-4 flex w-full flex-wrap items-center justify-between gap-2'>
-        <h2 className='font-display text-xl font-bold sm:text-2xl lg:text-3xl'>
-          {dict.profile.generalSettings}
-        </h2>
+      <div className='mb-4 mt-4 flex w-full flex-wrap items-center justify-between gap-2'>
+        <h2 className='text-base lg:text-xl'>{dict.profile.generalSettings}</h2>
         <div className='max-w-40'>
           <LanguageSwitcher />
         </div>
@@ -79,24 +78,14 @@ const GeneralSettings: React.FC = () => {
         className='pb-8 text-sm md:text-base'
       >
         {/* Name Field */}
-        <div className='mb-4'>
-          <label className='block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
-            {dict.profile.name}
-          </label>
+        <div className='mb-4 flex flex-col gap-2'>
+          <Label>{dict.profile.name}</Label>
           <Controller
             name='name'
             control={control}
             rules={{ required: dict.misc.fieldRequired }}
             render={({ field }) => (
-              <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                type='text'
-                className='mt-2 w-full'
-                {...field}
-                disabled={loading}
-              />
+              <Input type='text' disabled={loading} {...field} />
             )}
           />
           {errors.name && (
@@ -105,10 +94,8 @@ const GeneralSettings: React.FC = () => {
         </div>
 
         {/* Email Field */}
-        <div className='mb-4'>
-          <label className='block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
-            {dict.profile.email}
-          </label>
+        <div className='mb-4 flex flex-col gap-2'>
+          <Label>{dict.profile.email}</Label>
           <Controller
             name='email'
             control={control}
@@ -120,15 +107,7 @@ const GeneralSettings: React.FC = () => {
               },
             }}
             render={({ field }) => (
-              <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                type='email'
-                className='mt-2 w-full'
-                {...field}
-                disabled={loading}
-              />
+              <Input type='email' disabled={loading} {...field} />
             )}
           />
           {errors.email && (
@@ -137,23 +116,13 @@ const GeneralSettings: React.FC = () => {
         </div>
 
         {/* Company Field */}
-        <div className='mb-4'>
-          <label className='block text-xs text-gray-400 md:text-sm dark:text-gray-600'>
-            {dict.profile.company}
-          </label>
+        <div className='mb-4 flex flex-col gap-2'>
+          <Label>{dict.profile.company}</Label>
           <Controller
             name='company'
             control={control}
             render={({ field }) => (
-              <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                type='text'
-                className='mt-2 w-full'
-                {...field}
-                disabled={loading}
-              />
+              <Input type='text' disabled={loading} {...field} />
             )}
           />
         </div>
@@ -162,9 +131,7 @@ const GeneralSettings: React.FC = () => {
         <Button
           className='mt-4 w-full'
           type='submit'
-          size='sm'
-          colorScheme='light'
-          variant='solid'
+          size='lg'
           disabled={loading}
           loading={loading}
         >

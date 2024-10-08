@@ -29,6 +29,7 @@ import { IrminFileType } from '@/types/core/Bucket';
  * Internal type for managing file contents and file state in the editor
  */
 type FileContents = {
+  id: string;
   contents: string;
   originalContents: string;
   path: string;
@@ -126,7 +127,7 @@ export const EditorContextProvider = ({
         const newName = `${oldName.split('.')[0]}.${language}`;
         const newPath = getCorrectPath(currentTabPath, newName);
         const updatedOpenTabsContents = openTabsContents.map((tab) =>
-          tab.path === currentTabPath
+          tab.id === activeTabContents.id
             ? { ...tab, language, path: newPath }
             : tab
         );
@@ -226,26 +227,29 @@ export const EditorContextProvider = ({
    * Initializes or updates open tabs contents when openFileTabs or bucket changes
    */
   useEffect(() => {
-    const updatedOpenTabsContents = openFileTabs.map((tab) => {
-      const existingContent = openTabsContents.find(
-        (content) => content.path === tab
-      );
-      if (existingContent) {
-        return existingContent;
-      } else {
-        const file = getFileByPath(tab, bucket);
-        const contents = file?.contents ?? '';
-        return {
-          contents,
-          originalContents: contents,
-          language: file?.type ?? getLanguageFromFilename(tab),
-          path: tab,
-          created: !!file,
-        };
-      }
+    setOpenTabsContents((prevOpenTabsContents) => {
+      const updatedOpenTabsContents = openFileTabs.map((tabPath) => {
+        const existingContent = prevOpenTabsContents.find(
+          (content) => content.path === tabPath
+        );
+        if (existingContent) {
+          return existingContent;
+        } else {
+          const file = getFileByPath(tabPath, bucket);
+          const contents = file?.contents ?? '';
+          return {
+            id: crypto.randomUUID(),
+            contents,
+            originalContents: contents,
+            language: file?.type ?? getLanguageFromFilename(tabPath),
+            path: tabPath,
+            created: !!file,
+          };
+        }
+      });
+      return updatedOpenTabsContents;
     });
-    setOpenTabsContents(updatedOpenTabsContents);
-  }, [openFileTabs, openTabsContents, bucket]);
+  }, [openFileTabs, bucket]);
 
   /**
    * Retrieves the current editor content based on the active tab

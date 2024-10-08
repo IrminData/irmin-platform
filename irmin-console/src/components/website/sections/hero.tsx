@@ -2,8 +2,8 @@ import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
 
-import Button from '@/components/common/button/Button';
-import DynamicFaIcon from '@/components/common/DynamicFaIcon';
+import Button from '@/components/ui/Button';
+import DynamicFaIcon from '@/components/ui/DynamicFaIcon';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { getURL } from '@/utils/wordpress';
@@ -52,7 +52,7 @@ export default async function WebsiteHeroSection({
               key={`title-part-${index}`}
               className={`${
                 !titlePart.green
-                  ? 'text-irmin_black dark:text-gray-300'
+                  ? 'text-foreground dark:text-gray-300'
                   : 'text-irmin_green'
               }`}
             >
@@ -61,7 +61,7 @@ export default async function WebsiteHeroSection({
           ))}
         </h1>
         {section.description.length > 0 && (
-          <p className='mx-auto mb-8 max-w-3xl text-base font-normal leading-5 text-gray-700 sm:text-lg dark:text-gray-200'>
+          <p className='mx-auto mb-8 max-w-3xl text-base font-normal leading-5 text-gray-700 dark:text-gray-200 sm:text-lg'>
             {section.description}
           </p>
         )}
@@ -74,12 +74,11 @@ export default async function WebsiteHeroSection({
               <Button
                 size='lg'
                 variant={button.variant}
-                colorScheme={button.color_scheme}
                 icon={
                   button.icon ? <DynamicFaIcon name={button.icon} /> : undefined
                 }
                 className='w-full'
-                ariaLabel={button.text}
+                aria-label={button.text}
                 href={getURL(button.link)}
               >
                 {button.text}

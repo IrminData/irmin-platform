@@ -4,10 +4,8 @@ import React, { useCallback } from 'react';
 
 import { FaPause, FaPlay } from 'react-icons/fa6';
 
-import Button from '@/components/common/button/Button';
-import SettingsForm, {
-  FieldConfig,
-} from '@/components/common/form/SettingsForm';
+import Button from '@/components/ui/Button';
+import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -193,8 +191,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
         {workflow.status === 'paused' ? (
           <Button
             size='sm'
-            colorScheme='gray'
-            variant='solid'
+            variant='secondary'
             icon={<FaPlay size={14} />}
             onClick={handlePauseOrResume}
           >
@@ -203,8 +200,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
         ) : (
           <Button
             size='sm'
-            colorScheme='gray'
-            variant='solid'
+            variant='secondary'
             icon={<FaPause size={14} />}
             onClick={handlePauseOrResume}
           >

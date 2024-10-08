@@ -2,8 +2,9 @@
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -49,23 +50,14 @@ export default function CreateTagModalContent({
       className='flex flex-col gap-4 pb-8'
     >
       <div className='flex flex-col gap-2'>
-        <label htmlFor='tagName' className='text-xs'>
-          {dict.repository.tags.newTagName}
-        </label>
+        <Label>{dict.repository.tags.newTagName}</Label>
         <Controller
           name='tagName'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <>
-              <Input
-                id='tagName'
-                type='text'
-                variant='outline'
-                colorScheme='gray'
-                size='sm'
-                {...field}
-              />
+              <Input {...field} />
               {errors.tagName && (
                 <p className='mt-1 text-xs text-red-600'>
                   {errors.tagName.message}
@@ -76,24 +68,14 @@ export default function CreateTagModalContent({
         />
       </div>
       <div className='flex flex-col gap-2'>
-        <label htmlFor='ref' className='text-xs'>
-          {dict.repository.tags.fromCommit}
-        </label>
+        <Label>{dict.repository.tags.fromCommit}</Label>
         <Controller
           name='ref'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <>
-              <Input
-                id='ref'
-                type='text'
-                variant='outline'
-                colorScheme='gray'
-                size='sm'
-                disabled={true}
-                {...field}
-              />
+              <Input disabled {...field} />
               {errors.ref && (
                 <p className='mt-1 text-xs text-red-600'>
                   {errors.ref.message}
@@ -103,13 +85,7 @@ export default function CreateTagModalContent({
           )}
         />
       </div>
-      <Button
-        variant='solid'
-        colorScheme='primary'
-        size='sm'
-        className='w-full'
-        type='submit'
-      >
+      <Button variant='default' size='sm' className='w-full' type='submit'>
         {dict.repository.tags.createTag}
       </Button>
     </form>

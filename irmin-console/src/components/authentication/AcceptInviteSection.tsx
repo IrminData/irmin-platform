@@ -9,8 +9,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import IrminCore from '@/services/core/IrminCore';
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import { Checkbox } from '@/components/ui/checkbox';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -97,7 +99,7 @@ const AcceptInviteSection = () => {
                   <h3 className='mb-4 text-2xl font-bold md:text-3xl'>
                     {dict.auth.invite.invalid}
                   </h3>
-                  <p className='text-lg font-normal text-irmin_black'>
+                  <p className='text-lg font-normal text-foreground'>
                     {dict.auth.invite.invalidMessage}
                   </p>
                 </div>
@@ -127,7 +129,7 @@ const AcceptInviteSection = () => {
                       width={142}
                       height={98}
                     />
-                    <h3 className='relative text-xl font-normal leading-tight text-irmin_black md:text-3xl'>
+                    <h3 className='relative text-xl font-normal leading-tight text-foreground md:text-3xl'>
                       Love the simplicity of the service and the prompt customer
                       support. We can&apos;t imagine working without it.
                     </h3>
@@ -140,16 +142,16 @@ const AcceptInviteSection = () => {
                       width={88}
                       height={88}
                     />
-                    <h4 className='mb-2 text-lg font-semibold text-irmin_black'>
+                    <h4 className='mb-2 text-lg font-semibold text-foreground'>
                       John Doe
                     </h4>
-                    <span className='mb-8 block text-lg text-irmin_black'>
+                    <span className='mb-8 block text-lg text-foreground'>
                       CEO &amp; Founder at Acme Inc.
                     </span>
                     <div className='flex items-center justify-center'>
-                      <span className='mr-3 h-3 w-3 rounded-full bg-irmin_light_green' />
+                      <span className='bg-irmin_light_green mr-3 h-3 w-3 rounded-full' />
                       <span className='mr-3 h-3 w-3 rounded-full bg-irmin_green' />
-                      <span className='h-3 w-3 rounded-full bg-irmin_light_green' />
+                      <span className='bg-irmin_light_green h-3 w-3 rounded-full' />
                     </div>
                   </div>
                 </div>
@@ -160,34 +162,25 @@ const AcceptInviteSection = () => {
                 <h1 className='mb-2 font-display text-2xl font-bold md:text-3xl lg:text-5xl'>
                   {dict.auth.invite.title}
                 </h1>
-                <p className='text-lg font-normal text-irmin_black dark:text-gray-200'>
+                <p className='text-lg font-normal text-foreground dark:text-gray-200'>
                   {dict.auth.invite.subtitle}
                 </p>
               </div>
               <div className='mx-auto max-w-sm'>
-                {error && <p className='mb-4 text-red-800'>{error}</p>}
+                {error && <p className='mb-4 text-destructive'>{error}</p>}
                 {success && <p className='mb-4 text-irmin_green'>{success}</p>}
                 {/* Form Submission */}
                 <form onSubmit={handleSubmit(handleAcceptInvite)}>
                   {/* Company Field */}
-                  <div className='mb-6'>
-                    <label
-                      className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
-                      htmlFor='company'
-                    >
-                      {dict.auth.invite.company}*
-                    </label>
+                  <div className='mb-4 flex flex-col gap-2'>
+                    <Label>{dict.auth.invite.company} *</Label>
                     <Controller
                       name='company'
                       control={control}
                       rules={{ required: dict.misc.fieldRequired }}
                       render={({ field }) => (
                         <Input
-                          variant='solid'
-                          colorScheme='black'
-                          size='md'
-                          className='w-full'
-                          ariaLabel='Insert your company name here'
+                          aria-label='Insert your company name here'
                           placeholder={dict.auth.invite.companyPlaceholder}
                           {...field}
                         />
@@ -200,24 +193,15 @@ const AcceptInviteSection = () => {
                     )}
                   </div>
                   {/* Password Field */}
-                  <div className='mb-4'>
-                    <label
-                      className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
-                      htmlFor='password'
-                    >
-                      {dict.auth.invite.password} *
-                    </label>
+                  <div className='mb-4 flex flex-col gap-2'>
+                    <Label>{dict.auth.invite.password} *</Label>
                     <Controller
                       name='password'
                       control={control}
                       rules={{ required: dict.misc.fieldRequired }}
                       render={({ field }) => (
                         <Input
-                          variant='solid'
-                          colorScheme='black'
-                          size='md'
-                          className='w-full'
-                          ariaLabel='Insert your password here'
+                          aria-label='Insert your password here'
                           type='password'
                           placeholder={dict.auth.invite.passwordPlaceholder}
                           {...field}
@@ -231,13 +215,8 @@ const AcceptInviteSection = () => {
                     )}
                   </div>
                   {/* Password Confirmation Field */}
-                  <div className='mb-4'>
-                    <label
-                      className='mb-2 block font-normal text-irmin_black dark:text-gray-200'
-                      htmlFor='passwordConfirmation'
-                    >
-                      {dict.auth.invite.confirmPassword} *
-                    </label>
+                  <div className='mb-4 flex flex-col gap-2'>
+                    <Label>{dict.auth.invite.confirmPassword} *</Label>
                     <Controller
                       name='passwordConfirmation'
                       control={control}
@@ -249,11 +228,7 @@ const AcceptInviteSection = () => {
                       }}
                       render={({ field }) => (
                         <Input
-                          variant='solid'
-                          colorScheme='black'
-                          size='md'
-                          className='w-full'
-                          ariaLabel='Repeat your password here'
+                          aria-label='Repeat your password here'
                           type='password'
                           placeholder={
                             dict.auth.invite.confirmPasswordPlaceholder
@@ -270,15 +245,11 @@ const AcceptInviteSection = () => {
                   </div>
                   {/* Terms & Conditions */}
                   <div className='mb-6 flex w-full items-center md:w-2/3'>
-                    <input
-                      name='accept-terms'
-                      type='checkbox'
-                      className='h-6 w-6 rounded border-gray-300 bg-gray-100'
-                    />
-                    <label className='ms-2 text-xs font-normal text-irmin_black dark:text-gray-200'>
+                    <Checkbox id='accept-terms' name='accept-terms' />
+                    <Label htmlFor='accept-terms'>
                       {dict.auth.accept.accept}{' '}
                       <Link
-                        className='text-irmin_blue-500 hover:text-irmin_blue-600 dark:text-irmin_light_green dark:hover:text-irmin_green'
+                        className='dark:text-irmin_light_green text-irmin_blue-500 hover:text-irmin_blue-600 dark:hover:text-irmin_green'
                         href='/legal/terms-of-use'
                         target='_blank'
                       >
@@ -286,20 +257,18 @@ const AcceptInviteSection = () => {
                       </Link>{' '}
                       {dict.auth.accept.and}{' '}
                       <Link
-                        className='text-irmin_blue-500 hover:text-irmin_blue-600 dark:text-irmin_light_green dark:hover:text-irmin_green'
+                        className='dark:text-irmin_light_green text-irmin_blue-500 hover:text-irmin_blue-600 dark:hover:text-irmin_green'
                         href='/legal/privacy-policy'
                         target='_blank'
                       >
                         {dict.auth.accept.privacy}
                       </Link>
-                    </label>
+                    </Label>
                   </div>
                   {/* Submit Button */}
                   <Button
                     className='mb-6 w-full'
                     variant='gradient'
-                    colorScheme='primary'
-                    size='md'
                     disabled={isSubmitting}
                     loading={isSubmitting}
                     type='submit'
@@ -311,8 +280,6 @@ const AcceptInviteSection = () => {
                 <Button
                   className='w-full'
                   variant='outline'
-                  colorScheme='secondary'
-                  size='md'
                   onClick={handleDeclineInvite}
                   disabled={isSubmitting}
                 >

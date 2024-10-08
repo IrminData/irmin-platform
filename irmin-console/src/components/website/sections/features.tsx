@@ -2,7 +2,7 @@ import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
 
-import DynamicFaIcon from '@/components/common/DynamicFaIcon';
+import DynamicFaIcon from '@/components/ui/DynamicFaIcon';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { FeaturesSection } from '@/types/website/Wordpress';
@@ -44,7 +44,7 @@ export default async function WebsiteFeaturesSection({
           <h1 className='mb-4 font-display text-3xl font-bold leading-tight tracking-tighter md:text-4xl'>
             {section.title}
           </h1>
-          <p className='text-sm font-normal text-irmin_black md:text-base'>
+          <p className='text-sm font-normal text-foreground md:text-base'>
             {section.description}
           </p>
         </div>
@@ -52,17 +52,17 @@ export default async function WebsiteFeaturesSection({
           <div className='order-2 mb-8 w-full px-4 md:order-1 md:mb-0 md:w-1/2'>
             {section.features.map((feature, index) => (
               <div
-                className='mb-2 flex flex-wrap items-center gap-4 rounded-full p-4 text-center transition duration-200 md:text-left hover:md:bg-white hover:md:shadow-xl'
+                className='mb-2 flex flex-wrap items-center gap-4 rounded-full p-4 text-center transition duration-200 md:text-left hover:md:bg-background hover:md:shadow-xl'
                 key={`feature-${index}`}
               >
                 <div className='mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-irmin_green-500 text-white md:mx-0'>
                   <DynamicFaIcon name={feature.icon} width={21} height={21} />
                 </div>
                 <div className='w-full md:flex-1'>
-                  <h3 className='mb-2 text-lg font-normal leading-tight text-irmin_black md:text-xl'>
+                  <h3 className='mb-2 text-lg font-normal leading-tight text-foreground md:text-xl'>
                     {feature.title}
                   </h3>
-                  <p className='font-normal text-irmin_black'>
+                  <p className='font-normal text-foreground'>
                     {feature.description}
                   </p>
                 </div>

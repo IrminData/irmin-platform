@@ -7,7 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 import { SingleValue } from 'react-select';
 
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';

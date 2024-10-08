@@ -4,8 +4,8 @@ import { useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import WorkspaceCard from '@/components/workspace/WorkspaceCard';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -78,11 +78,11 @@ const ManageWorkspacesSection = () => {
   };
 
   return (
-    <div className='flex flex-col gap-4 px-4 pb-28 pt-4 lg:flex-row-reverse'>
+    <div className='flex flex-col gap-4 px-4 pb-28 lg:flex-row-reverse'>
       {/* Form for creating a new workspace */}
       <div className='w-full pr-4 lg:max-w-80'>
-        <div className='rounded-xl bg-white p-2 text-xs shadow sm:p-4 lg:p-4 lg:text-base dark:bg-irmin_black-600'>
-          <p className='mb-4 mt-4 block text-center text-sm font-normal md:text-base lg:mt-0 lg:text-left'>
+        <div className='rounded-xl bg-background p-2 text-xs text-foreground shadow sm:p-4 lg:p-4 lg:text-base'>
+          <p className='mb-4 block text-center text-sm font-normal md:text-base lg:mt-0 lg:text-left'>
             {dict.workspaceSwitcher.createNewWorkspace}
           </p>
           <form
@@ -94,20 +94,14 @@ const ManageWorkspacesSection = () => {
               control={control}
               rules={{ required: dict.misc.fieldRequired }}
               render={({ field }) => (
-                <>
-                  <Input
-                    variant='solid'
-                    colorScheme='gray'
-                    size='sm'
-                    type='text'
-                    id='newWorkspaceName'
-                    placeholder={dict.workspace.workspaceName}
-                    {...field}
-                    required
-                    className='mb-2 h-11 w-full md:mb-4'
-                    disabled={loading}
-                  />
-                </>
+                <Input
+                  type='text'
+                  placeholder={dict.workspace.workspaceName}
+                  required
+                  className='mb-2 md:mb-4'
+                  disabled={loading}
+                  {...field}
+                />
               )}
             />
             <Controller
@@ -121,31 +115,24 @@ const ManageWorkspacesSection = () => {
                 },
               }}
               render={({ field }) => (
-                <>
-                  <Input
-                    variant='solid'
-                    colorScheme='gray'
-                    size='sm'
-                    type='text'
-                    id='newWorkspaceDescription'
-                    placeholder={dict.workspace.workspaceDescription}
-                    {...field}
-                    maxLength={255}
-                    longtext={{
-                      rows: 3,
-                    }}
-                    required
-                    className='mb-2 w-full md:mb-4'
-                    disabled={loading}
-                  />
-                </>
+                <Input
+                  type='text'
+                  placeholder={dict.workspace.workspaceDescription}
+                  maxLength={255}
+                  longtext={{
+                    rows: 3,
+                  }}
+                  required
+                  className='mb-2 md:mb-4'
+                  disabled={loading}
+                  {...field}
+                />
               )}
             />
-            {error && <p className='mb-2 text-red-800'>{error}</p>}
+            {error && <p className='mb-2 text-destructive'>{error}</p>}
             {success && <p className='mb-2 text-irmin_green'>{success}</p>}
             <Button
               variant='gradient'
-              colorScheme='primary'
               size='sm'
               className='mb-0 h-11 w-full'
               type='submit'

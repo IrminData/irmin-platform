@@ -5,9 +5,9 @@ import Link from 'next/link';
 
 import { MdOutlineEmail } from 'react-icons/md';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
-import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -111,18 +111,14 @@ export default function WebsiteFooterContent({
               </div>
               <div className='flex w-full flex-row justify-stretch gap-0 align-middle md:mx-0'>
                 <Input
-                  size='sm'
-                  colorScheme='secondary'
-                  variant='solid'
                   placeholder={dict.website.footer.newsletter.email}
                   type='email'
-                  className='h-12 w-full rounded-r-none border-0 bg-[#051f2a] text-gray-200 shadow-none placeholder:text-gray-700'
+                  className='h-12 rounded-r-none border-0 bg-[#051f2a] text-gray-200 shadow-none placeholder:text-gray-700'
                 />
                 <Button
                   size='sm'
                   className='h-12 min-w-max rounded-l-none border-0 bg-[#051f2a] px-6 text-white text-opacity-60 shadow-none hover:bg-[#172a32] hover:text-white'
-                  colorScheme='secondary'
-                  variant='solid'
+                  variant='default'
                   icon={<MdOutlineEmail size={16} />}
                 >
                   {dict.website.footer.newsletter.subscribe}

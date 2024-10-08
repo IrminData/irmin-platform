@@ -2,14 +2,14 @@
 
 import React, { useCallback } from 'react';
 
-import SettingsForm, {
-  FieldConfig,
-} from '@/components/common/form/SettingsForm';
+import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepository } from '@/context/RepositoryContext';
 import { useWorkspace } from '@/context/workspace';
+
+import ImmutableWarning from './ImmutableWarning';
 
 /**
  * Repository Settings section component
@@ -129,31 +129,29 @@ const RepositorySettingsSection = () => {
     },
   ];
 
+  if (currentRepository?.is_immutable) {
+    return <ImmutableWarning />;
+  }
+
   return (
     <div
       className='container relative mx-auto my-8 max-w-6xl'
       id='repository-settings-section'
     >
-      {currentRepository?.is_immutable ? (
-        <p className='text-sm font-normal text-red-800 md:text-xl dark:text-red-400'>
-          {dict.repository.immutableDescription}
-        </p>
-      ) : (
-        <SettingsForm
-          initialValues={{
-            name: currentRepository?.name ?? '',
-            description: currentRepository?.description ?? '',
-            owner: currentRepository?.owner.id ?? '',
-          }}
-          onSubmit={handleUpdateRepository}
-          fieldConfiguration={fieldConfiguration}
-          deleteItem={handleDeleteRepository}
-          itemName='Repository'
-          submitButtonLabel={dict.repository.settings.saveChanges}
-          deleteButtonLabel={dict.repository.settings.deleteRepository}
-          dangerZoneMessage={dict.repository.settings.deletionNote}
-        />
-      )}
+      <SettingsForm
+        initialValues={{
+          name: currentRepository?.name ?? '',
+          description: currentRepository?.description ?? '',
+          owner: currentRepository?.owner.id ?? '',
+        }}
+        onSubmit={handleUpdateRepository}
+        fieldConfiguration={fieldConfiguration}
+        deleteItem={handleDeleteRepository}
+        itemName='Repository'
+        submitButtonLabel={dict.repository.settings.saveChanges}
+        deleteButtonLabel={dict.repository.settings.deleteRepository}
+        dangerZoneMessage={dict.repository.settings.deletionNote}
+      />
     </div>
   );
 };

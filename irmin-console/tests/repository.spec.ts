@@ -162,7 +162,7 @@ test('can open commit ref', async ({ page, context }) => {
   );
 
   // Click on the first commit to copy the hash
-  await page.locator('.col-span-1 > .flex > .text-irmin_black').first().click();
+  await page.locator('.col-span-1 > .flex > .text-foreground').first().click();
   await expect(page.locator('#alert')).toContainText(
     'Commit hash copied to clipboard'
   );

@@ -2,7 +2,7 @@ import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
 
-import DynamicFaIcon from '@/components/common/DynamicFaIcon';
+import DynamicFaIcon from '@/components/ui/DynamicFaIcon';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { ContentSection } from '@/types/website/Wordpress';
@@ -45,25 +45,25 @@ export default async function WebsiteContentSection({
           <span className='mb-4 inline-block rounded-full bg-irmin_blue px-2 py-px text-xs font-normal leading-5 text-white shadow-sm'>
             {section.subtitle}
           </span>
-          <h3 className='mb-6 text-4xl font-bold leading-tight tracking-tighter text-irmin_black md:text-5xl'>
+          <h3 className='mb-6 text-4xl font-bold leading-tight tracking-tighter text-foreground md:text-5xl'>
             {section.title}
           </h3>
-          <p className='mb-12 text-sm font-normal text-irmin_black md:text-base'>
+          <p className='mb-12 text-sm font-normal text-foreground md:text-base'>
             {section.description}
           </p>
           {section.features.map((feature, index) => (
             <div
-              className='mb-2 flex flex-wrap items-center gap-4 rounded-full p-4 text-center transition duration-200 md:text-left hover:lg:bg-white hover:lg:shadow-xl'
+              className='mb-2 flex flex-wrap items-center gap-4 rounded-full p-4 text-center transition duration-200 md:text-left hover:lg:bg-background hover:lg:shadow-xl'
               key={`feature-${index}`}
             >
               <div className='mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-irmin_green-500 text-white md:mx-0'>
                 <DynamicFaIcon name={feature.icon} width={21} height={21} />
               </div>
               <div className='w-full md:flex-1'>
-                <h3 className='mb-2 text-lg font-normal leading-tight text-irmin_black md:text-xl'>
+                <h3 className='mb-2 text-lg font-normal leading-tight text-foreground md:text-xl'>
                   {feature.title}
                 </h3>
-                <p className='font-normal text-irmin_black'>
+                <p className='font-normal text-foreground'>
                   {feature.description}
                 </p>
               </div>
@@ -88,7 +88,7 @@ export default async function WebsiteContentSection({
             height={100}
           />
           <Image
-            className='absolute -bottom-24 left-0 hidden w-28 text-red-800 md:block'
+            className='absolute -bottom-24 left-0 hidden w-28 text-destructive md:block'
             src='/ui-assets/elements/dots2-red.svg'
             alt='Red dots'
             width={100}

@@ -14,6 +14,8 @@ import {
   TbUser,
 } from 'react-icons/tb';
 
+import Button from '@/components/ui/Button';
+
 import { useLocale } from '@/context/LocaleContext';
 
 import {
@@ -165,28 +167,27 @@ export default function ConsoleSearch() {
           <TbSearch className='text-gray-500' />
         </div>
         <input
-          type='search'
-          value={query}
+          defaultValue={query}
           onChange={(e) => setQuery(e.target.value)}
-          className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible focus:outline-none group-focus-within:placeholder:visible md:text-sm md:placeholder:visible lg:text-base dark:bg-irmin_black dark:text-white'
+          className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible focus:outline-none group-focus-within:placeholder:visible dark:bg-irmin_black dark:text-white md:placeholder:visible lg:text-sm'
           placeholder={dict.consoleNavigation.searchPlaceholder}
         />
-        <button
-          type='button'
-          className='invisible absolute bottom-0 right-0 top-0 rounded-full bg-gray-50 px-4 text-xs font-normal text-gray-800 opacity-0 transition-all hover:bg-gray-100 focus:outline-none group-focus-within:visible group-focus-within:opacity-100 md:visible md:text-sm md:opacity-100 dark:bg-irmin_black dark:text-gray-200 dark:hover:bg-gray-800'
+        <Button
+          variant='ghost'
+          className='invisible absolute bottom-0 right-0 top-0 h-full rounded-full opacity-0 focus:outline-none group-focus-within:visible group-focus-within:opacity-100 md:visible md:opacity-100'
         >
           {dict.consoleNavigation.search}
-        </button>
+        </Button>
       </form>
 
       {/* Results Modal */}
       {debouncedQuery.length > 3 && isFocused && (
-        <div className='absolute mt-1 max-h-[calc(100vh-200px)] w-full overflow-y-scroll rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-900 dark:bg-gray-800'>
+        <div className='absolute mt-1 max-h-[calc(100vh-200px)] w-full overflow-y-scroll rounded-xl border border-gray-200 bg-background shadow-lg dark:border-gray-900'>
           {results.length > 0 ? (
             <div className='px-2 pt-2 lg:px-4 lg:pt-4'>
               {Object.keys(groupedResults).map((type) => (
                 <div key={type} className='mb-2 lg:mb-4'>
-                  <div className='mb-1 flex items-center pl-2 text-irmin_black lg:mb-2 dark:text-white'>
+                  <div className='mb-1 flex items-center pl-2 text-foreground lg:mb-2'>
                     {getIconForType(type as ConsoleSearchItemType)}
                     <span className='ml-2 text-base font-medium lg:text-lg'>
                       {type === 'workflow' &&
@@ -210,7 +211,7 @@ export default function ConsoleSearch() {
                       (result, idx) => (
                         <li
                           key={`search-result-${type}-${idx}`}
-                          className='rounded-lg px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 lg:text-base dark:text-gray-300 dark:hover:bg-gray-700'
+                          className='rounded-lg px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 lg:text-base'
                         >
                           <a href={result.link} className='block'>
                             <div>{result.title}</div>
@@ -228,7 +229,7 @@ export default function ConsoleSearch() {
           ) : (
             <div className='flex h-full min-h-96 w-full flex-col items-center justify-center gap-4'>
               <LuSearchX className='h-12 w-12 text-gray-400' />
-              <div className='text-base text-gray-600 lg:text-lg dark:text-gray-300'>
+              <div className='text-base text-gray-600 dark:text-gray-300 lg:text-lg'>
                 {dict.consoleNavigation.searchNoResults}
               </div>
             </div>

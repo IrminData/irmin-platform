@@ -4,8 +4,8 @@ import { useCallback, useRef, useState } from 'react';
 
 import { GoChevronDown, GoChevronUp } from 'react-icons/go';
 
-import Button from '@/components/common/button/Button';
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
+import Button from '@/components/ui/Button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useRepository } from '@/context/RepositoryContext';
@@ -104,7 +104,7 @@ const DiffView = ({
       {/* Header Section */}
       {!hideHeader && (
         <div className='mb-4'>
-          <h3 className='text-sm text-gray-900 lg:text-base dark:text-gray-100'>
+          <h3 className='text-sm text-gray-900 dark:text-gray-100 lg:text-base'>
             {dict.repository.compare.comparing}{' '}
             <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
               {baseRef ?? diff.base_ref}
@@ -126,13 +126,13 @@ const DiffView = ({
           return (
             <div
               key={`diff-item-${index}`}
-              className='rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-irmin_black'
+              className='rounded-lg border border-gray-200 bg-card text-card-foreground dark:border-gray-800'
             >
               {/* Main Diff Item Row */}
               <div className='flex flex-row items-center justify-between gap-4 p-2'>
                 <div className='flex flex-row items-center gap-2'>
                   {/* Affected collection */}
-                  <h4 className='text-sm text-gray-800 lg:text-base dark:text-gray-200'>
+                  <h4 className='text-sm text-gray-800 dark:text-gray-200 lg:text-base'>
                     {item.collection.name}
                   </h4>
                   {/* Size Indicator */}
@@ -171,7 +171,6 @@ const DiffView = ({
                 {/* Toggle Button */}
                 <Button
                   variant='link'
-                  colorScheme='gray'
                   size='sm'
                   onClick={() => toggleItem(index)}
                   icon={

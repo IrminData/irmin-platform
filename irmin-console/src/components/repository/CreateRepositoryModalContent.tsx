@@ -2,8 +2,9 @@
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -67,25 +68,15 @@ export default function CreateRepositoryModalContent({
       onSubmit={handleSubmit(onSubmit)}
       className='flex flex-col gap-4 px-4 py-8'
     >
-      <div>
-        <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-          {dict.repository.settings.name}
-        </label>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.settings.name}</Label>
         <Controller
           name='name'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <>
-              <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                required
-                className='h-11 w-full'
-                type='text'
-                {...field}
-              />
+              <Input {...field} />
               {errors.name && (
                 <p className='mt-1 text-xs text-red-600'>
                   {errors.name.message}
@@ -95,10 +86,8 @@ export default function CreateRepositoryModalContent({
           )}
         />
       </div>
-      <div>
-        <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-          {dict.repository.settings.description}
-        </label>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.settings.description}</Label>
         <Controller
           name='description'
           control={control}
@@ -106,12 +95,6 @@ export default function CreateRepositoryModalContent({
           render={({ field }) => (
             <>
               <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                required
-                className='w-full'
-                type='text'
                 {...field}
                 longtext={{
                   rows: 3,
@@ -126,13 +109,7 @@ export default function CreateRepositoryModalContent({
           )}
         />
       </div>
-      <Button
-        className='h-11 w-full'
-        type='submit'
-        size='sm'
-        colorScheme='primary'
-        variant='solid'
-      >
+      <Button className='h-11 w-full' type='submit' size='sm' variant='default'>
         {dict.repository.createNewRepository}
       </Button>
     </form>

@@ -29,11 +29,11 @@ export default function PageContent({
           {full_width ? (
             <div
               dangerouslySetInnerHTML={{ __html: content }}
-              className={'editor-styles-wrapper bg-white'}
+              className={'editor-styles-wrapper bg-background'}
             />
           ) : (
             <div className='p-2 lg:p-6'>
-              <div className='mx-auto max-w-7xl rounded-lg bg-white p-2 shadow-md lg:p-8'>
+              <div className='mx-auto max-w-7xl rounded-lg bg-background p-2 shadow-md lg:p-8'>
                 <div
                   dangerouslySetInnerHTML={{ __html: content }}
                   className={'editor-styles-wrapper'}

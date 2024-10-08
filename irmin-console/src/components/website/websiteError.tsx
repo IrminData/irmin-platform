@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -49,18 +49,12 @@ export default function WebsiteError({
                   ? dict.misc.pageNotFound
                   : dict.misc.somethingWentWrong}
               </h2>
-              <p className='mb-6 text-xs text-irmin_black md:text-sm dark:text-gray-300'>
+              <p className='mb-6 text-xs text-foreground dark:text-gray-300 md:text-sm'>
                 {error?.message}
               </p>
               <div className='flex flex-wrap gap-2'>
                 <div className='w-[calc(50%-4px)]'>
-                  <Button
-                    variant='solid'
-                    colorScheme='primary'
-                    size='md'
-                    className='w-full'
-                    href='/'
-                  >
+                  <Button variant='default' className='w-full' href='/'>
                     {dict.misc.goBackHome}
                   </Button>
                 </div>
@@ -68,8 +62,6 @@ export default function WebsiteError({
                   <div className='w-[calc(50%-4px)]'>
                     <Button
                       variant='outline'
-                      colorScheme='secondary'
-                      size='md'
                       className='w-full'
                       onClick={reset}
                     >

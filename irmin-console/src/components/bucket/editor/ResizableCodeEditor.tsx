@@ -60,7 +60,7 @@ const ResizableCodeEditor = ({
       style={{ minHeight: editorHeight }}
       ref={editorRef}
       id='code-editor'
-      className='bg-gray-200 text-xs lg:text-sm dark:bg-irmin_black'
+      className='bg-gray-200 text-xs dark:bg-irmin_black lg:text-sm'
     >
       <CodeMirrorEditor
         language={language}

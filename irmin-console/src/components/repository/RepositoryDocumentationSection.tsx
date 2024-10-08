@@ -4,10 +4,10 @@ import { useCallback } from 'react';
 
 import { TbFile } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 import DocumentationForm, {
   DocumentationFormValues,
-} from '@/components/common/form/DocumentationForm';
+} from '@/components/ui/form/DocumentationForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -54,13 +54,7 @@ const RepositoryDocumentationSection = () => {
         initialDocumentation={currentRepository.documentation ?? ''}
         onSubmit={handleSaveDocumentation}
       >
-        <Button
-          size='sm'
-          colorScheme='primary'
-          variant='solid'
-          type='submit'
-          icon={<TbFile />}
-        >
+        <Button size='sm' variant='default' type='submit' icon={<TbFile />}>
           {dict.repository.settings.saveChanges}
         </Button>
       </DocumentationForm>

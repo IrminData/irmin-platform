@@ -5,8 +5,9 @@ import { useMemo, useState } from 'react';
 import IrminCore from '@/services/core/IrminCore';
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -91,28 +92,16 @@ export default function UploadCollectionModalContent({
   };
 
   return (
-    <form onSubmit={handleSubmit(handleUpload)} className='space-y-4'>
-      <div className='pb-3'>
-        <label className='text-xs'>
-          {dict.repository.collections.upload.targetRepository}
-        </label>
+    <form onSubmit={handleSubmit(handleUpload)} className='flex flex-col gap-4'>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.collections.upload.targetRepository}</Label>
         <Controller
           name='repository'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <>
-              <Input
-                type='text'
-                {...field}
-                disabled={!!currentRepository}
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                className={`w-full ${
-                  errors.repository ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
+              <Input type='text' disabled={!!currentRepository} {...field} />
               {errors.repository && (
                 <p className='mt-1 text-xs text-red-600'>
                   {errors.repository.message}
@@ -122,27 +111,15 @@ export default function UploadCollectionModalContent({
           )}
         />
       </div>
-      <div className='pb-3'>
-        <label className='text-xs'>
-          {dict.repository.collections.upload.targetBranch}
-        </label>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.collections.upload.targetBranch}</Label>
         <Controller
           name='ref'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <>
-              <Input
-                type='text'
-                {...field}
-                disabled={!!currentRef}
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                className={`w-full ${
-                  errors.ref ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
+              <Input type='text' disabled={!!currentRef} {...field} />
               {errors.ref && (
                 <p className='mt-1 text-xs text-red-600'>
                   {errors.ref.message}
@@ -152,26 +129,15 @@ export default function UploadCollectionModalContent({
           )}
         />
       </div>
-      <div className='pb-3'>
-        <label className='text-xs'>
-          {dict.repository.collections.upload.collectionName}
-        </label>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.collections.upload.collectionName}</Label>
         <Controller
           name='name'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <>
-              <Input
-                type='text'
-                {...field}
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                className={`w-full ${
-                  errors.name ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
+              <Input type='text' {...field} />
               {errors.name && (
                 <p className='mt-1 text-xs text-red-600'>
                   {errors.name.message}
@@ -181,10 +147,8 @@ export default function UploadCollectionModalContent({
           )}
         />
       </div>
-      <div className='pb-3'>
-        <label className='text-xs'>
-          {dict.repository.collections.upload.filesToUpload}
-        </label>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.collections.upload.filesToUpload}</Label>
         <Controller
           name='files'
           control={control}
@@ -194,12 +158,6 @@ export default function UploadCollectionModalContent({
               <Input
                 type='file'
                 multiple
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                className={`w-full ${
-                  errors.files ? 'border-red-500' : 'border-gray-300'
-                }`}
                 disabled={loading}
                 onChange={(e) => {
                   // Ensure that `field.onChange` is called with the selected files
@@ -215,31 +173,20 @@ export default function UploadCollectionModalContent({
           )}
         />
       </div>
-      <div className='pb-3'>
-        <label className='text-xs'>
-          {dict.repository.collections.upload.pathInRepository}
-        </label>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.collections.upload.pathInRepository}</Label>
         <Controller
           name='path'
           control={control}
           render={({ field }) => (
-            <Input
-              type='text'
-              {...field}
-              size='sm'
-              variant='outline'
-              colorScheme='gray'
-              className='w-full'
-              placeholder='/example/path'
-            />
+            <Input type='text' placeholder='/example/path' {...field} />
           )}
         />
       </div>
-      {error && <div className='py-2 text-red-800'>{error}</div>}
+      {error && <div className='py-2 text-destructive'>{error}</div>}
       <div className='pb-3'>
         <Button
-          variant='solid'
-          colorScheme='primary'
+          variant='default'
           size='sm'
           className='w-full'
           disabled={loading}

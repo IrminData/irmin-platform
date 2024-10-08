@@ -3,8 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -49,34 +49,25 @@ export default function WebsiteNewsletterSection({
       />
       <div className='container relative z-10 mx-auto px-4'>
         <div className='mx-auto max-w-xl text-center'>
-          <h3 className='mb-4 text-3xl font-bold leading-tight tracking-tighter text-irmin_black md:text-4xl'>
+          <h3 className='mb-4 text-3xl font-bold leading-tight tracking-tighter text-foreground md:text-4xl'>
             {section.title}
           </h3>
-          <p className='mb-8 text-sm font-normal text-irmin_black md:text-base'>
+          <p className='mb-8 text-sm font-normal text-foreground md:text-base'>
             {section.subtitle}
           </p>
           <div className='mx-auto text-left md:max-w-md'>
             <div className='mb-1 flex flex-wrap gap-2'>
               <div className='w-full md:flex-1'>
                 <Input
-                  size='md'
-                  colorScheme='primary'
-                  variant='outline'
                   placeholder={dict.website.sections.newsletter.email}
                   type='email'
-                  className='w-full'
                 />
               </div>
-              <Button
-                size='md'
-                variant='solid'
-                colorScheme='primary'
-                className='w-full md:w-auto'
-              >
+              <Button variant='default' className='w-full md:w-auto'>
                 {dict.website.sections.newsletter.subscribe}
               </Button>
             </div>
-            <span className='text-xs font-normal text-irmin_black'>
+            <span className='text-xs font-normal text-foreground'>
               <span> {dict.website.sections.newsletter.privacy_notice} </span>
               <Link
                 className='text-irmin_green-500 hover:text-irmin_green-600'

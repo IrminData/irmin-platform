@@ -4,8 +4,9 @@ import { useCallback, useRef, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -61,23 +62,16 @@ export default function CommitChangesModalContent({
       id='commit-changes-modal-content'
       onSubmit={handleSubmit(onSubmit)}
     >
-      <div>
-        <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-          {dict.repository.commit.commitMessage}
-        </label>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.commit.commitMessage}</Label>
         <Controller
           name='message'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <Input
-              size='sm'
-              variant='outline'
-              colorScheme='gray'
-              className='h-11 w-full'
-              type='text'
-              placeholder={dict.repository.commit.commitMessagePlaceholder}
               {...field}
+              placeholder={dict.repository.commit.commitMessagePlaceholder}
             />
           )}
         />
@@ -89,8 +83,7 @@ export default function CommitChangesModalContent({
         className='mt-4 h-11 w-full'
         type='submit'
         size='sm'
-        colorScheme='primary'
-        variant='solid'
+        variant='default'
         disabled={loading}
       >
         {dict.repository.commit.commitChanges}

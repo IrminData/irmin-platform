@@ -1,6 +1,6 @@
 'use client';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -24,28 +24,21 @@ function ConsoleErrorSection({
         <h2 className='mb-4 text-4xl font-bold leading-tight tracking-tighter md:text-5xl'>
           {dict.misc.ohNo} {dict.misc.somethingWentWrong}
         </h2>
-        <p className='mb-6 text-lg text-irmin_black md:text-xl'>
+        <p className='mb-6 text-lg text-foreground md:text-xl'>
           {dict.misc.weEncounteredError} {error.message}.{' '}
           {dict.misc.tryAgainOrContactSupport}
         </p>
         <div className='flex justify-center'>
           <div className='mx-2'>
             <Button
-              variant='solid'
-              colorScheme='primary'
-              size='md'
+              variant='default'
               href={`/${locale}/console/manage-workspaces`}
             >
               {dict.misc.goBackConsole}
             </Button>
           </div>
           <div className='mx-2'>
-            <Button
-              variant='outline'
-              colorScheme='secondary'
-              size='md'
-              onClick={reset}
-            >
+            <Button variant='outline' onClick={reset}>
               {dict.misc.tryAgain}
             </Button>
           </div>

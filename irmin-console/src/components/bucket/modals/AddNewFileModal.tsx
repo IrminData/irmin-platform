@@ -7,8 +7,9 @@ import ReactSelect from 'react-select';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -178,62 +179,41 @@ export default function AddNewFileModal({
           )}
         />
       </div>
-      <div>
-        <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-          {dict.fileNavigator.newFileName}
-        </label>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.fileNavigator.newFileName}</Label>
         <Controller
           name='name'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
-            <Input
-              size='sm'
-              variant='outline'
-              colorScheme='gray'
-              className='h-11 w-full'
-              type='text'
-              disabled={loading}
-              {...field}
-            />
+            <Input type='text' disabled={loading} {...field} />
           )}
         />
         {errors.name && (
           <p className='mt-1 text-xs text-red-600'>{errors.name.message}</p>
         )}
       </div>
-      <div>
-        <label className='mb-2 block text-xs text-gray-600 md:text-sm lg:text-base dark:text-gray-400'>
-          {dict.fileNavigator.newFilePath}
-        </label>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.fileNavigator.newFilePath}</Label>
         <Controller
           name='path'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <div className='flex flex-row items-center'>
-              <Input
-                size='sm'
-                variant='outline'
-                colorScheme='gray'
-                className='h-11 w-full'
-                type='text'
-                disabled={true}
-                {...field}
-              />
+              <Input type='text' disabled={true} {...field} />
               <Button
-                variant='icon'
-                colorScheme='light'
-                size='sm'
-                className='m-0 ml-2 h-11 rounded-lg p-0 pl-2'
-                ariaLabel='Toggle the path selector'
+                size='icon'
+                variant='secondary'
+                className='h-11 rounded-full'
+                aria-label='Toggle the path selector'
                 onClick={() => setShowPathSelector(!showPathSelector)}
                 disabled={loading}
                 icon={
                   showPathSelector ? (
-                    <IoChevronUp className='inline-block' size={24} />
+                    <IoChevronUp className='inline-block' size={22} />
                   ) : (
-                    <IoChevronDown className='inline-block' size={24} />
+                    <IoChevronDown className='inline-block' size={22} />
                   )
                 }
               />
@@ -262,10 +242,11 @@ export default function AddNewFileModal({
           }}
         />
       )}
-      {error && error.length > 0 && <div className='text-red-800'>{error}</div>}
+      {error && error.length > 0 && (
+        <div className='text-destructive'>{error}</div>
+      )}
       <Button
-        variant='solid'
-        colorScheme='primary'
+        variant='default'
         size='sm'
         className='w-full'
         type='submit'

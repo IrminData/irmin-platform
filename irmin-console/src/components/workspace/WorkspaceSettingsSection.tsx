@@ -2,10 +2,8 @@
 
 import { useCallback } from 'react';
 
-import Button from '@/components/common/button/Button';
-import SettingsForm, {
-  FieldConfig,
-} from '@/components/common/form/SettingsForm';
+import Button from '@/components/ui/Button';
+import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -81,23 +79,23 @@ const WorkspaceSettingsSection = () => {
 
     irminModal.show(
       dict.workspace.confirmDeletion,
-      <div>
+      <div className='pb-4'>
         <p className='mb-4'>{dict.workspace.deletionWarning}</p>
-        <div className='flex justify-end'>
+        <div className='flex justify-end gap-4'>
           <Button
+            variant='ghost'
             onClick={() => {
               irminModal.close();
             }}
-            className='mr-4 rounded bg-gray-300 px-4 py-2 text-gray-700 transition-all hover:bg-gray-500'
           >
             {dict.workspace.cancel}
           </Button>
           <Button
+            variant='destructive'
             onClick={() => {
               irminModal.close();
               handleDelete();
             }}
-            className='rounded bg-red-800 px-4 py-2 text-white transition-all hover:bg-red-500'
           >
             {dict.workspace.delete}
           </Button>

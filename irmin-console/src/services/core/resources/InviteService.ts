@@ -66,6 +66,7 @@ class InviteService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Invite user error');
+      if (isDevelopment) return fake();
       throw error;
     }
   }
@@ -89,6 +90,7 @@ class InviteService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Resend invite error');
+      if (isDevelopment) return fake();
       throw error;
     }
   }
@@ -112,6 +114,7 @@ class InviteService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Cancel invite error');
+      if (isDevelopment) return fake();
       throw error;
     }
   }
@@ -137,6 +140,7 @@ class InviteService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Change invite role error');
+      if (isDevelopment) return fake();
       throw error;
     }
   }
@@ -215,6 +219,7 @@ class InviteService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Accept user invite error');
+      if (isDevelopment) return fake();
       throw error;
     }
   }
@@ -238,6 +243,7 @@ class InviteService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Decline user invite error');
+      if (isDevelopment) return fake();
       throw error;
     }
   }

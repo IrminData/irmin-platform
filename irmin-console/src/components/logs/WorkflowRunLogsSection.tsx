@@ -9,9 +9,9 @@ import IrminCore from '@/services/core/IrminCore';
 
 import { IoChevronBack } from 'react-icons/io5';
 
-import Button from '@/components/common/button/Button';
-import LoadingSkeleton from '@/components/common/loading/LoadingSkeleton';
-import StatusBadge from '@/components/common/status/StatusBadge';
+import { ButtonWithTooltip } from '@/components/ui/Button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useLogs } from '@/context/LogContext';
@@ -76,22 +76,21 @@ export default function WorkflowRunLogsSection({
     <div className='flex flex-col px-2 pt-12 md:px-4'>
       <div className='container mx-auto mb-12 max-w-6xl'>
         <div className='mb-12 flex items-center gap-8'>
-          <Button
-            size='sm'
-            variant='icon'
-            colorScheme='light'
-            className='bg-gray-100 dark:bg-gray-700'
+          <ButtonWithTooltip
+            size='icon'
+            variant='gray'
+            className='rounded-full'
             icon={<IoChevronBack size={24} />}
             onClick={() => router.back()}
-          >
-            <IoChevronBack size={24} />
-          </Button>
+            tooltip={dict.misc.back}
+            aria-label={dict.misc.back}
+          />
           <div>
             <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
               {dict.logs.workflowRunLogs}
             </h2>
             {selectedWorkflow && (
-              <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
+              <h3 className='mt-4 text-lg text-gray-600 dark:text-gray-400 xl:text-xl'>
                 <Link
                   className='hover:underline'
                   href={`${workspaceUrl}/workflows/${workflowId}`}
@@ -106,7 +105,7 @@ export default function WorkflowRunLogsSection({
           </div>
         </div>
         {run && (
-          <div className='flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg bg-gray-100 p-4 text-sm text-irmin_black lg:text-lg dark:bg-irmin_black-800 dark:text-gray-100'>
+          <div className='flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg bg-card p-4 text-sm text-card-foreground lg:text-lg'>
             <div className='flex flex-col gap-1'>
               <p className='text-sm opacity-60'>{dict.workflow.startedAt}</p>
               <p className='text-base'>
@@ -128,7 +127,7 @@ export default function WorkflowRunLogsSection({
             <div className='flex flex-col gap-1'>
               <p className='text-sm opacity-60'>{dict.list.status}</p>
               <p className='text-base'>
-                <StatusBadge runStatus={run.status} statusLabel={run.status} />
+                <StatusBadge status={run.status} label={run.status} />
               </p>
             </div>
           </div>

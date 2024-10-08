@@ -2,10 +2,10 @@
 
 import { TbFile } from 'react-icons/tb';
 
-import Button from '@/components/common/button/Button';
+import Button from '@/components/ui/Button';
 import DocumentationForm, {
   DocumentationFormValues,
-} from '@/components/common/form/DocumentationForm';
+} from '@/components/ui/form/DocumentationForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -51,18 +51,12 @@ const ConnectionDocumentationSection = ({
   };
 
   return (
-    <div className='mt-0 lg:-mt-6' id='connection-documentation-section'>
+    <div className='mt-0 lg:-mt-2' id='connection-documentation-section'>
       <DocumentationForm
         initialDocumentation={connection.documentation ?? ''}
         onSubmit={handleSaveDocumentation}
       >
-        <Button
-          size='sm'
-          colorScheme='primary'
-          variant='solid'
-          type='submit'
-          icon={<TbFile />}
-        >
+        <Button size='sm' variant='default' type='submit' icon={<TbFile />}>
           {dict.repository.settings.saveChanges}
         </Button>
       </DocumentationForm>

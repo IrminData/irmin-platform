@@ -4,12 +4,15 @@ import React from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/common/button/Button';
-import Input from '@/components/common/form/Input';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
+
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
 
 // Define the form values type for react-hook-form
 interface SignInFormValues {
@@ -53,16 +56,14 @@ const SignInSection = () => {
             <h1 className='mb-2 font-display text-2xl font-bold md:text-3xl lg:text-5xl'>
               {dict.auth.signIn.title}
             </h1>
-            <p className='text-lg font-normal text-irmin_black dark:text-gray-200'>
+            <p className='text-lg font-normal text-foreground dark:text-gray-200'>
               {dict.auth.signIn.subtitle}
             </p>
           </div>
           <form onSubmit={handleSubmit(onSubmit)}>
             {/* Email Field */}
-            <div className='mb-6'>
-              <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
-                {dict.auth.signIn.email}
-              </label>
+            <div className='mb-4 flex flex-col gap-2'>
+              <Label>{dict.auth.signIn.email} *</Label>
               <Controller
                 name='email'
                 control={control}
@@ -75,12 +76,7 @@ const SignInSection = () => {
                 }}
                 render={({ field }) => (
                   <Input
-                    variant='solid'
-                    colorScheme='black'
-                    size='md'
-                    required
-                    className='w-full'
-                    ariaLabel={dict.auth.signIn.email}
+                    aria-label={dict.auth.signIn.email}
                     type='email'
                     id='email'
                     placeholder={dict.auth.signIn.emailPlaceholder}
@@ -96,22 +92,15 @@ const SignInSection = () => {
             </div>
 
             {/* Password Field */}
-            <div className='mb-4'>
-              <label className='mb-2 block font-normal text-irmin_black dark:text-gray-200'>
-                {dict.auth.signIn.password}
-              </label>
+            <div className='mb-4 flex flex-col gap-2'>
+              <Label>{dict.auth.signIn.password} *</Label>
               <Controller
                 name='password'
                 control={control}
                 rules={{ required: dict.misc.fieldRequired }}
                 render={({ field }) => (
                   <Input
-                    variant='solid'
-                    colorScheme='black'
-                    size='md'
-                    required
-                    className='w-full'
-                    ariaLabel={dict.auth.signIn.password}
+                    aria-label={dict.auth.signIn.password}
                     type='password'
                     placeholder={dict.auth.signIn.passwordPlaceholder}
                     {...field}
@@ -127,31 +116,27 @@ const SignInSection = () => {
 
             {/* Error Messages */}
             {errors.email || errors.password ? (
-              <p className='mb-4 text-red-800'>{dict.misc.pleaseFixErrors}</p>
+              <p className='mb-4 text-destructive'>
+                {dict.misc.pleaseFixErrors}
+              </p>
             ) : null}
 
             {/* Remember Me & Forgot Password */}
             <div className='mb-6 flex flex-wrap items-center justify-between'>
               <div className='w-full md:w-1/2'>
                 <div className='flex items-center'>
-                  <input
+                  <Checkbox
                     name='remember-me'
+                    id='remember-me'
                     defaultChecked
-                    type='checkbox'
-                    className='h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500'
                   />
-                  <label className='ms-2 text-sm font-normal text-irmin_black dark:text-gray-200'>
+                  <Label htmlFor='remember-me'>
                     {dict.auth.signIn.rememberMe}
-                  </label>
+                  </Label>
                 </div>
               </div>
               <div className='mt-1 w-full md:w-auto'>
-                <Button
-                  variant='link'
-                  href='/forgot-password'
-                  size='sm'
-                  colorScheme='gray'
-                >
+                <Button variant='link' href='/forgot-password' size='sm'>
                   {dict.auth.signIn.forgotPassword}
                 </Button>
               </div>
@@ -161,8 +146,6 @@ const SignInSection = () => {
             <Button
               className='mb-6 w-full'
               variant='gradient'
-              colorScheme='primary'
-              size='md'
               disabled={isSubmitting}
               loading={isSubmitting}
               type='submit'
@@ -178,8 +161,6 @@ const SignInSection = () => {
               <Button
                 variant='link'
                 href='/sign-up'
-                size='md'
-                colorScheme='secondary'
                 className='my-0 py-0 dark:text-irmin_green'
               >
                 {dict.auth.signIn.signUp}
