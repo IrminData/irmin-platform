@@ -72,26 +72,13 @@ const ActionWorkflowList = ({
             >
               <StatusBadge status={item.status} label={item.status} />
               <div className='flex flex-col'>
-                {item.cron_syntax && item.cron_syntax.length > 0 ? (
-                  <>
-                    <span className='text-xs text-gray-600 dark:text-gray-400'>
-                      {dict.list.nextRun}
-                      {': '}
-                      {item.next_run_at
-                        ? new Date(item.next_run_at).toLocaleString(locale)
-                        : '-'}
-                    </span>
-                    <span className='text-xs text-gray-600 dark:text-gray-400'>
-                      {dict.list.prevRun}
-                      {': '}
-                      {item.last_run_at
-                        ? new Date(item.last_run_at).toLocaleString(locale)
-                        : '-'}
-                    </span>
-                  </>
+                {item.schedule && item.schedule.triggers.length > 0 ? (
+                  <span className='text-xs text-gray-400'>
+                    {dict.workflow.scheduled}
+                  </span>
                 ) : (
-                  <span className='text-xs text-gray-600 dark:text-gray-400'>
-                    {dict.list.notScheduled}
+                  <span className='text-xs text-gray-400'>
+                    {dict.workflow.notScheduled}
                   </span>
                 )}
               </div>

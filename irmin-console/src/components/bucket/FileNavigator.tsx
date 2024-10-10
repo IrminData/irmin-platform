@@ -11,7 +11,7 @@ import {
   FiFolder,
 } from 'react-icons/fi';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 

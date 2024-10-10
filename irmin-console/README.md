@@ -72,6 +72,13 @@ yarn build
 yarn start
 ```
 
+With Docker:
+
+```bash
+docker build -t irmin-frontend .
+docker run -p 3000:3000 irmin-frontend
+```
+
 ## Yarn v2 Migration Guide
 
 If you are migrating from Yarn v1 to Yarn v2, please follow the official migration guide provided by Yarn: [Yarn v2 Migration Guide](https://yarnpkg.com/migration/guide).

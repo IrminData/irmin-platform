@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 
 import { TbChevronLeft, TbDownload, TbFile, TbFolder } from 'react-icons/tb';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 

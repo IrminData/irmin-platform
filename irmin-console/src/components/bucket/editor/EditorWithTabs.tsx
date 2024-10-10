@@ -2,7 +2,7 @@
 
 import { IoAdd, IoClose, IoSave } from 'react-icons/io5';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';

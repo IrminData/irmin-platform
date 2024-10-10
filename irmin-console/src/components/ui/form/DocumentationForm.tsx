@@ -7,7 +7,7 @@ import { Controller, useForm, UseFormReturn } from 'react-hook-form';
 import { BsFileEarmarkRichtext } from 'react-icons/bs';
 import { CiTextAlignLeft } from 'react-icons/ci';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import MDXEditor from '@/components/ui/markdown-editor/MDXEditor';
 
 import { useLocale } from '@/context/LocaleContext';

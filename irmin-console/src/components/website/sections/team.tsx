@@ -2,7 +2,7 @@ import Image from 'next/image';
 
 import WordPress from '@/services/wordpress';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import DynamicFaIcon from '@/components/ui/DynamicFaIcon';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 

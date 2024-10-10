@@ -4,7 +4,7 @@ import React from 'react';
 
 import { TbDownload } from 'react-icons/tb';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 

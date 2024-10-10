@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GoGitMerge } from 'react-icons/go';
 import { TbArrowLeft, TbRefresh } from 'react-icons/tb';
 
-import Button, { ButtonWithTooltip } from '@/components/ui/Button';
+import Button, { ButtonWithTooltip } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';

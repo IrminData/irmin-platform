@@ -6,7 +6,7 @@ import IrminCore from '@/services/core/IrminCore';
 
 import { TbRun, TbTrash } from 'react-icons/tb';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';

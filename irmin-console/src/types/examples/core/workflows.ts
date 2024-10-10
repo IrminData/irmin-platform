@@ -1,3 +1,4 @@
+import { getRandomArrayElement } from '@/utils/getRandomArrayElement';
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
 import {
@@ -9,6 +10,7 @@ import {
 
 import { connections } from './connections';
 import { repositories } from './repositories';
+import { workflowSchedules } from './schedules';
 import { workspaceUsers } from './users';
 
 /**
@@ -25,9 +27,6 @@ export const workflows = (): Workflow[] => {
       description:
         'This an example Import Workflow for syncing Google Analytics data to a Repository.',
       documentation: '# Hello World! \n This is a test documentation.',
-      cron_syntax: '2 * 0 0 0',
-      last_run_at: getRandomDateTimeString(2, 'past', 0),
-      next_run_at: getRandomDateTimeString(2, 'future', 0),
       status: 'running',
       workflowable_type: 'import',
       workflowable: {
@@ -40,6 +39,7 @@ export const workflows = (): Workflow[] => {
         path: '/',
         branch: 'main',
       },
+      schedule: getRandomArrayElement(workflowSchedules),
       created_at: getRandomDateTimeString(500, 'past', 60),
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },
@@ -51,9 +51,6 @@ export const workflows = (): Workflow[] => {
         'This an example Import Workflow for syncing an Excel Sheet to a Repository.',
       documentation:
         '# Excel import explanation. \n Manually imported Excel file with KPIs and performance metrics. This workflow is not scheduled and should be ran manually when needed.',
-      cron_syntax: null,
-      last_run_at: getRandomDateTimeString(40, 'past', 10),
-      next_run_at: undefined,
       status: 'running',
       workflowable_type: 'import',
       workflowable: {
@@ -62,6 +59,7 @@ export const workflows = (): Workflow[] => {
         branch: 'main',
         path: '/',
       },
+      schedule: getRandomArrayElement(workflowSchedules),
       created_at: getRandomDateTimeString(500, 'past', 60),
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },
@@ -73,8 +71,6 @@ export const workflows = (): Workflow[] => {
         'This an example Import Workflow for syncing an Excel Sheet to a Repository.',
       documentation:
         'Manually imported Excel file with KPIs and performance metrics. This workflow is not scheduled and should be ran manually when needed. ',
-      cron_syntax: '2 * 0 0 0',
-      next_run_at: getRandomDateTimeString(2, 'future', 0),
       status: 'running',
       workflowable_type: 'import',
       workflowable: {
@@ -85,6 +81,7 @@ export const workflows = (): Workflow[] => {
         branch: 'main',
         path: '/',
       },
+      schedule: getRandomArrayElement(workflowSchedules),
       created_at: getRandomDateTimeString(500, 'past', 60),
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },
@@ -97,9 +94,6 @@ export const workflows = (): Workflow[] => {
       description:
         'This an example Export Workflow for exporting a Repository to Google Sheets Import.',
       documentation: '# Hello World! \n This is a test documentation.',
-      cron_syntax: '2 * 0 0 0',
-      last_run_at: getRandomDateTimeString(2, 'past', 0),
-      next_run_at: getRandomDateTimeString(2, 'future', 0),
       status: 'running',
       workflowable_type: 'export',
       workflowable: {
@@ -111,6 +105,7 @@ export const workflows = (): Workflow[] => {
         recursive: false,
         branch: 'main',
       },
+      schedule: getRandomArrayElement(workflowSchedules),
       created_at: getRandomDateTimeString(500, 'past', 60),
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },
@@ -123,9 +118,6 @@ export const workflows = (): Workflow[] => {
       description:
         'This an example of an Action Workflow for fetching app usage data and storing results in a Repository.',
       documentation: '# Hello World! \n This is a test documentation.',
-      cron_syntax: '2 * 0 0 0',
-      last_run_at: getRandomDateTimeString(2, 'past', 0),
-      next_run_at: getRandomDateTimeString(2, 'future', 0),
       status: 'running',
       workflowable_type: 'action',
       workflowable: {
@@ -134,6 +126,7 @@ export const workflows = (): Workflow[] => {
         repository: repositories().find((a) => a.slug === 'app-data'),
         branch: 'main',
       },
+      schedule: getRandomArrayElement(workflowSchedules),
       created_at: getRandomDateTimeString(500, 'past', 60),
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },
@@ -144,13 +137,12 @@ export const workflows = (): Workflow[] => {
       description:
         'This an example of an Action Workflow for sending receipts on orders. Results in no Repository.',
       documentation: '# Hello World! \n This is a test documentation.',
-      cron_syntax: '2 * 0 0 0',
-      next_run_at: getRandomDateTimeString(2, 'future', 0),
       status: 'error',
       workflowable_type: 'action',
       workflowable: {
         executable: '/send-receipt-on-order.js',
       },
+      schedule: getRandomArrayElement(workflowSchedules),
       created_at: getRandomDateTimeString(500, 'past', 60),
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },
@@ -161,9 +153,6 @@ export const workflows = (): Workflow[] => {
       description:
         'This is an example Action Workflow for querying top 100 ad clicking users.',
       documentation: '# Hello World! \n This is a test documentation.',
-      cron_syntax: '2 * 0 0 0',
-      last_run_at: getRandomDateTimeString(2, 'past', 0),
-      next_run_at: getRandomDateTimeString(2, 'future', 0),
       status: 'running',
       workflowable_type: 'action',
       workflowable: {
@@ -174,6 +163,7 @@ export const workflows = (): Workflow[] => {
         ),
         executable: '/find-top-100-ad-clicking-users.sql',
       },
+      schedule: getRandomArrayElement(workflowSchedules),
       created_at: getRandomDateTimeString(500, 'past', 60),
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },

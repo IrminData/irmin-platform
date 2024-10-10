@@ -7,7 +7,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-import Button, { ButtonProps } from '.';
+import Button, { ButtonProps } from './button';
 
 export interface ButtonWithTooltipProps extends ButtonProps {
   tooltip?: string;

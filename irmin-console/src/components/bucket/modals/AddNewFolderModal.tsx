@@ -6,8 +6,8 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import Button from '@/components/ui/button';
+import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';

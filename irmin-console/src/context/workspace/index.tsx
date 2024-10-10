@@ -16,6 +16,7 @@ import {
   Workflow,
 } from '@/types/core/Workflow';
 import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
+import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
 
 /**
  * Context for the workspace
@@ -111,6 +112,9 @@ const WorkspaceContext = createContext<{
       fetchActions: (_forceFetch?: boolean) => void;
     };
     allWorkflows: Workflow[];
+    createWorkflow: (
+      _newWorkflow: WorkflowSetup
+    ) => Promise<IrminAPIResponse | undefined>;
     updateWorkflow: (
       _workflowId: string,
       _updatedWorkflow: Workflow
@@ -187,6 +191,7 @@ const WorkspaceContext = createContext<{
       fetchActions: () => {},
     },
     allWorkflows: [],
+    createWorkflow: () => Promise.resolve({}),
     updateWorkflow: () => Promise.resolve({}),
     reassignWorkflow: () => Promise.resolve({}),
     deleteWorkflow: () => Promise.resolve({}),

@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { TbFile } from 'react-icons/tb';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import DocumentationForm, {
   DocumentationFormValues,
 } from '@/components/ui/form/DocumentationForm';
@@ -25,9 +25,13 @@ const RepositoryDocumentationSection = () => {
     repositories: { updateRepository },
   } = useWorkspace();
 
+  const saving = useRef(false);
+
   const handleSaveDocumentation = useCallback(
     async (data: DocumentationFormValues) => {
+      if (saving.current) return;
       try {
+        saving.current = true;
         const documentation = data.documentation.trim();
         const res = await updateRepository(currentRepository.slug, {
           ...currentRepository,
@@ -43,6 +47,8 @@ const RepositoryDocumentationSection = () => {
           (error as Error)?.message ??
             'Failed to update the repository documentation'
         );
+      } finally {
+        saving.current = false;
       }
     },
     [currentRepository, updateRepository, irminAlert]

@@ -2,50 +2,27 @@
 
 import { useEffect, useState } from 'react';
 
-import { Connection } from '@/types/core/Connection';
-import { Repository } from '@/types/core/Repository';
 import { WorkflowableType } from '@/types/core/Workflow';
+import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
 
 import ConfigureWorkflow from './ConfigureWorkflow';
 import ConfigureWorkflowable from './ConfigureWorkflowable';
 
 /**
- * Workflow setup object
- *
- * Please note, that different workflow will have different properties
- * required to be set.
- *
- * @typeParam name - Workflow name
- * @typeParam description - Workflow description
- * @typeParam cron - Sync interval as a cron expression
- * @typeParam type - Workflow type, eg. import, action, export
- * @typeParam connection - Connection to use in the workflow
- * @typeParam path - Path to use in the workflow
- * @typeParam branch - Branch to use in the workflow
- * @typeParam repository - Repository to use in the workflow
- * @typeParam recursive - If the workflow should be recursive
- * @typeParam executable - Path to the script file to be executed as an action workflow
- */
-export interface WorkflowSetup {
-  name: string;
-  description: string;
-  cron: string;
-  type: WorkflowableType;
-  connection: Connection | null;
-  path: string;
-  branch: string;
-  repository: Repository | null;
-  recursive: boolean;
-  executable: string;
-}
-
-/**
  * Empty workflow setup data
  */
 export const initialWorkflowData: WorkflowSetup = {
+  // Workflow properties
   name: '',
   description: '',
-  cron: '1 0 * * *',
+  documentation: '',
+  schedule: {
+    triggers: [],
+    max_retries: 3,
+    max_runtime: 15,
+    min_interval: 120,
+  },
+  // Workflowable properties
   type: 'action',
   connection: null,
   path: '/',

@@ -1,6 +1,6 @@
 import { IoChevronBack } from 'react-icons/io5';
 
-import Button, { ButtonWithTooltip } from '@/components/ui/Button';
+import Button, { ButtonWithTooltip } from '@/components/ui/button';
 
 import { TabsType } from '@/types/internal/Tabs';
 

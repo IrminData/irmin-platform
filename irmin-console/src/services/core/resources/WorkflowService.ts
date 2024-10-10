@@ -1,5 +1,6 @@
 import IrminCore from '@/services/core/IrminCore';
 
+import createWorkflowScheduleFormData from '@/utils/createWorkflwoScheduleFormData';
 import fake from '@/utils/prepareFakeResponse';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
@@ -10,6 +11,7 @@ import {
   Workflow,
   WorkflowRun,
 } from '@/types/core/Workflow';
+import { WorkflowSchedule } from '@/types/core/WorkflowSchedule';
 import { WorkspaceUser } from '@/types/core/Workspace';
 import {
   exampleActions,
@@ -102,7 +104,16 @@ class WorkflowService {
       formData.append('name', workflow.name);
       formData.append('description', workflow.description ?? '');
       formData.append('documentation', workflow.documentation ?? '');
-      formData.append('cron_syntax', workflow.cron_syntax ?? '');
+
+      // Append schedule properties if available
+      if (workflow.schedule) {
+        const scheduleFormData = createWorkflowScheduleFormData(
+          workflow.schedule
+        );
+        for (const [key, value] of scheduleFormData.entries()) {
+          formData.append(key, value);
+        }
+      }
 
       const response = await this.irminCore.fetch(`/v1/workflows/update`, {
         method: 'POST',
@@ -342,7 +353,8 @@ class WorkflowService {
    * @param props.path - Path in the repository to store the imported data in (default '/')
    * @param props.name - Name of the workflow
    * @param props.description - Description of the workflow
-   * @param props.cron_syntax - Cron syntax for the workflow, leave empty for manual run
+   * @param props.documentation - Documentation of the workflow
+   * @param props.schedule - (optional) Schedule configuration of when to run the workflow
    */
   public async createImportWorkflow({
     connection,
@@ -351,7 +363,8 @@ class WorkflowService {
     path,
     name,
     description,
-    cron_syntax,
+    documentation,
+    schedule,
   }: {
     connection: string;
     repository: string;
@@ -359,9 +372,18 @@ class WorkflowService {
     path: string;
     name: string;
     description: string;
-    cron_syntax: string;
+    documentation: string;
+    schedule?: WorkflowSchedule;
   }): Promise<WorkflowAPIResponse> {
-    if (isOfflineMode) return fake(exampleImports[0]) as WorkflowAPIResponse;
+    if (isOfflineMode)
+      return fake({
+        ...exampleImports[0],
+        id: `${Math.floor(Math.random() * 1000)}-new-import`,
+        name,
+        description,
+        documentation,
+        schedule,
+      }) as WorkflowAPIResponse;
     try {
       // Create a new FormData object
       const formData = new FormData();
@@ -375,7 +397,15 @@ class WorkflowService {
       // Workflow properties
       formData.append('name', name);
       formData.append('description', description);
-      formData.append('cron_syntax', cron_syntax);
+      formData.append('documentation', documentation);
+
+      // Append schedule properties if available
+      if (schedule) {
+        const scheduleFormData = createWorkflowScheduleFormData(schedule);
+        for (const [key, value] of scheduleFormData.entries()) {
+          formData.append(key, value);
+        }
+      }
 
       const res = (await this.irminCore.fetch(`/v1/workflows/imports/create`, {
         method: 'POST',
@@ -387,7 +417,15 @@ class WorkflowService {
         (error as Error).message,
         'Failed to create Import Workflow'
       );
-      if (isDevelopment) return fake(exampleImports[0]) as WorkflowAPIResponse;
+      if (isDevelopment)
+        return fake({
+          ...exampleImports[0],
+          id: `${Math.floor(Math.random() * 1000)}-new-import`,
+          name,
+          description,
+          documentation,
+          schedule,
+        }) as WorkflowAPIResponse;
       throw error;
     }
   }
@@ -403,7 +441,8 @@ class WorkflowService {
    * @param props.recursive - Whether to export recursively or not (default false)
    * @param props.name - Name of the workflow
    * @param props.description - Description of the workflow
-   * @param props.cron_syntax - Cron syntax for the workflow, leave empty for manual run
+   * @param props.documentation - Documentation of the workflow
+   * @param props.schedule - (optional) Schedule configuration of when to run the workflow
    */
   public async createExportWorkflow({
     connection,
@@ -413,7 +452,8 @@ class WorkflowService {
     recursive,
     name,
     description,
-    cron_syntax,
+    documentation,
+    schedule,
   }: {
     connection: string;
     repository: string;
@@ -422,9 +462,18 @@ class WorkflowService {
     recursive: boolean;
     name: string;
     description: string;
-    cron_syntax: string;
+    documentation: string;
+    schedule?: WorkflowSchedule;
   }): Promise<WorkflowAPIResponse> {
-    if (isOfflineMode) return fake(exampleExports[0]) as WorkflowAPIResponse;
+    if (isOfflineMode)
+      return fake({
+        ...exampleExports[0],
+        id: `${Math.floor(Math.random() * 1000)}-new-export`,
+        name,
+        description,
+        documentation,
+        schedule,
+      }) as WorkflowAPIResponse;
     try {
       // Create a new FormData object
       const formData = new FormData();
@@ -439,7 +488,15 @@ class WorkflowService {
       // Workflow properties
       formData.append('name', name);
       formData.append('description', description);
-      formData.append('cron_syntax', cron_syntax);
+      formData.append('documentation', documentation);
+
+      // Append schedule properties if available
+      if (schedule) {
+        const scheduleFormData = createWorkflowScheduleFormData(schedule);
+        for (const [key, value] of scheduleFormData.entries()) {
+          formData.append(key, value);
+        }
+      }
 
       const res = (await this.irminCore.fetch(`/v1/workflows/exports/create`, {
         method: 'POST',
@@ -451,7 +508,15 @@ class WorkflowService {
         (error as Error).message,
         'Failed to create Export Workflow'
       );
-      if (isDevelopment) return fake(exampleExports[0]) as WorkflowAPIResponse;
+      if (isDevelopment)
+        return fake({
+          ...exampleExports[0],
+          id: `${Math.floor(Math.random() * 1000)}-new-export`,
+          name,
+          description,
+          documentation,
+          schedule,
+        }) as WorkflowAPIResponse;
       throw error;
     }
   }
@@ -461,31 +526,42 @@ class WorkflowService {
    *
    * @param props - Workflow properties
    * @param props.executable - Path to the script file to be executed
-   * @param props.name - Name of the workflow
-   * @param props.description - Description of the workflow
-   * @param props.cron_syntax - Cron syntax for the workflow, leave empty for manual run
    * @param props.repository - Slug of the repository to put the action results in
    * @param props.branch - Branch to put the action results in
    * @param props.path - Path in the repository to put the action results in
+   * @param props.name - Name of the workflow
+   * @param props.description - Description of the workflow
+   * @param props.documentation - Documentation of the workflow
+   * @param props.schedule - (optional) Schedule configuration of when to run the workflow
    */
   public async createActionWorkflow({
     executable,
-    name,
-    description,
-    cron_syntax,
     repository,
     branch,
     path,
+    name,
+    description,
+    documentation,
+    schedule,
   }: {
     executable: string;
-    name: string;
-    description: string;
-    cron_syntax: string;
     repository: string;
     branch: string;
     path: string;
+    name: string;
+    description: string;
+    documentation: string;
+    schedule?: WorkflowSchedule;
   }): Promise<WorkflowAPIResponse> {
-    if (isOfflineMode) return fake(exampleActions[0]) as WorkflowAPIResponse;
+    if (isOfflineMode)
+      return fake({
+        ...exampleActions[0],
+        id: `${Math.floor(Math.random() * 1000)}-new-action`,
+        name,
+        description,
+        documentation,
+        schedule,
+      }) as WorkflowAPIResponse;
     try {
       // Create a new FormData object
       const formData = new FormData();
@@ -499,7 +575,15 @@ class WorkflowService {
       // Workflow properties
       formData.append('name', name);
       formData.append('description', description);
-      formData.append('cron_syntax', cron_syntax);
+      formData.append('documentation', documentation);
+
+      // Append schedule properties if available
+      if (schedule) {
+        const scheduleFormData = createWorkflowScheduleFormData(schedule);
+        for (const [key, value] of scheduleFormData.entries()) {
+          formData.append(key, value);
+        }
+      }
 
       const res = (await this.irminCore.fetch(`/v1/workflows/actions/create`, {
         method: 'POST',
@@ -511,7 +595,15 @@ class WorkflowService {
         (error as Error).message,
         'Failed to create Action Workflow'
       );
-      if (isDevelopment) return fake(exampleActions[0]) as WorkflowAPIResponse;
+      if (isDevelopment)
+        return fake({
+          ...exampleActions[0],
+          id: `${Math.floor(Math.random() * 1000)}-new-action`,
+          name,
+          description,
+          documentation,
+          schedule,
+        }) as WorkflowAPIResponse;
       throw error;
     }
   }

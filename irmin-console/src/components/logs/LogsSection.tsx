@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { IoChevronBack } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';

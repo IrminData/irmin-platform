@@ -1,15 +1,17 @@
 'use client';
 
+import { useCallback } from 'react';
+
 import ReactSelect from 'react-select';
 
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import Button from '@/components/ui/button';
+import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { WorkflowSetup } from '.';
+import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
 
 /**
  * Configure workfow type specific properties
@@ -35,10 +37,29 @@ export default function ConfigureWorkflowable({
     connections: { connections },
   } = useWorkspace();
 
-  const handleContinue = () => {
+  const handleContinue = useCallback(() => {
+    // Validate the form data
+    if (workflowData.type === 'action') {
+      if (!workflowData.executable) return;
+      if (!workflowData.repository) return;
+      if (!workflowData.branch) return;
+      if (!workflowData.path) return;
+    }
+    if (workflowData.type === 'import') {
+      if (!workflowData.connection) return;
+      if (!workflowData.repository) return;
+      if (!workflowData.branch) return;
+      if (!workflowData.path) return;
+    }
+    if (workflowData.type === 'export') {
+      if (!workflowData.connection) return;
+      if (!workflowData.repository) return;
+      if (!workflowData.branch) return;
+      if (!workflowData.path) return;
+    }
     // Continue to the next step
     setCurrentStep(2);
-  };
+  }, [workflowData, setCurrentStep]);
 
   return (
     <div className='flex w-full flex-col px-4 pb-6'>
@@ -309,6 +330,7 @@ export default function ConfigureWorkflowable({
         <Button
           className='mb-6 inline-block w-full'
           variant='default'
+          size={'lg'}
           onClick={handleContinue}
         >
           {dict.workflow.create.confirmAndContinue}

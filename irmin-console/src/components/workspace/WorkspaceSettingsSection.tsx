@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';

@@ -10,7 +10,7 @@ import {
   TbPlayerPlay,
 } from 'react-icons/tb';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -46,17 +46,17 @@ export default function SelectWorkflowTypeModalContent() {
   }[] = [
     {
       type: 'action',
-      icon: <TbPlayerPlay className='h-12 w-12' />,
+      icon: <TbPlayerPlay size={18} className='mr-4' />,
       label: 'Action',
     },
     {
       type: 'import',
-      icon: <TbDatabaseImport className='h-12 w-12' />,
+      icon: <TbDatabaseImport size={18} className='mr-4' />,
       label: 'Import',
     },
     {
       type: 'export',
-      icon: <TbDatabaseExport className='h-12 w-12' />,
+      icon: <TbDatabaseExport size={18} className='mr-4' />,
       label: 'Export',
     },
   ];
@@ -65,19 +65,15 @@ export default function SelectWorkflowTypeModalContent() {
     <div className='flex w-full flex-col px-4 pb-6'>
       <div className='flex flex-col gap-4 py-4'>
         {workflowTypeOptions.map((option, key) => (
-          <button
+          <Button
             key={`${option.type}-${key}`}
-            type='button'
-            className={`flex w-full flex-row items-center justify-start gap-4 rounded-lg bg-background px-4 py-2 text-left text-sm text-foreground shadow transition-all hover:opacity-80 ${
-              workflowableType === option.type
-                ? 'outline outline-gray-800 dark:outline-gray-200'
-                : ''
-            } `}
             onClick={() => setWorkflowableType(option.type)}
+            size='lg'
+            variant={workflowableType === option.type ? 'accent' : 'gray'}
           >
             {option.icon}
-            <p>{option.label}</p>
-          </button>
+            {option.label}
+          </Button>
         ))}
       </div>
       <div className='flex-grow'></div>
@@ -85,6 +81,7 @@ export default function SelectWorkflowTypeModalContent() {
         <Button
           className='mb-6 inline-block w-full'
           variant='default'
+          size='lg'
           onClick={handleContinue}
         >
           {dict.workflow.create.confirmAndContinue}

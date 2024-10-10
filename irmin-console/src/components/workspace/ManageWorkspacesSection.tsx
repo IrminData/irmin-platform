@@ -4,8 +4,8 @@ import { useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import Button from '@/components/ui/button';
+import Input from '@/components/ui/input';
 import WorkspaceCard from '@/components/workspace/WorkspaceCard';
 
 import { useLocale } from '@/context/LocaleContext';

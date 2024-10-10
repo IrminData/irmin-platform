@@ -10,7 +10,7 @@ import { TbDownload, TbFileDiff, TbUpload } from 'react-icons/tb';
 
 import CodeMirrorEditor from '@/components/bucket/editor/CodeMirrorEditor';
 import QueryResults from '@/components/query/QueryResults';
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';

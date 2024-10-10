@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 
 import {
+  TbClockCog,
   TbDatabase,
   TbFileText,
   TbLogs,
@@ -70,6 +71,10 @@ export default function WorkflowLayoutWrapper({
     () => workflow?.workflowable?.repository?.slug ?? null,
     [workflow]
   );
+  const repositoryBranch = useMemo(
+    () => workflow?.workflowable?.branch ?? null,
+    [workflow]
+  );
 
   const tabs = useMemo(
     () => [
@@ -81,11 +86,11 @@ export default function WorkflowLayoutWrapper({
         hidden: false,
       },
       {
-        name: dict.workflow.tabs.data,
-        link: `${workspaceUrl}/repositories/${repositorySlug ?? ''}`,
-        active: false,
-        icon: <TbDatabase size={14} />,
-        hidden: !repositorySlug,
+        name: dict.workflow.tabs.schedule,
+        link: `${baseUrl}/schedule`,
+        active: pathname === `${baseUrl}/schedule`,
+        icon: <TbClockCog size={14} />,
+        hidden: false,
       },
       {
         name: dict.workflow.tabs.documentation,
@@ -93,6 +98,13 @@ export default function WorkflowLayoutWrapper({
         active: pathname === `${baseUrl}/documentation`,
         icon: <TbFileText size={14} />,
         hidden: false,
+      },
+      {
+        name: dict.workflow.tabs.data,
+        link: `${workspaceUrl}/repositories/${repositorySlug}?ref=${repositoryBranch}`,
+        active: false,
+        icon: <TbDatabase size={14} />,
+        hidden: !repositorySlug,
       },
       {
         name: dict.workflow.tabs.logs,
@@ -109,7 +121,15 @@ export default function WorkflowLayoutWrapper({
         hidden: false,
       },
     ],
-    [pathname, dict, workflowId, repositorySlug, baseUrl, workspaceUrl]
+    [
+      pathname,
+      dict,
+      workflowId,
+      repositoryBranch,
+      repositorySlug,
+      baseUrl,
+      workspaceUrl,
+    ]
   );
 
   if (!workflow)

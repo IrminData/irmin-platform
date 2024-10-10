@@ -1,3 +1,5 @@
+import { getRandomArrayElement } from '@/utils/getRandomArrayElement';
+
 import { IrminAPIUnstructuredResponse } from '@/types/core/IrminAPIResponse';
 
 /**
@@ -16,13 +18,6 @@ export enum ContentType {
   csv = 'csv',
 }
 
-// Helper function to get a random content type
-function getRandomContentType(): ContentType {
-  const contentTypes = Object.values(ContentType);
-  const randomIndex = Math.floor(Math.random() * contentTypes.length);
-  return contentTypes[randomIndex];
-}
-
 /**
  * Get example response for unstrucured API response
  *
@@ -32,7 +27,8 @@ export const content = async (
   type?: ContentType
 ): Promise<IrminAPIUnstructuredResponse> => {
   try {
-    const contentType = type ?? getRandomContentType();
+    const contentType =
+      type ?? getRandomArrayElement(Object.values(ContentType));
     if (contentType === 'parquet') {
       const parquetRes = await fetch(
         'https://raw.githubusercontent.com/Teradata/kylo/refs/heads/master/samples/sample-data/parquet/userdata1.parquet',

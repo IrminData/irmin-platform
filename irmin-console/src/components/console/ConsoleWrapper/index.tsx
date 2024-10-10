@@ -9,7 +9,7 @@ import { useParams } from 'next/navigation';
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
 import ConsoleSearch from '@/components/console/ConsoleSearch';
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
 import { useLocale } from '@/context/LocaleContext';

@@ -12,6 +12,7 @@ import {
 import { Workspace } from '@/types/core/Workspace';
 
 import {
+  useCreateWorkflow,
   useDeleteWorkflow,
   useFetchActions,
   useFetchExports,
@@ -86,7 +87,16 @@ const useWorkflows = ({
     [actions, imports, exports]
   );
 
-  // Hooks for updating, reassigning, deleting, pausing and resuming workflows
+  // Hooks for creating, updating, reassigning, deleting, pausing and resuming workflows
+  const createWorkflow = useCreateWorkflow(
+    locale,
+    actions,
+    setActions,
+    imports,
+    setImports,
+    exports,
+    setExports
+  );
   const updateWorkflow = useUpdateWorkflow(
     locale,
     actions,
@@ -147,6 +157,7 @@ const useWorkflows = ({
     fetchActions,
     setActions,
     allWorkflows,
+    createWorkflow,
     updateWorkflow,
     reassignWorkflow,
     deleteWorkflow,

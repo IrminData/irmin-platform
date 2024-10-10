@@ -2,6 +2,8 @@ import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
 import { WorkspaceUser } from '@/types/core/Workspace';
 
+import { WorkflowSchedule } from './WorkflowSchedule';
+
 /**
  * Types of workflows that can be created
  * Source app/Enums/WorkflowType.php
@@ -16,9 +18,7 @@ export type WorkflowableType = 'import' | 'action' | 'export';
  * @typeParam owner - The workspace user that owns this workflow and is responsible for it
  * @typeParam workflowable_type - Type of workflow
  * @typeParam workflowable - Object with details for the workflow, specific to the workflowable type
- * @typeParam cron_syntax - Cron syntax for the workflow
- * @typeParam last_run_at - Timestamp of the last run of the workflow
- * @typeParam next_run_at - Timestamp of the next run of the workflow
+ * @typeParam schedule - (optional) Schedule configuration for the workflow (eg. triggers, max retries, max runtime) - empty if ran manually
  * @typeParam status - Status of the workflow
  * @typeParam description - Workflow description
  * @typeParam documentation - Workflow documentation as a markdown string
@@ -31,9 +31,7 @@ export interface Workflow {
   owner: WorkspaceUser;
   workflowable_type: WorkflowableType;
   workflowable: Import | Action | Export;
-  cron_syntax: string | null;
-  last_run_at?: string;
-  next_run_at?: string;
+  schedule?: WorkflowSchedule;
   status: WorkflowStatus;
   description: string;
   documentation: string;

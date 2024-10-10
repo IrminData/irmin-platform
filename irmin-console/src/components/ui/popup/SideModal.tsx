@@ -1,6 +1,6 @@
 import { IoClose } from 'react-icons/io5';
 
-import { ButtonWithTooltip } from '@/components/ui/Button';
+import { ButtonWithTooltip } from '@/components/ui/button';
 
 /**
  * Side modal UI component with steps
@@ -73,7 +73,7 @@ export default function SideModal({
                     <div
                       className={`flex aspect-square w-8 items-center justify-center rounded-full text-sm text-white lg:text-lg ${
                         currentStep >= index + 1
-                          ? 'bg-irmin_green'
+                          ? 'bg-accent'
                           : 'bg-gray-300 dark:bg-gray-600'
                       }`}
                     >
@@ -82,7 +82,7 @@ export default function SideModal({
                     <span
                       className={`mt-2 flex-shrink text-xs sm:mt-0 lg:text-sm ${
                         currentStep >= index + 1
-                          ? 'text-irmin_green'
+                          ? 'text-accent'
                           : 'text-gray-700 dark:text-gray-300'
                       }`}
                     >

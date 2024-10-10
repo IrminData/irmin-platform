@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 import { IoTriangle } from 'react-icons/io5';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';

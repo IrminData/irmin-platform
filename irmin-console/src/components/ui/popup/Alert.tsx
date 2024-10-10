@@ -4,7 +4,7 @@ import {
   IoInformationCircleOutline,
 } from 'react-icons/io5';
 
-import { ButtonWithTooltip } from '@/components/ui/Button';
+import { ButtonWithTooltip } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 

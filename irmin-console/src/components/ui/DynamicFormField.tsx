@@ -5,7 +5,7 @@ import { forwardRef } from 'react';
 import ReactSelect, { MultiValue, SingleValue } from 'react-select';
 
 import { Checkbox } from '@/components/ui/checkbox';
-import Input from '@/components/ui/Input';
+import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';

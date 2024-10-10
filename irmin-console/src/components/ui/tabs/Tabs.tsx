@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 
 import { TabsType } from '@/types/internal/Tabs';
 

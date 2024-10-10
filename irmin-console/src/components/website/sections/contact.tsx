@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import DynamicFaIcon from '@/components/ui/DynamicFaIcon';
-import Input from '@/components/ui/Input';
+import Input from '@/components/ui/input';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 import { useLocale } from '@/context/LocaleContext';

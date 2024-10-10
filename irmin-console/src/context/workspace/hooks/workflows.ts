@@ -12,6 +12,7 @@ import {
   Workflow,
 } from '@/types/core/Workflow';
 import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
+import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
 
 /**
  * Hook to fetch and update context for Import Workflows of the current workspace using the {@link IrminCore}.
@@ -158,6 +159,82 @@ export const useFetchActions = (
       setFetchedFor,
       locale,
     ]
+  );
+
+/**
+ * Hook to create a new workflow using the {@link IrminCore}.
+ */
+export const useCreateWorkflow = (
+  locale: Locale,
+  actions: ActionWorkflow[],
+  setActions: (actions: ActionWorkflow[]) => void,
+  imports: ImportWorkflow[],
+  setImports: (imports: ImportWorkflow[]) => void,
+  exports: ExportWorkflow[],
+  setExports: (exports: ExportWorkflow[]) => void
+) =>
+  useCallback(
+    async (workflowData: WorkflowSetup) => {
+      // Validate the workflow data
+      if (!workflowData.name) return;
+      // Get the Irmin service
+      const { workflowService } = new IrminCore(locale);
+      // Create the workflow
+      if (workflowData.type === 'action') {
+        // Create the action workflow
+        const response = await workflowService.createActionWorkflow({
+          // Workflow data
+          name: workflowData.name,
+          description: workflowData.description,
+          documentation: workflowData.documentation,
+          schedule: workflowData.schedule,
+          // Workflowable data
+          executable: workflowData.executable,
+          repository: workflowData.repository?.slug ?? '',
+          branch: workflowData.branch,
+          path: workflowData.path,
+        });
+        // Update the local state with the new workflow
+        setActions([...actions, response.data as ActionWorkflow]);
+        return response;
+      }
+      if (workflowData.type === 'import') {
+        const response = await workflowService.createImportWorkflow({
+          // Workflow data
+          name: workflowData.name,
+          description: workflowData.description,
+          documentation: workflowData.documentation,
+          schedule: workflowData.schedule,
+          // Workflowable data
+          repository: workflowData.repository?.slug ?? '',
+          branch: workflowData.branch,
+          path: workflowData.path,
+          connection: workflowData.connection?.id ?? '',
+        });
+        // Update the local state with the new workflow
+        setImports([...imports, response.data as ImportWorkflow]);
+        return response;
+      }
+      if (workflowData.type === 'export') {
+        const response = await workflowService.createExportWorkflow({
+          // Workflow data
+          name: workflowData.name,
+          description: workflowData.description,
+          documentation: workflowData.documentation,
+          schedule: workflowData.schedule,
+          // Workflowable data
+          repository: workflowData.repository?.slug ?? '',
+          branch: workflowData.branch,
+          path: workflowData.path,
+          connection: workflowData.connection?.id ?? '',
+          recursive: workflowData.recursive,
+        });
+        // Update the local state with the new workflow
+        setExports([...exports, response.data as ExportWorkflow]);
+        return response;
+      }
+    },
+    [locale, actions, setActions, imports, setImports, exports, setExports]
   );
 
 /**

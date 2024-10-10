@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { IoEnterOutline } from 'react-icons/io5';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import ProfileImagePlaceholder from '@/components/ui/ProfileImagePlaceholder';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
 

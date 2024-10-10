@@ -9,7 +9,7 @@ import IrminCore from '@/services/core/IrminCore';
 
 import { IoChevronBack } from 'react-icons/io5';
 
-import { ButtonWithTooltip } from '@/components/ui/Button';
+import { ButtonWithTooltip } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 

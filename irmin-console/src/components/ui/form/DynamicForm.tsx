@@ -2,7 +2,7 @@
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import DynamicFormField from '@/components/ui/DynamicFormField';
 
 import { useLocale } from '@/context/LocaleContext';

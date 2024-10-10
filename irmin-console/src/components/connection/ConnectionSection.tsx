@@ -3,14 +3,13 @@
 import Image from 'next/image';
 
 import { Badge } from '@/components/ui/badge';
+import Button from '@/components/ui/button';
 import WorkflowList from '@/components/workflow/WorkflowList';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
 import { Connection } from '@/types/core/Connection';
-
-import Button from '../ui/Button';
 
 /**
  * Connection Settings section component

@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';

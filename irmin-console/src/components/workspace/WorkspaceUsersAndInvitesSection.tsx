@@ -6,7 +6,7 @@ import ReactSelect from 'react-select';
 
 import { IoExit, IoKey, IoMailOpenOutline } from 'react-icons/io5';
 
-import Button, { ButtonWithTooltip } from '@/components/ui/Button';
+import Button, { ButtonWithTooltip } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';

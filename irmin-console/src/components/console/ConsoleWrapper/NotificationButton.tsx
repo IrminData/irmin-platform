@@ -2,7 +2,7 @@ import React from 'react';
 
 import { PiBell } from 'react-icons/pi';
 
-import { ButtonWithTooltip } from '@/components/ui/Button';
+import { ButtonWithTooltip } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';

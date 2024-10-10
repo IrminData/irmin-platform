@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
@@ -26,12 +26,16 @@ const RepositorySettingsSection = () => {
     repositories: { updateRepository, reassignRepository, deleteRepository },
   } = useWorkspace();
 
+  const updating = useRef(false);
+
   /**
    * Updates the repository with the new details provided
    */
   const handleUpdateRepository = useCallback(
     async (data: { name: string; description: string; owner: string }) => {
+      if (updating.current) return;
       try {
+        updating.current = true;
         // Check if the owner has changed
         if (data.owner && data.owner !== currentRepository.owner.id) {
           // Find the new owner object
@@ -62,6 +66,8 @@ const RepositorySettingsSection = () => {
           (error as Error)?.message ??
             'An error occurred while updating the repository'
         );
+      } finally {
+        updating.current = false;
       }
     },
     [
@@ -77,17 +83,28 @@ const RepositorySettingsSection = () => {
    * Deletes the repository after confirming with the user
    */
   const handleDeleteRepository = useCallback(() => {
+    if (updating.current) return;
     try {
       irminConfirm(
         'warning',
         dict.repository.settings.areYouSureYouWantToDelete,
         async (confirmed) => {
-          if (!confirmed) return;
-          const res = await deleteRepository(currentRepository.slug);
-          irminAlert(
-            'success',
-            res.message ?? 'Repository deleted successfully'
-          );
+          try {
+            if (!confirmed) return;
+            const res = await deleteRepository(currentRepository.slug);
+            irminAlert(
+              'success',
+              res.message ?? 'Repository deleted successfully'
+            );
+          } catch (error) {
+            irminAlert(
+              'error',
+              (error as Error)?.message ??
+                'An error occurred while deleting the repository'
+            );
+          } finally {
+            updating.current = false;
+          }
         }
       );
     } catch (error) {

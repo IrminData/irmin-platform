@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { GoChevronDown, GoChevronUp } from 'react-icons/go';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';

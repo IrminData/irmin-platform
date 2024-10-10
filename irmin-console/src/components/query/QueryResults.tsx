@@ -16,7 +16,7 @@ import {
 } from 'react-icons/tb';
 
 import LogFeed from '@/components/logs/LogFeed';
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import MDXEditor from '@/components/ui/markdown-editor/MDXEditor';
 
 import { useLocale } from '@/context/LocaleContext';

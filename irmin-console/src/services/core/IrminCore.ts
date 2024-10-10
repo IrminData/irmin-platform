@@ -116,6 +116,7 @@ class IrminCore {
         Accept: 'application/json',
         'Accept-Language': this.locale, // Irmin API returns localised messages based on the Accept-Language header
         Referer: app_base,
+        'Content-Type': 'multipart/form-data',
         ...options.headers,
       },
     });

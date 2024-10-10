@@ -6,7 +6,7 @@ import { GoGitCommit } from 'react-icons/go';
 import { GrRevert } from 'react-icons/gr';
 import { TbRefresh } from 'react-icons/tb';
 
-import Button, { ButtonWithTooltip } from '@/components/ui/Button';
+import Button, { ButtonWithTooltip } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';

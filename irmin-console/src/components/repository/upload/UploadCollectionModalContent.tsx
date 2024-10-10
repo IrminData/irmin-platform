@@ -5,8 +5,8 @@ import { useMemo, useState } from 'react';
 import IrminCore from '@/services/core/IrminCore';
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import Button from '@/components/ui/button';
+import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';

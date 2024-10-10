@@ -2,7 +2,7 @@
 
 import { IoClose } from 'react-icons/io5';
 
-import Button, { ButtonWithTooltip } from '@/components/ui/Button';
+import Button, { ButtonWithTooltip } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 

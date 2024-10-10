@@ -1,8 +1,10 @@
 'use client';
 
+import { useCallback, useRef } from 'react';
+
 import { TbFile } from 'react-icons/tb';
 
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import DocumentationForm, {
   DocumentationFormValues,
 } from '@/components/ui/form/DocumentationForm';
@@ -26,30 +28,40 @@ const WorkflowDocumentationSection = ({ workflow }: { workflow: Workflow }) => {
     workflows: { updateWorkflow },
   } = useWorkspace();
 
+  const saving = useRef(false);
+
   /**
    * Handles saving the documentation for the workflow.
    * Uses {@link updateWorkflow} to update the workflow details.
    * Shows {@link irminAlert} on success or error.
    */
-  const handleSaveDocumentation = async (data: DocumentationFormValues) => {
-    try {
-      const documentation = data.documentation.trim();
-      const res = await updateWorkflow(workflow.id, {
-        ...workflow,
-        documentation,
-      });
-      irminAlert(
-        'success',
-        res.message ?? dict.workflow.settings.workflowUpdated
-      );
-    } catch (error) {
-      irminAlert(
-        'error',
-        (error as Error)?.message ??
-          dict.workflow.settings.errorUpdatingWorkflow
-      );
-    }
-  };
+  const handleSaveDocumentation = useCallback(
+    async (data: DocumentationFormValues) => {
+      if (saving.current) return;
+      try {
+        saving.current = true;
+        const documentation = data.documentation.trim();
+        const res = await updateWorkflow(workflow.id, {
+          ...workflow,
+          documentation,
+        });
+        irminAlert(
+          'success',
+          res.message ?? 'Workflow documentation updated successfully'
+        );
+      } catch (error) {
+        console.error(error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ??
+            'Error updating the workflow documentation'
+        );
+      } finally {
+        saving.current = false;
+      }
+    },
+    [workflow, updateWorkflow, irminAlert]
+  );
 
   return (
     <div className='mt-0 lg:-mt-6' id='workflow-documentation-section'>

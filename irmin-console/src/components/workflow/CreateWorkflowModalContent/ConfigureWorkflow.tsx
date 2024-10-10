@@ -1,19 +1,17 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
-import IrminCore from '@/services/core/IrminCore';
-
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import Button from '@/components/ui/button';
+import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useWorkspace } from '@/context/workspace';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-
-import { WorkflowSetup } from '.';
+import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
 
 /**
  * Configure general workflow properties,
@@ -37,66 +35,41 @@ export default function ConfigureWorkflow({
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   closeModal: () => void;
 }) {
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
   const { irminAlert } = usePopup();
+  const {
+    workflows: { createWorkflow },
+  } = useWorkspace();
   const [processing, setProcessing] = useState(false);
 
-  const { workflowService } = useMemo(() => new IrminCore(locale), [locale]);
+  const initialWorkflowSchedule = useRef(workflowData.schedule);
+  const creatingWorkflow = useRef(false);
 
-  const handleCreate = async () => {
+  /**
+   * Create the workflow with the provided data using the Irmin API
+   */
+  const handleCreate = useCallback(async () => {
+    // Prevent multiple requests
+    if (creatingWorkflow.current) return;
     try {
-      // Prevent if already processing
-      if (processing) return;
+      creatingWorkflow.current = true;
       setProcessing(true);
       // Create the workflow
-      let res: IrminAPIResponse | undefined;
-      if (workflowData.type === 'action') {
-        res = await workflowService.createActionWorkflow({
-          name: workflowData.name,
-          description: workflowData.description,
-          cron_syntax: workflowData.cron,
-          executable: workflowData.executable,
-          repository: workflowData.repository?.slug ?? '',
-          branch: workflowData.branch,
-          path: workflowData.path,
-        });
-      }
-      if (workflowData.type === 'import') {
-        res = await workflowService.createImportWorkflow({
-          name: workflowData.name,
-          description: workflowData.description,
-          cron_syntax: workflowData.cron,
-          repository: workflowData.repository?.slug ?? '',
-          branch: workflowData.branch,
-          path: workflowData.path,
-          connection: workflowData.connection?.id ?? '',
-        });
-      }
-      if (workflowData.type === 'export') {
-        res = await workflowService.createExportWorkflow({
-          name: workflowData.name,
-          description: workflowData.description,
-          cron_syntax: workflowData.cron,
-          repository: workflowData.repository?.slug ?? '',
-          branch: workflowData.branch,
-          path: workflowData.path,
-          connection: workflowData.connection?.id ?? '',
-          recursive: workflowData.recursive,
-        });
-      }
+      const res = await createWorkflow(workflowData);
       // Show the result to the user
-      irminAlert('success', res?.message ?? dict.workflow.create.success);
+      irminAlert('success', res?.message ?? 'Workflow created successfully');
       closeModal();
     } catch (error) {
       console.error('Failed to create workflow', error);
       irminAlert(
         'error',
-        (error as Error)?.message ?? dict.workflow.create.failed
+        (error as Error)?.message ?? 'Failed to create the workflow'
       );
     } finally {
       setProcessing(false);
+      creatingWorkflow.current = false;
     }
-  };
+  }, [irminAlert, workflowData, createWorkflow, closeModal]);
 
   return (
     <div className='flex w-full flex-col px-4 pb-6'>
@@ -132,22 +105,17 @@ export default function ConfigureWorkflow({
             }
           />
         </div>
-        <div className='flex flex-col gap-2'>
-          <Label>{dict.workflow.runInterval}</Label>
-          <Input
-            required
-            type='text'
-            defaultValue={workflowData.cron}
-            onChange={(e) =>
+        <div className='rounded-md border border-foreground/20 px-2 py-4'>
+          <WorkflowScheduleForm
+            initialData={initialWorkflowSchedule.current}
+            disableSaveButton={true}
+            updateSchedule={(newSchedule) => {
               setWorkflowData({
                 ...workflowData,
-                cron: e.target.value,
-              })
-            }
+                schedule: newSchedule,
+              });
+            }}
           />
-          <span className='text-xs opacity-60'>
-            {dict.workflow.runIntervalDescription}
-          </span>
         </div>
       </div>
       <div className='flex-grow'></div>
@@ -155,6 +123,8 @@ export default function ConfigureWorkflow({
         <Button
           className='mb-6 inline-block w-full'
           variant='default'
+          size={'lg'}
+          disabled={processing}
           onClick={handleCreate}
         >
           {dict.workflow.create.confirmAndCreate}
@@ -163,6 +133,7 @@ export default function ConfigureWorkflow({
           className='mb-6 inline-block w-full'
           variant='link'
           size='sm'
+          disabled={processing}
           onClick={() => setCurrentStep(1)}
         >
           {dict.workflow.create.goBack}

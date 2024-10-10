@@ -7,7 +7,7 @@ import Image from 'next/image';
 import IrminCore from '@/services/core/IrminCore';
 
 import { Badge } from '@/components/ui/badge';
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 

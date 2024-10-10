@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
@@ -37,14 +37,16 @@ const ConnectionSettingsSection = ({
     connections: { updateConnection, reassignConnection, deleteConnection },
   } = useWorkspace();
 
+  const updating = useRef(false);
+
   /**
    * Updates the connection with the new details provided
    */
   const handleUpdateConnection = useCallback(
     async (data: ConnectionFormValues) => {
+      if (updating.current) return;
       try {
-        if (!connection) return;
-
+        updating.current = true;
         // Check if the owner has changed
         if (data.owner && data.owner !== connection.owner.id) {
           // Find the new owner object
@@ -56,7 +58,7 @@ const ConnectionSettingsSection = ({
             const res = await reassignConnection(connection.id, newOwner);
             irminAlert(
               'success',
-              res.message ?? dict.connections.settings.connectionOwnerChanged
+              res.message ?? 'Connection reassigned successfully'
             );
           }
         }
@@ -68,16 +70,14 @@ const ConnectionSettingsSection = ({
           description: data.description.trim(),
         });
 
-        irminAlert(
-          'success',
-          res.message ?? dict.connections.settings.connectionUpdated
-        );
+        irminAlert('success', res.message ?? 'Connection updated successfully');
       } catch (error) {
         irminAlert(
           'error',
-          (error as Error)?.message ??
-            dict.connections.settings.errorUpdatingConnection
+          (error as Error)?.message ?? 'Error updating the connection'
         );
+      } finally {
+        updating.current = false;
       }
     },
     [
@@ -86,7 +86,6 @@ const ConnectionSettingsSection = ({
       updateConnection,
       reassignConnection,
       irminAlert,
-      dict,
     ]
   );
 
@@ -94,24 +93,34 @@ const ConnectionSettingsSection = ({
    * Deletes the connection after confirming with the user
    */
   const handleDeleteConnection = useCallback(() => {
+    if (updating.current) return;
     try {
       irminConfirm(
         'warning',
         dict.connections.settings.areYouSureYouWantToDelete,
         async (confirmed) => {
-          if (!confirmed) return;
-          const res = await deleteConnection(connection.id);
-          irminAlert(
-            'success',
-            res.message ?? dict.connections.settings.connectionDeleted
-          );
+          try {
+            if (!confirmed) return;
+            updating.current = true;
+            const res = await deleteConnection(connection.id);
+            irminAlert(
+              'success',
+              res.message ?? 'Connection deleted successfully'
+            );
+          } catch (error) {
+            irminAlert(
+              'error',
+              (error as Error)?.message ?? 'Error deleting the connection'
+            );
+          } finally {
+            updating.current = false;
+          }
         }
       );
     } catch (error) {
       irminAlert(
         'error',
-        (error as Error)?.message ??
-          dict.connections.settings.errorDeletingConnection
+        (error as Error)?.message ?? 'Error deleting the connection'
       );
     }
   }, [connection, irminConfirm, deleteConnection, irminAlert, dict]);
@@ -143,10 +152,7 @@ const ConnectionSettingsSection = ({
   ];
 
   return (
-    <div
-      className='container relative mx-auto my-8 max-w-6xl'
-      id='connection-settings-section'
-    >
+    <div id='connection-settings-section'>
       <SettingsForm<ConnectionFormValues>
         initialValues={{
           name: connection.name,

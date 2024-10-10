@@ -1,10 +1,7 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
-import { FaPause, FaPlay } from 'react-icons/fa6';
-
-import Button from '@/components/ui/Button';
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -34,21 +31,19 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
   const { irminConfirm, irminAlert } = usePopup();
   const {
     workspaces: { currentWorkspace },
-    workflows: {
-      updateWorkflow,
-      reassignWorkflow,
-      deleteWorkflow,
-      resumeWorkflow,
-      pauseWorkflow,
-    },
+    workflows: { updateWorkflow, reassignWorkflow, deleteWorkflow },
   } = useWorkspace();
+
+  const processing = useRef(false);
 
   /**
    * Updates the workflow with the new details provided
    */
   const handleUpdateWorkflow = useCallback(
     async (data: WorkflowFormValues) => {
+      if (processing.current) return;
       try {
+        processing.current = true;
         if (!workflow) return;
 
         // Check if the owner has changed
@@ -62,7 +57,7 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
             const res = await reassignWorkflow(workflow.id, newOwner);
             irminAlert(
               'success',
-              res.message ?? dict.workflow.settings.workflowOwnerChanged
+              res.message ?? 'Workflow reassigned successfully'
             );
           }
         }
@@ -72,83 +67,61 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
           ...workflow,
           name: data.name.trim(),
           description: data.description.trim(),
-          cron_syntax: data.cron_syntax.trim(),
         });
 
-        irminAlert(
-          'success',
-          res.message ?? dict.workflow.settings.workflowUpdated
-        );
+        irminAlert('success', res.message ?? 'Workflow updated successfully');
       } catch (error) {
         irminAlert(
           'error',
           (error as Error)?.message ??
-            dict.workflow.settings.errorUpdatingWorkflow
+            'Error updating the workflow. Please try again.'
         );
+      } finally {
+        processing.current = false;
       }
     },
-    [
-      workflow,
-      updateWorkflow,
-      currentWorkspace,
-      reassignWorkflow,
-      irminAlert,
-      dict,
-    ]
+    [workflow, updateWorkflow, currentWorkspace, reassignWorkflow, irminAlert]
   );
 
   /**
    * Deletes the workflow after confirming with the user
    */
   const handleDeleteWorkflow = useCallback(() => {
+    if (processing.current) return;
+    if (!workflow) return;
     try {
       irminConfirm(
         'warning',
         dict.workflow.settings.areYouSureYouWantToDelete,
         async (confirmed) => {
           if (!confirmed) return;
-          const res = await deleteWorkflow(workflow.id);
-          irminAlert(
-            'success',
-            res.message ?? dict.workflow.settings.workflowDeleted
-          );
+          processing.current = true;
+          try {
+            if (!workflow) return;
+            const res = await deleteWorkflow(workflow.id);
+            irminAlert(
+              'success',
+              res.message ?? 'Workflow deleted successfully'
+            );
+          } catch (error) {
+            irminAlert(
+              'error',
+              (error as Error)?.message ??
+                'Error deleting the workflow. Please try again.'
+            );
+          } finally {
+            processing.current = false;
+          }
         }
       );
     } catch (error) {
       irminAlert(
         'error',
         (error as Error)?.message ??
-          dict.workflow.settings.errorDeletingWorkflow
+          'Error deleting the workflow. Please try again.'
       );
     }
   }, [workflow, irminConfirm, deleteWorkflow, irminAlert, dict]);
-
-  /**
-   * Pauses or resumes the workflow based on the current status
-   */
-  const handlePauseOrResume = useCallback(async () => {
-    try {
-      if (workflow.status === 'paused') {
-        const res = await resumeWorkflow(workflow.id);
-        irminAlert(
-          'success',
-          res.message ?? dict.workflow.settings.workflowResumed
-        );
-      } else {
-        const res = await pauseWorkflow(workflow.id);
-        irminAlert(
-          'success',
-          res.message ?? dict.workflow.settings.workflowPaused
-        );
-      }
-    } catch (error) {
-      irminAlert(
-        'error',
-        (error as Error)?.message ??
-          dict.workflow.settings.errorUpdatingWorkflow
-      );
-    }
-  }, [workflow, pauseWorkflow, resumeWorkflow, irminAlert, dict]);
 
   // Define field configurations
   const fieldConfiguration: FieldConfig<WorkflowFormValues>[] = [
@@ -165,12 +138,6 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
       placeholder: '',
     },
     {
-      name: 'cron_syntax',
-      label: dict.workflow.runInterval,
-      type: 'text',
-      placeholder: dict.workflow.runIntervalDescription,
-    },
-    {
       name: 'owner',
       label: dict.workflow.owner,
       type: 'select',
@@ -183,36 +150,11 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
   ];
 
   return (
-    <div
-      className='container relative mx-auto my-8 max-w-6xl'
-      id='workflow-settings-section'
-    >
-      <div className='mb-8 px-4'>
-        {workflow.status === 'paused' ? (
-          <Button
-            size='sm'
-            variant='secondary'
-            icon={<FaPlay size={14} />}
-            onClick={handlePauseOrResume}
-          >
-            {dict.workflow.settings.resumeWorkflow}
-          </Button>
-        ) : (
-          <Button
-            size='sm'
-            variant='secondary'
-            icon={<FaPause size={14} />}
-            onClick={handlePauseOrResume}
-          >
-            {dict.workflow.settings.pauseWorkflow}
-          </Button>
-        )}
-      </div>
+    <div id='workflow-settings-section'>
       <SettingsForm<WorkflowFormValues>
         initialValues={{
           name: workflow.name,
           description: workflow.description,
-          cron_syntax: workflow.cron_syntax ?? undefined,
           owner: workflow.owner.id,
         }}
         onSubmit={handleUpdateWorkflow}

@@ -12,7 +12,7 @@ import { BsFilePdf } from 'react-icons/bs';
 
 import ConsoleTitle from '@/components/console/ConsoleTitle';
 import { Badge } from '@/components/ui/badge';
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useIAM } from '@/context/IAMContext';
@@ -247,11 +247,11 @@ export default function DocumentationSection({
                       </span>
                     </p>
                     <p className='text-sm text-gray-600 dark:text-gray-400'>
-                      {dict.list.runInterval}:{' '}
+                      {dict.workflow.schedule.workflowSchedule}:{' '}
                       <span className='text-gray-800 dark:text-gray-200'>
-                        {item.cron_syntax
-                          ? item.cron_syntax
-                          : dict.list.notScheduled}
+                        {item.schedule && item.schedule.triggers.length > 0
+                          ? dict.workflow.scheduled
+                          : dict.workflow.notScheduled}
                       </span>
                     </p>
                     <div className='p-4-600 rounded-md bg-gray-200'>
@@ -288,11 +288,11 @@ export default function DocumentationSection({
                       </span>
                     </p>
                     <p className='text-sm text-gray-600 dark:text-gray-400'>
-                      {dict.list.runInterval}:{' '}
+                      {dict.workflow.schedule.workflowSchedule}:{' '}
                       <span className='text-gray-800 dark:text-gray-200'>
-                        {item.cron_syntax
-                          ? item.cron_syntax
-                          : dict.list.notScheduled}
+                        {item.schedule && item.schedule.triggers.length > 0
+                          ? dict.workflow.scheduled
+                          : dict.workflow.notScheduled}
                       </span>
                     </p>
                     <div className='p-4-600 rounded-md bg-gray-200'>
@@ -329,11 +329,11 @@ export default function DocumentationSection({
                       </span>
                     </p>
                     <p className='text-sm text-gray-600 dark:text-gray-400'>
-                      {dict.list.runInterval}:{' '}
+                      {dict.workflow.schedule.workflowSchedule}:{' '}
                       <span className='text-gray-800 dark:text-gray-200'>
-                        {item.cron_syntax
-                          ? item.cron_syntax
-                          : dict.list.notScheduled}
+                        {item.schedule && item.schedule.triggers.length > 0
+                          ? dict.workflow.scheduled
+                          : dict.workflow.notScheduled}
                       </span>
                     </p>
                     <div className='p-4-600 rounded-md bg-gray-200'>

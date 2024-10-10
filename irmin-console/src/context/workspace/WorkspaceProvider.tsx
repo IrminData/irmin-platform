@@ -198,6 +198,7 @@ export const WorkspaceProvider = ({
             fetchActions: workflows.fetchActions,
           },
           allWorkflows: workflows.allWorkflows,
+          createWorkflow: workflows.createWorkflow,
           updateWorkflow: workflows.updateWorkflow,
           reassignWorkflow: workflows.reassignWorkflow,
           deleteWorkflow: workflows.deleteWorkflow,

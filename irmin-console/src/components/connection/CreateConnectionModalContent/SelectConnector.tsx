@@ -9,7 +9,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { TbHelp } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
-import Button from '@/components/ui/Button';
+import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
