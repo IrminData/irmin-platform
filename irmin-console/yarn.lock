@@ -7230,7 +7230,7 @@ __metadata:
     postcss: "npm:^8.4.47"
     prettier: "npm:^3.3.3"
     prettier-plugin-tailwindcss: "npm:^0.6.8"
-    react: "npm:19.0.0-rc-fb9a90fa48-20240614"
+    react: "npm:19.0.0-rc.0"
     react-datasheet-grid: "npm:^4.11.4"
     react-diff-viewer: "npm:^3.1.1"
     react-dom: "npm:19.0.0-rc.0"
@@ -10100,10 +10100,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:19.0.0-rc-fb9a90fa48-20240614":
-  version: 19.0.0-rc-fb9a90fa48-20240614
-  resolution: "react@npm:19.0.0-rc-fb9a90fa48-20240614"
-  checksum: 10c0/99c3d3398d46c8c704c0deb04160f5a7c9cf2ff785a777fb0f1a4d0c91ade044c4d50cd52e008b4c45623eaa8f4d18a80272444df4972a2cc696bf35ef3e59b0
+"react@npm:19.0.0-rc.0":
+  version: 19.0.0-rc.0
+  resolution: "react@npm:19.0.0-rc.0"
+  checksum: 10c0/a3f253c5f7a9bc289526f21bc3f00f6b2cb3e754d318871edc9dbfcc5df51b3d00024f023d64f8b0d7bd7788a5b3de719ed3cee8e3dc876d5b8af009068262ba
   languageName: node
   linkType: hard
 
