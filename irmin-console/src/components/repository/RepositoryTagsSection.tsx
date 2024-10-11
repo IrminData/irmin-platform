@@ -60,15 +60,13 @@ export default function RepositoryTagsSection() {
    */
   const handleDeleteTag = useCallback(
     async (tag: string) => {
-      irminConfirm(
+      const confirmed = await irminConfirm(
         'warning',
-        dict.repository.tags.confirmDeleteTag,
-        async (confirmed) => {
-          if (!confirmed) return;
-          // Delete the tag
-          await deleteTag(tag);
-        }
+        dict.repository.tags.confirmDeleteTag
       );
+      if (!confirmed) return;
+      // Delete the tag
+      await deleteTag(tag);
     },
     [irminConfirm, dict, deleteTag]
   );

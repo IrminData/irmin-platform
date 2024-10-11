@@ -92,36 +92,25 @@ const ConnectionSettingsSection = ({
   /**
    * Deletes the connection after confirming with the user
    */
-  const handleDeleteConnection = useCallback(() => {
+  const handleDeleteConnection = useCallback(async () => {
     if (updating.current) return;
     try {
-      irminConfirm(
+      const confirmed = await irminConfirm(
         'warning',
-        dict.connections.settings.areYouSureYouWantToDelete,
-        async (confirmed) => {
-          try {
-            if (!confirmed) return;
-            updating.current = true;
-            const res = await deleteConnection(connection.id);
-            irminAlert(
-              'success',
-              res.message ?? 'Connection deleted successfully'
-            );
-          } catch (error) {
-            irminAlert(
-              'error',
-              (error as Error)?.message ?? 'Error deleting the connection'
-            );
-          } finally {
-            updating.current = false;
-          }
-        }
+        dict.connections.settings.areYouSureYouWantToDelete
       );
+      if (!confirmed) return;
+      updating.current = true;
+      const res = await deleteConnection(connection.id);
+      irminAlert('success', res.message ?? 'Connection deleted successfully');
     } catch (error) {
+      console.error('Failed to delete connection', error);
       irminAlert(
         'error',
         (error as Error)?.message ?? 'Error deleting the connection'
       );
+    } finally {
+      updating.current = false;
     }
   }, [connection, irminConfirm, deleteConnection, irminAlert, dict]);
 

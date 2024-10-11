@@ -86,40 +86,27 @@ const WorkflowSettingsSection = ({ workflow }: { workflow: Workflow }) => {
   /**
    * Deletes the workflow after confirming with the user
    */
-  const handleDeleteWorkflow = useCallback(() => {
+  const handleDeleteWorkflow = useCallback(async () => {
     if (processing.current) return;
     if (!workflow) return;
     try {
-      irminConfirm(
+      processing.current = true;
+      const confirmed = await irminConfirm(
         'warning',
-        dict.workflow.settings.areYouSureYouWantToDelete,
-        async (confirmed) => {
-          if (!confirmed) return;
-          processing.current = true;
-          try {
-            if (!workflow) return;
-            const res = await deleteWorkflow(workflow.id);
-            irminAlert(
-              'success',
-              res.message ?? 'Workflow deleted successfully'
-            );
-          } catch (error) {
-            irminAlert(
-              'error',
-              (error as Error)?.message ??
-                'Error deleting the workflow. Please try again.'
-            );
-          } finally {
-            processing.current = false;
-          }
-        }
+        dict.workflow.settings.areYouSureYouWantToDelete
       );
+      if (!confirmed) return;
+      const res = await deleteWorkflow(workflow.id);
+      irminAlert('success', res.message ?? 'Workflow deleted successfully');
     } catch (error) {
+      console.error('Failed to delete the workflow:', error);
       irminAlert(
         'error',
         (error as Error)?.message ??
           'Error deleting the workflow. Please try again.'
       );
+    } finally {
+      processing.current = false;
     }
   }, [workflow, irminConfirm, deleteWorkflow, irminAlert, dict]);
 

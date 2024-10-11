@@ -82,37 +82,25 @@ const RepositorySettingsSection = () => {
   /**
    * Deletes the repository after confirming with the user
    */
-  const handleDeleteRepository = useCallback(() => {
+  const handleDeleteRepository = useCallback(async () => {
     if (updating.current) return;
     try {
-      irminConfirm(
+      const confirmed = await irminConfirm(
         'warning',
-        dict.repository.settings.areYouSureYouWantToDelete,
-        async (confirmed) => {
-          try {
-            if (!confirmed) return;
-            const res = await deleteRepository(currentRepository.slug);
-            irminAlert(
-              'success',
-              res.message ?? 'Repository deleted successfully'
-            );
-          } catch (error) {
-            irminAlert(
-              'error',
-              (error as Error)?.message ??
-                'An error occurred while deleting the repository'
-            );
-          } finally {
-            updating.current = false;
-          }
-        }
+        dict.repository.settings.areYouSureYouWantToDelete
       );
+      if (!confirmed) return;
+      const res = await deleteRepository(currentRepository.slug);
+      irminAlert('success', res.message ?? 'Repository deleted successfully');
     } catch (error) {
+      console.error('Error deleting the repository', error);
       irminAlert(
         'error',
         (error as Error)?.message ??
           'An error occurred while deleting the repository'
       );
+    } finally {
+      updating.current = false;
     }
   }, [currentRepository, irminConfirm, deleteRepository, irminAlert, dict]);
 

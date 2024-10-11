@@ -80,16 +80,14 @@ export default function RepositoryUncommitedChangesSection() {
    * Revert the changes in the working branch.
    */
   const handleRevertChanges = useCallback(async () => {
-    irminConfirm(
+    const confirmed = await irminConfirm(
       'warning',
-      dict.repository.commit.confirmRevertChanges,
-      async (confirmed) => {
-        if (!confirmed) return;
-        // Revert the changes, then refetch the diff
-        const done = await revertChanges();
-        if (done) handleFetchDiff();
-      }
+      dict.repository.commit.confirmRevertChanges
     );
+    if (!confirmed) return;
+    // Revert the changes, then refetch the diff
+    const done = await revertChanges();
+    if (done) handleFetchDiff();
   }, [irminConfirm, dict, handleFetchDiff, revertChanges]);
 
   /**

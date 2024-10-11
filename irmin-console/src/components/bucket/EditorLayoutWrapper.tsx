@@ -100,28 +100,24 @@ export default function EditorLayoutWrapper({
    * @param item The item to delete
    */
   const deleteItem = useCallback(
-    (item: FileNavigatorItem) => {
+    async (item: FileNavigatorItem) => {
       if (item.type == 'file') {
-        irminConfirm(
+        const confirmed = await irminConfirm(
           'warning',
-          `${dict.fileNavigator.deleteConfirmation} ${item.current?.name ?? 'this file'}?`,
-          (confirmed) => {
-            if (confirmed) {
-              deleteFile(item);
-            }
-          }
+          `${dict.fileNavigator.deleteConfirmation} ${item.current?.name ?? 'this file'}?`
         );
+        if (confirmed) {
+          deleteFile(item);
+        }
       }
       if (item.type === 'folder') {
-        irminConfirm(
+        const confirmed = await irminConfirm(
           'warning',
-          `${dict.fileNavigator.deleteConfirmation} ${item.current?.name ?? 'this file'}? ${dict.fileNavigator.deleteFolderWarning}.`,
-          (confirmed) => {
-            if (confirmed) {
-              deleteFolder(item);
-            }
-          }
+          `${dict.fileNavigator.deleteConfirmation} ${item.current?.name ?? 'this file'}? ${dict.fileNavigator.deleteFolderWarning}.`
         );
+        if (confirmed) {
+          deleteFolder(item);
+        }
       }
     },
     [irminConfirm, dict, deleteFile, deleteFolder]

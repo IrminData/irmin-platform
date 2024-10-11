@@ -104,40 +104,34 @@ export default function CollectionSchema({
   // Processing state for the delete action
   const [processingDelete, setProcessingDelete] = useState(false);
   // Handle delete collection from the repository
-  const handleDeleteCollection = useCallback(() => {
+  const handleDeleteCollection = useCallback(async () => {
     if (!collection) return;
     // Confirm the delete action
-    irminConfirm(
+    const confirmed = await irminConfirm(
       'warning',
-      dict.repository.collections.deleteConfirm,
-      async (confirmed) => {
-        // Make sure the user confirmed the delete action
-        if (!confirmed) return;
-        // Make sure we are not already processing a delete action
-        setProcessingDelete(true);
-        try {
-          // Upload the collection
-          const res = await repositoryService.deleteCollection(
-            currentRepository.slug,
-            currentRef ?? '',
-            collection.name
-          );
-          // Show success message
-          irminAlert(
-            'success',
-            res.message ?? 'Collection deleted successfully'
-          );
-        } catch (error) {
-          console.error('Failed to delete the collection:', error);
-          irminAlert(
-            'error',
-            (error as Error)?.message ?? 'Failed to delete the collection'
-          );
-        } finally {
-          setProcessingDelete(false);
-        }
-      }
+      dict.repository.collections.deleteConfirm
     );
+    // Make sure the user confirmed the delete action
+    if (!confirmed) return;
+    setProcessingDelete(true);
+    try {
+      // Upload the collection
+      const res = await repositoryService.deleteCollection(
+        currentRepository.slug,
+        currentRef ?? '',
+        collection.name
+      );
+      // Show success message
+      irminAlert('success', res.message ?? 'Collection deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete the collection:', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to delete the collection'
+      );
+    } finally {
+      setProcessingDelete(false);
+    }
   }, [
     currentRef,
     currentRepository,

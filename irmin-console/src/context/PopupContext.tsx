@@ -19,7 +19,7 @@ import NotificationPopup from '@/components/ui/popup/NotificationPopup';
  * in the console layout.
  *
  * @param irminAlert - Function to show an alert
- * @param irminConfirm - Function to show a confirmation popup
+ * @param irminConfirm - Async function to show a confirmation popup, resolves to a boolean (confirmed or not)
  * @param toggleNotificationsPopup - Function to toggle the notifications popup
  * @param irminModal - Object with functions to show and close a modal
  *
@@ -32,9 +32,8 @@ const PopupContext = createContext<{
   ) => void;
   irminConfirm: (
     _type: 'warning' | 'info',
-    _message: string,
-    _onSelect: (_confirmed: boolean) => void
-  ) => void;
+    _message: string
+  ) => Promise<boolean>;
   toggleNotificationsPopup: (
     _e: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => void;
@@ -48,7 +47,7 @@ const PopupContext = createContext<{
   };
 }>({
   irminAlert: () => {},
-  irminConfirm: () => {},
+  irminConfirm: async () => false,
   toggleNotificationsPopup: () => {},
   irminModal: {
     show: () => {},
@@ -96,14 +95,14 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     null | ((_confirmed: boolean) => void)
   >(null);
   const irminConfirm = useCallback(
-    (
-      type: 'warning' | 'info',
-      message: string,
-      onSelect: (_confirmed: boolean) => void
-    ) => {
+    async (type: 'warning' | 'info', message: string) => {
       setConfirmType(type);
-      setConfirmOnSelect(() => onSelect);
       setConfirmMessage(message);
+      return new Promise<boolean>((resolve) => {
+        setConfirmOnSelect((confirmed: boolean) => {
+          resolve(confirmed);
+        });
+      });
     },
     []
   );

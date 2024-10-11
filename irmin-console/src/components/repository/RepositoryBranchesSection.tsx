@@ -53,15 +53,13 @@ export default function RepositoryBranchesSection() {
    */
   const handleDeleteBranch = useCallback(
     async (branch: string) => {
-      irminConfirm(
+      const confirmed = await irminConfirm(
         'warning',
-        dict.repository.branches.confirmDeleteBranch,
-        async (confirmed) => {
-          if (!confirmed) return;
-          // Delete the branch
-          await deleteBranch(branch);
-        }
+        dict.repository.branches.confirmDeleteBranch
       );
+      if (!confirmed) return;
+      // Delete the branch
+      await deleteBranch(branch);
     },
     [irminConfirm, dict, deleteBranch]
   );
