@@ -7208,7 +7208,7 @@ __metadata:
     prettier-plugin-tailwindcss: "npm:^0.6.8"
     react: "npm:19.0.0-rc.0"
     react-datasheet-grid: "npm:^4.11.4"
-    react-day-picker: "npm:9.1.3"
+    react-day-picker: "npm:^9.1.3"
     react-diff-viewer: "npm:^3.1.1"
     react-dom: "npm:19.0.0-rc.0"
     react-icons: "npm:^5.3.0"
@@ -9819,7 +9819,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-day-picker@npm:9.1.3":
+"react-day-picker@npm:^9.1.3":
   version: 9.1.3
   resolution: "react-day-picker@npm:9.1.3"
   dependencies:

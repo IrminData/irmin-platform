@@ -84,13 +84,14 @@ class CommitService {
   ): Promise<IrminAPIResponse> {
     if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/commits`, {
+      const formData = new FormData();
+      formData.append('repository', repository);
+      formData.append('ref', ref);
+      formData.append('message', message);
+
+      const response = (await this.irminCore.fetch(`/v1/commits/create`, {
         method: 'POST',
-        body: JSON.stringify({
-          repository,
-          ref,
-          message,
-        }),
+        body: formData,
       })) as IrminAPIResponse;
 
       return response;
@@ -113,12 +114,13 @@ class CommitService {
   ): Promise<IrminAPIResponse> {
     if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
+      const formData = new FormData();
+      formData.append('repository', repository);
+      formData.append('ref', ref);
+
       const response = (await this.irminCore.fetch(`/v1/commits/revert`, {
         method: 'POST',
-        body: JSON.stringify({
-          repository,
-          ref,
-        }),
+        body: formData,
       })) as IrminAPIResponse;
 
       return response;

@@ -132,7 +132,7 @@ class WorkspaceService {
       formData.append('name', name);
       formData.append('description', description);
 
-      const res = await this.irminCore.fetch(`/v1/workspaces`, {
+      const res = await this.irminCore.fetch(`/v1/workspaces/create`, {
         method: 'POST',
         body: formData,
       });
