@@ -518,3 +518,28 @@ export const useDeleteWorkflow = (
     },
     [locale, actions, setActions, imports, setImports, exports, setExports]
   );
+
+/**
+ * Trigger a workflow run using the {@link IrminCore}.
+ */
+export const useTriggerWorkflowRun = (
+  locale: Locale,
+  irminAlert: (type: 'success' | 'error', message: string) => void
+) =>
+  useCallback(
+    async (workflowId: string) => {
+      try {
+        const { workflowService } = new IrminCore(locale);
+        const response = await workflowService.triggerWorkflowRun(workflowId);
+        irminAlert('success', response.message ?? 'Workflow run triggered');
+        return response;
+      } catch (error) {
+        console.error('Failed to trigger workflow run', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to trigger the workflow run'
+        );
+      }
+    },
+    [locale, irminAlert]
+  );

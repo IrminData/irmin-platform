@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react';
 
 import { Locale } from '@/dictionaries';
 
+import { usePopup } from '@/context/PopupContext';
+
 import {
   ActionWorkflow,
   ExportWorkflow,
@@ -20,6 +22,7 @@ import {
   usePauseWorkflow,
   useReassignWorkflow,
   useResumeWorkflow,
+  useTriggerWorkflowRun,
   useUpdateWorkflow,
 } from './hooks/workflows';
 
@@ -33,6 +36,8 @@ const useWorkflows = ({
   currentWorkspace: Workspace | null;
   locale: Locale;
 }) => {
+  const { irminAlert } = usePopup();
+
   // Import workflows
   const [imports, setImports] = useState<ImportWorkflow[]>([]);
   const [importsLoading, setImportsLoading] = useState(false);
@@ -142,6 +147,7 @@ const useWorkflows = ({
     exports,
     setExports
   );
+  const triggerWorkflowRun = useTriggerWorkflowRun(locale, irminAlert);
 
   return {
     imports,
@@ -163,6 +169,7 @@ const useWorkflows = ({
     deleteWorkflow,
     pauseWorkflow,
     resumeWorkflow,
+    triggerWorkflowRun,
   };
 };
 

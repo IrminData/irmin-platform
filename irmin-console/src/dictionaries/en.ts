@@ -473,6 +473,8 @@ const en = {
     importWorkflows: 'Import workflows',
     actionWorkflows: 'Action workflows',
     exportWorkflows: 'Export workflows',
+    triggerRun: 'Trigger workflow run',
+    triggeringRun: 'Triggering run',
     workflow: 'Workflow',
     import: 'Import',
     action: 'Action',

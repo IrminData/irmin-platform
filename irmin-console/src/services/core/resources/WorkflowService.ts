@@ -80,6 +80,7 @@ class WorkflowService {
     this.reassignWorkflow = this.reassignWorkflow.bind(this);
     this.fetchWorkflowRunByID = this.fetchWorkflowRunByID.bind(this);
     this.fetchRunsByWorkflow = this.fetchRunsByWorkflow.bind(this);
+    this.triggerWorkflowRun = this.triggerWorkflowRun.bind(this);
     this.fetchImportWorkflows = this.fetchImportWorkflows.bind(this);
     this.fetchExportWorkflows = this.fetchExportWorkflows.bind(this);
     this.fetchActionWorkflows = this.fetchActionWorkflows.bind(this);
@@ -234,7 +235,7 @@ class WorkflowService {
   /**
    * Fetch Workflow Runs by Workflow
    *
-   * @param workflow - The slug of the workflow to fetch the runs for
+   * @param workflow - The ID of the workflow to fetch the runs for
    */
   async fetchRunsByWorkflow(
     workflow: string
@@ -287,6 +288,30 @@ class WorkflowService {
     } catch (error) {
       console.error((error as Error).message, 'Fetch workflow run by ID error');
       if (isDevelopment) return fake(exampleRun) as WorkflowRunAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Trigger a Workflow Run manually
+   *
+   * @param workflow - The ID of the workflow to trigger a run for
+   */
+  async triggerWorkflowRun(workflow: string): Promise<WorkflowRunAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleWorkflowRuns[0]) as WorkflowRunAPIResponse;
+    try {
+      const formData = new FormData();
+      formData.append('workflow_id', workflow);
+      const response = (await this.irminCore.fetch(`/v1/workflows/run`, {
+        method: 'POST',
+        body: formData,
+      })) as WorkflowRunAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Trigger workflow run error');
+      if (isDevelopment)
+        return fake(exampleWorkflowRuns[0]) as WorkflowRunAPIResponse;
       throw error;
     }
   }

@@ -204,6 +204,7 @@ export const WorkspaceProvider = ({
           deleteWorkflow: workflows.deleteWorkflow,
           pauseWorkflow: workflows.pauseWorkflow,
           resumeWorkflow: workflows.resumeWorkflow,
+          triggerWorkflowRun: workflows.triggerWorkflowRun,
         },
       }}
     >

@@ -11,7 +11,9 @@ ENV GENERATE_SOURCEMAP=false
 ENV NODE_OPTIONS=--max-old-space-size=3000
 
 # Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* ./
+COPY package.json yarn.lock ./
+COPY .yarnrc.yml ./
+COPY .yarn ./.yarn
 RUN echo 'nodeLinker: "node-modules"' > ./.yarnrc.yml
 RUN \
     if [ -f yarn.lock ]; then yarn install --immutable; \

@@ -475,6 +475,8 @@ const fi = {
     importWorkflows: 'Tuonti prosessit',
     actionWorkflows: 'Toiminto prosessit',
     exportWorkflows: 'Vienti prosessit',
+    triggerRun: 'Laukaise ajo',
+    triggeringRun: 'Laukaistaan ajo',
     workflow: 'Prosessi',
     import: 'Tuonti',
     action: 'Toiminto',

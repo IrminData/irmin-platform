@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { usePathname } from 'next/navigation';
 
@@ -9,11 +9,13 @@ import {
   TbDatabase,
   TbFileText,
   TbLogs,
+  TbPlayerPlay,
   TbRun,
   TbSettings,
 } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
+import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
@@ -41,6 +43,9 @@ export default function WorkflowLayoutWrapper({
 }) {
   const pathname = usePathname();
   const { dict } = useLocale();
+  const {
+    workflows: { triggerWorkflowRun },
+  } = useWorkspace();
 
   // The base URL for the workflow, eg. /en/console/workspace-slug/workflows/workflow-id
   const baseUrl = useBaseUrl({
@@ -75,6 +80,22 @@ export default function WorkflowLayoutWrapper({
     () => workflow?.workflowable?.branch ?? null,
     [workflow]
   );
+
+  const [processingRun, setProcessingRun] = useState(false);
+  const runningWorkflowRef = useRef(false);
+  const runWorkflow = useCallback(() => {
+    if (runningWorkflowRef.current) return;
+    try {
+      setProcessingRun(true);
+      runningWorkflowRef.current = true;
+      triggerWorkflowRun(workflowId);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setProcessingRun(false);
+      runningWorkflowRef.current = false;
+    }
+  }, [workflowId, triggerWorkflowRun]);
 
   const tabs = useMemo(
     () => [
@@ -143,7 +164,7 @@ export default function WorkflowLayoutWrapper({
     <>
       <div className='container relative mx-auto max-w-6xl'>
         <div className='mx-auto my-4 flex w-full flex-col px-2 md:px-4 lg:flex-row lg:items-center'>
-          <div className='flex flex-col gap-2 py-4'>
+          <div className='flex flex-1 flex-col gap-2 py-4'>
             <div className='flex flex-row items-center divide-x divide-gray-300 dark:divide-gray-700'>
               <div className='flex flex-row items-center gap-2 pr-2'>
                 <span className='text-xs text-gray-400 md:text-sm'>
@@ -176,6 +197,19 @@ export default function WorkflowLayoutWrapper({
             <p className='max-w-lg text-xs text-gray-400 lg:text-sm'>
               {workflow.description}
             </p>
+          </div>
+          <div className='flex min-w-60 flex-col gap-2'>
+            <Button
+              onClick={runWorkflow}
+              className='w-full'
+              variant='default'
+              size='lg'
+              icon={<TbPlayerPlay size={14} />}
+              loading={processingRun}
+              loadingText={dict.workflow.triggeringRun}
+            >
+              {dict.workflow.triggerRun}
+            </Button>
           </div>
         </div>
         <TabsWithBackButton

@@ -126,6 +126,9 @@ const WorkspaceContext = createContext<{
     deleteWorkflow: (_workflowId: string) => Promise<IrminAPIResponse>;
     pauseWorkflow: (_workflowId: string) => Promise<IrminAPIResponse>;
     resumeWorkflow: (_workflowId: string) => Promise<IrminAPIResponse>;
+    triggerWorkflowRun: (
+      _workflowId: string
+    ) => Promise<IrminAPIResponse | undefined>;
   };
 }>({
   workspaceLoading: false,
@@ -197,6 +200,7 @@ const WorkspaceContext = createContext<{
     deleteWorkflow: () => Promise.resolve({}),
     pauseWorkflow: () => Promise.resolve({}),
     resumeWorkflow: () => Promise.resolve({}),
+    triggerWorkflowRun: () => Promise.resolve({}),
   },
 });
 
