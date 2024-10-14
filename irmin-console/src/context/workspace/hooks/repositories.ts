@@ -6,7 +6,8 @@ import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
 import { Repository } from '@/types/core/Repository';
-import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
+import { User } from '@/types/core/User';
+import { Workspace } from '@/types/core/Workspace';
 
 /**
  * Hook to fetch the list of Repositories for the current workspace using the {@link IrminCore}.
@@ -140,7 +141,7 @@ export const useReassignRepository = (
   locale: Locale
 ) =>
   useCallback(
-    async (repository: Repository, newOwner: WorkspaceUser) => {
+    async (repository: Repository, newOwner: User) => {
       // Reassign the Repositories
       const { repositoryService } = new IrminCore(locale);
       const res = await repositoryService.reassignRepository(

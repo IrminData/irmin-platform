@@ -1,12 +1,12 @@
 import { Connection } from '@/types/core/Connection';
 import { Invite } from '@/types/core/Invite';
 import { Repository } from '@/types/core/Repository';
+import { User } from '@/types/core/User';
 import {
   ActionWorkflow,
   ExportWorkflow,
   ImportWorkflow,
 } from '@/types/core/Workflow';
-import { WorkspaceUser } from '@/types/core/Workspace';
 
 /**
  * Data object for the workspace proxy response
@@ -15,7 +15,7 @@ import { WorkspaceUser } from '@/types/core/Workspace';
  * @typeParam actions - {@link ActionWorkflow} objects
  * @typeParam connections - {@link Connection} objects
  * @typeParam repositories - {@link Repository} objects
- * @typeParam users - {@link WorkspaceUser} objects
+ * @typeParam users - {@link User} objects
  * @typeParam invites - {@link Invite} objects
  */
 export interface WorkspaceProxyData {
@@ -24,7 +24,7 @@ export interface WorkspaceProxyData {
   actions: ActionWorkflow[];
   connections: Connection[];
   repositories: Repository[];
-  users: WorkspaceUser[];
+  users: User[];
   invites: Invite[];
 }
 

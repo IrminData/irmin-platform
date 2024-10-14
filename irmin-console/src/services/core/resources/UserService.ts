@@ -4,7 +4,7 @@ import fake from '@/utils/prepareFakeResponse';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { IrminRole, IrminRoleNames } from '@/types/core/IrminRole';
-import { WorkspaceUser } from '@/types/core/Workspace';
+import { User } from '@/types/core/User';
 import { exampleRoles, exampleWorkspaceUsers } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -15,7 +15,7 @@ const isDevelopment =
  * Users API response type
  */
 interface UsersAPIResponse extends IrminAPIResponse {
-  data: WorkspaceUser[];
+  data: User[];
 }
 /**
  * Roles API response type

@@ -1,4 +1,4 @@
-import { WorkspaceUser } from './Workspace';
+import { User } from '@/types/core/User';
 
 /**
  * Enum for the types of log events.
@@ -29,7 +29,7 @@ export interface LogEvent {
   type: LogEventType;
   timestamp: string;
   description: string;
-  user?: WorkspaceUser;
+  user?: User;
   workflow?: string;
 }
 

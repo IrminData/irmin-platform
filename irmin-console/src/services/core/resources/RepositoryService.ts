@@ -4,7 +4,7 @@ import fake from '@/utils/prepareFakeResponse';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { Repository } from '@/types/core/Repository';
-import { WorkspaceUser } from '@/types/core/Workspace';
+import { User } from '@/types/core/User';
 import { exampleRepositories } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -104,7 +104,7 @@ class RepositoryService {
    * @param repository - The Repository to reassign
    * @param newOwner - The new owner of the Repository
    */
-  async reassignRepository(repository: Repository, newOwner: WorkspaceUser) {
+  async reassignRepository(repository: Repository, newOwner: User) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();

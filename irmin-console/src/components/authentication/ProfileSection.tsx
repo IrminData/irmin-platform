@@ -1,19 +1,21 @@
 'use client';
 
-import { SignIn } from '@clerk/nextjs';
+import { UserProfile } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
 import { useTheme } from 'next-themes';
 
 /**
- * Sign In UI component
+ * User profile section
  */
-const SignInSection = () => {
+export default function ProfileSection() {
   const { theme } = useTheme();
 
   return (
-    <div id='sign-in-section' className='mx-auto space-y-6'>
-      <SignIn
-        signUpUrl='/sign-up'
+    <div
+      id='profile-section'
+      className='container mx-auto mb-16 flex max-w-7xl flex-wrap py-16 md:mb-0 md:py-28'
+    >
+      <UserProfile
         appearance={{
           baseTheme: theme === 'dark' ? dark : undefined,
           variables: { colorPrimary: '#a3c2ac' },
@@ -21,6 +23,4 @@ const SignInSection = () => {
       />
     </div>
   );
-};
-
-export default SignInSection;
+}

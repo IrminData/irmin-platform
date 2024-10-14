@@ -4,6 +4,7 @@ import createWorkflowScheduleFormData from '@/utils/createWorkflwoScheduleFormDa
 import fake from '@/utils/prepareFakeResponse';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import { User } from '@/types/core/User';
 import {
   ActionWorkflow,
   ExportWorkflow,
@@ -12,7 +13,6 @@ import {
   WorkflowRun,
 } from '@/types/core/Workflow';
 import { WorkflowSchedule } from '@/types/core/WorkflowSchedule';
-import { WorkspaceUser } from '@/types/core/Workspace';
 import {
   exampleActions,
   exampleExports,
@@ -213,7 +213,7 @@ class WorkflowService {
    * @param newOwner - The new owner of the workflow
    *
    */
-  async reassignWorkflow(workflowID: string, newOwner: WorkspaceUser) {
+  async reassignWorkflow(workflowID: string, newOwner: User) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();

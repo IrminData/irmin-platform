@@ -19,6 +19,9 @@
     "e2e:codegen-mobile": "playwright codegen --load-storage=playwright/.auth/auth.json --device=\"iPhone 12\" https://localhost:3000/en"
   },
   "dependencies": {
+    "@clerk/nextjs": "^5.7.2",
+    "@clerk/themes": "^2.1.35",
+    "@clerk/types": "^4.25.0",
     "@codemirror/lang-javascript": "^6.2.2",
     "@codemirror/lang-sql": "^6.8.0",
     "@codemirror/view": "^6.34.1",

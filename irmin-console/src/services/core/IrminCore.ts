@@ -8,7 +8,6 @@ import {
   IrminAPIUnstructuredResponse,
 } from '@/types/core/IrminAPIResponse';
 
-import AuthService from './resources/AuthService';
 import BranchService from './resources/BranchService';
 import BucketService from './resources/BucketService';
 import CollectionService from './resources/CollectionService';
@@ -45,7 +44,6 @@ class IrminCore {
   public apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev';
   public appBase = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
-  public authService: AuthService;
   public bucketService: BucketService;
   public connectionService: ConnectionService;
   public connectorService: ConnectorService;
@@ -72,7 +70,6 @@ class IrminCore {
 
     // Create a new instance of each service class
     // Pass the current IrminCore instance to each service class
-    this.authService = new AuthService(this);
     this.bucketService = new BucketService(this);
     this.connectionService = new ConnectionService(this);
     this.connectorService = new ConnectorService(this);

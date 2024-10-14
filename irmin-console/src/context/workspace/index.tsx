@@ -9,13 +9,14 @@ import { Invite } from '@/types/core/Invite';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { IrminRole, IrminRoleNames } from '@/types/core/IrminRole';
 import { Repository } from '@/types/core/Repository';
+import { User } from '@/types/core/User';
 import {
   ActionWorkflow,
   ExportWorkflow,
   ImportWorkflow,
   Workflow,
 } from '@/types/core/Workflow';
-import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
+import { Workspace } from '@/types/core/Workspace';
 import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
 
 /**
@@ -41,7 +42,7 @@ const WorkspaceContext = createContext<{
     workspacesLoading: boolean;
   };
   users: {
-    users: WorkspaceUser[];
+    users: User[];
     isLoading: boolean;
     fetchUsers: (_forceFetch?: boolean) => void;
     deleteUser: (_userId: string) => Promise<IrminAPIResponse>;
@@ -76,7 +77,7 @@ const WorkspaceContext = createContext<{
     ) => Promise<IrminAPIResponse>;
     reassignConnection: (
       _connectionID: string,
-      _newOwner: WorkspaceUser
+      _newOwner: User
     ) => Promise<IrminAPIResponse>;
     deleteConnection: (_connectionID: string) => Promise<IrminAPIResponse>;
   };
@@ -92,7 +93,7 @@ const WorkspaceContext = createContext<{
     deleteRepository: (_repositorySlug: string) => Promise<IrminAPIResponse>;
     reassignRepository: (
       _repository: Repository,
-      _newOwner: WorkspaceUser
+      _newOwner: User
     ) => Promise<IrminAPIResponse>;
   };
   workflows: {
@@ -121,7 +122,7 @@ const WorkspaceContext = createContext<{
     ) => Promise<IrminAPIResponse>;
     reassignWorkflow: (
       _workflowId: string,
-      _newOwner: WorkspaceUser
+      _newOwner: User
     ) => Promise<IrminAPIResponse>;
     deleteWorkflow: (_workflowId: string) => Promise<IrminAPIResponse>;
     pauseWorkflow: (_workflowId: string) => Promise<IrminAPIResponse>;

@@ -46,7 +46,7 @@ const useConsoleNavigationLinks = (): {
   useful: ConsoleNavigationLinkType[];
 } => {
   const { locale, dict } = useLocale();
-  const { logout } = useIAM();
+  const { signOut } = useIAM();
   const pathname = usePathname();
 
   // Check if the link is active
@@ -142,7 +142,7 @@ const useConsoleNavigationLinks = (): {
     },
     {
       title: dict.consoleNavigation.links.signOut,
-      action: logout,
+      action: signOut,
       icon: <TbLogout />,
       active: false,
     },

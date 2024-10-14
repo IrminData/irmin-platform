@@ -1,5 +1,8 @@
 /**
  * Set a cookie
+ *
+ * To remove a cookie, set negative expiry
+ *
  * @param name - The name of the cookie
  * @param value - The value of the cookie
  * @param days - The number of days until the cookie expires

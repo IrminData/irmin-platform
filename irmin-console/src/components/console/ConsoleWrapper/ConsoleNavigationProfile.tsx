@@ -2,11 +2,8 @@
 
 import React from 'react';
 
-import Image from 'next/image';
-import Link from 'next/link';
-
+import IrminUserButton from '@/components/authentication/IrminUserButton';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
-import ProfileImagePlaceholder from '@/components/ui/ProfileImagePlaceholder';
 
 import { useIAM } from '@/context/IAMContext';
 
@@ -37,35 +34,14 @@ export default function ConsoleNavigationProfile({
 
   return (
     <div className='flex w-full flex-wrap items-center'>
-      <Link
-        className='contents'
-        href='/console/profile'
-        onClick={() => {
-          setIsMenuOpen(false);
-        }}
-      >
-        <div className='flex w-auto items-center p-1'>
-          {profile.profile_picture ? (
-            <Image
-              src={profile.profile_picture}
-              alt={profile.name ?? ''}
-              width={50}
-              height={50}
-              className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
-            />
-          ) : (
-            <ProfileImagePlaceholder
-              user={profile}
-              className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
-            />
-          )}
-        </div>
-        <div className='w-auto overflow-hidden p-1'>
-          <p className='text-sm font-normal text-foreground dark:text-gray-200'>
-            {profile.name ?? ''}
-          </p>
-        </div>
-      </Link>
+      <div className='flex w-auto items-center p-1'>
+        <IrminUserButton onLinkClick={() => setIsMenuOpen(false)} />
+      </div>
+      <div className='w-auto overflow-hidden p-1'>
+        <p className='text-sm font-normal text-foreground dark:text-gray-200'>
+          {profile.user?.fullName ?? profile.name ?? 'User'}
+        </p>
+      </div>
       <div className='ml-auto'>
         <NotificationButton />
       </div>

@@ -1,6 +1,6 @@
 import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
-import { WorkspaceUser } from '@/types/core/Workspace';
+import { User } from '@/types/core/User';
 
 import { WorkflowSchedule } from './WorkflowSchedule';
 
@@ -28,7 +28,7 @@ export type WorkflowableType = 'import' | 'action' | 'export';
 export interface Workflow {
   id: string;
   name: string;
-  owner: WorkspaceUser;
+  owner: User;
   workflowable_type: WorkflowableType;
   workflowable: Import | Action | Export;
   schedule?: WorkflowSchedule;
@@ -74,7 +74,7 @@ export type ActionWorkflow = Workflow & {
 export interface WorkflowRun {
   id: string;
   workflow_id: string;
-  owner: WorkspaceUser;
+  owner: User;
   status: WorkflowStatus;
   started_at: string;
   finished_at?: string;

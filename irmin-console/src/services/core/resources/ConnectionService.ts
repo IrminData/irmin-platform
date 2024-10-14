@@ -4,7 +4,7 @@ import fake from '@/utils/prepareFakeResponse';
 
 import { Connection } from '@/types/core/Connection';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { WorkspaceUser } from '@/types/core/Workspace';
+import { User } from '@/types/core/User';
 import { exampleConnections } from '@/types/examples/core';
 import exampleDynamicFields from '@/types/examples/exampleDynamicFields';
 import {
@@ -115,7 +115,7 @@ class ConnectionService {
    * @param connection - The ID of the Connection to reassign
    * @param newOwner - The new owner of the Connection
    */
-  async reassignConnection(connection: string, newOwner: WorkspaceUser) {
+  async reassignConnection(connection: string, newOwner: User) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();

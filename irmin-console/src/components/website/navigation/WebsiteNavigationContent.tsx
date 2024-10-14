@@ -9,8 +9,8 @@ import { usePathname } from 'next/navigation';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { IoEnterOutline } from 'react-icons/io5';
 
+import IrminUserButton from '@/components/authentication/IrminUserButton';
 import Button from '@/components/ui/button';
-import ProfileImagePlaceholder from '@/components/ui/ProfileImagePlaceholder';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
 import { useIAM } from '@/context/IAMContext';
@@ -209,32 +209,11 @@ export default function WebsiteNavigationContent({
               <div className='flex items-center justify-end pr-14 md:hidden'>
                 <ThemeSwitch />
               </div>
-              <div className='hidden flex-row items-center justify-end gap-2 md:flex lg:gap-4'>
-                {!isLoading &&
-                  (profile ? (
+              {!isLoading && (
+                <div className='hidden flex-row items-center justify-end gap-2 md:flex lg:gap-4'>
+                  {profile ? (
                     <>
-                      <Link
-                        href='/console/profile'
-                        className='flex max-w-44 flex-row items-center gap-2 overflow-hidden pr-4 transition-all hover:opacity-40 lg:max-w-56'
-                      >
-                        {profile.profile_picture ? (
-                          <Image
-                            src={profile.profile_picture}
-                            alt={profile.name ?? ''}
-                            width={50}
-                            height={50}
-                            className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
-                          />
-                        ) : (
-                          <ProfileImagePlaceholder
-                            user={profile}
-                            className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
-                          />
-                        )}
-                        <p className='text-xs font-normal lg:text-sm'>
-                          {profile.name ?? ''}
-                        </p>
-                      </Link>
+                      <IrminUserButton />
                       <Button
                         size={'lg'}
                         href='/console'
@@ -255,7 +234,7 @@ export default function WebsiteNavigationContent({
                         href='/sign-in'
                         onClick={closeMenu}
                       >
-                        {dict.auth.signIn.signIn}
+                        {dict.website.navigation.signIn}
                       </Button>
                       <Button
                         size='lg'
@@ -269,8 +248,9 @@ export default function WebsiteNavigationContent({
                         {dict.website.navigation.getStarted}
                       </Button>
                     </>
-                  ))}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           </nav>
         </div>
@@ -316,9 +296,9 @@ export default function WebsiteNavigationContent({
                   />
                 ))}
               </ul>
-              <div className='mt-auto flex flex-col'>
-                {!isLoading &&
-                  (!profile ? (
+              {!isLoading && (
+                <div className='mt-auto flex flex-col'>
+                  {profile ? (
                     <Button
                       href='/console'
                       variant='gradient'
@@ -338,7 +318,7 @@ export default function WebsiteNavigationContent({
                         className='w-full'
                         size={'lg'}
                       >
-                        {dict.auth.signIn.signIn}
+                        {dict.website.navigation.signIn}
                       </Button>
                       <Button
                         href='/sign-up'
@@ -351,33 +331,14 @@ export default function WebsiteNavigationContent({
                         {dict.website.navigation.getStarted}
                       </Button>
                     </div>
-                  ))}
-
-                {!isLoading && profile && (
-                  <Link
-                    href='/console/profile'
-                    className='mt-6 flex w-full flex-row items-center justify-center gap-2 overflow-hidden transition-all hover:opacity-40'
-                  >
-                    {profile.profile_picture ? (
-                      <Image
-                        src={profile.profile_picture}
-                        alt={profile.name ?? ''}
-                        width={50}
-                        height={50}
-                        className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
-                      />
-                    ) : (
-                      <ProfileImagePlaceholder
-                        user={profile}
-                        className='h-8 w-8 rounded-full xl:h-10 xl:w-10'
-                      />
-                    )}
-                    <p className='text-xs font-normal lg:text-sm'>
-                      {profile.name ?? ''}
-                    </p>
-                  </Link>
-                )}
-              </div>
+                  )}
+                  {profile && (
+                    <div className='mt-6 flex w-full flex-row items-center justify-center gap-2'>
+                      <IrminUserButton />
+                    </div>
+                  )}
+                </div>
+              )}
             </nav>
           </div>
         </div>

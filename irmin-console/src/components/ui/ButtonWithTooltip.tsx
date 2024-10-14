@@ -20,7 +20,7 @@ const ButtonWithTooltip = React.forwardRef<
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger>
+        <TooltipTrigger asChild>
           <Button ref={ref} {...props}>
             {children}
           </Button>

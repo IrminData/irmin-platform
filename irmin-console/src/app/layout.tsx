@@ -4,6 +4,7 @@ import { Big_Shoulders_Display, Inter } from 'next/font/google';
 
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 import '@/styles/globals.scss';
+import { ClerkProvider } from '@clerk/nextjs';
 import 'react-datasheet-grid/dist/style.css';
 
 import { IAMProvider } from '@/context/IAMContext';
@@ -50,24 +51,26 @@ export default function RootLayout({
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
 
   return (
-    <html suppressHydrationWarning>
-      <head />
-      <body
-        className={`${inter.variable} ${bigShouldersDisplay.variable} scrollbar-hide`}
-      >
-        <LocaleProvider>
-          <IAMProvider locale={lang}>
-            <ThemeProvider
-              attribute='class'
-              defaultTheme='system'
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-            </ThemeProvider>
-          </IAMProvider>
-        </LocaleProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html suppressHydrationWarning>
+        <head />
+        <body
+          className={`${inter.variable} ${bigShouldersDisplay.variable} scrollbar-hide`}
+        >
+          <LocaleProvider>
+            <IAMProvider locale={lang}>
+              <ThemeProvider
+                attribute='class'
+                defaultTheme='system'
+                enableSystem
+                disableTransitionOnChange
+              >
+                {children}
+              </ThemeProvider>
+            </IAMProvider>
+          </LocaleProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

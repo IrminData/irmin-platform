@@ -5,13 +5,14 @@ import { useCallback } from 'react';
 import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
+import { User } from '@/types/core/User';
 import {
   ActionWorkflow,
   ExportWorkflow,
   ImportWorkflow,
   Workflow,
 } from '@/types/core/Workflow';
-import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
+import { Workspace } from '@/types/core/Workspace';
 import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
 
 /**
@@ -306,7 +307,7 @@ export const useReassignWorkflow = (
   setExports: (exports: ExportWorkflow[]) => void
 ) =>
   useCallback(
-    async (workflowId: string, newOwner: WorkspaceUser) => {
+    async (workflowId: string, newOwner: User) => {
       // Reassign the workflow using the workflow service
       const { workflowService } = new IrminCore(locale);
       const res = await workflowService.reassignWorkflow(workflowId, newOwner);

@@ -3,7 +3,7 @@ import IrminCore from '@/services/core/IrminCore';
 import fake from '@/utils/prepareFakeResponse';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { Profile } from '@/types/core/Profile';
+import { User } from '@/types/core/User';
 import { exampleProfile } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -14,7 +14,7 @@ const isDevelopment =
  * Profile API response type
  */
 interface ProfileAPIResponse extends IrminAPIResponse {
-  data: Profile;
+  data: User;
 }
 
 /**
@@ -29,8 +29,6 @@ class ProfileService {
     this.irminCore = irminCore;
     // Bind methods
     this.getProfile = this.getProfile.bind(this);
-    this.regenerateToken = this.regenerateToken.bind(this);
-    this.updateProfile = this.updateProfile.bind(this);
   }
 
   /**
@@ -56,51 +54,6 @@ class ProfileService {
       // Ignore any other errors if in development mode
       if (isDevelopment) return fake(exampleProfile) as ProfileAPIResponse;
       // Otherwise, throw the error
-      throw error;
-    }
-  }
-
-  /**
-   * Regenerate the user's API token
-   */
-  async regenerateToken() {
-    if (isOfflineMode) return fake();
-    try {
-      const response = await this.irminCore.fetch(`/v1/regenerate-token`, {
-        method: 'POST',
-      });
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Regenerate token error');
-      if (isDevelopment) return fake();
-      throw error;
-    }
-  }
-
-  /**
-   * Update the user's profile information
-   *
-   * @param name - The user's name
-   * @param company - The user's company
-   * @param email - The user's email address
-   */
-  async updateProfile(name: string, company: string, email: string) {
-    if (isOfflineMode) return fake();
-    try {
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('company', company);
-      formData.append('email', email);
-      formData.append('_method', 'PATCH');
-
-      const response = await this.irminCore.fetch(`/v1/account/profile`, {
-        method: 'POST',
-        body: formData,
-      });
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Update profile error');
-      if (isDevelopment) return fake();
       throw error;
     }
   }

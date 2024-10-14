@@ -18,21 +18,32 @@ Ensure you have the following installed:
 Create a `.env` file in the project root. Add the following environment variables:
 
 ```text
+# Basic settings
 NEXT_PUBLIC_BASE_URL=https://irmin.dev  # Base URL of the application
 NEXT_PUBLIC_ENVIRONMENT_TYPE=development  # Environment type. Can be development, staging or production.
 
+# API and CMS URLs
 NEXT_PUBLIC_API_URL=https://api.irmin.dev  # API endpoint URL
 NEXT_PUBLIC_WORDPRESS_URL=https://cms.irmin.dev  # WordPress CMS URL
 
+# Authentication
 NEXT_PUBLIC_TOKEN_MAX_AGE=1800 # 30 minutes, how long are the token and profile data valid, before they are refetched
 
+# Environment authentication requirements (eg. password protection for staging)
 REQUIRE_ENV_AUTH=true  # Enable environment-specific authentication
 ENV_PASSWORD=devpassword  # Password for environment authentication
 
+# Offline mode
+NEXT_PUBLIC_OFFLINE_MODE=false  # Toggle offline mode for the Irmin API
+NEXT_PUBLIC_AUTH_OFFLINE_MODE=false # Toggle offline mode for authentication eg. Clerk
+NEXT_PUBLIC_CMS_OFFLINE_MODE=false  # Toggle offline mode for the Irmin CMS
+
+# Sentry
 SENTRY_AUTH_TOKEN=sntryu_xxxxx  # Sentry token for error tracking
 
-NEXT_PUBLIC_OFFLINE_MODE=false  # Toggle offline mode for the Irmin API
-NEXT_PUBLIC_CMS_OFFLINE_MODE=false  # Toggle offline mode for the Irmin CMS
+# Clerk
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+CLERK_SECRET_KEY=YOUR_SECRET_KEY
 
 # Environmant variables for testing
 

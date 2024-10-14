@@ -13,14 +13,14 @@ import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
 import { IrminRole } from '@/types/core/IrminRole';
-import { WorkspaceUser } from '@/types/core/Workspace';
+import { User } from '@/types/core/User';
 
 import LoadingSkeleton from '../ui/loading/LoadingSkeleton';
 import WorkspaceSendInviteModalContent from './WorkspaceSendInviteModalContent';
 
 type WorkspaceUsersAndPermissionsUser = {
   inviteId?: string;
-} & WorkspaceUser;
+} & User;
 
 /**
  * Workspace Users and Invites section component

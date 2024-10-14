@@ -5,7 +5,8 @@ import { useState } from 'react';
 import { Locale } from '@/dictionaries';
 
 import { IrminRole } from '@/types/core/IrminRole';
-import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
+import { User } from '@/types/core/User';
+import { Workspace } from '@/types/core/Workspace';
 
 import {
   useChangeUserRole,
@@ -28,7 +29,7 @@ const useUsersAndRoles = ({
   const [irminRoles, setIrminRoles] = useState<IrminRole[]>([]);
 
   // Users
-  const [users, setUsers] = useState<WorkspaceUser[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersFetchedFor, setUsersFetchedFor] = useState<string | null>(null);
 

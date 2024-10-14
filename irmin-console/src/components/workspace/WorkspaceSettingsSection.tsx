@@ -44,10 +44,7 @@ const WorkspaceSettingsSection = () => {
         await fetchWorkspaces();
 
         // Show success message
-        irminAlert(
-          'success',
-          res.message ?? dict.workspace.workspaceUpdatedSuccessfully
-        );
+        irminAlert('success', res.message ?? 'Workspace updated successfully.');
       } catch (error) {
         console.error('Failed to update workspace:', error);
         irminAlert(
@@ -57,7 +54,7 @@ const WorkspaceSettingsSection = () => {
         );
       }
     },
-    [currentWorkspace, updateWorkspace, fetchWorkspaces, irminAlert, dict]
+    [currentWorkspace, updateWorkspace, fetchWorkspaces, irminAlert]
   );
 
   const handleDeleteWorkspace = useCallback(() => {
@@ -66,10 +63,7 @@ const WorkspaceSettingsSection = () => {
     const handleDelete = async () => {
       try {
         const res = await deleteCurrentWorkspace();
-        irminAlert(
-          'success',
-          res.message ?? dict.workspace.workspaceDeletedSuccessfully
-        );
+        irminAlert('success', res.message ?? 'Workspace deleted successfully.');
       } catch (error) {
         console.error('Failed to delete workspace:', error);
         const errorMessage = (error as Error)?.message ?? '';

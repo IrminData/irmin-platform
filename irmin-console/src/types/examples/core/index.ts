@@ -26,7 +26,7 @@ import { files } from './files';
 import { folders } from './folders';
 import { invites } from './invites';
 import { logEvents, workflowRunLogs } from './logs';
-import { profile } from './profile';
+import { clerkUser, profile } from './profile';
 import { queries, queryExecutionResult } from './queries';
 import { repositories } from './repositories';
 import { roles } from './roles';
@@ -79,6 +79,11 @@ export const exampleWorkspaces = workspaces();
  * Fake profile {@link profile}
  */
 export const exampleProfile = profile();
+
+/**
+ * Fake Clerk user object {@link clerkUser}
+ */
+export const exampleClerkUser = clerkUser;
 
 /**
  * Fake invites {@link invites}

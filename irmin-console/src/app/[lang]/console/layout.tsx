@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 
-import ProtectedRouteWrapper from '@/components/authentication/ProtectedRouteWrapper';
 import ConsoleWrapper from '@/components/console/ConsoleWrapper';
 
 import { PopupProvider } from '@/context/PopupContext';
@@ -18,16 +17,13 @@ export const metadata: Metadata = {
 /**
  * Console layout
  *
- * @remarks
  * This layout is used for all pages within the Irmin console.
  *
- * It includes:
  * - Popup provider, for showing popups
  * - Workspace provider, for managing the workspace
  * - Console navigation, to wrap the page content with the console navigation
- * - Protected route, to ensure the user is authenticated when accessing the console
  *
- * Console pages everything thas is within the `src/[lang]/console` directory
+ * Console pages are everything that is within the `/src/app/[lang]/console` directory
  *
  * @param props - Layout properties
  * @param props.children - Page content
@@ -44,9 +40,7 @@ export default function ConsoleLayout({
   return (
     <PopupProvider>
       <WorkspaceProvider locale={lang}>
-        <ConsoleWrapper>
-          <ProtectedRouteWrapper>{children}</ProtectedRouteWrapper>
-        </ConsoleWrapper>
+        <ConsoleWrapper>{children}</ConsoleWrapper>
       </WorkspaceProvider>
     </PopupProvider>
   );

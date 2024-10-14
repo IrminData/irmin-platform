@@ -14,46 +14,28 @@ import { useRouter } from 'next/navigation';
 
 import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
+import { useAuth, useUser } from '@clerk/nextjs';
 
-import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { setCookie } from '@/utils/cookie';
 
-import { Profile } from '@/types/core/Profile';
+import { User } from '@/types/core/User';
+import { exampleProfile } from '@/types/examples/core';
+
+// We need to ignore and simulate clerk in offline mode
+const authOfflineMode = process.env.NEXT_PUBLIC_AUTH_OFFLINE_MODE === 'true';
 
 const IAMContext = createContext<{
-  profile: Profile | null;
-  token: string | null;
+  profile: User | undefined;
+  token: string | undefined;
   isLoading: boolean;
-  fetchProfile: (_forceFetch: boolean) => void;
-  updateProfile: (_name: string, _company: string, _email: string) => void;
-  login: (
-    _email: string,
-    _password: string,
-    _setSuccess: React.Dispatch<React.SetStateAction<string | null>>,
-    _setError: React.Dispatch<React.SetStateAction<string | null>>
-  ) => void;
-  register: (
-    _name: string,
-    _company: string,
-    _email: string,
-    _emailConfirmation: string,
-    _password: string,
-    _passwordConfirmation: string,
-    _setSuccess: React.Dispatch<React.SetStateAction<string | null>>,
-    _setError: React.Dispatch<React.SetStateAction<string | null>>
-  ) => void;
-  logout: () => void;
+  signOut: () => Promise<boolean>;
 }>({
-  profile: null,
-  token: null,
-  isLoading: true,
-  fetchProfile: () => {},
-  updateProfile: () => {},
-  login: () => {},
-  register: () => {},
-  logout: () => {},
+  profile: undefined,
+  token: undefined,
+  isLoading: false,
+  signOut: () => Promise.resolve(false),
 });
 
 /**
@@ -75,224 +57,138 @@ export const IAMProvider = ({
   children: React.ReactNode;
   locale: Locale;
 }) => {
-  const { dict } = useLocale();
-  const { irminAlert } = usePopup();
   const router = useRouter();
+  const { irminAlert } = usePopup();
 
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const { isSignedIn, user, isLoaded: clerkIsLoading } = useUser();
+  const { sessionId, signOut: clerkSignOut, getToken } = useAuth();
 
-  // Loading state, used only for the UI. Don't prevent IAM loads with this
-  const [isLoading, setIsLoading] = useState(true);
-  const initialisedRef = useRef(false);
+  const [profile, setProfile] = useState<User | undefined>();
+  const [profileLoading, setProfileLoading] = useState(true);
 
-  // Profile's API token and timestamp
-  const [token, setToken] = useState<string | null>(null);
-  const [tokenTimestamp, setTokenTimestamp] = useState<string | null>(null);
+  // Session ID which the profile has been initialised for
+  const initialiseForRef = useRef<string | undefined>();
 
-  const { profileService, authService } = useMemo(
-    () => new IrminCore(locale),
-    [locale]
-  );
+  // Ref to avoid calling sign out while it's in progress
+  const signingOut = useRef(false);
+
+  // Clerk token
+  const [token, setToken] = useState<string | undefined>();
 
   /**
-   * Fetch the profile data from the API and set the profile state accordingly
-   * using the {@link IrminCore}
+   * Function to get and set the user's token from Clerk
    */
-  const fetchProfile = useCallback(async () => {
+  const getUserToken = useCallback(async () => {
+    // If we are in offline mode, just simulate the token
+    if (authOfflineMode) {
+      setToken('offline-token');
+      setCookie('token', 'offline-token', 7);
+      return 'offline-token';
+    }
+    // Get the token from Clerk
     try {
-      setIsLoading(true);
-      // Regenerate the token
-      try {
-        await profileService.regenerateToken();
-      } catch (error) {
-        console.error('Error regenerating token:', error);
-      }
-      // Fetch the profile data
+      const newToken = await getToken();
+      setToken(newToken ?? undefined);
+      setCookie('token', newToken ?? '', 7);
+      return newToken ?? undefined;
+    } catch (e) {
+      console.error('Failed to get token in IAMContext', e);
+      setToken(undefined);
+      setCookie('token', '', -1);
+      return undefined;
+    }
+  }, [getToken]);
+
+  // Function to reset the IAM state in case of errors, sign out, etc.
+  const resetIAMState = useCallback(() => {
+    setProfile(undefined);
+    setToken(undefined);
+    setCookie('token', '', -1);
+    initialiseForRef.current = undefined;
+  }, []);
+
+  /**
+   * Function to fetch the Irmin profile and update the IAM context
+   */
+  const fetchIrminProfile = useCallback(async () => {
+    // If we are in offline mode, just set the example profile infomation
+    if (authOfflineMode) {
+      await getUserToken();
+      setProfile(exampleProfile);
+      setProfileLoading(false);
+      return;
+    }
+    try {
+      // Check if clerk is loaded and user is signed in
+      if (!isSignedIn || !user || !sessionId) return;
+      initialiseForRef.current = sessionId;
+      setProfileLoading(true);
+      // Get the token and init the profile service
+      const newToken = await getUserToken();
+      const { profileService } = new IrminCore(locale, newToken);
+      // Fetch the Irmin profile data
       const res = await profileService.getProfile();
-      if (res) {
-        // Update the profile's API token and timestamp if they exist
-        if (res.data.api_token) {
-          setToken(res.data.api_token ?? null);
-          setTokenTimestamp(Date.now().toString());
-        } else {
-          setToken(null);
-          setTokenTimestamp(null);
-        }
-        // Set cookies
-        setCookie(
-          'profile',
-          JSON.stringify({
-            name: res.data.name,
-            company: res.data.company,
-            email: res.data.email,
-            profile_picture: res.data.profile_picture,
-          }),
-          1
-        );
-
-        // Update the profile state
-        setProfile(res.data);
-      } else {
+      if (!res) {
         // If no profile data is returned, reset the IAM state
-        setToken(null);
-        setTokenTimestamp(null);
-        setProfile(null);
+        resetIAMState();
+        return;
       }
+      // Update the profile state
+      setProfile({
+        ...res.data,
+        user,
+      });
     } catch (error) {
-      // If error encountered, reset the IAM state
-      setToken(null);
-      setTokenTimestamp(null);
-      setProfile(null);
+      console.error('Error fetching Irmin profile in IAMContext:', error);
+      resetIAMState();
     } finally {
-      setIsLoading(false);
+      setProfileLoading(false);
     }
-  }, [profileService]);
+  }, [isSignedIn, locale, user, sessionId, getUserToken, resetIAMState]);
 
   /**
-   * Update the user profile data and refetch the profile data on success.
-   * Shows an alert on success or error.
+   * Function to sign the user out of Irmin and clean up the IAM context state
    */
-  const updateProfile = useCallback(
-    async (name: string, company: string, email: string) => {
-      try {
-        setIsLoading(true);
-        const res = await profileService.updateProfile(name, company, email);
-        irminAlert(
-          'success',
-          res.message ?? dict.profile.profileUpdatedSuccessfully
-        );
-        await fetchProfile();
-      } catch (error) {
-        console.error('Error updating profile:', error);
-        irminAlert(
-          'error',
-          (error as Error).message ?? 'Failed to update profile'
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [profileService, fetchProfile, irminAlert, dict]
-  );
-
-  /**
-   * Logout the user and refetch the profile data.
-   * Shows an alert on success or error.
-   */
-  const logout = useCallback(async () => {
+  const signOut = useCallback(async () => {
+    if (signingOut.current) return false;
     try {
-      setIsLoading(true);
-      // Handle logout
-      const res = await authService.logout();
-      // Reset cookies
-      setCookie('profile', '', -1);
-      setCookie('workspaces', '', -1);
-      // Show success message if logout was successful
-      irminAlert(
-        'success',
-        res.message ?? "You've been signed out successfully"
-      );
-      // Refetch the profile data
-      await fetchProfile();
-      // Redirect of unauthorised users is handled by the ProtectedRouteWrapper component
+      signingOut.current = true;
+      // Don't do anything if not signed in to begin with
+      if (!isSignedIn) return false;
+      // Call Clerk's sign out method to sign the user out
+      await clerkSignOut();
+      return true;
     } catch (error) {
-      console.error('Error logging out user:', error);
-      irminAlert('error', (error as Error).message ?? 'Failed to sign out');
+      console.error('Error signing out in IAMContext:', error);
+      irminAlert(
+        'error',
+        (error as Error).message ?? 'Failed to update profile'
+      );
+      return false;
     } finally {
-      setIsLoading(false);
+      // Reset the IAMContext
+      resetIAMState();
+      // Redirect to the sign in page
+      router.replace('/sign-in');
+      signingOut.current = false;
     }
-  }, [authService, irminAlert, fetchProfile]);
+  }, [clerkSignOut, resetIAMState, irminAlert, isSignedIn, router]);
 
   /**
-   * Login the user and refetch the profile data
-   */
-  const login = useCallback(
-    async (
-      email: string,
-      password: string,
-      setSuccess: React.Dispatch<React.SetStateAction<string | null>>,
-      setError: React.Dispatch<React.SetStateAction<string | null>>
-    ) => {
-      try {
-        setError(null);
-        setIsLoading(true);
-        const res = await authService.login(email, password);
-        setSuccess(res.message ?? 'Signed in successfully');
-        // Refetch the profile data
-        await fetchProfile();
-        // Redirect to the console
-        router.push('/console/manage-workspaces');
-      } catch (error) {
-        const message = (error as Error).message ?? 'Failed to sign in';
-        setError(message);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [authService, fetchProfile, router]
-  );
-
-  /**
-   * Register the user and refetch the profile data
-   */
-  const register = useCallback(
-    async (
-      name: string,
-      company: string,
-      email: string,
-      emailConfirmation: string,
-      password: string,
-      passwordConfirmation: string,
-      setSuccess: React.Dispatch<React.SetStateAction<string | null>>,
-      setError: React.Dispatch<React.SetStateAction<string | null>>
-    ) => {
-      try {
-        setError(null);
-        setIsLoading(true);
-        const res = await authService.register(
-          name,
-          company,
-          email,
-          emailConfirmation,
-          password,
-          passwordConfirmation
-        );
-        setSuccess(res.message ?? 'Registered successfully');
-        // Refetch the profile data
-        await fetchProfile();
-        // Redirect to the console
-        router.push('/console/manage-workspaces');
-      } catch (error) {
-        const message = (error as Error).message ?? 'Failed to sign up';
-        setError(message);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [authService, fetchProfile, router]
-  );
-
-  /**
-   * Fetch the profile data on component mount only
+   * Fetch the Irmin profile data on component mount and on Clerk user change
    */
   useEffect(() => {
-    // Do not initialise if the component is already initialised
-    if (initialisedRef.current) return;
-    initialisedRef.current = true;
-    fetchProfile();
-  }, [fetchProfile]);
+    // Make sure that we are not fetching the profile data for the same user
+    if (initialiseForRef.current === sessionId) return;
+    // Fetch the Irmin profile data
+    fetchIrminProfile();
+  }, [sessionId, fetchIrminProfile]);
 
-  /**
-   * Refetch token and profile data if they are older than NEXT_PUBLIC_TOKEN_MAX_AGE
-   */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Do not run if the component is not initialised
-      if (!initialisedRef.current) return;
-    }, 60000); // Check every minute
-
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, [token, tokenTimestamp, fetchProfile]);
+  // Combined IAM context loading state for Clerk and other fetches
+  const isLoading = useMemo(
+    () => profileLoading || (!authOfflineMode && !clerkIsLoading),
+    [clerkIsLoading, profileLoading]
+  );
 
   return (
     <IAMContext.Provider
@@ -300,11 +196,7 @@ export const IAMProvider = ({
         profile,
         token,
         isLoading,
-        fetchProfile,
-        updateProfile,
-        login,
-        register,
-        logout,
+        signOut,
       }}
     >
       {children}

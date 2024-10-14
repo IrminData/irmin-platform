@@ -1,4 +1,4 @@
-import { WorkspaceUser } from '@/types/core/Workspace';
+import { User } from '@/types/core/User';
 
 /**
  * Repository type
@@ -26,7 +26,7 @@ export interface Repository {
   documentation: string;
   is_immutable: boolean;
   default_branch: string;
-  owner: WorkspaceUser;
+  owner: User;
   created_at: string;
   updated_at: string;
 }

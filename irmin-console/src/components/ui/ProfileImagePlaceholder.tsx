@@ -1,25 +1,34 @@
-import { WorkspaceUser } from '@/types/core/Workspace';
+import { User } from '@/types/core/User';
 
+const getInitials = (name: string) => {
+  const initials = name
+    .split(' ')
+    .map((n) => n[0])
+    .join('');
+  return initials.toUpperCase();
+};
+
+/**
+ * Placeholder for profile image when user has no profile picture.
+ * Shows a circle with user's initials
+ *
+ * @param props - The component props
+ * @param props.user - User object
+ * @param props.className - Additional classes
+ */
 const ProfileImagePlaceholder = ({
   user,
   className = '',
 }: {
-  user: WorkspaceUser;
+  user?: User;
   className?: string;
 }) => {
-  const getInitials = (name: string) => {
-    const initials = name
-      .split(' ')
-      .map((n) => n[0])
-      .join('');
-    return initials.toUpperCase();
-  };
   return (
     <div
       className={`relative inline-flex items-center justify-center overflow-hidden rounded-full bg-accent/20 font-medium text-accent ${className ? className : 'h-10 w-10'}`}
       id='profile-image-placeholder'
     >
-      <span>{getInitials(user.name)}</span>
+      <span>{getInitials(user?.name ?? 'Unknown User')}</span>
     </div>
   );
 };

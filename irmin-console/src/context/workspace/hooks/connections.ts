@@ -6,7 +6,8 @@ import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
 import { Connection } from '@/types/core/Connection';
-import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
+import { User } from '@/types/core/User';
+import { Workspace } from '@/types/core/Workspace';
 
 /**
  * Hook to fetch and update context for Connections of the current workspace using the {@link IrminCore}.
@@ -117,7 +118,7 @@ export const useReassignConnection = (
   locale: Locale
 ) =>
   useCallback(
-    async (connection: string, newOwner: WorkspaceUser) => {
+    async (connection: string, newOwner: User) => {
       // Reassign the connection
       const { connectionService } = new IrminCore(locale);
       const res = await connectionService.reassignConnection(

@@ -6,7 +6,8 @@ import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
 import { IrminRole, IrminRoleNames } from '@/types/core/IrminRole';
-import { Workspace, WorkspaceUser } from '@/types/core/Workspace';
+import { User } from '@/types/core/User';
+import { Workspace } from '@/types/core/Workspace';
 
 /**
  * Hook to fetch the list of roles available on Irmin using the {@link IrminCore}.
@@ -34,7 +35,7 @@ export const useFetchRoles = (
  */
 export const useFetchUsers = (
   currentWorkspace: Workspace | null,
-  setUsers: React.Dispatch<React.SetStateAction<WorkspaceUser[]>>,
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>,
   loading: boolean,
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
@@ -82,8 +83,8 @@ export const useFetchUsers = (
  * Hook to delete a workspace user using the {@link IrminCore}.
  */
 export const useDeleteUser = (
-  users: WorkspaceUser[],
-  setUsers: React.Dispatch<React.SetStateAction<WorkspaceUser[]>>,
+  users: User[],
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>,
   locale: Locale
 ) =>
   useCallback(
@@ -104,8 +105,8 @@ export const useDeleteUser = (
  * Hook to change a user's role in the workspace using the {@link IrminCore}.
  */
 export const useChangeUserRole = (
-  users: WorkspaceUser[],
-  setUsers: React.Dispatch<React.SetStateAction<WorkspaceUser[]>>,
+  users: User[],
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>,
   locale: Locale
 ) =>
   useCallback(

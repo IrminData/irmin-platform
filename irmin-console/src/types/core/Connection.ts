@@ -1,5 +1,5 @@
 import { Connector } from '@/types/core/Connector';
-import { WorkspaceUser } from '@/types/core/Workspace';
+import { User } from '@/types/core/User';
 
 /**
  * Connection object - used to store information on data sources and destinations
@@ -18,7 +18,7 @@ import { WorkspaceUser } from '@/types/core/Workspace';
 export interface Connection {
   id: string;
   name: string;
-  owner: WorkspaceUser;
+  owner: User;
   description: string;
   documentation: string;
   details: string;
