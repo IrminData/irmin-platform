@@ -600,11 +600,11 @@ const fi = {
     transferOwnershipConfirmation:
       'Oletko varma, että haluat siirtää omistajuuden?',
     usersAndPermissions: 'Käyttäjät ja oikeudet',
+    invites: 'Kutsut työtilaan',
     inviteUser: 'Kutsu käyttäjä',
     name: 'Nimi',
     email: 'Sähköposti',
     role: 'Rooli',
-    invited: 'Kutsuttu',
     owner: 'Omistaja',
     noRole: 'Ei roolia',
     transferOwnership: 'Siirrä omistajuus',
@@ -617,6 +617,7 @@ const fi = {
   workspace: {
     general: 'Yleiset',
     users: 'Käyttäjät',
+    invites: 'Kutsut',
     billing: 'Laskutus',
     confirmDeletion: 'Vahvista poistaminen',
     deletionWarning:

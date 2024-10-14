@@ -223,23 +223,25 @@ export function useConsoleSearchItems() {
         type: ConsoleSearchItemType.Irmin,
       });
 
-      // Add users and invites
+      // Add users
       users.forEach((user) => {
         const roleString =
           user.roles?.flatMap((role) => role.label).join(', ') ?? '';
         newItems.push({
           title: user.name,
           description: `${user.email}${user.company ? ` - ${user.company}` : ''} - ${roleString}`,
-          link: `/${params.lang}/console/${params.workspace}/settings`,
+          link: `/${params.lang}/console/${params.workspace}/settings/users`,
           type: ConsoleSearchItemType.User,
         });
       });
+
+      // Add invites
       invites.forEach((invite) => {
         const roleString = invite.role.label;
         newItems.push({
           title: invite.name,
-          description: `${invite.email}  - ${roleString} - ${dict.usersPermissions.invited}`,
-          link: `/${params.lang}/console/${params.workspace}/settings`,
+          description: `${invite.email}  - ${roleString} - ${dict.usersPermissions.invite}`,
+          link: `/${params.lang}/console/${params.workspace}/settings/invites`,
           type: ConsoleSearchItemType.User,
         });
       });

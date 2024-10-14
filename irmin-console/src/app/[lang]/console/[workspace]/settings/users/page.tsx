@@ -1,8 +1,8 @@
-import WorkspaceUsersAndInvitesSection from '@/components/workspace/WorkspaceUsersAndInvitesSection';
+import WorkspaceUsersSection from '@/components/workspace/WorkspaceUsersSection';
 
 /**
- * Console Workspace users and invites page
+ * Console Workspace users page
  */
-export default function WorkspaceUsersAndInvitesPage() {
-  return <WorkspaceUsersAndInvitesSection />;
+export default function WorkspaceUsersPage() {
+  return <WorkspaceUsersSection />;
 }

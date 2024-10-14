@@ -596,11 +596,11 @@ const en = {
     transferOwnershipConfirmation:
       'Are you sure you want to transfer ownership?',
     usersAndPermissions: 'Users & Permissions',
+    invites: 'Invites to the workspace',
     inviteUser: 'Invite a User',
     name: 'Name',
     email: 'Email',
     role: 'Role',
-    invited: 'Invited',
     owner: 'Owner',
     noRole: 'No role',
     transferOwnership: 'Transfer ownership',
@@ -613,6 +613,7 @@ const en = {
   workspace: {
     general: 'General',
     users: 'Users',
+    invites: 'Invites',
     billing: 'Billing',
     confirmDeletion: 'Confirm Deletion',
     deletionWarning:

@@ -29,10 +29,7 @@ COPY ./sentry.client.config.ts ./sentry.edge.config.ts ./sentry.server.config.ts
 COPY ./postcss.config.js ./tailwind.config.ts ./
 
 # Build the application
-RUN \
-    if [ -f yarn.lock ]; then yarn build; \
-    else echo "Lockfile not found." && exit 1; \
-    fi
+RUN yarn build
 
 # Production image, copy all the files and run next
 FROM base AS runner

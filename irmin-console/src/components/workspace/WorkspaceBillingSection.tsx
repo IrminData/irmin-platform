@@ -11,7 +11,7 @@ import { useLocale } from '@/context/LocaleContext';
  *
  * @todo Currently Billing is not implemented, thus it only shows a contact us button.
  */
-const WorkspaceBillingSettingsSection = () => {
+const WorkspaceBillingSection = () => {
   const { dict } = useLocale();
 
   return (
@@ -25,12 +25,7 @@ const WorkspaceBillingSettingsSection = () => {
             <p className='mb-8 font-normal text-gray-500'>
               {dict.workspace.billingNote}
             </p>
-            <Button
-              href={'/contact'}
-              size='sm'
-              variant='outline'
-              className='w-48'
-            >
+            <Button href={'/contact'} size='sm' className='w-48'>
               {dict.workspace.contactUs}
             </Button>
           </div>
@@ -40,4 +35,4 @@ const WorkspaceBillingSettingsSection = () => {
   );
 };
 
-export default WorkspaceBillingSettingsSection;
+export default WorkspaceBillingSection;
