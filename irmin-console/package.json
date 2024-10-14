@@ -75,7 +75,7 @@
     "prettier-plugin-tailwindcss": "^0.6.8",
     "sass": "^1.79.4",
     "tailwindcss": "^3.4.13",
-    "typedoc": "^0.26.8",
+    "typedoc": "^0.26.9",
     "typedoc-plugin-missing-exports": "^3.0.0",
     "typescript": "5.6.3"
   },
