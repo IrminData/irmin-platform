@@ -81,6 +81,9 @@ export default clerkMiddleware((auth, req) => {
   const { pathname } = req.nextUrl;
   const { cookies } = req;
 
+  // If accessing /api routes, skip the rest of the middleware
+  if (pathname.startsWith('/api')) return NextResponse.next();
+
   const isTsDocsPath =
     pathname.startsWith('/frontend-docs') || pathname.startsWith('/tsdocs');
 
@@ -91,9 +94,6 @@ export default clerkMiddleware((auth, req) => {
       return NextResponse.redirect(new URL('/api/verify-dev-access', req.url));
     }
   }
-
-  // If accessing /api routes, skip the rest of the middleware
-  if (pathname.startsWith('/api')) return NextResponse.next();
 
   // If accessing TSDoc paths, skip the rest of the middleware, but handle redirects
   if (isTsDocsPath) {
