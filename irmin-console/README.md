@@ -87,6 +87,13 @@ docker build -t irmin-frontend .
 docker run -p 3000:3000 irmin-frontend
 ```
 
+Creating Docker image:
+
+```bash
+docker buildx create --use # Verify Buildx is active: docker buildx ls
+docker buildx build --platform linux/amd64/v2,linux/arm64/v8 -t YOUR_DOCKER_USERNAME/irmin-frontend:latest --push .
+```
+
 ## Yarn v2 Migration Guide
 
 If you are migrating from Yarn v1 to Yarn v2, please follow the official migration guide provided by Yarn: [Yarn v2 Migration Guide](https://yarnpkg.com/migration/guide).
