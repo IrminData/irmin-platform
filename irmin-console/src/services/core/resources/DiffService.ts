@@ -7,8 +7,7 @@ import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { diff } from '@/types/examples/core/diff';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment =
-  process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Comparison API response interface

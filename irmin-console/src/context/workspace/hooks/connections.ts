@@ -2,7 +2,6 @@
 
 import { useCallback } from 'react';
 
-import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
 import { Connection } from '@/types/core/Connection';
@@ -19,7 +18,7 @@ export const useFetchConnections = (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
   setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (forceFetch?: boolean) => {
@@ -34,14 +33,13 @@ export const useFetchConnections = (
       setLoading(true);
       try {
         // Get the workflow service
-        const { connectionService } = new IrminCore(locale);
         // If the current workspace is not set, clear the connections
         if (!currentWorkspace) {
           setConnections([]);
           return;
         }
         // Fetch the connections for the current workspace
-        const res = await connectionService.fetchConnections();
+        const res = await irminCore.connectionService.fetchConnections();
         setConnections(res.data);
       } finally {
         setLoading(false);
@@ -54,7 +52,7 @@ export const useFetchConnections = (
       setLoading,
       fetchedFor,
       setFetchedFor,
-      locale,
+      irminCore,
     ]
   );
 
@@ -64,13 +62,12 @@ export const useFetchConnections = (
 export const useUpdateConnection = (
   connections: Connection[],
   setConnections: React.Dispatch<React.SetStateAction<Connection[]>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (connection: string, updatedConnection: Connection) => {
       // Update the connection
-      const { connectionService } = new IrminCore(locale);
-      const res = await connectionService.updateConnection(
+      const res = await irminCore.connectionService.updateConnection(
         connection,
         updatedConnection
       );
@@ -82,7 +79,7 @@ export const useUpdateConnection = (
       // Return the res from the API
       return res;
     },
-    [connections, setConnections, locale]
+    [connections, setConnections, irminCore]
   );
 
 /**
@@ -91,13 +88,13 @@ export const useUpdateConnection = (
 export const useDeleteConnection = (
   connections: Connection[],
   setConnections: React.Dispatch<React.SetStateAction<Connection[]>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (connection: string) => {
       // Delete the connection
-      const { connectionService } = new IrminCore(locale);
-      const res = await connectionService.deleteConnection(connection);
+      const res =
+        await irminCore.connectionService.deleteConnection(connection);
       // Update the local state by removing the deleted connection
       const updateConnections = connections.filter(
         (conn) => conn.id !== connection
@@ -106,7 +103,7 @@ export const useDeleteConnection = (
       // Return the res from the API
       return res;
     },
-    [connections, setConnections, locale]
+    [connections, setConnections, irminCore]
   );
 
 /**
@@ -115,13 +112,12 @@ export const useDeleteConnection = (
 export const useReassignConnection = (
   connections: Connection[],
   setConnections: React.Dispatch<React.SetStateAction<Connection[]>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (connection: string, newOwner: User) => {
       // Reassign the connection
-      const { connectionService } = new IrminCore(locale);
-      const res = await connectionService.reassignConnection(
+      const res = await irminCore.connectionService.reassignConnection(
         connection,
         newOwner
       );
@@ -133,5 +129,5 @@ export const useReassignConnection = (
       // Return the res from the API
       return res;
     },
-    [connections, setConnections, locale]
+    [connections, setConnections, irminCore]
   );

@@ -6,6 +6,8 @@ import { Locale } from '@/dictionaries';
 
 import ConnectionLayoutWrapper from '@/components/connection/ConnectionLayoutWrapper';
 
+import { ConnectionProvider } from '@/context/ConnectionContext';
+
 import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
 
 /**
@@ -24,11 +26,10 @@ export type SingleConnectionLayoutParams = {
 /**
  * SEO metadata for the single connection pages layout
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: SingleConnectionLayoutParams;
+export async function generateMetadata(props: {
+  params: Promise<SingleConnectionLayoutParams>;
 }): Promise<Metadata> {
+  const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
     title: `Connection | ${formattedWorkspace} | IRMIN Console`,
@@ -38,20 +39,24 @@ export async function generateMetadata({
 /**
  * Layout for the single connection pages in the Console
  */
-export default function ConnectionPagesLayout({
-  children,
-  params,
-}: Readonly<{
-  children: React.ReactNode;
-  params: SingleConnectionLayoutParams;
-}>) {
+export default async function ConnectionPagesLayout(
+  props: Readonly<{
+    children: React.ReactNode;
+    params: SingleConnectionLayoutParams;
+  }>
+) {
+  const params = await props.params;
+
+  const { children } = props;
+
   const connection = params.connection;
   if (isInvalidRouteProp(connection)) {
     notFound();
   }
+
   return (
-    <ConnectionLayoutWrapper connectionID={connection}>
-      {children}
-    </ConnectionLayoutWrapper>
+    <ConnectionProvider connectionID={connection}>
+      <ConnectionLayoutWrapper>{children}</ConnectionLayoutWrapper>
+    </ConnectionProvider>
   );
 }

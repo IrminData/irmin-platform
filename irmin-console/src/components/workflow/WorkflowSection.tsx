@@ -4,11 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 
-import IrminCore from '@/services/core/IrminCore';
-
 import NormalList from '@/components/ui/list/NormalList';
 import StatusBadge from '@/components/ui/StatusBadge';
 
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
@@ -35,7 +34,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
   const [workflowRuns, setWorkflowRuns] = useState<WorkflowRun[]>([]);
   const [loadingWorkflowRuns, setLoadingWorkflowRuns] = useState(true);
 
-  const { workflowService } = useMemo(() => new IrminCore(locale), [locale]);
+  const { irminCore } = useIrminCore();
 
   // The base URL for the workspace, eg. /en/console/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -48,7 +47,9 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await workflowService.fetchRunsByWorkflow(workflow.id);
+        const res = await irminCore.workflowService.fetchRunsByWorkflow(
+          workflow.id
+        );
         setWorkflowRuns(res.data);
       } catch (error) {
         console.error('Error fetching workflow runs:', error);
@@ -56,7 +57,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
         setLoadingWorkflowRuns(false);
       }
     })();
-  }, [workflowService, workflow]);
+  }, [irminCore.workflowService, workflow]);
 
   const runRows: GridRow[] = useMemo(
     () =>

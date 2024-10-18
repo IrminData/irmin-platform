@@ -1,19 +1,12 @@
 'use client';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 
-import IrminCore from '@/services/core/IrminCore';
-
-import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { LogEvent, WorkflowRunLogs } from '@/types/core/Log';
+
+import { useIrminCore } from './IrminCoreContext';
 
 /**
  * Log context properties
@@ -44,7 +37,6 @@ const LogContext = createContext<LogContextProps | undefined>(undefined);
  */
 export const LogProvider = ({ children }: { children: React.ReactNode }) => {
   const { irminAlert } = usePopup();
-  const { locale } = useLocale();
 
   // Log events state
   const [loadingLogEvents, setLoadingLogEvents] = useState<boolean>(false);
@@ -56,7 +48,7 @@ export const LogProvider = ({ children }: { children: React.ReactNode }) => {
   const [workflowRunLogs, setWorkflowRunLogs] =
     useState<WorkflowRunLogs | null>(null);
 
-  const { logService } = useMemo(() => new IrminCore(locale), [locale]);
+  const { irminCore } = useIrminCore();
 
   /**
    * Fetch log events
@@ -68,7 +60,7 @@ export const LogProvider = ({ children }: { children: React.ReactNode }) => {
       setLoadingLogEvents(true);
       setLogEvents(null);
       try {
-        const res = await logService.fetchLogEvents(workflow);
+        const res = await irminCore.logService.fetchLogEvents(workflow);
         setLogEvents(res.data);
       } catch (error) {
         console.error('LogContext fetchLogEvents error', error);
@@ -80,7 +72,7 @@ export const LogProvider = ({ children }: { children: React.ReactNode }) => {
         setLoadingLogEvents(false);
       }
     },
-    [logService, irminAlert]
+    [irminCore.logService, irminAlert]
   );
 
   /**
@@ -94,7 +86,7 @@ export const LogProvider = ({ children }: { children: React.ReactNode }) => {
       setLoadingWorkflowRunLogs(true);
       setWorkflowRunLogs(null);
       try {
-        const res = await logService.fetchWorkflowRunLogs(
+        const res = await irminCore.logService.fetchWorkflowRunLogs(
           workflow,
           workflowRunID
         );
@@ -109,7 +101,7 @@ export const LogProvider = ({ children }: { children: React.ReactNode }) => {
         setLoadingWorkflowRunLogs(false);
       }
     },
-    [logService, irminAlert]
+    [irminCore.logService, irminAlert]
   );
 
   return (

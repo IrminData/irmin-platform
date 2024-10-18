@@ -1,15 +1,14 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import Image from 'next/image';
-
-import IrminCore from '@/services/core/IrminCore';
 
 import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -39,8 +38,8 @@ export default function ConfigureConnection({
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   closeModal: () => void;
 }) {
-  const { locale, dict } = useLocale();
-  const { connectionService } = useMemo(() => new IrminCore(locale), [locale]);
+  const { dict } = useLocale();
+  const { irminCore } = useIrminCore();
   const { irminAlert } = usePopup();
 
   // Handle form submission to create the connection
@@ -60,7 +59,7 @@ export default function ConfigureConnection({
 
       try {
         // Create connection via the connectionService
-        const res = await connectionService.createConnection({
+        const res = await irminCore.connectionService.createConnection({
           connectorID: connectionData.connector.id,
           connectionDetails: connectionData.connectionDetails,
           connectionSettings: connectionData.connectionSettings,
@@ -82,7 +81,7 @@ export default function ConfigureConnection({
     [
       connectionData,
       irminAlert,
-      connectionService,
+      irminCore.connectionService,
       dict.connections.create.requiredFieldsMissing,
       closeModal,
     ]

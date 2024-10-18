@@ -7,11 +7,10 @@ import WorkflowsLayoutWrapper from '@/components/workflow/WorkflowsLayoutWrapper
 /**
  * SEO metadata for the Workflows pages
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: WorkspaceLayoutParams;
+export async function generateMetadata(props: {
+  params: Promise<WorkspaceLayoutParams>;
 }): Promise<Metadata> {
+  const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
     title: `Workflows | ${formattedWorkspace} | IRMIN Console`,

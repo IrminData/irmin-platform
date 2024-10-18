@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { use, useMemo } from 'react';
 
 import { notFound } from 'next/navigation';
 
@@ -12,15 +12,11 @@ import { SingleWorkflowLayoutParams } from './layout';
 
 /**
  * Single workflow page
- *
- * @param props0 - The page properties
- * @param props0.params - The page parameters from Next JS router
  */
-export default function WorkflowPage({
-  params,
-}: {
-  params: SingleWorkflowLayoutParams;
+export default function WorkflowPage(props: {
+  params: Promise<SingleWorkflowLayoutParams>;
 }) {
+  const params = use(props.params);
   const workflowId = params.workflow;
 
   const {

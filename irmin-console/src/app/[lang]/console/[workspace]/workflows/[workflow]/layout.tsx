@@ -24,11 +24,10 @@ export type SingleWorkflowLayoutParams = {
 /**
  * SEO metadata for the single Worflow pages layout
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: SingleWorkflowLayoutParams;
+export async function generateMetadata(props: {
+  params: Promise<SingleWorkflowLayoutParams>;
 }): Promise<Metadata> {
+  const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
     title: `Workflow ${params.workflow} | ${formattedWorkspace} | IRMIN Console`,
@@ -38,13 +37,16 @@ export async function generateMetadata({
 /**
  * Layout for the single workflow pages in the Console
  */
-export default function WorkflowLayout({
-  children,
-  params,
-}: Readonly<{
-  children: React.ReactNode;
-  params: SingleWorkflowLayoutParams;
-}>) {
+export default async function WorkflowLayout(
+  props: Readonly<{
+    children: React.ReactNode;
+    params: SingleWorkflowLayoutParams;
+  }>
+) {
+  const params = await props.params;
+
+  const { children } = props;
+
   const workflowId = params.workflow;
   if (isInvalidRouteProp(workflowId)) notFound();
 

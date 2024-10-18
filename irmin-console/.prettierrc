@@ -16,6 +16,7 @@
     "^next/(.*)$",
     "<THIRD_PARTY_MODULES>",
     "^react-icons/(.*)$",
+    "^.*\\.css$",
     "^@/components/(.*)$",
     "^@/context/(.*)$",
     "^@/hooks/(.*)$",

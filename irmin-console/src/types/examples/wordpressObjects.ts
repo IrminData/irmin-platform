@@ -129,7 +129,7 @@ export const exampleWPPost: WPPost = {
   categories: [19],
   tags: [],
   yoast_head:
-    '<!-- This site is optimised with the Yoast SEO plugin v23.0 - https://yoast.com/wordpress/plugins/seo/ -->\n<title>Irmin 2024 year in review | IRMIN</title>\n<meta name="robots" content="noindex, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />\n<meta property="og:locale" content="en_GB" />\n<meta property="og:type" content="article" />\n<meta property="og:title" content="Irmin 2024 year in review | IRMIN" />\n<meta property="og:description" content="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris sem sem, ornare sed sem vitae, ullamcorper pulvinar felis. Nunc ac velit at felis vestibulum blandit. Etiam massa quam, gravida ut massa at, sodales suscipit neque. Phasellus vitae orci diam. Nunc vulputate vestibulum mauris ut consectetur. Pellentesque habitant morbi tristique senectus et netus et malesuada fames [&hellip;]" />\n<meta property="og:url" content="https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/" />\n<meta property="og:site_name" content="IRMIN" />\n<meta property="article:published_time" content="2024-07-18T08:51:08+00:00" />\n<meta property="article:modified_time" content="2024-07-18T08:51:18+00:00" />\n<meta property="og:image" content="http://cms.irmin.dev/wp-content/uploads/2024/07/cow_2.jpeg" />\n\t<meta property="og:image:width" content="640" />\n\t<meta property="og:image:height" content="438" />\n\t<meta property="og:image:type" content="image/jpeg" />\n<meta name="author" content="Tim Borovkov" />\n<meta name="twitter:card" content="summary_large_image" />\n<meta name="twitter:label1" content="Written by" />\n\t<meta name="twitter:data1" content="Tim Borovkov" />\n\t<meta name="twitter:label2" content="Estimated reading time" />\n\t<meta name="twitter:data2" content="2 minutes" />\n<script type="application/ld+json" class="yoast-schema-graph">{"@context":"https://schema.org","@graph":[{"@type":"Article","@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#article","isPartOf":{"@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/"},"author":{"name":"Tim Borovkov","@id":"https://cms.irmin.dev/#/schema/person/aeae0539cbcb6c991a4091b0969e21c3"},"headline":"Irmin 2024 year in review","datePublished":"2024-07-18T08:51:08+00:00","dateModified":"2024-07-18T08:51:18+00:00","mainEntityOfPage":{"@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/"},"wordCount":292,"commentCount":0,"publisher":{"@id":"https://cms.irmin.dev/#organization"},"image":{"@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#primaryimage"},"thumbnailUrl":"https://cms.irmin.dev/wp-content/uploads/2024/07/cow_2.jpeg","articleSection":["Irmin News"],"inLanguage":"en-GB","potentialAction":[{"@type":"CommentAction","name":"Comment","target":["https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#respond"]}]},{"@type":"WebPage","@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/","url":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/","name":"Irmin 2024 year in review | IRMIN","isPartOf":{"@id":"https://cms.irmin.dev/#website"},"primaryImageOfPage":{"@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#primaryimage"},"image":{"@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#primaryimage"},"thumbnailUrl":"https://cms.irmin.dev/wp-content/uploads/2024/07/cow_2.jpeg","datePublished":"2024-07-18T08:51:08+00:00","dateModified":"2024-07-18T08:51:18+00:00","breadcrumb":{"@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#breadcrumb"},"inLanguage":"en-GB","potentialAction":[{"@type":"ReadAction","target":["https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/"]}]},{"@type":"ImageObject","inLanguage":"en-GB","@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#primaryimage","url":"https://cms.irmin.dev/wp-content/uploads/2024/07/cow_2.jpeg","contentUrl":"https://cms.irmin.dev/wp-content/uploads/2024/07/cow_2.jpeg","width":640,"height":438},{"@type":"BreadcrumbList","@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://cms.irmin.dev/en/home/"},{"@type":"ListItem","position":2,"name":"Irmin 2024 year in review"}]},{"@type":"WebSite","@id":"https://cms.irmin.dev/#website","url":"https://cms.irmin.dev/","name":"IRMIN","description":"Tired of scattered data? Sync, analyse &amp; manage your data with AI in minutes. Use connectors, marketplace &amp; run actions.","publisher":{"@id":"https://cms.irmin.dev/#organization"},"potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://cms.irmin.dev/?s={search_term_string}"},"query-input":"required name=search_term_string"}],"inLanguage":"en-GB"},{"@type":"Organization","@id":"https://cms.irmin.dev/#organization","name":"IRMIN","url":"https://cms.irmin.dev/","logo":{"@type":"ImageObject","inLanguage":"en-GB","@id":"https://cms.irmin.dev/#/schema/logo/image/","url":"https://cms.irmin.dev/wp-content/uploads/2024/07/logo.png","contentUrl":"https://cms.irmin.dev/wp-content/uploads/2024/07/logo.png","width":952,"height":216,"caption":"IRMIN"},"image":{"@id":"https://cms.irmin.dev/#/schema/logo/image/"}},{"@type":"Person","@id":"https://cms.irmin.dev/#/schema/person/aeae0539cbcb6c991a4091b0969e21c3","name":"Tim Borovkov","image":{"@type":"ImageObject","inLanguage":"en-GB","@id":"https://cms.irmin.dev/#/schema/person/image/","url":"https://secure.gravatar.com/avatar/882ee92809271f616f989d40613a47ab?s=96&d=mm&r=g","contentUrl":"https://secure.gravatar.com/avatar/882ee92809271f616f989d40613a47ab?s=96&d=mm&r=g","caption":"Tim Borovkov"},"sameAs":["http://cms.irmin.dev"],"url":"https://cms.irmin.dev/author/tim/"}]}</script>\n<!-- / Yoast SEO plugin. -->',
+    '<!-- This site is optimised with the Yoast SEO plugin v23.0 - https://yoast.com/wordpress/plugins/seo/ -->\n<title>Irmin 2024 year in review | IRMIN</title>\n<meta name="robots" content="noindex, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />\n<meta property="og:locale" content="en_GB" />\n<meta property="og:type" content="article" />\n<meta property="og:title" content="Irmin 2024 year in review | IRMIN" />\n<meta property="og:description" content="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris sem sem, ornare sed sem vitae, ullamcorper pulvinar felis. Nunc ac velit at felis vestibulum blandit. Etiam massa quam, gravida ut massa at, sodales suscipit neque. Phasellus vitae orci diam. Nunc vulputate vestibulum mauris ut consectetur. Pellentesque habitant morbi tristique senectus et netus et malesuada fames [&hellip;]" />\n<meta property="og:url" content="https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/" />\n<meta property="og:site_name" content="IRMIN" />\n<meta property="article:published_time" content="2024-07-18T08:51:08+00:00" />\n<meta property="article:modified_time" content="2024-07-18T08:51:18+00:00" />\n<meta property="og:image" content="http://cms.irmin.dev/wp-content/uploads/2024/07/cow_2.jpeg" />\n\t<meta property="og:image:width" content="640" />\n\t<meta property="og:image:height" content="438" />\n\t<meta property="og:image:type" content="image/jpeg" />\n<meta name="author" content="Tim Borovkov" />\n<meta name="twitter:card" content="summary_large_image" />\n<meta name="twitter:label1" content="Written by" />\n\t<meta name="twitter:data1" content="Tim Borovkov" />\n\t<meta name="twitter:label2" content="Estimated reading time" />\n\t<meta name="twitter:data2" content="2 minutes" />\n<script type="application/ld+json" class="yoast-schema-graph">{"@context":"https://schema.org","@graph":[{"@type":"Article","@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#article","isPartOf":{"@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/"},"author":{"name":"Tim Borovkov","@id":"https://cms.irmin.dev/#/schema/person/aeae0539cbcb6c991a4091b0969e21c3"},"headline":"Irmin 2024 year in review","datePublished":"2024-07-18T08:51:08+00:00","dateModified":"2024-07-18T08:51:18+00:00","mainEntityOfPage":{"@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/"},"wordCount":292,"commentCount":0,"publisher":{"@id":"https://cms.irmin.dev/#organization"},"image":{"@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#primaryimage"},"thumbnailUrl":"https://cms.irmin.dev/wp-content/uploads/2024/07/content-photo3.jpg","articleSection":["Irmin News"],"inLanguage":"en-GB","potentialAction":[{"@type":"CommentAction","name":"Comment","target":["https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#respond"]}]},{"@type":"WebPage","@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/","url":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/","name":"Irmin 2024 year in review | IRMIN","isPartOf":{"@id":"https://cms.irmin.dev/#website"},"primaryImageOfPage":{"@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#primaryimage"},"image":{"@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#primaryimage"},"thumbnailUrl":"https://cms.irmin.dev/wp-content/uploads/2024/07/content-photo3.jpg","datePublished":"2024-07-18T08:51:08+00:00","dateModified":"2024-07-18T08:51:18+00:00","breadcrumb":{"@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#breadcrumb"},"inLanguage":"en-GB","potentialAction":[{"@type":"ReadAction","target":["https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/"]}]},{"@type":"ImageObject","inLanguage":"en-GB","@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#primaryimage","url":"https://cms.irmin.dev/wp-content/uploads/2024/07/content-photo3.jpg","contentUrl":"https://cms.irmin.dev/wp-content/uploads/2024/07/content-photo3.jpg","width":640,"height":438},{"@type":"BreadcrumbList","@id":"https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://cms.irmin.dev/en/home/"},{"@type":"ListItem","position":2,"name":"Irmin 2024 year in review"}]},{"@type":"WebSite","@id":"https://cms.irmin.dev/#website","url":"https://cms.irmin.dev/","name":"IRMIN","description":"Tired of scattered data? Sync, analyse &amp; manage your data with AI in minutes. Use connectors, marketplace &amp; run actions.","publisher":{"@id":"https://cms.irmin.dev/#organization"},"potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://cms.irmin.dev/?s={search_term_string}"},"query-input":"required name=search_term_string"}],"inLanguage":"en-GB"},{"@type":"Organization","@id":"https://cms.irmin.dev/#organization","name":"IRMIN","url":"https://cms.irmin.dev/","logo":{"@type":"ImageObject","inLanguage":"en-GB","@id":"https://cms.irmin.dev/#/schema/logo/image/","url":"https://cms.irmin.dev/wp-content/uploads/2024/07/logo.png","contentUrl":"https://cms.irmin.dev/wp-content/uploads/2024/07/logo.png","width":952,"height":216,"caption":"IRMIN"},"image":{"@id":"https://cms.irmin.dev/#/schema/logo/image/"}},{"@type":"Person","@id":"https://cms.irmin.dev/#/schema/person/aeae0539cbcb6c991a4091b0969e21c3","name":"Tim Borovkov","image":{"@type":"ImageObject","inLanguage":"en-GB","@id":"https://cms.irmin.dev/#/schema/person/image/","url":"https://secure.gravatar.com/avatar/882ee92809271f616f989d40613a47ab?s=96&d=mm&r=g","contentUrl":"https://secure.gravatar.com/avatar/882ee92809271f616f989d40613a47ab?s=96&d=mm&r=g","caption":"Tim Borovkov"},"sameAs":["http://cms.irmin.dev"],"url":"https://cms.irmin.dev/author/tim/"}]}</script>\n<!-- / Yoast SEO plugin. -->',
   yoast_head_json: {
     title: 'Irmin 2024 year in review | IRMIN',
     robots: {
@@ -186,7 +186,7 @@ export const exampleWPPost: WPPost = {
               'https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#primaryimage',
           },
           thumbnailUrl:
-            'https://cms.irmin.dev/wp-content/uploads/2024/07/cow_2.jpeg',
+            'https://cms.irmin.dev/wp-content/uploads/2024/07/content-photo3.jpg',
           articleSection: ['Irmin News'],
           inLanguage: 'en-GB',
         },
@@ -206,7 +206,7 @@ export const exampleWPPost: WPPost = {
               'https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#primaryimage',
           },
           thumbnailUrl:
-            'https://cms.irmin.dev/wp-content/uploads/2024/07/cow_2.jpeg',
+            'https://cms.irmin.dev/wp-content/uploads/2024/07/content-photo3.jpg',
           datePublished: '2024-07-18T08:51:08+00:00',
           dateModified: '2024-07-18T08:51:18+00:00',
           breadcrumb: {
@@ -228,9 +228,9 @@ export const exampleWPPost: WPPost = {
           inLanguage: 'en-GB',
           '@id':
             'https://cms.irmin.dev/en/2024/07/18/irmin-2024-year-in-review/#primaryimage',
-          url: 'https://cms.irmin.dev/wp-content/uploads/2024/07/cow_2.jpeg',
+          url: 'https://cms.irmin.dev/wp-content/uploads/2024/07/content-photo3.jpg',
           contentUrl:
-            'https://cms.irmin.dev/wp-content/uploads/2024/07/cow_2.jpeg',
+            'https://cms.irmin.dev/wp-content/uploads/2024/07/content-photo3.jpg',
           width: 640,
           height: 438,
         },
@@ -345,7 +345,7 @@ export const exampleWPMedia: Media = {
         height: 438,
         mime_type: 'image/jpeg',
         source_url:
-          'https://cms.irmin.dev/wp-content/uploads/2024/07/cow_2.jpeg',
+          'https://cms.irmin.dev/wp-content/uploads/2024/07/content-photo3.jpg',
       },
     },
     image_meta: {
@@ -362,7 +362,26 @@ export const exampleWPMedia: Media = {
       orientation: '0',
     },
   },
-  source_url: 'https://cms.irmin.dev/wp-content/uploads/2024/07/cow_2.jpeg',
+  source_url:
+    'https://cms.irmin.dev/wp-content/uploads/2024/07/content-photo3.jpg',
+};
+
+/**
+ * Example WordPress media object
+ */
+export const exampleWPVideoMedia: Media = {
+  id: 160,
+  slug: 'pointing_pink',
+  status: 'inherit',
+  type: 'attachment',
+  link: 'https://cms.irmin.dev/en/home/pointing_pink/',
+  title: { rendered: 'pointing_pink' },
+  alt_text: '',
+  media_type: 'file',
+  mime_type: 'video/mp4',
+  post: 180,
+  source_url:
+    'https://cms.irmin.dev/wp-content/uploads/2024/07/pointing_pink.mp4',
 };
 
 /**

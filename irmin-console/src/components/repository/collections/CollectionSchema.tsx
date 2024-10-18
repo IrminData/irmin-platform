@@ -2,13 +2,12 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import IrminCore from '@/services/core/IrminCore';
-
 import { TbRun, TbTrash } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepository } from '@/context/RepositoryContext';
@@ -38,7 +37,7 @@ export default function CollectionSchema({
   collectionID: string;
   immutable: boolean;
 }) {
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
   const { irminAlert, irminConfirm } = usePopup();
 
   const repositoryUrl = useBaseUrl({
@@ -60,7 +59,7 @@ export default function CollectionSchema({
     workflows: { allWorkflows },
   } = useWorkspace();
 
-  const { repositoryService } = useMemo(() => new IrminCore(locale), [locale]);
+  const { irminCore } = useIrminCore();
 
   const { currentRepository, currentRef, schema } = useRepository();
 
@@ -116,7 +115,7 @@ export default function CollectionSchema({
     setProcessingDelete(true);
     try {
       // Upload the collection
-      const res = await repositoryService.deleteCollection(
+      const res = await irminCore.repositoryService.deleteCollection(
         currentRepository.slug,
         currentRef ?? '',
         collection.name
@@ -138,7 +137,7 @@ export default function CollectionSchema({
     dict,
     irminAlert,
     irminConfirm,
-    repositoryService,
+    irminCore.repositoryService,
     collection,
   ]);
 

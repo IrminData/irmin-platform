@@ -9,28 +9,21 @@ import DocumentationForm, {
   DocumentationFormValues,
 } from '@/components/ui/form/DocumentationForm';
 
+import { useConnection } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Connection } from '@/types/core/Connection';
-
 /**
  * Connection Documentation section component for displaying and updating the documentation.
- *
- * @param props - The props.
- * @param props.connection - The connection to show and edit the documentation for.
  */
-const ConnectionDocumentationSection = ({
-  connection,
-}: {
-  connection: Connection;
-}) => {
+const ConnectionDocumentationSection = () => {
   const { irminAlert } = usePopup();
   const { dict } = useLocale();
   const {
     connections: { updateConnection },
   } = useWorkspace();
+  const { connection } = useConnection();
 
   const saving = useRef(false);
 

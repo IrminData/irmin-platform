@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 import ReactSelect from 'react-select';
@@ -50,7 +50,6 @@ export default function MergeModalContent({
   });
 
   const [loading, setLoading] = useState<boolean>(false);
-  const mergeInProgress = useRef<boolean>(false);
 
   const mergeStrategies = useMemo(
     () => [
@@ -69,19 +68,21 @@ export default function MergeModalContent({
    */
   const onSubmit = useCallback(
     async (data: { description: string; mergeStrategy: string }) => {
-      if (mergeInProgress.current) return;
-      mergeInProgress.current = true;
-      setLoading(true);
-      const successful = await mergeRefs(
-        baseRef,
-        compareRef,
-        data.description,
-        data.mergeStrategy
-      );
-      mergeInProgress.current = false;
-      setLoading(false);
-      if (successful) {
-        closeModal();
+      try {
+        setLoading(true);
+        const successful = await mergeRefs(
+          baseRef,
+          compareRef,
+          data.description,
+          data.mergeStrategy
+        );
+        if (successful) {
+          closeModal();
+        }
+      } catch (error) {
+        console.error('Failed to merge refs', error);
+      } finally {
+        setLoading(false);
       }
     },
     [baseRef, compareRef, closeModal, mergeRefs]

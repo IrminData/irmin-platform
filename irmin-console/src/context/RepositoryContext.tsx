@@ -12,9 +12,6 @@ import {
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-import IrminCore from '@/services/core/IrminCore';
-
-import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { constructBaseUrl } from '@/utils/constructBaseUrl';
@@ -29,6 +26,7 @@ import { IrminAPIUnstructuredResponse } from '@/types/core/IrminAPIResponse';
 import { Repository } from '@/types/core/Repository';
 import { Tag } from '@/types/core/Tag';
 
+import { useIrminCore } from './IrminCoreContext';
 import { useWorkspace } from './workspace';
 
 /**
@@ -117,15 +115,17 @@ export const RepositoryProvider = ({
   const searchParams = useSearchParams();
 
   const { irminAlert } = usePopup();
-  const { locale } = useLocale();
+
   const {
-    diffService,
-    branchService,
-    tagService,
-    commitService,
-    schemaService,
-    collectionService,
-  } = useMemo(() => new IrminCore(locale), [locale]);
+    irminCore: {
+      diffService,
+      branchService,
+      tagService,
+      commitService,
+      schemaService,
+      collectionService,
+    },
+  } = useIrminCore();
 
   const {
     repositories: { repositories },

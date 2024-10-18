@@ -33,10 +33,9 @@ type PageProps = {
  * It uses PageContent and PageSections to render
  * the page content and sections it receives from WordPress
  * API.
- *
- * @param param0 - Router properties received by the page
  */
-export default async function Page({ params }: PageProps) {
+export default async function Page(props: PageProps) {
+  const params = await props.params;
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
 
   const slug =
@@ -69,12 +68,9 @@ export default async function Page({ params }: PageProps) {
  * @remarks
  * Using router properties, like slug, it fetches the page
  * metadata from WordPress API and returns it.
- *
- * @param param0 - Router properties received by the page
  */
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
 
   const slug =

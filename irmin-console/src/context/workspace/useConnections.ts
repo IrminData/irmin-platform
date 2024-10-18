@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { Locale } from '@/dictionaries';
+import IrminCore from '@/services/core/IrminCore';
 
 import { Connection } from '@/types/core/Connection';
 import { Workspace } from '@/types/core/Workspace';
@@ -19,10 +19,10 @@ import {
  */
 const useConnections = ({
   currentWorkspace,
-  locale,
+  irminCore,
 }: {
   currentWorkspace: Workspace | null;
-  locale: Locale;
+  irminCore: IrminCore;
 }) => {
   // Connections
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -38,25 +38,25 @@ const useConnections = ({
     setLoading,
     connectionsFetchedFor,
     setConnectionsFetchedFor,
-    locale
+    irminCore
   );
 
   const deleteConnection = useDeleteConnection(
     connections,
     setConnections,
-    locale
+    irminCore
   );
 
   const updateConnection = useUpdateConnection(
     connections,
     setConnections,
-    locale
+    irminCore
   );
 
   const reassignConnection = useReassignConnection(
     connections,
     setConnections,
-    locale
+    irminCore
   );
 
   return {

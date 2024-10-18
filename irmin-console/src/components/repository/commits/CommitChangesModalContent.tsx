@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
@@ -36,21 +36,22 @@ export default function CommitChangesModalContent({
   });
 
   const [loading, setLoading] = useState<boolean>(false);
-  const commitInProgress = useRef<boolean>(false);
 
   /**
    * Handle the commit changes form submission.
    */
   const onSubmit = useCallback(
     async (data: { message: string }) => {
-      if (commitInProgress.current) return;
-      commitInProgress.current = true;
-      setLoading(true);
-      const successful = await commitChanges(data.message);
-      commitInProgress.current = false;
-      setLoading(false);
-      if (successful) {
-        closeModal();
+      try {
+        setLoading(true);
+        const successful = await commitChanges(data.message);
+        if (successful) {
+          closeModal();
+        }
+      } catch (error) {
+        console.error('Failed to commit changes', error);
+      } finally {
+        setLoading(false);
       }
     },
     [commitChanges, closeModal]

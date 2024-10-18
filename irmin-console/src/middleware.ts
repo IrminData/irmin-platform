@@ -1,11 +1,10 @@
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { defaultLocale, languages, Locale } from '@/dictionaries';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 // Environment variables for environment authentication
-const offlineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE ?? 'false';
+const authOfflineMode = process.env.NEXT_PUBLIC_AUTH_OFFLINE_MODE ?? 'false';
 const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'true';
 const appPassword = process.env.ENV_PASSWORD ?? 'oiDeNuDEvenTICYc';
 
@@ -74,7 +73,7 @@ const isProtectedRoute = createRouteMatcher(['/:lang([a-z]{2})/console(.*)']);
  */
 export default clerkMiddleware((auth, req) => {
   // Ignore route protection if in offline mode
-  if (offlineMode !== 'true') {
+  if (authOfflineMode !== 'true') {
     // Protect certain routes using Clerk
     if (isProtectedRoute(req)) auth().protect();
   }

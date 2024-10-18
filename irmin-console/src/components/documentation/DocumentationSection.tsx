@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
 import { WorkspaceLayoutParams } from '@/app/[lang]/console/[workspace]/layout';
-import IrminCore from '@/services/core/IrminCore';
 import { usePDF } from 'react-to-pdf';
 
 import { BsFilePdf } from 'react-icons/bs';
@@ -16,6 +15,7 @@ import Button from '@/components/ui/button';
 import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useIAM } from '@/context/IAMContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
@@ -49,17 +49,18 @@ export default function DocumentationSection({
 
   const [collections, setCollections] = useState<Collection[]>([]);
 
+  const { irminCore } = useIrminCore();
+
   useEffect(() => {
     try {
       (async () => {
-        const { collectionService } = new IrminCore(locale);
-        const res = await collectionService.fetchCollections();
+        const res = await irminCore.collectionService.fetchCollections();
         setCollections(res.data);
       })();
     } catch (error) {
       console.error((error as Error).message, 'Fetch Collections error');
     }
-  }, [locale]);
+  }, [irminCore.collectionService]);
 
   const pdfHeaderRef = useRef<HTMLDivElement | null>(null);
 

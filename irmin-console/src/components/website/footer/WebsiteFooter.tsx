@@ -1,4 +1,4 @@
-import { dictionaries, languages } from '@/dictionaries';
+import { dictionaries, Dictionary, languages, Locale } from '@/dictionaries';
 import WordPress from '@/services/wordpress';
 
 import WebsiteFooterContent from '@/components/website/footer/WebsiteFooterContent';
@@ -15,7 +15,13 @@ import { WebsiteFooterLinkSection } from '@/types/website/WebsiteNavigation';
  * This component is used to display the footer on the website. It is used in the website layout.
  * It fetches the footer links from the WordPress API and displays them in the {@link WebsiteFooterContent} component.
  */
-export default async function WebsiteFooter() {
+export default async function WebsiteFooter({
+  locale,
+  dict,
+}: {
+  locale: Locale;
+  dict: Dictionary;
+}) {
   const wordpress = WordPress.getInstance();
 
   // Object to store footer links for each language
@@ -41,5 +47,11 @@ export default async function WebsiteFooter() {
     // Add the locale to the navLinksForLocales object
     navLinksForLocales[language.code] = navLinks;
   }
-  return <WebsiteFooterContent footerLinks={navLinksForLocales} />;
+  return (
+    <WebsiteFooterContent
+      footerLinks={navLinksForLocales}
+      locale={locale}
+      dict={dict}
+    />
+  );
 }

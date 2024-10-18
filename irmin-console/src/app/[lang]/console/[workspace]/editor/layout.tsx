@@ -18,11 +18,10 @@ export type EditorLayoutParams = {
 /**
  * SEO metadata for the Editor layout
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: EditorLayoutParams;
+export async function generateMetadata(props: {
+  params: Promise<EditorLayoutParams>;
 }): Promise<Metadata> {
+  const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
     title: `Editor | ${formattedWorkspace} | IRMIN Console`,

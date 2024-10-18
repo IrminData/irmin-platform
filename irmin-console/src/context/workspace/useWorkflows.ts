@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-import { Locale } from '@/dictionaries';
+import IrminCore from '@/services/core/IrminCore';
 
 import { usePopup } from '@/context/PopupContext';
 
@@ -31,10 +31,10 @@ import {
  */
 const useWorkflows = ({
   currentWorkspace,
-  locale,
+  irminCore,
 }: {
   currentWorkspace: Workspace | null;
-  locale: Locale;
+  irminCore: IrminCore;
 }) => {
   const { irminAlert } = usePopup();
 
@@ -51,7 +51,7 @@ const useWorkflows = ({
     setImportsLoading,
     importsFetchedFor,
     setImportsFetchedFor,
-    locale
+    irminCore
   );
 
   // Export workflows
@@ -67,7 +67,7 @@ const useWorkflows = ({
     setExportsLoading,
     exportsFetchedFor,
     setExportsFetchedFor,
-    locale
+    irminCore
   );
 
   // Action workflows
@@ -83,7 +83,7 @@ const useWorkflows = ({
     setActionsLoading,
     actionsFetchedFor,
     setActionsFetchedFor,
-    locale
+    irminCore
   );
 
   // Construct "all workflows" object from imports, exports and actions
@@ -94,7 +94,7 @@ const useWorkflows = ({
 
   // Hooks for creating, updating, reassigning, deleting, pausing and resuming workflows
   const createWorkflow = useCreateWorkflow(
-    locale,
+    irminCore,
     actions,
     setActions,
     imports,
@@ -103,7 +103,7 @@ const useWorkflows = ({
     setExports
   );
   const updateWorkflow = useUpdateWorkflow(
-    locale,
+    irminCore,
     actions,
     setActions,
     imports,
@@ -112,7 +112,7 @@ const useWorkflows = ({
     setExports
   );
   const reassignWorkflow = useReassignWorkflow(
-    locale,
+    irminCore,
     actions,
     setActions,
     imports,
@@ -121,7 +121,7 @@ const useWorkflows = ({
     setExports
   );
   const deleteWorkflow = useDeleteWorkflow(
-    locale,
+    irminCore,
     actions,
     setActions,
     imports,
@@ -130,7 +130,7 @@ const useWorkflows = ({
     setExports
   );
   const pauseWorkflow = usePauseWorkflow(
-    locale,
+    irminCore,
     actions,
     setActions,
     imports,
@@ -139,7 +139,7 @@ const useWorkflows = ({
     setExports
   );
   const resumeWorkflow = useResumeWorkflow(
-    locale,
+    irminCore,
     actions,
     setActions,
     imports,
@@ -147,7 +147,7 @@ const useWorkflows = ({
     exports,
     setExports
   );
-  const triggerWorkflowRun = useTriggerWorkflowRun(locale, irminAlert);
+  const triggerWorkflowRun = useTriggerWorkflowRun(irminCore, irminAlert);
 
   return {
     imports,

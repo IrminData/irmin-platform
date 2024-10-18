@@ -10,7 +10,7 @@ This repository contains the code for Irmin frontend, built using Next.js, TypeS
 
 Ensure you have the following installed:
 
-- Node.js (20.x)
+- Node.js (22.x)
 - Yarn (4.5.0). See [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration details.
 
 ## Environment Configuration (.env)
@@ -20,14 +20,11 @@ Create a `.env` file in the project root. Add the following environment variable
 ```text
 # Basic settings
 NEXT_PUBLIC_BASE_URL=https://irmin.dev  # Base URL of the application
-NEXT_PUBLIC_ENVIRONMENT_TYPE=development  # Environment type. Can be development, staging or production.
+NODE_ENV=development  # Environment type. Can be development, staging or production.
 
 # API and CMS URLs
 NEXT_PUBLIC_API_URL=https://api.irmin.dev  # API endpoint URL
 NEXT_PUBLIC_WORDPRESS_URL=https://cms.irmin.dev  # WordPress CMS URL
-
-# Authentication
-NEXT_PUBLIC_TOKEN_MAX_AGE=1800 # 30 minutes, how long are the token and profile data valid, before they are refetched
 
 # Environment authentication requirements (eg. password protection for staging)
 REQUIRE_ENV_AUTH=true  # Enable environment-specific authentication
@@ -40,6 +37,8 @@ NEXT_PUBLIC_CMS_OFFLINE_MODE=false  # Toggle offline mode for the Irmin CMS
 
 # Sentry
 SENTRY_AUTH_TOKEN=sntryu_xxxxx  # Sentry token for error tracking
+NEXT_PUBLIC_SENTRY_DSN=https://ingest.de.sentry.io/xxxxx  # Sentry DSN for error tracking
+SENTRY_SUPPRESS_TURBOPACK_WARNING=1 # Suppress Turbopack warning in Sentry
 
 # Clerk
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
@@ -71,8 +70,6 @@ yarn format:fix
 Start the server:
 
 ```bash
-yarn dev-ssl
-# or
 yarn dev
 ```
 

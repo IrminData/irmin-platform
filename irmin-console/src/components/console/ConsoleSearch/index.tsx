@@ -52,7 +52,7 @@ export default function ConsoleSearch() {
   const items = useConsoleSearchItems();
 
   // Ref for the search container
-  const searchRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement | null>(null);
 
   // Debounce useEffect hook
   useEffect(() => {
@@ -169,7 +169,7 @@ export default function ConsoleSearch() {
         <input
           defaultValue={query}
           onChange={(e) => setQuery(e.target.value)}
-          className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible focus:outline-none group-focus-within:placeholder:visible dark:bg-irmin_black dark:text-white md:placeholder:visible lg:text-sm'
+          className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible focus:outline-none group-focus-within:placeholder:visible md:placeholder:visible lg:text-sm dark:bg-irmin_black dark:text-white'
           placeholder={dict.consoleNavigation.searchPlaceholder}
         />
         <Button
@@ -211,7 +211,7 @@ export default function ConsoleSearch() {
                       (result, idx) => (
                         <li
                           key={`search-result-${type}-${idx}`}
-                          className='rounded-lg px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 lg:text-base'
+                          className='rounded-lg px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 lg:text-base dark:text-gray-300 dark:hover:bg-gray-700'
                         >
                           <a href={result.link} className='block'>
                             <div>{result.title}</div>
@@ -229,7 +229,7 @@ export default function ConsoleSearch() {
           ) : (
             <div className='flex h-full min-h-96 w-full flex-col items-center justify-center gap-4'>
               <LuSearchX className='h-12 w-12 text-gray-400' />
-              <div className='text-base text-gray-600 dark:text-gray-300 lg:text-lg'>
+              <div className='text-base text-gray-600 lg:text-lg dark:text-gray-300'>
                 {dict.consoleNavigation.searchNoResults}
               </div>
             </div>

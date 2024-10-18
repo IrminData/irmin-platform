@@ -31,10 +31,9 @@ type PageProps = {
  *
  * It uses Post to render the post content and
  * categories it receives from WordPress API.
- *
- * @param param0 - Router properties received by the page
  */
-export default async function Page({ params }: PageProps) {
+export default async function Page(props: PageProps) {
+  const params = await props.params;
   const slug =
     typeof params.postSlug === 'string'
       ? params.postSlug
@@ -70,9 +69,8 @@ export default async function Page({ params }: PageProps) {
   return <Post post={post} categories={categories} image={image ?? ''} />;
 }
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
 
   const slug =

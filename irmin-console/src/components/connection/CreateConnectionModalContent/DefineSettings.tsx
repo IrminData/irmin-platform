@@ -1,16 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
-
-import IrminCore from '@/services/core/IrminCore';
 
 import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -27,9 +26,9 @@ export default function DefineSettings({
   setConnectionData: React.Dispatch<React.SetStateAction<ConnectionSetup>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
-  const { locale, dict } = useLocale();
+  const { dict } = useLocale();
   const { irminAlert } = usePopup();
-  const { connectionService } = useMemo(() => new IrminCore(locale), [locale]);
+  const { irminCore } = useIrminCore();
 
   const [loading, setLoading] = useState(false);
 
@@ -41,10 +40,11 @@ export default function DefineSettings({
       setLoading(true);
       fetchedFields.current = true;
       try {
-        const res = await connectionService.fetchNewConnectionSettings(
-          connectorID,
-          connectionDetails
-        );
+        const res =
+          await irminCore.connectionService.fetchNewConnectionSettings(
+            connectorID,
+            connectionDetails
+          );
 
         // Update connection data state
         setConnectionData((prev: ConnectionSetup) => ({
@@ -60,7 +60,7 @@ export default function DefineSettings({
       }
       setLoading(false);
     },
-    [connectionService, setConnectionData, irminAlert]
+    [irminCore.connectionService, setConnectionData, irminAlert]
   );
 
   // Fetch settings when component is mounted or connectionData changes

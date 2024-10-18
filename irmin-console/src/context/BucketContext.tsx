@@ -5,13 +5,11 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
 
 import { Locale } from '@/dictionaries';
-import IrminCore from '@/services/core/IrminCore';
 import { fetchBucketProxy } from '@/services/proxies/bucket';
 
 import { usePopup } from '@/context/PopupContext';
@@ -22,6 +20,7 @@ import { Bucket, BucketFile, BucketFolder } from '@/types/core/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 import { useIAM } from './IAMContext';
+import { useIrminCore } from './IrminCoreContext';
 
 /**
  * Bucket context properties
@@ -91,10 +90,10 @@ export const BucketProvider = ({
   const [activeTab, setActiveTab] = useState<number>(0);
   const [openFileTabs, setOpenFileTabs] = useState<string[]>([]);
 
-  const { bucketService } = useMemo(() => new IrminCore(locale), [locale]);
+  const { irminCore } = useIrminCore();
 
   // Ref to check which workspace the files were fetched for
-  const filesFetchedForRef = useRef<string | undefined>();
+  const filesFetchedForRef = useRef<string | null>(null);
 
   /*
    * Fetch files and folders from the current workspace bucket
@@ -103,9 +102,10 @@ export const BucketProvider = ({
     setLoading(true);
     // Fetch bucket data
     try {
+      if (!token) return;
       const res = await fetchBucketProxy({
         locale: locale,
-        token: token ?? '',
+        token: token,
         workspace: currentWorkspace,
       });
       if (!res || !res.data) return;
@@ -115,7 +115,7 @@ export const BucketProvider = ({
       setItems(bucketProxyData.fileNavItems);
     } catch (error) {
       console.error('BucketContext fetchBucket error', error);
-      filesFetchedForRef.current = undefined;
+      filesFetchedForRef.current = null;
       irminAlert(
         'error',
         (error as Error)?.message ?? 'Failed to fetch bucket'
@@ -230,7 +230,7 @@ export const BucketProvider = ({
         );
         updateStateWithBucket(updatedBucket);
         // Update the file in the bucket
-        const res = await bucketService.updateFile({
+        const res = await irminCore.bucketService.updateFile({
           original: file,
           current: file,
           type: 'file',
@@ -245,7 +245,7 @@ export const BucketProvider = ({
         );
       }
     },
-    [currentBucket, bucketService, irminAlert, updateStateWithBucket]
+    [currentBucket, irminCore.bucketService, irminAlert, updateStateWithBucket]
   );
 
   /**
@@ -267,7 +267,7 @@ export const BucketProvider = ({
         updatedBucket.files.push(file.current as BucketFile);
         updateStateWithBucket(updatedBucket);
         // Create the file in the bucket
-        const res = await bucketService.createFile(file);
+        const res = await irminCore.bucketService.createFile(file);
         // Show success alert
         irminAlert('success', res.message ?? 'File updated');
       } catch (error) {
@@ -278,7 +278,7 @@ export const BucketProvider = ({
         );
       }
     },
-    [currentBucket, bucketService, updateStateWithBucket, irminAlert]
+    [currentBucket, irminCore.bucketService, updateStateWithBucket, irminAlert]
   );
 
   /**
@@ -309,7 +309,7 @@ export const BucketProvider = ({
           )
         );
         // Update the file in the bucket
-        const res = await bucketService.updateFile(file);
+        const res = await irminCore.bucketService.updateFile(file);
         // Show success alert
         irminAlert('success', res.message ?? 'File updated');
       } catch (error) {
@@ -323,7 +323,7 @@ export const BucketProvider = ({
     [
       currentBucket,
       updateStateWithBucket,
-      bucketService,
+      irminCore.bucketService,
       openFileTabs,
       irminAlert,
     ]
@@ -358,7 +358,7 @@ export const BucketProvider = ({
           openFileTabs.filter((path) => path !== file.current?.path)
         );
         // Delete the file from the bucket
-        const res = await bucketService.deleteFile(file);
+        const res = await irminCore.bucketService.deleteFile(file);
         // Show success alert
         irminAlert('success', res.message ?? 'File deleted');
       } catch (error) {
@@ -371,7 +371,7 @@ export const BucketProvider = ({
     },
     [
       currentBucket,
-      bucketService,
+      irminCore.bucketService,
       updateStateWithBucket,
       openFileTabs,
       activeTab,
@@ -398,7 +398,7 @@ export const BucketProvider = ({
         updatedBucket.folders.push(folder.current as BucketFolder);
         updateStateWithBucket(updatedBucket);
         // Create the folder in the bucket
-        const res = await bucketService.createFolder(folder);
+        const res = await irminCore.bucketService.createFolder(folder);
         // Show success alert
         irminAlert('success', res.message ?? 'Folder created');
       } catch (error) {
@@ -409,7 +409,7 @@ export const BucketProvider = ({
         );
       }
     },
-    [currentBucket, bucketService, updateStateWithBucket, irminAlert]
+    [currentBucket, irminCore.bucketService, updateStateWithBucket, irminAlert]
   );
 
   /**
@@ -444,7 +444,7 @@ export const BucketProvider = ({
           )
         );
         // Update the folder in the bucket
-        const res = await bucketService.updateFolder(folder);
+        const res = await irminCore.bucketService.updateFolder(folder);
         // Show success alert
         irminAlert('success', res.message ?? 'Folder updated');
       } catch (error) {
@@ -458,7 +458,7 @@ export const BucketProvider = ({
     [
       constructUpdatedBucketForFolder,
       updateStateWithBucket,
-      bucketService,
+      irminCore.bucketService,
       openFileTabs,
       irminAlert,
     ]
@@ -500,7 +500,7 @@ export const BucketProvider = ({
           )
         );
         // Delete the folder from the bucket
-        const res = await bucketService.deleteFolder(folder);
+        const res = await irminCore.bucketService.deleteFolder(folder);
         // Show success alert
         irminAlert('success', res.message ?? 'Folder deleted');
       } catch (error) {
@@ -516,7 +516,7 @@ export const BucketProvider = ({
       updateStateWithBucket,
       openFileTabs,
       activeTab,
-      bucketService,
+      irminCore.bucketService,
       irminAlert,
     ]
   );

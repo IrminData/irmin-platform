@@ -67,7 +67,7 @@ export const IAMProvider = ({
   const [profileLoading, setProfileLoading] = useState(true);
 
   // Session ID which the profile has been initialised for
-  const initialiseForRef = useRef<string | undefined>();
+  const initialiseForRef = useRef<string | null>(null);
 
   // Ref to avoid calling sign out while it's in progress
   const signingOut = useRef(false);
@@ -99,12 +99,22 @@ export const IAMProvider = ({
     }
   }, [getToken]);
 
+  /**
+   * Hook to refetch the user token every 55 seconds, since Clerk tokens expire after 1 minute
+   */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      getUserToken();
+    }, 55000);
+    return () => clearInterval(interval);
+  }, [getUserToken]);
+
   // Function to reset the IAM state in case of errors, sign out, etc.
   const resetIAMState = useCallback(() => {
     setProfile(undefined);
     setToken(undefined);
     setCookie('token', '', -1);
-    initialiseForRef.current = undefined;
+    initialiseForRef.current = null;
   }, []);
 
   /**
@@ -125,6 +135,11 @@ export const IAMProvider = ({
       setProfileLoading(true);
       // Get the token and init the profile service
       const newToken = await getUserToken();
+      if (!newToken) {
+        // If no token is returned, reset the IAM state
+        resetIAMState();
+        return;
+      }
       const { profileService } = new IrminCore(locale, newToken);
       // Fetch the Irmin profile data
       const res = await profileService.getProfile();

@@ -8,6 +8,7 @@ import SignInSection from '@/components/authentication/SignInSection';
 export const metadata: Metadata = {
   title: 'Sign in | IRMIN',
   description: 'Sign in to access IRMIN.',
+
   openGraph: {
     type: 'website',
   },

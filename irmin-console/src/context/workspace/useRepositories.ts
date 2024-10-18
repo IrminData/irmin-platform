@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { Locale } from '@/dictionaries';
+import IrminCore from '@/services/core/IrminCore';
 
 import { Repository } from '@/types/core/Repository';
 import { Workspace } from '@/types/core/Workspace';
@@ -20,10 +20,10 @@ import {
  */
 const useRepositories = ({
   currentWorkspace,
-  locale,
+  irminCore,
 }: {
   currentWorkspace: Workspace | null;
-  locale: Locale;
+  irminCore: IrminCore;
 }) => {
   // Repositories
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -40,7 +40,7 @@ const useRepositories = ({
     setLoading,
     fetchedFor,
     setFetchedFor,
-    locale
+    irminCore
   );
 
   /**
@@ -49,7 +49,7 @@ const useRepositories = ({
   const createRepository = useCreateRepository(
     repositories,
     setRepositories,
-    locale
+    irminCore
   );
 
   /**
@@ -58,7 +58,7 @@ const useRepositories = ({
   const updateRepository = useUpdateRepository(
     repositories,
     setRepositories,
-    locale
+    irminCore
   );
 
   /**
@@ -67,7 +67,7 @@ const useRepositories = ({
   const deleteRepository = useDeleteRepository(
     repositories,
     setRepositories,
-    locale
+    irminCore
   );
 
   /**
@@ -76,7 +76,7 @@ const useRepositories = ({
   const reassignRepository = useReassignRepository(
     repositories,
     setRepositories,
-    locale
+    irminCore
   );
 
   return {

@@ -1,7 +1,9 @@
-'use client';
+import { useMemo } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
+
+import { Dictionary, Locale } from '@/dictionaries';
 
 import { MdOutlineEmail } from 'react-icons/md';
 
@@ -9,9 +11,9 @@ import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 
-import { useLocale } from '@/context/LocaleContext';
-
 import { WebsiteFooterLinkSection } from '@/types/website/WebsiteNavigation';
+
+import FooterLinkSection from './FooterLinkSection';
 
 /**
  * Website footer content
@@ -23,41 +25,18 @@ import { WebsiteFooterLinkSection } from '@/types/website/WebsiteNavigation';
  *
  * It is used by the WebsiteFooter component.
  */
-const FooterLinkSection = ({
-  section,
-  linkKey,
-}: {
-  section: WebsiteFooterLinkSection;
-  linkKey: string;
-}) => (
-  <div className='min-w-28 text-left' id={linkKey}>
-    <h3 className='mb-4 text-lg font-medium text-white text-opacity-80'>
-      {section.title}
-    </h3>
-    <ul>
-      {section.links.map((link, idx) => (
-        <li className='mb-2' key={`${linkKey}-footer-link-${idx}`}>
-          <Link
-            className='inline-block text-sm font-normal text-white text-opacity-60 transition-colors duration-200 hover:text-irmin_green'
-            href={link.href}
-          >
-            {link.label}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  </div>
-);
-
 export default function WebsiteFooterContent({
   footerLinks,
+  locale,
+  dict,
 }: {
   footerLinks: {
     [key: string]: WebsiteFooterLinkSection[];
   };
+  locale: Locale;
+  dict: Dictionary;
 }) {
-  const { dict, locale } = useLocale();
-  const sections = footerLinks[locale] ?? [];
+  const sections = useMemo(() => footerLinks[locale], [footerLinks, locale]);
 
   return (
     <section className='bg-irmin_black dark:bg-black'>
@@ -89,7 +68,7 @@ export default function WebsiteFooterContent({
               {sections.map((section, idx) => (
                 <FooterLinkSection
                   key={`website-footer-link-section-${idx}`}
-                  linkKey={`website-footer-link-section-${idx}`}
+                  sectionId={`website-footer-link-section-${idx}`}
                   section={section}
                 />
               ))}

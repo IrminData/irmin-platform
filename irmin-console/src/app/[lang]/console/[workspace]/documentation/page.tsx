@@ -5,10 +5,9 @@ import DocumentationSection from '@/components/documentation/DocumentationSectio
 /**
  * Page to show the full documentation for the workspace
  */
-export default function DocumentationPage({
-  params,
-}: {
-  params: WorkspaceLayoutParams;
+export default async function DocumentationPage(props: {
+  params: Promise<WorkspaceLayoutParams>;
 }) {
+  const params = await props.params;
   return <DocumentationSection params={params} />;
 }

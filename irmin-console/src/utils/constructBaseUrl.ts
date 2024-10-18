@@ -67,6 +67,7 @@ export const constructBaseUrl = ({
 
     return finalUrl;
   } catch (e) {
+    console.warn('Error constructing base URL:', e);
     return pathname;
   }
 };

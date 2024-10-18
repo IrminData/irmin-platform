@@ -40,9 +40,10 @@ export default async function WebsiteHeroSection({
   const video =
     typeof section.video === 'number'
       ? await wordpress
-          .getMediaByID(section.video)
+          .getMediaByID(section.video, true)
           .then((media) => media?.source_url)
       : section.video;
+
   return (
     <WebsiteSectionWrapper id='website-hero-section'>
       <div className='container mx-auto mt-12 flex min-h-[70vh] max-w-7xl flex-col items-center justify-center px-4 text-center'>
@@ -61,7 +62,7 @@ export default async function WebsiteHeroSection({
           ))}
         </h1>
         {section.description.length > 0 && (
-          <p className='mx-auto mb-8 max-w-3xl text-base font-normal leading-5 text-gray-700 dark:text-gray-200 sm:text-lg'>
+          <p className='mx-auto mb-8 max-w-3xl text-base font-normal leading-5 text-gray-700 sm:text-lg dark:text-gray-200'>
             {section.description}
           </p>
         )}
@@ -112,12 +113,14 @@ export default async function WebsiteHeroSection({
             />
             <video
               className='absolute left-1/2 top-1/2 h-full w-full max-w-none -translate-x-1/2 -translate-y-1/2 transform object-cover'
-              poster={videoPlaceholder}
               autoPlay
               muted
               loop
+              playsInline
+              disablePictureInPicture
             >
               <source src={video} type='video/mp4' />
+              Your browser does not support the video tag.
             </video>
           </div>
         </div>

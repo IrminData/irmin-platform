@@ -5,11 +5,10 @@ import { WorkspaceLayoutParams } from '@/app/[lang]/console/[workspace]/layout';
 /**
  * SEO metadata for the Connections pages
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: WorkspaceLayoutParams;
+export async function generateMetadata(props: {
+  params: Promise<WorkspaceLayoutParams>;
 }): Promise<Metadata> {
+  const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
     title: `Connections | ${formattedWorkspace} | IRMIN Console`,

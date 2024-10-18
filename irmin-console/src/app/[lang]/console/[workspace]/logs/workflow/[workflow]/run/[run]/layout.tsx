@@ -20,11 +20,10 @@ export type WorkflowRunLogsLayoutParams = {
 /**
  * SEO metadata for the Workflow Logs layout
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: WorkflowRunLogsLayoutParams;
+export async function generateMetadata(props: {
+  params: Promise<WorkflowRunLogsLayoutParams>;
 }): Promise<Metadata> {
+  const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   const formattedWorkflow = params.workflow.replace(/-/g, ' ');
   return {

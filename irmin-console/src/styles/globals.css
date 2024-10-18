@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Irmin Color Palette */
+    --irmin-black-100: 197 90% 83%;
+    --irmin-black-200: 197 92% 62%;
+    --irmin-black-300: 197 95% 42%;
+    --irmin-black-400: 197 94% 24%;
+    --irmin-black-500: 197 94% 6%; /* DEFAULT */
+    --irmin-black-600: 197 100% 4%;
+    --irmin-black-700: 197 100% 3%;
+    --irmin-black-800: 197 100% 2%;
+    --irmin-black-900: 197 100% 1%;
+
+    --irmin-blue-100: 197 100% 90%;
+    --irmin-blue-200: 197 65% 81%;
+    --irmin-blue-300: 197 49% 68%;
+    --irmin-blue-400: 197 29% 44%;
+    --irmin-blue-500: 197 67% 27%; /* DEFAULT */
+    --irmin-blue-600: 197 67% 20%;
+    --irmin-blue-700: 197 67% 14%;
+    --irmin-blue-800: 197 67% 10%;
+    --irmin-blue-900: 197 67% 4%;
+
+    --irmin-teal-100: 197 18% 90%;
+    --irmin-teal-200: 197 18% 80%;
+    --irmin-teal-300: 197 18% 70%;
+    --irmin-teal-400: 197 18% 60%;
+    --irmin-teal-500: 197 18% 50%; /* DEFAULT */
+    --irmin-teal-600: 197 18% 40%;
+    --irmin-teal-700: 197 18% 30%;
+    --irmin-teal-800: 197 18% 20%;
+    --irmin-teal-900: 197 18% 10%;
+
+    --irmin-green-100: 137 20% 94%;
+    --irmin-green-200: 137 20% 88%;
+    --irmin-green-300: 137 20% 82%;
+    --irmin-green-400: 137 20% 76%;
+    --irmin-green-500: 137 20% 70%; /* DEFAULT */
+    --irmin-green-600: 137 20% 60%;
+    --irmin-green-700: 137 20% 45%;
+    --irmin-green-800: 137 20% 35%;
+    --irmin-green-900: 137 20% 20%;
+
+    /* Base Theme Variables */
+    --background: 0 0% 100%;
+    --foreground: 193.33 69.23% 2.55%;
+
+    --primary: 196.96 66.67% 27.06%;
+    --primary-foreground: 200 24.32% 92.75%;
+
+    --card: 210 20% 96%;
+    --card-foreground: 197 98% 5%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 193.33 69.23% 2.55%;
+
+    --secondary: 197.14 25% 89.02%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 200 24.32% 92.75%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 137 20% 60%;
+    --accent-foreground: 140 3% 95%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 196.67 24.32% 85.49%;
+    --input: 200 10.91% 78.43%;
+    --ring: 196.96 66.67% 27.06%;
+
+    --chart-1: 137.42 20.26% 70%;
+    --chart-2: 136.15 20% 74.51%;
+    --chart-3: 138 20% 80.39%;
+    --chart-4: 137.65 20% 83.33%;
+    --chart-5: 137.14 20.59% 86.67%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Base Theme Variables in Dark mode */
+    --background: 197 94% 6%;
+    --foreground: 197.14 25% 89.02%;
+
+    --primary: 196.96 66.67% 27.06%;
+    --primary-foreground: 200 24.32% 92.75%;
+
+    --card: 197 98% 10%;
+    --card-foreground: 210 20% 96%;
+
+    --popover: 197 100% 2%;
+    --popover-foreground: 197.14 25% 89.02%;
+
+    --secondary: 196.88 66.67% 9.41%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 9.8%;
+    --muted-foreground: 0 0% 50.2%;
+
+    --accent: 137 20% 60%;
+    --accent-foreground: 140 3% 95%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 196.67 64.29% 5.49%;
+    --input: 200 9.89% 17.84%;
+    --ring: 196.96 66.67% 27.06%;
+
+    --chart-1: 137.42 20.26% 70%;
+    --chart-2: 136.15 12.62% 59.61%;
+    --chart-3: 138 8.62% 45.49%;
+    --chart-4: 137.65 8.63% 38.63%;
+    --chart-5: 137.14 8.75% 31.37%;
+
+    --radius: 0.5rem;
+  }
+}

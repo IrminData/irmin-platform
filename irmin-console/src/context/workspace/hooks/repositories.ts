@@ -2,7 +2,6 @@
 
 import { useCallback } from 'react';
 
-import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
 import { Repository } from '@/types/core/Repository';
@@ -19,7 +18,7 @@ export const useFetchRepositories = (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
   setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (forceFetch?: boolean) => {
@@ -33,15 +32,13 @@ export const useFetchRepositories = (
       if (loading) return;
       setLoading(true);
       try {
-        // Get the repository service
-        const { repositoryService } = new IrminCore(locale);
         // If the current workspace is not set, clear the connections
         if (!currentWorkspace) {
           setRepositories([]);
           return;
         }
         // Fetch the connections for the current workspace
-        const res = await repositoryService.fetchRepositories();
+        const res = await irminCore.repositoryService.fetchRepositories();
         setRepositories(res.data);
       } finally {
         setLoading(false);
@@ -54,7 +51,7 @@ export const useFetchRepositories = (
       setLoading,
       fetchedFor,
       setFetchedFor,
-      locale,
+      irminCore,
     ]
   );
 
@@ -64,13 +61,13 @@ export const useFetchRepositories = (
 export const useCreateRepository = (
   repositories: Repository[],
   setRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (repository: Repository) => {
       // Create the repository
-      const { repositoryService } = new IrminCore(locale);
-      const res = await repositoryService.createRepository(repository);
+      const res =
+        await irminCore.repositoryService.createRepository(repository);
       // Update the local state with the new repository
       if (res.data) {
         setRepositories([...repositories, res.data]);
@@ -78,7 +75,7 @@ export const useCreateRepository = (
       // Return the res from the API
       return res;
     },
-    [repositories, setRepositories, locale]
+    [repositories, setRepositories, irminCore]
   );
 
 /**
@@ -87,13 +84,12 @@ export const useCreateRepository = (
 export const useUpdateRepository = (
   repositories: Repository[],
   setRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (repositorySlug: string, updatedRepository: Repository) => {
       // Update the repository
-      const { repositoryService } = new IrminCore(locale);
-      const res = await repositoryService.updateRepository(
+      const res = await irminCore.repositoryService.updateRepository(
         repositorySlug,
         updatedRepository
       );
@@ -105,7 +101,7 @@ export const useUpdateRepository = (
       // Return the res from the API
       return res;
     },
-    [repositories, setRepositories, locale]
+    [repositories, setRepositories, irminCore]
   );
 
 /**
@@ -114,13 +110,13 @@ export const useUpdateRepository = (
 export const useDeleteRepository = (
   repositories: Repository[],
   setRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (repositorySlug: string) => {
       // Delete the repository
-      const { repositoryService } = new IrminCore(locale);
-      const res = await repositoryService.deleteRepository(repositorySlug);
+      const res =
+        await irminCore.repositoryService.deleteRepository(repositorySlug);
       // Update the local state by removing the deleted repository
       const updatedRepositories = repositories.filter(
         (repo) => repo.slug !== repositorySlug
@@ -129,7 +125,7 @@ export const useDeleteRepository = (
       // Return the res from the API
       return res;
     },
-    [repositories, setRepositories, locale]
+    [repositories, setRepositories, irminCore]
   );
 
 /**
@@ -138,13 +134,12 @@ export const useDeleteRepository = (
 export const useReassignRepository = (
   repositories: Repository[],
   setRepositories: React.Dispatch<React.SetStateAction<Repository[]>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (repository: Repository, newOwner: User) => {
       // Reassign the Repositories
-      const { repositoryService } = new IrminCore(locale);
-      const res = await repositoryService.reassignRepository(
+      const res = await irminCore.repositoryService.reassignRepository(
         repository,
         newOwner
       );
@@ -156,5 +151,5 @@ export const useReassignRepository = (
       // Return the res from the API
       return res;
     },
-    [repositories, setRepositories, locale]
+    [repositories, setRepositories, irminCore]
   );

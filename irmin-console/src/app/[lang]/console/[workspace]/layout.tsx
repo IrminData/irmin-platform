@@ -12,11 +12,10 @@ export type WorkspaceLayoutParams = {
 /**
  * Generate default SEO metadata for the console workspace pages.
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: WorkspaceLayoutParams;
+export async function generateMetadata(props: {
+  params: Promise<WorkspaceLayoutParams>;
 }): Promise<Metadata> {
+  const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
     title: `Workspace ${formattedWorkspace} | IRMIN Console`,
@@ -27,13 +26,14 @@ export async function generateMetadata({
  * Console workspace layout
  * Provides the {@link BucketProvider} context for the workspace.
  */
-export default function ConsoleWorkspaceLayout({
-  children,
-  params,
-}: {
+export default async function ConsoleWorkspaceLayout(props: {
   children: React.ReactNode;
-  params: WorkspaceLayoutParams;
+  params: Promise<WorkspaceLayoutParams>;
 }) {
+  const params = await props.params;
+
+  const { children } = props;
+
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
   const currentWorkspace = params.workspace;
   return (

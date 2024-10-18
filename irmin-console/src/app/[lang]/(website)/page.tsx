@@ -36,10 +36,9 @@ type PageProps = {
  * It uses PageContent and PageSections to render
  * the page content and sections it receives from WordPress
  * API.
- *
- * @param param0 - Router properties received by the page
  */
-export default async function WebsiteHome({ params }: PageProps) {
+export default async function WebsiteHome(props: PageProps) {
+  const params = await props.params;
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
 
   const wordpress = WordPress.getInstance();
@@ -65,12 +64,9 @@ export default async function WebsiteHome({ params }: PageProps) {
 
 /**
  * Generate SEO metadata for the website home page
- *
- * @param param0 - Router properties received by the page
  */
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
 
   const wordpress = WordPress.getInstance();

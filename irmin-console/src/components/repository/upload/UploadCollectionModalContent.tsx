@@ -1,14 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
-import IrminCore from '@/services/core/IrminCore';
 import { Controller, useForm } from 'react-hook-form';
 
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -38,12 +38,12 @@ export default function UploadCollectionModalContent({
   currentRef?: string;
 }) {
   const { irminAlert, irminModal } = usePopup();
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { repositoryService } = useMemo(() => new IrminCore(locale), [locale]);
+  const { irminCore } = useIrminCore();
 
   const {
     control,
@@ -72,7 +72,7 @@ export default function UploadCollectionModalContent({
       }
 
       // Upload the collection
-      const res = await repositoryService.uploadCollection(
+      const res = await irminCore.repositoryService.uploadCollection(
         data.repository,
         data.ref,
         data.name,

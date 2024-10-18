@@ -8,6 +8,7 @@ import SignUpSection from '@/components/authentication/SignUpSection';
 export const metadata: Metadata = {
   title: 'Create new account | IRMIN',
   description: 'Create a new account to access IRMIN.',
+
   openGraph: {
     type: 'website',
   },

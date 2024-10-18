@@ -46,8 +46,8 @@ export default function RepositoryCompareSection() {
   const [diff, setDiff] = useState<Diff | null>(null);
   const [loadingDiff, setLoadingDiff] = useState<boolean>(false);
 
-  const diffFetchedBase = useRef<string | undefined>();
-  const diffFetchedCompare = useRef<string | undefined>();
+  const diffFetchedBase = useRef<string | null>(null);
+  const diffFetchedCompare = useRef<string | null>(null);
 
   /**
    * Fetch the diff between the base and compare branches.
@@ -153,8 +153,8 @@ export default function RepositoryCompareSection() {
       compareRef === diffFetchedCompare.current
     )
       return;
-    diffFetchedBase.current = baseRef;
-    diffFetchedCompare.current = compareRef;
+    diffFetchedBase.current = baseRef ?? null;
+    diffFetchedCompare.current = compareRef ?? null;
     handleFetchDiff();
   }, [handleFetchDiff, baseRef, compareRef]);
 

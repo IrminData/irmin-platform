@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { use, useMemo } from 'react';
 
 import { notFound } from 'next/navigation';
 
@@ -14,15 +14,11 @@ import { SingleWorkflowLayoutParams } from '../layout';
 
 /**
  * Page for the Workflow schedule settings
- *
- * @param props0 - The page properties
- * @param props0.params - The page parameters from Next JS router
  */
-export default function WorkflowSchedulePage({
-  params,
-}: {
-  params: SingleWorkflowLayoutParams;
+export default function WorkflowSchedulePage(props: {
+  params: Promise<SingleWorkflowLayoutParams>;
 }) {
+  const params = use(props.params);
   const workflowId = params.workflow;
   if (isInvalidRouteProp(workflowId)) notFound();
 

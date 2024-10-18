@@ -38,8 +38,8 @@ export default function RepositoryUncommitedChangesSection() {
   const [diff, setDiff] = useState<Diff | null>(null);
   const [loadingDiff, setLoadingDiff] = useState<boolean>(false);
 
-  const diffFetchedBase = useRef<string | undefined>();
-  const diffFetchedCompare = useRef<string | undefined>();
+  const diffFetchedBase = useRef<string | null>(null);
+  const diffFetchedCompare = useRef<string | null>(null);
 
   // Commits are sorted in the context, so the first commit is the latest
   const latestCommit = useMemo(() => commits?.[0], [commits]);
@@ -124,7 +124,7 @@ export default function RepositoryUncommitedChangesSection() {
     <div className='container relative mx-auto max-w-6xl px-2 pb-12 pt-4 md:px-4'>
       <div className='mb-8 flex w-full flex-wrap items-center justify-between gap-4 lg:flex-row'>
         {/* Title */}
-        <h3 className='text-sm text-gray-900 dark:text-gray-100 lg:text-base'>
+        <h3 className='text-sm text-gray-900 lg:text-base dark:text-gray-100'>
           {dict.repository.commit.showingUncommitedChangesFor}{' '}
           <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
             {currentRef}

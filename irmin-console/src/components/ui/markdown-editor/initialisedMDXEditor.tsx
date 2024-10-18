@@ -22,6 +22,7 @@ import {
   toolbarPlugin,
   UndoRedo,
 } from '@mdxeditor/editor';
+
 import '@mdxeditor/editor/style.css';
 
 /**

@@ -5,14 +5,13 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import IrminCore from '@/services/core/IrminCore';
-
 import { IoChevronBack } from 'react-icons/io5';
 
 import { ButtonWithTooltip } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useLogs } from '@/context/LogContext';
 import { useWorkspace } from '@/context/workspace';
@@ -55,17 +54,22 @@ export default function WorkflowRunLogsSection({
     segmentsAfter: 1,
   });
 
-  const { workflowService } = useMemo(() => new IrminCore(locale), [locale]);
+  const { irminCore } = useIrminCore();
 
   useEffect(() => {
     fetchWorkflowRunLogs(workflowId, workflowRunId);
     if (!workflowId || !workflowRunId) return;
-    workflowService
+    irminCore.workflowService
       .fetchWorkflowRunByID(workflowId, workflowRunId)
       .then((res) => {
         setRun(res.data);
       });
-  }, [workflowId, workflowRunId, fetchWorkflowRunLogs, workflowService]);
+  }, [
+    workflowId,
+    workflowRunId,
+    fetchWorkflowRunLogs,
+    irminCore.workflowService,
+  ]);
 
   const selectedWorkflow = useMemo(
     () => allWorkflows.find((w) => w.id === workflowId),

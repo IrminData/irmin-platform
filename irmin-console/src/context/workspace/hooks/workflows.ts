@@ -2,7 +2,6 @@
 
 import { useCallback } from 'react';
 
-import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
 import { User } from '@/types/core/User';
@@ -25,7 +24,7 @@ export const useFetchImports = (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
   setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (forceFetch?: boolean) => {
@@ -39,15 +38,13 @@ export const useFetchImports = (
       if (loading) return;
       setLoading(true);
       try {
-        // Get the workflow service
-        const { workflowService } = new IrminCore(locale);
         // If the current workspace is not set, clear the imports
         if (!currentWorkspace) {
           setImports([]);
           return;
         }
         // Fetch the import workflows for the current workspace
-        const res = await workflowService.fetchImportWorkflows();
+        const res = await irminCore.workflowService.fetchImportWorkflows();
         setImports(res.data);
       } finally {
         setLoading(false);
@@ -60,7 +57,7 @@ export const useFetchImports = (
       setLoading,
       fetchedFor,
       setFetchedFor,
-      locale,
+      irminCore,
     ]
   );
 
@@ -74,7 +71,7 @@ export const useFetchExports = (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
   setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (forceFetch?: boolean) => {
@@ -88,15 +85,13 @@ export const useFetchExports = (
       if (loading) return;
       setLoading(true);
       try {
-        // Get the workflow service
-        const { workflowService } = new IrminCore(locale);
         // If the current workspace is not set, clear the exports
         if (!currentWorkspace) {
           setExports([]);
           return;
         }
         // Fetch the Export workflows for the current workspace
-        const res = await workflowService.fetchExportWorkflows();
+        const res = await irminCore.workflowService.fetchExportWorkflows();
         setExports(res.data);
       } finally {
         setLoading(false);
@@ -109,7 +104,7 @@ export const useFetchExports = (
       setLoading,
       fetchedFor,
       setFetchedFor,
-      locale,
+      irminCore,
     ]
   );
 
@@ -123,7 +118,7 @@ export const useFetchActions = (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
   setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (forceFetch?: boolean) => {
@@ -137,15 +132,13 @@ export const useFetchActions = (
       if (loading) return;
       setLoading(true);
       try {
-        // Get the workflow service
-        const { workflowService } = new IrminCore(locale);
         // If the current workspace is not set, clear the Actions
         if (!currentWorkspace) {
           setActions([]);
           return;
         }
         // Fetch the Action workflows for the current workspace
-        const res = await workflowService.fetchActionWorkflows();
+        const res = await irminCore.workflowService.fetchActionWorkflows();
         setActions(res.data);
       } finally {
         setLoading(false);
@@ -158,7 +151,7 @@ export const useFetchActions = (
       setLoading,
       fetchedFor,
       setFetchedFor,
-      locale,
+      irminCore,
     ]
   );
 
@@ -166,7 +159,7 @@ export const useFetchActions = (
  * Hook to create a new workflow using the {@link IrminCore}.
  */
 export const useCreateWorkflow = (
-  locale: Locale,
+  irminCore: IrminCore,
   actions: ActionWorkflow[],
   setActions: (actions: ActionWorkflow[]) => void,
   imports: ImportWorkflow[],
@@ -178,12 +171,10 @@ export const useCreateWorkflow = (
     async (workflowData: WorkflowSetup) => {
       // Validate the workflow data
       if (!workflowData.name) return;
-      // Get the Irmin service
-      const { workflowService } = new IrminCore(locale);
       // Create the workflow
       if (workflowData.type === 'action') {
         // Create the action workflow
-        const response = await workflowService.createActionWorkflow({
+        const response = await irminCore.workflowService.createActionWorkflow({
           // Workflow data
           name: workflowData.name,
           description: workflowData.description,
@@ -200,7 +191,7 @@ export const useCreateWorkflow = (
         return response;
       }
       if (workflowData.type === 'import') {
-        const response = await workflowService.createImportWorkflow({
+        const response = await irminCore.workflowService.createImportWorkflow({
           // Workflow data
           name: workflowData.name,
           description: workflowData.description,
@@ -217,7 +208,7 @@ export const useCreateWorkflow = (
         return response;
       }
       if (workflowData.type === 'export') {
-        const response = await workflowService.createExportWorkflow({
+        const response = await irminCore.workflowService.createExportWorkflow({
           // Workflow data
           name: workflowData.name,
           description: workflowData.description,
@@ -235,14 +226,14 @@ export const useCreateWorkflow = (
         return response;
       }
     },
-    [locale, actions, setActions, imports, setImports, exports, setExports]
+    [irminCore, actions, setActions, imports, setImports, exports, setExports]
   );
 
 /**
  * Hook to update a workflow using the {@link IrminCore}.
  */
 export const useUpdateWorkflow = (
-  locale: Locale,
+  irminCore: IrminCore,
   actions: ActionWorkflow[],
   setActions: (actions: ActionWorkflow[]) => void,
   imports: ImportWorkflow[],
@@ -253,8 +244,7 @@ export const useUpdateWorkflow = (
   useCallback(
     async (workflowId: string, updatedWorkflow: Workflow) => {
       // Update the workflow using the workflow service
-      const { workflowService } = new IrminCore(locale);
-      const res = await workflowService.updateWorkflow(
+      const res = await irminCore.workflowService.updateWorkflow(
         workflowId,
         updatedWorkflow
       );
@@ -291,14 +281,14 @@ export const useUpdateWorkflow = (
       // Return the res
       return res;
     },
-    [locale, actions, setActions, imports, setImports, exports, setExports]
+    [irminCore, actions, setActions, imports, setImports, exports, setExports]
   );
 
 /**
  * Hook to reassign a workflow to a new owner using the {@link IrminCore}.
  */
 export const useReassignWorkflow = (
-  locale: Locale,
+  irminCore: IrminCore,
   actions: ActionWorkflow[],
   setActions: (actions: ActionWorkflow[]) => void,
   imports: ImportWorkflow[],
@@ -309,8 +299,10 @@ export const useReassignWorkflow = (
   useCallback(
     async (workflowId: string, newOwner: User) => {
       // Reassign the workflow using the workflow service
-      const { workflowService } = new IrminCore(locale);
-      const res = await workflowService.reassignWorkflow(workflowId, newOwner);
+      const res = await irminCore.workflowService.reassignWorkflow(
+        workflowId,
+        newOwner
+      );
       // Update the local state based on the reassigned workflow and it's type
       const reassignedWorkflow =
         actions.find((action) => action.id === workflowId) ??
@@ -350,14 +342,14 @@ export const useReassignWorkflow = (
       // Return the res
       return res;
     },
-    [locale, actions, setActions, imports, setImports, exports, setExports]
+    [irminCore, actions, setActions, imports, setImports, exports, setExports]
   );
 
 /**
  * Hook to pause a workflow using the {@link IrminCore}.
  */
 export const usePauseWorkflow = (
-  locale: Locale,
+  irminCore: IrminCore,
   actions: ActionWorkflow[],
   setActions: (actions: ActionWorkflow[]) => void,
   imports: ImportWorkflow[],
@@ -368,8 +360,7 @@ export const usePauseWorkflow = (
   useCallback(
     async (workflowId: string) => {
       // Pause the workflow
-      const { workflowService } = new IrminCore(locale);
-      const res = await workflowService.pauseWorkflow(workflowId);
+      const res = await irminCore.workflowService.pauseWorkflow(workflowId);
       // Update the local state based on the paused workflow and it's type
       const pausedWorkflow =
         actions.find((action) => action.id === workflowId) ??
@@ -409,14 +400,14 @@ export const usePauseWorkflow = (
       // Return the res
       return res;
     },
-    [locale, actions, setActions, imports, setImports, exports, setExports]
+    [irminCore, actions, setActions, imports, setImports, exports, setExports]
   );
 
 /**
  * Hook to resume a workflow using the {@link IrminCore}.
  */
 export const useResumeWorkflow = (
-  locale: Locale,
+  irminCore: IrminCore,
   actions: ActionWorkflow[],
   setActions: (actions: ActionWorkflow[]) => void,
   imports: ImportWorkflow[],
@@ -427,8 +418,7 @@ export const useResumeWorkflow = (
   useCallback(
     async (workflowId: string) => {
       // Resume the workflow
-      const { workflowService } = new IrminCore(locale);
-      const res = await workflowService.resumeWorkflow(workflowId);
+      const res = await irminCore.workflowService.resumeWorkflow(workflowId);
       // Update the local state based on the resumed workflow and it's type
       const resumedWorkflow =
         actions.find((action) => action.id === workflowId) ??
@@ -468,14 +458,14 @@ export const useResumeWorkflow = (
       // Return the res
       return res;
     },
-    [locale, actions, setActions, imports, setImports, exports, setExports]
+    [irminCore, actions, setActions, imports, setImports, exports, setExports]
   );
 
 /**
  * Hook to delete a workflow using the {@link IrminCore}.
  */
 export const useDeleteWorkflow = (
-  locale: Locale,
+  irminCore: IrminCore,
   actions: ActionWorkflow[],
   setActions: (actions: ActionWorkflow[]) => void,
   imports: ImportWorkflow[],
@@ -486,8 +476,7 @@ export const useDeleteWorkflow = (
   useCallback(
     async (workflowId: string) => {
       // Delete the workflow
-      const { workflowService } = new IrminCore(locale);
-      const res = await workflowService.deleteWorkflow(workflowId);
+      const res = await irminCore.workflowService.deleteWorkflow(workflowId);
       // Update the local state based on the deleted workflow and it's type
       const deletedWorkflow =
         actions.find((action) => action.id === workflowId) ??
@@ -517,21 +506,21 @@ export const useDeleteWorkflow = (
       // Return the res
       return res;
     },
-    [locale, actions, setActions, imports, setImports, exports, setExports]
+    [irminCore, actions, setActions, imports, setImports, exports, setExports]
   );
 
 /**
  * Trigger a workflow run using the {@link IrminCore}.
  */
 export const useTriggerWorkflowRun = (
-  locale: Locale,
+  irminCore: IrminCore,
   irminAlert: (type: 'success' | 'error', message: string) => void
 ) =>
   useCallback(
     async (workflowId: string) => {
       try {
-        const { workflowService } = new IrminCore(locale);
-        const response = await workflowService.triggerWorkflowRun(workflowId);
+        const response =
+          await irminCore.workflowService.triggerWorkflowRun(workflowId);
         irminAlert('success', response.message ?? 'Workflow run triggered');
         return response;
       } catch (error) {
@@ -542,5 +531,5 @@ export const useTriggerWorkflowRun = (
         );
       }
     },
-    [locale, irminAlert]
+    [irminCore, irminAlert]
   );

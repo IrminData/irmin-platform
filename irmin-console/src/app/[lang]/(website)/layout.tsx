@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
+
 import WebsiteFooter from '@/components/website/footer/WebsiteFooter';
 import WebsiteNavigation from '@/components/website/navigation/WebsiteNavigation';
 
@@ -8,8 +10,10 @@ import WebsiteNavigation from '@/components/website/navigation/WebsiteNavigation
  */
 export const metadata: Metadata = {
   title: 'Just like GitHub for Data, made for developers | IRMIN',
+
   description:
     'Tired of scattered data? Sync, analyse & manage your data with AI in minutes. Use connectors, marketplace & run actions.',
+
   openGraph: {
     type: 'website',
   },
@@ -32,14 +36,20 @@ export const metadata: Metadata = {
  */
 export default function WebsiteLayout({
   children,
+  params,
 }: Readonly<{
   children: React.ReactNode;
+  params: {
+    lang: Locale;
+  };
 }>) {
+  const dict = dictionaries[params.lang] ?? dictionaries[defaultLocale];
+  const locale = params.lang ?? defaultLocale;
   return (
     <div className='flex flex-col'>
       <WebsiteNavigation />
       {children}
-      <WebsiteFooter />
+      <WebsiteFooter locale={locale} dict={dict} />
     </div>
   );
 }

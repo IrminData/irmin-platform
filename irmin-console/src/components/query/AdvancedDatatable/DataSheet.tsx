@@ -2,6 +2,8 @@ import React, { ForwardedRef, forwardRef } from 'react';
 
 import { Column, DataSheetGrid, DataSheetGridRef } from 'react-datasheet-grid';
 
+import 'react-datasheet-grid/dist/style.css';
+
 import { RenderableRow } from '@/types/internal/RenderableRow';
 
 /**

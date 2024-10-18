@@ -10,6 +10,7 @@ import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
 import ConsoleSearch from '@/components/console/ConsoleSearch';
 import Button from '@/components/ui/button';
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -207,6 +208,9 @@ export default function ConsoleWrapper({
               id='console-sidebar-footer'
               className={`mt-auto transition-all ${foldMenu ? 'hidden w-0' : 'block w-full'}`}
             >
+              <div className='px-6'>
+                <LanguageSwitcher />
+              </div>
               <div
                 className='w-full min-w-64 pt-8'
                 id='console-sidebar-useful-links'

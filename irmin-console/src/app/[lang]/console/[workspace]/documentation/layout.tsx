@@ -7,11 +7,10 @@ import DocumentationLayoutWrapper from '@/components/documentation/Documentation
 /**
  * SEO metadata for the Documentation pages
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: WorkspaceLayoutParams;
+export async function generateMetadata(props: {
+  params: Promise<WorkspaceLayoutParams>;
 }): Promise<Metadata> {
+  const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
     title: `Documentation | ${formattedWorkspace} | IRMIN Console`,
@@ -21,13 +20,14 @@ export async function generateMetadata({
 /**
  * Layout for the Documentations pages in the Console
  */
-export default function ConsoleDocumentationLayout({
-  params,
-  children,
-}: {
-  params: WorkspaceLayoutParams;
+export default async function ConsoleDocumentationLayout(props: {
+  params: Promise<WorkspaceLayoutParams>;
   children: React.ReactNode;
 }) {
+  const params = await props.params;
+
+  const { children } = props;
+
   return (
     <DocumentationLayoutWrapper params={params}>
       {children}

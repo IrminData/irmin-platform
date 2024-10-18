@@ -1,12 +1,10 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-
-import IrminCore from '@/services/core/IrminCore';
+import React, { useEffect, useState } from 'react';
 
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { Connector } from '@/types/core/Connector';
@@ -78,13 +76,12 @@ const CreateConnectionModalContent = ({
   currentStep: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) => {
-  const { locale } = useLocale();
   const { irminAlert } = usePopup();
   const [connectionData, setConnectionData] = useState<ConnectionSetup>(
     initialConnectionData
   );
   const [connectors, setConnectors] = useState<Connector[]>([]);
-  const { connectorService } = useMemo(() => new IrminCore(locale), [locale]);
+  const { irminCore } = useIrminCore();
 
   // Reset connection data when modal is closed
   useEffect(() => {
@@ -96,7 +93,7 @@ const CreateConnectionModalContent = ({
   useEffect(() => {
     (async () => {
       try {
-        const res = await connectorService.fetchAllConnectors();
+        const res = await irminCore.connectorService.fetchAllConnectors();
         setConnectors(res.data);
       } catch (error) {
         console.error('Fetch connectors error:', error);
@@ -106,7 +103,7 @@ const CreateConnectionModalContent = ({
         );
       }
     })();
-  }, [connectorService, irminAlert]);
+  }, [irminCore.connectorService, irminAlert]);
 
   if (
     connectors.length === 0 ||

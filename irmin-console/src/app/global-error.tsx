@@ -8,6 +8,8 @@ import WebsiteFooter from '@/components/website/footer/WebsiteFooter';
 import WebsiteNavigation from '@/components/website/navigation/WebsiteNavigation';
 import WebsiteError from '@/components/website/websiteError';
 
+import { useLocale } from '@/context/LocaleContext';
+
 /**
  * Global error page to display when an error occurs
  *
@@ -20,6 +22,8 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { dict, locale } = useLocale();
+
   useEffect(() => {
     Sentry.captureException(error);
   }, [error]);
@@ -29,7 +33,7 @@ export default function GlobalError({
       <body>
         <WebsiteNavigation />
         <WebsiteError error={error} reset={reset} />
-        <WebsiteFooter />
+        <WebsiteFooter dict={dict} locale={locale} />
       </body>
     </html>
   );

@@ -2,7 +2,6 @@
 
 import { useCallback } from 'react';
 
-import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
 import { Invite } from '@/types/core/Invite';
@@ -19,7 +18,7 @@ export const useFetchInvites = (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchedFor: string | null,
   setFetchedFor: React.Dispatch<React.SetStateAction<string | null>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (forceFetch?: boolean) => {
@@ -33,15 +32,13 @@ export const useFetchInvites = (
       if (loading) return;
       setLoading(true);
       try {
-        // Get the invite service
-        const { inviteService } = new IrminCore(locale);
         // If the current workspace is not set, clear the connections
         if (!currentWorkspace) {
           setInvites([]);
           return;
         }
         // Fetch the data
-        const res = await inviteService.fetchInvitesByWorkspace(
+        const res = await irminCore.inviteService.fetchInvitesByWorkspace(
           currentWorkspace.slug
         );
         setInvites(res.data);
@@ -56,7 +53,7 @@ export const useFetchInvites = (
       setLoading,
       fetchedFor,
       setFetchedFor,
-      locale,
+      irminCore,
     ]
   );
 
@@ -66,18 +63,20 @@ export const useFetchInvites = (
 export const useSendInvite = (
   currentWorkspace: Workspace | null,
   setInvites: React.Dispatch<React.SetStateAction<Invite[]>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (name: string, email: string, role: IrminRoleNames) => {
       // Make sure there is a current workspace
       if (!currentWorkspace) throw new Error('No current workspace');
-      // Get the invite service
-      const { inviteService } = new IrminCore(locale);
       // Send the invite
-      const res = await inviteService.inviteUserToWorkspace(name, email, role);
+      const res = await irminCore.inviteService.inviteUserToWorkspace(
+        name,
+        email,
+        role
+      );
       // Refetch the invites
-      const newInvites = await inviteService.fetchInvitesByWorkspace(
+      const newInvites = await irminCore.inviteService.fetchInvitesByWorkspace(
         currentWorkspace.slug
       );
       // Update the invites in the context state
@@ -85,23 +84,20 @@ export const useSendInvite = (
 
       return res;
     },
-    [currentWorkspace, setInvites, locale]
+    [currentWorkspace, setInvites, irminCore]
   );
 
 /**
  * Hook to resend an invite to a user and update the context state using the {@link IrminCore}.
  */
-export const useResendInvite = (locale: Locale) =>
+export const useResendInvite = (irminCore: IrminCore) =>
   useCallback(
     async (invite: string) => {
-      // Get the invite service
-      const { inviteService } = new IrminCore(locale);
       // Resend the invite
-      const res = await inviteService.resendUserInvite(invite);
-
+      const res = await irminCore.inviteService.resendUserInvite(invite);
       return res;
     },
-    [locale]
+    [irminCore]
   );
 
 /**
@@ -110,20 +106,18 @@ export const useResendInvite = (locale: Locale) =>
 export const useCancelInvite = (
   invites: Invite[],
   setInvites: React.Dispatch<React.SetStateAction<Invite[]>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (invite: string) => {
-      // Get the invite service
-      const { inviteService } = new IrminCore(locale);
       // Cancel the invite
-      const res = await inviteService.cancelUserInvite(invite);
+      const res = await irminCore.inviteService.cancelUserInvite(invite);
       // Update the invites in the context state
       setInvites(invites.filter((i) => i.id !== invite));
 
       return res;
     },
-    [invites, setInvites, locale]
+    [invites, setInvites, irminCore]
   );
 
 /**
@@ -132,14 +126,15 @@ export const useCancelInvite = (
 export const useChangeInvite = (
   invites: Invite[],
   setInvites: React.Dispatch<React.SetStateAction<Invite[]>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (invite: string, role: IrminRole) => {
-      // Get the invite service
-      const { inviteService } = new IrminCore(locale);
       // Change the invite
-      const res = await inviteService.changeUserInviteRole(invite, role.name);
+      const res = await irminCore.inviteService.changeUserInviteRole(
+        invite,
+        role.name
+      );
       // Update the invites in the context state
       setInvites(
         invites.map((i) => (i.id === invite ? { ...i, role: role } : i))
@@ -147,5 +142,5 @@ export const useChangeInvite = (
 
       return res;
     },
-    [invites, setInvites, locale]
+    [invites, setInvites, irminCore]
   );

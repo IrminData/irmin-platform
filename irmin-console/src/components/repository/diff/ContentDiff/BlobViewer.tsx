@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer';
+
 import '@cyntler/react-doc-viewer/dist/index.css';
 
 import { useLocale } from '@/context/LocaleContext';

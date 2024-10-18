@@ -1,3 +1,5 @@
+import { NextResponse } from 'next/server';
+
 /**
  * robots.txt route
  *
@@ -34,7 +36,7 @@ export async function GET() {
       `;
   }
 
-  return new Response(txt, {
+  return new NextResponse(txt, {
     headers: {
       'Content-Type': 'text/plain',
     },

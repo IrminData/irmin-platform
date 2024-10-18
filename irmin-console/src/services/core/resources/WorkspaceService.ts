@@ -7,8 +7,7 @@ import { Workspace } from '@/types/core/Workspace';
 import { exampleWorkspaces } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment =
-  process.env.NEXT_PUBLIC_ENVIRONMENT_TYPE === 'development';
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Workspaces API res type

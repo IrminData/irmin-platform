@@ -63,7 +63,7 @@ class IrminCore {
   public diffService: DiffService;
   public tagService: TagService;
 
-  constructor(locale: Locale, apiToken?: string) {
+  constructor(locale: Locale, apiToken: string) {
     // Set locale and token
     this.locale = locale || defaultLocale;
     this.token = apiToken || '';

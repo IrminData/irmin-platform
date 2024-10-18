@@ -1,3 +1,5 @@
+import { NextRequest, NextResponse } from 'next/server';
+
 const appPassword = process.env.ENV_PASSWORD ?? 'oiDeNuDEvenTICYc';
 const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
@@ -59,7 +61,7 @@ body {
  * @returns HTML form for signing in to the development environment
  */
 export async function GET() {
-  const response = new Response(signIn, {
+  const response = new NextResponse(signIn, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
     },
@@ -83,17 +85,17 @@ export async function GET() {
  * @param req - Request object
  * @returns Response object - Redirects to the home page
  */
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   // Parse the request body
   const body = await req.formData();
   const password = body.get('password');
 
   // Validate the password
   if (typeof password !== 'string') {
-    return new Response('Password is not a string', { status: 400 });
+    return new NextResponse('Password is not a string', { status: 400 });
   }
   if (password !== appPassword) {
-    return new Response('Wrong password', { status: 403 });
+    return new NextResponse('Wrong password', { status: 403 });
   }
 
   // Set the cookie
@@ -104,5 +106,5 @@ export async function POST(req: Request) {
   const headers = new Headers();
   headers.append('Set-Cookie', setCookieHeader);
   headers.append('Location', '/');
-  return new Response(null, { status: 302, headers });
+  return new NextResponse(null, { status: 302, headers });
 }

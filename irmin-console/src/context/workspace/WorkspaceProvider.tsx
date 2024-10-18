@@ -6,6 +6,9 @@ import { useParams } from 'next/navigation';
 
 import { Locale } from '@/dictionaries';
 
+import { useIAM } from '@/context/IAMContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
+
 import { getCookie, setCookie } from '@/utils/cookie';
 
 import { WorkspaceContext } from './index';
@@ -29,8 +32,14 @@ export const WorkspaceProvider = ({
   children: React.ReactNode;
   locale: Locale;
 }) => {
+  // Get token from IAM context
+  const { token } = useIAM();
+
   // URL params
   const params = useParams();
+
+  // Get Irmin Core
+  const { irminCore } = useIrminCore();
 
   // Workspace context state objects
   const initialisedRef = useRef(false);
@@ -38,27 +47,27 @@ export const WorkspaceProvider = ({
   const workspaceLoadingRef = useRef<boolean>(false);
 
   // Other context hooks
-  const workspaces = useWorkspaces({ locale });
+  const workspaces = useWorkspaces({ locale, irminCore });
   const currentWorkspace = workspaces.currentWorkspace;
   const connections = useConnections({
     currentWorkspace,
-    locale,
+    irminCore,
   });
   const repositories = useRepositories({
     currentWorkspace,
-    locale,
+    irminCore,
   });
   const usersAndRoles = useUsersAndRoles({
     currentWorkspace,
-    locale,
+    irminCore,
   });
   const invites = useInvite({
     currentWorkspace,
-    locale,
+    irminCore,
   });
   const workflows = useWorkflows({
     currentWorkspace,
-    locale,
+    irminCore,
   });
 
   /**
@@ -74,7 +83,7 @@ export const WorkspaceProvider = ({
       workspaceFetchedRef.current = workspaceSlug;
       try {
         // Empty workspace slug = reset the context data
-        if (!workspaceSlug) {
+        if (!workspaceSlug || !token) {
           connections.setConnections([]);
           workflows.setImports([]);
           workflows.setExports([]);
@@ -85,7 +94,11 @@ export const WorkspaceProvider = ({
           return;
         }
         // Fetch the full data for the current workspace
-        const res = await workspaces.fetchFullCurrentWorkspace(workspaceSlug);
+        const res = await workspaces.fetchFullCurrentWorkspace(
+          workspaceSlug,
+          token
+        );
+        if (!res) return;
         // Set the states for the fetched data
         connections.setConnections(res.data.connections);
         workflows.setImports(res.data.imports);
@@ -100,7 +113,15 @@ export const WorkspaceProvider = ({
         workspaceLoadingRef.current = false;
       }
     },
-    [workspaces, connections, workflows, repositories, usersAndRoles, invites]
+    [
+      workspaces,
+      connections,
+      workflows,
+      repositories,
+      usersAndRoles,
+      invites,
+      token,
+    ]
   );
 
   /**

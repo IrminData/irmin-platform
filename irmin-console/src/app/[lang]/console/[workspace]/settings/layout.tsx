@@ -7,11 +7,10 @@ import { WorkspaceLayoutParams } from '../layout';
 /**
  * SEO metadata for the Workspace Settings layout
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: WorkspaceLayoutParams;
+export async function generateMetadata(props: {
+  params: Promise<WorkspaceLayoutParams>;
 }): Promise<Metadata> {
+  const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
     title: `Workspace Settings | ${formattedWorkspace} | IRMIN Console`,

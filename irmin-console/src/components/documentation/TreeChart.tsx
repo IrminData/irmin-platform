@@ -3,8 +3,9 @@
 import React, { useMemo } from 'react';
 
 import { Controls, Edge, Node, ReactFlow } from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
 import { useTheme } from 'next-themes';
+
+import '@xyflow/react/dist/style.css';
 
 /**
  * Interface representing a tree node.

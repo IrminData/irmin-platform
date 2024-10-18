@@ -7,11 +7,10 @@ import LogsLayoutWrapper from '@/components/logs/LogsLayoutWrapper';
 /**
  * SEO metadata for the Logs pages
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: WorkspaceLayoutParams;
+export async function generateMetadata(props: {
+  params: Promise<WorkspaceLayoutParams>;
 }): Promise<Metadata> {
+  const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
     title: `Logs | ${formattedWorkspace} | IRMIN Console`,

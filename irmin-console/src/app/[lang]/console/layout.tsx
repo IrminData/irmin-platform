@@ -29,13 +29,14 @@ export const metadata: Metadata = {
  * @param props.children - Page content
  * @param props.params - Page parameters
  */
-export default function ConsoleLayout({
-  children,
-  params,
-}: {
+export default async function ConsoleLayout(props: {
   children: React.ReactNode;
-  params: { lang: Locale };
+  params: Promise<{ lang: Locale }>;
 }) {
+  const params = await props.params;
+
+  const { children } = props;
+
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
   return (
     <PopupProvider>

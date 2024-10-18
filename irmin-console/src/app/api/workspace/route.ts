@@ -1,3 +1,5 @@
+import { NextRequest, NextResponse } from 'next/server';
+
 import { Locale } from '@/dictionaries';
 import IrminCore from '@/services/core/IrminCore';
 
@@ -19,11 +21,11 @@ import {
  * Fetches all the data in parallel and waits for all the promises to resolve.
  * Returns a JSON object {@link WorkspaceProxyResponse} with all the data and any errors.
  */
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   // Get the token from the Authorization header
   const token = req.headers.get('Authorization');
   if (!token || !token.startsWith('Bearer ') || token === 'Bearer ') {
-    return new Response('Missing required headers', { status: 401 });
+    return new NextResponse('Missing required headers', { status: 401 });
   }
   const usableToken = token.replace('Bearer ', '');
 
@@ -44,22 +46,24 @@ export async function GET(req: Request) {
   // Get the workspace to fetch
   const workspaceSlug = req.headers.get('Workspace');
   if (!workspaceSlug) {
-    return new Response('No workspace', { status: 401 });
+    return new NextResponse('No workspace', { status: 401 });
   }
 
   // Validate the token by fetching the /profile endpoint
   const profile = await profileService.getProfile();
   if (!profile || !profile.data.email) {
-    return new Response('Unauthorised', { status: 401 });
+    return new NextResponse('Unauthorised', { status: 401 });
   }
 
   // Check if the user is authorised to access the workspace
   const workspaces = await workspaceService.fetchWorkspaces();
   if (!workspaces) {
-    return new Response('No workspaces', { status: 401 });
+    return new NextResponse('No workspaces', { status: 401 });
   }
   if (!workspaces.data.find((w) => w.slug === workspaceSlug)) {
-    return new Response('Not authorised for this workspace', { status: 404 });
+    return new NextResponse('Not authorised for this workspace', {
+      status: 404,
+    });
   }
 
   // Build the response, don't assign correct type yet, to prevent massive switch blocks later
@@ -121,7 +125,7 @@ export async function GET(req: Request) {
   }
 
   // Return the full workspace data as JSON
-  return new Response(JSON.stringify(workspaceProxyRes), {
+  return new NextResponse(JSON.stringify(workspaceProxyRes), {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
     },

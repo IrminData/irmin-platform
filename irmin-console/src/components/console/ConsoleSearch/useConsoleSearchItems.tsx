@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { useParams } from 'next/navigation';
 
-import IrminCore from '@/services/core/IrminCore';
-
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
@@ -24,7 +23,7 @@ import {
  */
 export function useConsoleSearchItems() {
   const params = useParams();
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
   const [items, setItems] = useState<ConsoleSearchItem[]>([]);
 
   const {
@@ -39,17 +38,18 @@ export function useConsoleSearchItems() {
 
   const [collections, setCollections] = useState<Collection[]>([]);
 
+  const { irminCore } = useIrminCore();
+
   useEffect(() => {
     try {
       (async () => {
-        const { collectionService } = new IrminCore(locale);
-        const res = await collectionService.fetchCollections();
+        const res = await irminCore.collectionService.fetchCollections();
         setCollections(res.data);
       })();
     } catch (error) {
       console.error((error as Error).message, 'Fetch Collections error');
     }
-  }, [locale]);
+  }, [irminCore.collectionService]);
 
   useEffect(() => {
     // Return if workspace is loading

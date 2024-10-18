@@ -1,3 +1,5 @@
+import { NextResponse } from 'next/server';
+
 import { detectLocaleFromURL, languages } from '@/dictionaries';
 import WordPress from '@/services/wordpress';
 
@@ -72,7 +74,7 @@ export async function GET() {
     </urlset>
   `;
 
-  return new Response(xml, {
+  return new NextResponse(xml, {
     headers: {
       'Content-Type': 'application/xml',
     },

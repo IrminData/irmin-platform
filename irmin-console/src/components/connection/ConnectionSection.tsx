@@ -1,47 +1,55 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import Image from 'next/image';
 
 import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/button';
 import WorkflowList from '@/components/workflow/WorkflowList';
 
+import { useConnection } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/workspace';
 
-import { Connection } from '@/types/core/Connection';
-
 /**
  * Connection Settings section component
- *
- * @param props0 - The props
- * @param props0.connection - The connection to view
  */
-const ConnectionSection = ({ connection }: { connection: Connection }) => {
+const ConnectionSection = () => {
   const { dict } = useLocale();
+  const { connection } = useConnection();
 
   const {
     workflows: { imports, exports },
   } = useWorkspace();
 
-  const loading = imports.isLoading || exports.isLoading;
-  const relatedWorkflows = [
-    ...imports.imports.filter(
-      (item) => item.workflowable.connection.id === connection.id
-    ),
-    ...exports.exports.filter(
-      (item) => item.workflowable.connection.id === connection.id
-    ),
-  ];
+  const loading = useMemo(
+    () => imports.isLoading || exports.isLoading,
+    [imports.isLoading, exports.isLoading]
+  );
 
-  let details = {};
-  let settings = {};
-  try {
-    details = JSON.parse(connection.details ?? '{}');
-    settings = JSON.parse(connection.settings ?? '{}');
-  } catch (error) {
-    console.error('Error parsing connection details or settings:', error);
-  }
+  const relatedWorkflows = useMemo(() => {
+    return [
+      ...imports.imports.filter(
+        (item) => item.workflowable.connection.id === connection.id
+      ),
+      ...exports.exports.filter(
+        (item) => item.workflowable.connection.id === connection.id
+      ),
+    ];
+  }, [imports.imports, exports.exports, connection.id]);
+
+  const { details, settings } = useMemo(() => {
+    let parsedDetails = {};
+    let parsedSettings = {};
+    try {
+      parsedDetails = JSON.parse(connection.details ?? '{}');
+      parsedSettings = JSON.parse(connection.settings ?? '{}');
+    } catch (error) {
+      console.error('Error parsing connection details or settings:', error);
+    }
+    return { details: parsedDetails, settings: parsedSettings };
+  }, [connection.details, connection.settings]);
 
   return (
     <div className='container relative mx-auto max-w-6xl'>

@@ -11,8 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 
+import { useConnection } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
@@ -23,21 +23,12 @@ import useBaseUrl from '@/hooks/useBaseUrl';
  */
 export default function ConnectionLayoutWrapper({
   children,
-  connectionID,
 }: {
   children: React.ReactNode;
-  connectionID: string;
 }) {
   const pathname = usePathname();
   const { dict } = useLocale();
-  const {
-    connections: { connections },
-  } = useWorkspace();
-
-  const connection = useMemo(
-    () => connections.find((item) => item.id === connectionID),
-    [connections, connectionID]
-  );
+  const { connection } = useConnection();
 
   // The base URL for the connection, eg. /en/console/workspace-slug/connections/connection-id
   const baseUrl = useBaseUrl({

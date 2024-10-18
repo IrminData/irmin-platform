@@ -1,22 +1,23 @@
 import { withSentryConfig } from '@sentry/nextjs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-// Get the directory name of the current module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
  * Next.js configuration
  */
 const nextConfig = {
   output: 'standalone',
+  reactStrictMode: true,
   experimental: {
-    esmExternals: false,
-  },
-  sassOptions: {
-    includePaths: [path.join(__dirname, 'src', 'styles')],
-    silenceDeprecations: ['legacy-js-api'],
+    turbo: {
+      resolveExtensions: [
+        '.mdx',
+        '.tsx',
+        '.ts',
+        '.jsx',
+        '.js',
+        '.mjs',
+        '.json',
+      ],
+    },
   },
   images: {
     remotePatterns: [
@@ -33,11 +34,6 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: '**.irmin.app',
-        port: '',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.postgresql.org',
         port: '',
       },
     ],

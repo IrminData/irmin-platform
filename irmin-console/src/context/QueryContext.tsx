@@ -4,19 +4,18 @@ import {
   createContext,
   useCallback,
   useContext,
-  useMemo,
   useRef,
   useState,
 } from 'react';
 
-import IrminCore from '@/services/core/IrminCore';
 import { QueryExecutionResultAPIResponse } from '@/services/core/resources/QueryService';
 
-import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { IrminFileType } from '@/types/core/Bucket';
 import { Collection } from '@/types/core/Collection';
+
+import { useIrminCore } from './IrminCoreContext';
 
 /**
  * Query context properties
@@ -43,8 +42,8 @@ const QueryContext = createContext<QueryContextProps | undefined>(undefined);
  */
 export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
   const { irminAlert } = usePopup();
-  const { locale } = useLocale();
-  const { queryService } = useMemo(() => new IrminCore(locale), [locale]);
+
+  const { irminCore } = useIrminCore();
 
   // Query state
   const [loading, setLoading] = useState<boolean>(false);
@@ -65,7 +64,7 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
       executing.current = true;
       setLoading(true);
       try {
-        const res = await queryService.executeScript(
+        const res = await irminCore.queryService.executeScript(
           type,
           content,
           collection?.type
@@ -81,7 +80,7 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
       executing.current = false;
     },
-    [queryService, irminAlert]
+    [irminCore.queryService, irminAlert]
   );
 
   return (

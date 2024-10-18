@@ -3,8 +3,7 @@
 import { useState } from 'react';
 
 import { Locale } from '@/dictionaries';
-
-import { useIAM } from '@/context/IAMContext';
+import IrminCore from '@/services/core/IrminCore';
 
 import { Workspace } from '@/types/core/Workspace';
 
@@ -21,10 +20,13 @@ import {
 /**
  * Hook for Workspaces to be used in the Workspace Provider.
  */
-const useWorkspaces = ({ locale }: { locale: Locale }) => {
-  // Get token from IAM context
-  const { token } = useIAM();
-
+const useWorkspaces = ({
+  locale,
+  irminCore,
+}: {
+  locale: Locale;
+  irminCore: IrminCore;
+}) => {
   // Workspaces
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(
@@ -40,29 +42,26 @@ const useWorkspaces = ({ locale }: { locale: Locale }) => {
     setWorkspaces,
     workspacesLoading,
     setWorkspacesLoading,
-    locale
+    irminCore
   );
 
   /**
    * Hook to fetch the full data for the current workspace.
    */
-  const fetchFullCurrentWorkspace = useFetchFullCurrentWorkspace(
-    locale,
-    token ?? ''
-  );
+  const fetchFullCurrentWorkspace = useFetchFullCurrentWorkspace(locale);
 
   /**
    * Hook to create a new workspace.
    * @param newWorkspaceName - The name of the new workspace.
    * @param newWorkspaceDescription - The description of the new workspace.
    */
-  const createWorkspace = useCreateWorkspace(locale);
+  const createWorkspace = useCreateWorkspace(irminCore);
 
   /**
    * Hook to update the current workspace data.
    * @param workspace - The updated workspace data object.
    */
-  const updateWorkspace = useUpdateWorkspace(locale);
+  const updateWorkspace = useUpdateWorkspace(irminCore);
 
   /**
    * Hook to switch to a workspace. Updates localStorage and the current workspace state.
@@ -74,7 +73,8 @@ const useWorkspaces = ({ locale }: { locale: Locale }) => {
     workspacesLoading,
     setWorkspacesLoading,
     fetchWorkspaces,
-    locale
+    locale,
+    irminCore
   );
 
   /**
@@ -84,7 +84,7 @@ const useWorkspaces = ({ locale }: { locale: Locale }) => {
   const deleteCurrentWorkspace = useDeleteCurrentWorkspace(
     switchWorkspace,
     fetchWorkspaces,
-    locale
+    irminCore
   );
 
   /**
@@ -94,7 +94,7 @@ const useWorkspaces = ({ locale }: { locale: Locale }) => {
   const transferOwnership = useTransferOwnership(
     currentWorkspace,
     setCurrentWorkspace,
-    locale
+    irminCore
   );
 
   return {

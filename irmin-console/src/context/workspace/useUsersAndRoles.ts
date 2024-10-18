@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { Locale } from '@/dictionaries';
+import IrminCore from '@/services/core/IrminCore';
 
 import { IrminRole } from '@/types/core/IrminRole';
 import { User } from '@/types/core/User';
@@ -20,10 +20,10 @@ import {
  */
 const useUsersAndRoles = ({
   currentWorkspace,
-  locale,
+  irminCore,
 }: {
   currentWorkspace: Workspace | null;
-  locale: Locale;
+  irminCore: IrminCore;
 }) => {
   // Roles
   const [irminRoles, setIrminRoles] = useState<IrminRole[]>([]);
@@ -36,7 +36,7 @@ const useUsersAndRoles = ({
   /**
    * Hook to fetch the roles.
    */
-  const fetchRoles = useFetchRoles(setIrminRoles, locale);
+  const fetchRoles = useFetchRoles(setIrminRoles, irminCore);
 
   /**
    * Hook to fetch the users for the current workspace.
@@ -48,20 +48,20 @@ const useUsersAndRoles = ({
     setUsersLoading,
     usersFetchedFor,
     setUsersFetchedFor,
-    locale
+    irminCore
   );
 
   /**
    * Hook to delete a user. It calls the API to delete the user,
    * and fetches the updated users.
    */
-  const deleteUser = useDeleteUser(users, setUsers, locale);
+  const deleteUser = useDeleteUser(users, setUsers, irminCore);
 
   /**
    * Hook to change the role of a user. It calls the API to change the role,
    * and fetches the updated users.
    */
-  const changeUserRole = useChangeUserRole(users, setUsers, locale);
+  const changeUserRole = useChangeUserRole(users, setUsers, irminCore);
 
   return {
     irminRoles,

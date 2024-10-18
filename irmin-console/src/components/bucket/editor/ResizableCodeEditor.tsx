@@ -31,7 +31,7 @@ const ResizableCodeEditor = ({
   editorHeight: string;
   setEditorHeight: (_height: string) => void;
 }) => {
-  const editorRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLDivElement | null>(null);
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
@@ -60,7 +60,7 @@ const ResizableCodeEditor = ({
       style={{ minHeight: editorHeight }}
       ref={editorRef}
       id='code-editor'
-      className='bg-gray-200 text-xs dark:bg-irmin_black lg:text-sm'
+      className='bg-gray-200 text-xs lg:text-sm dark:bg-irmin_black'
     >
       <CodeMirrorEditor
         language={language}

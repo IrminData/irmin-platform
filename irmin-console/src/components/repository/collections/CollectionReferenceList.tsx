@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import IrminCore from '@/services/core/IrminCore';
-
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
@@ -23,24 +22,24 @@ import { Repository } from '@/types/core/Repository';
  */
 const CollectionReferenceList = () => {
   const { irminAlert } = usePopup();
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
   const {
     repositories: { repositories },
   } = useWorkspace();
 
   const [collections, setCollections] = useState<Collection[]>([]);
+  const { irminCore } = useIrminCore();
 
   useEffect(() => {
     try {
       (async () => {
-        const { collectionService } = new IrminCore(locale);
-        const res = await collectionService.fetchCollections();
+        const res = await irminCore.collectionService.fetchCollections();
         setCollections(res.data);
       })();
     } catch (error) {
       console.error((error as Error).message, 'Fetch Collections error');
     }
-  }, [locale]);
+  }, [irminCore.collectionService]);
 
   /**
    * When a repository collection is selected, format the collection name

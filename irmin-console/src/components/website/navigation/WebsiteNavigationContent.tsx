@@ -172,87 +172,89 @@ export default function WebsiteNavigationContent({
 
   return (
     <>
-      <div className='fixed z-40 max-h-[80px] w-full bg-background bg-opacity-70 backdrop-blur-md dark:bg-opacity-70 dark:backdrop-blur-md'>
-        <div className='container mx-auto max-w-96 px-0 sm:max-w-7xl sm:px-4 xl:px-0'>
-          <nav className='flex justify-between'>
-            <div className='flex w-full items-center justify-between gap-2'>
-              <div className='flex items-center justify-start gap-6'>
-                <Link href='/' className='py-4' aria-label='Go to home page'>
-                  <Image
-                    className='h-6 min-h-4 w-auto dark:hidden'
-                    src='/irmin-logo.svg'
-                    alt='Irmin logo'
-                    width={100}
-                    height={100}
-                  />
-                  <Image
-                    className='hidden h-6 min-h-4 w-auto dark:block'
-                    src='/irmin-logo-light.svg'
-                    alt='Irmin logo'
-                    width={100}
-                    height={100}
-                  />
-                </Link>
-                <ul className='hidden max-w-full gap-1 py-4 md:flex md:justify-center lg:gap-2'>
-                  {links.map((link, idx) => (
-                    <NavLink
-                      key={`website-desktop-navigation-link-${idx}`}
-                      linkKey={`website-desktop-navigation-link-${idx}`}
-                      link={link}
+      <div className='fixed z-40 max-h-[80px] w-full pt-1'>
+        <div className='container mx-auto w-full max-w-[calc(80rem+16px)] rounded-xl bg-background bg-opacity-70 px-2 backdrop-blur-md dark:bg-opacity-70 dark:backdrop-blur-md'>
+          <div className='w-full max-w-96 px-0 sm:max-w-7xl sm:px-4 xl:px-0'>
+            <nav className='flex justify-between'>
+              <div className='flex w-full items-center justify-between gap-2'>
+                <div className='flex items-center justify-start gap-6'>
+                  <Link href='/' className='py-4' aria-label='Go to home page'>
+                    <Image
+                      className='h-6 min-h-4 w-auto dark:hidden'
+                      src='/irmin-logo.svg'
+                      alt='Irmin logo'
+                      width={100}
+                      height={100}
                     />
-                  ))}
-                  <div className='py-2'>
-                    <ThemeSwitch />
-                  </div>
-                </ul>
-              </div>
-              <div className='flex items-center justify-end pr-14 md:hidden'>
-                <ThemeSwitch />
-              </div>
-              {!isLoading && (
-                <div className='hidden flex-row items-center justify-end gap-2 md:flex lg:gap-4'>
-                  {profile ? (
-                    <>
-                      <IrminUserButton />
-                      <Button
-                        size={'lg'}
-                        href='/console'
-                        variant='gradient'
-                        onClick={closeMenu}
-                        className='min-w-32 py-2 text-xs font-normal md:text-sm xl:text-sm'
-                      >
-                        <IoEnterOutline size={24} className='mr-2' />
-                        {dict.website.navigation.goToConsole}
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        size='lg'
-                        variant='secondary'
-                        className='min-w-32 py-2 text-xs font-normal md:text-sm xl:text-sm'
-                        href='/sign-in'
-                        onClick={closeMenu}
-                      >
-                        {dict.website.navigation.signIn}
-                      </Button>
-                      <Button
-                        size='lg'
-                        variant='gradient'
-                        className='min-w-32 py-2 pl-6 pr-3 text-xs font-normal md:text-sm xl:text-sm'
-                        href='/sign-up'
-                        onClick={closeMenu}
-                        iconFirst={false}
-                        icon={<IoEnterOutline size={24} className='ml-1' />}
-                      >
-                        {dict.website.navigation.getStarted}
-                      </Button>
-                    </>
-                  )}
+                    <Image
+                      className='hidden h-6 min-h-4 w-auto dark:block'
+                      src='/irmin-logo-light.svg'
+                      alt='Irmin logo'
+                      width={100}
+                      height={100}
+                    />
+                  </Link>
+                  <ul className='hidden max-w-full gap-1 py-4 md:flex md:justify-center lg:gap-2'>
+                    {links.map((link, idx) => (
+                      <NavLink
+                        key={`website-desktop-navigation-link-${idx}`}
+                        linkKey={`website-desktop-navigation-link-${idx}`}
+                        link={link}
+                      />
+                    ))}
+                    <div className='py-2'>
+                      <ThemeSwitch />
+                    </div>
+                  </ul>
                 </div>
-              )}
-            </div>
-          </nav>
+                <div className='flex items-center justify-end pr-14 md:hidden'>
+                  <ThemeSwitch />
+                </div>
+                {!isLoading && (
+                  <div className='hidden flex-row items-center justify-end gap-2 md:flex lg:gap-4'>
+                    {profile ? (
+                      <>
+                        <IrminUserButton />
+                        <Button
+                          size={'lg'}
+                          href='/console'
+                          variant='gradient'
+                          onClick={closeMenu}
+                          className='min-w-32 py-2 text-xs font-normal md:text-sm xl:text-sm'
+                        >
+                          <IoEnterOutline size={24} className='mr-2' />
+                          {dict.website.navigation.goToConsole}
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          size='lg'
+                          variant='secondary'
+                          className='min-w-32 py-2 text-xs font-normal md:text-sm xl:text-sm'
+                          href='/sign-in'
+                          onClick={closeMenu}
+                        >
+                          {dict.website.navigation.signIn}
+                        </Button>
+                        <Button
+                          size='lg'
+                          variant='gradient'
+                          className='min-w-32 py-2 pl-6 pr-3 text-xs font-normal md:text-sm xl:text-sm'
+                          href='/sign-up'
+                          onClick={closeMenu}
+                          iconFirst={false}
+                          icon={<IoEnterOutline size={24} className='ml-1' />}
+                        >
+                          {dict.website.navigation.getStarted}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </nav>
+          </div>
         </div>
       </div>
       {/* Add a gap to the top of the page, since the nav bar is position fixed */}

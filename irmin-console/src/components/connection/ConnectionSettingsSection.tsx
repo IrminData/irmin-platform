@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
+import { useConnection } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/workspace';
-
-import { Connection } from '@/types/core/Connection';
 
 interface ConnectionFormValues {
   name: string;
@@ -21,21 +20,15 @@ interface ConnectionFormValues {
  *
  * Handles connection settings updates, reassignment, and deletion.
  * Uses {@link SettingsForm} to show and edit the connection settings.
- *
- * @param props - The props
- * @param props.connection - The connection to view and edit settings for
  */
-const ConnectionSettingsSection = ({
-  connection,
-}: {
-  connection: Connection;
-}) => {
+const ConnectionSettingsSection = () => {
   const { dict } = useLocale();
   const { irminConfirm, irminAlert } = usePopup();
   const {
     workspaces: { currentWorkspace },
     connections: { updateConnection, reassignConnection, deleteConnection },
   } = useWorkspace();
+  const { connection } = useConnection();
 
   const updating = useRef(false);
 

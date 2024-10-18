@@ -19,32 +19,30 @@ export const useFetchWorkspaces = (
   setWorkspaces: React.Dispatch<React.SetStateAction<Workspace[]>>,
   workspaceLoading: boolean,
   setWorkspaceLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(async () => {
-    // Get the workspace service
-    const { workspaceService } = new IrminCore(locale);
     // Prevent multiple simultaneous fetches
     if (workspaceLoading) return;
     setWorkspaceLoading(true);
     try {
       // Fetch the workspaces
-      const res = await workspaceService.fetchWorkspaces();
+      const res = await irminCore.workspaceService.fetchWorkspaces();
       setWorkspaces(res.data ?? []);
       setWorkspaceLoading(false);
       return res.data;
     } finally {
       setWorkspaceLoading(false);
     }
-  }, [setWorkspaces, workspaceLoading, setWorkspaceLoading, locale]);
+  }, [setWorkspaces, workspaceLoading, setWorkspaceLoading, irminCore]);
 
 /**
  * Hook to fetch the full data for the current workspace using the {@link fetchWorkspaceProxy}.
  * Used to avoid fetching Core Irmin API on the client side.
  */
-export const useFetchFullCurrentWorkspace = (locale: Locale, token: string) =>
+export const useFetchFullCurrentWorkspace = (locale: Locale) =>
   useCallback(
-    async (workspace: string) => {
+    async (workspace: string, token: string) => {
       // Fetch the full data for the current workspace
       const data = await fetchWorkspaceProxy({
         locale,
@@ -53,40 +51,36 @@ export const useFetchFullCurrentWorkspace = (locale: Locale, token: string) =>
       });
       return data;
     },
-    [locale, token]
+    [locale]
   );
 
 /**
  * Hook to create a new workspace using the {@link IrminCore}.
  */
-export const useCreateWorkspace = (locale: Locale) =>
+export const useCreateWorkspace = (irminCore: IrminCore) =>
   useCallback(
     async (newWorkspaceName: string, newWorkspaceDescription: string) => {
-      // Get the workspace service
-      const { workspaceService } = new IrminCore(locale);
       // Create the workspace
-      const res = await workspaceService.createWorkspace(
+      const res = await irminCore.workspaceService.createWorkspace(
         newWorkspaceName,
         newWorkspaceDescription
       );
       return res;
     },
-    [locale]
+    [irminCore]
   );
 
 /**
  * Hook to update the current workspace data using the {@link IrminCore}.
  */
-export const useUpdateWorkspace = (locale: Locale) =>
+export const useUpdateWorkspace = (irminCore: IrminCore) =>
   useCallback(
     async (workspace: Workspace) => {
-      // Get the workspace service
-      const { workspaceService } = new IrminCore(locale);
       // Update the workspace
-      const res = await workspaceService.updateWorkspace(workspace);
+      const res = await irminCore.workspaceService.updateWorkspace(workspace);
       return res;
     },
-    [locale]
+    [irminCore]
   );
 
 /**
@@ -98,7 +92,8 @@ export const useSwitchWorkspace = (
   workspaceLoading: boolean,
   setWorkspaceLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchWorkspaces: () => Promise<Workspace[] | undefined>,
-  locale: Locale
+  locale: Locale,
+  irminCore: IrminCore
 ) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -108,8 +103,6 @@ export const useSwitchWorkspace = (
       if (workspaceLoading) return;
       setWorkspaceLoading(true);
       try {
-        // Get the workspace service
-        const { workspaceService } = new IrminCore(locale);
         // Fetch a list of all workspaces available to the user
         const workspaces = await fetchWorkspaces();
         // Update the workspaces cookie
@@ -142,7 +135,7 @@ export const useSwitchWorkspace = (
         setCookie('currentWorkspaceSlug', workspaceSlug, 1);
         // Switch to the new workspace
         const newWorkspace =
-          await workspaceService.switchWorkspace(workspaceSlug);
+          await irminCore.workspaceService.switchWorkspace(workspaceSlug);
         if (newWorkspace) {
           setCurrentWorkspace(newWorkspace.data);
           // If router not already on a workspace page, redirect to the workspace
@@ -175,6 +168,7 @@ export const useSwitchWorkspace = (
       locale,
       router,
       pathname,
+      irminCore,
     ]
   );
 };
@@ -185,14 +179,13 @@ export const useSwitchWorkspace = (
 export const useTransferOwnership = (
   currentWorkspace: Workspace | null,
   setCurrentWorkspace: React.Dispatch<React.SetStateAction<Workspace | null>>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(
     async (newOwner: string) => {
-      // Get the workspace service
-      const { workspaceService } = new IrminCore(locale);
       // Transfer ownership
-      const res = await workspaceService.transferWorkspaceOwnership(newOwner);
+      const res =
+        await irminCore.workspaceService.transferWorkspaceOwnership(newOwner);
       // Update the current workspace owner
       if (currentWorkspace) {
         setCurrentWorkspace({ ...currentWorkspace, owner_id: newOwner });
@@ -200,7 +193,7 @@ export const useTransferOwnership = (
 
       return res;
     },
-    [currentWorkspace, setCurrentWorkspace, locale]
+    [currentWorkspace, setCurrentWorkspace, irminCore]
   );
 
 /**
@@ -212,13 +205,12 @@ export const useDeleteCurrentWorkspace = (
     _disableAlerts?: boolean
   ) => void,
   fetchWorkspaces: () => Promise<Workspace[] | undefined>,
-  locale: Locale
+  irminCore: IrminCore
 ) =>
   useCallback(async () => {
-    const { workspaceService } = new IrminCore(locale);
-    const res = await workspaceService.deleteWorkspace();
+    const res = await irminCore.workspaceService.deleteWorkspace();
     await switchWorkspace(null, true);
     await fetchWorkspaces();
 
     return res;
-  }, [switchWorkspace, fetchWorkspaces, locale]);
+  }, [switchWorkspace, fetchWorkspaces, irminCore]);

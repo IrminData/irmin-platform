@@ -8,8 +8,6 @@ import WebsiteError from '@/components/website/websiteError';
 
 /**
  * Error page (Website)
- *
- * @param param0 - Error properties
  */
 export default function WebsiteErrorPage({
   error,

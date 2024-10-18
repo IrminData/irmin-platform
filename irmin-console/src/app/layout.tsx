@@ -3,11 +3,13 @@ import type { Metadata } from 'next';
 import { Big_Shoulders_Display, Inter } from 'next/font/google';
 
 import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
-import '@/styles/globals.scss';
 import { ClerkProvider } from '@clerk/nextjs';
-import 'react-datasheet-grid/dist/style.css';
+
+import '@/styles/globals.css';
+import '@/styles/irmin-global.css';
 
 import { IAMProvider } from '@/context/IAMContext';
+import { IrminCoreProvider } from '@/context/IrminCoreContext';
 import { LocaleProvider } from '@/context/LocaleContext';
 import { ThemeProvider } from '@/context/ThemeProvider';
 
@@ -30,24 +32,19 @@ export const metadata: Metadata = {
 };
 
 /**
- * Root layout component of the application
+ * Root layout component of the application.
  *
- * @remarks
- *
- * This component is used to wrap the entire application with the necessary providers.
- * The providers include the LocaleProvider and IAMProvider.
- *
- * This component also includes the global styles and fonts for the application.
- *
- * @param children - The children components to render
+ * Wraps the app with `ClerkProvider` and other global context providers.
+ * Initializes the font variables for the app and includes global styles.
  */
-export default function RootLayout({
-  children,
-  params,
-}: Readonly<{
+export default async function RootLayout(props: {
   children: React.ReactNode;
-  params: { lang: Locale };
-}>) {
+  params: Promise<{ lang: Locale }>;
+}) {
+  const params = await props.params;
+
+  const { children } = props;
+
   const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
 
   return (
@@ -65,7 +62,7 @@ export default function RootLayout({
                 enableSystem
                 disableTransitionOnChange
               >
-                {children}
+                <IrminCoreProvider locale={lang}>{children}</IrminCoreProvider>
               </ThemeProvider>
             </IAMProvider>
           </LocaleProvider>

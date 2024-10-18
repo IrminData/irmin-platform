@@ -37,7 +37,7 @@ const NotificationPopup = ({
     workspaces: { currentWorkspace },
   } = useWorkspace();
   const [isScrolled, setIsScrolled] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const workspaceSlug = currentWorkspace?.slug ?? '-';
   const workspaceName = currentWorkspace?.name ?? '-';

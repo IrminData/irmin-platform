@@ -1,14 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { use, useCallback, useEffect, useRef } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import IrminCore from '@/services/core/IrminCore';
-
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
-import { useLocale } from '@/context/LocaleContext';
+import { useIrminCore } from '@/context/IrminCoreContext';
 
 import {
   convertToText,
@@ -23,14 +21,13 @@ const appBaseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 /**
  * Page to download a repository or specific collections at a specific ref
  */
-export default function RepositoryDownloadPage({
-  params,
-}: {
-  params: RepositoryRouteParams;
+export default function RepositoryDownloadPage(props: {
+  params: Promise<RepositoryRouteParams>;
 }) {
-  const { locale } = useLocale();
+  const params = use(props.params);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { irminCore } = useIrminCore();
 
   const collections = searchParams.getAll('collection');
   const targetRef = searchParams.get('ref') ?? '';
@@ -47,15 +44,13 @@ export default function RepositoryDownloadPage({
     const redirectSuccessUrl = `${appBaseUrl}/${params.lang}/console/${params.workspace}/repositories/${params.repository}/download/success`;
     const redirectFailedUrl = `${appBaseUrl}/${params.lang}/console/${params.workspace}/repositories/${params.repository}/download/failed`;
     try {
-      // Fetch required data
-      const { collectionService } = new IrminCore(locale);
       if (collections && collections.length > 0) {
         // More than zero collections selected, fetch them one by one
         const fetches = [];
         for (let i = 0; i < collections.length; i++) {
           const collection = collections[i];
           fetches.push(
-            collectionService.fetchContent({
+            irminCore.collectionService.fetchContent({
               repository: params.repository,
               collection: collection,
               ref: targetRef,
@@ -77,7 +72,7 @@ export default function RepositoryDownloadPage({
         }
       } else {
         // If no collections are selected, download the entire repository
-        const res = await collectionService.fetchContent({
+        const res = await irminCore.collectionService.fetchContent({
           repository: params.repository,
           ref: targetRef,
         });
@@ -96,7 +91,7 @@ export default function RepositoryDownloadPage({
       // Redirect the user to the failed page
       router.push(redirectFailedUrl);
     }
-  }, [collections, locale, params, targetRef, router]);
+  }, [collections, irminCore, params, targetRef, router]);
 
   useEffect(() => {
     if (downloadStarted.current) return;

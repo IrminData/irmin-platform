@@ -5,6 +5,7 @@ import {
   exampleWPMenu,
   exampleWPPage,
   exampleWPPost,
+  exampleWPVideoMedia,
 } from '@/types/examples/wordpressObjects';
 import { Media, Menu, WPPost } from '@/types/website/Wordpress';
 
@@ -134,10 +135,11 @@ export default class WordPress {
   /**
    * Get a Wordpress media by its ID
    * @param id - The ID of the media to get
+   * @param video - (optional) Whether the media is a video, used for example data
    * @returns The media or null if not found
    */
-  public async getMediaByID(id: number): Promise<Media | null> {
-    if (offlineMode) return exampleWPMedia;
+  public async getMediaByID(id: number, video = false): Promise<Media | null> {
+    if (offlineMode) return video ? exampleWPVideoMedia : exampleWPMedia;
     try {
       const media = (await this.fetchAPI(`media/${id}`)) as Media;
       return media ?? null;

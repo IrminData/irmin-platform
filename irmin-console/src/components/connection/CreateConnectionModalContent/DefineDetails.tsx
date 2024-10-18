@@ -1,16 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
-
-import IrminCore from '@/services/core/IrminCore';
 
 import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
+import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -30,10 +29,10 @@ export default function DefineDetails({
   setConnectionData: React.Dispatch<React.SetStateAction<ConnectionSetup>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
-  const { locale, dict } = useLocale();
+  const { dict } = useLocale();
   const { irminAlert } = usePopup();
   const [loading, setLoading] = useState(false);
-  const { connectionService } = useMemo(() => new IrminCore(locale), [locale]);
+  const { irminCore } = useIrminCore();
 
   const fetchedFields = useRef(false);
 
@@ -44,7 +43,9 @@ export default function DefineDetails({
       fetchedFields.current = true;
       try {
         const res =
-          await connectionService.fetchNewConnectionDetails(connectorID);
+          await irminCore.connectionService.fetchNewConnectionDetails(
+            connectorID
+          );
 
         // Update connection data state
         setConnectionData((prev: ConnectionSetup) => ({
@@ -60,7 +61,7 @@ export default function DefineDetails({
       }
       setLoading(false);
     },
-    [connectionService, setConnectionData, irminAlert]
+    [irminCore.connectionService, setConnectionData, irminAlert]
   );
 
   useEffect(() => {
@@ -86,7 +87,7 @@ export default function DefineDetails({
         });
 
         // Test the connection
-        const res = await connectionService.testConnectionWithDetails(
+        const res = await irminCore.connectionService.testConnectionWithDetails(
           connectionData.connector?.id ?? '',
           connectionDetails as DynamicFieldValues
         );
@@ -112,7 +113,7 @@ export default function DefineDetails({
       setConnectionData,
       setCurrentStep,
       irminAlert,
-      connectionService,
+      irminCore.connectionService,
       dict,
     ]
   );

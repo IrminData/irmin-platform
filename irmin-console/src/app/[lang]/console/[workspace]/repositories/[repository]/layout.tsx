@@ -13,9 +13,6 @@ import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
 /**
  * Route parameter types for the Repository routes
  * eg. /[lang]/console/[workspace]/repositories/[repository]/whatever
- * @param lang - The language of the user
- * @param workspace - The workspace slug
- * @param repository - The repository slug
  */
 export type RepositoryRouteParams = {
   lang: Locale;
@@ -26,11 +23,10 @@ export type RepositoryRouteParams = {
 /**
  * SEO metadata for the Repository layout
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: RepositoryRouteParams;
+export async function generateMetadata(props: {
+  params: Promise<RepositoryRouteParams>;
 }): Promise<Metadata> {
+  const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
     title: `Repository ${params.repository} | ${formattedWorkspace} | IRMIN Console`,
@@ -40,18 +36,15 @@ export async function generateMetadata({
 /**
  * Layout for the Repository pages in the Console.
  * Provides the {@link RepositoryProvider} to use the repository data.
- *
- * @param props0 - The layout properties
- * @param props0.params - The layout parameters from Next JS router
- * @param props0.children - The children to render
  */
-export default function RepositoryLayoutWithContainer({
-  children,
-  params,
-}: {
+export default async function RepositoryLayoutWithContainer(props: {
   children: React.ReactNode;
-  params: RepositoryRouteParams;
+  params: Promise<RepositoryRouteParams>;
 }) {
+  const params = await props.params;
+
+  const { children } = props;
+
   if (isInvalidRouteProp(params.repository)) {
     notFound();
   }
