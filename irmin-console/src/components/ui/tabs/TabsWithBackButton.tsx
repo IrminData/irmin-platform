@@ -29,7 +29,7 @@ const TabsWithBackButton = ({
         tooltip={backTooltip}
         aria-label={backTooltip}
       />
-      <div className='flex w-full flex-row border-gray-200 dark:border-gray-800 md:border-b'>
+      <div className='flex w-full flex-row border-gray-200 md:border-b dark:border-gray-800'>
         {tabs
           .map((tab, idx) => {
             if (tab.hidden) return null;

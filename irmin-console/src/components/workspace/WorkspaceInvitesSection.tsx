@@ -194,7 +194,7 @@ const WorkspaceInvitesSection: React.FC = () => {
                       </span>
                     </td>
                     {/* Only for larger screens */}
-                    <td className='hidden px-2 py-2 text-sm text-gray-700 dark:text-gray-400 md:table-cell'>
+                    <td className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
                       {invite.email}
                     </td>
                     <td className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>

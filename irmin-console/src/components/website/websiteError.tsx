@@ -49,7 +49,7 @@ export default function WebsiteError({
                   ? dict.misc.pageNotFound
                   : dict.misc.somethingWentWrong}
               </h2>
-              <p className='mb-6 text-xs text-foreground dark:text-gray-300 md:text-sm'>
+              <p className='mb-6 text-xs text-foreground md:text-sm dark:text-gray-300'>
                 {error?.message}
               </p>
               <div className='flex flex-wrap gap-2'>

@@ -77,7 +77,7 @@ const TableData = ({
       {/* Title, metadata and actions */}
       <div className='flex items-center justify-start px-4 py-1 text-xs'>
         <p className='ml-0 hidden text-gray-400 lg:inline'>{title}</p>
-        <p className='inline text-[8px] text-irmin_blue dark:text-irmin_green md:ml-auto md:pl-2 lg:text-xs'>
+        <p className='inline text-[8px] text-irmin_blue md:ml-auto md:pl-2 lg:text-xs dark:text-irmin_green'>
           {metadata && metadata.rowsReturned && metadata.timeTaken
             ? `
           ${metadata.rowsReturned} ${dict.query.rowsReturnedIn} ${metadata.timeTaken}ms

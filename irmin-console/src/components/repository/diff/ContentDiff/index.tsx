@@ -146,7 +146,7 @@ const ContentDiff = ({
   }
 
   return (
-    <p className='mx-auto mb-2 max-w-lg text-center text-lg text-gray-600 dark:text-gray-300 lg:text-2xl'>
+    <p className='mx-auto mb-2 max-w-lg text-center text-lg text-gray-600 lg:text-2xl dark:text-gray-300'>
       {dict.repository.compare.unsupportedContentType}
     </p>
   );

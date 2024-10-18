@@ -265,7 +265,7 @@ export default function WebsiteNavigationContent({
           className={`fixed right-0 top-0 z-40 h-full w-full bg-background bg-opacity-10 backdrop-blur-sm dark:bg-black dark:bg-opacity-10 dark:backdrop-blur-sm`}
         >
           <div
-            className={`fixed bottom-0 right-0 top-0 w-full max-w-full border-l border-gray-300 bg-background dark:border-gray-800 dark:bg-black sm:max-w-sm ${animate} transition-all duration-300`}
+            className={`fixed bottom-0 right-0 top-0 w-full max-w-full border-l border-gray-300 bg-background sm:max-w-sm dark:border-gray-800 dark:bg-black ${animate} transition-all duration-300`}
           >
             <nav className='relative flex h-full flex-col justify-start overflow-y-scroll px-4 pb-8 pt-24'>
               <Link

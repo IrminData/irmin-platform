@@ -80,7 +80,7 @@ const QueryResults = ({
       id='query-results'
     >
       {/* Tab Buttons */}
-      <div className='mb-0 mt-1 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 dark:border-gray-800 md:border-b'>
+      <div className='mb-0 mt-1 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b dark:border-gray-800'>
         <div
           className={`border-accent ${activeTab === 'data' ? 'border-b-2' : ''}`}
         >

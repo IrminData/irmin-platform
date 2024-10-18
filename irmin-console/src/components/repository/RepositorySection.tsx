@@ -115,7 +115,7 @@ export default function RepositorySection() {
     <>
       <div className='container relative mx-auto mb-4 flex max-w-6xl flex-col px-2 md:px-4'>
         <div className='mb-4 flex w-full flex-wrap items-center justify-between gap-4'>
-          <div className='inline max-w-full overflow-x-scroll whitespace-nowrap text-xs text-gray-600 dark:text-gray-400 lg:text-sm'>
+          <div className='inline max-w-full overflow-x-scroll whitespace-nowrap text-xs text-gray-600 lg:text-sm dark:text-gray-400'>
             <Link
               className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
               href={`${workspaceUrl}/repositories`}

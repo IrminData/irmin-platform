@@ -26,14 +26,14 @@ const ConsoleTitle: React.FC<{
       {showLogo && (
         <>
           <Image
-            className='block h-8 w-auto dark:hidden md:hidden'
+            className='block h-8 w-auto md:hidden dark:hidden'
             src='/irmin-logo.svg'
             alt='Irmin logo'
             width={100}
             height={100}
           />
           <Image
-            className='hidden h-8 w-auto dark:block md:hidden dark:md:hidden'
+            className='hidden h-8 w-auto md:hidden dark:block dark:md:hidden'
             src='/irmin-logo-light.svg'
             alt='Irmin logo'
             width={100}

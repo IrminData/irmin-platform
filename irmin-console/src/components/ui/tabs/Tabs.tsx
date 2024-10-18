@@ -60,7 +60,7 @@ export default function Tabs({ tabs }: { tabs: TabsType }) {
 
   return (
     <>
-      <div className='mb-4 mt-4 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 dark:border-gray-800 md:border-b'>
+      <div className='mb-4 mt-4 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b dark:border-gray-800'>
         {tabs.map((tab, idx) => (
           <Button
             key={`tab-${idx}-${tab.slug}`}

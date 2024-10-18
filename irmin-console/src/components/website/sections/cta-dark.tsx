@@ -25,7 +25,7 @@ export default function WebsiteCTADarkSection({
   return (
     <WebsiteSectionWrapper id='cta-dark-section'>
       <div className='container mx-auto max-w-7xl px-4'>
-        <div className='relative -mb-40 overflow-hidden rounded-xl bg-irmin_black px-4 py-16 dark:bg-gray-600 md:px-8 lg:px-16'>
+        <div className='relative -mb-40 overflow-hidden rounded-xl bg-irmin_black px-4 py-16 md:px-8 lg:px-16 dark:bg-gray-600'>
           <div className='relative mx-auto max-w-2xl text-center'>
             <h3 className='mb-2 text-2xl font-bold leading-tight tracking-tighter text-irmin_green md:text-5xl'>
               {section.title}

@@ -94,7 +94,7 @@ export default function WorkflowRunLogsSection({
               {dict.logs.workflowRunLogs}
             </h2>
             {selectedWorkflow && (
-              <h3 className='mt-4 text-lg text-gray-600 dark:text-gray-400 xl:text-xl'>
+              <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
                 <Link
                   className='hover:underline'
                   href={`${workspaceUrl}/workflows/${workflowId}`}

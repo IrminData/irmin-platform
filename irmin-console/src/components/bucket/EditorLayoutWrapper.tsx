@@ -136,7 +136,7 @@ export default function EditorLayoutWrapper({
         <button
           id='editor-sidebar-toggle-mobile'
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className={`absolute z-20 w-10 bg-gray-100 px-1 py-1 text-center text-foreground opacity-60 transition-all hover:opacity-100 focus:outline-none dark:bg-gray-800 lg:hidden ${sidebarOpen ? 'right-0' : ''}`}
+          className={`absolute z-20 w-10 bg-gray-100 px-1 py-1 text-center text-foreground opacity-60 transition-all hover:opacity-100 focus:outline-none lg:hidden dark:bg-gray-800 ${sidebarOpen ? 'right-0' : ''}`}
           aria-label='Toggle editor sidebar'
         >
           {sidebarOpen ? (

@@ -189,7 +189,7 @@ const FileNavigator = ({
     <div id='file-navigator' className='relative'>
       <div className='mb-0 flex flex-row justify-stretch gap-0 border-b bg-gray-100 p-0 dark:border-gray-700 dark:bg-gray-800'>
         <Button
-          className='w-[40%] rounded-none px-2 py-2 text-xs shadow-none hover:bg-gray-200 dark:hover:bg-gray-700 lg:w-1/2 lg:text-xs'
+          className='w-[40%] rounded-none px-2 py-2 text-xs shadow-none hover:bg-gray-200 lg:w-1/2 lg:text-xs dark:hover:bg-gray-700'
           variant='ghost'
           size='sm'
           onClick={addNewFile}
@@ -199,7 +199,7 @@ const FileNavigator = ({
           {dict.fileNavigator.createFile}
         </Button>
         <Button
-          className='w-[40%] rounded-none px-2 py-2 text-xs shadow-none hover:bg-gray-200 dark:hover:bg-gray-700 lg:w-1/2 lg:text-xs'
+          className='w-[40%] rounded-none px-2 py-2 text-xs shadow-none hover:bg-gray-200 lg:w-1/2 lg:text-xs dark:hover:bg-gray-700'
           variant='ghost'
           size='sm'
           onClick={addNewFolder}
@@ -209,7 +209,7 @@ const FileNavigator = ({
           {dict.fileNavigator.createFolder}
         </Button>
       </div>
-      <div className='max-h-60 overflow-auto border-t px-3 py-4 dark:border-gray-700 xl:max-h-96'>
+      <div className='max-h-60 overflow-auto border-t px-3 py-4 xl:max-h-96 dark:border-gray-700'>
         {renderItems(items)}
       </div>
       {contextMenu && contextMenu.visible && (

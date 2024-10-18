@@ -259,7 +259,7 @@ export default function ConsoleWrapper({
               >
                 <Image
                   className={
-                    'block h-full max-h-4 object-contain dark:hidden md:max-h-6'
+                    'block h-full max-h-4 object-contain md:max-h-6 dark:hidden'
                   }
                   src='/irmin-logo.svg'
                   alt='Irmin logo'
@@ -268,7 +268,7 @@ export default function ConsoleWrapper({
                 />
                 <Image
                   className={
-                    'hidden h-full max-h-4 object-contain dark:block md:max-h-6'
+                    'hidden h-full max-h-4 object-contain md:max-h-6 dark:block'
                   }
                   src='/irmin-logo-light.svg'
                   alt='Irmin logo'

@@ -104,7 +104,7 @@ const DiffView = ({
       {/* Header Section */}
       {!hideHeader && (
         <div className='mb-4'>
-          <h3 className='text-sm text-gray-900 dark:text-gray-100 lg:text-base'>
+          <h3 className='text-sm text-gray-900 lg:text-base dark:text-gray-100'>
             {dict.repository.compare.comparing}{' '}
             <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
               {baseRef ?? diff.base_ref}
@@ -132,7 +132,7 @@ const DiffView = ({
               <div className='flex flex-row items-center justify-between gap-4 p-2'>
                 <div className='flex flex-row items-center gap-2'>
                   {/* Affected collection */}
-                  <h4 className='text-sm text-gray-800 dark:text-gray-200 lg:text-base'>
+                  <h4 className='text-sm text-gray-800 lg:text-base dark:text-gray-200'>
                     {item.collection.name}
                   </h4>
                   {/* Size Indicator */}
