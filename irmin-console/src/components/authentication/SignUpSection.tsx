@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
  * Sign Up UI component
  */
 const SignUpSection = () => {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   return (
     <div
@@ -24,7 +24,7 @@ const SignUpSection = () => {
           <SignUp
             signInUrl='/sign-in'
             appearance={{
-              baseTheme: theme === 'dark' ? dark : undefined,
+              baseTheme: resolvedTheme === 'dark' ? dark : undefined,
               variables: { colorPrimary: '#a3c2ac' },
             }}
           />

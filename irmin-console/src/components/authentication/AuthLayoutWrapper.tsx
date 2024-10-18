@@ -1,8 +1,4 @@
-'use client';
-
 import React from 'react';
-
-import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';
 
 /**
  * Layout wrapper for authentication pages
@@ -15,10 +11,13 @@ export default function AuthLayoutWrapper({
   children: React.ReactNode;
 }) {
   return (
-    <WebsiteSectionWrapper id='auth-layout-wrapper'>
-      <div className='container mx-auto mb-16 flex max-w-7xl flex-wrap px-4 py-16 md:mb-0 md:py-28'>
+    <div
+      id='auth-layout-wrapper'
+      className='pattern-bg relative overflow-hidden bg-background bg-cover bg-top bg-no-repeat'
+    >
+      <div className='container mx-auto mb-16 flex min-h-96 max-w-7xl flex-wrap px-4 py-16 md:mb-0 md:py-28'>
         {children}
       </div>
-    </WebsiteSectionWrapper>
+    </div>
   );
 }

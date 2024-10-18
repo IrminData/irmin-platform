@@ -8,7 +8,7 @@ import { useTheme } from 'next-themes';
  * User profile section
  */
 export default function ProfileSection() {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   return (
     <div
@@ -17,7 +17,7 @@ export default function ProfileSection() {
     >
       <UserProfile
         appearance={{
-          baseTheme: theme === 'dark' ? dark : undefined,
+          baseTheme: resolvedTheme === 'dark' ? dark : undefined,
           variables: { colorPrimary: '#a3c2ac' },
         }}
       />

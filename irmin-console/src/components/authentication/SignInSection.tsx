@@ -8,14 +8,14 @@ import { useTheme } from 'next-themes';
  * Sign In UI component
  */
 const SignInSection = () => {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   return (
     <div id='sign-in-section' className='mx-auto space-y-6'>
       <SignIn
         signUpUrl='/sign-up'
         appearance={{
-          baseTheme: theme === 'dark' ? dark : undefined,
+          baseTheme: resolvedTheme === 'dark' ? dark : undefined,
           variables: { colorPrimary: '#a3c2ac' },
         }}
       />

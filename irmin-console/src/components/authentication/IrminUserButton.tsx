@@ -28,7 +28,7 @@ export default function IrminUserButton({
   onLinkClick?: () => void;
 }) {
   const { locale } = useLocale();
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const { isLoading, profile } = useIAM();
 
   if (isLoading) {
@@ -46,7 +46,7 @@ export default function IrminUserButton({
       {!authOfflineMode ? (
         <UserButton
           appearance={{
-            baseTheme: theme === 'dark' ? dark : undefined,
+            baseTheme: resolvedTheme === 'dark' ? dark : undefined,
             variables: { colorPrimary: '#a3c2ac' },
           }}
           userProfileMode='navigation'

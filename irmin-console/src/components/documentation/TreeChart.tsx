@@ -105,7 +105,7 @@ export default function TreeChart({
   tree: TreeNode;
   className?: string;
 }) {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   // Generate flow data from the tree data structure
   const { nodes, edges } = useMemo(() => generateFlowData(tree), [tree]);
@@ -119,7 +119,7 @@ export default function TreeChart({
         defaultNodes={nodes}
         defaultEdges={edges}
         fitView
-        colorMode={theme === 'dark' ? 'dark' : 'light'}
+        colorMode={resolvedTheme === 'dark' ? 'dark' : 'light'}
         nodesDraggable={true}
         nodesConnectable={false}
       >

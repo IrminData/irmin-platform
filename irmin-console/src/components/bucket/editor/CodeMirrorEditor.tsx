@@ -34,7 +34,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   ...editorProps
 }) => {
   const { dict } = useLocale();
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   const placeholder = useMemo(
     () =>
@@ -53,9 +53,9 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
     ];
   }, [language]);
 
-  if (!theme) return <></>;
+  if (!resolvedTheme) return <></>;
 
-  const editorTheme = theme === 'dark' ? githubDark : githubLight;
+  const editorTheme = resolvedTheme === 'dark' ? githubDark : githubLight;
 
   return (
     <CodeMirror

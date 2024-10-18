@@ -19,7 +19,7 @@ const TextDiff = ({
   hideLineNumbers?: boolean;
   showDiffOnly?: boolean;
 }) => {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   return (
     <ReactDiffViewer
       oldValue={base}
@@ -27,7 +27,7 @@ const TextDiff = ({
       splitView={splitView}
       hideLineNumbers={hideLineNumbers}
       showDiffOnly={showDiffOnly}
-      useDarkTheme={theme === 'dark'}
+      useDarkTheme={resolvedTheme === 'dark'}
     />
   );
 };
