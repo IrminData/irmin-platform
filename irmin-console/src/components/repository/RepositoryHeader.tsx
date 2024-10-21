@@ -7,11 +7,12 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { GoGitBranch, GoGitCommit, GoGitCompare } from 'react-icons/go';
 import { TbDatabase, TbFileText, TbSettings, TbTags } from 'react-icons/tb';
 
+import { Dictionary } from '@/lib/dict';
+
 import { Badge } from '@/components/ui/badge';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 
-import { useLocale } from '@/context/LocaleContext';
 import { useRepository } from '@/context/RepositoryContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
@@ -22,11 +23,9 @@ import BranchSelector from './branches/BranchSelector';
  * Single Repository page header.
  * Provides tabs and title for the repository.
  */
-export default function RepositoryHeader() {
+export default function RepositoryHeader({ dict }: { dict: Dictionary }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  const { dict } = useLocale();
 
   const {
     currentRepository,

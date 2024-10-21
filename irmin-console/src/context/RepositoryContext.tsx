@@ -127,6 +127,11 @@ const RepositoryContext = createContext<RepositoryContextProps | undefined>(
  * @param config.repositorySlug - Initial active repository to set
  * @param config.initialRef - (optional) Initial active ref to set (eg. branch, commit, tag
  * @param config.initialRepository - Initial repository object to set
+ * @param config.initialBranches - Initial branches to set
+ * @param config.initialTags - Initial tags to set
+ * @param config.initialCollections - Initial collections to set
+ * @param config.initialSchema - Initial schema to set
+ * @param config.initialCommits - Initial commits to set
  *
  * @returns Repository context provider
  */
@@ -136,12 +141,22 @@ export const RepositoryProvider = ({
   repositorySlug,
   initialRef,
   initialRepository,
+  initialBranches,
+  initialTags,
+  initialCollections,
+  initialSchema,
+  initialCommits,
 }: {
   children: React.ReactNode;
   dict: Dictionary;
   repositorySlug: string;
   initialRef?: string;
   initialRepository: Repository;
+  initialBranches: Branch[];
+  initialTags: Tag[];
+  initialCollections: Collection[];
+  initialSchema: RepositorySchema;
+  initialCommits: Commit[];
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -304,23 +319,24 @@ export const RepositoryProvider = ({
 
   // Collections state
   const [loadingCollections, setLoadingCollections] = useState(false);
-  const [collections, setCollections] = useState<Collection[]>([]);
+  const [collections, setCollections] =
+    useState<Collection[]>(initialCollections);
 
   // Schema state
   const [loadingSchema, setLoadingSchema] = useState<boolean>(false);
-  const [schema, setSchema] = useState<RepositorySchema | null>(null);
+  const [schema, setSchema] = useState<RepositorySchema>(initialSchema);
 
   // Branches state
   const [loadingBranches, setLoadingBranches] = useState<boolean>(false);
-  const [branches, setBranches] = useState<Branch[] | null>(null);
+  const [branches, setBranches] = useState<Branch[]>(initialBranches);
 
   // Tags state
   const [loadingTags, setLoadingTags] = useState<boolean>(false);
-  const [tags, setTags] = useState<Tag[] | null>(null);
+  const [tags, setTags] = useState<Tag[]>(initialTags);
 
   // Commits state
   const [loadingCommits, setLoadingCommits] = useState<boolean>(false);
-  const [commits, setCommits] = useState<Commit[] | null>(null);
+  const [commits, setCommits] = useState<Commit[]>(initialCommits);
 
   /**
    * Fetch the currennt collections
@@ -693,47 +709,6 @@ export const RepositoryProvider = ({
     },
     [repositorySlug, fetchTags, irminAlert]
   );
-
-  // Track the fetch for the initial values
-  const initialFetchFor = useRef<string | null>(null);
-  const refFetchFor = useRef<string | null>(null);
-
-  /**
-   * Fetch the collections, branches and tags when the repository changes
-   *
-   * Only fetch if the repository is set
-   */
-  useEffect(() => {
-    // Don't fetch if already fetched for the current repository and ref
-    if (initialFetchFor.current === repositorySlug) return;
-    initialFetchFor.current = repositorySlug;
-    // Fetch the collections, branches and tags
-    fetchCollections();
-    fetchBranches();
-    fetchTags();
-  }, [repositorySlug, currentRef, fetchCollections, fetchBranches, fetchTags]);
-
-  /**
-   * Fetch the schema and commits on initial load, after the collections
-   * and branches are loaded, and the current ref is set.
-   */
-  useEffect(() => {
-    if (!collections || !branches || !currentRef) return;
-    // Don't fetch schema if already fetched for the current repository and ref
-    const fetchFor = `${repositorySlug}-${currentRef}`;
-    if (refFetchFor.current === fetchFor) return;
-    refFetchFor.current = fetchFor;
-    // Fetch the schema and commits
-    fetchSchema();
-    fetchCommits();
-  }, [
-    collections,
-    branches,
-    repositorySlug,
-    currentRef,
-    fetchSchema,
-    fetchCommits,
-  ]);
 
   /**
    * Update current ref if not set
