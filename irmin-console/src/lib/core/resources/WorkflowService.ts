@@ -165,7 +165,7 @@ class WorkflowService {
         }
       }
 
-      const response = await this.irminCore.fetchAPI(`/v1/workflows/update`, {
+      const response = await this.irminCore.fetchAPI(`/v1/workflows`, {
         method: 'POST',
       });
 
@@ -481,13 +481,10 @@ class WorkflowService {
         }
       }
 
-      const res = (await this.irminCore.fetchAPI(
-        `/v1/workflows/imports/create`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      )) as WorkflowAPIResponse;
+      const res = (await this.irminCore.fetchAPI(`/v1/workflows/imports`, {
+        method: 'POST',
+        body: formData,
+      })) as WorkflowAPIResponse;
       return res;
     } catch (error) {
       console.error(
@@ -575,13 +572,10 @@ class WorkflowService {
         }
       }
 
-      const res = (await this.irminCore.fetchAPI(
-        `/v1/workflows/exports/create`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      )) as WorkflowAPIResponse;
+      const res = (await this.irminCore.fetchAPI(`/v1/workflows/exports`, {
+        method: 'POST',
+        body: formData,
+      })) as WorkflowAPIResponse;
       return res;
     } catch (error) {
       console.error(
@@ -665,13 +659,10 @@ class WorkflowService {
         }
       }
 
-      const res = (await this.irminCore.fetchAPI(
-        `/v1/workflows/actions/create`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      )) as WorkflowAPIResponse;
+      const res = (await this.irminCore.fetchAPI(`/v1/workflows/actions`, {
+        method: 'POST',
+        body: formData,
+      })) as WorkflowAPIResponse;
       return res;
     } catch (error) {
       console.error(

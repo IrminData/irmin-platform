@@ -98,7 +98,7 @@ class BranchService {
       formData.append('from', from);
       formData.append('repository', repository);
 
-      const res = await this.irminCore.fetchAPI(`/v1/branches/create`, {
+      const res = await this.irminCore.fetchAPI(`/v1/branches`, {
         method: 'POST',
         body: formData,
       });

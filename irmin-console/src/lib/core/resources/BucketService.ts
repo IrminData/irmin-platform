@@ -71,13 +71,10 @@ class BucketService {
       body.append('name', fileNavigatorItem.current.name);
       body.append('path', fileNavigatorItem.current.path);
       body.append('contents', fileNavigatorItem.current.contents);
-      const response = await this.irminCore.fetchAPI(
-        `/v1/buckets/files/create`,
-        {
-          method: 'POST',
-          body,
-        }
-      );
+      const response = await this.irminCore.fetchAPI(`/v1/buckets/files`, {
+        method: 'POST',
+        body,
+      });
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create file error');
@@ -167,13 +164,10 @@ class BucketService {
       const body = new FormData();
       body.append('name', fileNavigatorItem.current.name);
       body.append('path', fileNavigatorItem.current.path);
-      const response = await this.irminCore.fetchAPI(
-        `/v1/buckets/folders/create`,
-        {
-          method: 'POST',
-          body,
-        }
-      );
+      const response = await this.irminCore.fetchAPI(`/v1/buckets/folders`, {
+        method: 'POST',
+        body,
+      });
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create folder error');

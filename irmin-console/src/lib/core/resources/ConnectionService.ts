@@ -130,7 +130,7 @@ class ConnectionService {
       if (data.documentation)
         formData.append('documentation', data.documentation);
 
-      const response = await this.irminCore.fetchAPI(`/v1/connections/update`, {
+      const response = await this.irminCore.fetchAPI(`/v1/connections`, {
         method: 'POST',
       });
 
@@ -208,7 +208,7 @@ class ConnectionService {
       if (isOfflineMode)
         return fake(exampleDynamicFields) as ConnectionFieldsAPIResponse;
       const response = await this.irminCore.fetchAPI(
-        `/v1/connections/create/details?connector=${connectorID}`,
+        `/v1/connections/details?connector=${connectorID}`,
         {
           method: 'GET',
         }
@@ -249,7 +249,7 @@ class ConnectionService {
 
       // Make the request
       const response = await this.irminCore.fetchAPI(
-        `/v1/connections/create/test-connection?${params.toString()}`,
+        `/v1/connections/test-connection?${params.toString()}`,
         {
           method: 'GET',
         }
@@ -288,7 +288,7 @@ class ConnectionService {
 
       // Make the request
       const response = await this.irminCore.fetchAPI(
-        `/v1/connections/create/settings?${params.toString()}`,
+        `/v1/connections/settings?${params.toString()}`,
         {
           method: 'GET',
         }
@@ -344,7 +344,7 @@ class ConnectionService {
       formData.append('name', name);
       formData.append('description', description);
 
-      const res = await this.irminCore.fetchAPI(`/v1/connections/create`, {
+      const res = await this.irminCore.fetchAPI(`/v1/connections`, {
         method: 'POST',
         body: formData,
       });

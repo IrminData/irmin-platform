@@ -58,7 +58,7 @@ class InviteService {
       formData.append('email', email);
       formData.append('role', role);
 
-      const response = await this.irminCore.fetchAPI(`/v1/invites/create`, {
+      const response = await this.irminCore.fetchAPI(`/v1/invites`, {
         method: 'POST',
         body: formData,
       });
@@ -132,7 +132,7 @@ class InviteService {
       formData.append('role', role);
       formData.append('_method', 'PATCH');
 
-      const response = await this.irminCore.fetchAPI(`/v1/invites/update`, {
+      const response = await this.irminCore.fetchAPI(`/v1/invites`, {
         method: 'POST',
         body: formData,
       });

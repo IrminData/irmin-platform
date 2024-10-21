@@ -98,7 +98,7 @@ class TagService {
       formData.append('ref', ref);
       formData.append('repository', repository);
 
-      const res = await this.irminCore.fetchAPI(`/v1/tags/create`, {
+      const res = await this.irminCore.fetchAPI(`/v1/tags`, {
         method: 'POST',
         body: formData,
       });

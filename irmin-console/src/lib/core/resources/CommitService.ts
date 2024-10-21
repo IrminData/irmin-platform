@@ -119,7 +119,7 @@ class CommitService {
       formData.append('ref', ref);
       formData.append('message', message);
 
-      const response = (await this.irminCore.fetchAPI(`/v1/commits/create`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/commits`, {
         method: 'POST',
         body: formData,
       })) as IrminAPIResponse;

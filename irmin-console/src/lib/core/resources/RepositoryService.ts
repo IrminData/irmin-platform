@@ -104,13 +104,10 @@ class RepositoryService {
       formData.append('description', repository.description ?? '');
       formData.append('documentation', repository.documentation ?? '');
 
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/create`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      )) as RepositoryAPIResponse;
+      const response = (await this.irminCore.fetchAPI(`/v1/repositories`, {
+        method: 'POST',
+        body: formData,
+      })) as RepositoryAPIResponse;
 
       return response;
     } catch (error) {
@@ -195,7 +192,7 @@ class RepositoryService {
         formData.append('documentation', data.documentation);
 
       const response = await this.irminCore.fetchAPI(
-        `/v1/repositories/${repositorySlug}/update`,
+        `/v1/repositories/${repositorySlug}`,
         {
           method: 'POST',
           body: formData,
