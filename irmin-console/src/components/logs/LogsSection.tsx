@@ -78,9 +78,7 @@ export default function LogsSection({
               className='rounded-full'
               icon={<IoChevronBack size={24} />}
               onClick={() => router.back()}
-            >
-              <IoChevronBack size={24} />
-            </Button>
+            />
           )}
           <div>
             <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
@@ -90,7 +88,7 @@ export default function LogsSection({
               <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
                 <Link
                   className='hover:underline'
-                  href={`${workspaceUrl}/workflows/${workflow}`}
+                  href={`${workspaceUrl}/workflows/${workflow.id}`}
                 >
                   {workflow.name}
                 </Link>

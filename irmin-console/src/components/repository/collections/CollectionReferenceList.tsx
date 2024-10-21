@@ -83,9 +83,9 @@ const CollectionReferenceList = ({
       </p>
       <ul className='text-xs'>
         {repositories.map((repository) => {
-          const matchedCollections = collections
-            .filter((item) => item.repository === repository.slug)
-            .sort((a, b) => a.name.localeCompare(b.name));
+          const matchedCollections = collections.filter(
+            (item) => item.repository === repository.slug
+          );
           if (matchedCollections.length === 0) return;
           return (
             <li key={`repository-${repository.id}`} className='px-4 py-2'>

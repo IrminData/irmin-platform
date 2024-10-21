@@ -49,15 +49,13 @@ export default function WorkflowsSection({
     const handler = setTimeout(() => {
       if (workflows) {
         setFilteredItems(
-          workflows
-            .filter((item) =>
-              item.name
-                .trim()
-                .replace(/\s+/g, '')
-                .toLowerCase()
-                .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
-            )
-            .sort((a, b) => a.name.localeCompare(b.name))
+          workflows.filter((item) =>
+            item.name
+              .trim()
+              .replace(/\s+/g, '')
+              .toLowerCase()
+              .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
+          )
         );
       }
     }, 300);
