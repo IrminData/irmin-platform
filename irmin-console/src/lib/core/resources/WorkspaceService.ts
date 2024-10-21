@@ -51,7 +51,7 @@ class WorkspaceService {
   async fetchWorkspaces(): Promise<WorkspacesAPIResponse> {
     if (isOfflineMode) return fake(exampleWorkspaces) as WorkspacesAPIResponse;
     try {
-      const res = (await this.irminCore.fetch(`/v1/workspaces`, {
+      const res = (await this.irminCore.fetchAPI(`/v1/workspaces`, {
         method: 'GET',
       })) as WorkspacesAPIResponse;
       return res;
@@ -74,7 +74,7 @@ class WorkspaceService {
           exampleWorkspaces[0]
       ) as WorkspaceAPIResponse;
     try {
-      const res = (await this.irminCore.fetch(
+      const res = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspaceSlug}`,
         {
           method: 'GET',
@@ -102,7 +102,7 @@ class WorkspaceService {
       const formData = new FormData();
       formData.append('user', user);
 
-      const res = await this.irminCore.fetch(
+      const res = await this.irminCore.fetchAPI(
         `/v1/workspaces/transfer-ownership`,
         {
           method: 'POST',
@@ -132,7 +132,7 @@ class WorkspaceService {
       formData.append('name', name);
       formData.append('description', description);
 
-      const res = await this.irminCore.fetch(`/v1/workspaces/create`, {
+      const res = await this.irminCore.fetchAPI(`/v1/workspaces`, {
         method: 'POST',
         body: formData,
       });
@@ -156,7 +156,7 @@ class WorkspaceService {
       formData.append('_method', 'PATCH');
       if (data.name) formData.append('name', data.name);
       if (data.description) formData.append('description', data.description);
-      const res = await this.irminCore.fetch(`/v1/workspaces`, {
+      const res = await this.irminCore.fetchAPI(`/v1/workspaces`, {
         method: 'POST',
         body: formData,
       });
@@ -175,7 +175,7 @@ class WorkspaceService {
     try {
       const formData = new FormData();
       formData.append('_method', 'DELETE');
-      const res = await this.irminCore.fetch(`/v1/workspaces`, {
+      const res = await this.irminCore.fetchAPI(`/v1/workspaces`, {
         method: 'POST',
         body: formData,
       });
@@ -204,7 +204,7 @@ class WorkspaceService {
       const formData = new FormData();
       formData.append('workspace', workspaceSlug);
 
-      await this.irminCore.fetch(`/v1/workspaces/switch`, {
+      await this.irminCore.fetchAPI(`/v1/workspaces/switch`, {
         method: 'POST',
         body: formData,
       });

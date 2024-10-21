@@ -27,6 +27,8 @@ import UserService from './resources/UserService';
 import WorkflowService from './resources/WorkflowService';
 import WorkspaceService from './resources/WorkspaceService';
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 /**
  * All Core API Services centralised in one place.
  *
@@ -97,32 +99,38 @@ class IrminCore {
     const api_base = this.apiBase;
     const app_base = this.appBase;
 
-    // Use the token if it is set
-    if (this.token && this.token.length > 0) {
-      options.headers = {
-        Authorization: `Bearer ${this.token}`,
-        ...options.headers,
-      };
-    }
-
-    // Fetch Core Irmin API
-    const response = await fetch(`${api_base}${url}`, {
-      ...options,
+    const requestOptions: RequestInit = {
       cache: options.cache ?? 'default', // Use default cache mode if not set
       credentials: 'include', // Include credentials with every request
+      ...options,
       headers: {
         Accept: 'application/json',
         'Accept-Language': this.locale, // Irmin API returns localised messages based on the Accept-Language header
         Referer: app_base,
-        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${this.token}`,
         ...options.headers,
       },
-    });
+    };
+
+    const requestURL = `${api_base}${url}`;
+
+    if (isDevelopment) {
+      console.log('IrminCore fetch request');
+      console.log('Fetch URL:', requestURL);
+      console.log('Fetch Options:', requestOptions);
+    }
+
+    // Fetch Core Irmin API
+    const response = await fetch(requestURL, requestOptions);
+
+    if (isDevelopment) {
+      console.log('Fetch Response:', response);
+    }
 
     return response;
   };
 
-  public fetch = async (
+  public fetchAPI = async (
     url: string,
     options: RequestInit
   ): Promise<IrminAPIResponse> => {

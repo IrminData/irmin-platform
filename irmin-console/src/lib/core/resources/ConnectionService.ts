@@ -75,7 +75,7 @@ class ConnectionService {
     if (isOfflineMode)
       return fake(exampleConnections) as ConnectionsAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/connections`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/connections`, {
         method: 'GET',
       })) as ConnectionsAPIResponse;
       return response;
@@ -97,7 +97,7 @@ class ConnectionService {
     if (isOfflineMode)
       return fake(exampleConnections[0]) as ConnectionAPIResponse;
     try {
-      const response = await this.irminCore.fetch(
+      const response = await this.irminCore.fetchAPI(
         `/v1/connections/${connection}`,
         {
           method: 'GET',
@@ -130,7 +130,7 @@ class ConnectionService {
       if (data.documentation)
         formData.append('documentation', data.documentation);
 
-      const response = await this.irminCore.fetch(`/v1/connections/update`, {
+      const response = await this.irminCore.fetchAPI(`/v1/connections/update`, {
         method: 'POST',
       });
 
@@ -155,9 +155,12 @@ class ConnectionService {
       formData.append('connection', connection);
       formData.append('assignee', newOwner);
 
-      const response = await this.irminCore.fetch(`/v1/connections/reassign`, {
-        method: 'POST',
-      });
+      const response = await this.irminCore.fetchAPI(
+        `/v1/connections/reassign`,
+        {
+          method: 'POST',
+        }
+      );
 
       return response;
     } catch (error) {
@@ -180,7 +183,7 @@ class ConnectionService {
       formData.append('_method', 'DELETE');
       formData.append('connection', connection);
 
-      const response = await this.irminCore.fetch(`/v1/connections/delete`, {
+      const response = await this.irminCore.fetchAPI(`/v1/connections/delete`, {
         method: 'POST',
       });
 
@@ -204,7 +207,7 @@ class ConnectionService {
     try {
       if (isOfflineMode)
         return fake(exampleDynamicFields) as ConnectionFieldsAPIResponse;
-      const response = await this.irminCore.fetch(
+      const response = await this.irminCore.fetchAPI(
         `/v1/connections/create/details?connector=${connectorID}`,
         {
           method: 'GET',
@@ -245,7 +248,7 @@ class ConnectionService {
       });
 
       // Make the request
-      const response = await this.irminCore.fetch(
+      const response = await this.irminCore.fetchAPI(
         `/v1/connections/create/test-connection?${params.toString()}`,
         {
           method: 'GET',
@@ -284,7 +287,7 @@ class ConnectionService {
       });
 
       // Make the request
-      const response = await this.irminCore.fetch(
+      const response = await this.irminCore.fetchAPI(
         `/v1/connections/create/settings?${params.toString()}`,
         {
           method: 'GET',
@@ -341,7 +344,7 @@ class ConnectionService {
       formData.append('name', name);
       formData.append('description', description);
 
-      const res = await this.irminCore.fetch(`/v1/connections/create`, {
+      const res = await this.irminCore.fetchAPI(`/v1/connections/create`, {
         method: 'POST',
         body: formData,
       });

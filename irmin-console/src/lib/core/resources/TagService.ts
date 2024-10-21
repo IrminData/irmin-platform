@@ -40,7 +40,7 @@ class TagService {
   async fetchTags(repository: string): Promise<TagsAPIResponse> {
     if (isOfflineMode) return fake(exampleTags) as TagsAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/tags?repository=${repository}`,
         {
           method: 'GET',
@@ -70,7 +70,7 @@ class TagService {
       formData.append('tag', tag);
       formData.append('repository', repository);
 
-      const response = await this.irminCore.fetch(`/v1/tags`, {
+      const response = await this.irminCore.fetchAPI(`/v1/tags`, {
         method: 'POST',
       });
 
@@ -98,7 +98,7 @@ class TagService {
       formData.append('ref', ref);
       formData.append('repository', repository);
 
-      const res = await this.irminCore.fetch(`/v1/tags/create`, {
+      const res = await this.irminCore.fetchAPI(`/v1/tags/create`, {
         method: 'POST',
         body: formData,
       });

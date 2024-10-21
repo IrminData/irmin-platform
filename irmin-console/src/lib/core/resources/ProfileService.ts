@@ -37,7 +37,7 @@ class ProfileService {
   async getProfile(): Promise<ProfileAPIResponse | null> {
     if (isOfflineMode) return fake(exampleProfile) as ProfileAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/account/profile`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/account/profile`, {
         method: 'GET',
       })) as ProfileAPIResponse;
       return response;

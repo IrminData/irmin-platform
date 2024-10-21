@@ -55,7 +55,7 @@ class CommitService {
       const urlParams = new URLSearchParams();
       urlParams.append('repository', repository);
       if (ref) urlParams.append('ref', ref);
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/commits?${urlParams.toString()}`,
         {
           method: 'GET',
@@ -85,7 +85,7 @@ class CommitService {
       const urlParams = new URLSearchParams();
       urlParams.append('repository', repository);
       urlParams.append('hash', hash);
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/commits?${urlParams.toString()}`,
         {
           method: 'GET',
@@ -119,7 +119,7 @@ class CommitService {
       formData.append('ref', ref);
       formData.append('message', message);
 
-      const response = (await this.irminCore.fetch(`/v1/commits/create`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/commits/create`, {
         method: 'POST',
         body: formData,
       })) as IrminAPIResponse;
@@ -148,7 +148,7 @@ class CommitService {
       formData.append('repository', repository);
       formData.append('ref', ref);
 
-      const response = (await this.irminCore.fetch(`/v1/commits/revert`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/commits/revert`, {
         method: 'POST',
         body: formData,
       })) as IrminAPIResponse;
@@ -182,7 +182,7 @@ class CommitService {
       urlParams.append('repository', repository);
       urlParams.append('ref', ref);
       urlParams.append('collection', collection);
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/commits/last?${urlParams.toString()}`,
         {
           method: 'GET',

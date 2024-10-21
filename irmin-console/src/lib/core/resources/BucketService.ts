@@ -43,7 +43,7 @@ class BucketService {
   async fetchBucket(): Promise<BucketAPIResponse> {
     if (isOfflineMode) return fake(exampleBucket) as BucketAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/bucket`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/bucket`, {
         method: 'GET',
       })) as BucketAPIResponse;
       return response;
@@ -71,10 +71,13 @@ class BucketService {
       body.append('name', fileNavigatorItem.current.name);
       body.append('path', fileNavigatorItem.current.path);
       body.append('contents', fileNavigatorItem.current.contents);
-      const response = await this.irminCore.fetch(`/v1/buckets/files/create`, {
-        method: 'POST',
-        body,
-      });
+      const response = await this.irminCore.fetchAPI(
+        `/v1/buckets/files/create`,
+        {
+          method: 'POST',
+          body,
+        }
+      );
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create file error');
@@ -107,7 +110,7 @@ class BucketService {
       body.append('contents', fileNavigatorItem.current.contents);
       body.append('original_path', fileNavigatorItem.original.path);
       body.append('original_contents', fileNavigatorItem.original.contents);
-      const response = await this.irminCore.fetch(`/v1/buckets/files`, {
+      const response = await this.irminCore.fetchAPI(`/v1/buckets/files`, {
         method: 'POST',
         body,
       });
@@ -136,7 +139,7 @@ class BucketService {
       body.append('_method', 'DELETE');
       body.append('name', fileNavigatorItem.original.name);
       body.append('path', fileNavigatorItem.original.path);
-      const response = await this.irminCore.fetch(`/v1/buckets/files`, {
+      const response = await this.irminCore.fetchAPI(`/v1/buckets/files`, {
         method: 'POST',
         body,
       });
@@ -164,7 +167,7 @@ class BucketService {
       const body = new FormData();
       body.append('name', fileNavigatorItem.current.name);
       body.append('path', fileNavigatorItem.current.path);
-      const response = await this.irminCore.fetch(
+      const response = await this.irminCore.fetchAPI(
         `/v1/buckets/folders/create`,
         {
           method: 'POST',
@@ -201,7 +204,7 @@ class BucketService {
       body.append('name', fileNavigatorItem.current.name);
       body.append('path', fileNavigatorItem.current.path);
       body.append('original_path', fileNavigatorItem.original.path);
-      const response = await this.irminCore.fetch(`/v1/buckets/folders`, {
+      const response = await this.irminCore.fetchAPI(`/v1/buckets/folders`, {
         method: 'POST',
         body,
       });
@@ -231,7 +234,7 @@ class BucketService {
       body.append('_method', 'DELETE');
       body.append('name', fileNavigatorItem.original.name);
       body.append('path', fileNavigatorItem.original.path);
-      const response = await this.irminCore.fetch(`/v1/buckets/folders`, {
+      const response = await this.irminCore.fetchAPI(`/v1/buckets/folders`, {
         method: 'POST',
         body,
       });

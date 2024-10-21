@@ -58,7 +58,7 @@ class InviteService {
       formData.append('email', email);
       formData.append('role', role);
 
-      const response = await this.irminCore.fetch(`/v1/invites/create`, {
+      const response = await this.irminCore.fetchAPI(`/v1/invites/create`, {
         method: 'POST',
         body: formData,
       });
@@ -82,7 +82,7 @@ class InviteService {
 
       formData.append('invite', invite);
 
-      const response = await this.irminCore.fetch(`/v1/invites/resend`, {
+      const response = await this.irminCore.fetchAPI(`/v1/invites/resend`, {
         method: 'POST',
         body: formData,
       });
@@ -106,7 +106,7 @@ class InviteService {
       formData.append('invite', invite);
       formData.append('_method', 'DELETE');
 
-      const response = await this.irminCore.fetch(`/v1/invites/cancel`, {
+      const response = await this.irminCore.fetchAPI(`/v1/invites/cancel`, {
         method: 'POST',
         body: formData,
       });
@@ -132,7 +132,7 @@ class InviteService {
       formData.append('role', role);
       formData.append('_method', 'PATCH');
 
-      const response = await this.irminCore.fetch(`/v1/invites/update`, {
+      const response = await this.irminCore.fetchAPI(`/v1/invites/update`, {
         method: 'POST',
         body: formData,
       });
@@ -154,7 +154,7 @@ class InviteService {
   ): Promise<InvitesAPIResponse> {
     if (isOfflineMode) return fake(exampleInvites) as InvitesAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/invites?workspace=${workspace}`,
         {
           method: 'GET',
@@ -177,9 +177,12 @@ class InviteService {
   async fetchInvitesByUser(user: string): Promise<InvitesAPIResponse> {
     if (isOfflineMode) return fake(exampleInvites) as InvitesAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/invites?user=${user}`, {
-        method: 'GET',
-      })) as InvitesAPIResponse;
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/invites?user=${user}`,
+        {
+          method: 'GET',
+        }
+      )) as InvitesAPIResponse;
 
       return response;
     } catch (error) {
@@ -211,7 +214,7 @@ class InviteService {
       formData.append('password', password ?? '');
       formData.append('password_confirmation', password_confirmation ?? '');
 
-      const response = await this.irminCore.fetch(`/v1/invites/accept`, {
+      const response = await this.irminCore.fetchAPI(`/v1/invites/accept`, {
         method: 'POST',
         body: formData,
       });
@@ -235,7 +238,7 @@ class InviteService {
       formData.append('invite', invite);
       formData.append('_method', 'DELETE');
 
-      const response = await this.irminCore.fetch(`/v1/invites/decline`, {
+      const response = await this.irminCore.fetchAPI(`/v1/invites/decline`, {
         method: 'POST',
         body: formData,
       });

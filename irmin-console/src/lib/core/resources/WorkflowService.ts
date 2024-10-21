@@ -104,7 +104,7 @@ class WorkflowService {
   async fetchWorkflows(): Promise<WorkflowsAPIResponse> {
     if (isOfflineMode) return fake(exampleWorkflows) as WorkflowsAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/workflows`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/workflows`, {
         method: 'GET',
       })) as WorkflowsAPIResponse;
       return response;
@@ -124,7 +124,7 @@ class WorkflowService {
   async fetchWorkflow(workflowID: string): Promise<WorkflowAPIResponse> {
     if (isOfflineMode) return fake(exampleWorkflows[0]) as WorkflowAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/workflows/${workflowID}`,
         {
           method: 'GET',
@@ -165,7 +165,7 @@ class WorkflowService {
         }
       }
 
-      const response = await this.irminCore.fetch(`/v1/workflows/update`, {
+      const response = await this.irminCore.fetchAPI(`/v1/workflows/update`, {
         method: 'POST',
       });
 
@@ -190,7 +190,7 @@ class WorkflowService {
       formData.append('_method', 'DELETE');
       formData.append('workflow', workflowID);
 
-      const response = await this.irminCore.fetch(`/v1/workflows/delete`, {
+      const response = await this.irminCore.fetchAPI(`/v1/workflows/delete`, {
         method: 'POST',
       });
 
@@ -217,7 +217,7 @@ class WorkflowService {
       formData.append('_method', 'PATCH');
       formData.append('workflow', workflowID);
 
-      const response = await this.irminCore.fetch(`/v1/workflows/pause`, {
+      const response = await this.irminCore.fetchAPI(`/v1/workflows/pause`, {
         method: 'POST',
       });
 
@@ -243,7 +243,7 @@ class WorkflowService {
       formData.append('_method', 'PATCH');
       formData.append('workflow', workflowID);
 
-      const response = await this.irminCore.fetch(`/v1/workflows/resume`, {
+      const response = await this.irminCore.fetchAPI(`/v1/workflows/resume`, {
         method: 'POST',
       });
 
@@ -269,7 +269,7 @@ class WorkflowService {
       formData.append('workflow', workflowID);
       formData.append('assignee', newOwner);
 
-      const response = await this.irminCore.fetch(`/v1/workflows/reassign`, {
+      const response = await this.irminCore.fetchAPI(`/v1/workflows/reassign`, {
         method: 'POST',
       });
 
@@ -292,7 +292,7 @@ class WorkflowService {
     if (isOfflineMode)
       return fake(exampleWorkflowRuns) as WorkflowRunsAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/workflows/${workflow}/runs`,
         {
           method: 'GET',
@@ -327,7 +327,7 @@ class WorkflowService {
     try {
       const urlParams = new URLSearchParams();
       if (workflowRun) urlParams.append('id', workflowRun);
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/workflows/${workflow}/runs?${urlParams.toString()}`,
         {
           method: 'GET',
@@ -352,7 +352,7 @@ class WorkflowService {
     try {
       const formData = new FormData();
       formData.append('workflow_id', workflow);
-      const response = (await this.irminCore.fetch(`/v1/workflows/run`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/workflows/run`, {
         method: 'POST',
         body: formData,
       })) as WorkflowRunAPIResponse;
@@ -371,7 +371,7 @@ class WorkflowService {
   async fetchImportWorkflows(): Promise<ImportsAPIResponse> {
     if (isOfflineMode) return fake(exampleImports) as ImportsAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/workflows/imports`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/workflows/imports`, {
         method: 'GET',
       })) as ImportsAPIResponse;
       return response;
@@ -389,7 +389,7 @@ class WorkflowService {
     if (isOfflineMode) return fake(exampleExports) as ExportsAPIResponse;
 
     try {
-      const response = (await this.irminCore.fetch(`/v1/workflows/exports`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/workflows/exports`, {
         method: 'GET',
       })) as ExportsAPIResponse;
       return response;
@@ -406,7 +406,7 @@ class WorkflowService {
   async fetchActionWorkflows(): Promise<ActionsAPIResponse> {
     if (isOfflineMode) return fake(exampleActions) as ActionsAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/workflows/actions`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/workflows/actions`, {
         method: 'GET',
       })) as ActionsAPIResponse;
       return response;
@@ -481,10 +481,13 @@ class WorkflowService {
         }
       }
 
-      const res = (await this.irminCore.fetch(`/v1/workflows/imports/create`, {
-        method: 'POST',
-        body: formData,
-      })) as WorkflowAPIResponse;
+      const res = (await this.irminCore.fetchAPI(
+        `/v1/workflows/imports/create`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as WorkflowAPIResponse;
       return res;
     } catch (error) {
       console.error(
@@ -572,10 +575,13 @@ class WorkflowService {
         }
       }
 
-      const res = (await this.irminCore.fetch(`/v1/workflows/exports/create`, {
-        method: 'POST',
-        body: formData,
-      })) as WorkflowAPIResponse;
+      const res = (await this.irminCore.fetchAPI(
+        `/v1/workflows/exports/create`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as WorkflowAPIResponse;
       return res;
     } catch (error) {
       console.error(
@@ -659,10 +665,13 @@ class WorkflowService {
         }
       }
 
-      const res = (await this.irminCore.fetch(`/v1/workflows/actions/create`, {
-        method: 'POST',
-        body: formData,
-      })) as WorkflowAPIResponse;
+      const res = (await this.irminCore.fetchAPI(
+        `/v1/workflows/actions/create`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as WorkflowAPIResponse;
       return res;
     } catch (error) {
       console.error(

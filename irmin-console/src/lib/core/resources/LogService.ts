@@ -51,7 +51,7 @@ class LogService {
     try {
       const urlParams = new URLSearchParams();
       if (workflow) urlParams.append('workflow', workflow);
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/logs?${urlParams.toString()}`,
         {
           method: 'GET',
@@ -81,7 +81,7 @@ class LogService {
       const urlParams = new URLSearchParams();
       if (workflow) urlParams.append('workflow', workflow);
       if (workflowRunID) urlParams.append('workflow_run_id', workflowRunID);
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/logs?${urlParams.toString()}`,
         {
           method: 'GET',

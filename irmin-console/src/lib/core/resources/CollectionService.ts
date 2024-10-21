@@ -62,7 +62,7 @@ class CollectionService {
       const urlParams = new URLSearchParams();
       if (repository) urlParams.append('repository', repository);
       if (ref) urlParams.append('ref', ref);
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/collections?${urlParams.toString()}`,
         {
           method: 'GET',
@@ -157,7 +157,7 @@ class CollectionService {
         formData.append('files[]', files[i]);
       }
 
-      const response = await this.irminCore.fetch(
+      const response = await this.irminCore.fetchAPI(
         `/v1/repositories/${repository}/collection/upload`,
         {
           method: 'POST',
@@ -193,7 +193,7 @@ class CollectionService {
       formData.append('ref', ref);
       formData.append('collection', collection);
 
-      const response = await this.irminCore.fetch(
+      const response = await this.irminCore.fetchAPI(
         `/v1/repositories/${repository}/collection/delete`,
         {
           method: 'POST',

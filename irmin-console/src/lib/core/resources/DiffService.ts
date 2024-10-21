@@ -58,7 +58,7 @@ class DiffService {
       const urlParams = new URLSearchParams();
       urlParams.append('base_ref', baseRef);
       urlParams.append('compare_ref', compareRef);
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/repositories/${repository}/compare?${urlParams.toString()}`,
         {
           method: 'GET',
@@ -104,7 +104,7 @@ class DiffService {
       formData.append('description', description);
       formData.append('strategy', mergeStrategy);
 
-      const response = await this.irminCore.fetch(
+      const response = await this.irminCore.fetchAPI(
         `/v1/repositories/${repository}/merge`,
         {
           method: 'POST',

@@ -48,7 +48,7 @@ class SchemaService {
       );
       if (ref) urlParams.append('ref', ref);
 
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/schema?${urlParams.toString()}`,
         {
           method: 'GET',

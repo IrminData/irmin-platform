@@ -40,7 +40,7 @@ class BranchService {
   async fetchBranches(repository: string): Promise<BranchesAPIResponse> {
     if (isOfflineMode) return fake(exampleBranches) as BranchesAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/branches?repository=${repository}`,
         {
           method: 'GET',
@@ -70,7 +70,7 @@ class BranchService {
       formData.append('branch', branch);
       formData.append('repository', repository);
 
-      const response = await this.irminCore.fetch(`/v1/branches`, {
+      const response = await this.irminCore.fetchAPI(`/v1/branches`, {
         method: 'POST',
       });
 
@@ -98,7 +98,7 @@ class BranchService {
       formData.append('from', from);
       formData.append('repository', repository);
 
-      const res = await this.irminCore.fetch(`/v1/branches/create`, {
+      const res = await this.irminCore.fetchAPI(`/v1/branches/create`, {
         method: 'POST',
         body: formData,
       });

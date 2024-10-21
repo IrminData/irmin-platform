@@ -36,7 +36,7 @@ class RoleService {
   async fetchRoles(): Promise<RolesAPIResponse> {
     if (isOfflineMode) return fake(exampleRoles) as RolesAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/roles`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/roles`, {
         method: 'GET',
       })) as RolesAPIResponse;
       return response;

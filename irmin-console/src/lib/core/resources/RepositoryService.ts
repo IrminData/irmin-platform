@@ -50,7 +50,7 @@ class RepositoryService {
     if (isOfflineMode)
       return fake(exampleRepositories) as RepositoriesAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/repositories`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/repositories`, {
         method: 'GET',
       })) as RepositoriesAPIResponse;
 
@@ -70,9 +70,12 @@ class RepositoryService {
     if (isOfflineMode)
       return fake(exampleRepositories[0]) as RepositoryAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/repositories/${slug}`, {
-        method: 'GET',
-      })) as RepositoryAPIResponse;
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/repositories/${slug}`,
+        {
+          method: 'GET',
+        }
+      )) as RepositoryAPIResponse;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Repository error');
@@ -101,10 +104,13 @@ class RepositoryService {
       formData.append('description', repository.description ?? '');
       formData.append('documentation', repository.documentation ?? '');
 
-      const response = (await this.irminCore.fetch(`/v1/repositories/create`, {
-        method: 'POST',
-        body: formData,
-      })) as RepositoryAPIResponse;
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/repositories/create`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as RepositoryAPIResponse;
 
       return response;
     } catch (error) {
@@ -127,7 +133,7 @@ class RepositoryService {
       const formData = new FormData();
       formData.append('assignee', newOwner);
 
-      const response = await this.irminCore.fetch(
+      const response = await this.irminCore.fetchAPI(
         `/v1/repositories/${repository}/reassign`,
         {
           method: 'POST',
@@ -154,7 +160,7 @@ class RepositoryService {
 
       formData.append('_method', 'DELETE');
 
-      const response = await this.irminCore.fetch(
+      const response = await this.irminCore.fetchAPI(
         `/v1/repositories/${repositorySlug}/delete`,
         {
           method: 'POST',
@@ -188,7 +194,7 @@ class RepositoryService {
       if (data.documentation)
         formData.append('documentation', data.documentation);
 
-      const response = await this.irminCore.fetch(
+      const response = await this.irminCore.fetchAPI(
         `/v1/repositories/${repositorySlug}/update`,
         {
           method: 'POST',

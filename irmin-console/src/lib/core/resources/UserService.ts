@@ -46,7 +46,7 @@ class UserService {
   async fetchWorkspaceUsers(): Promise<UsersAPIResponse> {
     if (isOfflineMode) return fake(exampleWorkspaceUsers) as UsersAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/users`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/users`, {
         method: 'GET',
       })) as UsersAPIResponse;
       return response;
@@ -65,7 +65,7 @@ class UserService {
   async fetchUserRoles(user: string): Promise<RolesAPIResponse> {
     if (isOfflineMode) return fake(exampleRoles) as RolesAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/users/roles?user=${user}`,
         {
           method: 'GET',
@@ -93,7 +93,7 @@ class UserService {
       formData.append('user', user);
       formData.append('roles[]', newRole);
 
-      const response = await this.irminCore.fetch(`/v1/users/roles`, {
+      const response = await this.irminCore.fetchAPI(`/v1/users/roles`, {
         method: 'POST',
         body: formData,
       });
@@ -117,7 +117,7 @@ class UserService {
       formData.append('_method', 'DELETE');
       formData.append('user', user);
 
-      const response = await this.irminCore.fetch(`/v1/users/remove`, {
+      const response = await this.irminCore.fetchAPI(`/v1/users/remove`, {
         method: 'POST',
         body: formData,
       });

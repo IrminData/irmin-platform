@@ -38,7 +38,7 @@ class ConnectorService {
   async fetchAllConnectors(): Promise<ConnectorAPIResponse> {
     if (isOfflineMode) return fake(exampleConnectors) as ConnectorAPIResponse;
     try {
-      const response = (await this.irminCore.fetch(`/v1/connectors`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/connectors`, {
         method: 'GET',
       })) as ConnectorAPIResponse;
       return response;
