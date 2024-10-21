@@ -10,8 +10,6 @@ import { initDict } from '@/lib/initDict';
 
 import RepositoryLayoutWrapper from '@/components/repository/RepositoryLayoutWrapper';
 
-import { RepositoryProvider } from '@/context/RepositoryContext';
-
 import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
 
 /**
@@ -39,7 +37,6 @@ export async function generateMetadata(props: {
 
 /**
  * Layout for the Repository pages in the Console.
- * Provides the {@link RepositoryProvider} to use the repository data.
  */
 export default async function RepositoryLayoutWithContainer(props: {
   children: React.ReactNode;
