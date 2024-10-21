@@ -14,7 +14,9 @@ export async function initCore() {
   // Get the user and token
   const { userId, getToken } = auth();
   if (!userId) throw new Error('User not signed in');
-  const token = await getToken();
+  const token = await getToken({
+    template: 'irmin-core',
+  });
   if (!token) throw new Error('Failed to get token');
   // Get the locale from the cookie or the Accept-Language header
   const cookieStore = cookies();

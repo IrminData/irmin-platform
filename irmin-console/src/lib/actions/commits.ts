@@ -1,3 +1,5 @@
+'use server';
+
 import { initCore } from '@/lib/initCore';
 
 import { sortCommits } from '@/utils/sortCommits';

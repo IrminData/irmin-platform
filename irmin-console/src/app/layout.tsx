@@ -7,8 +7,6 @@ import { ClerkProvider } from '@clerk/nextjs';
 import '@/styles/globals.css';
 import '@/styles/irmin-global.css';
 
-import { defaultLocale, dictionaries, Locale } from '@/lib/dict';
-
 import { IAMProvider } from '@/context/IAMContext';
 import { LocaleProvider } from '@/context/LocaleContext';
 import { ThemeProvider } from '@/context/ThemeProvider';
@@ -37,15 +35,8 @@ export const metadata: Metadata = {
  * Wraps the app with `ClerkProvider` and other global context providers.
  * Initializes the font variables for the app and includes global styles.
  */
-export default async function RootLayout(props: {
-  children: React.ReactNode;
-  params: Promise<{ lang: Locale }>;
-}) {
-  const params = await props.params;
-
+export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props;
-
-  const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
 
   return (
     <ClerkProvider>
@@ -55,7 +46,7 @@ export default async function RootLayout(props: {
           className={`${inter.variable} ${bigShouldersDisplay.variable} scrollbar-hide`}
         >
           <LocaleProvider>
-            <IAMProvider locale={lang}>
+            <IAMProvider>
               <ThemeProvider
                 attribute='class'
                 defaultTheme='system'

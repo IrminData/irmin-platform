@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { getDict } from '@/lib/actions/dict';
-import { getWorkspace, getWorkspaces } from '@/lib/actions/workspaces';
+import { getWorkspaces } from '@/lib/actions/workspaces';
 import { Locale } from '@/lib/dict';
 
 import ConsoleWrapper from '@/components/console/ConsoleWrapper';
@@ -29,7 +29,6 @@ export default async function ConsoleLayout(props: {
   children: React.ReactNode;
   params: Promise<{ lang: Locale }>;
 }) {
-  const params = await props.params;
   const { children } = props;
 
   const [workspaces, { dict }] = await Promise.all([

@@ -1,6 +1,6 @@
 'use client';
 
-import { ComponentPropsWithoutRef, useEffect, useMemo, useState } from 'react';
+import { ComponentPropsWithoutRef, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';

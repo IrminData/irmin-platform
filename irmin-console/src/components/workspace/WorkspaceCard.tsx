@@ -14,7 +14,7 @@ import { Workspace } from '@/types/core/Workspace';
  * This component is used to display a workspace card in the workspace switcher
  * on the console home page. It displays the workspace name and some details.
  */
-const WorkspaceCard = async ({
+const WorkspaceCard = ({
   workspace,
   handleClick,
 }: {

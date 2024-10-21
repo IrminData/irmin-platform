@@ -1,6 +1,6 @@
 'use client';
 
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
@@ -13,12 +13,9 @@ import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 
-import IrminCore from '@/lib/core';
-import { Locale } from '@/lib/dict';
+import { getProfile } from '@/lib/actions/profile';
 
 import { usePopup } from '@/context/PopupContext';
-
-import { setCookie } from '@/utils/cookie';
 
 import { User } from '@/types/core/User';
 import { exampleProfile } from '@/types/examples/core';
@@ -29,12 +26,10 @@ const authOfflineMode = process.env.NEXT_PUBLIC_AUTH_OFFLINE_MODE === 'true';
 // Create IAM context
 const IAMContext = createContext<{
   profile: User | undefined;
-  token: string | undefined;
   isLoading: boolean;
   signOut: () => Promise<boolean>;
 }>({
   profile: undefined,
-  token: undefined,
   isLoading: false,
   signOut: () => Promise.resolve(false),
 });
@@ -42,28 +37,15 @@ const IAMContext = createContext<{
 /**
  * Identity and Access Management (IAM) context provider
  *
- * @param iamParams - The IAM parameters
- * @param iamParams.children - The children components
- * @param iamParams.locale - The locale
- *
- * @remarks
- *
  * Provides user profile data and authentication state.
  */
-export const IAMProvider = ({
-  children,
-  locale,
-}: {
-  children: React.ReactNode;
-  locale: Locale;
-}) => {
+export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { irminAlert } = usePopup();
   const { isSignedIn, user, isLoaded: clerkIsLoaded } = useUser();
-  const { sessionId, signOut: clerkSignOut, getToken } = useAuth();
+  const { sessionId, signOut: clerkSignOut } = useAuth();
 
   const [profile, setProfile] = useState<User | undefined>();
-  const [token, setToken] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(true);
 
   // Track the session ID to avoid redundant fetches
@@ -73,56 +55,10 @@ export const IAMProvider = ({
   const signingOutRef = useRef(false);
 
   /**
-   * Retrieves and sets the user token from Clerk
-   */
-  const getUserToken = useCallback(async () => {
-    if (authOfflineMode) {
-      const offlineToken = 'offline-token';
-      setToken(offlineToken);
-      setCookie('token', offlineToken, 7);
-      return offlineToken;
-    }
-
-    try {
-      const newToken = await getToken();
-      setToken(newToken ?? undefined);
-      setCookie('token', newToken ?? '', 7);
-      return newToken ?? undefined;
-    } catch (error) {
-      console.error('Failed to get token in IAMContext', error);
-      setToken(undefined);
-      setCookie('token', '', -1);
-      return undefined;
-    }
-  }, [getToken]);
-
-  /**
-   * Refreshes the user token every 55 seconds
-   */
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
-    const refreshToken = async () => {
-      await getUserToken();
-    };
-
-    if (!authOfflineMode) {
-      refreshToken();
-      intervalId = setInterval(refreshToken, 55000);
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [getUserToken]);
-
-  /**
    * Resets the IAM state
    */
   const resetIAMState = useCallback(() => {
     setProfile(undefined);
-    setToken(undefined);
-    setCookie('token', '', -1);
     initializedSessionIdRef.current = null;
   }, []);
 
@@ -131,7 +67,6 @@ export const IAMProvider = ({
    */
   const fetchIrminProfile = useCallback(async () => {
     if (authOfflineMode) {
-      await getUserToken();
       setProfile(exampleProfile);
       setIsLoading(false);
       return;
@@ -154,15 +89,7 @@ export const IAMProvider = ({
     setIsLoading(true);
 
     try {
-      const newToken = await getUserToken();
-      if (!newToken) {
-        resetIAMState();
-        setIsLoading(false);
-        return;
-      }
-
-      const irminCore = new IrminCore(locale, newToken);
-      const res = await irminCore.profileService.getProfile();
+      const res = await getProfile();
 
       if (res?.data) {
         setProfile({ ...res.data, user });
@@ -175,15 +102,7 @@ export const IAMProvider = ({
     } finally {
       setIsLoading(false);
     }
-  }, [
-    clerkIsLoaded,
-    getUserToken,
-    isSignedIn,
-    locale,
-    resetIAMState,
-    sessionId,
-    user,
-  ]);
+  }, [clerkIsLoaded, isSignedIn, resetIAMState, sessionId, user]);
 
   /**
    * Signs the user out and cleans up the IAM context state
@@ -223,7 +142,6 @@ export const IAMProvider = ({
     <IAMContext.Provider
       value={{
         profile,
-        token,
         isLoading,
         signOut,
       }}
