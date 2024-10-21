@@ -1,15 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+
+import { useRouter } from 'next/navigation';
 
 import { Controller, useForm } from 'react-hook-form';
+
+import { getWorkspaces, switchWorkspace } from '@/lib/actions/workspaces';
+import { Dictionary } from '@/lib/dict';
 
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import WorkspaceCard from '@/components/workspace/WorkspaceCard';
 
-import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+import { usePopup } from '@/context/PopupContext';
+
+import { useCreateWorkspace } from '@/hooks/useCreateWorkspace';
+
+import { Workspace } from '@/types/core/Workspace';
 
 /**
  * Define form values type for react-hook-form
@@ -27,26 +35,22 @@ interface CreateWorkspaceFormValues {
  * This component is used to manage workspaces in the console.
  * Here, users can create new workspaces and navigate to existing ones.
  *
- * It uses the {@link useWorkspace} Context to fetch and manage workspace data.
- *
- * @todo The workspace card shows dummy data for now. This should be replaced with real data.
+ * @param props - The component props
+ * @param props.initialWorkspaces - The initial workspaces to display
+ * @param props.dict - Dictionary for translations
  */
-const ManageWorkspacesSection = () => {
-  const { dict } = useLocale();
-  const {
-    workspaces: {
-      workspaces,
-      fetchWorkspaces,
-      createWorkspace,
-      workspacesLoading,
-    },
-  } = useWorkspace();
+const ManageWorkspacesSection = ({
+  initialWorkspaces,
+  dict,
+}: {
+  initialWorkspaces: Workspace[];
+  dict: Dictionary;
+}) => {
+  const { irminAlert } = usePopup();
+  const router = useRouter();
 
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
-
-  const loading = workspacesLoading || processing;
+  const [workspaces, setWorkspaces] = useState(initialWorkspaces);
 
   // Set up react-hook-form
   const { control, handleSubmit, reset } = useForm<CreateWorkspaceFormValues>({
@@ -56,26 +60,42 @@ const ManageWorkspacesSection = () => {
     },
   });
 
-  const handleCreateWorkspace = async (data: CreateWorkspaceFormValues) => {
-    setProcessing(true);
-    setError(null);
-    setSuccess(null);
+  const { handleCreate, successMessage, errorMessage } = useCreateWorkspace({
+    reset,
+  });
 
-    // Create new workspace
-    try {
-      const res = await createWorkspace(
-        data.newWorkspaceName,
-        data.newWorkspaceDescription
-      );
-      await fetchWorkspaces();
-      setSuccess(res.message ?? 'Workspace created successfully');
-      reset(); // Reset form values
-    } catch (error) {
-      setError((error as Error)?.message ?? 'Creation failed');
-    } finally {
+  const handleCreateWorkspace = useCallback(
+    async (data: CreateWorkspaceFormValues) => {
+      setProcessing(true);
+      // Create the workspace
+      await handleCreate(data.newWorkspaceName, data.newWorkspaceDescription);
+      // Refetch the workspaces
+      const newWorkspaces = await getWorkspaces();
+      setWorkspaces(newWorkspaces);
       setProcessing(false);
-    }
-  };
+    },
+    [handleCreate]
+  );
+
+  const handleSwitchWorkspace = useCallback(
+    async (slug: string) => {
+      try {
+        const res = await switchWorkspace(slug);
+        irminAlert(
+          'success',
+          res?.message ?? 'Workspace switched successfully'
+        );
+        router.push(`/console/${slug}`);
+      } catch (error) {
+        console.error('Failed to switch workspace: ', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to switch workspace'
+        );
+      }
+    },
+    [router, irminAlert]
+  );
 
   return (
     <div className='flex flex-col gap-4 px-4 pb-28 lg:flex-row-reverse'>
@@ -87,7 +107,7 @@ const ManageWorkspacesSection = () => {
           </p>
           <form
             onSubmit={handleSubmit(handleCreateWorkspace)}
-            className={`${loading && 'blur-sm'}`}
+            className={`${processing && 'blur-sm'}`}
           >
             <Controller
               name='newWorkspaceName'
@@ -99,7 +119,7 @@ const ManageWorkspacesSection = () => {
                   placeholder={dict.workspace.workspaceName}
                   required
                   className='mb-2 md:mb-4'
-                  disabled={loading}
+                  disabled={processing}
                   {...field}
                 />
               )}
@@ -124,20 +144,24 @@ const ManageWorkspacesSection = () => {
                   }}
                   required
                   className='mb-2 md:mb-4'
-                  disabled={loading}
+                  disabled={processing}
                   {...field}
                 />
               )}
             />
-            {error && <p className='mb-2 text-destructive'>{error}</p>}
-            {success && <p className='mb-2 text-irmin_green'>{success}</p>}
+            {errorMessage && (
+              <p className='mb-2 text-destructive'>{errorMessage}</p>
+            )}
+            {successMessage && (
+              <p className='mb-2 text-irmin_green'>{successMessage}</p>
+            )}
             <Button
               variant='gradient'
               size='sm'
               className='mb-0 h-11 w-full'
               type='submit'
-              disabled={loading}
-              loading={loading}
+              disabled={processing}
+              loading={processing}
             >
               {dict.workspaceSwitcher.createNewWorkspace}
             </Button>
@@ -148,14 +172,17 @@ const ManageWorkspacesSection = () => {
       {workspaces.length > 0 && (
         <div className='ml-auto flex-grow'>
           <div
-            className={`flex w-full flex-wrap content-stretch items-stretch justify-start ${loading && 'blur-sm'} -mx-2`}
+            className={`flex w-full flex-wrap content-stretch items-stretch justify-start ${processing && 'blur-sm'} -mx-2`}
           >
             {workspaces.map((workspace, idx) => (
               <div
                 className='w-1/2 p-2 lg:w-full lg:max-w-60'
                 key={`select-workspace-card-${idx}`}
               >
-                <WorkspaceCard workspace={workspace} />
+                <WorkspaceCard
+                  workspace={workspace}
+                  handleClick={handleSwitchWorkspace}
+                />
               </div>
             ))}
           </div>

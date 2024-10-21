@@ -2,9 +2,13 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { Locale } from '@/dictionaries';
+import { getWorkflowRuns } from '@/lib/actions/workflowRuns';
+import { getWorkflow } from '@/lib/actions/workflows';
+import { Locale } from '@/lib/dict';
 
 import WorkflowLayoutWrapper from '@/components/workflow/WorkflowLayoutWrapper';
+
+import { WorkflowProvider } from '@/context/WorkflowContext';
 
 import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
 
@@ -50,9 +54,14 @@ export default async function WorkflowLayout(
   const workflowId = params.workflow;
   if (isInvalidRouteProp(workflowId)) notFound();
 
+  const runs = await getWorkflowRuns(workflowId);
+  const workflow = await getWorkflow(workflowId);
+
   return (
-    <WorkflowLayoutWrapper workflowId={workflowId}>
-      {children}
-    </WorkflowLayoutWrapper>
+    <WorkflowProvider runs={runs} initialWorkflow={workflow}>
+      <WorkflowLayoutWrapper workflowID={workflowId}>
+        {children}
+      </WorkflowLayoutWrapper>
+    </WorkflowProvider>
   );
 }

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Dictionary, Locale } from '@/dictionaries';
+import { Dictionary, Locale } from '@/lib/dict';
 
 import { MdOutlineEmail } from 'react-icons/md';
 

@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 
-import { Locale } from '@/dictionaries';
+import { Locale } from '@/lib/dict';
 
 /**
  * URL parameters for the Workflow Run Logs layout

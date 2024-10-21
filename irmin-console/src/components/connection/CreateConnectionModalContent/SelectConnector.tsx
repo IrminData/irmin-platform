@@ -1,7 +1,5 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-
 import Image from 'next/image';
 
 import { Controller, useForm } from 'react-hook-form';
@@ -14,14 +12,17 @@ import Button from '@/components/ui/button';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
+import {
+  useConnectorCategoryFilter,
+  useHandleConnectorClick,
+  useHandleConnectorSelected,
+} from '@/hooks/useCreateConnection';
+
 import { Connector } from '@/types/core/Connector';
-
-import { ConnectionSetup } from '.';
-
-// Define the form data type for react-hook-form
-interface SelectConnectorFormValues {
-  connector: Connector | null;
-}
+import {
+  ConnectionSetup,
+  SelectConnectorFormValues,
+} from '@/types/internal/ConnectionSetup';
 
 /**
  * Component to select a connector for the connection setup.
@@ -56,54 +57,16 @@ export default function SelectConnector({
     },
   });
 
-  const [filteredConnectors, setFilteredConnectors] = useState<Connector[]>(
-    connectors.sort((a, b) => a.name.localeCompare(b.name))
-  );
-  const [activeCategory, setActiveCategory] = useState<string>(
-    dict.connections.create.categoryAll
-  );
-  const categoryFilterOptions = [
-    dict.connections.create.categoryAll,
-    ...new Set(connectors.map((connector) => connector.category)),
-  ];
-
-  // Handle category selection and filtering
-  const selectCategoryFilter = (category: string) => {
-    setActiveCategory(category);
-    setFilteredConnectors(
-      category === dict.connections.create.categoryAll
-        ? connectors
-        : connectors.filter((connector) => connector.category === category)
-    );
-  };
-
-  // Handle connector selection by setting the form value
-  const handleConnectorClick = useCallback(
-    (connector: Connector) => {
-      setValue('connector', connector, { shouldDirty: true });
-    },
-    [setValue]
-  );
-
-  // Handle form submission and continue to the next step
-  const handleContinue = useCallback(
-    (data: SelectConnectorFormValues) => {
-      if (!data.connector) {
-        irminAlert('error', dict.connections.create.pleaseSelectConnector);
-        return;
-      }
-      setConnectionData((prev) => ({
-        ...prev,
-        connector: data.connector ?? undefined,
-      }));
-      setCurrentStep(2);
-    },
-    [
-      dict.connections.create.pleaseSelectConnector,
-      irminAlert,
-      setConnectionData,
-      setCurrentStep,
-    ]
+  const {
+    filteredConnectors,
+    activeCategory,
+    categoryFilterOptions,
+    selectCategoryFilter,
+  } = useConnectorCategoryFilter(connectors);
+  const handleConnectorClick = useHandleConnectorClick(setValue);
+  const handleContinue = useHandleConnectorSelected(
+    setConnectionData,
+    setCurrentStep
   );
 
   return (

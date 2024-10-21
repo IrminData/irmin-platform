@@ -1,7 +1,5 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-
 import Image from 'next/image';
 
 import { Badge } from '@/components/ui/badge';
@@ -9,13 +7,14 @@ import Button from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
-import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
 
-import { DynamicFieldValues } from '@/types/internal/DynamicField';
+import {
+  useContinueCreateConnection,
+  useFetchConnectionSettings,
+} from '@/hooks/useCreateConnection';
 
-import { ConnectionSetup } from '.';
+import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 
 export default function DefineSettings({
   connectionData,
@@ -27,77 +26,22 @@ export default function DefineSettings({
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const { dict } = useLocale();
-  const { irminAlert } = usePopup();
-  const { irminCore } = useIrminCore();
-
-  const [loading, setLoading] = useState(false);
-
-  const fetchedFields = useRef(false);
-
-  // Function to fetch connection settings from backend
-  const fetchConnectionSettings = useCallback(
-    async (connectorID: string, connectionDetails: DynamicFieldValues) => {
-      setLoading(true);
-      fetchedFields.current = true;
-      try {
-        const res =
-          await irminCore.connectionService.fetchNewConnectionSettings(
-            connectorID,
-            connectionDetails
-          );
-
-        // Update connection data state
-        setConnectionData((prev: ConnectionSetup) => ({
-          ...prev,
-          connectionSettingsFields: res.data,
-        }));
-      } catch (error) {
-        console.error('Fetch new connection settings error:', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to fetch new connection settings'
-        );
-      }
-      setLoading(false);
-    },
-    [irminCore.connectionService, setConnectionData, irminAlert]
+  const { loading: loadingSettings } = useFetchConnectionSettings(
+    connectionData,
+    setConnectionData
   );
+  const { loading: loadingContinue, continueCreateConnection } =
+    useContinueCreateConnection(
+      connectionData,
+      setConnectionData,
+      setCurrentStep
+    );
 
-  // Fetch settings when component is mounted or connectionData changes
-  useEffect(() => {
-    const connectorID = connectionData.connector?.id;
-    const connectionDetails = connectionData.connectionDetails;
-    if (!connectorID || !connectionDetails) return;
-    if (!fetchedFields.current)
-      fetchConnectionSettings(connectorID, connectionDetails);
-  }, [connectionData, fetchConnectionSettings]);
-
-  // Handle form submission to continue creating connection
-  const continueCreateConnection = useCallback(
-    async (data: DynamicFieldValues) => {
-      setLoading(true);
-      try {
-        // Update connection data state with form values
-        setConnectionData({
-          ...connectionData,
-          connectionSettings: data,
-        });
-        // Proceed to the next step
-        setCurrentStep(4);
-      } catch (error) {
-        console.error('Failed to set connection settings:', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to set connection settings'
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [connectionData, setConnectionData, setCurrentStep, irminAlert]
-  );
-
-  if (loading || !connectionData.connectionSettingsFields) {
+  if (
+    loadingSettings ||
+    loadingContinue ||
+    !connectionData.connectionSettingsFields
+  ) {
     return <LoadingSpinner />;
   }
 

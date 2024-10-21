@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 
-import { useIrminCore } from '@/context/IrminCoreContext';
+import { getCollections } from '@/lib/actions/collections';
+
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
 
 import { Collection } from '@/types/core/Collection';
 import { Repository } from '@/types/core/Repository';
@@ -20,26 +20,22 @@ import { Repository } from '@/types/core/Repository';
  *
  * @returns The repository collection reference list component
  */
-const CollectionReferenceList = () => {
+const CollectionReferenceList = ({
+  repositories,
+}: {
+  repositories: Repository[];
+}) => {
   const { irminAlert } = usePopup();
   const { dict } = useLocale();
-  const {
-    repositories: { repositories },
-  } = useWorkspace();
 
   const [collections, setCollections] = useState<Collection[]>([]);
-  const { irminCore } = useIrminCore();
-
   useEffect(() => {
-    try {
-      (async () => {
-        const res = await irminCore.collectionService.fetchCollections();
-        setCollections(res.data);
-      })();
-    } catch (error) {
-      console.error((error as Error).message, 'Fetch Collections error');
-    }
-  }, [irminCore.collectionService]);
+    getCollections()
+      .then((res) => setCollections(res))
+      .catch((error) =>
+        console.error((error as Error).message, 'Fetch collections error')
+      );
+  }, []);
 
   /**
    * When a repository collection is selected, format the collection name

@@ -1,55 +1,18 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
-import { useIrminCore } from '@/context/IrminCoreContext';
-import { usePopup } from '@/context/PopupContext';
+import { initialConnectionData } from '@/hooks/useCreateConnection';
 
 import { Connector } from '@/types/core/Connector';
-import {
-  DynamicFields,
-  DynamicFieldValues,
-} from '@/types/internal/DynamicField';
+import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 
 import ConfigureConnection from './ConfigureConnection';
 import DefineDetails from './DefineDetails';
 import DefineSettings from './DefineSettings';
 import SelectConnector from './SelectConnector';
-
-/**
- * Connection setup object
- * @typeParam name - Connection name
- * @typeParam description - Connection description
- * @typeParam connector - Which connector to use
- * @typeParam connectionDetailsFields - Connection details fields
- * @typeParam connectionSettingsFields - Connection settings fields
- * @typeParam connectionDetails - Connection details with user input
- * @typeParam connectionSettings - Connection settings with user input
- */
-export interface ConnectionSetup {
-  name: string;
-  description: string;
-  connector: undefined | Connector;
-  connectionDetailsFields: undefined | DynamicFields;
-  connectionSettingsFields: undefined | DynamicFields;
-  connectionDetails: undefined | DynamicFieldValues;
-  connectionSettings: undefined | DynamicFieldValues;
-}
-
-/**
- * Empty connection setup data
- */
-const initialConnectionData: ConnectionSetup = {
-  name: '',
-  description: '',
-  connector: undefined,
-  connectionDetailsFields: undefined,
-  connectionSettingsFields: undefined,
-  connectionDetails: undefined,
-  connectionSettings: undefined,
-};
 
 /**
  * Connection setup view
@@ -66,44 +29,27 @@ const initialConnectionData: ConnectionSetup = {
  * for maanging the state of the connection creation process.
  */
 const CreateConnectionModalContent = ({
+  connectors,
   isOpen,
   closeModal,
   currentStep,
   setCurrentStep,
 }: {
+  connectors: Connector[];
   isOpen: boolean;
   closeModal: () => void;
   currentStep: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) => {
-  const { irminAlert } = usePopup();
   const [connectionData, setConnectionData] = useState<ConnectionSetup>(
     initialConnectionData
   );
-  const [connectors, setConnectors] = useState<Connector[]>([]);
-  const { irminCore } = useIrminCore();
 
   // Reset connection data when modal is closed
   useEffect(() => {
     setCurrentStep(1);
     setConnectionData(initialConnectionData);
   }, [isOpen, setCurrentStep, setConnectionData]);
-
-  // Fetch all available connectors
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await irminCore.connectorService.fetchAllConnectors();
-        setConnectors(res.data);
-      } catch (error) {
-        console.error('Fetch connectors error:', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to fetch connectors'
-        );
-      }
-    })();
-  }, [irminCore.connectorService, irminAlert]);
 
   if (
     connectors.length === 0 ||

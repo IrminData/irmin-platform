@@ -8,31 +8,44 @@ import { useSearchParams } from 'next/navigation';
 import { AiOutlinePlayCircle } from 'react-icons/ai';
 import { TbDownload, TbFileDiff, TbUpload } from 'react-icons/tb';
 
+import { Dictionary } from '@/lib/dict';
+
 import CodeMirrorEditor from '@/components/bucket/editor/CodeMirrorEditor';
 import QueryResults from '@/components/query/QueryResults';
 import Button from '@/components/ui/button';
 
-import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
 import { useRepository } from '@/context/RepositoryContext';
-import { useWorkspace } from '@/context/workspace';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
+import { Workflow } from '@/types/core/Workflow';
+import { Workspace } from '@/types/core/Workspace';
+
 import CollectionList from './collections/CollectionList';
 import CollectionSchema from './collections/CollectionSchema';
-import UploadCollectionModalContent from './upload/UploadCollectionModalContent';
+import UploadCollectionModal from './UploadCollectionModal';
 
 /**
  * Repository viewer section, provides UI for the Repository viewer Page.
+ *
+ * @param props - The component props
+ * @param props.currentWorkspace - The current workspace
+ * @param props.workflows - The workflows available in the workspace
+ * @param props.dict - The dictionary for the current locale
  */
-export default function RepositorySection() {
+export default function RepositorySection({
+  currentWorkspace,
+  workflows,
+  dict,
+}: {
+  currentWorkspace: Workspace;
+  workflows: Workflow[];
+  dict: Dictionary;
+}) {
   const searchParams = useSearchParams();
-  const { dict } = useLocale();
-  const {
-    workspaces: { currentWorkspace },
-  } = useWorkspace();
+
   const {
     immutable,
     currentRef,
@@ -70,7 +83,7 @@ export default function RepositorySection() {
   const handleUpload = useCallback(() => {
     irminModal.show(
       dict.repository.collections.uploadCollection,
-      <UploadCollectionModalContent
+      <UploadCollectionModal
         currentRepository={currentRepository.slug}
         currentRef={currentRef}
       />
@@ -174,6 +187,7 @@ export default function RepositorySection() {
           </div>
           {selectedCollectionID && (
             <CollectionSchema
+              workflows={workflows}
               collectionID={selectedCollectionID}
               immutable={immutable}
             />

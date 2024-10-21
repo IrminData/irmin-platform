@@ -8,14 +8,13 @@ import {
   useState,
 } from 'react';
 
-import { QueryExecutionResultAPIResponse } from '@/services/core/resources/QueryService';
+import { executeScript } from '@/lib/actions/query';
+import { QueryExecutionResultAPIResponse } from '@/lib/core/resources/QueryService';
 
 import { usePopup } from '@/context/PopupContext';
 
 import { IrminFileType } from '@/types/core/Bucket';
 import { Collection } from '@/types/core/Collection';
-
-import { useIrminCore } from './IrminCoreContext';
 
 /**
  * Query context properties
@@ -43,8 +42,6 @@ const QueryContext = createContext<QueryContextProps | undefined>(undefined);
 export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
   const { irminAlert } = usePopup();
 
-  const { irminCore } = useIrminCore();
-
   // Query state
   const [loading, setLoading] = useState<boolean>(false);
   const [queryResult, setQueryResult] =
@@ -58,17 +55,13 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
    *
    * The script can be either Irmin SQL query or a script to be executed in the Action Wrapper.
    */
-  const executeScript = useCallback(
+  const handleExecuteScript = useCallback(
     async (type: IrminFileType, content: string, collection?: Collection) => {
       if (executing.current) return;
       executing.current = true;
       setLoading(true);
       try {
-        const res = await irminCore.queryService.executeScript(
-          type,
-          content,
-          collection?.type
-        );
+        const res = await executeScript(type, content, collection?.type);
         setQueryResult(res);
       } catch (error) {
         console.error('QueryContext executeScript error', error);
@@ -80,7 +73,7 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
       executing.current = false;
     },
-    [irminCore.queryService, irminAlert]
+    [irminAlert]
   );
 
   return (
@@ -88,7 +81,7 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         loading,
         result: queryResult,
-        executeScript,
+        executeScript: handleExecuteScript,
       }}
     >
       {children}

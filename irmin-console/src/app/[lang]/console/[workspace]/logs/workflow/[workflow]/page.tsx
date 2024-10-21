@@ -1,3 +1,6 @@
+import { getLogs } from '@/lib/actions/logs';
+import { getWorkflow } from '@/lib/actions/workflows';
+
 import LogsSection from '@/components/logs/LogsSection';
 
 import { WorkflowLogsLayoutParams } from './layout';
@@ -9,5 +12,11 @@ export default async function WorkflowLogsPage(props: {
   params: Promise<WorkflowLogsLayoutParams>;
 }) {
   const params = await props.params;
-  return <LogsSection workflow={params.workflow} />;
+
+  const [logs, workflow] = await Promise.all([
+    getLogs(params.workflow),
+    getWorkflow(params.workflow),
+  ]);
+
+  return <LogsSection workflow={workflow} logEvents={logs} />;
 }

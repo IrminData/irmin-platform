@@ -1,27 +1,28 @@
-'use client';
-
 import { GoWorkflow } from 'react-icons/go';
 import { TbDatabase, TbPlayerPlay, TbRun } from 'react-icons/tb';
 
+import { Dictionary } from '@/lib/dict';
+
 import LinkCard from '@/components/ui/LinkCard';
 
-import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+import { Workspace } from '@/types/core/Workspace';
 
 /**
  * Home page section for the workspace.
  */
-const WorkspaceHomeSection = () => {
-  const { dict } = useLocale();
-  const {
-    workspaces: { currentWorkspace },
-  } = useWorkspace();
+const WorkspaceHomeSection = ({
+  dict,
+  workspace,
+}: {
+  dict: Dictionary;
+  workspace: Workspace;
+}) => {
   return (
     <div className='container relative mx-auto my-12 max-w-6xl px-4'>
       <div className='flex flex-col gap-8 px-4'>
         <div className='flex w-full flex-col gap-4'>
           <h2 className='text-center font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
-            {currentWorkspace?.name}
+            {workspace?.name}
           </h2>
           <p className='text-center text-sm opacity-80'>
             {dict.consoleHome.welcomeToWorkspace}

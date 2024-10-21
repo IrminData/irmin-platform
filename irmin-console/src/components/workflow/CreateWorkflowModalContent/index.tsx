@@ -1,39 +1,12 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import { getConnections } from '@/lib/actions/connections';
+import { getRepositories } from '@/lib/actions/repositories';
 
 import { WorkflowableType } from '@/types/core/Workflow';
-import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
 
-import ConfigureWorkflow from './ConfigureWorkflow';
-import ConfigureWorkflowable from './ConfigureWorkflowable';
+import CreateWorkflowWrapper from './CreateWorkflowWrapper';
 
 /**
- * Empty workflow setup data
- */
-export const initialWorkflowData: WorkflowSetup = {
-  // Workflow properties
-  name: '',
-  description: '',
-  documentation: '',
-  schedule: {
-    triggers: [],
-    max_retries: 3,
-    max_runtime: 15,
-    min_interval: 120,
-  },
-  // Workflowable properties
-  type: 'action',
-  connection: null,
-  path: '/',
-  branch: 'main',
-  repository: null,
-  recursive: false,
-  executable: '',
-};
-
-/**
- * Workflow setup view
+ * Workflow creation modal content
  *
  * @param props - Component properties
  * @param props.isOpen - If the modal is open
@@ -42,7 +15,7 @@ export const initialWorkflowData: WorkflowSetup = {
  * @param props.currentStep - Current step in the workflow creation
  * @param props.setCurrentStep - Function to set the current step
  */
-const CreateWorkflowModalContent = ({
+const CreateWorkflowModalContent = async ({
   isOpen,
   workflowType,
   closeModal,
@@ -55,38 +28,20 @@ const CreateWorkflowModalContent = ({
   currentStep: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) => {
-  const [workflowData, setWorkflowData] = useState<WorkflowSetup>({
-    ...initialWorkflowData,
-    type: workflowType,
-  });
-
-  // Reset connection data when modal is closed
-  useEffect(() => {
-    setCurrentStep(1);
-    setWorkflowData({
-      ...initialWorkflowData,
-      type: workflowType,
-    });
-  }, [isOpen, workflowType, setCurrentStep, setWorkflowData]);
-
+  const [connections, repositories] = await Promise.all([
+    getConnections(),
+    getRepositories(),
+  ]);
   return (
-    <>
-      {currentStep === 1 && (
-        <ConfigureWorkflowable
-          workflowData={workflowData}
-          setWorkflowData={setWorkflowData}
-          setCurrentStep={setCurrentStep}
-        />
-      )}
-      {currentStep === 2 && (
-        <ConfigureWorkflow
-          workflowData={workflowData}
-          setWorkflowData={setWorkflowData}
-          setCurrentStep={setCurrentStep}
-          closeModal={closeModal}
-        />
-      )}
-    </>
+    <CreateWorkflowWrapper
+      repositories={repositories}
+      connections={connections}
+      isOpen={isOpen}
+      workflowType={workflowType}
+      closeModal={closeModal}
+      currentStep={currentStep}
+      setCurrentStep={setCurrentStep}
+    />
   );
 };
 

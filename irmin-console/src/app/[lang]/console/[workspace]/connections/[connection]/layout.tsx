@@ -2,7 +2,8 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { Locale } from '@/dictionaries';
+import { getConnection } from '@/lib/actions/connections';
+import { Locale } from '@/lib/dict';
 
 import ConnectionLayoutWrapper from '@/components/connection/ConnectionLayoutWrapper';
 
@@ -39,23 +40,26 @@ export async function generateMetadata(props: {
 /**
  * Layout for the single connection pages in the Console
  */
-export default async function ConnectionPagesLayout(
-  props: Readonly<{
-    children: React.ReactNode;
-    params: SingleConnectionLayoutParams;
-  }>
-) {
+export default async function ConnectionPagesLayout(props: {
+  children: React.ReactNode;
+  params: Promise<SingleConnectionLayoutParams>;
+}) {
   const params = await props.params;
 
   const { children } = props;
 
-  const connection = params.connection;
-  if (isInvalidRouteProp(connection)) {
+  const connectionID = params.connection;
+  if (isInvalidRouteProp(connectionID)) {
     notFound();
   }
 
+  const connection = await getConnection(connectionID);
+
   return (
-    <ConnectionProvider connectionID={connection}>
+    <ConnectionProvider
+      defaultConnection={connection}
+      connectionID={connectionID}
+    >
       <ConnectionLayoutWrapper>{children}</ConnectionLayoutWrapper>
     </ConnectionProvider>
   );

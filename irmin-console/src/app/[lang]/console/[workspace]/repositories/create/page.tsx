@@ -1,6 +1,4 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
+import { getRepositories } from '@/lib/actions/repositories';
 
 import RepositoriesSection from '@/components/repository/RepositoriesSection';
 
@@ -13,14 +11,9 @@ import RepositoriesSection from '@/components/repository/RepositoriesSection';
  *
  * If the user tries to close the modal, it navigates back to the repositories page.
  */
-export default function RepositoryCreatePage() {
-  const router = useRouter();
+export default async function RepositoryCreatePage() {
+  const repositories = await getRepositories();
   return (
-    <RepositoriesSection
-      sideModalOpen={true}
-      onModalClose={() => {
-        router.push('../repositories');
-      }}
-    />
+    <RepositoriesSection repositories={repositories} sideModalOpen={true} />
   );
 }

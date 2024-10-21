@@ -1,107 +1,28 @@
-'use client';
+import { initCore } from '@/lib/initCore';
 
-import { use, useCallback, useEffect, useRef } from 'react';
-
-import { useRouter, useSearchParams } from 'next/navigation';
-
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
-
-import { useIrminCore } from '@/context/IrminCoreContext';
-
-import {
-  convertToText,
-  downloadContent,
-  getContentType,
-} from '@/utils/content';
+import RepositoryDownloadSection from '@/components/repository/RepositoryDownloadSection';
 
 import { RepositoryRouteParams } from '../layout';
-
-const appBaseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
 /**
  * Page to download a repository or specific collections at a specific ref
  */
-export default function RepositoryDownloadPage(props: {
+export default async function RepositoryDownloadPage(props: {
   params: Promise<RepositoryRouteParams>;
 }) {
-  const params = use(props.params);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { irminCore } = useIrminCore();
+  const params = await props.params;
 
-  const collections = searchParams.getAll('collection');
-  const targetRef = searchParams.get('ref') ?? '';
-
-  const downloadStarted = useRef(false);
-
-  /**
-   * Download the repository or collections at the target ref
-   *
-   * Redirects the user to the success or failed page based on the result
-   */
-  const download = useCallback(async () => {
-    // Construct the URL to redirect the user to after downloading the repository
-    const redirectSuccessUrl = `${appBaseUrl}/${params.lang}/console/${params.workspace}/repositories/${params.repository}/download/success`;
-    const redirectFailedUrl = `${appBaseUrl}/${params.lang}/console/${params.workspace}/repositories/${params.repository}/download/failed`;
-    try {
-      if (collections && collections.length > 0) {
-        // More than zero collections selected, fetch them one by one
-        const fetches = [];
-        for (let i = 0; i < collections.length; i++) {
-          const collection = collections[i];
-          fetches.push(
-            irminCore.collectionService.fetchContent({
-              repository: params.repository,
-              collection: collection,
-              ref: targetRef,
-            })
-          );
-        }
-        const responses = await Promise.all(fetches);
-        // Download the content one by one
-        for (let i = 0; i < responses.length; i++) {
-          const res = responses[i];
-          const collection = collections[i];
-          const textContent = convertToText(res);
-          const contentType = getContentType(res);
-          downloadContent(
-            textContent ? textContent : (res as Blob),
-            contentType,
-            `${params.repository}_${collection}`
-          );
-        }
-      } else {
-        // If no collections are selected, download the entire repository
-        const res = await irminCore.collectionService.fetchContent({
-          repository: params.repository,
-          ref: targetRef,
-        });
-        const textContent = convertToText(res);
-        const contentType = getContentType(res);
-        downloadContent(
-          textContent ? textContent : (res as Blob),
-          contentType,
-          `${params.repository}`
-        );
-      }
-      // Redirect the user to the success page
-      router.push(redirectSuccessUrl);
-    } catch (error) {
-      console.error('RepositoryDownloadPage download error', error);
-      // Redirect the user to the failed page
-      router.push(redirectFailedUrl);
-    }
-  }, [collections, irminCore, params, targetRef, router]);
-
-  useEffect(() => {
-    if (downloadStarted.current) return;
-    downloadStarted.current = true;
-    download();
-  }, [download]);
+  const locale = params.lang;
+  const workspaceSlug = params.workspace;
+  const repositorySlug = params.repository;
+  const irminCore = await initCore();
 
   return (
-    <div className='container relative mx-auto max-w-6xl py-12'>
-      <LoadingSkeleton className='h-96' />
-    </div>
+    <RepositoryDownloadSection
+      irminCore={irminCore}
+      workspaceSlug={workspaceSlug}
+      repositorySlug={repositorySlug}
+      locale={locale}
+    />
   );
 }

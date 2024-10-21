@@ -1,13 +1,42 @@
-import { WorkspaceLayoutParams } from '@/app/[lang]/console/[workspace]/layout';
+import { getCollections } from '@/lib/actions/collections';
+import { getConnections } from '@/lib/actions/connections';
+import { getRepositories } from '@/lib/actions/repositories';
+import {
+  getActionWorkflows,
+  getExportWorkflows,
+  getImportWorkflows,
+} from '@/lib/actions/workflows';
 
 import DocumentationSection from '@/components/documentation/DocumentationSection';
 
 /**
  * Page to show the full documentation for the workspace
  */
-export default async function DocumentationPage(props: {
-  params: Promise<WorkspaceLayoutParams>;
-}) {
-  const params = await props.params;
-  return <DocumentationSection params={params} />;
+export default async function DocumentationPage() {
+  const [
+    connections,
+    collections,
+    actionWorkflows,
+    exportWorkflows,
+    importWorkflows,
+    repositories,
+  ] = await Promise.all([
+    getConnections(),
+    getCollections(),
+    getActionWorkflows(),
+    getExportWorkflows(),
+    getImportWorkflows(),
+    getRepositories(),
+  ]);
+
+  return (
+    <DocumentationSection
+      connections={connections}
+      collections={collections}
+      actions={actionWorkflows}
+      exports={exportWorkflows}
+      imports={importWorkflows}
+      repositories={repositories}
+    />
+  );
 }

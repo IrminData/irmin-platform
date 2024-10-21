@@ -1,7 +1,5 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-
 import Image from 'next/image';
 
 import { Badge } from '@/components/ui/badge';
@@ -9,16 +7,15 @@ import Button from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
-import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
 
 import {
-  DynamicFields,
-  DynamicFieldValues,
-} from '@/types/internal/DynamicField';
+  useContinueAndTestConnection,
+  useFetchConnectionDetails,
+} from '@/hooks/useCreateConnection';
 
-import { ConnectionSetup } from '.';
+import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
+import { DynamicFields } from '@/types/internal/DynamicField';
 
 export default function DefineDetails({
   connectionData,
@@ -30,95 +27,22 @@ export default function DefineDetails({
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const { dict } = useLocale();
-  const { irminAlert } = usePopup();
-  const [loading, setLoading] = useState(false);
-  const { irminCore } = useIrminCore();
-
-  const fetchedFields = useRef(false);
-
-  // Function to fetch connection details from backend
-  const fetchConnectionDetails = useCallback(
-    async (connectorID: string) => {
-      setLoading(true);
-      fetchedFields.current = true;
-      try {
-        const res =
-          await irminCore.connectionService.fetchNewConnectionDetails(
-            connectorID
-          );
-
-        // Update connection data state
-        setConnectionData((prev: ConnectionSetup) => ({
-          ...prev,
-          connectionDetailsFields: res.data,
-        }));
-      } catch (error) {
-        console.error('Fetch connection details error:', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to fetch connection details'
-        );
-      }
-      setLoading(false);
-    },
-    [irminCore.connectionService, setConnectionData, irminAlert]
+  const { loading: loadingDetails } = useFetchConnectionDetails(
+    connectionData,
+    setConnectionData
   );
-
-  useEffect(() => {
-    const connectorID = connectionData.connector?.id;
-    if (!connectorID) return;
-    if (!fetchedFields.current) fetchConnectionDetails(connectorID);
-  }, [connectionData.connector?.id, fetchConnectionDetails]);
-
-  // Handle form submission to continue and test the connection
-  const continueAndTestConnection = useCallback(
-    async (data: DynamicFieldValues) => {
-      setLoading(true);
-      try {
-        const { irmin_connection_name, ...connectionDetails } = data;
-
-        // Update the connection data state
-        setConnectionData({
-          ...connectionData,
-          name:
-            (irmin_connection_name as string) ??
-            `${connectionData.connector?.name} ${Date.now()}`,
-          connectionDetails: connectionDetails as DynamicFieldValues,
-        });
-
-        // Test the connection
-        const res = await irminCore.connectionService.testConnectionWithDetails(
-          connectionData.connector?.id ?? '',
-          connectionDetails as DynamicFieldValues
-        );
-        if (res.data.connected) {
-          // Proceed to the next step
-          irminAlert('success', dict.connections.create.success);
-          setCurrentStep(3);
-        } else {
-          irminAlert('error', dict.connections.create.failed);
-        }
-      } catch (error) {
-        console.error('Test connection error:', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to test connection'
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [
+  const { loading: loadingTest, continueAndTestConnection } =
+    useContinueAndTestConnection(
       connectionData,
       setConnectionData,
-      setCurrentStep,
-      irminAlert,
-      irminCore.connectionService,
-      dict,
-    ]
-  );
+      setCurrentStep
+    );
 
-  if (loading || !connectionData.connectionDetailsFields) {
+  if (
+    loadingDetails ||
+    loadingTest ||
+    !connectionData.connectionDetailsFields
+  ) {
     return <LoadingSpinner />;
   }
 

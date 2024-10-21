@@ -12,11 +12,36 @@ import {
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
+import {
+  createBranch,
+  deleteBranch,
+  getBranches,
+} from '@/lib/actions/branches';
+import {
+  getCollectionContent,
+  getCollections,
+} from '@/lib/actions/collections';
+import {
+  createCommit,
+  getCommits,
+  getLastModification,
+  revertUncommittedChanges,
+} from '@/lib/actions/commits';
+import { getDiff, mergeRefs } from '@/lib/actions/diff';
+import {
+  deleteRepository,
+  getRepository,
+  reassignRepository,
+  updateRepository,
+} from '@/lib/actions/repositories';
+import { fetchSchemas } from '@/lib/actions/schema';
+import { createTag, deleteTag, getTags } from '@/lib/actions/tags';
+import { Dictionary } from '@/lib/dict';
+
 import { usePopup } from '@/context/PopupContext';
 
 import { constructBaseUrl } from '@/utils/constructBaseUrl';
 import { createQueryString } from '@/utils/queryParams';
-import { sortCommits } from '@/utils/sortCommits';
 
 import { Branch } from '@/types/core/Branch';
 import { Collection, RepositorySchema } from '@/types/core/Collection';
@@ -25,9 +50,7 @@ import { Diff } from '@/types/core/Diff';
 import { IrminAPIUnstructuredResponse } from '@/types/core/IrminAPIResponse';
 import { Repository } from '@/types/core/Repository';
 import { Tag } from '@/types/core/Tag';
-
-import { useIrminCore } from './IrminCoreContext';
-import { useWorkspace } from './workspace';
+import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 /**
  * Repository context properties
@@ -41,6 +64,11 @@ interface RepositoryContextProps {
   viewRef: (ref: string) => void;
   defaultRef?: string;
   setDefaultRef: (ref: string) => void;
+  // General repository hooks
+  fetchRepository: () => Promise<void>;
+  updateRepository: (data: ItemUpdateProps) => Promise<void>;
+  deleteRepository: () => Promise<void>;
+  reassignRepository: (ownerID: string) => Promise<void>;
   // Collections
   loadingCollections: boolean;
   collections: Collection[];
@@ -64,8 +92,7 @@ interface RepositoryContextProps {
   // Commits
   loadingCommits: boolean;
   commits: Commit[] | null;
-  fetchCommits: () => Promise<void>;
-  fetchCommitsForRef: (ref: string) => Promise<Commit[] | null>;
+  fetchCommits: (ref?: string) => Promise<Commit[] | undefined>;
   commitChanges: (message: string) => Promise<boolean>;
   revertChanges: () => Promise<boolean>;
   fetchLastModification: (collection: string) => Promise<Commit | null>;
@@ -96,46 +123,34 @@ const RepositoryContext = createContext<RepositoryContextProps | undefined>(
  *
  * @param config - Repository context provider configuration
  * @param config.children - Child components
- * @param config.repositorySlug - (optional) Initial active repository to set
- * @param config.initialRef - (optional) Initial active ref to set (eg. branch, commit, tag)
+ * @param config.dict - Dictionary with translations
+ * @param config.repositorySlug - Initial active repository to set
+ * @param config.initialRef - (optional) Initial active ref to set (eg. branch, commit, tag
+ * @param config.initialRepository - Initial repository object to set
  *
  * @returns Repository context provider
  */
 export const RepositoryProvider = ({
   children,
+  dict,
   repositorySlug,
   initialRef,
+  initialRepository,
 }: {
   children: React.ReactNode;
-  repositorySlug?: string;
+  dict: Dictionary;
+  repositorySlug: string;
   initialRef?: string;
+  initialRepository: Repository;
 }) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const { irminAlert } = usePopup();
-
-  const {
-    irminCore: {
-      diffService,
-      branchService,
-      tagService,
-      commitService,
-      schemaService,
-      collectionService,
-    },
-  } = useIrminCore();
-
-  const {
-    repositories: { repositories },
-  } = useWorkspace();
+  const { irminAlert, irminConfirm } = usePopup();
 
   // Active Repository for the context
-  const currentRepository = useMemo(
-    () => repositories.find((item) => item.slug === repositorySlug),
-    [repositories, repositorySlug]
-  );
+  const [currentRepository, setRepository] = useState(initialRepository);
 
   // Initial ref to default to
   const [defaultRef, setDefaultRef] = useState<string | undefined>(
@@ -194,6 +209,99 @@ export const RepositoryProvider = ({
     [updateCurrentRef, router]
   );
 
+  // Track if the repository is being updated
+  const updating = useRef(false);
+
+  // Refetch the current repository
+  const fetchRepository = useCallback(async () => {
+    try {
+      const newRepository = await getRepository(repositorySlug);
+      setRepository(newRepository);
+    } catch (error) {
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to fetch the repository'
+      );
+    }
+  }, [repositorySlug, irminAlert]);
+
+  // Delete the current repository
+  const handleDeleteRepository = useCallback(async () => {
+    const confirmed = await irminConfirm(
+      'warning',
+      `${dict.misc.areYouSureYouWantToDelete} (${currentRepository.name})`
+    );
+    if (updating.current || !confirmed) return;
+    try {
+      updating.current = true;
+      const res = await deleteRepository(repositorySlug);
+      irminAlert('success', res.message ?? 'Repository deleted successfully');
+    } catch (error) {
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Error deleting the repository'
+      );
+    } finally {
+      updating.current = false;
+    }
+  }, [repositorySlug, currentRepository.name, dict, irminAlert, irminConfirm]);
+
+  // Update the current repository
+  const handleUpdateRepository = useCallback(
+    async (data: ItemUpdateProps) => {
+      if (updating.current) return;
+      try {
+        updating.current = true;
+        const res = await updateRepository(repositorySlug, data);
+        await fetchRepository();
+        irminAlert('success', res.message ?? 'Repository updated successfully');
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Error updating the repository'
+        );
+      } finally {
+        updating.current = false;
+      }
+    },
+    [repositorySlug, fetchRepository, irminAlert]
+  );
+
+  // Reassign the current repository
+  const handleReassignRepository = useCallback(
+    async (ownerID: string) => {
+      const confirmed = await irminConfirm(
+        'warning',
+        `${dict.misc.areYouSureYouWantToReassign} (${currentRepository.name})`
+      );
+      if (updating.current || !confirmed) return;
+      try {
+        updating.current = true;
+        const res = await reassignRepository(repositorySlug, ownerID);
+        await fetchRepository();
+        irminAlert(
+          'success',
+          res.message ?? 'Repository reassigned successfully'
+        );
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Error reassigning the repository'
+        );
+      } finally {
+        updating.current = false;
+      }
+    },
+    [
+      repositorySlug,
+      currentRepository.name,
+      dict,
+      fetchRepository,
+      irminAlert,
+      irminConfirm,
+    ]
+  );
+
   // Collections state
   const [loadingCollections, setLoadingCollections] = useState(false);
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -220,11 +328,8 @@ export const RepositoryProvider = ({
   const fetchCollections = useCallback(async () => {
     setLoadingCollections(true);
     try {
-      const res = await collectionService.fetchCollections(
-        repositorySlug ?? '',
-        currentRef
-      );
-      setCollections(res.data);
+      const newCollections = await getCollections(repositorySlug, currentRef);
+      setCollections(newCollections);
     } catch (error) {
       console.error('RepositoryContext fetchCollections error', error);
       irminAlert(
@@ -234,7 +339,7 @@ export const RepositoryProvider = ({
     } finally {
       setLoadingCollections(false);
     }
-  }, [collectionService, irminAlert, repositorySlug, currentRef]);
+  }, [irminAlert, repositorySlug, currentRef]);
 
   /**
    * Fetch the schema
@@ -242,11 +347,11 @@ export const RepositoryProvider = ({
   const fetchSchema = useCallback(async () => {
     setLoadingSchema(true);
     try {
-      const res = await schemaService.fetchSchema(
+      const newSchema = await fetchSchemas(
         collections.map((collection) => collection.formatted_name),
-        currentRef
+        currentRef ?? currentRepository.default_branch
       );
-      setSchema(res.data);
+      setSchema(newSchema);
     } catch (error) {
       console.error('RepositoryContext fetchSchema error', error);
       irminAlert(
@@ -256,7 +361,7 @@ export const RepositoryProvider = ({
     } finally {
       setLoadingSchema(false);
     }
-  }, [currentRef, schemaService, collections, irminAlert]);
+  }, [currentRef, collections, currentRepository.default_branch, irminAlert]);
 
   /**
    * Fetch the branches and default branch for the current repository
@@ -265,9 +370,9 @@ export const RepositoryProvider = ({
     setLoadingBranches(true);
     try {
       // Fetch the branches
-      const res = await branchService.fetchBranches(repositorySlug ?? '');
+      const newBranches = await getBranches(repositorySlug);
       // Set the branches
-      setBranches(res.data);
+      setBranches(newBranches);
     } catch (error) {
       console.error('RepositoryContext fetchBranches error', error);
       irminAlert(
@@ -277,7 +382,7 @@ export const RepositoryProvider = ({
     } finally {
       setLoadingBranches(false);
     }
-  }, [repositorySlug, branchService, irminAlert]);
+  }, [repositorySlug, irminAlert]);
 
   /**
    * Fetch the tags for the current repository
@@ -286,59 +391,37 @@ export const RepositoryProvider = ({
     setLoadingTags(true);
     try {
       // Fetch and set the tags
-      const res = await tagService.fetchTags(repositorySlug ?? '');
-      setTags(res.data);
+      const tags = await getTags(repositorySlug);
+      setTags(tags);
     } catch (error) {
       console.error('RepositoryContext fetchTags error', error);
       irminAlert('error', (error as Error)?.message ?? 'Failed to fetch tags');
     } finally {
       setLoadingTags(false);
     }
-  }, [repositorySlug, tagService, irminAlert]);
+  }, [repositorySlug, irminAlert]);
 
   /**
-   * Fetch the current commits
+   * Fetch the commits for a specific ref or the current ref
    */
-  const fetchCommits = useCallback(async () => {
-    setLoadingCommits(true);
-    try {
-      if (!repositorySlug) return;
-      const res = await commitService.fetchCommits(repositorySlug, currentRef);
-      // Sort the commits by hash
-      const sortedCommits = sortCommits(res.data ?? []);
-      setCommits(sortedCommits);
-    } catch (error) {
-      console.error('RepositoryContext fetchCommits error', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to fetch commits'
-      );
-    } finally {
-      setLoadingCommits(false);
-    }
-  }, [repositorySlug, currentRef, commitService, irminAlert]);
-
-  /**
-   * Hook to fetch a sorted list of commits for a specific ref
-   */
-  const fetchCommitsForRef = useCallback(
-    async (ref: string) => {
+  const fetchCommits = useCallback(
+    async (ref?: string) => {
+      setLoadingCommits(true);
       try {
-        if (!repositorySlug) return null;
-        const res = await commitService.fetchCommits(repositorySlug, ref);
-        // Sort the commits by hash
-        const sortedCommits = sortCommits(res.data ?? []);
-        return sortedCommits;
+        const newCommits = await getCommits(repositorySlug, ref ?? currentRef);
+        if (!ref) setCommits(newCommits);
+        return newCommits;
       } catch (error) {
-        console.error('RepositoryContext fetchCommitsForRef error', error);
+        console.error('RepositoryContext fetchCommits error', error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to fetch commits for ref'
+          (error as Error)?.message ?? 'Failed to fetch commits'
         );
+      } finally {
+        setLoadingCommits(false);
       }
-      return null;
     },
-    [repositorySlug, commitService, irminAlert]
+    [repositorySlug, currentRef, irminAlert]
   );
 
   /**
@@ -351,12 +434,7 @@ export const RepositoryProvider = ({
   const fetchDiff = useCallback(
     async (base: string, compare: string): Promise<Diff | null> => {
       try {
-        if (!repositorySlug) return null;
-        const res = await diffService.compareRefs(
-          repositorySlug,
-          base,
-          compare
-        );
+        const res = await getDiff(repositorySlug, base, compare);
         return res.data;
       } catch (error) {
         console.error(error);
@@ -367,7 +445,7 @@ export const RepositoryProvider = ({
       }
       return null;
     },
-    [repositorySlug, diffService, irminAlert]
+    [repositorySlug, irminAlert]
   );
 
   /**
@@ -384,12 +462,12 @@ export const RepositoryProvider = ({
     } | null> => {
       try {
         const [baseContent, compareContent] = await Promise.all([
-          collectionService.fetchContent({
+          getCollectionContent({
             collection: collection,
             repository: repositorySlug,
             ref: base,
           }),
-          collectionService.fetchContent({
+          getCollectionContent({
             collection: collection,
             repository: repositorySlug,
             ref: compare,
@@ -408,7 +486,7 @@ export const RepositoryProvider = ({
       }
       return null;
     },
-    [collectionService, repositorySlug, irminAlert]
+    [repositorySlug, irminAlert]
   );
 
   /**
@@ -420,12 +498,8 @@ export const RepositoryProvider = ({
   const commitChanges = useCallback(
     async (message: string): Promise<boolean> => {
       try {
-        if (!repositorySlug || !currentRef) return false;
-        const res = await commitService.createCommit(
-          repositorySlug,
-          currentRef,
-          message
-        );
+        if (!currentRef) return false;
+        const res = await createCommit(repositorySlug, currentRef, message);
         fetchCommits();
         irminAlert('success', res.message ?? 'Changes committed');
         return true;
@@ -438,7 +512,7 @@ export const RepositoryProvider = ({
       }
       return false;
     },
-    [repositorySlug, currentRef, commitService, fetchCommits, irminAlert]
+    [repositorySlug, currentRef, fetchCommits, irminAlert]
   );
 
   /**
@@ -450,8 +524,8 @@ export const RepositoryProvider = ({
   const fetchLastModification = useCallback(
     async (collection: string): Promise<Commit | null> => {
       try {
-        if (!repositorySlug || !currentRef) return null;
-        const res = await commitService.fetchLastModification(
+        if (!currentRef) return null;
+        const res = await getLastModification(
           repositorySlug,
           currentRef,
           collection
@@ -467,7 +541,7 @@ export const RepositoryProvider = ({
       }
       return null;
     },
-    [repositorySlug, commitService, currentRef, irminAlert]
+    [repositorySlug, currentRef, irminAlert]
   );
 
   /**
@@ -477,11 +551,8 @@ export const RepositoryProvider = ({
    */
   const revertChanges = useCallback(async (): Promise<boolean> => {
     try {
-      if (!repositorySlug || !currentRef) return false;
-      const res = await commitService.revertUncommittedChanges(
-        repositorySlug,
-        currentRef
-      );
+      if (!currentRef) return false;
+      const res = await revertUncommittedChanges(repositorySlug, currentRef);
       irminAlert('success', res.message ?? 'Changes reverted');
       return true;
     } catch (error) {
@@ -492,7 +563,7 @@ export const RepositoryProvider = ({
       );
     }
     return false;
-  }, [repositorySlug, currentRef, commitService, irminAlert]);
+  }, [repositorySlug, currentRef, irminAlert]);
 
   /**
    * Hook to merge one ref into another
@@ -503,7 +574,7 @@ export const RepositoryProvider = ({
    * @param strategy - The merge strategy (default, source-wins, dest-wins)
    * @returns boolean - True if the merge was successful, false otherwise
    */
-  const mergeRefs = useCallback(
+  const handleMergeRefs = useCallback(
     async (
       base: string,
       compare: string,
@@ -511,8 +582,7 @@ export const RepositoryProvider = ({
       strategy: string
     ): Promise<boolean> => {
       try {
-        if (!repositorySlug) return false;
-        const res = await diffService.mergeRefs(
+        const res = await mergeRefs(
           repositorySlug,
           base,
           compare,
@@ -527,7 +597,7 @@ export const RepositoryProvider = ({
       }
       return false;
     },
-    [repositorySlug, diffService, irminAlert]
+    [repositorySlug, irminAlert]
   );
 
   /**
@@ -535,14 +605,11 @@ export const RepositoryProvider = ({
    *
    * @param branch - The branch name to delete
    */
-  const deleteBranch = useCallback(
+  const handleDeleteBranch = useCallback(
     async (branch: string) => {
       try {
         // Delete the branch
-        const res = await branchService.deleteBranch(
-          branch,
-          repositorySlug ?? ''
-        );
+        const res = await deleteBranch(branch, repositorySlug ?? '');
         irminAlert('success', res.message ?? 'Branch deleted successfully');
         // Refetch the branches
         fetchBranches();
@@ -553,7 +620,7 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [repositorySlug, fetchBranches, irminAlert, branchService]
+    [repositorySlug, fetchBranches, irminAlert]
   );
 
   /**
@@ -562,15 +629,11 @@ export const RepositoryProvider = ({
    * @param name - The name of the new branch
    * @param from - The branch to create the new branch from
    */
-  const createBranch = useCallback(
+  const handleCreateBranch = useCallback(
     async (name: string, from: string) => {
       try {
         // Create the branch
-        const res = await branchService.createBranch(
-          name,
-          from,
-          repositorySlug ?? ''
-        );
+        const res = await createBranch(name, from, repositorySlug ?? '');
         irminAlert('success', res.message ?? 'Branch created successfully');
         // Refetch the branches
         fetchBranches();
@@ -581,7 +644,7 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [repositorySlug, fetchBranches, irminAlert, branchService]
+    [repositorySlug, fetchBranches, irminAlert]
   );
 
   /**
@@ -589,11 +652,11 @@ export const RepositoryProvider = ({
    *
    * @param tag - The tag name to delete
    */
-  const deleteTag = useCallback(
+  const handleDeleteTag = useCallback(
     async (tag: string) => {
       try {
         // Delete the tag
-        const res = await tagService.deleteTag(tag, repositorySlug ?? '');
+        const res = await deleteTag(tag, repositorySlug ?? '');
         irminAlert('success', res.message ?? 'Tag deleted successfully');
         // Refetch the tags
         fetchTags();
@@ -604,7 +667,7 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [repositorySlug, fetchTags, irminAlert, tagService]
+    [repositorySlug, fetchTags, irminAlert]
   );
 
   /**
@@ -613,11 +676,11 @@ export const RepositoryProvider = ({
    * @param name - The name of the new tag
    * @param ref - The ref to create the new tag from
    */
-  const createTag = useCallback(
+  const handleCreateTag = useCallback(
     async (name: string, ref: string) => {
       try {
         // Create the tag
-        const res = await tagService.createTag(name, ref, repositorySlug ?? '');
+        const res = await createTag(name, ref, repositorySlug ?? '');
         irminAlert('success', res.message ?? 'Tag created successfully');
         // Refetch the tags
         fetchTags();
@@ -628,7 +691,7 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [repositorySlug, fetchTags, irminAlert, tagService]
+    [repositorySlug, fetchTags, irminAlert]
   );
 
   // Track the fetch for the initial values
@@ -641,7 +704,6 @@ export const RepositoryProvider = ({
    * Only fetch if the repository is set
    */
   useEffect(() => {
-    if (!repositorySlug) return;
     // Don't fetch if already fetched for the current repository and ref
     if (initialFetchFor.current === repositorySlug) return;
     initialFetchFor.current = repositorySlug;
@@ -701,9 +763,6 @@ export const RepositoryProvider = ({
     return branch.is_immutable;
   }, [branches, currentRepository, currentRef]);
 
-  // Return nothing until the repository is set
-  if (!currentRepository) return <></>;
-
   return (
     <RepositoryContext.Provider
       value={{
@@ -715,6 +774,11 @@ export const RepositoryProvider = ({
         viewRef,
         defaultRef,
         setDefaultRef,
+        // General repository hooks
+        fetchRepository,
+        updateRepository: handleUpdateRepository,
+        deleteRepository: handleDeleteRepository,
+        reassignRepository: handleReassignRepository,
         // Collections
         loadingCollections,
         collections,
@@ -727,26 +791,25 @@ export const RepositoryProvider = ({
         loadingBranches,
         branches,
         fetchBranches,
-        deleteBranch,
-        createBranch,
+        deleteBranch: handleDeleteBranch,
+        createBranch: handleCreateBranch,
         // Tags
         loadingTags,
         tags,
         fetchTags,
-        deleteTag,
-        createTag,
+        deleteTag: handleDeleteTag,
+        createTag: handleCreateTag,
         // Commits
         loadingCommits,
         commits,
         fetchCommits,
-        fetchCommitsForRef,
         commitChanges,
         revertChanges,
         fetchLastModification,
         // Diff
         fetchDiff,
         fetchDiffContent,
-        mergeRefs,
+        mergeRefs: handleMergeRefs,
       }}
     >
       {children}

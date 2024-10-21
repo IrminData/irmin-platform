@@ -2,14 +2,10 @@
 
 import { useCallback } from 'react';
 
-import Button from '@/components/ui/button';
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
-
-import { Workspace } from '@/types/core/Workspace';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 /**
  * General Workspace settings section
@@ -19,85 +15,21 @@ import { Workspace } from '@/types/core/Workspace';
  */
 const WorkspaceSettingsSection = () => {
   const { dict } = useLocale();
-  const { irminAlert, irminModal } = usePopup();
-  const {
-    workspaces: {
-      currentWorkspace,
-      fetchWorkspaces,
-      deleteCurrentWorkspace,
-      updateWorkspace,
-    },
-  } = useWorkspace();
+  const { workspace, updateWorkspace, deleteWorkspace } = useWorkspace();
 
   const handleUpdateWorkspace = useCallback(
     async (data: { name: string; description: string }) => {
-      if (!currentWorkspace) return;
-      try {
-        // Call the API to update the workspace
-        const res = await updateWorkspace({
-          ...currentWorkspace,
-          name: data.name.trim(),
-          description: data.description.trim(),
-        } as Workspace);
-
-        // Fetch the updated workspace data
-        await fetchWorkspaces();
-
-        // Show success message
-        irminAlert('success', res.message ?? 'Workspace updated successfully.');
-      } catch (error) {
-        console.error('Failed to update workspace:', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ??
-            'Failed to update workspace. Please try again.'
-        );
-      }
+      await updateWorkspace({
+        name: data.name,
+        description: data.description,
+      });
     },
-    [currentWorkspace, updateWorkspace, fetchWorkspaces, irminAlert]
+    [updateWorkspace]
   );
 
-  const handleDeleteWorkspace = useCallback(() => {
-    if (!currentWorkspace) return;
-
-    const handleDelete = async () => {
-      try {
-        const res = await deleteCurrentWorkspace();
-        irminAlert('success', res.message ?? 'Workspace deleted successfully.');
-      } catch (error) {
-        console.error('Failed to delete workspace:', error);
-        const errorMessage = (error as Error)?.message ?? '';
-        irminAlert('error', 'Failed to delete workspace: ' + errorMessage);
-      }
-    };
-
-    irminModal.show(
-      dict.workspace.confirmDeletion,
-      <div className='pb-4'>
-        <p className='mb-4'>{dict.workspace.deletionWarning}</p>
-        <div className='flex justify-end gap-4'>
-          <Button
-            variant='ghost'
-            onClick={() => {
-              irminModal.close();
-            }}
-          >
-            {dict.workspace.cancel}
-          </Button>
-          <Button
-            variant='destructive'
-            onClick={() => {
-              irminModal.close();
-              handleDelete();
-            }}
-          >
-            {dict.workspace.delete}
-          </Button>
-        </div>
-      </div>,
-      () => {}
-    );
-  }, [currentWorkspace, deleteCurrentWorkspace, dict, irminModal, irminAlert]);
+  const handleDeleteWorkspace = useCallback(async () => {
+    await deleteWorkspace();
+  }, [deleteWorkspace]);
 
   // Define field configurations
   const fieldConfiguration: FieldConfig<{
@@ -123,11 +55,11 @@ const WorkspaceSettingsSection = () => {
       className='container relative mx-auto my-8 max-w-6xl'
       id='workspace-settings-section'
     >
-      {currentWorkspace && (
+      {workspace && (
         <SettingsForm
           initialValues={{
-            name: currentWorkspace.name,
-            description: currentWorkspace.description ?? '',
+            name: workspace.name,
+            description: workspace.description ?? '',
           }}
           onSubmit={handleUpdateWorkspace}
           fieldConfiguration={fieldConfiguration}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 
 import { usePathname } from 'next/navigation';
 
@@ -16,12 +16,11 @@ import {
 
 import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/button';
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+import { useWorkflow } from '@/context/WorkflowContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
@@ -30,22 +29,20 @@ import useBaseUrl from '@/hooks/useBaseUrl';
  *
  * @param props - The properties of the component
  * @param props.children - The children to render
- * @param props.workflowId - The ID of the workflow to show
+ * @param props.workflowID - The ID of the workflow to show
  *
  * @returns The Workflow layout wrapper
  */
 export default function WorkflowLayoutWrapper({
   children,
-  workflowId,
+  workflowID,
 }: {
   children: React.ReactNode;
-  workflowId: string;
+  workflowID: string;
 }) {
   const pathname = usePathname();
   const { dict } = useLocale();
-  const {
-    workflows: { triggerWorkflowRun },
-  } = useWorkspace();
+  const { workflow, triggerWorkflowRun } = useWorkflow();
 
   // The base URL for the workflow, eg. /en/console/workspace-slug/workflows/workflow-id
   const baseUrl = useBaseUrl({
@@ -63,15 +60,6 @@ export default function WorkflowLayoutWrapper({
     segmentsAfter: 1,
   });
 
-  const {
-    workflows: { allWorkflows },
-  } = useWorkspace();
-
-  const workflow = useMemo(
-    () => allWorkflows.find((item) => item.id === workflowId),
-    [allWorkflows, workflowId]
-  );
-
   const repositorySlug = useMemo(
     () => workflow?.workflowable?.repository?.slug ?? null,
     [workflow]
@@ -80,22 +68,6 @@ export default function WorkflowLayoutWrapper({
     () => workflow?.workflowable?.branch ?? null,
     [workflow]
   );
-
-  const [processingRun, setProcessingRun] = useState(false);
-  const runningWorkflowRef = useRef(false);
-  const runWorkflow = useCallback(() => {
-    if (runningWorkflowRef.current) return;
-    try {
-      setProcessingRun(true);
-      runningWorkflowRef.current = true;
-      triggerWorkflowRun(workflowId);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setProcessingRun(false);
-      runningWorkflowRef.current = false;
-    }
-  }, [workflowId, triggerWorkflowRun]);
 
   const tabs = useMemo(
     () => [
@@ -129,7 +101,7 @@ export default function WorkflowLayoutWrapper({
       },
       {
         name: dict.workflow.tabs.logs,
-        link: `${workspaceUrl}/logs/workflow/${workflowId}`,
+        link: `${workspaceUrl}/logs/workflow/${workflowID}`,
         active: false,
         icon: <TbLogs size={14} />,
         hidden: false,
@@ -145,20 +117,13 @@ export default function WorkflowLayoutWrapper({
     [
       pathname,
       dict,
-      workflowId,
+      workflowID,
       repositoryBranch,
       repositorySlug,
       baseUrl,
       workspaceUrl,
     ]
   );
-
-  if (!workflow)
-    return (
-      <div className='container relative mx-auto max-w-6xl py-12'>
-        <LoadingSkeleton className='h-96' />
-      </div>
-    );
 
   return (
     <>
@@ -200,12 +165,11 @@ export default function WorkflowLayoutWrapper({
           </div>
           <div className='flex min-w-60 flex-col gap-2'>
             <Button
-              onClick={runWorkflow}
+              onClick={triggerWorkflowRun}
               className='w-full'
               variant='default'
               size='lg'
               icon={<TbPlayerPlay size={14} />}
-              loading={processingRun}
               loadingText={dict.workflow.triggeringRun}
             >
               {dict.workflow.triggerRun}

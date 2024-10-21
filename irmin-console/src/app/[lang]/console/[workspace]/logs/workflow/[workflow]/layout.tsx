@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 
-import { Locale } from '@/dictionaries';
+import { Locale } from '@/lib/dict';
 
 /**
  * URL parameters for the Workflow Logs layout
@@ -31,13 +31,10 @@ export async function generateMetadata(props: {
 
 /**
  * Layout for the Workflow Logs pages in the Console
- * @param children - The children to render
  */
-export default function WorkflowLogsLayout({
-  children,
-}: Readonly<{
+export default async function WorkflowLogsLayout(props: {
+  params: Promise<WorkflowLogsLayoutParams>;
   children: React.ReactNode;
-  params: WorkflowLogsLayoutParams;
-}>) {
-  return children;
+}) {
+  return props.children;
 }

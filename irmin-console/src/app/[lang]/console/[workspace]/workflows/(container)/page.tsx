@@ -1,6 +1,4 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
+import { getWorkflows } from '@/lib/actions/workflows';
 
 import WorkflowsSection from '@/components/workflow/WorkflowsSection';
 
@@ -15,15 +13,7 @@ import WorkflowsSection from '@/components/workflow/WorkflowsSection';
  * clicks on the create button, it navigates to the create page, where
  * the side modal is pre-opened.
  */
-export default function WorkflowsPage() {
-  const router = useRouter();
-  return (
-    <WorkflowsSection
-      sideModalOpen={false}
-      onModalOpen={() => {
-        router.push('workflows/create');
-      }}
-      onModalClose={() => {}}
-    />
-  );
+export default async function WorkflowsPage() {
+  const workflows = await getWorkflows();
+  return <WorkflowsSection workflows={workflows} sideModalOpen={false} />;
 }

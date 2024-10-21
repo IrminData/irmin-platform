@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
@@ -9,7 +11,8 @@ import Button from '@/components/ui/button';
 import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+
+import { ExportWorkflow } from '@/types/core/Workflow';
 
 import CreateWorkflowModalContent from './CreateWorkflowModalContent';
 import ExportWorkflowList from './ExportWorkflowList';
@@ -21,70 +24,58 @@ import ExportWorkflowList from './ExportWorkflowList';
  * Uses {@link SideModal} and {@link CreateWorkflowModalContent} to provide UI for new Export Workflow creation
  *
  * @param props0 - The props
+ * @param props0.workflows - The list of Export Workflows
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
- * @param props0.onModalOpen - Callback when the modal is opened
- * @param props0.onModalClose - Callback when the modal is closed
  */
 export default function ExportWorkflowsSection({
+  workflows,
   sideModalOpen = false,
-  onModalOpen,
-  onModalClose,
 }: {
+  workflows: ExportWorkflow[];
   sideModalOpen?: boolean;
-  onModalOpen?: () => void;
-  onModalClose?: () => void;
 }) {
+  const router = useRouter();
   const { dict } = useLocale();
-  const {
-    workspaceLoading,
-    workflows: {
-      exports: { exports, isLoading: workflowsLoading },
-    },
-  } = useWorkspace();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
   const [currentStep, setCurrentStep] = useState(1);
 
-  const [filteredItems, setFilteredItems] = useState(exports);
+  const [filteredItems, setFilteredItems] = useState(workflows);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (exports) {
-        setFilteredItems(
-          exports.filter((item) =>
-            item.name
-              .trim()
-              .replace(/\s+/g, '')
-              .toLowerCase()
-              .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
-          )
-        );
-      }
+      setFilteredItems(
+        workflows.filter((item) =>
+          item.name
+            .trim()
+            .replace(/\s+/g, '')
+            .toLowerCase()
+            .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
+        )
+      );
     }, 300);
     return () => {
       clearTimeout(handler);
     };
-  }, [searchQuery, exports]);
+  }, [searchQuery, workflows]);
 
   const closeModal = () => {
-    if (onModalClose) {
-      onModalClose();
+    if (sideModalOpen) {
+      router.push('../exports');
     } else {
       setIsOpen(false);
     }
   };
   const openModal = () => {
-    if (onModalOpen) {
-      onModalOpen();
+    if (!sideModalOpen) {
+      router.push('exports/create');
     } else {
       setIsOpen(true);
       setCurrentStep(1);
     }
   };
-
-  const loading = workspaceLoading || workflowsLoading;
 
   return (
     <div className='container relative mx-auto max-w-6xl px-4 py-8'>
@@ -130,7 +121,7 @@ export default function ExportWorkflowsSection({
             placeholder={dict.list.searchPlaceholder}
           />
         </div>
-        <ExportWorkflowList loading={loading} exportWorkflows={filteredItems} />
+        <ExportWorkflowList loading={false} exportWorkflows={filteredItems} />
       </div>
     </div>
   );

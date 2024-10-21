@@ -2,8 +2,9 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
-import WordPress from '@/services/wordpress';
+import { defaultLocale, dictionaries, Locale } from '@/lib/dict';
+
+import WordPress from '@/lib/wordpress';
 
 import Post from '@/components/website/templates/Post';
 

@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 
-import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
+import { getDict } from '@/lib/actions/dict';
+import { getWorkspace, getWorkspaces } from '@/lib/actions/workspaces';
+import { Locale } from '@/lib/dict';
 
 import ConsoleWrapper from '@/components/console/ConsoleWrapper';
 
 import { PopupProvider } from '@/context/PopupContext';
-import { WorkspaceProvider } from '@/context/workspace';
 
 /**
  * Default layout level metadata for SEO on the console
@@ -18,12 +19,7 @@ export const metadata: Metadata = {
  * Console layout
  *
  * This layout is used for all pages within the Irmin console.
- *
- * - Popup provider, for showing popups
- * - Workspace provider, for managing the workspace
- * - Console navigation, to wrap the page content with the console navigation
- *
- * Console pages are everything that is within the `/src/app/[lang]/console` directory
+ * Wraps the pages with {@link PopupProvider} and {@link ConsoleWrapper}
  *
  * @param props - Layout properties
  * @param props.children - Page content
@@ -34,15 +30,18 @@ export default async function ConsoleLayout(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const params = await props.params;
-
   const { children } = props;
 
-  const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
+  const [workspaces, { dict }] = await Promise.all([
+    getWorkspaces(),
+    getDict(),
+  ]);
+
   return (
     <PopupProvider>
-      <WorkspaceProvider locale={lang}>
-        <ConsoleWrapper>{children}</ConsoleWrapper>
-      </WorkspaceProvider>
+      <ConsoleWrapper workspaces={workspaces} dict={dict}>
+        {children}
+      </ConsoleWrapper>
     </PopupProvider>
   );
 }

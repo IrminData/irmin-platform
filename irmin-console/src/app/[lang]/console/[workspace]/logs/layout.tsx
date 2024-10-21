@@ -2,8 +2,6 @@ import { Metadata } from 'next';
 
 import { WorkspaceLayoutParams } from '@/app/[lang]/console/[workspace]/layout';
 
-import LogsLayoutWrapper from '@/components/logs/LogsLayoutWrapper';
-
 /**
  * SEO metadata for the Logs pages
  */
@@ -20,11 +18,9 @@ export async function generateMetadata(props: {
 /**
  * Layout for the Logs pages in the Console
  */
-export default function ConsoleLogsLayout({
-  children,
-}: Readonly<{
-  params: WorkspaceLayoutParams;
+export default async function ConsoleLogsLayout(props: {
+  params: Promise<WorkspaceLayoutParams>;
   children: React.ReactNode;
-}>) {
-  return <LogsLayoutWrapper>{children}</LogsLayoutWrapper>;
+}) {
+  return props.children;
 }

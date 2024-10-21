@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ComponentPropsWithoutRef } from 'react';
+import { ComponentPropsWithoutRef, useEffect, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,14 +8,16 @@ import { useParams } from 'next/navigation';
 
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
+import { Dictionary } from '@/lib/dict';
+
 import ConsoleSearch from '@/components/console/ConsoleSearch';
 import Button from '@/components/ui/button';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
-import { useLocale } from '@/context/LocaleContext';
-
 import { useBreakpoint } from '@/utils/tw';
+
+import { Workspace } from '@/types/core/Workspace';
 
 import ConsoleNavigationLink from './ConsoleNavigationLink';
 import ConsoleNavigationProfile from './ConsoleNavigationProfile';
@@ -37,18 +39,30 @@ import useConsoleNavigationLinks from './useConsoleNavigationLinks';
  * Links are fetched from {@link useConsoleNavigationLinks} context and displayed using {@link ConsoleNavigationLink}.
  */
 export default function ConsoleWrapper({
+  dict,
+  workspaces,
   children,
-}: Readonly<{ children: React.ReactNode }>) {
-  const { dict } = useLocale();
-  const { workspace: workspaceSlug } = useParams();
-
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const [isMenuFolded, setIsMenuFolded] = React.useState(false);
-
+}: {
+  dict: Dictionary;
+  workspaces: Workspace[];
+  children: React.ReactNode;
+}) {
+  const params = useParams<{ workspace?: string }>();
   const links = useConsoleNavigationLinks();
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuFolded, setIsMenuFolded] = useState(false);
+
+  const currentWorkspace = useMemo(
+    () => workspaces.find((workspace) => workspace.slug === params.workspace),
+    [params.workspace, workspaces]
+  );
+
   const isLargeScreen = useBreakpoint('lg');
-  const foldMenu = isLargeScreen ? isMenuFolded : false;
+  const foldMenu = useMemo(
+    () => (isLargeScreen ? isMenuFolded : false),
+    [isLargeScreen, isMenuFolded]
+  );
 
   return (
     <div className='contents' id='console-wrapper'>
@@ -124,6 +138,8 @@ export default function ConsoleWrapper({
                 <div className='w-full min-w-36 px-4'>
                   <ConsoleNavigationProfile setIsMenuOpen={setIsMenuOpen} />
                   <ConsoleNavigationWorkspaceSwitcher
+                    workspaces={workspaces}
+                    currentWorkspace={currentWorkspace}
                     setIsMenuOpen={setIsMenuOpen}
                   />
                 </div>
@@ -132,7 +148,7 @@ export default function ConsoleWrapper({
               {foldMenu && <div className='mb-12'></div>}
 
               {/* No workspace links */}
-              {!workspaceSlug && (
+              {!currentWorkspace && (
                 <div id='console-sidebar-links-no-workspace'>
                   <p
                     className={`mb-2 w-max pl-8 text-xs font-medium uppercase text-accent transition-all duration-300 ${
@@ -155,7 +171,7 @@ export default function ConsoleWrapper({
               )}
 
               {/* Workspace links */}
-              {workspaceSlug && (
+              {currentWorkspace && (
                 <div id='console-sidebar-links-workspace'>
                   <p
                     className={`mb-2 w-max pl-8 text-xs font-medium uppercase text-accent transition-all duration-300 ${

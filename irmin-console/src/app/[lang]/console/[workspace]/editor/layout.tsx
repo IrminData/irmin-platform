@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 
-import { Locale } from '@/dictionaries';
+import { getRepositories } from '@/lib/actions/repositories';
+import { Locale } from '@/lib/dict';
 
 import EditorLayoutWrapper from '@/components/bucket/EditorLayoutWrapper';
 
@@ -32,11 +33,16 @@ export async function generateMetadata(props: {
  * Layout for the Editor page in the Console
  * @param children - The children to render
  */
-export default function EditorLayout({
+export default async function EditorLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-  params: EditorLayoutParams;
-}>) {
-  return <EditorLayoutWrapper>{children}</EditorLayoutWrapper>;
+  params: Promise<EditorLayoutParams>;
+}) {
+  const repositories = await getRepositories();
+  return (
+    <EditorLayoutWrapper repositories={repositories}>
+      {children}
+    </EditorLayoutWrapper>
+  );
 }

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
@@ -9,7 +11,9 @@ import Button from '@/components/ui/button';
 import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+
+import { Connection } from '@/types/core/Connection';
+import { Connector } from '@/types/core/Connector';
 
 import ConnectionList from './ConnectionList';
 import CreateConnectionModalContent from './CreateConnectionModalContent';
@@ -21,34 +25,34 @@ import CreateConnectionModalContent from './CreateConnectionModalContent';
  * Uses {@link SideModal} and {@link CreateConnectionModalContent} to provide UI for new Connection creation
  *
  * @param props0 - The props
+ * @param props0.connections - The list of Connections
+ * @param props0.connectors - List of available connectors
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
- * @param props0.onModalOpen - Callback when the modal is opened
- * @param props0.onModalClose - Callback when the modal is closed
  */
 export default function ConnectionsSection({
+  connections,
+  connectors,
   sideModalOpen = false,
-  onModalOpen,
-  onModalClose,
 }: {
+  connections: Connection[];
+  connectors: Connector[];
   sideModalOpen?: boolean;
-  onModalOpen?: () => void;
-  onModalClose?: () => void;
 }) {
+  const router = useRouter();
   const { dict } = useLocale();
-  const { workspaceLoading, connections } = useWorkspace();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
   const [currentStep, setCurrentStep] = useState(1);
 
-  const [filteredItems, setFilteredItems] = useState(connections.connections);
+  const [filteredItems, setFilteredItems] = useState(connections);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (connections.connections) {
+      if (connections) {
         setFilteredItems(
-          connections.connections.filter((item) =>
+          connections.filter((item) =>
             item.name
               .trim()
               .replace(/\s+/g, '')
@@ -63,21 +67,18 @@ export default function ConnectionsSection({
     };
   }, [searchQuery, connections]);
 
-  const loading = workspaceLoading || connections.isLoading;
-
   const closeModal = () => {
-    if (onModalClose) {
-      onModalClose();
+    if (sideModalOpen) {
+      router.push('../connections');
     } else {
       setIsOpen(false);
     }
   };
   const openModal = () => {
-    if (onModalOpen) {
-      onModalOpen();
+    if (!sideModalOpen) {
+      router.push('connections/create');
     } else {
       setIsOpen(true);
-      setCurrentStep(1);
     }
   };
 
@@ -109,6 +110,7 @@ export default function ConnectionsSection({
         title={dict.connections.create.createNewConnection}
       >
         <CreateConnectionModalContent
+          connectors={connectors}
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}
@@ -126,7 +128,7 @@ export default function ConnectionsSection({
             placeholder={dict.list.searchPlaceholder}
           />
         </div>
-        <ConnectionList loading={loading} connections={filteredItems} />
+        <ConnectionList connections={filteredItems} />
       </div>
     </div>
   );

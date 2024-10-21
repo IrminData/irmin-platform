@@ -1,7 +1,5 @@
 'use client';
 
-import { useCallback } from 'react';
-
 import ReactSelect from 'react-select';
 
 import Button from '@/components/ui/button';
@@ -9,57 +7,41 @@ import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
 
+import { useConfigureWorkflowable } from '@/hooks/useCreateWorkflow';
+
+import { Connection } from '@/types/core/Connection';
+import { Repository } from '@/types/core/Repository';
 import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
 
 /**
  * Configure workfow type specific properties
  *
  * @param props - Component properties
+ * @param props.connections - List of connections
+ * @param props.repositories - List of repositories
  * @param props.workflowData - Workflow setup data
  * @param props.setWorkflowData - Function to set the workflow setup data
  * @param props.setCurrentStep - Function to set the current step
  */
 export default function ConfigureWorkflowable({
+  connections,
+  repositories,
   workflowData,
   setWorkflowData,
   setCurrentStep,
 }: {
+  connections: Connection[];
+  repositories: Repository[];
   workflowData: WorkflowSetup;
   setWorkflowData: React.Dispatch<React.SetStateAction<WorkflowSetup>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const { dict } = useLocale();
-
-  const {
-    repositories: { repositories },
-    connections: { connections },
-  } = useWorkspace();
-
-  const handleContinue = useCallback(() => {
-    // Validate the form data
-    if (workflowData.type === 'action') {
-      if (!workflowData.executable) return;
-      if (!workflowData.repository) return;
-      if (!workflowData.branch) return;
-      if (!workflowData.path) return;
-    }
-    if (workflowData.type === 'import') {
-      if (!workflowData.connection) return;
-      if (!workflowData.repository) return;
-      if (!workflowData.branch) return;
-      if (!workflowData.path) return;
-    }
-    if (workflowData.type === 'export') {
-      if (!workflowData.connection) return;
-      if (!workflowData.repository) return;
-      if (!workflowData.branch) return;
-      if (!workflowData.path) return;
-    }
-    // Continue to the next step
-    setCurrentStep(2);
-  }, [workflowData, setCurrentStep]);
+  const { handleContinue } = useConfigureWorkflowable(
+    workflowData,
+    setCurrentStep
+  );
 
   return (
     <div className='flex w-full flex-col px-4 pb-6'>

@@ -2,14 +2,14 @@ import type { Metadata } from 'next';
 
 import { Big_Shoulders_Display, Inter } from 'next/font/google';
 
-import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
 import { ClerkProvider } from '@clerk/nextjs';
 
 import '@/styles/globals.css';
 import '@/styles/irmin-global.css';
 
+import { defaultLocale, dictionaries, Locale } from '@/lib/dict';
+
 import { IAMProvider } from '@/context/IAMContext';
-import { IrminCoreProvider } from '@/context/IrminCoreContext';
 import { LocaleProvider } from '@/context/LocaleContext';
 import { ThemeProvider } from '@/context/ThemeProvider';
 
@@ -62,7 +62,7 @@ export default async function RootLayout(props: {
                 enableSystem
                 disableTransitionOnChange
               >
-                <IrminCoreProvider locale={lang}>{children}</IrminCoreProvider>
+                {children}
               </ThemeProvider>
             </IAMProvider>
           </LocaleProvider>

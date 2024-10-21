@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -9,13 +9,13 @@ import { IoChevronBack } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useLogs } from '@/context/LogContext';
-import { useWorkspace } from '@/context/workspace';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+
+import { LogEvent } from '@/types/core/Log';
+import { Workflow } from '@/types/core/Workflow';
 
 import LogEventFeed from './LogEventFeed';
 
@@ -23,22 +23,21 @@ import LogEventFeed from './LogEventFeed';
  * Logs section - showing log events for the workspace or workflow.
  *
  * @param props - The component properties
- * @param props.workflow - Optional. Slug of the workflow to fetch logs for
+ * @param props.logEvents - List of log events to display
+ * @param props.workflow - Optional. The workflow the logs belong to
  */
-export default function LogsSection({ workflow }: { workflow?: string }) {
+export default function LogsSection({
+  logEvents,
+  workflow,
+}: {
+  logEvents: LogEvent[];
+  workflow?: Workflow;
+}) {
   const router = useRouter();
   const { dict } = useLocale();
-  const { logEvents, fetchLogEvents, loadingLogEvents } = useLogs();
-  const {
-    workflows: { allWorkflows },
-  } = useWorkspace();
 
   const [filteredItems, setFilteredItems] = useState(logEvents);
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    fetchLogEvents(workflow);
-  }, [workflow, fetchLogEvents]);
 
   // The base URL for the workspace, eg. /en/console/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -68,11 +67,6 @@ export default function LogsSection({ workflow }: { workflow?: string }) {
     };
   }, [searchQuery, logEvents]);
 
-  const selectedWorkflow = useMemo(
-    () => allWorkflows.find((w) => w.id === workflow),
-    [allWorkflows, workflow]
-  );
-
   return (
     <div className='container relative mx-auto max-w-6xl'>
       <div className='flex flex-col px-2 py-12 md:px-4'>
@@ -92,13 +86,13 @@ export default function LogsSection({ workflow }: { workflow?: string }) {
             <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
               {workflow ? dict.logs.workflowLogs : dict.logs.workspaceLogs}
             </h2>
-            {selectedWorkflow && (
+            {workflow && (
               <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
                 <Link
                   className='hover:underline'
                   href={`${workspaceUrl}/workflows/${workflow}`}
                 >
-                  {selectedWorkflow.name}
+                  {workflow.name}
                 </Link>
               </h3>
             )}
@@ -114,9 +108,7 @@ export default function LogsSection({ workflow }: { workflow?: string }) {
             placeholder={dict.list.searchPlaceholder}
           />
         </div>
-        {loadingLogEvents ? (
-          <LoadingSkeleton className='h-96 w-full' />
-        ) : filteredItems && filteredItems.length > 0 ? (
+        {filteredItems && filteredItems.length > 0 ? (
           <LogEventFeed events={filteredItems} systemLabel={dict.logs.system} />
         ) : (
           <p className='text-center text-lg text-gray-600 dark:text-gray-400'>

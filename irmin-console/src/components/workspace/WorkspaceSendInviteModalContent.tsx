@@ -1,7 +1,5 @@
 'use client';
 
-import { useCallback } from 'react';
-
 import { Controller, useForm } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
@@ -10,8 +8,6 @@ import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
 
 import { IrminRole, IrminRoleNames } from '@/types/core/IrminRole';
 
@@ -26,27 +22,24 @@ interface InviteFormValues {
  *
  * @param props - Component props
  * @param props.onClose - Function to close the modal
+ * @param props.handleInvite - Function to send the invite
  * @param props.irminRoles - List of available roles
  */
 const WorkspaceSendInviteModalContent = ({
   irminRoles,
+  handleInvite,
   onClose,
 }: {
   irminRoles: IrminRole[];
+  handleInvite: (data: InviteFormValues) => void;
   onClose: (open: boolean) => void;
 }) => {
   const { dict } = useLocale();
-  const {
-    invites: { sendInvite },
-  } = useWorkspace();
-  const { irminAlert } = usePopup();
 
   const {
     control,
     handleSubmit,
     formState: { errors },
-    setError,
-    clearErrors,
   } = useForm<InviteFormValues>({
     defaultValues: {
       name: '',
@@ -54,28 +47,6 @@ const WorkspaceSendInviteModalContent = ({
       role: irminRoles[0]?.name,
     },
   });
-
-  const handleInvite = useCallback(
-    async (data: InviteFormValues) => {
-      try {
-        // Clear any previous errors
-        clearErrors();
-
-        // Invite the user
-        const res = await sendInvite(data.name, data.email, data.role);
-
-        // Close the modal and inform that invite has been sent
-        onClose(false);
-        irminAlert('success', res.message ?? 'Invite sent successfully');
-      } catch (error) {
-        console.error('Error inviting user:', error);
-        setError('email', {
-          message: (error as Error)?.message ?? 'Error inviting user',
-        });
-      }
-    },
-    [sendInvite, onClose, irminAlert, clearErrors, setError]
-  );
 
   return (
     <>

@@ -1,16 +1,12 @@
 'use client';
 
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 
-import { Locale } from '@/dictionaries';
-import { fetchBucketProxy } from '@/services/proxies/bucket';
+import {
+  createBucketItem,
+  deleteBucketItem,
+  updateBucketItem,
+} from '@/lib/actions/bucket';
 
 import { usePopup } from '@/context/PopupContext';
 
@@ -19,15 +15,10 @@ import { transformBucketToFileNavItem } from '@/utils/bucket';
 import { Bucket, BucketFile, BucketFolder } from '@/types/core/Bucket';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
-import { useIAM } from './IAMContext';
-import { useIrminCore } from './IrminCoreContext';
-
 /**
  * Bucket context properties
  *
  * @typeParam items - Files and folders in the bucket
- * @typeParam loading - Loading state of the bucket
- * @typeParam fetchBucket - Fetch the bucket, items and folders
  * @typeParam createFile - Create a new file in the bucket
  * @typeParam updateFile - Update a file in the bucket
  * @typeParam deleteFile - Delete a file from the bucket
@@ -42,9 +33,7 @@ import { useIrminCore } from './IrminCoreContext';
 interface BucketContextProps {
   items: FileNavigatorItem[];
   bucket: Bucket | null;
-  loading: boolean;
   openNewTab: () => void;
-  fetchBucket: () => void;
   saveFileContents: (file: BucketFile) => void;
   createFile: (file: FileNavigatorItem) => void;
   updateFile: (file: FileNavigatorItem) => void;
@@ -64,66 +53,25 @@ const BucketContext = createContext<BucketContextProps | undefined>(undefined);
  * Bucket context to provide bucket data to components like the file navigator
  *
  * @param config - Bucket context provider configuration
- * @param config.locale - Locale object
- * @param config.currentWorkspace - Current workspace ID
+ * @param config.bucket - Current bucket data
  * @param config.children - Child components
  *
  * @returns Bucket context provider
  */
 export const BucketProvider = ({
-  locale,
-  currentWorkspace,
+  bucket,
   children,
 }: {
-  locale: Locale;
-  currentWorkspace: string;
+  bucket: Bucket;
   children: React.ReactNode;
 }) => {
   const { irminAlert } = usePopup();
-  const { token } = useIAM();
 
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const [currentBucket, setCurrentBucket] = useState<Bucket | null>(null);
+  const [currentBucket, setCurrentBucket] = useState<Bucket>(bucket);
   const [items, setItems] = useState<FileNavigatorItem[]>([]);
 
   const [activeTab, setActiveTab] = useState<number>(0);
   const [openFileTabs, setOpenFileTabs] = useState<string[]>([]);
-
-  const { irminCore } = useIrminCore();
-
-  // Ref to check which workspace the files were fetched for
-  const filesFetchedForRef = useRef<string | null>(null);
-
-  /*
-   * Fetch files and folders from the current workspace bucket
-   */
-  const fetchBucket = useCallback(async () => {
-    setLoading(true);
-    // Fetch bucket data
-    try {
-      if (!token) return;
-      const res = await fetchBucketProxy({
-        locale: locale,
-        token: token,
-        workspace: currentWorkspace,
-      });
-      if (!res || !res.data) return;
-      const bucketProxyData = res.data;
-      // Update the context state
-      setCurrentBucket(bucketProxyData.bucket);
-      setItems(bucketProxyData.fileNavItems);
-    } catch (error) {
-      console.error('BucketContext fetchBucket error', error);
-      filesFetchedForRef.current = null;
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to fetch bucket'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [currentWorkspace, locale, token, setCurrentBucket, setItems, irminAlert]);
 
   /**
    * Update the context state with the bucket data
@@ -230,7 +178,7 @@ export const BucketProvider = ({
         );
         updateStateWithBucket(updatedBucket);
         // Update the file in the bucket
-        const res = await irminCore.bucketService.updateFile({
+        const res = await updateBucketItem({
           original: file,
           current: file,
           type: 'file',
@@ -245,7 +193,7 @@ export const BucketProvider = ({
         );
       }
     },
-    [currentBucket, irminCore.bucketService, irminAlert, updateStateWithBucket]
+    [currentBucket, irminAlert, updateStateWithBucket]
   );
 
   /**
@@ -267,7 +215,7 @@ export const BucketProvider = ({
         updatedBucket.files.push(file.current as BucketFile);
         updateStateWithBucket(updatedBucket);
         // Create the file in the bucket
-        const res = await irminCore.bucketService.createFile(file);
+        const res = await createBucketItem(file);
         // Show success alert
         irminAlert('success', res.message ?? 'File updated');
       } catch (error) {
@@ -278,7 +226,7 @@ export const BucketProvider = ({
         );
       }
     },
-    [currentBucket, irminCore.bucketService, updateStateWithBucket, irminAlert]
+    [currentBucket, updateStateWithBucket, irminAlert]
   );
 
   /**
@@ -309,7 +257,7 @@ export const BucketProvider = ({
           )
         );
         // Update the file in the bucket
-        const res = await irminCore.bucketService.updateFile(file);
+        const res = await updateBucketItem(file);
         // Show success alert
         irminAlert('success', res.message ?? 'File updated');
       } catch (error) {
@@ -320,13 +268,7 @@ export const BucketProvider = ({
         );
       }
     },
-    [
-      currentBucket,
-      updateStateWithBucket,
-      irminCore.bucketService,
-      openFileTabs,
-      irminAlert,
-    ]
+    [currentBucket, updateStateWithBucket, openFileTabs, irminAlert]
   );
 
   /**
@@ -358,7 +300,7 @@ export const BucketProvider = ({
           openFileTabs.filter((path) => path !== file.current?.path)
         );
         // Delete the file from the bucket
-        const res = await irminCore.bucketService.deleteFile(file);
+        const res = await deleteBucketItem(file);
         // Show success alert
         irminAlert('success', res.message ?? 'File deleted');
       } catch (error) {
@@ -369,14 +311,7 @@ export const BucketProvider = ({
         );
       }
     },
-    [
-      currentBucket,
-      irminCore.bucketService,
-      updateStateWithBucket,
-      openFileTabs,
-      activeTab,
-      irminAlert,
-    ]
+    [currentBucket, updateStateWithBucket, openFileTabs, activeTab, irminAlert]
   );
 
   /**
@@ -398,7 +333,7 @@ export const BucketProvider = ({
         updatedBucket.folders.push(folder.current as BucketFolder);
         updateStateWithBucket(updatedBucket);
         // Create the folder in the bucket
-        const res = await irminCore.bucketService.createFolder(folder);
+        const res = await createBucketItem(folder);
         // Show success alert
         irminAlert('success', res.message ?? 'Folder created');
       } catch (error) {
@@ -409,7 +344,7 @@ export const BucketProvider = ({
         );
       }
     },
-    [currentBucket, irminCore.bucketService, updateStateWithBucket, irminAlert]
+    [currentBucket, updateStateWithBucket, irminAlert]
   );
 
   /**
@@ -444,7 +379,7 @@ export const BucketProvider = ({
           )
         );
         // Update the folder in the bucket
-        const res = await irminCore.bucketService.updateFolder(folder);
+        const res = await updateBucketItem(folder);
         // Show success alert
         irminAlert('success', res.message ?? 'Folder updated');
       } catch (error) {
@@ -458,7 +393,6 @@ export const BucketProvider = ({
     [
       constructUpdatedBucketForFolder,
       updateStateWithBucket,
-      irminCore.bucketService,
       openFileTabs,
       irminAlert,
     ]
@@ -500,7 +434,7 @@ export const BucketProvider = ({
           )
         );
         // Delete the folder from the bucket
-        const res = await irminCore.bucketService.deleteFolder(folder);
+        const res = await deleteBucketItem(folder);
         // Show success alert
         irminAlert('success', res.message ?? 'Folder deleted');
       } catch (error) {
@@ -511,35 +445,15 @@ export const BucketProvider = ({
         );
       }
     },
-    [
-      currentBucket,
-      updateStateWithBucket,
-      openFileTabs,
-      activeTab,
-      irminCore.bucketService,
-      irminAlert,
-    ]
+    [currentBucket, updateStateWithBucket, openFileTabs, activeTab, irminAlert]
   );
-
-  /**
-   * Fetch the bucket when the workspace changes
-   */
-  useEffect(() => {
-    // Don't fetch twice for the same workspace
-    if (currentWorkspace === filesFetchedForRef.current) return;
-    filesFetchedForRef.current = currentWorkspace;
-    // Fetch the bucket
-    fetchBucket();
-  }, [currentWorkspace, fetchBucket]);
 
   return (
     <BucketContext.Provider
       value={{
         items,
         bucket: currentBucket,
-        loading,
         openNewTab,
-        fetchBucket,
         saveFileContents,
         createFile,
         updateFile,

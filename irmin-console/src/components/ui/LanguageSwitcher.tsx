@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import dynamic from 'next/dynamic';
 
-import { languages, Locale } from '@/dictionaries';
+import { languages, Locale } from '@/lib/dict';
 import { SingleValue } from 'react-select';
 
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';

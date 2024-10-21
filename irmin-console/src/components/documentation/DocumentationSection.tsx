@@ -1,10 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 
 import Image from 'next/image';
 
-import { WorkspaceLayoutParams } from '@/app/[lang]/console/[workspace]/layout';
 import { usePDF } from 'react-to-pdf';
 
 import { BsFilePdf } from 'react-icons/bs';
@@ -15,11 +14,17 @@ import Button from '@/components/ui/button';
 import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useIAM } from '@/context/IAMContext';
-import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 import { Collection } from '@/types/core/Collection';
+import { Connection } from '@/types/core/Connection';
+import { Repository } from '@/types/core/Repository';
+import {
+  ActionWorkflow,
+  ExportWorkflow,
+  ImportWorkflow,
+} from '@/types/core/Workflow';
 
 import MDXViewer from './MDXViewer';
 
@@ -27,40 +32,26 @@ import MDXViewer from './MDXViewer';
  * Page UI to show the full documentation for the workspace
  */
 export default function DocumentationSection({
-  params,
+  connections,
+  collections,
+  imports,
+  exports,
+  actions,
+  repositories,
 }: {
-  params: WorkspaceLayoutParams;
+  connections: Connection[];
+  collections: Collection[];
+  imports: ImportWorkflow[];
+  exports: ExportWorkflow[];
+  actions: ActionWorkflow[];
+  repositories: Repository[];
 }) {
   const { profile } = useIAM();
+  const { workspace } = useWorkspace();
   const { dict, locale } = useLocale();
   const { toPDF, targetRef } = usePDF({
-    filename: `${params.workspace}-documentation-${new Date().toISOString()}.pdf`,
+    filename: `${workspace?.slug}-documentation-${new Date().toISOString()}.pdf`,
   });
-  const {
-    workspaces: { currentWorkspace },
-    connections: { connections },
-    workflows: {
-      exports: { exports },
-      actions: { actions },
-      imports: { imports },
-    },
-    repositories: { repositories },
-  } = useWorkspace();
-
-  const [collections, setCollections] = useState<Collection[]>([]);
-
-  const { irminCore } = useIrminCore();
-
-  useEffect(() => {
-    try {
-      (async () => {
-        const res = await irminCore.collectionService.fetchCollections();
-        setCollections(res.data);
-      })();
-    } catch (error) {
-      console.error((error as Error).message, 'Fetch Collections error');
-    }
-  }, [irminCore.collectionService]);
 
   const pdfHeaderRef = useRef<HTMLDivElement | null>(null);
 
@@ -125,11 +116,9 @@ export default function DocumentationSection({
           <div className='flex flex-col gap-2 border-b-2 py-4 dark:border-gray-800'>
             <p className='m-0 p-0 text-xs'>{dict.documentation.workspace}</p>
             <h2 className='m-0 mb-2 p-0 font-display text-2xl font-bold text-foreground md:text-4xl'>
-              {currentWorkspace?.name ?? '-'}
+              {workspace?.name ?? '-'}
             </h2>
-            <p className='m-0 p-0 text-sm'>
-              {currentWorkspace?.description ?? ''}
-            </p>
+            <p className='m-0 p-0 text-sm'>{workspace?.description ?? ''}</p>
           </div>
           {repositories.length > 0 && (
             <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>

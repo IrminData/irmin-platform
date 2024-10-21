@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
@@ -9,7 +11,8 @@ import Button from '@/components/ui/button';
 import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+
+import { Workflow } from '@/types/core/Workflow';
 
 import SelectWorkflowTypeModalContent from './SelectWorkflowTypeModalContent';
 import WorkflowList from './WorkflowList';
@@ -23,33 +26,30 @@ import WorkflowList from './WorkflowList';
  * creation modal.
  *
  * @param props0 - The props
+ * @param props0.workflows - The list of workflows to display
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
- * @param props0.onModalOpen - Callback when the modal is opened
- * @param props0.onModalClose - Callback when the modal is closed
  */
 export default function WorkflowsSection({
+  workflows,
   sideModalOpen = false,
-  onModalOpen,
-  onModalClose,
 }: {
+  workflows: Workflow[];
   sideModalOpen?: boolean;
-  onModalOpen?: () => void;
-  onModalClose?: () => void;
 }) {
+  const router = useRouter();
   const { dict } = useLocale();
-  const { workspaceLoading, workflows } = useWorkspace();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
 
-  const [filteredItems, setFilteredItems] = useState(workflows.allWorkflows);
+  const [filteredItems, setFilteredItems] = useState(workflows);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (workflows.allWorkflows) {
+      if (workflows) {
         setFilteredItems(
-          workflows.allWorkflows
+          workflows
             .filter((item) =>
               item.name
                 .trim()
@@ -67,15 +67,15 @@ export default function WorkflowsSection({
   }, [searchQuery, workflows]);
 
   const closeModal = () => {
-    if (onModalClose) {
-      onModalClose();
+    if (sideModalOpen) {
+      router.push('../workflows');
     } else {
       setIsOpen(false);
     }
   };
   const openModal = () => {
-    if (onModalOpen) {
-      onModalOpen();
+    if (!sideModalOpen) {
+      router.push('workflows/create');
     } else {
       setIsOpen(true);
     }
@@ -114,7 +114,7 @@ export default function WorkflowsSection({
             placeholder={dict.list.searchPlaceholder}
           />
         </div>
-        <WorkflowList loading={workspaceLoading} workflows={filteredItems} />
+        <WorkflowList loading={false} workflows={filteredItems} />
       </div>
     </div>
   );

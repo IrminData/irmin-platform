@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 
-import { Locale } from '@/dictionaries';
-import WordPress from '@/services/wordpress';
+import { Locale } from '@/lib/dict';
+
+import WordPress from '@/lib/wordpress';
 
 import WebsiteArticlesSectionContent from '@/components/website/sections/articles/content';
 

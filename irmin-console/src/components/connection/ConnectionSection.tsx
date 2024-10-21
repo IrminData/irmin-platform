@@ -10,34 +10,32 @@ import WorkflowList from '@/components/workflow/WorkflowList';
 
 import { useConnection } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+
+import { ExportWorkflow, ImportWorkflow } from '@/types/core/Workflow';
 
 /**
  * Connection Settings section component
  */
-const ConnectionSection = () => {
+const ConnectionSection = ({
+  importWorkflows,
+  exportWorkflows,
+}: {
+  importWorkflows: ImportWorkflow[];
+  exportWorkflows: ExportWorkflow[];
+}) => {
   const { dict } = useLocale();
   const { connection } = useConnection();
 
-  const {
-    workflows: { imports, exports },
-  } = useWorkspace();
-
-  const loading = useMemo(
-    () => imports.isLoading || exports.isLoading,
-    [imports.isLoading, exports.isLoading]
-  );
-
   const relatedWorkflows = useMemo(() => {
     return [
-      ...imports.imports.filter(
+      ...importWorkflows.filter(
         (item) => item.workflowable.connection.id === connection.id
       ),
-      ...exports.exports.filter(
+      ...exportWorkflows.filter(
         (item) => item.workflowable.connection.id === connection.id
       ),
     ];
-  }, [imports.imports, exports.exports, connection.id]);
+  }, [importWorkflows, exportWorkflows, connection.id]);
 
   const { details, settings } = useMemo(() => {
     let parsedDetails = {};
@@ -102,7 +100,7 @@ const ConnectionSection = () => {
             </div>
           ))}
         </div>
-        <WorkflowList workflows={relatedWorkflows} loading={loading} />
+        <WorkflowList workflows={relatedWorkflows} loading={false} />
       </div>
     </div>
   );

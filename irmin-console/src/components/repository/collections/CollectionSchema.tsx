@@ -4,20 +4,21 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { TbRun, TbTrash } from 'react-icons/tb';
 
+import { deleteCollection } from '@/lib/actions/collections';
+
 import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
-import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepository } from '@/context/RepositoryContext';
-import { useWorkspace } from '@/context/workspace';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
 import { FileSchema } from '@/types/core/FileCollection';
 import { FolderSchema } from '@/types/core/FolderCollection';
 import { TableSchema } from '@/types/core/TableCollection';
+import { Workflow } from '@/types/core/Workflow';
 
 import FileCollectionSchema from './FileCollectionSchema';
 import FolderCollectionSchema from './FolderCollectionSchema';
@@ -29,13 +30,16 @@ import TableCollectionSchema from './TableCollectionSchema';
  * @param props - The component props
  * @param props.collectionID - The ID of the collection to display the schema for
  * @param props.immutable - Whether the repository or ref is immutable
+ * @param props.workflows - The workflows available in the workspace
  */
 export default function CollectionSchema({
   collectionID,
   immutable,
+  workflows,
 }: {
   collectionID: string;
   immutable: boolean;
+  workflows: Workflow[];
 }) {
   const { dict } = useLocale();
   const { irminAlert, irminConfirm } = usePopup();
@@ -54,12 +58,6 @@ export default function CollectionSchema({
     includeSegment: true,
     segmentsAfter: 1,
   });
-
-  const {
-    workflows: { allWorkflows },
-  } = useWorkspace();
-
-  const { irminCore } = useIrminCore();
 
   const { currentRepository, currentRef, schema } = useRepository();
 
@@ -86,10 +84,8 @@ export default function CollectionSchema({
 
   // Workflow that is associated with the collection
   const matchedWorkflow = useMemo(() => {
-    return allWorkflows.find(
-      (workflow) => workflow.id === collection?.workflow
-    );
-  }, [allWorkflows, collection]);
+    return workflows.find((workflow) => workflow.id === collection?.workflow);
+  }, [workflows, collection]);
 
   // Structured download URL for the collection
   const downloadUrl = useMemo(() => {
@@ -115,9 +111,9 @@ export default function CollectionSchema({
     setProcessingDelete(true);
     try {
       // Upload the collection
-      const res = await irminCore.repositoryService.deleteCollection(
+      const res = await deleteCollection(
         currentRepository.slug,
-        currentRef ?? '',
+        currentRef ?? currentRepository.default_branch,
         collection.name
       );
       // Show success message
@@ -137,7 +133,6 @@ export default function CollectionSchema({
     dict,
     irminAlert,
     irminConfirm,
-    irminCore.repositoryService,
     collection,
   ]);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 
 import { TbFile } from 'react-icons/tb';
 
@@ -11,47 +11,21 @@ import DocumentationForm, {
 
 import { useConnection } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
 
 /**
  * Connection Documentation section component for displaying and updating the documentation.
  */
 const ConnectionDocumentationSection = () => {
-  const { irminAlert } = usePopup();
   const { dict } = useLocale();
-  const {
-    connections: { updateConnection },
-  } = useWorkspace();
-  const { connection } = useConnection();
-
-  const saving = useRef(false);
+  const { connection, updateConnection } = useConnection();
 
   const handleSaveDocumentation = useCallback(
     async (data: DocumentationFormValues) => {
-      if (saving.current) return;
-      try {
-        saving.current = true;
-        const documentation = data.documentation.trim();
-        const res = await updateConnection(connection.id, {
-          ...connection,
-          documentation,
-        });
-        irminAlert(
-          'success',
-          res.message ?? 'Connection documentation updated successfully'
-        );
-      } catch (error) {
-        irminAlert(
-          'error',
-          (error as Error)?.message ??
-            'Error updating the connection documentation'
-        );
-      } finally {
-        saving.current = false;
-      }
+      await updateConnection({
+        documentation: data.documentation,
+      });
     },
-    [connection, irminAlert, updateConnection]
+    [updateConnection]
   );
 
   return (

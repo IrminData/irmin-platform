@@ -1,97 +1,43 @@
 'use client';
 
-import React, { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 
 import { FaPause, FaPlay } from 'react-icons/fa6';
 
 import Button from '@/components/ui/button';
+import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
+import { useWorkflow } from '@/context/WorkflowContext';
 
-import deepEqual from '@/utils/deepEqual';
-
-import { Workflow } from '@/types/core/Workflow';
 import { WorkflowSchedule } from '@/types/core/WorkflowSchedule';
-
-import WorkflowScheduleForm from './WorkflowScheduleForm';
 
 /**
  * Workflow Schedule section component
  *
  * Handles workflow schedule viewing and updates.
- *
- * @param props - The props
- * @param props.workflow - The workflow to view and edit settings for
  */
-const WorkflowScheduleSection = ({ workflow }: { workflow: Workflow }) => {
+const WorkflowScheduleSection = () => {
   const { dict } = useLocale();
-  const { irminAlert } = usePopup();
-  const {
-    workflows: { updateWorkflow, resumeWorkflow, pauseWorkflow },
-  } = useWorkspace();
+  const { workflow, updateWorkflow, resumeWorkflow, pauseWorkflow } =
+    useWorkflow();
 
-  const previousScheduleRef = useRef(workflow.schedule);
-  const processing = useRef(false);
-
-  /**
-   * Updates the workflow schedule with the new details provided
-   */
   const handleUpdateWorkflowSchedule = useCallback(
     async (schedule: WorkflowSchedule) => {
-      if (processing.current) return;
-      try {
-        processing.current = true;
-        if (!workflow) return;
-        if (deepEqual(previousScheduleRef.current, schedule)) return;
-
-        const res = await updateWorkflow(workflow.id, {
-          ...workflow,
-          schedule,
-        });
-
-        irminAlert(
-          'success',
-          res.message ?? 'Workflow schedule updated successfully'
-        );
-        previousScheduleRef.current = schedule;
-      } catch (error) {
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Error updating the workflow schedule'
-        );
-      } finally {
-        processing.current = false;
-      }
+      await updateWorkflow({
+        schedule,
+      });
     },
-    [workflow, updateWorkflow, irminAlert]
+    [updateWorkflow]
   );
 
-  /**
-   * Pauses or resumes the workflow based on the current status
-   */
   const handlePauseOrResume = useCallback(async () => {
-    if (processing.current) return;
-    try {
-      processing.current = true;
-      if (workflow.status === 'paused') {
-        const res = await resumeWorkflow(workflow.id);
-        irminAlert('success', res.message ?? 'Workflow resumed successfully');
-      } else {
-        const res = await pauseWorkflow(workflow.id);
-        irminAlert('success', res.message ?? 'Workflow paused successfully');
-      }
-    } catch (error) {
-      irminAlert(
-        'error',
-        (error as Error)?.message ??
-          'Error pausing or resuming the workflow. Please try again.'
-      );
-    } finally {
-      processing.current = false;
+    if (workflow.status === 'paused') {
+      await resumeWorkflow();
+    } else {
+      await pauseWorkflow();
     }
-  }, [workflow, pauseWorkflow, resumeWorkflow, irminAlert]);
+  }, [workflow, pauseWorkflow, resumeWorkflow]);
 
   return (
     <div

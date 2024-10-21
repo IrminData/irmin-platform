@@ -1,8 +1,22 @@
+import { getDict } from '@/lib/actions/dict';
+import { getWorkspace } from '@/lib/actions/workspaces';
+
 import WorkspaceHomeSection from '@/components/workspace/WorkspaceHomeSection';
+
+import { WorkspaceLayoutParams } from './layout';
 
 /**
  * Workspace index page
  */
-export default function WorkspaceIndexPage() {
-  return <WorkspaceHomeSection />;
+export default async function WorkspaceIndexPage(props: {
+  params: Promise<WorkspaceLayoutParams>;
+}) {
+  const params = await props.params;
+
+  const currentWorkspace = params.workspace;
+  const [workspace, { dict }] = await Promise.all([
+    getWorkspace(currentWorkspace),
+    getDict(),
+  ]);
+  return <WorkspaceHomeSection dict={dict} workspace={workspace} />;
 }

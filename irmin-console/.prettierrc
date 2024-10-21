@@ -17,6 +17,7 @@
     "<THIRD_PARTY_MODULES>",
     "^react-icons/(.*)$",
     "^.*\\.css$",
+    "^@/lib/(.*)$",
     "^@/components/(.*)$",
     "^@/context/(.*)$",
     "^@/hooks/(.*)$",

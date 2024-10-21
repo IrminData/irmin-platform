@@ -1,4 +1,4 @@
-import { Locale } from '@/dictionaries';
+import { Locale } from '@/lib/dict';
 
 import WebsiteArticlesSection from '@/components/website/sections/articles';
 import WebsiteCareersSection from '@/components/website/sections/careers';

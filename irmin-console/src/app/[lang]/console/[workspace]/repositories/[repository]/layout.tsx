@@ -2,7 +2,9 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { Locale } from '@/dictionaries';
+import { getRepository } from '@/lib/actions/repositories';
+import { Locale } from '@/lib/dict';
+import { initDict } from '@/lib/initDict';
 
 import RepositoryLayoutWrapper from '@/components/repository/RepositoryLayoutWrapper';
 
@@ -49,8 +51,17 @@ export default async function RepositoryLayoutWithContainer(props: {
     notFound();
   }
 
+  const [repository, { dict }] = await Promise.all([
+    getRepository(params.repository),
+    initDict(),
+  ]);
+
   return (
-    <RepositoryProvider repositorySlug={params.repository}>
+    <RepositoryProvider
+      dict={dict}
+      repositorySlug={params.repository}
+      initialRepository={repository}
+    >
       <RepositoryLayoutWrapper>{children}</RepositoryLayoutWrapper>
     </RepositoryProvider>
   );

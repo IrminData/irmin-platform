@@ -1,23 +1,17 @@
 'use client';
 
-import { useCallback } from 'react';
-
 import Image from 'next/image';
 
 import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 
-import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
 
-import {
-  DynamicFields,
-  DynamicFieldValues,
-} from '@/types/internal/DynamicField';
+import { useCreateConnection } from '@/hooks/useCreateConnection';
 
-import { ConnectionSetup } from '.';
+import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
+import { DynamicFields } from '@/types/internal/DynamicField';
 
 /**
  * Configure connection component for finalizing the connection setup.
@@ -39,53 +33,7 @@ export default function ConfigureConnection({
   closeModal: () => void;
 }) {
   const { dict } = useLocale();
-  const { irminCore } = useIrminCore();
-  const { irminAlert } = usePopup();
-
-  // Handle form submission to create the connection
-  const createConnection = useCallback(
-    async (data: DynamicFieldValues) => {
-      // Ensure required fields are present
-      if (
-        !connectionData.name ||
-        !data.description ||
-        !connectionData.connector ||
-        !connectionData.connectionDetails ||
-        !connectionData.connectionSettings
-      ) {
-        irminAlert('error', dict.connections.create.requiredFieldsMissing);
-        return;
-      }
-
-      try {
-        // Create connection via the connectionService
-        const res = await irminCore.connectionService.createConnection({
-          connectorID: connectionData.connector.id,
-          connectionDetails: connectionData.connectionDetails,
-          connectionSettings: connectionData.connectionSettings,
-          name: connectionData.name,
-          description: data.description as string,
-        });
-
-        // Show success alert and close modal
-        irminAlert('success', res.message ?? 'Connection created successfully');
-        closeModal();
-      } catch (error) {
-        console.error('Failed to create connection', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to create connection'
-        );
-      }
-    },
-    [
-      connectionData,
-      irminAlert,
-      irminCore.connectionService,
-      dict.connections.create.requiredFieldsMissing,
-      closeModal,
-    ]
-  );
+  const { createConnection } = useCreateConnection(connectionData, closeModal);
 
   // Prepare the fields for DynamicForm
   const formFields: DynamicFields = {

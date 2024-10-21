@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
+import { defaultLocale, dictionaries, Locale } from '@/lib/dict';
 
 import WebsiteFooter from '@/components/website/footer/WebsiteFooter';
 import WebsiteNavigation from '@/components/website/navigation/WebsiteNavigation';

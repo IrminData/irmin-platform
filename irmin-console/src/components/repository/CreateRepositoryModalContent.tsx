@@ -7,10 +7,8 @@ import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
 
-import { Repository } from '@/types/core/Repository';
+import { useCreateRepository } from '@/hooks/useCreateRepository';
 
 /**
  * Modal content to create a new repository.
@@ -24,11 +22,6 @@ export default function CreateRepositoryModalContent({
   closeModal: () => void;
 }) {
   const { dict } = useLocale();
-  const { irminAlert } = usePopup();
-
-  const {
-    repositories: { createRepository },
-  } = useWorkspace();
 
   const {
     handleSubmit,
@@ -42,30 +35,15 @@ export default function CreateRepositoryModalContent({
     },
   });
 
-  const onSubmit = async (data: { name: string; description: string }) => {
-    try {
-      const { name, description } = data;
-      const res = await createRepository({
-        name: name.trim(),
-        description: description.trim(),
-        documentation: '',
-      } as Repository);
-      irminAlert('success', res.message ?? 'Repository created successfully');
-      closeModal();
-      reset(); // Reset the form values
-    } catch (error) {
-      irminAlert(
-        'error',
-        (error as Error)?.message ??
-          'An error occurred while creating the repository'
-      );
-    }
-  };
+  const { handleCreate } = useCreateRepository({
+    reset,
+    closeModal,
+  });
 
   return (
     <form
       id='create-repository-modal-content'
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(handleCreate)}
       className='flex flex-col gap-4 px-4 py-8'
     >
       <div className='flex flex-col gap-2'>

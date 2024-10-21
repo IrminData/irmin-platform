@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { defaultLocale, languages, Locale } from '@/dictionaries';
+import { defaultLocale, languages, Locale } from '@/lib/dict';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 // Environment variables for environment authentication

@@ -1,6 +1,6 @@
 import Image from 'next/image';
 
-import WordPress from '@/services/wordpress';
+import WordPress from '@/lib/wordpress';
 
 import DynamicFaIcon from '@/components/ui/DynamicFaIcon';
 import WebsiteSectionWrapper from '@/components/website/WebsiteSectionWrapper';

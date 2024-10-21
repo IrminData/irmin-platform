@@ -1,17 +1,16 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
-
 import ReactSelect from 'react-select';
 
 import { IoExit, IoKey } from 'react-icons/io5';
 
 import { ButtonWithTooltip } from '@/components/ui/button';
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
+import { useUsers } from '@/context/UsersContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
+
+import { IrminRoleNames } from '@/types/core/IrminRole';
 
 /**
  * Workspace Users section
@@ -19,116 +18,10 @@ import { useWorkspace } from '@/context/workspace';
  * This component is used to display the list of users and their permissions in the workspace.
  * It allows to manage the users and their roles in the workspace.
  */
-const WorkspaceUsersSection: React.FC = () => {
+const WorkspaceUsersSection = () => {
   const { dict } = useLocale();
-  const {
-    workspaceLoading,
-    workspaces: { currentWorkspace, switchWorkspace, transferOwnership },
-    irminRoles,
-    users: { users, deleteUser, changeUserRole },
-  } = useWorkspace();
-  const { irminAlert, irminConfirm } = usePopup();
-
-  const [processing, setProcessing] = useState(false);
-
-  const loading = useMemo(
-    () => workspaceLoading || processing || !currentWorkspace,
-    [workspaceLoading, processing, currentWorkspace]
-  );
-
-  const handleRemoveUser = useCallback(
-    async (id: string) => {
-      // Confirm removal
-      const confirmed = await irminConfirm(
-        'info',
-        dict.usersPermissions.removeUserConfirmation
-      );
-      if (!confirmed) return;
-      try {
-        setProcessing(true);
-        // Remove user from workspace
-        const res = await deleteUser(id);
-        irminAlert(
-          'success',
-          res.message ?? 'User removed successfully from the workspace'
-        );
-      } catch (error) {
-        console.error('Error changing user role:', error);
-        irminAlert('error', (error as Error)?.message ?? 'Error removing user');
-      } finally {
-        setProcessing(false);
-      }
-    },
-    [deleteUser, irminAlert, irminConfirm, dict]
-  );
-
-  const handleTransferOwnership = useCallback(
-    async (id: string) => {
-      // Confirm transfer
-      const confirmed = await irminConfirm(
-        'warning',
-        dict.usersPermissions.transferOwnershipConfirmation
-      );
-      if (!confirmed) return;
-      // Transfer confirmed
-      try {
-        setProcessing(true);
-        // Transfer ownership
-        const res = await transferOwnership(id);
-        // Refetch the current workspace
-        switchWorkspace(currentWorkspace?.slug ?? '');
-        // Inform that ownership has been transferred
-        irminAlert(
-          'success',
-          res.message ?? 'Ownership transfered successfully'
-        );
-      } catch (error) {
-        console.error('Error transferring ownership:', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Error transferring ownership'
-        );
-      } finally {
-        setProcessing(false);
-      }
-    },
-    [
-      transferOwnership,
-      irminAlert,
-      irminConfirm,
-      dict,
-      currentWorkspace,
-      switchWorkspace,
-    ]
-  );
-
-  const handleChangeRole = useCallback(
-    async (id: string, selectedRole: string) => {
-      try {
-        setProcessing(true);
-        // Find the role
-        const desiredRole = irminRoles.find(
-          (role) => role.name === selectedRole
-        )!;
-        if (!desiredRole || selectedRole === 'no-role') {
-          irminAlert('error', 'Invalid role');
-          return;
-        }
-        // Change user role
-        const res = await changeUserRole(id, desiredRole.name);
-        irminAlert('success', res.message ?? 'User role changed successfully');
-      } catch (error) {
-        console.error('Error changing user role:', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Error changing user role'
-        );
-      } finally {
-        setProcessing(false);
-      }
-    },
-    [changeUserRole, irminAlert, irminRoles]
-  );
+  const { users, roles, changeUserRole, deleteUser } = useUsers();
+  const { workspace, reassignWorkspace } = useWorkspace();
 
   return (
     <div className='my-8 px-2'>
@@ -158,29 +51,6 @@ const WorkspaceUsersSection: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {loading && users.length === 0 && (
-                  <>
-                    {[...Array(8)].map((_, index) => (
-                      <tr
-                        key={`users-loading-skeleton-${index}`}
-                        className='h-14 border-b dark:border-gray-800'
-                      >
-                        <td className='px-1 py-2'>
-                          <LoadingSkeleton className={`h-8 w-full`} />
-                        </td>
-                        <td className='px-1 py-2'>
-                          <LoadingSkeleton className={`h-8 w-full`} />
-                        </td>
-                        <td className='px-1 py-2'>
-                          <LoadingSkeleton className={`h-8 w-full`} />
-                        </td>
-                        <td className='px-1 py-2'>
-                          <LoadingSkeleton className={`h-8 w-full`} />
-                        </td>
-                      </tr>
-                    ))}
-                  </>
-                )}
                 {users.map((user, idx) => (
                   <tr
                     key={`workspace-user-${user.id}-${idx}`}
@@ -198,7 +68,7 @@ const WorkspaceUsersSection: React.FC = () => {
                       {user.email}
                     </td>
                     <td className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
-                      {currentWorkspace?.owner_id === user.id ? (
+                      {workspace?.owner_id === user.id ? (
                         dict.usersPermissions.owner
                       ) : (
                         <ReactSelect
@@ -216,13 +86,15 @@ const WorkspaceUsersSection: React.FC = () => {
                           onChange={(val) => {
                             if (!val || !val.value) return;
                             // Change role of a user
-                            handleChangeRole(user.id, val.value);
+                            changeUserRole(
+                              user.id,
+                              val.value as IrminRoleNames
+                            );
                           }}
-                          options={irminRoles.map((role) => ({
+                          options={roles.map((role) => ({
                             value: role.name,
                             label: role.label,
                           }))}
-                          isLoading={loading}
                           isSearchable={false}
                           isClearable={false}
                           className='react-select-container'
@@ -231,24 +103,22 @@ const WorkspaceUsersSection: React.FC = () => {
                       )}
                     </td>
                     <td className='px-4 py-2 text-right'>
-                      {currentWorkspace?.owner_id !== user.id && (
+                      {workspace?.owner_id !== user.id && (
                         <div className='flex w-full flex-row justify-end gap-2 align-middle'>
                           <ButtonWithTooltip
                             size='icon'
                             variant='secondary'
-                            onClick={() => handleTransferOwnership(user.id)}
+                            onClick={() => reassignWorkspace(user.id)}
                             icon={<IoKey size={14} />}
                             tooltip={dict.usersPermissions.transferOwnership}
-                            disabled={loading}
                           />
                           <ButtonWithTooltip
                             size='icon'
                             variant='secondary'
                             aria-label='Remove user from workspace'
-                            onClick={() => handleRemoveUser(user.id)}
+                            onClick={() => deleteUser(user.id)}
                             icon={<IoExit size={14} />}
                             tooltip={dict.usersPermissions.removeFromWorkspace}
-                            disabled={loading}
                           />
                         </div>
                       )}

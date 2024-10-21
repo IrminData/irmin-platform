@@ -17,7 +17,7 @@ import {
   Dictionary,
   getDictionary,
   Locale,
-} from '@/dictionaries';
+} from '@/lib/dict';
 
 import { setCookie } from '@/utils/cookie';
 
@@ -61,7 +61,6 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     (newLocale: Locale) => {
       setLocale(newLocale);
       setCookie('locale', newLocale, 365);
-      setCookie('currentWorkspaceSlug', '', -1);
       // Redirect to the new locale
       window.open(`/${newLocale}${pathname.substring(3)}`, '_self');
     },

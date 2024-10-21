@@ -1,6 +1,4 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
+import { getExportWorkflows } from '@/lib/actions/workflows';
 
 import ExportWorkflowsSection from '@/components/workflow/ExportWorkflowsSection';
 
@@ -13,14 +11,7 @@ import ExportWorkflowsSection from '@/components/workflow/ExportWorkflowsSection
  *
  * If the user tries to close the modal, it navigates back to the export workflows page.
  */
-export default function ExportWorkflowCreatePage() {
-  const router = useRouter();
-  return (
-    <ExportWorkflowsSection
-      sideModalOpen={true}
-      onModalClose={() => {
-        router.push('../exports');
-      }}
-    />
-  );
+export default async function ExportWorkflowCreatePage() {
+  const workflows = await getExportWorkflows();
+  return <ExportWorkflowsSection workflows={workflows} sideModalOpen={true} />;
 }

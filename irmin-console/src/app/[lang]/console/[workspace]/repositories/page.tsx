@@ -1,6 +1,4 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
+import { getRepositories } from '@/lib/actions/repositories';
 
 import RepositoriesSection from '@/components/repository/RepositoriesSection';
 
@@ -15,15 +13,9 @@ import RepositoriesSection from '@/components/repository/RepositoriesSection';
  * clicks on the create button, it navigates to the create page, where
  * the side modal is pre-opened.
  */
-export default function RepositoriesPage() {
-  const router = useRouter();
+export default async function RepositoriesPage() {
+  const repositories = await getRepositories();
   return (
-    <RepositoriesSection
-      sideModalOpen={false}
-      onModalOpen={() => {
-        router.push('repositories/create');
-      }}
-      onModalClose={() => {}}
-    />
+    <RepositoriesSection repositories={repositories} sideModalOpen={false} />
   );
 }

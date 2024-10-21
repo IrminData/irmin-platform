@@ -22,7 +22,7 @@ const ConnectionList = ({
   loading,
   connections: items,
 }: {
-  loading: boolean;
+  loading?: boolean;
   connections: Connection[];
 }) => {
   const { dict, locale } = useLocale();

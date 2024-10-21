@@ -34,7 +34,7 @@ export default function RepositoryCompareSection() {
     fetchDiff,
     mergeRefs,
     currentRepository,
-    fetchCommitsForRef,
+    fetchCommits,
   } = useRepository();
 
   const [baseRef, setBaseRef] = useState<string | undefined>(defaultRef);
@@ -65,7 +65,7 @@ export default function RepositoryCompareSection() {
     const compareBranch = branches?.find((b) => b.name === compareRef);
     if (compareBranch) {
       // Compare is a branch, so find the latest commit on the branch
-      const compareCommits = await fetchCommitsForRef(compareRef);
+      const compareCommits = await fetchCommits(compareRef);
       if (compareCommits && compareCommits.length > 0) {
         // The first commit is the latest
         compareCommit = compareCommits[0].hash;
@@ -77,7 +77,7 @@ export default function RepositoryCompareSection() {
     const res = await fetchDiff(baseRef, compareCommit);
     if (res) setDiff(res);
     setLoadingDiff(false);
-  }, [baseRef, compareRef, branches, fetchDiff, fetchCommitsForRef]);
+  }, [baseRef, compareRef, branches, fetchDiff, fetchCommits]);
 
   /**
    * Check if the refs are valid for merging.

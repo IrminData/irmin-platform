@@ -1,24 +1,19 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { IoChevronBack } from 'react-icons/io5';
 
 import { ButtonWithTooltip } from '@/components/ui/button';
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 
-import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useLogs } from '@/context/LogContext';
-import { useWorkspace } from '@/context/workspace';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
-import { WorkflowRun } from '@/types/core/Workflow';
+import { WorkflowRunLogs } from '@/types/core/Log';
+import { Workflow, WorkflowRun } from '@/types/core/Workflow';
 
 import LogFeed from './LogFeed';
 
@@ -26,25 +21,21 @@ import LogFeed from './LogFeed';
  * Workflow Run Logs section - showing logs for a specific workflow run.
  *
  * @param props - The component properties
- * @param props.workflowId - ID of the workflow to fetch logs for
- * @param props.workflowRunId - ID of the workflow run to fetch logs for
+ * @param props.workflowRun - The workflow run to display logs for
+ * @param props.workflowRunLogs - The logs for the workflow run
+ * @param props.workflow - The workflow the run belongs to
  */
 export default function WorkflowRunLogsSection({
-  workflowId,
-  workflowRunId,
+  workflowRun,
+  workflowRunLogs,
+  workflow,
 }: {
-  workflowId?: string;
-  workflowRunId?: string;
+  workflowRun: WorkflowRun;
+  workflowRunLogs: WorkflowRunLogs;
+  workflow?: Workflow;
 }) {
   const router = useRouter();
   const { dict, locale } = useLocale();
-  const { workflowRunLogs, fetchWorkflowRunLogs, loadingWorkflowRunLogs } =
-    useLogs();
-  const {
-    workflows: { allWorkflows },
-  } = useWorkspace();
-
-  const [run, setRun] = useState<WorkflowRun | null>(null);
 
   // The base URL for the workspace, eg. /en/console/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -53,28 +44,6 @@ export default function WorkflowRunLogsSection({
     includeSegment: true,
     segmentsAfter: 1,
   });
-
-  const { irminCore } = useIrminCore();
-
-  useEffect(() => {
-    fetchWorkflowRunLogs(workflowId, workflowRunId);
-    if (!workflowId || !workflowRunId) return;
-    irminCore.workflowService
-      .fetchWorkflowRunByID(workflowId, workflowRunId)
-      .then((res) => {
-        setRun(res.data);
-      });
-  }, [
-    workflowId,
-    workflowRunId,
-    fetchWorkflowRunLogs,
-    irminCore.workflowService,
-  ]);
-
-  const selectedWorkflow = useMemo(
-    () => allWorkflows.find((w) => w.id === workflowId),
-    [allWorkflows, workflowId]
-  );
 
   return (
     <div className='flex flex-col px-2 pt-12 md:px-4'>
@@ -93,53 +62,52 @@ export default function WorkflowRunLogsSection({
             <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
               {dict.logs.workflowRunLogs}
             </h2>
-            {selectedWorkflow && (
+            {workflow && (
               <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
                 <Link
                   className='hover:underline'
-                  href={`${workspaceUrl}/workflows/${workflowId}`}
+                  href={`${workspaceUrl}/workflows/${workflowRun.workflow_id}`}
                 >
-                  {selectedWorkflow.name}
+                  {workflow.name}
                 </Link>
                 , {dict.workflow.run}
                 {': '}
-                {workflowRunId}
+                {workflowRun.id}
               </h3>
             )}
           </div>
         </div>
-        {run && (
-          <div className='flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg bg-card p-4 text-sm text-card-foreground lg:text-lg'>
-            <div className='flex flex-col gap-1'>
-              <p className='text-sm opacity-60'>{dict.workflow.startedAt}</p>
-              <p className='text-base'>
-                {new Date(run.started_at).toLocaleString(locale)}
-              </p>
-            </div>
-            <div className='flex flex-col gap-1'>
-              <p className='text-sm opacity-60'>{dict.workflow.finishedAt}</p>
-              <p className='text-base'>
-                {run.finished_at
-                  ? new Date(run.finished_at).toLocaleString(locale)
-                  : '-'}
-              </p>
-            </div>
-            <div className='flex flex-col gap-1'>
-              <p className='text-sm opacity-60'>{dict.workflow.owner}</p>
-              <p className='text-base'>{run.owner.name}</p>
-            </div>
-            <div className='flex flex-col gap-1'>
-              <p className='text-sm opacity-60'>{dict.list.status}</p>
-              <p className='text-base'>
-                <StatusBadge status={run.status} label={run.status} />
-              </p>
-            </div>
+        <div className='flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg bg-card p-4 text-sm text-card-foreground lg:text-lg'>
+          <div className='flex flex-col gap-1'>
+            <p className='text-sm opacity-60'>{dict.workflow.startedAt}</p>
+            <p className='text-base'>
+              {new Date(workflowRun.started_at).toLocaleString(locale)}
+            </p>
           </div>
-        )}
+          <div className='flex flex-col gap-1'>
+            <p className='text-sm opacity-60'>{dict.workflow.finishedAt}</p>
+            <p className='text-base'>
+              {workflowRun.finished_at
+                ? new Date(workflowRun.finished_at).toLocaleString(locale)
+                : '-'}
+            </p>
+          </div>
+          <div className='flex flex-col gap-1'>
+            <p className='text-sm opacity-60'>{dict.workflow.owner}</p>
+            <p className='text-base'>{workflowRun.owner.name}</p>
+          </div>
+          <div className='flex flex-col gap-1'>
+            <p className='text-sm opacity-60'>{dict.list.status}</p>
+            <p className='text-base'>
+              <StatusBadge
+                status={workflowRun.status}
+                label={workflowRun.status}
+              />
+            </p>
+          </div>
+        </div>
       </div>
-      {loadingWorkflowRunLogs ? (
-        <LoadingSkeleton className='h-96 w-full' />
-      ) : workflowRunLogs && workflowRunLogs.logs ? (
+      {workflowRunLogs && workflowRunLogs.logs ? (
         <div className='h-[calc(100vh-347px)]'>
           <LogFeed text={workflowRunLogs.logs.join('\n\n')} />
         </div>

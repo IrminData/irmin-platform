@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import Link from 'next/link';
 
@@ -9,7 +9,7 @@ import { IoTriangle } from 'react-icons/io5';
 import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 import { useBreakpoint } from '@/utils/tw';
 
@@ -32,15 +32,17 @@ const NotificationPopup = ({
 }: {
   notificationsClickPosition: { x: number; y: number } | null;
 }) => {
-  const { dict, locale } = useLocale();
-  const {
-    workspaces: { currentWorkspace },
-  } = useWorkspace();
+  const { locale, dict } = useLocale();
+  const { workspace } = useWorkspace();
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const workspaceSlug = currentWorkspace?.slug ?? '-';
-  const workspaceName = currentWorkspace?.name ?? '-';
+  const { workspaceSlug, workspaceName } = useMemo(() => {
+    return {
+      workspaceSlug: workspace?.slug ?? '-',
+      workspaceName: workspace?.name ?? '-',
+    };
+  }, [workspace]);
 
   // TODO: Implement real data fetching
   const [notifications, setNotifications] = useState<Notification[]>([

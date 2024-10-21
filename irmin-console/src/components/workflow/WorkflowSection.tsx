@@ -1,40 +1,27 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import Link from 'next/link';
 
 import NormalList from '@/components/ui/list/NormalList';
 import StatusBadge from '@/components/ui/StatusBadge';
 
-import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
+import { useWorkflow } from '@/context/WorkflowContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
-import {
-  ActionWorkflow,
-  ExportWorkflow,
-  ImportWorkflow,
-  Workflow,
-  WorkflowRun,
-} from '@/types/core/Workflow';
 import { GridRow } from '@/types/internal/ListProps';
 
 /**
  * Workflow section component to show basic information about a workflow
  * and a list of runs for the workflow
- *
- * @param props0 - The props
- * @param props0.workflow - The workflow to show
  */
-const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
+const WorkflowSection = () => {
   const { dict, locale } = useLocale();
 
-  const [workflowRuns, setWorkflowRuns] = useState<WorkflowRun[]>([]);
-  const [loadingWorkflowRuns, setLoadingWorkflowRuns] = useState(true);
-
-  const { irminCore } = useIrminCore();
+  const { workflow, runs } = useWorkflow();
 
   // The base URL for the workspace, eg. /en/console/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -44,24 +31,9 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
     segmentsAfter: 1,
   });
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await irminCore.workflowService.fetchRunsByWorkflow(
-          workflow.id
-        );
-        setWorkflowRuns(res.data);
-      } catch (error) {
-        console.error('Error fetching workflow runs:', error);
-      } finally {
-        setLoadingWorkflowRuns(false);
-      }
-    })();
-  }, [irminCore.workflowService, workflow]);
-
   const runRows: GridRow[] = useMemo(
     () =>
-      workflowRuns.map((run, i) => ({
+      runs.map((run, i) => ({
         columns: [
           <div key={`run-${i}`} className='inline-flex flex-col gap-2'>
             <p className='text-xs lg:text-sm'>
@@ -92,7 +64,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
           },
         ],
       })),
-    [dict, locale, workflowRuns, workspaceUrl, workflow.id]
+    [dict, locale, runs, workspaceUrl, workflow.id]
   );
 
   return (
@@ -114,9 +86,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               <p className='text-sm opacity-60'>
                 {dict.workflow.executableScriptFile}
               </p>
-              <p className='text-base'>
-                {(workflow as ActionWorkflow).workflowable.executable}
-              </p>
+              <p className='text-base'>{workflow.workflowable.executable}</p>
             </div>
           )}
           {workflow.workflowable_type === 'action' && (
@@ -125,8 +95,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
                 {dict.workflow.scriptResultDestinationRepository}
               </p>
               <p className='text-base'>
-                {(workflow as ActionWorkflow).workflowable.repository?.name ??
-                  '-'}
+                {workflow.workflowable.repository?.name ?? '-'}
               </p>
             </div>
           )}
@@ -135,9 +104,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               <p className='text-sm opacity-60'>
                 {dict.workflow.scriptResultDestinationBranch}
               </p>
-              <p className='text-base'>
-                {(workflow as ActionWorkflow).workflowable.branch ?? '-'}
-              </p>
+              <p className='text-base'>{workflow.workflowable.branch ?? '-'}</p>
             </div>
           )}
           {workflow.workflowable_type === 'action' && (
@@ -145,9 +112,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               <p className='text-sm opacity-60'>
                 {dict.workflow.scriptResultDestinationPath}
               </p>
-              <p className='text-base'>
-                {(workflow as ActionWorkflow).workflowable.path ?? '/'}
-              </p>
+              <p className='text-base'>{workflow.workflowable.path ?? '/'}</p>
             </div>
           )}
           {workflow.workflowable_type === 'import' && (
@@ -157,10 +122,10 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`${workspaceUrl}/connections/${(workflow as ImportWorkflow).workflowable.connection.id}`}
+                href={`${workspaceUrl}/connections/${workflow.workflowable.connection.id}`}
               >
                 <p className='text-base'>
-                  {(workflow as ImportWorkflow).workflowable.connection.name}
+                  {workflow.workflowable.connection.name}
                 </p>
               </Link>
             </div>
@@ -172,10 +137,10 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`${workspaceUrl}/repositories/${(workflow as ImportWorkflow).workflowable.repository.slug}`}
+                href={`${workspaceUrl}/repositories/${workflow.workflowable.repository.slug}`}
               >
                 <p className='text-base'>
-                  {(workflow as ImportWorkflow).workflowable.repository.name}
+                  {workflow.workflowable.repository.name}
                 </p>
               </Link>
             </div>
@@ -185,9 +150,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               <p className='text-sm opacity-60'>
                 {dict.workflow.importDestinationBranch}
               </p>
-              <p className='text-base'>
-                {(workflow as ImportWorkflow).workflowable.branch}
-              </p>
+              <p className='text-base'>{workflow.workflowable.branch}</p>
             </div>
           )}
           {workflow.workflowable_type === 'import' && (
@@ -195,9 +158,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               <p className='text-sm opacity-60'>
                 {dict.workflow.importDestinationPath}
               </p>
-              <p className='text-base'>
-                {(workflow as ImportWorkflow).workflowable.path}
-              </p>
+              <p className='text-base'>{workflow.workflowable.path}</p>
             </div>
           )}
           {workflow.workflowable_type === 'export' && (
@@ -207,10 +168,10 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`${workspaceUrl}/connections/${(workflow as ExportWorkflow).workflowable.connection.id}`}
+                href={`${workspaceUrl}/connections/${workflow.workflowable.connection.id}`}
               >
                 <p className='text-base'>
-                  {(workflow as ExportWorkflow).workflowable.connection.name}
+                  {workflow.workflowable.connection.name}
                 </p>
               </Link>
             </div>
@@ -222,10 +183,10 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`${workspaceUrl}/repositories/${(workflow as ExportWorkflow).workflowable.repository.slug}`}
+                href={`${workspaceUrl}/repositories/${workflow.workflowable.repository.slug}`}
               >
                 <p className='text-base'>
-                  {(workflow as ExportWorkflow).workflowable.repository.name}
+                  {workflow.workflowable.repository.name}
                 </p>
               </Link>
             </div>
@@ -235,9 +196,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               <p className='text-sm opacity-60'>
                 {dict.workflow.exportSourceBranch}
               </p>
-              <p className='text-base'>
-                {(workflow as ExportWorkflow).workflowable.branch}
-              </p>
+              <p className='text-base'>{workflow.workflowable.branch}</p>
             </div>
           )}
           {workflow.workflowable_type === 'export' && (
@@ -245,9 +204,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
               <p className='text-sm opacity-60'>
                 {dict.workflow.exportSourcePath}
               </p>
-              <p className='text-base'>
-                {(workflow as ExportWorkflow).workflowable.path}
-              </p>
+              <p className='text-base'>{workflow.workflowable.path}</p>
             </div>
           )}
           {workflow.workflowable_type === 'export' && (
@@ -256,9 +213,7 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
                 {dict.workflow.exportRecursive}
               </p>
               <p className='text-base'>
-                {(workflow as ExportWorkflow).workflowable.recursive
-                  ? dict.misc.yes
-                  : dict.misc.no}
+                {workflow.workflowable.recursive ? dict.misc.yes : dict.misc.no}
               </p>
             </div>
           )}
@@ -270,7 +225,6 @@ const WorkflowSection = ({ workflow }: { workflow: Workflow }) => {
             dict.list.status,
             dict.list.actions,
           ]}
-          loading={loadingWorkflowRuns}
           hideHeaders={false}
           rows={runRows}
         />

@@ -8,13 +8,18 @@ import React, {
   useRef,
   useState,
 } from 'react';
+
 import { useRouter } from 'next/navigation';
+
 import { useAuth, useUser } from '@clerk/nextjs';
 
-import IrminCore from '@/services/core/IrminCore';
-import { Locale } from '@/dictionaries';
+import IrminCore from '@/lib/core';
+import { Locale } from '@/lib/dict';
+
 import { usePopup } from '@/context/PopupContext';
+
 import { setCookie } from '@/utils/cookie';
+
 import { User } from '@/types/core/User';
 import { exampleProfile } from '@/types/examples/core';
 

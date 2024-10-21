@@ -1,6 +1,5 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
+import { getConnections } from '@/lib/actions/connections';
+import { getConnectors } from '@/lib/actions/connectors';
 
 import ConnectionsSection from '@/components/connection/ConnectionsSection';
 
@@ -15,15 +14,16 @@ import ConnectionsSection from '@/components/connection/ConnectionsSection';
  * clicks on the create button, it navigates to the create page, where
  * the side modal is pre-opened.
  */
-export default function ConnectionsPage() {
-  const router = useRouter();
+export default async function ConnectionsPage() {
+  const [connectors, connections] = await Promise.all([
+    getConnectors(),
+    getConnections(),
+  ]);
   return (
     <ConnectionsSection
+      connections={connections}
+      connectors={connectors}
       sideModalOpen={false}
-      onModalOpen={() => {
-        router.push('connections/create');
-      }}
-      onModalClose={() => {}}
     />
   );
 }

@@ -5,55 +5,30 @@ import Image from 'next/image';
 import ProfileImagePlaceholder from '@/components/ui/ProfileImagePlaceholder';
 
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
 
 import { Workspace } from '@/types/core/Workspace';
 
 /**
  * Workspace card component
  *
- * @remarks
- *
  * This component is used to display a workspace card in the workspace switcher
  * on the console home page. It displays the workspace name and some details.
- *
- * It allows users to switch to the workspace by clicking on the card.
  */
-const WorkspaceCard = ({ workspace }: { workspace: Workspace }) => {
+const WorkspaceCard = async ({
+  workspace,
+  handleClick,
+}: {
+  workspace: Workspace;
+  handleClick: (slug: string) => void;
+}) => {
   const { dict } = useLocale();
-
-  const { irminAlert } = usePopup();
-  const {
-    workspaces: { switchWorkspace },
-  } = useWorkspace();
-
-  const handleWorkspaceCardClick = async (
-    e: React.MouseEvent<HTMLDivElement>
-  ) => {
-    e.preventDefault();
-    try {
-      const res = await switchWorkspace(workspace.slug);
-      irminAlert(
-        'success',
-        res?.message ??
-          `${dict.workspaceSwitcher.switchedTo}: ${workspace.name}`
-      );
-    } catch (error) {
-      console.error('Failed to switch workspace: ', error);
-      const errorMessage = (error as Error)?.message ?? '';
-      irminAlert(
-        'error',
-        `${dict.workspaceSwitcher.failedToSwitch}: ` + errorMessage
-      );
-    }
-  };
-
   return (
     <div
       id='workspace-card'
       className='h-full w-full cursor-pointer transition-all duration-300 hover:scale-95'
-      onClick={handleWorkspaceCardClick}
+      onClick={() => {
+        handleClick(workspace.slug);
+      }}
       aria-label={`Go to ${workspace.name} workspace`}
     >
       <div className='flex h-full flex-col rounded-xl bg-card p-2 text-xs text-card-foreground shadow lg:p-4 lg:text-base'>

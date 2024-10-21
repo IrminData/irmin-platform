@@ -1,4 +1,4 @@
-import { Dictionary } from '@/dictionaries';
+import { Dictionary } from '@/lib/dict';
 
 import {
   Bucket,

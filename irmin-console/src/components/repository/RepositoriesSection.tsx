@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
@@ -9,7 +11,8 @@ import Button from '@/components/ui/button';
 import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/workspace';
+
+import { Repository } from '@/types/core/Repository';
 
 import CreateRepositoryModalContent from './CreateRepositoryModalContent';
 import RepositoryList from './RepositoryList';
@@ -22,32 +25,28 @@ import RepositoryList from './RepositoryList';
  *
  * @param props0 - The props
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
- * @param props0.onModalOpen - Callback when the modal is opened
- * @param props0.onModalClose - Callback when the modal is closed
  */
 export default function RepositoriesSection({
+  repositories,
   sideModalOpen = false,
-  onModalOpen,
-  onModalClose,
 }: {
+  repositories: Repository[];
   sideModalOpen?: boolean;
-  onModalOpen?: () => void;
-  onModalClose?: () => void;
 }) {
+  const router = useRouter();
   const { dict } = useLocale();
-  const { workspaceLoading, repositories } = useWorkspace();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
 
-  const [filteredItems, setFilteredItems] = useState(repositories.repositories);
+  const [filteredItems, setFilteredItems] = useState(repositories);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (repositories.repositories) {
+      if (repositories) {
         setFilteredItems(
-          repositories.repositories.filter((item) =>
+          repositories.filter((item) =>
             item.name
               .trim()
               .replace(/\s+/g, '')
@@ -62,18 +61,16 @@ export default function RepositoriesSection({
     };
   }, [searchQuery, repositories]);
 
-  const loading = workspaceLoading || repositories.isLoading;
-
   const closeModal = () => {
-    if (onModalClose) {
-      onModalClose();
+    if (sideModalOpen) {
+      router.push('../repositories');
     } else {
       setIsOpen(false);
     }
   };
   const openModal = () => {
-    if (onModalOpen) {
-      onModalOpen();
+    if (!sideModalOpen) {
+      router.push('repositories/create');
     } else {
       setIsOpen(true);
     }
@@ -112,7 +109,7 @@ export default function RepositoriesSection({
             placeholder={dict.list.searchPlaceholder}
           />
         </div>
-        <RepositoryList loading={loading} repositories={filteredItems} />
+        <RepositoryList loading={false} repositories={filteredItems} />
       </div>
     </div>
   );

@@ -1,8 +1,17 @@
+'use server';
+
 import type { Metadata } from 'next';
 
-import { defaultLocale, dictionaries, Locale } from '@/dictionaries';
+import { getBucket } from '@/lib/actions/bucket';
+import { getInvites } from '@/lib/actions/invites';
+import { getRoles } from '@/lib/actions/roles';
+import { getUsers } from '@/lib/actions/users';
+import { getWorkspace, switchWorkspace } from '@/lib/actions/workspaces';
+import { Locale } from '@/lib/dict';
 
 import { BucketProvider } from '@/context/BucketContext';
+import { UsersProvider } from '@/context/UsersContext';
+import { WorkspaceProvider } from '@/context/WorkspaceContext';
 
 export type WorkspaceLayoutParams = {
   lang: Locale;
@@ -24,7 +33,7 @@ export async function generateMetadata(props: {
 
 /**
  * Console workspace layout
- * Provides the {@link BucketProvider} context for the workspace.
+ * Provides the {@link UsersProvider}, {@link WorkspaceProvider} and {@link BucketProvider} contexts for the workspace pages.
  */
 export default async function ConsoleWorkspaceLayout(props: {
   children: React.ReactNode;
@@ -34,11 +43,33 @@ export default async function ConsoleWorkspaceLayout(props: {
 
   const { children } = props;
 
-  const lang = dictionaries[params.lang] ? params.lang : defaultLocale;
   const currentWorkspace = params.workspace;
+
+  // Switch to the current workspace
+  await switchWorkspace(currentWorkspace);
+
+  // Fetch the workspace, roles, users, invites, and bucket
+  const [workspace, roles, users, invites, bucket] = await Promise.all([
+    getWorkspace(currentWorkspace),
+    getRoles(),
+    getUsers(),
+    getInvites(currentWorkspace),
+    getBucket(),
+  ]);
+
   return (
-    <BucketProvider locale={lang} currentWorkspace={currentWorkspace}>
-      {children}
-    </BucketProvider>
+    <WorkspaceProvider
+      initialWorkspace={workspace}
+      workspaceSlug={currentWorkspace}
+    >
+      <UsersProvider
+        workspaceSlug={currentWorkspace}
+        roles={roles}
+        currentUsers={users}
+        currentInvites={invites}
+      >
+        <BucketProvider bucket={bucket}>{children}</BucketProvider>
+      </UsersProvider>
+    </WorkspaceProvider>
   );
 }

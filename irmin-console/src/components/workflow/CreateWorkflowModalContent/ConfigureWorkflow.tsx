@@ -1,15 +1,13 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
-
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/workspace';
+
+import { useConfigureWorkflow } from '@/hooks/useCreateWorkflow';
 
 import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
 
@@ -36,40 +34,9 @@ export default function ConfigureWorkflow({
   closeModal: () => void;
 }) {
   const { dict } = useLocale();
-  const { irminAlert } = usePopup();
-  const {
-    workflows: { createWorkflow },
-  } = useWorkspace();
-  const [processing, setProcessing] = useState(false);
 
-  const initialWorkflowSchedule = useRef(workflowData.schedule);
-  const creatingWorkflow = useRef(false);
-
-  /**
-   * Create the workflow with the provided data using the Irmin API
-   */
-  const handleCreate = useCallback(async () => {
-    // Prevent multiple requests
-    if (creatingWorkflow.current) return;
-    try {
-      creatingWorkflow.current = true;
-      setProcessing(true);
-      // Create the workflow
-      const res = await createWorkflow(workflowData);
-      // Show the result to the user
-      irminAlert('success', res?.message ?? 'Workflow created successfully');
-      closeModal();
-    } catch (error) {
-      console.error('Failed to create workflow', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to create the workflow'
-      );
-    } finally {
-      setProcessing(false);
-      creatingWorkflow.current = false;
-    }
-  }, [irminAlert, workflowData, createWorkflow, closeModal]);
+  const { processing, initialWorkflowSchedule, handleCreate } =
+    useConfigureWorkflow(workflowData, closeModal);
 
   return (
     <div className='flex w-full flex-col px-4 pb-6'>

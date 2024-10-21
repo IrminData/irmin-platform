@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 
-import { QueryExecutionResultAPIResponse } from '@/services/core/resources/QueryService';
-
 import { AiOutlineSave } from 'react-icons/ai';
 import { BsFileEarmarkRichtext } from 'react-icons/bs';
 import { CiTextAlignLeft } from 'react-icons/ci';
@@ -14,6 +12,8 @@ import {
   TbLogs,
   TbTable,
 } from 'react-icons/tb';
+
+import { QueryExecutionResultAPIResponse } from '@/lib/core/resources/QueryService';
 
 import LogFeed from '@/components/logs/LogFeed';
 import Button from '@/components/ui/button';

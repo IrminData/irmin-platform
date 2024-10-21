@@ -12,6 +12,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { QueryProvider } from '@/context/QueryContext';
 
+import { Repository } from '@/types/core/Repository';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 import FileNavigator from './FileNavigator';
@@ -27,9 +28,11 @@ import RenameOrMoveItemModal from './modals/RenameOrMoveItemModal';
  */
 export default function EditorLayoutWrapper({
   children,
-}: Readonly<{
+  repositories,
+}: {
   children: React.ReactNode;
-}>) {
+  repositories: Repository[];
+}) {
   const { irminModal, irminConfirm } = usePopup();
   const { dict } = useLocale();
   const {
@@ -176,7 +179,7 @@ export default function EditorLayoutWrapper({
             }}
             items={items}
           />
-          <CollectionReferenceList />
+          <CollectionReferenceList repositories={repositories} />
         </div>
       </div>
       <div className='ml-10 flex-1 flex-shrink overflow-hidden lg:ml-0'>
