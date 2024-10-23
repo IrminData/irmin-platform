@@ -10,6 +10,7 @@ import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { IoEnterOutline } from 'react-icons/io5';
 
 import IrminUserButton from '@/components/authentication/IrminUserButton';
+import NotificationsButton from '@/components/NotificationsButton';
 import Button from '@/components/ui/button';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
@@ -215,6 +216,7 @@ export default function WebsiteNavigationContent({
                     {profile ? (
                       <>
                         <IrminUserButton />
+                        <NotificationsButton profile={profile} />
                         <Button
                           size={'lg'}
                           href='/console'
@@ -335,8 +337,9 @@ export default function WebsiteNavigationContent({
                     </div>
                   )}
                   {profile && (
-                    <div className='mt-6 flex w-full flex-row items-center justify-center gap-2'>
+                    <div className='mt-6 flex w-full flex-row items-center justify-center gap-4'>
                       <IrminUserButton />
+                      <NotificationsButton profile={profile} />
                     </div>
                   )}
                 </div>

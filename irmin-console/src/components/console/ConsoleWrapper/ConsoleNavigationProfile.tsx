@@ -3,11 +3,10 @@
 import React from 'react';
 
 import IrminUserButton from '@/components/authentication/IrminUserButton';
+import NotificationsButton from '@/components/NotificationsButton';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useIAM } from '@/context/IAMContext';
-
-import NotificationButton from './NotificationButton';
 
 /**
  * Profile UI for the console navigation
@@ -44,7 +43,7 @@ export default function ConsoleNavigationProfile({
         </p>
       </div>
       <div className='ml-auto'>
-        <NotificationButton />
+        <NotificationsButton profile={profile} />
       </div>
     </div>
   );

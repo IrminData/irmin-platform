@@ -5,22 +5,19 @@ import { createContext, useCallback, useContext, useState } from 'react';
 import Alert from '@/components/ui/popup/Alert';
 import Confirm from '@/components/ui/popup/Confirm';
 import Modal from '@/components/ui/popup/Modal';
-import NotificationPopup from '@/components/ui/popup/NotificationPopup';
 
 /**
- * Context to use and show alerts, confirmations, notifications and modals
+ * Context to use and show alerts, confirmations and modals
  *
  * @remarks
  *
- * This context is used to show, hide and update {@link NotificationPopup},
- * {@link Alert}, {@link Confirm} and {@link Modal} components.
+ * This context is used to show, hide and update {@link Alert}, {@link Confirm} and {@link Modal} components.
  *
  * When shown, these components will be rendered on top of the current view,
  * in the console layout.
  *
  * @param irminAlert - Function to show an alert
  * @param irminConfirm - Async function to show a confirmation popup, resolves to a boolean (confirmed or not)
- * @param toggleNotificationsPopup - Function to toggle the notifications popup
  * @param irminModal - Object with functions to show and close a modal
  *
  * @returns The popup context
@@ -34,9 +31,6 @@ const PopupContext = createContext<{
     _type: 'warning' | 'info',
     _message: string
   ) => Promise<boolean>;
-  toggleNotificationsPopup: (
-    _e: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => void;
   irminModal: {
     show: (
       _title: string,
@@ -48,24 +42,12 @@ const PopupContext = createContext<{
 }>({
   irminAlert: () => {},
   irminConfirm: async () => false,
-  toggleNotificationsPopup: () => {},
   irminModal: {
     show: () => {},
     close: () => {},
   },
 });
 
-/**
- * Provider for the popup context to handle alerts, confirmations, notifications and modals
- *
- * @remarks
- *
- * Used to show, hide and update NotificationPopup, Alert, Confirm and Modal components.
- * When shown, these components will be rendered on top of the current view.
- *
- * @param children - The children components
- * @returns The popup provider component
- */
 export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   // Handle alerts
   const [alertMessage, setAlertMessage] = useState<string | JSX.Element | null>(
@@ -107,20 +89,6 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     []
   );
 
-  // Handle notifications
-  const [notificationsPopupOpen, setNotificationsPopupOpen] = useState(false);
-  const [notificationsClickPosition, setNotificationsClickPosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  const toggleNotificationsPopup = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-      setNotificationsClickPosition({ x: e.clientX, y: e.clientY });
-      setNotificationsPopupOpen(!notificationsPopupOpen);
-    },
-    [notificationsPopupOpen]
-  );
-
   // Handle modal
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
@@ -149,7 +117,6 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         irminAlert: irminAlert,
         irminConfirm: irminConfirm,
-        toggleNotificationsPopup,
         irminModal: {
           show: showIrminModal,
           close: closeModal,
@@ -173,11 +140,6 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
             if (typeof confirmOnSelect === 'function')
               confirmOnSelect(confirmed);
           }}
-        />
-      )}
-      {notificationsPopupOpen && (
-        <NotificationPopup
-          notificationsClickPosition={notificationsClickPosition}
         />
       )}
       {modalOpen && (

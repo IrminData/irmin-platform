@@ -172,13 +172,6 @@ const en = {
     workspace: 'Workspace',
     settings: 'Settings',
     usefulLinks: 'Useful links',
-    notifications: {
-      toggle: 'Toggle notifications popup',
-      notifications: 'Notifications',
-      clearAll: 'Clear all',
-      noNotifications: 'No notifications',
-      relatedWorkspace: 'Workspace',
-    },
     links: {
       home: 'Workspace',
       repositories: 'Repositories',

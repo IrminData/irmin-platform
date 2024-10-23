@@ -172,13 +172,6 @@ const fi = {
     workspace: 'Työtila',
     settings: 'Asetukset',
     usefulLinks: 'Hyödylliset linkit',
-    notifications: {
-      toggle: 'Vaihda ilmoitusponnahdusikkuna',
-      notifications: 'Ilmoitukset',
-      clearAll: 'Tyhjennä kaikki',
-      noNotifications: 'Ei ilmoituksia',
-      relatedWorkspace: 'Työtila',
-    },
     links: {
       home: 'Työtilaa',
       repositories: 'Tietovarastot',

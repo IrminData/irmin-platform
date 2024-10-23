@@ -35,17 +35,20 @@ NEXT_PUBLIC_OFFLINE_MODE=false  # Toggle offline mode for the Irmin API
 NEXT_PUBLIC_AUTH_OFFLINE_MODE=false # Toggle offline mode for authentication eg. Clerk
 NEXT_PUBLIC_CMS_OFFLINE_MODE=false  # Toggle offline mode for the Irmin CMS
 
-# Sentry
+# Sentry for error tracking
 SENTRY_AUTH_TOKEN=sntryu_xxxxx  # Sentry token for error tracking
 NEXT_PUBLIC_SENTRY_DSN=https://ingest.de.sentry.io/xxxxx  # Sentry DSN for error tracking
 SENTRY_SUPPRESS_TURBOPACK_WARNING=1 # Suppress Turbopack warning in Sentry
 
-# Clerk
+# Clerk for authentication
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
 CLERK_SECRET_KEY=YOUR_SECRET_KEY
 
-# Environmant variables for testing
+# Novu for notifications
+NEXT_PUBLIC_NOVU_APP_ID=1234 # Novu app ID
+NOVU_SECRET_KEY=abc123 # Novu secret key
 
+# Environmant variables for e2e testing
 TEST_USER_EMAIL=example@example.com # Irmin user email to run tests with
 TEST_USER_PASSWORD=12345678 # Irmin user password to run tests with
 TEST_USER_WORKSPACE="Example Core" # Workspace available for the test user
