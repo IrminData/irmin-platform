@@ -128,7 +128,6 @@ const ManageWorkspacesSection = ({
               name='newWorkspaceDescription'
               control={control}
               rules={{
-                required: dict.misc.fieldRequired,
                 maxLength: {
                   value: 255,
                   message: dict.misc.fieldInvalid,
@@ -142,7 +141,6 @@ const ManageWorkspacesSection = ({
                   longtext={{
                     rows: 3,
                   }}
-                  required
                   className='mb-2 md:mb-4'
                   disabled={processing}
                   {...field}

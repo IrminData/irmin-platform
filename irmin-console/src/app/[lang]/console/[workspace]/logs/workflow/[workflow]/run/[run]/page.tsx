@@ -1,6 +1,5 @@
 import { getWorkflowRunLogs } from '@/lib/actions/logs';
-import { getWorkflowRun } from '@/lib/actions/workflowRuns';
-import { getWorkflow } from '@/lib/actions/workflows';
+import { getWorkflow, getWorkflowRun } from '@/lib/actions/workflows';
 
 import WorkflowRunLogsSection from '@/components/logs/WorkflowRunLogsSection';
 

@@ -364,7 +364,8 @@ export const RepositoryProvider = ({
     setLoadingSchema(true);
     try {
       const newSchema = await fetchSchemas(
-        collections.map((collection) => collection.formatted_name),
+        collections.map((collection) => collection.name),
+        currentRepository.slug,
         currentRef ?? currentRepository.default_branch
       );
       setSchema(newSchema);
@@ -377,7 +378,7 @@ export const RepositoryProvider = ({
     } finally {
       setLoadingSchema(false);
     }
-  }, [currentRef, collections, currentRepository.default_branch, irminAlert]);
+  }, [currentRef, collections, currentRepository, irminAlert]);
 
   /**
    * Fetch the branches and default branch for the current repository
@@ -534,7 +535,7 @@ export const RepositoryProvider = ({
   /**
    * Hook to fetch the last commit which modified a collection
    *
-   * @param collection - The collection to fetch the last commit for
+   * @param collection - The collection name to fetch the last commit for
    * @returns Commit - The last commit which modified the collection
    */
   const fetchLastModification = useCallback(
@@ -625,7 +626,7 @@ export const RepositoryProvider = ({
     async (branch: string) => {
       try {
         // Delete the branch
-        const res = await deleteBranch(branch, repositorySlug ?? '');
+        const res = await deleteBranch(branch, repositorySlug);
         irminAlert('success', res.message ?? 'Branch deleted successfully');
         // Refetch the branches
         fetchBranches();
@@ -649,7 +650,7 @@ export const RepositoryProvider = ({
     async (name: string, from: string) => {
       try {
         // Create the branch
-        const res = await createBranch(name, from, repositorySlug ?? '');
+        const res = await createBranch(name, from, repositorySlug);
         irminAlert('success', res.message ?? 'Branch created successfully');
         // Refetch the branches
         fetchBranches();
@@ -666,13 +667,13 @@ export const RepositoryProvider = ({
   /**
    * Hook to delete a tag from the repository.
    *
-   * @param tag - The tag name to delete
+   * @param tag - The tag ID to delete
    */
   const handleDeleteTag = useCallback(
     async (tag: string) => {
       try {
         // Delete the tag
-        const res = await deleteTag(tag, repositorySlug ?? '');
+        const res = await deleteTag(tag, repositorySlug);
         irminAlert('success', res.message ?? 'Tag deleted successfully');
         // Refetch the tags
         fetchTags();
@@ -696,7 +697,7 @@ export const RepositoryProvider = ({
     async (name: string, ref: string) => {
       try {
         // Create the tag
-        const res = await createTag(name, ref, repositorySlug ?? '');
+        const res = await createTag(name, ref, repositorySlug);
         irminAlert('success', res.message ?? 'Tag created successfully');
         // Refetch the tags
         fetchTags();

@@ -2,20 +2,20 @@
 
 import QueryResults from '@/components/query/QueryResults';
 
-import { useBucket } from '@/context/BucketContext';
 import { useEditor } from '@/context/EditorContext';
+import { useEditorItems } from '@/context/EditorItemsContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useQuery } from '@/context/QueryContext';
 
-import EditorWithTabs from './editor/EditorWithTabs';
+import EditorWithTabs from './ide/EditorWithTabs';
 
 /**
  * Editor Section, provides UI for the Editor Page.
- * Used to edit files in the Workspace's Bucket
+ * Used to edit files in the Workspace's EditorItems
  */
 export default function EditorSection() {
   const { dict } = useLocale();
-  const { openFileTabs } = useBucket();
+  const { openFileTabs } = useEditorItems();
   const { currentEditor } = useEditor();
   const query = useQuery();
 

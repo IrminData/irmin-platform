@@ -17,6 +17,13 @@ interface BranchesAPIResponse extends IrminAPIResponse {
 }
 
 /**
+ * Branches API response type
+ */
+interface BranchAPIResponse extends IrminAPIResponse {
+  data: Branch;
+}
+
+/**
  * Branch API service
  *
  * Responsible for all repository branch related API calls
@@ -28,8 +35,10 @@ class BranchService {
     this.irminCore = irminCore;
     // Bind methods
     this.fetchBranches = this.fetchBranches.bind(this);
+    this.fetchBranch = this.fetchBranch.bind(this);
     this.createBranch = this.createBranch.bind(this);
     this.deleteBranch = this.deleteBranch.bind(this);
+    this.updateBranch = this.updateBranch.bind(this);
   }
 
   /**
@@ -41,7 +50,7 @@ class BranchService {
     if (isOfflineMode) return fake(exampleBranches) as BranchesAPIResponse;
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/branches?repository=${repository}`,
+        `/v1/repositories/${repository}/branches`,
         {
           method: 'GET',
         }
@@ -51,6 +60,33 @@ class BranchService {
     } catch (error) {
       console.error((error as Error).message, 'Fetch Branches error');
       if (isDevelopment) return fake(exampleBranches) as BranchesAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch a branch by name in a repository
+   *
+   * @param branch - The branch name to fetch
+   * @param repository - The repository slug to fetch the branch from
+   */
+  async fetchBranch(
+    branch: string,
+    repository: string
+  ): Promise<BranchAPIResponse> {
+    if (isOfflineMode) return fake(exampleBranches[0]) as BranchAPIResponse;
+    try {
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/repositories/${repository}/branches/${branch}`,
+        {
+          method: 'GET',
+        }
+      )) as BranchAPIResponse;
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch Branch error');
+      if (isDevelopment) return fake(exampleBranches[0]) as BranchAPIResponse;
       throw error;
     }
   }
@@ -67,12 +103,13 @@ class BranchService {
       const formData = new FormData();
 
       formData.append('_method', 'DELETE');
-      formData.append('branch', branch);
-      formData.append('repository', repository);
 
-      const response = await this.irminCore.fetchAPI(`/v1/branches`, {
-        method: 'POST',
-      });
+      const response = await this.irminCore.fetchAPI(
+        `/v1/repositories/${repository}/branches/${branch}`,
+        {
+          method: 'POST',
+        }
+      );
 
       return response;
     } catch (error) {
@@ -96,15 +133,47 @@ class BranchService {
 
       formData.append('name', name);
       formData.append('from', from);
-      formData.append('repository', repository);
 
-      const res = await this.irminCore.fetchAPI(`/v1/branches`, {
-        method: 'POST',
-        body: formData,
-      });
+      const res = await this.irminCore.fetchAPI(
+        `/v1/repositorories/${repository}/branches`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Failed to create branch');
+      if (isDevelopment) return fake();
+      throw error;
+    }
+  }
+
+  /**
+   * Update a branch
+   *
+   * @param branch - The branch to update
+   * @param repository - The repository slug to update the branch in
+   * @param name - The new name of the branch
+   */
+  async updateBranch(branch: string, repository: string, name: string) {
+    if (isOfflineMode) return fake();
+    try {
+      const formData = new FormData();
+
+      formData.append('_method', 'PATCH');
+      formData.append('name', name);
+
+      const res = await this.irminCore.fetchAPI(
+        `/v1/repositories/${repository}/branches/${branch}`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+      return res;
+    } catch (error) {
+      console.error((error as Error).message, 'Failed to update branch');
       if (isDevelopment) return fake();
       throw error;
     }

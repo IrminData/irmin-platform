@@ -7,9 +7,9 @@ import { FiChevronDown, FiChevronRight, FiFolder } from 'react-icons/fi';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { transformBucketToFileNavItem } from '@/utils/bucket';
+import { transformEditorItemsToFileNavItem } from '@/utils/editorItems';
 
-import { Bucket } from '@/types/core/Bucket';
+import { EditorItems } from '@/types/core/EditorItems';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
@@ -22,20 +22,20 @@ import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
  * It will only show folder items that are not the item being edited.
  *
  * @param pathSelectorProps - The props for the path selector
- * @param pathSelectorProps.bucket - The bucket get the list of files to show
+ * @param pathSelectorProps.editorItems - The editorItems get the list of files to show
  * @param pathSelectorProps.itemName - The name of the item being edited. For files, should include the extension
  * @param pathSelectorProps.originalItemPath - The original path of the item being edited
  * @param pathSelectorProps.currentSelected - The currently selected path, if any
  * @param pathSelectorProps.onSelectPath - Function to select a path
  */
 const PathSelector = ({
-  bucket,
+  editorItems,
   itemName,
   originalItemPath,
   currentSelected,
   onSelectPath,
 }: {
-  bucket: Bucket | null;
+  editorItems: EditorItems | null;
   itemName: string | null;
   originalItemPath: string | null;
   currentSelected: string | null;
@@ -50,10 +50,10 @@ const PathSelector = ({
     (currentSelected ?? '').replace(new RegExp(`/${itemName}$`), '')
   );
 
-  // Transform the bucket into a file navigator item
+  // Transform the editorItems into a file navigator item
   const items = useMemo(
-    () => (bucket ? transformBucketToFileNavItem(bucket) : []),
-    [bucket]
+    () => (editorItems ? transformEditorItemsToFileNavItem(editorItems) : []),
+    [editorItems]
   );
 
   /**
@@ -171,7 +171,7 @@ const PathSelector = ({
             <FaFolderTree />
           </span>
           <span className='ml-2 cursor-pointer hover:underline'>
-            {dict.fileNavigator.bucketRoot}
+            {dict.fileNavigator.rootDirectory}
           </span>
         </button>
         {renderItems(items)}

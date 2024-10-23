@@ -8,7 +8,6 @@
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 import { branches } from './branches';
-import { bucket } from './bucket';
 import {
   collectionData,
   collections,
@@ -22,10 +21,17 @@ import { connections } from './connections';
 import { connectors } from './connectors';
 import { content } from './content';
 import { diff } from './diff';
+import { editorItems } from './editorItems';
 import { files } from './files';
 import { folders } from './folders';
 import { invites } from './invites';
-import { logEvents, workflowRunLogs } from './logs';
+import {
+  connectionLogEvents,
+  logEvents,
+  repositoryLogEvents,
+  workflowLogEvents,
+  workflowRunLogs,
+} from './logs';
 import { clerkUser, profile } from './profile';
 import { queries, queryExecutionResult } from './queries';
 import { repositories } from './repositories';
@@ -193,14 +199,29 @@ export const exampleFolders = folders();
 export const exampleFiles = files();
 
 /**
- * Fake bucket {@link bucket}
+ * Fake editor items {@link editorItems}
  */
-export const exampleBucket = bucket();
+export const exampleEditorItems = editorItems();
 
 /**
  * Fake log events {@link logEvents}
  */
 export const exampleLogEvents = logEvents();
+
+/**
+ * Fake workflow log events {@link logEvents}
+ */
+export const exampleWorkflowLogEvents = workflowLogEvents();
+
+/**
+ * Fake repository log events {@link logEvents}
+ */
+export const exampleRepositoryLogEvents = repositoryLogEvents();
+
+/**
+ * Fake connection log events {@link logEvents}
+ */
+export const exampleConnectionLogEvents = connectionLogEvents();
 
 /**
  * Fake workflow run logs {@link workflowRunLogs}

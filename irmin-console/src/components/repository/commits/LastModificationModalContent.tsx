@@ -35,7 +35,7 @@ export default function LastModificationModalContent({
       <table className='w-full table-auto text-sm'>
         <tbody>
           <tr>
-            <td className='pb-2 font-bold'>{dict.list.description}</td>
+            <td className='pb-2 font-bold'>{dict.misc.description}</td>
             <td className='pb-2'>{commit.message}</td>
           </tr>
           <tr>

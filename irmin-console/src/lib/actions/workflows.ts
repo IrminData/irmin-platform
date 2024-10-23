@@ -136,6 +136,27 @@ export async function triggerWorkflowRun(workflowID: string) {
 }
 
 /**
+ * Server action to get a workflow runs for a workflow
+ */
+export async function getWorkflowRuns(workflow: string) {
+  const irminCore = await initCore();
+  const runs = await irminCore.workflowService.fetchRunsByWorkflow(workflow);
+  return runs.data;
+}
+
+/**
+ * Server action to get a workflow run by ID.
+ */
+export async function getWorkflowRun(workflow: string, runID: string) {
+  const irminCore = await initCore();
+  const run = await irminCore.workflowService.fetchWorkflowRunByID(
+    workflow,
+    runID
+  );
+  return run.data;
+}
+
+/**
  * Server action to create an action workflow.
  */
 export async function createActionWorkflow(data: {

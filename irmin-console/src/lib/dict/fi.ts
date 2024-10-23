@@ -106,6 +106,8 @@ const fi = {
       success: 'Latauksesi onnistui!',
       failed: 'Latauksesi epäonnistui',
     },
+    name: 'Nimi',
+    description: 'Kuvaus',
   },
   consoleNavigation: {
     search: 'Hae',
@@ -323,8 +325,6 @@ const fi = {
     },
     settings: {
       generalSettings: 'Yleiset asetukset',
-      name: 'Nimi',
-      description: 'Kuvaus',
       owner: 'Omistaja',
       saveChanges: 'Tallenna',
       deletionNote:
@@ -360,7 +360,6 @@ const fi = {
       constraints: 'Rajoitteet',
       folder: 'Kansio',
       file: 'Tiedosto',
-      name: 'Nimi',
       size: 'Koko',
       created_at: 'Luotu',
       modified_at: 'Muokattu',
@@ -378,8 +377,6 @@ const fi = {
       title: 'Yhteyden asetukset',
       connector: 'Yhdistin',
       saveChanges: 'Tallenna muutokset',
-      name: 'Nimi',
-      description: 'Kuvaus',
       owner: 'Omistaja',
       deletionNote:
         'Poistamalla tämän yhteyden poistetaan kaikki siihen liittyvät tiedot. Tätä toimintoa ei voi peruuttaa.',
@@ -432,8 +429,6 @@ const fi = {
     finishedAt: 'Valmis',
     scheduled: 'Aikataulutettu',
     notScheduled: 'Ei aikataulutettu',
-    name: 'Nimi',
-    description: 'Kuvaus',
     owner: 'Omistaja',
     executableScriptFile: 'Suoritettava skriptitiedosto',
     scriptResultDestinationRepository: 'Tuloksen tietovarasto',
@@ -520,8 +515,6 @@ const fi = {
     search: 'Hae tuloksista',
   },
   list: {
-    name: 'Nimi',
-    description: 'Kuvaus',
     status: 'Tila',
     runs: 'Ajot',
     connector: 'Yhdistin',
@@ -551,7 +544,7 @@ const fi = {
     delete: 'Poista',
     rename: 'Nimeä uudelleen',
     move: 'Siirrä',
-    bucketRoot: 'Juuri',
+    rootDirectory: 'Juurihakemisto',
     newNameOfTheFile: 'Tiedoston uusi nimi',
     newNameOfTheFolder: 'Kansion uusi nimi',
     newPathOfTheFile: 'Tiedoston uusi polku',
@@ -564,7 +557,6 @@ const fi = {
     deleteFolderWarning:
       'Kaikki kansiossa olevat tiedostot ja kansiot poistetaan',
     errors: {
-      noBucket: 'No bucket provided',
       invalidType: 'Virheellinen tyyppi (tiedosto tai kansio)',
       noExtension: 'Tiedostolla virheellinen tai puuttuva tiedostopääte',
       invalidExtension: 'Virheellinen tiedostopääte (js, py, sql)',
@@ -596,7 +588,7 @@ const fi = {
       exportWorkflows: 'Vienti prosessit',
     },
   },
-  usersPermissions: {
+  users: {
     removeUserConfirmation:
       'Oletko varma, että haluat poistaa tämän käyttäjän?',
     transferOwnershipConfirmation:
@@ -604,7 +596,8 @@ const fi = {
     usersAndPermissions: 'Käyttäjät ja oikeudet',
     invites: 'Kutsut työtilaan',
     inviteUser: 'Kutsu käyttäjä',
-    name: 'Nimi',
+    firstName: 'First name',
+    lastName: 'Last name',
     email: 'Sähköposti',
     role: 'Rooli',
     owner: 'Omistaja',

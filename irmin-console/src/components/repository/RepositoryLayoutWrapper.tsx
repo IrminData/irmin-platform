@@ -63,7 +63,8 @@ export default function RepositoryLayoutWrapper({
         getCommits(repositorySlug, initialRef),
       ]);
       const newSchema = await fetchSchemas(
-        newCollections.map((collection) => collection.formatted_name),
+        newCollections.map((collection) => collection.name),
+        repositorySlug,
         initialRef
       );
       setCommits(newCommits);

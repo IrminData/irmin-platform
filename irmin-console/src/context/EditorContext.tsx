@@ -9,10 +9,10 @@ import React, {
   useState,
 } from 'react';
 
-import RenameOrMoveItemModal from '@/components/bucket/modals/RenameOrMoveItemModal';
-import SaveEditorAsFileModal from '@/components/bucket/modals/SaveEditorAsFileModal';
+import RenameOrMoveItemModal from '@/components/editor/modals/RenameOrMoveItemModal';
+import SaveEditorAsFileModal from '@/components/editor/modals/SaveEditorAsFileModal';
 
-import { useBucket } from '@/context/BucketContext';
+import { useEditorItems } from '@/context/EditorItemsContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -21,9 +21,9 @@ import {
   getFileByPath,
   getItemByPath,
   getLanguageFromFilename,
-} from '@/utils/bucket';
+} from '@/utils/editorItems';
 
-import { IrminFileType } from '@/types/core/Bucket';
+import { IrminFileType } from '@/types/core/EditorItems';
 
 /**
  * Internal type for managing file contents and file state in the editor
@@ -77,7 +77,7 @@ export const EditorContextProvider = ({
 }) => {
   const { irminModal } = usePopup();
   const {
-    bucket,
+    editorItems,
     items: navigatorItems,
     saveFileContents,
     openNewTab,
@@ -88,7 +88,7 @@ export const EditorContextProvider = ({
     createFile,
     updateFile,
     updateFolder,
-  } = useBucket();
+  } = useEditorItems();
   const { dict } = useLocale();
 
   const [openTabsContents, setOpenTabsContents] = useState<FileContents[]>([]);
@@ -116,7 +116,7 @@ export const EditorContextProvider = ({
           dict.fileNavigator.updateFile,
           <RenameOrMoveItemModal
             item={fileNavItem}
-            bucket={bucket}
+            editorItems={editorItems}
             updateFile={updateFile}
             updateFolder={updateFolder}
           />
@@ -145,7 +145,7 @@ export const EditorContextProvider = ({
       navigatorItems,
       irminModal,
       dict,
-      bucket,
+      editorItems,
       updateFile,
       updateFolder,
       setOpenFileTabs,
@@ -153,7 +153,7 @@ export const EditorContextProvider = ({
   );
 
   /**
-   * Save the active tab as a file in the bucket
+   * Save the active tab as a file in the editorItems
    *
    * If the file already exists, update the file
    * If the file does not exist, prompt to create a new file
@@ -166,7 +166,7 @@ export const EditorContextProvider = ({
     if (!activeTabContents) return;
 
     if (activeTabContents.created) {
-      const file = getFileByPath(activeTabContents.path, bucket);
+      const file = getFileByPath(activeTabContents.path, editorItems);
       if (!file) return;
       saveFileContents({ ...file, contents: activeTabContents.contents });
 
@@ -187,7 +187,7 @@ export const EditorContextProvider = ({
           defaultPath={activeTabContents.path}
           defaultType={activeLanguage}
           contents={activeTabContents.contents}
-          bucket={bucket}
+          editorItems={editorItems}
           createFile={createFile}
         />
       );
@@ -196,7 +196,7 @@ export const EditorContextProvider = ({
     openTabsContents,
     openFileTabs,
     activeTab,
-    bucket,
+    editorItems,
     saveFileContents,
     irminModal,
     dict,
@@ -224,7 +224,7 @@ export const EditorContextProvider = ({
   );
 
   /**
-   * Initializes or updates open tabs contents when openFileTabs or bucket changes
+   * Initializes or updates open tabs contents when openFileTabs or editorItems changes
    */
   useEffect(() => {
     setOpenTabsContents((prevOpenTabsContents) => {
@@ -235,7 +235,7 @@ export const EditorContextProvider = ({
         if (existingContent) {
           return existingContent;
         } else {
-          const file = getFileByPath(tabPath, bucket);
+          const file = getFileByPath(tabPath, editorItems);
           const contents = file?.contents ?? '';
           return {
             id: crypto.randomUUID(),
@@ -249,7 +249,7 @@ export const EditorContextProvider = ({
       });
       return updatedOpenTabsContents;
     });
-  }, [openFileTabs, bucket]);
+  }, [openFileTabs, editorItems]);
 
   /**
    * Retrieves the current editor content based on the active tab

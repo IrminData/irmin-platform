@@ -2,8 +2,8 @@ import IrminCore from '@/lib/core';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { IrminFileType } from '@/types/core/Bucket';
 import { CollectionType } from '@/types/core/Collection';
+import { IrminFileType } from '@/types/core/EditorItems';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { Query, QueryExecutionResult } from '@/types/core/Query';
 import {
@@ -49,6 +49,9 @@ class QueryService {
     this.executeScript = this.executeScript.bind(this);
     this.createQuery = this.createQuery.bind(this);
     this.getQueries = this.getQueries.bind(this);
+    this.getQuery = this.getQuery.bind(this);
+    this.deleteQuery = this.deleteQuery.bind(this);
+    this.updateQuery = this.updateQuery.bind(this);
     this.executeQuery = this.executeQuery.bind(this);
     this.getQueryResults = this.getQueryResults.bind(this);
   }
@@ -148,6 +151,86 @@ class QueryService {
   }
 
   /**
+   * Get single query by ID
+   *
+   * @param query - ID of the query to get
+   */
+  async getQuery(query: string): Promise<QueryAPIResponse> {
+    if (isOfflineMode) return fake(exampleQueries[0]) as QueryAPIResponse;
+    try {
+      const response = (await this.irminCore.fetchAPI(`/v1/query/${query}`, {
+        method: 'GET',
+      })) as QueryAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Get queries error');
+      if (isDevelopment) return fake(exampleQueries[0]) as QueryAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a query by ID
+   *
+   * @param query - ID of the query to delete
+   */
+  async deleteQuery(query: string): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return fake();
+    try {
+      const formData = new FormData();
+      formData.append('_method', 'DELETE');
+      const response = (await this.irminCore.fetchAPI(`/v1/query/${query}`, {
+        method: 'POST',
+        body: formData,
+      })) as QueryAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Get queries error');
+      if (isDevelopment) return fake(exampleQueries[0]) as QueryAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Update a query by ID
+   *
+   * @param query - ID of the query to update
+   * @param type - (optional) Type of the query (e.g., `sql`, `js`, etc.)
+   * @param content - (optional) Content of the query
+   * @param name - (optional) Name of the query
+   * @param description - (optional) Description of the query
+   * @param stored - (optional) Whether the query results are stored in the system
+   */
+  async updateQuery(
+    query: string,
+    type?: IrminFileType,
+    content?: string,
+    name?: string,
+    description?: string,
+    stored?: boolean
+  ): Promise<QueryAPIResponse> {
+    if (isOfflineMode) return fake(exampleQueries[0]) as QueryAPIResponse;
+    try {
+      const body = new FormData();
+      body.append('_method', 'PATCH');
+      if (type) body.append('type', type);
+      if (content) body.append('content', content);
+      if (name) body.append('name', name);
+      if (description) body.append('description', description);
+      if (stored) body.append('stored', stored.toString());
+      const response = (await this.irminCore.fetchAPI(`/v1/query/${query}`, {
+        method: 'POST',
+        body,
+      })) as QueryAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Update query error');
+      if (isDevelopment) return fake(exampleQueries[0]) as QueryAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
    * Execute a query
    *
    * @param queryId - ID of the query to execute
@@ -158,7 +241,7 @@ class QueryService {
       const response = await this.irminCore.fetchAPI(
         `/v1/query/${queryId}/execute`,
         {
-          method: 'POST',
+          method: 'GET',
         }
       );
       return response;
@@ -170,7 +253,7 @@ class QueryService {
   }
 
   /**
-   * Get saved result of a query, paginated
+   * Get result of a query, paginated
    *
    * @param queryId - ID of the query to fetch results for
    * @param page - Page number

@@ -1,4 +1,4 @@
-import { getLogs } from '@/lib/actions/logs';
+import { getWorkflowLogs } from '@/lib/actions/logs';
 import { getWorkflow } from '@/lib/actions/workflows';
 
 import LogsSection from '@/components/logs/LogsSection';
@@ -14,7 +14,7 @@ export default async function WorkflowLogsPage(props: {
   const params = await props.params;
 
   const [logs, workflow] = await Promise.all([
-    getLogs(params.workflow),
+    getWorkflowLogs(params.workflow),
     getWorkflow(params.workflow),
   ]);
 

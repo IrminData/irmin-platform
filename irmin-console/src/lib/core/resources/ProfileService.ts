@@ -2,19 +2,12 @@ import IrminCore from '@/lib/core';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { User } from '@/types/core/User';
 import { exampleProfile } from '@/types/examples/core';
+
+import { UserAPIResponse } from './UserService';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
-
-/**
- * Profile API response type
- */
-interface ProfileAPIResponse extends IrminAPIResponse {
-  data: User;
-}
 
 /**
  * Profile API service
@@ -28,30 +21,59 @@ class ProfileService {
     this.irminCore = irminCore;
     // Bind methods
     this.getProfile = this.getProfile.bind(this);
+    this.updateProfile = this.updateProfile.bind(this);
   }
 
   /**
    * Get the user's profile information
-   * @returns user's profile information or null if the user is not logged in
    */
-  async getProfile(): Promise<ProfileAPIResponse | null> {
-    if (isOfflineMode) return fake(exampleProfile) as ProfileAPIResponse;
+  async getProfile(): Promise<UserAPIResponse> {
+    if (isOfflineMode) return fake(exampleProfile) as UserAPIResponse;
     try {
-      const response = (await this.irminCore.fetchAPI(`/v1/account/profile`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/profile`, {
         method: 'GET',
-      })) as ProfileAPIResponse;
+      })) as UserAPIResponse;
       return response;
     } catch (error) {
-      // Check if the error is due to not being logged in
-      if ((error as { message: string }).message === 'Unauthenticated.') {
-        // If the user isn't logged in, log a message and return null
-        console.log("User isn't logged in");
-        return null;
-      }
-      // Otherwise, log the error
       console.error((error as Error).message, 'Get profile error');
       // Ignore any other errors if in development mode
-      if (isDevelopment) return fake(exampleProfile) as ProfileAPIResponse;
+      if (isDevelopment) return fake(exampleProfile) as UserAPIResponse;
+      // Otherwise, throw the error
+      throw error;
+    }
+  }
+
+  /**
+   * Update the user's profile information
+   *
+   * @param first_name - (optional) User's new first name
+   * @param last_name - (optional) User's new last name
+   * @param company - (optional) User's new company name
+   * @param profile_picture - (optional) User's new profile picture
+   */
+  async updateProfile(
+    first_name?: string,
+    last_name?: string,
+    company?: string,
+    profile_picture?: Blob
+  ): Promise<UserAPIResponse> {
+    if (isOfflineMode) return fake(exampleProfile) as UserAPIResponse;
+    const formData = new FormData();
+    formData.append('_method', 'PATCH');
+    if (first_name) formData.append('first_name', first_name);
+    if (last_name) formData.append('last_name', last_name);
+    if (company) formData.append('company', company);
+    if (profile_picture) formData.append('profile_picture', profile_picture);
+    try {
+      const response = (await this.irminCore.fetchAPI(`/v1/profile`, {
+        method: 'POST',
+        body: formData,
+      })) as UserAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Update profile error');
+      // Ignore any other errors if in development mode
+      if (isDevelopment) return fake(exampleProfile) as UserAPIResponse;
       // Otherwise, throw the error
       throw error;
     }

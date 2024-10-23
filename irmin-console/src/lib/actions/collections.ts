@@ -10,11 +10,56 @@ import { initCore } from '@/lib/initCore';
  * @param ref - (optional) ref to fetch the collections from, eg. branch, tag, commit hash
  * @returns The list of collections
  */
-export async function getCollections(repository?: string, ref?: string) {
+export async function getCollections(repository: string, ref?: string) {
   // Create the IrminCore instance
   const irminCore = await initCore();
   // Get the collections
   const collections = await irminCore.collectionService.fetchCollections(
+    repository,
+    ref
+  );
+  return collections.data;
+}
+
+/**
+ * Server action to get the list of all collections in the workspace.
+ * Note! This is done internally and not constructed in the Irmin API
+ *
+ * @returns The list of collections
+ */
+export async function getAllCollections() {
+  // Create the IrminCore instance
+  const irminCore = await initCore();
+  const { data: repositories } =
+    await irminCore.repositoryService.fetchRepositories();
+  const collections = (
+    await Promise.all(
+      repositories.map((repo) => {
+        return irminCore.collectionService.fetchCollections(repo.slug);
+      })
+    )
+  ).flatMap((res) => res.data);
+  return collections;
+}
+
+/**
+ * Server action to get a collection in a repository at a specific ref.
+ *
+ * @param collection - name of the collection to fetch
+ * @param repository - slug of the repository to fetch collections for
+ * @param ref - ref to fetch the collections from, eg. branch, tag, commit hash
+ * @returns The collection object
+ */
+export async function getCollection(
+  collection: string,
+  repository: string,
+  ref: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore();
+  // Get the collections
+  const collections = await irminCore.collectionService.fetchCollection(
+    collection,
     repository,
     ref
   );

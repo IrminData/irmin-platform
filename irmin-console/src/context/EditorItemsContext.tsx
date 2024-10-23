@@ -3,38 +3,42 @@
 import { createContext, useCallback, useContext, useState } from 'react';
 
 import {
-  createBucketItem,
-  deleteBucketItem,
-  updateBucketItem,
-} from '@/lib/actions/bucket';
+  createEditorItem,
+  deleteEditorItem,
+  updateEditorItem,
+} from '@/lib/actions/editor-items';
 
 import { usePopup } from '@/context/PopupContext';
 
-import { transformBucketToFileNavItem } from '@/utils/bucket';
+import { transformEditorItemsToFileNavItem } from '@/utils/editorItems';
 
-import { Bucket, BucketFile, BucketFolder } from '@/types/core/Bucket';
+import {
+  EditorItems,
+  EditorItemsFile,
+  EditorItemsFolder,
+} from '@/types/core/EditorItems';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
- * Bucket context properties
+ * EditorItems context properties
  *
- * @typeParam items - Files and folders in the bucket
- * @typeParam createFile - Create a new file in the bucket
- * @typeParam updateFile - Update a file in the bucket
- * @typeParam deleteFile - Delete a file from the bucket
- * @typeParam createFolder - Create a new folder in the bucket
- * @typeParam updateFolder - Update a folder in the bucket
- * @typeParam deleteFolder - Delete a folder from the bucket
+ * @typeParam items - Editor files and folders in the workspace
+ * @typeParam createFile - Create a new file
+ * @typeParam updateFile - Update a file
+ * @typeParam deleteFile - Delete a file
+ * @typeParam createFolder - Create a new folder
+ * @typeParam updateFolder - Update a folder
+ * @typeParam deleteFolder - Delete a folder
  * @typeParam openFileTabs - Paths of the items open in the editor
  * @typeParam setOpenFileTabs - Set the paths of the items open in the editor
  * @typeParam activeTab - Active tab index
  * @typeParam setActiveTab - Set the active tab index
  */
-interface BucketContextProps {
+interface EditorItemsContextProps {
   items: FileNavigatorItem[];
-  bucket: Bucket | null;
+  editorItems: EditorItems | null;
   openNewTab: () => void;
-  saveFileContents: (file: BucketFile) => void;
+  saveFileContents: (file: EditorItemsFile) => void;
   createFile: (file: FileNavigatorItem) => void;
   updateFile: (file: FileNavigatorItem) => void;
   deleteFile: (file: FileNavigatorItem) => void;
@@ -47,61 +51,64 @@ interface BucketContextProps {
   setActiveTab: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const BucketContext = createContext<BucketContextProps | undefined>(undefined);
+const EditorItemsContext = createContext<EditorItemsContextProps | undefined>(
+  undefined
+);
 
 /**
- * Bucket context to provide bucket data to components like the file navigator
+ * EditorItems context to provide editor items data to components like the file navigator
  *
- * @param config - Bucket context provider configuration
- * @param config.bucket - Current bucket data
+ * @param config - EditorItems context provider configuration
+ * @param config.editorItems - Current editor items
  * @param config.children - Child components
  *
- * @returns Bucket context provider
+ * @returns EditorItems context provider
  */
-export const BucketProvider = ({
-  bucket,
+export const EditorItemsProvider = ({
+  editorItems,
   children,
 }: {
-  bucket: Bucket;
+  editorItems: EditorItems;
   children: React.ReactNode;
 }) => {
   const { irminAlert } = usePopup();
 
-  const [currentBucket, setCurrentBucket] = useState<Bucket>(bucket);
+  const [currentEditorItems, setCurrentEditorItems] =
+    useState<EditorItems>(editorItems);
   const [items, setItems] = useState<FileNavigatorItem[]>([]);
 
   const [activeTab, setActiveTab] = useState<number>(0);
   const [openFileTabs, setOpenFileTabs] = useState<string[]>([]);
 
   /**
-   * Update the context state with the bucket data
-   * @param bucket - Bucket object
+   * Update the context state with the editorItems
+   * @param editorItems - EditorItems object
    * @internal
    */
-  const updateStateWithBucket = useCallback((bucket: Bucket) => {
-    const fileItems = transformBucketToFileNavItem(bucket);
-    setCurrentBucket(bucket);
+  const updateStateWithEditorItems = useCallback((editorItems: EditorItems) => {
+    const fileItems = transformEditorItemsToFileNavItem(editorItems);
+    setCurrentEditorItems(editorItems);
     setItems(fileItems);
   }, []);
 
   /**
-   * Construct the updated bucket for a folder
+   * Construct the updated editorItems for a folder
    *
    * When folder is moved or renamed, the path of the folder and its children need to be updated.
-   * This function constructs the updated bucket with the new paths.
+   * This function constructs the updated editorItems with the new paths.
    *
    * @param folder - File navigator item
-   * @returns Updated bucket
+   * @returns Updated editorItems
    */
-  const constructUpdatedBucketForFolder = useCallback(
+  const constructUpdatedEditorItemsForFolder = useCallback(
     (folder: FileNavigatorItem) => {
-      if (!currentBucket) return;
-      // Construct the updated bucket
-      const updatedBucket = { ...currentBucket };
-      updatedBucket.folders = updatedBucket.folders?.map((f) => {
-        // Update the folder item in the bucket
+      if (!currentEditorItems) return;
+      // Construct the updated editorItems
+      const updatedEditorItems = { ...currentEditorItems };
+      updatedEditorItems.folders = updatedEditorItems.folders?.map((f) => {
+        // Update the folder item
         if (f.path === folder.original?.path) {
-          return folder.current as BucketFolder;
+          return folder.current as EditorItemsFolder;
         }
         // Update children of the folder to reflect the path change
         if (folder.original?.path && f.path?.startsWith(folder.original.path)) {
@@ -113,8 +120,8 @@ export const BucketProvider = ({
         }
         return f;
       });
-      // Update the files in the bucket to reflect the path change
-      updatedBucket.files = updatedBucket.files?.map((f) => {
+      // Update the files to reflect the path change
+      updatedEditorItems.files = updatedEditorItems.files?.map((f) => {
         if (f.path?.startsWith(folder.original?.path ?? '')) {
           const newPath = f.path.replace(
             folder.original?.path ?? '',
@@ -124,18 +131,18 @@ export const BucketProvider = ({
         }
         return f;
       });
-      // Return the updated bucket
-      return updatedBucket;
+      // Return the updated editorItems
+      return updatedEditorItems;
     },
-    [currentBucket]
+    [currentEditorItems]
   );
 
   /**
    * Open a new tab in the editor
-   * Does not update the bucket or the item list, only the editor tabs
+   * Does not update the editorItems or the item list, only the editor tabs
    */
   const openNewTab = useCallback(() => {
-    if (!currentBucket) return;
+    if (!currentEditorItems) return;
     // Create a new tab with a random file name and switch to it
     const prevOpenFileTabs = [...openFileTabs];
     setOpenFileTabs([
@@ -146,7 +153,7 @@ export const BucketProvider = ({
 
     // Create a new untitled file and make sure it's unique
     const untitledFiles =
-      currentBucket.files.filter((file) =>
+      currentEditorItems.files.filter((file) =>
         file.name.toLowerCase().includes('untitled')
       ) ?? [];
     const untitledTabs = openFileTabs.filter((path) =>
@@ -158,27 +165,27 @@ export const BucketProvider = ({
 
     // Update the newly created tab with the untitled file path
     setOpenFileTabs([...prevOpenFileTabs, untitledPath]);
-  }, [currentBucket, openFileTabs]);
+  }, [currentEditorItems, openFileTabs]);
 
   /**
-   * Update file contents in the bucket
+   * Update file contents
    *
-   * This function updates the file in the context state and the bucket.
+   * This function updates the file in the context state and the editorItems.
    *
    * @param file - The file to update
    */
   const saveFileContents = useCallback(
-    async (file: BucketFile) => {
+    async (file: EditorItemsFile) => {
       try {
-        if (!currentBucket) return;
+        if (!currentEditorItems) return;
         // Update the context state
-        const updatedBucket = { ...currentBucket };
-        updatedBucket.files = updatedBucket.files.map((f) =>
+        const updatedEditorItems = { ...currentEditorItems };
+        updatedEditorItems.files = updatedEditorItems.files.map((f) =>
           f.path === file.path ? file : f
         );
-        updateStateWithBucket(updatedBucket);
-        // Update the file in the bucket
-        const res = await updateBucketItem({
+        updateStateWithEditorItems(updatedEditorItems);
+        // Update the file
+        const res = await updateEditorItem({
           original: file,
           current: file,
           type: 'file',
@@ -193,29 +200,29 @@ export const BucketProvider = ({
         );
       }
     },
-    [currentBucket, irminAlert, updateStateWithBucket]
+    [currentEditorItems, irminAlert, updateStateWithEditorItems]
   );
 
   /**
-   * Create a new file in the bucket
+   * Create a new file
    *
    * @remarks
    *
    * Create the file in the context state
-   * Create the file in the bucket
+   * Create the file
    *
    * @param file - File navigator item
    */
   const createFile = useCallback(
     async (file: FileNavigatorItem) => {
       try {
-        if (!currentBucket) return;
+        if (!currentEditorItems) return;
         // Update the context state
-        const updatedBucket = { ...currentBucket };
-        updatedBucket.files.push(file.current as BucketFile);
-        updateStateWithBucket(updatedBucket);
-        // Create the file in the bucket
-        const res = await createBucketItem(file);
+        const updatedEditorItems = { ...currentEditorItems };
+        updatedEditorItems.files.push(file.current as EditorItemsFile);
+        updateStateWithEditorItems(updatedEditorItems);
+        // Create the file
+        const res = await createEditorItem(file);
         // Show success alert
         irminAlert('success', res.message ?? 'File updated');
       } catch (error) {
@@ -226,38 +233,38 @@ export const BucketProvider = ({
         );
       }
     },
-    [currentBucket, updateStateWithBucket, irminAlert]
+    [currentEditorItems, updateStateWithEditorItems, irminAlert]
   );
 
   /**
-   * Update a file in the bucket
+   * Update a file
    *
    * @remarks
    *
    * Update the file in the context state
    * Update the open file tabs
-   * Update the file in the bucket
+   * Update the file
    *
    * @param file - File navigator item
    */
   const updateFile = useCallback(
     async (file: FileNavigatorItem) => {
       try {
-        if (!currentBucket) return;
+        if (!currentEditorItems) return;
         // Update the context state
-        const updatedBucket = { ...currentBucket };
-        updatedBucket.files = updatedBucket.files.map((f) =>
-          f.path === file.original?.path ? (file.current as BucketFile) : f
+        const updatedEditorItems = { ...currentEditorItems };
+        updatedEditorItems.files = updatedEditorItems.files.map((f) =>
+          f.path === file.original?.path ? (file.current as EditorItemsFile) : f
         );
-        updateStateWithBucket(updatedBucket);
+        updateStateWithEditorItems(updatedEditorItems);
         // Update the open file tabs
         setOpenFileTabs(
           openFileTabs.map((path) =>
             path === file.original?.path ? (file.current?.path ?? '') : path
           )
         );
-        // Update the file in the bucket
-        const res = await updateBucketItem(file);
+        // Update the file
+        const res = await updateEditorItem(file);
         // Show success alert
         irminAlert('success', res.message ?? 'File updated');
       } catch (error) {
@@ -268,11 +275,11 @@ export const BucketProvider = ({
         );
       }
     },
-    [currentBucket, updateStateWithBucket, openFileTabs, irminAlert]
+    [currentEditorItems, updateStateWithEditorItems, openFileTabs, irminAlert]
   );
 
   /**
-   * Delete a file from the bucket
+   * Delete a file
    *
    * @remarks
    *
@@ -280,27 +287,27 @@ export const BucketProvider = ({
    *
    * Delete the file from the context state
    * Update the open file tabs
-   * Delete the file from the bucket
+   * Delete the file
    *
    * @param file - File navigator item
    */
   const deleteFile = useCallback(
     async (file: FileNavigatorItem) => {
       try {
-        if (!currentBucket) return;
+        if (!currentEditorItems) return;
         // Update the context state
-        const updatedBucket = { ...currentBucket };
-        updatedBucket.files = updatedBucket.files.filter(
+        const updatedEditorItems = { ...currentEditorItems };
+        updatedEditorItems.files = updatedEditorItems.files.filter(
           (f) => f.path !== file.current?.path
         );
-        updateStateWithBucket(updatedBucket);
+        updateStateWithEditorItems(updatedEditorItems);
         // Update the open file tabs
         if (openFileTabs[activeTab] === file.current?.path) setActiveTab(0);
         setOpenFileTabs(
           openFileTabs.filter((path) => path !== file.current?.path)
         );
-        // Delete the file from the bucket
-        const res = await deleteBucketItem(file);
+        // Delete the file
+        const res = await deleteEditorItem(file);
         // Show success alert
         irminAlert('success', res.message ?? 'File deleted');
       } catch (error) {
@@ -311,29 +318,35 @@ export const BucketProvider = ({
         );
       }
     },
-    [currentBucket, updateStateWithBucket, openFileTabs, activeTab, irminAlert]
+    [
+      currentEditorItems,
+      updateStateWithEditorItems,
+      openFileTabs,
+      activeTab,
+      irminAlert,
+    ]
   );
 
   /**
-   * Create a new folder in the bucket
+   * Create a new folder
    *
    * @remarks
    *
    * Create the folder in the context state
-   * Create the folder in the bucket
+   * Create the folder
    *
    * @param folder - File navigator item
    */
   const createFolder = useCallback(
     async (folder: FileNavigatorItem) => {
       try {
-        if (!currentBucket) return;
+        if (!currentEditorItems) return;
         // Update the context state
-        const updatedBucket = { ...currentBucket };
-        updatedBucket.folders.push(folder.current as BucketFolder);
-        updateStateWithBucket(updatedBucket);
-        // Create the folder in the bucket
-        const res = await createBucketItem(folder);
+        const updatedEditorItems = { ...currentEditorItems };
+        updatedEditorItems.folders.push(folder.current as EditorItemsFolder);
+        updateStateWithEditorItems(updatedEditorItems);
+        // Create the folder
+        const res = await createEditorItem(folder);
         // Show success alert
         irminAlert('success', res.message ?? 'Folder created');
       } catch (error) {
@@ -344,29 +357,29 @@ export const BucketProvider = ({
         );
       }
     },
-    [currentBucket, updateStateWithBucket, irminAlert]
+    [currentEditorItems, updateStateWithEditorItems, irminAlert]
   );
 
   /**
-   * Update a folder in the bucket
+   * Update a folder
    *
    * @remarks
    *
    * Update the folder in the context state
    * Update the open file tabs
-   * Update the folder in the bucket
+   * Update the folder
    *
    * @param folder - File navigator item
    */
   const updateFolder = useCallback(
     async (folder: FileNavigatorItem) => {
       try {
-        // Construct the updated bucket
-        const updatedBucket = constructUpdatedBucketForFolder(folder);
-        if (!updatedBucket)
-          throw new Error('Bucket failed to construct for folder');
+        // Construct the updated editorItems
+        const updatedEditorItems = constructUpdatedEditorItemsForFolder(folder);
+        if (!updatedEditorItems)
+          throw new Error('EditorItems failed to construct for folder');
         // Update the context state
-        updateStateWithBucket(updatedBucket);
+        updateStateWithEditorItems(updatedEditorItems);
         // Update the open file tabs
         setOpenFileTabs(
           openFileTabs.map((path) =>
@@ -378,8 +391,8 @@ export const BucketProvider = ({
               : path
           )
         );
-        // Update the folder in the bucket
-        const res = await updateBucketItem(folder);
+        // Update the folder
+        const res = await updateEditorItem(folder);
         // Show success alert
         irminAlert('success', res.message ?? 'Folder updated');
       } catch (error) {
@@ -391,15 +404,15 @@ export const BucketProvider = ({
       }
     },
     [
-      constructUpdatedBucketForFolder,
-      updateStateWithBucket,
+      constructUpdatedEditorItemsForFolder,
+      updateStateWithEditorItems,
       openFileTabs,
       irminAlert,
     ]
   );
 
   /**
-   * Delete a folder from the bucket
+   * Delete a folder
    *
    * @remarks
    *
@@ -407,23 +420,23 @@ export const BucketProvider = ({
    *
    * Delete the folder and all of it's children from the context state
    * Update the open file tabs
-   * Delete the folder from the bucket
+   * Delete the folder
    *
    * @param folder - File navigator item
    */
   const deleteFolder = useCallback(
     async (folder: FileNavigatorItem) => {
       try {
-        if (!currentBucket) return;
+        if (!currentEditorItems) return;
         // Remove the folder and its children from the context state
-        const updatedBucket = { ...currentBucket };
-        updatedBucket.folders = updatedBucket.folders.filter(
+        const updatedEditorItems = { ...currentEditorItems };
+        updatedEditorItems.folders = updatedEditorItems.folders.filter(
           (f) => !f.path?.startsWith(folder.original?.path ?? '')
         );
-        updatedBucket.files = updatedBucket.files.filter(
+        updatedEditorItems.files = updatedEditorItems.files.filter(
           (f) => !f.path?.startsWith(folder.original?.path ?? '')
         );
-        updateStateWithBucket(updatedBucket);
+        updateStateWithEditorItems(updatedEditorItems);
         // Update the open file tabs
         if (openFileTabs[activeTab]?.startsWith(folder.original?.path ?? '')) {
           setActiveTab(0);
@@ -433,8 +446,8 @@ export const BucketProvider = ({
             (path) => !path?.startsWith(folder.original?.path ?? '')
           )
         );
-        // Delete the folder from the bucket
-        const res = await deleteBucketItem(folder);
+        // Delete the folder
+        const res = await deleteEditorItem(folder);
         // Show success alert
         irminAlert('success', res.message ?? 'Folder deleted');
       } catch (error) {
@@ -445,14 +458,20 @@ export const BucketProvider = ({
         );
       }
     },
-    [currentBucket, updateStateWithBucket, openFileTabs, activeTab, irminAlert]
+    [
+      currentEditorItems,
+      updateStateWithEditorItems,
+      openFileTabs,
+      activeTab,
+      irminAlert,
+    ]
   );
 
   return (
-    <BucketContext.Provider
+    <EditorItemsContext.Provider
       value={{
         items,
-        bucket: currentBucket,
+        editorItems: currentEditorItems,
         openNewTab,
         saveFileContents,
         createFile,
@@ -468,17 +487,17 @@ export const BucketProvider = ({
       }}
     >
       {children}
-    </BucketContext.Provider>
+    </EditorItemsContext.Provider>
   );
 };
 
 /**
- * Hook to use the bucket context
+ * Hook to use the editor items context
  */
-export const useBucket = () => {
-  const context = useContext(BucketContext);
+export const useEditorItems = () => {
+  const context = useContext(EditorItemsContext);
   if (!context) {
-    throw new Error('useBucket must be used within a BucketProvider');
+    throw new Error('useEditorItems must be used within a EditorItemsProvider');
   }
   return context;
 };

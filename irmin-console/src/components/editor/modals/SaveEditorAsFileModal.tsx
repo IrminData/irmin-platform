@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
+import ReactSelect from 'react-select';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
@@ -18,24 +19,45 @@ import {
   getCorrectPath,
   getNameWithoutExtension,
   itemCanBeCreated,
-} from '@/utils/bucket';
+} from '@/utils/editorItems';
 
-import { Bucket, BucketFolder } from '@/types/core/Bucket';
+import {
+  EditorItems,
+  EditorItemsFile,
+  IrminFileType,
+  irminFileTypes,
+  IrminFileTypeWithDetails,
+} from '@/types/core/EditorItems';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 import PathSelector from '../PathSelector';
 
-type FormData = {
-  name: string;
-  path: string;
-};
-
-export default function AddNewFolderModal({
-  bucket,
-  createFolder,
+/**
+ * Content for the "Save As File" modal in the editor
+ * Allows the user to create a new file
+ *
+ * @param options - The options for the item to create
+ * @param options.defaultName - The default name for the new file
+ * @param options.defaultPath - The default path for the new file
+ * @param options.defaultType - The default type for the new file
+ * @param options.contents - The contents of the new file
+ * @param options.editorItems - The editorItems the item is in
+ * @param options.createFile - Function to create a new file
+ */
+export default function SaveEditorAsFileModal({
+  defaultName,
+  defaultPath,
+  defaultType,
+  contents,
+  editorItems,
+  createFile,
 }: {
-  bucket: Bucket | null;
-  createFolder: (folder: FileNavigatorItem) => void;
+  defaultName: string;
+  defaultPath: string;
+  defaultType: IrminFileType;
+  contents: string;
+  editorItems: EditorItems | null;
+  createFile: (file: FileNavigatorItem) => void;
 }) {
   const { irminModal } = usePopup();
   const { dict } = useLocale();
@@ -44,29 +66,42 @@ export default function AddNewFolderModal({
   const [loading, setLoading] = useState(false);
   const [showPathSelector, setShowPathSelector] = useState(true);
 
-  const creatingNewFolderRef = useRef(false);
+  const creationInProgress = useRef(false);
 
   const {
-    handleSubmit,
     control,
+    handleSubmit,
     watch,
     setValue,
     formState: { errors },
-  } = useForm<FormData>({
+  } = useForm<{
+    name: string;
+    path: string;
+    extension: IrminFileTypeWithDetails;
+  }>({
     defaultValues: {
-      name: '',
-      path: '',
+      name: getNameWithoutExtension(defaultName),
+      path: defaultPath,
+      extension:
+        irminFileTypes.find((type) => type.extension === defaultType) ||
+        irminFileTypes[0],
     },
   });
 
   const name = watch('name');
   const path = watch('path');
+  const extension = watch('extension');
 
   /**
-   * Update the path when the name changes
+   * Update the path and name when the extension or name changes
    */
-  const updatePath = useCallback(() => {
-    const nameWithExtension = getCorrectNameWithExtension(name, 'folder');
+  const updatePathAndName = useCallback(() => {
+    const extensionValue = extension.extension;
+    const nameWithExtension = getCorrectNameWithExtension(
+      name,
+      'file',
+      extensionValue
+    );
     const newPath = getCorrectPath(path, nameWithExtension);
 
     // Update the name without extension and path
@@ -75,27 +110,33 @@ export default function AddNewFolderModal({
       shouldDirty: true,
     });
     setValue('path', newPath, { shouldValidate: true, shouldDirty: true });
-  }, [name, path, setValue]);
+  }, [name, path, extension, setValue]);
 
-  // Update path whenever the name changes
+  // Update path and name whenever name or extension changes
   useEffect(() => {
-    updatePath();
-  }, [name, updatePath]);
+    updatePathAndName();
+  }, [name, extension, updatePathAndName]);
 
   /**
-   * Create the folder based on the values provided by the user
+   * Create the new item based on the values provided by the user
    */
   const onSubmit = useCallback(
-    async (data: FormData) => {
-      if (creatingNewFolderRef.current) return;
-      creatingNewFolderRef.current = true;
+    async (data: {
+      name: string;
+      path: string;
+      extension: IrminFileTypeWithDetails;
+    }) => {
+      if (creationInProgress.current) return;
+      creationInProgress.current = true;
       try {
         setError('');
         setLoading(true);
 
+        const extensionValue = data.extension.extension;
         const nameWithExtension = getCorrectNameWithExtension(
           data.name,
-          'folder'
+          'file',
+          extensionValue
         );
         const newPath = data.path;
 
@@ -103,25 +144,30 @@ export default function AddNewFolderModal({
         const canCreate = itemCanBeCreated(
           newPath,
           nameWithExtension,
-          'folder',
-          bucket,
-          dict
+          'file',
+          editorItems,
+          dict,
+          extensionValue
         );
         if (!canCreate.canCreate) {
           throw new Error(canCreate.reason);
         }
-        // Create the new folder
-        const newFolder = {
-          bucket: bucket?.slug ?? '',
+
+        // Create the new file
+        const newFile = {
+          is_draft: false,
+          workspace: editorItems?.workspace ?? '',
+          contents: contents,
           name: nameWithExtension,
           path: newPath,
-        } as BucketFolder;
-        createFolder({
+          type: extensionValue,
+        } as EditorItemsFile;
+        createFile({
           original: null,
-          current: newFolder,
-          children: [],
-          type: 'folder',
+          current: newFile,
+          type: 'file',
         });
+
         // Close the modal after creation
         irminModal.close();
       } catch (error) {
@@ -129,26 +175,44 @@ export default function AddNewFolderModal({
         setError((error as Error).message);
       } finally {
         setLoading(false);
-        creatingNewFolderRef.current = false;
+        creationInProgress.current = false;
       }
     },
-    [bucket, createFolder, dict, irminModal]
+    [editorItems, contents, createFile, dict, irminModal]
   );
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
       className='flex flex-col gap-4 pb-6'
-      id='add-new-folder-modal'
+      id='save-editor-as-file-modal'
     >
+      <div>
+        <Controller
+          name='extension'
+          control={control}
+          render={({ field }) => (
+            <ReactSelect
+              {...field}
+              aria-label='Select the type of the file'
+              isDisabled={loading}
+              options={irminFileTypes}
+              getOptionLabel={(option) => option.name}
+              getOptionValue={(option) => option.extension}
+              className='react-select-container'
+              classNamePrefix='react-select'
+            />
+          )}
+        />
+      </div>
       <div className='flex flex-col gap-2'>
-        <Label>{dict.fileNavigator.newFolderName}</Label>
+        <Label>{dict.fileNavigator.newFileName}</Label>
         <Controller
           name='name'
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
-            <Input type='text' disabled={loading} {...field} />
+            <Input {...field} type='text' disabled={loading} />
           )}
         />
         {errors.name && (
@@ -156,14 +220,13 @@ export default function AddNewFolderModal({
         )}
       </div>
       <div className='flex flex-col gap-2'>
-        <Label>{dict.fileNavigator.newFolderPath}</Label>
+        <Label>{dict.fileNavigator.newFilePath}</Label>
         <Controller
           name='path'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <div className='flex items-center'>
-              <Input type='text' disabled {...field} />
+              <Input {...field} type='text' disabled />
               <Button
                 size='icon'
                 variant='secondary'
@@ -182,14 +245,15 @@ export default function AddNewFolderModal({
             </div>
           )}
         />
-        {errors.path && (
-          <p className='mt-1 text-xs text-red-600'>{errors.path.message}</p>
-        )}
       </div>
       {showPathSelector && (
         <PathSelector
-          bucket={bucket}
-          itemName={getCorrectNameWithExtension(name, 'folder')}
+          editorItems={editorItems}
+          itemName={getCorrectNameWithExtension(
+            name,
+            'file',
+            extension.extension
+          )}
           originalItemPath={null}
           currentSelected={path}
           onSelectPath={(selectedPath: string) => {
@@ -200,7 +264,7 @@ export default function AddNewFolderModal({
           }}
         />
       )}
-      {error && <div className='text-destructive'>{error}</div>}
+      {error && <div className='py-2 text-destructive'>{error}</div>}
       <Button
         variant='default'
         size='sm'
@@ -208,7 +272,7 @@ export default function AddNewFolderModal({
         type='submit'
         disabled={loading}
       >
-        {loading ? dict.misc.loading : dict.fileNavigator.createFolder}
+        {loading ? dict.misc.loading : dict.fileNavigator.createFile}
       </Button>
     </form>
   );

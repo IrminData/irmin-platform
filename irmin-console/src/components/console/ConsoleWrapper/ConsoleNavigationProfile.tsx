@@ -39,7 +39,8 @@ export default function ConsoleNavigationProfile({
       </div>
       <div className='w-auto overflow-hidden p-1'>
         <p className='text-sm font-normal text-foreground dark:text-gray-200'>
-          {profile.user?.fullName ?? profile.name ?? 'User'}
+          {profile.user?.fullName ??
+            `${profile.first_name} ${profile.last_name}`}
         </p>
       </div>
       <div className='ml-auto'>

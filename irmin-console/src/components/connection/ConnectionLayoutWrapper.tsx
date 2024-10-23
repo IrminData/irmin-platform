@@ -92,10 +92,12 @@ export default function ConnectionLayoutWrapper({
                 <Badge>{connection.connector.name}</Badge>
               </div>
               <span className='px-2 text-xs text-gray-400 md:text-sm'>
-                {dict.list.owner}: {connection.owner.name}
+                {dict.list.owner}:{' '}
+                {`${connection.owner.first_name} ${connection.owner.last_name}`}
                 {connection.owner.company
                   ? ` (${connection.owner.company})`
-                  : ''}
+                  : ''}{' '}
+                - {connection.owner.email}
               </span>
             </div>
             <div className='flex flex-wrap items-center gap-2'>

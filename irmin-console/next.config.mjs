@@ -36,6 +36,11 @@ const nextConfig = {
         hostname: '**.irmin.app',
         port: '',
       },
+      {
+        protocol: 'https',
+        hostname: 'img.clerk.com',
+        port: '',
+      },
     ],
   },
 };

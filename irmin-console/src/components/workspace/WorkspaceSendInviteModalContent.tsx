@@ -9,12 +9,13 @@ import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { IrminRole, IrminRoleNames } from '@/types/core/IrminRole';
+import { IrminRole } from '@/types/core/IrminRole';
 
 interface InviteFormValues {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  role: IrminRoleNames;
+  role: string;
 }
 
 /**
@@ -42,7 +43,8 @@ const WorkspaceSendInviteModalContent = ({
     formState: { errors },
   } = useForm<InviteFormValues>({
     defaultValues: {
-      name: '',
+      firstName: '',
+      lastName: '',
       email: '',
       role: irminRoles[0]?.name,
     },
@@ -55,26 +57,45 @@ const WorkspaceSendInviteModalContent = ({
         className='flex flex-col gap-4 pb-4'
       >
         <div className='flex flex-col gap-2'>
-          <Label>{dict.usersPermissions.name}</Label>
+          <Label>{dict.users.firstName}</Label>
           <Controller
-            name='name'
+            name='firstName'
             control={control}
             rules={{ required: dict.misc.fieldRequired }}
             render={({ field }) => (
               <Input
                 className='mt-2'
                 type='text'
-                placeholder='John Doe'
+                placeholder='John'
                 {...field}
               />
             )}
           />
-          {errors.name && (
-            <p className='mt-1 text-destructive'>{errors.name.message}</p>
+          {errors.firstName && (
+            <p className='mt-1 text-destructive'>{errors.firstName.message}</p>
           )}
         </div>
         <div className='flex flex-col gap-2'>
-          <Label>{dict.usersPermissions.email}</Label>
+          <Label>{dict.users.lastName}</Label>
+          <Controller
+            name='lastName'
+            control={control}
+            rules={{ required: dict.misc.fieldRequired }}
+            render={({ field }) => (
+              <Input
+                className='mt-2'
+                type='text'
+                placeholder='Doe'
+                {...field}
+              />
+            )}
+          />
+          {errors.lastName && (
+            <p className='mt-1 text-destructive'>{errors.lastName.message}</p>
+          )}
+        </div>
+        <div className='flex flex-col gap-2'>
+          <Label>{dict.users.email}</Label>
           <Controller
             name='email'
             control={control}
@@ -96,7 +117,7 @@ const WorkspaceSendInviteModalContent = ({
           )}
         </div>
         <div className='flex flex-col gap-2'>
-          <Label>{dict.usersPermissions.role}</Label>
+          <Label>{dict.users.role}</Label>
           <div className='mt-2 w-full'>
             <Controller
               name='role'
@@ -136,7 +157,7 @@ const WorkspaceSendInviteModalContent = ({
         </div>
         <div className='flex flex-row gap-2'>
           <Button size='sm' variant='link' onClick={() => onClose(false)}>
-            {dict.usersPermissions.cancel}
+            {dict.users.cancel}
           </Button>
           <Button
             size='sm'
@@ -144,7 +165,7 @@ const WorkspaceSendInviteModalContent = ({
             variant='default'
             type='submit'
           >
-            {dict.usersPermissions.invite}
+            {dict.users.invite}
           </Button>
         </div>
       </form>

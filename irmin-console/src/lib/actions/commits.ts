@@ -50,13 +50,13 @@ export async function createCommit(
  */
 export async function getLastModification(
   repositorySlug: string,
-  currentRef: string,
+  branch: string,
   collection: string
 ) {
   const irminCore = await initCore();
   const res = await irminCore.commitService.fetchLastModification(
     repositorySlug,
-    currentRef,
+    branch,
     collection
   );
   return res;

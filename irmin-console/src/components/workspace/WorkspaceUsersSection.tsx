@@ -10,8 +10,6 @@ import { useLocale } from '@/context/LocaleContext';
 import { useUsers } from '@/context/UsersContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
-import { IrminRoleNames } from '@/types/core/IrminRole';
-
 /**
  * Workspace Users section
  *
@@ -30,20 +28,20 @@ const WorkspaceUsersSection = () => {
           <div className='my-8 px-4'>
             <div className='mb-8 flex flex-row items-center justify-between px-2'>
               <h2 className='text-lg font-semibold lg:text-xl'>
-                {dict.usersPermissions.usersAndPermissions}
+                {dict.users.usersAndPermissions}
               </h2>
             </div>
             <table className='min-w-full'>
               <thead>
                 <tr className='border-b dark:border-gray-800'>
                   <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
-                    {dict.usersPermissions.name}
+                    {dict.misc.name}
                   </th>
                   <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
-                    {dict.usersPermissions.email}
+                    {dict.users.email}
                   </th>
                   <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
-                    {dict.usersPermissions.role}
+                    {dict.users.role}
                   </th>
                   <th className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
                     {/* Actions */}
@@ -57,7 +55,7 @@ const WorkspaceUsersSection = () => {
                     className='h-14 border-b dark:border-gray-800'
                   >
                     <td className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
-                      {user.name}
+                      {user.first_name} {user.last_name}
                       {/* Only for mobile screens */}
                       <span className='block text-xs opacity-70 md:hidden'>
                         {user.email}
@@ -69,7 +67,7 @@ const WorkspaceUsersSection = () => {
                     </td>
                     <td className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
                       {workspace?.owner_id === user.id ? (
-                        dict.usersPermissions.owner
+                        dict.users.owner
                       ) : (
                         <ReactSelect
                           value={
@@ -80,21 +78,22 @@ const WorkspaceUsersSection = () => {
                                 }
                               : {
                                   value: 'no-role',
-                                  label: dict.usersPermissions.noRole,
+                                  label: dict.users.noRole,
                                 }
                           }
                           onChange={(val) => {
-                            if (!val || !val.value) return;
-                            // Change role of a user
+                            if (!val || !val.length) return;
+                            // Change roles of a user
                             changeUserRole(
                               user.id,
-                              val.value as IrminRoleNames
+                              val.map((v) => v.value)
                             );
                           }}
                           options={roles.map((role) => ({
                             value: role.name,
                             label: role.label,
                           }))}
+                          isMulti={true}
                           isSearchable={false}
                           isClearable={false}
                           className='react-select-container'
@@ -110,7 +109,7 @@ const WorkspaceUsersSection = () => {
                             variant='secondary'
                             onClick={() => reassignWorkspace(user.id)}
                             icon={<IoKey size={14} />}
-                            tooltip={dict.usersPermissions.transferOwnership}
+                            tooltip={dict.users.transferOwnership}
                           />
                           <ButtonWithTooltip
                             size='icon'
@@ -118,7 +117,7 @@ const WorkspaceUsersSection = () => {
                             aria-label='Remove user from workspace'
                             onClick={() => deleteUser(user.id)}
                             icon={<IoExit size={14} />}
-                            tooltip={dict.usersPermissions.removeFromWorkspace}
+                            tooltip={dict.users.removeFromWorkspace}
                           />
                         </div>
                       )}

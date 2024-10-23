@@ -44,13 +44,13 @@ const WorkflowSettingsSection = () => {
   const fieldConfiguration: FieldConfig<WorkflowFormValues>[] = [
     {
       name: 'name',
-      label: dict.workflow.name,
+      label: dict.misc.name,
       type: 'text',
       placeholder: '',
     },
     {
       name: 'description',
-      label: dict.workflow.description,
+      label: dict.misc.description,
       type: 'textarea',
       placeholder: '',
     },

@@ -110,7 +110,7 @@ export const WorkspaceProvider = ({
       if (updating.current) return;
       try {
         updating.current = true;
-        const res = await updateWorkspace(data);
+        const res = await updateWorkspace(workspaceSlug, data);
         await fetchWorkspace();
         irminAlert('success', res.message ?? 'Workspace updated successfully');
       } catch (error) {
@@ -122,19 +122,20 @@ export const WorkspaceProvider = ({
         updating.current = false;
       }
     },
-    [fetchWorkspace, irminAlert]
+    [workspaceSlug, fetchWorkspace, irminAlert]
   );
 
   const handleReassignWorkspace = useCallback(
     async (ownerID: string) => {
+      if (!workspace) return;
       const confirmed = await irminConfirm(
         'warning',
-        `${dict.misc.areYouSureYouWantToReassign} (${workspace?.name})`
+        `${dict.misc.areYouSureYouWantToReassign} (${workspace.name})`
       );
       if (updating.current || !confirmed) return;
       try {
         updating.current = true;
-        const res = await reassignWorkspace(ownerID);
+        const res = await reassignWorkspace(workspace.slug, ownerID);
         await fetchWorkspace();
         irminAlert(
           'success',

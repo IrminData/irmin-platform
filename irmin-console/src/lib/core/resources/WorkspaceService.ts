@@ -65,6 +65,7 @@ class WorkspaceService {
 
   /**
    * Fetch a single workspace by slug
+   *
    * @param workspaceSlug - The slug of the workspace to fetch
    */
   async fetchWorkspace(workspaceSlug: string): Promise<WorkspaceAPIResponse> {
@@ -93,89 +94,112 @@ class WorkspaceService {
   }
 
   /**
-   * Transfer the ownership of the workspace to another user
+   * Transfer the ownership of a to another user
+   *
+   * @param workspace - The slug of the workspace to transfer the ownership of
    * @param user - The ID of the user to transfer the ownership to
    */
-  async transferWorkspaceOwnership(user: string) {
-    if (isOfflineMode) return fake();
+  async transferWorkspaceOwnership(
+    workspace: string,
+    user: string
+  ): Promise<WorkspaceAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleWorkspaces[0]) as WorkspaceAPIResponse;
     try {
       const formData = new FormData();
       formData.append('user', user);
-
-      const res = await this.irminCore.fetchAPI(
-        `/v1/workspaces/transfer-ownership`,
+      const res = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/reassign`,
         {
           method: 'POST',
           body: formData,
         }
-      );
-
+      )) as WorkspaceAPIResponse;
       return res;
     } catch (error) {
       console.error(
         (error as Error).message,
         'Transfer workspace ownership error'
       );
+      if (isDevelopment)
+        return fake(exampleWorkspaces[0]) as WorkspaceAPIResponse;
       throw error;
     }
   }
 
   /**
    * Create a new workspace
+   *
    * @param name - The name of the new workspace
-   * @param description - The description of the new workspace
+   * @param description - (optional) The description of the new workspace
    */
-  async createWorkspace(name: string, description: string) {
-    if (isOfflineMode) return fake();
+  async createWorkspace(
+    name: string,
+    description?: string
+  ): Promise<WorkspaceAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleWorkspaces[0]) as WorkspaceAPIResponse;
     try {
       const formData = new FormData();
       formData.append('name', name);
-      formData.append('description', description);
-
-      const res = await this.irminCore.fetchAPI(`/v1/workspaces`, {
+      if (description) formData.append('description', description);
+      const res = (await this.irminCore.fetchAPI(`/v1/workspaces`, {
         method: 'POST',
         body: formData,
-      });
-
+      })) as WorkspaceAPIResponse;
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Create workspace error');
+      if (isDevelopment)
+        return fake(exampleWorkspaces[0]) as WorkspaceAPIResponse;
       throw error;
     }
   }
 
   /**
-   * Update the current workspace
+   * Update a workspace
    *
+   * @param workspace - The slug of the workspace to update
    * @param data - The updated workspace properties
    */
-  async updateWorkspace(data: ItemUpdateProps) {
-    if (isOfflineMode) return fake();
+  async updateWorkspace(
+    workspace: string,
+    data: ItemUpdateProps
+  ): Promise<WorkspaceAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleWorkspaces[0]) as WorkspaceAPIResponse;
     try {
       const formData = new FormData();
       formData.append('_method', 'PATCH');
       if (data.name) formData.append('name', data.name);
       if (data.description) formData.append('description', data.description);
-      const res = await this.irminCore.fetchAPI(`/v1/workspaces`, {
-        method: 'POST',
-        body: formData,
-      });
+      const res = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as WorkspaceAPIResponse;
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Update workspace error');
+      if (isDevelopment)
+        return fake(exampleWorkspaces[0]) as WorkspaceAPIResponse;
       throw error;
     }
   }
 
   /**
-   * Delete the current workspace
+   * Delete a workspace
+   *
+   * @param workspace - The slug of the workspace to delete
    */
-  async deleteWorkspace() {
+  async deleteWorkspace(workspace: string) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
       formData.append('_method', 'DELETE');
-      const res = await this.irminCore.fetchAPI(`/v1/workspaces`, {
+      const res = await this.irminCore.fetchAPI(`/v1/workspaces/${workspace}`, {
         method: 'POST',
         body: formData,
       });
@@ -183,6 +207,7 @@ class WorkspaceService {
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Delete workspace error');
+      if (isDevelopment) return fake();
       throw error;
     }
   }
@@ -201,19 +226,20 @@ class WorkspaceService {
           exampleWorkspaces[0]
       ) as WorkspaceAPIResponse;
     try {
-      const formData = new FormData();
-      formData.append('workspace', workspaceSlug);
-
-      await this.irminCore.fetchAPI(`/v1/workspaces/switch`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      const newWorkspace = await this.fetchWorkspace(workspaceSlug);
-
+      const newWorkspace = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspaceSlug}/switch`,
+        {
+          method: 'GET',
+        }
+      )) as WorkspaceAPIResponse;
       return newWorkspace;
     } catch (error) {
       console.error((error as Error).message, 'Switch workspace error');
+      if (isDevelopment)
+        return fake(
+          exampleWorkspaces.find((v) => v.slug === workspaceSlug) ??
+            exampleWorkspaces[0]
+        ) as WorkspaceAPIResponse;
       throw error;
     }
   }

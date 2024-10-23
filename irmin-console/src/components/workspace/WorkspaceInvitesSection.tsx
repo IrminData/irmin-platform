@@ -33,23 +33,23 @@ const WorkspaceInvitesSection = () => {
           <div className='my-8 px-4'>
             <div className='mb-8 flex flex-row items-center justify-between px-2'>
               <h2 className='text-lg font-semibold lg:text-xl'>
-                {dict.usersPermissions.invites}
+                {dict.users.invites}
               </h2>
               <Button size='sm' variant='default' onClick={() => sendInvite()}>
-                {dict.usersPermissions.inviteUser}
+                {dict.users.inviteUser}
               </Button>
             </div>
             <table className='min-w-full'>
               <thead>
                 <tr className='border-b dark:border-gray-800'>
                   <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
-                    {dict.usersPermissions.name}
+                    {dict.misc.name}
                   </th>
                   <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
-                    {dict.usersPermissions.email}
+                    {dict.users.email}
                   </th>
                   <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
-                    {dict.usersPermissions.role}
+                    {dict.users.role}
                   </th>
                   <th className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
                     {/* Actions */}
@@ -63,7 +63,7 @@ const WorkspaceInvitesSection = () => {
                     className='h-14 border-b dark:border-gray-800'
                   >
                     <td className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
-                      {invite.name}
+                      {invite.first_name} {invite.last_name}
                       {/* Only for mobile screens */}
                       <span className='block text-xs opacity-70 md:hidden'>
                         {invite.email}
@@ -102,7 +102,7 @@ const WorkspaceInvitesSection = () => {
                           aria-label='Resend invite'
                           icon={<IoMailOpenOutline size={14} />}
                           onClick={() => resendInvite(invite.id)}
-                          tooltip={dict.usersPermissions.resendInvite}
+                          tooltip={dict.users.resendInvite}
                         />
                         <ButtonWithTooltip
                           size='icon'
@@ -110,7 +110,7 @@ const WorkspaceInvitesSection = () => {
                           aria-label='Cancel invite'
                           icon={<IoExit size={14} />}
                           onClick={() => deleteInvite(invite.id)}
-                          tooltip={dict.usersPermissions.cancelInvite}
+                          tooltip={dict.users.cancelInvite}
                         />
                       </div>
                     </td>

@@ -50,7 +50,7 @@ const WorkflowSection = () => {
             </p>
           </div>,
           <div key={`run-${i}-owner`} className='inline-flex flex-col gap-2'>
-            <p className='text-xs lg:text-sm'>{run.owner.name}</p>
+            <p className='text-xs lg:text-sm'>{run.owner.email}</p>
           </div>,
           <div key={`run-${i}-status`} className='inline-flex flex-col gap-2'>
             <StatusBadge status={run.status} label={run.status} />

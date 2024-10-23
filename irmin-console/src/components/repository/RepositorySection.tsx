@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -10,7 +10,7 @@ import { TbDownload, TbFileDiff, TbUpload } from 'react-icons/tb';
 
 import { Dictionary } from '@/lib/dict';
 
-import CodeMirrorEditor from '@/components/bucket/editor/CodeMirrorEditor';
+import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import QueryResults from '@/components/query/QueryResults';
 import Button from '@/components/ui/button';
 
@@ -20,6 +20,7 @@ import { useRepository } from '@/context/RepositoryContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
+import { Collection } from '@/types/core/Collection';
 import { Workflow } from '@/types/core/Workflow';
 import { Workspace } from '@/types/core/Workspace';
 
@@ -52,19 +53,16 @@ export default function RepositorySection({
     currentRepository,
     loadingCollections,
     collections,
+    schema,
   } = useRepository();
 
   const query = useQuery();
 
   const { irminModal } = usePopup();
 
-  const [selectedCollectionID, setSelectedCollectionID] = useState<
-    string | null
-  >(null);
-  const selectedCollection = useMemo(
-    () => collections?.find((item) => item.id === selectedCollectionID),
-    [selectedCollectionID, collections]
-  );
+  const [selectedCollection, setSelectedCollection] = useState<
+    Collection | undefined
+  >();
   const [queryField, setQueryField] = useState<string>('');
   const [queryChanged, setQueryChanged] = useState(false);
 
@@ -76,7 +74,7 @@ export default function RepositorySection({
     if (!selectedCollection) return;
     if (queryChanged) return;
     setQueryField(
-      `SELECT * FROM $["${selectedCollection.formatted_name}${currentRef ? `@${currentRef}` : ''}"]`
+      `SELECT * FROM $["${selectedCollection.repository}.${selectedCollection.name}${currentRef ? `@${currentRef}` : ''}"]`
     );
   }, [selectedCollection, queryChanged, currentRef]);
 
@@ -92,12 +90,8 @@ export default function RepositorySection({
 
   const runCurrentQuery = useCallback(() => {
     if (!queryField || queryField.length < 3) return;
-    query.executeScript(
-      'sql',
-      queryField,
-      collections.find((item) => item.id === selectedCollectionID)
-    );
-  }, [queryField, query, selectedCollectionID, collections]);
+    query.executeScript('sql', queryField, selectedCollection);
+  }, [queryField, query, selectedCollection]);
 
   // The base URL for the repository, eg. /en/console/workspace-slug/repositories/repository-slug
   const baseUrl = useBaseUrl({
@@ -180,15 +174,17 @@ export default function RepositorySection({
           <div className='max-h-[400px] w-full overflow-scroll'>
             <CollectionList
               collections={collections}
-              selectedCollectionID={selectedCollectionID}
-              setSelectedCollectionID={setSelectedCollectionID}
+              selectedCollection={selectedCollection}
+              setSelectedCollection={setSelectedCollection}
               loading={loadingCollections}
             />
           </div>
-          {selectedCollectionID && (
+          {selectedCollection && (
             <CollectionSchema
               workflows={workflows}
-              collectionID={selectedCollectionID}
+              collection={schema?.find(
+                (c) => c.name === selectedCollection.name
+              )}
               immutable={immutable}
             />
           )}

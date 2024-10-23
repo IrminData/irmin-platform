@@ -53,13 +53,13 @@ const RepositorySettingsSection = ({
   }>[] = [
     {
       name: 'name',
-      label: dict.repository.settings.name,
+      label: dict.misc.name,
       type: 'text',
       placeholder: '',
     },
     {
       name: 'description',
-      label: dict.repository.settings.description,
+      label: dict.misc.description,
       type: 'textarea',
       placeholder: '',
     },

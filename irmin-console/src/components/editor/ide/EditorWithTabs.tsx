@@ -7,9 +7,9 @@ import Button from '@/components/ui/button';
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { getNameFromPath } from '@/utils/bucket';
+import { getNameFromPath } from '@/utils/editorItems';
 
-import { irminFileTypes } from '@/types/core/Bucket';
+import { irminFileTypes } from '@/types/core/EditorItems';
 
 import NewTabContent from './NewTabContent';
 import ResizableCodeEditor from './ResizableCodeEditor';

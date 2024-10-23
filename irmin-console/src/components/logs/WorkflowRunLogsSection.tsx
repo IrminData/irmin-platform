@@ -94,7 +94,7 @@ export default function WorkflowRunLogsSection({
           </div>
           <div className='flex flex-col gap-1'>
             <p className='text-sm opacity-60'>{dict.workflow.owner}</p>
-            <p className='text-base'>{workflowRun.owner.name}</p>
+            <p className='text-base'>{workflowRun.owner.email}</p>
           </div>
           <div className='flex flex-col gap-1'>
             <p className='text-sm opacity-60'>{dict.list.status}</p>

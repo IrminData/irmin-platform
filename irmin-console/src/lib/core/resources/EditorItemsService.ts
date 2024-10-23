@@ -2,33 +2,55 @@ import IrminCore from '@/lib/core';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { Bucket } from '@/types/core/Bucket';
+import {
+  EditorItems,
+  EditorItemsFile,
+  EditorItemsFolder,
+} from '@/types/core/EditorItems';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { exampleBucket } from '@/types/examples/core';
+import {
+  exampleEditorItems,
+  exampleFiles,
+  exampleFolders,
+} from '@/types/examples/core';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Bucket API response type
+ * EditorItems API response type
  */
-interface BucketAPIResponse extends IrminAPIResponse {
-  data: Bucket;
+interface EditorItemsAPIResponse extends IrminAPIResponse {
+  data: EditorItems;
 }
 
 /**
- * Bucket API service
- *
- * Responsible for all bucket related API calls.
+ * EditorFolder API response type
  */
-class BucketService {
+interface EditorFolderAPIResponse extends IrminAPIResponse {
+  data: EditorItemsFolder;
+}
+
+/**
+ * EditorFile API response type
+ */
+interface EditorFileAPIResponse extends IrminAPIResponse {
+  data: EditorItemsFile;
+}
+
+/**
+ * EditorItems API service
+ *
+ * Responsible for all editorItems related API calls.
+ */
+class EditorItemsService {
   private irminCore: IrminCore;
 
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
-    this.fetchBucket = this.fetchBucket.bind(this);
+    this.fetchEditorItems = this.fetchEditorItems.bind(this);
     this.createFile = this.createFile.bind(this);
     this.updateFile = this.updateFile.bind(this);
     this.deleteFile = this.deleteFile.bind(this);
@@ -38,29 +60,33 @@ class BucketService {
   }
 
   /**
-   * Fetch the bucket for the current workspace
+   * Fetch the editorItems for the current workspace
    */
-  async fetchBucket(): Promise<BucketAPIResponse> {
-    if (isOfflineMode) return fake(exampleBucket) as BucketAPIResponse;
+  async fetchEditorItems(): Promise<EditorItemsAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleEditorItems) as EditorItemsAPIResponse;
     try {
-      const response = (await this.irminCore.fetchAPI(`/v1/bucket`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/editor-items`, {
         method: 'GET',
-      })) as BucketAPIResponse;
+      })) as EditorItemsAPIResponse;
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Fetch bucket error');
-      if (isDevelopment) return fake(exampleBucket) as BucketAPIResponse;
+      console.error((error as Error).message, 'Fetch editorItems error');
+      if (isDevelopment)
+        return fake(exampleEditorItems) as EditorItemsAPIResponse;
       throw error;
     }
   }
 
   /**
-   * Create a new file in the bucket
+   * Create a new file in the editorItems
    *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    */
-  async createFile(fileNavigatorItem: FileNavigatorItem) {
-    if (isOfflineMode) return fake();
+  async createFile(
+    fileNavigatorItem: FileNavigatorItem
+  ): Promise<EditorFileAPIResponse> {
+    if (isOfflineMode) return fake(exampleFiles[0]) as EditorFileAPIResponse;
     try {
       // Make sure the item is a file
       if (fileNavigatorItem.type !== 'file' || !fileNavigatorItem.current) {
@@ -71,25 +97,30 @@ class BucketService {
       body.append('name', fileNavigatorItem.current.name);
       body.append('path', fileNavigatorItem.current.path);
       body.append('contents', fileNavigatorItem.current.contents);
-      const response = await this.irminCore.fetchAPI(`/v1/buckets/files`, {
-        method: 'POST',
-        body,
-      });
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/editor-items/files`,
+        {
+          method: 'POST',
+          body,
+        }
+      )) as EditorFileAPIResponse;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create file error');
-      if (isDevelopment) return fake();
+      if (isDevelopment) return fake(exampleFiles[0]) as EditorFileAPIResponse;
       throw error;
     }
   }
 
   /**
-   * Update a file in the bucket
+   * Update a file in the editorItems
    *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    */
-  async updateFile(fileNavigatorItem: FileNavigatorItem) {
-    if (isOfflineMode) return fake();
+  async updateFile(
+    fileNavigatorItem: FileNavigatorItem
+  ): Promise<EditorFileAPIResponse> {
+    if (isOfflineMode) return fake(exampleFiles[0]) as EditorFileAPIResponse;
     try {
       // Make sure the item is a file
       if (
@@ -101,30 +132,34 @@ class BucketService {
       }
       // Update the file
       const body = new FormData();
-      body.append('_method', 'PUT');
+      body.append('_method', 'PATCH');
       body.append('name', fileNavigatorItem.current.name);
       body.append('path', fileNavigatorItem.current.path);
       body.append('contents', fileNavigatorItem.current.contents);
       body.append('original_path', fileNavigatorItem.original.path);
-      body.append('original_contents', fileNavigatorItem.original.contents);
-      const response = await this.irminCore.fetchAPI(`/v1/buckets/files`, {
-        method: 'POST',
-        body,
-      });
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/editor-items/files`,
+        {
+          method: 'POST',
+          body,
+        }
+      )) as EditorFileAPIResponse;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update file error');
-      if (isDevelopment) return fake();
+      if (isDevelopment) return fake(exampleFiles[0]) as EditorFileAPIResponse;
       throw error;
     }
   }
 
   /**
-   * Delete a file from the bucket
+   * Delete a file from the editorItems
    *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    */
-  async deleteFile(fileNavigatorItem: FileNavigatorItem) {
+  async deleteFile(
+    fileNavigatorItem: FileNavigatorItem
+  ): Promise<IrminAPIResponse> {
     if (isOfflineMode) return fake();
     try {
       // Make sure the item is a file
@@ -136,7 +171,7 @@ class BucketService {
       body.append('_method', 'DELETE');
       body.append('name', fileNavigatorItem.original.name);
       body.append('path', fileNavigatorItem.original.path);
-      const response = await this.irminCore.fetchAPI(`/v1/buckets/files`, {
+      const response = await this.irminCore.fetchAPI(`/v1/editor-items/files`, {
         method: 'POST',
         body,
       });
@@ -149,12 +184,15 @@ class BucketService {
   }
 
   /**
-   * Create a new folder in the bucket
+   * Create a new folder in the editorItems
    *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    */
-  async createFolder(fileNavigatorItem: FileNavigatorItem) {
-    if (isOfflineMode) return fake();
+  async createFolder(
+    fileNavigatorItem: FileNavigatorItem
+  ): Promise<EditorFolderAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleFolders[0]) as EditorFolderAPIResponse;
     try {
       // Make sure the item is a folder
       if (fileNavigatorItem.type !== 'folder' || !fileNavigatorItem.current) {
@@ -164,25 +202,32 @@ class BucketService {
       const body = new FormData();
       body.append('name', fileNavigatorItem.current.name);
       body.append('path', fileNavigatorItem.current.path);
-      const response = await this.irminCore.fetchAPI(`/v1/buckets/folders`, {
-        method: 'POST',
-        body,
-      });
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/editor-items/folders`,
+        {
+          method: 'POST',
+          body,
+        }
+      )) as EditorFolderAPIResponse;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create folder error');
-      if (isDevelopment) return fake();
+      if (isDevelopment)
+        return fake(exampleFolders[0]) as EditorFolderAPIResponse;
       throw error;
     }
   }
 
   /**
-   * Update a folder in the bucket
+   * Update a folder in the editorItems
    *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    */
-  async updateFolder(fileNavigatorItem: FileNavigatorItem) {
-    if (isOfflineMode) return fake();
+  async updateFolder(
+    fileNavigatorItem: FileNavigatorItem
+  ): Promise<EditorFolderAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleFolders[0]) as EditorFolderAPIResponse;
     try {
       // Make sure the item is a folder
       if (
@@ -194,29 +239,34 @@ class BucketService {
       }
       // Update the folder
       const body = new FormData();
-      body.append('_method', 'PUT');
+      body.append('_method', 'PATCH');
       body.append('name', fileNavigatorItem.current.name);
       body.append('path', fileNavigatorItem.current.path);
       body.append('original_path', fileNavigatorItem.original.path);
-      const response = await this.irminCore.fetchAPI(`/v1/buckets/folders`, {
-        method: 'POST',
-        body,
-      });
-
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/editor-items/folders`,
+        {
+          method: 'POST',
+          body,
+        }
+      )) as EditorFolderAPIResponse;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update folder error');
-      if (isDevelopment) return fake();
+      if (isDevelopment)
+        return fake(exampleFolders[0]) as EditorFolderAPIResponse;
       throw error;
     }
   }
 
   /**
-   * Delete a folder from the bucket
+   * Delete a folder from the editorItems
    *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
    */
-  async deleteFolder(fileNavigatorItem: FileNavigatorItem) {
+  async deleteFolder(
+    fileNavigatorItem: FileNavigatorItem
+  ): Promise<IrminAPIResponse> {
     if (isOfflineMode) return fake();
     try {
       // Make sure the item is a folder
@@ -228,10 +278,13 @@ class BucketService {
       body.append('_method', 'DELETE');
       body.append('name', fileNavigatorItem.original.name);
       body.append('path', fileNavigatorItem.original.path);
-      const response = await this.irminCore.fetchAPI(`/v1/buckets/folders`, {
-        method: 'POST',
-        body,
-      });
+      const response = await this.irminCore.fetchAPI(
+        `/v1/editor-items/folders`,
+        {
+          method: 'POST',
+          body,
+        }
+      );
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete folder error');
@@ -241,4 +294,4 @@ class BucketService {
   }
 }
 
-export default BucketService;
+export default EditorItemsService;

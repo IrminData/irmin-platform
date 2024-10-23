@@ -43,13 +43,13 @@ const ConnectionSettingsSection = () => {
   const fieldConfiguration: FieldConfig<ConnectionFormValues>[] = [
     {
       name: 'name',
-      label: dict.connections.settings.name,
+      label: dict.misc.name,
       type: 'text',
       placeholder: '',
     },
     {
       name: 'description',
-      label: dict.connections.settings.description,
+      label: dict.misc.description,
       type: 'textarea',
       placeholder: '',
     },

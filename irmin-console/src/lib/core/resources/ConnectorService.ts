@@ -10,10 +10,17 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Connector API response type
+ * Connectors API response type
+ */
+interface ConnectorsAPIResponse extends IrminAPIResponse {
+  data: Connector[];
+}
+
+/**
+ * Connector API response type.
  */
 interface ConnectorAPIResponse extends IrminAPIResponse {
-  data: Connector[];
+  data: Connector;
 }
 
 /**
@@ -35,16 +42,39 @@ class ConnectorService {
    *
    * @returns avalable connectors
    */
-  async fetchAllConnectors(): Promise<ConnectorAPIResponse> {
-    if (isOfflineMode) return fake(exampleConnectors) as ConnectorAPIResponse;
+  async fetchAllConnectors(): Promise<ConnectorsAPIResponse> {
+    if (isOfflineMode) return fake(exampleConnectors) as ConnectorsAPIResponse;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/connectors`, {
+        method: 'GET',
+      })) as ConnectorsAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch connectors error');
+      if (isDevelopment)
+        return fake(exampleConnectors) as ConnectorsAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch a connector by id
+   *
+   * @param id - connector id
+   * @returns connector
+   */
+  async fetchConnector(id: string): Promise<ConnectorAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleConnectors[0]) as ConnectorAPIResponse;
+    try {
+      const response = (await this.irminCore.fetchAPI(`/v1/connectors/${id}`, {
         method: 'GET',
       })) as ConnectorAPIResponse;
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Fetch connectors error');
-      if (isDevelopment) return fake(exampleConnectors) as ConnectorAPIResponse;
+      console.error((error as Error).message, 'Fetch connector error');
+      if (isDevelopment)
+        return fake(exampleConnectors[0]) as ConnectorAPIResponse;
       throw error;
     }
   }

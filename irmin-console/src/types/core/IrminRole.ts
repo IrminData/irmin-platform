@@ -3,15 +3,10 @@
  *
  * @typeParam description - Human-readable description
  * @typeParam label - Human-readable name
- * @typeParam name - Slug of the role
+ * @typeParam name - Slug of the role eg. 'admin', 'editor', 'billing', 'viewer', ...
  */
 export interface IrminRole {
   description: string;
   label: string;
-  name: IrminRoleNames;
+  name: string;
 }
-
-/**
- * All currently available roles in Irmin
- */
-export type IrminRoleNames = 'admin' | 'editor' | 'billing' | 'viewer';

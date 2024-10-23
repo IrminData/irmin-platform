@@ -75,7 +75,7 @@ export default function TagList({
             label: dict.list.delete,
             primary: false,
             onClick: () => {
-              handleDeleteTag(tag.name);
+              handleDeleteTag(tag.id);
             },
           },
         ],
@@ -87,7 +87,7 @@ export default function TagList({
     <div id='tags-list'>
       <NormalList
         headers={[
-          dict.list.name,
+          dict.misc.name,
           dict.repository.commit.commitHash,
           dict.list.actions,
         ]}

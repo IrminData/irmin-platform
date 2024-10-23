@@ -38,6 +38,7 @@ class CommitService {
     this.fetchCommit = this.fetchCommit.bind(this);
     this.createCommit = this.createCommit.bind(this);
     this.revertUncommittedChanges = this.revertUncommittedChanges.bind(this);
+    this.fetchLastModification = this.fetchLastModification.bind(this);
   }
 
   /**
@@ -53,10 +54,9 @@ class CommitService {
     if (isOfflineMode) return fake(exampleCommits) as CommitsAPIResponse;
     try {
       const urlParams = new URLSearchParams();
-      urlParams.append('repository', repository);
       if (ref) urlParams.append('ref', ref);
       const response = (await this.irminCore.fetchAPI(
-        `/v1/commits?${urlParams.toString()}`,
+        `/v1/repositories/${repository}/commits?${urlParams.toString()}`,
         {
           method: 'GET',
         }
@@ -82,11 +82,8 @@ class CommitService {
   ): Promise<CommitAPIResponse> {
     if (isOfflineMode) return fake(exampleCommits[0]) as CommitAPIResponse;
     try {
-      const urlParams = new URLSearchParams();
-      urlParams.append('repository', repository);
-      urlParams.append('hash', hash);
       const response = (await this.irminCore.fetchAPI(
-        `/v1/commits?${urlParams.toString()}`,
+        `/v1/repositories/${repository}/commits/${hash}`,
         {
           method: 'GET',
         }
@@ -104,25 +101,27 @@ class CommitService {
    * Create a new commit in a repository using the uncommitted changes
    *
    * @param repository - The repository to commit to
-   * @param ref - The ref to commit to, eg. branch name
+   * @param branch - The branch to commit to
    * @param message - The commit message
    */
   async createCommit(
     repository: string,
-    ref: string,
+    branch: string,
     message: string
   ): Promise<IrminAPIResponse> {
     if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
       const formData = new FormData();
-      formData.append('repository', repository);
-      formData.append('ref', ref);
+      formData.append('branch', branch);
       formData.append('message', message);
 
-      const response = (await this.irminCore.fetchAPI(`/v1/commits`, {
-        method: 'POST',
-        body: formData,
-      })) as IrminAPIResponse;
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/repositories/${repository}/commits`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as IrminAPIResponse;
 
       return response;
     } catch (error) {
@@ -136,22 +135,24 @@ class CommitService {
    * Revert uncommitted changes in a repository branch
    *
    * @param repository - The repository to revert changes in
-   * @param ref - The ref to revert changes in, eg. branch name
+   * @param branch - The branch to revert changes in
    */
   async revertUncommittedChanges(
     repository: string,
-    ref: string
+    branch: string
   ): Promise<IrminAPIResponse> {
     if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
       const formData = new FormData();
-      formData.append('repository', repository);
-      formData.append('ref', ref);
+      formData.append('branch', branch);
 
-      const response = (await this.irminCore.fetchAPI(`/v1/commits/revert`, {
-        method: 'POST',
-        body: formData,
-      })) as IrminAPIResponse;
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/repositories/${repository}/commits/revert`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as IrminAPIResponse;
 
       return response;
     } catch (error) {
@@ -168,22 +169,20 @@ class CommitService {
    * Fetch the last commit which modified a collection in a repository
    *
    * @param repository - The slug of the repository the collection is in
-   * @param ref - The ref the collection is on (eg. branch name)
-   * @param collection - ID of the collection to fetch the last modification for
+   * @param branch - The branch the collection is on
+   * @param collection - Name of the collection to fetch the last modification for
    */
   async fetchLastModification(
     repository: string,
-    ref: string,
+    branch: string,
     collection: string
   ): Promise<CommitAPIResponse> {
     if (isOfflineMode) return fake(exampleCommits[0]) as CommitAPIResponse;
     try {
       const urlParams = new URLSearchParams();
-      urlParams.append('repository', repository);
-      urlParams.append('ref', ref);
-      urlParams.append('collection', collection);
+      urlParams.append('branch', branch);
       const response = (await this.irminCore.fetchAPI(
-        `/v1/commits/last?${urlParams.toString()}`,
+        `/v1/repositories/${repository}/collections/${collection}/last-commit?${urlParams.toString()}`,
         {
           method: 'GET',
         }

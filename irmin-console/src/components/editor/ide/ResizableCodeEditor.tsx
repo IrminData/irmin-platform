@@ -2,7 +2,7 @@
 
 import React, { useCallback, useRef } from 'react';
 
-import { IrminFileType } from '@/types/core/Bucket';
+import { IrminFileType } from '@/types/core/EditorItems';
 
 import CodeMirrorEditor from './CodeMirrorEditor';
 

@@ -81,6 +81,9 @@ class WorkflowService {
     this.irminCore = irminCore;
     // Bind methods
     this.fetchWorkflows = this.fetchWorkflows.bind(this);
+    this.fetchImportWorkflows = this.fetchImportWorkflows.bind(this);
+    this.fetchExportWorkflows = this.fetchExportWorkflows.bind(this);
+    this.fetchActionWorkflows = this.fetchActionWorkflows.bind(this);
     this.fetchWorkflow = this.fetchWorkflow.bind(this);
     this.updateWorkflow = this.updateWorkflow.bind(this);
     this.deleteWorkflow = this.deleteWorkflow.bind(this);
@@ -90,9 +93,6 @@ class WorkflowService {
     this.fetchWorkflowRunByID = this.fetchWorkflowRunByID.bind(this);
     this.fetchRunsByWorkflow = this.fetchRunsByWorkflow.bind(this);
     this.triggerWorkflowRun = this.triggerWorkflowRun.bind(this);
-    this.fetchImportWorkflows = this.fetchImportWorkflows.bind(this);
-    this.fetchExportWorkflows = this.fetchExportWorkflows.bind(this);
-    this.fetchActionWorkflows = this.fetchActionWorkflows.bind(this);
     this.createImportWorkflow = this.createImportWorkflow.bind(this);
     this.createExportWorkflow = this.createExportWorkflow.bind(this);
     this.createActionWorkflow = this.createActionWorkflow.bind(this);
@@ -148,9 +148,7 @@ class WorkflowService {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-
       formData.append('_method', 'PATCH');
-      formData.append('workflow', workflowID);
 
       if (data.name) formData.append('name', data.name);
       if (data.description) formData.append('description', data.description);
@@ -165,9 +163,13 @@ class WorkflowService {
         }
       }
 
-      const response = await this.irminCore.fetchAPI(`/v1/workflows`, {
-        method: 'POST',
-      });
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workflows/${workflowID}`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
 
       return response;
     } catch (error) {
@@ -186,14 +188,14 @@ class WorkflowService {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-
       formData.append('_method', 'DELETE');
-      formData.append('workflow', workflowID);
-
-      const response = await this.irminCore.fetchAPI(`/v1/workflows/delete`, {
-        method: 'POST',
-      });
-
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workflows/${workflowID}`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete workflow error');
@@ -204,23 +206,18 @@ class WorkflowService {
 
   /**
    * Pause a Workflow
-   * {@link https://api.irmin.dev/docs#workflows-PATCHv1-workflows-pause | Irmin API docs}
    *
    * @param workflowID - ID of the workflow to pause
-   *
    */
   async pauseWorkflow(workflowID: string) {
     if (isOfflineMode) return fake();
     try {
-      const formData = new FormData();
-
-      formData.append('_method', 'PATCH');
-      formData.append('workflow', workflowID);
-
-      const response = await this.irminCore.fetchAPI(`/v1/workflows/pause`, {
-        method: 'POST',
-      });
-
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workflows/${workflowID}/pause`,
+        {
+          method: 'GET',
+        }
+      );
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Pause workflow error');
@@ -238,15 +235,12 @@ class WorkflowService {
   async resumeWorkflow(workflowID: string) {
     if (isOfflineMode) return fake();
     try {
-      const formData = new FormData();
-
-      formData.append('_method', 'PATCH');
-      formData.append('workflow', workflowID);
-
-      const response = await this.irminCore.fetchAPI(`/v1/workflows/resume`, {
-        method: 'POST',
-      });
-
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workflows/${workflowID}/resume`,
+        {
+          method: 'GET',
+        }
+      );
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Resume workflow error');
@@ -266,12 +260,15 @@ class WorkflowService {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-      formData.append('workflow', workflowID);
-      formData.append('assignee', newOwner);
+      formData.append('owner', newOwner);
 
-      const response = await this.irminCore.fetchAPI(`/v1/workflows/reassign`, {
-        method: 'POST',
-      });
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workflows/${workflowID}/reassign`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
 
       return response;
     } catch (error) {
@@ -325,10 +322,8 @@ class WorkflowService {
       exampleWorkflowRuns[0];
     if (isOfflineMode) return fake(exampleRun) as WorkflowRunAPIResponse;
     try {
-      const urlParams = new URLSearchParams();
-      if (workflowRun) urlParams.append('id', workflowRun);
       const response = (await this.irminCore.fetchAPI(
-        `/v1/workflows/${workflow}/runs?${urlParams.toString()}`,
+        `/v1/workflows/${workflow}/runs/${workflowRun}`,
         {
           method: 'GET',
         }
@@ -350,12 +345,12 @@ class WorkflowService {
     if (isOfflineMode)
       return fake(exampleWorkflowRuns[0]) as WorkflowRunAPIResponse;
     try {
-      const formData = new FormData();
-      formData.append('workflow_id', workflow);
-      const response = (await this.irminCore.fetchAPI(`/v1/workflows/run`, {
-        method: 'POST',
-        body: formData,
-      })) as WorkflowRunAPIResponse;
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workflows/${workflow}/run`,
+        {
+          method: 'GET',
+        }
+      )) as WorkflowRunAPIResponse;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Trigger workflow run error');

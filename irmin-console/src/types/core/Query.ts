@@ -1,5 +1,5 @@
-import { IrminFileType } from './Bucket';
 import { CollectionData } from './Collection';
+import { IrminFileType } from './EditorItems';
 
 /**
  * Query object interface

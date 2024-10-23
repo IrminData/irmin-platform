@@ -1,9 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
-import { getCollections } from '@/lib/actions/collections';
-
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -17,25 +13,16 @@ import { Repository } from '@/types/core/Repository';
  *
  * When a collection is selected, a reference snippet is generated and
  * displayed to the user.
- *
- * @returns The repository collection reference list component
  */
 const CollectionReferenceList = ({
+  collections,
   repositories,
 }: {
+  collections: Collection[];
   repositories: Repository[];
 }) => {
   const { irminAlert } = usePopup();
   const { dict } = useLocale();
-
-  const [collections, setCollections] = useState<Collection[]>([]);
-  useEffect(() => {
-    getCollections()
-      .then((res) => setCollections(res))
-      .catch((error) =>
-        console.error((error as Error).message, 'Fetch collections error')
-      );
-  }, []);
 
   /**
    * When a repository collection is selected, format the collection name

@@ -11,7 +11,7 @@ This repository contains the code for Irmin frontend, built using Next.js, TypeS
 Ensure you have the following installed:
 
 - Node.js (22.x)
-- Yarn (4.5.0). See [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration details.
+- Yarn (4.5.1). See [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration details.
 
 ## Environment Configuration (.env)
 

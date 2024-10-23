@@ -27,17 +27,19 @@ class SchemaService {
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
-    this.fetchSchema = this.fetchSchema.bind(this);
+    this.fetchSchemas = this.fetchSchemas.bind(this);
   }
   /**
-   * Fetch schema for a repository, workspace or specific collections
+   * Fetch schema for a list of collections
    *
    * @param collections - The collections to fetch schema for
-   * @param ref - (optional) The ref to fetch schema for
+   * @param repository - The repository to fetch schema for
+   * @param ref - The ref to fetch schema for
    */
-  async fetchSchema(
+  async fetchSchemas(
     collections: string[],
-    ref?: string
+    repository: string,
+    ref: string
   ): Promise<SchemaAPIResponse> {
     if (isOfflineMode)
       return fake(exampleRepositorySchema) as SchemaAPIResponse;
@@ -46,10 +48,10 @@ class SchemaService {
       collections.forEach((collection) =>
         urlParams.append('collection', collection)
       );
-      if (ref) urlParams.append('ref', ref);
+      urlParams.append('ref', ref);
 
       const response = (await this.irminCore.fetchAPI(
-        `/v1/schema?${urlParams.toString()}`,
+        `/v1/repositories/${repository}/schemas?${urlParams.toString()}`,
         {
           method: 'GET',
         }

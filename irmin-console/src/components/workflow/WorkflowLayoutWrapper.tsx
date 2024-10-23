@@ -145,8 +145,11 @@ export default function WorkflowLayoutWrapper({
                 </Badge>
               </div>
               <span className='px-2 text-xs text-gray-400 md:text-sm'>
-                {dict.list.owner}: {workflow.owner.name}
-                {workflow.owner.company ? ` (${workflow.owner.company})` : ''}
+                {dict.list.owner}:{' '}
+                {`${workflow.owner.first_name} ${workflow.owner.last_name}`}
+                {workflow.owner.company
+                  ? ` (${workflow.owner.company})`
+                  : ''} - {workflow.owner.email}
               </span>
             </div>
             <div className='flex flex-wrap items-center gap-2'>

@@ -13,8 +13,8 @@ import { QueryExecutionResultAPIResponse } from '@/lib/core/resources/QueryServi
 
 import { usePopup } from '@/context/PopupContext';
 
-import { IrminFileType } from '@/types/core/Bucket';
 import { Collection } from '@/types/core/Collection';
+import { IrminFileType } from '@/types/core/EditorItems';
 
 /**
  * Query context properties

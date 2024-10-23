@@ -84,7 +84,7 @@ const DiffView = ({
       });
 
       const content = await fetchDiffContent(
-        item.collection.id,
+        item.collection.name,
         diff.base_ref,
         diff.compare_ref
       );

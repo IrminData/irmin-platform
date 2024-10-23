@@ -19,15 +19,15 @@ import {
   getCorrectPath,
   getNameWithoutExtension,
   itemCanBeCreated,
-} from '@/utils/bucket';
+} from '@/utils/editorItems';
 
 import {
-  Bucket,
-  BucketFile,
-  BucketFolder,
+  EditorItems,
+  EditorItemsFile,
+  EditorItemsFolder,
   irminFileTypes,
   IrminFileTypeWithDetails,
-} from '@/types/core/Bucket';
+} from '@/types/core/EditorItems';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 import PathSelector from '../PathSelector';
@@ -44,18 +44,18 @@ type FormData = {
  *
  * @param options - The options for the item to rename or move
  * @param options.item The item to rename
- * @param options.bucket The bucket the item is in
+ * @param options.editorItems The editorItems the item is in
  * @param options.updateFile Function to update a file
  * @param options.updateFolder Function to update a folder
  */
 export default function RenameOrMoveItemModal({
   item,
-  bucket,
+  editorItems,
   updateFile,
   updateFolder,
 }: {
   item: FileNavigatorItem;
-  bucket: Bucket | null;
+  editorItems: EditorItems | null;
   updateFile: (file: FileNavigatorItem) => void;
   updateFolder: (folder: FileNavigatorItem) => void;
 }) {
@@ -140,7 +140,7 @@ export default function RenameOrMoveItemModal({
           newPath,
           nameWithExtension,
           item.type,
-          bucket,
+          editorItems,
           dict,
           extensionValue
         );
@@ -155,7 +155,7 @@ export default function RenameOrMoveItemModal({
             name: nameWithExtension,
             path: newPath,
             type: extensionValue,
-          } as BucketFile;
+          } as EditorItemsFile;
           updateFile({
             ...item,
             current: newFile,
@@ -165,7 +165,7 @@ export default function RenameOrMoveItemModal({
             ...item.current,
             name: nameWithExtension,
             path: newPath,
-          } as BucketFolder;
+          } as EditorItemsFolder;
           updateFolder({
             ...item,
             current: newFolder,
@@ -182,7 +182,7 @@ export default function RenameOrMoveItemModal({
         updatingRef.current = false;
       }
     },
-    [item, bucket, dict, updateFile, updateFolder, irminModal]
+    [item, editorItems, dict, updateFile, updateFolder, irminModal]
   );
 
   return (
@@ -211,7 +211,7 @@ export default function RenameOrMoveItemModal({
           />
           <p className='mt-1 pl-1 text-xs text-gray-400'>
             {dict.fileNavigator.original}:{' '}
-            {(item.original as BucketFile)?.type ?? ''}
+            {(item.original as EditorItemsFile)?.type ?? ''}
           </p>
         </div>
       )}
@@ -272,7 +272,7 @@ export default function RenameOrMoveItemModal({
       </div>
       {showPathSelector && (
         <PathSelector
-          bucket={bucket}
+          editorItems={editorItems}
           itemName={getCorrectNameWithExtension(
             name,
             item.type,

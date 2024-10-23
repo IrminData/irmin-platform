@@ -9,12 +9,12 @@ import {
 } from '@/types/core/IrminAPIResponse';
 
 import BranchService from './resources/BranchService';
-import BucketService from './resources/BucketService';
 import CollectionService from './resources/CollectionService';
 import CommitService from './resources/CommitService';
 import ConnectionService from './resources/ConnectionService';
 import ConnectorService from './resources/ConnectorService';
 import DiffService from './resources/DiffService';
+import EditorItemsService from './resources/EditorItemsService';
 import InviteService from './resources/InviteService';
 import LogService from './resources/LogService';
 import ProfileService from './resources/ProfileService';
@@ -46,7 +46,7 @@ class IrminCore {
   public apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev';
   public appBase = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
-  public bucketService: BucketService;
+  public editorItemService: EditorItemsService;
   public connectionService: ConnectionService;
   public connectorService: ConnectorService;
   public repositoryService: RepositoryService;
@@ -72,7 +72,7 @@ class IrminCore {
 
     // Create a new instance of each service class
     // Pass the current IrminCore instance to each service class
-    this.bucketService = new BucketService(this);
+    this.editorItemService = new EditorItemsService(this);
     this.connectionService = new ConnectionService(this);
     this.connectorService = new ConnectorService(this);
     this.repositoryService = new RepositoryService(this);

@@ -1,4 +1,4 @@
-import { LogEvent } from '@/types/core/Log';
+import { ConnectionLogEvent } from '@/types/core/Log';
 
 import LogEventIcon from './LogEventIcon';
 
@@ -9,11 +9,11 @@ import LogEventIcon from './LogEventIcon';
  * @param props.events - List of events to display
  * @param props.systemLabel - Label to use for system events
  */
-const LogEventFeed = ({
+const ConnectionLogEventFeed = ({
   events,
   systemLabel = 'System',
 }: {
-  events: LogEvent[];
+  events: ConnectionLogEvent[];
   systemLabel?: string;
 }) => {
   return (
@@ -30,6 +30,11 @@ const LogEventFeed = ({
             <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
               {event.description}
             </span>
+            {event.connection && (
+              <span className='text-xs text-gray-500 dark:text-gray-400'>
+                {event.connection.name}
+              </span>
+            )}
           </div>
           {/* Event timestamp and user */}
           <div className='ml-auto flex w-36 flex-col'>
@@ -46,4 +51,4 @@ const LogEventFeed = ({
   );
 };
 
-export default LogEventFeed;
+export default ConnectionLogEventFeed;

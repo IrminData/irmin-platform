@@ -17,6 +17,13 @@ interface TagsAPIResponse extends IrminAPIResponse {
 }
 
 /**
+ * Tag API response type
+ */
+interface TagAPIResponse extends IrminAPIResponse {
+  data: Tag;
+}
+
+/**
  * Tag API service
  *
  * Responsible for all repository tag related API calls
@@ -28,6 +35,8 @@ class TagService {
     this.irminCore = irminCore;
     // Bind methods
     this.fetchTags = this.fetchTags.bind(this);
+    this.fetchTag = this.fetchTag.bind(this);
+    this.updateTag = this.updateTag.bind(this);
     this.createTag = this.createTag.bind(this);
     this.deleteTag = this.deleteTag.bind(this);
   }
@@ -41,7 +50,7 @@ class TagService {
     if (isOfflineMode) return fake(exampleTags) as TagsAPIResponse;
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/tags?repository=${repository}`,
+        `/v1/repositories/${repository}/tags`,
         {
           method: 'GET',
         }
@@ -56,23 +65,82 @@ class TagService {
   }
 
   /**
+   * Fetch a single tag
+   *
+   * @param tag - The ID of the tag to fetch
+   * @param repository - The repository slug to fetch the tag from
+   */
+  async fetchTag(tag: string, repository: string): Promise<TagAPIResponse> {
+    if (isOfflineMode) return fake(exampleTags[0]) as TagAPIResponse;
+    try {
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/repositories/${repository}/tags/${tag}`,
+        {
+          method: 'GET',
+        }
+      )) as TagAPIResponse;
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch Tag error');
+      if (isDevelopment) return fake(exampleTags[0]) as TagAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Update a tag
+   *
+   * @param tag - The ID of the tag to update
+   * @param repository - The repository slug to update the tag in
+   * @param name - (optional) The new name for the tag
+   * @param ref - (optional) The new ref for the tag
+   */
+  async updateTag(
+    tag: string,
+    repository: string,
+    name?: string,
+    ref?: string
+  ): Promise<TagAPIResponse> {
+    if (isOfflineMode) return fake(exampleTags[0]) as TagAPIResponse;
+    try {
+      const formData = new FormData();
+      formData.append('_method', 'PATCH');
+      if (name) formData.append('name', name);
+      if (ref) formData.append('ref', ref);
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/repositories/${repository}/tags/${tag}`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as TagAPIResponse;
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Update tag error');
+      if (isDevelopment) return fake(exampleTags[0]) as TagAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
    * Delete a tag
    *
-   * @param tag - The tag name to delete
+   * @param tag - The ID of the tag to delete
    * @param repository - The repository slug to delete the tag from
    */
   async deleteTag(tag: string, repository: string) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-
       formData.append('_method', 'DELETE');
-      formData.append('tag', tag);
-      formData.append('repository', repository);
-
-      const response = await this.irminCore.fetchAPI(`/v1/tags`, {
-        method: 'POST',
-      });
+      const response = await this.irminCore.fetchAPI(
+        `/v1/repositories/${repository}/tags/${tag}`,
+        {
+          method: 'POST',
+        }
+      );
 
       return response;
     } catch (error) {
@@ -89,23 +157,29 @@ class TagService {
    * @param ref - The ref to create the new tag from
    * @param repository - The repository slug to create the tag in
    */
-  async createTag(name: string, ref: string, repository: string) {
-    if (isOfflineMode) return fake();
+  async createTag(
+    name: string,
+    ref: string,
+    repository: string
+  ): Promise<TagAPIResponse> {
+    if (isOfflineMode) return fake(exampleTags[0]) as TagAPIResponse;
     try {
       const formData = new FormData();
 
       formData.append('name', name);
       formData.append('ref', ref);
-      formData.append('repository', repository);
 
-      const res = await this.irminCore.fetchAPI(`/v1/tags`, {
-        method: 'POST',
-        body: formData,
-      });
+      const res = (await this.irminCore.fetchAPI(
+        `/v1/repositories/${repository}/tags`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as TagAPIResponse;
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Failed to create tag');
-      if (isDevelopment) return fake();
+      if (isDevelopment) return fake(exampleTags[0]) as TagAPIResponse;
       throw error;
     }
   }

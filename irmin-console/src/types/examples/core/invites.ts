@@ -12,7 +12,8 @@ import { roles } from './roles';
 export const invites: () => Invite[] = () => [
   {
     id: '0',
-    name: 'Petteri Orpo',
+    first_name: 'Petteri',
+    last_name: 'Orpo',
     email: 'petteri@example.com',
     role: roles()[2],
     created_at: getRandomDateTimeString(500, 'past', 60),
@@ -20,7 +21,8 @@ export const invites: () => Invite[] = () => [
   },
   {
     id: '1',
-    name: 'Sanna Marin',
+    first_name: 'Sanna',
+    last_name: 'Marin',
     email: 'sanna@example.com',
     role: roles()[1],
     created_at: getRandomDateTimeString(500, 'past', 60),
@@ -28,7 +30,8 @@ export const invites: () => Invite[] = () => [
   },
   {
     id: '2',
-    name: 'Juha Sipilä',
+    first_name: 'Juha',
+    last_name: 'Sipilä',
     email: 'juha@example.com',
     role: roles()[3],
     created_at: getRandomDateTimeString(500, 'past', 60),

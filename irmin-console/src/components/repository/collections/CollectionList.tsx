@@ -21,19 +21,19 @@ import LastModificationModalContent from '../commits/LastModificationModalConten
  *
  * @param props - The props
  * @param props.collections - The list of collections to display
- * @param props.selectedCollectionID - The currently selected collection
- * @param props.setSelectedCollectionID - The function to set the selected collection
+ * @param props.selectedCollection - (optional) The currently selected collection
+ * @param props.setSelectedCollection - The function to set the selected collection
  * @param props.loading - Whether the collections are loading
  */
 export default function CollectionList({
   collections,
-  selectedCollectionID,
-  setSelectedCollectionID,
+  selectedCollection,
+  setSelectedCollection,
   loading,
 }: {
   collections: Collection[];
-  selectedCollectionID: string | null;
-  setSelectedCollectionID: (collection: string | null) => void;
+  selectedCollection?: Collection;
+  setSelectedCollection: (collection?: Collection) => void;
   loading?: boolean;
 }) {
   const { dict, locale } = useLocale();
@@ -42,7 +42,7 @@ export default function CollectionList({
 
   const showLastModification = useCallback(
     async (collection: Collection) => {
-      const lastModification = await fetchLastModification(collection.id);
+      const lastModification = await fetchLastModification(collection.name);
       if (!lastModification) return;
       irminModal.show(
         `${dict.repository.collections.lastModification} - ${collection.type} ${collection.name}`,
@@ -112,16 +112,16 @@ export default function CollectionList({
               primary: false,
             },
           ];
-          if (item.id === selectedCollectionID) {
+          if (item.name === selectedCollection?.name) {
             newActions.push({
               label: dict.misc.selected,
-              onClick: () => setSelectedCollectionID(null),
+              onClick: () => setSelectedCollection(),
               primary: true,
             });
           } else {
             newActions.push({
               label: dict.list.view,
-              onClick: () => setSelectedCollectionID(item.id),
+              onClick: () => setSelectedCollection(item),
               primary: true,
             });
           }
@@ -132,8 +132,8 @@ export default function CollectionList({
       dict,
       locale,
       showLastModification,
-      setSelectedCollectionID,
-      selectedCollectionID,
+      setSelectedCollection,
+      selectedCollection,
       collections,
     ]
   );
@@ -142,7 +142,7 @@ export default function CollectionList({
     <div id='collections-list' className='mb-4'>
       <NormalList
         headers={[
-          dict.list.description,
+          dict.misc.description,
           `${dict.misc.lastModified} & ${dict.misc.size}`,
           dict.list.actions,
         ]}

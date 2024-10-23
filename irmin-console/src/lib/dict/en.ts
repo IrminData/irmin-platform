@@ -106,6 +106,8 @@ const en = {
       success: 'Your download has been successful!',
       failed: 'Your download has failed!',
     },
+    name: 'Name',
+    description: 'Description',
   },
   consoleNavigation: {
     search: 'Search',
@@ -321,8 +323,6 @@ const en = {
     },
     settings: {
       generalSettings: 'General settings',
-      name: 'Name',
-      description: 'Description',
       owner: 'Owner',
       saveChanges: 'Save changes',
       deletionNote:
@@ -358,7 +358,6 @@ const en = {
       constraints: 'Constraints',
       folder: 'Folder',
       file: 'File',
-      name: 'Name',
       size: 'Size',
       created_at: 'Created at',
       modified_at: 'Modified at',
@@ -376,8 +375,6 @@ const en = {
       title: 'Connection settings',
       connector: 'Connector',
       saveChanges: 'Save changes',
-      name: 'Name',
-      description: 'Description',
       owner: 'Owner',
       deletionNote:
         'Deleting this connection will remove all data associated with it. This action is irreversible.',
@@ -430,8 +427,6 @@ const en = {
     finishedAt: 'Finished at',
     scheduled: 'Scheduled',
     notScheduled: 'Not scheduled',
-    name: 'Name',
-    description: 'Description',
     owner: 'Owner',
     executableScriptFile: 'Executable script file',
     scriptResultDestinationRepository: 'Result to repository',
@@ -518,8 +513,6 @@ const en = {
     search: 'Search in results',
   },
   list: {
-    name: 'Name',
-    description: 'Description',
     status: 'Status',
     runs: 'Runs',
     connector: 'Connector',
@@ -549,7 +542,7 @@ const en = {
     delete: 'Delete',
     rename: 'Rename',
     move: 'Move',
-    bucketRoot: 'Bucket root',
+    rootDirectory: 'Root directory',
     newNameOfTheFile: 'New name of the file',
     newNameOfTheFolder: 'New name of the folder',
     newPathOfTheFile: 'New path of the file',
@@ -561,7 +554,6 @@ const en = {
     deleteConfirmation: 'Are you sure you want to delete',
     deleteFolderWarning: 'All files and folders inside will be deleted',
     errors: {
-      noBucket: 'No bucket provided',
       invalidType: 'Invalid item type (file or folder)',
       noExtension: 'No extension provided',
       invalidExtension: 'Invalid file extension (js, py, sql)',
@@ -593,14 +585,15 @@ const en = {
       exportWorkflows: 'Export workflows',
     },
   },
-  usersPermissions: {
+  users: {
     removeUserConfirmation: 'Are you sure you want to remove this user?',
     transferOwnershipConfirmation:
       'Are you sure you want to transfer ownership?',
     usersAndPermissions: 'Users & Permissions',
     invites: 'Invites to the workspace',
     inviteUser: 'Invite a User',
-    name: 'Name',
+    firstName: 'First name',
+    lastName: 'Last name',
     email: 'Email',
     role: 'Role',
     owner: 'Owner',

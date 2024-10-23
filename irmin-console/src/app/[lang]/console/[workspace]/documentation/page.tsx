@@ -1,4 +1,4 @@
-import { getCollections } from '@/lib/actions/collections';
+import { getAllCollections } from '@/lib/actions/collections';
 import { getConnections } from '@/lib/actions/connections';
 import { getRepositories } from '@/lib/actions/repositories';
 import {
@@ -22,7 +22,7 @@ export default async function DocumentationPage() {
     repositories,
   ] = await Promise.all([
     getConnections(),
-    getCollections(),
+    getAllCollections(),
     getActionWorkflows(),
     getExportWorkflows(),
     getImportWorkflows(),

@@ -28,7 +28,9 @@ const ProfileImagePlaceholder = ({
       className={`relative inline-flex items-center justify-center overflow-hidden rounded-full bg-accent/20 font-medium text-accent ${className ? className : 'h-10 w-10'}`}
       id='profile-image-placeholder'
     >
-      <span>{getInitials(user?.name ?? 'Unknown User')}</span>
+      <span>
+        {getInitials(user ? `${user?.first_name} ${user?.last_name}` : 'User')}
+      </span>
     </div>
   );
 };

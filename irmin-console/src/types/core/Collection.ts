@@ -15,9 +15,7 @@ export type CollectionType = 'table' | 'folder' | 'file';
  *
  * Repositories consist of Collections, which can be for example tables in the Lakehouse.
  *
- * @typeParam id - Hash ID of the Collection
- * @typeParam name - Name of the Collection
- * @typeParam formatted_name - Formatted name of the Collection, to be used in queries (ref can be added)
+ * @typeParam name - Name of the Collection (unique within the repository)
  * @typeParam repository - Slug of the repository of the Collection is part of
  * @typeParam type - Type of the Collection. Eg. 'table', 'folder', 'file'
  * @typeParam is_immutable -  If the Collection is_immutable, it cannot be changed or updated manually
@@ -26,9 +24,7 @@ export type CollectionType = 'table' | 'folder' | 'file';
  * @typeParam workflow - (optional) ID of the workflow associated with the Collection
  */
 export interface Collection {
-  id: string;
   name: string;
-  formatted_name: string;
   repository: string;
   type: CollectionType;
   is_immutable: boolean;
@@ -46,15 +42,15 @@ export type CollectionData =
   | FileCollectionData;
 
 /**
- * RepositoryCollection ensures schema is always present.
+ * CollectionWithSchema ensures schema is always present.
  *
  * @typeParam schema - Schema of the Collection based on the type
  */
-export interface RepositoryCollection extends Collection {
+export interface CollectionWithSchema extends Collection {
   schema: TableSchema | FolderSchema | FileSchema;
 }
 
 /**
  * RepositorySchema is an array of collections, where schema is required.
  */
-export type RepositorySchema = RepositoryCollection[];
+export type RepositorySchema = CollectionWithSchema[];

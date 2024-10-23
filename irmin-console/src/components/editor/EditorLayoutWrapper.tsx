@@ -1,17 +1,18 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 
 import CollectionReferenceList from '@/components/repository/collections/CollectionReferenceList';
 
-import { useBucket } from '@/context/BucketContext';
 import { EditorContextProvider } from '@/context/EditorContext';
+import { useEditorItems } from '@/context/EditorItemsContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { QueryProvider } from '@/context/QueryContext';
 
+import { Collection } from '@/types/core/Collection';
 import { Repository } from '@/types/core/Repository';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
@@ -29,14 +30,16 @@ import RenameOrMoveItemModal from './modals/RenameOrMoveItemModal';
 export default function EditorLayoutWrapper({
   children,
   repositories,
+  collections,
 }: {
   children: React.ReactNode;
   repositories: Repository[];
+  collections: Collection[];
 }) {
   const { irminModal, irminConfirm } = usePopup();
   const { dict } = useLocale();
   const {
-    bucket,
+    editorItems,
     items,
     createFile,
     createFolder,
@@ -47,7 +50,7 @@ export default function EditorLayoutWrapper({
     openFileTabs,
     setOpenFileTabs,
     setActiveTab,
-  } = useBucket();
+  } = useEditorItems();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -57,9 +60,9 @@ export default function EditorLayoutWrapper({
   const addNewFile = useCallback(() => {
     irminModal.show(
       dict.fileNavigator.createFile,
-      <AddNewFileModal bucket={bucket} createFile={createFile} />
+      <AddNewFileModal editorItems={editorItems} createFile={createFile} />
     );
-  }, [irminModal, dict, bucket, createFile]);
+  }, [irminModal, dict, editorItems, createFile]);
 
   /**
    * Open the modal to create a new folder
@@ -67,9 +70,12 @@ export default function EditorLayoutWrapper({
   const addNewFolder = useCallback(() => {
     irminModal.show(
       dict.fileNavigator.createFolder,
-      <AddNewFolderModal bucket={bucket} createFolder={createFolder} />
+      <AddNewFolderModal
+        editorItems={editorItems}
+        createFolder={createFolder}
+      />
     );
-  }, [irminModal, dict, bucket, createFolder]);
+  }, [irminModal, dict, editorItems, createFolder]);
 
   /**
    * Open the modal to rename or move a file or folder.
@@ -86,13 +92,13 @@ export default function EditorLayoutWrapper({
           : dict.fileNavigator.updateFolder,
         <RenameOrMoveItemModal
           item={item}
-          bucket={bucket}
+          editorItems={editorItems}
           updateFile={updateFile}
           updateFolder={updateFolder}
         />
       );
     },
-    [irminModal, dict, bucket, updateFile, updateFolder]
+    [irminModal, dict, editorItems, updateFile, updateFolder]
   );
 
   /**
@@ -179,7 +185,10 @@ export default function EditorLayoutWrapper({
             }}
             items={items}
           />
-          <CollectionReferenceList repositories={repositories} />
+          <CollectionReferenceList
+            repositories={repositories}
+            collections={collections}
+          />
         </div>
       </div>
       <div className='ml-10 flex-1 flex-shrink overflow-hidden lg:ml-0'>

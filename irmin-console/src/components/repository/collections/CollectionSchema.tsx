@@ -15,6 +15,7 @@ import { useRepository } from '@/context/RepositoryContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
+import { CollectionWithSchema } from '@/types/core/Collection';
 import { FileSchema } from '@/types/core/FileCollection';
 import { FolderSchema } from '@/types/core/FolderCollection';
 import { TableSchema } from '@/types/core/TableCollection';
@@ -28,16 +29,16 @@ import TableCollectionSchema from './TableCollectionSchema';
  * Component for displaying the schema of a collection.
  *
  * @param props - The component props
- * @param props.collectionID - The ID of the collection to display the schema for
+ * @param props.collection - The collection with schema to display
  * @param props.immutable - Whether the repository or ref is immutable
  * @param props.workflows - The workflows available in the workspace
  */
 export default function CollectionSchema({
-  collectionID,
+  collection,
   immutable,
   workflows,
 }: {
-  collectionID: string;
+  collection?: CollectionWithSchema;
   immutable: boolean;
   workflows: Workflow[];
 }) {
@@ -59,13 +60,7 @@ export default function CollectionSchema({
     segmentsAfter: 1,
   });
 
-  const { currentRepository, currentRef, schema } = useRepository();
-
-  // Collection schema that is associated with the collection ID
-  const collection = useMemo(
-    () => schema?.find((schema) => schema.id === collectionID),
-    [schema, collectionID]
-  );
+  const { currentRepository, currentRef } = useRepository();
 
   // Type specific label for the collection
   const typeScpecificLabel = useMemo(() => {

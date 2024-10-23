@@ -56,7 +56,7 @@ export default function RepositoryTagsSection() {
 
   /**
    * Confirm the deletion of a tag and delete it.
-   * @param tag - The tag to delete
+   * @param tag - The ID of the tag to delete
    */
   const handleDeleteTag = useCallback(
     async (tag: string) => {

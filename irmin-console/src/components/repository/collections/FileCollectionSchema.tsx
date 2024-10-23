@@ -31,7 +31,7 @@ export default function FileCollectionSchema({
       <table className='border-seperate w-full table-auto gap-2 text-left'>
         <tbody>
           <tr className='gap-2'>
-            <td className='p-1 font-bold'>{dict.repository.schema.name}</td>
+            <td className='p-1 font-bold'>{dict.misc.name}</td>
             <td className='p-1'>{schema.name}</td>
           </tr>
           <tr className='gap-2'>

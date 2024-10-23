@@ -1,7 +1,20 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { LogEvent, LogEventType, WorkflowRunLogs } from '@/types/core/Log';
+import {
+  ConnectionLogEvent,
+  LogEvent,
+  LogEventType,
+  RepositoryLogEvent,
+  WorkflowLogEvent,
+  WorkflowRunLogs,
+} from '@/types/core/Log';
 
+import {
+  exampleConnections,
+  exampleRepositories,
+  exampleWorkflowRuns,
+  exampleWorkflows,
+} from '.';
 import { workspaceUsers } from './users';
 
 /**
@@ -15,7 +28,6 @@ export const logEvents: () => LogEvent[] = () => [
     timestamp: getRandomDateTimeString(500, 'past', 60),
     description: 'Created a new workflow.',
     user: workspaceUsers()[0],
-    workflow: 'management-data-from-excel',
   },
   {
     id: '2',
@@ -23,7 +35,6 @@ export const logEvents: () => LogEvent[] = () => [
     timestamp: getRandomDateTimeString(500, 'past', 60),
     description: 'Workflow ran successfuly.',
     user: workspaceUsers()[0],
-    workflow: 'management-data-from-excel',
   },
   {
     id: '3',
@@ -93,7 +104,43 @@ export const logEvents: () => LogEvent[] = () => [
   },
 ];
 
+/**
+ * Example workflow log events for testing
+ * {@link WorkflowLogEvent}
+ */
+export const workflowLogEvents: () => WorkflowLogEvent[] = () =>
+  logEvents().map((event) => ({
+    ...event,
+    workflow: exampleWorkflows[0],
+  }));
+
+/**
+ * Example repository log events for testing
+ * {@link RepositoryLogEvent}
+ */
+export const repositoryLogEvents: () => RepositoryLogEvent[] = () =>
+  logEvents().map((event) => ({
+    ...event,
+    repository: exampleRepositories[0],
+  }));
+
+/**
+ * Example connection log events for testing
+ * {@link ConnectionLogEvent}
+ */
+export const connectionLogEvents: () => ConnectionLogEvent[] = () =>
+  logEvents().map((event) => ({
+    ...event,
+    connection: exampleConnections[0],
+  }));
+
+/**
+ * Example workflow run logs for testing
+ * {@link WorkflowRunLogs}
+ */
 export const workflowRunLogs: () => WorkflowRunLogs = () => ({
+  workflow: exampleWorkflows[0],
+  workflowRun: exampleWorkflowRuns[0],
   logs: [
     '2024-10-05 10:00:01 [INFO] Starting workflow: FormatDataForWooCommerce',
     '2024-10-05 10:00:02 [INFO] Fetching data from Microsoft Dynamics...',

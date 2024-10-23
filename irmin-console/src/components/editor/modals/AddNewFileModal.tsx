@@ -19,44 +19,29 @@ import {
   getCorrectPath,
   getNameWithoutExtension,
   itemCanBeCreated,
-} from '@/utils/bucket';
+} from '@/utils/editorItems';
 
 import {
-  Bucket,
-  BucketFile,
-  IrminFileType,
+  EditorItems,
+  EditorItemsFile,
   irminFileTypes,
   IrminFileTypeWithDetails,
-} from '@/types/core/Bucket';
+} from '@/types/core/EditorItems';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 import PathSelector from '../PathSelector';
 
-/**
- * Content for the "Save As File" modal in the editor
- * Allows the user to create a new file
- *
- * @param options - The options for the item to create
- * @param options.defaultName - The default name for the new file
- * @param options.defaultPath - The default path for the new file
- * @param options.defaultType - The default type for the new file
- * @param options.contents - The contents of the new file
- * @param options.bucket - The bucket the item is in
- * @param options.createFile - Function to create a new file
- */
-export default function SaveEditorAsFileModal({
-  defaultName,
-  defaultPath,
-  defaultType,
-  contents,
-  bucket,
+type FormData = {
+  extension: IrminFileTypeWithDetails;
+  name: string;
+  path: string;
+};
+
+export default function AddNewFileModal({
+  editorItems,
   createFile,
 }: {
-  defaultName: string;
-  defaultPath: string;
-  defaultType: IrminFileType;
-  contents: string;
-  bucket: Bucket | null;
+  editorItems: EditorItems | null;
   createFile: (file: FileNavigatorItem) => void;
 }) {
   const { irminModal } = usePopup();
@@ -66,31 +51,25 @@ export default function SaveEditorAsFileModal({
   const [loading, setLoading] = useState(false);
   const [showPathSelector, setShowPathSelector] = useState(true);
 
-  const creationInProgress = useRef(false);
+  const creatingFileRef = useRef(false);
 
   const {
-    control,
     handleSubmit,
+    control,
     watch,
     setValue,
     formState: { errors },
-  } = useForm<{
-    name: string;
-    path: string;
-    extension: IrminFileTypeWithDetails;
-  }>({
+  } = useForm<FormData>({
     defaultValues: {
-      name: getNameWithoutExtension(defaultName),
-      path: defaultPath,
-      extension:
-        irminFileTypes.find((type) => type.extension === defaultType) ||
-        irminFileTypes[0],
+      extension: irminFileTypes.find((a) => a.extension === 'sql')!,
+      name: '',
+      path: '',
     },
   });
 
+  const extension = watch('extension');
   const name = watch('name');
   const path = watch('path');
-  const extension = watch('extension');
 
   /**
    * Update the path and name when the extension or name changes
@@ -110,24 +89,20 @@ export default function SaveEditorAsFileModal({
       shouldDirty: true,
     });
     setValue('path', newPath, { shouldValidate: true, shouldDirty: true });
-  }, [name, path, extension, setValue]);
+  }, [extension, name, path, setValue]);
 
-  // Update path and name whenever name or extension changes
+  // Update path and name whenever extension or name changes
   useEffect(() => {
     updatePathAndName();
-  }, [name, extension, updatePathAndName]);
+  }, [extension, name, updatePathAndName]);
 
   /**
-   * Create the new item based on the values provided by the user
+   * Create the file based on the values provided by the user
    */
   const onSubmit = useCallback(
-    async (data: {
-      name: string;
-      path: string;
-      extension: IrminFileTypeWithDetails;
-    }) => {
-      if (creationInProgress.current) return;
-      creationInProgress.current = true;
+    async (data: FormData) => {
+      if (creatingFileRef.current) return;
+      creatingFileRef.current = true;
       try {
         setError('');
         setLoading(true);
@@ -145,29 +120,27 @@ export default function SaveEditorAsFileModal({
           newPath,
           nameWithExtension,
           'file',
-          bucket,
+          editorItems,
           dict,
           extensionValue
         );
         if (!canCreate.canCreate) {
           throw new Error(canCreate.reason);
         }
-
         // Create the new file
         const newFile = {
           is_draft: false,
-          bucket: bucket?.slug ?? '',
-          contents: contents,
+          workspace: editorItems?.workspace ?? '',
+          contents: '',
           name: nameWithExtension,
           path: newPath,
           type: extensionValue,
-        } as BucketFile;
+        } as EditorItemsFile;
         createFile({
           original: null,
           current: newFile,
           type: 'file',
         });
-
         // Close the modal after creation
         irminModal.close();
       } catch (error) {
@@ -175,22 +148,23 @@ export default function SaveEditorAsFileModal({
         setError((error as Error).message);
       } finally {
         setLoading(false);
-        creationInProgress.current = false;
+        creatingFileRef.current = false;
       }
     },
-    [bucket, contents, createFile, dict, irminModal]
+    [editorItems, createFile, dict, irminModal]
   );
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
       className='flex flex-col gap-4 pb-6'
-      id='save-editor-as-file-modal'
+      id='add-new-file-modal'
     >
       <div>
         <Controller
           name='extension'
           control={control}
+          rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
             <ReactSelect
               {...field}
@@ -212,7 +186,7 @@ export default function SaveEditorAsFileModal({
           control={control}
           rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
-            <Input {...field} type='text' disabled={loading} />
+            <Input type='text' disabled={loading} {...field} />
           )}
         />
         {errors.name && (
@@ -224,9 +198,10 @@ export default function SaveEditorAsFileModal({
         <Controller
           name='path'
           control={control}
+          rules={{ required: dict.misc.fieldRequired }}
           render={({ field }) => (
-            <div className='flex items-center'>
-              <Input {...field} type='text' disabled />
+            <div className='flex flex-row items-center'>
+              <Input type='text' disabled={true} {...field} />
               <Button
                 size='icon'
                 variant='secondary'
@@ -245,10 +220,13 @@ export default function SaveEditorAsFileModal({
             </div>
           )}
         />
+        {errors.path && (
+          <p className='mt-1 text-xs text-red-600'>{errors.path.message}</p>
+        )}
       </div>
       {showPathSelector && (
         <PathSelector
-          bucket={bucket}
+          editorItems={editorItems}
           itemName={getCorrectNameWithExtension(
             name,
             'file',
@@ -264,7 +242,9 @@ export default function SaveEditorAsFileModal({
           }}
         />
       )}
-      {error && <div className='py-2 text-destructive'>{error}</div>}
+      {error && error.length > 0 && (
+        <div className='text-destructive'>{error}</div>
+      )}
       <Button
         variant='default'
         size='sm'

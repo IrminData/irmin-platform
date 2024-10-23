@@ -1,9 +1,10 @@
 import { Metadata } from 'next';
 
+import { getAllCollections } from '@/lib/actions/collections';
 import { getRepositories } from '@/lib/actions/repositories';
 import { Locale } from '@/lib/dict';
 
-import EditorLayoutWrapper from '@/components/bucket/EditorLayoutWrapper';
+import EditorLayoutWrapper from '@/components/editor/EditorLayoutWrapper';
 
 /**
  * URL parameters for the Editor layout
@@ -39,9 +40,12 @@ export default async function EditorLayout({
   children: React.ReactNode;
   params: Promise<EditorLayoutParams>;
 }) {
-  const repositories = await getRepositories();
+  const [repositories, collections] = await Promise.all([
+    getRepositories(),
+    getAllCollections(),
+  ]);
   return (
-    <EditorLayoutWrapper repositories={repositories}>
+    <EditorLayoutWrapper repositories={repositories} collections={collections}>
       {children}
     </EditorLayoutWrapper>
   );

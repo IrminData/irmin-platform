@@ -1,24 +1,26 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { BucketFolder } from '@/types/core/Bucket';
+import { EditorItemsFolder } from '@/types/core/EditorItems';
 
 /**
- * Get example BucketFolder objects
+ * Get example EditorItemsFolder objects
  *
- * Array of {@link BucketFolder}
+ * Array of {@link EditorItemsFolder}
  */
-export const folders: () => BucketFolder[] = () => [
+export const folders: () => EditorItemsFolder[] = () => [
   {
-    bucket: 'example-bucket',
+    workspace: 'example-workspace',
     name: 'folder1',
     path: '/folder1',
+    owner: '1',
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    bucket: 'example-bucket',
+    workspace: 'example-workspace',
     name: 'folder2',
     path: '/folder1/folder2',
+    owner: '1',
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },

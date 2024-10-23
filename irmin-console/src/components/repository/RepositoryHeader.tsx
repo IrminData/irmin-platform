@@ -116,10 +116,12 @@ export default function RepositoryHeader({ dict }: { dict: Dictionary }) {
               )}
             </div>
             <span className='px-2 text-sm text-gray-400'>
-              {dict.list.owner}: {currentRepository.owner.name}
+              {dict.list.owner}:{' '}
+              {`${currentRepository.owner.first_name} ${currentRepository.owner.last_name}`}
               {currentRepository.owner.company
                 ? ` (${currentRepository.owner.company})`
-                : ''}
+                : ''}{' '}
+              - {currentRepository.owner.email}
             </span>
           </div>
           <div className='flex flex-wrap items-center gap-2'>

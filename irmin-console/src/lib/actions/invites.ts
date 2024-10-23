@@ -2,20 +2,16 @@
 
 import { initCore } from '@/lib/initCore';
 
-import { IrminRoleNames } from '@/types/core/IrminRole';
-
 /**
- * Server action to get all invites to a workspace
+ * Server action to get all invites to the current workspace
  *
- * @param workspaceSlug - The slug of the workspace
  * @returns The invites to the workspace
  */
-export async function getInvites(workspaceSlug: string) {
+export async function getInvites() {
   // Create the IrminCore instance
   const irminCore = await initCore();
   // Get the invites
-  const invites =
-    await irminCore.inviteService.fetchInvitesByWorkspace(workspaceSlug);
+  const invites = await irminCore.inviteService.fetchInvites();
   return invites.data;
 }
 
@@ -31,7 +27,7 @@ export async function cancelInvite(inviteID: string) {
 /**
  * Server action to change the role of the invitee
  */
-export async function changeInviteRole(inviteID: string, role: IrminRoleNames) {
+export async function changeInviteRole(inviteID: string, role: string) {
   const irminCore = await initCore();
   const res = await irminCore.inviteService.changeUserInviteRole(
     inviteID,
@@ -53,13 +49,15 @@ export async function resendInvite(inviteID: string) {
  * Server action to send an invite
  */
 export async function sendInvite(
-  name: string,
+  firstName: string,
+  lastName: string,
   email: string,
-  role: IrminRoleNames
+  role: string
 ) {
   const irminCore = await initCore();
   const res = await irminCore.inviteService.inviteUserToWorkspace(
-    name,
+    firstName,
+    lastName,
     email,
     role
   );

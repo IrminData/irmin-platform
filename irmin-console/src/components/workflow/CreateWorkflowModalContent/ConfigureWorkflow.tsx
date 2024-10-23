@@ -42,7 +42,7 @@ export default function ConfigureWorkflow({
     <div className='flex w-full flex-col px-4 pb-6'>
       <div className='flex flex-col gap-4 py-4'>
         <div className='flex flex-col gap-2'>
-          <Label>{dict.workflow.name}</Label>
+          <Label>{dict.misc.name}</Label>
           <Input
             required
             type='text'
@@ -56,7 +56,7 @@ export default function ConfigureWorkflow({
           />
         </div>
         <div className='flex flex-col gap-2'>
-          <Label>{dict.workflow.description}</Label>
+          <Label>{dict.misc.description}</Label>
           <Input
             required
             type='text'

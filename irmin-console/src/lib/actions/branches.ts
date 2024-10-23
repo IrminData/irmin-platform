@@ -14,6 +14,20 @@ export async function getBranches(repository: string) {
 }
 
 /**
+ * Server action to get a branch in a repository.
+ */
+export async function getBranch(repository: string, branch: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore();
+  // Get the branch
+  const branchData = await irminCore.branchService.fetchBranch(
+    repository,
+    branch
+  );
+  return branchData.data;
+}
+
+/**
  * Server action to create a branch in a repository.
  */
 export async function createBranch(

@@ -2,8 +2,6 @@
 
 import { initCore } from '@/lib/initCore';
 
-import { IrminRoleNames } from '@/types/core/IrminRole';
-
 /**
  * Server action to get all users in the current workspace
  */
@@ -12,6 +10,17 @@ export async function getUsers() {
   const irminCore = await initCore();
   // Get the users
   const users = await irminCore.userService.fetchWorkspaceUsers();
+  return users.data;
+}
+
+/**
+ * Server action to get a single user
+ */
+export async function getUser(userID: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore();
+  // Get the users
+  const users = await irminCore.userService.fetchUser(userID);
   return users.data;
 }
 
@@ -27,8 +36,8 @@ export async function deleteUser(userID: string) {
 /**
  * Server action to change the role of a user in the workspace
  */
-export async function changeUserRole(userID: string, role: IrminRoleNames) {
+export async function changeUserRole(userID: string, roles: string[]) {
   const irminCore = await initCore();
-  const res = await irminCore.userService.changeUserRole(userID, role);
+  const res = await irminCore.userService.changeUserRole(userID, roles);
   return res;
 }

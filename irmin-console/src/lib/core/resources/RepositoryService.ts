@@ -128,7 +128,7 @@ class RepositoryService {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-      formData.append('assignee', newOwner);
+      formData.append('owner', newOwner);
 
       const response = await this.irminCore.fetchAPI(
         `/v1/repositories/${repository}/reassign`,
@@ -154,14 +154,11 @@ class RepositoryService {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-
       formData.append('_method', 'DELETE');
-
       const response = await this.irminCore.fetchAPI(
-        `/v1/repositories/${repositorySlug}/delete`,
+        `/v1/repositories/${repositorySlug}`,
         {
           method: 'POST',
-
           body: formData,
         }
       );
@@ -185,7 +182,6 @@ class RepositoryService {
     try {
       const formData = new FormData();
       formData.append('_method', 'PATCH');
-
       if (data.name) formData.append('name', data.name);
       if (data.description) formData.append('description', data.description);
       if (data.documentation)

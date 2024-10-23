@@ -1,11 +1,7 @@
 import { User } from '@/types/core/User';
 
 /**
- * Repository type
- *
- * Repositories consist of collections, which can be for example tables in the Lakehouse. They can be created manually or by a Workflow.
- * All workflows will create a Repository, even Export Workflows - not sure what this will be used for.
- * Workflow created Repositories will be immutable by default, this might change in the future.
+ * Repository object
  *
  * @typeParam id - Repository ID
  * @typeParam name - Name of the Repository

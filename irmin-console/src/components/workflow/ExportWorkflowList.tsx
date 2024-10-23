@@ -65,7 +65,7 @@ const ExportWorkflowList = ({
             >
               <p className='text-base'>{item.name}</p>
               <span className='text-sm text-gray-600 dark:text-gray-400'>
-                {dict.list.owner}: {item.owner.name}
+                {dict.list.owner}: {item.owner.email}
                 {item.owner.company ? ` (${item.owner.company})` : ''}
               </span>
             </div>,
@@ -111,7 +111,7 @@ const ExportWorkflowList = ({
   return (
     <CardOrNormalList
       loading={loading}
-      headers={[dict.list.name, dict.list.status, dict.list.actions]}
+      headers={[dict.misc.name, dict.list.status, dict.list.actions]}
       rows={rows}
       hideHeaders={false}
     />

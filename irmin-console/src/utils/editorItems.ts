@@ -1,12 +1,12 @@
 import { Dictionary } from '@/lib/dict';
 
 import {
-  Bucket,
-  BucketFile,
-  BucketFolder,
+  EditorItems,
+  EditorItemsFile,
+  EditorItemsFolder,
   IrminFileType,
   irminFileTypes,
-} from '@/types/core/Bucket';
+} from '@/types/core/EditorItems';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
@@ -63,7 +63,7 @@ export const getNameFromPath = (path: string): string => {
  * @param path The path of the item being created
  * @param name The name of the item being created
  * @param type The type of the item being created (file or folder)
- * @param bucket The bucket object
+ * @param editorItems The editorItems object
  * @param dict The dictionary object
  * @param extension The extension of the file being created, if file (optional)
  * @returns Whether the item can be created and the reason if it cannot
@@ -72,16 +72,19 @@ export const itemCanBeCreated = function (
   path: string,
   name: string,
   type: string,
-  bucket: Bucket | null,
+  editorItems: EditorItems | null,
   dict: Dictionary,
   extension?: string
 ): {
   canCreate: boolean;
   reason?: string;
 } {
-  // Make sure bucket is provided
-  if (!bucket)
-    return { canCreate: false, reason: dict.fileNavigator.errors.noBucket };
+  // Make sure editorItems is provided
+  if (!editorItems)
+    return {
+      canCreate: false,
+      reason: 'No editorItems provided',
+    };
   // Make sure type of item created is correct
   if (type !== 'file' && type !== 'folder')
     return { canCreate: false, reason: dict.fileNavigator.errors.invalidType };
@@ -114,15 +117,15 @@ export const itemCanBeCreated = function (
     return { canCreate: false, reason: dict.fileNavigator.errors.invalidPath };
   // Make sure that the path is not already taken
   if (
-    bucket.files.some((file) => file.path === correctPath) ||
-    bucket.folders.some((folder) => folder.path === correctPath)
+    editorItems.files.some((file) => file.path === correctPath) ||
+    editorItems.folders.some((folder) => folder.path === correctPath)
   )
     return { canCreate: false, reason: dict.fileNavigator.errors.pathExists };
   // Make sure that the parent paths exist
   const parentPath = getParentPath(correctPath, correctName);
   if (
     parentPath !== '/' &&
-    !bucket.folders.some((folder) => folder.path === parentPath)
+    !editorItems.folders.some((folder) => folder.path === parentPath)
   )
     return {
       canCreate: false,
@@ -135,40 +138,40 @@ export const itemCanBeCreated = function (
 };
 
 /**
- * Transform bucket object to file items for the file navigator
- * @param bucket - Bucket object
+ * Transform editorItems object to file items for the file navigator
+ * @param editorItems - EditorItems object
  * @returns File items
  */
-export const transformBucketToFileNavItem = (
-  bucket: Bucket
+export const transformEditorItemsToFileNavItem = (
+  editorItems: EditorItems
 ): FileNavigatorItem[] => {
-  const transformFile = (file: BucketFile): FileNavigatorItem => ({
+  const transformFile = (file: EditorItemsFile): FileNavigatorItem => ({
     type: 'file',
     original: file,
     current: file,
   });
-  const transformFolder = (folder: BucketFolder): FileNavigatorItem => ({
+  const transformFolder = (folder: EditorItemsFolder): FileNavigatorItem => ({
     type: 'folder',
     original: folder,
     current: folder,
     children: [
       // Get the folders that are direct children of the current folder
-      ...bucket.folders
+      ...editorItems.folders
         .filter((a) => getParentPath(a.path, a.name) === folder.path)
         .map(transformFolder),
       // Get the files that are direct children of the current folder
-      ...bucket.files
+      ...editorItems.files
         .filter((a) => getParentPath(a.path) === folder.path)
         .map(transformFile),
     ],
   });
   return [
     // Get the folders in the root
-    ...bucket.folders
+    ...editorItems.folders
       .filter((folder) => getParentPath(folder.path, folder.name) === '/')
       .map(transformFolder),
     // Get the files in the root
-    ...bucket.files
+    ...editorItems.files
       .filter((file) => getParentPath(file.path) === '/')
       .map(transformFile),
   ];
@@ -227,17 +230,17 @@ export const getLanguageFromFilename = (filename: string): IrminFileType => {
 };
 
 /**
- * Utility function to find a file by path in the bucket
+ * Utility function to find a file by path in the editorItems
  * @param path - Path of the file to find
- * @param bucket - Bucket to search in
+ * @param editorItems - EditorItems to search in
  * @returns The file if found, undefined otherwise
  */
 export const getFileByPath = (
   path: string,
-  bucket: Bucket | null
-): BucketFile | undefined => {
-  if (!bucket) return;
-  return bucket.files.find((file) => file.path === path);
+  editorItems: EditorItems | null
+): EditorItemsFile | undefined => {
+  if (!editorItems) return;
+  return editorItems.files.find((file) => file.path === path);
 };
 
 /**

@@ -2,8 +2,7 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { getWorkflowRuns } from '@/lib/actions/workflowRuns';
-import { getWorkflow } from '@/lib/actions/workflows';
+import { getWorkflow, getWorkflowRuns } from '@/lib/actions/workflows';
 import { Locale } from '@/lib/dict';
 
 import WorkflowLayoutWrapper from '@/components/workflow/WorkflowLayoutWrapper';

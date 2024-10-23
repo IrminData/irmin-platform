@@ -23,6 +23,13 @@ interface CollectionsAPIResponse extends IrminAPIResponse {
 }
 
 /**
+ * Collection API response type
+ */
+interface CollectionAPIResponse extends IrminAPIResponse {
+  data: Collection;
+}
+
+/**
  * Collection API service
  *
  * Responsible for all repository collection related API calls
@@ -34,6 +41,7 @@ class CollectionService {
     this.irminCore = irminCore;
     // Bind methods
     this.fetchCollections = this.fetchCollections.bind(this);
+    this.fetchCollection = this.fetchCollection.bind(this);
     this.fetchContent = this.fetchContent.bind(this);
     this.uploadCollection = this.uploadCollection.bind(this);
     this.deleteCollection = this.deleteCollection.bind(this);
@@ -45,11 +53,11 @@ class CollectionService {
    * If no repository is provided, fetch all collections.
    * If no ref is provided, fetch the collections from the default branch.
    *
-   * @param repository - (optional) slug of the repository to fetch collections for
+   * @param repository - slug of the repository to fetch collections for
    * @param ref - (optional) ref to fetch the collections from, eg. branch, tag, commit hash
    */
   async fetchCollections(
-    repository?: string,
+    repository: string,
     ref?: string
   ): Promise<CollectionsAPIResponse> {
     const examples = repository
@@ -60,10 +68,9 @@ class CollectionService {
     if (isOfflineMode) return fake(examples) as CollectionsAPIResponse;
     try {
       const urlParams = new URLSearchParams();
-      if (repository) urlParams.append('repository', repository);
       if (ref) urlParams.append('ref', ref);
       const response = (await this.irminCore.fetchAPI(
-        `/v1/collections?${urlParams.toString()}`,
+        `/v1/repositories/${repository}/collections?${urlParams.toString()}`,
         {
           method: 'GET',
         }
@@ -73,6 +80,36 @@ class CollectionService {
     } catch (error) {
       console.error((error as Error).message, 'Fetch Collections error');
       if (isDevelopment) return fake(examples) as CollectionsAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch a single collection by it's name in a repository at a specific ref.
+   *
+   * @param collection - name of the collection to fetch
+   * @param repository - slug of the repository to fetch collections for
+   * @param ref - ref to fetch the collections from, eg. branch, tag, commit hash
+   */
+  async fetchCollection(
+    collection: string,
+    repository: string,
+    ref: string
+  ): Promise<CollectionAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleCollections[0]) as CollectionAPIResponse;
+    try {
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/repositories/${repository}/collections/${collection}?ref=${ref}`,
+        {
+          method: 'GET',
+        }
+      )) as CollectionAPIResponse;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch Collection error');
+      if (isDevelopment)
+        return fake(exampleCollections[0]) as CollectionAPIResponse;
       throw error;
     }
   }
@@ -107,13 +144,11 @@ class CollectionService {
     try {
       // Construct the query parameters from the props
       const urlParams = new URLSearchParams();
-      if (repository) urlParams.append('repository', repository);
       if (ref) urlParams.append('ref', ref);
       if (path) urlParams.append('path', path);
-      if (collection) urlParams.append('collection', collection);
       // Fetch the collection content from the API
       const response = await this.irminCore.fetchUnstructured(
-        `/v1/content?${urlParams.toString()}`,
+        `/v1/repositories/${repository}/collections/${collection}/content?${urlParams.toString()}`,
         {
           method: 'GET',
         }
@@ -154,11 +189,11 @@ class CollectionService {
       formData.append('path', path);
 
       for (let i = 0; i < files.length; i++) {
-        formData.append('files[]', files[i]);
+        formData.append('files', files[i]);
       }
 
       const response = await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/collection/upload`,
+        `/v1/repositories/${repository}/collections`,
         {
           method: 'POST',
           body: formData,
@@ -174,7 +209,7 @@ class CollectionService {
   }
 
   /**
-   * Delete a collection from the repository
+   * Delete a collection from the repository at the given ref
    *
    * @param repository - The repository to delete the collection from
    * @param ref - The ref to delete the collection from
@@ -191,10 +226,9 @@ class CollectionService {
 
       formData.append('_method', 'DELETE');
       formData.append('ref', ref);
-      formData.append('collection', collection);
 
       const response = await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/collection/delete`,
+        `/v1/repositories/${repository}/collections/${collection}`,
         {
           method: 'POST',
           body: formData,

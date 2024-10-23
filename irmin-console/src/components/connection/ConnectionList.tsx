@@ -59,8 +59,7 @@ const ConnectionList = ({
             >
               <p className='text-base'>{item.name}</p>
               <span className='text-sm text-gray-600 dark:text-gray-400'>
-                {dict.list.owner}: {item.owner.name}
-                {item.owner.company ? ` (${item.owner.company})` : ''}
+                {dict.list.owner}: {item.owner.email}
               </span>
             </div>,
             <div
@@ -101,7 +100,7 @@ const ConnectionList = ({
   return (
     <CardOrNormalList
       loading={loading}
-      headers={[dict.list.name, dict.list.connector, dict.list.actions]}
+      headers={[dict.misc.name, dict.list.connector, dict.list.actions]}
       rows={rows}
       hideHeaders={false}
     />

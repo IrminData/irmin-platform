@@ -7,8 +7,8 @@ import { User } from '@/types/core/User';
  * @typeParam name - Workspace name
  * @typeParam slug - Workspace slug
  * @typeParam owner_id - Workspace owner ID
- * @typeParam description - Workspace description to be displayed (optional)
- * @typeParam users - Array of users in the workspace
+ * @typeParam description - Workspace description to be displayed
+ * @typeParam users - Array of users in the workspace (optional)
  * @typeParam created_at - Timestamp of workspace creation
  * @typeParam updated_at - Timestamp of workspace update
  */
