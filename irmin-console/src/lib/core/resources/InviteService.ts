@@ -203,12 +203,11 @@ class InviteService {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-      formData.append('hash', hash);
       if (password) formData.append('password', password);
       if (password_confirmation)
         formData.append('password_confirmation', password_confirmation);
       const response = await this.irminCore.fetchAPI(
-        `/v1/invites/${invite}/accept`,
+        `/v1/invites/${invite}/accept/${hash}`,
         {
           method: 'POST',
           body: formData,
@@ -231,15 +230,10 @@ class InviteService {
   async declineInvite(invite: string, hash: string) {
     if (isOfflineMode) return fake();
     try {
-      const formData = new FormData();
-      formData.append('invite', invite);
-      formData.append('hash', hash);
-
       const response = await this.irminCore.fetchAPI(
-        `/v1/invites/${invite}/decline`,
+        `/v1/invites/${invite}/decline/${hash}`,
         {
           method: 'POST',
-          body: formData,
         }
       );
       return response;
