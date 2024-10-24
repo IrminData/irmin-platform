@@ -7,9 +7,13 @@ import { sortCommits } from '@/utils/sortCommits';
 /**
  * Server action to get a list of commits in a repository at a specific ref.
  */
-export async function getCommits(repository: string, ref?: string) {
+export async function getCommits(
+  repository: string,
+  ref?: string,
+  token?: string
+) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Get the commits
   const res = await irminCore.commitService.fetchCommits(repository, ref);
   // Sort the commits by hash
@@ -20,9 +24,13 @@ export async function getCommits(repository: string, ref?: string) {
 /**
  * Server action to get a commit by hash.
  */
-export async function getCommit(repository: string, hash: string) {
+export async function getCommit(
+  repository: string,
+  hash: string,
+  token?: string
+) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Get the commit
   const res = await irminCore.commitService.fetchCommit(repository, hash);
   return res.data;
@@ -34,9 +42,11 @@ export async function getCommit(repository: string, hash: string) {
 export async function createCommit(
   repositorySlug: string,
   currentRef: string,
-  message: string
+  message: string,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.commitService.createCommit(
     repositorySlug,
     currentRef,
@@ -51,9 +61,11 @@ export async function createCommit(
 export async function getLastModification(
   repositorySlug: string,
   branch: string,
-  collection: string
+  collection: string,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.commitService.fetchLastModification(
     repositorySlug,
     branch,
@@ -67,9 +79,11 @@ export async function getLastModification(
  */
 export async function revertUncommittedChanges(
   repositorySlug: string,
-  ref: string
+  ref: string,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.commitService.revertUncommittedChanges(
     repositorySlug,
     ref

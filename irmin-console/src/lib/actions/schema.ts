@@ -8,9 +8,11 @@ import { initCore } from '@/lib/initCore';
 export async function fetchSchemas(
   collections: string[],
   repository: string,
-  ref: string
+  ref: string,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.schemaService.fetchSchemas(
     collections,
     repository,

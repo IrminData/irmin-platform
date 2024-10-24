@@ -7,9 +7,9 @@ import { initCore } from '@/lib/initCore';
  *
  * @returns List of log events
  */
-export async function getLogs() {
+export async function getLogs(token?: string) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Fetch the logs
   const logs = await irminCore.logService.fetchLogEvents();
   return logs.data;
@@ -18,9 +18,9 @@ export async function getLogs() {
 /**
  * Server action to get the list of logs for a workflow
  */
-export async function getWorkflowLogs(workflowID: string) {
+export async function getWorkflowLogs(workflowID: string, token?: string) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Fetch the logs
   const logs = await irminCore.logService.fetchWorkflowLogEvents(workflowID);
   return logs.data;
@@ -29,9 +29,12 @@ export async function getWorkflowLogs(workflowID: string) {
 /**
  * Server action to get the list of logs for a repository
  */
-export async function getRepositoryLogs(repositorySlug: string) {
+export async function getRepositoryLogs(
+  repositorySlug: string,
+  token?: string
+) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Fetch the logs
   const logs = await irminCore.logService.fetchRepositoryLogs(repositorySlug);
   return logs.data;
@@ -40,9 +43,9 @@ export async function getRepositoryLogs(repositorySlug: string) {
 /**
  * Server action to get the list of logs for a connection
  */
-export async function getConnectionLogs(connectionID: string) {
+export async function getConnectionLogs(connectionID: string, token?: string) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Fetch the logs
   const logs = await irminCore.logService.fetchConnectionLogs(connectionID);
   return logs.data;
@@ -55,10 +58,11 @@ export async function getConnectionLogs(connectionID: string) {
  */
 export async function getWorkflowRunLogs(
   workflowID: string,
-  workflowRunID: string
+  workflowRunID: string,
+  token?: string
 ) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Fetch the logs
   const logs = await irminCore.logService.fetchWorkflowRunLogs(
     workflowID,

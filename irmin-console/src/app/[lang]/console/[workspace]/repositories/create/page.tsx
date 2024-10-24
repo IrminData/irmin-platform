@@ -1,4 +1,5 @@
 import { getRepositories } from '@/lib/actions/repositories';
+import { getToken } from '@/lib/getToken';
 
 import RepositoriesSection from '@/components/repository/RepositoriesSection';
 
@@ -12,7 +13,8 @@ import RepositoriesSection from '@/components/repository/RepositoriesSection';
  * If the user tries to close the modal, it navigates back to the repositories page.
  */
 export default async function RepositoryCreatePage() {
-  const repositories = await getRepositories();
+  const token = await getToken();
+  const repositories = await getRepositories(token);
   return (
     <RepositoriesSection repositories={repositories} sideModalOpen={true} />
   );

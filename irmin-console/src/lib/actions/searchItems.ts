@@ -7,6 +7,7 @@ import { getRepositories } from '@/lib/actions/repositories';
 import { getUsers } from '@/lib/actions/users';
 import { getWorkflows } from '@/lib/actions/workflows';
 import { getWorkspaces } from '@/lib/actions/workspaces';
+import { getToken } from '@/lib/getToken';
 import { initDict } from '@/lib/initDict';
 
 import {
@@ -21,11 +22,12 @@ export async function generateSearchItems({
 }): Promise<ConsoleSearchItem[]> {
   try {
     const { dict, locale } = await initDict();
+    const token = await getToken();
 
     const newItems: ConsoleSearchItem[] = [];
 
     // Add workspaces
-    const workspaces = await getWorkspaces();
+    const workspaces = await getWorkspaces(token);
     workspaces.forEach((ws) => {
       newItems.push({
         title: ws.name,
@@ -105,12 +107,12 @@ export async function generateSearchItems({
         repositories,
         collections,
       ] = await Promise.all([
-        getConnections(),
-        getInvites(),
-        getUsers(),
-        getWorkflows(),
-        getRepositories(),
-        getAllCollections(),
+        getConnections(token),
+        getInvites(token),
+        getUsers(token),
+        getWorkflows(token),
+        getRepositories(token),
+        getAllCollections(token),
       ]);
 
       // Add workspace-dependent static Irmin items

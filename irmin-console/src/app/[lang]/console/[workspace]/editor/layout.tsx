@@ -4,6 +4,7 @@ import { getAllCollections } from '@/lib/actions/collections';
 import { getEditorItems } from '@/lib/actions/editor-items';
 import { getRepositories } from '@/lib/actions/repositories';
 import { Locale } from '@/lib/dict';
+import { getToken } from '@/lib/getToken';
 
 import EditorLayoutWrapper from '@/components/editor/EditorLayoutWrapper';
 
@@ -43,10 +44,11 @@ export default async function EditorLayout({
   children: React.ReactNode;
   params: Promise<EditorLayoutParams>;
 }) {
+  const token = await getToken();
   const [repositories, collections, editorItems] = await Promise.all([
-    getRepositories(),
-    getAllCollections(),
-    getEditorItems(),
+    getRepositories(token),
+    getAllCollections(token),
+    getEditorItems(token),
   ]);
   return (
     <EditorProvider editorItems={editorItems}>

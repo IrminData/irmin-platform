@@ -7,9 +7,9 @@ import { initCore } from '@/lib/initCore';
  *
  * @returns The invites to the workspace
  */
-export async function getInvites() {
+export async function getInvites(token?: string) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Get the invites
   const invites = await irminCore.inviteService.fetchInvites();
   return invites.data;
@@ -18,8 +18,9 @@ export async function getInvites() {
 /**
  * Server action to cancel an invite
  */
-export async function cancelInvite(inviteID: string) {
-  const irminCore = await initCore();
+export async function cancelInvite(inviteID: string, token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.inviteService.cancelUserInvite(inviteID);
   return res;
 }
@@ -27,8 +28,13 @@ export async function cancelInvite(inviteID: string) {
 /**
  * Server action to change the role of the invitee
  */
-export async function changeInviteRole(inviteID: string, role: string) {
-  const irminCore = await initCore();
+export async function changeInviteRole(
+  inviteID: string,
+  role: string,
+  token?: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.inviteService.changeUserInviteRole(
     inviteID,
     role
@@ -39,8 +45,9 @@ export async function changeInviteRole(inviteID: string, role: string) {
 /**
  * Server action to resend an invite
  */
-export async function resendInvite(inviteID: string) {
-  const irminCore = await initCore();
+export async function resendInvite(inviteID: string, token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.inviteService.resendUserInvite(inviteID);
   return res;
 }
@@ -52,9 +59,11 @@ export async function sendInvite(
   firstName: string,
   lastName: string,
   email: string,
-  role: string
+  role: string,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.inviteService.inviteUserToWorkspace(
     firstName,
     lastName,

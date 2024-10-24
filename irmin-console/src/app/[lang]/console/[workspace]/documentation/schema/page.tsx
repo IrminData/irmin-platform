@@ -5,6 +5,7 @@ import {
   getExportWorkflows,
   getImportWorkflows,
 } from '@/lib/actions/workflows';
+import { getToken } from '@/lib/getToken';
 
 import DocumentationSchemaSection from '@/components/documentation/DocumentationSchemaSection';
 
@@ -12,6 +13,7 @@ import DocumentationSchemaSection from '@/components/documentation/Documentation
  * Page to show the schema documentation for the workspace
  */
 export default async function DocumentationSchemaPage() {
+  const token = await getToken();
   const [
     connections,
     actionWorkflows,
@@ -19,11 +21,11 @@ export default async function DocumentationSchemaPage() {
     importWorkflows,
     repositories,
   ] = await Promise.all([
-    getConnections(),
-    getActionWorkflows(),
-    getExportWorkflows(),
-    getImportWorkflows(),
-    getRepositories(),
+    getConnections(token),
+    getActionWorkflows(token),
+    getExportWorkflows(token),
+    getImportWorkflows(token),
+    getRepositories(token),
   ]);
 
   return (

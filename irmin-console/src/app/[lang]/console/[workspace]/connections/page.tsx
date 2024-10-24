@@ -1,5 +1,6 @@
 import { getConnections } from '@/lib/actions/connections';
 import { getConnectors } from '@/lib/actions/connectors';
+import { getToken } from '@/lib/getToken';
 
 import ConnectionsSection from '@/components/connection/ConnectionsSection';
 
@@ -15,9 +16,10 @@ import ConnectionsSection from '@/components/connection/ConnectionsSection';
  * the side modal is pre-opened.
  */
 export default async function ConnectionsPage() {
+  const token = await getToken();
   const [connectors, connections] = await Promise.all([
-    getConnectors(),
-    getConnections(),
+    getConnectors(token),
+    getConnections(token),
   ]);
   return (
     <ConnectionsSection

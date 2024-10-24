@@ -1,5 +1,6 @@
 import { getDict } from '@/lib/actions/dict';
 import { getWorkspace } from '@/lib/actions/workspaces';
+import { getToken } from '@/lib/getToken';
 
 import RepositorySettingsSection from '@/components/repository/RepositorySettingsSection';
 
@@ -14,9 +15,11 @@ export default async function RepositorySettingsPage(props: {
   const params = await props.params;
 
   const currentWorkspace = params.workspace;
+  const token = await getToken();
   const [workspace, { dict }] = await Promise.all([
-    getWorkspace(currentWorkspace),
+    getWorkspace(currentWorkspace, token),
     getDict(),
   ]);
+
   return <RepositorySettingsSection dict={dict} currentWorkspace={workspace} />;
 }

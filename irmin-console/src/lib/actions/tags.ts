@@ -5,9 +5,9 @@ import { initCore } from '@/lib/initCore';
 /**
  * Server action to get a list of tags in a repository.
  */
-export async function getTags(repository: string) {
+export async function getTags(repository: string, token?: string) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Get the tags
   const tags = await irminCore.tagService.fetchTags(repository);
   return tags.data;
@@ -16,8 +16,13 @@ export async function getTags(repository: string) {
 /**
  * Server action to get a tag from a repository.
  */
-export async function getTag(repository: string, tagID: string) {
-  const irminCore = await initCore();
+export async function getTag(
+  repository: string,
+  tagID: string,
+  token?: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const tag = await irminCore.tagService.fetchTag(tagID, repository);
   return tag.data;
 }
@@ -28,9 +33,11 @@ export async function getTag(repository: string, tagID: string) {
 export async function createTag(
   repository: string,
   from: string,
-  name: string
+  name: string,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.tagService.createTag(repository, from, name);
   return res;
 }
@@ -42,9 +49,11 @@ export async function updateTag(
   repository: string,
   tagID: string,
   name?: string,
-  ref?: string
+  ref?: string,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.tagService.updateTag(
     repository,
     tagID,
@@ -57,8 +66,13 @@ export async function updateTag(
 /**
  * Server action to delete a tag in a repository.
  */
-export async function deleteTag(repository: string, tagID: string) {
-  const irminCore = await initCore();
+export async function deleteTag(
+  repository: string,
+  tagID: string,
+  token?: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.tagService.deleteTag(repository, tagID);
   return res;
 }

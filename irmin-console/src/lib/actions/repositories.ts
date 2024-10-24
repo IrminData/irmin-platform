@@ -7,8 +7,9 @@ import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 /**
  * Server action to get all repositories for the current workspace.
  */
-export async function getRepositories() {
-  const irminCore = await initCore();
+export async function getRepositories(token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const repositories = await irminCore.repositoryService.fetchRepositories();
   return repositories.data;
 }
@@ -16,8 +17,9 @@ export async function getRepositories() {
 /**
  * Server action to fetch a single repository by slug.
  */
-export async function getRepository(repositorySlug: string) {
-  const irminCore = await initCore();
+export async function getRepository(repositorySlug: string, token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const repositories =
     await irminCore.repositoryService.fetchRepository(repositorySlug);
   return repositories.data;
@@ -29,8 +31,12 @@ export async function getRepository(repositorySlug: string) {
  * @param repository - The repository data to create.
  * @returns The API response from the server.
  */
-export async function createRepository(repository: ItemUpdateProps) {
-  const irminCore = await initCore();
+export async function createRepository(
+  repository: ItemUpdateProps,
+  token?: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.repositoryService.createRepository(repository);
   return res;
 }
@@ -41,8 +47,9 @@ export async function createRepository(repository: ItemUpdateProps) {
  * @param repositorySlug - The repository slug to delete.
  * @returns The API response from the server.
  */
-export async function deleteRepository(repositorySlug: string) {
-  const irminCore = await initCore();
+export async function deleteRepository(repositorySlug: string, token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res =
     await irminCore.repositoryService.deleteRepository(repositorySlug);
   return res;
@@ -56,9 +63,11 @@ export async function deleteRepository(repositorySlug: string) {
  */
 export async function updateRepository(
   repositorySlug: string,
-  data: ItemUpdateProps
+  data: ItemUpdateProps,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.repositoryService.updateRepository(
     repositorySlug,
     data
@@ -71,9 +80,11 @@ export async function updateRepository(
  */
 export async function reassignRepository(
   repositorySlug: string,
-  ownerID: string
+  ownerID: string,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.repositoryService.reassignRepository(
     repositorySlug,
     ownerID

@@ -6,6 +6,7 @@ import { getBranches } from '@/lib/actions/branches';
 import { getRepository } from '@/lib/actions/repositories';
 import { getTags } from '@/lib/actions/tags';
 import { Locale } from '@/lib/dict';
+import { getToken } from '@/lib/getToken';
 import { initDict } from '@/lib/initDict';
 
 import RepositoryLayoutWrapper from '@/components/repository/RepositoryLayoutWrapper';
@@ -50,10 +51,11 @@ export default async function RepositoryLayoutWithContainer(props: {
     notFound();
   }
 
+  const token = await getToken();
   const [repository, branches, tags, { dict }] = await Promise.all([
-    getRepository(params.repository),
-    getBranches(params.repository),
-    getTags(params.repository),
+    getRepository(params.repository, token),
+    getBranches(params.repository, token),
+    getTags(params.repository, token),
     initDict(),
   ]);
 

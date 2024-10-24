@@ -8,9 +8,11 @@ import { initCore } from '@/lib/initCore';
 export async function getDiff(
   repository: string,
   ref: string,
-  compareRef: string
+  compareRef: string,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.diffService.compareRefs(
     repository,
     ref,
@@ -27,9 +29,11 @@ export async function mergeRefs(
   base: string,
   compare: string,
   description: string,
-  strategy: string
+  strategy: string,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.diffService.mergeRefs(
     repository,
     base,

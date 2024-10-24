@@ -10,9 +10,9 @@ import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
  *
  * @returns The list of connections
  */
-export async function getConnections() {
+export async function getConnections(token?: string) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Get the connections
   const connections = await irminCore.connectionService.fetchConnections();
   return connections.data;
@@ -23,9 +23,9 @@ export async function getConnections() {
  *
  * @returns The list of connections
  */
-export async function getConnection(id: string) {
+export async function getConnection(id: string, token?: string) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Get the connection
   const connections = await irminCore.connectionService.fetchConnection(id);
   return connections.data;
@@ -34,14 +34,18 @@ export async function getConnection(id: string) {
 /**
  * Server action to create a new connection.
  */
-export async function createConnection(data: {
-  connectorID: string;
-  connectionDetails: DynamicFieldValues;
-  connectionSettings: DynamicFieldValues;
-  name: string;
-  description: string;
-}) {
-  const irminCore = await initCore();
+export async function createConnection(
+  data: {
+    connectorID: string;
+    connectionDetails: DynamicFieldValues;
+    connectionSettings: DynamicFieldValues;
+    name: string;
+    description: string;
+  },
+  token?: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.connectionService.createConnection(data);
   return res;
 }
@@ -51,9 +55,11 @@ export async function createConnection(data: {
  */
 export async function updateConnection(
   connectionID: string,
-  data: ItemUpdateProps
+  data: ItemUpdateProps,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.connectionService.updateConnection(
     connectionID,
     data
@@ -64,8 +70,9 @@ export async function updateConnection(
 /**
  * Server action to delete a connection.
  */
-export async function deleteConnection(connectionID: string) {
-  const irminCore = await initCore();
+export async function deleteConnection(connectionID: string, token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.connectionService.deleteConnection(connectionID);
   return res;
 }
@@ -75,9 +82,11 @@ export async function deleteConnection(connectionID: string) {
  */
 export async function reassignConnection(
   connectionID: string,
-  ownerID: string
+  ownerID: string,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.connectionService.reassignConnection(
     connectionID,
     ownerID
@@ -88,8 +97,12 @@ export async function reassignConnection(
 /**
  * Server action to get new connection details
  */
-export async function getNewConnectionDetails(connectorID: string) {
-  const irminCore = await initCore();
+export async function getNewConnectionDetails(
+  connectorID: string,
+  token?: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res =
     await irminCore.connectionService.fetchNewConnectionDetails(connectorID);
   return res;
@@ -100,9 +113,11 @@ export async function getNewConnectionDetails(connectorID: string) {
  */
 export async function testConnection(
   connectorID: string,
-  connectionDetails: DynamicFieldValues
+  connectionDetails: DynamicFieldValues,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.connectionService.testConnectionWithDetails(
     connectorID,
     connectionDetails
@@ -115,9 +130,11 @@ export async function testConnection(
  */
 export async function getNewConnectionSettings(
   connectorID: string,
-  connectionDetails: DynamicFieldValues
+  connectionDetails: DynamicFieldValues,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.connectionService.fetchNewConnectionSettings(
     connectorID,
     connectionDetails
@@ -128,14 +145,18 @@ export async function getNewConnectionSettings(
 /**
  * Server action to create a new connection
  */
-export async function createNewConnection(data: {
-  connectorID: string;
-  connectionDetails: DynamicFieldValues;
-  connectionSettings: DynamicFieldValues;
-  name: string;
-  description: string;
-}) {
-  const irminCore = await initCore();
+export async function createNewConnection(
+  data: {
+    connectorID: string;
+    connectionDetails: DynamicFieldValues;
+    connectionSettings: DynamicFieldValues;
+    name: string;
+    description: string;
+  },
+  token?: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.connectionService.createConnection(data);
   return res;
 }

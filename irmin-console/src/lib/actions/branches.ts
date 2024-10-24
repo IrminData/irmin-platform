@@ -5,9 +5,9 @@ import { initCore } from '@/lib/initCore';
 /**
  * Server action to get a list of branches in a repository.
  */
-export async function getBranches(repository: string) {
+export async function getBranches(repository: string, token?: string) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Get the branches
   const branches = await irminCore.branchService.fetchBranches(repository);
   return branches.data;
@@ -16,9 +16,13 @@ export async function getBranches(repository: string) {
 /**
  * Server action to get a branch in a repository.
  */
-export async function getBranch(repository: string, branch: string) {
+export async function getBranch(
+  repository: string,
+  branch: string,
+  token?: string
+) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Get the branch
   const branchData = await irminCore.branchService.fetchBranch(
     repository,
@@ -33,9 +37,11 @@ export async function getBranch(repository: string, branch: string) {
 export async function createBranch(
   repository: string,
   from: string,
-  branch: string
+  branch: string,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.branchService.createBranch(
     repository,
     from,
@@ -47,8 +53,13 @@ export async function createBranch(
 /**
  * Server acction to delete a branch in a repository.
  */
-export async function deleteBranch(repository: string, branch: string) {
-  const irminCore = await initCore();
+export async function deleteBranch(
+  repository: string,
+  branch: string,
+  token?: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.branchService.deleteBranch(repository, branch);
   return res;
 }

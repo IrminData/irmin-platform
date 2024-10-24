@@ -9,9 +9,9 @@ import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
  *
  * @returns The EditorItems object
  */
-export async function getEditorItems() {
+export async function getEditorItems(token?: string) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Get the editorItems
   const editorItems = await irminCore.editorItemService.fetchEditorItems();
   return editorItems.data;
@@ -20,8 +20,12 @@ export async function getEditorItems() {
 /**
  * Server action to create a file or folder in the Workspace's EditorItems.
  */
-export async function createEditorItem(file: FileNavigatorItem) {
-  const irminCore = await initCore();
+export async function createEditorItem(
+  file: FileNavigatorItem,
+  token?: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   if (file.type === 'folder') {
     const res = await irminCore.editorItemService.createFolder(file);
     return res;
@@ -33,8 +37,12 @@ export async function createEditorItem(file: FileNavigatorItem) {
 /**
  * Server action to delete a file or folder in the Workspace's EditorItems.
  */
-export async function deleteEditorItem(file: FileNavigatorItem) {
-  const irminCore = await initCore();
+export async function deleteEditorItem(
+  file: FileNavigatorItem,
+  token?: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   if (file.type === 'folder') {
     const res = await irminCore.editorItemService.deleteFolder(file);
     return res;
@@ -46,8 +54,12 @@ export async function deleteEditorItem(file: FileNavigatorItem) {
 /**
  * Server action to update a file or folder in the Workspace's EditorItems.
  */
-export async function updateEditorItem(file: FileNavigatorItem) {
-  const irminCore = await initCore();
+export async function updateEditorItem(
+  file: FileNavigatorItem,
+  token?: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   if (file.type === 'folder') {
     const res = await irminCore.editorItemService.updateFolder(file);
     return res;

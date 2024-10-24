@@ -1,4 +1,5 @@
 import { getRepositories } from '@/lib/actions/repositories';
+import { getToken } from '@/lib/getToken';
 
 import RepositoriesSection from '@/components/repository/RepositoriesSection';
 
@@ -14,7 +15,8 @@ import RepositoriesSection from '@/components/repository/RepositoriesSection';
  * the side modal is pre-opened.
  */
 export default async function RepositoriesPage() {
-  const repositories = await getRepositories();
+  const token = await getToken();
+  const repositories = await getRepositories(token);
   return (
     <RepositoriesSection repositories={repositories} sideModalOpen={false} />
   );

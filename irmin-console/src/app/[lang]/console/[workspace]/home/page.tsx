@@ -1,5 +1,6 @@
 import { getDict } from '@/lib/actions/dict';
 import { getWorkspace } from '@/lib/actions/workspaces';
+import { getToken } from '@/lib/getToken';
 
 import WorkspaceHomeSection from '@/components/workspace/WorkspaceHomeSection';
 
@@ -14,8 +15,9 @@ export default async function WorkspaceHomePage(props: {
   const params = await props.params;
 
   const currentWorkspace = params.workspace;
+  const token = await getToken();
   const [workspace, { dict }] = await Promise.all([
-    getWorkspace(currentWorkspace),
+    getWorkspace(currentWorkspace, token),
     getDict(),
   ]);
   return <WorkspaceHomeSection dict={dict} workspace={workspace} />;

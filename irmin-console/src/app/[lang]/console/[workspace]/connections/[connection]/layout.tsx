@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 
 import { getConnection } from '@/lib/actions/connections';
 import { Locale } from '@/lib/dict';
+import { getToken } from '@/lib/getToken';
 
 import ConnectionLayoutWrapper from '@/components/connection/ConnectionLayoutWrapper';
 
@@ -53,7 +54,8 @@ export default async function ConnectionPagesLayout(props: {
     notFound();
   }
 
-  const connection = await getConnection(connectionID);
+  const token = await getToken();
+  const connection = await getConnection(connectionID, token);
 
   return (
     <ConnectionProvider

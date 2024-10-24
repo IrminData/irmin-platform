@@ -1,5 +1,6 @@
 import { getConnections } from '@/lib/actions/connections';
 import { getConnectors } from '@/lib/actions/connectors';
+import { getToken } from '@/lib/getToken';
 
 import ConnectionsSection from '@/components/connection/ConnectionsSection';
 
@@ -10,9 +11,10 @@ import ConnectionsSection from '@/components/connection/ConnectionsSection';
  * If the user tries to close the modal, it navigates back to the connections page.
  */
 export default async function ConnectionCreatePage() {
+  const token = await getToken();
   const [connectors, connections] = await Promise.all([
-    getConnectors(),
-    getConnections(),
+    getConnectors(token),
+    getConnections(token),
   ]);
 
   return (

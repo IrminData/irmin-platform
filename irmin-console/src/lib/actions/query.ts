@@ -11,9 +11,11 @@ import { IrminFileType } from '@/types/core/EditorItems';
 export async function executeScript(
   type: IrminFileType,
   content: string,
-  exampleType?: CollectionType
+  exampleType?: CollectionType,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.queryService.executeScript(
     type,
     content,
@@ -31,9 +33,11 @@ export async function createQuery(
   name?: string,
   description?: string,
   stored?: boolean,
-  run?: boolean
+  run?: boolean,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.queryService.createQuery(
     type,
     content,
@@ -48,8 +52,9 @@ export async function createQuery(
 /**
  * Server action to get all queries.
  */
-export async function getQueries() {
-  const irminCore = await initCore();
+export async function getQueries(token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.queryService.getQueries();
   return res;
 }
@@ -57,8 +62,9 @@ export async function getQueries() {
 /**
  * Server action to get a single query by ID.
  */
-export async function getQuery(query: string) {
-  const irminCore = await initCore();
+export async function getQuery(query: string, token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.queryService.getQuery(query);
   return res;
 }
@@ -66,8 +72,9 @@ export async function getQuery(query: string) {
 /**
  * Server action to delete a query.
  */
-export async function deleteQuery(query: string) {
-  const irminCore = await initCore();
+export async function deleteQuery(query: string, token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.queryService.deleteQuery(query);
   return res;
 }
@@ -81,9 +88,11 @@ export async function updateQuery(
   content?: string,
   name?: string,
   description?: string,
-  stored?: boolean
+  stored?: boolean,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.queryService.updateQuery(
     query,
     type,
@@ -98,8 +107,9 @@ export async function updateQuery(
 /**
  * Server action to run a query.
  */
-export async function executeQuery(query: string) {
-  const irminCore = await initCore();
+export async function executeQuery(query: string, token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.queryService.executeQuery(query);
   return res;
 }
@@ -110,9 +120,11 @@ export async function executeQuery(query: string) {
 export async function getQueryResults(
   query: string,
   page: number,
-  exampleType?: 'table' | 'file' | 'folder'
+  exampleType?: 'table' | 'file' | 'folder',
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.queryService.getQueryResults(
     query,
     page,

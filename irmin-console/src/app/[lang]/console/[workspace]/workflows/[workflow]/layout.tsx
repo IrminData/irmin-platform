@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 
 import { getWorkflow, getWorkflowRuns } from '@/lib/actions/workflows';
 import { Locale } from '@/lib/dict';
+import { getToken } from '@/lib/getToken';
 
 import WorkflowLayoutWrapper from '@/components/workflow/WorkflowLayoutWrapper';
 
@@ -53,8 +54,11 @@ export default async function WorkflowLayout(
   const workflowId = params.workflow;
   if (isInvalidRouteProp(workflowId)) notFound();
 
-  const runs = await getWorkflowRuns(workflowId);
-  const workflow = await getWorkflow(workflowId);
+  const token = await getToken();
+  const [runs, workflow] = await Promise.all([
+    getWorkflowRuns(workflowId, token),
+    getWorkflow(workflowId, token),
+  ]);
 
   return (
     <WorkflowProvider runs={runs} initialWorkflow={workflow}>

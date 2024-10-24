@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { getDict } from '@/lib/actions/dict';
 import { getWorkspaces } from '@/lib/actions/workspaces';
 import { Locale } from '@/lib/dict';
+import { getToken } from '@/lib/getToken';
 
 import ConsoleWrapper from '@/components/console/ConsoleWrapper';
 
@@ -31,8 +32,9 @@ export default async function ConsoleLayout(props: {
 }) {
   const { children } = props;
 
+  const token = await getToken();
   const [workspaces, { dict }] = await Promise.all([
-    getWorkspaces(),
+    getWorkspaces(token),
     getDict(),
   ]);
 

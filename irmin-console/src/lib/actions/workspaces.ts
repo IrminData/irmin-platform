@@ -7,8 +7,9 @@ import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 /**
  * Server action to get all workspaces for the current user.
  */
-export async function getWorkspaces() {
-  const irminCore = await initCore();
+export async function getWorkspaces(token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const workspaces = await irminCore.workspaceService.fetchWorkspaces();
   return workspaces.data;
 }
@@ -16,8 +17,9 @@ export async function getWorkspaces() {
 /**
  * Server action to fetch a single workspace by slug.
  */
-export async function getWorkspace(workspaceSlug: string) {
-  const irminCore = await initCore();
+export async function getWorkspace(workspaceSlug: string, token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const workspace =
     await irminCore.workspaceService.fetchWorkspace(workspaceSlug);
   return workspace.data;
@@ -26,8 +28,9 @@ export async function getWorkspace(workspaceSlug: string) {
 /**
  * Server action to delete a workspace.
  */
-export async function deleteWorkspace(workspaceSlug: string) {
-  const irminCore = await initCore();
+export async function deleteWorkspace(workspaceSlug: string, token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.workspaceService.deleteWorkspace(workspaceSlug);
   return res;
 }
@@ -37,9 +40,11 @@ export async function deleteWorkspace(workspaceSlug: string) {
  */
 export async function reassignWorkspace(
   workspaceSlug: string,
-  newOwnerID: string
+  newOwnerID: string,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.workspaceService.transferWorkspaceOwnership(
     workspaceSlug,
     newOwnerID
@@ -52,9 +57,11 @@ export async function reassignWorkspace(
  */
 export async function updateWorkspace(
   workspaceSlug: string,
-  data: ItemUpdateProps
+  data: ItemUpdateProps,
+  token?: string
 ) {
-  const irminCore = await initCore();
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.workspaceService.updateWorkspace(
     workspaceSlug,
     data
@@ -65,8 +72,13 @@ export async function updateWorkspace(
 /**
  * Server action to create a new workspace.
  */
-export async function createWorkspace(name: string, description: string) {
-  const irminCore = await initCore();
+export async function createWorkspace(
+  name: string,
+  description: string,
+  token?: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.workspaceService.createWorkspace(
     name,
     description
@@ -77,8 +89,9 @@ export async function createWorkspace(name: string, description: string) {
 /**
  * Server action to switch the current workspace.
  */
-export async function switchWorkspace(workspaceSlug?: string) {
-  const irminCore = await initCore();
+export async function switchWorkspace(workspaceSlug?: string, token?: string) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.workspaceService.switchWorkspace(
     workspaceSlug ?? ''
   );

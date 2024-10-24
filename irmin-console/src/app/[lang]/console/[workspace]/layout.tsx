@@ -7,6 +7,7 @@ import { getRoles } from '@/lib/actions/roles';
 import { getUsers } from '@/lib/actions/users';
 import { getWorkspace, switchWorkspace } from '@/lib/actions/workspaces';
 import { Locale } from '@/lib/dict';
+import { getToken } from '@/lib/getToken';
 
 import { UsersProvider } from '@/context/UsersContext';
 import { WorkspaceProvider } from '@/context/WorkspaceContext';
@@ -43,15 +44,17 @@ export default async function ConsoleWorkspaceLayout(props: {
 
   const currentWorkspace = params.workspace;
 
+  const token = await getToken();
+
   // Switch to the current workspace
-  await switchWorkspace(currentWorkspace);
+  await switchWorkspace(currentWorkspace, token);
 
   // Fetch the workspace, roles, users, and invites
   const [workspace, roles, users, invites] = await Promise.all([
-    getWorkspace(currentWorkspace),
-    getRoles(),
-    getUsers(),
-    getInvites(),
+    getWorkspace(currentWorkspace, token),
+    getRoles(token),
+    getUsers(token),
+    getInvites(token),
   ]);
 
   return (

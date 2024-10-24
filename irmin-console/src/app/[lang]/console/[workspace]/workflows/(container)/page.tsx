@@ -1,4 +1,5 @@
 import { getWorkflows } from '@/lib/actions/workflows';
+import { getToken } from '@/lib/getToken';
 
 import WorkflowsSection from '@/components/workflow/WorkflowsSection';
 
@@ -14,6 +15,7 @@ import WorkflowsSection from '@/components/workflow/WorkflowsSection';
  * the side modal is pre-opened.
  */
 export default async function WorkflowsPage() {
-  const workflows = await getWorkflows();
+  const token = await getToken();
+  const workflows = await getWorkflows(token);
   return <WorkflowsSection workflows={workflows} sideModalOpen={false} />;
 }

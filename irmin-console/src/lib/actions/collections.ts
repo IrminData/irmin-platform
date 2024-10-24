@@ -10,9 +10,13 @@ import { initCore } from '@/lib/initCore';
  * @param ref - (optional) ref to fetch the collections from, eg. branch, tag, commit hash
  * @returns The list of collections
  */
-export async function getCollections(repository: string, ref?: string) {
+export async function getCollections(
+  repository: string,
+  ref?: string,
+  token?: string
+) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Get the collections
   const collections = await irminCore.collectionService.fetchCollections(
     repository,
@@ -27,9 +31,9 @@ export async function getCollections(repository: string, ref?: string) {
  *
  * @returns The list of collections
  */
-export async function getAllCollections() {
+export async function getAllCollections(token?: string) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   const { data: repositories } =
     await irminCore.repositoryService.fetchRepositories();
   const collections = (
@@ -53,10 +57,11 @@ export async function getAllCollections() {
 export async function getCollection(
   collection: string,
   repository: string,
-  ref: string
+  ref: string,
+  token?: string
 ) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Get the collections
   const collections = await irminCore.collectionService.fetchCollection(
     collection,
@@ -76,10 +81,11 @@ export async function getCollection(
 export async function deleteCollection(
   repository: string,
   ref: string,
-  collection: string
+  collection: string,
+  token?: string
 ) {
   // Create the IrminCore instance
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Delete the collection
   const res = await irminCore.collectionService.deleteCollection(
     repository,
@@ -98,13 +104,17 @@ export async function deleteCollection(
  * @param data.repository - Slug of the repository to fetch the collection from
  * @param data.ref - Ref to fetch the collection from, eg. branch, tag, commit hash
  */
-export async function getCollectionContent(data: {
-  collection?: string;
-  path?: string;
-  repository?: string;
-  ref?: string;
-}) {
-  const irminCore = await initCore();
+export async function getCollectionContent(
+  data: {
+    collection?: string;
+    path?: string;
+    repository?: string;
+    ref?: string;
+  },
+  token?: string
+) {
+  // Create the IrminCore instance
+  const irminCore = await initCore(token);
   const res = await irminCore.collectionService.fetchContent(data);
   return res;
 }

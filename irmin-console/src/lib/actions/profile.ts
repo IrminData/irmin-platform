@@ -11,13 +11,15 @@ import { initDict } from '@/lib/initDict';
  *
  * @returns The user's profile API response
  */
-export async function getProfile() {
+export async function getProfile(token?: string) {
   const { locale } = await initDict();
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Get the profile
   const res = await irminCore.profileService.getProfile();
-  // Register the user as a subscriber in Novu
-  await registerNovuSubscriber(res.data, locale);
+  if (res.data) {
+    // Register the user as a subscriber in Novu
+    await registerNovuSubscriber(res.data, locale);
+  }
   return res;
 }
 
@@ -37,10 +39,11 @@ export async function updateProfile(
   first_name?: string,
   last_name?: string,
   company?: string,
-  profile_picture?: Blob
+  profile_picture?: Blob,
+  token?: string
 ) {
   const { locale } = await initDict();
-  const irminCore = await initCore();
+  const irminCore = await initCore(token);
   // Update the profile
   const res = await irminCore.profileService.updateProfile(
     first_name,

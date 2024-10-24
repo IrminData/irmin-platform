@@ -1,6 +1,7 @@
 import { getDict } from '@/lib/actions/dict';
 import { getWorkflows } from '@/lib/actions/workflows';
 import { getWorkspace } from '@/lib/actions/workspaces';
+import { getToken } from '@/lib/getToken';
 
 import RepositorySection from '@/components/repository/RepositorySection';
 
@@ -20,9 +21,10 @@ export default async function RepositoryPage(props: {
 
   const currentWorkspace = params.workspace;
 
+  const token = await getToken();
   const [workspace, workflows, { dict }] = await Promise.all([
-    getWorkspace(currentWorkspace),
-    getWorkflows(),
+    getWorkspace(currentWorkspace, token),
+    getWorkflows(token),
     getDict(),
   ]);
 
