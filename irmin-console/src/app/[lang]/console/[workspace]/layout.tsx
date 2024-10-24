@@ -2,14 +2,12 @@
 
 import type { Metadata } from 'next';
 
-import { getEditorItems } from '@/lib/actions/editor-items';
 import { getInvites } from '@/lib/actions/invites';
 import { getRoles } from '@/lib/actions/roles';
 import { getUsers } from '@/lib/actions/users';
 import { getWorkspace, switchWorkspace } from '@/lib/actions/workspaces';
 import { Locale } from '@/lib/dict';
 
-import { EditorItemsProvider } from '@/context/EditorItemsContext';
 import { UsersProvider } from '@/context/UsersContext';
 import { WorkspaceProvider } from '@/context/WorkspaceContext';
 
@@ -33,7 +31,7 @@ export async function generateMetadata(props: {
 
 /**
  * Console workspace layout
- * Provides the {@link UsersProvider}, {@link WorkspaceProvider} and {@link EditorItemsProvider} contexts for the workspace pages.
+ * Provides the {@link UsersProvider} and {@link WorkspaceProvider} contexts for the workspace pages.
  */
 export default async function ConsoleWorkspaceLayout(props: {
   children: React.ReactNode;
@@ -48,13 +46,12 @@ export default async function ConsoleWorkspaceLayout(props: {
   // Switch to the current workspace
   await switchWorkspace(currentWorkspace);
 
-  // Fetch the workspace, roles, users, invites, and editorItems
-  const [workspace, roles, users, invites, editorItems] = await Promise.all([
+  // Fetch the workspace, roles, users, and invites
+  const [workspace, roles, users, invites] = await Promise.all([
     getWorkspace(currentWorkspace),
     getRoles(),
     getUsers(),
     getInvites(),
-    getEditorItems(),
   ]);
 
   return (
@@ -67,9 +64,7 @@ export default async function ConsoleWorkspaceLayout(props: {
         currentUsers={users}
         currentInvites={invites}
       >
-        <EditorItemsProvider editorItems={editorItems}>
-          {children}
-        </EditorItemsProvider>
+        {children}
       </UsersProvider>
     </WorkspaceProvider>
   );

@@ -164,7 +164,7 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
 export const usePopup = () => {
   const context = useContext(PopupContext);
   if (!context) {
-    throw new Error('usePopup must be used within a EditorItemsProvider');
+    throw new Error('usePopup must be used within the PopupProvider');
   }
   return context;
 };

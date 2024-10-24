@@ -102,9 +102,6 @@ const ManageWorkspacesSection = ({
       {/* Form for creating a new workspace */}
       <div className='w-full pr-4 lg:max-w-80'>
         <div className='rounded-xl bg-background p-2 text-xs text-foreground shadow sm:p-4 lg:p-4 lg:text-base'>
-          <p className='mb-4 block text-center text-sm font-normal md:text-base lg:mt-0 lg:text-left'>
-            {dict.workspaceSwitcher.createNewWorkspace}
-          </p>
           <form
             onSubmit={handleSubmit(handleCreateWorkspace)}
             className={`${processing && 'blur-sm'}`}

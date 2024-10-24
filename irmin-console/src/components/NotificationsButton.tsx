@@ -6,8 +6,11 @@ import { Inbox } from '@novu/react';
 import { dark } from '@novu/react/themes';
 import { useTheme } from 'next-themes';
 
+import { TbBell } from 'react-icons/tb';
+
 import { User } from '@/types/core/User';
 
+const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const novuApplicationIdentifier = process.env.NEXT_PUBLIC_NOVU_APP_ID ?? '';
 
 /**
@@ -21,6 +24,9 @@ const novuApplicationIdentifier = process.env.NEXT_PUBLIC_NOVU_APP_ID ?? '';
 const NotificationsButton = ({ profile }: { profile: User }) => {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
+  if (isOfflineMode) {
+    return <TbBell className='text-xl text-accent' />;
+  }
   return (
     <Inbox
       applicationIdentifier={novuApplicationIdentifier}

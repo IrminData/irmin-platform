@@ -1,31 +1,27 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 
 import CollectionReferenceList from '@/components/repository/collections/CollectionReferenceList';
 
-import { EditorContextProvider } from '@/context/EditorContext';
-import { useEditorItems } from '@/context/EditorItemsContext';
-import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
+import { useEditor } from '@/context/EditorContext';
 import { QueryProvider } from '@/context/QueryContext';
 
 import { Collection } from '@/types/core/Collection';
 import { Repository } from '@/types/core/Repository';
-import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 import FileNavigator from './FileNavigator';
-import AddNewFileModal from './modals/AddNewFileModal';
-import AddNewFolderModal from './modals/AddNewFolderModal';
-import RenameOrMoveItemModal from './modals/RenameOrMoveItemModal';
 
 /**
  * Component to wrap the editor pages in.
  * Provides a sidebar with file navigator and other tools.
  *
- * @param children - The children to render
+ * @param props - The props to pass to the component
+ * @param props.children - The children to render
+ * @param props.repositories - The repositories to display in the collection reference list
+ * @param props.collections - The collections to display in the collection reference list
  */
 export default function EditorLayoutWrapper({
   children,
@@ -36,101 +32,16 @@ export default function EditorLayoutWrapper({
   repositories: Repository[];
   collections: Collection[];
 }) {
-  const { irminModal, irminConfirm } = usePopup();
-  const { dict } = useLocale();
   const {
-    editorItems,
     items,
-    createFile,
-    createFolder,
-    updateFile,
-    updateFolder,
-    deleteFile,
-    deleteFolder,
-    openFileTabs,
-    setOpenFileTabs,
-    setActiveTab,
-  } = useEditorItems();
+    addNewFile,
+    addNewFolder,
+    renameOrMoveItem,
+    deleteItem,
+    openFile,
+  } = useEditor();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  /**
-   * Open the modal to create a new file
-   */
-  const addNewFile = useCallback(() => {
-    irminModal.show(
-      dict.fileNavigator.createFile,
-      <AddNewFileModal editorItems={editorItems} createFile={createFile} />
-    );
-  }, [irminModal, dict, editorItems, createFile]);
-
-  /**
-   * Open the modal to create a new folder
-   */
-  const addNewFolder = useCallback(() => {
-    irminModal.show(
-      dict.fileNavigator.createFolder,
-      <AddNewFolderModal
-        editorItems={editorItems}
-        createFolder={createFolder}
-      />
-    );
-  }, [irminModal, dict, editorItems, createFolder]);
-
-  /**
-   * Open the modal to rename or move a file or folder.
-   *
-   * The modal will ask for the new name, path, and, if applicable, type of the file.
-   *
-   * @param item The item to change
-   */
-  const renameOrMoveItem = useCallback(
-    (item: FileNavigatorItem) => {
-      irminModal.show(
-        item.type === 'file'
-          ? dict.fileNavigator.updateFile
-          : dict.fileNavigator.updateFolder,
-        <RenameOrMoveItemModal
-          item={item}
-          editorItems={editorItems}
-          updateFile={updateFile}
-          updateFolder={updateFolder}
-        />
-      );
-    },
-    [irminModal, dict, editorItems, updateFile, updateFolder]
-  );
-
-  /**
-   * Delete a file or folder.
-   *
-   * Ask for confirmation before deleting.
-   *
-   * @param item The item to delete
-   */
-  const deleteItem = useCallback(
-    async (item: FileNavigatorItem) => {
-      if (item.type == 'file') {
-        const confirmed = await irminConfirm(
-          'warning',
-          `${dict.fileNavigator.deleteConfirmation} ${item.current?.name ?? 'this file'}?`
-        );
-        if (confirmed) {
-          deleteFile(item);
-        }
-      }
-      if (item.type === 'folder') {
-        const confirmed = await irminConfirm(
-          'warning',
-          `${dict.fileNavigator.deleteConfirmation} ${item.current?.name ?? 'this file'}? ${dict.fileNavigator.deleteFolderWarning}.`
-        );
-        if (confirmed) {
-          deleteFolder(item);
-        }
-      }
-    },
-    [irminConfirm, dict, deleteFile, deleteFolder]
-  );
 
   return (
     <div
@@ -172,13 +83,7 @@ export default function EditorLayoutWrapper({
               renameOrMoveItem(item);
             }}
             onOpenFile={(file) => {
-              if (!openFileTabs.includes(file.current?.path ?? '')) {
-                const newTabs = [...openFileTabs, file.current?.path ?? ''];
-                setOpenFileTabs(newTabs);
-                setActiveTab(newTabs.length - 1);
-              } else {
-                setActiveTab(openFileTabs.indexOf(file.current?.path ?? ''));
-              }
+              openFile(file);
             }}
             onDelete={(item) => {
               deleteItem(item);
@@ -196,9 +101,7 @@ export default function EditorLayoutWrapper({
           className='flex h-full w-full flex-col bg-background'
           id='editor-page-content'
         >
-          <EditorContextProvider>
-            <QueryProvider>{children}</QueryProvider>
-          </EditorContextProvider>
+          <QueryProvider>{children}</QueryProvider>
         </div>
       </div>
     </div>

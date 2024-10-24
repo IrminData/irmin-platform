@@ -3,7 +3,6 @@
 import QueryResults from '@/components/query/QueryResults';
 
 import { useEditor } from '@/context/EditorContext';
-import { useEditorItems } from '@/context/EditorItemsContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useQuery } from '@/context/QueryContext';
 
@@ -15,8 +14,7 @@ import EditorWithTabs from './ide/EditorWithTabs';
  */
 export default function EditorSection() {
   const { dict } = useLocale();
-  const { openFileTabs } = useEditorItems();
-  const { currentEditor } = useEditor();
+  const { currentEditor, openFileTabs } = useEditor();
   const query = useQuery();
 
   return (
