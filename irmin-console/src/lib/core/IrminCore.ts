@@ -1,6 +1,5 @@
 import { defaultLocale, Locale } from '@/lib/dict';
 
-import { handleCoreAPIErrors } from '@/utils/errorParser';
 import removeCircularJSON from '@/utils/removeCircularJSON';
 
 import {
@@ -139,12 +138,23 @@ class IrminCore {
 
     // Parse the response as JSON
     const data = await response.json();
+    if (!response.ok && (!data.errors || !Array.isArray(data.errors))) {
+      throw new Error(
+        `Irmin API fetch error: ${options.method ?? 'GET'} ${url}`
+      );
+    }
 
     // Create the result object removing circular references
     const result = removeCircularJSON(data) as IrminAPIResponse;
 
     // Throw an error if response contains errors
-    handleCoreAPIErrors(result);
+    let message = '';
+    if (result.errors && result.errors.length > 0) {
+      message = result.errors.join('\n');
+    }
+    if (message.length > 0) {
+      throw new Error(message);
+    }
 
     return result;
   };
