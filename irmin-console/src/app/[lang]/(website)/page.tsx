@@ -3,7 +3,6 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { defaultLocale, dictionaries, Locale } from '@/lib/dict';
-
 import WordPress from '@/lib/wordpress';
 
 import PageContent from '@/components/website/templates/PageContent';
@@ -17,9 +16,9 @@ const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
  * Router properties received by the page
  */
 type PageProps = {
-  params: {
+  params: Promise<{
     lang: Locale;
-  };
+  }>;
 };
 
 /**

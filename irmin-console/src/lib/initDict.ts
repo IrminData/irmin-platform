@@ -9,9 +9,9 @@ import { defaultLocale, findLocale, getDictionary } from '@/lib/dict';
  */
 export async function initDict() {
   // Get the locale from the cookie or the Accept-Language header
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const localeCookie = cookieStore.get('locale')?.value;
-  const headersList = headers();
+  const headersList = await headers();
   const localeHeader = headersList.get('accept-language');
   // Get the locale and the dictionary
   const locale = findLocale(localeCookie || localeHeader || defaultLocale);

@@ -1,5 +1,4 @@
 import { dictionaries, languages } from '@/lib/dict';
-
 import WordPress from '@/lib/wordpress';
 
 import WebsiteNavigationContent from '@/components/website/navigation/WebsiteNavigationContent';

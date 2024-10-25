@@ -18,7 +18,7 @@ export async function getToken(): Promise<string> {
   if (isOfflineMode || isAuthOfflineMode) return 'offline';
 
   // Get the cookie store
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   // Get the user and token
   const { userId, getToken } = await auth();

@@ -1,6 +1,6 @@
 {
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint"],
+  "plugins": ["@typescript-eslint", "eslint-plugin-react-compiler"],
   "extends": [
     "next/core-web-vitals",
     "eslint:recommended",
@@ -8,6 +8,7 @@
     "prettier"
   ],
   "rules": {
+    "react-compiler/react-compiler": "error",
     "no-irregular-whitespace": "off",
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": [

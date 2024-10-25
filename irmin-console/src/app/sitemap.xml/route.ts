@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 
 import { detectLocaleFromURL, languages } from '@/lib/dict';
-
 import WordPress from '@/lib/wordpress';
 
 import { getURL } from '@/utils/wordpress';

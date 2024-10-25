@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { defaultLocale, languages, Locale } from '@/lib/dict';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+
+import { defaultLocale, languages, Locale } from '@/lib/dict';
 
 // Environment variables for environment authentication
 const authOfflineMode = process.env.NEXT_PUBLIC_AUTH_OFFLINE_MODE ?? 'false';
@@ -71,11 +72,12 @@ const isProtectedRoute = createRouteMatcher(['/:lang([a-z]{2})/console(.*)']);
  * {@link https://nextjs.org/docs/app/building-your-application/routing/middleware}
  * {@link https://clerk.com/docs/references/nextjs/clerk-middleware}
  */
-export default clerkMiddleware((auth, req) => {
+export default clerkMiddleware(async (auth, req) => {
+  const resolvedAuth = await auth();
   // Ignore route protection if in offline mode
   if (authOfflineMode !== 'true') {
     // Protect certain routes using Clerk
-    if (isProtectedRoute(req)) auth().protect();
+    if (isProtectedRoute(req)) resolvedAuth.redirectToSignIn();
   }
 
   const { pathname } = req.nextUrl;

@@ -1,5 +1,4 @@
 import { dictionaries, Dictionary, languages, Locale } from '@/lib/dict';
-
 import WordPress from '@/lib/wordpress';
 
 import WebsiteFooterContent from '@/components/website/footer/WebsiteFooterContent';

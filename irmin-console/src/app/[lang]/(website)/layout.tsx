@@ -34,15 +34,18 @@ export const metadata: Metadata = {
  *
  * @param props - Children to render
  */
-export default function WebsiteLayout({
-  children,
-  params,
-}: Readonly<{
-  children: React.ReactNode;
-  params: {
-    lang: Locale;
-  };
-}>) {
+export default async function WebsiteLayout(
+  props: Readonly<{
+    children: React.ReactNode;
+    params: {
+      lang: Locale;
+    };
+  }>
+) {
+  const params = await props.params;
+
+  const { children } = props;
+
   const dict = dictionaries[params.lang] ?? dictionaries[defaultLocale];
   const locale = params.lang ?? defaultLocale;
   return (

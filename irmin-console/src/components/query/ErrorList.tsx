@@ -1,6 +1,6 @@
-import { Dictionary } from '@/lib/dict';
-
 import { TbAlertCircle } from 'react-icons/tb';
+
+import { Dictionary } from '@/lib/dict';
 
 /**
  * Error list component

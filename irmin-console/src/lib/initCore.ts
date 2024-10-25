@@ -11,9 +11,9 @@ import { getToken } from '@/lib/getToken';
  */
 export async function initCore(apiToken?: string): Promise<IrminCore> {
   // Get the locale from the cookie or the Accept-Language header
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const localeCookie = cookieStore.get('locale')?.value;
-  const headersList = headers();
+  const headersList = await headers();
   const localeHeader = headersList.get('accept-language');
   const locale = findLocale(localeCookie || localeHeader || defaultLocale);
 

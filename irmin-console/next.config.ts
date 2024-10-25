@@ -1,12 +1,15 @@
+import type { NextConfig } from 'next';
+
 import { withSentryConfig } from '@sentry/nextjs';
 
 /**
  * Next.js configuration
  */
-const nextConfig = {
+const nextConfig: NextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   experimental: {
+    reactCompiler: true,
     turbo: {
       resolveExtensions: [
         '.mdx',
