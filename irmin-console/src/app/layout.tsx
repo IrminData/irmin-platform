@@ -39,7 +39,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props;
 
   return (
-    <ClerkProvider>
+    <ClerkProvider dynamic>
       <html suppressHydrationWarning>
         <head />
         <body

@@ -77,7 +77,10 @@ export default clerkMiddleware(async (auth, req) => {
   // Ignore route protection if in offline mode
   if (authOfflineMode !== 'true') {
     // Protect certain routes using Clerk
-    if (isProtectedRoute(req)) resolvedAuth.redirectToSignIn();
+    if (isProtectedRoute(req) && !resolvedAuth.userId) {
+      resolvedAuth.redirectToSignIn();
+      return;
+    }
   }
 
   const { pathname } = req.nextUrl;
