@@ -68,22 +68,26 @@ class LogService {
    *
    * @param workflow - ID of the workflow to fetch logs for
    */
-  async fetchWorkflowLogEvents(workflow: string): Promise<LogEvent> {
-    if (isOfflineMode) return fake(exampleWorkflowLogEvents) as LogEvent;
+  async fetchWorkflowLogEvents(
+    workflow: string
+  ): Promise<LogEventsAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleWorkflowLogEvents) as LogEventsAPIResponse;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workflows/${workflow}/logs`,
         {
           method: 'GET',
         }
-      )) as LogEvent;
+      )) as LogEventsAPIResponse;
       return response;
     } catch (error) {
       console.error(
         (error as Error).message,
         'Fetch Workflow Log Events error'
       );
-      if (isDevelopment) return fake(exampleWorkflowLogEvents) as LogEvent;
+      if (isDevelopment)
+        return fake(exampleWorkflowLogEvents) as LogEventsAPIResponse;
       throw error;
     }
   }
@@ -93,22 +97,24 @@ class LogService {
    *
    * @param repository - Slug of the repository to fetch logs for
    */
-  async fetchRepositoryLogs(repository: string): Promise<LogEvent> {
-    if (isOfflineMode) return fake(exampleRepositoryLogEvents) as LogEvent;
+  async fetchRepositoryLogs(repository: string): Promise<LogEventsAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleRepositoryLogEvents) as LogEventsAPIResponse;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/repositories/${repository}/logs`,
         {
           method: 'GET',
         }
-      )) as LogEvent;
+      )) as LogEventsAPIResponse;
       return response;
     } catch (error) {
       console.error(
         (error as Error).message,
         'Fetch Repository Log Events error'
       );
-      if (isDevelopment) return fake(exampleRepositoryLogEvents) as LogEvent;
+      if (isDevelopment)
+        return fake(exampleRepositoryLogEvents) as LogEventsAPIResponse;
       throw error;
     }
   }
@@ -118,22 +124,24 @@ class LogService {
    *
    * @param connection - ID of the connection to fetch logs for
    */
-  async fetchConnectionLogs(connection: string): Promise<LogEvent> {
-    if (isOfflineMode) return fake(exampleConnectionLogEvents) as LogEvent;
+  async fetchConnectionLogs(connection: string): Promise<LogEventsAPIResponse> {
+    if (isOfflineMode)
+      return fake(exampleConnectionLogEvents) as LogEventsAPIResponse;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/connections/${connection}/logs`,
         {
           method: 'GET',
         }
-      )) as LogEvent;
+      )) as LogEventsAPIResponse;
       return response;
     } catch (error) {
       console.error(
         (error as Error).message,
         'Fetch Connection Log Events error'
       );
-      if (isDevelopment) return fake(exampleConnectionLogEvents) as LogEvent;
+      if (isDevelopment)
+        return fake(exampleConnectionLogEvents) as LogEventsAPIResponse;
       throw error;
     }
   }
