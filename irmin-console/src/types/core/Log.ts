@@ -1,5 +1,3 @@
-import { Connection } from '@/types/core/Connection';
-import { Repository } from '@/types/core/Repository';
 import { User } from '@/types/core/User';
 import { Workflow, WorkflowRun } from '@/types/core/Workflow';
 
@@ -24,6 +22,8 @@ export enum LogEventType {
  * @typeParam type - Type of the activity (e.g., CREATE, UPDATE, DELETE, etc.)
  * @typeParam timestamp - Timestamp of the event
  * @typeParam description - Description of the event
+ * @typeParam subject_id - Optional. ID of the subject object of the event
+ * @typeParam subject_type - Optional. Type of the subject object of the event
  * @typeParam user - Optional. User who is responsible for the event. Leave empty if system.
  */
 export interface LogEvent {
@@ -31,28 +31,9 @@ export interface LogEvent {
   type: LogEventType;
   timestamp: string;
   description: string;
+  subject_id?: string;
+  subject_type?: 'repository' | 'workflow' | 'connection';
   user?: User;
-}
-
-/**
- * Workflow log event type
- */
-export interface WorkflowLogEvent extends LogEvent {
-  workflow: Workflow;
-}
-
-/**
- * Repository log event type
- */
-export interface RepositoryLogEvent extends LogEvent {
-  repository: Repository;
-}
-
-/**
- * Connection log event type
- */
-export interface ConnectionLogEvent extends LogEvent {
-  connection: Connection;
 }
 
 /**

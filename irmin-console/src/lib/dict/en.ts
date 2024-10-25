@@ -623,6 +623,8 @@ const en = {
   logs: {
     workspaceLogs: 'Workspace logs',
     workflowLogs: 'Workflow logs',
+    repositoryLogs: 'Repository logs',
+    connectionLogs: 'Connection logs',
     workflowRunLogs: 'Workflow run logs',
     noLogsFound: 'No logs found',
     system: 'System',

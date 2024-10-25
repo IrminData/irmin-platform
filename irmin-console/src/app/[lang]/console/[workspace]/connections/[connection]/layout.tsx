@@ -62,7 +62,9 @@ export default async function ConnectionPagesLayout(props: {
       defaultConnection={connection}
       connectionID={connectionID}
     >
-      <ConnectionLayoutWrapper>{children}</ConnectionLayoutWrapper>
+      <ConnectionLayoutWrapper connectionID={connectionID}>
+        {children}
+      </ConnectionLayoutWrapper>
     </ConnectionProvider>
   );
 }

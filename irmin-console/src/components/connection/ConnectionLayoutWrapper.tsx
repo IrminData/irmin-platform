@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 
 import { GoWorkflow } from 'react-icons/go';
-import { TbFileText, TbSettings } from 'react-icons/tb';
+import { TbFileText, TbLogs, TbSettings } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -18,13 +18,13 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 
 /**
  * Component to wrap the single Connection pages in.
- *
- * @param children - The children to render
  */
 export default function ConnectionLayoutWrapper({
   children,
+  connectionID,
 }: {
   children: React.ReactNode;
+  connectionID: string;
 }) {
   const pathname = usePathname();
   const { dict } = useLocale();
@@ -38,11 +38,12 @@ export default function ConnectionLayoutWrapper({
     segmentsAfter: 1,
   });
 
-  // The base URL for the connections list page, eg. /en/console/workspace-slug/connections
-  const connectionsUrl = useBaseUrl({
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
     pathname: '',
-    segment: 'connections',
+    segment: 'console',
     includeSegment: true,
+    segmentsAfter: 1,
   });
 
   const tabs = useMemo(
@@ -62,6 +63,13 @@ export default function ConnectionLayoutWrapper({
         hidden: false,
       },
       {
+        name: dict.workflow.tabs.logs,
+        link: `${workspaceUrl}/logs/connection/${connectionID}`,
+        active: false,
+        icon: <TbLogs size={14} />,
+        hidden: false,
+      },
+      {
         name: dict.connections.tabs.settings,
         link: `${baseUrl}/settings`,
         active: pathname === `${baseUrl}/settings`,
@@ -69,7 +77,7 @@ export default function ConnectionLayoutWrapper({
         hidden: false,
       },
     ],
-    [pathname, dict, baseUrl]
+    [pathname, dict, baseUrl, workspaceUrl, connectionID]
   );
 
   if (!connection)
@@ -111,7 +119,7 @@ export default function ConnectionLayoutWrapper({
           </div>
         </div>
         <TabsWithBackButton
-          backHref={connectionsUrl}
+          backHref={`${workspaceUrl}/connections`}
           backTooltip={dict.connections.allConnections}
           tabs={tabs}
         />

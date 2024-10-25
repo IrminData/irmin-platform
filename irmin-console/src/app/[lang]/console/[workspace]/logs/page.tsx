@@ -1,5 +1,6 @@
 import { getLogs } from '@/lib/actions/logs';
 import { getToken } from '@/lib/getToken';
+import { initDict } from '@/lib/initDict';
 
 import LogsSection from '@/components/logs/LogsSection';
 
@@ -8,6 +9,6 @@ import LogsSection from '@/components/logs/LogsSection';
  */
 export default async function LogsPage() {
   const token = await getToken();
-  const logs = await getLogs(token);
-  return <LogsSection logEvents={logs} />;
+  const [logs, { dict }] = await Promise.all([getLogs(token), initDict()]);
+  return <LogsSection logEvents={logs} title={dict.logs.workspaceLogs} />;
 }

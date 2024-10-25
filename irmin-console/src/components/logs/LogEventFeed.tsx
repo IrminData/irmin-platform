@@ -1,4 +1,7 @@
+import { Connection } from '@/types/core/Connection';
 import { LogEvent } from '@/types/core/Log';
+import { Repository } from '@/types/core/Repository';
+import { Workflow } from '@/types/core/Workflow';
 
 import LogEventIcon from './LogEventIcon';
 
@@ -7,13 +10,16 @@ import LogEventIcon from './LogEventIcon';
  *
  * @param props - The props for the EventFeed component
  * @param props.events - List of events to display
+ * @param props.subject - Optional. The object associated with the events
  * @param props.systemLabel - Label to use for system events
  */
 const LogEventFeed = ({
   events,
+  subject,
   systemLabel = 'System',
 }: {
   events: LogEvent[];
+  subject?: Repository | Workflow | Connection;
   systemLabel?: string;
 }) => {
   return (
@@ -25,11 +31,16 @@ const LogEventFeed = ({
         >
           {/* Event icon */}
           <LogEventIcon type={event.type} />
-          {/* Event description and workflow */}
+          {/* Event description and the associated object */}
           <div className='flex flex-col'>
             <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
               {event.description}
             </span>
+            {subject && (
+              <span className='text-xs text-gray-500 dark:text-gray-400'>
+                {subject.name}
+              </span>
+            )}
           </div>
           {/* Event timestamp and user */}
           <div className='ml-auto flex w-36 flex-col'>

@@ -1,13 +1,6 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import {
-  ConnectionLogEvent,
-  LogEvent,
-  LogEventType,
-  RepositoryLogEvent,
-  WorkflowLogEvent,
-  WorkflowRunLogs,
-} from '@/types/core/Log';
+import { LogEvent, LogEventType, WorkflowRunLogs } from '@/types/core/Log';
 
 import {
   exampleConnections,
@@ -106,32 +99,32 @@ export const logEvents: () => LogEvent[] = () => [
 
 /**
  * Example workflow log events for testing
- * {@link WorkflowLogEvent}
  */
-export const workflowLogEvents: () => WorkflowLogEvent[] = () =>
+export const workflowLogEvents = (): LogEvent[] =>
   logEvents().map((event) => ({
     ...event,
-    workflow: exampleWorkflows[0],
+    subject_id: exampleWorkflows[0].id,
+    subject_type: 'workflow',
   }));
 
 /**
  * Example repository log events for testing
- * {@link RepositoryLogEvent}
  */
-export const repositoryLogEvents: () => RepositoryLogEvent[] = () =>
+export const repositoryLogEvents = (): LogEvent[] =>
   logEvents().map((event) => ({
     ...event,
-    repository: exampleRepositories[0],
+    subject_id: exampleRepositories[0].id,
+    subject_type: 'repository',
   }));
 
 /**
  * Example connection log events for testing
- * {@link ConnectionLogEvent}
  */
-export const connectionLogEvents: () => ConnectionLogEvent[] = () =>
+export const connectionLogEvents = (): LogEvent[] =>
   logEvents().map((event) => ({
     ...event,
-    connection: exampleConnections[0],
+    subject_id: exampleConnections[0].id,
+    subject_type: 'connection',
   }));
 
 /**

@@ -627,6 +627,8 @@ const fi = {
   logs: {
     workspaceLogs: 'Työtilan lokit',
     workflowLogs: 'Prosessin lokit',
+    repositoryLogs: 'Tietovaraston lokit',
+    connectionLogs: 'Yhteyden lokit',
     workflowRunLogs: 'Prosessin ajon lokit',
     noLogsFound: 'Ei lokeja löytynyt',
     system: 'Järjestelmä',

@@ -93,7 +93,7 @@ export default function RepositoryLayoutWrapper({
       initialSchema={schema}
       initialCommits={commits}
     >
-      <RepositoryHeader dict={dict} />
+      <RepositoryHeader repositorySlug={repositorySlug} dict={dict} />
       <div>{children}</div>
     </RepositoryProvider>
   );

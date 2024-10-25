@@ -5,7 +5,13 @@ import { useMemo } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 import { GoGitBranch, GoGitCommit, GoGitCompare } from 'react-icons/go';
-import { TbDatabase, TbFileText, TbSettings, TbTags } from 'react-icons/tb';
+import {
+  TbDatabase,
+  TbFileText,
+  TbLogs,
+  TbSettings,
+  TbTags,
+} from 'react-icons/tb';
 
 import { Dictionary } from '@/lib/dict';
 
@@ -23,7 +29,13 @@ import BranchSelector from './branches/BranchSelector';
  * Single Repository page header.
  * Provides tabs and title for the repository.
  */
-export default function RepositoryHeader({ dict }: { dict: Dictionary }) {
+export default function RepositoryHeader({
+  dict,
+  repositorySlug,
+}: {
+  dict: Dictionary;
+  repositorySlug: string;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -43,11 +55,12 @@ export default function RepositoryHeader({ dict }: { dict: Dictionary }) {
     segmentsAfter: 1,
   });
 
-  // The base URL for the repositories list, eg. /en/console/workspace-slug/repositories
-  const repositoriesUrl = useBaseUrl({
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
     pathname: '',
-    segment: 'repositories',
+    segment: 'console',
     includeSegment: true,
+    segmentsAfter: 1,
   });
 
   const tabs = useMemo(
@@ -95,8 +108,23 @@ export default function RepositoryHeader({ dict }: { dict: Dictionary }) {
         icon: <TbSettings size={14} />,
         hidden: immutable,
       },
+      {
+        name: dict.workflow.tabs.logs,
+        link: `${workspaceUrl}/logs/repository/${repositorySlug}`,
+        active: false,
+        icon: <TbLogs size={14} />,
+        hidden: false,
+      },
     ],
-    [pathname, searchParams, baseUrl, dict, immutable]
+    [
+      pathname,
+      workspaceUrl,
+      searchParams,
+      baseUrl,
+      repositorySlug,
+      dict,
+      immutable,
+    ]
   );
 
   return (
@@ -152,7 +180,7 @@ export default function RepositoryHeader({ dict }: { dict: Dictionary }) {
         </div>
       </div>
       <TabsWithBackButton
-        backHref={repositoriesUrl}
+        backHref={`${workspaceUrl}/repositories`}
         backTooltip={dict.repository.allRepositories}
         tabs={tabs}
       />
