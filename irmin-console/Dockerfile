@@ -20,13 +20,8 @@ RUN \
     else echo "Lockfile not found." && exit 1; \
     fi
 
-# Rebuild the source code only when needed
-COPY ./src ./src
-COPY ./public ./public
-COPY ./README.md ./
-COPY ./next.config.mjs ./tsconfig.json ./
-COPY ./sentry.client.config.ts ./sentry.edge.config.ts ./sentry.server.config.ts ./
-COPY ./postcss.config.js ./tailwind.config.ts ./
+# Copy the source code
+COPY . .
 
 # Build the application
 RUN yarn build
