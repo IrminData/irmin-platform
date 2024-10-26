@@ -11,6 +11,7 @@ import { Workspace } from '@/types/core/Workspace';
  * @typeParam email - User's primary email
  * @typeParam first_name - User's first name
  * @typeParam last_name - User's last name
+ * @typeParam phone - User's phone number
  * @typeParam company - User's company name
  * @typeParam profile_picture - User's profile picture URL
  * @typeParam roles - Array of roles user has in the currently active workspace
@@ -24,6 +25,7 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
+  phone?: string;
   company?: string;
   profile_picture?: string;
   roles?: IrminRole[];

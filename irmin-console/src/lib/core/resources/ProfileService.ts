@@ -48,20 +48,26 @@ class ProfileService {
    *
    * @param first_name - (optional) User's new first name
    * @param last_name - (optional) User's new last name
+   * @param email - (optional) User's new email
+   * @param phone - (optional) User's new phone number
    * @param company - (optional) User's new company name
    * @param profile_picture - (optional) User's new profile picture
    */
   async updateProfile(
     first_name?: string,
     last_name?: string,
+    email?: string,
+    phone?: string,
     company?: string,
-    profile_picture?: Blob
+    profile_picture?: File
   ): Promise<UserAPIResponse> {
     if (isOfflineMode) return fake(exampleProfile) as UserAPIResponse;
     const formData = new FormData();
     formData.append('_method', 'PATCH');
     if (first_name) formData.append('first_name', first_name);
     if (last_name) formData.append('last_name', last_name);
+    if (email) formData.append('email', email);
+    if (phone) formData.append('phone', phone);
     if (company) formData.append('company', company);
     if (profile_picture) formData.append('profile_picture', profile_picture);
     try {

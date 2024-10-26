@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 
-import ProfileSection from '@/components/authentication/ProfileSection';
+import ProfileSection from '@/components/user/ProfileSection';
 
 /**
  * Page metadata for SEO on the profile page

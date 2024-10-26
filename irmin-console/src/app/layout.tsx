@@ -9,6 +9,7 @@ import '@/styles/irmin-global.css';
 
 import { IAMProvider } from '@/context/IAMContext';
 import { LocaleProvider } from '@/context/LocaleContext';
+import { PopupProvider } from '@/context/PopupContext';
 import { ThemeProvider } from '@/context/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -46,16 +47,18 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
           className={`${inter.variable} ${bigShouldersDisplay.variable} scrollbar-hide`}
         >
           <LocaleProvider>
-            <IAMProvider>
-              <ThemeProvider
-                attribute='class'
-                defaultTheme='system'
-                enableSystem
-                disableTransitionOnChange
-              >
-                {children}
-              </ThemeProvider>
-            </IAMProvider>
+            <PopupProvider>
+              <IAMProvider>
+                <ThemeProvider
+                  attribute='class'
+                  defaultTheme='system'
+                  enableSystem
+                  disableTransitionOnChange
+                >
+                  {children}
+                </ThemeProvider>
+              </IAMProvider>
+            </PopupProvider>
           </LocaleProvider>
         </body>
       </html>

@@ -2,9 +2,9 @@
 
 import React from 'react';
 
-import IrminUserButton from '@/components/authentication/IrminUserButton';
 import NotificationsButton from '@/components/NotificationsButton';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import IrminUserButton from '@/components/user/IrminUserButton';
 
 import { useIAM } from '@/context/IAMContext';
 

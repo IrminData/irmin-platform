@@ -7,8 +7,6 @@ import { getToken } from '@/lib/getToken';
 
 import ConsoleWrapper from '@/components/console/ConsoleWrapper';
 
-import { PopupProvider } from '@/context/PopupContext';
-
 /**
  * Default layout level metadata for SEO on the console
  */
@@ -20,7 +18,6 @@ export const metadata: Metadata = {
  * Console layout
  *
  * This layout is used for all pages within the Irmin console.
- * Wraps the pages with {@link PopupProvider} and {@link ConsoleWrapper}
  *
  * @param props - Layout properties
  * @param props.children - Page content
@@ -39,10 +36,8 @@ export default async function ConsoleLayout(props: {
   ]);
 
   return (
-    <PopupProvider>
-      <ConsoleWrapper workspaces={workspaces} dict={dict}>
-        {children}
-      </ConsoleWrapper>
-    </PopupProvider>
+    <ConsoleWrapper workspaces={workspaces} dict={dict}>
+      {children}
+    </ConsoleWrapper>
   );
 }

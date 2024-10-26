@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import AuthLayoutWrapper from '@/components/authentication/AuthLayoutWrapper';
+import AuthLayoutWrapper from '@/components/user/AuthLayoutWrapper';
 
 /**
  * SEO metadata for the authentication routes

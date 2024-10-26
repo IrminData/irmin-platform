@@ -9,10 +9,10 @@ import { usePathname } from 'next/navigation';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { IoEnterOutline } from 'react-icons/io5';
 
-import IrminUserButton from '@/components/authentication/IrminUserButton';
 import NotificationsButton from '@/components/NotificationsButton';
 import Button from '@/components/ui/button';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
+import IrminUserButton from '@/components/user/IrminUserButton';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';

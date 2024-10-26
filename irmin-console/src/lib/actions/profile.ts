@@ -30,6 +30,8 @@ export async function getProfile(token?: string) {
  *
  * @param first_name - (optional) User's new first name
  * @param last_name - (optional) User's new last name
+ * @param email - (optional) User's new email
+ * @param phone - (optional) User's new phone number
  * @param company - (optional) User's new company name
  * @param profile_picture - (optional) User's new profile picture
  *
@@ -38,8 +40,10 @@ export async function getProfile(token?: string) {
 export async function updateProfile(
   first_name?: string,
   last_name?: string,
+  email?: string,
+  phone?: string,
   company?: string,
-  profile_picture?: Blob,
+  profile_picture?: File,
   token?: string
 ) {
   const { locale } = await initDict();
@@ -48,6 +52,8 @@ export async function updateProfile(
   const res = await irminCore.profileService.updateProfile(
     first_name,
     last_name,
+    email,
+    phone,
     company,
     profile_picture
   );

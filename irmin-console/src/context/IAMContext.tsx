@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 
-import { getProfile } from '@/lib/actions/profile';
+import { getProfile, updateProfile } from '@/lib/actions/profile';
 
 import { usePopup } from '@/context/PopupContext';
 
@@ -26,10 +26,19 @@ const authOfflineMode = process.env.NEXT_PUBLIC_AUTH_OFFLINE_MODE === 'true';
 // Create IAM context
 const IAMContext = createContext<{
   profile: User | undefined;
+  updateProfile: (
+    first_name?: string,
+    last_name?: string,
+    email?: string,
+    phone?: string,
+    company?: string,
+    profile_picture?: FileList
+  ) => Promise<boolean>;
   isLoading: boolean;
   signOut: () => Promise<boolean>;
 }>({
   profile: undefined,
+  updateProfile: () => Promise.resolve(false),
   isLoading: false,
   signOut: () => Promise.resolve(false),
 });
@@ -131,6 +140,44 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [clerkSignOut, resetIAMState, irminAlert, isSignedIn, router]);
 
+  const handleUpdateProfile = useCallback(
+    async (
+      first_name?: string,
+      last_name?: string,
+      email?: string,
+      phone?: string,
+      company?: string,
+      profile_picture?: FileList
+    ) => {
+      try {
+        const res = await updateProfile(
+          first_name,
+          last_name,
+          email,
+          phone,
+          company,
+          profile_picture && profile_picture.length > 0
+            ? profile_picture[0]
+            : undefined
+        );
+        if (res.data) {
+          setProfile(res.data);
+          irminAlert('success', res.message ?? 'Profile updated successfully');
+        }
+        if (!res.data)
+          throw new Error(res.message ?? 'Failed to update profile');
+        return true;
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error).message ?? 'Failed to update profile'
+        );
+        return false;
+      }
+    },
+    [irminAlert]
+  );
+
   /**
    * Fetches the Irmin profile data on component mount and when dependencies change
    */
@@ -142,6 +189,7 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
     <IAMContext.Provider
       value={{
         profile,
+        updateProfile: handleUpdateProfile,
         isLoading,
         signOut,
       }}

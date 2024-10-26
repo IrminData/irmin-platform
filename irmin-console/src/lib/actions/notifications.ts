@@ -17,7 +17,7 @@ export async function registerNovuSubscriber(user: User, locale: Locale) {
     email: user.user?.primaryEmailAddress?.toString() ?? user.email,
     firstName: user.user?.firstName ?? user.first_name,
     lastName: user.user?.lastName ?? user.last_name,
-    phone: user.user?.primaryPhoneNumber?.toString(),
+    phone: user.user?.primaryPhoneNumber?.toString() ?? user.phone,
     avatar: user.user?.imageUrl ?? user.profile_picture,
     locale: locale ?? defaultLocale,
   });

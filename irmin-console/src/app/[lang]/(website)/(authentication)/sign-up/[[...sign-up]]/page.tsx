@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 
-import SignUpSection from '@/components/authentication/SignUpSection';
+import SignUpSection from '@/components/user/SignUpSection';
 
 /**
  * Page metadata for SEO on the sign up page
