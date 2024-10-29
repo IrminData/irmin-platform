@@ -51,7 +51,7 @@ const IAMContext = createContext<{
 export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { irminAlert } = usePopup();
-  const { isSignedIn, user, isLoaded: clerkIsLoaded } = useUser();
+  const { isSignedIn, isLoaded: clerkIsLoaded } = useUser();
   const { sessionId, signOut: clerkSignOut } = useAuth();
 
   const [profile, setProfile] = useState<User | undefined>();
@@ -83,7 +83,7 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (!clerkIsLoaded) return;
 
-    if (!isSignedIn || !user || !sessionId) {
+    if (!isSignedIn || !sessionId) {
       resetIAMState();
       setIsLoading(false);
       return;
@@ -98,10 +98,9 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
 
     try {
-      const res = await getProfile();
-
-      if (res?.data) {
-        setProfile({ ...res.data, user });
+      const profile = await getProfile();
+      if (profile) {
+        setProfile(profile);
       } else {
         resetIAMState();
       }
@@ -111,7 +110,7 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [clerkIsLoaded, isSignedIn, resetIAMState, sessionId, user]);
+  }, [clerkIsLoaded, isSignedIn, resetIAMState, sessionId]);
 
   /**
    * Signs the user out and cleans up the IAM context state

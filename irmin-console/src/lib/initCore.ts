@@ -20,7 +20,6 @@ export async function initCore(apiToken?: string): Promise<IrminCore> {
   // Get the token
   const token = apiToken ?? (await getToken());
 
-  // Create the IrminCore instance
   const irminCore = new IrminCore(locale, token);
   return irminCore;
 }

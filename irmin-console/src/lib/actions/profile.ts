@@ -1,8 +1,12 @@
 'use server';
 
+import { currentUser } from '@clerk/nextjs/server';
+
 import { registerNovuSubscriber } from '@/lib/actions/notifications';
 import { initCore } from '@/lib/initCore';
 import { initDict } from '@/lib/initDict';
+
+import { User } from '@/types/core/User';
 
 /**
  * Server action to get the profile for the current user.
@@ -14,13 +18,28 @@ import { initDict } from '@/lib/initDict';
 export async function getProfile(token?: string) {
   const { locale } = await initDict();
   const irminCore = await initCore(token);
+  const clerkUser = await currentUser();
   // Get the profile
   const res = await irminCore.profileService.getProfile();
-  if (res.data) {
+  let profile: User | undefined;
+  if (res.data && clerkUser) {
+    // Construct the profile object
+    profile = {
+      ...res.data,
+      first_name: res.data.first_name ?? clerkUser.firstName,
+      last_name: res.data.last_name ?? clerkUser.lastName,
+      email: res.data.email ?? clerkUser.primaryEmailAddress,
+      phone: res.data.phone ?? clerkUser.primaryPhoneNumber,
+      profile_picture:
+        res.data.profile_picture ?? clerkUser.imageUrl ?? undefined,
+      clerk_id: clerkUser.id,
+    };
     // Register the user as a subscriber in Novu
-    await registerNovuSubscriber(res.data, locale);
+    await registerNovuSubscriber(profile, locale);
+    // Return the profile
+    return profile;
   }
-  return res;
+  throw new Error('Failed to get profile');
 }
 
 /**

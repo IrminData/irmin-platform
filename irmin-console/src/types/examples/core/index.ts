@@ -24,7 +24,7 @@ import { diff } from './diff';
 import { editorItems } from './editorItems';
 import { files } from './files';
 import { folders } from './folders';
-import { invites } from './invites';
+import { invites, inviteSignedURLPayload } from './invites';
 import {
   connectionLogEvents,
   logEvents,
@@ -32,7 +32,7 @@ import {
   workflowLogEvents,
   workflowRunLogs,
 } from './logs';
-import { clerkUser, profile } from './profile';
+import { profile } from './profile';
 import { queries, queryExecutionResult } from './queries';
 import { repositories } from './repositories';
 import { roles } from './roles';
@@ -87,14 +87,14 @@ export const exampleWorkspaces = workspaces();
 export const exampleProfile = profile();
 
 /**
- * Fake Clerk user object {@link clerkUser}
- */
-export const exampleClerkUser = clerkUser;
-
-/**
  * Fake invites {@link invites}
  */
 export const exampleInvites = invites();
+
+/**
+ * Fake invite signed URL payload {@link inviteSignedURLPayload}
+ */
+export const exampleInviteSignedURLPayload = inviteSignedURLPayload;
 
 /**
  * Fake workspace users {@link workspaceUsers}

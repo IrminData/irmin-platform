@@ -122,9 +122,7 @@ class IrminCore {
     // Fetch Core Irmin API
     const response = await fetch(requestURL, requestOptions);
 
-    if (isDevelopment) {
-      console.log('Fetch Response:', response);
-    }
+    if (isDevelopment) console.log('Fetch Response:', response);
 
     return response;
   };
@@ -138,6 +136,11 @@ class IrminCore {
 
     // Parse the response as JSON
     const data = await response.json();
+
+    if (isDevelopment)
+      console.log('Fetch Response data:', JSON.stringify(data, null, 2));
+
+    // Check if the response is not OK and does not contain any error messages
     if (!response.ok && (!data.errors || !Array.isArray(data.errors))) {
       throw new Error(
         `Irmin API fetch error: ${options.method ?? 'GET'} ${url}`

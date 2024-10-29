@@ -1,6 +1,6 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { Invite } from '@/types/core/Invite';
+import { Invite, InviteSignedURLPayload } from '@/types/core/Invite';
 
 import { roles } from './roles';
 
@@ -11,30 +11,49 @@ import { roles } from './roles';
  */
 export const invites: () => Invite[] = () => [
   {
-    id: '0',
-    first_name: 'Petteri',
-    last_name: 'Orpo',
-    email: 'petteri@example.com',
+    id: 'inv-0',
+    first_name: 'John',
+    last_name: 'Doe',
+    email: 'john@example.com',
+    phone: '+1234567890',
+    company: 'Example Inc.',
     role: roles()[2],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: '1',
-    first_name: 'Sanna',
-    last_name: 'Marin',
-    email: 'sanna@example.com',
+    id: 'inv-1',
+    first_name: 'Jane',
+    last_name: 'Doe',
+    email: 'jane@example.com',
+    phone: '+1234567890',
     role: roles()[1],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: '2',
-    first_name: 'Juha',
-    last_name: 'Sipilä',
-    email: 'juha@example.com',
+    id: 'inv-2',
+    first_name: 'Nick',
+    last_name: 'Doe',
+    email: 'nick@example.com',
+    phone: '+1234567890',
     role: roles()[3],
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
 ];
+
+/**
+ * Get example invite signed URL payload
+ */
+export const inviteSignedURLPayload: InviteSignedURLPayload = {
+  invite: 'inv-0',
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john@example.com',
+  phone: '+1234567890',
+  company: 'Example Inc.',
+  workspace: 'Example workspace',
+  inviter: 'Neil Armstrong',
+  has_an_account: false,
+};

@@ -21,6 +21,7 @@ Create a `.env` file in the project root. Add the following environment variable
 # Basic settings
 NEXT_PUBLIC_BASE_URL=https://irmin.dev  # Base URL of the application
 NODE_ENV=development  # Environment type. Can be development, staging or production.
+IRMIN_SIGNED_URL_TOKEN=abcxyz  # Token for signed URL endpoints
 
 # API and CMS URLs
 NEXT_PUBLIC_API_URL=https://api.irmin.dev  # API endpoint URL

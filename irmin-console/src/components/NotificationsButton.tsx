@@ -27,6 +27,7 @@ const NotificationsButton = ({ profile }: { profile: User }) => {
   if (isOfflineMode) {
     return <TbBell className='text-xl text-accent' />;
   }
+  if (!profile.clerk_id) return <></>;
   return (
     <Inbox
       applicationIdentifier={novuApplicationIdentifier}

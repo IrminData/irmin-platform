@@ -69,7 +69,7 @@ class ProfileService {
     if (email) formData.append('email', email);
     if (phone) formData.append('phone', phone);
     if (company) formData.append('company', company);
-    if (profile_picture) formData.append('profile_picture', profile_picture);
+    if (profile_picture) formData.append('avatar', profile_picture);
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/profile`, {
         method: 'POST',

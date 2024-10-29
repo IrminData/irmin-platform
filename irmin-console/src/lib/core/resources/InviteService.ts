@@ -2,9 +2,12 @@ import IrminCore from '@/lib/core';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { Invite } from '@/types/core/Invite';
+import { Invite, InviteSignedURLPayload } from '@/types/core/Invite';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { exampleInvites } from '@/types/examples/core';
+import {
+  exampleInvites,
+  exampleInviteSignedURLPayload,
+} from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -24,6 +27,13 @@ interface InviteAPIResponse extends IrminAPIResponse {
 }
 
 /**
+ * Invite hash payload API response type
+ */
+interface InviteSignedURLPayloadAPIResponse extends IrminAPIResponse {
+  data: InviteSignedURLPayload;
+}
+
+/**
  * Invite API service
  *
  * Responsible for all invite related API calls.
@@ -40,6 +50,7 @@ class InviteService {
     this.changeUserInviteRole = this.changeUserInviteRole.bind(this);
     this.fetchInvites = this.fetchInvites.bind(this);
     this.fetchInvite = this.fetchInvite.bind(this);
+    this.verifyInvite = this.verifyInvite.bind(this);
     this.acceptInvite = this.acceptInvite.bind(this);
     this.declineInvite = this.declineInvite.bind(this);
   }
@@ -50,12 +61,16 @@ class InviteService {
    * @param first_name - The invitee's first name.
    * @param last_name - The invitee's last name.
    * @param email - The invitee's email. Can be new or existing Irmin user.
+   * @param phone - The invitee's phone number.
+   * @param company - The invitee's company name.
    * @param role - The invitee's role slug.
    */
   async inviteUserToWorkspace(
     first_name: string,
     last_name: string,
     email: string,
+    phone: string,
+    company: string,
     role: string
   ) {
     if (isOfflineMode) return fake();
@@ -65,6 +80,8 @@ class InviteService {
       formData.append('first_name', first_name);
       formData.append('last_name', last_name);
       formData.append('email', email);
+      formData.append('phone', phone);
+      formData.append('company', company);
       formData.append('role', role);
 
       const response = await this.irminCore.fetchAPI(`/v1/invites`, {
@@ -182,6 +199,34 @@ class InviteService {
     } catch (error) {
       console.error((error as Error).message, 'Get invite by ID error');
       if (isDevelopment) return fake(exampleInvites) as InviteAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Verify Invite signed URL hash.
+   *
+   * @param hash - The invite's signed URL hash.
+   */
+  async verifyInvite(hash: string): Promise<InviteSignedURLPayloadAPIResponse> {
+    if (isOfflineMode)
+      return fake(
+        exampleInviteSignedURLPayload
+      ) as InviteSignedURLPayloadAPIResponse;
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/signed-urls/${hash}/verify`,
+        {
+          method: 'GET',
+        }
+      );
+      return response as InviteSignedURLPayloadAPIResponse;
+    } catch (error) {
+      console.error((error as Error).message, 'Verify user invite error');
+      if (isDevelopment)
+        return fake(
+          exampleInviteSignedURLPayload
+        ) as InviteSignedURLPayloadAPIResponse;
       throw error;
     }
   }

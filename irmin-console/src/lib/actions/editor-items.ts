@@ -10,7 +10,6 @@ import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
  * @returns The EditorItems object
  */
 export async function getEditorItems(token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Get the editorItems
   const editorItems = await irminCore.editorItemService.fetchEditorItems();
@@ -24,7 +23,6 @@ export async function createEditorItem(
   file: FileNavigatorItem,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   if (file.type === 'folder') {
     const res = await irminCore.editorItemService.createFolder(file);
@@ -41,7 +39,6 @@ export async function deleteEditorItem(
   file: FileNavigatorItem,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   if (file.type === 'folder') {
     const res = await irminCore.editorItemService.deleteFolder(file);
@@ -58,7 +55,6 @@ export async function updateEditorItem(
   file: FileNavigatorItem,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   if (file.type === 'folder') {
     const res = await irminCore.editorItemService.updateFolder(file);

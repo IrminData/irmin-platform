@@ -24,7 +24,7 @@ const WorkspaceUsersSection = () => {
   return (
     <div className='my-8 px-2'>
       <div className='container relative mx-auto my-8 max-w-6xl'>
-        <div className='w-full max-w-3xl rounded-lg border-b border-t border-accent bg-background px-4 py-4 shadow-md md:mx-4'>
+        <div className='w-full max-w-4xl rounded-lg border-b border-t border-accent bg-background px-4 py-4 shadow-md md:mx-4'>
           <div className='my-8 px-4'>
             <div className='mb-8 flex flex-row items-center justify-between px-2'>
               <h2 className='text-lg font-semibold lg:text-xl'>
@@ -39,6 +39,12 @@ const WorkspaceUsersSection = () => {
                   </th>
                   <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
                     {dict.users.email}
+                  </th>
+                  <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+                    {dict.users.phone}
+                  </th>
+                  <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+                    {dict.users.company}
                   </th>
                   <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
                     {dict.users.role}
@@ -58,12 +64,18 @@ const WorkspaceUsersSection = () => {
                       {user.first_name} {user.last_name}
                       {/* Only for mobile screens */}
                       <span className='block text-xs opacity-70 md:hidden'>
-                        {user.email}
+                        {user.email} | {user.phone} | {user.company}
                       </span>
                     </td>
                     {/* Only for larger screens */}
                     <td className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
                       {user.email}
+                    </td>
+                    <td className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
+                      {user.phone}
+                    </td>
+                    <td className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
+                      {user.company}
                     </td>
                     <td className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
                       {workspace?.owner_id === user.id ? (

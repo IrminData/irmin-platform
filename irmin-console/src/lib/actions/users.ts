@@ -6,7 +6,6 @@ import { initCore } from '@/lib/initCore';
  * Server action to get all users in the current workspace
  */
 export async function getUsers(token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Get the users
   const users = await irminCore.userService.fetchWorkspaceUsers();
@@ -17,7 +16,6 @@ export async function getUsers(token?: string) {
  * Server action to get a single user
  */
 export async function getUser(userID: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Get the users
   const users = await irminCore.userService.fetchUser(userID);
@@ -28,7 +26,6 @@ export async function getUser(userID: string, token?: string) {
  * Server action to delete a user from the workspace
  */
 export async function deleteUser(userID: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.userService.removeUserFromWorkspace(userID);
   return res;
@@ -42,7 +39,6 @@ export async function changeUserRole(
   roles: string[],
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.userService.changeUserRole(userID, roles);
   return res;

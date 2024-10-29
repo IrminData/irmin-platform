@@ -14,7 +14,7 @@ const exampleDynamicFields: DynamicFields = {
     label: 'Email',
     required: true,
     help_text: 'Enter your email address',
-    example: 'john.doe@gmail.com',
+    example: 'john@gmail.com',
     default: '',
   },
   password: {

@@ -12,7 +12,6 @@ export async function getCommits(
   ref?: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Get the commits
   const res = await irminCore.commitService.fetchCommits(repository, ref);
@@ -29,7 +28,6 @@ export async function getCommit(
   hash: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Get the commit
   const res = await irminCore.commitService.fetchCommit(repository, hash);
@@ -45,7 +43,6 @@ export async function createCommit(
   message: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.commitService.createCommit(
     repositorySlug,
@@ -64,7 +61,6 @@ export async function getLastModification(
   collection: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.commitService.fetchLastModification(
     repositorySlug,
@@ -82,7 +78,6 @@ export async function revertUncommittedChanges(
   ref: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.commitService.revertUncommittedChanges(
     repositorySlug,

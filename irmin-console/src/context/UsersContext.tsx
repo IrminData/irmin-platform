@@ -199,6 +199,8 @@ export const UsersProvider = ({
           firstName: string;
           lastName: string;
           email: string;
+          phone: string;
+          company: string;
           role: string;
         }) => {
           if (updatingInvites.current) return;
@@ -208,6 +210,8 @@ export const UsersProvider = ({
               data.firstName,
               data.lastName,
               data.email,
+              data.phone,
+              data.company,
               data.role
             );
             await fetchInvites();

@@ -15,6 +15,8 @@ interface InviteFormValues {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
+  company: string;
   role: string;
 }
 
@@ -46,6 +48,8 @@ const WorkspaceSendInviteModalContent = ({
       firstName: '',
       lastName: '',
       email: '',
+      phone: '',
+      company: '',
       role: irminRoles[0]?.name,
     },
   });
@@ -107,13 +111,55 @@ const WorkspaceSendInviteModalContent = ({
               <Input
                 className='mt-2'
                 type='email'
-                placeholder='johndoe@example.com'
+                placeholder='john@example.com'
                 {...field}
               />
             )}
           />
           {errors.email && (
             <p className='mt-1 text-destructive'>{errors.email.message}</p>
+          )}
+        </div>
+        <div className='flex flex-col gap-2'>
+          <Label>{dict.users.phone}</Label>
+          <Controller
+            name='phone'
+            control={control}
+            rules={{
+              required: dict.misc.fieldRequired,
+            }}
+            render={({ field }) => (
+              <Input
+                className='mt-2'
+                type='tel'
+                placeholder='+1234567890'
+                {...field}
+              />
+            )}
+          />
+          {errors.phone && (
+            <p className='mt-1 text-destructive'>{errors.phone.message}</p>
+          )}
+        </div>
+        <div className='flex flex-col gap-2'>
+          <Label>{dict.users.company}</Label>
+          <Controller
+            name='company'
+            control={control}
+            rules={{
+              required: dict.misc.fieldRequired,
+            }}
+            render={({ field }) => (
+              <Input
+                className='mt-2'
+                type='company'
+                placeholder='Example Inc.'
+                {...field}
+              />
+            )}
+          />
+          {errors.company && (
+            <p className='mt-1 text-destructive'>{errors.company.message}</p>
           )}
         </div>
         <div className='flex flex-col gap-2'>

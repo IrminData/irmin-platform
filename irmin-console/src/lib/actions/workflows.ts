@@ -14,7 +14,6 @@ import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
  * Server action to get all workflows for the current workspace.
  */
 export async function getWorkflows(token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Fetch the workflows
   const workflows = await irminCore.workflowService.fetchWorkflows();
@@ -25,7 +24,6 @@ export async function getWorkflows(token?: string) {
  * Server action to get all action workflows for the current workspace.
  */
 export async function getActionWorkflows(token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Fetch the workflows
   const workflows = await irminCore.workflowService.fetchActionWorkflows();
@@ -36,7 +34,6 @@ export async function getActionWorkflows(token?: string) {
  * Server action to get all export workflows for the current workspace.
  */
 export async function getExportWorkflows(token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Fetch the workflows
   const workflows = await irminCore.workflowService.fetchExportWorkflows();
@@ -47,7 +44,6 @@ export async function getExportWorkflows(token?: string) {
  * Server action to get all import workflows for the current workspace.
  */
 export async function getImportWorkflows(token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Fetch the workflows
   const workflows = await irminCore.workflowService.fetchImportWorkflows();
@@ -58,7 +54,6 @@ export async function getImportWorkflows(token?: string) {
  * Server action to fetch a single workflow by ID.
  */
 export async function getWorkflow(workflowID: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Fetch the workflow
   const workflow = await irminCore.workflowService.fetchWorkflow(workflowID);
@@ -83,7 +78,6 @@ export async function updateWorkflow(
   data: ItemUpdateProps,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workflowService.updateWorkflow(workflowID, data);
   return res;
@@ -93,7 +87,6 @@ export async function updateWorkflow(
  * Server action to delete a workflow.
  */
 export async function deleteWorkflow(workflowID: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workflowService.deleteWorkflow(workflowID);
   return res;
@@ -107,7 +100,6 @@ export async function reassignWorkflow(
   ownerID: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workflowService.reassignWorkflow(
     workflowID,
@@ -120,7 +112,6 @@ export async function reassignWorkflow(
  * Server action to pause a workflow.
  */
 export async function pauseWorkflow(workflowID: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workflowService.pauseWorkflow(workflowID);
   return res;
@@ -130,7 +121,6 @@ export async function pauseWorkflow(workflowID: string, token?: string) {
  * Server action to resume a workflow.
  */
 export async function resumeWorkflow(workflowID: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workflowService.resumeWorkflow(workflowID);
   return res;
@@ -140,7 +130,6 @@ export async function resumeWorkflow(workflowID: string, token?: string) {
  * Server action to trigger a workflow run.
  */
 export async function triggerWorkflowRun(workflowID: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workflowService.triggerWorkflowRun(workflowID);
   return res;
@@ -150,7 +139,6 @@ export async function triggerWorkflowRun(workflowID: string, token?: string) {
  * Server action to get a workflow runs for a workflow
  */
 export async function getWorkflowRuns(workflow: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const runs = await irminCore.workflowService.fetchRunsByWorkflow(workflow);
   return runs.data;
@@ -164,7 +152,6 @@ export async function getWorkflowRun(
   runID: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const run = await irminCore.workflowService.fetchWorkflowRunByID(
     workflow,
@@ -191,7 +178,6 @@ export async function createActionWorkflow(
   },
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workflowService.createActionWorkflow(data);
   return res;
@@ -215,7 +201,6 @@ export async function createImportWorkflow(
   },
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workflowService.createImportWorkflow(data);
   return res;
@@ -240,7 +225,6 @@ export async function createExportWorkflow(
   },
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workflowService.createExportWorkflow(data);
   return res;

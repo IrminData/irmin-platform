@@ -11,7 +11,6 @@ export async function fetchSchemas(
   ref: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.schemaService.fetchSchemas(
     collections,

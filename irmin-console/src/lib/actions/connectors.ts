@@ -8,7 +8,6 @@ import { initCore } from '@/lib/initCore';
  * @returns The list of connectors
  */
 export async function getConnectors(token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Get the connectors
   const connectors = await irminCore.connectorService.fetchAllConnectors();

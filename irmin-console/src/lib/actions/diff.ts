@@ -11,7 +11,6 @@ export async function getDiff(
   compareRef: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.diffService.compareRefs(
     repository,
@@ -32,7 +31,6 @@ export async function mergeRefs(
   strategy: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.diffService.mergeRefs(
     repository,

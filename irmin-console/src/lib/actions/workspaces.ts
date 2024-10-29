@@ -8,7 +8,6 @@ import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
  * Server action to get all workspaces for the current user.
  */
 export async function getWorkspaces(token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const workspaces = await irminCore.workspaceService.fetchWorkspaces();
   return workspaces.data;
@@ -18,7 +17,6 @@ export async function getWorkspaces(token?: string) {
  * Server action to fetch a single workspace by slug.
  */
 export async function getWorkspace(workspaceSlug: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const workspace =
     await irminCore.workspaceService.fetchWorkspace(workspaceSlug);
@@ -29,7 +27,6 @@ export async function getWorkspace(workspaceSlug: string, token?: string) {
  * Server action to delete a workspace.
  */
 export async function deleteWorkspace(workspaceSlug: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workspaceService.deleteWorkspace(workspaceSlug);
   return res;
@@ -43,7 +40,6 @@ export async function reassignWorkspace(
   newOwnerID: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workspaceService.transferWorkspaceOwnership(
     workspaceSlug,
@@ -60,7 +56,6 @@ export async function updateWorkspace(
   data: ItemUpdateProps,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workspaceService.updateWorkspace(
     workspaceSlug,
@@ -77,7 +72,6 @@ export async function createWorkspace(
   description: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workspaceService.createWorkspace(
     name,
@@ -90,7 +84,6 @@ export async function createWorkspace(
  * Server action to switch the current workspace.
  */
 export async function switchWorkspace(workspaceSlug?: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.workspaceService.switchWorkspace(
     workspaceSlug ?? ''

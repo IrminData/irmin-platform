@@ -6,7 +6,6 @@ import { initCore } from '@/lib/initCore';
  * Server action to get a list of tags in a repository.
  */
 export async function getTags(repository: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Get the tags
   const tags = await irminCore.tagService.fetchTags(repository);
@@ -21,7 +20,6 @@ export async function getTag(
   tagID: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const tag = await irminCore.tagService.fetchTag(tagID, repository);
   return tag.data;
@@ -36,7 +34,6 @@ export async function createTag(
   name: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.tagService.createTag(repository, from, name);
   return res;
@@ -52,7 +49,6 @@ export async function updateTag(
   ref?: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.tagService.updateTag(
     repository,
@@ -71,7 +67,6 @@ export async function deleteTag(
   tagID: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.tagService.deleteTag(repository, tagID);
   return res;

@@ -14,7 +14,6 @@ export async function executeScript(
   exampleType?: CollectionType,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.queryService.executeScript(
     type,
@@ -36,7 +35,6 @@ export async function createQuery(
   run?: boolean,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.queryService.createQuery(
     type,
@@ -53,7 +51,6 @@ export async function createQuery(
  * Server action to get all queries.
  */
 export async function getQueries(token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.queryService.getQueries();
   return res;
@@ -63,7 +60,6 @@ export async function getQueries(token?: string) {
  * Server action to get a single query by ID.
  */
 export async function getQuery(query: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.queryService.getQuery(query);
   return res;
@@ -73,7 +69,6 @@ export async function getQuery(query: string, token?: string) {
  * Server action to delete a query.
  */
 export async function deleteQuery(query: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.queryService.deleteQuery(query);
   return res;
@@ -91,7 +86,6 @@ export async function updateQuery(
   stored?: boolean,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.queryService.updateQuery(
     query,
@@ -108,7 +102,6 @@ export async function updateQuery(
  * Server action to run a query.
  */
 export async function executeQuery(query: string, token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.queryService.executeQuery(query);
   return res;
@@ -123,7 +116,6 @@ export async function getQueryResults(
   exampleType?: 'table' | 'file' | 'folder',
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.queryService.getQueryResults(
     query,

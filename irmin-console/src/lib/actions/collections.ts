@@ -15,7 +15,6 @@ export async function getCollections(
   ref?: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Get the collections
   const collections = await irminCore.collectionService.fetchCollections(
@@ -32,7 +31,6 @@ export async function getCollections(
  * @returns The list of collections
  */
 export async function getAllCollections(token?: string) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const { data: repositories } =
     await irminCore.repositoryService.fetchRepositories();
@@ -60,7 +58,6 @@ export async function getCollection(
   ref: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Get the collections
   const collections = await irminCore.collectionService.fetchCollection(
@@ -84,7 +81,6 @@ export async function deleteCollection(
   collection: string,
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   // Delete the collection
   const res = await irminCore.collectionService.deleteCollection(
@@ -113,7 +109,6 @@ export async function getCollectionContent(
   },
   token?: string
 ) {
-  // Create the IrminCore instance
   const irminCore = await initCore(token);
   const res = await irminCore.collectionService.fetchContent(data);
   return res;
