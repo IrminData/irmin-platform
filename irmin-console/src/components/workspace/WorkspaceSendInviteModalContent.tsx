@@ -132,7 +132,7 @@ const WorkspaceSendInviteModalContent = ({
               <Input
                 className='mt-2'
                 type='tel'
-                placeholder='+1234567890'
+                placeholder='+12014270935'
                 {...field}
               />
             )}

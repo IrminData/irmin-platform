@@ -2,10 +2,14 @@
 
 import { useCallback } from 'react';
 
+import { TbLogout } from 'react-icons/tb';
+
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
+
+import Button from '../ui/button';
 
 /**
  * General Workspace settings section
@@ -15,7 +19,8 @@ import { useWorkspace } from '@/context/WorkspaceContext';
  */
 const WorkspaceSettingsSection = () => {
   const { dict } = useLocale();
-  const { workspace, updateWorkspace, deleteWorkspace } = useWorkspace();
+  const { workspace, updateWorkspace, deleteWorkspace, leaveWorkspace } =
+    useWorkspace();
 
   const handleUpdateWorkspace = useCallback(
     async (data: { name: string; description: string }) => {
@@ -29,6 +34,10 @@ const WorkspaceSettingsSection = () => {
 
   const handleDeleteWorkspace = useCallback(async () => {
     await deleteWorkspace();
+  }, [deleteWorkspace]);
+
+  const handleLeaveWorkspace = useCallback(async () => {
+    await leaveWorkspace();
   }, [deleteWorkspace]);
 
   // Define field configurations
@@ -68,6 +77,19 @@ const WorkspaceSettingsSection = () => {
           submitButtonLabel={dict.workspace.saveChanges}
           deleteButtonLabel={dict.workspace.deleteWorkspace}
           dangerZoneMessage={dict.workspace.deletionNote}
+          additionalDangerContent={
+            <>
+              <Button
+                onClick={handleLeaveWorkspace}
+                className='mt-4'
+                variant='secondary'
+                size={'sm'}
+                icon={<TbLogout />}
+              >
+                {dict.workspaceSwitcher.leaveWorkspace}
+              </Button>
+            </>
+          }
         />
       )}
     </div>

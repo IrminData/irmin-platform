@@ -90,3 +90,14 @@ export async function switchWorkspace(workspaceSlug?: string, token?: string) {
   );
   return res;
 }
+
+/**
+ * Server action to leave a workspace.
+ */
+export async function leaveWorkspace(workspaceSlug?: string, token?: string) {
+  const irminCore = await initCore(token);
+  const res = await irminCore.workspaceService.leaveWorkspace(
+    workspaceSlug ?? ''
+  );
+  return res;
+}

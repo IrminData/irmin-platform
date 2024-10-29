@@ -44,6 +44,7 @@ interface SettingsFormProps<T extends FieldValues> {
   dangerZoneMessage?: string;
   submitButtonLabel: string;
   deleteButtonLabel?: string;
+  additionalDangerContent?: React.ReactNode;
 }
 
 /**
@@ -58,6 +59,7 @@ export default function SettingsForm<T extends FieldValues>({
   dangerZoneMessage = 'This action cannot be undone. Deleting this item will remove it permanently.',
   submitButtonLabel,
   deleteButtonLabel,
+  additionalDangerContent,
 }: SettingsFormProps<T>) {
   const { dict } = useLocale();
   const {
@@ -143,14 +145,17 @@ export default function SettingsForm<T extends FieldValues>({
               <p className='mt-2 max-w-sm text-xs md:text-sm'>
                 {dangerZoneMessage}
               </p>
-              <Button
-                className='mt-4'
-                size='sm'
-                variant='secondary'
-                onClick={deleteItem}
-              >
-                {deleteButtonLabel ?? `Delete ${itemName}`}
-              </Button>
+              <div className='flex gap-2'>
+                <Button
+                  className='mt-4'
+                  size='sm'
+                  variant='secondary'
+                  onClick={deleteItem}
+                >
+                  {deleteButtonLabel ?? `Delete ${itemName}`}
+                </Button>
+                {additionalDangerContent}
+              </div>
             </div>
           )}
         </div>

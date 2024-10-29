@@ -220,6 +220,9 @@ const fi = {
     switchedTo: 'Työtila vaihdettu',
     failedToSwitch: 'Työtilan vaihto epäonnistui',
     workspace: 'Työtila',
+    leaveWorkspace: 'Poistu työtilasta',
+    leaveWorkspaceConfirm:
+      'Oletko varma, että haluat poistua tästä työtilasta?',
   },
   repository: {
     repository: 'Tietovarasto',

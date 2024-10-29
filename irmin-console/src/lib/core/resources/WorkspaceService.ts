@@ -43,6 +43,7 @@ class WorkspaceService {
     this.updateWorkspace = this.updateWorkspace.bind(this);
     this.deleteWorkspace = this.deleteWorkspace.bind(this);
     this.switchWorkspace = this.switchWorkspace.bind(this);
+    this.leaveWorkspace = this.leaveWorkspace.bind(this);
   }
 
   /**
@@ -240,6 +241,28 @@ class WorkspaceService {
           exampleWorkspaces.find((v) => v.slug === workspaceSlug) ??
             exampleWorkspaces[0]
         ) as WorkspaceAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Leave a workspace
+   *
+   * @param workspaceSlug - The slug of the workspace to switch to
+   */
+  async leaveWorkspace(workspaceSlug: string): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return fake();
+    try {
+      const res = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspaceSlug}/leave`,
+        {
+          method: 'GET',
+        }
+      );
+      return res;
+    } catch (error) {
+      console.error((error as Error).message, 'Leave workspace error');
+      if (isDevelopment) return fake();
       throw error;
     }
   }

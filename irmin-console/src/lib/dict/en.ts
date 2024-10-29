@@ -220,6 +220,8 @@ const en = {
     switchedTo: 'Switched to',
     failedToSwitch: 'Failed to switch workspace',
     workspace: 'Workspace',
+    leaveWorkspace: 'Leave workspace',
+    leaveWorkspaceConfirm: 'Are you sure you want to leave this workspace?',
   },
   repository: {
     repository: 'Repository',

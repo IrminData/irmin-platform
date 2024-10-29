@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import {
   deleteWorkspace,
   getWorkspace,
+  leaveWorkspace,
   reassignWorkspace,
   switchWorkspace,
   updateWorkspace,
@@ -35,6 +36,7 @@ interface WorkspaceContextProps {
   deleteWorkspace: () => Promise<void>;
   updateWorkspace: (data: ItemUpdateProps) => Promise<void>;
   reassignWorkspace: (ownerID: string) => Promise<void>;
+  leaveWorkspace: () => Promise<void>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextProps | undefined>(
@@ -153,6 +155,28 @@ export const WorkspaceProvider = ({
     [workspace, dict, fetchWorkspace, irminAlert, irminConfirm]
   );
 
+  const handleLeaveWorkspace = useCallback(async () => {
+    if (!workspace) return;
+    const confirmed = await irminConfirm(
+      'warning',
+      `${dict.workspaceSwitcher.leaveWorkspaceConfirm} (${workspace.name})`
+    );
+    if (updating.current || !confirmed) return;
+    try {
+      updating.current = true;
+      const res = await leaveWorkspace();
+      router.push('/console/manage-workspaces');
+      irminAlert('success', res.message ?? 'You have left the workspace');
+    } catch (error) {
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Error leaving the workspace'
+      );
+    } finally {
+      updating.current = false;
+    }
+  }, [workspace, dict, irminAlert, irminConfirm, leaveWorkspace, router]);
+
   return (
     <WorkspaceContext.Provider
       value={{
@@ -161,6 +185,7 @@ export const WorkspaceProvider = ({
         deleteWorkspace: handleDeleteWorkspace,
         updateWorkspace: handleUpdateWorkspace,
         reassignWorkspace: handleReassignWorkspace,
+        leaveWorkspace: handleLeaveWorkspace,
       }}
     >
       {children}
