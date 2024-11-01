@@ -175,7 +175,7 @@ export const WorkspaceProvider = ({
     } finally {
       updating.current = false;
     }
-  }, [workspace, dict, irminAlert, irminConfirm, leaveWorkspace, router]);
+  }, [workspace, dict, irminAlert, irminConfirm, router]);
 
   return (
     <WorkspaceContext.Provider

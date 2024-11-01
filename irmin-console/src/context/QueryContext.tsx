@@ -53,7 +53,7 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
   /**
    * Execute a script
    *
-   * The script can be either Irmin SQL query or a script to be executed in the Action Wrapper.
+   * The script can be either Irmin SQL query or a script to be executed in the Compute Sandbox.
    */
   const handleExecuteScript = useCallback(
     async (type: IrminFileType, content: string, collection?: Collection) => {

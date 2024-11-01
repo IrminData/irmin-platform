@@ -58,7 +58,7 @@ class QueryService {
   /**
    * Execute a script
    *
-   * The script can be either Irmin SQL query or a script to be executed in the Action Wrapper.
+   * The script can be either Irmin SQL query or a script to be executed in the Compute Sandbox.
    *
    * Even if the script is invalid, the API will return a 200 status code. The response will contain the error messages.
    *

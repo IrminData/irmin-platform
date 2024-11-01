@@ -38,7 +38,7 @@ const WorkspaceSettingsSection = () => {
 
   const handleLeaveWorkspace = useCallback(async () => {
     await leaveWorkspace();
-  }, [deleteWorkspace]);
+  }, [leaveWorkspace]);
 
   // Define field configurations
   const fieldConfiguration: FieldConfig<{
