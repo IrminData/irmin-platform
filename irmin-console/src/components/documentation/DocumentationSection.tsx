@@ -136,14 +136,14 @@ export default function DocumentationSection({
                     className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
                   >
                     <div className='flex flex-row justify-between gap-2'>
-                      <h3 className='text-xl text-foreground'>
+                      <div className='text-xl text-foreground'>
                         {item.name}
                         {item.is_immutable && (
                           <Badge className='ml-2' variant='secondary'>
                             {dict.list.immutable}
                           </Badge>
                         )}
-                      </h3>
+                      </div>
                       <StatusBadge status={'private'} label={'private'} />
                     </div>
                     <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>

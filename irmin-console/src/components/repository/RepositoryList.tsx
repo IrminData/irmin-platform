@@ -57,14 +57,14 @@ const RepositoryList = ({
               key={`name-and-owner-${i}`}
               className='inline-flex flex-col gap-1'
             >
-              <p className='text-base'>
+              <div className='text-base'>
                 {item.name}
                 {item.is_immutable && (
                   <Badge className='ml-2' variant='secondary'>
                     {dict.list.immutable}
                   </Badge>
                 )}
-              </p>
+              </div>
               <span className='text-sm text-gray-600 dark:text-gray-400'>
                 {dict.list.owner}: {item.owner.email}
                 {item.owner.company ? ` (${item.owner.company})` : ''}

@@ -184,15 +184,9 @@ export default function ConsoleSearch() {
         <input
           defaultValue={query}
           onChange={(e) => setQuery(e.target.value)}
-          className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible focus:outline-none group-focus-within:placeholder:visible md:placeholder:visible lg:text-sm dark:bg-irmin_black dark:text-white'
+          className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible placeholder:opacity-40 focus:outline-none group-focus-within:placeholder:visible md:placeholder:visible lg:text-sm dark:bg-irmin_black dark:text-white'
           placeholder={dict.consoleNavigation.searchPlaceholder}
         />
-        <Button
-          variant='ghost'
-          className='invisible absolute bottom-0 right-0 top-0 h-full rounded-full opacity-0 focus:outline-none group-focus-within:visible group-focus-within:opacity-100 md:visible md:opacity-100'
-        >
-          {dict.consoleNavigation.search}
-        </Button>
       </form>
 
       {/* Results Modal */}

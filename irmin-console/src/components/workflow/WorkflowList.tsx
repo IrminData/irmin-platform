@@ -61,14 +61,14 @@ const WorkflowList = ({
               key={`name-and-owner-${i}`}
               className='inline-flex flex-col gap-1'
             >
-              <p className='text-base'>
+              <div className='text-base'>
                 {item.name}
                 <Badge className='ml-2'>
                   {item.workflowable_type === 'action' && dict.workflow.action}
                   {item.workflowable_type === 'import' && dict.workflow.import}
                   {item.workflowable_type === 'export' && dict.workflow.export}
                 </Badge>
-              </p>
+              </div>
               <span className='text-sm text-gray-400'>
                 {dict.list.owner}: {item.owner.email}
                 {item.owner.company ? ` (${item.owner.company})` : ''}
