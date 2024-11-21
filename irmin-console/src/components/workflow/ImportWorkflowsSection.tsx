@@ -12,6 +12,8 @@ import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { Connection } from '@/types/core/Connection';
+import { Repository } from '@/types/core/Repository';
 import { ImportWorkflow } from '@/types/core/Workflow';
 
 import CreateWorkflowModalContent from './CreateWorkflowModalContent';
@@ -24,13 +26,19 @@ import ImportWorkflowList from './ImportWorkflowList';
  * Uses {@link SideModal} and {@link CreateWorkflowModalContent} to provide UI for new Import Workflow creation
  *
  * @param props0 - The props
+ * @param props0.connections - List of connections
+ * @param props0.repositories - List of repositories
  * @param props0.workflows - The list of Import Workflows
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
 export default function ImportWorkflowsSection({
+  connections,
+  repositories,
   workflows,
   sideModalOpen = false,
 }: {
+  connections: Connection[];
+  repositories: Repository[];
   workflows: ImportWorkflow[];
   sideModalOpen?: boolean;
 }) {
@@ -103,6 +111,8 @@ export default function ImportWorkflowsSection({
         title={dict.workflow.create.createNewImportWorkflow}
       >
         <CreateWorkflowModalContent
+          connections={connections}
+          repositories={repositories}
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}

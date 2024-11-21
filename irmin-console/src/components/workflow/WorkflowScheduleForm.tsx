@@ -1,13 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
+import { getRepositories } from '@/lib/actions/repositories';
+import { getWorkflows } from '@/lib/actions/workflows';
+import { getToken } from '@/lib/getToken';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import RRuleGenerator from '@/components/ui/RRuleGenerator';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -46,26 +51,44 @@ interface WorkflowScheduleFormData {
  * Form to configure a workflow schedule using react-hook-form
  *
  * @param props - Component properties
- * @param props.workflows - List of workflows to select from
- * @param props.repositories - List of repositories to select from
  * @param props.initialData - Initial schedule data
  * @param props.updateSchedule - Callback to call in order to update the schedule
  * @param props.disableSaveButton - Disable the save button and auto-update schedule on change
  */
 export default function WorkflowScheduleForm({
-  workflows,
-  repositories,
   initialData,
   updateSchedule,
   disableSaveButton,
 }: {
-  workflows: Workflow[];
-  repositories: Repository[];
   initialData?: WorkflowSchedule;
   updateSchedule: (schedule: WorkflowSchedule) => void;
   disableSaveButton?: boolean;
 }) {
   const { dict } = useLocale();
+
+  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const token = await getToken();
+        const [_repositories, _workflows] = await Promise.all([
+          getRepositories(token),
+          getWorkflows(token),
+        ]);
+        setRepositories(_repositories);
+        setWorkflows(_workflows);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   // Initialize react-hook-form
   const { register, handleSubmit, control, watch, setValue } =
@@ -184,8 +207,16 @@ export default function WorkflowScheduleForm({
     [setValue, triggerFields]
   );
 
+  if (loading) {
+    return <LoadingSkeleton className='h-12 w-full' />;
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className='space-y-4'
+      id='workflow-schedule-form'
+    >
       <h3 className='pl-1 text-lg'>
         {dict.workflow.schedule.workflowSchedule}
       </h3>

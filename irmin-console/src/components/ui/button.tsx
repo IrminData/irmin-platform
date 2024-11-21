@@ -65,6 +65,7 @@ export interface ButtonProps
   iconFirst?: boolean;
   href?: string;
   target?: React.AnchorHTMLAttributes<HTMLAnchorElement>['target'];
+  prefetch?: boolean | null;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -81,6 +82,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       href,
       target,
+      prefetch = null,
       ...props
     },
     ref
@@ -115,7 +117,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     if (href) {
       return (
-        <Link href={href} target={target} className='contents'>
+        <Link
+          href={href}
+          target={target}
+          className='contents'
+          prefetch={prefetch}
+        >
           <Comp {...buttonProps}>{content}</Comp>
         </Link>
       );

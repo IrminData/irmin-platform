@@ -1,3 +1,5 @@
+import { getConnections } from '@/lib/actions/connections';
+import { getRepositories } from '@/lib/actions/repositories';
 import { getImportWorkflows } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
 
@@ -16,6 +18,17 @@ import ImportWorkflowsSection from '@/components/workflow/ImportWorkflowsSection
  */
 export default async function ImportWorkflowsPage() {
   const token = await getToken();
-  const workflows = await getImportWorkflows(token);
-  return <ImportWorkflowsSection workflows={workflows} sideModalOpen={false} />;
+  const [workflows, connections, repositories] = await Promise.all([
+    getImportWorkflows(token),
+    getConnections(token),
+    getRepositories(token),
+  ]);
+  return (
+    <ImportWorkflowsSection
+      workflows={workflows}
+      connections={connections}
+      repositories={repositories}
+      sideModalOpen={false}
+    />
+  );
 }
