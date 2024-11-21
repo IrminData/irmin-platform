@@ -3,7 +3,10 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { formatDistanceToNow, intervalToDuration } from 'date-fns';
+
 import { IoChevronBack } from 'react-icons/io5';
+import { TbClock, TbHourglassLow } from 'react-icons/tb';
 
 import { ButtonWithTooltip } from '@/components/ui/button';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -11,6 +14,8 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+
+import { formatDurationForUI } from '@/utils/formatDurationForUI';
 
 import { WorkflowRunLogs } from '@/types/core/Log';
 import { Workflow, WorkflowRun } from '@/types/core/Workflow';
@@ -105,11 +110,30 @@ export default function WorkflowRunLogsSection({
               />
             </p>
           </div>
+          <div className='flex flex-col gap-1'>
+            <p className='flex items-center text-sm lg:text-base'>
+              <TbClock className='mr-1' />
+              {formatDistanceToNow(new Date(workflowRun.started_at), {
+                addSuffix: true,
+              })}
+            </p>
+            <p className='flex items-center text-sm lg:text-base'>
+              <TbHourglassLow className='mr-1' />
+              {workflowRun.finished_at
+                ? formatDurationForUI(
+                    intervalToDuration({
+                      start: new Date(workflowRun.started_at),
+                      end: new Date(workflowRun.finished_at),
+                    })
+                  )
+                : '-'}
+            </p>
+          </div>
         </div>
       </div>
       {workflowRunLogs && workflowRunLogs.logs ? (
         <div className='h-[calc(100vh-347px)]'>
-          <LogFeed text={workflowRunLogs.logs.join('\n\n')} />
+          {/* <LogFeed text={workflowRunLogs.logs.join('\n\n')} /> */}
         </div>
       ) : (
         <p className='text-center text-lg text-gray-600 dark:text-gray-400'>

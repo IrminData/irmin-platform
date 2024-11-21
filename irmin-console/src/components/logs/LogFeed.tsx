@@ -1,3 +1,5 @@
+'use client';
+
 import { LazyLog, ScrollFollow } from '@melloware/react-logviewer';
 
 /**

@@ -4,6 +4,11 @@ import { useMemo } from 'react';
 
 import Link from 'next/link';
 
+import * as Tooltip from '@radix-ui/react-tooltip';
+import { formatDistanceToNow, intervalToDuration } from 'date-fns';
+
+import { TbClock, TbHourglassLow } from 'react-icons/tb';
+
 import NormalList from '@/components/ui/list/NormalList';
 import StatusBadge from '@/components/ui/StatusBadge';
 
@@ -11,6 +16,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { useWorkflow } from '@/context/WorkflowContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+
+import { formatDurationForUI } from '@/utils/formatDurationForUI';
 
 import { GridRow } from '@/types/internal/ListProps';
 
@@ -30,25 +37,52 @@ const WorkflowSection = () => {
     includeSegment: true,
     segmentsAfter: 1,
   });
-
   const runRows: GridRow[] = useMemo(
     () =>
       runs.map((run, i) => ({
         columns: [
-          <div key={`run-${i}`} className='inline-flex flex-col gap-2'>
-            <p className='text-xs lg:text-sm'>
-              {dict.workflow.startedAt}
-              {': '}
-              {new Date(run.started_at).toLocaleString(locale)}
-            </p>
-            <p className='text-xs lg:text-sm'>
-              {dict.workflow.finishedAt}
-              {': '}
-              {run.finished_at
-                ? new Date(run.finished_at).toLocaleString(locale)
-                : '-'}
-            </p>
-          </div>,
+          <Tooltip.Root key={`run-${i}`}>
+            <Tooltip.Trigger>
+              <div className='inline-flex cursor-pointer flex-col gap-2'>
+                <p className='flex items-center text-xs lg:text-sm'>
+                  <TbClock className='mr-1' />
+                  {formatDistanceToNow(new Date(run.started_at), {
+                    addSuffix: true,
+                  })}
+                </p>
+                <p className='flex items-center text-xs lg:text-sm'>
+                  <TbHourglassLow className='mr-1' />
+                  {run.finished_at
+                    ? formatDurationForUI(
+                        intervalToDuration({
+                          start: new Date(run.started_at),
+                          end: new Date(run.finished_at),
+                        })
+                      )
+                    : '-'}
+                </p>
+              </div>
+            </Tooltip.Trigger>
+            <Tooltip.Content
+              side='top'
+              align='center'
+              className='tooltip-content rounded bg-background p-2'
+            >
+              <p className='text-xs lg:text-sm'>
+                {dict.workflow.startedAt}
+                {': '}
+                {new Date(run.started_at).toLocaleString(locale)}
+              </p>
+              <p className='text-xs lg:text-sm'>
+                {dict.workflow.finishedAt}
+                {': '}
+                {run.finished_at
+                  ? new Date(run.finished_at).toLocaleString(locale)
+                  : '-'}
+              </p>
+              <Tooltip.Arrow />
+            </Tooltip.Content>
+          </Tooltip.Root>,
           <div key={`run-${i}-owner`} className='inline-flex flex-col gap-2'>
             <p className='text-xs lg:text-sm'>{run.owner.email}</p>
           </div>,
@@ -218,16 +252,18 @@ const WorkflowSection = () => {
             </div>
           )}
         </div>
-        <NormalList
-          headers={[
-            dict.workflow.run,
-            dict.list.owner,
-            dict.list.status,
-            dict.list.actions,
-          ]}
-          hideHeaders={false}
-          rows={runRows}
-        />
+        <Tooltip.TooltipProvider>
+          <NormalList
+            headers={[
+              dict.workflow.run,
+              dict.list.owner,
+              dict.list.status,
+              dict.list.actions,
+            ]}
+            hideHeaders={false}
+            rows={runRows}
+          />
+        </Tooltip.TooltipProvider>
       </div>
     </div>
   );

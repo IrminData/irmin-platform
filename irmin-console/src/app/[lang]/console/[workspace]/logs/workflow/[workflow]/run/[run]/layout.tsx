@@ -25,9 +25,8 @@ export async function generateMetadata(props: {
 }): Promise<Metadata> {
   const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  const formattedWorkflow = params.workflow.replace(/-/g, ' ');
   return {
-    title: `Workflow run ${params.run} ${formattedWorkflow} logs | ${formattedWorkspace} | IRMIN Console`,
+    title: `Run ${params.run} logs | ${formattedWorkspace} | IRMIN Console`,
   };
 }
 
