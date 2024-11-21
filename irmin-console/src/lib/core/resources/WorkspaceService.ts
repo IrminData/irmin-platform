@@ -230,7 +230,7 @@ class WorkspaceService {
       const formData = new FormData();
       formData.append('workspace', workspaceSlug);
       const newWorkspace = (await this.irminCore.fetchAPI(
-        `/v1/workspaces/switch`,
+        `/v1/workspaces/${workspaceSlug}/switch`,
         {
           method: 'POST',
           body: formData,

@@ -99,7 +99,6 @@ class RepositoryService {
     try {
       const formData = new FormData();
 
-      formData.append('_method', 'PATCH');
       formData.append('name', repository.name ?? '');
       formData.append('description', repository.description ?? '');
       formData.append('documentation', repository.documentation ?? '');

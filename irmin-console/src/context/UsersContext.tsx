@@ -11,7 +11,7 @@ import {
 import {
   cancelInvite,
   changeInviteRole,
-  getInvites,
+  getWorkspaceInvites,
   resendInvite,
   sendInvite,
 } from '@/lib/actions/invites';
@@ -50,11 +50,13 @@ const UsersContext = createContext<UsersContextProps | undefined>(undefined);
  */
 export const UsersProvider = ({
   children,
+  currentWorkspace,
   roles,
   currentUsers,
   currentInvites,
 }: {
   children: React.ReactNode;
+  currentWorkspace: string;
   roles: IrminRole[];
   currentUsers: User[];
   currentInvites: Invite[];
@@ -82,7 +84,7 @@ export const UsersProvider = ({
 
   const fetchInvites = useCallback(async () => {
     try {
-      const newInvites = await getInvites();
+      const newInvites = await getWorkspaceInvites(currentWorkspace);
       setInvites(newInvites);
     } catch (error) {
       irminAlert(

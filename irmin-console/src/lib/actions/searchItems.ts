@@ -2,7 +2,7 @@
 
 import { getAllCollections } from '@/lib/actions/collections';
 import { getConnections } from '@/lib/actions/connections';
-import { getInvites } from '@/lib/actions/invites';
+import { getWorkspaceInvites } from '@/lib/actions/invites';
 import { getRepositories } from '@/lib/actions/repositories';
 import { getUsers } from '@/lib/actions/users';
 import { getWorkflows } from '@/lib/actions/workflows';
@@ -108,7 +108,7 @@ export async function generateSearchItems({
         collections,
       ] = await Promise.all([
         getConnections(token),
-        getInvites(token),
+        getWorkspaceInvites(workspace, false, false, token),
         getUsers(token),
         getWorkflows(token),
         getRepositories(token),

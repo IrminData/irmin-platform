@@ -48,7 +48,8 @@ class InviteService {
     this.resendUserInvite = this.resendUserInvite.bind(this);
     this.cancelUserInvite = this.cancelUserInvite.bind(this);
     this.changeUserInviteRole = this.changeUserInviteRole.bind(this);
-    this.fetchInvites = this.fetchInvites.bind(this);
+    this.fetchWorkspaceInvites = this.fetchWorkspaceInvites.bind(this);
+    this.fetchUserInvites = this.fetchUserInvites.bind(this);
     this.fetchInvite = this.fetchInvite.bind(this);
     this.verifyInvite = this.verifyInvite.bind(this);
     this.acceptInvite = this.acceptInvite.bind(this);
@@ -168,17 +169,65 @@ class InviteService {
 
   /**
    * Get a list of invites to the workspace
+   *
+   * @param workspace - The workspace slug to get invites for
+   * @param trashed - (optional) Include trashed invites
+   * @param expired - (optional) Include expired invites
    */
-  async fetchInvites(): Promise<InvitesAPIResponse> {
+  async fetchWorkspaceInvites(
+    workspace: string,
+    trashed?: boolean,
+    expired?: boolean
+  ): Promise<InvitesAPIResponse> {
     if (isOfflineMode) return fake(exampleInvites) as InvitesAPIResponse;
     try {
-      const response = (await this.irminCore.fetchAPI(`/v1/invites`, {
-        method: 'GET',
-      })) as InvitesAPIResponse;
+      const urlParams = new URLSearchParams();
+      urlParams.append('workspace', workspace);
+      if (trashed) urlParams.append('trashed', '1');
+      if (expired) urlParams.append('expired', '1');
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/invites?${urlParams.toString()}`,
+        {
+          method: 'GET',
+        }
+      )) as InvitesAPIResponse;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Get invites by workspace error');
+      if (isDevelopment) return fake(exampleInvites) as InvitesAPIResponse;
+      throw error;
+    }
+  }
+
+  /**
+   * Get a list of invites for the user
+   *
+   * @param user - The user's ID to get invites for
+   * @param trashed - (optional) Include trashed invites
+   * @param expired - (optional) Include expired invites
+   */
+  async fetchUserInvites(
+    user: string,
+    trashed?: boolean,
+    expired?: boolean
+  ): Promise<InvitesAPIResponse> {
+    if (isOfflineMode) return fake(exampleInvites) as InvitesAPIResponse;
+    try {
+      const urlParams = new URLSearchParams();
+      urlParams.append('user', user);
+      if (trashed) urlParams.append('trashed', '1');
+      if (expired) urlParams.append('expired', '1');
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/invites?${urlParams.toString()}`,
+        {
+          method: 'GET',
+        }
+      )) as InvitesAPIResponse;
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Get invites by user error');
       if (isDevelopment) return fake(exampleInvites) as InvitesAPIResponse;
       throw error;
     }
