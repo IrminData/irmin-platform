@@ -133,7 +133,7 @@ export default function WorkflowRunLogsSection({
       </div>
       {workflowRunLogs && workflowRunLogs.logs ? (
         <div className='h-[calc(100vh-347px)]'>
-          {/* <LogFeed text={workflowRunLogs.logs.join('\n\n')} /> */}
+          <LogFeed logs={workflowRunLogs.logs} />
         </div>
       ) : (
         <p className='text-center text-lg text-gray-600 dark:text-gray-400'>

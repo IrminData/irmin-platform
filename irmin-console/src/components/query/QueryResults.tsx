@@ -230,7 +230,7 @@ const QueryResults = ({
       {activeTab === 'logs' && (
         <>
           {logs && logs.length > 0 ? (
-            <LogFeed text={logs.join('\n\n')} />
+            <LogFeed logs={logs} />
           ) : (
             <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
               {dict.logs.noLogsFound}

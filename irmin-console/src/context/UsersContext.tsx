@@ -92,7 +92,7 @@ export const UsersProvider = ({
         (error as Error)?.message ?? 'Failed to fetch the invites'
       );
     }
-  }, [irminAlert]);
+  }, [irminAlert, currentWorkspace]);
 
   const handleDeleteUser = useCallback(
     async (userID: string) => {

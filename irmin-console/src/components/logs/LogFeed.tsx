@@ -1,63 +1,74 @@
 'use client';
 
-import { LazyLog, ScrollFollow } from '@melloware/react-logviewer';
+import { useEffect, useRef } from 'react';
+
+import { useLocale } from '@/context/LocaleContext';
 
 /**
  * Component to display logs in a feed
  *
  * @param props - The props for the LogFeed component
- * @param props.url - The URL to fetch logs from
- * @param props.stream - Whether to stream logs from the URL
- * @param props.text - Text logs to use if URL is not provided
- * @param props.height - The height of the log feed, defaults to 'auto'
+ * @param props.logs - The logs to display
+ * @param props.height - The height of the log feed
  */
 const LogFeed = ({
-  url,
-  stream = false,
-  text,
+  logs,
   height = 'auto',
 }: {
-  url?: string;
-  stream?: boolean;
-  text?: string;
-  height?: string;
+  logs: string[];
+  height?: number | 'auto';
 }) => {
-  if (url) {
-    return (
-      <ScrollFollow
-        startFollowing={true}
-        render={({ follow, onScroll }) => (
-          <LazyLog
-            caseInsensitive
-            enableHotKeys
-            enableSearch
-            extraLines={1}
-            stream={stream}
-            height={height}
-            url={url}
-            follow={follow}
-            onScroll={onScroll}
-          />
-        )}
-      />
-    );
-  }
+  const { dict } = useLocale();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [logs]);
+
+  const highlightLog = (log: string) => {
+    if (log.toLowerCase().includes('[error]')) {
+      return 'text-red-500 font-semibold';
+    } else if (log.toLowerCase().includes('[warning]')) {
+      return 'text-yellow-500';
+    } else if (log.toLowerCase().includes('[info]')) {
+      return 'text-blue-500';
+    } else {
+      return 'text-foreground';
+    }
+  };
+
+  const getHeightStyle = () => {
+    if (height === 'auto') {
+      return { maxHeight: '80vh', height: 'auto' };
+    }
+    return { height: `${height}px` };
+  };
+
   return (
-    <ScrollFollow
-      startFollowing={true}
-      render={({ follow, onScroll }) => (
-        <LazyLog
-          caseInsensitive
-          enableHotKeys
-          enableSearch
-          extraLines={1}
-          height={height}
-          text={text ?? ''}
-          follow={follow}
-          onScroll={onScroll}
-        />
+    <div
+      ref={scrollAreaRef}
+      className='w-full overflow-y-auto rounded bg-background p-4'
+      style={getHeightStyle()}
+      role='log'
+      aria-live='polite'
+    >
+      {logs.length > 0 ? (
+        logs.map((log, index) => (
+          <div
+            key={index}
+            className={`my-1 font-mono text-sm ${highlightLog(log)}`}
+          >
+            {log}
+          </div>
+        ))
+      ) : (
+        <div className='text-center text-muted-foreground'>
+          {dict.logs.noLogsFound}
+        </div>
       )}
-    />
+    </div>
   );
 };
 

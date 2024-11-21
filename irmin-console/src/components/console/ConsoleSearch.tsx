@@ -18,8 +18,6 @@ import {
 
 import { generateSearchItems } from '@/lib/actions/searchItems';
 
-import Button from '@/components/ui/button';
-
 import { useLocale } from '@/context/LocaleContext';
 
 import {
