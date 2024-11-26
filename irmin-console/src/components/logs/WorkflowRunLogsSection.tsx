@@ -103,12 +103,10 @@ export default function WorkflowRunLogsSection({
           </div>
           <div className='flex flex-col gap-1'>
             <p className='text-sm opacity-60'>{dict.list.status}</p>
-            <p className='text-base'>
-              <StatusBadge
-                status={workflowRun.status}
-                label={workflowRun.status}
-              />
-            </p>
+            <StatusBadge
+              status={workflowRun.status}
+              label={workflowRun.status}
+            />
           </div>
           <div className='flex flex-col gap-1'>
             <p className='flex items-center text-sm lg:text-base'>
