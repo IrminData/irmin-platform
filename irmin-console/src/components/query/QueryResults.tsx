@@ -13,14 +13,14 @@ import {
   TbTable,
 } from 'react-icons/tb';
 
-import { QueryExecutionResultAPIResponse } from '@/lib/core/resources/QueryService';
-
 import LogFeed from '@/components/logs/LogFeed';
 import Button from '@/components/ui/button';
 import MDXEditor from '@/components/ui/markdown-editor/MDXEditor';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import { QueryExecutionResult } from '@/types/core/Query';
 import { ActionWorkflow } from '@/types/core/Workflow';
 
 import ErrorList from './ErrorList';
@@ -50,7 +50,7 @@ const QueryResults = ({
   workflow,
 }: {
   title: string;
-  result: QueryExecutionResultAPIResponse | null;
+  result: IrminAPIResponse<QueryExecutionResult> | null;
   loading?: boolean;
   onSave?: () => Promise<void>;
   onRun?: () => Promise<void>;

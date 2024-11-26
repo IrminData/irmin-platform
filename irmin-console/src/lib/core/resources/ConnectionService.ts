@@ -16,27 +16,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Connections API response type
- */
-interface ConnectionsAPIResponse extends IrminAPIResponse {
-  data: Connection[];
-}
-
-/**
- * Connection API response type
- */
-interface ConnectionAPIResponse extends IrminAPIResponse {
-  data: Connection;
-}
-
-/**
- * Connection details and settings API response type
- */
-interface ConnectionFieldsAPIResponse extends IrminAPIResponse {
-  data: DynamicFields;
-}
-
-/**
  * Connection test API response type
  */
 interface ConnectionTestAPIResponse extends IrminAPIResponse {
@@ -71,18 +50,18 @@ class ConnectionService {
   /**
    * Fetch all Connections for the current workspace
    */
-  async fetchConnections(): Promise<ConnectionsAPIResponse> {
+  async fetchConnections(): Promise<IrminAPIResponse<Connection[]>> {
     if (isOfflineMode)
-      return fake(exampleConnections) as ConnectionsAPIResponse;
+      return fake(exampleConnections) as IrminAPIResponse<Connection[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/connections`, {
         method: 'GET',
-      })) as ConnectionsAPIResponse;
+      })) as IrminAPIResponse<Connection[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch connections error');
       if (isDevelopment)
-        return fake(exampleConnections) as ConnectionsAPIResponse;
+        return fake(exampleConnections) as IrminAPIResponse<Connection[]>;
       throw error;
     }
   }
@@ -93,9 +72,11 @@ class ConnectionService {
    * @param connection - The ID of the Connection to fetch
    * @returns The Connection object
    */
-  async fetchConnection(connection: string): Promise<ConnectionAPIResponse> {
+  async fetchConnection(
+    connection: string
+  ): Promise<IrminAPIResponse<Connection>> {
     if (isOfflineMode)
-      return fake(exampleConnections[0]) as ConnectionAPIResponse;
+      return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/connections/${connection}`,
@@ -103,11 +84,11 @@ class ConnectionService {
           method: 'GET',
         }
       );
-      return response as ConnectionAPIResponse;
+      return response as IrminAPIResponse<Connection>;
     } catch (error) {
       console.error((error as Error).message, 'Fetch connection error');
       if (isDevelopment)
-        return fake(exampleConnections[0]) as ConnectionAPIResponse;
+        return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
       throw error;
     }
   }
@@ -204,24 +185,24 @@ class ConnectionService {
    */
   async fetchNewConnectionDetails(
     connectorID: string
-  ): Promise<ConnectionFieldsAPIResponse> {
+  ): Promise<IrminAPIResponse<DynamicFields>> {
     try {
       if (isOfflineMode)
-        return fake(exampleDynamicFields) as ConnectionFieldsAPIResponse;
+        return fake(exampleDynamicFields) as IrminAPIResponse<DynamicFields>;
       const response = await this.irminCore.fetchAPI(
         `/v1/connections/details?connector=${connectorID}`,
         {
           method: 'GET',
         }
       );
-      return response as ConnectionFieldsAPIResponse;
+      return response as IrminAPIResponse<DynamicFields>;
     } catch (error) {
       console.error(
         (error as Error).message,
         'Failed to fetch new Connection details'
       );
       if (isDevelopment)
-        return fake(exampleDynamicFields) as ConnectionFieldsAPIResponse;
+        return fake(exampleDynamicFields) as IrminAPIResponse<DynamicFields>;
       throw error;
     }
   }
@@ -276,10 +257,10 @@ class ConnectionService {
   async fetchNewConnectionSettings(
     connectorID: string,
     connectionDetails: DynamicFieldValues
-  ): Promise<ConnectionFieldsAPIResponse> {
+  ): Promise<IrminAPIResponse<DynamicFields>> {
     try {
       if (isOfflineMode)
-        return fake(exampleDynamicFields) as ConnectionFieldsAPIResponse;
+        return fake(exampleDynamicFields) as IrminAPIResponse<DynamicFields>;
 
       // Construct the query parameters from connectionDetails
       const params = new URLSearchParams({
@@ -294,14 +275,14 @@ class ConnectionService {
           method: 'GET',
         }
       );
-      return response as ConnectionFieldsAPIResponse;
+      return response as IrminAPIResponse<DynamicFields>;
     } catch (error) {
       console.error(
         (error as Error).message,
         'Failed to fetch new Connection settings'
       );
       if (isDevelopment)
-        return fake(exampleDynamicFields) as ConnectionFieldsAPIResponse;
+        return fake(exampleDynamicFields) as IrminAPIResponse<DynamicFields>;
       throw error;
     }
   }

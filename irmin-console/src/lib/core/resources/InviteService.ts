@@ -13,27 +13,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Invites API response type
- */
-interface InvitesAPIResponse extends IrminAPIResponse {
-  data: Invite[];
-}
-
-/**
- * Invite API response type
- */
-interface InviteAPIResponse extends IrminAPIResponse {
-  data: Invite;
-}
-
-/**
- * Invite hash payload API response type
- */
-interface InviteSignedURLPayloadAPIResponse extends IrminAPIResponse {
-  data: InviteSignedURLPayload;
-}
-
-/**
  * Invite API service
  *
  * Responsible for all invite related API calls.
@@ -178,8 +157,9 @@ class InviteService {
     workspace: string,
     trashed?: boolean,
     expired?: boolean
-  ): Promise<InvitesAPIResponse> {
-    if (isOfflineMode) return fake(exampleInvites) as InvitesAPIResponse;
+  ): Promise<IrminAPIResponse<Invite[]>> {
+    if (isOfflineMode)
+      return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
     try {
       const urlParams = new URLSearchParams();
       urlParams.append('workspace', workspace);
@@ -190,12 +170,13 @@ class InviteService {
         {
           method: 'GET',
         }
-      )) as InvitesAPIResponse;
+      )) as IrminAPIResponse<Invite[]>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Get invites by workspace error');
-      if (isDevelopment) return fake(exampleInvites) as InvitesAPIResponse;
+      if (isDevelopment)
+        return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
       throw error;
     }
   }
@@ -211,8 +192,9 @@ class InviteService {
     user: string,
     trashed?: boolean,
     expired?: boolean
-  ): Promise<InvitesAPIResponse> {
-    if (isOfflineMode) return fake(exampleInvites) as InvitesAPIResponse;
+  ): Promise<IrminAPIResponse<Invite[]>> {
+    if (isOfflineMode)
+      return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
     try {
       const urlParams = new URLSearchParams();
       urlParams.append('user', user);
@@ -223,12 +205,13 @@ class InviteService {
         {
           method: 'GET',
         }
-      )) as InvitesAPIResponse;
+      )) as IrminAPIResponse<Invite[]>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Get invites by user error');
-      if (isDevelopment) return fake(exampleInvites) as InvitesAPIResponse;
+      if (isDevelopment)
+        return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
       throw error;
     }
   }
@@ -238,16 +221,17 @@ class InviteService {
    *
    * @param invite - ID of the invite
    */
-  async fetchInvite(invite: string): Promise<InviteAPIResponse> {
-    if (isOfflineMode) return fake(exampleInvites) as InviteAPIResponse;
+  async fetchInvite(invite: string): Promise<IrminAPIResponse<Invite>> {
+    if (isOfflineMode) return fake(exampleInvites) as IrminAPIResponse<Invite>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/invites/${invite}`, {
         method: 'GET',
-      })) as InviteAPIResponse;
+      })) as IrminAPIResponse<Invite>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Get invite by ID error');
-      if (isDevelopment) return fake(exampleInvites) as InviteAPIResponse;
+      if (isDevelopment)
+        return fake(exampleInvites) as IrminAPIResponse<Invite>;
       throw error;
     }
   }
@@ -257,11 +241,13 @@ class InviteService {
    *
    * @param hash - The invite's signed URL hash.
    */
-  async verifyInvite(hash: string): Promise<InviteSignedURLPayloadAPIResponse> {
+  async verifyInvite(
+    hash: string
+  ): Promise<IrminAPIResponse<InviteSignedURLPayload>> {
     if (isOfflineMode)
       return fake(
         exampleInviteSignedURLPayload
-      ) as InviteSignedURLPayloadAPIResponse;
+      ) as IrminAPIResponse<InviteSignedURLPayload>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/signed-urls/${hash}/verify`,
@@ -269,13 +255,13 @@ class InviteService {
           method: 'GET',
         }
       );
-      return response as InviteSignedURLPayloadAPIResponse;
+      return response as IrminAPIResponse<InviteSignedURLPayload>;
     } catch (error) {
       console.error((error as Error).message, 'Verify user invite error');
       if (isDevelopment)
         return fake(
           exampleInviteSignedURLPayload
-        ) as InviteSignedURLPayloadAPIResponse;
+        ) as IrminAPIResponse<InviteSignedURLPayload>;
       throw error;
     }
   }

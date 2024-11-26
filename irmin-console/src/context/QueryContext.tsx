@@ -9,19 +9,20 @@ import {
 } from 'react';
 
 import { executeScript } from '@/lib/actions/query';
-import { QueryExecutionResultAPIResponse } from '@/lib/core/resources/QueryService';
 
 import { usePopup } from '@/context/PopupContext';
 
 import { Collection } from '@/types/core/Collection';
 import { IrminFileType } from '@/types/core/EditorItems';
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import { QueryExecutionResult } from '@/types/core/Query';
 
 /**
  * Query context properties
  */
 interface QueryContextProps {
   loading: boolean;
-  result: QueryExecutionResultAPIResponse | null;
+  result: IrminAPIResponse<QueryExecutionResult> | null;
   executeScript: (
     type: IrminFileType,
     content: string,
@@ -45,7 +46,7 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
   // Query state
   const [loading, setLoading] = useState<boolean>(false);
   const [queryResult, setQueryResult] =
-    useState<QueryExecutionResultAPIResponse | null>(null);
+    useState<IrminAPIResponse<QueryExecutionResult> | null>(null);
 
   // Flag to prevent multiple script executions at the same time
   const executing = useRef(false);

@@ -15,27 +15,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Query Execution Result API response type
- */
-export interface QueryExecutionResultAPIResponse extends IrminAPIResponse {
-  data: QueryExecutionResult;
-}
-
-/**
- * Query API response type - single query
- */
-export interface QueryAPIResponse extends IrminAPIResponse {
-  data: Query;
-}
-
-/**
- * Queries API response type - list of queries
- */
-export interface QueriesAPIResponse extends IrminAPIResponse {
-  data: Query[];
-}
-
-/**
  * Query API service
  *
  * Responsible for query related API calls
@@ -70,11 +49,11 @@ class QueryService {
     type: IrminFileType,
     content: string,
     exampleType?: CollectionType
-  ): Promise<QueryExecutionResultAPIResponse> {
+  ): Promise<IrminAPIResponse<QueryExecutionResult>> {
     if (isOfflineMode)
       return fake(
         exampleQueryExecutionResult(exampleType)
-      ) as QueryExecutionResultAPIResponse;
+      ) as IrminAPIResponse<QueryExecutionResult>;
     try {
       const body = new FormData();
       body.append('type', type);
@@ -82,14 +61,14 @@ class QueryService {
       const response = (await this.irminCore.fetchAPI(`/v1/query/execute`, {
         method: 'POST',
         body,
-      })) as QueryExecutionResultAPIResponse;
+      })) as IrminAPIResponse<QueryExecutionResult>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Execute script error');
       if (isDevelopment)
         return fake(
           exampleQueryExecutionResult(exampleType)
-        ) as QueryExecutionResultAPIResponse;
+        ) as IrminAPIResponse<QueryExecutionResult>;
       throw error;
     }
   }
@@ -111,8 +90,9 @@ class QueryService {
     description?: string,
     stored?: boolean,
     run?: boolean
-  ): Promise<QueryAPIResponse> {
-    if (isOfflineMode) return fake(exampleQueries[0]) as QueryAPIResponse;
+  ): Promise<IrminAPIResponse<Query>> {
+    if (isOfflineMode)
+      return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
     try {
       const body = new FormData();
       body.append('type', type);
@@ -124,11 +104,12 @@ class QueryService {
       const response = (await this.irminCore.fetchAPI(`/v1/query`, {
         method: 'POST',
         body,
-      })) as QueryAPIResponse;
+      })) as IrminAPIResponse<Query>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create query error');
-      if (isDevelopment) return fake(exampleQueries[0]) as QueryAPIResponse;
+      if (isDevelopment)
+        return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
       throw error;
     }
   }
@@ -136,16 +117,17 @@ class QueryService {
   /**
    * Get all queries in the workspace
    */
-  async getQueries(): Promise<QueriesAPIResponse> {
-    if (isOfflineMode) return fake(exampleQueries) as QueriesAPIResponse;
+  async getQueries(): Promise<IrminAPIResponse<Query[]>> {
+    if (isOfflineMode) return fake(exampleQueries) as IrminAPIResponse<Query[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/query`, {
         method: 'GET',
-      })) as QueriesAPIResponse;
+      })) as IrminAPIResponse<Query[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Get queries error');
-      if (isDevelopment) return fake(exampleQueries) as QueriesAPIResponse;
+      if (isDevelopment)
+        return fake(exampleQueries) as IrminAPIResponse<Query[]>;
       throw error;
     }
   }
@@ -155,16 +137,18 @@ class QueryService {
    *
    * @param query - ID of the query to get
    */
-  async getQuery(query: string): Promise<QueryAPIResponse> {
-    if (isOfflineMode) return fake(exampleQueries[0]) as QueryAPIResponse;
+  async getQuery(query: string): Promise<IrminAPIResponse<Query>> {
+    if (isOfflineMode)
+      return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/query/${query}`, {
         method: 'GET',
-      })) as QueryAPIResponse;
+      })) as IrminAPIResponse<Query>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Get queries error');
-      if (isDevelopment) return fake(exampleQueries[0]) as QueryAPIResponse;
+      if (isDevelopment)
+        return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
       throw error;
     }
   }
@@ -182,11 +166,12 @@ class QueryService {
       const response = (await this.irminCore.fetchAPI(`/v1/query/${query}`, {
         method: 'POST',
         body: formData,
-      })) as QueryAPIResponse;
+      })) as IrminAPIResponse<Query>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Get queries error');
-      if (isDevelopment) return fake(exampleQueries[0]) as QueryAPIResponse;
+      if (isDevelopment)
+        return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
       throw error;
     }
   }
@@ -208,8 +193,9 @@ class QueryService {
     name?: string,
     description?: string,
     stored?: boolean
-  ): Promise<QueryAPIResponse> {
-    if (isOfflineMode) return fake(exampleQueries[0]) as QueryAPIResponse;
+  ): Promise<IrminAPIResponse<Query>> {
+    if (isOfflineMode)
+      return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
     try {
       const body = new FormData();
       body.append('_method', 'PATCH');
@@ -221,11 +207,12 @@ class QueryService {
       const response = (await this.irminCore.fetchAPI(`/v1/query/${query}`, {
         method: 'POST',
         body,
-      })) as QueryAPIResponse;
+      })) as IrminAPIResponse<Query>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update query error');
-      if (isDevelopment) return fake(exampleQueries[0]) as QueryAPIResponse;
+      if (isDevelopment)
+        return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
       throw error;
     }
   }
@@ -263,11 +250,11 @@ class QueryService {
     queryId: string,
     page: number,
     exampleType?: 'table' | 'file' | 'folder'
-  ): Promise<QueryExecutionResultAPIResponse> {
+  ): Promise<IrminAPIResponse<QueryExecutionResult>> {
     if (isOfflineMode)
       return fake(
         exampleQueryExecutionResult(exampleType)
-      ) as QueryExecutionResultAPIResponse;
+      ) as IrminAPIResponse<QueryExecutionResult>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/query/${queryId}/results?page=${page}`,
@@ -275,13 +262,13 @@ class QueryService {
           method: 'GET',
         }
       );
-      return response as QueryExecutionResultAPIResponse;
+      return response as IrminAPIResponse<QueryExecutionResult>;
     } catch (error) {
       console.error((error as Error).message, 'Get query results error');
       if (isDevelopment)
         return fake(
           exampleQueryExecutionResult(exampleType)
-        ) as QueryExecutionResultAPIResponse;
+        ) as IrminAPIResponse<QueryExecutionResult>;
       throw error;
     }
   }

@@ -10,20 +10,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Branches API response type
- */
-interface BranchesAPIResponse extends IrminAPIResponse {
-  data: Branch[];
-}
-
-/**
- * Branches API response type
- */
-interface BranchAPIResponse extends IrminAPIResponse {
-  data: Branch;
-}
-
-/**
  * Branch API service
  *
  * Responsible for all repository branch related API calls
@@ -46,20 +32,22 @@ class BranchService {
    *
    * @param repository - slug of the repository to fetch branches for
    */
-  async fetchBranches(repository: string): Promise<BranchesAPIResponse> {
-    if (isOfflineMode) return fake(exampleBranches) as BranchesAPIResponse;
+  async fetchBranches(repository: string): Promise<IrminAPIResponse<Branch[]>> {
+    if (isOfflineMode)
+      return fake(exampleBranches) as IrminAPIResponse<Branch[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/repositories/${repository}/branches`,
         {
           method: 'GET',
         }
-      )) as BranchesAPIResponse;
+      )) as IrminAPIResponse<Branch[]>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Branches error');
-      if (isDevelopment) return fake(exampleBranches) as BranchesAPIResponse;
+      if (isDevelopment)
+        return fake(exampleBranches) as IrminAPIResponse<Branch[]>;
       throw error;
     }
   }
@@ -73,20 +61,22 @@ class BranchService {
   async fetchBranch(
     branch: string,
     repository: string
-  ): Promise<BranchAPIResponse> {
-    if (isOfflineMode) return fake(exampleBranches[0]) as BranchAPIResponse;
+  ): Promise<IrminAPIResponse<Branch>> {
+    if (isOfflineMode)
+      return fake(exampleBranches[0]) as IrminAPIResponse<Branch>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/repositories/${repository}/branches/${branch}`,
         {
           method: 'GET',
         }
-      )) as BranchAPIResponse;
+      )) as IrminAPIResponse<Branch>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Branch error');
-      if (isDevelopment) return fake(exampleBranches[0]) as BranchAPIResponse;
+      if (isDevelopment)
+        return fake(exampleBranches[0]) as IrminAPIResponse<Branch>;
       throw error;
     }
   }

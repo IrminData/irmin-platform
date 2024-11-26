@@ -10,13 +10,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Roles API response type
- */
-export interface RolesAPIResponse extends IrminAPIResponse {
-  data: IrminRole[];
-}
-
-/**
  * Irmin Role API service
  *
  * Responsible for Role related API calls.
@@ -33,16 +26,18 @@ class RoleService {
   /**
    * Fetch all available roles
    */
-  async fetchRoles(): Promise<RolesAPIResponse> {
-    if (isOfflineMode) return fake(exampleRoles) as RolesAPIResponse;
+  async fetchRoles(): Promise<IrminAPIResponse<IrminRole[]>> {
+    if (isOfflineMode)
+      return fake(exampleRoles) as IrminAPIResponse<IrminRole[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/roles`, {
         method: 'GET',
-      })) as RolesAPIResponse;
+      })) as IrminAPIResponse<IrminRole[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch roles error');
-      if (isDevelopment) return fake(exampleRoles) as RolesAPIResponse;
+      if (isDevelopment)
+        return fake(exampleRoles) as IrminAPIResponse<IrminRole[]>;
       throw error;
     }
   }

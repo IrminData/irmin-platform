@@ -10,19 +10,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Users API response type
- */
-interface UsersAPIResponse extends IrminAPIResponse {
-  data: User[];
-}
-/**
- * User API response type
- */
-export interface UserAPIResponse extends IrminAPIResponse {
-  data: User;
-}
-
-/**
  * Workspace user API service
  *
  * Responsible for Workspace User related API calls.
@@ -42,16 +29,18 @@ class UserService {
   /**
    * Fetch all users from the current workspace
    */
-  async fetchWorkspaceUsers(): Promise<UsersAPIResponse> {
-    if (isOfflineMode) return fake(exampleWorkspaceUsers) as UsersAPIResponse;
+  async fetchWorkspaceUsers(): Promise<IrminAPIResponse<User[]>> {
+    if (isOfflineMode)
+      return fake(exampleWorkspaceUsers) as IrminAPIResponse<User[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/users`, {
         method: 'GET',
-      })) as UsersAPIResponse;
+      })) as IrminAPIResponse<User[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch users error');
-      if (isDevelopment) return fake(exampleWorkspaceUsers) as UsersAPIResponse;
+      if (isDevelopment)
+        return fake(exampleWorkspaceUsers) as IrminAPIResponse<User[]>;
       throw error;
     }
   }
@@ -61,17 +50,18 @@ class UserService {
    *
    * @param user - User ID
    */
-  async fetchUser(user: string): Promise<UserAPIResponse> {
-    if (isOfflineMode) return fake(exampleWorkspaceUsers[1]) as UserAPIResponse;
+  async fetchUser(user: string): Promise<IrminAPIResponse<User>> {
+    if (isOfflineMode)
+      return fake(exampleWorkspaceUsers[1]) as IrminAPIResponse<User>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/users/${user}`, {
         method: 'GET',
-      })) as UserAPIResponse;
+      })) as IrminAPIResponse<User>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch user error');
       if (isDevelopment)
-        return fake(exampleWorkspaceUsers[1]) as UserAPIResponse;
+        return fake(exampleWorkspaceUsers[1]) as IrminAPIResponse<User>;
       throw error;
     }
   }

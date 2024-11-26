@@ -11,20 +11,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Repositories API response type (multiple)
- */
-interface RepositoriesAPIResponse extends IrminAPIResponse {
-  data: Repository[];
-}
-
-/**
- * Repository API response type (single)
- */
-interface RepositoryAPIResponse extends IrminAPIResponse {
-  data: Repository;
-}
-
-/**
  * Repository API service
  *
  * Responsible for all Repository related API calls.
@@ -46,19 +32,19 @@ class RepositoryService {
   /**
    * Fetch all available repositories
    */
-  async fetchRepositories(): Promise<RepositoriesAPIResponse> {
+  async fetchRepositories(): Promise<IrminAPIResponse<Repository[]>> {
     if (isOfflineMode)
-      return fake(exampleRepositories) as RepositoriesAPIResponse;
+      return fake(exampleRepositories) as IrminAPIResponse<Repository[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/repositories`, {
         method: 'GET',
-      })) as RepositoriesAPIResponse;
+      })) as IrminAPIResponse<Repository[]>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Repositories error');
       if (isDevelopment)
-        return fake(exampleRepositories) as RepositoriesAPIResponse;
+        return fake(exampleRepositories) as IrminAPIResponse<Repository[]>;
       throw error;
     }
   }
@@ -66,21 +52,21 @@ class RepositoryService {
   /**
    * Fetch a repository by its slug
    */
-  async fetchRepository(slug: string): Promise<RepositoryAPIResponse> {
+  async fetchRepository(slug: string): Promise<IrminAPIResponse<Repository>> {
     if (isOfflineMode)
-      return fake(exampleRepositories[0]) as RepositoryAPIResponse;
+      return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/repositories/${slug}`,
         {
           method: 'GET',
         }
-      )) as RepositoryAPIResponse;
+      )) as IrminAPIResponse<Repository>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Repository error');
       if (isDevelopment)
-        return fake(exampleRepositories[0]) as RepositoryAPIResponse;
+        return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
       throw error;
     }
   }
@@ -93,9 +79,9 @@ class RepositoryService {
    */
   async createRepository(
     repository: ItemUpdateProps
-  ): Promise<RepositoryAPIResponse> {
+  ): Promise<IrminAPIResponse<Repository>> {
     if (isOfflineMode)
-      return fake(exampleRepositories[0]) as RepositoryAPIResponse;
+      return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
     try {
       const formData = new FormData();
 
@@ -106,13 +92,13 @@ class RepositoryService {
       const response = (await this.irminCore.fetchAPI(`/v1/repositories`, {
         method: 'POST',
         body: formData,
-      })) as RepositoryAPIResponse;
+      })) as IrminAPIResponse<Repository>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create Repositories error');
       if (isDevelopment)
-        return fake(exampleRepositories[0]) as RepositoryAPIResponse;
+        return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
       throw error;
     }
   }

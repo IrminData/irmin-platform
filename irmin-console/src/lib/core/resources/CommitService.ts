@@ -10,20 +10,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Commits API response type
- */
-interface CommitsAPIResponse extends IrminAPIResponse {
-  data: Commit[];
-}
-
-/**
- * Commit API response type
- */
-interface CommitAPIResponse extends IrminAPIResponse {
-  data: Commit;
-}
-
-/**
  * Commit API service
  *
  * Responsible for all repository commit related API calls
@@ -50,8 +36,9 @@ class CommitService {
   async fetchCommits(
     repository: string,
     ref?: string
-  ): Promise<CommitsAPIResponse> {
-    if (isOfflineMode) return fake(exampleCommits) as CommitsAPIResponse;
+  ): Promise<IrminAPIResponse<Commit[]>> {
+    if (isOfflineMode)
+      return fake(exampleCommits) as IrminAPIResponse<Commit[]>;
     try {
       const urlParams = new URLSearchParams();
       if (ref) urlParams.append('ref', ref);
@@ -60,12 +47,13 @@ class CommitService {
         {
           method: 'GET',
         }
-      )) as CommitsAPIResponse;
+      )) as IrminAPIResponse<Commit[]>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Commits error');
-      if (isDevelopment) return fake(exampleCommits) as CommitsAPIResponse;
+      if (isDevelopment)
+        return fake(exampleCommits) as IrminAPIResponse<Commit[]>;
       throw error;
     }
   }
@@ -79,20 +67,22 @@ class CommitService {
   async fetchCommit(
     repository: string,
     hash: string
-  ): Promise<CommitAPIResponse> {
-    if (isOfflineMode) return fake(exampleCommits[0]) as CommitAPIResponse;
+  ): Promise<IrminAPIResponse<Commit>> {
+    if (isOfflineMode)
+      return fake(exampleCommits[0]) as IrminAPIResponse<Commit>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/repositories/${repository}/commits/${hash}`,
         {
           method: 'GET',
         }
-      )) as CommitAPIResponse;
+      )) as IrminAPIResponse<Commit>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Commit error');
-      if (isDevelopment) return fake(exampleCommits[0]) as CommitAPIResponse;
+      if (isDevelopment)
+        return fake(exampleCommits[0]) as IrminAPIResponse<Commit>;
       throw error;
     }
   }
@@ -176,8 +166,9 @@ class CommitService {
     repository: string,
     branch: string,
     collection: string
-  ): Promise<CommitAPIResponse> {
-    if (isOfflineMode) return fake(exampleCommits[0]) as CommitAPIResponse;
+  ): Promise<IrminAPIResponse<Commit>> {
+    if (isOfflineMode)
+      return fake(exampleCommits[0]) as IrminAPIResponse<Commit>;
     try {
       const urlParams = new URLSearchParams();
       urlParams.append('branch', branch);
@@ -186,11 +177,12 @@ class CommitService {
         {
           method: 'GET',
         }
-      )) as CommitAPIResponse;
+      )) as IrminAPIResponse<Commit>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Last Modification error');
-      if (isDevelopment) return fake(exampleCommits[0]) as CommitAPIResponse;
+      if (isDevelopment)
+        return fake(exampleCommits[0]) as IrminAPIResponse<Commit>;
       throw error;
     }
   }

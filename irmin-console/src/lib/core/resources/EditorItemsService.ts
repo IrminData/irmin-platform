@@ -19,27 +19,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * EditorItems API response type
- */
-interface EditorItemsAPIResponse extends IrminAPIResponse {
-  data: EditorItems;
-}
-
-/**
- * EditorFolder API response type
- */
-interface EditorFolderAPIResponse extends IrminAPIResponse {
-  data: EditorItemsFolder;
-}
-
-/**
- * EditorFile API response type
- */
-interface EditorFileAPIResponse extends IrminAPIResponse {
-  data: EditorItemsFile;
-}
-
-/**
  * EditorItems API service
  *
  * Responsible for all editorItems related API calls.
@@ -62,18 +41,18 @@ class EditorItemsService {
   /**
    * Fetch the editorItems for the current workspace
    */
-  async fetchEditorItems(): Promise<EditorItemsAPIResponse> {
+  async fetchEditorItems(): Promise<IrminAPIResponse<EditorItems>> {
     if (isOfflineMode)
-      return fake(exampleEditorItems) as EditorItemsAPIResponse;
+      return fake(exampleEditorItems) as IrminAPIResponse<EditorItems>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/editor-items`, {
         method: 'GET',
-      })) as EditorItemsAPIResponse;
+      })) as IrminAPIResponse<EditorItems>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch editorItems error');
       if (isDevelopment)
-        return fake(exampleEditorItems) as EditorItemsAPIResponse;
+        return fake(exampleEditorItems) as IrminAPIResponse<EditorItems>;
       throw error;
     }
   }
@@ -85,8 +64,9 @@ class EditorItemsService {
    */
   async createFile(
     fileNavigatorItem: FileNavigatorItem
-  ): Promise<EditorFileAPIResponse> {
-    if (isOfflineMode) return fake(exampleFiles[0]) as EditorFileAPIResponse;
+  ): Promise<IrminAPIResponse<EditorItemsFile>> {
+    if (isOfflineMode)
+      return fake(exampleFiles[0]) as IrminAPIResponse<EditorItemsFile>;
     try {
       // Make sure the item is a file
       if (fileNavigatorItem.type !== 'file' || !fileNavigatorItem.current) {
@@ -103,11 +83,12 @@ class EditorItemsService {
           method: 'POST',
           body,
         }
-      )) as EditorFileAPIResponse;
+      )) as IrminAPIResponse<EditorItemsFile>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create file error');
-      if (isDevelopment) return fake(exampleFiles[0]) as EditorFileAPIResponse;
+      if (isDevelopment)
+        return fake(exampleFiles[0]) as IrminAPIResponse<EditorItemsFile>;
       throw error;
     }
   }
@@ -119,8 +100,9 @@ class EditorItemsService {
    */
   async updateFile(
     fileNavigatorItem: FileNavigatorItem
-  ): Promise<EditorFileAPIResponse> {
-    if (isOfflineMode) return fake(exampleFiles[0]) as EditorFileAPIResponse;
+  ): Promise<IrminAPIResponse<EditorItemsFile>> {
+    if (isOfflineMode)
+      return fake(exampleFiles[0]) as IrminAPIResponse<EditorItemsFile>;
     try {
       // Make sure the item is a file
       if (
@@ -143,11 +125,12 @@ class EditorItemsService {
           method: 'POST',
           body,
         }
-      )) as EditorFileAPIResponse;
+      )) as IrminAPIResponse<EditorItemsFile>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update file error');
-      if (isDevelopment) return fake(exampleFiles[0]) as EditorFileAPIResponse;
+      if (isDevelopment)
+        return fake(exampleFiles[0]) as IrminAPIResponse<EditorItemsFile>;
       throw error;
     }
   }
@@ -190,9 +173,9 @@ class EditorItemsService {
    */
   async createFolder(
     fileNavigatorItem: FileNavigatorItem
-  ): Promise<EditorFolderAPIResponse> {
+  ): Promise<IrminAPIResponse<EditorItemsFolder>> {
     if (isOfflineMode)
-      return fake(exampleFolders[0]) as EditorFolderAPIResponse;
+      return fake(exampleFolders[0]) as IrminAPIResponse<EditorItemsFolder>;
     try {
       // Make sure the item is a folder
       if (fileNavigatorItem.type !== 'folder' || !fileNavigatorItem.current) {
@@ -208,12 +191,12 @@ class EditorItemsService {
           method: 'POST',
           body,
         }
-      )) as EditorFolderAPIResponse;
+      )) as IrminAPIResponse<EditorItemsFolder>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create folder error');
       if (isDevelopment)
-        return fake(exampleFolders[0]) as EditorFolderAPIResponse;
+        return fake(exampleFolders[0]) as IrminAPIResponse<EditorItemsFolder>;
       throw error;
     }
   }
@@ -225,9 +208,9 @@ class EditorItemsService {
    */
   async updateFolder(
     fileNavigatorItem: FileNavigatorItem
-  ): Promise<EditorFolderAPIResponse> {
+  ): Promise<IrminAPIResponse<EditorItemsFolder>> {
     if (isOfflineMode)
-      return fake(exampleFolders[0]) as EditorFolderAPIResponse;
+      return fake(exampleFolders[0]) as IrminAPIResponse<EditorItemsFolder>;
     try {
       // Make sure the item is a folder
       if (
@@ -249,12 +232,12 @@ class EditorItemsService {
           method: 'POST',
           body,
         }
-      )) as EditorFolderAPIResponse;
+      )) as IrminAPIResponse<EditorItemsFolder>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update folder error');
       if (isDevelopment)
-        return fake(exampleFolders[0]) as EditorFolderAPIResponse;
+        return fake(exampleFolders[0]) as IrminAPIResponse<EditorItemsFolder>;
       throw error;
     }
   }

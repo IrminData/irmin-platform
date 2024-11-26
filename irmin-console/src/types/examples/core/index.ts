@@ -64,6 +64,7 @@ export const exampleAPIResponse: IrminAPIResponse = {
     'This is because the API is not available',
     'Or you are working offline',
   ],
+  data: undefined,
 };
 
 /**

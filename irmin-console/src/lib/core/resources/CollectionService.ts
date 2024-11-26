@@ -16,20 +16,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Collections API response type
- */
-interface CollectionsAPIResponse extends IrminAPIResponse {
-  data: Collection[];
-}
-
-/**
- * Collection API response type
- */
-interface CollectionAPIResponse extends IrminAPIResponse {
-  data: Collection;
-}
-
-/**
  * Collection API service
  *
  * Responsible for all repository collection related API calls
@@ -59,13 +45,13 @@ class CollectionService {
   async fetchCollections(
     repository: string,
     ref?: string
-  ): Promise<CollectionsAPIResponse> {
+  ): Promise<IrminAPIResponse<Collection[]>> {
     const examples = repository
       ? exampleCollections.filter(
           (collection) => collection.repository === repository
         )
       : exampleCollections;
-    if (isOfflineMode) return fake(examples) as CollectionsAPIResponse;
+    if (isOfflineMode) return fake(examples) as IrminAPIResponse<Collection[]>;
     try {
       const urlParams = new URLSearchParams();
       if (ref) urlParams.append('ref', ref);
@@ -74,12 +60,13 @@ class CollectionService {
         {
           method: 'GET',
         }
-      )) as CollectionsAPIResponse;
+      )) as IrminAPIResponse<Collection[]>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Collections error');
-      if (isDevelopment) return fake(examples) as CollectionsAPIResponse;
+      if (isDevelopment)
+        return fake(examples) as IrminAPIResponse<Collection[]>;
       throw error;
     }
   }
@@ -95,21 +82,21 @@ class CollectionService {
     collection: string,
     repository: string,
     ref: string
-  ): Promise<CollectionAPIResponse> {
+  ): Promise<IrminAPIResponse<Collection>> {
     if (isOfflineMode)
-      return fake(exampleCollections[0]) as CollectionAPIResponse;
+      return fake(exampleCollections[0]) as IrminAPIResponse<Collection>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/repositories/${repository}/collections/${collection}?ref=${ref}`,
         {
           method: 'GET',
         }
-      )) as CollectionAPIResponse;
+      )) as IrminAPIResponse<Collection>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Collection error');
       if (isDevelopment)
-        return fake(exampleCollections[0]) as CollectionAPIResponse;
+        return fake(exampleCollections[0]) as IrminAPIResponse<Collection>;
       throw error;
     }
   }

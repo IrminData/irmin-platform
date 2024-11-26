@@ -25,51 +25,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Workflow Runs API response type, for fetching a list of workflow runs
- */
-interface WorkflowRunsAPIResponse extends IrminAPIResponse {
-  data: WorkflowRun[];
-}
-/**
- * Workflow Run API response type, for fetching a single workflow run
- */
-interface WorkflowRunAPIResponse extends IrminAPIResponse {
-  data: WorkflowRun;
-}
-/**
- * Import Workflows API response type
- */
-interface ImportsAPIResponse extends IrminAPIResponse {
-  data: ImportWorkflow[];
-}
-/**
- * Export Workflows API response type
- */
-interface ExportsAPIResponse extends IrminAPIResponse {
-  data: ExportWorkflow[];
-}
-/**
- * Action Workflows API response type
- */
-interface ActionsAPIResponse extends IrminAPIResponse {
-  data: ActionWorkflow[];
-}
-
-/**
- * Workflows API response type
- */
-interface WorkflowsAPIResponse extends IrminAPIResponse {
-  data: Workflow[];
-}
-
-/**
- * Workflow API response type
- */
-interface WorkflowAPIResponse extends IrminAPIResponse {
-  data: Workflow;
-}
-
-/**
  * Workflow API service
  *
  * Responsible for all workflow related API calls.
@@ -101,16 +56,18 @@ class WorkflowService {
   /**
    * Fetch all workflows
    */
-  async fetchWorkflows(): Promise<WorkflowsAPIResponse> {
-    if (isOfflineMode) return fake(exampleWorkflows) as WorkflowsAPIResponse;
+  async fetchWorkflows(): Promise<IrminAPIResponse<Workflow[]>> {
+    if (isOfflineMode)
+      return fake(exampleWorkflows) as IrminAPIResponse<Workflow[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/workflows`, {
         method: 'GET',
-      })) as WorkflowsAPIResponse;
+      })) as IrminAPIResponse<Workflow[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch workflows error');
-      if (isDevelopment) return fake(exampleImports) as WorkflowsAPIResponse;
+      if (isDevelopment)
+        return fake(exampleImports) as IrminAPIResponse<Workflow[]>;
       throw error;
     }
   }
@@ -121,19 +78,21 @@ class WorkflowService {
    * @param workflowID - The ID of the workflow to fetch
    * @returns The workflow object
    */
-  async fetchWorkflow(workflowID: string): Promise<WorkflowAPIResponse> {
-    if (isOfflineMode) return fake(exampleWorkflows[0]) as WorkflowAPIResponse;
+  async fetchWorkflow(workflowID: string): Promise<IrminAPIResponse<Workflow>> {
+    if (isOfflineMode)
+      return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workflows/${workflowID}`,
         {
           method: 'GET',
         }
-      )) as WorkflowAPIResponse;
+      )) as IrminAPIResponse<Workflow>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch workflows error');
-      if (isDevelopment) return fake(exampleImports[0]) as WorkflowAPIResponse;
+      if (isDevelopment)
+        return fake(exampleImports[0]) as IrminAPIResponse<Workflow>;
       throw error;
     }
   }
@@ -285,16 +244,16 @@ class WorkflowService {
    */
   async fetchRunsByWorkflow(
     workflow: string
-  ): Promise<WorkflowRunsAPIResponse> {
+  ): Promise<IrminAPIResponse<WorkflowRun[]>> {
     if (isOfflineMode)
-      return fake(exampleWorkflowRuns) as WorkflowRunsAPIResponse;
+      return fake(exampleWorkflowRuns) as IrminAPIResponse<WorkflowRun[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workflows/${workflow}/runs`,
         {
           method: 'GET',
         }
-      )) as WorkflowRunsAPIResponse;
+      )) as IrminAPIResponse<WorkflowRun[]>;
       return response;
     } catch (error) {
       console.error(
@@ -302,7 +261,7 @@ class WorkflowService {
         'Fetch workflow runs by workflow error'
       );
       if (isDevelopment)
-        return fake(exampleWorkflowRuns) as WorkflowRunsAPIResponse;
+        return fake(exampleWorkflowRuns) as IrminAPIResponse<WorkflowRun[]>;
       throw error;
     }
   }
@@ -316,22 +275,23 @@ class WorkflowService {
   async fetchWorkflowRunByID(
     workflow: string,
     workflowRun: string
-  ): Promise<WorkflowRunAPIResponse> {
+  ): Promise<IrminAPIResponse<WorkflowRun>> {
     const exampleRun =
       exampleWorkflowRuns.find((run) => run.id === workflowRun) ??
       exampleWorkflowRuns[0];
-    if (isOfflineMode) return fake(exampleRun) as WorkflowRunAPIResponse;
+    if (isOfflineMode) return fake(exampleRun) as IrminAPIResponse<WorkflowRun>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workflows/${workflow}/runs/${workflowRun}`,
         {
           method: 'GET',
         }
-      )) as WorkflowRunAPIResponse;
+      )) as IrminAPIResponse<WorkflowRun>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch workflow run by ID error');
-      if (isDevelopment) return fake(exampleRun) as WorkflowRunAPIResponse;
+      if (isDevelopment)
+        return fake(exampleRun) as IrminAPIResponse<WorkflowRun>;
       throw error;
     }
   }
@@ -341,21 +301,23 @@ class WorkflowService {
    *
    * @param workflow - The ID of the workflow to trigger a run for
    */
-  async triggerWorkflowRun(workflow: string): Promise<WorkflowRunAPIResponse> {
+  async triggerWorkflowRun(
+    workflow: string
+  ): Promise<IrminAPIResponse<WorkflowRun>> {
     if (isOfflineMode)
-      return fake(exampleWorkflowRuns[0]) as WorkflowRunAPIResponse;
+      return fake(exampleWorkflowRuns[0]) as IrminAPIResponse<WorkflowRun>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workflows/${workflow}/run`,
         {
           method: 'GET',
         }
-      )) as WorkflowRunAPIResponse;
+      )) as IrminAPIResponse<WorkflowRun>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Trigger workflow run error');
       if (isDevelopment)
-        return fake(exampleWorkflowRuns[0]) as WorkflowRunAPIResponse;
+        return fake(exampleWorkflowRuns[0]) as IrminAPIResponse<WorkflowRun>;
       throw error;
     }
   }
@@ -363,16 +325,18 @@ class WorkflowService {
   /**
    * Fetch all Import Workflows
    */
-  async fetchImportWorkflows(): Promise<ImportsAPIResponse> {
-    if (isOfflineMode) return fake(exampleImports) as ImportsAPIResponse;
+  async fetchImportWorkflows(): Promise<IrminAPIResponse<ImportWorkflow[]>> {
+    if (isOfflineMode)
+      return fake(exampleImports) as IrminAPIResponse<ImportWorkflow[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/workflows/imports`, {
         method: 'GET',
-      })) as ImportsAPIResponse;
+      })) as IrminAPIResponse<ImportWorkflow[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch import workflows error');
-      if (isDevelopment) return fake(exampleImports) as ImportsAPIResponse;
+      if (isDevelopment)
+        return fake(exampleImports) as IrminAPIResponse<ImportWorkflow[]>;
       throw error;
     }
   }
@@ -380,17 +344,19 @@ class WorkflowService {
   /**
    * Fetch all Export Workflows
    */
-  async fetchExportWorkflows(): Promise<ExportsAPIResponse> {
-    if (isOfflineMode) return fake(exampleExports) as ExportsAPIResponse;
+  async fetchExportWorkflows(): Promise<IrminAPIResponse<ExportWorkflow[]>> {
+    if (isOfflineMode)
+      return fake(exampleExports) as IrminAPIResponse<ExportWorkflow[]>;
 
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/workflows/exports`, {
         method: 'GET',
-      })) as ExportsAPIResponse;
+      })) as IrminAPIResponse<ExportWorkflow[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch export workflows error');
-      if (isDevelopment) return fake(exampleExports) as ExportsAPIResponse;
+      if (isDevelopment)
+        return fake(exampleExports) as IrminAPIResponse<ExportWorkflow[]>;
       throw error;
     }
   }
@@ -398,16 +364,18 @@ class WorkflowService {
   /**
    * Fetch all Action Workflows
    */
-  async fetchActionWorkflows(): Promise<ActionsAPIResponse> {
-    if (isOfflineMode) return fake(exampleActions) as ActionsAPIResponse;
+  async fetchActionWorkflows(): Promise<IrminAPIResponse<ActionWorkflow[]>> {
+    if (isOfflineMode)
+      return fake(exampleActions) as IrminAPIResponse<ActionWorkflow[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/workflows/actions`, {
         method: 'GET',
-      })) as ActionsAPIResponse;
+      })) as IrminAPIResponse<ActionWorkflow[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch actions error');
-      if (isDevelopment) return fake(exampleActions) as ActionsAPIResponse;
+      if (isDevelopment)
+        return fake(exampleActions) as IrminAPIResponse<ActionWorkflow[]>;
       throw error;
     }
   }
@@ -443,7 +411,7 @@ class WorkflowService {
     description: string;
     documentation: string;
     schedule?: WorkflowSchedule;
-  }): Promise<WorkflowAPIResponse> {
+  }): Promise<IrminAPIResponse<Workflow>> {
     if (isOfflineMode)
       return fake({
         ...exampleImports[0],
@@ -452,7 +420,7 @@ class WorkflowService {
         description,
         documentation,
         schedule,
-      }) as WorkflowAPIResponse;
+      }) as IrminAPIResponse<Workflow>;
     try {
       // Create a new FormData object
       const formData = new FormData();
@@ -479,7 +447,7 @@ class WorkflowService {
       const res = (await this.irminCore.fetchAPI(`/v1/workflows/imports`, {
         method: 'POST',
         body: formData,
-      })) as WorkflowAPIResponse;
+      })) as IrminAPIResponse<Workflow>;
       return res;
     } catch (error) {
       console.error(
@@ -494,7 +462,7 @@ class WorkflowService {
           description,
           documentation,
           schedule,
-        }) as WorkflowAPIResponse;
+        }) as IrminAPIResponse<Workflow>;
       throw error;
     }
   }
@@ -533,7 +501,7 @@ class WorkflowService {
     description: string;
     documentation: string;
     schedule?: WorkflowSchedule;
-  }): Promise<WorkflowAPIResponse> {
+  }): Promise<IrminAPIResponse<Workflow>> {
     if (isOfflineMode)
       return fake({
         ...exampleExports[0],
@@ -542,7 +510,7 @@ class WorkflowService {
         description,
         documentation,
         schedule,
-      }) as WorkflowAPIResponse;
+      }) as IrminAPIResponse<Workflow>;
     try {
       // Create a new FormData object
       const formData = new FormData();
@@ -570,7 +538,7 @@ class WorkflowService {
       const res = (await this.irminCore.fetchAPI(`/v1/workflows/exports`, {
         method: 'POST',
         body: formData,
-      })) as WorkflowAPIResponse;
+      })) as IrminAPIResponse<Workflow>;
       return res;
     } catch (error) {
       console.error(
@@ -585,7 +553,7 @@ class WorkflowService {
           description,
           documentation,
           schedule,
-        }) as WorkflowAPIResponse;
+        }) as IrminAPIResponse<Workflow>;
       throw error;
     }
   }
@@ -621,7 +589,7 @@ class WorkflowService {
     description: string;
     documentation: string;
     schedule?: WorkflowSchedule;
-  }): Promise<WorkflowAPIResponse> {
+  }): Promise<IrminAPIResponse<Workflow>> {
     if (isOfflineMode)
       return fake({
         ...exampleActions[0],
@@ -630,7 +598,7 @@ class WorkflowService {
         description,
         documentation,
         schedule,
-      }) as WorkflowAPIResponse;
+      }) as IrminAPIResponse<Workflow>;
     try {
       // Create a new FormData object
       const formData = new FormData();
@@ -657,7 +625,7 @@ class WorkflowService {
       const res = (await this.irminCore.fetchAPI(`/v1/workflows/actions`, {
         method: 'POST',
         body: formData,
-      })) as WorkflowAPIResponse;
+      })) as IrminAPIResponse<Workflow>;
       return res;
     } catch (error) {
       console.error(
@@ -672,7 +640,7 @@ class WorkflowService {
           description,
           documentation,
           schedule,
-        }) as WorkflowAPIResponse;
+        }) as IrminAPIResponse<Workflow>;
       throw error;
     }
   }

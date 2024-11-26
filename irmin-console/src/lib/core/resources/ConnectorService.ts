@@ -10,20 +10,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Connectors API response type
- */
-interface ConnectorsAPIResponse extends IrminAPIResponse {
-  data: Connector[];
-}
-
-/**
- * Connector API response type.
- */
-interface ConnectorAPIResponse extends IrminAPIResponse {
-  data: Connector;
-}
-
-/**
  * Connector API service
  *
  * Responsible for all connector related API calls.
@@ -42,17 +28,18 @@ class ConnectorService {
    *
    * @returns avalable connectors
    */
-  async fetchAllConnectors(): Promise<ConnectorsAPIResponse> {
-    if (isOfflineMode) return fake(exampleConnectors) as ConnectorsAPIResponse;
+  async fetchAllConnectors(): Promise<IrminAPIResponse<Connector[]>> {
+    if (isOfflineMode)
+      return fake(exampleConnectors) as IrminAPIResponse<Connector[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/connectors`, {
         method: 'GET',
-      })) as ConnectorsAPIResponse;
+      })) as IrminAPIResponse<Connector[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch connectors error');
       if (isDevelopment)
-        return fake(exampleConnectors) as ConnectorsAPIResponse;
+        return fake(exampleConnectors) as IrminAPIResponse<Connector[]>;
       throw error;
     }
   }
@@ -63,18 +50,18 @@ class ConnectorService {
    * @param id - connector id
    * @returns connector
    */
-  async fetchConnector(id: string): Promise<ConnectorAPIResponse> {
+  async fetchConnector(id: string): Promise<IrminAPIResponse<Connector>> {
     if (isOfflineMode)
-      return fake(exampleConnectors[0]) as ConnectorAPIResponse;
+      return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/connectors/${id}`, {
         method: 'GET',
-      })) as ConnectorAPIResponse;
+      })) as IrminAPIResponse<Connector>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch connector error');
       if (isDevelopment)
-        return fake(exampleConnectors[0]) as ConnectorAPIResponse;
+        return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
       throw error;
     }
   }

@@ -11,20 +11,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Workspaces API res type
- */
-interface WorkspacesAPIResponse extends IrminAPIResponse {
-  data: Workspace[];
-}
-
-/**
- * Workspace API res type
- */
-interface WorkspaceAPIResponse extends IrminAPIResponse {
-  data: Workspace;
-}
-
-/**
  * Workspace API service
  *
  * Responsible for all workspace related API calls.
@@ -49,17 +35,18 @@ class WorkspaceService {
   /**
    * Fetch all workspaces
    */
-  async fetchWorkspaces(): Promise<WorkspacesAPIResponse> {
-    if (isOfflineMode) return fake(exampleWorkspaces) as WorkspacesAPIResponse;
+  async fetchWorkspaces(): Promise<IrminAPIResponse<Workspace[]>> {
+    if (isOfflineMode)
+      return fake(exampleWorkspaces) as IrminAPIResponse<Workspace[]>;
     try {
       const res = (await this.irminCore.fetchAPI(`/v1/workspaces`, {
         method: 'GET',
-      })) as WorkspacesAPIResponse;
+      })) as IrminAPIResponse<Workspace[]>;
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Fetch workspaces error');
       if (isDevelopment)
-        return fake(exampleWorkspaces) as WorkspacesAPIResponse;
+        return fake(exampleWorkspaces) as IrminAPIResponse<Workspace[]>;
       throw error;
     }
   }
@@ -69,19 +56,21 @@ class WorkspaceService {
    *
    * @param workspaceSlug - The slug of the workspace to fetch
    */
-  async fetchWorkspace(workspaceSlug: string): Promise<WorkspaceAPIResponse> {
+  async fetchWorkspace(
+    workspaceSlug: string
+  ): Promise<IrminAPIResponse<Workspace>> {
     if (isOfflineMode)
       return fake(
         exampleWorkspaces.find((v) => v.slug === workspaceSlug) ??
           exampleWorkspaces[0]
-      ) as WorkspaceAPIResponse;
+      ) as IrminAPIResponse<Workspace>;
     try {
       const res = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspaceSlug}`,
         {
           method: 'GET',
         }
-      )) as WorkspaceAPIResponse;
+      )) as IrminAPIResponse<Workspace>;
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Fetch workspace error');
@@ -89,7 +78,7 @@ class WorkspaceService {
         return fake(
           exampleWorkspaces.find((v) => v.slug === workspaceSlug) ??
             exampleWorkspaces[0]
-        ) as WorkspaceAPIResponse;
+        ) as IrminAPIResponse<Workspace>;
       throw error;
     }
   }
@@ -103,9 +92,9 @@ class WorkspaceService {
   async transferWorkspaceOwnership(
     workspace: string,
     user: string
-  ): Promise<WorkspaceAPIResponse> {
+  ): Promise<IrminAPIResponse<Workspace>> {
     if (isOfflineMode)
-      return fake(exampleWorkspaces[0]) as WorkspaceAPIResponse;
+      return fake(exampleWorkspaces[0]) as IrminAPIResponse<Workspace>;
     try {
       const formData = new FormData();
       formData.append('user', user);
@@ -115,7 +104,7 @@ class WorkspaceService {
           method: 'POST',
           body: formData,
         }
-      )) as WorkspaceAPIResponse;
+      )) as IrminAPIResponse<Workspace>;
       return res;
     } catch (error) {
       console.error(
@@ -123,7 +112,7 @@ class WorkspaceService {
         'Transfer workspace ownership error'
       );
       if (isDevelopment)
-        return fake(exampleWorkspaces[0]) as WorkspaceAPIResponse;
+        return fake(exampleWorkspaces[0]) as IrminAPIResponse<Workspace>;
       throw error;
     }
   }
@@ -137,9 +126,9 @@ class WorkspaceService {
   async createWorkspace(
     name: string,
     description?: string
-  ): Promise<WorkspaceAPIResponse> {
+  ): Promise<IrminAPIResponse<Workspace>> {
     if (isOfflineMode)
-      return fake(exampleWorkspaces[0]) as WorkspaceAPIResponse;
+      return fake(exampleWorkspaces[0]) as IrminAPIResponse<Workspace>;
     try {
       const formData = new FormData();
       formData.append('name', name);
@@ -147,12 +136,12 @@ class WorkspaceService {
       const res = (await this.irminCore.fetchAPI(`/v1/workspaces`, {
         method: 'POST',
         body: formData,
-      })) as WorkspaceAPIResponse;
+      })) as IrminAPIResponse<Workspace>;
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Create workspace error');
       if (isDevelopment)
-        return fake(exampleWorkspaces[0]) as WorkspaceAPIResponse;
+        return fake(exampleWorkspaces[0]) as IrminAPIResponse<Workspace>;
       throw error;
     }
   }
@@ -166,9 +155,9 @@ class WorkspaceService {
   async updateWorkspace(
     workspace: string,
     data: ItemUpdateProps
-  ): Promise<WorkspaceAPIResponse> {
+  ): Promise<IrminAPIResponse<Workspace>> {
     if (isOfflineMode)
-      return fake(exampleWorkspaces[0]) as WorkspaceAPIResponse;
+      return fake(exampleWorkspaces[0]) as IrminAPIResponse<Workspace>;
     try {
       const formData = new FormData();
       formData.append('_method', 'PATCH');
@@ -180,12 +169,12 @@ class WorkspaceService {
           method: 'POST',
           body: formData,
         }
-      )) as WorkspaceAPIResponse;
+      )) as IrminAPIResponse<Workspace>;
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Update workspace error');
       if (isDevelopment)
-        return fake(exampleWorkspaces[0]) as WorkspaceAPIResponse;
+        return fake(exampleWorkspaces[0]) as IrminAPIResponse<Workspace>;
       throw error;
     }
   }
@@ -220,12 +209,14 @@ class WorkspaceService {
    *
    * @param workspaceSlug - The slug of the workspace to switch to
    */
-  async switchWorkspace(workspaceSlug: string): Promise<WorkspaceAPIResponse> {
+  async switchWorkspace(
+    workspaceSlug: string
+  ): Promise<IrminAPIResponse<Workspace>> {
     if (isOfflineMode)
       return fake(
         exampleWorkspaces.find((v) => v.slug === workspaceSlug) ??
           exampleWorkspaces[0]
-      ) as WorkspaceAPIResponse;
+      ) as IrminAPIResponse<Workspace>;
     try {
       const formData = new FormData();
       formData.append('workspace', workspaceSlug);
@@ -235,7 +226,7 @@ class WorkspaceService {
           method: 'POST',
           body: formData,
         }
-      )) as WorkspaceAPIResponse;
+      )) as IrminAPIResponse<Workspace>;
       return newWorkspace;
     } catch (error) {
       console.error((error as Error).message, 'Switch workspace error');
@@ -243,7 +234,7 @@ class WorkspaceService {
         return fake(
           exampleWorkspaces.find((v) => v.slug === workspaceSlug) ??
             exampleWorkspaces[0]
-        ) as WorkspaceAPIResponse;
+        ) as IrminAPIResponse<Workspace>;
       throw error;
     }
   }

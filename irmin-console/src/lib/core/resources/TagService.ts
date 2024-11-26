@@ -10,20 +10,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Tags API response type
- */
-interface TagsAPIResponse extends IrminAPIResponse {
-  data: Tag[];
-}
-
-/**
- * Tag API response type
- */
-interface TagAPIResponse extends IrminAPIResponse {
-  data: Tag;
-}
-
-/**
  * Tag API service
  *
  * Responsible for all repository tag related API calls
@@ -46,20 +32,20 @@ class TagService {
    *
    * @param repository - slug of the repository to fetch tags for
    */
-  async fetchTags(repository: string): Promise<TagsAPIResponse> {
-    if (isOfflineMode) return fake(exampleTags) as TagsAPIResponse;
+  async fetchTags(repository: string): Promise<IrminAPIResponse<Tag[]>> {
+    if (isOfflineMode) return fake(exampleTags) as IrminAPIResponse<Tag[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/repositories/${repository}/tags`,
         {
           method: 'GET',
         }
-      )) as TagsAPIResponse;
+      )) as IrminAPIResponse<Tag[]>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Tags error');
-      if (isDevelopment) return fake(exampleTags) as TagsAPIResponse;
+      if (isDevelopment) return fake(exampleTags) as IrminAPIResponse<Tag[]>;
       throw error;
     }
   }
@@ -70,20 +56,23 @@ class TagService {
    * @param tag - The ID of the tag to fetch
    * @param repository - The repository slug to fetch the tag from
    */
-  async fetchTag(tag: string, repository: string): Promise<TagAPIResponse> {
-    if (isOfflineMode) return fake(exampleTags[0]) as TagAPIResponse;
+  async fetchTag(
+    tag: string,
+    repository: string
+  ): Promise<IrminAPIResponse<Tag>> {
+    if (isOfflineMode) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/repositories/${repository}/tags/${tag}`,
         {
           method: 'GET',
         }
-      )) as TagAPIResponse;
+      )) as IrminAPIResponse<Tag>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Tag error');
-      if (isDevelopment) return fake(exampleTags[0]) as TagAPIResponse;
+      if (isDevelopment) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
       throw error;
     }
   }
@@ -101,8 +90,8 @@ class TagService {
     repository: string,
     name?: string,
     ref?: string
-  ): Promise<TagAPIResponse> {
-    if (isOfflineMode) return fake(exampleTags[0]) as TagAPIResponse;
+  ): Promise<IrminAPIResponse<Tag>> {
+    if (isOfflineMode) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
     try {
       const formData = new FormData();
       formData.append('_method', 'PATCH');
@@ -114,12 +103,12 @@ class TagService {
           method: 'POST',
           body: formData,
         }
-      )) as TagAPIResponse;
+      )) as IrminAPIResponse<Tag>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update tag error');
-      if (isDevelopment) return fake(exampleTags[0]) as TagAPIResponse;
+      if (isDevelopment) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
       throw error;
     }
   }
@@ -161,8 +150,8 @@ class TagService {
     name: string,
     ref: string,
     repository: string
-  ): Promise<TagAPIResponse> {
-    if (isOfflineMode) return fake(exampleTags[0]) as TagAPIResponse;
+  ): Promise<IrminAPIResponse<Tag>> {
+    if (isOfflineMode) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
     try {
       const formData = new FormData();
 
@@ -175,11 +164,11 @@ class TagService {
           method: 'POST',
           body: formData,
         }
-      )) as TagAPIResponse;
+      )) as IrminAPIResponse<Tag>;
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Failed to create tag');
-      if (isDevelopment) return fake(exampleTags[0]) as TagAPIResponse;
+      if (isDevelopment) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
       throw error;
     }
   }

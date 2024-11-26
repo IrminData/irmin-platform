@@ -39,12 +39,12 @@ export type IrminAPIResponseMetadata = {
  * @typeParam errors - Errors from the API response
  * @typeParam data - Data from the API response
  */
-export interface IrminAPIResponse {
+export type IrminAPIResponse<T = unknown> = {
   metadata?: IrminAPIResponseMetadata & IrminAPIPaginationMetadata;
   message?: string;
   errors?: string[];
-  data?: unknown;
-}
+  data: T;
+};
 
 /**
  * Type for the unstructured response from Core Irmin API

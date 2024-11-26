@@ -10,13 +10,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Comparison API response interface
- */
-export interface ComparisonAPIResponse extends IrminAPIResponse {
-  data: Diff;
-}
-
-/**
  * Diff Service: Merge and Compare API
  *
  * Responsible for merging and comparing repository branches and refs.
@@ -44,7 +37,7 @@ class DiffService {
     repository: string,
     baseRef: string,
     compareRef: string
-  ): Promise<ComparisonAPIResponse> {
+  ): Promise<IrminAPIResponse<Diff>> {
     if (isOfflineMode)
       return fake(
         diff({
@@ -52,7 +45,7 @@ class DiffService {
           base: baseRef,
           compare: compareRef,
         })
-      ) as ComparisonAPIResponse;
+      ) as IrminAPIResponse<Diff>;
     try {
       // Construct the query parameters from the props
       const urlParams = new URLSearchParams();
@@ -63,7 +56,7 @@ class DiffService {
         {
           method: 'GET',
         }
-      )) as ComparisonAPIResponse;
+      )) as IrminAPIResponse<Diff>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Error comparing refs');
@@ -74,7 +67,7 @@ class DiffService {
             base: baseRef,
             compare: compareRef,
           })
-        ) as ComparisonAPIResponse;
+        ) as IrminAPIResponse<Diff>;
       throw error;
     }
   }

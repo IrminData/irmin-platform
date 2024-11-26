@@ -10,13 +10,6 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Schema API response type
- */
-interface SchemaAPIResponse extends IrminAPIResponse {
-  data: RepositorySchema;
-}
-
-/**
  * Schema API service
  *
  * Responsible for schema related API calls
@@ -40,9 +33,11 @@ class SchemaService {
     collections: string[],
     repository: string,
     ref: string
-  ): Promise<SchemaAPIResponse> {
+  ): Promise<IrminAPIResponse<RepositorySchema>> {
     if (isOfflineMode)
-      return fake(exampleRepositorySchema) as SchemaAPIResponse;
+      return fake(
+        exampleRepositorySchema
+      ) as IrminAPIResponse<RepositorySchema>;
     try {
       const urlParams = new URLSearchParams();
       collections.forEach((collection) =>
@@ -55,13 +50,15 @@ class SchemaService {
         {
           method: 'GET',
         }
-      )) as SchemaAPIResponse;
+      )) as IrminAPIResponse<RepositorySchema>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Schema error');
       if (isDevelopment)
-        return fake(exampleRepositorySchema) as SchemaAPIResponse;
+        return fake(
+          exampleRepositorySchema
+        ) as IrminAPIResponse<RepositorySchema>;
       throw error;
     }
   }
