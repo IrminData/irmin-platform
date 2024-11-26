@@ -7955,7 +7955,7 @@ __metadata:
     tailwindcss: "npm:^3.4.15"
     tailwindcss-animate: "npm:^1.0.7"
     typedoc: "npm:^0.26.11"
-    typedoc-plugin-missing-exports: "npm:^3.0.2"
+    typedoc-plugin-missing-exports: "npm:^3.1.0"
     typescript: "npm:5.6.3"
   languageName: unknown
   linkType: soft
@@ -12126,12 +12126,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typedoc-plugin-missing-exports@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "typedoc-plugin-missing-exports@npm:3.0.2"
+"typedoc-plugin-missing-exports@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "typedoc-plugin-missing-exports@npm:3.1.0"
   peerDependencies:
-    typedoc: 0.26.x
-  checksum: 10c0/215a59dcccb6679718bcaf0965d20514db3c4fd4983a633d1e5483dfc0d0f3f5d51088840de2bd7d70d05560fd4af4916713cd4fc311d1fac33ce054cb298c97
+    typedoc: 0.26.x || 0.27.x
+  checksum: 10c0/516964657833f3235f47e2faf7ebccc741ff32923d32af5c3adfdb9bc1fae94dd85885cb735db77d2605e501aee40d5fbe94e8e18ed965d0c1c0198234a7db44
   languageName: node
   linkType: hard
 
