@@ -2344,18 +2344,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@novu/node@npm:^2.0.1":
-  version: 2.0.1
-  resolution: "@novu/node@npm:2.0.1"
+"@novu/node@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "@novu/node@npm:2.0.2"
   dependencies:
-    "@novu/shared": "npm:^2.0.1"
+    "@novu/shared": "npm:2.1.3"
     axios: "npm:^1.6.8"
     axios-retry: "npm:^3.8.0"
     handlebars: "npm:^4.7.7"
     lodash.get: "npm:^4.4.2"
     lodash.merge: "npm:^4.6.2"
     uuid: "npm:^9.0.1"
-  checksum: 10c0/3cdeb57adcc6b15e63a21725bc5ece69eb91dcf91e0949a4d07a9e7542296a7ebd3d4f610e77e6acd5b570279848453f3e3ce774db08c7e39f9c735c5e3ab813
+  checksum: 10c0/199316473efa904c2391053821be6c6b747c00d0d9c62f4170505f794536d5e9f8011cf294bff0232bd5959299af138af7420f8ba821b0e7509749f05401695f
   languageName: node
   linkType: hard
 
@@ -2374,7 +2374,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@novu/shared@npm:^2.0.0, @novu/shared@npm:^2.0.1":
+"@novu/shared@npm:2.1.3":
+  version: 2.1.3
+  resolution: "@novu/shared@npm:2.1.3"
+  checksum: 10c0/50668200caef5e98a9f8bd3b640f2ae763ac61d957627054321cad7dfde52a4744a1852f2ff4b6ecfdd0a5fcb0950c5f77361b17fd2040bd6e7fa846a6bad749
+  languageName: node
+  linkType: hard
+
+"@novu/shared@npm:^2.0.0":
   version: 2.1.1
   resolution: "@novu/shared@npm:2.1.1"
   dependencies:
@@ -7907,7 +7914,7 @@ __metadata:
     "@codemirror/view": "npm:^6.34.3"
     "@cyntler/react-doc-viewer": "npm:^1.17.0"
     "@mdxeditor/editor": "npm:^3.19.0"
-    "@novu/node": "npm:^2.0.1"
+    "@novu/node": "npm:^2.0.2"
     "@novu/react": "npm:^2.6.0"
     "@playwright/test": "npm:^1.49.0"
     "@radix-ui/react-avatar": "npm:^1.1.1"
