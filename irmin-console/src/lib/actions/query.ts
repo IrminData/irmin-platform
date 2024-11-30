@@ -2,7 +2,6 @@
 
 import { initCore } from '@/lib/initCore';
 
-import { CollectionType } from '@/types/core/Collection';
 import { IrminFileType } from '@/types/core/EditorItems';
 
 /**
@@ -11,15 +10,10 @@ import { IrminFileType } from '@/types/core/EditorItems';
 export async function executeScript(
   type: IrminFileType,
   content: string,
-  exampleType?: CollectionType,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.queryService.executeScript(
-    type,
-    content,
-    exampleType
-  );
+  const res = await irminCore.queryService.executeScript(type, content);
   return res;
 }
 
@@ -113,14 +107,9 @@ export async function executeQuery(query: string, token?: string) {
 export async function getQueryResults(
   query: string,
   page: number,
-  exampleType?: 'table' | 'file' | 'folder',
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.queryService.getQueryResults(
-    query,
-    page,
-    exampleType
-  );
+  const res = await irminCore.queryService.getQueryResults(query, page);
   return res;
 }

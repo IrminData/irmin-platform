@@ -53,19 +53,19 @@ export async function createCommit(
 }
 
 /**
- * Server action to get last modification to a collection.
+ * Server action to get last modification to an object.
  */
 export async function getLastModification(
   repositorySlug: string,
   branch: string,
-  collection: string,
+  objectPath: string,
   token?: string
 ) {
   const irminCore = await initCore(token);
   const res = await irminCore.commitService.fetchLastModification(
     repositorySlug,
     branch,
-    collection
+    objectPath
   );
   return res;
 }

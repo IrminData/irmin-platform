@@ -18,10 +18,6 @@ import {
   getBranches,
 } from '@/lib/actions/branches';
 import {
-  getCollectionContent,
-  getCollections,
-} from '@/lib/actions/collections';
-import {
   createCommit,
   getCommits,
   getLastModification,
@@ -29,12 +25,19 @@ import {
 } from '@/lib/actions/commits';
 import { getDiff, mergeRefs } from '@/lib/actions/diff';
 import {
+  deleteObject,
+  getObjectContent,
+  getObjects,
+  getObjectSchema,
+  moveObject,
+  uploadObject,
+} from '@/lib/actions/objects';
+import {
   deleteRepository,
   getRepository,
   reassignRepository,
   updateRepository,
 } from '@/lib/actions/repositories';
-import { fetchSchemas } from '@/lib/actions/schema';
 import { createTag, deleteTag, getTags } from '@/lib/actions/tags';
 import { Dictionary } from '@/lib/dict';
 
@@ -44,19 +47,20 @@ import { constructBaseUrl } from '@/utils/constructBaseUrl';
 import { createQueryString } from '@/utils/queryParams';
 
 import { Branch } from '@/types/core/Branch';
-import { Collection, RepositorySchema } from '@/types/core/Collection';
 import { Commit } from '@/types/core/Commit';
 import { Diff } from '@/types/core/Diff';
-import { IrminAPIUnstructuredResponse } from '@/types/core/IrminAPIResponse';
+import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
+import { Object } from '@/types/core/Object';
+import { ObjectSchema } from '@/types/core/ObjectSchema';
 import { Repository } from '@/types/core/Repository';
 import { Tag } from '@/types/core/Tag';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 /**
- * Repository context properties
+ * Repository context props
  */
 interface RepositoryContextProps {
-  // Active repository context state
+  // Active repository state
   currentRepository: Repository;
   immutable: boolean;
   currentRef?: string;
@@ -64,19 +68,23 @@ interface RepositoryContextProps {
   viewRef: (ref: string) => void;
   defaultRef?: string;
   setDefaultRef: (ref: string) => void;
+  currentPath: string;
+  updateCurrentPath: (path: string) => void;
   // General repository hooks
   fetchRepository: () => Promise<void>;
   updateRepository: (data: ItemUpdateProps) => Promise<void>;
   deleteRepository: () => Promise<void>;
   reassignRepository: (ownerID: string) => Promise<void>;
-  // Collections
-  loadingCollections: boolean;
-  collections: Collection[];
-  fetchCollections?: (repository: string, ref?: string) => Promise<void>;
-  // Schema
-  loadingSchema: boolean;
-  schema: RepositorySchema | null;
-  fetchSchema: (collections: string[]) => Promise<void>;
+  // Objects
+  loadingObjects: boolean;
+  objects: Object[];
+  deleteObject: (objectName: string) => Promise<void>;
+  moveObject: (oldPath: string, newPath: string) => Promise<void>;
+  uploadObject: (objectName: string, files: FileList) => Promise<void>;
+  getObjectContent: (
+    objectPath: string
+  ) => Promise<IrminAPIBinaryResponse | undefined>;
+  getObjectSchema: (objectPath: string) => Promise<ObjectSchema | undefined>;
   // Branches
   loadingBranches: boolean;
   branches: Branch[] | null;
@@ -95,16 +103,16 @@ interface RepositoryContextProps {
   fetchCommits: (ref?: string) => Promise<Commit[] | undefined>;
   commitChanges: (message: string) => Promise<boolean>;
   revertChanges: () => Promise<boolean>;
-  fetchLastModification: (collection: string) => Promise<Commit | null>;
+  fetchLastModification: (objectPath: string) => Promise<Commit | null>;
   // Diff
   fetchDiff: (base: string, compare: string) => Promise<Diff | null>;
   fetchDiffContent: (
-    collection: string,
+    objectPath: string,
     base: string,
     compare: string
   ) => Promise<{
-    base: IrminAPIUnstructuredResponse;
-    compare: IrminAPIUnstructuredResponse;
+    base: IrminAPIBinaryResponse;
+    compare: IrminAPIBinaryResponse;
   } | null>;
   mergeRefs: (
     base: string,
@@ -119,7 +127,7 @@ const RepositoryContext = createContext<RepositoryContextProps | undefined>(
 );
 
 /**
- * Repository context for state management and interactions with the repository, branches, commits, and collections.
+ * Repository context for state management and interactions with the repository, branches, commits and objects
  *
  * @param config - Repository context provider configuration
  * @param config.children - Child components
@@ -129,8 +137,6 @@ const RepositoryContext = createContext<RepositoryContextProps | undefined>(
  * @param config.initialRepository - Initial repository object to set
  * @param config.initialBranches - Initial branches to set
  * @param config.initialTags - Initial tags to set
- * @param config.initialCollections - Initial collections to set
- * @param config.initialSchema - Initial schema to set
  * @param config.initialCommits - Initial commits to set
  *
  * @returns Repository context provider
@@ -143,8 +149,6 @@ export const RepositoryProvider = ({
   initialRepository,
   initialBranches,
   initialTags,
-  initialCollections,
-  initialSchema,
   initialCommits,
 }: {
   children: React.ReactNode;
@@ -154,8 +158,6 @@ export const RepositoryProvider = ({
   initialRepository: Repository;
   initialBranches: Branch[];
   initialTags: Tag[];
-  initialCollections: Collection[];
-  initialSchema: RepositorySchema;
   initialCommits: Commit[];
 }) => {
   const router = useRouter();
@@ -174,6 +176,9 @@ export const RepositoryProvider = ({
 
   // Active repository context ref (eg. branch, commit, tag)
   const [currentRef, setCurrentRef] = useState<string | undefined>(undefined);
+
+  // Active path in the repository, default to root
+  const [currentPath, setCurrentPath] = useState<string>('/');
 
   /**
    * Hook to update the current ref
@@ -317,14 +322,9 @@ export const RepositoryProvider = ({
     ]
   );
 
-  // Collections state
-  const [loadingCollections, setLoadingCollections] = useState(false);
-  const [collections, setCollections] =
-    useState<Collection[]>(initialCollections);
-
-  // Schema state
-  const [loadingSchema, setLoadingSchema] = useState<boolean>(false);
-  const [schema, setSchema] = useState<RepositorySchema>(initialSchema);
+  // Objects state
+  const [loadingObjects, setLoadingObjects] = useState(false);
+  const [objects, setObjects] = useState<Object[]>([]);
 
   // Branches state
   const [loadingBranches, setLoadingBranches] = useState<boolean>(false);
@@ -339,46 +339,142 @@ export const RepositoryProvider = ({
   const [commits, setCommits] = useState<Commit[]>(initialCommits);
 
   /**
-   * Fetch the currennt collections
+   * Fetch the current objects in the repository at the current path and ref
    */
-  const fetchCollections = useCallback(async () => {
-    setLoadingCollections(true);
+  const fetchObjects = useCallback(async () => {
+    setLoadingObjects(true);
     try {
-      const newCollections = await getCollections(repositorySlug, currentRef);
-      setCollections(newCollections);
+      const newObjects = await getObjects(
+        repositorySlug,
+        currentPath,
+        currentRef
+      );
+      setObjects(newObjects);
     } catch (error) {
-      console.error('RepositoryContext fetchCollections error', error);
+      console.error('RepositoryContext fetchObjects error', error);
       irminAlert(
         'error',
-        (error as Error)?.message ?? 'Failed to fetch collections'
+        (error as Error)?.message ?? 'Failed to fetch objects'
       );
     } finally {
-      setLoadingCollections(false);
+      setLoadingObjects(false);
     }
-  }, [irminAlert, repositorySlug, currentRef]);
+  }, [irminAlert, repositorySlug, currentPath, currentRef]);
 
   /**
-   * Fetch the schema
+   * Delete an object from the repository at path
    */
-  const fetchSchema = useCallback(async () => {
-    setLoadingSchema(true);
-    try {
-      const newSchema = await fetchSchemas(
-        collections.map((collection) => collection.name),
-        currentRepository.slug,
-        currentRef ?? currentRepository.default_branch
-      );
-      setSchema(newSchema);
-    } catch (error) {
-      console.error('RepositoryContext fetchSchema error', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to fetch schema'
-      );
-    } finally {
-      setLoadingSchema(false);
-    }
-  }, [currentRef, collections, currentRepository, irminAlert]);
+  const handleDeleteObject = useCallback(
+    async (objectName: string) => {
+      try {
+        const res = await deleteObject(
+          repositorySlug,
+          currentRef ?? 'main',
+          currentPath,
+          objectName
+        );
+        irminAlert('success', res.message ?? 'Object deleted successfully');
+        fetchObjects();
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to delete object'
+        );
+      }
+    },
+    [repositorySlug, currentRef, currentPath, fetchObjects, irminAlert]
+  );
+
+  /**
+   * Move an object in the repository to a new path
+   */
+  const handleMoveObject = useCallback(
+    async (currentObjectPath: string, newObjectPath: string) => {
+      try {
+        const res = await moveObject(
+          repositorySlug,
+          currentRef ?? 'main',
+          currentObjectPath,
+          newObjectPath
+        );
+        irminAlert('success', res.message ?? 'Object moved successfully');
+        fetchObjects();
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to move object'
+        );
+      }
+    },
+    [repositorySlug, currentRef, fetchObjects, irminAlert]
+  );
+
+  /**
+   * Upload an object to the repository at path
+   */
+  const handleUploadObject = useCallback(
+    async (objectName: string, files: FileList) => {
+      try {
+        const res = await uploadObject(
+          repositorySlug,
+          currentRef ?? 'main',
+          currentPath,
+          objectName,
+          files
+        );
+        irminAlert('success', res.message ?? 'Object uploaded successfully');
+        fetchObjects();
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to upload object'
+        );
+      }
+    },
+    [repositorySlug, currentRef, currentPath, fetchObjects, irminAlert]
+  );
+
+  /**
+   * Fetch the content of the object at path
+   */
+  const fetchObjectContent = useCallback(
+    async (path: string) => {
+      try {
+        const res = await getObjectContent(repositorySlug, path, currentRef);
+        return res;
+      } catch (error) {
+        console.error('RepositoryContext fetchObjectContent error', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to fetch object content'
+        );
+      }
+    },
+    [repositorySlug, currentRef, irminAlert]
+  );
+
+  /**
+   * Fetch the schema of the object at path
+   */
+  const fetchObjectSchema = useCallback(
+    async (path: string) => {
+      try {
+        const res = await getObjectSchema(
+          repositorySlug,
+          currentRef ?? '',
+          path
+        );
+        return res.data;
+      } catch (error) {
+        console.error('RepositoryContext fetchObjectSchema error', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to fetch object schema'
+        );
+      }
+    },
+    [repositorySlug, currentRef, irminAlert]
+  );
 
   /**
    * Fetch the branches and default branch for the current repository
@@ -466,29 +562,21 @@ export const RepositoryProvider = ({
   );
 
   /**
-   * Hook to fetch the content of the diff for a specific collection
+   * Hook to fetch the content of the diff for a specific object
    */
   const fetchDiffContent = useCallback(
     async (
-      collection: string,
+      objectPath: string,
       base: string,
       compare: string
     ): Promise<{
-      base: IrminAPIUnstructuredResponse;
-      compare: IrminAPIUnstructuredResponse;
+      base: IrminAPIBinaryResponse;
+      compare: IrminAPIBinaryResponse;
     } | null> => {
       try {
         const [baseContent, compareContent] = await Promise.all([
-          getCollectionContent({
-            collection: collection,
-            repository: repositorySlug,
-            ref: base,
-          }),
-          getCollectionContent({
-            collection: collection,
-            repository: repositorySlug,
-            ref: compare,
-          }),
+          getObjectContent(repositorySlug, objectPath, base),
+          getObjectContent(repositorySlug, objectPath, compare),
         ]);
         return {
           base: baseContent,
@@ -533,27 +621,26 @@ export const RepositoryProvider = ({
   );
 
   /**
-   * Hook to fetch the last commit which modified a collection
+   * Hook to fetch the last commit which modified an object
    *
-   * @param collection - The collection name to fetch the last commit for
-   * @returns Commit - The last commit which modified the collection
+   * @param objectPath - The path of the object to check
+   * @returns Commit - The last commit which modified the object, null if failed
    */
   const fetchLastModification = useCallback(
-    async (collection: string): Promise<Commit | null> => {
+    async (objectPath: string): Promise<Commit | null> => {
       try {
         if (!currentRef) return null;
         const res = await getLastModification(
           repositorySlug,
           currentRef,
-          collection
+          objectPath
         );
         return res.data;
       } catch (error) {
         console.error('RepositoryContext fetchLastModification error', error);
         irminAlert(
           'error',
-          (error as Error)?.message ??
-            'Failed to fetch last commit for collection'
+          (error as Error)?.message ?? 'Failed to fetch last commit for object'
         );
       }
       return null;
@@ -711,6 +798,18 @@ export const RepositoryProvider = ({
     [repositorySlug, fetchTags, irminAlert]
   );
 
+  const objectsFetchedFor = useRef<string | undefined>(undefined);
+
+  /**
+   * Fetch the repository object at the active path and ref on mount and when the path or ref changes
+   */
+  useEffect(() => {
+    if (!currentPath || !currentRef) return;
+    if (objectsFetchedFor.current === `${currentPath}@${currentRef}`) return;
+    objectsFetchedFor.current = `${currentPath}@${currentRef}`;
+    fetchObjects();
+  }, [currentPath, currentRef, fetchObjects]);
+
   /**
    * Update current ref if not set
    */
@@ -750,19 +849,21 @@ export const RepositoryProvider = ({
         viewRef,
         defaultRef,
         setDefaultRef,
+        currentPath,
+        updateCurrentPath: setCurrentPath,
         // General repository hooks
         fetchRepository,
         updateRepository: handleUpdateRepository,
         deleteRepository: handleDeleteRepository,
         reassignRepository: handleReassignRepository,
-        // Collections
-        loadingCollections,
-        collections,
-        fetchCollections,
-        // Schema
-        loadingSchema,
-        schema,
-        fetchSchema,
+        // Objects
+        loadingObjects,
+        objects,
+        deleteObject: handleDeleteObject,
+        moveObject: handleMoveObject,
+        uploadObject: handleUploadObject,
+        getObjectContent: fetchObjectContent,
+        getObjectSchema: fetchObjectSchema,
         // Branches
         loadingBranches,
         branches,

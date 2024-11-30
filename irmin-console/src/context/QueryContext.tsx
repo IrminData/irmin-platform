@@ -12,7 +12,6 @@ import { executeScript } from '@/lib/actions/query';
 
 import { usePopup } from '@/context/PopupContext';
 
-import { Collection } from '@/types/core/Collection';
 import { IrminFileType } from '@/types/core/EditorItems';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { QueryExecutionResult } from '@/types/core/Query';
@@ -23,11 +22,7 @@ import { QueryExecutionResult } from '@/types/core/Query';
 interface QueryContextProps {
   loading: boolean;
   result: IrminAPIResponse<QueryExecutionResult> | null;
-  executeScript: (
-    type: IrminFileType,
-    content: string,
-    collection?: Collection
-  ) => Promise<void>;
+  executeScript: (type: IrminFileType, content: string) => Promise<void>;
 }
 
 const QueryContext = createContext<QueryContextProps | undefined>(undefined);
@@ -57,12 +52,12 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
    * The script can be either Irmin SQL query or a script to be executed in the Compute Sandbox.
    */
   const handleExecuteScript = useCallback(
-    async (type: IrminFileType, content: string, collection?: Collection) => {
+    async (type: IrminFileType, content: string) => {
       if (executing.current) return;
       executing.current = true;
       setLoading(true);
       try {
-        const res = await executeScript(type, content, collection?.type);
+        const res = await executeScript(type, content);
         setQueryResult(res);
       } catch (error) {
         console.error('QueryContext executeScript error', error);

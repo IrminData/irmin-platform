@@ -4,13 +4,8 @@ import { useState } from 'react';
 
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 
-import CollectionReferenceList from '@/components/repository/collections/CollectionReferenceList';
-
 import { useEditor } from '@/context/EditorContext';
 import { QueryProvider } from '@/context/QueryContext';
-
-import { Collection } from '@/types/core/Collection';
-import { Repository } from '@/types/core/Repository';
 
 import FileNavigator from './FileNavigator';
 
@@ -20,17 +15,11 @@ import FileNavigator from './FileNavigator';
  *
  * @param props - The props to pass to the component
  * @param props.children - The children to render
- * @param props.repositories - The repositories to display in the collection reference list
- * @param props.collections - The collections to display in the collection reference list
  */
 export default function EditorLayoutWrapper({
   children,
-  repositories,
-  collections,
 }: {
   children: React.ReactNode;
-  repositories: Repository[];
-  collections: Collection[];
 }) {
   const {
     items,
@@ -89,10 +78,6 @@ export default function EditorLayoutWrapper({
               deleteItem(item);
             }}
             items={items}
-          />
-          <CollectionReferenceList
-            repositories={repositories}
-            collections={collections}
           />
         </div>
       </div>

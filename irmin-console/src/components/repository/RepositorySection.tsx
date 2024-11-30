@@ -20,29 +20,25 @@ import { useRepository } from '@/context/RepositoryContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
-import { Collection } from '@/types/core/Collection';
-import { Workflow } from '@/types/core/Workflow';
+import { Object } from '@/types/core/Object';
 import { Workspace } from '@/types/core/Workspace';
 
-import CollectionList from './collections/CollectionList';
-import CollectionSchema from './collections/CollectionSchema';
-import UploadCollectionModal from './UploadCollectionModal';
+import ObjectDetails from './objects/ObjectDetails';
+import ObjectList from './objects/ObjectList';
+import UploadObjectModal from './objects/UploadObjectModal';
 
 /**
  * Repository viewer section, provides UI for the Repository viewer Page.
  *
  * @param props - The component props
  * @param props.currentWorkspace - The current workspace
- * @param props.workflows - The workflows available in the workspace
  * @param props.dict - The dictionary for the current locale
  */
 export default function RepositorySection({
   currentWorkspace,
-  workflows,
   dict,
 }: {
   currentWorkspace: Workspace;
-  workflows: Workflow[];
   dict: Dictionary;
 }) {
   const searchParams = useSearchParams();
@@ -50,38 +46,36 @@ export default function RepositorySection({
   const {
     immutable,
     currentRef,
+    currentPath,
     currentRepository,
-    loadingCollections,
-    collections,
-    schema,
+    loadingObjects,
+    objects,
   } = useRepository();
 
   const query = useQuery();
 
   const { irminModal } = usePopup();
 
-  const [selectedCollection, setSelectedCollection] = useState<
-    Collection | undefined
-  >();
+  const [selectedObject, setSelectedObject] = useState<Object | undefined>();
   const [queryField, setQueryField] = useState<string>('');
   const [queryChanged, setQueryChanged] = useState(false);
 
   /**
-   * Set the initial query when the selected collection changes.
-   * Skip if the query has been changed by the user or if there is no selected collection.
+   * Set the initial query when the selected object changes.
+   * Skip if the query has been changed by the user or if there is no selected object.
    */
   useEffect(() => {
-    if (!selectedCollection) return;
+    if (!selectedObject) return;
     if (queryChanged) return;
     setQueryField(
-      `SELECT * FROM $["${selectedCollection.repository}.${selectedCollection.name}${currentRef ? `@${currentRef}` : ''}"]`
+      `SELECT * FROM $["${currentRepository.slug}.${selectedObject.path.replaceAll('/', '.')}${currentRef ? `@${currentRef}` : ''}"]`
     );
-  }, [selectedCollection, queryChanged, currentRef]);
+  }, [currentRepository, selectedObject, queryChanged, currentRef]);
 
   const handleUpload = useCallback(() => {
     irminModal.show(
-      dict.repository.collections.uploadCollection,
-      <UploadCollectionModal
+      dict.repository.objects.uploadObject,
+      <UploadObjectModal
         currentRepository={currentRepository.slug}
         currentRef={currentRef}
       />
@@ -90,8 +84,8 @@ export default function RepositorySection({
 
   const runCurrentQuery = useCallback(() => {
     if (!queryField || queryField.length < 3) return;
-    query.executeScript('sql', queryField, selectedCollection);
-  }, [queryField, query, selectedCollection]);
+    query.executeScript('sql', queryField);
+  }, [queryField, query]);
 
   // The base URL for the repository, eg. /en/console/workspace-slug/repositories/repository-slug
   const baseUrl = useBaseUrl({
@@ -165,27 +159,17 @@ export default function RepositorySection({
                 onClick={handleUpload}
                 icon={<TbUpload />}
               >
-                {dict.repository.collections.uploadCollection}
+                {dict.repository.objects.uploadObject}
               </Button>
             )}
           </div>
         </div>
         <div className='flex w-full flex-col items-start gap-2 md:flex-row md:gap-2'>
-          <div className='max-h-[400px] w-full overflow-scroll'>
-            <CollectionList
-              collections={collections}
-              selectedCollection={selectedCollection}
-              setSelectedCollection={setSelectedCollection}
-              loading={loadingCollections}
-            />
-          </div>
-          {selectedCollection && (
-            <CollectionSchema
-              workflows={workflows}
-              collection={schema?.find(
-                (c) => c.name === selectedCollection.name
-              )}
-              immutable={immutable}
+          <ObjectList selectObject={setSelectedObject} />
+          {selectedObject && (
+            <ObjectDetails
+              selectedObject={selectedObject}
+              closeDetails={() => setSelectedObject(undefined)}
             />
           )}
         </div>

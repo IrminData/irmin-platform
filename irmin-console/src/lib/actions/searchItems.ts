@@ -1,6 +1,5 @@
 'use server';
 
-import { getAllCollections } from '@/lib/actions/collections';
 import { getConnections } from '@/lib/actions/connections';
 import { getWorkspaceInvites } from '@/lib/actions/invites';
 import { getRepositories } from '@/lib/actions/repositories';
@@ -99,21 +98,14 @@ export async function generateSearchItems({
 
     if (workspace) {
       // Fetch workspace-dependent items
-      const [
-        connections,
-        invites,
-        users,
-        workflows,
-        repositories,
-        collections,
-      ] = await Promise.all([
-        getConnections(token),
-        getWorkspaceInvites(workspace, false, false, token),
-        getUsers(token),
-        getWorkflows(token),
-        getRepositories(token),
-        getAllCollections(token),
-      ]);
+      const [connections, invites, users, workflows, repositories] =
+        await Promise.all([
+          getConnections(token),
+          getWorkspaceInvites(workspace, false, false, token),
+          getUsers(token),
+          getWorkflows(token),
+          getRepositories(token),
+        ]);
 
       // Add workspace-dependent static Irmin items
       newItems.push(
@@ -267,26 +259,6 @@ export async function generateSearchItems({
           description: repository.description ?? '-',
           link: `/${locale}/console/${workspace}/repositories/${repository.slug}`,
           type: ConsoleSearchItemType.Repository,
-        });
-      });
-
-      // Add collections
-      collections.forEach((collection) => {
-        const title = `${collection.repository}.${collection.name}`;
-        if (newItems.some((item) => item.title === title)) return;
-        const typeLabel =
-          collection.type === 'table'
-            ? dict.repository.schema.table
-            : collection.type === 'folder'
-              ? dict.repository.schema.folder
-              : collection.type === 'file'
-                ? dict.repository.schema.file
-                : '';
-        newItems.push({
-          title,
-          description: typeLabel,
-          link: `/${locale}/console/${workspace}/repositories/${collection.repository}`,
-          type: ConsoleSearchItemType.Collection,
         });
       });
     }

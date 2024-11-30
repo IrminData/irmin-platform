@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 
+import BlobViewer from '@/components/repository/objects/BlobViewer';
 import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -13,9 +14,8 @@ import {
 } from '@/utils/content';
 
 import { ChangeItem } from '@/types/core/Diff';
-import { IrminAPIUnstructuredResponse } from '@/types/core/IrminAPIResponse';
+import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 
-import BlobViewer from './BlobViewer';
 import TextDiff from './TextDiff';
 
 /**
@@ -32,8 +32,8 @@ const ContentDiff = ({
   compareContent,
 }: {
   item: ChangeItem;
-  baseContent: IrminAPIUnstructuredResponse;
-  compareContent: IrminAPIUnstructuredResponse;
+  baseContent: IrminAPIBinaryResponse;
+  compareContent: IrminAPIBinaryResponse;
 }) => {
   const { dict } = useLocale();
 
@@ -45,11 +45,7 @@ const ContentDiff = ({
 
   const handleDownload = useCallback(
     (content: Blob | string, contentType: string) => {
-      downloadContent(
-        content,
-        contentType,
-        `${item.collection.repository}_${item.collection.name}`
-      );
+      downloadContent(content, contentType, item.object.name);
     },
     [item]
   );

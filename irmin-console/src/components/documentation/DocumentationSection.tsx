@@ -17,7 +17,6 @@ import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
-import { Collection } from '@/types/core/Collection';
 import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
 import {
@@ -33,14 +32,12 @@ import MDXViewer from './MDXViewer';
  */
 export default function DocumentationSection({
   connections,
-  collections,
   imports,
   exports,
   actions,
   repositories,
 }: {
   connections: Connection[];
-  collections: Collection[];
   imports: ImportWorkflow[];
   exports: ExportWorkflow[];
   actions: ActionWorkflow[];
@@ -157,21 +154,6 @@ export default function DocumentationSection({
                           ? ` (${item.owner.company})`
                           : ''} - {item.owner.email}
                       </span>
-                    </p>
-                    <p className='flex flex-wrap text-sm text-gray-600 dark:text-gray-400'>
-                      <span className='pr-4'>
-                        {dict.documentation.collections}:{' '}
-                      </span>
-                      {collections
-                        .filter((a) => a.repository === item.slug)
-                        .map((collection, index) => (
-                          <span
-                            key={`item-${item.id}-${i}-collection-${index}`}
-                            className='pr-4 text-gray-800 dark:text-gray-200'
-                          >
-                            {collection.name}
-                          </span>
-                        ))}
                     </p>
                     <div className='p-4-600 rounded-md bg-gray-200'>
                       <MDXViewer content={item.documentation} />

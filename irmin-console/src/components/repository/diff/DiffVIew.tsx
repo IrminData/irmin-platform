@@ -11,7 +11,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { useRepository } from '@/context/RepositoryContext';
 
 import { ChangeType, Diff } from '@/types/core/Diff';
-import { IrminAPIUnstructuredResponse } from '@/types/core/IrminAPIResponse';
+import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 
 import CommitList from '../commits/CommitList';
 import ContentDiff from './ContentDiff';
@@ -19,8 +19,8 @@ import NoDiffWarning from './NoDiffWarning';
 
 type OpenDiffContentItem = {
   loading: boolean;
-  base: IrminAPIUnstructuredResponse;
-  compare: IrminAPIUnstructuredResponse;
+  base: IrminAPIBinaryResponse;
+  compare: IrminAPIBinaryResponse;
   diffItem: number;
 };
 
@@ -73,7 +73,7 @@ const DiffView = ({
       if (fetchingDiffContent.current) return;
 
       const item = diff.items[index];
-      if (!item.collection) return;
+      if (!item.object) return;
 
       fetchingDiffContent.current = true;
       setOpenItem({
@@ -84,7 +84,7 @@ const DiffView = ({
       });
 
       const content = await fetchDiffContent(
-        item.collection.name,
+        item.object.path,
         diff.base_ref,
         diff.compare_ref
       );
@@ -122,7 +122,7 @@ const DiffView = ({
       {/* Diff Items Section */}
       <div className='space-y-4'>
         {diff.items.map((item, index) => {
-          if (!item.collection) return null;
+          if (!item.object) return null;
           return (
             <div
               key={`diff-item-${index}`}
@@ -131,9 +131,9 @@ const DiffView = ({
               {/* Main Diff Item Row */}
               <div className='flex flex-row items-center justify-between gap-4 p-2'>
                 <div className='flex flex-row items-center gap-2'>
-                  {/* Affected collection */}
+                  {/* Affected object */}
                   <h4 className='text-sm text-gray-800 lg:text-base dark:text-gray-200'>
-                    {item.collection.name}
+                    {item.object.path}
                   </h4>
                   {/* Size Indicator */}
                   <div className='text-xs text-gray-500 dark:text-gray-400'>

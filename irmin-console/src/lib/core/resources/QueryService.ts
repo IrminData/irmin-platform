@@ -2,7 +2,6 @@ import IrminCore from '@/lib/core';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { CollectionType } from '@/types/core/Collection';
 import { IrminFileType } from '@/types/core/EditorItems';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { Query, QueryExecutionResult } from '@/types/core/Query';
@@ -43,16 +42,14 @@ class QueryService {
    *
    * @param type - type of the script. Can be for example `sql`. See {@link IrminFileType}
    * @param content - content of the script
-   * @param exampleType - (optional) Type of the example data to return in offline mode
    */
   async executeScript(
     type: IrminFileType,
-    content: string,
-    exampleType?: CollectionType
+    content: string
   ): Promise<IrminAPIResponse<QueryExecutionResult>> {
     if (isOfflineMode)
       return fake(
-        exampleQueryExecutionResult(exampleType)
+        exampleQueryExecutionResult()
       ) as IrminAPIResponse<QueryExecutionResult>;
     try {
       const body = new FormData();
@@ -67,7 +64,7 @@ class QueryService {
       console.error((error as Error).message, 'Execute script error');
       if (isDevelopment)
         return fake(
-          exampleQueryExecutionResult(exampleType)
+          exampleQueryExecutionResult()
         ) as IrminAPIResponse<QueryExecutionResult>;
       throw error;
     }
@@ -244,16 +241,14 @@ class QueryService {
    *
    * @param queryId - ID of the query to fetch results for
    * @param page - Page number
-   * @param exampleType - (optional) Type of the example data to return in offline mode
    */
   async getQueryResults(
     queryId: string,
-    page: number,
-    exampleType?: 'table' | 'file' | 'folder'
+    page: number
   ): Promise<IrminAPIResponse<QueryExecutionResult>> {
     if (isOfflineMode)
       return fake(
-        exampleQueryExecutionResult(exampleType)
+        exampleQueryExecutionResult()
       ) as IrminAPIResponse<QueryExecutionResult>;
     try {
       const response = await this.irminCore.fetchAPI(
@@ -267,7 +262,7 @@ class QueryService {
       console.error((error as Error).message, 'Get query results error');
       if (isDevelopment)
         return fake(
-          exampleQueryExecutionResult(exampleType)
+          exampleQueryExecutionResult()
         ) as IrminAPIResponse<QueryExecutionResult>;
       throw error;
     }

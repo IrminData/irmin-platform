@@ -1,4 +1,5 @@
-import { CollectionData } from './Collection';
+import { JSONValue } from '@/types/internal/GenericJSON';
+
 import { IrminFileType } from './EditorItems';
 
 /**
@@ -38,7 +39,7 @@ export interface Query {
  * @typeParam logs - Logs from the query execution
  */
 export interface QueryExecutionResult {
-  result: CollectionData;
+  result: JSONValue;
   execution_time: number;
   logs: string[];
 }

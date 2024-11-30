@@ -2,8 +2,8 @@ import { getRandomArrayElement } from '@/utils/getRandomArrayElement';
 
 import { ChangeType, Diff } from '@/types/core/Diff';
 
-import { collections } from './collections';
 import { commits } from './commits';
+import { objects } from './objects';
 
 /**
  * Get example {@link Diff} difference between two refs
@@ -28,7 +28,7 @@ export const diff = ({
   compare?: string;
 } = {}): Diff => {
   const newCommits = commits();
-  const allCollections = collections();
+  const allObjects = objects();
   // Use the provided amount or generate a random number of changes
   const amountOfChanges = amount ?? Math.floor(Math.random() * 15);
   // Generate diff items
@@ -37,7 +37,7 @@ export const diff = ({
     base_ref: base ?? 'main',
     compare_ref: compare ?? 'feature',
     items: Array.from({ length: amountOfChanges }, () => ({
-      collection: getRandomArrayElement(allCollections),
+      object: getRandomArrayElement(allObjects),
       type: getRandomArrayElement(Object.values(ChangeType)),
       size: Math.floor(Math.random() * 100000),
     })),

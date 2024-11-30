@@ -24,7 +24,6 @@ import { QueryExecutionResult } from '@/types/core/Query';
 import { ActionWorkflow } from '@/types/core/Workflow';
 
 import ErrorList from './ErrorList';
-import FolderAndFileData from './FolderAndFileData';
 import TableData from './TableData';
 
 /**
@@ -196,7 +195,7 @@ const QueryResults = ({
           )}
         </div>
       </div>
-      {activeTab === 'data' && result?.data?.result.type === 'table' && (
+      {activeTab === 'data' && result?.data?.result && (
         <TableData
           title={title}
           data={result.data.result}
@@ -204,20 +203,6 @@ const QueryResults = ({
             rowsReturned: result.metadata?.total,
             timeTaken: result.data.execution_time,
           }}
-          loading={showLoadingOnData}
-        />
-      )}
-      {activeTab === 'data' && result?.data?.result.type === 'folder' && (
-        <FolderAndFileData
-          title={title}
-          data={result.data.result}
-          loading={showLoadingOnData}
-        />
-      )}
-      {activeTab === 'data' && result?.data?.result.type === 'file' && (
-        <FolderAndFileData
-          title={title}
-          data={result.data.result}
           loading={showLoadingOnData}
         />
       )}

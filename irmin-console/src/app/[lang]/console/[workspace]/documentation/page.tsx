@@ -1,4 +1,3 @@
-import { getAllCollections } from '@/lib/actions/collections';
 import { getConnections } from '@/lib/actions/connections';
 import { getRepositories } from '@/lib/actions/repositories';
 import {
@@ -17,14 +16,12 @@ export default async function DocumentationPage() {
   const token = await getToken();
   const [
     connections,
-    collections,
     actionWorkflows,
     exportWorkflows,
     importWorkflows,
     repositories,
   ] = await Promise.all([
     getConnections(token),
-    getAllCollections(token),
     getActionWorkflows(token),
     getExportWorkflows(token),
     getImportWorkflows(token),
@@ -34,7 +31,6 @@ export default async function DocumentationPage() {
   return (
     <DocumentationSection
       connections={connections}
-      collections={collections}
       actions={actionWorkflows}
       exports={exportWorkflows}
       imports={importWorkflows}

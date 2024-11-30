@@ -47,6 +47,6 @@ export type IrminAPIResponse<T = unknown> = {
 };
 
 /**
- * Type for the unstructured response from Core Irmin API
+ * Type for the binary response from Core Irmin API
  */
-export type IrminAPIUnstructuredResponse = JSONValue | Blob;
+export type IrminAPIBinaryResponse = JSONValue | Blob;

@@ -1,6 +1,6 @@
 import { getRandomArrayElement } from '@/utils/getRandomArrayElement';
 
-import { IrminAPIUnstructuredResponse } from '@/types/core/IrminAPIResponse';
+import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 
 /**
  * Type of the content for the example response
@@ -25,7 +25,7 @@ export enum ContentType {
  */
 export const content = async (
   type?: ContentType
-): Promise<IrminAPIUnstructuredResponse> => {
+): Promise<IrminAPIBinaryResponse> => {
   try {
     const contentType =
       type ?? getRandomArrayElement(Object.values(ContentType));
@@ -103,7 +103,7 @@ export const content = async (
   } catch (error) {
     console.warn(
       (error as Error).message,
-      'Failed to fetch example content for IrminAPIUnstructuredResponse'
+      'Failed to fetch example content for IrminAPIBinaryResponse'
     );
     return `
       This is an example response from the API.

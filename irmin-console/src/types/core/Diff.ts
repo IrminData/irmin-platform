@@ -1,5 +1,5 @@
-import { Collection } from './Collection';
 import { Commit } from './Commit';
+import { Object } from './Object';
 
 export enum ChangeType {
   ADDED = 'added',
@@ -10,26 +10,16 @@ export enum ChangeType {
 }
 
 /**
- * Interface to represent a diff item
- *
- * @typeParam collection - The collection the change is referring to
- * @typeParam type - The type of difference
- * @typeParam size - Size of the added/changed/deleted entry in bytes
+ * Interface to represent a diff item.
  */
 export interface ChangeItem {
-  collection: Collection;
+  object: Object;
   type: ChangeType;
   size: number;
 }
 
 /**
- * Interface to represent the difference between two refs
- *
- * @typeParam repository - The repository the refs are in
- * @typeParam base_ref - The base ref
- * @typeParam compare_ref - The ref to compare against
- * @typeParam items - The diff items
- * @typeParam commits - The commits on the compare ref that are not in the base ref
+ * Interface to represent the difference between two refs.
  */
 export interface Diff {
   repository: string;

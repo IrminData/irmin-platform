@@ -8,14 +8,6 @@
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 import { branches } from './branches';
-import {
-  collectionData,
-  collections,
-  fileCollectionData,
-  folderCollectionData,
-  repositorySchema,
-  tableCollectionData,
-} from './collections';
 import { commits } from './commits';
 import { connections } from './connections';
 import { connectors } from './connectors';
@@ -32,6 +24,8 @@ import {
   workflowLogEvents,
   workflowRunLogs,
 } from './logs';
+import { objects } from './objects';
+import { objectSchema } from './objectSchema';
 import { profile } from './profile';
 import { queries, queryExecutionResult } from './queries';
 import { repositories } from './repositories';
@@ -68,9 +62,9 @@ export const exampleAPIResponse: IrminAPIResponse = {
 };
 
 /**
- * Get example unstructured API response from the Irmin Core API
+ * Get example binary API response from the Irmin Core API
  */
-export const exampleAPIUnstructuredResponse = content;
+export const exampleAPIBinaryResponse = content;
 
 /**
  * Fake {@link roles}
@@ -128,36 +122,14 @@ export const exampleTags = tags();
 export const exampleCommits = commits();
 
 /**
- * Fake collections {@link collections}
+ * Fake objects {@link objects}
  */
-export const exampleCollections = collections();
+export const exampleObjects = objects();
 
 /**
- * Fake repository schema {@link repositorySchema}
+ * Fake object schema {@link objectSchema}
  */
-export const exampleRepositorySchema = repositorySchema();
-
-/**
- * Fake table collection data {@link tableCollectionData}
- */
-export const exampleTableCollectionData = tableCollectionData();
-
-/**
- * Fake folder collection data {@link folderCollectionData}
- */
-export const exampleFolderCollectionData = folderCollectionData();
-
-/**
- * Fake file collection data {@link fileCollectionData}
- */
-export const exampleFileCollectionData = fileCollectionData();
-
-/**
- * Get example collection data
- *
- * @param type - Type of collection data to return
- */
-export const exampleCollectionData = collectionData;
+export const exampleObjectSchema = objectSchema();
 
 /**
  * Fake connections {@link connections}

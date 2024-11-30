@@ -1,8 +1,6 @@
 import { Metadata } from 'next';
 
-import { getAllCollections } from '@/lib/actions/collections';
 import { getEditorItems } from '@/lib/actions/editor-items';
-import { getRepositories } from '@/lib/actions/repositories';
 import { Locale } from '@/lib/dict';
 import { getToken } from '@/lib/getToken';
 
@@ -45,19 +43,10 @@ export default async function EditorLayout({
   params: Promise<EditorLayoutParams>;
 }) {
   const token = await getToken();
-  const [repositories, collections, editorItems] = await Promise.all([
-    getRepositories(token),
-    getAllCollections(token),
-    getEditorItems(token),
-  ]);
+  const editorItems = await getEditorItems(token);
   return (
     <EditorProvider editorItems={editorItems}>
-      <EditorLayoutWrapper
-        repositories={repositories}
-        collections={collections}
-      >
-        {children}
-      </EditorLayoutWrapper>
+      <EditorLayoutWrapper>{children}</EditorLayoutWrapper>
     </EditorProvider>
   );
 }

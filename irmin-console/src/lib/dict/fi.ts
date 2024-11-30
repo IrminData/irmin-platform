@@ -117,7 +117,6 @@ const fi = {
       workflows: 'Prosessit',
       connections: 'Yhteydet',
       repositories: 'Tietovarastot',
-      collections: 'Kokoelmat',
       users: 'Käyttäjät',
       workspaces: 'Työtilat',
       irmin: 'Irmin',
@@ -303,20 +302,26 @@ const fi = {
       mergeExplanation:
         'Jos yhdistäminen on ristiriidassa, tämä valinta pakottaa yhdistämisprosessin suosimaan automaattisesti muutoksia pohjasta ("Määränpää voittaa") tai muutoksesta ("Lähde voittaa"). Jos valintaa ei tehdä, yhdistäminen epäonnistuu ristiriitatilanteessa.',
     },
-    collections: {
-      collections: 'Kokoelmat',
-      uploadCollection: 'Lataa kokoelma',
-      deleteCollection: 'Poista kokoelma',
-      noCollections: 'Ei kokoelmia tässä tietovarastossa',
-      deleteConfirm: 'Oletko varma, että haluat poistaa tämän kokoelman?',
+    objects: {
+      uploadObject: 'Lataa kokoelma',
+      noObjects: 'Ei objekteja löytynyt',
+      deleteConfirm: 'Oletko varma, että haluat poistaa tämän objektin?',
       lastModification: 'Viimeisin muokkaus',
+      path: 'Polku',
+      type: 'Tyyppi',
+      contentType: 'Sisältötyyppi',
+      lastModified: 'Viimeksi muokattu',
+      view: 'Näytä',
+      viewSchema: 'Näytä rakenne',
+      download: 'Lataa',
+      filterObjects: 'Suodata objekteja',
       upload: {
         targetRepository: 'Kohde tietovarasto',
         targetBranch: 'Kohde haara',
-        collectionName: 'Uuden kokoelman nimi',
+        objectName: 'Uuden objektin nimi',
         filesToUpload: 'Ladattavat tiedostot',
         pathInRepository: 'Polku tietovarastossa',
-        noFilesSelected: 'Lisää tiedostot ennen kokoelman lataamista',
+        noFilesSelected: 'Lisää tiedostot ennen objektin lataamista',
       },
     },
     settings: {
@@ -338,14 +343,6 @@ const fi = {
       compare: 'Vertaa',
       documentation: 'Dokumentaatio',
       settings: 'Asetukset',
-    },
-    referenceRepository: {
-      clickOnCollection: 'Klikkaa kokoelmaa viitataksesi siihen',
-      toReferenceTheCollection: 'Käyttääksesi kokoelmaa',
-      fromTheRepository: 'tietovarastosta',
-      inTheEditor: ', käytä seuraavaa syntaksia:',
-      orForSpecificRef:
-        'tai viitataksesi tiettyyn haaraan, tagiin tai commitiin, käytä:',
     },
     schema: {
       schema: 'Rakenne',
@@ -540,6 +537,7 @@ const fi = {
     delete: 'Poista',
     rename: 'Nimeä uudelleen',
     move: 'Siirrä',
+    root: 'Juuri',
     rootDirectory: 'Juurihakemisto',
     newNameOfTheFile: 'Tiedoston uusi nimi',
     newNameOfTheFolder: 'Kansion uusi nimi',
@@ -575,7 +573,6 @@ const fi = {
     timestamp: 'Aikaleima',
     workspace: 'Työtila',
     createdBy: 'Luonut',
-    collections: 'Kokoelmat',
     sections: {
       repositories: 'Tietovarastot',
       connections: 'Yhteydet',

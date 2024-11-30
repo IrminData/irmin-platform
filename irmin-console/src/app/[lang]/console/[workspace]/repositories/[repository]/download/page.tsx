@@ -1,28 +1,18 @@
-import { initCore } from '@/lib/initCore';
-
-import RepositoryDownloadSection from '@/components/repository/RepositoryDownloadSection';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { RepositoryRouteParams } from '../layout';
 
 /**
- * Page to download a repository or specific collections at a specific ref
+ * Page to download a repository or specific objects at a specific ref
+ *
+ * TODO: Implement the download functionality
  */
-export default async function RepositoryDownloadPage(props: {
+export default async function RepositoryDownloadPage(_: {
   params: Promise<RepositoryRouteParams>;
 }) {
-  const params = await props.params;
-
-  const locale = params.lang;
-  const workspaceSlug = params.workspace;
-  const repositorySlug = params.repository;
-  const irminCore = await initCore();
-
   return (
-    <RepositoryDownloadSection
-      irminCore={irminCore}
-      workspaceSlug={workspaceSlug}
-      repositorySlug={repositorySlug}
-      locale={locale}
-    />
+    <div className='container relative mx-auto max-w-6xl py-12'>
+      <LoadingSkeleton className='h-96' />
+    </div>
   );
 }

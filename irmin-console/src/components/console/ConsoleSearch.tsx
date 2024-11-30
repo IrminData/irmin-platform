@@ -9,6 +9,8 @@ import { LuSearchX } from 'react-icons/lu';
 import {
   TbDashboard,
   TbDatabase,
+  TbFile,
+  TbFolder,
   TbRun,
   TbSearch,
   TbTable,
@@ -156,8 +158,12 @@ export default function ConsoleSearch() {
         return <TbUser size={22} />;
       case ConsoleSearchItemType.Repository:
         return <TbDatabase size={22} />;
-      case ConsoleSearchItemType.Collection:
+      case ConsoleSearchItemType.StructuredObject:
         return <TbTable size={22} />;
+      case ConsoleSearchItemType.BinaryObject:
+        return <TbFile size={22} />;
+      case ConsoleSearchItemType.GroupObject:
+        return <TbFolder size={22} />;
       case ConsoleSearchItemType.Connection:
         return <GoWorkflow size={22} />;
       case ConsoleSearchItemType.Workflow:
@@ -203,8 +209,6 @@ export default function ConsoleSearch() {
                         dict.consoleNavigation.searchItemType.connections}
                       {type === 'repository' &&
                         dict.consoleNavigation.searchItemType.repositories}
-                      {type === 'collection' &&
-                        dict.consoleNavigation.searchItemType.collections}
                       {type === 'user' &&
                         dict.consoleNavigation.searchItemType.users}
                       {type === 'workspace' &&

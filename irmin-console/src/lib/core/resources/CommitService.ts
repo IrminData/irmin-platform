@@ -156,16 +156,16 @@ class CommitService {
   }
 
   /**
-   * Fetch the last commit which modified a collection in a repository
+   * Fetch the last commit which modified a repository object in a certain branch
    *
-   * @param repository - The slug of the repository the collection is in
-   * @param branch - The branch the collection is on
-   * @param collection - Name of the collection to fetch the last modification for
+   * @param repository - The slug of the repository the object is in
+   * @param branch - The branch the object is on
+   * @param objectPath - Path of the object to get the last modification for
    */
   async fetchLastModification(
     repository: string,
     branch: string,
-    collection: string
+    objectPath: string
   ): Promise<IrminAPIResponse<Commit>> {
     if (isOfflineMode)
       return fake(exampleCommits[0]) as IrminAPIResponse<Commit>;
@@ -173,7 +173,7 @@ class CommitService {
       const urlParams = new URLSearchParams();
       urlParams.append('branch', branch);
       const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/collections/${collection}/last-commit?${urlParams.toString()}`,
+        `/v1/repositories/${repository}/objects/${objectPath}/last-commit?${urlParams.toString()}`,
         {
           method: 'GET',
         }

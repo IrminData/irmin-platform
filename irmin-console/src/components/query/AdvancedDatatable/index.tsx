@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic';
 
@@ -19,8 +19,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { TableRow } from '@/types/core/TableCollection';
-import { RenderableRow } from '@/types/internal/RenderableRow';
+import { TableRow } from '@/types/internal/Datatable';
 
 const DataSheet = dynamic(() => import('./DataSheet'), {
   loading: () => <LoadingSkeleton />,
@@ -35,9 +34,9 @@ const DataSheet = dynamic(() => import('./DataSheet'), {
 export default function AdvancedDatatable({ items }: { items: TableRow[] }) {
   const { locale } = useLocale();
 
-  const [renderItems, setRenderItems] = useState<RenderableRow[]>([]);
+  const [renderItems, setRenderItems] = useState<TableRow[]>([]);
   const [columns, setColumns] = useState<
-    Partial<Column<RenderableRow>>[] | undefined
+    Partial<Column<TableRow>>[] | undefined
   >(undefined);
 
   // Create columns and render items from the properties
@@ -85,7 +84,7 @@ export default function AdvancedDatatable({ items }: { items: TableRow[] }) {
 
     // Make sure values in the data are matching the columns
     const newItems = items.map((item) => {
-      const newItem: RenderableRow = { ...item };
+      const newItem: TableRow = { ...item };
       Object.keys(columnsWithTypes).map((key) => {
         try {
           if (!newItem[key]) {

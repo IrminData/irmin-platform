@@ -1,7 +1,7 @@
 import { isBlobText } from '@/utils/isBlobText';
 import removeCircularJSON from '@/utils/removeCircularJSON';
 
-import { IrminAPIUnstructuredResponse } from '@/types/core/IrminAPIResponse';
+import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 
 /**
  * Convert any type of content to text
@@ -10,7 +10,7 @@ import { IrminAPIUnstructuredResponse } from '@/types/core/IrminAPIResponse';
  *
  * @returns The content as text or null if impossible
  */
-export const convertToText = (content: IrminAPIUnstructuredResponse) => {
+export const convertToText = (content: IrminAPIBinaryResponse) => {
   if (content instanceof Blob && isBlobText(content)) {
     const reader = new FileReader();
     reader.readAsText(content);
@@ -29,7 +29,7 @@ export const convertToText = (content: IrminAPIUnstructuredResponse) => {
  *
  * @param content - The content to get the content type for
  */
-export const getContentType = (content: IrminAPIUnstructuredResponse) => {
+export const getContentType = (content: IrminAPIBinaryResponse) => {
   if (content instanceof Blob) return content.type;
   if (typeof content === 'string') return 'text/plain';
   if (typeof content === 'number') return 'text/plain';
@@ -46,7 +46,7 @@ export const getContentType = (content: IrminAPIUnstructuredResponse) => {
  * @param prefix - The prefix to add to the file name
  */
 export const constructFileNameForContent = (
-  content: IrminAPIUnstructuredResponse,
+  content: IrminAPIBinaryResponse,
   prefix?: string
 ) => {
   const contentType = getContentType(content);

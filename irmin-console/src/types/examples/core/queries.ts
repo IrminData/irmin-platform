@@ -2,7 +2,7 @@ import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
 import { Query, QueryExecutionResult } from '@/types/core/Query';
 
-import { exampleCollectionData, exampleWorkflowRunLogs } from '.';
+import { exampleWorkflowRunLogs } from '.';
 
 /**
  * Example Query objects for testing
@@ -65,13 +65,60 @@ export const queries: () => Query[] = () => [
 /**
  * Example Query Execution Result object for testing
  * {@link QueryExecutionResult}
- *
- * @param type - (optional) Type of the query execution result
  */
-export const queryExecutionResult = (
-  type?: 'table' | 'file' | 'folder'
-): QueryExecutionResult => ({
-  result: exampleCollectionData(type),
+export const queryExecutionResult = (): QueryExecutionResult => ({
+  result: [
+    {
+      city: 'New York',
+      country: 'USA',
+      population: 8175133,
+    },
+    {
+      city: 'Los Angeles',
+      country: 'USA',
+      population: 3792621,
+    },
+    {
+      city: 'Chicago',
+      country: 'USA',
+      population: 2695598,
+    },
+    {
+      city: 'Houston',
+      country: 'USA',
+      population: 2100263,
+    },
+    {
+      city: 'Phoenix',
+      country: 'USA',
+      population: 1445632,
+    },
+    {
+      city: 'Philadelphia',
+      country: 'USA',
+      population: 1526006,
+    },
+    {
+      city: 'San Antonio',
+      country: 'USA',
+      population: 1327407,
+    },
+    {
+      city: 'San Diego',
+      country: 'USA',
+      population: 1307402,
+    },
+    {
+      city: 'Dallas',
+      country: 'USA',
+      population: 1197816,
+    },
+    {
+      city: 'San Jose',
+      country: 'USA',
+      population: 945942,
+    },
+  ],
   execution_time: 1000,
   logs: exampleWorkflowRunLogs.logs,
 });

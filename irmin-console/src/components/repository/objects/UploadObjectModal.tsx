@@ -4,13 +4,11 @@ import { useCallback, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import IrminCore from '@/lib/core';
-import { Dictionary } from '@/lib/dict';
-
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 interface UploadFormValues {
@@ -22,25 +20,20 @@ interface UploadFormValues {
 }
 
 /**
- * UI for the upload collection modal.
+ * UI for the upload object modal.
  *
  * @param props - The component props
- * @param props.irminCore - The Irmin core instance
- * @param props.dict - The dictionary for the current locale
  * @param props.currentRepository - The current repository slug
  * @param props.currentRef - The current ref (e.g., branch)
  */
-export default function UploadCollectionModalContent({
-  irminCore,
-  dict,
+export default function UploadObjectModal({
   currentRepository,
   currentRef,
 }: {
-  irminCore: IrminCore;
-  dict: Dictionary;
   currentRepository?: string;
   currentRef?: string;
 }) {
+  const { dict } = useLocale();
   const { irminAlert, irminModal } = usePopup();
 
   const [error, setError] = useState('');
@@ -60,7 +53,7 @@ export default function UploadCollectionModalContent({
     },
   });
 
-  // Handle upload collection to the repository
+  // Handle upload object to the repository
   const handleUpload = useCallback(
     async (data: UploadFormValues) => {
       try {
@@ -68,39 +61,29 @@ export default function UploadCollectionModalContent({
         setError('');
 
         if (!data.files) {
-          setError(dict.repository.collections.upload.noFilesSelected);
+          setError(dict.repository.objects.upload.noFilesSelected);
           return;
         }
 
-        // Upload the collection
-        const res = await irminCore.collectionService.uploadCollection(
-          data.repository,
-          data.ref,
-          data.name,
-          data.files,
-          data.path
-        );
+        // TODO: Upload the object
 
         // Close the modal and show success message
         irminModal.close();
-        irminAlert(
-          'success',
-          res.message ?? 'Collection uploaded successfully'
-        );
+        irminAlert('success', 'Object uploaded successfully');
       } catch (error) {
-        console.error('Failed to upload new collection:', error);
-        setError((error as Error)?.message ?? 'Could not upload collection');
+        console.error('Failed to upload new object:', error);
+        setError((error as Error)?.message ?? 'Could not upload object');
       } finally {
         setLoading(false);
       }
     },
-    [irminCore, irminAlert, irminModal, dict]
+    [irminAlert, irminModal, dict]
   );
 
   return (
     <form onSubmit={handleSubmit(handleUpload)} className='flex flex-col gap-4'>
       <div className='flex flex-col gap-2'>
-        <Label>{dict.repository.collections.upload.targetRepository}</Label>
+        <Label>{dict.repository.objects.upload.targetRepository}</Label>
         <Controller
           name='repository'
           control={control}
@@ -118,7 +101,7 @@ export default function UploadCollectionModalContent({
         />
       </div>
       <div className='flex flex-col gap-2'>
-        <Label>{dict.repository.collections.upload.targetBranch}</Label>
+        <Label>{dict.repository.objects.upload.targetBranch}</Label>
         <Controller
           name='ref'
           control={control}
@@ -136,7 +119,7 @@ export default function UploadCollectionModalContent({
         />
       </div>
       <div className='flex flex-col gap-2'>
-        <Label>{dict.repository.collections.upload.collectionName}</Label>
+        <Label>{dict.repository.objects.upload.objectName}</Label>
         <Controller
           name='name'
           control={control}
@@ -154,7 +137,7 @@ export default function UploadCollectionModalContent({
         />
       </div>
       <div className='flex flex-col gap-2'>
-        <Label>{dict.repository.collections.upload.filesToUpload}</Label>
+        <Label>{dict.repository.objects.upload.filesToUpload}</Label>
         <Controller
           name='files'
           control={control}
@@ -180,7 +163,7 @@ export default function UploadCollectionModalContent({
         />
       </div>
       <div className='flex flex-col gap-2'>
-        <Label>{dict.repository.collections.upload.pathInRepository}</Label>
+        <Label>{dict.repository.objects.upload.pathInRepository}</Label>
         <Controller
           name='path'
           control={control}
@@ -198,9 +181,7 @@ export default function UploadCollectionModalContent({
           disabled={loading}
           type='submit'
         >
-          {loading
-            ? dict.misc.loading
-            : dict.repository.collections.uploadCollection}
+          {loading ? dict.misc.loading : dict.repository.objects.uploadObject}
         </Button>
       </div>
     </form>

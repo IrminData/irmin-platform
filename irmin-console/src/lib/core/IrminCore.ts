@@ -3,12 +3,11 @@ import { defaultLocale, Locale } from '@/lib/dict';
 import removeCircularJSON from '@/utils/removeCircularJSON';
 
 import {
+  IrminAPIBinaryResponse,
   IrminAPIResponse,
-  IrminAPIUnstructuredResponse,
 } from '@/types/core/IrminAPIResponse';
 
 import BranchService from './resources/BranchService';
-import CollectionService from './resources/CollectionService';
 import CommitService from './resources/CommitService';
 import ConnectionService from './resources/ConnectionService';
 import ConnectorService from './resources/ConnectorService';
@@ -16,11 +15,11 @@ import DiffService from './resources/DiffService';
 import EditorItemsService from './resources/EditorItemsService';
 import InviteService from './resources/InviteService';
 import LogService from './resources/LogService';
+import ObjectService from './resources/ObjectService';
 import ProfileService from './resources/ProfileService';
 import QueryService from './resources/QueryService';
 import RepositoryService from './resources/RepositoryService';
 import RoleService from './resources/RoleService';
-import SchemaService from './resources/SchemaService';
 import TagService from './resources/TagService';
 import UserService from './resources/UserService';
 import WorkflowService from './resources/WorkflowService';
@@ -51,8 +50,6 @@ class IrminCore {
   public repositoryService: RepositoryService;
   public branchService: BranchService;
   public commitService: CommitService;
-  public collectionService: CollectionService;
-  public schemaService: SchemaService;
   public inviteService: InviteService;
   public profileService: ProfileService;
   public userService: UserService;
@@ -63,6 +60,7 @@ class IrminCore {
   public logService: LogService;
   public diffService: DiffService;
   public tagService: TagService;
+  public objectService: ObjectService;
 
   constructor(locale: Locale, apiToken: string) {
     // Set locale and token
@@ -77,8 +75,6 @@ class IrminCore {
     this.repositoryService = new RepositoryService(this);
     this.branchService = new BranchService(this);
     this.commitService = new CommitService(this);
-    this.collectionService = new CollectionService(this);
-    this.schemaService = new SchemaService(this);
     this.inviteService = new InviteService(this);
     this.profileService = new ProfileService(this);
     this.userService = new UserService(this);
@@ -89,6 +85,7 @@ class IrminCore {
     this.logService = new LogService(this);
     this.diffService = new DiffService(this);
     this.tagService = new TagService(this);
+    this.objectService = new ObjectService(this);
   }
 
   private _fetch = async (
@@ -162,10 +159,10 @@ class IrminCore {
     return result;
   };
 
-  public fetchUnstructured = async (
+  public fetchBinary = async (
     url: string,
     options: RequestInit
-  ): Promise<IrminAPIUnstructuredResponse> => {
+  ): Promise<IrminAPIBinaryResponse> => {
     // Call the Irmin API using the internal _fetch method
     const response = await this._fetch(url, options);
 
