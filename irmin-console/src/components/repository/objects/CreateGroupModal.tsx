@@ -11,41 +11,32 @@ import { Label } from '@/components/ui/label';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-interface UploadFormValues {
+interface CreateGroupFormValues {
   repository: string;
   ref: string;
   name: string;
-  files: FileList | null;
   path: string;
 }
 
 /**
- * UI for the upload object modal.
+ * UI for the create group (folder) modal.
  *
  * @param props - The component props
- * @param props.uploadObject - The function to upload the object
+ * @param props.createGroup - The function to create the group
  * @param props.currentPath - The current path in the repository
  * @param props.currentRepository - The current repository slug
  * @param props.currentRef - The current branch/ref
- * @param props.prefilledName - The name to prefill in the name field
  */
-export default function UploadObjectModal({
-  uploadObject,
+export default function CreateGroupModal({
+  createGroup,
   currentPath,
   currentRepository,
   currentRef,
-  prefilledName,
 }: {
-  uploadObject: (
-    name: string,
-    path: string,
-    ref: string,
-    files: FileList
-  ) => Promise<void>;
+  createGroup: (name: string, path: string, ref: string) => Promise<void>;
   currentPath: string;
   currentRepository: string;
   currentRef: string;
-  prefilledName?: string;
 }) {
   const { dict } = useLocale();
   const { irminModal } = usePopup();
@@ -56,47 +47,42 @@ export default function UploadObjectModal({
   const {
     control,
     handleSubmit,
-    setValue,
     formState: { errors },
-  } = useForm<UploadFormValues>({
+  } = useForm<CreateGroupFormValues>({
     defaultValues: {
       repository: currentRepository,
       ref: currentRef,
-      name: prefilledName ?? 'example.txt',
-      files: null,
+      name: 'example-group',
       path: currentPath,
     },
   });
 
-  // Handle upload object to the repository
-  const handleUpload = useCallback(
-    async (data: UploadFormValues) => {
+  const handleCreateGroup = useCallback(
+    async (data: CreateGroupFormValues) => {
       try {
         setLoading(true);
         setError('');
 
-        if (!data.files) {
-          setError(dict.repository.objects.noFilesSelected);
-          return;
-        }
-
-        // Upload the object
-        await uploadObject(data.name, data.path, data.ref, data.files);
+        // Create the group in the repository
+        await createGroup(data.name, data.path, data.ref);
 
         // Close the modal and show success message
         irminModal.close();
       } catch (error) {
-        console.error('Failed to upload new object:', error);
-        setError((error as Error)?.message ?? 'Could not upload object');
+        console.error('Failed to create group:', error);
+        setError((error as Error)?.message ?? 'Could not create group');
       } finally {
         setLoading(false);
       }
     },
-    [uploadObject, irminModal, dict]
+    [createGroup, irminModal]
   );
 
   return (
-    <form onSubmit={handleSubmit(handleUpload)} className='flex flex-col gap-4'>
+    <form
+      onSubmit={handleSubmit(handleCreateGroup)}
+      className='flex flex-col gap-4'
+    >
       <div className='flex flex-col gap-2'>
         <Label>{dict.repository.objects.targetRepository}</Label>
         <Controller
@@ -152,35 +138,6 @@ export default function UploadObjectModal({
         />
       </div>
       <div className='flex flex-col gap-2'>
-        <Label>{dict.repository.objects.fileToUpload}</Label>
-        <Controller
-          name='files'
-          control={control}
-          rules={{ required: dict.misc.fieldRequired }}
-          render={({ field }) => (
-            <>
-              <Input
-                type='file'
-                disabled={loading}
-                onChange={(e) => {
-                  const files = e.target.files;
-                  field.onChange(files);
-                  if (files && files[0]) {
-                    // Auto-set the name field to the selected file's name
-                    setValue('name', files[0].name);
-                  }
-                }}
-              />
-              {errors.files && (
-                <p className='mt-1 text-xs text-red-600'>
-                  {errors.files.message}
-                </p>
-              )}
-            </>
-          )}
-        />
-      </div>
-      <div className='flex flex-col gap-2'>
         <Label>{dict.repository.objects.pathInRepository}</Label>
         <Controller
           name='path'
@@ -198,7 +155,7 @@ export default function UploadObjectModal({
           disabled={loading}
           type='submit'
         >
-          {loading ? dict.misc.loading : dict.repository.objects.uploadObject}
+          {loading ? dict.misc.loading : dict.repository.objects.createGroup}
         </Button>
       </div>
     </form>

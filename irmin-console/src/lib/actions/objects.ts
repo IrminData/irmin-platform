@@ -101,9 +101,9 @@ export async function getObjectContent(
  *
  * @param repository - Repository slug
  * @param ref - Ref to upload the object to
- * @param path - Path within the repository
- * @param object - Name of the object
- * @param files - Files to upload
+ * @param path - Path within the repository (example: /example/path)
+ * @param object - Name of the object (example: file.txt)
+ * @param files - (optional) Files to upload (leave undefined for group creation)
  * @param token - (optional) User token
  * @returns The created object
  */
@@ -112,7 +112,7 @@ export async function uploadObject(
   ref: string,
   path: string,
   object: string,
-  files: FileList,
+  files?: FileList,
   token?: string
 ) {
   const irminCore = await initCore(token);

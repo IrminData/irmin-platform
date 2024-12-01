@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 import { AiOutlinePlayCircle } from 'react-icons/ai';
-import { TbDownload, TbFileDiff, TbUpload } from 'react-icons/tb';
+import { TbDownload, TbFileDiff, TbFolderOpen, TbUpload } from 'react-icons/tb';
 
 import { Dictionary } from '@/lib/dict';
 
@@ -23,6 +23,7 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 import { Object } from '@/types/core/Object';
 import { Workspace } from '@/types/core/Workspace';
 
+import CreateGroupModal from './objects/CreateGroupModal';
 import ObjectDetails from './objects/ObjectDetails';
 import ObjectList from './objects/ObjectList';
 import UploadObjectModal from './objects/UploadObjectModal';
@@ -48,8 +49,8 @@ export default function RepositorySection({
     currentRef,
     currentPath,
     currentRepository,
-    loadingObjects,
-    objects,
+    uploadObject,
+    createGroup,
   } = useRepository();
 
   const query = useQuery();
@@ -76,11 +77,39 @@ export default function RepositorySection({
     irminModal.show(
       dict.repository.objects.uploadObject,
       <UploadObjectModal
+        currentPath={currentPath}
         currentRepository={currentRepository.slug}
-        currentRef={currentRef}
+        currentRef={currentRef ?? 'main'}
+        uploadObject={uploadObject}
       />
     );
-  }, [currentRef, currentRepository.slug, dict, irminModal]);
+  }, [
+    dict,
+    irminModal,
+    currentPath,
+    currentRepository,
+    currentRef,
+    uploadObject,
+  ]);
+
+  const handleCreateGroup = useCallback(() => {
+    irminModal.show(
+      dict.repository.objects.createGroup,
+      <CreateGroupModal
+        currentPath={currentPath}
+        currentRepository={currentRepository.slug}
+        currentRef={currentRef ?? 'main'}
+        createGroup={createGroup}
+      />
+    );
+  }, [
+    dict,
+    irminModal,
+    currentPath,
+    currentRepository,
+    currentRef,
+    createGroup,
+  ]);
 
   const runCurrentQuery = useCallback(() => {
     if (!queryField || queryField.length < 3) return;
@@ -154,6 +183,16 @@ export default function RepositorySection({
             </Button>
             {!immutable && (
               <Button
+                variant='secondary'
+                size='sm'
+                onClick={handleCreateGroup}
+                icon={<TbFolderOpen />}
+              >
+                {dict.repository.objects.createGroup}
+              </Button>
+            )}
+            {!immutable && (
+              <Button
                 variant='default'
                 size='sm'
                 onClick={handleUpload}
@@ -166,12 +205,10 @@ export default function RepositorySection({
         </div>
         <div className='flex w-full flex-col items-start gap-2 md:flex-row md:gap-2'>
           <ObjectList selectObject={setSelectedObject} />
-          {selectedObject && (
-            <ObjectDetails
-              selectedObject={selectedObject}
-              closeDetails={() => setSelectedObject(undefined)}
-            />
-          )}
+          <ObjectDetails
+            selectedObject={selectedObject}
+            closeDetails={() => setSelectedObject(undefined)}
+          />
         </div>
         <div className='w-full max-w-full overflow-hidden rounded-md border border-gray-100 bg-background dark:border-gray-800'>
           <div className='flex w-full flex-row items-center justify-between bg-gray-100 pl-4 dark:bg-gray-800'>

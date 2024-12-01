@@ -80,7 +80,13 @@ interface RepositoryContextProps {
   objects: Object[];
   deleteObject: (objectName: string) => Promise<void>;
   moveObject: (oldPath: string, newPath: string) => Promise<void>;
-  uploadObject: (objectName: string, files: FileList) => Promise<void>;
+  createGroup: (name: string, path: string, ref: string) => Promise<void>;
+  uploadObject: (
+    objectName: string,
+    objectPath: string | undefined,
+    ref: string | undefined,
+    files: FileList
+  ) => Promise<void>;
   getObjectContent: (
     objectPath: string
   ) => Promise<IrminAPIBinaryResponse | undefined>;
@@ -410,15 +416,39 @@ export const RepositoryProvider = ({
   );
 
   /**
+   * Create a group (e.g. directory) in the repository at path
+   */
+  const handleCreateGroup = useCallback(
+    async (name: string, path: string, ref: string) => {
+      try {
+        const res = await uploadObject(repositorySlug, ref, path, name);
+        irminAlert('success', res.message ?? 'Group created successfully');
+        fetchObjects();
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to create directory'
+        );
+      }
+    },
+    [repositorySlug, fetchObjects, irminAlert]
+  );
+
+  /**
    * Upload an object to the repository at path
    */
   const handleUploadObject = useCallback(
-    async (objectName: string, files: FileList) => {
+    async (
+      objectName: string,
+      objectPath: string | undefined,
+      ref: string | undefined,
+      files: FileList
+    ) => {
       try {
         const res = await uploadObject(
           repositorySlug,
-          currentRef ?? 'main',
-          currentPath,
+          ref ?? currentRef ?? 'main',
+          objectPath ?? currentPath ?? '/',
           objectName,
           files
         );
@@ -861,6 +891,7 @@ export const RepositoryProvider = ({
         objects,
         deleteObject: handleDeleteObject,
         moveObject: handleMoveObject,
+        createGroup: handleCreateGroup,
         uploadObject: handleUploadObject,
         getObjectContent: fetchObjectContent,
         getObjectSchema: fetchObjectSchema,

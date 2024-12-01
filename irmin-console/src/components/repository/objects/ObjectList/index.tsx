@@ -78,7 +78,7 @@ export default function ObjectList({
     }));
   };
 
-  const getIcon = (type: Object['type'], contentType?: string) => {
+  const getIcon = (type: Object['type']) => {
     switch (type) {
       case 'group':
         return (
@@ -138,7 +138,7 @@ export default function ObjectList({
                 <TableRow key={obj.path}>
                   <TableCell>
                     <div className='flex items-center space-x-2'>
-                      {getIcon(obj.type, obj.content_type)}
+                      {getIcon(obj.type)}
                       <Button
                         variant='link'
                         onClick={() => {

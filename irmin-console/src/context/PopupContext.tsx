@@ -73,17 +73,24 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   const [confirmType, setConfirmType] = useState<'warning' | 'info' | null>(
     null
   );
-  const [confirmOnSelect, setConfirmOnSelect] = useState<
-    null | ((_confirmed: boolean) => void)
+  const [confirmResolver, setConfirmResolver] = useState<
+    null | ((value: boolean) => void)
   >(null);
+  const handleConfirmSelection = (confirmed: boolean) => {
+    if (confirmResolver) {
+      confirmResolver(confirmed); // Resolve the stored promise
+      setConfirmResolver(null); // Clear the resolver
+    }
+    setConfirmMessage(null);
+    setConfirmType(null);
+  };
   const irminConfirm = useCallback(
-    async (type: 'warning' | 'info', message: string) => {
+    (type: 'warning' | 'info', message: string): Promise<boolean> => {
       setConfirmType(type);
       setConfirmMessage(message);
+
       return new Promise<boolean>((resolve) => {
-        setConfirmOnSelect((confirmed: boolean) => {
-          resolve(confirmed);
-        });
+        setConfirmResolver(() => resolve); // Store the resolver function
       });
     },
     []
@@ -135,11 +142,7 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
         <Confirm
           type={confirmType}
           message={confirmMessage}
-          onSelect={(confirmed) => {
-            setConfirmMessage(null);
-            if (typeof confirmOnSelect === 'function')
-              confirmOnSelect(confirmed);
-          }}
+          onSelect={handleConfirmSelection}
         />
       )}
       {modalOpen && (

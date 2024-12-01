@@ -63,7 +63,7 @@ TEST_USER_REPOSITORY_SLUG="kpi-and-performance-metrics" # Slug of the repository
 
 Lint and code formatting:
 
-```bash
+```
 yarn lint
 
 yarn format
@@ -73,27 +73,27 @@ yarn format:fix
 
 Start the server:
 
-```bash
+```
 yarn dev
 ```
 
 Build and start the server:
 
-```bash
+```
 yarn build
 yarn start
 ```
 
 With Docker:
 
-```bash
+```
 docker build -t irmin-frontend .
 docker run -p 3000:3000 irmin-frontend
 ```
 
 Creating Docker image:
 
-```bash
+```
 docker buildx create --use # Verify Buildx is active: docker buildx ls
 docker buildx build --platform linux/amd64/v2,linux/arm64/v8 -t YOUR_DOCKER_USERNAME/irmin-frontend:latest --push .
 ```
@@ -106,7 +106,7 @@ To quickly migrate, you can use the following commands:
 
 1. Set Yarn to use version 2:
 
-   ```bash
+   ```
    yarn set version 4.4.1
    ```
 
@@ -118,7 +118,7 @@ To quickly migrate, you can use the following commands:
    ```
 
 3. Install dependencies using Yarn v2:
-   ```bash
+   ```
    yarn install
    ```
 
@@ -132,7 +132,7 @@ When documenting code, use TypeDoc comments. TypeDoc comments should be placed a
 
 To generate the TypeDoc documentation, run:
 
-```bash
+```
 yarn docs
 ```
 
@@ -148,7 +148,7 @@ Playwright is used for end-to-end testing. The tests are located in the `tests` 
 
 To run the tests, use the following commands:
 
-```bash
+```
 yarn e2e # Run the tests
 yarn e2e:ui # Run the tests with UI
 yarn e2e:report # Show the test report
@@ -156,7 +156,7 @@ yarn e2e:report # Show the test report
 
 To generate test code, use the following commands:
 
-```bash
+```
 yarn e2e:codegen # Generate test code for desktop
 yarn e2e:codegen-mobile # Generate test code for mobile
 ```
