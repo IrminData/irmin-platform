@@ -40,12 +40,12 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props;
 
   return (
-    <ClerkProvider dynamic>
-      <html suppressHydrationWarning>
-        <head />
-        <body
-          className={`${inter.variable} ${bigShouldersDisplay.variable} scrollbar-hide`}
-        >
+    <html suppressHydrationWarning>
+      <head />
+      <body
+        className={`${inter.variable} ${bigShouldersDisplay.variable} scrollbar-hide`}
+      >
+        <ClerkProvider dynamic>
           <LocaleProvider>
             <PopupProvider>
               <IAMProvider>
@@ -60,8 +60,8 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
               </IAMProvider>
             </PopupProvider>
           </LocaleProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

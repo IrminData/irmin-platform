@@ -105,7 +105,9 @@ export default function AcceptInviteSection({
             />
           </div>
           <div className='space-y-2'>
-            <Label htmlFor='confirm-password'>{dict.invite.confirmPassword}</Label>
+            <Label htmlFor='confirm-password'>
+              {dict.invite.confirmPassword}
+            </Label>
             <Input
               id='confirm-password'
               type='password'

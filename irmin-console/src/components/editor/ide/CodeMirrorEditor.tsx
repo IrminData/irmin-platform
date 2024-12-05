@@ -4,28 +4,23 @@ import { memo, useMemo } from 'react';
 
 import { javascript } from '@codemirror/lang-javascript';
 import { PostgreSQL, sql } from '@codemirror/lang-sql';
-import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
-import CodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
+import {
+  vscodeDark,
+  vscodeDarkInit,
+  vscodeLight,
+} from '@uiw/codemirror-theme-vscode';
+import CodeMirror from '@uiw/react-codemirror';
 import { useTheme } from 'next-themes';
 
 import { useLocale } from '@/context/LocaleContext';
 
-interface CodeMirrorEditorProps extends ReactCodeMirrorProps {
+interface CodeMirrorEditorProps {
   language: string;
   content: string;
-  editorHeight: string;
+  editorHeight?: string;
   updateEditorContent: (value: string) => void;
 }
 
-/**
- * CodeMirror editor component with support for JavaScript and SQL
- *
- * @param props - The props for the component  {@link ReactCodeMirrorProps}
- * @param props.language - The language of the editor (eg. 'js' or 'sql')
- * @param props.content - The content of the editor
- * @param props.editorHeight - The height of the editor
- * @param props.updateEditorContent - Callback to update the content of the editor
- */
 const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   language,
   content,
@@ -36,6 +31,11 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const { dict } = useLocale();
   const { resolvedTheme } = useTheme();
 
+  const editorTheme = useMemo(
+    () => (resolvedTheme === 'dark' ? vscodeDark : vscodeLight),
+    [resolvedTheme]
+  );
+
   const placeholder = useMemo(
     () =>
       language === 'js' ? dict.editor.writeYourJS : dict.editor.writeYourSQL,
@@ -44,29 +44,30 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
   const extensions = useMemo(() => {
     if (language === 'js') {
-      return [javascript({ jsx: false, typescript: false })];
+      return [editorTheme, javascript({ jsx: false, typescript: false })];
     }
-    return [
-      sql({
-        dialect: PostgreSQL,
-      }),
-    ];
-  }, [language]);
+    return [editorTheme, sql({ dialect: PostgreSQL })];
+  }, [language, editorTheme]);
 
-  if (!resolvedTheme) return <></>;
-
-  const editorTheme = resolvedTheme === 'dark' ? githubDark : githubLight;
+  if (!resolvedTheme) return null;
 
   return (
-    <CodeMirror
-      value={content}
-      height={editorHeight}
-      extensions={extensions}
-      placeholder={placeholder}
-      theme={editorTheme}
-      onChange={(value) => updateEditorContent(value)}
-      {...editorProps}
-    />
+    <div
+      style={{
+        maxHeight: editorHeight,
+      }}
+      className='relative h-full w-full overflow-scroll'
+    >
+      <CodeMirror
+        value={content}
+        height={'100%'}
+        extensions={extensions}
+        placeholder={placeholder}
+        onChange={(value) => updateEditorContent(value)}
+        theme={vscodeDarkInit()}
+        {...editorProps}
+      />
+    </div>
   );
 };
 

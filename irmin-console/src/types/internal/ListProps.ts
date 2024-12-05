@@ -1,3 +1,5 @@
+import type { JSX } from 'react';
+
 /**
  * Action that can be taken on a table row, shown as a button at the end of the row
  * @typeParam label - Label of the action button

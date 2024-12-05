@@ -25,21 +25,19 @@ import {
   EditorItemsFile,
   IrminFileType,
 } from '@/types/core/EditorItems';
-import { FileContents } from '@/types/internal/FileContents';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
- * Hook to manage editor items and editor state
+ * Hook to manage editor items and editor state.
  *
- * @param editorItems - Current editor items
+ * @param editorItems - Current editor items.
  */
 export const useEditor = (editorItems: EditorItems) => {
   const { dict } = useLocale();
   const { irminModal, irminAlert, irminConfirm } = usePopup();
 
   // State for editor items
-  const [currentEditorItems, setCurrentEditorItems] =
-    useState<EditorItems>(editorItems);
+  const [currentEditorItems, setCurrentEditorItems] = useState(editorItems);
 
   // Update currentEditorItems if editorItems prop changes
   useEffect(() => {
@@ -52,117 +50,116 @@ export const useEditor = (editorItems: EditorItems) => {
     [currentEditorItems]
   );
 
-  // State for editor tabs and contents
-  const [activeTab, setActiveTab] = useState(0);
-  const [openFileTabs, setOpenFileTabs] = useState<string[]>([]);
-  const [openTabsContents, setOpenTabsContents] = useState<FileContents[]>([]);
+  // State for open tabs and active tab index
+  const [openTabs, setOpenTabs] = useState<
+    {
+      id: string;
+      path: string;
+      contents: string;
+      originalContents: string;
+      language: IrminFileType;
+      created: boolean;
+    }[]
+  >([]);
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [editorHeight, setEditorHeight] = useState('500px');
+  const [untitledCounter, setUntitledCounter] = useState(1);
+
+  // Get the current editor based on active tab
+  const currentEditor = openTabs[activeTabIndex];
 
   /**
-   * Opens a new tab with an untitled file name
+   * Opens a new tab with an untitled file name.
    */
   const openNewTab = useCallback(() => {
-    const untitledCount = openFileTabs.filter((path) =>
-      path.toLowerCase().includes('untitled')
-    ).length;
-    const untitledName = `untitled_${untitledCount + 1}.sql`;
+    const untitledName = `untitled_${untitledCounter}.sql`;
     const untitledPath = `/${untitledName}`;
 
-    setOpenFileTabs((prev) => [...prev, untitledPath]);
-    setActiveTab(openFileTabs.length);
-  }, [openFileTabs]);
+    const newTab = {
+      id: crypto.randomUUID(),
+      path: untitledPath,
+      contents: '',
+      originalContents: '',
+      language: 'sql' as IrminFileType,
+      created: false,
+    };
+
+    setOpenTabs((prev) => [...prev, newTab]);
+    setActiveTabIndex(openTabs.length);
+    setUntitledCounter((prev) => prev + 1);
+  }, [openTabs.length, untitledCounter]);
 
   /**
-   * Opens a file in a new tab
+   * Opens a file in a new tab.
    */
   const openFile = useCallback(
     (file: FileNavigatorItem) => {
       const filePath = file.current?.path ?? '';
-      const existingTabIndex = openFileTabs.indexOf(filePath);
+      const existingTabIndex = openTabs.findIndex(
+        (tab) => tab.path === filePath
+      );
 
       if (existingTabIndex === -1) {
-        setOpenFileTabs((prev) => [...prev, filePath]);
-        setActiveTab(openFileTabs.length);
+        const currentAsFile = file.current
+          ? (file.current as EditorItemsFile)
+          : null;
+        const fileContents = currentAsFile?.contents ?? '';
+        const language =
+          currentAsFile?.type ?? getLanguageFromFilename(filePath);
+
+        const newTab = {
+          id: crypto.randomUUID(),
+          path: filePath,
+          contents: fileContents,
+          originalContents: fileContents,
+          language,
+          created: true,
+        };
+        setOpenTabs((prev) => [...prev, newTab]);
+        setActiveTabIndex(openTabs.length);
       } else {
-        setActiveTab(existingTabIndex);
+        setActiveTabIndex(existingTabIndex);
       }
     },
-    [openFileTabs]
+    [openTabs]
   );
 
   /**
-   * Closes a tab
+   * Closes a tab.
    */
   const closeTab = useCallback(
     (tabPath: string) => {
-      setOpenFileTabs((prev) => prev.filter((path) => path !== tabPath));
-      setOpenTabsContents((prev) =>
-        prev.filter((content) => content.path !== tabPath)
-      );
+      const tabIndex = openTabs.findIndex((tab) => tab.path === tabPath);
+      if (tabIndex !== -1) {
+        setOpenTabs((prev) => prev.filter((tab) => tab.path !== tabPath));
 
-      if (activeTab >= openFileTabs.length - 1) {
-        setActiveTab(
-          openFileTabs.length - 2 >= 0 ? openFileTabs.length - 2 : 0
-        );
+        // Adjust activeTabIndex if necessary
+        if (activeTabIndex >= tabIndex) {
+          setActiveTabIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+        }
       }
     },
-    [activeTab, openFileTabs.length]
+    [activeTabIndex, openTabs]
   );
 
   /**
-   * Updates the content of the current tab
+   * Updates the content of the current tab.
    */
   const updateCurrentTabContent = useCallback(
     (newContent: string) => {
-      const currentTabPath = openFileTabs[activeTab];
-      setOpenTabsContents((prev) =>
-        prev.map((content) =>
-          content.path === currentTabPath
-            ? { ...content, contents: newContent }
-            : content
+      if (!currentEditor) return;
+
+      setOpenTabs((prev) =>
+        prev.map((tab) =>
+          tab.id === currentEditor.id ? { ...tab, contents: newContent } : tab
         )
       );
     },
-    [activeTab, openFileTabs]
+    [currentEditor]
   );
 
   /**
-   * Initializes or updates open tabs contents
-   */
-  useEffect(() => {
-    const updatedContents = openFileTabs.map((tabPath) => {
-      const existingContent = openTabsContents.find(
-        (content) => content.path === tabPath
-      );
-      if (existingContent) return existingContent;
-
-      const file = getFileByPath(tabPath, currentEditorItems);
-      const contents = file?.contents ?? '';
-      const language = file?.type ?? getLanguageFromFilename(tabPath);
-
-      return {
-        id: crypto.randomUUID(),
-        contents,
-        originalContents: contents,
-        language,
-        path: tabPath,
-        created: !!file,
-      };
-    });
-
-    setOpenTabsContents(updatedContents);
-  }, [openFileTabs, currentEditorItems, openTabsContents]);
-
-  /**
-   * Retrieves the current editor content based on the active tab
-   */
-  const currentEditor = useMemo(
-    () => openTabsContents.find((tab) => tab.path === openFileTabs[activeTab]),
-    [openTabsContents, openFileTabs, activeTab]
-  );
-
-  /**
-   * Determines if the save button should be enabled
+   * Determines if the save button should be enabled.
    */
   const enableSaveButton = useMemo(() => {
     if (!currentEditor) return false;
@@ -170,7 +167,7 @@ export const useEditor = (editorItems: EditorItems) => {
   }, [currentEditor]);
 
   /**
-   * Create a new file
+   * Creates a new file.
    */
   const createFile = useCallback(
     async (fileItem: FileNavigatorItem) => {
@@ -187,7 +184,7 @@ export const useEditor = (editorItems: EditorItems) => {
   );
 
   /**
-   * Save the active tab as a file
+   * Saves the active tab as a file.
    */
   const saveActiveTabAsFile = useCallback(async () => {
     if (!currentEditor) return;
@@ -202,16 +199,17 @@ export const useEditor = (editorItems: EditorItems) => {
         current: updatedFile,
         type: 'file',
       });
+
       setCurrentEditorItems((prev) => ({
         ...prev,
         files: prev.files.map((f) => (f.path === file.path ? updatedFile : f)),
       }));
 
-      setOpenTabsContents((prev) =>
-        prev.map((content) =>
-          content.path === currentEditor.path
-            ? { ...content, originalContents: currentEditor.contents }
-            : content
+      setOpenTabs((prev) =>
+        prev.map((tab) =>
+          tab.id === currentEditor.id
+            ? { ...tab, originalContents: currentEditor.contents }
+            : tab
         )
       );
 
@@ -239,14 +237,15 @@ export const useEditor = (editorItems: EditorItems) => {
   ]);
 
   /**
-   * Change the language of the active tab
+   * Changes the language of the active tab.
    */
   const changeLanguage = useCallback(
     (language: IrminFileType) => {
       if (!currentEditor) return;
-      setOpenTabsContents((prev) =>
-        prev.map((content) =>
-          content.id === currentEditor.id ? { ...content, language } : content
+
+      setOpenTabs((prev) =>
+        prev.map((tab) =>
+          tab.id === currentEditor.id ? { ...tab, language } : tab
         )
       );
     },
@@ -254,7 +253,7 @@ export const useEditor = (editorItems: EditorItems) => {
   );
 
   /**
-   * Add new file via modal
+   * Adds a new file via modal.
    */
   const addNewFile = useCallback(() => {
     irminModal.show(
@@ -272,7 +271,7 @@ export const useEditor = (editorItems: EditorItems) => {
   ]);
 
   /**
-   * Add new folder via modal
+   * Adds a new folder via modal.
    */
   const addNewFolder = useCallback(() => {
     irminModal.show(
@@ -298,7 +297,7 @@ export const useEditor = (editorItems: EditorItems) => {
   ]);
 
   /**
-   * Rename or move item via modal
+   * Renames or moves an item via modal.
    */
   const renameOrMoveItem = useCallback(
     (item: FileNavigatorItem) => {
@@ -356,7 +355,7 @@ export const useEditor = (editorItems: EditorItems) => {
   );
 
   /**
-   * Delete item with confirmation
+   * Deletes an item with confirmation.
    */
   const deleteItem = useCallback(
     (item: FileNavigatorItem) => {
@@ -398,11 +397,11 @@ export const useEditor = (editorItems: EditorItems) => {
     deleteItem,
     openFile,
     currentEditor,
-    openFileTabs,
-    activeTab,
+    openFileTabs: openTabs.map((tab) => tab.path),
+    activeTab: activeTabIndex,
     updateCurrentTabContent,
     setEditorHeight,
-    setActiveTab,
+    setActiveTab: setActiveTabIndex,
     saveActiveTabAsFile,
     closeTab,
     changeLanguage,

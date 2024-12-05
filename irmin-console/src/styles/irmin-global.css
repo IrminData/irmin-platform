@@ -214,8 +214,9 @@ input[type='radio'] {
 }
 
 /* Code editor */
-#code-editor {
-  .cm-editor.cm-focused {
+.cm-editor {
+  all: unset !important;
+  &.cm-focused {
     outline: none;
   }
 }

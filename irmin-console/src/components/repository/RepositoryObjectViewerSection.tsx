@@ -103,30 +103,33 @@ const RepositoryObjectViewerSection = ({
   return (
     <>
       <div className='container relative mx-auto mb-4 flex max-w-6xl flex-col gap-4 px-2 md:px-4'>
-        <div className='flex flex-col items-start justify-between gap-4 lg:flex-row'>
-          <div className='w-full max-w-full overflow-hidden rounded-md border border-gray-100 bg-background dark:border-gray-800'>
-            <div className='flex w-full flex-row items-center justify-between bg-gray-100 pl-4 dark:bg-gray-800'>
-              <div className='py-2 text-sm font-semibold'>
-                {dict.repository.sqlQuery}
+        <div
+          className={`flex flex-col items-start gap-4 lg:flex-row ${selectedObject.type === 'structured' ? 'justify-between' : 'justify-end'}`}
+        >
+          {selectedObject.type === 'structured' && (
+            <div className='w-full max-w-full overflow-hidden rounded-md border border-gray-100 bg-background dark:border-gray-800'>
+              <div className='flex w-full flex-row items-center justify-between bg-gray-100 pl-4 dark:bg-gray-800'>
+                <div className='py-2 text-sm font-semibold'>
+                  {dict.repository.sqlQuery}
+                </div>
+                <Button
+                  variant='accent'
+                  className='float-end m-2 shadow-none'
+                  size='sm'
+                  icon={<AiOutlinePlayCircle />}
+                  loading={query.loading}
+                  onClick={runCurrentQuery}
+                >
+                  {dict.repository.runQuery}
+                </Button>
               </div>
-              <Button
-                variant='accent'
-                className='float-end m-2 shadow-none'
-                size='sm'
-                icon={<AiOutlinePlayCircle />}
-                loading={query.loading}
-                onClick={runCurrentQuery}
-              >
-                {dict.repository.runQuery}
-              </Button>
+              <CodeMirrorEditor
+                language='sql'
+                content={queryField}
+                updateEditorContent={setQueryField}
+              />
             </div>
-            <CodeMirrorEditor
-              language='sql'
-              content={queryField}
-              editorHeight='200px'
-              updateEditorContent={setQueryField}
-            />
-          </div>
+          )}
           <ObjectDetails
             selectedObject={selectedObject}
             hideViewButton={true}
@@ -158,7 +161,7 @@ const RepositoryObjectViewerSection = ({
               >
                 {currentRepository.slug}
               </Link>
-              {` / ${selectedObject.path.replace(/\//g, '')}`}
+              {`/ ${selectedObject.path.substring(1)}`}
               {currentRef && ` @ ${currentRef}`}
             </div>
           </div>

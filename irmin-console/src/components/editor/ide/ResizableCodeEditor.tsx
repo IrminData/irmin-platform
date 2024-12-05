@@ -57,10 +57,10 @@ const ResizableCodeEditor = ({
 
   return (
     <div
-      style={{ minHeight: editorHeight }}
+      style={{ maxHeight: editorHeight }}
       ref={editorRef}
       id='code-editor'
-      className='bg-gray-200 text-xs lg:text-sm dark:bg-irmin_black'
+      className='flex h-full flex-col bg-gray-200 text-xs lg:text-sm dark:bg-irmin_black'
     >
       <CodeMirrorEditor
         language={language}

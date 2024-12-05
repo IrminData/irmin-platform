@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { type JSX, useCallback, useRef, useState } from 'react';
 
 import { GoChevronDown, GoChevronUp } from 'react-icons/go';
 

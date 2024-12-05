@@ -1,6 +1,12 @@
 'use client';
 
-import { createContext, useCallback, useContext, useState } from 'react';
+import {
+  createContext,
+  type JSX,
+  useCallback,
+  useContext,
+  useState,
+} from 'react';
 
 import Alert from '@/components/ui/popup/Alert';
 import Confirm from '@/components/ui/popup/Confirm';

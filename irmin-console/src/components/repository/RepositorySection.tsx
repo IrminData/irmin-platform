@@ -171,9 +171,7 @@ export default function RepositorySection({
           <CodeMirrorEditor
             language='sql'
             content={queryField}
-            editorHeight='100px'
             updateEditorContent={updateQuery}
-            className='h-full w-full text-sm outline-none md:text-sm lg:text-base'
           />
         </div>
         {!queryResultsOpen ? (

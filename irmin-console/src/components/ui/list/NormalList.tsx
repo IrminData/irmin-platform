@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { type JSX, useState } from 'react';
 
 import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5';
 
