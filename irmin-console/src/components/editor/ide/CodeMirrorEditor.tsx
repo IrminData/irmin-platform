@@ -3,31 +3,30 @@
 import { memo, useMemo } from 'react';
 
 import { javascript } from '@codemirror/lang-javascript';
+import { markdown } from '@codemirror/lang-markdown';
 import { PostgreSQL, sql } from '@codemirror/lang-sql';
 import {
   vscodeDark,
   vscodeDarkInit,
   vscodeLight,
 } from '@uiw/codemirror-theme-vscode';
-import CodeMirror from '@uiw/react-codemirror';
+import CodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
 import { useTheme } from 'next-themes';
 
 import { useLocale } from '@/context/LocaleContext';
 
-interface CodeMirrorEditorProps {
-  language: string;
-  content: string;
-  editorHeight?: string;
-  updateEditorContent: (value: string) => void;
-}
-
-const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
+const CodeMirrorEditor = ({
   language,
   content,
   editorHeight,
   updateEditorContent,
   ...editorProps
-}) => {
+}: {
+  language: string;
+  content: string;
+  editorHeight?: string;
+  updateEditorContent: (value: string) => void;
+} & ReactCodeMirrorProps) => {
   const { dict } = useLocale();
   const { resolvedTheme } = useTheme();
 
@@ -45,6 +44,9 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const extensions = useMemo(() => {
     if (language === 'js') {
       return [editorTheme, javascript({ jsx: false, typescript: false })];
+    }
+    if (language === 'md') {
+      return [editorTheme, markdown()];
     }
     return [editorTheme, sql({ dialect: PostgreSQL })];
   }, [language, editorTheme]);

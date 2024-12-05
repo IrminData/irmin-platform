@@ -568,7 +568,7 @@ const fi = {
   documentation: {
     documentation: 'Dokumentaatio',
     switchToPlainText: 'Teksti',
-    switchToMarkdownEditor: 'Markdown muokkaaja',
+    switchToVisualEditor: 'Visuaalinen muokkaaja',
     startTypingDocumentation:
       'Aloita dokumentaation ja muistiinpanojen kirjoittaminen tähän...',
     schema: 'Rakenne',

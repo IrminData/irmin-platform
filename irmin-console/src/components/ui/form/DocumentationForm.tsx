@@ -7,6 +7,7 @@ import { Controller, useForm, UseFormReturn } from 'react-hook-form';
 import { BsFileEarmarkRichtext } from 'react-icons/bs';
 import { CiTextAlignLeft } from 'react-icons/ci';
 
+import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import Button from '@/components/ui/button';
 import MDXEditor from '@/components/ui/markdown-editor/MDXEditor';
 
@@ -71,7 +72,7 @@ const DocumentationForm = ({
         >
           {documentationEditorType === 'mdx'
             ? dict.documentation.switchToPlainText
-            : dict.documentation.switchToMarkdownEditor}
+            : dict.documentation.switchToVisualEditor}
         </Button>
         {children}
       </div>
@@ -80,14 +81,18 @@ const DocumentationForm = ({
           name='documentation'
           control={control}
           render={({ field }) => (
-            <textarea
-              className='h-full w-full bg-gray-200 p-2 text-foreground focus:outline-none dark:text-gray-200'
-              placeholder={dict.documentation.startTypingDocumentation}
+            <div
+              className='h-full w-full bg-background p-2 text-foreground'
               id='plain-text-documentation-editor'
-              value={field.value}
-              onChange={field.onChange}
-              rows={40}
-            />
+            >
+              <CodeMirrorEditor
+                language='md'
+                content={field.value}
+                editorHeight='320px'
+                updateEditorContent={field.onChange}
+                placeholder={dict.documentation.startTypingDocumentation}
+              />
+            </div>
           )}
         />
       )}

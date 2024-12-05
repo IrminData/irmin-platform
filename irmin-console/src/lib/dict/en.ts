@@ -564,7 +564,7 @@ const en = {
   documentation: {
     documentation: 'Documentation',
     switchToPlainText: 'Plain text',
-    switchToMarkdownEditor: 'Markdown editor',
+    switchToVisualEditor: 'Visual editor',
     startTypingDocumentation:
       'Start typing your documentation and notes here...',
     schema: 'Schema',

@@ -609,7 +609,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/lang-markdown@npm:^6.0.0, @codemirror/lang-markdown@npm:^6.2.3":
+"@codemirror/lang-markdown@npm:^6.0.0, @codemirror/lang-markdown@npm:^6.2.3, @codemirror/lang-markdown@npm:^6.3.1":
   version: 6.3.1
   resolution: "@codemirror/lang-markdown@npm:6.3.1"
   dependencies:
@@ -7606,6 +7606,7 @@ __metadata:
     "@clerk/themes": "npm:^2.1.52"
     "@clerk/types": "npm:^4.38.0"
     "@codemirror/lang-javascript": "npm:^6.2.2"
+    "@codemirror/lang-markdown": "npm:^6.3.1"
     "@codemirror/lang-sql": "npm:^6.8.0"
     "@codemirror/view": "npm:^6.35.0"
     "@cyntler/react-doc-viewer": "npm:^1.17.0"

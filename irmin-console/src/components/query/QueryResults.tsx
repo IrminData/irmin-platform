@@ -13,6 +13,7 @@ import {
   TbTable,
 } from 'react-icons/tb';
 
+import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import LogFeed from '@/components/logs/LogFeed';
 import TableViewer from '@/components/repository/objects/ObjectViewer/TableViewer';
 import Button from '@/components/ui/button';
@@ -156,7 +157,7 @@ const QueryResults = ({
             >
               {documentationTab === 'mdx'
                 ? dict.documentation.switchToPlainText
-                : dict.documentation.switchToMarkdownEditor}
+                : dict.documentation.switchToVisualEditor}
             </Button>
           )}
           {onSave && (
@@ -226,15 +227,17 @@ const QueryResults = ({
       {activeTab === 'documentation' && (
         <div className='flex h-0 flex-1 flex-col overflow-scroll px-2 pt-2'>
           {documentationTab === 'plain' && (
-            <textarea
-              className='h-full w-full bg-gray-200 p-2 text-foreground focus:outline-none dark:text-gray-200'
-              placeholder={dict.documentation.startTypingDocumentation}
-              value={currentDocumentation}
-              onChange={(e) => {
-                setCurrentDocumentation(e.target.value);
-              }}
-              rows={40}
-            />
+            <div className='h-full w-full bg-background p-2 text-foreground'>
+              <CodeMirrorEditor
+                language='md'
+                content={currentDocumentation}
+                updateEditorContent={(value) => {
+                  setCurrentDocumentation(value);
+                }}
+                editorHeight='100%'
+                placeholder={dict.documentation.startTypingDocumentation}
+              />
+            </div>
           )}
           {documentationTab === 'mdx' && (
             <MDXEditor
