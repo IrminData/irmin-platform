@@ -309,6 +309,8 @@ const en = {
       currentName: 'Current name',
       type: 'Type',
       contentType: 'Content-Type',
+      description: 'Description',
+      size: 'Size',
       lastModified: 'Last modified',
       view: 'View',
       viewSchema: 'View schema',

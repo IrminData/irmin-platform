@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 import { useLocale } from '@/context/LocaleContext';
 
 import { checkIfSimpleArrayOfObjects } from '@/utils/checkIfSimpleArrayOfObjects';

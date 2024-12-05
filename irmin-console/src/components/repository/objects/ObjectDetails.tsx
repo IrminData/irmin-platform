@@ -22,6 +22,7 @@ import { useRepository } from '@/context/RepositoryContext';
 import useBaseUrl from '@/hooks/useBaseUrl';
 
 import { Object } from '@/types/core/Object';
+import { ObjectSchema } from '@/types/core/ObjectSchema';
 
 import MoveRenameObjectModal from './MoveRenameObjectModal';
 import UploadObjectModal from './UploadObjectModal';
@@ -31,17 +32,23 @@ import UploadObjectModal from './UploadObjectModal';
  *
  * @param props - The component props
  * @param props.selectedObject - The selected object to display details for
+ * @param props.selectedObjectSchema - (optional) The schema of the selected object
  * @param props.closeDetails - (optional) The function to close the details view. If not provided, the view will not show a close button
  * @param props.hideViewButton - (optional) Set this to true in order to hide the "view object" button. Used in the object viewer.
+ * @param props.hideSchemaButton - (optional) Set this to true in order to hide the "view schema" button. Used in the schema viewer.
  */
 export default function ObjectDetails({
   selectedObject,
+  selectedObjectSchema,
   closeDetails,
   hideViewButton = false,
+  hideSchemaButton = false,
 }: {
   selectedObject?: Object;
+  selectedObjectSchema?: ObjectSchema;
   closeDetails?: () => void;
   hideViewButton?: boolean;
+  hideSchemaButton?: boolean;
 }) {
   const {
     immutable,
@@ -146,21 +153,32 @@ export default function ObjectDetails({
         )}
       </div>
       <div className='flex flex-col gap-2 p-2'>
+        {/** Description of the object */}
+        {selectedObjectSchema && (
+          <div className='flex w-full justify-between gap-1'>
+            <span className='font-semibold'>
+              {dict.repository.objects.description}:
+            </span>
+            <span className='text-right'>
+              {selectedObjectSchema.description}
+            </span>
+          </div>
+        )}
         {/** Metadata of the object */}
         <div className='flex w-full justify-between gap-1'>
           <span className='font-semibold'>{dict.repository.objects.path}:</span>
-          <span>{selectedObject.path}</span>
+          <span className='text-right'>{selectedObject.path}</span>
         </div>
         <div className='flex w-full justify-between gap-1'>
           <span className='font-semibold'>{dict.repository.objects.type}:</span>
-          <span>{selectedObject.type}</span>
+          <span className='text-right'>{selectedObject.type}</span>
         </div>
         {selectedObject.content_type && (
           <div className='flex w-full justify-between gap-1'>
             <span className='font-semibold'>
               {dict.repository.objects.contentType}:
             </span>
-            <span>{selectedObject.content_type}</span>
+            <span className='text-right'>{selectedObject.content_type}</span>
           </div>
         )}
         {selectedObject.last_modified && (
@@ -168,11 +186,26 @@ export default function ObjectDetails({
             <span className='font-semibold'>
               {dict.repository.objects.lastModified}:
             </span>
-            <span>
+            <span className='text-right'>
               {new Date(selectedObject.last_modified).toLocaleString()}
             </span>
           </div>
         )}
+        {/** Properties from the schema */}
+        {selectedObjectSchema &&
+          (selectedObjectSchema.type === 'structured' ||
+            selectedObjectSchema.type === 'binary') && (
+            <>
+              <div className='flex w-full justify-between gap-1'>
+                <span className='font-semibold'>
+                  {dict.repository.objects.size}:
+                </span>
+                <span className='text-right'>
+                  {(selectedObjectSchema.size / 1024).toFixed(3)}KB
+                </span>
+              </div>
+            </>
+          )}
         <hr className='border-gray-200 dark:border-gray-800' />
         <div className='flex w-full flex-col gap-1'>
           {/** Buttons for all possible actions for the object */}
@@ -199,14 +232,17 @@ export default function ObjectDetails({
                   {dict.repository.objects.view}
                 </Button>
               )}
-              <Button
-                size='sm'
-                variant='default'
-                className='w-full'
-                icon={<TbSchema />}
-              >
-                {dict.repository.objects.viewSchema}
-              </Button>
+              {!hideSchemaButton && (
+                <Button
+                  size='sm'
+                  variant='default'
+                  className='w-full'
+                  href={`${baseUrl}/schema?path=${selectedObject.path}&ref=${currentRef}`}
+                  icon={<TbSchema />}
+                >
+                  {dict.repository.objects.viewSchema}
+                </Button>
+              )}
               <Button
                 size='sm'
                 variant='secondary'

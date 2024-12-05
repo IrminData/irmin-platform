@@ -12,7 +12,7 @@ import { ObjectSchema } from '@/types/core/ObjectSchema';
 import {
   exampleAPIBinaryResponse,
   exampleObjects,
-  exampleObjectSchema,
+  exampleTableObjectSchema,
 } from '@/types/examples/core';
 import { ContentType } from '@/types/examples/core/content';
 
@@ -120,7 +120,7 @@ class ObjectService {
     ref?: string
   ): Promise<IrminAPIResponse<ObjectSchema>> {
     if (isOfflineMode)
-      return fake(exampleObjectSchema) as IrminAPIResponse<ObjectSchema>;
+      return fake(exampleTableObjectSchema) as IrminAPIResponse<ObjectSchema>;
     try {
       const urlParams = new URLSearchParams();
       if (ref) urlParams.append('ref', ref);
@@ -132,7 +132,7 @@ class ObjectService {
     } catch (error) {
       console.error((error as Error).message, 'Fetch Object Schema error');
       if (isDevelopment)
-        return fake(exampleObjectSchema) as IrminAPIResponse<ObjectSchema>;
+        return fake(exampleTableObjectSchema) as IrminAPIResponse<ObjectSchema>;
       throw error;
     }
   }

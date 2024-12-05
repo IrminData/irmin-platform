@@ -25,7 +25,7 @@ import {
   workflowRunLogs,
 } from './logs';
 import { objects } from './objects';
-import { objectSchema } from './objectSchema';
+import { objectSchema, tableObjectSchema } from './objectSchema';
 import { profile } from './profile';
 import { queries, queryExecutionResult } from './queries';
 import { repositories } from './repositories';
@@ -130,6 +130,11 @@ export const exampleObjects = objects();
  * Fake object schema {@link objectSchema}
  */
 export const exampleObjectSchema = objectSchema();
+
+/**
+ * Fake table object schema {@link objectSchema}
+ */
+export const exampleTableObjectSchema = tableObjectSchema();
 
 /**
  * Fake connections {@link connections}

@@ -312,6 +312,8 @@ const fi = {
       currentName: 'Nykyinen nimi',
       type: 'Tyyppi',
       contentType: 'Sisältötyyppi',
+      description: 'Kuvaus',
+      size: 'Koko',
       lastModified: 'Viimeksi muokattu',
       view: 'Näytä',
       viewSchema: 'Näytä rakenne',

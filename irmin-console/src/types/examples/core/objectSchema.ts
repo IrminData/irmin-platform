@@ -122,3 +122,33 @@ export const objectSchema = (): ObjectSchema => ({
     },
   ],
 });
+
+export const tableObjectSchema = (): ObjectSchema => ({
+  name: 'users',
+  path: '/users',
+  type: 'structured',
+  content_type: 'application/json',
+  last_modified: getRandomDateTimeString(60, 'past', 1),
+  size: 10240,
+  schema: {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'Unique identifier for the user',
+        },
+        username: { type: 'string', description: 'Username of the user' },
+        email: { type: 'string', description: 'Email address of the user' },
+        created_at: {
+          type: 'string',
+          format: 'date-time',
+          description: 'Account creation date',
+        },
+      },
+      required: ['userId', 'username', 'email', 'created_at'],
+    },
+  },
+  description: 'Table containing user information',
+});
