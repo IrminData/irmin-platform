@@ -205,6 +205,8 @@ input[type='radio'] {
   }
   .dsg-input {
     font-size: 12px;
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
   }
   .dsg-corner-indicator {
     opacity: 0.5;

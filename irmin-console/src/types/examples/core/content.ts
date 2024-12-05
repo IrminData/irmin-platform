@@ -1,6 +1,7 @@
 import { getRandomArrayElement } from '@/utils/getRandomArrayElement';
 
 import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
+import exampleTableData from '@/types/examples/exampleTableData.json';
 
 /**
  * Type of the content for the example response
@@ -22,14 +23,17 @@ export enum ContentType {
  * Get example response for unstrucured API response
  *
  * @param type - (optional) type of the content to generate
+ * @param raw - (optional) return raw content without parsing tables to JSON
  */
 export const content = async (
-  type?: ContentType
+  type?: ContentType,
+  raw?: boolean
 ): Promise<IrminAPIBinaryResponse> => {
   try {
     const contentType =
       type ?? getRandomArrayElement(Object.values(ContentType));
     if (contentType === 'parquet') {
+      if (!raw) return exampleTableData;
       const parquetRes = await fetch(
         'https://raw.githubusercontent.com/Teradata/kylo/refs/heads/master/samples/sample-data/parquet/userdata1.parquet',
         { mode: 'cors' }
@@ -38,6 +42,7 @@ export const content = async (
         type: 'application/vnd.apache.parquet',
       });
     } else if (contentType === 'avro') {
+      if (!raw) return exampleTableData;
       const avroRes = await fetch(
         'https://raw.githubusercontent.com/Teradata/kylo/refs/heads/master/samples/sample-data/avro/userdata5.avro',
         { mode: 'cors' }
@@ -46,6 +51,7 @@ export const content = async (
         type: 'application/vnd.apache.avro',
       });
     } else if (contentType === 'orc') {
+      if (!raw) return exampleTableData;
       const orcRes = await fetch(
         'https://raw.githubusercontent.com/Teradata/kylo/refs/heads/master/samples/sample-data/orc/userdata1_orc',
         { mode: 'cors' }
@@ -54,6 +60,7 @@ export const content = async (
         type: 'application/vnd.apache.orc',
       });
     } else if (contentType === 'csv') {
+      if (!raw) return exampleTableData;
       const csvRes = await fetch(
         'https://raw.githubusercontent.com/Teradata/kylo/refs/heads/master/samples/sample-data/csv/userdata1.csv',
         { mode: 'cors' }
@@ -91,6 +98,7 @@ export const content = async (
         type: 'application/zip',
       });
     } else if (contentType === 'json') {
+      if (!raw) return exampleTableData;
       const jsonRes = await fetch(
         'https://baconipsum.com/api/?type=meat-and-filler&format=json&paras=10'
       );

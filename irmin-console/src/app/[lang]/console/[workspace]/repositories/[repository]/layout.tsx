@@ -11,6 +11,8 @@ import { initDict } from '@/lib/initDict';
 
 import RepositoryLayoutWrapper from '@/components/repository/RepositoryLayoutWrapper';
 
+import { QueryProvider } from '@/context/QueryContext';
+
 import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
 
 /**
@@ -67,7 +69,7 @@ export default async function RepositoryLayoutWithContainer(props: {
       initialBranches={branches}
       initialTags={tags}
     >
-      {children}
+      <QueryProvider>{children}</QueryProvider>
     </RepositoryLayoutWrapper>
   );
 }

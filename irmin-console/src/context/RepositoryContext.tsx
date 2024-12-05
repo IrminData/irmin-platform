@@ -54,6 +54,7 @@ import { Object } from '@/types/core/Object';
 import { ObjectSchema } from '@/types/core/ObjectSchema';
 import { Repository } from '@/types/core/Repository';
 import { Tag } from '@/types/core/Tag';
+import { ContentType } from '@/types/examples/core/content';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 /**
@@ -88,7 +89,9 @@ interface RepositoryContextProps {
     files: FileList
   ) => Promise<void>;
   getObjectContent: (
-    objectPath: string
+    objectPath: string,
+    raw?: boolean,
+    type?: ContentType
   ) => Promise<IrminAPIBinaryResponse | undefined>;
   getObjectSchema: (objectPath: string) => Promise<ObjectSchema | undefined>;
   // Branches
@@ -468,9 +471,15 @@ export const RepositoryProvider = ({
    * Fetch the content of the object at path
    */
   const fetchObjectContent = useCallback(
-    async (path: string) => {
+    async (path: string, raw?: boolean, type?: ContentType) => {
       try {
-        const res = await getObjectContent(repositorySlug, path, currentRef);
+        const res = await getObjectContent(
+          repositorySlug,
+          path,
+          currentRef,
+          raw,
+          type
+        );
         return res;
       } catch (error) {
         console.error('RepositoryContext fetchObjectContent error', error);

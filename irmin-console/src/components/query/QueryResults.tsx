@@ -14,6 +14,7 @@ import {
 } from 'react-icons/tb';
 
 import LogFeed from '@/components/logs/LogFeed';
+import TableViewer from '@/components/repository/objects/ObjectViewer/TableViewer';
 import Button from '@/components/ui/button';
 import MDXEditor from '@/components/ui/markdown-editor/MDXEditor';
 
@@ -24,7 +25,6 @@ import { QueryExecutionResult } from '@/types/core/Query';
 import { ActionWorkflow } from '@/types/core/Workflow';
 
 import ErrorList from './ErrorList';
-import TableData from './TableData';
 
 /**
  * Query Results component
@@ -196,7 +196,7 @@ const QueryResults = ({
         </div>
       </div>
       {activeTab === 'data' && result?.data?.result && (
-        <TableData
+        <TableViewer
           title={title}
           data={result.data.result}
           metadata={{

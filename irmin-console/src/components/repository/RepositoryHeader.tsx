@@ -47,7 +47,7 @@ export default function RepositoryHeader({
     updateCurrentRef,
   } = useRepository();
 
-  // The base URL for the repository, eg. /en/console/workspace-slug/repositories/repository-slug
+  /** The base URL for the repository, eg. /en/console/workspace-slug/repositories/repository-slug */
   const baseUrl = useBaseUrl({
     pathname: '',
     segment: 'repositories',

@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 
-import BlobViewer from '@/components/repository/objects/BlobViewer';
+import ObjectViewer from '@/components/repository/objects/ObjectViewer';
 import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -106,11 +106,7 @@ const ContentDiff = ({
             </Button>
           </div>
           <div className='max-w-full overflow-scroll text-xs'>
-            {baseText ? (
-              <TextDiff base={baseText} compare={''} splitView={false} />
-            ) : (
-              <BlobViewer blob={baseContent as Blob} />
-            )}
+            <ObjectViewer object={item.object} objectContent={baseContent} />
           </div>
         </div>
         <div className='flex max-h-96 w-full flex-col lg:w-1/2'>
@@ -130,11 +126,7 @@ const ContentDiff = ({
             </Button>
           </div>
           <div className='max-w-full overflow-scroll text-xs'>
-            {compareText ? (
-              <TextDiff base={''} compare={compareText} splitView={false} />
-            ) : (
-              <BlobViewer blob={compareContent as Blob} />
-            )}
+            <ObjectViewer object={item.object} objectContent={compareContent} />
           </div>
         </div>
       </div>

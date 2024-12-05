@@ -124,7 +124,10 @@ export default function AdvancedDatatable({ items }: { items: TableRow[] }) {
     );
 
   return (
-    <div className='h-full w-full overflow-scroll' id='advanced-datatable'>
+    <div
+      className='h-full min-h-[500px] w-full overflow-scroll'
+      id='advanced-datatable'
+    >
       <div className='relative h-full w-full'>
         <div className='absolute h-full w-full'>
           <DataSheet items={renderItems} columns={columns} />

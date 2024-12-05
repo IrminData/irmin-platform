@@ -1,21 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { AiOutlineDownload } from 'react-icons/ai';
 
+import AdvancedDatatable from '@/components/repository/objects/ObjectViewer/AdvancedDatatable';
+import JSONViewer from '@/components/repository/objects/ObjectViewer/JSONViewer';
 import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { checkIfSimpleArrayOfObjects } from '@/utils/checkIfSimpleArrayOfObjects';
 import { downloadCSV } from '@/utils/csv';
 
 import { TableCellValue } from '@/types/internal/Datatable';
 import { JSONValue } from '@/types/internal/GenericJSON';
-
-import AdvancedDatatable from './AdvancedDatatable';
-import JSONViewer from './JSONViewer';
 
 /**
  * Show the content of JSON data in a table if it's an array of simple objects.
@@ -27,7 +27,7 @@ import JSONViewer from './JSONViewer';
  * @param props.metadata - Additional metadata about the run
  * @param props.loading - Whether to show a loading skeleton
  */
-const TableData = ({
+const TableViewer = ({
   title,
   data,
   metadata,
@@ -48,9 +48,10 @@ const TableData = ({
     Array<Record<string, TableCellValue>>
   >([]);
 
-  const isSimpleArrayOfObjects =
-    Array.isArray(data) &&
-    data.every((item) => typeof item === 'object' && item !== null);
+  const isSimpleArrayOfObjects = useMemo(
+    () => checkIfSimpleArrayOfObjects(data),
+    [data]
+  );
 
   // Update the filtered items when the filter text changes (for simple array of objects)
   useEffect(() => {
@@ -144,4 +145,4 @@ const TableData = ({
   );
 };
 
-export default TableData;
+export default TableViewer;

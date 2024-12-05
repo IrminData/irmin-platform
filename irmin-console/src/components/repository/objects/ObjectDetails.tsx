@@ -19,6 +19,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepository } from '@/context/RepositoryContext';
 
+import useBaseUrl from '@/hooks/useBaseUrl';
+
 import { Object } from '@/types/core/Object';
 
 import MoveRenameObjectModal from './MoveRenameObjectModal';
@@ -29,14 +31,17 @@ import UploadObjectModal from './UploadObjectModal';
  *
  * @param props - The component props
  * @param props.selectedObject - The selected object to display details for
- * @param props.closeDetails - The function to close the details view
+ * @param props.closeDetails - (optional) The function to close the details view. If not provided, the view will not show a close button
+ * @param props.hideViewButton - (optional) Set this to true in order to hide the "view object" button. Used in the object viewer.
  */
 export default function ObjectDetails({
   selectedObject,
   closeDetails,
+  hideViewButton = false,
 }: {
   selectedObject?: Object;
-  closeDetails: () => void;
+  closeDetails?: () => void;
+  hideViewButton?: boolean;
 }) {
   const {
     immutable,
@@ -102,7 +107,9 @@ export default function ObjectDetails({
     );
     if (!confirmed) return;
     await deleteObject(selectedObject.name);
-    closeDetails();
+    if (closeDetails) {
+      closeDetails();
+    }
   }, [
     dict,
     immutable,
@@ -112,6 +119,14 @@ export default function ObjectDetails({
     deleteObject,
   ]);
 
+  /** The base URL for the repository, eg. /en/console/workspace-slug/repositories/repository-slug */
+  const baseUrl = useBaseUrl({
+    pathname: '',
+    segment: 'repositories',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
+
   if (!selectedObject) return <></>;
 
   return (
@@ -120,13 +135,15 @@ export default function ObjectDetails({
         className={`flex items-center justify-between border-b border-gray-200 p-2 py-4 dark:border-gray-800`}
       >
         <p className='text-sm'>{selectedObject.name}</p>
-        <Button
-          variant='ghost'
-          size='sm'
-          onClick={closeDetails}
-          icon={<IoClose className='h-6 w-6' />}
-          className='h-5 px-0 py-0'
-        />
+        {closeDetails && (
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={closeDetails}
+            icon={<IoClose className='h-6 w-6' />}
+            className='h-5 px-0 py-0'
+          />
+        )}
       </div>
       <div className='flex flex-col gap-2 p-2'>
         {/** Metadata of the object */}
@@ -171,14 +188,17 @@ export default function ObjectDetails({
             </Button>
           ) : (
             <>
-              <Button
-                size='sm'
-                variant='accent'
-                className='w-full'
-                icon={<TbFile />}
-              >
-                {dict.repository.objects.view}
-              </Button>
+              {!hideViewButton && (
+                <Button
+                  size='sm'
+                  variant='accent'
+                  className='w-full'
+                  icon={<TbFile />}
+                  href={`${baseUrl}/object?path=${selectedObject.path}&ref=${currentRef}`}
+                >
+                  {dict.repository.objects.view}
+                </Button>
+              )}
               <Button
                 size='sm'
                 variant='default'

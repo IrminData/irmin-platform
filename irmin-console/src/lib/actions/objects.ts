@@ -2,6 +2,8 @@
 
 import { initCore } from '@/lib/initCore';
 
+import { ContentType } from '@/types/examples/core/content';
+
 /**
  * Server action to fetch objects at a given path in a repository and ref.
  *
@@ -82,6 +84,8 @@ export async function getObjectSchema(
  * @param repository - Repository slug
  * @param path - Path of the object in the repository
  * @param ref - (optional) Ref to fetch content at
+ * @param raw - (optional) Return raw content without parsing tables to JSON
+ * @param exampleType - (optional) Type of the content to generate for the example response
  * @param token - (optional) User token
  * @returns The object content
  */
@@ -89,10 +93,18 @@ export async function getObjectContent(
   repository: string,
   path: string,
   ref?: string,
+  raw?: boolean,
+  exampleType?: ContentType,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.objectService.fetchContent(repository, path, ref);
+  const res = await irminCore.objectService.fetchContent(
+    repository,
+    path,
+    ref,
+    raw,
+    exampleType
+  );
   return res;
 }
 

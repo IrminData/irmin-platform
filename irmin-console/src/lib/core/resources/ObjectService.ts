@@ -14,6 +14,7 @@ import {
   exampleObjects,
   exampleObjectSchema,
 } from '@/types/examples/core';
+import { ContentType } from '@/types/examples/core/content';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -142,17 +143,25 @@ class ObjectService {
    * @param repository - Repository slug
    * @param path - Path of the object
    * @param ref - (optional) Ref to fetch content at
+   * @param raw - (optional) Return raw content without parsing tables to JSON
+   * @param exampleType - (optional) Type of the content to generate for the example response
    */
   async fetchContent(
     repository: string,
     path: string,
-    ref?: string
+    ref?: string,
+    raw?: boolean,
+    exampleType?: ContentType
   ): Promise<IrminAPIBinaryResponse> {
     if (isOfflineMode)
-      return (await exampleAPIBinaryResponse()) as IrminAPIBinaryResponse;
+      return (await exampleAPIBinaryResponse(
+        exampleType,
+        raw
+      )) as IrminAPIBinaryResponse;
     try {
       const urlParams = new URLSearchParams();
       if (ref) urlParams.append('ref', ref);
+      if (raw) urlParams.append('raw', 'true');
       const response = await this.irminCore.fetchBinary(
         `/v1/repositories/${repository}/objects/content/${path}?${urlParams.toString()}`,
         { method: 'GET' }
@@ -161,7 +170,10 @@ class ObjectService {
     } catch (error) {
       console.error((error as Error).message, 'Fetch Object Content error');
       if (isDevelopment)
-        return (await exampleAPIBinaryResponse()) as IrminAPIBinaryResponse;
+        return (await exampleAPIBinaryResponse(
+          exampleType,
+          raw
+        )) as IrminAPIBinaryResponse;
       throw error;
     }
   }

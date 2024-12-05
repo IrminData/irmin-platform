@@ -4,8 +4,6 @@ import { getToken } from '@/lib/getToken';
 
 import RepositorySection from '@/components/repository/RepositorySection';
 
-import { QueryProvider } from '@/context/QueryContext';
-
 import { RepositoryRouteParams } from './layout';
 
 /**
@@ -26,9 +24,5 @@ export default async function RepositoryPage(props: {
     getDict(),
   ]);
 
-  return (
-    <QueryProvider>
-      <RepositorySection currentWorkspace={workspace} dict={dict} />
-    </QueryProvider>
-  );
+  return <RepositorySection currentWorkspace={workspace} dict={dict} />;
 }
