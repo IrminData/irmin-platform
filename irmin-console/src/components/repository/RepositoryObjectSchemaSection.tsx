@@ -97,7 +97,7 @@ const RepositoryObjectSchemaSection = ({
         <div
           className={`flex flex-col items-start gap-4 lg:flex-row ${selectedObject.type === 'structured' ? 'justify-between' : 'justify-end'}`}
         >
-          <div className='flex w-full flex-col'>
+          <div className='flex w-full flex-col gap-2'>
             {selectedObject.type === 'structured' && (
               <div className='w-full max-w-full overflow-hidden rounded-md border border-gray-100 bg-background dark:border-gray-800'>
                 <div className='flex w-full flex-row items-center justify-between bg-gray-100 pl-4 dark:bg-gray-800'>
@@ -124,6 +124,25 @@ const RepositoryObjectSchemaSection = ({
             )}
             {!queryResultsOpen && (
               <>
+                <div className='flex w-full flex-wrap items-center justify-between gap-4'>
+                  <div className='inline max-w-full overflow-x-scroll whitespace-nowrap text-xs text-gray-600 lg:text-sm dark:text-gray-400'>
+                    <Link
+                      className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
+                      href={`${workspaceUrl}/repositories`}
+                    >
+                      {currentWorkspace}
+                    </Link>
+                    {' / '}
+                    <Link
+                      className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
+                      href={`${workspaceUrl}/repositories/${currentRepository.slug}`}
+                    >
+                      {currentRepository.slug}
+                    </Link>
+                    {`/ ${selectedObject.path.substring(1)}`}
+                    {currentRef && ` @ ${currentRef}`}
+                  </div>
+                </div>
                 {objectSchema ? (
                   <div className='max-h-96 w-full overflow-y-scroll rounded bg-background'>
                     <SchemaViewer
@@ -143,7 +162,7 @@ const RepositoryObjectSchemaSection = ({
             hideSchemaButton={true}
           />
         </div>
-        {queryResultsOpen ? (
+        {queryResultsOpen && (
           <Button
             variant='gray'
             size='sm'
@@ -153,26 +172,6 @@ const RepositoryObjectSchemaSection = ({
           >
             {dict.misc.close} {dict.query.queryResults}
           </Button>
-        ) : (
-          <div className='flex w-full flex-wrap items-center justify-between gap-4'>
-            <div className='inline max-w-full overflow-x-scroll whitespace-nowrap text-xs text-gray-600 lg:text-sm dark:text-gray-400'>
-              <Link
-                className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
-                href={`${workspaceUrl}/repositories`}
-              >
-                {currentWorkspace}
-              </Link>
-              {' / '}
-              <Link
-                className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
-                href={`${workspaceUrl}/repositories/${currentRepository.slug}`}
-              >
-                {currentRepository.slug}
-              </Link>
-              {`/ ${selectedObject.path.substring(1)}`}
-              {currentRef && ` @ ${currentRef}`}
-            </div>
-          </div>
         )}
       </div>
       {query.result && queryResultsOpen && (
