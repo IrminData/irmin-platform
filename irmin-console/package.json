@@ -27,7 +27,7 @@
     "@mdxeditor/editor": "^3.19.3",
     "@melloware/react-logviewer": "^6.0.3",
     "@microlink/react-json-view": "^1.23.4",
-    "@novu/node": "^2.0.4",
+    "@novu/node": "^2.0.5",
     "@novu/react": "^2.6.2",
     "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-checkbox": "^1.1.2",

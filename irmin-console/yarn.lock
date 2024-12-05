@@ -2324,9 +2324,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@novu/node@npm:^2.0.4":
-  version: 2.0.4
-  resolution: "@novu/node@npm:2.0.4"
+"@novu/node@npm:^2.0.5":
+  version: 2.0.5
+  resolution: "@novu/node@npm:2.0.5"
   dependencies:
     "@novu/shared": "npm:2.1.4"
     axios: "npm:^1.6.8"
@@ -2335,7 +2335,7 @@ __metadata:
     lodash.get: "npm:^4.4.2"
     lodash.merge: "npm:^4.6.2"
     uuid: "npm:^9.0.1"
-  checksum: 10c0/8f836b68af85fc40cc4e7c743d8efe38729edcfa9a3dcc9d0aae2ba1116cdb64fc3f24b0ed61b7e0a0d7b2e1dbdfe00a913ca39b490854bce91d9612730595bd
+  checksum: 10c0/a0970bb20fa83cabf1d3df498ab6ebf68b77234cff361740faa039883dfef078d52a3d1b556e28d3c1ad92d389f47c71b5afd962968760ce5e3e10a15c218202
   languageName: node
   linkType: hard
 
@@ -7866,7 +7866,7 @@ __metadata:
     "@mdxeditor/editor": "npm:^3.19.3"
     "@melloware/react-logviewer": "npm:^6.0.3"
     "@microlink/react-json-view": "npm:^1.23.4"
-    "@novu/node": "npm:^2.0.4"
+    "@novu/node": "npm:^2.0.5"
     "@novu/react": "npm:^2.6.2"
     "@playwright/test": "npm:^1.49.0"
     "@radix-ui/react-avatar": "npm:^1.1.1"
