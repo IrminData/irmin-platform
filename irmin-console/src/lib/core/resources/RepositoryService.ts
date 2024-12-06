@@ -27,6 +27,7 @@ class RepositoryService {
     this.reassignRepository = this.reassignRepository.bind(this);
     this.deleteRepository = this.deleteRepository.bind(this);
     this.updateRepository = this.updateRepository.bind(this);
+    this.getRepositoryDownloadLink = this.getRepositoryDownloadLink.bind(this);
   }
 
   /**
@@ -184,6 +185,44 @@ class RepositoryService {
     } catch (error) {
       console.error((error as Error).message, 'Update Repository error');
       if (isDevelopment) return fake();
+      throw error;
+    }
+  }
+
+  /**
+   * Get a download link for a repository
+   *
+   * @param repositorySlug - The slug of the repository
+   * @param ref - The ref to download
+   * @param path - The path to download
+   */
+  async getRepositoryDownloadLink(
+    repositorySlug: string,
+    ref: string,
+    path: string
+  ): Promise<IrminAPIResponse<{ download_url: string }>> {
+    if (isOfflineMode)
+      return fake({ download_url: 'http://example.com' }) as IrminAPIResponse<{
+        download_url: string;
+      }>;
+    try {
+      const formData = new FormData();
+      formData.append('ref', ref);
+      formData.append('path', path);
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/repositories/${repositorySlug}/download`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as IrminAPIResponse<{ download_url: string }>;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Get Repository download link');
+      if (isDevelopment)
+        return fake({
+          download_url: 'http://example.com',
+        }) as IrminAPIResponse<{ download_url: string }>;
       throw error;
     }
   }

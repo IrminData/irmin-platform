@@ -35,6 +35,7 @@ import {
 import {
   deleteRepository,
   getRepository,
+  getRepositoryDownloadLink,
   reassignRepository,
   updateRepository,
 } from '@/lib/actions/repositories';
@@ -76,6 +77,7 @@ interface RepositoryContextProps {
   updateRepository: (data: ItemUpdateProps) => Promise<void>;
   deleteRepository: () => Promise<void>;
   reassignRepository: (ownerID: string) => Promise<void>;
+  downloadRepository: (selectedPath?: string) => Promise<void>;
   // Objects
   loadingObjects: boolean;
   objects: Object[];
@@ -329,6 +331,37 @@ export const RepositoryProvider = ({
       irminAlert,
       irminConfirm,
     ]
+  );
+
+  // Download the current repository
+  const handleRpositoryDownload = useCallback(
+    async (selectedPath?: string) => {
+      try {
+        const res = await getRepositoryDownloadLink(
+          repositorySlug,
+          currentRef ?? 'main',
+          selectedPath ?? currentPath
+        );
+        if (typeof res.data.download_url === 'string') {
+          irminAlert(
+            'success',
+            res.message ?? 'Repository downloaded successfully'
+          );
+          window.open(res.data.download_url, '_blank');
+        } else {
+          irminAlert(
+            'info',
+            res.message ?? 'Download link was not provided by the server'
+          );
+        }
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Error downloading the repository'
+        );
+      }
+    },
+    [repositorySlug, currentRef, currentPath, irminAlert]
   );
 
   // Objects state
@@ -895,6 +928,7 @@ export const RepositoryProvider = ({
         updateRepository: handleUpdateRepository,
         deleteRepository: handleDeleteRepository,
         reassignRepository: handleReassignRepository,
+        downloadRepository: handleRpositoryDownload,
         // Objects
         loadingObjects,
         objects,

@@ -85,3 +85,21 @@ export async function reassignRepository(
   );
   return res;
 }
+
+/**
+ * Server action to get the download link of a repository.
+ */
+export async function getRepositoryDownloadLink(
+  repositorySlug: string,
+  ref: string,
+  path: string,
+  token?: string
+) {
+  const irminCore = await initCore(token);
+  const res = await irminCore.repositoryService.getRepositoryDownloadLink(
+    repositorySlug,
+    ref,
+    path
+  );
+  return res;
+}

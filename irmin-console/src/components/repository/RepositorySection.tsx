@@ -209,7 +209,7 @@ export default function RepositorySection({
                   variant='secondary'
                   size='sm'
                   icon={<TbDownload />}
-                  href={`${workspaceUrl}/repositories/${currentRepository.slug}/download?${searchParams.toString()}`}
+                  href={`${workspaceUrl}/repositories/${currentRepository.slug}/download?ref=${currentRef}&path=${currentPath}`}
                 >
                   {dict.misc.download.download}
                 </Button>

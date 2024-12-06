@@ -1,18 +1,22 @@
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import RepositoryDownloadSection from '@/components/repository/RepositoryDownloadSection';
 
 import { RepositoryRouteParams } from '../layout';
 
 /**
- * Page to download a repository or specific objects at a specific ref
- *
- * TODO: Implement the download functionality
+ * Page to download a repository or specific path as zip at a specific ref
  */
-export default async function RepositoryDownloadPage(_: {
+export default async function RepositoryDownloadPage(props: {
   params: Promise<RepositoryRouteParams>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const searchParams = await props.searchParams;
   return (
-    <div className='container relative mx-auto max-w-6xl py-12'>
-      <LoadingSkeleton className='h-96' />
-    </div>
+    <RepositoryDownloadSection
+      selectedPath={
+        searchParams.path && typeof searchParams.path === 'string'
+          ? searchParams.path
+          : undefined
+      }
+    />
   );
 }
