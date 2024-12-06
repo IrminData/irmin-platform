@@ -103,6 +103,7 @@ const en = {
       'Are you sure you want to reassign the ownership of this item?',
     download: {
       download: 'Download',
+      downloading: 'Downloading',
       success: 'Your download has been successful!',
       failed: 'Your download has failed!',
     },

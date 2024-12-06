@@ -103,6 +103,7 @@ const fi = {
       'Oletko varma, että haluat vaihtaa tämän omistajan?',
     download: {
       download: 'Lataa',
+      downloading: 'Ladataan',
       success: 'Latauksesi onnistui!',
       failed: 'Latauksesi epäonnistui',
     },

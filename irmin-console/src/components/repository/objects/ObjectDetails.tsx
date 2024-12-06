@@ -259,6 +259,7 @@ export default function ObjectDetails({
             size='sm'
             variant='secondary'
             className='w-full'
+            href={`${baseUrl}/object/download?path=${selectedObject.path}&ref=${currentRef}`}
             icon={<TbDownload />}
           >
             {dict.repository.objects.download}
