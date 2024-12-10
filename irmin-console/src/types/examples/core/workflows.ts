@@ -5,7 +5,9 @@ import {
   ActionWorkflow,
   ExportWorkflow,
   ImportWorkflow,
+  PipelineWorkflow,
   Workflow,
+  WorkflowStatus,
 } from '@/types/core/Workflow';
 
 import { connections } from './connections';
@@ -21,18 +23,19 @@ import { workspaceUsers } from './users';
 export const workflows = (): Workflow[] => {
   const exampleImports: ImportWorkflow[] = [
     {
-      id: '0',
+      id: 'import-workflow-1',
       name: 'Main Google Analytics',
       owner: workspaceUsers()[0],
       description:
         'This an example Import Workflow for syncing Google Analytics data to a Repository.',
       documentation: '# Hello World! \n This is a test documentation.',
-      status: 'running',
-      workflowable_type: 'import',
+      status: WorkflowStatus.Running,
+      type: 'import',
       workflowable: {
         connection: connections().find(
           (c) => c.name === 'Main Google Analytics'
         )!,
+        connection_path: '/',
         repository: repositories().find(
           (a) => a.slug === 'main-google-analytics'
         )!,
@@ -44,17 +47,18 @@ export const workflows = (): Workflow[] => {
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },
     {
-      id: '4',
+      id: 'export-workflow-2',
       name: 'KPIs from Excel',
       owner: workspaceUsers()[0],
       description:
         'This an example Import Workflow for syncing an Excel Sheet to a Repository.',
       documentation:
         '# Excel import explanation. \n Manually imported Excel file with KPIs and performance metrics. This workflow is not scheduled and should be ran manually when needed.',
-      status: 'running',
-      workflowable_type: 'import',
+      status: WorkflowStatus.Running,
+      type: 'import',
       workflowable: {
         connection: connections().find((c) => c.name === 'KPIs spreadsheet')!,
+        connection_path: '/',
         repository: repositories().find((a) => a.slug === 'kpis-from-excel')!,
         branch: 'main',
         path: '/',
@@ -64,17 +68,18 @@ export const workflows = (): Workflow[] => {
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },
     {
-      id: '5',
+      id: 'export-workflow-3',
       name: 'Management data from Excel',
       owner: workspaceUsers()[3],
       description:
         'This an example Import Workflow for syncing an Excel Sheet to a Repository.',
       documentation:
         'Manually imported Excel file with KPIs and performance metrics. This workflow is not scheduled and should be ran manually when needed. ',
-      status: 'running',
-      workflowable_type: 'import',
+      status: WorkflowStatus.Running,
+      type: 'import',
       workflowable: {
         connection: connections().find((c) => c.name === 'HR spreadsheet')!,
+        connection_path: '/',
         repository: repositories().find(
           (a) => a.slug === 'management-data-from-excel'
         )!,
@@ -88,16 +93,17 @@ export const workflows = (): Workflow[] => {
   ];
   const exampleExports: ExportWorkflow[] = [
     {
-      id: '1',
+      id: 'export-workflow-1',
       name: 'Export KPIs to Google Sheets',
       owner: workspaceUsers()[1],
       description:
         'This an example Export Workflow for exporting a Repository to Google Sheets Import.',
       documentation: '# Hello World! \n This is a test documentation.',
-      status: 'running',
-      workflowable_type: 'export',
+      status: WorkflowStatus.Running,
+      type: 'export',
       workflowable: {
         connection: connections().find((c) => c.name === 'Google Sheets KPIs')!,
+        connection_path: '/',
         repository: repositories().find(
           (a) => a.slug === 'kpi-and-performance-metrics'
         )!,
@@ -112,14 +118,14 @@ export const workflows = (): Workflow[] => {
   ];
   const exampleActions: ActionWorkflow[] = [
     {
-      id: '2',
+      id: 'action-workflow-1',
       name: 'App usage data',
       owner: workspaceUsers()[2],
       description:
         'This an example of an Action Workflow for fetching app usage data and storing results in a Repository.',
       documentation: '# Hello World! \n This is a test documentation.',
-      status: 'running',
-      workflowable_type: 'action',
+      status: WorkflowStatus.Running,
+      type: 'action',
       workflowable: {
         path: '/',
         executable: '/fetch-app-data.js',
@@ -131,14 +137,14 @@ export const workflows = (): Workflow[] => {
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },
     {
-      id: '3',
+      id: 'action-workflow-2',
       name: 'Send receipt on order',
       owner: workspaceUsers()[0],
       description:
         'This an example of an Action Workflow for sending receipts on orders. Results in no Repository.',
       documentation: '# Hello World! \n This is a test documentation.',
-      status: 'error',
-      workflowable_type: 'action',
+      status: WorkflowStatus.Error,
+      type: 'action',
       workflowable: {
         executable: '/send-receipt-on-order.js',
       },
@@ -147,14 +153,14 @@ export const workflows = (): Workflow[] => {
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },
     {
-      id: '6',
+      id: 'action-workflow-3',
       name: 'Top 100 Ad Clicking Users',
       owner: workspaceUsers()[3],
       description:
         'This is an example Action Workflow for querying top 100 ad clicking users.',
       documentation: '# Hello World! \n This is a test documentation.',
-      status: 'running',
-      workflowable_type: 'action',
+      status: WorkflowStatus.Running,
+      type: 'action',
       workflowable: {
         path: '/',
         branch: 'main',
@@ -168,7 +174,73 @@ export const workflows = (): Workflow[] => {
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },
   ];
-  return [...exampleImports, ...exampleExports, ...exampleActions];
+  const examplePipelines: PipelineWorkflow[] = [
+    {
+      id: '1',
+      name: 'Data Transformation Pipeline',
+      owner: workspaceUsers()[1],
+      description:
+        'Processes raw data, applies transformations, and loads it into a warehouse.',
+      documentation:
+        '# Data Transformation Pipeline\nA three-step pipeline to process raw data and store it in the data warehouse.',
+      status: WorkflowStatus.Running,
+      type: 'pipeline',
+      workflowable: {
+        live: false,
+        stages: [
+          {
+            description: 'Read raw data from Google Analytics',
+            type: 'connection',
+            connection: connections().find(
+              (c) => c.name === 'Main Google Analytics'
+            )!,
+            connection_write_path: '/',
+            connection_read_path: '/',
+            write: false,
+            read: true,
+          },
+          {
+            description: 'Validate data and transform format',
+            type: 'action',
+            write: true,
+            read: true,
+            executable: '/path/to/script.js',
+          },
+          {
+            description: 'Update KPIs in Google Sheets',
+            type: 'connection',
+            connection: connections().find(
+              (c) => c.name === 'Google Sheets KPIs'
+            )!,
+            connection_write_path: '/analytics',
+            connection_read_path: '/',
+            write: true,
+            read: false,
+          },
+          {
+            description: 'Write transformed data to a repository',
+            type: 'repository',
+            write: true,
+            read: false,
+            repository: repositories().find(
+              (a) => a.slug === 'main-google-analytics'
+            )!,
+            branch: 'ga-pipeline',
+            path: '/',
+          },
+        ],
+      },
+      schedule: getRandomArrayElement(workflowSchedules),
+      created_at: getRandomDateTimeString(500, 'past', 60),
+      updated_at: getRandomDateTimeString(50, 'past', 10),
+    },
+  ];
+  return [
+    ...exampleImports,
+    ...exampleExports,
+    ...exampleActions,
+    ...examplePipelines,
+  ];
 };
 
 /**
@@ -177,9 +249,7 @@ export const workflows = (): Workflow[] => {
  * Type: {@link ImportWorkflow}
  */
 export const imports = () =>
-  workflows().filter(
-    (a) => a.workflowable_type === 'import'
-  ) as ImportWorkflow[];
+  workflows().filter((a) => a.type === 'import') as ImportWorkflow[];
 
 /**
  * Get example Export Workflow
@@ -187,9 +257,7 @@ export const imports = () =>
  * Type: {@link ExportWorkflow}
  */
 export const exports = () =>
-  workflows().filter(
-    (a) => a.workflowable_type === 'export'
-  ) as ExportWorkflow[];
+  workflows().filter((a) => a.type === 'export') as ExportWorkflow[];
 
 /**
  * Get example Action Workflow
@@ -197,6 +265,12 @@ export const exports = () =>
  * Type: {@link ActionWorkflow}
  */
 export const actions = () =>
-  workflows().filter(
-    (a) => a.workflowable_type === 'action'
-  ) as ActionWorkflow[];
+  workflows().filter((a) => a.type === 'action') as ActionWorkflow[];
+
+/**
+ * Get example Pipeline Workflow
+ *
+ * Type: {@link PipelineWorkflow}
+ */
+export const pipelines = () =>
+  workflows().filter((a) => a.type === 'pipeline') as PipelineWorkflow[];

@@ -17,22 +17,21 @@ export enum LogEventType {
 
 /**
  * Interface for the details of a log event.
- *
- * @typeParam id - Unique identifier of the event
- * @typeParam type - Type of the activity (e.g., CREATE, UPDATE, DELETE, etc.)
- * @typeParam timestamp - Timestamp of the event
- * @typeParam description - Description of the event
- * @typeParam subject_id - Optional. ID of the subject object of the event
- * @typeParam subject_type - Optional. Type of the subject object of the event
- * @typeParam user - Optional. User who is responsible for the event. Leave empty if system.
  */
 export interface LogEvent {
+  /** Unique identifier of the event */
   id: string;
+  /** Type of the activity (e.g., CREATE, UPDATE, DELETE, etc.) */
   type: LogEventType;
+  /** Timestamp of the event */
   timestamp: string;
+  /** Description of the event */
   description: string;
+  /** Optional. ID of the subject object of the event */
   subject_id?: string;
+  /** Optional. Type of the subject object of the event */
   subject_type?: 'repository' | 'workflow' | 'connection';
+  /** Optional. User who is responsible for the event. Leave empty if system. */
   user?: User;
 }
 

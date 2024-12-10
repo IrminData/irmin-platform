@@ -1,7 +1,7 @@
 'use server';
 
 import { getConnections } from '@/lib/actions/connections';
-import { getWorkspaceInvites } from '@/lib/actions/invites';
+import { getInvites } from '@/lib/actions/invites';
 import { getRepositories } from '@/lib/actions/repositories';
 import { getUsers } from '@/lib/actions/users';
 import { getWorkflows } from '@/lib/actions/workflows';
@@ -101,7 +101,7 @@ export async function generateSearchItems({
       const [connections, invites, users, workflows, repositories] =
         await Promise.all([
           getConnections(token),
-          getWorkspaceInvites(workspace, false, false, token),
+          getInvites(workspace, undefined, false, false, token),
           getUsers(token),
           getWorkflows(token),
           getRepositories(token),

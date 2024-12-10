@@ -64,9 +64,10 @@ const WorkflowList = ({
               <div className='text-base'>
                 {item.name}
                 <Badge className='ml-2'>
-                  {item.workflowable_type === 'action' && dict.workflow.action}
-                  {item.workflowable_type === 'import' && dict.workflow.import}
-                  {item.workflowable_type === 'export' && dict.workflow.export}
+                  {item.type === 'action' && dict.workflow.action}
+                  {item.type === 'import' && dict.workflow.import}
+                  {item.type === 'export' && dict.workflow.export}
+                  {item.type === 'pipeline' && dict.workflow.pipeline}
                 </Badge>
               </div>
               <span className='text-sm text-gray-400'>

@@ -10,7 +10,10 @@ import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { branches } from './branches';
 import { commits } from './commits';
 import { connections } from './connections';
-import { connectors } from './connectors';
+import {
+  connectorConfigurationValidationResult,
+  connectors,
+} from './connectors';
 import { content } from './content';
 import { diff } from './diff';
 import { editorItems } from './editorItems';
@@ -33,7 +36,7 @@ import { roles } from './roles';
 import { tags } from './tags';
 import { workspaceUsers } from './users';
 import { workflowRuns } from './workflowRuns';
-import { actions, exports, imports, workflows } from './workflows';
+import { actions, exports, imports, pipelines, workflows } from './workflows';
 import { workspaces } from './workspaces';
 
 /**
@@ -102,6 +105,13 @@ export const exampleWorkspaceUsers = workspaceUsers();
 export const exampleConnectors = connectors();
 
 /**
+ * Fake connector configuration validation result {@link connectorConfigurationValidationResult}
+ */
+export const exampleConnectorConfigurationValidationResult = {
+  ...connectorConfigurationValidationResult,
+};
+
+/**
  * Fake repositories {@link repositories}
  */
 export const exampleRepositories = repositories();
@@ -160,6 +170,11 @@ export const exampleImports = imports();
  * Fake export workflows {@link exports}
  */
 export const exampleExports = exports();
+
+/**
+ * Fake pipelines {@link pipelines}
+ */
+export const examplePipelines = pipelines();
 
 /**
  * Fake workflow runs {@link workflowRuns}

@@ -5,136 +5,208 @@ import { User } from '@/types/core/User';
 import { WorkflowSchedule } from './WorkflowSchedule';
 
 /**
- * Types of workflows that can be created
- * Source app/Enums/WorkflowType.php
+ * Types of workflows that can exist
  */
-export type WorkflowableType = 'import' | 'action' | 'export';
+export type WorkflowableType = 'import' | 'action' | 'export' | 'pipeline';
 
 /**
- * Workflow object
- *
- * @typeParam id - Workflow hash ID
- * @typeParam name - Workflow name
- * @typeParam owner - The workspace user that owns this workflow and is responsible for it
- * @typeParam workflowable_type - Type of workflow
- * @typeParam workflowable - Object with details for the workflow, specific to the workflowable type
- * @typeParam schedule - (optional) Schedule configuration for the workflow (eg. triggers, max retries, max runtime) - empty if ran manually
- * @typeParam status - Status of the workflow
- * @typeParam description - Workflow description
- * @typeParam documentation - Workflow documentation as a markdown string
- * @typeParam created_at - Workflow creation date
- * @typeParam updated_at - Workflow update date
+ * Base Workflow object that all workflows extend
  */
-export interface Workflow {
+interface WorkflowBase {
+  /** Workflow hash ID */
   id: string;
+  /** Workflow name */
   name: string;
+  /** The workspace user that owns this workflow and is responsible for it */
   owner: User;
-  workflowable_type: WorkflowableType;
-  workflowable: Import | Action | Export;
+  /** (optional) Schedule configuration for the workflow (eg. triggers, max retries, max runtime) */
   schedule?: WorkflowSchedule;
+  /** Status of the workflow */
   status: WorkflowStatus;
+  /** Workflow's type specific configurations */
+  workflowable: Import | Export | Action | Pipeline;
+  /** Workflow description */
   description: string;
+  /** Workflow documentation as a markdown string */
   documentation: string;
+  /** Workflow creation date */
   created_at: string;
+  /** Workflow update date */
   updated_at: string;
 }
 
 /**
  * Workflow of type Import
  */
-export type ImportWorkflow = Workflow & {
+export type ImportWorkflow = WorkflowBase & {
+  type: 'import';
   workflowable: Import;
-  workflowable_type: 'import';
-};
-/**
- * Workflow of type Export
- */
-export type ExportWorkflow = Workflow & {
-  workflowable: Export;
-  workflowable_type: 'export';
-};
-/**
- * Workflow of type Action
- */
-export type ActionWorkflow = Workflow & {
-  workflowable: Action;
-  workflowable_type: 'action';
 };
 
 /**
+ * Workflow of type Export
+ */
+export type ExportWorkflow = WorkflowBase & {
+  type: 'export';
+  workflowable: Export;
+};
+
+/**
+ * Workflow of type Action
+ */
+export type ActionWorkflow = WorkflowBase & {
+  type: 'action';
+  workflowable: Action;
+};
+
+/**
+ * Workflow of type Pipeline
+ */
+export type PipelineWorkflow = WorkflowBase & {
+  type: 'pipeline';
+  workflowable: Pipeline;
+};
+
+/**
+ * Workflow object
+ */
+export type Workflow =
+  | ImportWorkflow
+  | ExportWorkflow
+  | ActionWorkflow
+  | PipelineWorkflow;
+
+/**
  * Workflow run object. eg. Single execution of a Workflow
- *
- * @typeParam id - Workflow run ID
- * @typeParam workflow_id - ID of the workflow that was run
- * @typeParam owner - The workspace user that is response for this workflow run. Essentialy the owner of the workflow that was run, at the time of the run.
- * @typeParam status - Status of the workflow run
- * @typeParam started_at - Timestamp of when the workflow run started
- * @typeParam finished_at - Timestamp of when the workflow run finished
  */
 export interface WorkflowRun {
+  /** Workflow run ID */
   id: string;
+  /** ID of the workflow that was run */
   workflow_id: string;
+  /** The workspace user that is responsible for this workflow run. Essentially the owner of the workflow that was run, at the time of the run. */
   owner: User;
+  /** Status of the workflow run */
   status: WorkflowStatus;
+  /** Timestamp of when the workflow run started */
   started_at: string;
+  /** Timestamp of when the workflow run finished */
   finished_at?: string;
 }
 
 /**
  * Workflow status options
- * Source in the API: `app/Enums/WorkflowStatus.php`
  */
-export type WorkflowStatus =
-  | 'paused'
-  | 'pending'
-  | 'initiating'
-  | 'running'
-  | 'complete'
-  | 'error';
+export enum WorkflowStatus {
+  Paused = 'paused',
+  Pending = 'pending',
+  Initiating = 'initiating',
+  Running = 'running',
+  Complete = 'complete',
+  Error = 'error',
+}
 
 /**
  * Import object - workflowable for the Workflow
- *
- * @typeParam connection - Connection object of where to import from
- * @typeParam repository - Repository object of where to store the imported data
- * @typeParam branch - Branch to import to
- * @typeParam path - Where in the repository to store the imported data
  */
 export interface Import {
+  /** Source connection */
   connection: Connection;
+  /** Path within the connection's schema to fetch data from */
+  connection_path: string;
+  /**  Destination repository in Irmin */
   repository: Repository;
+  /** Destination branch in the repository */
   branch: string;
+  /** Path within the repository to store the imported data */
   path: string;
 }
 
 /**
  * Export object - workflowable for the Workflow
- *
- * @typeParam connection - Export destination, Connection object of where to export to
- * @typeParam repository - Repository object of what to export
- * @typeParam branch - Branch to export from
- * @typeParam path - What in the repository to export
- * @typeParam recursive - If the export should be recursive
  */
 export interface Export {
+  /** Destination connection */
   connection: Connection;
+  /** Path within the connection's schema to export data to */
+  connection_path: string;
+  /** Source repository in Irmin */
   repository: Repository;
+  /** Source branch in the repository */
   branch: string;
+  /** Path within the repository to export data from */
   path: string;
-  recursive: false;
+  /** Determines if the export should be recursive */
+  recursive: boolean;
 }
 
 /**
  * Action object - workflowable for the Workflow
- *
- * @typeParam executable - Path to the script file to be executed as an action workflow
- * @typeParam repository - (optional) Repository object of where the action results will be stored
- * @typeParam branch - (optional) Repository branch to store the action results in
- * @typeParam path - (optional) Path in the repository to store the action results
  */
 export interface Action {
+  /** Path to the script to execute */
   executable: string;
+  /** Repository to store action results */
   repository?: Repository;
+  /** Branch in the repository for results */
   branch?: string;
+  /** Path within the repository for results */
   path?: string;
+}
+
+/**
+ * Pipeline Workflow configuration
+ */
+export interface Pipeline {
+  /** Whether the pipeline runs continuously or follows a Workflow Schedule */
+  live: boolean;
+  /** Chain of thins, in order, to pass the data through */
+  stages: PipelineStage[];
+}
+
+/**
+ * One stage of a Pipeline
+ */
+export type PipelineStage = {
+  /** Explanation as to what this stage is responsible for */
+  description: string;
+  /** Whether the input of the stage should be used */
+  write: boolean;
+  /** Whether the result of the stage should be passed to the next stage */
+  read: boolean;
+} & (PipelineStageAction | PipelineStageConnection | PipelineStageRepository);
+
+/**
+ * Pipeline Stage that executes an action
+ */
+export interface PipelineStageAction {
+  type: 'action';
+  /** Path to the Action Script to be executed */
+  executable: string;
+}
+
+/**
+ * Pipeline Stage that uses a connection
+ */
+export interface PipelineStageConnection {
+  type: 'connection';
+  /** Connection to use */
+  connection: Connection;
+  /** Path to write within the connection */
+  connection_write_path: string;
+  /** Path to read within the connection */
+  connection_read_path: string;
+}
+
+/**
+ * Pipeline Stage that uses a repository
+ */
+export interface PipelineStageRepository {
+  type: 'repository';
+  /** Repository to use */
+  repository: Repository;
+  /** Branch in the repository */
+  branch: string;
+  /** Path within the repository */
+  path: string;
 }

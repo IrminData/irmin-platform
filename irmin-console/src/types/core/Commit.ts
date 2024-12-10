@@ -1,16 +1,15 @@
 /**
  * Repository commit type
- *
- * @typeParam hash - Hash of the commit
- * @typeParam message - Commit message
- * @typeParam timestamp - Commit timestamp
- * @typeParam author - Commit author
- * @typeParam previous_hash - Previous commit hash, if any
  */
 export interface Commit {
+  /** Hash of the commit */
   hash: string;
+  /** Commit message */
   message: string;
+  /** Commit timestamp */
   timestamp: string;
+  /** Commit author */
   author: string;
+  /** Previous commit hash, if any */
   previous_hash?: string;
 }

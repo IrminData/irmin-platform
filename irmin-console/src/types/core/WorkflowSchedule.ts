@@ -10,11 +10,10 @@ export type WorkflowTrigger =
 
 /**
  * Time trigger type, which represents a time-based trigger using cron syntax.
- *
- * @typeParam rrule - Recurrence Rule (rfc5545), like `RRULE:FREQ=DAILY;INTERVAL=1;`
  */
 export interface TimeTrigger {
   type: 'time';
+  /** Recurrence Rule (rfc5545), like `RRULE:FREQ=DAILY;INTERVAL=1;`*/
   rrule: string;
 }
 
@@ -38,16 +37,15 @@ export enum RepositoryEvent {
 
 /**
  * Trigger type for repository events
- *
- * @typeParam event - The event that triggers the workflow
- * @typeParam repository - (optional) Slug of the repository that the occured event should reference
- * @typeParam ref - (option) Ref, eg. branch, tag, or commit in the repository that the occured event should reference
  */
 export interface RepositoryTrigger {
-  type: 'repository-event';
+  /** The event that triggers the workflow */
   event: RepositoryEvent;
+  /** (optional) Slug of the repository that the occurred event should reference */
   repository?: string;
+  /** (optional) Ref, eg. branch, tag, or commit in the repository that the occurred event should reference */
   ref?: string;
+  type: 'repository-event';
 }
 
 /**
@@ -60,14 +58,13 @@ export enum WorkflowRunEvent {
 
 /**
  * Trigger type for workflow run events
- *
- * @typeParam event - The event that triggers the workflow
- * @typeParam workflow - (optional) ID of the workflow that the occured event should reference
  */
 export interface WorkflowRunTrigger {
-  type: 'workflow-run-event';
+  /** The event that triggers the workflow */
   event: WorkflowRunEvent;
+  /** (optional) ID of the workflow that the occurred event should reference */
   workflow?: string;
+  type: 'workflow-run-event';
 }
 
 /**
@@ -75,14 +72,14 @@ export interface WorkflowRunTrigger {
  *
  * Represents the schedule configuration for a workflow.
  * If there are no triggers, the workflow is ran only manually.
- *
- * @typeParam triggers - List of triggers that can activate the workflow
- * @typeParam max_retries - Number of times the workflow can be retried if it fails
- * @typeParam max_runtime - Maximum runtime of the workflow in seconds
  */
 export interface WorkflowSchedule {
+  /** List of triggers that can activate the workflow */
   triggers: WorkflowTrigger[];
+  /** Number of times the workflow can be retried if it fails */
   max_retries?: number;
+  /** Maximum runtime of the workflow in seconds */
   max_runtime?: number;
+  /** Minimum interval between workflow runs in seconds */
   min_interval?: number;
 }

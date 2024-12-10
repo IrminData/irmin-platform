@@ -2,12 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type UseFormSetValue } from 'react-hook-form';
 
+import { createConnection } from '@/lib/actions/connections';
 import {
-  createConnection,
-  getNewConnectionDetails,
-  getNewConnectionSettings,
-  testConnection,
-} from '@/lib/actions/connections';
+  getConnectorConfigurationFields,
+  validateConnectorConfiguration,
+} from '@/lib/actions/connectors';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -43,13 +42,15 @@ export function useConnectorCategoryFilter(connectors: Connector[]) {
     setFilteredConnectors(
       category === dict.connections.create.categoryAll
         ? connectors
-        : connectors.filter((connector) => connector.category === category)
+        : connectors.filter(
+            (connector) => connector.primary_category === category
+          )
     );
   };
 
   const categoryFilterOptions = [
     dict.connections.create.categoryAll,
-    ...new Set(connectors.map((connector) => connector.category)),
+    ...new Set(connectors.map((connector) => connector.primary_category)),
   ];
 
   return {
@@ -112,11 +113,13 @@ export function useFetchConnectionDetails(
       setLoading(true);
       fetchedFields.current = true;
       try {
-        const res = await getNewConnectionDetails(connectorID);
-
-        setConnectionData((prev: ConnectionSetup) => ({
+        const res = await getConnectorConfigurationFields(
+          connectorID,
+          'details'
+        );
+        setConnectionData((prev) => ({
           ...prev,
-          connectionDetailsFields: res.data,
+          connectionDetailsFields: res,
         }));
       } catch (error) {
         console.error('Fetch connection details error:', error);
@@ -162,11 +165,11 @@ export function useContinueAndTestConnection(
           connectionDetails: connectionDetails as DynamicFieldValues,
         });
 
-        const res = await testConnection(
+        const res = await validateConnectorConfiguration(
           connectionData.connector?.id ?? '',
           connectionDetails as DynamicFieldValues
         );
-        if (res.data.connected) {
+        if (res.data.can_connect && res.data.connection_details_valid) {
           irminAlert('success', dict.connections.create.success);
           setCurrentStep(3);
         } else {
@@ -201,14 +204,14 @@ export function useFetchConnectionSettings(
       setLoading(true);
       fetchedFields.current = true;
       try {
-        const res = await getNewConnectionSettings(
+        const res = await getConnectorConfigurationFields(
           connectorID,
+          'settings',
           connectionDetails
         );
-
-        setConnectionData((prev: ConnectionSetup) => ({
+        setConnectionData((prev) => ({
           ...prev,
-          connectionSettingsFields: res.data,
+          connectionSettingsFields: res,
         }));
       } catch (error) {
         console.error('Fetch new connection settings error:', error);
@@ -238,6 +241,7 @@ export function useContinueCreateConnection(
   setConnectionData: React.Dispatch<React.SetStateAction<ConnectionSetup>>,
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>
 ) {
+  const { dict } = useLocale();
   const { irminAlert } = usePopup();
   const [loading, setLoading] = useState(false);
 
@@ -249,7 +253,17 @@ export function useContinueCreateConnection(
           ...connectionData,
           connectionSettings: data,
         });
-        setCurrentStep(4);
+        const res = await validateConnectorConfiguration(
+          connectionData.connector?.id ?? '',
+          connectionData.connectionDetails,
+          data
+        );
+        if (res.data.ok && res.data.connection_settings_valid) {
+          irminAlert('success', dict.connections.create.configuration_valid);
+          setCurrentStep(4);
+        } else {
+          irminAlert('error', dict.connections.create.configuration_invalid);
+        }
       } catch (error) {
         console.error('Failed to set connection settings:', error);
         irminAlert(
@@ -260,7 +274,7 @@ export function useContinueCreateConnection(
         setLoading(false);
       }
     },
-    [connectionData, setConnectionData, setCurrentStep, irminAlert]
+    [connectionData, dict, setConnectionData, setCurrentStep, irminAlert]
   );
 
   return { loading, continueCreateConnection };

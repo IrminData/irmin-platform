@@ -8,6 +8,8 @@ import {
   ActionWorkflow,
   ExportWorkflow,
   ImportWorkflow,
+  PipelineStage,
+  PipelineWorkflow,
   Workflow,
   WorkflowRun,
 } from '@/types/core/Workflow';
@@ -16,6 +18,7 @@ import {
   exampleActions,
   exampleExports,
   exampleImports,
+  examplePipelines,
   exampleWorkflowRuns,
   exampleWorkflows,
 } from '@/types/examples/core';
@@ -39,6 +42,7 @@ class WorkflowService {
     this.fetchImportWorkflows = this.fetchImportWorkflows.bind(this);
     this.fetchExportWorkflows = this.fetchExportWorkflows.bind(this);
     this.fetchActionWorkflows = this.fetchActionWorkflows.bind(this);
+    this.fetchPipelineWorkflows = this.fetchPipelineWorkflows.bind(this);
     this.fetchWorkflow = this.fetchWorkflow.bind(this);
     this.updateWorkflow = this.updateWorkflow.bind(this);
     this.deleteWorkflow = this.deleteWorkflow.bind(this);
@@ -51,6 +55,7 @@ class WorkflowService {
     this.createImportWorkflow = this.createImportWorkflow.bind(this);
     this.createExportWorkflow = this.createExportWorkflow.bind(this);
     this.createActionWorkflow = this.createActionWorkflow.bind(this);
+    this.createPipelineWorkflow = this.createPipelineWorkflow.bind(this);
   }
 
   /**
@@ -381,6 +386,30 @@ class WorkflowService {
   }
 
   /**
+   * Fetch all Pipeline Workflows
+   */
+  async fetchPipelineWorkflows(): Promise<
+    IrminAPIResponse<PipelineWorkflow[]>
+  > {
+    if (isOfflineMode)
+      return fake(examplePipelines) as IrminAPIResponse<PipelineWorkflow[]>;
+    try {
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workflows/pipelines`,
+        {
+          method: 'GET',
+        }
+      )) as IrminAPIResponse<PipelineWorkflow[]>;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch pipelines error');
+      if (isDevelopment)
+        return fake(examplePipelines) as IrminAPIResponse<PipelineWorkflow[]>;
+      throw error;
+    }
+  }
+
+  /**
    * Create a new Import Workflow
    *
    * @param props - Workflow properties
@@ -636,6 +665,112 @@ class WorkflowService {
         return fake({
           ...exampleActions[0],
           id: `${Math.floor(Math.random() * 1000)}-new-action`,
+          name,
+          description,
+          documentation,
+          schedule,
+        }) as IrminAPIResponse<Workflow>;
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new Pipeline Workflow
+   *
+   * @param props - Workflow properties
+   * @param props.stages - Stages of the pipeline in order
+   * @param props.live - Whether the pipeline runs continuously or is running according to a schedule
+   * @param props.name - Name of the workflow
+   * @param props.description - Description of the workflow
+   * @param props.documentation - Documentation of the workflow
+   * @param props.schedule - (optional) Schedule configuration of when to run the workflow
+   */
+  public async createPipelineWorkflow({
+    stages,
+    live,
+    name,
+    description,
+    documentation,
+    schedule,
+  }: {
+    stages: PipelineStage[];
+    live: boolean;
+    name: string;
+    description: string;
+    documentation: string;
+    schedule?: WorkflowSchedule;
+  }): Promise<IrminAPIResponse<Workflow>> {
+    if (isOfflineMode)
+      return fake({
+        ...examplePipelines[0],
+        id: `${Math.floor(Math.random() * 1000)}-new-pipeline`,
+        stages,
+        live,
+        name,
+        description,
+        documentation,
+        schedule,
+      }) as IrminAPIResponse<Workflow>;
+    try {
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('documentation', documentation);
+      formData.append('live', live ? 'true' : 'false');
+      // Append schedule properties if available
+      if (schedule) {
+        const scheduleFormData = createWorkflowScheduleFormData(schedule);
+        for (const [key, value] of scheduleFormData.entries()) {
+          formData.append(key, value);
+        }
+      }
+      // Append pipline stages
+      for (let i = 0; i < stages.length; i++) {
+        const stage = stages[i];
+        formData.append(`stages[${i}][description]`, stage.description);
+        formData.append(`stages[${i}][write]`, stage.write ? 'true' : 'false');
+        formData.append(`stages[${i}][read]`, stage.read ? 'true' : 'false');
+        formData.append(`stages[${i}][type]`, stage.type);
+        if (stage.type === 'action') {
+          formData.append(`stages[${i}][executable]`, stage.executable);
+        }
+        if (stage.type === 'connection') {
+          formData.append(`stages[${i}][connection]`, stage.connection.id);
+          formData.append(
+            `stages[${i}][connection_write_path]`,
+            stage.connection_write_path
+          );
+          formData.append(
+            `stages[${i}][connection_read_path]`,
+            stage.connection_read_path
+          );
+        }
+        if (stage.type === 'repository') {
+          formData.append(`stages[${i}][repository]`, stage.repository.slug);
+          formData.append(`stages[${i}][branch]`, stage.branch);
+          formData.append(`stages[${i}][path]`, stage.path);
+        }
+      }
+      // Create the pipeline
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workflows/pipelines`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as IrminAPIResponse<Workflow>;
+      return response;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Failed to create Pipeline Workflow'
+      );
+      if (isDevelopment)
+        return fake({
+          ...examplePipelines[0],
+          id: `${Math.floor(Math.random() * 1000)}-new-pipeline`,
+          stages,
+          live,
           name,
           description,
           documentation,

@@ -52,7 +52,7 @@ export async function getProfile(token?: string) {
  * @param email - (optional) User's new email
  * @param phone - (optional) User's new phone number
  * @param company - (optional) User's new company name
- * @param profile_picture - (optional) User's new profile picture
+ * @param avatar - (optional) User's new profile picture
  *
  * @returns The updated user's profile API response
  */
@@ -62,7 +62,7 @@ export async function updateProfile(
   email?: string,
   phone?: string,
   company?: string,
-  profile_picture?: File,
+  avatar?: File | Blob,
   token?: string
 ) {
   const { locale } = await initDict();
@@ -74,7 +74,7 @@ export async function updateProfile(
     email,
     phone,
     company,
-    profile_picture
+    avatar
   );
   // Register the user as a subscriber in Novu
   await registerNovuSubscriber(res.data, locale);

@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { MergeStrategy } from '@/types/core/Diff';
+
 /**
  * Modal content to merge refs.
  *
@@ -32,7 +34,7 @@ export default function MergeModalContent({
     baseRef: string,
     compareRef: string,
     description: string,
-    mergeStrategy: string
+    mergeStrategy: MergeStrategy
   ) => Promise<boolean>;
   closeModal: () => void;
 }) {
@@ -74,7 +76,7 @@ export default function MergeModalContent({
           baseRef,
           compareRef,
           data.description,
-          data.mergeStrategy
+          data.mergeStrategy as MergeStrategy
         );
         if (successful) {
           closeModal();

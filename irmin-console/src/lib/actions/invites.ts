@@ -5,38 +5,22 @@ import { initCore } from '@/lib/initCore';
 const signedURLToken = process.env.IRMIN_SIGNED_URL_TOKEN ?? '';
 
 /**
- * Server action to get all invites to a workspace
+ * Server action to get all invites to a workspace or for a user
+ *
+ * Please provide either workspace or user, not both.
  *
  * @returns The invites to the workspace
  */
-export async function getWorkspaceInvites(
-  workspace: string,
+export async function getInvites(
+  workspace?: string,
+  user?: string,
   trashed?: boolean,
   expired?: boolean,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const invites = await irminCore.inviteService.fetchWorkspaceInvites(
+  const invites = await irminCore.inviteService.fetchInvites(
     workspace,
-    trashed,
-    expired
-  );
-  return invites.data;
-}
-
-/**
- * Server action to get all invites received by a user
- *
- * @returns The invites received by the user
- */
-export async function getUserInvites(
-  user: string,
-  trashed?: boolean,
-  expired?: boolean,
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  const invites = await irminCore.inviteService.fetchUserInvites(
     user,
     trashed,
     expired

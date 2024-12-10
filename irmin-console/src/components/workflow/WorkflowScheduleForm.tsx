@@ -448,7 +448,7 @@ export default function WorkflowScheduleForm({
                               const workflow = workflows.find(
                                 (workflow) => field.value === workflow.id
                               );
-                              return `${workflow?.name} (${workflow?.workflowable_type})`;
+                              return `${workflow?.name} (${workflow?.type})`;
                             })(),
                           }}
                           onChange={(selectedOption) => {
@@ -456,7 +456,7 @@ export default function WorkflowScheduleForm({
                           }}
                           options={workflows.map((workflow) => ({
                             value: workflow.id,
-                            label: `${workflow.name} (${workflow.workflowable_type})`,
+                            label: `${workflow.name} (${workflow.type})`,
                           }))}
                           className='react-select-container'
                           classNamePrefix='react-select'

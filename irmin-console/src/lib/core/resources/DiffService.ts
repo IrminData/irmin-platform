@@ -2,7 +2,7 @@ import IrminCore from '@/lib/core';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { Diff } from '@/types/core/Diff';
+import { Diff, MergeStrategy } from '@/types/core/Diff';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { diff } from '@/types/examples/core/diff';
 
@@ -86,7 +86,7 @@ class DiffService {
     baseRef: string,
     compareRef: string,
     description: string,
-    mergeStrategy: string
+    mergeStrategy: MergeStrategy
   ): Promise<IrminAPIResponse> {
     if (isOfflineMode) return fake() as IrminAPIResponse;
     try {

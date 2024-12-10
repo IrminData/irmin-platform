@@ -128,6 +128,7 @@ class TagService {
         `/v1/repositories/${repository}/tags/${tag}`,
         {
           method: 'POST',
+          body: formData,
         }
       );
 

@@ -56,16 +56,18 @@ const ConnectionSection = ({
           <div className='flex w-full flex-row items-center gap-4'>
             <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-card px-4 py-2 text-left text-sm text-card-foreground shadow'>
               <Image
-                src={connection.connector.logo}
+                src={connection.connector.logo_url}
                 alt={connection.connector.name}
                 className='h-12 w-12 object-contain'
                 width={48}
                 height={48}
               />
               <div className='flex flex-col justify-start gap-1'>
-                <Badge variant='secondary'>
-                  {connection.connector.category}
-                </Badge>
+                {connection.connector.primary_category && (
+                  <Badge variant='secondary'>
+                    {connection.connector.primary_category}
+                  </Badge>
+                )}
                 <p>{connection.connector.name}</p>
               </div>
             </div>
@@ -73,13 +75,13 @@ const ConnectionSection = ({
               <p className='text-sm opacity-80'>
                 {connection.connector.description}
               </p>
-              {connection.connector.url && (
+              {connection.connector.read_more_url && (
                 <Button
                   variant='link'
                   target='_blank'
                   className='h-max p-0'
                   rel='noopener noreferrer'
-                  href={connection.connector.url}
+                  href={connection.connector.read_more_url}
                 >
                   {dict.connections.create.learnMore}
                 </Button>

@@ -113,17 +113,18 @@ class EditorItemsService {
         throw new Error('Item is not a file');
       }
       // Update the file
-      const body = new FormData();
-      body.append('_method', 'PATCH');
-      body.append('name', fileNavigatorItem.current.name);
-      body.append('path', fileNavigatorItem.current.path);
-      body.append('contents', fileNavigatorItem.current.contents);
-      body.append('original_path', fileNavigatorItem.original.path);
+      const formData = new FormData();
+      formData.append('_method', 'PATCH');
+      formData.append('name', fileNavigatorItem.current.name);
+      formData.append('path', fileNavigatorItem.current.path);
+      formData.append('contents', fileNavigatorItem.current.contents);
+      formData.append('owner', fileNavigatorItem.current.owner);
+      formData.append('original_path', fileNavigatorItem.original.path);
       const response = (await this.irminCore.fetchAPI(
         `/v1/editor-items/files`,
         {
           method: 'POST',
-          body,
+          body: formData,
         }
       )) as IrminAPIResponse<EditorItemsFile>;
       return response;
@@ -150,13 +151,12 @@ class EditorItemsService {
         throw new Error('Item is not a file');
       }
       // Delete the file
-      const body = new FormData();
-      body.append('_method', 'DELETE');
-      body.append('name', fileNavigatorItem.original.name);
-      body.append('path', fileNavigatorItem.original.path);
+      const formData = new FormData();
+      formData.append('_method', 'DELETE');
+      formData.append('path', fileNavigatorItem.original.path);
       const response = await this.irminCore.fetchAPI(`/v1/editor-items/files`, {
         method: 'POST',
-        body,
+        body: formData,
       });
       return response;
     } catch (error) {
@@ -182,14 +182,14 @@ class EditorItemsService {
         throw new Error('Item is not a folder');
       }
       // Create the folder
-      const body = new FormData();
-      body.append('name', fileNavigatorItem.current.name);
-      body.append('path', fileNavigatorItem.current.path);
+      const formData = new FormData();
+      formData.append('name', fileNavigatorItem.current.name);
+      formData.append('path', fileNavigatorItem.current.path);
       const response = (await this.irminCore.fetchAPI(
         `/v1/editor-items/folders`,
         {
           method: 'POST',
-          body,
+          body: formData,
         }
       )) as IrminAPIResponse<EditorItemsFolder>;
       return response;
@@ -221,16 +221,17 @@ class EditorItemsService {
         throw new Error('Item is not a folder');
       }
       // Update the folder
-      const body = new FormData();
-      body.append('_method', 'PATCH');
-      body.append('name', fileNavigatorItem.current.name);
-      body.append('path', fileNavigatorItem.current.path);
-      body.append('original_path', fileNavigatorItem.original.path);
+      const formData = new FormData();
+      formData.append('_method', 'PATCH');
+      formData.append('name', fileNavigatorItem.current.name);
+      formData.append('path', fileNavigatorItem.current.path);
+      formData.append('owner', fileNavigatorItem.current.owner);
+      formData.append('original_path', fileNavigatorItem.original.path);
       const response = (await this.irminCore.fetchAPI(
         `/v1/editor-items/folders`,
         {
           method: 'POST',
-          body,
+          body: formData,
         }
       )) as IrminAPIResponse<EditorItemsFolder>;
       return response;
@@ -259,7 +260,6 @@ class EditorItemsService {
       // Delete the folder
       const body = new FormData();
       body.append('_method', 'DELETE');
-      body.append('name', fileNavigatorItem.original.name);
       body.append('path', fileNavigatorItem.original.path);
       const response = await this.irminCore.fetchAPI(
         `/v1/editor-items/folders`,

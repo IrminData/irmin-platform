@@ -21,6 +21,11 @@ export const branches: () => Branch[] = () => [
     is_immutable: false,
   },
   {
+    name: 'ga-pipeline',
+    default: false,
+    is_immutable: false,
+  },
+  {
     name: 'migration-googlesheets',
     default: false,
     is_immutable: true,

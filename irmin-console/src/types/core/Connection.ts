@@ -3,27 +3,26 @@ import { User } from '@/types/core/User';
 
 /**
  * Connection object - used to store information on data sources and destinations
- *
- * @typeParam id - Connection hash ID
- * @typeParam name - Connection name
- * @typeParam owner - The workspace user that owns this connection and is responsible for it
- * @typeParam description - Connection description
- * @typeParam documentation - Connection documentation as a markdown string
- * @typeParam details - String which contains a JSON object
- * @typeParam settings - String which contains a JSON object
- * @typeParam connector - Connector object
- * @typeParam created_at - Connection creation date
- * @typeParam updated_at - Connection update date
  */
 export interface Connection {
+  /** Connection hash ID */
   id: string;
+  /** Connection name */
   name: string;
+  /** The workspace user that owns this connection and is responsible for it */
   owner: User;
+  /** Connection description */
   description: string;
+  /** Connection documentation as a markdown string */
   documentation: string;
+  /** String which contains a JSON object */
   details: string;
+  /** String which contains a JSON object */
   settings: string;
+  /** Connector object */
   connector: Connector;
+  /** Connection creation date */
   created_at: string;
+  /** Connection update date */
   updated_at: string;
 }

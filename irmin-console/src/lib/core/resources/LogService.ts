@@ -82,6 +82,36 @@ class LogService {
   }
 
   /**
+   * Fetch logs for a specific workflow run
+   *
+   * @param workflow - ID of the workflow to fetch logs for
+   * @param workflowRunID -  ID of the workflow run to fetch logs for
+   */
+  async fetchWorkflowRunLogs(
+    workflow?: string,
+    workflowRunID?: string
+  ): Promise<IrminAPIResponse<WorkflowRunLogs>> {
+    if (isOfflineMode)
+      return fake(exampleWorkflowRunLogs) as IrminAPIResponse<WorkflowRunLogs>;
+    try {
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workflows/${workflow}/runs/${workflowRunID}/logs`,
+        {
+          method: 'GET',
+        }
+      )) as IrminAPIResponse<WorkflowRunLogs>;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch Workflow Run Logs error');
+      if (isDevelopment)
+        return fake(
+          exampleWorkflowRunLogs
+        ) as IrminAPIResponse<WorkflowRunLogs>;
+      throw error;
+    }
+  }
+
+  /**
    * Fetch log events for a specific repository
    *
    * @param repository - Slug of the repository to fetch logs for
@@ -135,36 +165,6 @@ class LogService {
       );
       if (isDevelopment)
         return fake(exampleConnectionLogEvents) as IrminAPIResponse<LogEvent[]>;
-      throw error;
-    }
-  }
-
-  /**
-   * Fetch logs for a specific workflow run
-   *
-   * @param workflow - ID of the workflow to fetch logs for
-   * @param workflowRunID -  ID of the workflow run to fetch logs for
-   */
-  async fetchWorkflowRunLogs(
-    workflow?: string,
-    workflowRunID?: string
-  ): Promise<IrminAPIResponse<WorkflowRunLogs>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflowRunLogs) as IrminAPIResponse<WorkflowRunLogs>;
-    try {
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/workflows/${workflow}/runs/${workflowRunID}/logs`,
-        {
-          method: 'GET',
-        }
-      )) as IrminAPIResponse<WorkflowRunLogs>;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Fetch Workflow Run Logs error');
-      if (isDevelopment)
-        return fake(
-          exampleWorkflowRunLogs
-        ) as IrminAPIResponse<WorkflowRunLogs>;
       throw error;
     }
   }

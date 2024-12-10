@@ -67,7 +67,7 @@ const ConnectionList = ({
               className='inline-flex flex-row items-center gap-2'
             >
               <Image
-                src={item.connector.logo}
+                src={item.connector.logo_url}
                 alt={item.connector.name}
                 className='h-8 w-8 object-contain'
                 width={32}

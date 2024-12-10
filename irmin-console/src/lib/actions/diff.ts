@@ -2,6 +2,8 @@
 
 import { initCore } from '@/lib/initCore';
 
+import { MergeStrategy } from '@/types/core/Diff';
+
 /**
  * Server action to get a diff between two refs in a repository.
  */
@@ -28,7 +30,7 @@ export async function mergeRefs(
   base: string,
   compare: string,
   description: string,
-  strategy: string,
+  strategy: MergeStrategy,
   token?: string
 ) {
   const irminCore = await initCore(token);

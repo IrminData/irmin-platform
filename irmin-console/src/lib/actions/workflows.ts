@@ -2,11 +2,7 @@
 
 import { initCore } from '@/lib/initCore';
 
-import {
-  ActionWorkflow,
-  ExportWorkflow,
-  ImportWorkflow,
-} from '@/types/core/Workflow';
+import { PipelineStage } from '@/types/core/Workflow';
 import { WorkflowSchedule } from '@/types/core/WorkflowSchedule';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
@@ -51,23 +47,33 @@ export async function getImportWorkflows(token?: string) {
 }
 
 /**
+ * Server action to get all pipeline workflows for the current workspace.
+ */
+export async function getPipelineWorkflows(token?: string) {
+  const irminCore = await initCore(token);
+  // Fetch the workflows
+  const workflows = await irminCore.workflowService.fetchPipelineWorkflows();
+  return workflows.data;
+}
+
+/**
  * Server action to fetch a single workflow by ID.
  */
 export async function getWorkflow(workflowID: string, token?: string) {
   const irminCore = await initCore(token);
   // Fetch the workflow
   const workflow = await irminCore.workflowService.fetchWorkflow(workflowID);
-  const foundWorkflow = workflow.data;
+  // Return the workflow
+  return workflow.data;
+}
 
-  // Return the workflow based on its type
-  if (foundWorkflow.workflowable_type === 'import')
-    return foundWorkflow as ImportWorkflow;
-  if (foundWorkflow.workflowable_type === 'export')
-    return foundWorkflow as ExportWorkflow;
-  if (foundWorkflow.workflowable_type === 'action')
-    return foundWorkflow as ActionWorkflow;
-
-  throw new Error('Invalid workflow type');
+/**
+ * Server action to delete a workflow.
+ */
+export async function deleteWorkflow(workflowID: string, token?: string) {
+  const irminCore = await initCore(token);
+  const res = await irminCore.workflowService.deleteWorkflow(workflowID);
+  return res;
 }
 
 /**
@@ -80,15 +86,6 @@ export async function updateWorkflow(
 ) {
   const irminCore = await initCore(token);
   const res = await irminCore.workflowService.updateWorkflow(workflowID, data);
-  return res;
-}
-
-/**
- * Server action to delete a workflow.
- */
-export async function deleteWorkflow(workflowID: string, token?: string) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.workflowService.deleteWorkflow(workflowID);
   return res;
 }
 
@@ -227,5 +224,26 @@ export async function createExportWorkflow(
 ) {
   const irminCore = await initCore(token);
   const res = await irminCore.workflowService.createExportWorkflow(data);
+  return res;
+}
+
+/**
+ * Server action to create a pipeline workflow.
+ */
+export async function createPipelineWorkflow(
+  data: {
+    // Workflow data
+    name: string;
+    description: string;
+    documentation: string;
+    schedule: WorkflowSchedule;
+    // Workflowable data
+    stages: PipelineStage[];
+    live: boolean;
+  },
+  token?: string
+) {
+  const irminCore = await initCore(token);
+  const res = await irminCore.workflowService.createPipelineWorkflow(data);
   return res;
 }

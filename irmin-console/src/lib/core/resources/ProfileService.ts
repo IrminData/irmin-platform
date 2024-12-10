@@ -51,7 +51,7 @@ class ProfileService {
    * @param email - (optional) User's new email
    * @param phone - (optional) User's new phone number
    * @param company - (optional) User's new company name
-   * @param profile_picture - (optional) User's new profile picture
+   * @param avatar - (optional) User's new profile picture
    */
   async updateProfile(
     first_name?: string,
@@ -59,7 +59,7 @@ class ProfileService {
     email?: string,
     phone?: string,
     company?: string,
-    profile_picture?: File
+    avatar?: File | Blob
   ): Promise<IrminAPIResponse<User>> {
     if (isOfflineMode) return fake(exampleProfile) as IrminAPIResponse<User>;
     const formData = new FormData();
@@ -69,7 +69,7 @@ class ProfileService {
     if (email) formData.append('email', email);
     if (phone) formData.append('phone', phone);
     if (company) formData.append('company', company);
-    if (profile_picture) formData.append('avatar', profile_picture);
+    if (avatar) formData.append('avatar', avatar);
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/profile`, {
         method: 'POST',

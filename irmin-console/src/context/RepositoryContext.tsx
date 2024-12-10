@@ -49,7 +49,7 @@ import { createQueryString } from '@/utils/queryParams';
 
 import { Branch } from '@/types/core/Branch';
 import { Commit } from '@/types/core/Commit';
-import { Diff } from '@/types/core/Diff';
+import { Diff, MergeStrategy } from '@/types/core/Diff';
 import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 import { Object } from '@/types/core/Object';
 import { ObjectSchema } from '@/types/core/ObjectSchema';
@@ -129,7 +129,7 @@ interface RepositoryContextProps {
     base: string,
     compare: string,
     description: string,
-    strategy: string
+    strategy: MergeStrategy
   ) => Promise<boolean>;
 }
 
@@ -755,7 +755,7 @@ export const RepositoryProvider = ({
       base: string,
       compare: string,
       description: string,
-      strategy: string
+      strategy: MergeStrategy
     ): Promise<boolean> => {
       try {
         const res = await mergeRefs(

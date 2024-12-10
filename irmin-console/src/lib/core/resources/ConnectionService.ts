@@ -5,24 +5,11 @@ import fake from '@/utils/prepareFakeResponse';
 import { Connection } from '@/types/core/Connection';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { exampleConnections } from '@/types/examples/core';
-import exampleDynamicFields from '@/types/examples/exampleDynamicFields';
-import {
-  DynamicFields,
-  DynamicFieldValues,
-} from '@/types/internal/DynamicField';
+import { DynamicFieldValues } from '@/types/internal/DynamicField';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
-
-/**
- * Connection test API response type
- */
-interface ConnectionTestAPIResponse extends IrminAPIResponse {
-  data: {
-    connected: boolean;
-  };
-}
 
 /**
  * Connection API service
@@ -40,10 +27,6 @@ class ConnectionService {
     this.updateConnection = this.updateConnection.bind(this);
     this.reassignConnection = this.reassignConnection.bind(this);
     this.deleteConnection = this.deleteConnection.bind(this);
-    this.fetchNewConnectionDetails = this.fetchNewConnectionDetails.bind(this);
-    this.testConnectionWithDetails = this.testConnectionWithDetails.bind(this);
-    this.fetchNewConnectionSettings =
-      this.fetchNewConnectionSettings.bind(this);
     this.createConnection = this.createConnection.bind(this);
   }
 
@@ -99,8 +82,12 @@ class ConnectionService {
    * @param connection - The ID of the Connection to update
    * @param data - The updated Connection properties
    */
-  async updateConnection(connection: string, data: ItemUpdateProps) {
-    if (isOfflineMode) return fake();
+  async updateConnection(
+    connection: string,
+    data: ItemUpdateProps
+  ): Promise<IrminAPIResponse<Connection>> {
+    if (isOfflineMode)
+      return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
     try {
       const formData = new FormData();
       formData.append('_method', 'PATCH');
@@ -110,17 +97,19 @@ class ConnectionService {
       if (data.documentation)
         formData.append('documentation', data.documentation);
 
-      const response = await this.irminCore.fetchAPI(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/connections/${connection}`,
         {
           method: 'POST',
+          body: formData,
         }
-      );
+      )) as IrminAPIResponse<Connection>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update connection error');
-      if (isDevelopment) return fake();
+      if (isDevelopment)
+        return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
       throw error;
     }
   }
@@ -131,23 +120,29 @@ class ConnectionService {
    * @param connection - The ID of the Connection to reassign
    * @param newOwner -  The ID of the new owner for the Connection
    */
-  async reassignConnection(connection: string, newOwner: string) {
-    if (isOfflineMode) return fake();
+  async reassignConnection(
+    connection: string,
+    newOwner: string
+  ): Promise<IrminAPIResponse<Connection>> {
+    if (isOfflineMode)
+      return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
     try {
       const formData = new FormData();
       formData.append('owner', newOwner);
 
-      const response = await this.irminCore.fetchAPI(
+      const response = (await this.irminCore.fetchAPI(
         `/v1/connections/${connection}/reassign`,
         {
           method: 'POST',
+          body: formData,
         }
-      );
+      )) as IrminAPIResponse<Connection>;
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Reassign connection error');
-      if (isDevelopment) return fake();
+      if (isDevelopment)
+        return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
       throw error;
     }
   }
@@ -167,122 +162,13 @@ class ConnectionService {
 
       const response = await this.irminCore.fetchAPI(`/v1/connections`, {
         method: 'POST',
+        body: formData,
       });
 
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete connection error');
       if (isDevelopment) return fake();
-      throw error;
-    }
-  }
-
-  /**
-   * Fetch connection details for a new connection.
-   *
-   * @param connectorID - The ID of the connector to fetch
-   * @returns required details fields to create a connection
-   */
-  async fetchNewConnectionDetails(
-    connectorID: string
-  ): Promise<IrminAPIResponse<DynamicFields>> {
-    try {
-      if (isOfflineMode)
-        return fake(exampleDynamicFields) as IrminAPIResponse<DynamicFields>;
-      const response = await this.irminCore.fetchAPI(
-        `/v1/connections/details?connector=${connectorID}`,
-        {
-          method: 'GET',
-        }
-      );
-      return response as IrminAPIResponse<DynamicFields>;
-    } catch (error) {
-      console.error(
-        (error as Error).message,
-        'Failed to fetch new Connection details'
-      );
-      if (isDevelopment)
-        return fake(exampleDynamicFields) as IrminAPIResponse<DynamicFields>;
-      throw error;
-    }
-  }
-
-  /**
-   * Test a connection with the provided connection details
-   * @param connectorID - The ID of the connector
-   * @param connectionDetails - The connection details to test
-   * @returns whether the connection was successful or not
-   */
-  async testConnectionWithDetails(
-    connectorID: string,
-    connectionDetails: DynamicFieldValues
-  ): Promise<ConnectionTestAPIResponse> {
-    try {
-      if (isOfflineMode)
-        return fake({
-          connected: true,
-        }) as ConnectionTestAPIResponse;
-
-      // Construct the query parameters from connectionDetails
-      const params = new URLSearchParams({
-        connector: connectorID.toString(),
-        ...connectionDetails,
-      });
-
-      // Make the request
-      const response = await this.irminCore.fetchAPI(
-        `/v1/connections/test?${params.toString()}`,
-        {
-          method: 'GET',
-        }
-      );
-      return response as ConnectionTestAPIResponse;
-    } catch (error) {
-      console.error((error as Error).message, 'Failed to test new Connection');
-      if (isDevelopment)
-        return fake({
-          connected: true,
-        }) as ConnectionTestAPIResponse;
-      throw error;
-    }
-  }
-
-  /**
-   * Fetch connection settings for a new connection.
-   *
-   * @param connectorID - The ID of the connector to fetch
-   * @param connectionDetails - The connection details to fetch settings for
-   * @returns required settings fields to create a connection
-   */
-  async fetchNewConnectionSettings(
-    connectorID: string,
-    connectionDetails: DynamicFieldValues
-  ): Promise<IrminAPIResponse<DynamicFields>> {
-    try {
-      if (isOfflineMode)
-        return fake(exampleDynamicFields) as IrminAPIResponse<DynamicFields>;
-
-      // Construct the query parameters from connectionDetails
-      const params = new URLSearchParams({
-        connector: connectorID.toString(),
-        ...connectionDetails,
-      });
-
-      // Make the request
-      const response = await this.irminCore.fetchAPI(
-        `/v1/connections/settings?${params.toString()}`,
-        {
-          method: 'GET',
-        }
-      );
-      return response as IrminAPIResponse<DynamicFields>;
-    } catch (error) {
-      console.error(
-        (error as Error).message,
-        'Failed to fetch new Connection settings'
-      );
-      if (isDevelopment)
-        return fake(exampleDynamicFields) as IrminAPIResponse<DynamicFields>;
       throw error;
     }
   }
@@ -310,33 +196,33 @@ class ConnectionService {
     connectionSettings: DynamicFieldValues;
     name: string;
     description: string;
-  }) {
+  }): Promise<IrminAPIResponse<Connection>> {
+    if (isOfflineMode)
+      return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
     try {
-      if (isOfflineMode) return fake();
-
       const formData = new FormData();
-
       formData.append('connector', connectorID.toString());
+      formData.append('name', name);
+      formData.append('description', description);
       Object.keys(connectionDetails).forEach((key) => {
         formData.append(`details[${key}]`, connectionDetails[key] as string);
       });
       Object.keys(connectionSettings).forEach((key) => {
         formData.append(`settings[${key}]`, connectionSettings[key] as string);
       });
-      formData.append('name', name);
-      formData.append('description', description);
 
-      const res = await this.irminCore.fetchAPI(`/v1/connections`, {
+      const res = (await this.irminCore.fetchAPI(`/v1/connections`, {
         method: 'POST',
         body: formData,
-      });
+      })) as IrminAPIResponse<Connection>;
       return res;
     } catch (error) {
       console.error(
         (error as Error).message,
         'Failed to create new Connection'
       );
-      if (isDevelopment) return fake();
+      if (isDevelopment)
+        return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
       throw error;
     }
   }

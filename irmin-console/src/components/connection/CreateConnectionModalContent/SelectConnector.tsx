@@ -87,14 +87,18 @@ export default function SelectConnector({
                 <div className='flex w-full flex-row items-center gap-4'>
                   <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-card px-4 py-2 text-left text-sm text-card-foreground shadow'>
                     <Image
-                      src={field.value.logo}
+                      src={field.value.logo_url}
                       alt={field.value.name}
                       className='h-12 w-12 object-contain'
                       width={48}
                       height={48}
                     />
                     <div className='flex flex-col justify-start gap-1'>
-                      <Badge variant='secondary'>{field.value.category}</Badge>
+                      {field.value.primary_category && (
+                        <Badge variant='secondary'>
+                          {field.value.primary_category}
+                        </Badge>
+                      )}
                       <p>{field.value.name}</p>
                     </div>
                   </div>
@@ -102,13 +106,13 @@ export default function SelectConnector({
                     <p className='text-sm opacity-80'>
                       {field.value.description}
                     </p>
-                    {field.value.url && (
+                    {field.value.read_more_url && (
                       <Button
                         variant='link'
                         target='_blank'
                         className='h-max p-0'
                         rel='noopener noreferrer'
-                        href={field.value.url}
+                        href={field.value.read_more_url}
                       >
                         {dict.connections.create.learnMore}
                       </Button>
@@ -123,7 +127,7 @@ export default function SelectConnector({
                 <Button
                   variant={category === activeCategory ? 'accent' : 'secondary'}
                   key={`category-${index}`}
-                  onClick={() => selectCategoryFilter(category)}
+                  onClick={() => selectCategoryFilter(category ?? '')}
                 >
                   {category}
                 </Button>
@@ -143,14 +147,18 @@ export default function SelectConnector({
                   onClick={() => handleConnectorClick(connector)}
                 >
                   <Image
-                    src={connector.logo}
+                    src={connector.logo_url}
                     alt={connector.name}
                     className='h-12 w-12 object-contain'
                     width={48}
                     height={48}
                   />
                   <div className='flex flex-col justify-start gap-1'>
-                    <Badge variant='secondary'>{connector.category}</Badge>
+                    {connector.primary_category && (
+                      <Badge variant='secondary'>
+                        {connector.primary_category}
+                      </Badge>
+                    )}
                     <p>{connector.name}</p>
                   </div>
                 </button>

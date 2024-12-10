@@ -7,6 +7,7 @@ import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import {
   exampleInvites,
   exampleInviteSignedURLPayload,
+  exampleRoles,
 } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -27,8 +28,7 @@ class InviteService {
     this.resendUserInvite = this.resendUserInvite.bind(this);
     this.cancelUserInvite = this.cancelUserInvite.bind(this);
     this.changeUserInviteRole = this.changeUserInviteRole.bind(this);
-    this.fetchWorkspaceInvites = this.fetchWorkspaceInvites.bind(this);
-    this.fetchUserInvites = this.fetchUserInvites.bind(this);
+    this.fetchInvites = this.fetchInvites.bind(this);
     this.fetchInvite = this.fetchInvite.bind(this);
     this.verifyInvite = this.verifyInvite.bind(this);
     this.acceptInvite = this.acceptInvite.bind(this);
@@ -52,8 +52,19 @@ class InviteService {
     phone: string,
     company: string,
     role: string
-  ) {
-    if (isOfflineMode) return fake();
+  ): Promise<IrminAPIResponse<Invite>> {
+    if (isOfflineMode)
+      return fake({
+        first_name,
+        last_name,
+        email,
+        phone,
+        company,
+        role: exampleRoles.find((r) => r.name === role) ?? exampleRoles[0],
+        invited_at: new Date().toISOString(),
+        expired_at: null,
+        deleted_at: null,
+      }) as IrminAPIResponse<Invite>;
     try {
       const formData = new FormData();
 
@@ -64,14 +75,25 @@ class InviteService {
       formData.append('company', company);
       formData.append('role', role);
 
-      const response = await this.irminCore.fetchAPI(`/v1/invites`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/invites`, {
         method: 'POST',
         body: formData,
-      });
+      })) as IrminAPIResponse<Invite>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Invite user error');
-      if (isDevelopment) return fake();
+      if (isDevelopment)
+        return fake({
+          first_name,
+          last_name,
+          email,
+          phone,
+          company,
+          role: exampleRoles.find((r) => r.name === role) ?? exampleRoles[0],
+          invited_at: new Date().toISOString(),
+          expired_at: null,
+          deleted_at: null,
+        }) as IrminAPIResponse<Invite>;
       throw error;
     }
   }
@@ -108,7 +130,6 @@ class InviteService {
     try {
       const formData = new FormData();
       formData.append('_method', 'DELETE');
-
       const response = await this.irminCore.fetchAPI(`/v1/invites/${invite}`, {
         method: 'POST',
         body: formData,
@@ -127,69 +148,42 @@ class InviteService {
    * @param invite - The invite's ID.
    * @param role - The role slug.
    */
-  async changeUserInviteRole(invite: string, role: string) {
-    if (isOfflineMode) return fake();
+  async changeUserInviteRole(
+    invite: string,
+    role: string
+  ): Promise<IrminAPIResponse<Invite>> {
+    if (isOfflineMode)
+      return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
     try {
       const formData = new FormData();
       formData.append('role', role);
       formData.append('_method', 'PATCH');
-
-      const response = await this.irminCore.fetchAPI(`/v1/invites/${invite}`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/invites/${invite}`, {
         method: 'POST',
         body: formData,
-      });
+      })) as IrminAPIResponse<Invite>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Change invite role error');
-      if (isDevelopment) return fake();
-      throw error;
-    }
-  }
-
-  /**
-   * Get a list of invites to the workspace
-   *
-   * @param workspace - The workspace slug to get invites for
-   * @param trashed - (optional) Include trashed invites
-   * @param expired - (optional) Include expired invites
-   */
-  async fetchWorkspaceInvites(
-    workspace: string,
-    trashed?: boolean,
-    expired?: boolean
-  ): Promise<IrminAPIResponse<Invite[]>> {
-    if (isOfflineMode)
-      return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
-    try {
-      const urlParams = new URLSearchParams();
-      urlParams.append('workspace', workspace);
-      if (trashed) urlParams.append('trashed', '1');
-      if (expired) urlParams.append('expired', '1');
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/invites?${urlParams.toString()}`,
-        {
-          method: 'GET',
-        }
-      )) as IrminAPIResponse<Invite[]>;
-
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Get invites by workspace error');
       if (isDevelopment)
-        return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
+        return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
       throw error;
     }
   }
 
   /**
-   * Get a list of invites for the user
+   * Get a list of invites to the workspace or for the user.
    *
-   * @param user - The user's ID to get invites for
+   * Please provide either workspace or user, not both.
+   *
+   * @param workspace - (optional) The workspace slug to get invites for
+   * @param user - (optional) The user's ID to get invites for
    * @param trashed - (optional) Include trashed invites
    * @param expired - (optional) Include expired invites
    */
-  async fetchUserInvites(
-    user: string,
+  async fetchInvites(
+    workspace?: string,
+    user?: string,
     trashed?: boolean,
     expired?: boolean
   ): Promise<IrminAPIResponse<Invite[]>> {
@@ -197,7 +191,8 @@ class InviteService {
       return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
     try {
       const urlParams = new URLSearchParams();
-      urlParams.append('user', user);
+      if (workspace) urlParams.append('workspace', workspace);
+      if (user) urlParams.append('user', user);
       if (trashed) urlParams.append('trashed', '1');
       if (expired) urlParams.append('expired', '1');
       const response = (await this.irminCore.fetchAPI(
@@ -209,7 +204,7 @@ class InviteService {
 
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Get invites by user error');
+      console.error((error as Error).message, 'Get invites error');
       if (isDevelopment)
         return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
       throw error;

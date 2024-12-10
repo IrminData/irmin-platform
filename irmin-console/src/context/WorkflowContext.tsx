@@ -19,12 +19,7 @@ import {
   updateWorkflow,
 } from '@/lib/actions/workflows';
 
-import {
-  ActionWorkflow,
-  ExportWorkflow,
-  ImportWorkflow,
-  WorkflowRun,
-} from '@/types/core/Workflow';
+import { Workflow, WorkflowRun } from '@/types/core/Workflow';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 import { useLocale } from './LocaleContext';
@@ -34,7 +29,7 @@ import { usePopup } from './PopupContext';
  * Workflow context properties
  */
 interface WorkflowContextProps {
-  workflow: ImportWorkflow | ExportWorkflow | ActionWorkflow;
+  workflow: Workflow;
   runs: WorkflowRun[];
   fetchWorkflow: () => Promise<void>;
   updateWorkflow: (data: ItemUpdateProps) => Promise<void>;
@@ -63,7 +58,7 @@ export const WorkflowProvider = ({
   runs,
 }: {
   children: React.ReactNode;
-  initialWorkflow: ImportWorkflow | ExportWorkflow | ActionWorkflow;
+  initialWorkflow: Workflow;
   runs: WorkflowRun[];
 }) => {
   const { dict } = useLocale();

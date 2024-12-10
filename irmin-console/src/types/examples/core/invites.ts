@@ -18,8 +18,9 @@ export const invites: () => Invite[] = () => [
     phone: '+12014270935',
     company: 'Example Inc.',
     role: roles()[2],
-    created_at: getRandomDateTimeString(500, 'past', 60),
-    updated_at: getRandomDateTimeString(50, 'past', 10),
+    invited_at: getRandomDateTimeString(50, 'past', 1),
+    expired_at: getRandomDateTimeString(10, 'future', 2),
+    deleted_at: null,
   },
   {
     id: 'inv-1',
@@ -28,8 +29,9 @@ export const invites: () => Invite[] = () => [
     email: 'jane@example.com',
     phone: '+12014270935',
     role: roles()[1],
-    created_at: getRandomDateTimeString(500, 'past', 60),
-    updated_at: getRandomDateTimeString(50, 'past', 10),
+    invited_at: getRandomDateTimeString(50, 'past', 1),
+    expired_at: null,
+    deleted_at: null,
   },
   {
     id: 'inv-2',
@@ -38,8 +40,9 @@ export const invites: () => Invite[] = () => [
     email: 'nick@example.com',
     phone: '+12014270935',
     role: roles()[3],
-    created_at: getRandomDateTimeString(500, 'past', 60),
-    updated_at: getRandomDateTimeString(50, 'past', 10),
+    invited_at: getRandomDateTimeString(50, 'past', 1),
+    expired_at: null,
+    deleted_at: null,
   },
 ];
 

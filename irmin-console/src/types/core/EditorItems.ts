@@ -1,32 +1,30 @@
 /**
  * Single Editor Items instance
- *
- * @param workspace - The workspace slug the items are for
- * @param folders - List of folders in the workspace
- * @param files - List of files in the workspace
  */
 export interface EditorItems {
+  /** The workspace slug the items are for */
   workspace: string;
+  /** List of folders in the workspace */
   folders: EditorItemsFolder[];
+  /** List of files in the workspace */
   files: EditorItemsFile[];
 }
 
 /**
  * EditorItems Folder type
- *
- * @param workspace - Slug of the workspace this folder is in
- * @param name - Name of the folder
- * @param path - Path of the file in the editor files
- * @param owner - ID of the user who owns the file
- * @param created_at - Folder creation date
- * @param updated_at - Folder update date
  */
 export interface EditorItemsFolder {
+  /** Slug of the workspace this folder is in */
   workspace: string;
+  /** Name of the folder */
   name: string;
+  /** Path of the file in the editor files */
   path: string;
+  /** ID of the user who owns the file */
   owner: string;
+  /** Folder creation date */
   created_at: string;
+  /** Folder update date */
   updated_at: string;
 }
 
@@ -48,25 +46,24 @@ export type IrminFileType = (typeof irminFileTypes)[number]['extension'];
 
 /**
  * EditorItems File type
- *
- * @param workspace - Slug of the workspace this file is in
- * @param name - Name of the file
- * @param path - Path of the file in the editor files
- * @param type - Type of the file (file extension)
- * @param contents - Content of the file
- * @param is_draft - Is the file a draft
- * @param owner - ID of the user who owns the file
- * @param created_at - File creation date
- * @param updated_at - File update date
  */
 export interface EditorItemsFile {
+  /** Slug of the workspace this file is in */
   workspace: string;
+  /** Name of the file */
   name: string;
+  /** Path of the file in the editor files */
   path: string;
+  /** Type of the file (file extension) */
   type: IrminFileType;
+  /** Content of the file */
   contents: string;
+  /** Is the file a draft */
   is_draft: boolean;
+  /** ID of the user who owns the file */
   owner: string;
+  /** File creation date */
   created_at: string;
+  /** File update date */
   updated_at: string;
 }

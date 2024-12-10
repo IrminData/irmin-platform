@@ -11,7 +11,7 @@ import {
 import {
   cancelInvite,
   changeInviteRole,
-  getWorkspaceInvites,
+  getInvites,
   resendInvite,
   sendInvite,
 } from '@/lib/actions/invites';
@@ -84,7 +84,7 @@ export const UsersProvider = ({
 
   const fetchInvites = useCallback(async () => {
     try {
-      const newInvites = await getWorkspaceInvites(currentWorkspace);
+      const newInvites = await getInvites(currentWorkspace);
       setInvites(newInvites);
     } catch (error) {
       irminAlert(

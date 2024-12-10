@@ -52,12 +52,12 @@ class QueryService {
         exampleQueryExecutionResult()
       ) as IrminAPIResponse<QueryExecutionResult>;
     try {
-      const body = new FormData();
-      body.append('type', type);
-      body.append('content', content);
-      const response = (await this.irminCore.fetchAPI(`/v1/query/execute`, {
+      const formData = new FormData();
+      formData.append('type', type);
+      formData.append('content', content);
+      const response = (await this.irminCore.fetchAPI(`/v1/queries/execute`, {
         method: 'POST',
-        body,
+        body: formData,
       })) as IrminAPIResponse<QueryExecutionResult>;
       return response;
     } catch (error) {
@@ -96,9 +96,9 @@ class QueryService {
       body.append('content', content);
       if (name) body.append('name', name);
       if (description) body.append('description', description);
-      if (stored) body.append('stored', stored.toString());
-      if (run) body.append('run', run.toString());
-      const response = (await this.irminCore.fetchAPI(`/v1/query`, {
+      body.append('run', run ? 'true' : 'false');
+      body.append('stored', stored ? 'true' : 'false');
+      const response = (await this.irminCore.fetchAPI(`/v1/queries`, {
         method: 'POST',
         body,
       })) as IrminAPIResponse<Query>;
@@ -117,7 +117,7 @@ class QueryService {
   async getQueries(): Promise<IrminAPIResponse<Query[]>> {
     if (isOfflineMode) return fake(exampleQueries) as IrminAPIResponse<Query[]>;
     try {
-      const response = (await this.irminCore.fetchAPI(`/v1/query`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/queries`, {
         method: 'GET',
       })) as IrminAPIResponse<Query[]>;
       return response;
@@ -138,7 +138,7 @@ class QueryService {
     if (isOfflineMode)
       return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
     try {
-      const response = (await this.irminCore.fetchAPI(`/v1/query/${query}`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/queries/${query}`, {
         method: 'GET',
       })) as IrminAPIResponse<Query>;
       return response;
@@ -160,7 +160,7 @@ class QueryService {
     try {
       const formData = new FormData();
       formData.append('_method', 'DELETE');
-      const response = (await this.irminCore.fetchAPI(`/v1/query/${query}`, {
+      const response = (await this.irminCore.fetchAPI(`/v1/queries/${query}`, {
         method: 'POST',
         body: formData,
       })) as IrminAPIResponse<Query>;
@@ -200,8 +200,8 @@ class QueryService {
       if (content) body.append('content', content);
       if (name) body.append('name', name);
       if (description) body.append('description', description);
-      if (stored) body.append('stored', stored.toString());
-      const response = (await this.irminCore.fetchAPI(`/v1/query/${query}`, {
+      body.append('stored', stored ? 'true' : 'false');
+      const response = (await this.irminCore.fetchAPI(`/v1/queries/${query}`, {
         method: 'POST',
         body,
       })) as IrminAPIResponse<Query>;
@@ -223,7 +223,7 @@ class QueryService {
     if (isOfflineMode) return fake();
     try {
       const response = await this.irminCore.fetchAPI(
-        `/v1/query/${queryId}/execute`,
+        `/v1/queries/${queryId}/execute`,
         {
           method: 'GET',
         }
@@ -252,7 +252,7 @@ class QueryService {
       ) as IrminAPIResponse<QueryExecutionResult>;
     try {
       const response = await this.irminCore.fetchAPI(
-        `/v1/query/${queryId}/results?page=${page}`,
+        `/v1/queries/${queryId}/results?page=${page}`,
         {
           method: 'GET',
         }

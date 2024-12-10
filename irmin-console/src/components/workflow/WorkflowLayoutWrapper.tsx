@@ -61,11 +61,17 @@ export default function WorkflowLayoutWrapper({
   });
 
   const repositorySlug = useMemo(
-    () => workflow?.workflowable?.repository?.slug ?? null,
+    () =>
+      workflow?.type === 'import' || workflow?.type === 'export'
+        ? workflow?.workflowable?.repository?.slug
+        : null,
     [workflow]
   );
   const repositoryBranch = useMemo(
-    () => workflow?.workflowable?.branch ?? null,
+    () =>
+      workflow?.type === 'import' || workflow?.type === 'export'
+        ? workflow?.workflowable?.branch
+        : null,
     [workflow]
   );
 
@@ -136,12 +142,10 @@ export default function WorkflowLayoutWrapper({
                   {dict.workflow.workflow}
                 </span>
                 <Badge>
-                  {workflow.workflowable_type === 'action' &&
-                    dict.workflow.action}
-                  {workflow.workflowable_type === 'import' &&
-                    dict.workflow.import}
-                  {workflow.workflowable_type === 'export' &&
-                    dict.workflow.export}
+                  {workflow.type === 'action' && dict.workflow.action}
+                  {workflow.type === 'import' && dict.workflow.import}
+                  {workflow.type === 'export' && dict.workflow.export}
+                  {workflow.type === 'pipeline' && dict.workflow.pipeline}
                 </Badge>
               </div>
               <span className='px-2 text-xs text-gray-400 md:text-sm'>

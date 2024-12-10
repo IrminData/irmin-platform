@@ -89,51 +89,6 @@ export async function reassignConnection(
 }
 
 /**
- * Server action to get new connection details
- */
-export async function getNewConnectionDetails(
-  connectorID: string,
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  const res =
-    await irminCore.connectionService.fetchNewConnectionDetails(connectorID);
-  return res;
-}
-
-/**
- * Server action to test connection with details
- */
-export async function testConnection(
-  connectorID: string,
-  connectionDetails: DynamicFieldValues,
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.connectionService.testConnectionWithDetails(
-    connectorID,
-    connectionDetails
-  );
-  return res;
-}
-
-/**
- * Server action to get new connection settings
- */
-export async function getNewConnectionSettings(
-  connectorID: string,
-  connectionDetails: DynamicFieldValues,
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.connectionService.fetchNewConnectionSettings(
-    connectorID,
-    connectionDetails
-  );
-  return res;
-}
-
-/**
  * Server action to create a new connection
  */
 export async function createNewConnection(

@@ -2,23 +2,22 @@ import { User } from '@/types/core/User';
 
 /**
  * Workspace type
- *
- * @typeParam id - Workspace ID
- * @typeParam name - Workspace name
- * @typeParam slug - Workspace slug
- * @typeParam owner_id - Workspace owner ID
- * @typeParam description - Workspace description to be displayed
- * @typeParam users - Array of users in the workspace (optional)
- * @typeParam created_at - Timestamp of workspace creation
- * @typeParam updated_at - Timestamp of workspace update
  */
 export interface Workspace {
+  /** Workspace ID */
   id: string;
+  /** Workspace name */
   name: string;
+  /** Workspace slug */
   slug: string;
+  /** Workspace owner ID */
   owner_id: string;
+  /** Workspace description to be displayed */
   description: string;
-  users?: User[];
+  /** Array of users in the workspace */
+  users: User[];
+  /** Timestamp of workspace creation */
   created_at: string;
+  /** Timestamp of workspace update */
   updated_at: string;
 }

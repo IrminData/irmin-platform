@@ -2,7 +2,7 @@
 
 import type { Metadata } from 'next';
 
-import { getWorkspaceInvites } from '@/lib/actions/invites';
+import { getInvites } from '@/lib/actions/invites';
 import { getRoles } from '@/lib/actions/roles';
 import { getUsers } from '@/lib/actions/users';
 import { getWorkspace, switchWorkspace } from '@/lib/actions/workspaces';
@@ -54,7 +54,7 @@ export default async function ConsoleWorkspaceLayout(props: {
     getWorkspace(currentWorkspace, token),
     getRoles(token),
     getUsers(token),
-    getWorkspaceInvites(currentWorkspace, false, false, token),
+    getInvites(currentWorkspace, undefined, false, false, token),
   ]);
 
   return (
