@@ -109,7 +109,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/helper-create-class-features-plugin@npm:^7.18.6":
+"@babel/helper-create-class-features-plugin@npm:^7.25.9":
   version: 7.25.9
   resolution: "@babel/helper-create-class-features-plugin@npm:7.25.9"
   dependencies:
@@ -196,7 +196,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/helper-plugin-utils@npm:^7.18.6":
+"@babel/helper-plugin-utils@npm:^7.25.9":
   version: 7.25.9
   resolution: "@babel/helper-plugin-utils@npm:7.25.9"
   checksum: 10c0/483066a1ba36ff16c0116cd24f93de05de746a603a777cd695ac7a1b034928a65a4ecb35f255761ca56626435d7abdb73219eba196f9aa83b6c3c3169325599d
@@ -277,15 +277,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-proposal-private-methods@npm:^7.18.6":
-  version: 7.18.6
-  resolution: "@babel/plugin-proposal-private-methods@npm:7.18.6"
+"@babel/plugin-transform-private-methods@npm:^7.25.9":
+  version: 7.25.9
+  resolution: "@babel/plugin-transform-private-methods@npm:7.25.9"
   dependencies:
-    "@babel/helper-create-class-features-plugin": "npm:^7.18.6"
-    "@babel/helper-plugin-utils": "npm:^7.18.6"
+    "@babel/helper-create-class-features-plugin": "npm:^7.25.9"
+    "@babel/helper-plugin-utils": "npm:^7.25.9"
   peerDependencies:
     "@babel/core": ^7.0.0-0
-  checksum: 10c0/1c273d0ec3d49d0fe80bd754ec0191016e5b3ab4fb1e162ac0c014e9d3c1517a5d973afbf8b6dc9f9c98a8605c79e5f9e8b5ee158a4313fa68d1ff7b02084b6a
+  checksum: 10c0/64bd71de93d39daefa3e6c878d6f2fd238ed7d4ecfb13b0e771ddbbc131487def3ceb405b62b534a5cbb5043046b504e1b189b0a45229cc75af979a9fbcaa7bd
   languageName: node
   linkType: hard
 
@@ -389,7 +389,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@clerk/nextjs@npm:^6.8.2":
+"@clerk/nextjs@npm:^6.9.1":
   version: 6.9.1
   resolution: "@clerk/nextjs@npm:6.9.1"
   dependencies:
@@ -430,7 +430,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@clerk/themes@npm:^2.1.54":
+"@clerk/themes@npm:^2.2.1":
   version: 2.2.1
   resolution: "@clerk/themes@npm:2.2.1"
   dependencies:
@@ -440,7 +440,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@clerk/types@npm:^4.39.1, @clerk/types@npm:^4.39.3":
+"@clerk/types@npm:^4.39.3":
   version: 4.39.3
   resolution: "@clerk/types@npm:4.39.3"
   dependencies:
@@ -2193,74 +2193,74 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@next/env@npm:15.0.4":
-  version: 15.0.4
-  resolution: "@next/env@npm:15.0.4"
-  checksum: 10c0/114f5404798017ab9438ed9e90cb0057d8a42167995cf702ba938613e869e59869e55d7cebdbb19a5f5f89aa5d1899bc8849ea20e0902101196c66f63f5580fb
+"@next/env@npm:15.1.0":
+  version: 15.1.0
+  resolution: "@next/env@npm:15.1.0"
+  checksum: 10c0/5c6d66bcc652696a8dbbe1596194b612dd492e8b27041b738fcb63aa08669754bd7bdd3664ec8b756029a7d7b22187e646409fc1651c5e95d3ae39c3cca62c3d
   languageName: node
   linkType: hard
 
-"@next/eslint-plugin-next@npm:15.0.4":
-  version: 15.0.4
-  resolution: "@next/eslint-plugin-next@npm:15.0.4"
+"@next/eslint-plugin-next@npm:15.1.0":
+  version: 15.1.0
+  resolution: "@next/eslint-plugin-next@npm:15.1.0"
   dependencies:
     fast-glob: "npm:3.3.1"
-  checksum: 10c0/ce55e4102712baac47d79f4b6ed8962b472d1a9aafe2ec0fcb7160e818fd2768d806c7a6cd95e122e1c32ac1897bc10cb39f70b6c53f7b36589269177f88f66f
+  checksum: 10c0/d20c396d9c298523e31b4402d126e28d536cfa151bc6a9a9da3e74bddd5770547c76d5fbda59fe4332ffaea3af1e7f489b2358336cb2f921d3561577a0f4cd1a
   languageName: node
   linkType: hard
 
-"@next/swc-darwin-arm64@npm:15.0.4":
-  version: 15.0.4
-  resolution: "@next/swc-darwin-arm64@npm:15.0.4"
+"@next/swc-darwin-arm64@npm:15.1.0":
+  version: 15.1.0
+  resolution: "@next/swc-darwin-arm64@npm:15.1.0"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@next/swc-darwin-x64@npm:15.0.4":
-  version: 15.0.4
-  resolution: "@next/swc-darwin-x64@npm:15.0.4"
+"@next/swc-darwin-x64@npm:15.1.0":
+  version: 15.1.0
+  resolution: "@next/swc-darwin-x64@npm:15.1.0"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@next/swc-linux-arm64-gnu@npm:15.0.4":
-  version: 15.0.4
-  resolution: "@next/swc-linux-arm64-gnu@npm:15.0.4"
+"@next/swc-linux-arm64-gnu@npm:15.1.0":
+  version: 15.1.0
+  resolution: "@next/swc-linux-arm64-gnu@npm:15.1.0"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@next/swc-linux-arm64-musl@npm:15.0.4":
-  version: 15.0.4
-  resolution: "@next/swc-linux-arm64-musl@npm:15.0.4"
+"@next/swc-linux-arm64-musl@npm:15.1.0":
+  version: 15.1.0
+  resolution: "@next/swc-linux-arm64-musl@npm:15.1.0"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@next/swc-linux-x64-gnu@npm:15.0.4":
-  version: 15.0.4
-  resolution: "@next/swc-linux-x64-gnu@npm:15.0.4"
+"@next/swc-linux-x64-gnu@npm:15.1.0":
+  version: 15.1.0
+  resolution: "@next/swc-linux-x64-gnu@npm:15.1.0"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@next/swc-linux-x64-musl@npm:15.0.4":
-  version: 15.0.4
-  resolution: "@next/swc-linux-x64-musl@npm:15.0.4"
+"@next/swc-linux-x64-musl@npm:15.1.0":
+  version: 15.1.0
+  resolution: "@next/swc-linux-x64-musl@npm:15.1.0"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@next/swc-win32-arm64-msvc@npm:15.0.4":
-  version: 15.0.4
-  resolution: "@next/swc-win32-arm64-msvc@npm:15.0.4"
+"@next/swc-win32-arm64-msvc@npm:15.1.0":
+  version: 15.1.0
+  resolution: "@next/swc-win32-arm64-msvc@npm:15.1.0"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@next/swc-win32-x64-msvc@npm:15.0.4":
-  version: 15.0.4
-  resolution: "@next/swc-win32-x64-msvc@npm:15.0.4"
+"@next/swc-win32-x64-msvc@npm:15.1.0":
+  version: 15.1.0
+  resolution: "@next/swc-win32-x64-msvc@npm:15.1.0"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -2899,7 +2899,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-avatar@npm:^1.1.1":
+"@radix-ui/react-avatar@npm:^1.1.2":
   version: 1.1.2
   resolution: "@radix-ui/react-avatar@npm:1.1.2"
   dependencies:
@@ -2921,7 +2921,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-checkbox@npm:^1.1.2":
+"@radix-ui/react-checkbox@npm:^1.1.3":
   version: 1.1.3
   resolution: "@radix-ui/react-checkbox@npm:1.1.3"
   dependencies:
@@ -3063,7 +3063,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-dropdown-menu@npm:^2.1.2":
+"@radix-ui/react-dropdown-menu@npm:^2.1.3":
   version: 2.1.3
   resolution: "@radix-ui/react-dropdown-menu@npm:2.1.3"
   dependencies:
@@ -3146,7 +3146,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-label@npm:^2.1.0":
+"@radix-ui/react-label@npm:^2.1.1":
   version: 2.1.1
   resolution: "@radix-ui/react-label@npm:2.1.1"
   dependencies:
@@ -3387,7 +3387,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-separator@npm:1.1.1, @radix-ui/react-separator@npm:^1.1.0":
+"@radix-ui/react-separator@npm:1.1.1, @radix-ui/react-separator@npm:^1.1.1":
   version: 1.1.1
   resolution: "@radix-ui/react-separator@npm:1.1.1"
   dependencies:
@@ -3406,7 +3406,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-slot@npm:1.1.1, @radix-ui/react-slot@npm:^1.1.0":
+"@radix-ui/react-slot@npm:1.1.1, @radix-ui/react-slot@npm:^1.1.1":
   version: 1.1.1
   resolution: "@radix-ui/react-slot@npm:1.1.1"
   dependencies:
@@ -3421,7 +3421,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-switch@npm:^1.1.1":
+"@radix-ui/react-switch@npm:^1.1.2":
   version: 1.1.2
   resolution: "@radix-ui/react-switch@npm:1.1.2"
   dependencies:
@@ -3517,7 +3517,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-tooltip@npm:^1.0.7, @radix-ui/react-tooltip@npm:^1.1.4":
+"@radix-ui/react-tooltip@npm:^1.0.7, @radix-ui/react-tooltip@npm:^1.1.5":
   version: 1.1.5
   resolution: "@radix-ui/react-tooltip@npm:1.1.5"
   dependencies:
@@ -3910,7 +3910,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/nextjs@npm:^8.42.0":
+"@sentry/nextjs@npm:^8.44.0":
   version: 8.44.0
   resolution: "@sentry/nextjs@npm:8.44.0"
   dependencies:
@@ -4005,7 +4005,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/types@npm:^8.42.0":
+"@sentry/types@npm:^8.44.0":
   version: 8.44.0
   resolution: "@sentry/types@npm:8.44.0"
   dependencies:
@@ -4125,12 +4125,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc/helpers@npm:0.5.13":
-  version: 0.5.13
-  resolution: "@swc/helpers@npm:0.5.13"
+"@swc/helpers@npm:0.5.15":
+  version: 0.5.15
+  resolution: "@swc/helpers@npm:0.5.15"
   dependencies:
-    tslib: "npm:^2.4.0"
-  checksum: 10c0/b9df578401fc62405da9a6c31e79e447a2fd90f68b25b1daee12f2caf2821991bb89106f0397bc1acb4c4d84a8ce079d04b60b65f534496952e3bf8c9a52f40f
+    tslib: "npm:^2.8.0"
+  checksum: 10c0/33002f74f6f885f04c132960835fdfc474186983ea567606db62e86acd0680ca82f34647e8e610f4e1e422d1c16fce729dde22cd3b797ab1fd9061a825dabca4
   languageName: node
   linkType: hard
 
@@ -4346,7 +4346,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^22.10.1":
+"@types/node@npm:*, @types/node@npm:^22.10.2":
   version: 22.10.2
   resolution: "@types/node@npm:22.10.2"
   dependencies:
@@ -5102,12 +5102,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-plugin-react-compiler@npm:19.0.0-beta-37ed2a7-20241206":
-  version: 19.0.0-beta-37ed2a7-20241206
-  resolution: "babel-plugin-react-compiler@npm:19.0.0-beta-37ed2a7-20241206"
+"babel-plugin-react-compiler@npm:19.0.0-beta-df7b47d-20241124":
+  version: 19.0.0-beta-df7b47d-20241124
+  resolution: "babel-plugin-react-compiler@npm:19.0.0-beta-df7b47d-20241124"
   dependencies:
     "@babel/types": "npm:^7.19.0"
-  checksum: 10c0/0b4b5ecf8bbd0805cf9f5d54c20e7fd6e269be0c1623aa2efde2b8d12ba2c5cadfc77e757c79526f738acbd28341d1db015b8943b7b7de4e2f27f072bf1792ee
+  checksum: 10c0/d5132730c5503f2d93b07da68f443c73b22dbff8fc312d0472782b4860f72eb814b34b115823e7debe4dee9f43cf676857e9213656d9857e00309327da464c55
   languageName: node
   linkType: hard
 
@@ -6442,11 +6442,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-next@npm:15.0.4":
-  version: 15.0.4
-  resolution: "eslint-config-next@npm:15.0.4"
+"eslint-config-next@npm:15.1.0":
+  version: 15.1.0
+  resolution: "eslint-config-next@npm:15.1.0"
   dependencies:
-    "@next/eslint-plugin-next": "npm:15.0.4"
+    "@next/eslint-plugin-next": "npm:15.1.0"
     "@rushstack/eslint-patch": "npm:^1.10.3"
     "@typescript-eslint/eslint-plugin": "npm:^5.4.2 || ^6.0.0 || ^7.0.0 || ^8.0.0"
     "@typescript-eslint/parser": "npm:^5.4.2 || ^6.0.0 || ^7.0.0 || ^8.0.0"
@@ -6454,7 +6454,7 @@ __metadata:
     eslint-import-resolver-typescript: "npm:^3.5.2"
     eslint-plugin-import: "npm:^2.31.0"
     eslint-plugin-jsx-a11y: "npm:^6.10.0"
-    eslint-plugin-react: "npm:^7.35.0"
+    eslint-plugin-react: "npm:^7.37.0"
     eslint-plugin-react-hooks: "npm:^5.0.0"
   peerDependencies:
     eslint: ^7.23.0 || ^8.0.0 || ^9.0.0
@@ -6462,7 +6462,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10c0/2259c19da18f3376814bd344a6b07168345c97a376ebadef8cf6f82d69f88d87c8a5162b91e98fb928b9cc675b498ab6de3981d191be72891216733b3ebd94c2
+  checksum: 10c0/53f244e49964bb6bfd89d5b6978b5c1650f927c913f7c6d8f251fc2528a9fbae04e5a6371c9856886b0b1e008c23f6aba1e1270537f8cb97c5306288052c0a1d
   languageName: node
   linkType: hard
 
@@ -6579,19 +6579,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react-compiler@npm:19.0.0-beta-37ed2a7-20241206":
-  version: 19.0.0-beta-37ed2a7-20241206
-  resolution: "eslint-plugin-react-compiler@npm:19.0.0-beta-37ed2a7-20241206"
+"eslint-plugin-react-compiler@npm:19.0.0-beta-df7b47d-20241124":
+  version: 19.0.0-beta-df7b47d-20241124
+  resolution: "eslint-plugin-react-compiler@npm:19.0.0-beta-df7b47d-20241124"
   dependencies:
     "@babel/core": "npm:^7.24.4"
     "@babel/parser": "npm:^7.24.4"
-    "@babel/plugin-proposal-private-methods": "npm:^7.18.6"
+    "@babel/plugin-transform-private-methods": "npm:^7.25.9"
     hermes-parser: "npm:^0.25.1"
     zod: "npm:^3.22.4"
     zod-validation-error: "npm:^3.0.3"
   peerDependencies:
     eslint: ">=7"
-  checksum: 10c0/072413c7a9a4959fc5e7bb65e1107498c0d940acd993112be338719138fada20f3dcf21900e6a17978a3de6a700ad8f1b9073f873b97ed6ca5be9c63ca32ed06
+  checksum: 10c0/0f9d215d922fda2b452bb0eb203f90acf2fd5233a663151f976210778fd266cf1ddb5499a3a652b476ed30ee7393db3a411338287e712020f2e66c9680da927c
   languageName: node
   linkType: hard
 
@@ -6604,7 +6604,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react@npm:^7.35.0":
+"eslint-plugin-react@npm:^7.37.0":
   version: 7.37.2
   resolution: "eslint-plugin-react@npm:7.37.2"
   dependencies:
@@ -7605,9 +7605,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "irmin-frontend@workspace:."
   dependencies:
-    "@clerk/nextjs": "npm:^6.8.2"
-    "@clerk/themes": "npm:^2.1.54"
-    "@clerk/types": "npm:^4.39.1"
+    "@clerk/nextjs": "npm:^6.9.1"
+    "@clerk/themes": "npm:^2.2.1"
+    "@clerk/types": "npm:^4.39.3"
     "@codemirror/lang-javascript": "npm:^6.2.2"
     "@codemirror/lang-markdown": "npm:^6.3.1"
     "@codemirror/lang-sql": "npm:^6.8.0"
@@ -7619,19 +7619,19 @@ __metadata:
     "@novu/node": "npm:^2.0.5"
     "@novu/react": "npm:^2.6.2"
     "@playwright/test": "npm:^1.49.1"
-    "@radix-ui/react-avatar": "npm:^1.1.1"
-    "@radix-ui/react-checkbox": "npm:^1.1.2"
-    "@radix-ui/react-dropdown-menu": "npm:^2.1.2"
-    "@radix-ui/react-label": "npm:^2.1.0"
-    "@radix-ui/react-separator": "npm:^1.1.0"
-    "@radix-ui/react-slot": "npm:^1.1.0"
-    "@radix-ui/react-switch": "npm:^1.1.1"
-    "@radix-ui/react-tooltip": "npm:^1.1.4"
-    "@sentry/nextjs": "npm:^8.42.0"
-    "@sentry/types": "npm:^8.42.0"
+    "@radix-ui/react-avatar": "npm:^1.1.2"
+    "@radix-ui/react-checkbox": "npm:^1.1.3"
+    "@radix-ui/react-dropdown-menu": "npm:^2.1.3"
+    "@radix-ui/react-label": "npm:^2.1.1"
+    "@radix-ui/react-separator": "npm:^1.1.1"
+    "@radix-ui/react-slot": "npm:^1.1.1"
+    "@radix-ui/react-switch": "npm:^1.1.2"
+    "@radix-ui/react-tooltip": "npm:^1.1.5"
+    "@sentry/nextjs": "npm:^8.44.0"
+    "@sentry/types": "npm:^8.44.0"
     "@trivago/prettier-plugin-sort-imports": "npm:^4.3.0"
     "@types/eslint": "npm:9.6.1"
-    "@types/node": "npm:^22.10.1"
+    "@types/node": "npm:^22.10.2"
     "@types/react": "npm:^19.0.1"
     "@types/react-dom": "npm:^19.0.2"
     "@typescript-eslint/eslint-plugin": "npm:8.18.0"
@@ -7640,29 +7640,29 @@ __metadata:
     "@uiw/react-codemirror": "npm:^4.23.6"
     "@xyflow/react": "npm:^12.3.6"
     autoprefixer: "npm:^10.4.20"
-    babel-plugin-react-compiler: "npm:19.0.0-beta-37ed2a7-20241206"
+    babel-plugin-react-compiler: "npm:19.0.0-beta-df7b47d-20241124"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     date-fns: "npm:^4.1.0"
     eslint: "npm:9.16.0"
-    eslint-config-next: "npm:15.0.4"
+    eslint-config-next: "npm:15.1.0"
     eslint-config-prettier: "npm:^9.1.0"
-    eslint-plugin-react-compiler: "npm:19.0.0-beta-37ed2a7-20241206"
+    eslint-plugin-react-compiler: "npm:19.0.0-beta-df7b47d-20241124"
     lucide-react: "npm:^0.468.0"
     markdown-to-jsx: "npm:^7.7.1"
-    next: "npm:15.0.4"
+    next: "npm:15.1.0"
     next-themes: "npm:^0.4.4"
     postcss: "npm:^8.4.49"
     prettier: "npm:^3.4.2"
     prettier-plugin-tailwindcss: "npm:^0.6.9"
     react: "npm:19.0.0"
     react-datasheet-grid: "npm:^4.11.5"
-    react-day-picker: "npm:^9.4.2"
+    react-day-picker: "npm:^9.4.3"
     react-diff-viewer: "npm:^3.1.1"
     react-dom: "npm:19.0.0"
     react-icons: "npm:^5.4.0"
     react-responsive: "npm:^10.0.0"
-    react-select: "npm:^5.8.3"
+    react-select: "npm:^5.9.0"
     react-to-pdf: "npm:^1.0.1"
     rrule: "npm:^2.8.1"
     sharp: "npm:^0.33.5"
@@ -9403,21 +9403,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"next@npm:15.0.4":
-  version: 15.0.4
-  resolution: "next@npm:15.0.4"
+"next@npm:15.1.0":
+  version: 15.1.0
+  resolution: "next@npm:15.1.0"
   dependencies:
-    "@next/env": "npm:15.0.4"
-    "@next/swc-darwin-arm64": "npm:15.0.4"
-    "@next/swc-darwin-x64": "npm:15.0.4"
-    "@next/swc-linux-arm64-gnu": "npm:15.0.4"
-    "@next/swc-linux-arm64-musl": "npm:15.0.4"
-    "@next/swc-linux-x64-gnu": "npm:15.0.4"
-    "@next/swc-linux-x64-musl": "npm:15.0.4"
-    "@next/swc-win32-arm64-msvc": "npm:15.0.4"
-    "@next/swc-win32-x64-msvc": "npm:15.0.4"
+    "@next/env": "npm:15.1.0"
+    "@next/swc-darwin-arm64": "npm:15.1.0"
+    "@next/swc-darwin-x64": "npm:15.1.0"
+    "@next/swc-linux-arm64-gnu": "npm:15.1.0"
+    "@next/swc-linux-arm64-musl": "npm:15.1.0"
+    "@next/swc-linux-x64-gnu": "npm:15.1.0"
+    "@next/swc-linux-x64-musl": "npm:15.1.0"
+    "@next/swc-win32-arm64-msvc": "npm:15.1.0"
+    "@next/swc-win32-x64-msvc": "npm:15.1.0"
     "@swc/counter": "npm:0.1.3"
-    "@swc/helpers": "npm:0.5.13"
+    "@swc/helpers": "npm:0.5.15"
     busboy: "npm:1.6.0"
     caniuse-lite: "npm:^1.0.30001579"
     postcss: "npm:8.4.31"
@@ -9427,8 +9427,8 @@ __metadata:
     "@opentelemetry/api": ^1.1.0
     "@playwright/test": ^1.41.2
     babel-plugin-react-compiler: "*"
-    react: ^18.2.0 || 19.0.0-rc-66855b96-20241106 || ^19.0.0
-    react-dom: ^18.2.0 || 19.0.0-rc-66855b96-20241106 || ^19.0.0
+    react: ^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0
+    react-dom: ^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0
     sass: ^1.3.0
   dependenciesMeta:
     "@next/swc-darwin-arm64":
@@ -9460,7 +9460,7 @@ __metadata:
       optional: true
   bin:
     next: dist/bin/next
-  checksum: 10c0/80b2296f33d865bf4f30f5df3d6fa461de13ef383dd9e32f33f5c05f21c766eb7f7573431235b9f3d51a5f09614cf431f8fcf925272b9524faced802961ff37b
+  checksum: 10c0/652a48a6cf6329753da72bec9777c153e88aee8dd1bb709c2c8e6b31b678514d50501e1a58e065464416998bb5d872ce0eaf769e7aacebc2821d36359e63c225
   languageName: node
   linkType: hard
 
@@ -10319,7 +10319,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-day-picker@npm:^9.4.2":
+"react-day-picker@npm:^9.4.3":
   version: 9.4.3
   resolution: "react-day-picker@npm:9.4.3"
   dependencies:
@@ -10502,7 +10502,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select@npm:^5.8.3":
+"react-select@npm:^5.9.0":
   version: 5.9.0
   resolution: "react-select@npm:5.9.0"
   dependencies:
@@ -11798,7 +11798,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.0.0, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.3.0, tslib@npm:^2.3.1, tslib@npm:^2.4.0":
+"tslib@npm:^2.0.0, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.3.0, tslib@npm:^2.3.1, tslib@npm:^2.4.0, tslib@npm:^2.8.0":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10c0/9c4759110a19c53f992d9aae23aac5ced636e99887b51b9e61def52611732872ff7668757d4e4c61f19691e36f4da981cd9485e869b4a7408d689f6bf1f14e62
