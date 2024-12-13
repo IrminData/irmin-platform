@@ -5,6 +5,7 @@ import ReactSelect from 'react-select';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -13,6 +14,8 @@ import { useConfigureWorkflowable } from '@/hooks/useCreateWorkflow';
 import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
 import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
+
+import PipelineStageEditor from '../PipelineStageEditor';
 
 /**
  * Configure workfow type specific properties
@@ -303,6 +306,35 @@ export default function ConfigureWorkflowable({
                 ]}
                 className='react-select-container w-full'
                 classNamePrefix='react-select'
+              />
+            </div>
+          </>
+        )}
+        {workflowData.type === 'pipeline' && (
+          <>
+            <PipelineStageEditor
+              initialStages={workflowData.stages}
+              repositories={repositories}
+              connections={connections}
+              onSubmit={(data) => {
+                setWorkflowData({
+                  ...workflowData,
+                  stages: data.stages,
+                });
+              }}
+              readOnly={false}
+              hideSaveButton={true}
+            />
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.pipeline.livePipeline}</Label>
+              <Switch
+                checked={workflowData.live ?? false}
+                onCheckedChange={(checked) =>
+                  setWorkflowData({
+                    ...workflowData,
+                    live: checked,
+                  })
+                }
               />
             </div>
           </>

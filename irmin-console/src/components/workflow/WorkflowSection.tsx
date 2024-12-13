@@ -251,6 +251,14 @@ const WorkflowSection = () => {
               </p>
             </div>
           )}
+          {workflow.type === 'pipeline' && (
+            <div className='flex flex-col gap-1'>
+              <p className='text-sm opacity-60'>{dict.workflow.livePipeline}</p>
+              <p className='text-base'>
+                {workflow.workflowable.live ? dict.misc.yes : dict.misc.no}
+              </p>
+            </div>
+          )}
         </div>
         <Tooltip.TooltipProvider>
           <NormalList

@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import CardOrNormalList from '@/components/ui/list/CardOrNormalList';
 import StatusBadge from '@/components/ui/StatusBadge';
 
@@ -10,20 +9,20 @@ import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
-import { Workflow } from '@/types/core/Workflow';
+import { PipelineWorkflow } from '@/types/core/Workflow';
 import { GridRow } from '@/types/internal/ListProps';
 
 /**
- * Table UI to display a list of Workflows of all types
+ * Table UI to display a list of Pipeline Workflows
  *
  * Uses {@link CardOrNormalList} and {@link StatusBadge}
  */
-const WorkflowList = ({
+const PipelineWorkflowList = ({
   loading,
-  workflows: items,
+  pipelineWorkflows: items,
 }: {
   loading: boolean;
-  workflows: Workflow[];
+  pipelineWorkflows: PipelineWorkflow[];
 }) => {
   const { dict, locale } = useLocale();
 
@@ -38,7 +37,7 @@ const WorkflowList = ({
   const rows: GridRow[] = useMemo(
     () =>
       items.map((item, i) => {
-        const tableActions = [
+        const actions = [
           {
             label: dict.list.view,
             primary: true,
@@ -55,22 +54,15 @@ const WorkflowList = ({
             href: `${workspaceUrl}/logs/workflow/${item.id}`,
           },
         ];
+
         return {
           columns: [
             <div
               key={`name-and-owner-${i}`}
               className='inline-flex flex-col gap-1'
             >
-              <div className='text-base'>
-                {item.name}
-                <Badge className='ml-2'>
-                  {item.type === 'action' && dict.workflow.action}
-                  {item.type === 'import' && dict.workflow.import}
-                  {item.type === 'export' && dict.workflow.export}
-                  {item.type === 'pipeline' && dict.workflow.pipeline.pipeline}
-                </Badge>
-              </div>
-              <span className='text-sm text-gray-400'>
+              <p className='text-base'>{item.name}</p>
+              <span className='text-sm text-gray-600 dark:text-gray-400'>
                 {dict.list.owner}: {item.owner.email}
                 {item.owner.company ? ` (${item.owner.company})` : ''}
               </span>
@@ -93,9 +85,9 @@ const WorkflowList = ({
               </div>
             </div>,
           ],
-          actions: tableActions,
+          actions,
           details: (
-            <div className='flex max-w-sm flex-col text-gray-400'>
+            <div className='flex max-w-sm flex-col text-gray-600 dark:text-gray-400'>
               <p className='pb-4 text-sm'>{item.description}</p>
               <p className='pb-1 text-xs'>
                 {dict.list.lastUpdated}
@@ -111,7 +103,7 @@ const WorkflowList = ({
           ),
         };
       }),
-    [items, locale, dict, workspaceUrl]
+    [items, workspaceUrl, dict, locale]
   );
 
   return (
@@ -124,4 +116,4 @@ const WorkflowList = ({
   );
 };
 
-export default WorkflowList;
+export default PipelineWorkflowList;

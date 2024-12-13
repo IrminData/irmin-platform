@@ -4,35 +4,57 @@ import { WorkflowableType } from '@/types/core/Workflow';
 import { WorkflowSchedule } from '@/types/core/WorkflowSchedule';
 
 /**
+ * Pipeline stage input object.
+ *
+ * Seperate object to define the input of a pipeline stage used for creation or editing.
+ */
+export type PipelineStageInput = {
+  description: string;
+  write: boolean;
+  read: boolean;
+  type: 'action' | 'connection' | 'repository';
+  executable?: string;
+  /** ID of the connection */
+  connection?: string;
+  connection_write_path?: string;
+  connection_read_path?: string;
+  /** Slug of the repository */
+  repository?: string;
+  branch?: string;
+  path?: string;
+};
+
+/**
  * Workflow setup object
  *
  * Please note, that different workflow will have different properties
  * required to be set.
- *
- * @typeParam name - Workflow name
- * @typeParam description - Workflow description
- * @typeParam documentation - Workflow documentation
- * @typeParam schedule - Workflow schedule configuration of when to run the workflow
- * @typeParam type - Workflow type, eg. import, action, export
- * @typeParam connection - Connection to use in the workflow
- * @typeParam path - Path to use in the workflow
- * @typeParam branch - Branch to use in the workflow
- * @typeParam repository - Repository to use in the workflow
- * @typeParam recursive - If the workflow should be recursive
- * @typeParam executable - Path to the script file to be executed as an action workflow
  */
 export interface WorkflowSetup {
-  // Workflow properties
+  /** Workflow name */
   name: string;
+  /** Workflow description */
   description: string;
+  /** Workflow documentation */
   documentation: string;
+  /** Workflow schedule configuration of when to run the workflow */
   schedule: WorkflowSchedule;
-  // Workflowable properties
+  /** Type of the workflow */
   type: WorkflowableType;
+  /** Connection to use in the workflow */
   connection: Connection | null;
+  /** Path to use in the workflow */
   path: string;
+  /** Branch to use in the workflow */
   branch: string;
+  /** Repository to use in the workflow */
   repository: Repository | null;
+  /** If the workflow should be recursive */
   recursive: boolean;
+  /** Path to the script file to be executed as an action workflow */
   executable: string;
+  /** If the pipeline workflow should be live */
+  live: boolean;
+  /** Stages to run in the pipeline workflow */
+  stages: PipelineStageInput[];
 }

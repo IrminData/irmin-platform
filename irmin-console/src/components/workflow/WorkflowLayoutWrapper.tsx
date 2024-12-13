@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 
 import { usePathname } from 'next/navigation';
 
+import { RiFlowChart } from 'react-icons/ri';
 import {
   TbClockCog,
   TbDatabase,
@@ -85,6 +86,13 @@ export default function WorkflowLayoutWrapper({
         hidden: false,
       },
       {
+        name: dict.workflow.pipeline.pipeline,
+        link: `${baseUrl}/pipeline`,
+        active: pathname === `${baseUrl}/pipeline`,
+        icon: <RiFlowChart size={14} />,
+        hidden: workflow.type !== 'pipeline',
+      },
+      {
         name: dict.workflow.tabs.schedule,
         link: `${baseUrl}/schedule`,
         active: pathname === `${baseUrl}/schedule`,
@@ -121,6 +129,7 @@ export default function WorkflowLayoutWrapper({
       },
     ],
     [
+      workflow,
       pathname,
       dict,
       workflowID,
@@ -145,7 +154,8 @@ export default function WorkflowLayoutWrapper({
                   {workflow.type === 'action' && dict.workflow.action}
                   {workflow.type === 'import' && dict.workflow.import}
                   {workflow.type === 'export' && dict.workflow.export}
-                  {workflow.type === 'pipeline' && dict.workflow.pipeline}
+                  {workflow.type === 'pipeline' &&
+                    dict.workflow.pipeline.pipeline}
                 </Badge>
               </div>
               <span className='px-2 text-xs text-gray-400 md:text-sm'>

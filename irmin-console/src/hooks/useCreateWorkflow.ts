@@ -33,6 +33,8 @@ const initialWorkflowData: WorkflowSetup = {
   repository: null,
   recursive: false,
   executable: '',
+  live: false,
+  stages: [],
 };
 
 export const useWorkflowCreation = (

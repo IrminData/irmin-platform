@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 
+import { RiFlowChart } from 'react-icons/ri';
 import {
   TbDatabaseExport,
   TbDatabaseImport,
@@ -57,6 +58,12 @@ export default function WorkflowsLayoutWrapper({
         name: dict.consoleNavigation.links.exports,
         slug: 'export-workflows',
         link: `${baseUrl}/exports`,
+      },
+      {
+        icon: <RiFlowChart />,
+        name: dict.consoleNavigation.links.pipelines,
+        slug: 'pipeline-workflows',
+        link: `${baseUrl}/pipelines`,
       },
     ],
     [dict, baseUrl]

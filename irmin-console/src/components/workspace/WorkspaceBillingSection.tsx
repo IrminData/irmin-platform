@@ -17,7 +17,7 @@ const WorkspaceBillingSection = () => {
   return (
     <div className='my-8 px-4' id='workspace-billing-settings-section'>
       <div className='container relative mx-auto my-8 max-w-6xl'>
-        <div className='shadow-md-600 w-full max-w-3xl rounded-lg border-b border-t border-accent bg-background px-4 py-4 md:mx-4'>
+        <div className='w-full max-w-3xl rounded-lg border-b border-t border-accent bg-background px-4 py-4 shadow-md md:mx-4'>
           <div className='my-8 px-4'>
             <h2 className='mb-8 text-lg font-semibold lg:text-xl'>
               {dict.workspace.billingSettings}

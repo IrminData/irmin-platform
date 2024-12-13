@@ -1,9 +1,10 @@
 'use client';
 
-import { type JSX, useState } from 'react';
+import { type JSX, useMemo, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { RiFlowChart } from 'react-icons/ri';
 import {
   TbDatabaseExport,
   TbDatabaseImport,
@@ -37,29 +38,40 @@ export default function SelectWorkflowTypeModalContent() {
     if (workflowableType === 'export') {
       router.push('../workflows/exports/create');
     }
+    if (workflowableType === 'pipeline') {
+      router.push('../workflows/pipelines/create');
+    }
   };
 
   const workflowTypeOptions: {
     type: WorkflowableType;
     icon: JSX.Element;
     label: string;
-  }[] = [
-    {
-      type: 'action',
-      icon: <TbPlayerPlay size={18} className='mr-4' />,
-      label: 'Action',
-    },
-    {
-      type: 'import',
-      icon: <TbDatabaseImport size={18} className='mr-4' />,
-      label: 'Import',
-    },
-    {
-      type: 'export',
-      icon: <TbDatabaseExport size={18} className='mr-4' />,
-      label: 'Export',
-    },
-  ];
+  }[] = useMemo(
+    () => [
+      {
+        type: 'action',
+        icon: <TbPlayerPlay size={18} className='mr-4' />,
+        label: dict.workflow.action,
+      },
+      {
+        type: 'import',
+        icon: <TbDatabaseImport size={18} className='mr-4' />,
+        label: dict.workflow.import,
+      },
+      {
+        type: 'export',
+        icon: <TbDatabaseExport size={18} className='mr-4' />,
+        label: dict.workflow.export,
+      },
+      {
+        type: 'pipeline',
+        icon: <RiFlowChart size={18} className='mr-4' />,
+        label: dict.workflow.pipeline.pipeline,
+      },
+    ],
+    [dict]
+  );
 
   return (
     <div className='flex w-full flex-col px-4 pb-6'>
