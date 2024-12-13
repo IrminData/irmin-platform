@@ -2,18 +2,18 @@ import { ComponentPropsWithoutRef } from 'react';
 
 /**
  * Navigation link for the console.
- * @typeParam title - Link title
- * @typeParam active - Link active status
- * @typeParam icon - Link icon
- * @typeParam href - Link href
- * @typeParam action - Link action
- * @typeParam props - Link props
  */
 export interface ConsoleNavigationLinkType {
+  /** Link title */
   title: string;
+  /** Link active status */
   active: boolean;
+  /** Link icon */
   icon?: React.ReactNode;
+  /** Link href */
   href?: string;
+  /** Link action */
   action?: () => void;
+  /** Link props */
   props?: ComponentPropsWithoutRef<'a'> | ComponentPropsWithoutRef<'button'>;
 }

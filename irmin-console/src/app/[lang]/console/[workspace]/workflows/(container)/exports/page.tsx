@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+
 import { getConnections } from '@/lib/actions/connections';
 import { getRepositories } from '@/lib/actions/repositories';
 import { getExportWorkflows } from '@/lib/actions/workflows';
@@ -23,6 +25,7 @@ export default async function ExportWorkflowsPage() {
     getConnections(token),
     getRepositories(token),
   ]);
+  if (!workflows || !connections || !repositories) return notFound();
   return (
     <ExportWorkflowsSection
       workflows={workflows}

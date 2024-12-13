@@ -10,20 +10,20 @@ export interface SelectConnectorFormValues {
 
 /**
  * Connection setup object
- * @typeParam name - Connection name
- * @typeParam description - Connection description
- * @typeParam connector - Which connector to use
- * @typeParam connectionDetailsFields - Connection details fields
- * @typeParam connectionSettingsFields - Connection settings fields
- * @typeParam connectionDetails - Connection details with user input
- * @typeParam connectionSettings - Connection settings with user input
  */
 export interface ConnectionSetup {
+  /** Connection name */
   name: string;
+  /** Connection description */
   description: string;
+  /** Which connector to use */
   connector: undefined | Connector;
+  /** Connection details fields */
   connectionDetailsFields: undefined | DynamicFields;
+  /** Connection settings fields */
   connectionSettingsFields: undefined | DynamicFields;
+  /** Connection details with user input */
   connectionDetails: undefined | DynamicFieldValues;
+  /** Connection settings with user input */
   connectionSettings: undefined | DynamicFieldValues;
 }

@@ -74,6 +74,7 @@ export const WorkflowProvider = ({
   const fetchWorkflow = useCallback(async () => {
     try {
       const newWorkflow = await getWorkflow(workflowID);
+      if (!newWorkflow) return;
       setWorkflow(newWorkflow);
     } catch (error) {
       irminAlert(

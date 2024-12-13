@@ -72,7 +72,7 @@ const QueryResults = ({
 
   const showLoadingOnData = loading || processingRun;
   const errors = result?.errors ?? [];
-  const logs = result?.data.logs ?? [];
+  const logs = result?.data?.logs ?? [];
 
   return (
     <div

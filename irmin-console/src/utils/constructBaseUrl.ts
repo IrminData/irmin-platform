@@ -1,21 +1,20 @@
 /**
  * Properties for constructing a base URL
- *
- * @typeParam pathname - The current pathname (with query parameters and hash fragments if needed)
- * @typeParam segment - The segment to include in the base URL
- * @typeParam protocolAndDomain - Include the protocol and domain in the URL
- * @typeParam includeSegment - If true, includes the specified segment in the returned URL.
- * @typeParam segmentsAfter - Number of segments to include after the specified segment
- * @typeParam keepQueryParams - If true, retains query parameters in the returned URL
- * @typeParam keepHash - If true, retains hash fragments in the returned URL
  */
 export interface ConstructBaseUrlProps {
+  /** The current pathname (with query parameters and hash fragments if needed) */
   pathname: string;
+  /** The segment to include in the base URL */
   segment: string;
+  /** Include the protocol and domain in the URL */
   protocolAndDomain?: boolean;
+  /** If true, includes the specified segment in the returned URL. */
   includeSegment?: boolean;
+  /** Number of segments to include after the specified segment */
   segmentsAfter?: number;
+  /** If true, retains query parameters in the returned URL */
   keepQueryParams?: boolean;
+  /** If true, retains hash fragments in the returned URL */
   keepHash?: boolean;
 }
 

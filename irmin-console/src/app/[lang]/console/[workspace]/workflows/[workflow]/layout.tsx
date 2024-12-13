@@ -52,13 +52,15 @@ export default async function WorkflowLayout(
   const { children } = props;
 
   const workflowId = params.workflow;
-  if (isInvalidRouteProp(workflowId)) notFound();
+  if (isInvalidRouteProp(workflowId)) return notFound();
 
   const token = await getToken();
   const [runs, workflow] = await Promise.all([
     getWorkflowRuns(workflowId, token),
     getWorkflow(workflowId, token),
   ]);
+
+  if (!workflow || !runs) return notFound();
 
   return (
     <WorkflowProvider runs={runs} initialWorkflow={workflow}>

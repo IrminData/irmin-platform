@@ -247,6 +247,7 @@ export const RepositoryProvider = ({
   const fetchRepository = useCallback(async () => {
     try {
       const newRepository = await getRepository(repositorySlug);
+      if (!newRepository) return;
       setRepository(newRepository);
     } catch (error) {
       irminAlert(
@@ -342,7 +343,7 @@ export const RepositoryProvider = ({
           currentRef ?? 'main',
           selectedPath ?? currentPath
         );
-        if (typeof res.data.download_url === 'string') {
+        if (typeof res.data?.download_url === 'string') {
           irminAlert(
             'success',
             res.message ?? 'Repository downloaded successfully'
@@ -391,6 +392,7 @@ export const RepositoryProvider = ({
         currentPath,
         currentRef
       );
+      if (!newObjects) return;
       setObjects(newObjects);
     } catch (error) {
       console.error('RepositoryContext fetchObjects error', error);
@@ -557,6 +559,7 @@ export const RepositoryProvider = ({
       // Fetch the branches
       const newBranches = await getBranches(repositorySlug);
       // Set the branches
+      if (!newBranches) return;
       setBranches(newBranches);
     } catch (error) {
       console.error('RepositoryContext fetchBranches error', error);
@@ -577,6 +580,7 @@ export const RepositoryProvider = ({
     try {
       // Fetch and set the tags
       const tags = await getTags(repositorySlug);
+      if (!tags) return;
       setTags(tags);
     } catch (error) {
       console.error('RepositoryContext fetchTags error', error);
@@ -620,7 +624,7 @@ export const RepositoryProvider = ({
     async (base: string, compare: string): Promise<Diff | null> => {
       try {
         const res = await getDiff(repositorySlug, base, compare);
-        return res.data;
+        return res?.data ?? null;
       } catch (error) {
         console.error(error);
         irminAlert(
@@ -707,7 +711,7 @@ export const RepositoryProvider = ({
           currentRef,
           objectPath
         );
-        return res.data;
+        return res?.data ?? null;
       } catch (error) {
         console.error('RepositoryContext fetchLastModification error', error);
         irminAlert(

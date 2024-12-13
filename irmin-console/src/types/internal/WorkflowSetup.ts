@@ -6,28 +6,37 @@ import { WorkflowSchedule } from '@/types/core/WorkflowSchedule';
 /**
  * Pipeline stage input object.
  *
- * Seperate object to define the input of a pipeline stage used for creation or editing.
+ * Separate object to define the input of a pipeline stage used for creation or editing.
  */
 export type PipelineStageInput = {
+  /** Description of the pipeline stage */
   description: string;
+  /** Write permission for the pipeline stage */
   write: boolean;
+  /** Read permission for the pipeline stage */
   read: boolean;
+  /** Type of the pipeline stage */
   type: 'action' | 'connection' | 'repository';
+  /** Executable script for the pipeline stage */
   executable?: string;
   /** ID of the connection */
   connection?: string;
+  /** Write path for the connection */
   connection_write_path?: string;
+  /** Read path for the connection */
   connection_read_path?: string;
   /** Slug of the repository */
   repository?: string;
+  /** Branch of the repository */
   branch?: string;
+  /** Path in the repository */
   path?: string;
 };
 
 /**
  * Workflow setup object
  *
- * Please note, that different workflow will have different properties
+ * Please note, that different workflows will have different properties
  * required to be set.
  */
 export interface WorkflowSetup {

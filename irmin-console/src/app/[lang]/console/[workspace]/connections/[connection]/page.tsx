@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+
 import {
   getExportWorkflows,
   getImportWorkflows,
@@ -15,6 +17,9 @@ export default async function ConnectionOverviewPage() {
     getImportWorkflows(token),
     getExportWorkflows(token),
   ]);
+  if (!importWorkflows || !exportWorkflows) {
+    return notFound();
+  }
   return (
     <ConnectionSection
       importWorkflows={importWorkflows}

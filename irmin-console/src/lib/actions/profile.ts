@@ -76,6 +76,7 @@ export async function updateProfile(
     company,
     avatar
   );
+  if (!res.data) return null;
   // Register the user as a subscriber in Novu
   await registerNovuSubscriber(res.data, locale);
   return res;

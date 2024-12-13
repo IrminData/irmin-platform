@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+
 import { getConnections } from '@/lib/actions/connections';
 import { getConnectors } from '@/lib/actions/connectors';
 import { getToken } from '@/lib/getToken';
@@ -16,7 +18,7 @@ export default async function ConnectionCreatePage() {
     getConnectors(token),
     getConnections(token),
   ]);
-
+  if (!connections || !connectors) return notFound();
   return (
     <ConnectionsSection
       connections={connections}

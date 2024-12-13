@@ -2,6 +2,8 @@
 
 import type { Metadata } from 'next';
 
+import { notFound } from 'next/navigation';
+
 import { getInvites } from '@/lib/actions/invites';
 import { getRoles } from '@/lib/actions/roles';
 import { getUsers } from '@/lib/actions/users';
@@ -56,6 +58,8 @@ export default async function ConsoleWorkspaceLayout(props: {
     getUsers(token),
     getInvites(currentWorkspace, undefined, false, false, token),
   ]);
+
+  if (!workspace || !roles || !users || !invites) return notFound();
 
   return (
     <WorkspaceProvider

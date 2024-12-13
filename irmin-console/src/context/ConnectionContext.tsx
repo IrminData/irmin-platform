@@ -60,6 +60,7 @@ export const ConnectionProvider = ({
   const fetchConnection = useCallback(async () => {
     try {
       const newConnection = await getConnection(connectionID);
+      if (!newConnection) return;
       setConnection(newConnection);
     } catch (error) {
       irminAlert(

@@ -32,7 +32,6 @@
     "blockTags": [
       "@todo",
       "@param",
-      "@typeParam",
       "@returns",
       "@example",
       "@deprecated",

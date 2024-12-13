@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+
 import { getWorkflows } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
 
@@ -17,5 +19,6 @@ import WorkflowsSection from '@/components/workflow/WorkflowsSection';
 export default async function WorkflowsPage() {
   const token = await getToken();
   const workflows = await getWorkflows(token);
+  if (!workflows) return notFound();
   return <WorkflowsSection workflows={workflows} sideModalOpen={false} />;
 }

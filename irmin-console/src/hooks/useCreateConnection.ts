@@ -169,7 +169,7 @@ export function useContinueAndTestConnection(
           connectionData.connector?.id ?? '',
           connectionDetails as DynamicFieldValues
         );
-        if (res.data.can_connect && res.data.connection_details_valid) {
+        if (res.data?.can_connect && res.data.connection_details_valid) {
           irminAlert('success', dict.connections.create.success);
           setCurrentStep(3);
         } else {
@@ -258,7 +258,7 @@ export function useContinueCreateConnection(
           connectionData.connectionDetails,
           data
         );
-        if (res.data.ok && res.data.connection_settings_valid) {
+        if (res.data?.ok && res.data.connection_settings_valid) {
           irminAlert('success', dict.connections.create.configuration_valid);
           setCurrentStep(4);
         } else {

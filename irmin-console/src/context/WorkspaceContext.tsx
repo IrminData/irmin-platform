@@ -68,6 +68,7 @@ export const WorkspaceProvider = ({
   const fetchWorkspace = useCallback(async () => {
     try {
       const newWorkspace = await getWorkspace(workspaceSlug);
+      if (!newWorkspace) return;
       setWorkspace(newWorkspace);
     } catch (error) {
       irminAlert(

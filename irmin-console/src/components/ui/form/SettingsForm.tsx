@@ -17,33 +17,41 @@ import { useLocale } from '@/context/LocaleContext';
 
 /**
  * The configuration for a field in the form
- *
- * @typeParam name - The name of the field
- * @typeParam label - The label for the field
- * @typeParam type - The type of the field
- * @typeParam placeholder - The placeholder for the field
- * @typeParam options - The options for the field if it's a select field
- * @typeParam rules - The validation rules for the field
  */
 export interface FieldConfig<T extends FieldValues> {
+  /** The name of the field */
   name: Path<T>;
+  /** The label for the field */
   label: string;
+  /** The type of the field */
   type: 'text' | 'textarea' | 'select';
+  /** The placeholder for the field */
   placeholder?: string;
+  /** The options for the field if it's a select field */
   options?: { value: string; label: string }[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  rules?: any;
+  /** The validation rules for the field */
+  rules?: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  any;
 }
 
 interface SettingsFormProps<T extends FieldValues> {
+  /** The initial values for the form */
   initialValues: DefaultValues<T>;
+  /** The function to call when the form is submitted */
   onSubmit: (data: T) => void;
+  /** The configuration for each field in the form */
   fieldConfiguration: FieldConfig<T>[];
+  /** The function to call when the delete button is clicked */
   deleteItem?: () => void;
+  /** The name of the item being edited */
   itemName?: string;
+  /** The message to display in the danger zone */
   dangerZoneMessage?: string;
+  /** The label for the submit button */
   submitButtonLabel: string;
+  /** The label for the delete button */
   deleteButtonLabel?: string;
+  /** Additional content to display in the danger zone */
   additionalDangerContent?: React.ReactNode;
 }
 

@@ -55,13 +55,12 @@ interface Excerpt {
  *
  * See src/components/website/templates/PageSections.tsx to understand section rendering
  *
- * @param sections - Sections of the page. Each section is a different type of content block.
- * @param full_width - Whether the page should be full width or not.
- *
  * @example See `/src/types/examples/wordpressObjects.ts`
  */
 interface Acf {
+  /** Sections of the page. Each section is a different type of content block. */
   sections: IrminWebsiteSection[];
+  /** Whether the page should be full width or not. */
   full_width: boolean;
 }
 
@@ -92,407 +91,422 @@ export type IrminWebsiteSection =
 /**
  * Type of props passed to Numbers section on the website from Wordpress API
  *
- * @param acf_fc_layout - The type of section, in this case 'numbers'
- * @param title - The title of the section
- * @param subtitle - The subtitle of the section
- * @param description - The description of the section
- * @param metrics - The metrics displayed in the section
- *
  * @example See `src/components/website/sections/numbers.tsx`
  */
 export interface NumbersSection {
+  /** The type of section, in this case 'numbers' */
   acf_fc_layout: 'numbers';
+  /** The title of the section */
   title: string;
+  /** The subtitle of the section */
   subtitle: string;
+  /** The description of the section */
   description: string;
+  /** The metrics displayed in the section */
   metrics: Metric[];
 }
 
 /**
  * Metric displayed in the numbers section
- * @param title - The title of the metric
- * @param description - The description of the metric
  */
 interface Metric {
+  /** The title of the metric */
   title: string;
+  /** The description of the metric */
   description: string;
 }
 
 /**
  * Type of props passed to Articles section on the website from Wordpress API
  *
- * @param acf_fc_layout - The type of section, in this case 'articles'
- * @param title - The title of the section
- * @param subtitle - The subtitle of the section
- * @param description - The description of the section
- *
  * @example See `src/components/website/sections/articles.tsx`
  */
 export interface ArticlesSection {
+  /** The type of section, in this case 'articles' */
   acf_fc_layout: 'articles';
+  /** The title of the section */
   title: string;
+  /** The subtitle of the section */
   subtitle: string;
+  /** The description of the section */
   description: string;
 }
 
 /**
  * Type of props passed to Careers section on the website from Wordpress API
- * @param acf_fc_layout - The type of section, in this case 'careers'
- * @param title - The title of the section
- * @param subtitle - The subtitle of the section
- * @param description - The description of the section
- * @param open_positions - The open positions displayed in the section
+ *
  * @example See `src/components/website/sections/careers.tsx`
  */
 export interface CareersSection {
+  /** The type of section, in this case 'careers' */
   acf_fc_layout: 'careers';
+  /** The title of the section */
   title: string;
+  /** The subtitle of the section */
   subtitle: string;
+  /** The description of the section */
   description: string;
+  /** The open positions displayed in the section */
   open_positions: OpenPosition[];
 }
 
 /**
  * Single open position displayed in the careers section
- * @param role - The role of the position
- * @param location - The location of the position
- * @param note - A note about the position
- * @param description - The description of the position
- * @param link - The link to the position
+ *
  * @example See `src/components/website/sections/careers.tsx`
  */
 interface OpenPosition {
+  /** The role of the position */
   role: string;
+  /** The location of the position */
   location: string;
+  /** A note about the position */
   note: string;
+  /** The description of the position */
   description: string;
+  /** The link to the position */
   link: string | WordpressLink;
 }
 
 /**
  * Type of props passed to Contact section on the website from Wordpress API
- * @param acf_fc_layout - The type of section, in this case 'contact'
- * @param title - The title of the section
- * @param subtitle - The subtitle of the section
- * @param description - The description of the section
- * @param buttons - The buttons displayed in the section
- * @param contact_methods - The contact methods displayed in the section
- * @param socials - The socials displayed in the section
+ *
  * @example See `src/components/website/sections/contact.tsx`
  */
 export interface ContactSection {
+  /** The type of section, in this case 'contact' */
   acf_fc_layout: 'contact';
+  /** The title of the section */
   title: string;
+  /** The subtitle of the section */
   subtitle: string;
+  /** The description of the section */
   description: string;
+  /** The buttons displayed in the section */
   buttons: Button[];
+  /** The contact methods displayed in the section */
   contact_methods: ContactMethod[];
+  /** The socials displayed in the section */
   socials: Social[];
 }
+
 /**
  * Single contact method displayed in the contact section
- * @param title - The title of the contact method
- * @param icon - The icon of the contact method
- * @param detail - The detail of the contact method
  */
 interface ContactMethod {
+  /** The title of the contact method */
   title: string;
+  /** The icon of the contact method */
   icon: string;
+  /** The detail of the contact method */
   detail: string;
 }
 
 /**
  * Single social displayed in the contact section
- * @param icon - The icon of the social
- * @param link - The link of the social
+ *
  * @example See `src/components/website/sections/contact.tsx`
  */
 interface Social {
+  /** The icon of the social */
   icon: string;
+  /** The link of the social */
   link: string | WordpressLink;
 }
 
 /**
  * Type of props passed to Content section on the website from Wordpress API
- * @param acf_fc_layout - The type of section, in this case 'content'
- * @param title - The title of the section
- * @param subtitle - The subtitle of the section
- * @param description - The description of the section
- * @param features - The features displayed in the section
- * @param main_image - The main image of the section
- * @param image_first - Whether the image should be displayed first or not
+ *
  * @example See `src/components/website/sections/content.tsx`
  */
 export interface ContentSection {
+  /** The type of section, in this case 'content' */
   acf_fc_layout: 'content';
+  /** The title of the section */
   title: string;
+  /** The subtitle of the section */
   subtitle: string;
+  /** The description of the section */
   description: string;
+  /** The features displayed in the section */
   features: Feature[];
+  /** The main image of the section */
   main_image: string | number;
+  /** Whether the image should be displayed first or not */
   image_first: boolean;
 }
 
 /**
  * Type of props passed to Features section on the website from Wordpress API
- * @param acf_fc_layout - The type of section, in this case 'features'
- * @param title - The title of the section
- * @param subtitle - The subtitle of the section
- * @param description - The description of the section
- * @param features - The features displayed in the section
- * @param image - The image of the section
+ *
  * @example See `src/components/website/sections/features.tsx`
  */
 export interface FeaturesSection {
+  /** The type of section, in this case 'features' */
   acf_fc_layout: 'features';
+  /** The title of the section */
   title: string;
+  /** The subtitle of the section */
   subtitle: string;
+  /** The description of the section */
   description: string;
+  /** The features displayed in the section */
   features: Feature[];
+  /** The image of the section */
   image: string;
 }
 
 /**
  * Single feature displayed in the features and content sections
- * @param title - The title of the feature
- * @param description - The description of the feature
- * @param icon - The icon of the feature
  */
 interface Feature {
+  /** The title of the feature */
   title: string;
+  /** The description of the feature */
   description: string;
+  /** The icon of the feature */
   icon: string;
 }
 
 /**
  * Type of props passed to Team section on the website from Wordpress API
- * @param acf_fc_layout - The type of section, in this case 'team'
- * @param title - The title of the section
- * @param subtitle - The subtitle of the section
- * @param description - The description of the section
- * @param buttons - The buttons displayed in the section
- * @param people - The people displayed in the section
+ *
  * @example See `src/components/website/sections/team.tsx`
  */
 export interface TeamSection {
+  /** The type of section, in this case 'team' */
   acf_fc_layout: 'team';
+  /** The title of the section */
   title: string;
+  /** The subtitle of the section */
   subtitle: string;
+  /** The description of the section */
   description: string;
+  /** The buttons displayed in the section */
   buttons: Button[];
+  /** The people displayed in the section */
   people: People[];
 }
 
 /**
  * Single person displayed in the team section
- * @param name - The name of the person
- * @param title - The title of the person
- * @param description - The description of the person
- * @param profile - The profile of the person
+ *
  * @example See `src/components/website/sections/team.tsx`
  */
 interface People {
+  /** The name of the person */
   name: string;
+  /** The title of the person */
   title: string;
+  /** The description of the person */
   description: string;
+  /** The profile of the person */
   profile: string | number;
 }
 
 /**
  * Type of props passed to CTA section on the website from Wordpress API
- * @param acf_fc_layout - The type of section, in this case 'cta'
- * @param title - The title of the section
- * @param bullet_points - The bullet points displayed in the section
- * @param buttons - The buttons displayed in the section
- * @param image - The image of the section
+ *
  * @example See `src/components/website/sections/cta.tsx`
  */
 export interface CTASection {
+  /** The type of section, in this case 'cta' */
   acf_fc_layout: string;
+  /** The title of the section */
   title: string;
+  /** The bullet points displayed in the section */
   bullet_points: BulletPoint[];
+  /** The buttons displayed in the section */
   buttons: Button[];
+  /** The image of the section */
   image: string | number;
 }
 
 /**
  * Type of props passed to CTA dark section on the website from Wordpress API
- * @param acf_fc_layout - The type of section, in this case 'cta_dark'
- * @param title - The title of the section
- * @param description - The description of the section
- * @param buttons - The buttons displayed in the section
+ *
  * @example See `src/components/website/sections/cta-dark.tsx`
  */
 export interface CTADarkSection {
+  /** The type of section, in this case 'cta_dark' */
   acf_fc_layout: 'cta_dark';
+  /** The title of the section */
   title: string;
+  /** The description of the section */
   description: string;
+  /** The buttons displayed in the section */
   buttons: Button[];
 }
 
 /**
  * Type of props passed to FAQ section on the website from Wordpress API
- * @param acf_fc_layout - The type of section, in this case 'faq'
- * @param title - The title of the section
- * @param subtitle - The subtitle of the section
- * @param description - The description of the section
- * @param questions - The questions displayed in the section
+ *
  * @example See `src/components/website/websiteFAQSection.tsx`
  */
 export interface FAQSection {
+  /** The type of section, in this case 'faq' */
   acf_fc_layout: 'faq';
+  /** The title of the section */
   title: string;
+  /** The subtitle of the section */
   subtitle: string;
+  /** The description of the section */
   description: string;
+  /** The questions displayed in the section */
   questions: Question[];
 }
 
 /**
  * Single question displayed in the FAQ section
- * @param title - The title of the question
- * @param description - The description of the question
- * @param icon - The icon of the question
  */
 interface Question {
+  /** The title of the question */
   title: string;
+  /** The description of the question */
   description: string;
+  /** The icon of the question */
   icon: string;
 }
 
 /**
  * Type of props passed to Price section on the website from Wordpress API
- * @param acf_fc_layout - The type of section, in this case 'prices'
- * @param title - The title of the section
- * @param subtitle - The subtitle of the section
- * @param description - The description of the section
- * @param annual_saving_note - The annual saving note of the section
- * @param prices - The prices displayed in the section
+ *
  * @example See `src/components/website/websitePriceSection.tsx`
  */
 export interface PriceSection {
+  /** The type of section, in this case 'prices' */
   acf_fc_layout: 'prices';
+  /** The title of the section */
   title: string;
+  /** The subtitle of the section */
   subtitle: string;
+  /** The description of the section */
   description: string;
+  /** The annual saving note of the section */
   annual_saving_note: string;
+  /** The prices displayed in the section */
   prices: Price[];
 }
 
 /**
  * Single price displayed in the price section
- * @param title - The title of the price
- * @param subtitle - The subtitle of the price
- * @param monthly_price - The monthly price of the price
- * @param annual_price - The annual price of the price
- * @param bullet_points - The bullet points of the price
- * @param link_text - The link text of the price
- * @param link - The link of the price
+ *
  * @example See `src/components/website/websitePriceSection.tsx`
  */
 interface Price {
+  /** The title of the price */
   title: string;
+  /** The subtitle of the price */
   subtitle: string;
+  /** The monthly price of the price */
   monthly_price: number;
+  /** The annual price of the price */
   annual_price: number;
+  /** The bullet points of the price */
   bullet_points: BulletPoint[];
+  /** The link text of the price */
   link_text: string;
+  /** The link of the price */
   link: string | WordpressLink;
 }
 
 /**
  * Single bullet point displayed in the price and CTA sections
- * @param title - The title of the bullet point
  */
 interface BulletPoint {
+  /** The title of the bullet point */
   title: string;
 }
 
 /**
  * Type of props passed to Hero section on the website from Wordpress API
- * @param acf_fc_layout - The type of section, in this case 'hero'
- * @param title_parts - The title parts displayed in the section
- * @param description - The description of the section
- * @param buttons - The buttons displayed in the section
- * @param video_placeholder - The video placeholder of the section
- * @param video - The video of the section
+ *
  * @example See `src/components/website/sections/hero.tsx`
  */
 export interface HeroSection {
+  /** The type of section, in this case 'hero' */
   acf_fc_layout: 'hero';
+  /** The title parts displayed in the section */
   title_parts: TitlePart[];
+  /** The description of the section */
   description: string;
+  /** The buttons displayed in the section */
   buttons: Button[];
+  /** The video placeholder of the section */
   video_placeholder: string | number;
+  /** The video of the section */
   video: string | number;
 }
 
 /**
  * Single title part displayed in the hero section
- * @param title - The title of the title part
- * @param green - Whether the title part should be green or not
  */
 interface TitlePart {
+  /** The title of the title part */
   title: string;
+  /** Whether the title part should be green or not */
   green: boolean;
 }
 
 /**
  * Type of props passed to Testimonial section on the website from Wordpress API
- * @param acf_fc_layout - The type of section, in this case 'testimonials'
- * @param testimonials - The testimonials displayed in the section
  */
 export interface TestimonialSection {
+  /** The type of section, in this case 'testimonials' */
   acf_fc_layout: 'testimonials';
+  /** The testimonials displayed in the section */
   testimonials: Testimonial[];
 }
 
 /**
  * Single testimonial displayed in the testimonial section
- * @param image - The image of the testimonial
- * @param name - The name of the testimonial
- * @param title - The title of the testimonial
- * @param quote - The quote of the testimonial
  */
 interface Testimonial {
+  /** The image of the testimonial */
   image: string | number;
+  /** The name of the testimonial */
   name: string;
+  /** The title of the testimonial */
   title: string;
+  /** The quote of the testimonial */
   quote: string;
 }
 
 /**
  * Type of props passed to Logo cloud section on the website from Wordpress API
- * @param acf_fc_layout - The type of section, in this case 'logo_cloud'
- * @param title - The title of the section
- * @param logos - The logos displayed in the section
+ *
  * @example See `src/components/website/sections/logoCloud.tsx`
  */
 export interface LogoCloudSection {
+  /** The type of section, in this case 'logo_cloud' */
   acf_fc_layout: 'logo_cloud';
+  /** The title of the section */
   title: string;
+  /** The logos displayed in the section */
   logos: Logo[];
 }
 
 /**
  * Single logo displayed in the logo cloud section
- * @param logo - The logo of the logo
- * @param title - The title of the logo
  */
 interface Logo {
+  /** The logo of the logo */
   logo: string | number;
+  /** The title of the logo */
   title: string;
 }
 
 /**
  * Type of props passed to Newsletter section on the website from Wordpress API
- * @param acf_fc_layout - The type of section, in this case 'newsletter'
- * @param title - The title of the section
- * @param subtitle - The subtitle of the section
+ *
  * @example See `src/components/website/sections/newsletter.tsx`
  */
 export interface NewsletterSection {
+  /** The type of section, in this case 'newsletter' */
   acf_fc_layout: 'newsletter';
+  /** The title of the section */
   title: string;
+  /** The subtitle of the section */
   subtitle: string;
 }
 
@@ -501,9 +515,13 @@ export interface NewsletterSection {
  * This is the type of the button object returned by the Wordpress API
  */
 interface Button {
+  /** The text of the button */
   text: string;
+  /** The link of the button */
   link: string | WordpressLink;
+  /** The icon of the button */
   icon?: string | null;
+  /** The variant of the button */
   variant:
     | 'default'
     | 'destructive'

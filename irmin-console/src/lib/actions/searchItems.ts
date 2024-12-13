@@ -27,7 +27,7 @@ export async function generateSearchItems({
 
     // Add workspaces
     const workspaces = await getWorkspaces(token);
-    workspaces.forEach((ws) => {
+    workspaces?.forEach((ws) => {
       newItems.push({
         title: ws.name,
         description: ws.description ?? '-',
@@ -208,7 +208,7 @@ export async function generateSearchItems({
       );
 
       // Add users
-      users.forEach((user) => {
+      users?.forEach((user) => {
         const roleString =
           user.roles?.map((role) => role.label).join(', ') ?? '';
         newItems.push({
@@ -222,7 +222,7 @@ export async function generateSearchItems({
       });
 
       // Add invites
-      invites.forEach((invite) => {
+      invites?.forEach((invite) => {
         const roleString = invite.role.label;
         newItems.push({
           title: `${invite.first_name} ${invite.last_name}`,
@@ -233,7 +233,7 @@ export async function generateSearchItems({
       });
 
       // Add workflows
-      workflows.forEach((workflow) => {
+      workflows?.forEach((workflow) => {
         newItems.push({
           title: workflow.name,
           description: workflow.description ?? '-',
@@ -243,7 +243,7 @@ export async function generateSearchItems({
       });
 
       // Add connections
-      connections.forEach((connection) => {
+      connections?.forEach((connection) => {
         newItems.push({
           title: connection.name,
           description: connection.description ?? '-',
@@ -253,7 +253,7 @@ export async function generateSearchItems({
       });
 
       // Add repositories
-      repositories.forEach((repository) => {
+      repositories?.forEach((repository) => {
         newItems.push({
           title: repository.name,
           description: repository.description ?? '-',

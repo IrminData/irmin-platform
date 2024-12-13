@@ -61,6 +61,10 @@ export default async function RepositoryLayoutWithContainer(props: {
     initDict(),
   ]);
 
+  if (!repository || !branches || !tags) {
+    return notFound();
+  }
+
   return (
     <RepositoryLayoutWrapper
       dict={dict}

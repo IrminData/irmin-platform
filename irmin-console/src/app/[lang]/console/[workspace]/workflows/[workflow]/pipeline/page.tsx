@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+
 import { getConnections } from '@/lib/actions/connections';
 import { getRepositories } from '@/lib/actions/repositories';
 import { getToken } from '@/lib/getToken';
@@ -13,6 +15,9 @@ export default async function WorkflowPipelinePage() {
     getRepositories(token),
     getConnections(token),
   ]);
+  if (!repositories || !connections) {
+    return notFound();
+  }
   return (
     <WorkflowPipelineSection
       repositories={repositories}

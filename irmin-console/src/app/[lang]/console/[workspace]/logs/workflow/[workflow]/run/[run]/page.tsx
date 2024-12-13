@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+
 import { getWorkflowRunLogs } from '@/lib/actions/logs';
 import { getWorkflow, getWorkflowRun } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
@@ -19,6 +21,7 @@ export default async function WorkflowRunLogsPage(props: {
     getWorkflowRun(params.workflow, params.run, token),
     getWorkflow(params.workflow, token),
   ]);
+  if (!logs || !run || !workflow) return notFound();
   return (
     <WorkflowRunLogsSection
       workflowRun={run}

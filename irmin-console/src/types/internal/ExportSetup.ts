@@ -2,14 +2,14 @@ import { DynamicFieldValues } from './DynamicField';
 
 /**
  * Export setup object
- * @typeParam connectionID - Connection ID
- * @typeParam name - Export name
- * @typeParam settings - Export settings
- * @typeParam cron - Interval at wich the export should run
  */
 export interface ExportSetup {
+  /** Connection ID */
   connectionID: null | number;
+  /** Export name */
   name: string;
+  /** Export settings */
   settings: DynamicFieldValues;
+  /** Interval at which the export should run */
   cron: string;
 }

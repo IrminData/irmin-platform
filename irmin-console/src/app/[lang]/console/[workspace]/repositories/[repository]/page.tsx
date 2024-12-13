@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+
 import { getDict } from '@/lib/actions/dict';
 import { getWorkspace } from '@/lib/actions/workspaces';
 import { getToken } from '@/lib/getToken';
@@ -23,6 +25,8 @@ export default async function RepositoryPage(props: {
     getWorkspace(currentWorkspace, token),
     getDict(),
   ]);
+
+  if (!workspace) return notFound();
 
   return <RepositorySection currentWorkspace={workspace} dict={dict} />;
 }

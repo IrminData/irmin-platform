@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
 
+import { notFound } from 'next/navigation';
+
 import { getConnection } from '@/lib/actions/connections';
 import { getConnectionLogs } from '@/lib/actions/logs';
 import { Locale } from '@/lib/dict';
@@ -49,6 +51,8 @@ export default async function ConnectionLogsPage(props: {
     getConnection(params.connection, token),
     initDict(),
   ]);
+
+  if (!logs || !connection) return notFound();
 
   return (
     <LogsSection

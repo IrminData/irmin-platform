@@ -73,6 +73,7 @@ export const UsersProvider = ({
   const fetchUsers = useCallback(async () => {
     try {
       const newUsers = await getUsers();
+      if (!newUsers) return;
       setUsers(newUsers);
     } catch (error) {
       irminAlert(
@@ -85,6 +86,7 @@ export const UsersProvider = ({
   const fetchInvites = useCallback(async () => {
     try {
       const newInvites = await getInvites(currentWorkspace);
+      if (!newInvites) return;
       setInvites(newInvites);
     } catch (error) {
       irminAlert(

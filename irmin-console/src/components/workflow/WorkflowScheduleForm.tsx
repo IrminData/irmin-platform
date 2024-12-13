@@ -79,8 +79,8 @@ export default function WorkflowScheduleForm({
           getRepositories(token),
           getWorkflows(token),
         ]);
-        setRepositories(_repositories);
-        setWorkflows(_workflows);
+        if (_repositories) setRepositories(_repositories);
+        if (_workflows) setWorkflows(_workflows);
       } catch (error) {
         console.error('Failed to fetch data:', error);
       } finally {

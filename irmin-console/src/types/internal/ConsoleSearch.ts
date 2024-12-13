@@ -15,15 +15,14 @@ export enum ConsoleSearchItemType {
 
 /**
  * Interface for a console search item
- *
- * @param title - The title of the search item
- * @param description - The description of the search item
- * @param link - The link to the search item
- * @param type - The type of the search item
  */
 export interface ConsoleSearchItem {
+  /** The title of the search item */
   title: string;
+  /** The description of the search item */
   description: string;
+  /** The link to the search item */
   link: string;
+  /** The type of the search item */
   type: ConsoleSearchItemType;
 }

@@ -57,6 +57,8 @@ export default async function ConnectionPagesLayout(props: {
   const token = await getToken();
   const connection = await getConnection(connectionID, token);
 
+  if (!connection) return notFound();
+
   return (
     <ConnectionProvider
       defaultConnection={connection}

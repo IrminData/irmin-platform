@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+
 import { getWorkflowLogs } from '@/lib/actions/logs';
 import { getWorkflow } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
@@ -22,6 +24,7 @@ export default async function WorkflowLogsPage(props: {
     initDict(),
   ]);
 
+  if (!logs || !workflow) return notFound();
   return (
     <LogsSection
       workflow={workflow}

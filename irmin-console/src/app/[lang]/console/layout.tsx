@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import { notFound } from 'next/navigation';
+
 import { getDict } from '@/lib/actions/dict';
 import { getWorkspaces } from '@/lib/actions/workspaces';
 import { Locale } from '@/lib/dict';
@@ -34,6 +36,10 @@ export default async function ConsoleLayout(props: {
     getWorkspaces(token),
     getDict(),
   ]);
+
+  if (!workspaces) {
+    return notFound();
+  }
 
   return (
     <ConsoleWrapper workspaces={workspaces} dict={dict}>

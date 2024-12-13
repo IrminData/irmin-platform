@@ -159,12 +159,12 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
             ? profile_picture[0]
             : undefined
         );
-        if (res.data) {
-          setProfile(res.data);
-          irminAlert('success', res.message ?? 'Profile updated successfully');
+        if (res?.data) {
+          setProfile(res?.data);
+          irminAlert('success', res?.message ?? 'Profile updated successfully');
         }
-        if (!res.data)
-          throw new Error(res.message ?? 'Failed to update profile');
+        if (!res?.data)
+          throw new Error(res?.message ?? 'Failed to update profile');
         return true;
       } catch (error) {
         irminAlert(

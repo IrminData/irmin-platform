@@ -71,7 +71,7 @@ const ManageWorkspacesSection = ({
       await handleCreate(data.newWorkspaceName, data.newWorkspaceDescription);
       // Refetch the workspaces
       const newWorkspaces = await getWorkspaces();
-      setWorkspaces(newWorkspaces);
+      if (newWorkspaces) setWorkspaces(newWorkspaces);
       setProcessing(false);
     },
     [handleCreate]

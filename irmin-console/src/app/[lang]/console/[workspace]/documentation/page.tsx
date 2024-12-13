@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+
 import { getConnections } from '@/lib/actions/connections';
 import { getRepositories } from '@/lib/actions/repositories';
 import {
@@ -27,6 +29,16 @@ export default async function DocumentationPage() {
     getImportWorkflows(token),
     getRepositories(token),
   ]);
+
+  if (
+    !connections ||
+    !actionWorkflows ||
+    !exportWorkflows ||
+    !importWorkflows ||
+    !repositories
+  ) {
+    return notFound();
+  }
 
   return (
     <DocumentationSection

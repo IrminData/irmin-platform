@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+
 import { getDict } from '@/lib/actions/dict';
 import { getWorkspaces } from '@/lib/actions/workspaces';
 import { getToken } from '@/lib/getToken';
@@ -16,6 +18,10 @@ const ManageWorkspacesPage = async () => {
     getDict(),
     getWorkspaces(token),
   ]);
+
+  if (!workspaces) {
+    return notFound();
+  }
 
   return (
     <>

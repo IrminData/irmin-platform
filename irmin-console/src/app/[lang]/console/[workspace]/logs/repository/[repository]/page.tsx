@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
 
+import { notFound } from 'next/navigation';
+
 import { getRepositoryLogs } from '@/lib/actions/logs';
 import { getRepository } from '@/lib/actions/repositories';
 import { Locale } from '@/lib/dict';
@@ -49,6 +51,8 @@ export default async function RepositoryLogsPage(props: {
     getRepository(params.repository, token),
     initDict(),
   ]);
+
+  if (!logs || !repository) return notFound();
 
   return (
     <LogsSection

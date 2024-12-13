@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+
 import { getRepositories } from '@/lib/actions/repositories';
 import { getToken } from '@/lib/getToken';
 
@@ -17,6 +19,7 @@ import RepositoriesSection from '@/components/repository/RepositoriesSection';
 export default async function RepositoriesPage() {
   const token = await getToken();
   const repositories = await getRepositories(token);
+  if (!repositories) return notFound();
   return (
     <RepositoriesSection repositories={repositories} sideModalOpen={false} />
   );
