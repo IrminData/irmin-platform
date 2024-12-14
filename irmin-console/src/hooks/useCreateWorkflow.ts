@@ -14,7 +14,7 @@ import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
 /**
  * Empty workflow setup data
  */
-const initialWorkflowData: WorkflowSetup = {
+export const emptyWorkflowSetupData: WorkflowSetup = {
   // Workflow properties
   name: '',
   description: '',
@@ -40,20 +40,29 @@ const initialWorkflowData: WorkflowSetup = {
 export const useWorkflowCreation = (
   isOpen: boolean,
   workflowType: WorkflowableType,
+  initialWorkflowData: WorkflowSetup | undefined,
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>
 ) => {
   const [workflowData, setWorkflowData] = useState<WorkflowSetup>({
-    ...initialWorkflowData,
+    ...emptyWorkflowSetupData,
+    ...(initialWorkflowData ?? {}),
     type: workflowType,
   });
 
   useEffect(() => {
     setCurrentStep(1);
     setWorkflowData({
-      ...initialWorkflowData,
+      ...emptyWorkflowSetupData,
+      ...(initialWorkflowData ?? {}),
       type: workflowType,
     });
-  }, [isOpen, workflowType, setCurrentStep, setWorkflowData]);
+  }, [
+    isOpen,
+    workflowType,
+    initialWorkflowData,
+    setCurrentStep,
+    setWorkflowData,
+  ]);
 
   return {
     workflowData,

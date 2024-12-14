@@ -1,11 +1,14 @@
 'use client';
 
 import { IoAdd, IoClose, IoSave } from 'react-icons/io5';
+import { TbRun } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
 
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
+
+import useBaseUrl from '@/hooks/useBaseUrl';
 
 import { getNameFromPath } from '@/utils/editorItems';
 
@@ -37,6 +40,14 @@ const EditorWithTabs = () => {
   } = useEditor();
 
   const { dict } = useLocale();
+
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'console',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
   return (
     <>
@@ -93,6 +104,17 @@ const EditorWithTabs = () => {
               ))}
             </select>
             <Button
+              size='sm'
+              variant='secondary'
+              className='px-2 py-2 text-xs'
+              aria-label='Save file as workflow'
+              disabled={!currentEditor}
+              href={`${workspaceUrl}/workflows/actions/create?executable=${currentEditor?.path}`}
+            >
+              <TbRun className='mr-1 inline-block' />{' '}
+              {dict.query.saveAsWorkflow}
+            </Button>
+            <Button
               disabled={!enableSaveButton}
               size='sm'
               variant='default'
@@ -100,7 +122,7 @@ const EditorWithTabs = () => {
               aria-label='Save file'
               onClick={() => saveActiveTabAsFile()}
             >
-              <IoSave className='mr-2 inline-block' /> {dict.query.save}
+              <IoSave className='mr-1 inline-block' /> {dict.query.save}
             </Button>
           </div>
         </div>

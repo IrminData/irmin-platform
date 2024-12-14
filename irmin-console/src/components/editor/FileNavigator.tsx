@@ -215,7 +215,7 @@ const FileNavigator = ({
       {contextMenu && contextMenu.visible && (
         <ul
           id='file-navigator-context-menu'
-          className='absolute left-2 right-2 rounded-lg bg-popover px-4 py-2'
+          className='absolute left-2 right-2 rounded-lg border bg-popover px-4 py-2'
           style={{ top: `${contextMenu.top}px` }}
         >
           <button
@@ -225,7 +225,7 @@ const FileNavigator = ({
           >
             <FaTimes size={16} />
           </button>
-          <li className='border-b border-border p-1 pb-2 text-sm'>
+          <li className='border-b border-border p-1 pb-2 text-xs'>
             {contextMenu.item.current?.name ?? contextMenu.item.original?.name}
           </li>
           {contextMenu.item.type === 'file' && (

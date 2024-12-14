@@ -535,6 +535,7 @@ const en = {
     noErrors: 'No errors',
     queryResults: 'Query results',
     save: 'Save',
+    saveAsWorkflow: 'Save as workflow',
     run: 'Run',
     rowsReturnedIn: 'rows returned in',
     exportTable: 'export table (.csv)',

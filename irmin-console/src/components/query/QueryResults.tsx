@@ -180,9 +180,9 @@ const QueryResults = ({
           {onRun && (
             <Button
               icon={<MdPlayArrow />}
-              variant='default'
+              variant='accent'
               size='sm'
-              className='text-xs'
+              className='px-4 text-xs'
               loading={processingRun || loading}
               onClick={() => {
                 setProcessingRun(true);

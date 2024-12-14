@@ -540,6 +540,7 @@ const fi = {
     noErrors: 'Ei virheitä',
     queryResults: 'Kyselyn tulokset',
     save: 'Tallenna',
+    saveAsWorkflow: 'Tallenna prosessina',
     run: 'Suorita',
     rowsReturnedIn: 'riviä palautettu ajassa',
     exportTable: 'vie taulukko (.csv)',

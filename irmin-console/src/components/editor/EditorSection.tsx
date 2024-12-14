@@ -24,9 +24,6 @@ export default function EditorSection() {
         <QueryResults
           title={dict.query.results}
           result={query.result}
-          onSave={async () => {
-            // TODO: Implement save functionality
-          }}
           onRun={async () => {
             if (!currentEditor || !currentEditor.contents) return;
             await query.executeScript(
