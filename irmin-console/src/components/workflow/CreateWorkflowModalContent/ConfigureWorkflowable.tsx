@@ -2,6 +2,7 @@
 
 import ReactSelect from 'react-select';
 
+import FileSelector from '@/components/editor/FileSelector';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,15 +13,17 @@ import { useLocale } from '@/context/LocaleContext';
 import { useConfigureWorkflowable } from '@/hooks/useCreateWorkflow';
 
 import { Connection } from '@/types/core/Connection';
+import { EditorItems } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
 import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
 
 import PipelineStageEditor from '../PipelineStageEditor';
 
 /**
- * Configure workfow type specific properties
+ * Configure workflow type specific properties
  *
  * @param props - Component properties
+ * @param props.editorItems - List of editor items
  * @param props.connections - List of connections
  * @param props.repositories - List of repositories
  * @param props.workflowData - Workflow setup data
@@ -28,12 +31,14 @@ import PipelineStageEditor from '../PipelineStageEditor';
  * @param props.setCurrentStep - Function to set the current step
  */
 export default function ConfigureWorkflowable({
+  editorItems,
   connections,
   repositories,
   workflowData,
   setWorkflowData,
   setCurrentStep,
 }: {
+  editorItems: EditorItems;
   connections: Connection[];
   repositories: Repository[];
   workflowData: WorkflowSetup;
@@ -53,14 +58,13 @@ export default function ConfigureWorkflowable({
           <>
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.executableScriptFile}</Label>
-              <Input
-                required
-                type='text'
-                defaultValue={workflowData.path ?? ''}
-                onChange={(e) =>
+              <FileSelector
+                editorItems={editorItems}
+                currentSelectedFile={workflowData.executable ?? null}
+                onSelectFile={(filePath) =>
                   setWorkflowData({
                     ...workflowData,
-                    executable: e.target.value,
+                    executable: filePath,
                   })
                 }
               />
@@ -314,6 +318,7 @@ export default function ConfigureWorkflowable({
           <>
             <PipelineStageEditor
               initialStages={workflowData.stages}
+              editorItems={editorItems}
               repositories={repositories}
               connections={connections}
               onSubmit={(data) => {

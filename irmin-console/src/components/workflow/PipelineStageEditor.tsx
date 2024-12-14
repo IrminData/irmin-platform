@@ -10,6 +10,7 @@ import {
 } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
+import FileSelector from '@/components/editor/FileSelector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { useLocale } from '@/context/LocaleContext';
 
 import { Connection } from '@/types/core/Connection';
+import { EditorItems } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
 import { PipelineStageInput } from '@/types/internal/WorkflowSetup';
 
@@ -31,6 +33,7 @@ type FormData = {
 };
 
 type PipelineStageEditorProps = {
+  editorItems?: EditorItems;
   repositories: Repository[];
   connections: Connection[];
   initialStages?: PipelineStageInput[];
@@ -43,9 +46,10 @@ type PipelineStageEditorProps = {
  * UI component for editing pipeline stages.
  *
  * @param props - The component props.
+ * @param props.initialStages - The initial stages to display.
+ * @param props.editorItems - (optional) The editor items to display.
  * @param props.repositories - List of available repositories.
  * @param props.connections - List of available connections.
- * @param props.initialStages - The initial stages to display.
  * @param props.onSubmit - The function to call when the form is submitted.
  * @param props.readOnly - Whether the form is read-only.
  * @param props.hideSaveButton - Whether to hide the save button.
@@ -54,13 +58,13 @@ type PipelineStageEditorProps = {
  */
 export default function PipelineStageEditor({
   initialStages = [],
+  editorItems,
   repositories,
   connections,
   onSubmit = (data) => console.log(data),
   readOnly = false,
   hideSaveButton = false,
 }: PipelineStageEditorProps) {
-  console.log(initialStages);
   const { dict } = useLocale();
 
   const { register, control, handleSubmit, watch, setValue } =
@@ -118,6 +122,7 @@ export default function PipelineStageEditor({
           const stageType = watch(`stages.${index}.type`);
           const selectedConnection = watch(`stages.${index}.connection`);
           const selectedRepository = watch(`stages.${index}.repository`);
+          const currentExecutable = watch(`stages.${index}.executable`);
 
           return (
             <div
@@ -257,14 +262,24 @@ export default function PipelineStageEditor({
                   <Label htmlFor={`executable-${index}`}>
                     {dict.workflow.pipeline.executablePath}
                   </Label>
-                  <Input
-                    id={`executable-${index}`}
-                    placeholder={
-                      dict.workflow.pipeline.executablePathDescription
-                    }
-                    {...register(`stages.${index}.executable`)}
-                    readOnly={readOnly}
-                  />
+                  {!readOnly && editorItems ? (
+                    <FileSelector
+                      editorItems={editorItems}
+                      currentSelectedFile={currentExecutable ?? null}
+                      onSelectFile={(filePath) =>
+                        setValue(`stages.${index}.executable`, filePath)
+                      }
+                    />
+                  ) : (
+                    <Input
+                      id={`executable-${index}`}
+                      placeholder={
+                        dict.workflow.pipeline.executablePathDescription
+                      }
+                      {...register(`stages.${index}.executable`)}
+                      readOnly={readOnly}
+                    />
+                  )}
                 </div>
               )}
 

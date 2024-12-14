@@ -3,6 +3,7 @@
 import { useWorkflowCreation } from '@/hooks/useCreateWorkflow';
 
 import { Connection } from '@/types/core/Connection';
+import { EditorItems } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
 import { WorkflowableType } from '@/types/core/Workflow';
 
@@ -13,6 +14,7 @@ import ConfigureWorkflowable from './ConfigureWorkflowable';
  * Workflow setup view
  *
  * @param props - Component properties
+ * @param props.editorItems - List of editor items
  * @param props.repositories - List of repositories
  * @param props.connections - List of connections
  * @param props.isOpen - If the modal is open
@@ -22,6 +24,7 @@ import ConfigureWorkflowable from './ConfigureWorkflowable';
  * @param props.setCurrentStep - Function to set the current step
  */
 const CreateWorkflowWrapper = ({
+  editorItems,
   repositories,
   connections,
   isOpen,
@@ -30,6 +33,7 @@ const CreateWorkflowWrapper = ({
   currentStep,
   setCurrentStep,
 }: {
+  editorItems: EditorItems;
   repositories: Repository[];
   connections: Connection[];
   isOpen: boolean;
@@ -48,6 +52,7 @@ const CreateWorkflowWrapper = ({
     <>
       {currentStep === 1 && (
         <ConfigureWorkflowable
+          editorItems={editorItems}
           repositories={repositories}
           connections={connections}
           workflowData={workflowData}

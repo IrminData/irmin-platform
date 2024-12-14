@@ -250,7 +250,7 @@ export default function RenameOrMoveItemModal({
               <Input {...field} type='text' disabled />
               <Button
                 size='icon'
-                variant='secondary'
+                variant='ghost'
                 className='h-11 rounded-full'
                 aria-label='Toggle the path selector'
                 onClick={() => setShowPathSelector(!showPathSelector)}

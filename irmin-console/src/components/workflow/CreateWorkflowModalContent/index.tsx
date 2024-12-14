@@ -1,4 +1,5 @@
 import { Connection } from '@/types/core/Connection';
+import { EditorItems } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
 import { WorkflowableType } from '@/types/core/Workflow';
 
@@ -17,6 +18,7 @@ import CreateWorkflowWrapper from './CreateWorkflowWrapper';
  * @param props.setCurrentStep - Function to set the current step
  */
 const CreateWorkflowModalContent = ({
+  editorItems,
   connections,
   repositories,
   isOpen,
@@ -25,6 +27,7 @@ const CreateWorkflowModalContent = ({
   currentStep,
   setCurrentStep,
 }: {
+  editorItems: EditorItems;
   connections: Connection[];
   repositories: Repository[];
   isOpen: boolean;
@@ -35,6 +38,7 @@ const CreateWorkflowModalContent = ({
 }) => {
   return (
     <CreateWorkflowWrapper
+      editorItems={editorItems}
       repositories={repositories}
       connections={connections}
       isOpen={isOpen}

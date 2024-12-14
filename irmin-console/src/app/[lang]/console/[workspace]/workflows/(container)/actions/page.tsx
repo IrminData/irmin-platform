@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { getConnections } from '@/lib/actions/connections';
+import { getEditorItems } from '@/lib/actions/editor-items';
 import { getRepositories } from '@/lib/actions/repositories';
 import { getActionWorkflows } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
@@ -20,14 +21,19 @@ import ActionWorkflowsSection from '@/components/workflow/ActionWorkflowsSection
  */
 export default async function ActionWorkflowsPage() {
   const token = await getToken();
-  const [workflows, connections, repositories] = await Promise.all([
-    getActionWorkflows(token),
-    getConnections(token),
-    getRepositories(token),
-  ]);
-  if (!workflows || !connections || !repositories) return notFound();
+  const [editorItems, workflows, connections, repositories] = await Promise.all(
+    [
+      getEditorItems(token),
+      getActionWorkflows(token),
+      getConnections(token),
+      getRepositories(token),
+    ]
+  );
+  if (!workflows || !connections || !repositories || !editorItems)
+    return notFound();
   return (
     <ActionWorkflowsSection
+      editorItems={editorItems}
       workflows={workflows}
       connections={connections}
       repositories={repositories}

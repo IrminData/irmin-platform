@@ -160,7 +160,7 @@ const PathSelector = ({
   return (
     <div
       id='path-selector'
-      className='relative mb-2 max-h-36 overflow-y-scroll border-b pb-4 dark:border-b-gray-800'
+      className='relative mb-2 max-h-48 overflow-y-scroll border-b pb-4 dark:border-b-gray-800'
     >
       <div className='my-1'>
         <button
