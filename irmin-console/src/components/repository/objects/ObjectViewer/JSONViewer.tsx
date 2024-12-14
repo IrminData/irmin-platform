@@ -1,22 +1,28 @@
 'use client';
 
-import ReactJsonView from '@microlink/react-json-view';
+import { useMemo } from 'react';
+
+import dynamic from 'next/dynamic';
+
 import { useTheme } from 'next-themes';
 
 import { JSONValue } from '@/types/internal/GenericJSON';
 
-/**
- * JSONViewer component to display JSON data in a user-friendly format.
- *
- * @param props - Props for the JSONViewer component
- * @param props.data - The JSON data to display
- */
+const ReactJsonView = dynamic(() => import('@microlink/react-json-view'), {
+  ssr: false,
+});
+
 const JSONViewer = ({ data, name }: { data: JSONValue; name?: string }) => {
   const { resolvedTheme } = useTheme();
-  const jsonTheme = resolvedTheme === 'dark' ? 'google' : 'rjv-default';
-  if (typeof data !== 'object') {
-    return <></>;
+  const jsonTheme = useMemo(
+    () => (resolvedTheme === 'dark' ? 'google' : 'rjv-default'),
+    [resolvedTheme]
+  );
+
+  if (!data || typeof data !== 'object') {
+    return null;
   }
+
   return (
     <ReactJsonView
       src={data as object}

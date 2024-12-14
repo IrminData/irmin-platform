@@ -72,7 +72,7 @@ const CodeMirrorEditor = ({
       style={{
         maxHeight: editorHeight,
       }}
-      className='relative h-full w-full overflow-scroll bg-background'
+      className='relative h-full w-full overflow-scroll bg-white dark:bg-gray-950'
     >
       <CodeMirror
         value={content}

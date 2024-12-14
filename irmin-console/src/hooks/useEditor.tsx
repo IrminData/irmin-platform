@@ -84,10 +84,13 @@ export const useEditor = (editorItems: EditorItems) => {
       created: false,
     };
 
-    setOpenTabs((prev) => [...prev, newTab]);
-    setActiveTabIndex(openTabs.length);
+    setOpenTabs((prev) => {
+      const updated = [...prev, newTab];
+      setActiveTabIndex(updated.length - 1);
+      return updated;
+    });
     setUntitledCounter((prev) => prev + 1);
-  }, [openTabs.length, untitledCounter]);
+  }, [untitledCounter]);
 
   /**
    * Opens a file in a new tab.
@@ -100,9 +103,7 @@ export const useEditor = (editorItems: EditorItems) => {
       );
 
       if (existingTabIndex === -1) {
-        const currentAsFile = file.current
-          ? (file.current as EditorItemsFile)
-          : null;
+        const currentAsFile = file.current as EditorItemsFile | null;
         const fileContents = currentAsFile?.contents ?? '';
         const language =
           currentAsFile?.type ?? getLanguageFromFilename(filePath);
@@ -115,8 +116,11 @@ export const useEditor = (editorItems: EditorItems) => {
           language,
           created: true,
         };
-        setOpenTabs((prev) => [...prev, newTab]);
-        setActiveTabIndex(openTabs.length);
+        setOpenTabs((prev) => {
+          const updated = [...prev, newTab];
+          setActiveTabIndex(updated.length - 1);
+          return updated;
+        });
       } else {
         setActiveTabIndex(existingTabIndex);
       }
@@ -191,7 +195,15 @@ export const useEditor = (editorItems: EditorItems) => {
 
     if (currentEditor.created) {
       const file = getFileByPath(currentEditor.path, currentEditorItems);
-      if (!file) return;
+
+      if (!file) {
+        // Provide feedback if no file is found
+        irminAlert(
+          'error',
+          'Could not find the file to save. Please try again.'
+        );
+        return;
+      }
 
       const updatedFile = { ...file, contents: currentEditor.contents };
       const res = await updateEditorItem({
@@ -199,6 +211,15 @@ export const useEditor = (editorItems: EditorItems) => {
         current: updatedFile,
         type: 'file',
       });
+
+      if (!res || res.errors) {
+        // Handle update error
+        irminAlert(
+          'error',
+          res?.message ?? 'File could not be saved. Please try again.'
+        );
+        return;
+      }
 
       setCurrentEditorItems((prev) => ({
         ...prev,
@@ -215,6 +236,7 @@ export const useEditor = (editorItems: EditorItems) => {
 
       irminAlert('success', res.message ?? 'File saved successfully');
     } else {
+      // Unsaved file: show the "save as" modal
       irminModal.show(
         dict.fileNavigator.saveFile,
         <SaveEditorAsFileModal
@@ -244,9 +266,18 @@ export const useEditor = (editorItems: EditorItems) => {
       if (!currentEditor) return;
 
       setOpenTabs((prev) =>
-        prev.map((tab) =>
-          tab.id === currentEditor.id ? { ...tab, language } : tab
-        )
+        prev.map((tab) => {
+          if (tab.id !== currentEditor.id) return tab;
+
+          // If the file is not created (unsaved), replace its extension
+          if (!tab.created) {
+            const newPath = tab.path.replace(/\.\w+$/, `.${language}`);
+            return { ...tab, language, path: newPath };
+          }
+
+          // If the file is already created, just update the language and do NOT rename the path
+          return { ...tab, language };
+        })
       );
     },
     [currentEditor]
