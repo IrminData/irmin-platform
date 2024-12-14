@@ -529,6 +529,7 @@ const fi = {
   editor: {
     writeYourSQL: 'Kirjoita SQL-kyselysi tähän...',
     writeYourJS: 'Kirjoita JavaScript-koodisi tähän...',
+    writeYourGo: 'Kirjoita Go-koodisi tähän...',
     newScriptTitle: 'Luo uusi skripti',
     newScriptSubtitle:
       'Kirjoita skripti valitsemallasi kielellä ja tallenna se toimintoprosessiksi',

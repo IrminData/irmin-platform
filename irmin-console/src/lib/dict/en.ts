@@ -524,6 +524,7 @@ const en = {
   editor: {
     writeYourSQL: 'Write your SQL query here...',
     writeYourJS: 'Write your JavaScript script here...',
+    writeYourGo: 'Write your Go script here...',
     newScriptTitle: 'Create a new script',
     newScriptSubtitle:
       'Start writing your script in your preferred language and save it as a workflow',

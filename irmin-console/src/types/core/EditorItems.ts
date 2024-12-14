@@ -37,6 +37,10 @@ export const irminFileTypes = [
     extension: 'js',
   },
   {
+    name: 'Go-lang',
+    extension: 'go',
+  },
+  {
     name: 'SQL',
     extension: 'sql',
   },

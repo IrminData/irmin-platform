@@ -2,6 +2,7 @@
 
 import { memo, useMemo } from 'react';
 
+import { go } from '@codemirror/lang-go';
 import { javascript } from '@codemirror/lang-javascript';
 import { markdown } from '@codemirror/lang-markdown';
 import { PostgreSQL, sql } from '@codemirror/lang-sql';
@@ -43,13 +44,20 @@ const CodeMirrorEditor = ({
 
   const placeholder = useMemo(
     () =>
-      language === 'js' ? dict.editor.writeYourJS : dict.editor.writeYourSQL,
+      language === 'js'
+        ? dict.editor.writeYourJS
+        : language === 'go'
+          ? dict.editor.writeYourGo
+          : dict.editor.writeYourSQL,
     [language, dict]
   );
 
   const extensions = useMemo(() => {
     if (language === 'js') {
       return [editorTheme, javascript({ jsx: false, typescript: false })];
+    }
+    if (language === 'go') {
+      return [editorTheme, go()];
     }
     if (language === 'md') {
       return [editorTheme, markdown()];

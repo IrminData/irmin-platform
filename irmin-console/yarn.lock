@@ -439,7 +439,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/lang-go@npm:^6.0.0":
+"@codemirror/lang-go@npm:^6.0.0, @codemirror/lang-go@npm:^6.0.1":
   version: 6.0.1
   resolution: "@codemirror/lang-go@npm:6.0.1"
   dependencies:
@@ -7538,6 +7538,7 @@ __metadata:
     "@clerk/nextjs": "npm:^6.9.2"
     "@clerk/themes": "npm:^2.2.2"
     "@clerk/types": "npm:^4.39.4"
+    "@codemirror/lang-go": "npm:^6.0.1"
     "@codemirror/lang-javascript": "npm:^6.2.2"
     "@codemirror/lang-markdown": "npm:^6.3.1"
     "@codemirror/lang-sql": "npm:^6.8.0"
