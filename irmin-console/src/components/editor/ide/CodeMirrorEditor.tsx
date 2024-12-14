@@ -9,6 +9,7 @@ import {
   vscodeDark,
   vscodeDarkInit,
   vscodeLight,
+  vscodeLightInit,
 } from '@uiw/codemirror-theme-vscode';
 import CodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
 import { useTheme } from 'next-themes';
@@ -35,6 +36,11 @@ const CodeMirrorEditor = ({
     [resolvedTheme]
   );
 
+  const initialisedEditorTheme = useMemo(
+    () => (resolvedTheme === 'dark' ? vscodeDarkInit() : vscodeLightInit()),
+    [resolvedTheme]
+  );
+
   const placeholder = useMemo(
     () =>
       language === 'js' ? dict.editor.writeYourJS : dict.editor.writeYourSQL,
@@ -58,7 +64,7 @@ const CodeMirrorEditor = ({
       style={{
         maxHeight: editorHeight,
       }}
-      className='relative h-full w-full overflow-scroll'
+      className='relative h-full w-full overflow-scroll bg-background'
     >
       <CodeMirror
         value={content}
@@ -66,7 +72,7 @@ const CodeMirrorEditor = ({
         extensions={extensions}
         placeholder={placeholder}
         onChange={(value) => updateEditorContent(value)}
-        theme={vscodeDarkInit()}
+        theme={initialisedEditorTheme}
         {...editorProps}
       />
     </div>
