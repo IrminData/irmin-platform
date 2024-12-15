@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import {
   createEditorItem,
@@ -34,6 +36,9 @@ import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
  */
 export const useEditor = (editorItems: EditorItems) => {
   const { dict } = useLocale();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const { irminModal, irminAlert, irminConfirm } = usePopup();
 
   // State for editor items
@@ -62,7 +67,7 @@ export const useEditor = (editorItems: EditorItems) => {
     }[]
   >([]);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
-  const [editorHeight, setEditorHeight] = useState('500px');
+  const [editorHeight, setEditorHeight] = useState('600px');
   const [untitledCounter, setUntitledCounter] = useState(1);
 
   // Get the current editor based on active tab
@@ -129,6 +134,24 @@ export const useEditor = (editorItems: EditorItems) => {
   );
 
   /**
+   * Hook to set initial open tabs using searchParams.
+   */
+  const setInitialOpenTabs = useRef(false);
+  useEffect(() => {
+    if (setInitialOpenTabs.current) return;
+    const paths = searchParams.getAll('path');
+    for (let i = 0; i < paths.length; i++) {
+      const path = paths[i];
+      if (!path) continue;
+      if (openTabs.some((tab) => tab.path === path)) continue;
+      const editorItem = getFileByPath(path, currentEditorItems);
+      if (!editorItem) continue;
+      openFile({ type: 'file', current: editorItem, original: editorItem });
+    }
+    setInitialOpenTabs.current = true;
+  }, [searchParams, currentEditorItems, openTabs, openFile]);
+
+  /**
    * Closes a tab.
    */
   const closeTab = useCallback(
@@ -141,9 +164,14 @@ export const useEditor = (editorItems: EditorItems) => {
         if (activeTabIndex >= tabIndex) {
           setActiveTabIndex((prevIndex) => Math.max(prevIndex - 1, 0));
         }
+
+        // Update the URL by removing the path from searchParams
+        const newSearchParams = new URLSearchParams(searchParams.toString());
+        newSearchParams.delete('path', tabPath);
+        router.push(`${pathname}?${newSearchParams.toString()}`);
       }
     },
-    [activeTabIndex, openTabs]
+    [activeTabIndex, searchParams, openTabs, router, pathname]
   );
 
   /**

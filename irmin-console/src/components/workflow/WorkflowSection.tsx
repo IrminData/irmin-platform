@@ -37,6 +37,7 @@ const WorkflowSection = () => {
     includeSegment: true,
     segmentsAfter: 1,
   });
+
   const runRows: GridRow[] = useMemo(
     () =>
       runs.map((run, i) => ({
@@ -120,7 +121,13 @@ const WorkflowSection = () => {
               <p className='text-sm opacity-60'>
                 {dict.workflow.executableScriptFile}
               </p>
-              <p className='text-base'>{workflow.workflowable.executable}</p>
+              <Link
+                href={`${workspaceUrl}/editor?path=${workflow.workflowable.executable}`}
+                target='_blank'
+                className='transition-all hover:underline hover:opacity-40'
+              >
+                <p className='text-base'>{workflow.workflowable.executable}</p>
+              </Link>
             </div>
           )}
           {workflow.type === 'action' && (

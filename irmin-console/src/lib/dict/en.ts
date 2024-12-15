@@ -430,6 +430,7 @@ const en = {
     scheduled: 'Scheduled',
     notScheduled: 'Not scheduled',
     owner: 'Owner',
+    openInEditor: 'Open in editor',
     executableScriptFile: 'Executable script file',
     scriptResultDestinationRepository: 'Result to repository',
     scriptResultDestinationBranch: 'Result to branch',

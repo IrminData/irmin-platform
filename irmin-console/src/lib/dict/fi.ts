@@ -435,6 +435,7 @@ const fi = {
     scheduled: 'Aikataulutettu',
     notScheduled: 'Ei aikataulutettu',
     owner: 'Omistaja',
+    openInEditor: 'Avaa muokkaajassa',
     executableScriptFile: 'Suoritettava skriptitiedosto',
     scriptResultDestinationRepository: 'Tuloksen tietovarasto',
     scriptResultDestinationBranch: 'Tuloksen haara',

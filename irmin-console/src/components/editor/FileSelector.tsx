@@ -10,7 +10,11 @@ import {
   FiFolder,
 } from 'react-icons/fi';
 
+import { ButtonWithTooltip } from '@/components/ui/button';
+
 import { useLocale } from '@/context/LocaleContext';
+
+import useBaseUrl from '@/hooks/useBaseUrl';
 
 import { transformEditorItemsToFileNavItem } from '@/utils/editorItems';
 
@@ -168,11 +172,30 @@ const FileSelector = ({
     [selectedFile, openFolders, handleItemClick]
   );
 
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'console',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
+
   return (
     <div
       id='file-selector'
       className='relative mb-2 max-h-48 overflow-y-scroll border-b pb-4 dark:border-b-gray-800'
     >
+      {currentSelectedFile && currentSelectedFile.length > 0 && (
+        <ButtonWithTooltip
+          href={`${workspaceUrl}/editor?path=${currentSelectedFile}`}
+          target='_blank'
+          variant='gray'
+          tooltip={currentSelectedFile}
+          className='w-full'
+        >
+          {dict.workflow.openInEditor}
+        </ButtonWithTooltip>
+      )}
       <div className='my-1'>
         {/* Root directory display - optional if you want a root entry */}
         <div className='flex items-center justify-normal rounded-md p-1 text-sm'>
