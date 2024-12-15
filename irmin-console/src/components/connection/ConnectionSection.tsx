@@ -11,31 +11,29 @@ import WorkflowList from '@/components/workflow/WorkflowList';
 import { useConnection } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { ExportWorkflow, ImportWorkflow } from '@/types/core/Workflow';
+import { Workflow } from '@/types/core/Workflow';
 
 /**
  * Connection Settings section component
  */
-const ConnectionSection = ({
-  importWorkflows,
-  exportWorkflows,
-}: {
-  importWorkflows: ImportWorkflow[];
-  exportWorkflows: ExportWorkflow[];
-}) => {
+const ConnectionSection = ({ workflows }: { workflows: Workflow[] }) => {
   const { dict } = useLocale();
   const { connection } = useConnection();
 
   const relatedWorkflows = useMemo(() => {
-    return [
-      ...importWorkflows.filter(
-        (item) => item.workflowable.connection.id === connection.id
-      ),
-      ...exportWorkflows.filter(
-        (item) => item.workflowable.connection.id === connection.id
-      ),
-    ];
-  }, [importWorkflows, exportWorkflows, connection.id]);
+    return workflows.filter((item) => {
+      if (item.type === 'import' || item.type === 'export') {
+        return item.workflowable.connection.id === connection.id;
+      }
+      if (item.type === 'pipeline') {
+        return item.workflowable.stages.some((stage) => {
+          return (
+            stage.type === 'connection' && stage.connection.id === connection.id
+          );
+        });
+      }
+    });
+  }, [workflows, workflows, connection.id]);
 
   const { details, settings } = useMemo(() => {
     let parsedDetails = {};
