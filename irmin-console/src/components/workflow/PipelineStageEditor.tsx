@@ -18,6 +18,8 @@ import { Switch } from '@/components/ui/switch';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import useBaseUrl from '@/hooks/useBaseUrl';
+
 import { Connection } from '@/types/core/Connection';
 import { EditorItems } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
@@ -110,6 +112,14 @@ export default function PipelineStageEditor({
     });
   };
 
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'console',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
       <div className='space-y-4'>
@@ -164,7 +174,7 @@ export default function PipelineStageEditor({
                 )}
               </div>
 
-              <div className='flex flex-col space-y-2'>
+              <div className='flex flex-col gap-2'>
                 <Label htmlFor={`description-${index}`}>
                   {dict.misc.description}
                 </Label>
@@ -207,7 +217,7 @@ export default function PipelineStageEditor({
               </div>
 
               {/* Replaced RadioGroup with ReactSelect for stage type */}
-              <div className='flex flex-col space-y-2'>
+              <div className='flex flex-col gap-2'>
                 <Label htmlFor={`type-select-${index}`}>
                   {dict.repository.objects.type}
                 </Label>
@@ -258,7 +268,7 @@ export default function PipelineStageEditor({
 
               {/* Conditional fields based on type */}
               {stageType === 'action' && (
-                <div className='flex flex-col space-y-2'>
+                <div className='flex flex-col gap-2'>
                   <Label htmlFor={`executable-${index}`}>
                     {dict.workflow.pipeline.executablePath}
                   </Label>
@@ -285,7 +295,7 @@ export default function PipelineStageEditor({
 
               {stageType === 'connection' && (
                 <>
-                  <div className='flex flex-col space-y-2'>
+                  <div className='flex flex-col gap-2'>
                     <Label htmlFor={`connection-select-${index}`}>
                       {dict.connections.connection}
                     </Label>
@@ -330,8 +340,33 @@ export default function PipelineStageEditor({
                         />
                       )}
                     />
+                    {selectedConnection && (
+                      <Button
+                        href={`${workspaceUrl}/connections/${selectedConnection}`}
+                        target='_blank'
+                        variant='secondary'
+                        className='w-full'
+                        size={'sm'}
+                      >
+                        {dict.list.view}
+                      </Button>
+                    )}
+                    {!readOnly && (
+                      <Button
+                        href={`${workspaceUrl}/connections/create`}
+                        target='_blank'
+                        variant='gray'
+                        className='w-full'
+                        size={'sm'}
+                      >
+                        {
+                          dict.consoleNavigation.staticSearchItems
+                            .createConnection
+                        }
+                      </Button>
+                    )}
                   </div>
-                  <div className='flex flex-col space-y-2'>
+                  <div className='flex flex-col gap-2'>
                     <Label htmlFor={`connection_write_path-${index}`}>
                       {dict.workflow.pipeline.connectionWritePath}
                     </Label>
@@ -344,7 +379,7 @@ export default function PipelineStageEditor({
                       readOnly={readOnly || !selectedConnection}
                     />
                   </div>
-                  <div className='flex flex-col space-y-2'>
+                  <div className='flex flex-col gap-2'>
                     <Label htmlFor={`connection_read_path-${index}`}>
                       {dict.workflow.pipeline.connectionReadPath}
                     </Label>
@@ -362,7 +397,7 @@ export default function PipelineStageEditor({
 
               {stageType === 'repository' && (
                 <>
-                  <div className='flex flex-col space-y-2'>
+                  <div className='flex flex-col gap-2'>
                     <Label htmlFor={`repository-select-${index}`}>
                       {dict.repository.repository}
                     </Label>
@@ -405,8 +440,33 @@ export default function PipelineStageEditor({
                         />
                       )}
                     />
+                    {selectedRepository && (
+                      <Button
+                        href={`${workspaceUrl}/repositories/${selectedRepository}`}
+                        target='_blank'
+                        variant='secondary'
+                        className='w-full'
+                        size={'sm'}
+                      >
+                        {dict.list.view}
+                      </Button>
+                    )}
+                    {!readOnly && (
+                      <Button
+                        href={`${workspaceUrl}/repositories/create`}
+                        target='_blank'
+                        variant='gray'
+                        className='w-full'
+                        size={'sm'}
+                      >
+                        {
+                          dict.consoleNavigation.staticSearchItems
+                            .createRepository
+                        }
+                      </Button>
+                    )}
                   </div>
-                  <div className='flex flex-col space-y-2'>
+                  <div className='flex flex-col gap-2'>
                     <Label htmlFor={`branch-${index}`}>
                       {dict.repository.branches.branch}
                     </Label>
@@ -416,7 +476,7 @@ export default function PipelineStageEditor({
                       readOnly={readOnly || !selectedRepository}
                     />
                   </div>
-                  <div className='flex flex-col space-y-2'>
+                  <div className='flex flex-col gap-2'>
                     <Label htmlFor={`path-${index}`}>
                       {dict.repository.objects.path}
                     </Label>

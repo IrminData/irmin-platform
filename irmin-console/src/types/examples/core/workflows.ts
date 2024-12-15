@@ -47,7 +47,7 @@ export const workflows = (): Workflow[] => {
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },
     {
-      id: 'export-workflow-2',
+      id: 'import-workflow-2',
       name: 'KPIs from Excel',
       owner: workspaceUsers()[0],
       description:
@@ -68,7 +68,7 @@ export const workflows = (): Workflow[] => {
       updated_at: getRandomDateTimeString(50, 'past', 10),
     },
     {
-      id: 'export-workflow-3',
+      id: 'import-workflow-3',
       name: 'Management data from Excel',
       owner: workspaceUsers()[3],
       description:
@@ -104,9 +104,7 @@ export const workflows = (): Workflow[] => {
       workflowable: {
         connection: connections().find((c) => c.name === 'Google Sheets KPIs')!,
         connection_path: '/',
-        repository: repositories().find(
-          (a) => a.slug === 'kpi-and-performance-metrics'
-        )!,
+        repository: repositories().find((a) => a.slug === 'kpis-from-excel')!,
         path: '/',
         recursive: false,
         branch: 'main',

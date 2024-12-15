@@ -18,7 +18,7 @@ export const formatDurationForUI = (duration: Duration) => {
   const nonZeroUnits = units.filter((unit) => unit?.value ?? 0 > 0);
   const formattedUnits = nonZeroUnits
     .slice(0, 2)
-    .map((unit) => `${unit.value}${unit.label}`);
+    .map((unit) => `${Math.abs(unit.value ?? 0)}${unit.label}`);
 
   return formattedUnits.join(' ');
 };

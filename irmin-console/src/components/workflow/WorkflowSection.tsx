@@ -135,9 +135,16 @@ const WorkflowSection = () => {
               <p className='text-sm opacity-60'>
                 {dict.workflow.scriptResultDestinationRepository}
               </p>
-              <p className='text-base'>
-                {workflow.workflowable.repository?.name ?? '-'}
-              </p>
+              {workflow.workflowable.repository && (
+                <Link
+                  className='transition-all duration-200 hover:underline'
+                  href={`${workspaceUrl}/repositories/${workflow.workflowable.repository.slug}?ref=${workflow.workflowable.branch}`}
+                >
+                  <p className='text-base'>
+                    {workflow.workflowable.repository.name}
+                  </p>
+                </Link>
+              )}
             </div>
           )}
           {workflow.type === 'action' && (
@@ -178,7 +185,7 @@ const WorkflowSection = () => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`${workspaceUrl}/repositories/${workflow.workflowable.repository.slug}`}
+                href={`${workspaceUrl}/repositories/${workflow.workflowable.repository.slug}?ref=${workflow.workflowable.branch}`}
               >
                 <p className='text-base'>
                   {workflow.workflowable.repository.name}
@@ -224,7 +231,7 @@ const WorkflowSection = () => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`${workspaceUrl}/repositories/${workflow.workflowable.repository.slug}`}
+                href={`${workspaceUrl}/repositories/${workflow.workflowable.repository.slug}?ref=${workflow.workflowable.branch}`}
               >
                 <p className='text-base'>
                   {workflow.workflowable.repository.name}

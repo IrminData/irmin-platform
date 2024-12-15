@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import useBaseUrl from '@/hooks/useBaseUrl';
 import { useConfigureWorkflowable } from '@/hooks/useCreateWorkflow';
 
 import { Connection } from '@/types/core/Connection';
@@ -50,6 +51,14 @@ export default function ConfigureWorkflowable({
     workflowData,
     setCurrentStep
   );
+
+  // The base URL for the workspace, eg. /en/console/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'console',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
   return (
     <div className='flex w-full flex-col px-4 pb-6'>
@@ -93,6 +102,26 @@ export default function ConfigureWorkflowable({
                 className='react-select-container w-full'
                 classNamePrefix='react-select'
               />
+              {workflowData.repository && (
+                <Button
+                  href={`${workspaceUrl}/repositories/${workflowData.repository.slug}?ref=${workflowData.branch}`}
+                  target='_blank'
+                  variant='secondary'
+                  className='w-full'
+                  size={'sm'}
+                >
+                  {dict.list.view}
+                </Button>
+              )}
+              <Button
+                href={`${workspaceUrl}/repositories/create`}
+                target='_blank'
+                variant='gray'
+                className='w-full'
+                size={'sm'}
+              >
+                {dict.consoleNavigation.staticSearchItems.createRepository}
+              </Button>
             </div>
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.scriptResultDestinationBranch}</Label>
@@ -149,6 +178,26 @@ export default function ConfigureWorkflowable({
                 className='react-select-container w-full'
                 classNamePrefix='react-select'
               />
+              {workflowData.connection && (
+                <Button
+                  href={`${workspaceUrl}/connections/${workflowData.connection}`}
+                  target='_blank'
+                  variant='secondary'
+                  className='w-full'
+                  size={'sm'}
+                >
+                  {dict.list.view}
+                </Button>
+              )}
+              <Button
+                href={`${workspaceUrl}/connections/create`}
+                target='_blank'
+                variant='gray'
+                className='w-full'
+                size={'sm'}
+              >
+                {dict.consoleNavigation.staticSearchItems.createConnection}
+              </Button>
             </div>
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.importDestinationRepository}</Label>
@@ -174,6 +223,26 @@ export default function ConfigureWorkflowable({
                 className='react-select-container w-full'
                 classNamePrefix='react-select'
               />
+              {workflowData.repository && (
+                <Button
+                  href={`${workspaceUrl}/repositories/${workflowData.repository.slug}?ref=${workflowData.branch}`}
+                  target='_blank'
+                  variant='secondary'
+                  className='w-full'
+                  size={'sm'}
+                >
+                  {dict.list.view}
+                </Button>
+              )}
+              <Button
+                href={`${workspaceUrl}/repositories/create`}
+                target='_blank'
+                variant='gray'
+                className='w-full'
+                size={'sm'}
+              >
+                {dict.consoleNavigation.staticSearchItems.createRepository}
+              </Button>
             </div>
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.importDestinationBranch}</Label>
@@ -255,6 +324,26 @@ export default function ConfigureWorkflowable({
                 className='react-select-container w-full'
                 classNamePrefix='react-select'
               />
+              {workflowData.repository && (
+                <Button
+                  href={`${workspaceUrl}/repositories/${workflowData.repository.slug}?ref=${workflowData.branch}`}
+                  target='_blank'
+                  variant='secondary'
+                  className='w-full'
+                  size={'sm'}
+                >
+                  {dict.list.view}
+                </Button>
+              )}
+              <Button
+                href={`${workspaceUrl}/repositories/create`}
+                target='_blank'
+                variant='gray'
+                className='w-full'
+                size={'sm'}
+              >
+                {dict.consoleNavigation.staticSearchItems.createRepository}
+              </Button>
             </div>
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.exportSourceBranch}</Label>
