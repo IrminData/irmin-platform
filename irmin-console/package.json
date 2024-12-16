@@ -41,7 +41,7 @@
     "@radix-ui/react-tooltip": "^1.1.5",
     "@sentry/nextjs": "^8.45.0",
     "@uiw/codemirror-theme-vscode": "^4.23.7",
-    "@uiw/react-codemirror": "^4.23.6",
+    "@uiw/react-codemirror": "^4.23.7",
     "@xyflow/react": "^12.3.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
