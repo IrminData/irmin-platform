@@ -1,8 +1,6 @@
 'use client';
 
-import Image from 'next/image';
-
-import { Badge } from '@/components/ui/badge';
+import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import Button from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
@@ -53,41 +51,7 @@ export default function DefineSettings({
           <p className='mb-2 text-sm opacity-80'>
             {dict.connections.create.selectedConnector}:
           </p>
-          <div className='flex w-full flex-row items-center gap-4'>
-            <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-card px-4 py-2 text-left text-sm text-card-foreground shadow'>
-              <Image
-                src={connectionData.connector.logo_url}
-                alt={connectionData.connector.name}
-                className='h-12 w-12 object-contain'
-                width={48}
-                height={48}
-              />
-              <div className='flex flex-col justify-start gap-1'>
-                {connectionData.connector.primary_category && (
-                  <Badge variant='secondary'>
-                    {connectionData.connector.primary_category}
-                  </Badge>
-                )}
-                <p>{connectionData.connector.name}</p>
-              </div>
-            </div>
-            <div className='flex max-w-64 flex-col gap-1'>
-              <p className='text-sm opacity-80'>
-                {connectionData.connector.description}
-              </p>
-              {connectionData.connector.read_more_url && (
-                <Button
-                  variant='link'
-                  target='_blank'
-                  className='h-max p-0'
-                  rel='noopener noreferrer'
-                  href={connectionData.connector.read_more_url}
-                >
-                  {dict.connections.create.learnMore}
-                </Button>
-              )}
-            </div>
-          </div>
+          <ConnectorInfoSmall connector={connectionData.connector} />
         </div>
       )}
 

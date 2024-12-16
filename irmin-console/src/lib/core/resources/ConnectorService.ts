@@ -74,7 +74,9 @@ class ConnectorService {
     connectorId: string
   ): Promise<IrminAPIResponse<Connector>> {
     if (isOfflineMode)
-      return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
+      return fake(
+        exampleConnectors.find((item) => item.id === connectorId)
+      ) as IrminAPIResponse<Connector>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/connectors/${connectorId}`,

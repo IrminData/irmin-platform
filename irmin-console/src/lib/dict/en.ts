@@ -350,6 +350,7 @@ const en = {
     },
     schema: {
       schema: 'Schema',
+      noSchema: 'No schema available',
       table: 'Table',
       column: 'Column',
       type: 'Type',
@@ -410,6 +411,16 @@ const en = {
       configuration_invalid: 'Connection configuration invalid',
       contactSupport: 'Contact support',
       requiredFieldsMissing: 'Error! Required fields are missing',
+    },
+    connector: {
+      version: 'Version',
+      structureVersion: 'Irmin Structure Version',
+      author: 'Author',
+      authorEmail: 'Author email',
+      categories: 'Categories',
+      capabilities: 'Capabilities',
+      locales: 'Locales',
+      readMore: 'Read more',
     },
   },
   workflow: {

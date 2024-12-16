@@ -2,6 +2,8 @@
 
 import SchemaViewer from '@/components/repository/objects/SchemaViewer';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { ObjectSchema } from '@/types/core/ObjectSchema';
 
 /**
@@ -15,13 +17,12 @@ const ConnectionSchemaSection = ({
 }: {
   pullSchema?: ObjectSchema;
 }) => {
+  const { dict } = useLocale();
   if (!pullSchema) {
     return (
       <div className='container relative mx-auto max-w-6xl px-4'>
-        <div className='max-h-96 w-full overflow-y-scroll rounded bg-background'>
-          <div className='flex h-full items-center justify-center'>
-            <p className='text-lg text-gray-500'>No schema available</p>
-          </div>
+        <div className='flex h-full items-center justify-center py-4'>
+          <p className='text-2xl'>{dict.repository.schema.noSchema}</p>
         </div>
       </div>
     );

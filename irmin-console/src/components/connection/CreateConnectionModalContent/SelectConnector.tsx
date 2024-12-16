@@ -1,11 +1,11 @@
 'use client';
 
-import Image from 'next/image';
-
 import { Controller, useForm } from 'react-hook-form';
 
 import { TbHelp } from 'react-icons/tb';
 
+import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/button';
 
@@ -84,41 +84,7 @@ export default function SelectConnector({
                 <p className='mb-2 text-sm opacity-80'>
                   {dict.connections.create.selectedConnector}:
                 </p>
-                <div className='flex w-full flex-row items-center gap-4'>
-                  <div className='flex w-max flex-row items-center justify-start gap-4 rounded-lg bg-card px-4 py-2 text-left text-sm text-card-foreground shadow'>
-                    <Image
-                      src={field.value.logo_url}
-                      alt={field.value.name}
-                      className='h-12 w-12 object-contain'
-                      width={48}
-                      height={48}
-                    />
-                    <div className='flex flex-col justify-start gap-1'>
-                      {field.value.primary_category && (
-                        <Badge variant='secondary'>
-                          {field.value.primary_category}
-                        </Badge>
-                      )}
-                      <p>{field.value.name}</p>
-                    </div>
-                  </div>
-                  <div className='flex max-w-64 flex-col gap-1'>
-                    <p className='text-sm opacity-80'>
-                      {field.value.description}
-                    </p>
-                    {field.value.read_more_url && (
-                      <Button
-                        variant='link'
-                        target='_blank'
-                        className='h-max p-0'
-                        rel='noopener noreferrer'
-                        href={field.value.read_more_url}
-                      >
-                        {dict.connections.create.learnMore}
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                <ConnectorInfoSmall connector={field.value} />
               </div>
             )}
             {/* Category Filter */}
@@ -146,13 +112,15 @@ export default function SelectConnector({
                   key={`connector-${index}`}
                   onClick={() => handleConnectorClick(connector)}
                 >
-                  <Image
-                    src={connector.logo_url}
-                    alt={connector.name}
-                    className='h-12 w-12 object-contain'
-                    width={48}
-                    height={48}
-                  />
+                  <Avatar className='h-12 w-12'>
+                    <AvatarImage
+                      src={connector.logo_url}
+                      alt={connector.name}
+                    />
+                    <AvatarFallback>
+                      {connector.name.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className='flex flex-col justify-start gap-1'>
                     {connector.primary_category && (
                       <Badge variant='secondary'>

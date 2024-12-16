@@ -12,7 +12,7 @@ import {
  */
 export const connectors: () => Connector[] = () => [
   {
-    id: '0',
+    id: 'connector-0',
     name: 'PostgreSQL',
     description: 'Sync data to and from PostgreSQL databases',
     version: '1.0.0',
@@ -33,7 +33,7 @@ export const connectors: () => Connector[] = () => [
     read_more_url: 'https://postgresql.org',
   },
   {
-    id: '1',
+    id: 'connector-1',
     name: 'MySQL',
     description: 'Sync data to and from MySQL databases',
     version: '1.0.0',
@@ -54,7 +54,7 @@ export const connectors: () => Connector[] = () => [
     read_more_url: 'https://mysql.org',
   },
   {
-    id: '2',
+    id: 'connector-2',
     name: 'MongoDB',
     description: 'Sync data to and from MongoDB databases',
     version: '1.0.0',
@@ -74,7 +74,7 @@ export const connectors: () => Connector[] = () => [
     read_more_url: 'https://mongodb.org',
   },
   {
-    id: '3',
+    id: 'connector-3',
     name: 'Google Sheets',
     description: 'Sync data to and from Google Sheets',
     version: '1.0.0',
@@ -94,7 +94,7 @@ export const connectors: () => Connector[] = () => [
     read_more_url: 'https://sheets.google.com',
   },
   {
-    id: '4',
+    id: 'connector-4',
     name: 'Google Analytics',
     description: 'Sync data from Google Analytics',
     version: '1.0.0',
@@ -111,7 +111,7 @@ export const connectors: () => Connector[] = () => [
     read_more_url: 'https://analytics.google.com',
   },
   {
-    id: '5',
+    id: 'connector-5',
     name: 'Excel',
     description: 'Upload a local Excel file to Irmin',
     version: '1.0.0',
@@ -128,7 +128,7 @@ export const connectors: () => Connector[] = () => [
     read_more_url: 'https://microsoft.com/excel',
   },
   {
-    id: '6',
+    id: 'connector-6',
     name: 'Pipedrive',
     description: 'Sync data to and from Pipedrive CRM',
     version: '1.0.0',
@@ -149,7 +149,7 @@ export const connectors: () => Connector[] = () => [
     read_more_url: 'https://pipedrive.com',
   },
   {
-    id: '7',
+    id: 'connector-7',
     name: 'HubSpot',
     description: 'Sync data to and from HubSpot CRM',
     version: '1.0.0',
@@ -170,7 +170,7 @@ export const connectors: () => Connector[] = () => [
     read_more_url: 'https://hubspot.com',
   },
   {
-    id: '8',
+    id: 'connector-8',
     name: 'Microsoft Dynamics',
     description: 'Sync data to and from Microsoft Dynamics CRM',
     version: '1.0.0',
@@ -190,7 +190,7 @@ export const connectors: () => Connector[] = () => [
     read_more_url: 'https://microsoft.com/dynamics',
   },
   {
-    id: '9',
+    id: 'connector-9',
     name: 'Salesforce',
     description: 'Sync data to and from Salesforce CRM',
     version: '1.0.0',
@@ -210,7 +210,7 @@ export const connectors: () => Connector[] = () => [
     read_more_url: 'https://salesforce.com',
   },
   {
-    id: '10',
+    id: 'connector-10',
     name: 'Shopify',
     description: 'Sync data to and from Shopify',
     version: '1.0.0',
@@ -230,7 +230,7 @@ export const connectors: () => Connector[] = () => [
     read_more_url: 'https://shopify.com',
   },
   {
-    id: '11',
+    id: 'connector-11',
     name: 'Stripe',
     description: 'Sync data to and from Stripe',
     version: '1.0.0',
@@ -250,7 +250,7 @@ export const connectors: () => Connector[] = () => [
     read_more_url: 'https://stripe.com',
   },
   {
-    id: '12',
+    id: 'connector-12',
     name: 'Mailchimp',
     description: 'Sync data to and from Mailchimp',
     version: '1.0.0',
@@ -270,7 +270,7 @@ export const connectors: () => Connector[] = () => [
     read_more_url: 'https://mailchimp.com',
   },
   {
-    id: '13',
+    id: 'connector-13',
     name: 'SendGrid',
     description: 'Sync data to and from SendGrid',
     version: '1.0.0',

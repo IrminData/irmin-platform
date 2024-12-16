@@ -355,6 +355,7 @@ const fi = {
     },
     schema: {
       schema: 'Rakenne',
+      noSchema: 'Ei rakennetta saatavilla',
       table: 'Taulu',
       column: 'Kolumni',
       type: 'Tyyppi',
@@ -415,6 +416,16 @@ const fi = {
       configuration_invalid: 'Yhteyden konfiguraatio on virheellinen',
       contactSupport: 'Ota yhteyttä tukeen',
       requiredFieldsMissing: 'Virhe! Pakollisia kenttiä puuttuu',
+    },
+    connector: {
+      version: 'Version',
+      structureVersion: 'Irmin Struktuurin Versio',
+      author: 'Tekijä',
+      authorEmail: 'Tekijän sähköposti',
+      categories: 'Kategoriat',
+      capabilities: 'Toiminallisuudet',
+      locales: 'Kielet',
+      readMore: 'Lue lisää',
     },
   },
   workflow: {
