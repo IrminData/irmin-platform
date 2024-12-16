@@ -5032,12 +5032,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-plugin-react-compiler@npm:19.0.0-beta-37ed2a7-20241206":
-  version: 19.0.0-beta-37ed2a7-20241206
-  resolution: "babel-plugin-react-compiler@npm:19.0.0-beta-37ed2a7-20241206"
+"babel-plugin-react-compiler@npm:19.0.0-beta-201e55d-20241215":
+  version: 19.0.0-beta-201e55d-20241215
+  resolution: "babel-plugin-react-compiler@npm:19.0.0-beta-201e55d-20241215"
   dependencies:
     "@babel/types": "npm:^7.19.0"
-  checksum: 10c0/0b4b5ecf8bbd0805cf9f5d54c20e7fd6e269be0c1623aa2efde2b8d12ba2c5cadfc77e757c79526f738acbd28341d1db015b8943b7b7de4e2f27f072bf1792ee
+  checksum: 10c0/bf9894c7e58d4df1f0e646d57cd81a99168b9e3b02ebfcdd918b2933ec8a08d53b9f0f1a6873f6d6adbf03f8119a15b8e808bb6040783328e37c175529cd2ffa
   languageName: node
   linkType: hard
 
@@ -7571,7 +7571,7 @@ __metadata:
     "@uiw/react-codemirror": "npm:^4.23.7"
     "@xyflow/react": "npm:^12.3.6"
     autoprefixer: "npm:^10.4.20"
-    babel-plugin-react-compiler: "npm:19.0.0-beta-37ed2a7-20241206"
+    babel-plugin-react-compiler: "npm:19.0.0-beta-201e55d-20241215"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     date-fns: "npm:^4.1.0"
