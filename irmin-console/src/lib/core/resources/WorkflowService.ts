@@ -84,10 +84,10 @@ class WorkflowService {
    * @returns The workflow object
    */
   async fetchWorkflow(workflowID: string): Promise<IrminAPIResponse<Workflow>> {
-    const exampleWorkflow =
-      exampleWorkflows.find((w) => w.id === workflowID) ?? exampleWorkflows[0];
     if (isOfflineMode)
-      return fake(exampleWorkflow) as IrminAPIResponse<Workflow>;
+      return fake(
+        exampleWorkflows.find((w) => w.id === workflowID)
+      ) as IrminAPIResponse<Workflow>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workflows/${workflowID}`,
@@ -99,7 +99,7 @@ class WorkflowService {
     } catch (error) {
       console.error((error as Error).message, 'Fetch workflows error');
       if (isDevelopment)
-        return fake(exampleWorkflow) as IrminAPIResponse<Workflow>;
+        return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
       throw error;
     }
   }

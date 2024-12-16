@@ -59,7 +59,9 @@ class ConnectionService {
     connection: string
   ): Promise<IrminAPIResponse<Connection>> {
     if (isOfflineMode)
-      return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
+      return fake(
+        exampleConnections.find((item) => item.id === connection)
+      ) as IrminAPIResponse<Connection>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/connections/${connection}`,
@@ -87,7 +89,9 @@ class ConnectionService {
     data: ItemUpdateProps
   ): Promise<IrminAPIResponse<Connection>> {
     if (isOfflineMode)
-      return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
+      return fake(
+        exampleConnections.find((item) => item.id === connection)
+      ) as IrminAPIResponse<Connection>;
     try {
       const formData = new FormData();
       formData.append('_method', 'PATCH');
@@ -125,7 +129,9 @@ class ConnectionService {
     newOwner: string
   ): Promise<IrminAPIResponse<Connection>> {
     if (isOfflineMode)
-      return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
+      return fake(
+        exampleConnections.find((item) => item.id === connection)
+      ) as IrminAPIResponse<Connection>;
     try {
       const formData = new FormData();
       formData.append('owner', newOwner);

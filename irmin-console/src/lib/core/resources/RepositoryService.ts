@@ -55,7 +55,9 @@ class RepositoryService {
    */
   async fetchRepository(slug: string): Promise<IrminAPIResponse<Repository>> {
     if (isOfflineMode)
-      return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
+      return fake(
+        exampleRepositories.find((item) => item.slug === slug)
+      ) as IrminAPIResponse<Repository>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/repositories/${slug}`,

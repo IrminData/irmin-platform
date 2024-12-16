@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 
 import { GoWorkflow } from 'react-icons/go';
-import { TbFileText, TbLogs, TbSettings } from 'react-icons/tb';
+import { TbFileText, TbLogs, TbSchema, TbSettings } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -53,6 +53,13 @@ export default function ConnectionLayoutWrapper({
         link: `${baseUrl}`,
         active: pathname === `${baseUrl}`,
         icon: <GoWorkflow size={14} />,
+        hidden: false,
+      },
+      {
+        name: dict.repository.schema.schema,
+        link: `${baseUrl}/schema`,
+        active: pathname === `${baseUrl}/schema`,
+        icon: <TbSchema size={14} />,
         hidden: false,
       },
       {

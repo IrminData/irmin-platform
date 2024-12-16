@@ -12,7 +12,7 @@ import { workspaceUsers } from './users';
  */
 export const connections = (): Connection[] => [
   {
-    id: '0',
+    id: 'connection-0',
     name: 'Main Google Analytics',
     owner: workspaceUsers()[0],
     description: 'This an example Connection to Google Analytics.',
@@ -27,7 +27,7 @@ export const connections = (): Connection[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: '1',
+    id: 'connection-1',
     name: 'KPIs spreadsheet',
     owner: workspaceUsers()[0],
     description:
@@ -41,7 +41,7 @@ export const connections = (): Connection[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: '2',
+    id: 'connection-2',
     name: 'HR spreadsheet',
     owner: workspaceUsers()[0],
     description:
@@ -55,7 +55,7 @@ export const connections = (): Connection[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: '3',
+    id: 'connection-3',
     name: 'Google Sheets KPIs',
     owner: workspaceUsers()[0],
     description:
@@ -68,7 +68,7 @@ export const connections = (): Connection[] => [
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
-    id: '4',
+    id: 'connection-4',
     name: 'App database production',
     owner: workspaceUsers()[0],
     description:

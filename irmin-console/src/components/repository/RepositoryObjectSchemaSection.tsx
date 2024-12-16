@@ -144,7 +144,7 @@ const RepositoryObjectSchemaSection = ({
                   </div>
                 </div>
                 {objectSchema ? (
-                  <div className='max-h-96 w-full overflow-y-scroll rounded bg-background'>
+                  <div className='min-h-96 w-full overflow-y-scroll rounded bg-background'>
                     <SchemaViewer
                       object={selectedObject}
                       objectSchema={objectSchema}
