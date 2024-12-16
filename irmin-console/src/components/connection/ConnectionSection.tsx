@@ -20,20 +20,23 @@ const ConnectionSection = ({ workflows }: { workflows: Workflow[] }) => {
   const { dict } = useLocale();
   const { connection } = useConnection();
 
-  const relatedWorkflows = useMemo(() => {
-    return workflows.filter((item) => {
-      if (item.type === 'import' || item.type === 'export') {
-        return item.workflowable.connection.id === connection.id;
-      }
-      if (item.type === 'pipeline') {
-        return item.workflowable.stages.some((stage) => {
-          return (
-            stage.type === 'connection' && stage.connection.id === connection.id
-          );
-        });
-      }
-    });
-  }, [workflows, workflows, connection.id]);
+  const relatedWorkflows = useMemo(
+    () =>
+      workflows.filter((item) => {
+        if (item.type === 'import' || item.type === 'export') {
+          return item.workflowable.connection.id === connection.id;
+        }
+        if (item.type === 'pipeline') {
+          return item.workflowable.stages.some((stage) => {
+            return (
+              stage.type === 'connection' &&
+              stage.connection.id === connection.id
+            );
+          });
+        }
+      }),
+    [workflows, connection.id]
+  );
 
   const { details, settings } = useMemo(() => {
     let parsedDetails = {};
