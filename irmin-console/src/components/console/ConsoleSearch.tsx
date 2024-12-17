@@ -200,9 +200,9 @@ export default function ConsoleSearch() {
             <div className='px-2 pt-2 lg:px-4 lg:pt-4'>
               {Object.keys(groupedResults).map((type) => (
                 <div key={type} className='mb-2 lg:mb-4'>
-                  <div className='mb-1 flex items-center pl-2 text-foreground lg:mb-2'>
+                  <div className='mb-1 flex items-center pl-2 text-primary lg:mb-2'>
                     {getIconForType(type as ConsoleSearchItemType)}
-                    <span className='ml-2 text-base font-medium lg:text-lg'>
+                    <span className='ml-2 text-base lg:text-lg'>
                       {type === 'workflow' &&
                         dict.consoleNavigation.searchItemType.workflows}
                       {type === 'connection' &&

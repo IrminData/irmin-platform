@@ -29,16 +29,14 @@ const RepositoryDocumentationSection = () => {
   );
 
   return (
-    <div className='mt-0 lg:-mt-6' id='repository-documentation-section'>
-      <DocumentationForm
-        initialDocumentation={currentRepository.documentation ?? ''}
-        onSubmit={handleSaveDocumentation}
-      >
-        <Button size='sm' variant='default' type='submit' icon={<TbFile />}>
-          {dict.repository.settings.saveChanges}
-        </Button>
-      </DocumentationForm>
-    </div>
+    <DocumentationForm
+      initialDocumentation={currentRepository.documentation ?? ''}
+      onSubmit={handleSaveDocumentation}
+    >
+      <Button size='sm' variant='default' type='submit' icon={<TbFile />}>
+        {dict.repository.settings.saveChanges}
+      </Button>
+    </DocumentationForm>
   );
 };
 

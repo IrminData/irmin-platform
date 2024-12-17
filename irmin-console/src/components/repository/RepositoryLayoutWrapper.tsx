@@ -61,7 +61,7 @@ export default function RepositoryLayoutWrapper({
 
   if (!commits) {
     return (
-      <div className='container relative mx-auto max-w-6xl py-12'>
+      <div className='container relative mx-auto max-w-7xl py-12'>
         <LoadingSkeleton className='h-96' />
       </div>
     );

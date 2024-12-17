@@ -49,11 +49,8 @@ const DocumentationForm = ({
     });
 
   return (
-    <form
-      className='container relative mx-auto flex max-w-6xl flex-1 flex-col overflow-scroll px-2 md:px-4'
-      onSubmit={handleSubmit(onSubmit)}
-    >
-      <div className='mb-4 flex flex-row items-center justify-end gap-2'>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className='container mx-auto mb-4 flex max-w-6xl flex-row items-center justify-end gap-2'>
         <Button
           onClick={() =>
             setDocumentationEditorType(
@@ -76,44 +73,46 @@ const DocumentationForm = ({
         </Button>
         {children}
       </div>
-      {documentationEditorType === 'plain' && (
-        <Controller
-          name='documentation'
-          control={control}
-          render={({ field }) => (
-            <div
-              className='h-full w-full bg-background p-2 text-foreground'
-              id='plain-text-documentation-editor'
-            >
-              <CodeMirrorEditor
-                language='md'
-                content={field.value}
-                editorHeight='320px'
-                updateEditorContent={field.onChange}
-                placeholder={dict.documentation.startTypingDocumentation}
-              />
-            </div>
-          )}
-        />
-      )}
-      {documentationEditorType === 'mdx' && (
-        <div
-          id='mdx-documentation-editor'
-          className='h-full max-h-full min-h-80 w-full overflow-y-scroll rounded-lg border border-gray-300 bg-background dark:border-gray-800'
-        >
+      <div className='container mx-auto mb-4 flex max-w-7xl'>
+        {documentationEditorType === 'plain' && (
           <Controller
             name='documentation'
             control={control}
             render={({ field }) => (
-              <MDXEditor
-                placeholder={dict.documentation.startTypingDocumentation}
-                markdown={field.value}
-                onChange={field.onChange}
-              />
+              <div
+                className='h-full min-h-[400px] w-full bg-background p-2 text-foreground'
+                id='plain-text-documentation-editor'
+              >
+                <CodeMirrorEditor
+                  language='md'
+                  content={field.value}
+                  editorHeight='400px'
+                  updateEditorContent={field.onChange}
+                  placeholder={dict.documentation.startTypingDocumentation}
+                />
+              </div>
             )}
           />
-        </div>
-      )}
+        )}
+        {documentationEditorType === 'mdx' && (
+          <div
+            id='mdx-documentation-editor'
+            className='h-full max-h-full min-h-80 w-full overflow-y-scroll rounded-lg border border-gray-300 bg-background dark:border-gray-800'
+          >
+            <Controller
+              name='documentation'
+              control={control}
+              render={({ field }) => (
+                <MDXEditor
+                  placeholder={dict.documentation.startTypingDocumentation}
+                  markdown={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+          </div>
+        )}
+      </div>
     </form>
   );
 };

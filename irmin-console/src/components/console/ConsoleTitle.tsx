@@ -2,6 +2,8 @@ import React from 'react';
 
 import Image from 'next/image';
 
+import { cn } from '@/utils/tw';
+
 /**
  * Console title UI component
  *
@@ -14,14 +16,19 @@ import Image from 'next/image';
  * @param props - The props of the component
  * @param props.title - The title of the console
  * @param props.showLogo - Whether to hide the logo or not
+ * @param props.className - The class name of the component
  */
 const ConsoleTitle: React.FC<{
   title: string;
   showLogo?: boolean;
-}> = ({ title, showLogo }) => {
+  className?: string;
+}> = ({ title, showLogo, className }) => {
   return (
     <div
-      className={`px-4 pb-4 pt-12 text-center text-2xl font-bold text-foreground text-opacity-90 sm:text-3xl md:text-left lg:text-5xl`}
+      className={cn(
+        'px-4 pb-4 pt-12 text-center text-2xl font-bold text-foreground text-opacity-90 sm:text-3xl md:text-left lg:text-5xl',
+        className
+      )}
     >
       {showLogo && (
         <>

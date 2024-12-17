@@ -129,7 +129,7 @@ export default function RepositoryHeader({
 
   return (
     <div
-      className='container relative mx-auto max-w-6xl'
+      className='container relative mx-auto max-w-7xl'
       id='repository-header'
     >
       <div className='mx-auto my-4 flex w-full flex-col px-2 md:px-4 lg:flex-row lg:items-center'>

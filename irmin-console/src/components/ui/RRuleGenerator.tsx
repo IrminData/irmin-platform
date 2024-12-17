@@ -60,7 +60,7 @@ export default function RRuleGenerator({
   useEffect(() => {
     if (initialised.current) return;
     try {
-      if (!rule) return;
+      if (!rule || rule.length === 0) return;
 
       const rrule = rrulestr(rule);
 

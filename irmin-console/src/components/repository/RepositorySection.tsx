@@ -151,7 +151,7 @@ export default function RepositorySection({
 
   return (
     <>
-      <div className='container relative mx-auto mb-4 flex max-w-6xl flex-col px-2 md:px-4'>
+      <div className='container relative mx-auto mb-4 flex max-w-7xl flex-col px-2 md:px-4'>
         <div className='w-full max-w-full overflow-hidden rounded-md border border-gray-100 bg-background dark:border-gray-800'>
           <div className='flex w-full flex-row items-center justify-between bg-gray-100 pl-4 dark:bg-gray-800'>
             <div className='py-2 text-sm font-semibold'>

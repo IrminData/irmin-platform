@@ -93,7 +93,7 @@ const RepositoryObjectSchemaSection = ({
 
   return (
     <>
-      <div className='container relative mx-auto mb-4 flex max-w-6xl flex-col gap-4 px-2 md:px-4'>
+      <div className='container relative mx-auto mb-4 flex max-w-7xl flex-col gap-4 px-2 md:px-4'>
         <div
           className={`flex flex-col items-start gap-4 lg:flex-row ${selectedObject.type === 'structured' ? 'justify-between' : 'justify-end'}`}
         >

@@ -112,7 +112,7 @@ export default function SelectConnector({
                   key={`connector-${index}`}
                   onClick={() => handleConnectorClick(connector)}
                 >
-                  <Avatar className='h-12 w-12'>
+                  <Avatar className='h-12 w-12 rounded-none'>
                     <AvatarImage
                       src={connector.logo_url}
                       alt={connector.name}

@@ -28,7 +28,7 @@ const ConnectorInfoSmall = ({ connector }: { connector: Connector }) => {
 
   return (
     <div className='flex items-center space-x-4'>
-      <Avatar className='h-16 w-16'>
+      <Avatar className='h-16 w-16 rounded-none'>
         <AvatarImage src={connector.logo_url} alt={connector.name} />
         <AvatarFallback>
           {connector.name.slice(0, 2).toUpperCase()}

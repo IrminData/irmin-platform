@@ -11,7 +11,7 @@ export default function RepositoryCommitsSection() {
   const { commits, loadingCommits } = useRepository();
 
   return (
-    <div className='container relative mx-auto max-w-6xl px-2 md:px-4'>
+    <div className='container relative mx-auto max-w-7xl px-2 md:px-4'>
       <CommitList commits={commits ?? []} loading={loadingCommits} />
     </div>
   );

@@ -59,40 +59,35 @@ const WorkspaceSettingsSection = () => {
     },
   ];
 
+  if (!workspace) return <></>;
+
   return (
-    <div
-      className='container relative mx-auto my-8 max-w-6xl'
-      id='workspace-settings-section'
-    >
-      {workspace && (
-        <SettingsForm
-          initialValues={{
-            name: workspace.name,
-            description: workspace.description ?? '',
-          }}
-          onSubmit={handleUpdateWorkspace}
-          fieldConfiguration={fieldConfiguration}
-          deleteItem={handleDeleteWorkspace}
-          itemName={dict.consoleNavigation.workspace}
-          submitButtonLabel={dict.workspace.saveChanges}
-          deleteButtonLabel={dict.workspace.deleteWorkspace}
-          dangerZoneMessage={dict.workspace.deletionNote}
-          additionalDangerContent={
-            <>
-              <Button
-                onClick={handleLeaveWorkspace}
-                className='mt-4'
-                variant='secondary'
-                size={'sm'}
-                icon={<TbLogout />}
-              >
-                {dict.workspaceSwitcher.leaveWorkspace}
-              </Button>
-            </>
-          }
-        />
-      )}
-    </div>
+    <SettingsForm
+      initialValues={{
+        name: workspace.name,
+        description: workspace.description ?? '',
+      }}
+      onSubmit={handleUpdateWorkspace}
+      fieldConfiguration={fieldConfiguration}
+      deleteItem={handleDeleteWorkspace}
+      itemName={dict.consoleNavigation.workspace}
+      submitButtonLabel={dict.workspace.saveChanges}
+      deleteButtonLabel={dict.workspace.deleteWorkspace}
+      dangerZoneMessage={dict.workspace.deletionNote}
+      additionalDangerContent={
+        <>
+          <Button
+            onClick={handleLeaveWorkspace}
+            className='mt-4'
+            variant='secondary'
+            size={'sm'}
+            icon={<TbLogout />}
+          >
+            {dict.workspaceSwitcher.leaveWorkspace}
+          </Button>
+        </>
+      }
+    />
   );
 };
 

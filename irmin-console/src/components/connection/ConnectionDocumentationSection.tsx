@@ -29,16 +29,14 @@ const ConnectionDocumentationSection = () => {
   );
 
   return (
-    <div className='mt-0 lg:-mt-2' id='connection-documentation-section'>
-      <DocumentationForm
-        initialDocumentation={connection.documentation ?? ''}
-        onSubmit={handleSaveDocumentation}
-      >
-        <Button size='sm' variant='default' type='submit' icon={<TbFile />}>
-          {dict.repository.settings.saveChanges}
-        </Button>
-      </DocumentationForm>
-    </div>
+    <DocumentationForm
+      initialDocumentation={connection.documentation ?? ''}
+      onSubmit={handleSaveDocumentation}
+    >
+      <Button size='sm' variant='default' type='submit' icon={<TbFile />}>
+        {dict.repository.settings.saveChanges}
+      </Button>
+    </DocumentationForm>
   );
 };
 

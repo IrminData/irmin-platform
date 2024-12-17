@@ -10,6 +10,7 @@ import {
 import ReactSelect from 'react-select';
 
 import Button from '@/components/ui/button';
+import ContentWrapper from '@/components/ui/ContentWrapper';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -79,95 +80,88 @@ export default function SettingsForm<T extends FieldValues>({
   });
 
   return (
-    <div className='container relative mx-auto my-8 max-w-6xl'>
-      <div className='w-full max-w-4xl rounded-lg border-b border-t border-accent bg-background px-4 py-4 shadow-md md:mx-4'>
-        <div className='my-8 px-4'>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className='flex flex-col gap-4'
+    <ContentWrapper wrapperClassName='py-8'>
+      <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-4'>
+        {fieldConfiguration.map((field, idx) => (
+          <div
+            key={`field-${idx}-${field.name}`}
+            className='flex flex-col gap-2'
           >
-            {fieldConfiguration.map((field, idx) => (
-              <div
-                key={`field-${idx}-${field.name}`}
-                className='flex flex-col gap-2'
-              >
-                <Label>{field.label}</Label>
-                <Controller
-                  name={field.name}
-                  control={control}
-                  rules={field.rules}
-                  render={({ field: formField }) => (
-                    <>
-                      {field.type === 'text' || field.type === 'textarea' ? (
-                        <Input
-                          required={!!field.rules?.required}
-                          type='text'
-                          placeholder={field.placeholder}
-                          {...formField}
-                          longtext={
-                            field.type === 'textarea' ? { rows: 3 } : undefined
-                          }
-                        />
-                      ) : field.type === 'select' && field.options ? (
-                        <ReactSelect
-                          value={field.options.find(
-                            (option) => option.value === formField.value
-                          )}
-                          onChange={(newValue) =>
-                            formField.onChange(newValue?.value)
-                          }
-                          options={field.options}
-                          getOptionLabel={(option) => option.label}
-                          className='react-select-container'
-                          classNamePrefix='react-select'
-                        />
-                      ) : null}
-                      {errors[field.name] && (
-                        <p className='mt-1 text-xs text-red-600'>
-                          {
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            (errors[field.name] as any)?.message
-                          }
-                        </p>
+            <Label>{field.label}</Label>
+            <Controller
+              name={field.name}
+              control={control}
+              rules={field.rules}
+              render={({ field: formField }) => (
+                <>
+                  {field.type === 'text' || field.type === 'textarea' ? (
+                    <Input
+                      required={!!field.rules?.required}
+                      type='text'
+                      placeholder={field.placeholder}
+                      {...formField}
+                      longtext={
+                        field.type === 'textarea' ? { rows: 3 } : undefined
+                      }
+                    />
+                  ) : field.type === 'select' && field.options ? (
+                    <ReactSelect
+                      value={field.options.find(
+                        (option) => option.value === formField.value
                       )}
-                    </>
+                      onChange={(newValue) =>
+                        formField.onChange(newValue?.value)
+                      }
+                      options={field.options}
+                      getOptionLabel={(option) => option.label}
+                      className='react-select-container'
+                      classNamePrefix='react-select'
+                    />
+                  ) : null}
+                  {errors[field.name] && (
+                    <p className='mt-1 text-xs text-red-600'>
+                      {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        (errors[field.name] as any)?.message
+                      }
+                    </p>
                   )}
-                />
-              </div>
-            ))}
+                </>
+              )}
+            />
+          </div>
+        ))}
+        <Button
+          className='h-11 w-full'
+          type='submit'
+          size='sm'
+          variant='default'
+          disabled={!isDirty}
+        >
+          {submitButtonLabel}
+        </Button>
+      </form>
+      {deleteItem && (
+        <div className='mt-8'>
+          <p className='text-sm font-normal capitalize text-destructive md:text-xl'>
+            {dict.misc.dangerZone}
+          </p>
+          <p className='mt-2 max-w-sm text-xs md:text-sm'>
+            {dangerZoneMessage}
+          </p>
+          <div className='flex gap-2'>
             <Button
-              className='h-11 w-full'
-              type='submit'
+              className='mt-4'
               size='sm'
-              variant='default'
-              disabled={!isDirty}
+              variant='secondary'
+              onClick={deleteItem}
             >
-              {submitButtonLabel}
+              {deleteButtonLabel ?? `Delete ${itemName}`}
             </Button>
-          </form>
-          {deleteItem && (
-            <div className='mt-8'>
-              <p className='text-sm font-normal capitalize text-destructive md:text-xl'>
-                {dict.misc.dangerZone}
-              </p>
-              <p className='mt-2 max-w-sm text-xs md:text-sm'>
-                {dangerZoneMessage}
-              </p>
-              <div className='flex gap-2'>
-                <Button
-                  className='mt-4'
-                  size='sm'
-                  variant='secondary'
-                  onClick={deleteItem}
-                >
-                  {deleteButtonLabel ?? `Delete ${itemName}`}
-                </Button>
-                {additionalDangerContent}
-              </div>
-            </div>
-          )}
+            {additionalDangerContent}
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </ContentWrapper>
   );
 }

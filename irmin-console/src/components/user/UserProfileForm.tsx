@@ -104,7 +104,7 @@ export default function UserProfileForm() {
         </Avatar>
       </div>
       <div className='space-y-2'>
-        <Label htmlFor='profile_picture' className='text-sm font-medium'>
+        <Label htmlFor='profile_picture' className='text-sm'>
           {dict.users.changeProfilePicture}
         </Label>
         <Input
@@ -117,7 +117,7 @@ export default function UserProfileForm() {
       </div>
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <div className='space-y-2'>
-          <Label htmlFor='first_name' className='text-sm font-medium'>
+          <Label htmlFor='first_name' className='text-sm'>
             {dict.users.firstName}
           </Label>
           <Input
@@ -132,7 +132,7 @@ export default function UserProfileForm() {
           )}
         </div>
         <div className='space-y-2'>
-          <Label htmlFor='last_name' className='text-sm font-medium'>
+          <Label htmlFor='last_name' className='text-sm'>
             {dict.users.lastName}
           </Label>
           <Input
@@ -148,7 +148,7 @@ export default function UserProfileForm() {
         </div>
       </div>
       <div className='space-y-2'>
-        <Label htmlFor='email' className='text-sm font-medium'>
+        <Label htmlFor='email' className='text-sm'>
           {dict.users.email}
         </Label>
         <Input
@@ -168,7 +168,7 @@ export default function UserProfileForm() {
         )}
       </div>
       <div className='space-y-2'>
-        <Label htmlFor='phone' className='text-sm font-medium'>
+        <Label htmlFor='phone' className='text-sm'>
           {dict.users.phone}
         </Label>
         <Input
@@ -179,12 +179,18 @@ export default function UserProfileForm() {
         />
       </div>
       <div className='space-y-2'>
-        <Label htmlFor='company' className='text-sm font-medium'>
+        <Label htmlFor='company' className='text-sm'>
           {dict.users.company}
         </Label>
         <Input id='company' {...register('company')} className='w-full' />
       </div>
-      <Button type='submit' disabled={isSubmitting} className='w-full'>
+      <Button
+        type='submit'
+        disabled={isSubmitting}
+        className='w-full'
+        size={'sm'}
+        variant={'accent'}
+      >
         {dict.users.updateProfile}
       </Button>
     </form>
