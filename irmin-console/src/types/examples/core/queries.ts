@@ -11,53 +11,72 @@ import { exampleWorkflowRunLogs } from '.';
 export const queries: () => Query[] = () => [
   {
     id: 'query_1',
-    name: 'Query 1',
-    description: 'This is the first query',
-    content: 'SELECT * FROM table',
+    name: 'Identify underperforming stores',
+    description: 'Retrieve stores where annual costs exceed annual revenue',
+    content: `
+      SELECT store_id, city, country, annual_revenue, annual_cost
+      FROM store_locations
+      WHERE annual_cost > annual_revenue
+      ORDER BY (annual_cost - annual_revenue) DESC;
+    `,
     type: 'sql',
     owner: 'user_1',
     stored: true,
     started_at: getRandomDateTimeString(500, 'past', 60),
     finished_at: getRandomDateTimeString(500, 'past', 60),
-    execution_time: 1000,
+    execution_time: 1120,
     logs: [
-      'This is an example log message',
-      'This is another example log message',
-      'This is yet another example log message',
+      'Query started execution',
+      'No syntax errors detected',
+      'Query returned 12 rows',
+      'Query completed successfully',
     ],
   },
   {
     id: 'query_2',
-    name: 'Query 2',
-    description: 'This is the second query',
-    content: 'SELECT * FROM table',
+    name: 'Locate profitable outlets',
+    description: 'Find stores that are generating more revenue than costs',
+    content: `
+      SELECT store_id, city, country, annual_revenue, annual_cost
+      FROM store_locations
+      WHERE annual_revenue > annual_cost
+      ORDER BY annual_revenue DESC;
+    `,
     type: 'sql',
     owner: 'user_2',
     stored: true,
     started_at: getRandomDateTimeString(500, 'past', 60),
     finished_at: getRandomDateTimeString(500, 'past', 60),
-    execution_time: 1000,
+    execution_time: 945,
     logs: [
-      'This is an example log message',
-      'This is another example log message',
-      'This is yet another example log message',
+      'Query started execution',
+      'Index applied on annual_revenue column',
+      'Query returned 30 rows',
+      'Query completed successfully',
     ],
   },
   {
     id: 'query_3',
-    name: 'Query 3',
-    description: 'This is the third query',
-    content: 'SELECT * FROM table',
+    name: 'Identify high foot traffic locations',
+    description:
+      'List stores with foot traffic exceeding 50,000 visitors per month',
+    content: `
+      SELECT store_id, city, country, foot_traffic
+      FROM store_locations
+      WHERE foot_traffic > 50000
+      ORDER BY foot_traffic DESC;
+    `,
     type: 'sql',
     owner: 'user_3',
     stored: true,
     started_at: getRandomDateTimeString(500, 'past', 60),
     finished_at: getRandomDateTimeString(500, 'past', 60),
-    execution_time: 1000,
+    execution_time: 1060,
     logs: [
-      'This is an example log message',
-      'This is another example log message',
-      'This is yet another example log message',
+      'Query started execution',
+      'Index used for foot_traffic column',
+      'Query returned 7 rows',
+      'Query completed successfully',
     ],
   },
 ];
@@ -119,6 +138,6 @@ export const queryExecutionResult = (): QueryExecutionResult => ({
       population: 945942,
     },
   ],
-  execution_time: 1000,
+  execution_time: 984,
   logs: exampleWorkflowRunLogs.logs,
 });

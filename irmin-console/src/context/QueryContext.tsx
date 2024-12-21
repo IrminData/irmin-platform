@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 
-import { executeScript } from '@/lib/actions/query';
+import { executeScript, getQueryResults } from '@/lib/actions/query';
 
 import { usePopup } from '@/context/PopupContext';
 
@@ -23,6 +23,7 @@ interface QueryContextProps {
   loading: boolean;
   result: IrminAPIResponse<QueryExecutionResult> | null;
   executeScript: (type: IrminFileType, content: string) => Promise<void>;
+  getQueryResult: (queryId: string, page: number) => Promise<void>;
 }
 
 const QueryContext = createContext<QueryContextProps | undefined>(undefined);
@@ -60,7 +61,7 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
         const res = await executeScript(type, content);
         setQueryResult(res);
       } catch (error) {
-        console.error('QueryContext executeScript error', error);
+        console.error('QueryContext handleExecuteScript error', error);
         irminAlert(
           'error',
           (error as Error)?.message ?? 'Failed to run script'
@@ -72,12 +73,35 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
     [irminAlert]
   );
 
+  /**
+   * Set query result to a stored value
+   */
+  const handleGetQueryResult = useCallback(
+    async (queryId: string, page: number) => {
+      if (executing.current) return;
+      executing.current = true;
+      setLoading(true);
+      try {
+        const res = await getQueryResults(queryId, page);
+        if (!res.data)
+          throw new Error(res.message ?? 'Failed to get query results');
+        setQueryResult(res);
+      } catch (error) {
+        console.error('QueryContext handleGetQueryResult error', error);
+      }
+      setLoading(false);
+      executing.current = false;
+    },
+    []
+  );
+
   return (
     <QueryContext.Provider
       value={{
         loading,
         result: queryResult,
         executeScript: handleExecuteScript,
+        getQueryResult: handleGetQueryResult,
       }}
     >
       {children}

@@ -18,6 +18,7 @@ import {
   TbRun,
   TbSchema,
   TbSettings,
+  TbSql,
   TbUser,
 } from 'react-icons/tb';
 
@@ -96,6 +97,11 @@ const useConsoleNavigationLinks = (): {
           icon: <TbFile />,
         },
         {
+          title: dict.consoleNavigation.links.queries,
+          href: `${workspaceUrl}/queries`,
+          icon: <TbSql />,
+        },
+        {
           title: dict.consoleNavigation.links.logs,
           href: `${workspaceUrl}/logs`,
           icon: <TbLogs />,
@@ -104,11 +110,6 @@ const useConsoleNavigationLinks = (): {
           title: dict.consoleNavigation.links.documentation,
           href: `${workspaceUrl}/documentation`,
           icon: <TbSchema />,
-        },
-        {
-          title: dict.consoleNavigation.links.workspaceSettings,
-          href: `${workspaceUrl}/settings`,
-          icon: <TbSettings />,
         },
       ].map((link) => ({
         ...link,
@@ -134,6 +135,12 @@ const useConsoleNavigationLinks = (): {
   }));
 
   const settingsLinks = [
+    {
+      title: dict.consoleNavigation.links.workspaceSettings,
+      href: `${workspaceUrl}/settings`,
+      icon: <TbSettings />,
+      active: isActiveLink(`${workspaceUrl}/settings`),
+    },
     {
       title: dict.consoleNavigation.links.myProfile,
       href: `/${locale}/console/profile`,

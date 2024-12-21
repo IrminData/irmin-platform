@@ -2,6 +2,8 @@
 
 import { memo, useMemo } from 'react';
 
+import dynamic from 'next/dynamic';
+
 import { go } from '@codemirror/lang-go';
 import { javascript } from '@codemirror/lang-javascript';
 import { markdown } from '@codemirror/lang-markdown';
@@ -12,10 +14,14 @@ import {
   vscodeLight,
   vscodeLightInit,
 } from '@uiw/codemirror-theme-vscode';
-import CodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
+import { ReactCodeMirrorProps } from '@uiw/react-codemirror';
 import { useTheme } from 'next-themes';
 
 import { useLocale } from '@/context/LocaleContext';
+
+const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
+  ssr: false,
+});
 
 const CodeMirrorEditor = ({
   language,
@@ -42,41 +48,32 @@ const CodeMirrorEditor = ({
     [resolvedTheme]
   );
 
-  const placeholder = useMemo(
-    () =>
-      language === 'js'
-        ? dict.editor.writeYourJS
-        : language === 'go'
-          ? dict.editor.writeYourGo
-          : dict.editor.writeYourSQL,
-    [language, dict]
-  );
+  const placeholder = useMemo(() => {
+    if (language === 'js') return dict.editor.writeYourJS;
+    if (language === 'go') return dict.editor.writeYourGo;
+    if (language === 'md') return dict.editor.writeYourMarkdown;
+    return dict.editor.writeYourSQL;
+  }, [language, dict]);
 
   const extensions = useMemo(() => {
-    if (language === 'js') {
+    if (!editorTheme) return [];
+    if (language === 'js')
       return [editorTheme, javascript({ jsx: false, typescript: false })];
-    }
-    if (language === 'go') {
-      return [editorTheme, go()];
-    }
-    if (language === 'md') {
-      return [editorTheme, markdown()];
-    }
+    if (language === 'go') return [editorTheme, go()];
+    if (language === 'md') return [editorTheme, markdown()];
     return [editorTheme, sql({ dialect: PostgreSQL })];
   }, [language, editorTheme]);
-
-  if (!resolvedTheme) return null;
 
   return (
     <div
       style={{
-        maxHeight: editorHeight,
+        maxHeight: editorHeight ?? '100%',
       }}
-      className='relative h-full w-full overflow-scroll bg-white dark:bg-gray-950'
+      className='codemirror-editor relative h-full w-full overflow-scroll bg-white dark:bg-gray-950'
     >
       <CodeMirror
         value={content}
-        height={'100%'}
+        height='100%'
         extensions={extensions}
         placeholder={placeholder}
         onChange={(value) => updateEditorContent(value)}

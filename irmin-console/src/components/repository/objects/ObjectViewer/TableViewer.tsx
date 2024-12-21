@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { AiOutlineDownload } from 'react-icons/ai';
+import { TbSearch } from 'react-icons/tb';
 
 import AdvancedDatatable from '@/components/repository/objects/ObjectViewer/AdvancedDatatable';
 import JSONViewer from '@/components/repository/objects/ObjectViewer/JSONViewer';
@@ -115,13 +116,17 @@ const TableViewer = ({
             </Button>
           )}
           {isSimpleArrayOfObjects && (
-            <input
-              type='text'
-              className='h-8 w-48 rounded-md border border-solid border-gray-400 px-2 py-1 text-xs focus:outline-none dark:border-gray-800'
-              placeholder={dict.query.search}
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
-            />
+            <div className='relative flex h-8 w-48 flex-row items-center rounded-full border border-gray-200 dark:border-gray-800'>
+              <div className='pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3'>
+                <TbSearch className='text-gray-500' />
+              </div>
+              <input
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible placeholder:opacity-40 focus:outline-none group-focus-within:placeholder:visible md:placeholder:visible lg:text-sm dark:bg-irmin_black dark:text-white'
+                placeholder={dict.query.search}
+              />
+            </div>
           )}
         </div>
       </div>

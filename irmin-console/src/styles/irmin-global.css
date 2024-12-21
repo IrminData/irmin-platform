@@ -432,3 +432,8 @@ input[type='radio'] {
     display: none;
   }
 }
+
+/* CodeMirror editor */
+.codemirror-editor .cm-theme {
+  height: 100%;
+}

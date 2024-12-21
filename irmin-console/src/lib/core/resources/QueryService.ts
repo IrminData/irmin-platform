@@ -89,7 +89,19 @@ class QueryService {
     run?: boolean
   ): Promise<IrminAPIResponse<Query>> {
     if (isOfflineMode)
-      return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
+      return fake({
+        ...exampleQueries[0],
+        id: Math.random().toString(36).substring(2, 12) + '-query',
+        type,
+        name,
+        description,
+        content,
+        stored,
+        started_at: new Date().toISOString(),
+        finished_at: new Date().toISOString(),
+        execution_time: 0,
+        logs: [],
+      }) as IrminAPIResponse<Query>;
     try {
       const body = new FormData();
       body.append('type', type);
@@ -136,7 +148,9 @@ class QueryService {
    */
   async getQuery(query: string): Promise<IrminAPIResponse<Query>> {
     if (isOfflineMode)
-      return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
+      return fake(
+        exampleQueries.find((item) => item.id === query)
+      ) as IrminAPIResponse<Query>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/queries/${query}`, {
         method: 'GET',
@@ -191,8 +205,17 @@ class QueryService {
     description?: string,
     stored?: boolean
   ): Promise<IrminAPIResponse<Query>> {
-    if (isOfflineMode)
-      return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
+    if (isOfflineMode) {
+      const currentExample = exampleQueries.find((item) => item.id === query);
+      if (!currentExample) throw new Error('Query not found');
+      return fake({
+        ...currentExample,
+        type: type ?? currentExample.type,
+        name: name ?? currentExample.name,
+        description: description ?? currentExample.description,
+        content: content ?? currentExample.content,
+      }) as IrminAPIResponse<Query>;
+    }
     try {
       const body = new FormData();
       body.append('_method', 'PATCH');
