@@ -98,7 +98,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/helper-create-class-features-plugin@npm:^7.25.9":
+"@babel/helper-create-class-features-plugin@npm:^7.18.6":
   version: 7.25.9
   resolution: "@babel/helper-create-class-features-plugin@npm:7.25.9"
   dependencies:
@@ -157,7 +157,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/helper-plugin-utils@npm:^7.25.9":
+"@babel/helper-plugin-utils@npm:^7.18.6":
   version: 7.25.9
   resolution: "@babel/helper-plugin-utils@npm:7.25.9"
   checksum: 10c0/483066a1ba36ff16c0116cd24f93de05de746a603a777cd695ac7a1b034928a65a4ecb35f255761ca56626435d7abdb73219eba196f9aa83b6c3c3169325599d
@@ -229,15 +229,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-transform-private-methods@npm:^7.25.9":
-  version: 7.25.9
-  resolution: "@babel/plugin-transform-private-methods@npm:7.25.9"
+"@babel/plugin-proposal-private-methods@npm:^7.18.6":
+  version: 7.18.6
+  resolution: "@babel/plugin-proposal-private-methods@npm:7.18.6"
   dependencies:
-    "@babel/helper-create-class-features-plugin": "npm:^7.25.9"
-    "@babel/helper-plugin-utils": "npm:^7.25.9"
+    "@babel/helper-create-class-features-plugin": "npm:^7.18.6"
+    "@babel/helper-plugin-utils": "npm:^7.18.6"
   peerDependencies:
     "@babel/core": ^7.0.0-0
-  checksum: 10c0/64bd71de93d39daefa3e6c878d6f2fd238ed7d4ecfb13b0e771ddbbc131487def3ceb405b62b534a5cbb5043046b504e1b189b0a45229cc75af979a9fbcaa7bd
+  checksum: 10c0/1c273d0ec3d49d0fe80bd754ec0191016e5b3ab4fb1e162ac0c014e9d3c1517a5d973afbf8b6dc9f9c98a8605c79e5f9e8b5ee158a4313fa68d1ff7b02084b6a
   languageName: node
   linkType: hard
 
@@ -5234,12 +5234,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-plugin-react-compiler@npm:19.0.0-beta-df7b47d-20241124":
-  version: 19.0.0-beta-df7b47d-20241124
-  resolution: "babel-plugin-react-compiler@npm:19.0.0-beta-df7b47d-20241124"
+"babel-plugin-react-compiler@npm:19.0.0-beta-b2e8e9c-20241220":
+  version: 19.0.0-beta-b2e8e9c-20241220
+  resolution: "babel-plugin-react-compiler@npm:19.0.0-beta-b2e8e9c-20241220"
   dependencies:
     "@babel/types": "npm:^7.19.0"
-  checksum: 10c0/d5132730c5503f2d93b07da68f443c73b22dbff8fc312d0472782b4860f72eb814b34b115823e7debe4dee9f43cf676857e9213656d9857e00309327da464c55
+  checksum: 10c0/e4903f63bfe0e900927411e6ac5942798293fe85df0ae402bec6300c5b666089dc819ea071e0ac86929e12249cd7bda8acbc599728f03cfc1519eead79df083c
   languageName: node
   linkType: hard
 
@@ -6711,19 +6711,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react-compiler@npm:19.0.0-beta-df7b47d-20241124":
-  version: 19.0.0-beta-df7b47d-20241124
-  resolution: "eslint-plugin-react-compiler@npm:19.0.0-beta-df7b47d-20241124"
+"eslint-plugin-react-compiler@npm:19.0.0-beta-b2e8e9c-20241220":
+  version: 19.0.0-beta-b2e8e9c-20241220
+  resolution: "eslint-plugin-react-compiler@npm:19.0.0-beta-b2e8e9c-20241220"
   dependencies:
     "@babel/core": "npm:^7.24.4"
     "@babel/parser": "npm:^7.24.4"
-    "@babel/plugin-transform-private-methods": "npm:^7.25.9"
+    "@babel/plugin-proposal-private-methods": "npm:^7.18.6"
     hermes-parser: "npm:^0.25.1"
     zod: "npm:^3.22.4"
     zod-validation-error: "npm:^3.0.3"
   peerDependencies:
     eslint: ">=7"
-  checksum: 10c0/0f9d215d922fda2b452bb0eb203f90acf2fd5233a663151f976210778fd266cf1ddb5499a3a652b476ed30ee7393db3a411338287e712020f2e66c9680da927c
+  checksum: 10c0/fc6b009d3c49aca87fdb1e70d3cccd72d5afaac9b77ead6c52e8fe8220f4994f71aa267188a921866f0e8547cf18c64fd86a7e91a254144ab90cd78e78ed36ad
   languageName: node
   linkType: hard
 
@@ -7774,14 +7774,14 @@ __metadata:
     "@uiw/react-codemirror": "npm:^4.23.7"
     "@xyflow/react": "npm:^12.3.6"
     autoprefixer: "npm:^10.4.20"
-    babel-plugin-react-compiler: "npm:19.0.0-beta-df7b47d-20241124"
+    babel-plugin-react-compiler: "npm:19.0.0-beta-b2e8e9c-20241220"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     date-fns: "npm:^4.1.0"
     eslint: "npm:9.17.0"
     eslint-config-next: "npm:15.1.2"
     eslint-config-prettier: "npm:^9.1.0"
-    eslint-plugin-react-compiler: "npm:19.0.0-beta-df7b47d-20241124"
+    eslint-plugin-react-compiler: "npm:19.0.0-beta-b2e8e9c-20241220"
     markdown-to-jsx: "npm:^7.7.2"
     next: "npm:15.1.2"
     next-themes: "npm:^0.4.4"
@@ -7800,7 +7800,7 @@ __metadata:
     rrule: "npm:^2.8.1"
     sharp: "npm:^0.33.5"
     styled-components: "npm:^6.1.13"
-    tailwind-merge: "npm:^2.5.5"
+    tailwind-merge: "npm:^2.6.0"
     tailwindcss: "npm:^3.4.17"
     tailwindcss-animate: "npm:^1.0.7"
     typedoc: "npm:^0.27.5"
@@ -11774,10 +11774,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tailwind-merge@npm:^2.4.0, tailwind-merge@npm:^2.5.5":
+"tailwind-merge@npm:^2.4.0":
   version: 2.5.5
   resolution: "tailwind-merge@npm:2.5.5"
   checksum: 10c0/32614dd2b4ddd4fab070d5ec569e6da00e2b34269b9ac2f2ff16733cef29a076c8e2210fbfc1904d7983a8fdb6b3e63d18ca117645f21b12ca7bcf8fe3507241
+  languageName: node
+  linkType: hard
+
+"tailwind-merge@npm:^2.6.0":
+  version: 2.6.0
+  resolution: "tailwind-merge@npm:2.6.0"
+  checksum: 10c0/fc8a5535524de9f4dacf1c16ab298581c7bb757d68a95faaf28942b1c555a619bba9d4c6726fe83986e44973b315410c1a5226e5354c30ba82353bd6d2288fa5
   languageName: node
   linkType: hard
 
