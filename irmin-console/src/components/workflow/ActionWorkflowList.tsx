@@ -108,7 +108,7 @@ const ActionWorkflowList = ({
   return (
     <CardOrNormalList
       loading={loading}
-      headers={[dict.misc.name, dict.list.status, dict.list.actions]}
+      headers={[dict.common.name, dict.list.status, dict.list.actions]}
       rows={rows}
       hideHeaders={false}
     />

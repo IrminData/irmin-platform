@@ -86,7 +86,7 @@ export default function ConnectionsSection({
     <div className='container relative mx-auto max-w-6xl px-4 py-8'>
       <div className='my-4 flex flex-row items-center justify-between gap-4'>
         <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
-          {dict.consoleNavigation.links.connections}
+          {dict.connections.connections}
         </h2>
         <Button
           variant='gradient'

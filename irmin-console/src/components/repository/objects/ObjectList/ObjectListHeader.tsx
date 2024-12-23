@@ -42,7 +42,7 @@ export function ObjectListHeader({
       {currentPath !== '/' && (
         <Button variant='ghost' onClick={navigateUp}>
           <TbChevronLeft className='mr-2 h-4 w-4' />
-          {dict.misc.back}
+          {dict.common.back}
         </Button>
       )}
       <div className='flex items-center space-x-2 rounded-md font-mono text-xs'>

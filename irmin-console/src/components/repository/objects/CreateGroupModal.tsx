@@ -88,7 +88,7 @@ export default function CreateGroupModal({
         <Controller
           name='repository'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input type='text' disabled={!!currentRepository} {...field} />
@@ -106,7 +106,7 @@ export default function CreateGroupModal({
         <Controller
           name='ref'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input type='text' disabled={!!currentRef} {...field} />
@@ -124,7 +124,7 @@ export default function CreateGroupModal({
         <Controller
           name='name'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input type='text' {...field} />
@@ -155,7 +155,7 @@ export default function CreateGroupModal({
           disabled={loading}
           type='submit'
         >
-          {loading ? dict.misc.loading : dict.repository.objects.createGroup}
+          {loading ? dict.common.loading : dict.repository.objects.createFolder}
         </Button>
       </div>
     </form>

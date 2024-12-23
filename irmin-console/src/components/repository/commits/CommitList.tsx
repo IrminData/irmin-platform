@@ -71,7 +71,7 @@ export default function CommitList({
     <div id='commits-list'>
       <NormalList
         headers={[
-          dict.misc.description,
+          dict.common.description,
           dict.repository.commit.commitHash,
           dict.list.actions,
         ]}

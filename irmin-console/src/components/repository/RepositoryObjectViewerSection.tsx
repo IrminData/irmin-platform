@@ -143,7 +143,7 @@ const RepositoryObjectViewerSection = ({
             onClick={() => setQueryResultsOpen(false)}
             icon={<TbChevronUp className='text-xl' />}
           >
-            {dict.misc.close} {dict.query.queryResults}
+            {dict.common.close} {dict.query.queryResults}
           </Button>
         ) : (
           <div className='flex w-full flex-wrap items-center justify-between gap-4'>

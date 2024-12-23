@@ -272,7 +272,7 @@ export default function WorkflowScheduleForm({
                 size='sm'
                 onClick={() => remove(index)}
               >
-                {dict.misc.remove}
+                {dict.common.remove}
               </Button>
             </div>
 

@@ -65,8 +65,8 @@ export default function BranchSelector({
         }}
         options={options}
         isSearchable
-        placeholder={dict.repository.tabs.branches}
-        noOptionsMessage={() => dict.misc.noOptionsMessage}
+        placeholder={dict.repository.branches.branches}
+        noOptionsMessage={() => dict.common.noOptionsMessage}
         className='react-select-container'
         classNamePrefix='react-select'
       />

@@ -47,11 +47,11 @@ export default function CreateRepositoryModalContent({
       className='flex flex-col gap-4 px-4 py-8'
     >
       <div className='flex flex-col gap-2'>
-        <Label>{dict.misc.name}</Label>
+        <Label>{dict.common.name}</Label>
         <Controller
           name='name'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input {...field} />
@@ -65,11 +65,11 @@ export default function CreateRepositoryModalContent({
         />
       </div>
       <div className='flex flex-col gap-2'>
-        <Label>{dict.misc.description}</Label>
+        <Label>{dict.common.description}</Label>
         <Controller
           name='description'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input

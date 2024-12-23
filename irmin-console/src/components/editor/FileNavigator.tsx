@@ -268,7 +268,7 @@ const FileNavigator = ({
               onDelete(contextMenu.item);
             }}
           >
-            {dict.fileNavigator.delete}
+            {dict.list.delete}
           </li>
         </ul>
       )}

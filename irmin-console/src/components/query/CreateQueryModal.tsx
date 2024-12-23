@@ -57,11 +57,11 @@ export default function CreateSavedQueryModal({
       }`}
     >
       <div className='flex flex-col gap-2'>
-        <Label>{dict.misc.name}</Label>
+        <Label>{dict.common.name}</Label>
         <Controller
           name='queryName'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input {...field} disabled={isSubmitting} />
@@ -76,11 +76,11 @@ export default function CreateSavedQueryModal({
       </div>
 
       <div className='flex flex-col gap-2'>
-        <Label>{dict.misc.description}</Label>
+        <Label>{dict.common.description}</Label>
         <Controller
           name='queryDescription'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input
@@ -107,7 +107,7 @@ export default function CreateSavedQueryModal({
         type='submit'
         disabled={isSubmitting}
       >
-        {isSubmitting ? dict.misc.loading : dict.query.createQuery}
+        {isSubmitting ? dict.common.loading : dict.query.createQuery}
       </Button>
     </form>
   );

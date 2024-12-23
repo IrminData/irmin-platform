@@ -100,7 +100,7 @@ const ConnectionList = ({
   return (
     <CardOrNormalList
       loading={loading}
-      headers={[dict.misc.name, dict.list.connector, dict.list.actions]}
+      headers={[dict.common.name, dict.connectors.connector, dict.list.actions]}
       rows={rows}
       hideHeaders={false}
     />

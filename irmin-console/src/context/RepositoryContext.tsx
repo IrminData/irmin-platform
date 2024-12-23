@@ -261,7 +261,7 @@ export const RepositoryProvider = ({
   const handleDeleteRepository = useCallback(async () => {
     const confirmed = await irminConfirm(
       'warning',
-      `${dict.misc.areYouSureYouWantToDelete} (${currentRepository.name})`
+      `${dict.common.areYouSureYouWantToDelete} (${currentRepository.name})`
     );
     if (updating.current || !confirmed) return;
     try {
@@ -304,7 +304,7 @@ export const RepositoryProvider = ({
     async (ownerID: string) => {
       const confirmed = await irminConfirm(
         'warning',
-        `${dict.misc.areYouSureYouWantToReassign} (${currentRepository.name})`
+        `${dict.common.areYouSureYouWantToReassign} (${currentRepository.name})`
       );
       if (updating.current || !confirmed) return;
       try {

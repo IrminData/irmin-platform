@@ -203,18 +203,13 @@ export default function ConsoleSearch() {
                   <div className='mb-1 flex items-center pl-2 text-primary lg:mb-2'>
                     {getIconForType(type as ConsoleSearchItemType)}
                     <span className='ml-2 text-base lg:text-lg'>
-                      {type === 'workflow' &&
-                        dict.consoleNavigation.searchItemType.workflows}
-                      {type === 'connection' &&
-                        dict.consoleNavigation.searchItemType.connections}
-                      {type === 'repository' &&
-                        dict.consoleNavigation.searchItemType.repositories}
-                      {type === 'user' &&
-                        dict.consoleNavigation.searchItemType.users}
+                      {type === 'workflow' && dict.workflow.workflows}
+                      {type === 'connection' && dict.connections.connections}
+                      {type === 'repository' && dict.repository.repositories}
+                      {type === 'user' && dict.workspace.users}
                       {type === 'workspace' &&
-                        dict.consoleNavigation.searchItemType.workspaces}
-                      {type === 'irmin' &&
-                        dict.consoleNavigation.searchItemType.irmin}
+                        dict.consoleNavigation.workspaces}
+                      {type === 'irmin' && dict.consoleNavigation.irmin}
                     </span>
                   </div>
                   <ul>
@@ -241,7 +236,7 @@ export default function ConsoleSearch() {
             <div className='flex h-full min-h-96 w-full flex-col items-center justify-center gap-4'>
               <LuSearchX className='h-12 w-12 text-gray-400' />
               <div className='text-base text-gray-600 lg:text-lg dark:text-gray-300'>
-                {dict.consoleNavigation.searchNoResults}
+                {dict.common.noResults}
               </div>
             </div>
           )}

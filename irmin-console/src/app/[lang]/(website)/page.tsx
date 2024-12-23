@@ -43,7 +43,7 @@ export default async function WebsiteHome(props: PageProps) {
 
   const wordpress = WordPress.getInstance();
   const page = await wordpress.getPage(
-    dictionaries[lang].static.wordpressHomePageSlug
+    dictionaries[lang].website.cms.homePageSlug
   );
 
   if (!page) {
@@ -71,7 +71,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
   const wordpress = WordPress.getInstance();
   const page = await wordpress.getPage(
-    dictionaries[lang].static.wordpressHomePageSlug
+    dictionaries[lang].website.cms.homePageSlug
   );
 
   if (!page) {

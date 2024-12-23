@@ -90,7 +90,7 @@ export default function WebsiteFooterContent({
               </div>
               <div className='flex w-full flex-row justify-stretch gap-0 align-middle md:mx-0'>
                 <Input
-                  placeholder={dict.website.footer.newsletter.email}
+                  placeholder={dict.common.email}
                   type='email'
                   className='h-12 rounded-r-none border-0 bg-[#051f2a] text-gray-200 shadow-none placeholder:text-gray-700'
                 />
@@ -100,7 +100,7 @@ export default function WebsiteFooterContent({
                   variant='default'
                   icon={<MdOutlineEmail size={16} />}
                 >
-                  {dict.website.footer.newsletter.subscribe}
+                  {dict.common.actions.subscribe}
                 </Button>
               </div>
             </div>
@@ -112,13 +112,13 @@ export default function WebsiteFooterContent({
               className='inline-block text-xs font-normal text-white text-opacity-60 transition-all duration-200 hover:underline'
               href='/legal/privacy-policy'
             >
-              {dict.website.footer.privacy}
+              {dict.common.terms.privacyPolicy}
             </Link>
             <Link
               className='inline-block text-xs font-normal text-white text-opacity-60 transition-all duration-200 hover:underline'
               href='/legal/terms-of-use'
             >
-              {dict.website.footer.terms}
+              {dict.common.terms.termsAndConditions}
             </Link>
           </div>
           <p className='text-xs font-normal text-white text-opacity-60'>

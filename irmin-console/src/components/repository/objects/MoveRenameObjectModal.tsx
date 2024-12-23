@@ -89,7 +89,7 @@ export default function MoveRenameObjectModal({
         <Controller
           name='path'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input type='text' {...field} />
@@ -114,7 +114,7 @@ export default function MoveRenameObjectModal({
         <Controller
           name='name'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input type='text' {...field} />
@@ -140,7 +140,7 @@ export default function MoveRenameObjectModal({
           disabled={loading}
           type='submit'
         >
-          {loading ? dict.misc.loading : dict.repository.objects.moveOrRename}
+          {loading ? dict.common.loading : dict.repository.objects.moveOrRename}
         </Button>
       </div>
     </form>

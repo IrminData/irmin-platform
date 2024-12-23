@@ -191,7 +191,7 @@ export default function QueriesSection({
       if (!selectedQuery) return;
       const confirmed = await irminConfirm(
         'warning',
-        `${dict.misc.confirm}: ${selectedQuery.name}`
+        `${dict.common.areYouSureYouWantToDelete}: ${selectedQuery.name}`
       );
       if (!confirmed) return;
       try {
@@ -280,7 +280,7 @@ export default function QueriesSection({
               onClick={handleSaveQuery}
               disabled={!edited}
             >
-              {dict.query.save}
+              {dict.common.save}
             </Button>
             <Button
               variant='accent'

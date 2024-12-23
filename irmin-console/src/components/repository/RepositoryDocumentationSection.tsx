@@ -34,7 +34,7 @@ const RepositoryDocumentationSection = () => {
       onSubmit={handleSaveDocumentation}
     >
       <Button size='sm' variant='default' type='submit' icon={<TbFile />}>
-        {dict.repository.settings.saveChanges}
+        {dict.common.save}
       </Button>
     </DocumentationForm>
   );

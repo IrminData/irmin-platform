@@ -79,7 +79,7 @@ export default function WorkflowLayoutWrapper({
   const tabs = useMemo(
     () => [
       {
-        name: dict.workflow.tabs.overview,
+        name: dict.common.overview,
         link: `${baseUrl}`,
         active: pathname === `${baseUrl}`,
         icon: <TbRun size={14} />,
@@ -100,7 +100,7 @@ export default function WorkflowLayoutWrapper({
         hidden: false,
       },
       {
-        name: dict.workflow.tabs.documentation,
+        name: dict.documentation.documentation,
         link: `${baseUrl}/documentation`,
         active: pathname === `${baseUrl}/documentation`,
         icon: <TbFileText size={14} />,
@@ -121,7 +121,7 @@ export default function WorkflowLayoutWrapper({
         hidden: false,
       },
       {
-        name: dict.workflow.tabs.settings,
+        name: dict.consoleNavigation.settings,
         link: `${baseUrl}/settings`,
         active: pathname === `${baseUrl}/settings`,
         icon: <TbSettings size={14} />,
@@ -195,7 +195,7 @@ export default function WorkflowLayoutWrapper({
         </div>
         <TabsWithBackButton
           backHref={`${workspaceUrl}/workflows`}
-          backTooltip={dict.workflow.allWorkflows}
+          backTooltip={dict.workflow.workflows}
           tabs={tabs}
         />
       </div>

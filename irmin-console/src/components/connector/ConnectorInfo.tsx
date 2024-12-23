@@ -53,27 +53,23 @@ export function ConnectorInfo({ connector }: ConnectorInfoProps) {
 
       <div className='grid gap-4 text-sm'>
         <div className='flex items-center justify-between'>
-          <span className='font-semibold'>
-            {dict.connections.connector.version}:
-          </span>
+          <span className='font-semibold'>{dict.connectors.version}:</span>
           <span>{connector.version}</span>
         </div>
         <div className='flex items-center justify-between'>
           <span className='font-semibold'>
-            {dict.connections.connector.structureVersion}:
+            {dict.connectors.structureVersion}:
           </span>
           <span>{connector.structure_version}</span>
         </div>
         <div className='flex items-center justify-between'>
-          <span className='font-semibold'>
-            {dict.connections.connector.author}:
-          </span>
+          <span className='font-semibold'>{dict.connectors.author}:</span>
           <span>{connector.author}</span>
         </div>
         {connector.author_email && (
           <div className='flex items-center justify-between'>
             <span className='font-semibold'>
-              {dict.connections.connector.authorEmail}:
+              {dict.connectors.authorEmail}:
             </span>
             <a
               href={`mailto:${connector.author_email}`}
@@ -89,9 +85,7 @@ export function ConnectorInfo({ connector }: ConnectorInfoProps) {
       <Separator />
 
       <div>
-        <h3 className='mb-2 font-semibold'>
-          {dict.connections.connector.categories}:
-        </h3>
+        <h3 className='mb-2 font-semibold'>{dict.connectors.categories}:</h3>
         <div className='flex flex-wrap gap-2'>
           {connector.primary_category && (
             <Badge key={connector.primary_category} variant={'primary'}>
@@ -109,9 +103,7 @@ export function ConnectorInfo({ connector }: ConnectorInfoProps) {
       </div>
 
       <div>
-        <h3 className='mb-2 font-semibold'>
-          {dict.connections.connector.capabilities}:
-        </h3>
+        <h3 className='mb-2 font-semibold'>{dict.connectors.capabilities}:</h3>
         <div className='flex flex-wrap gap-2'>
           {connector.capabilities.map((capability) => (
             <Badge key={capability} variant='primary'>
@@ -122,9 +114,7 @@ export function ConnectorInfo({ connector }: ConnectorInfoProps) {
       </div>
 
       <div>
-        <h3 className='mb-2 font-semibold'>
-          {dict.connections.connector.locales}:
-        </h3>
+        <h3 className='mb-2 font-semibold'>{dict.connectors.locales}:</h3>
         <div className='flex flex-wrap gap-2'>
           {connector.locales.map((locale) => (
             <Badge key={locale} variant='primary'>
@@ -167,7 +157,7 @@ export function ConnectorInfo({ connector }: ConnectorInfoProps) {
             className='w-full'
             variant='gray'
           >
-            {dict.connections.connector.readMore}
+            {dict.common.readMore}
           </Button>
         </div>
       )}

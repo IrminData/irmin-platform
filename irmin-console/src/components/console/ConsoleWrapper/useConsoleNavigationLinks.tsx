@@ -72,42 +72,42 @@ const useConsoleNavigationLinks = (): {
     () =>
       [
         {
-          title: dict.consoleNavigation.links.home,
+          title: dict.consoleNavigation.workspace,
           href: `${workspaceUrl}/home`,
           icon: <TbDashboard />,
         },
         {
-          title: dict.consoleNavigation.links.repositories,
+          title: dict.repository.repositories,
           href: `${workspaceUrl}/repositories`,
           icon: <TbDatabase />,
         },
         {
-          title: dict.consoleNavigation.links.connections,
+          title: dict.connections.connections,
           href: `${workspaceUrl}/connections`,
           icon: <GoWorkflow />,
         },
         {
-          title: dict.consoleNavigation.links.workflows,
+          title: dict.workflow.workflows,
           href: `${workspaceUrl}/workflows`,
           icon: <TbRun />,
         },
         {
-          title: dict.consoleNavigation.links.editor,
+          title: dict.consoleNavigation.editor,
           href: `${workspaceUrl}/editor`,
           icon: <TbFile />,
         },
         {
-          title: dict.consoleNavigation.links.queries,
+          title: dict.consoleNavigation.queries,
           href: `${workspaceUrl}/queries`,
           icon: <TbSql />,
         },
         {
-          title: dict.consoleNavigation.links.logs,
+          title: dict.consoleNavigation.logs,
           href: `${workspaceUrl}/logs`,
           icon: <TbLogs />,
         },
         {
-          title: dict.consoleNavigation.links.documentation,
+          title: dict.documentation.documentation,
           href: `${workspaceUrl}/documentation`,
           icon: <TbSchema />,
         },
@@ -120,12 +120,12 @@ const useConsoleNavigationLinks = (): {
 
   const noWorkspaceLinks = [
     {
-      title: dict.consoleNavigation.links.workspaces,
+      title: dict.consoleNavigation.workspaces,
       href: `/${locale}/console/manage-workspaces`,
       icon: <TbDashboard />,
     },
     {
-      title: dict.consoleNavigation.links.goToWebsite,
+      title: dict.consoleNavigation.goToWebsite,
       href: '/',
       icon: <TbChevronLeft />,
     },
@@ -136,19 +136,19 @@ const useConsoleNavigationLinks = (): {
 
   const settingsLinks = [
     {
-      title: dict.consoleNavigation.links.workspaceSettings,
+      title: dict.consoleNavigation.workspaceSettings,
       href: `${workspaceUrl}/settings`,
       icon: <TbSettings />,
       active: isActiveLink(`${workspaceUrl}/settings`),
     },
     {
-      title: dict.consoleNavigation.links.myProfile,
+      title: dict.consoleNavigation.myProfile,
       href: `/${locale}/console/profile`,
       icon: <TbUser />,
       active: isActiveLink(`/${locale}/console/profile`),
     },
     {
-      title: dict.consoleNavigation.links.signOut,
+      title: dict.consoleNavigation.signOut,
       action: signOut,
       icon: <TbLogout />,
       active: false,
@@ -157,7 +157,7 @@ const useConsoleNavigationLinks = (): {
 
   const usefulLinks = [
     {
-      title: dict.consoleNavigation.links.guides,
+      title: dict.consoleNavigation.guides,
       href: `/${locale}/legal`,
       icon: <TbBook />,
       props: {
@@ -166,7 +166,7 @@ const useConsoleNavigationLinks = (): {
       active: false,
     },
     {
-      title: dict.consoleNavigation.links.developerDocs,
+      title: dict.consoleNavigation.developerDocs,
       href: `/${locale}/docs`,
       icon: <MdCode />,
       props: {
@@ -175,7 +175,7 @@ const useConsoleNavigationLinks = (): {
       active: false,
     },
     {
-      title: dict.consoleNavigation.links.contactSupport,
+      title: dict.consoleNavigation.contactSupport,
       href: `/${locale}/contact`,
       icon: <TbHelp />,
       props: {
@@ -184,7 +184,7 @@ const useConsoleNavigationLinks = (): {
       active: false,
     },
     {
-      title: dict.consoleNavigation.links.termsAndPrivacy,
+      title: dict.consoleNavigation.termsAndPrivacy,
       href: `/${locale}/legal`,
       icon: <MdOutlinePrivacyTip />,
       props: {

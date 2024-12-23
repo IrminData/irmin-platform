@@ -65,7 +65,7 @@ const WorkspaceSendInviteModalContent = ({
           <Controller
             name='firstName'
             control={control}
-            rules={{ required: dict.misc.fieldRequired }}
+            rules={{ required: dict.common.fieldRequired }}
             render={({ field }) => (
               <Input
                 className='mt-2'
@@ -84,7 +84,7 @@ const WorkspaceSendInviteModalContent = ({
           <Controller
             name='lastName'
             control={control}
-            rules={{ required: dict.misc.fieldRequired }}
+            rules={{ required: dict.common.fieldRequired }}
             render={({ field }) => (
               <Input
                 className='mt-2'
@@ -104,7 +104,7 @@ const WorkspaceSendInviteModalContent = ({
             name='email'
             control={control}
             rules={{
-              required: dict.misc.fieldRequired,
+              required: dict.common.fieldRequired,
               pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
             }}
             render={({ field }) => (
@@ -126,7 +126,7 @@ const WorkspaceSendInviteModalContent = ({
             name='phone'
             control={control}
             rules={{
-              required: dict.misc.fieldRequired,
+              required: dict.common.fieldRequired,
             }}
             render={({ field }) => (
               <Input
@@ -147,7 +147,7 @@ const WorkspaceSendInviteModalContent = ({
             name='company'
             control={control}
             rules={{
-              required: dict.misc.fieldRequired,
+              required: dict.common.fieldRequired,
             }}
             render={({ field }) => (
               <Input
@@ -168,7 +168,7 @@ const WorkspaceSendInviteModalContent = ({
             <Controller
               name='role'
               control={control}
-              rules={{ required: dict.misc.fieldRequired }}
+              rules={{ required: dict.common.fieldRequired }}
               render={({ field }) => (
                 <ReactSelect
                   {...field}
@@ -203,7 +203,7 @@ const WorkspaceSendInviteModalContent = ({
         </div>
         <div className='flex flex-row gap-2'>
           <Button size='sm' variant='link' onClick={() => onClose(false)}>
-            {dict.users.cancel}
+            {dict.common.cancel}
           </Button>
           <Button
             size='sm'

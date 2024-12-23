@@ -27,7 +27,7 @@ class DiffService {
   /**
    * Compare two refs in a repository and return the differences
    *
-   * To get uncommited changes, use the latest commit as the base ref and the current branch as the compare ref
+   * To get uncommitted changes, use the latest commit as the base ref and the current branch as the compare ref
    *
    * @param repository - The repository refs are in
    * @param baseRef - The base ref to compare (branch, tag, commit)

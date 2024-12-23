@@ -378,8 +378,8 @@ export default function ConfigureWorkflowable({
               <ReactSelect
                 value={
                   workflowData.recursive
-                    ? { value: true, label: dict.misc.yes }
-                    : { value: false, label: dict.misc.no }
+                    ? { value: true, label: dict.common.yes }
+                    : { value: false, label: dict.common.no }
                 }
                 onChange={(newValue) => {
                   setWorkflowData({
@@ -390,11 +390,11 @@ export default function ConfigureWorkflowable({
                 options={[
                   {
                     value: true,
-                    label: dict.misc.yes,
+                    label: dict.common.yes,
                   },
                   {
                     value: false,
-                    label: dict.misc.no,
+                    label: dict.common.no,
                   },
                 ]}
                 className='react-select-container w-full'

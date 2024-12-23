@@ -84,7 +84,7 @@ export default function WebsiteCareersSection({
             <div className='w-full px-3 md:mb-0 md:w-1/3'>
               <Input
                 icon={<FaSearch />}
-                placeholder={dict.website.sections.careers.search}
+                placeholder={dict.common.search}
                 onChange={(e) => setStringFilter(e.target.value)}
               />
             </div>

@@ -53,19 +53,19 @@ const RepositorySettingsSection = ({
   }>[] = [
     {
       name: 'name',
-      label: dict.misc.name,
+      label: dict.common.name,
       type: 'text',
       placeholder: '',
     },
     {
       name: 'description',
-      label: dict.misc.description,
+      label: dict.common.description,
       type: 'textarea',
       placeholder: '',
     },
     {
       name: 'owner',
-      label: dict.repository.settings.owner,
+      label: dict.list.owner,
       type: 'select',
       options:
         currentWorkspace?.users?.map((user) => ({
@@ -94,7 +94,7 @@ const RepositorySettingsSection = ({
         fieldConfiguration={fieldConfiguration}
         deleteItem={deleteRepository}
         itemName='Repository'
-        submitButtonLabel={dict.repository.settings.saveChanges}
+        submitButtonLabel={dict.common.save}
         deleteButtonLabel={dict.repository.settings.deleteRepository}
         dangerZoneMessage={dict.repository.settings.deletionNote}
       />

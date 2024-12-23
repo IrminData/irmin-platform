@@ -51,7 +51,7 @@ const Confirm = ({
             variant='ghost'
             onClick={() => onSelect(false)}
             aria-label='Close confirmation popup'
-            tooltip={dict.misc.close}
+            tooltip={dict.common.close}
             icon={<IoClose size={22} />}
           />
         </div>
@@ -63,7 +63,7 @@ const Confirm = ({
             size='sm'
             className='w-1/2'
           >
-            {dict.misc.cancel}
+            {dict.common.cancel}
           </Button>
           <Button
             variant={type === 'warning' ? 'destructive' : 'default'}
@@ -72,7 +72,7 @@ const Confirm = ({
             size='sm'
             className='w-1/2'
           >
-            {dict.misc.confirm}
+            {dict.common.confirm}
           </Button>
         </div>
       </div>

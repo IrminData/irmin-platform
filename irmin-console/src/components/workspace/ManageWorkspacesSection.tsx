@@ -109,7 +109,7 @@ const ManageWorkspacesSection = ({
             <Controller
               name='newWorkspaceName'
               control={control}
-              rules={{ required: dict.misc.fieldRequired }}
+              rules={{ required: dict.common.fieldRequired }}
               render={({ field }) => (
                 <Input
                   type='text'
@@ -127,7 +127,7 @@ const ManageWorkspacesSection = ({
               rules={{
                 maxLength: {
                   value: 255,
-                  message: dict.misc.fieldInvalid,
+                  message: dict.common.fieldInvalid,
                 },
               }}
               render={({ field }) => (

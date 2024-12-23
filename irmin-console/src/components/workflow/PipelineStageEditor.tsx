@@ -168,7 +168,7 @@ export default function PipelineStageEditor({
                       onClick={() => remove(index)}
                       variant='destructive'
                     >
-                      {dict.workflow.pipeline.removeStage}
+                      {dict.common.remove}
                     </Button>
                   </div>
                 )}
@@ -176,7 +176,7 @@ export default function PipelineStageEditor({
 
               <div className='flex flex-col gap-2'>
                 <Label htmlFor={`description-${index}`}>
-                  {dict.misc.description}
+                  {dict.common.description}
                 </Label>
                 <Input
                   id={`description-${index}`}

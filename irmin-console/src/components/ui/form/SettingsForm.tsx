@@ -144,7 +144,7 @@ export default function SettingsForm<T extends FieldValues>({
       {deleteItem && (
         <div className='mt-8'>
           <p className='text-sm font-normal capitalize text-destructive md:text-xl'>
-            {dict.misc.dangerZone}
+            {dict.common.dangerZone}
           </p>
           <p className='mt-2 max-w-sm text-xs md:text-sm'>
             {dangerZoneMessage}

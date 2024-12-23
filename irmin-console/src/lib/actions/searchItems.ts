@@ -39,14 +39,14 @@ export async function generateSearchItems({
     // Add static Irmin items
     newItems.push(
       {
-        title: dict.consoleNavigation.staticSearchItems.irminWebsite,
+        title: dict.consoleNavigation.irminWebsite,
         description:
           dict.consoleNavigation.staticSearchItems.description.irminWebsite,
         link: `/${locale}`,
         type: ConsoleSearchItemType.Irmin,
       },
       {
-        title: dict.consoleNavigation.staticSearchItems.contactUs,
+        title: dict.common.contactUs,
         description:
           dict.consoleNavigation.staticSearchItems.description.contactUs,
         link: `/${locale}/contact`,
@@ -141,31 +141,38 @@ export async function generateSearchItems({
           type: ConsoleSearchItemType.Irmin,
         },
         {
-          title: dict.consoleNavigation.staticSearchItems.workflows,
+          title: dict.workflow.workflows,
           description:
             dict.consoleNavigation.staticSearchItems.description.workflows,
           link: `/${locale}/console/${workspace}/workflows`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
-          title: dict.consoleNavigation.staticSearchItems.actions,
+          title: dict.workflow.actionWorkflows,
           description:
             dict.consoleNavigation.staticSearchItems.description.actions,
           link: `/${locale}/console/${workspace}/workflows/actions`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
-          title: dict.consoleNavigation.staticSearchItems.imports,
+          title: dict.workflow.importWorkflows,
           description:
             dict.consoleNavigation.staticSearchItems.description.imports,
           link: `/${locale}/console/${workspace}/workflows/imports`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
-          title: dict.consoleNavigation.staticSearchItems.exports,
+          title: dict.workflow.exportWorkflows,
           description:
             dict.consoleNavigation.staticSearchItems.description.exports,
           link: `/${locale}/console/${workspace}/workflows/exports`,
+          type: ConsoleSearchItemType.Irmin,
+        },
+        {
+          title: dict.workflow.pipelineWorkflows,
+          description:
+            dict.consoleNavigation.staticSearchItems.description.pipelines,
+          link: `/${locale}/console/${workspace}/workflows/pipelines`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
@@ -176,7 +183,7 @@ export async function generateSearchItems({
           type: ConsoleSearchItemType.Irmin,
         },
         {
-          title: dict.consoleNavigation.staticSearchItems.connections,
+          title: dict.connections.connections,
           description:
             dict.consoleNavigation.staticSearchItems.description.connections,
           link: `/${locale}/console/${workspace}/connections`,
@@ -191,7 +198,7 @@ export async function generateSearchItems({
           type: ConsoleSearchItemType.Irmin,
         },
         {
-          title: dict.consoleNavigation.staticSearchItems.repositories,
+          title: dict.repository.repositories,
           description:
             dict.consoleNavigation.staticSearchItems.description.repositories,
           link: `/${locale}/console/${workspace}/repositories`,

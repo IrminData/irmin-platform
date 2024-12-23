@@ -39,9 +39,9 @@ const Alert = ({
   onClose: () => void;
 }) => {
   const { dict } = useLocale();
-  const successTitle = dict.misc.success;
-  const errorTitle = dict.misc.error;
-  const infoTitle = dict.misc.info;
+  const successTitle = dict.common.success;
+  const errorTitle = dict.common.error;
+  const infoTitle = dict.common.info;
   return (
     <div
       id='alert'
@@ -78,8 +78,8 @@ const Alert = ({
           variant='ghost'
           className='ml-4 rounded-full'
           onClick={onClose}
-          aria-label={dict.misc.close}
-          tooltip={dict.misc.close}
+          aria-label={dict.common.close}
+          tooltip={dict.common.close}
           icon={<IoClose size={24} />}
         />
       </div>

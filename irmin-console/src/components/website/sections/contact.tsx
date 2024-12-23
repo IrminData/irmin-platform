@@ -117,7 +117,7 @@ export default function WebsiteContactSection({
               <form>
                 <div className='mb-6'>
                   <label className='mb-2 block font-normal leading-6 text-foreground'>
-                    {dict.website.sections.contact.email}
+                    {dict.common.email}
                   </label>
                   <Input type='email' placeholder='me@example.com' />
                 </div>
@@ -126,18 +126,16 @@ export default function WebsiteContactSection({
                     className='mb-2 block font-normal leading-6 text-foreground'
                     htmlFor=''
                   >
-                    {dict.website.sections.contact.message}
+                    {dict.common.message}
                   </label>
                   <textarea
                     className='block h-32 w-full resize-none appearance-none rounded-lg border border-irmin_black px-3 py-2 leading-6 text-foreground shadow-md md:h-52'
-                    placeholder={
-                      dict.website.sections.contact.messagePlaceholder
-                    }
+                    placeholder={dict.common.messagePlaceholder}
                     defaultValue={''}
                   />
                 </div>
                 <Button className='w-full' variant='default'>
-                  {dict.website.sections.contact.send}
+                  {dict.common.actions.send}
                 </Button>
               </form>
             </div>

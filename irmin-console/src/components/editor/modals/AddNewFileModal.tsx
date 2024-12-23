@@ -164,7 +164,7 @@ export default function AddNewFileModal({
         <Controller
           name='extension'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <ReactSelect
               {...field}
@@ -184,7 +184,7 @@ export default function AddNewFileModal({
         <Controller
           name='name'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <Input type='text' disabled={loading} {...field} />
           )}
@@ -198,7 +198,7 @@ export default function AddNewFileModal({
         <Controller
           name='path'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <div className='flex flex-row items-center'>
               <Input type='text' disabled={true} {...field} />
@@ -252,7 +252,7 @@ export default function AddNewFileModal({
         type='submit'
         disabled={loading}
       >
-        {loading ? dict.misc.loading : dict.fileNavigator.createFile}
+        {loading ? dict.common.loading : dict.fileNavigator.createFile}
       </Button>
     </form>
   );

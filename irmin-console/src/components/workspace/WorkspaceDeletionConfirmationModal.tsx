@@ -26,7 +26,7 @@ export default function WorkspaceDeletionConfirmationModal({
             close();
           }}
         >
-          {dict.workspace.cancel}
+          {dict.common.cancel}
         </Button>
         <Button
           variant='destructive'
@@ -35,7 +35,7 @@ export default function WorkspaceDeletionConfirmationModal({
             handleDelete();
           }}
         >
-          {dict.workspace.delete}
+          {dict.list.delete}
         </Button>
       </div>
     </div>

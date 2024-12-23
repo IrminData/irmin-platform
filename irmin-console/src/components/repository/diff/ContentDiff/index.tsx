@@ -64,7 +64,7 @@ const ContentDiff = ({
               className='ml-auto'
               onClick={() => handleDownload(baseText, baseContentType)}
             >
-              {dict.repository.compare.download}
+              {dict.common.actions.download}
             </Button>
           </div>
           <div className='flex w-1/2 flex-row items-center gap-2 p-2'>
@@ -77,7 +77,7 @@ const ContentDiff = ({
               className='ml-auto'
               onClick={() => handleDownload(compareText, compareContentType)}
             >
-              {dict.repository.compare.download}
+              {dict.common.actions.download}
             </Button>
           </div>
         </div>
@@ -102,7 +102,7 @@ const ContentDiff = ({
                 handleDownload(baseContent as Blob, baseContentType)
               }
             >
-              {dict.repository.compare.download}
+              {dict.common.actions.download}
             </Button>
           </div>
           <div className='max-w-full overflow-scroll text-xs'>
@@ -122,7 +122,7 @@ const ContentDiff = ({
                 handleDownload(compareContent as Blob, compareContentType)
               }
             >
-              {dict.repository.compare.download}
+              {dict.common.actions.download}
             </Button>
           </div>
           <div className='max-w-full overflow-scroll text-xs'>

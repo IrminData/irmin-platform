@@ -261,7 +261,9 @@ const WorkflowSection = () => {
                 {dict.workflow.exportRecursive}
               </p>
               <p className='text-base'>
-                {workflow.workflowable.recursive ? dict.misc.yes : dict.misc.no}
+                {workflow.workflowable.recursive
+                  ? dict.common.yes
+                  : dict.common.no}
               </p>
             </div>
           )}
@@ -269,7 +271,7 @@ const WorkflowSection = () => {
             <div className='flex flex-col gap-1'>
               <p className='text-sm opacity-60'>{dict.workflow.livePipeline}</p>
               <p className='text-base'>
-                {workflow.workflowable.live ? dict.misc.yes : dict.misc.no}
+                {workflow.workflowable.live ? dict.common.yes : dict.common.no}
               </p>
             </div>
           )}

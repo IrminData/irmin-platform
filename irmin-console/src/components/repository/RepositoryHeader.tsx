@@ -66,43 +66,43 @@ export default function RepositoryHeader({
   const tabs = useMemo(
     () => [
       {
-        name: dict.repository.tabs.dataViewer,
+        name: dict.repository.objects.objects,
         link: `${baseUrl}?${searchParams.toString()}`,
         active: pathname === `${baseUrl}`,
         icon: <TbDatabase size={14} />,
       },
       {
-        name: dict.repository.tabs.commits,
+        name: dict.repository.commit.commits,
         link: `${baseUrl}/commits?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/commits`,
         icon: <GoGitCommit size={14} />,
       },
       {
-        name: dict.repository.tabs.tags,
+        name: dict.repository.tags.tags,
         link: `${baseUrl}/tags?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/tags`,
         icon: <TbTags size={14} />,
       },
       {
-        name: dict.repository.tabs.branches,
+        name: dict.repository.branches.branches,
         link: `${baseUrl}/branches?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/branches`,
         icon: <GoGitBranch size={14} />,
       },
       {
-        name: dict.repository.tabs.compare,
+        name: dict.repository.compare.compare,
         link: `${baseUrl}/compare?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/compare`,
         icon: <GoGitCompare size={14} />,
       },
       {
-        name: dict.repository.tabs.documentation,
+        name: dict.documentation.documentation,
         link: `${baseUrl}/documentation?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/documentation`,
         icon: <TbFileText size={14} />,
       },
       {
-        name: dict.repository.tabs.settings,
+        name: dict.consoleNavigation.settings,
         link: `${baseUrl}/settings?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/settings`,
         icon: <TbSettings size={14} />,
@@ -181,7 +181,7 @@ export default function RepositoryHeader({
       </div>
       <TabsWithBackButton
         backHref={`${workspaceUrl}/repositories`}
-        backTooltip={dict.repository.allRepositories}
+        backTooltip={dict.repository.repositories}
         tabs={tabs}
       />
     </div>

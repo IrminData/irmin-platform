@@ -19,14 +19,14 @@ function ConsoleErrorSection({
     <div className='container relative z-10 mx-auto px-4 py-16 text-center'>
       <div className='py-16'>
         <span className='mb-4 inline-block rounded-full bg-irmin_green px-2 py-px text-xs font-medium leading-5 text-white shadow-sm'>
-          {dict.misc.error}
+          {dict.common.error}
         </span>
         <h2 className='mb-4 text-4xl font-bold leading-tight tracking-tighter md:text-5xl'>
-          {dict.misc.ohNo} {dict.misc.somethingWentWrong}
+          {dict.common.ohNo} {dict.common.somethingWentWrong}
         </h2>
         <p className='mb-6 text-lg text-foreground md:text-xl'>
-          {dict.misc.weEncounteredError} {error.message}.{' '}
-          {dict.misc.tryAgainOrContactSupport}
+          {dict.common.weEncounteredError} {error.message}.{' '}
+          {dict.common.tryAgainOrContactSupport}
         </p>
         <div className='flex justify-center'>
           <div className='mx-2'>
@@ -34,12 +34,12 @@ function ConsoleErrorSection({
               variant='default'
               href={`/${locale}/console/manage-workspaces`}
             >
-              {dict.misc.goBackConsole}
+              {dict.common.goBackConsole}
             </Button>
           </div>
           <div className='mx-2'>
             <Button variant='outline' onClick={reset}>
-              {dict.misc.tryAgain}
+              {dict.common.tryAgain}
             </Button>
           </div>
         </div>

@@ -208,7 +208,7 @@ export default function RepositoryCompareSection() {
             variant='secondary'
             icon={<TbRefresh size={18} />}
             onClick={handleFetchDiff}
-            tooltip={dict.misc.refresh}
+            tooltip={dict.common.refresh}
             disabled={loadingDiff}
           />
           <Button

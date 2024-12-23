@@ -24,7 +24,7 @@ const WorkspaceBillingSection = () => {
         {dict.workspace.billingNote}
       </p>
       <Button href={'/contact'} size='sm' className='w-48'>
-        {dict.workspace.contactUs}
+        {dict.common.contactUs}
       </Button>
     </ContentWrapper>
   );

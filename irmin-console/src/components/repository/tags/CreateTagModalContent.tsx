@@ -54,7 +54,7 @@ export default function CreateTagModalContent({
         <Controller
           name='tagName'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input {...field} />
@@ -72,7 +72,7 @@ export default function CreateTagModalContent({
         <Controller
           name='ref'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input disabled {...field} />

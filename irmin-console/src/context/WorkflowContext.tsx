@@ -87,7 +87,7 @@ export const WorkflowProvider = ({
   const handleDeleteWorkflow = useCallback(async () => {
     const confirmed = await irminConfirm(
       'warning',
-      `${dict.misc.areYouSureYouWantToDelete} (${workflow.name})`
+      `${dict.common.areYouSureYouWantToDelete} (${workflow.name})`
     );
     if (updating.current || !confirmed) return;
     try {
@@ -128,7 +128,7 @@ export const WorkflowProvider = ({
     async (ownerID: string) => {
       const confirmed = await irminConfirm(
         'warning',
-        `${dict.misc.areYouSureYouWantToReassign} (${workflow.name})`
+        `${dict.common.areYouSureYouWantToReassign} (${workflow.name})`
       );
       if (updating.current || !confirmed) return;
       try {

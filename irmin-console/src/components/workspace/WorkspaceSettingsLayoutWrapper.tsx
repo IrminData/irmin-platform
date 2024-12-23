@@ -81,7 +81,7 @@ export default function WorkspaceSettingsLayoutWrapper({
       <div className='container relative mx-auto max-w-6xl'>
         <div className='mx-auto my-8 flex w-full flex-col gap-2 px-2 md:px-4'>
           <h1 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
-            {dict.consoleNavigation.links.workspaceSettings}
+            {dict.consoleNavigation.workspaceSettings}
           </h1>
           <p className='max-w-lg text-base text-gray-400 lg:text-lg'>
             {workspace.name}

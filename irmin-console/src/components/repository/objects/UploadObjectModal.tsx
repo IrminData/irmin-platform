@@ -102,7 +102,7 @@ export default function UploadObjectModal({
         <Controller
           name='repository'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input type='text' disabled={!!currentRepository} {...field} />
@@ -120,7 +120,7 @@ export default function UploadObjectModal({
         <Controller
           name='ref'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input type='text' disabled={!!currentRef} {...field} />
@@ -138,7 +138,7 @@ export default function UploadObjectModal({
         <Controller
           name='name'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input type='text' {...field} />
@@ -156,7 +156,7 @@ export default function UploadObjectModal({
         <Controller
           name='files'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input
@@ -198,7 +198,7 @@ export default function UploadObjectModal({
           disabled={loading}
           type='submit'
         >
-          {loading ? dict.misc.loading : dict.repository.objects.uploadObject}
+          {loading ? dict.common.loading : dict.repository.objects.uploadObject}
         </Button>
       </div>
     </form>

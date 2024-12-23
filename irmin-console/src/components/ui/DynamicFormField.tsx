@@ -114,7 +114,7 @@ function DynamicFormField(
               fieldProps?.onChange?.(value);
             }}
             options={options}
-            noOptionsMessage={() => dict.misc.noOptionsMessage}
+            noOptionsMessage={() => dict.common.noOptionsMessage}
             className='react-select-container'
             classNamePrefix='react-select'
             ref={ref}

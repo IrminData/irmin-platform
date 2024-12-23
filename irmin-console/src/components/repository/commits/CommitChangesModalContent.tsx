@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { useLocale } from '@/context/LocaleContext';
 
 /**
- * Modal content to commit the uncommited changes.
+ * Modal content to commit the uncommitted changes.
  *
  * @param props - The props
  * @param props.commitChanges - Callback to commit the changes
@@ -68,7 +68,7 @@ export default function CommitChangesModalContent({
         <Controller
           name='message'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <Input
               {...field}

@@ -60,8 +60,8 @@ export default function WorkflowRunLogsSection({
             className='rounded-full'
             icon={<IoChevronBack size={24} />}
             onClick={() => router.back()}
-            tooltip={dict.misc.back}
-            aria-label={dict.misc.back}
+            tooltip={dict.common.back}
+            aria-label={dict.common.back}
           />
           <div>
             <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
@@ -98,7 +98,7 @@ export default function WorkflowRunLogsSection({
             </p>
           </div>
           <div className='flex flex-col gap-1'>
-            <p className='text-sm opacity-60'>{dict.workflow.owner}</p>
+            <p className='text-sm opacity-60'>{dict.list.owner}</p>
             <p className='text-base'>{workflowRun.owner.email}</p>
           </div>
           <div className='flex flex-col gap-1'>

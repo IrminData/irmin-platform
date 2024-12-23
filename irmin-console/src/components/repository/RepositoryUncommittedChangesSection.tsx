@@ -16,14 +16,14 @@ import { useRepository } from '@/context/RepositoryContext';
 import { Diff } from '@/types/core/Diff';
 
 import CommitChangesModalContent from './commits/CommitChangesModalContent';
-import NoUncommitedChangesWarning from './commits/NoUncommitedChangesWarning';
+import NoUncommittedChangesWarning from './commits/NoUncommittedChangesWarning';
 import DiffView from './diff/DiffVIew';
 import ImmutableWarning from './ImmutableWarning';
 
 /**
- * Section to view and commit uncommited changes in a repository.
+ * Section to view and commit uncommitted changes in a repository.
  */
-export default function RepositoryUncommitedChangesSection() {
+export default function RepositoryUncommittedChangesSection() {
   const { dict } = useLocale();
   const { irminModal, irminConfirm } = usePopup();
   const {
@@ -125,7 +125,7 @@ export default function RepositoryUncommitedChangesSection() {
       <div className='mb-8 flex w-full flex-wrap items-center justify-between gap-4 lg:flex-row'>
         {/* Title */}
         <h3 className='text-sm text-gray-900 lg:text-base dark:text-gray-100'>
-          {dict.repository.commit.showingUncommitedChangesFor}{' '}
+          {dict.repository.commit.showingUncommittedChangesFor}{' '}
           <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
             {currentRef}
           </span>
@@ -136,7 +136,7 @@ export default function RepositoryUncommitedChangesSection() {
             size='icon'
             icon={<TbRefresh size={18} />}
             onClick={handleFetchDiff}
-            tooltip={dict.misc.refresh}
+            tooltip={dict.common.refresh}
             disabled={loadingDiff}
           />
           <ButtonWithTooltip
@@ -158,13 +158,13 @@ export default function RepositoryUncommitedChangesSection() {
         </div>
       </div>
       {loadingDiff && <LoadingSkeleton className='h-96' />}
-      {!loadingDiff && !canCommit && <NoUncommitedChangesWarning />}
+      {!loadingDiff && !canCommit && <NoUncommittedChangesWarning />}
       {!loadingDiff && canCommit && diff && (
         <DiffView
           diff={diff}
           hideHeader={true}
           hideCommits={true}
-          noDiffWarning={<NoUncommitedChangesWarning />}
+          noDiffWarning={<NoUncommittedChangesWarning />}
         />
       )}
     </div>

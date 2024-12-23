@@ -27,7 +27,7 @@ export default async function WebsiteNavigation() {
     const language = languages[i];
 
     // Get the menu slug for the current language from the dictionary
-    const menuSlug = dictionaries[language.code].static.wordpressMainMenuSlug;
+    const menuSlug = dictionaries[language.code].website.cms.mainMenuSlug;
 
     // Fetch the menu
     const menu = await wordpress.getMenu(menuSlug);

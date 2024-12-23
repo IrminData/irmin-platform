@@ -170,7 +170,7 @@ const RepositoryObjectSchemaSection = ({
             onClick={() => setQueryResultsOpen(false)}
             icon={<TbChevronUp className='text-xl' />}
           >
-            {dict.misc.close} {dict.query.queryResults}
+            {dict.common.close} {dict.query.queryResults}
           </Button>
         )}
       </div>

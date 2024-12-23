@@ -95,7 +95,7 @@ export default function BranchList({
   return (
     <div id='branches-list'>
       <NormalList
-        headers={[dict.misc.name, dict.list.actions]}
+        headers={[dict.common.name, dict.list.actions]}
         hideHeaders={false}
         loading={loading}
         rows={rows}

@@ -103,7 +103,7 @@ export default function DynamicForm({
       {renderFields()}
       {Object.keys(errors).length > 0 && (
         <p className='w-full text-center text-red-500'>
-          {dict.misc.pleaseFixErrors}
+          {dict.common.pleaseFixErrors}
         </p>
       )}
       <Button
@@ -123,7 +123,7 @@ export default function DynamicForm({
         size='sm'
         className='w-full'
       >
-        {dict.misc.resetForm}
+        {dict.common.resetForm}
       </Button>
     </form>
   );

@@ -37,31 +37,31 @@ export default function WorkflowsLayoutWrapper({
     () => [
       {
         icon: <TbRun />,
-        name: dict.workflow.allWorkflows,
+        name: dict.workflow.workflows,
         slug: 'all-workflows',
         link: `${baseUrl}`,
       },
       {
         icon: <TbPlayerPlay />,
-        name: dict.consoleNavigation.links.actions,
+        name: dict.workflow.actions,
         slug: 'action-workflows',
         link: `${baseUrl}/actions`,
       },
       {
         icon: <TbDatabaseImport />,
-        name: dict.consoleNavigation.links.imports,
+        name: dict.workflow.imports,
         slug: 'import-workflows',
         link: `${baseUrl}/imports`,
       },
       {
         icon: <TbDatabaseExport />,
-        name: dict.consoleNavigation.links.exports,
+        name: dict.workflow.exports,
         slug: 'export-workflows',
         link: `${baseUrl}/exports`,
       },
       {
         icon: <RiFlowChart />,
-        name: dict.consoleNavigation.links.pipelines,
+        name: dict.workflow.pipelines,
         slug: 'pipeline-workflows',
         link: `${baseUrl}/pipelines`,
       },

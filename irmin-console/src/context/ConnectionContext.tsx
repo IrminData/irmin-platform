@@ -73,7 +73,7 @@ export const ConnectionProvider = ({
   const handleDeleteConnection = useCallback(async () => {
     const confirmed = await irminConfirm(
       'warning',
-      `${dict.misc.areYouSureYouWantToDelete} (${connection.name})`
+      `${dict.common.areYouSureYouWantToDelete} (${connection.name})`
     );
     if (updating.current || !confirmed) return;
     try {
@@ -114,7 +114,7 @@ export const ConnectionProvider = ({
     async (ownerID: string) => {
       const confirmed = await irminConfirm(
         'warning',
-        `${dict.misc.areYouSureYouWantToReassign} (${connection.name})`
+        `${dict.common.areYouSureYouWantToReassign} (${connection.name})`
       );
       if (updating.current || !confirmed) return;
       try {

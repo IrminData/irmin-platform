@@ -146,7 +146,7 @@ export default function AddNewFolderModal({
         <Controller
           name='name'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <Input type='text' disabled={loading} {...field} />
           )}
@@ -160,7 +160,7 @@ export default function AddNewFolderModal({
         <Controller
           name='path'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <div className='flex items-center'>
               <Input type='text' disabled {...field} />
@@ -208,7 +208,7 @@ export default function AddNewFolderModal({
         type='submit'
         disabled={loading}
       >
-        {loading ? dict.misc.loading : dict.fileNavigator.createFolder}
+        {loading ? dict.common.loading : dict.fileNavigator.createFolder}
       </Button>
     </form>
   );

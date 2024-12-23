@@ -55,7 +55,7 @@ export default function CreateBranchModalContent({
         <Controller
           name='branchName'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Input {...field} />
@@ -73,7 +73,7 @@ export default function CreateBranchModalContent({
         <Controller
           name='fromBranch'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
               <Select
@@ -89,8 +89,8 @@ export default function CreateBranchModalContent({
                   field.onChange(selectedOption?.value || 'main');
                 }}
                 isSearchable
-                placeholder={dict.repository.tabs.branches}
-                noOptionsMessage={() => dict.misc.noOptionsMessage}
+                placeholder={dict.repository.branches.branches}
+                noOptionsMessage={() => dict.common.noOptionsMessage}
                 className='react-select-container'
                 classNamePrefix='react-select'
               />

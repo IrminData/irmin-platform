@@ -224,7 +224,7 @@ export default function RenameOrMoveItemModal({
         <Controller
           name='name'
           control={control}
-          rules={{ required: dict.misc.fieldRequired }}
+          rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <Input {...field} type='text' disabled={loading} />
           )}
@@ -297,7 +297,7 @@ export default function RenameOrMoveItemModal({
         disabled={loading}
       >
         {loading
-          ? dict.misc.loading
+          ? dict.common.loading
           : item.type === 'folder'
             ? dict.fileNavigator.updateFolder
             : dict.fileNavigator.updateFile}

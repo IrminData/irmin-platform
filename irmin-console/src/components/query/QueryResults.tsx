@@ -174,7 +174,7 @@ const QueryResults = ({
                 });
               }}
             >
-              {dict.query.save}
+              {dict.common.save}
             </Button>
           )}
           {onRun && (
@@ -209,7 +209,7 @@ const QueryResults = ({
       )}
       {activeTab === 'data' && !result?.data && (
         <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
-          {dict.query.noResults}
+          {dict.common.noResults}
         </div>
       )}
       {activeTab === 'errors' && <ErrorList errors={errors} dict={dict} />}

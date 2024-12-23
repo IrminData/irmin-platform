@@ -69,8 +69,8 @@ export default function LanguageSwitcher() {
       options={options}
       isSearchable={false}
       isClearable={false}
-      placeholder={dict.misc.selectLanguage}
-      noOptionsMessage={() => dict.misc.noOptionsMessage}
+      placeholder={dict.common.selectLanguage}
+      noOptionsMessage={() => dict.common.noOptionsMessage}
       className='react-select-container'
       classNamePrefix='react-select'
       id='language-switcher'

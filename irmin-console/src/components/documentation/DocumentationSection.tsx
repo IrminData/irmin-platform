@@ -67,7 +67,7 @@ export default function DocumentationSection({
           icon={<BsFilePdf size={16} />}
           onClick={downloadPDF}
         >
-          {dict.documentation.downloadPDF}
+          {dict.common.actions.download}
         </Button>
         <div
           className='flex flex-col bg-background px-2 py-4 md:px-4'
@@ -103,7 +103,7 @@ export default function DocumentationSection({
                 </p>
               )}
               <p>
-                <b>{dict.documentation.timestamp}: </b>
+                <b>{dict.common.timestamp}: </b>
                 {new Date().toLocaleString(locale ?? 'en')}
               </p>
             </div>
@@ -119,7 +119,7 @@ export default function DocumentationSection({
           {repositories.length > 0 && (
             <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
               <h2 className='text-center font-display text-2xl font-bold text-primary lg:text-4xl'>
-                {dict.documentation.sections.repositories}
+                {dict.repository.repositories}
               </h2>
               <div className='w-full pl-4'>
                 {repositories.map((item, i) => (
@@ -158,7 +158,7 @@ export default function DocumentationSection({
           {connections.length > 0 && (
             <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
               <h2 className='text-center font-display text-2xl font-bold text-primary lg:text-4xl'>
-                {dict.documentation.sections.connections}
+                {dict.connections.connections}
               </h2>
               <div className='w-full pl-4'>
                 {connections.map((item, i) => (
@@ -182,7 +182,7 @@ export default function DocumentationSection({
                       </span>
                     </p>
                     <p className='text-sm text-gray-600 dark:text-gray-400'>
-                      {dict.list.connector}:{' '}
+                      {dict.connectors.connector}:{' '}
                       <span className='text-gray-800 dark:text-gray-200'>
                         {item.connector.name}
                       </span>
@@ -200,7 +200,7 @@ export default function DocumentationSection({
           {imports.length > 0 && (
             <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
               <h2 className='text-center font-display text-2xl font-bold text-primary lg:text-4xl'>
-                {dict.documentation.sections.importWorkflows}
+                {dict.workflow.importWorkflows}
               </h2>
               <div className='w-full pl-4'>
                 {imports.map((item, i) => (
@@ -245,7 +245,7 @@ export default function DocumentationSection({
           {exports.length > 0 && (
             <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
               <h2 className='text-center font-display text-2xl font-bold text-primary lg:text-4xl'>
-                {dict.documentation.sections.exportWorkflows}
+                {dict.workflow.exportWorkflows}
               </h2>
               <div className='w-full pl-4'>
                 {exports.map((item, i) => (
@@ -290,7 +290,7 @@ export default function DocumentationSection({
           {actions.length > 0 && (
             <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
               <h2 className='text-center font-display text-2xl font-bold text-primary lg:text-4xl'>
-                {dict.documentation.sections.actionWorkflows}
+                {dict.workflow.actionWorkflows}
               </h2>
               <div className='w-full pl-4'>
                 {actions.map((item, i) => (

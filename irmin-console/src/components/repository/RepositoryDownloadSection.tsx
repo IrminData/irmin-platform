@@ -56,7 +56,7 @@ const RepositoryDownloadSection = ({
   return (
     <div className='container relative mx-auto flex max-w-7xl flex-col gap-4 py-4'>
       <h2 className='w-full text-center font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
-        {`${dict.misc.download.downloading}...`}
+        {`${dict.common.pleaseWait}`}
       </h2>
       <p className='w-full pb-4 text-center font-mono text-base sm:text-lg lg:text-xl'>
         {currentRepository?.name}

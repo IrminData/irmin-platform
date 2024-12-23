@@ -83,7 +83,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
   if (!page) {
     return {
-      title: `${dictionaries[lang].misc.pageNotFound} | IRMIN`,
+      title: `${dictionaries[lang].common.pageNotFound} | IRMIN`,
     };
   }
 

@@ -64,7 +64,7 @@ export default function WebsiteNewsletterSection({
                 />
               </div>
               <Button variant='default' className='w-full md:w-auto'>
-                {dict.website.sections.newsletter.subscribe}
+                {dict.common.actions.subscribe}
               </Button>
             </div>
             <span className='text-xs font-normal text-foreground'>
@@ -73,7 +73,7 @@ export default function WebsiteNewsletterSection({
                 className='text-irmin_green-500 hover:text-irmin_green-600'
                 href='/legal/privacy-policy'
               >
-                {dict.website.sections.newsletter.privacy}
+                {dict.common.terms.privacyPolicy}
               </Link>
             </span>
           </div>

@@ -123,7 +123,7 @@ export default function UserProfileForm() {
           <Input
             id='first_name'
             {...register('first_name', {
-              required: dict.misc.fieldRequired,
+              required: dict.common.fieldRequired,
             })}
             className='w-full'
           />
@@ -138,7 +138,7 @@ export default function UserProfileForm() {
           <Input
             id='last_name'
             {...register('last_name', {
-              required: dict.misc.fieldRequired,
+              required: dict.common.fieldRequired,
             })}
             className='w-full'
           />
@@ -155,10 +155,10 @@ export default function UserProfileForm() {
           id='email'
           type='email'
           {...register('email', {
-            required: dict.misc.fieldRequired,
+            required: dict.common.fieldRequired,
             pattern: {
               value: /\S+@\S+\.\S+/,
-              message: dict.misc.fieldInvalid,
+              message: dict.common.fieldInvalid,
             },
           })}
           className='w-full'

@@ -120,7 +120,7 @@ export default function ConsoleNavigationWorkspaceSwitcher({
             value: 'select-workspace',
             label: dict.workspaceSwitcher.selectWorkspace,
           }}
-          noOptionsMessage={() => dict.misc.noOptionsMessage}
+          noOptionsMessage={() => dict.common.noOptionsMessage}
           className='react-select-container'
           classNamePrefix='react-select'
         />

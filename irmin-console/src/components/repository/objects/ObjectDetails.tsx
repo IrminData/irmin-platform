@@ -156,9 +156,7 @@ export default function ObjectDetails({
         {/** Description of the object */}
         {selectedObjectSchema && (
           <div className='flex w-full justify-between gap-1'>
-            <span className='font-semibold'>
-              {dict.repository.objects.description}:
-            </span>
+            <span className='font-semibold'>{dict.common.description}:</span>
             <span className='text-right'>
               {selectedObjectSchema.description}
             </span>
@@ -183,9 +181,7 @@ export default function ObjectDetails({
         )}
         {selectedObject.last_modified && (
           <div className='flex w-full justify-between gap-1'>
-            <span className='font-semibold'>
-              {dict.repository.objects.lastModified}:
-            </span>
+            <span className='font-semibold'>{dict.common.lastModified}:</span>
             <span className='text-right'>
               {new Date(selectedObject.last_modified).toLocaleString()}
             </span>
@@ -197,9 +193,7 @@ export default function ObjectDetails({
             selectedObjectSchema.type === 'binary') && (
             <>
               <div className='flex w-full justify-between gap-1'>
-                <span className='font-semibold'>
-                  {dict.repository.objects.size}:
-                </span>
+                <span className='font-semibold'>{dict.common.size}:</span>
                 <span className='text-right'>
                   {(selectedObjectSchema.size / 1024).toFixed(3)}KB
                 </span>
@@ -262,7 +256,7 @@ export default function ObjectDetails({
             href={`${baseUrl}/object/download?path=${selectedObject.path}&ref=${currentRef}`}
             icon={<TbDownload />}
           >
-            {dict.repository.objects.download}
+            {dict.common.actions.download}
           </Button>
           <Button
             size='sm'
@@ -282,7 +276,7 @@ export default function ObjectDetails({
             disabled={immutable}
             onClick={handleDelete}
           >
-            {dict.fileNavigator.delete}
+            {dict.list.delete}
           </Button>
         </div>
       </div>

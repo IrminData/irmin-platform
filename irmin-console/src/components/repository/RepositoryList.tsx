@@ -40,7 +40,7 @@ const RepositoryList = ({
       items.map((item, i) => {
         const actions = [
           {
-            label: dict.misc.download.download,
+            label: dict.common.actions.download,
             primary: false,
             href: `${workspaceUrl}/${item.slug}/download`,
           },
@@ -103,7 +103,7 @@ const RepositoryList = ({
   return (
     <CardOrNormalList
       loading={loading}
-      headers={[dict.misc.name, dict.list.status, dict.list.actions]}
+      headers={[dict.common.name, dict.list.status, dict.list.actions]}
       rows={rows}
       hideHeaders={false}
     />

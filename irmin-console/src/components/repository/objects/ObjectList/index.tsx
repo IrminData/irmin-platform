@@ -108,7 +108,7 @@ export default function ObjectList({
               <TableRow>
                 <TableHead className='w-[300px]'>
                   <Button variant='ghost' onClick={() => handleSort('name')}>
-                    {dict.misc.name}
+                    {dict.common.name}
                     <TbArrowsSort className='ml-2 h-4 w-4' />
                   </Button>
                 </TableHead>
@@ -126,7 +126,7 @@ export default function ObjectList({
                     variant='ghost'
                     onClick={() => handleSort('last_modified')}
                   >
-                    {dict.repository.objects.lastModified}
+                    {dict.common.lastModified}
                     <TbArrowsSort className='ml-2 h-4 w-4' />
                   </Button>
                 </TableHead>

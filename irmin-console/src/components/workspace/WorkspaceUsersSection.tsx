@@ -28,7 +28,7 @@ const WorkspaceUsersSection = () => {
         <thead>
           <tr className='border-b dark:border-gray-800'>
             <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
-              {dict.misc.name}
+              {dict.common.name}
             </th>
             <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
               {dict.users.email}
@@ -72,7 +72,7 @@ const WorkspaceUsersSection = () => {
               </td>
               <td className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
                 {workspace?.owner_id === user.id ? (
-                  dict.users.owner
+                  dict.list.owner
                 ) : (
                   <ReactSelect
                     value={

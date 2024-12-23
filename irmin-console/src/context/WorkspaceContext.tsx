@@ -80,7 +80,7 @@ export const WorkspaceProvider = ({
 
   const handleDeleteWorkspace = useCallback(async () => {
     irminModal.show(
-      dict.workspace.delete,
+      dict.list.delete,
       <WorkspaceDeletionConfirmationModal
         dict={dict}
         close={irminModal.close}
@@ -133,7 +133,7 @@ export const WorkspaceProvider = ({
       if (!workspace) return;
       const confirmed = await irminConfirm(
         'warning',
-        `${dict.misc.areYouSureYouWantToReassign} (${workspace.name})`
+        `${dict.common.areYouSureYouWantToReassign} (${workspace.name})`
       );
       if (updating.current || !confirmed) return;
       try {

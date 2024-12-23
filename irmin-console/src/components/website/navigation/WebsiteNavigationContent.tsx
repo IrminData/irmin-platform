@@ -225,7 +225,7 @@ export default function WebsiteNavigationContent({
                           className='min-w-32 py-2 text-xs font-normal md:text-sm xl:text-sm'
                         >
                           <IoEnterOutline size={24} className='mr-2' />
-                          {dict.website.navigation.goToConsole}
+                          {dict.website.goToConsole}
                         </Button>
                       </>
                     ) : (
@@ -237,7 +237,7 @@ export default function WebsiteNavigationContent({
                           href='/sign-in'
                           onClick={closeMenu}
                         >
-                          {dict.website.navigation.signIn}
+                          {dict.website.signIn}
                         </Button>
                         <Button
                           size='lg'
@@ -248,7 +248,7 @@ export default function WebsiteNavigationContent({
                           iconFirst={false}
                           icon={<IoEnterOutline size={24} className='ml-1' />}
                         >
-                          {dict.website.navigation.getStarted}
+                          {dict.website.getStarted}
                         </Button>
                       </>
                     )}
@@ -311,7 +311,7 @@ export default function WebsiteNavigationContent({
                       onClick={closeMenu}
                     >
                       <IoEnterOutline size={22} className='mr-4' />
-                      {dict.website.navigation.goToConsole}
+                      {dict.website.goToConsole}
                     </Button>
                   ) : (
                     <div className='flex w-full flex-col items-center justify-stretch gap-2'>
@@ -322,7 +322,7 @@ export default function WebsiteNavigationContent({
                         className='w-full'
                         size={'lg'}
                       >
-                        {dict.website.navigation.signIn}
+                        {dict.website.signIn}
                       </Button>
                       <Button
                         href='/sign-up'
@@ -332,7 +332,7 @@ export default function WebsiteNavigationContent({
                         size={'lg'}
                       >
                         <IoEnterOutline size={22} />
-                        {dict.website.navigation.getStarted}
+                        {dict.website.getStarted}
                       </Button>
                     </div>
                   )}

@@ -45,7 +45,7 @@ const ConnectorInfoSmall = ({ connector }: { connector: Connector }) => {
             size='sm'
             href={`${workspaceUrl}/connectors/${connector.id}`}
           >
-            {dict.connections.connector.readMore}
+            {dict.common.readMore}
           </Button>
         </div>
         <p className='text-sm text-gray-500'>{connector.description}</p>

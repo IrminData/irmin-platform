@@ -137,7 +137,7 @@ const TableViewer = ({
         ) : isSimpleArrayOfObjects ? (
           filteredItems.length === 0 ? (
             <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
-              {dict.query.noResults}
+              {dict.common.noResults}
             </div>
           ) : (
             <AdvancedDatatable items={filteredItems} />

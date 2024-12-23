@@ -74,7 +74,7 @@ export default function WebsiteArticlesSectionContent({
           <div className='relative mx-auto md:w-80'>
             <Input
               icon={<FaSearch />}
-              placeholder={dict.website.sections.articles.search}
+              placeholder={dict.common.search}
               onChange={(e) => setSearchFilter(e.target.value)}
             />
           </div>

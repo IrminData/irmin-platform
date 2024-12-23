@@ -41,13 +41,13 @@ export default function WebsiteError({
           <div className='ml-auto w-full text-center md:w-1/2 md:text-left'>
             <div className='md:max-w-xl'>
               <span className='mb-4 inline-block rounded-full bg-irmin_green px-2 py-px text-xs font-medium leading-5 text-white shadow-sm'>
-                {dict.misc.error} {pageNotFound ? '404' : '500'}
+                {dict.common.error} {pageNotFound ? '404' : '500'}
               </span>
               <h2 className='mb-8 font-display text-6xl font-bold tracking-tight sm:text-8xl lg:text-9xl'>
-                {dict.misc.ohNo}{' '}
+                {dict.common.ohNo}{' '}
                 {pageNotFound
-                  ? dict.misc.pageNotFound
-                  : dict.misc.somethingWentWrong}
+                  ? dict.common.pageNotFound
+                  : dict.common.somethingWentWrong}
               </h2>
               <p className='mb-6 text-xs text-foreground md:text-sm dark:text-gray-300'>
                 {error?.message}
@@ -55,7 +55,7 @@ export default function WebsiteError({
               <div className='flex flex-wrap gap-2'>
                 <div className='w-[calc(50%-4px)]'>
                   <Button variant='default' className='w-full' href='/'>
-                    {dict.misc.goBackHome}
+                    {dict.common.goBackHome}
                   </Button>
                 </div>
                 {!pageNotFound && reset && (
@@ -65,7 +65,7 @@ export default function WebsiteError({
                       className='w-full'
                       onClick={reset}
                     >
-                      {dict.misc.tryAgain}
+                      {dict.common.tryAgain}
                     </Button>
                   </div>
                 )}

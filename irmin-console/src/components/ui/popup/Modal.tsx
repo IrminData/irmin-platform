@@ -52,8 +52,8 @@ const Modal = ({
               variant='ghost'
               className='ml-4 rounded-full'
               onClick={onClose}
-              aria-label={dict.misc.close}
-              tooltip={dict.misc.close}
+              aria-label={dict.common.close}
+              tooltip={dict.common.close}
               icon={<IoClose size={24} />}
             />
           </div>

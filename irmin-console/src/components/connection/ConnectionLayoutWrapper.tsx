@@ -55,7 +55,7 @@ export default function ConnectionLayoutWrapper({
   const tabs = useMemo(
     () => [
       {
-        name: dict.connections.tabs.overview,
+        name: dict.common.overview,
         link: `${baseUrl}`,
         active: pathname === `${baseUrl}`,
         icon: <GoWorkflow size={14} />,
@@ -69,14 +69,14 @@ export default function ConnectionLayoutWrapper({
         hidden: false,
       },
       {
-        name: dict.list.connector,
+        name: dict.connectors.connector,
         link: `${baseUrl}/connector`,
         active: pathname === `${baseUrl}/connector`,
         icon: <TbPlug size={14} />,
         hidden: false,
       },
       {
-        name: dict.connections.tabs.documentation,
+        name: dict.documentation.documentation,
         link: `${baseUrl}/documentation`,
         active: pathname === `${baseUrl}/documentation`,
         icon: <TbFileText size={14} />,
@@ -90,7 +90,7 @@ export default function ConnectionLayoutWrapper({
         hidden: false,
       },
       {
-        name: dict.connections.tabs.settings,
+        name: dict.consoleNavigation.settings,
         link: `${baseUrl}/settings`,
         active: pathname === `${baseUrl}/settings`,
         icon: <TbSettings size={14} />,
@@ -140,7 +140,7 @@ export default function ConnectionLayoutWrapper({
         </div>
         <TabsWithBackButton
           backHref={`${workspaceUrl}/connections`}
-          backTooltip={dict.connections.allConnections}
+          backTooltip={dict.connections.connections}
           tabs={tabs}
         />
       </div>

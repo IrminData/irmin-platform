@@ -35,7 +35,7 @@ export default function LastModificationModalContent({
       <table className='w-full table-auto text-sm'>
         <tbody>
           <tr>
-            <td className='pb-2 font-bold'>{dict.misc.description}</td>
+            <td className='pb-2 font-bold'>{dict.common.description}</td>
             <td className='pb-2'>{commit.message}</td>
           </tr>
           <tr>
@@ -43,7 +43,7 @@ export default function LastModificationModalContent({
             <td className='pb-2'>{commit.author}</td>
           </tr>
           <tr>
-            <td className='pb-2 font-bold'>{dict.misc.timestamp}</td>
+            <td className='pb-2 font-bold'>{dict.common.timestamp}</td>
             <td className='pb-2'>
               {new Date(commit.timestamp).toLocaleString(locale)}
             </td>
@@ -86,7 +86,7 @@ export default function LastModificationModalContent({
         className='w-full'
         onClick={closeModal}
       >
-        {dict.misc.close}
+        {dict.common.close}
       </Button>
     </div>
   );

@@ -10,7 +10,7 @@ const DownloadFailed = () => {
     <div className='flex flex-col items-center justify-center gap-4 py-12'>
       <AiOutlineException className='text-red-600' size={60} />
       <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
-        {dict.misc.download.failed}
+        {dict.common.error}
       </h2>
     </div>
   );

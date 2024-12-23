@@ -1,8 +1,8 @@
-import RepositoryUncommitedChangesSection from '@/components/repository/RepositoryUncommitedChangesSection';
+import RepositoryUncommittedChangesSection from '@/components/repository/RepositoryUncommittedChangesSection';
 
 /**
- * Page for the Repository uncommited changes on a branch.
+ * Page for the Repository uncommitted changes on a branch.
  */
-export default function RepositoryUncommitedchangesPage() {
-  return <RepositoryUncommitedChangesSection />;
+export default function RepositoryUncommittedchangesPage() {
+  return <RepositoryUncommittedChangesSection />;
 }

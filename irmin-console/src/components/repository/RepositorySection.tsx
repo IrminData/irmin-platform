@@ -101,7 +101,7 @@ export default function RepositorySection({
 
   const handleCreateGroup = useCallback(() => {
     irminModal.show(
-      dict.repository.objects.createGroup,
+      dict.repository.objects.createFolder,
       <CreateGroupModal
         currentPath={currentPath}
         currentRepository={currentRepository.slug}
@@ -194,15 +194,15 @@ export default function RepositorySection({
                 {currentRef && ` @ ${currentRef}`}
               </div>
               <div className='flex items-center gap-2'>
-                {/** Button to navigate to uncommited changes of the current branch */}
+                {/** Button to navigate to uncommitted changes of the current branch */}
                 {!immutable && (
                   <Button
                     variant='secondary'
                     size='sm'
-                    href={`${baseUrl}/uncommited-changes?${searchParams.toString()}`}
+                    href={`${baseUrl}/uncommitted-changes?${searchParams.toString()}`}
                     icon={<TbFileDiff />}
                   >
-                    {dict.repository.commit.uncommitedChanges}
+                    {dict.repository.commit.uncommittedChanges}
                   </Button>
                 )}
                 <Button
@@ -211,7 +211,7 @@ export default function RepositorySection({
                   icon={<TbDownload />}
                   href={`${workspaceUrl}/repositories/${currentRepository.slug}/download?ref=${currentRef}&path=${currentPath}`}
                 >
-                  {dict.misc.download.download}
+                  {dict.common.actions.download}
                 </Button>
                 {!immutable && (
                   <Button
@@ -220,7 +220,7 @@ export default function RepositorySection({
                     onClick={handleCreateGroup}
                     icon={<TbFolderOpen />}
                   >
-                    {dict.repository.objects.createGroup}
+                    {dict.repository.objects.createFolder}
                   </Button>
                 )}
                 {!immutable && (
@@ -252,7 +252,7 @@ export default function RepositorySection({
               onClick={() => setQueryResultsOpen(false)}
               icon={<TbChevronUp className='text-xl' />}
             >
-              {dict.misc.close} {dict.query.queryResults}
+              {dict.common.close} {dict.query.queryResults}
             </Button>
           </div>
         )}

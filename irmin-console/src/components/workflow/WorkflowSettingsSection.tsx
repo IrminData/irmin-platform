@@ -44,19 +44,19 @@ const WorkflowSettingsSection = () => {
   const fieldConfiguration: FieldConfig<WorkflowFormValues>[] = [
     {
       name: 'name',
-      label: dict.misc.name,
+      label: dict.common.name,
       type: 'text',
       placeholder: '',
     },
     {
       name: 'description',
-      label: dict.misc.description,
+      label: dict.common.description,
       type: 'textarea',
       placeholder: '',
     },
     {
       name: 'owner',
-      label: dict.workflow.owner,
+      label: dict.list.owner,
       type: 'select',
       options:
         users?.map((user) => ({

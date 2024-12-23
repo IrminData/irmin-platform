@@ -87,7 +87,7 @@ export default function TagList({
     <div id='tags-list'>
       <NormalList
         headers={[
-          dict.misc.name,
+          dict.common.name,
           dict.repository.commit.commitHash,
           dict.list.actions,
         ]}

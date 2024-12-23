@@ -34,7 +34,7 @@ export default async function WebsiteFooter({
     const language = languages[i];
 
     // Get the menu slug for the current language from the dictionary
-    const menuSlug = dictionaries[language.code].static.wordpressFooterMenuSlug;
+    const menuSlug = dictionaries[language.code].website.cms.footerMenuSlug;
 
     // Fetch the menu
     const menu = await wordpress.getMenu(menuSlug);
