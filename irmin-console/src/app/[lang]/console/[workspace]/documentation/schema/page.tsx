@@ -2,11 +2,7 @@ import { notFound } from 'next/navigation';
 
 import { getConnections } from '@/lib/actions/connections';
 import { getRepositories } from '@/lib/actions/repositories';
-import {
-  getActionWorkflows,
-  getExportWorkflows,
-  getImportWorkflows,
-} from '@/lib/actions/workflows';
+import { getWorkflows } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
 
 import DocumentationSchemaSection from '@/components/documentation/DocumentationSchemaSection';
@@ -16,36 +12,20 @@ import DocumentationSchemaSection from '@/components/documentation/Documentation
  */
 export default async function DocumentationSchemaPage() {
   const token = await getToken();
-  const [
-    connections,
-    actionWorkflows,
-    exportWorkflows,
-    importWorkflows,
-    repositories,
-  ] = await Promise.all([
+  const [connections, workflows, repositories] = await Promise.all([
     getConnections(token),
-    getActionWorkflows(token),
-    getExportWorkflows(token),
-    getImportWorkflows(token),
+    getWorkflows(token),
     getRepositories(token),
   ]);
 
-  if (
-    !connections ||
-    !actionWorkflows ||
-    !exportWorkflows ||
-    !importWorkflows ||
-    !repositories
-  ) {
+  if (!connections || !workflows || !repositories) {
     return notFound();
   }
 
   return (
     <DocumentationSchemaSection
       connections={connections}
-      actions={actionWorkflows}
-      exports={exportWorkflows}
-      imports={importWorkflows}
+      workflows={workflows}
       repositories={repositories}
     />
   );

@@ -10,11 +10,7 @@ import { useWorkspace } from '@/context/WorkspaceContext';
 
 import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
-import {
-  ActionWorkflow,
-  ExportWorkflow,
-  ImportWorkflow,
-} from '@/types/core/Workflow';
+import { Workflow } from '@/types/core/Workflow';
 
 import { TreeNode } from './TreeChart';
 
@@ -27,15 +23,11 @@ const TreeChart = dynamic(() => import('./TreeChart'), {
  */
 export default function DocumentationSchemaSection({
   connections,
-  imports,
-  exports,
-  actions,
+  workflows,
   repositories,
 }: {
   connections: Connection[];
-  imports: ImportWorkflow[];
-  exports: ExportWorkflow[];
-  actions: ActionWorkflow[];
+  workflows: Workflow[];
   repositories: Repository[];
 }) {
   const { workspace } = useWorkspace();
@@ -89,49 +81,70 @@ export default function DocumentationSchemaSection({
     };
 
     // Add import workflows.
-    if (imports) {
+    if (workflows.filter((item) => item.type === 'import').length > 0) {
       const importsNode: TreeNode = {
         id: `import-workflows`,
         label: 'Imports',
-        children: imports.map((importSync) => ({
-          id: `workflow-import-${importSync.id}`,
-          label: importSync.name,
-        })),
+        children: workflows
+          .filter((item) => item.type === 'import')
+          .map((item) => ({
+            id: `workflow-import-${item.id}`,
+            label: item.name,
+          })),
       };
       workflowsNode.children?.push(importsNode);
     }
 
     // Add export workflows.
-    if (exports) {
+    if (workflows.filter((item) => item.type === 'export').length > 0) {
       const exportsNode = {
         id: 'export-workflows',
         label: 'Exports',
-        children: exports.map((exportSync) => ({
-          id: `workflow-export-${exportSync.id}`,
-          label: exportSync.name,
-        })),
+        children: workflows
+          .filter((item) => item.type === 'export')
+          .map((item) => ({
+            id: `workflow-export-${item.id}`,
+            label: item.name,
+          })),
       };
       workflowsNode.children?.push(exportsNode);
     }
 
     // Add action workflows.
-    if (actions) {
+    if (workflows.filter((item) => item.type === 'action').length > 0) {
       const actionsNode = {
         id: 'action-workflows',
         label: 'Actions',
-        children: actions.map((action) => ({
-          id: `workflow-action-${action.id}`,
-          name: action.name,
-        })),
+        children: workflows
+          .filter((item) => item.type === 'action')
+          .map((item) => ({
+            id: `workflow-action-${item.id}`,
+            name: item.name,
+          })),
       };
       workflowsNode.children?.push(actionsNode);
+    }
+
+    // Add pipeline workflows.
+    if (workflows.filter((item) => item.type === 'action').length > 0) {
+      const pipeliensNode = {
+        id: 'pipeline-workflows',
+        label: 'Pipelines',
+        children: workflows
+          .filter((item) => item.type === 'pipeline')
+          .map((item) => ({
+            id: `workflow-pipeline-${item.id}`,
+            name: item.name,
+          })),
+      };
+      workflowsNode.children?.push(pipeliensNode);
     }
 
     // Add workflows node to the tree.
     newTree.children?.push(workflowsNode);
 
     setTree(newTree);
-  }, [workspace, connections, imports, exports, actions, repositories]);
+  }, [workspace, connections, workflows, repositories]);
 
   return <TreeChart tree={tree} />;
 }
