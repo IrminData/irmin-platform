@@ -1,10 +1,8 @@
 import { notFound } from 'next/navigation';
 
-import { getDict } from '@/lib/actions/dict';
 import { getWorkspaces } from '@/lib/actions/workspaces';
 import { getToken } from '@/lib/getToken';
 
-import ConsoleTitle from '@/components/console/ConsoleTitle';
 import ManageWorkspacesSection from '@/components/workspace/ManageWorkspacesSection';
 
 /**
@@ -14,21 +12,13 @@ import ManageWorkspacesSection from '@/components/workspace/ManageWorkspacesSect
  */
 const ManageWorkspacesPage = async () => {
   const token = await getToken();
-  const [{ dict }, workspaces] = await Promise.all([
-    getDict(),
-    getWorkspaces(token),
-  ]);
+  const workspaces = await getWorkspaces(token);
 
   if (!workspaces) {
     return notFound();
   }
 
-  return (
-    <>
-      <ConsoleTitle title={dict.workspaceSwitcher.manageWorkspaces} />
-      <ManageWorkspacesSection initialWorkspaces={workspaces} dict={dict} />
-    </>
-  );
+  return <ManageWorkspacesSection initialWorkspaces={workspaces} />;
 };
 
 export default ManageWorkspacesPage;
