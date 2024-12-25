@@ -1,1 +1,1 @@
-# irmin-sdk-go
+# Irmin SDK for Go-lang
