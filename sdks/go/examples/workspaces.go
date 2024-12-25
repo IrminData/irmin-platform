@@ -40,4 +40,23 @@ func main() {
 	for _, workspace := range workspaces {
 		fmt.Printf("Workspace: %s (%s)\n", workspace.Name, workspace.Slug)
 	}
+
+	// Switch to the first workspace
+	if len(workspaces) == 0 {
+		fmt.Println("No workspaces found")
+		return
+	}
+	err = workspaceService.SwitchWorkspace(workspaces[0].Slug)
+	if err != nil {
+		fmt.Println("Error switching workspace:", err)
+		return
+	}
+
+	// Fetch the current workspace
+	currentWorkspace, err := workspaceService.FetchWorkspace(workspaces[0].Slug)
+	if err != nil {
+		fmt.Println("Error fetching workspace:", err)
+		return
+	}
+	fmt.Printf("Current workspace: %s (%s)\n", currentWorkspace.Name, currentWorkspace.Slug)
 }
