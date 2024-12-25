@@ -1,3 +1,3 @@
-module github.com/IrminData/irmin-sdk-go
+module irmin-sdk
 
 go 1.23.1
