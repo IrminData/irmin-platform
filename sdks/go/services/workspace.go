@@ -77,8 +77,8 @@ func (s *WorkspaceService) CreateWorkspace(name, description string) (*models.Wo
 
 func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*models.Workspace, error) {
 	endpoint := fmt.Sprintf("/v1/workspaces/%s", slug)
-	body := map[string]string{"name": name, "description": description}
-	response, err := s.client.Request("PUT", endpoint, body)
+	body := map[string]string{"_method": "PATCH", "name": name, "description": description}
+	response, err := s.client.Request("POST", endpoint, body)
 	if err != nil {
 		return nil, fmt.Errorf("update workspace error: %w", err)
 	}
@@ -94,7 +94,8 @@ func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*mod
 
 func (s *WorkspaceService) DeleteWorkspace(slug string) error {
 	endpoint := fmt.Sprintf("/v1/workspaces/%s", slug)
-	_, err := s.client.Request("DELETE", endpoint, nil)
+	body := map[string]string{"_method": "DELETE"}
+	_, err := s.client.Request("POST", endpoint, body)
 	if err != nil {
 		return fmt.Errorf("delete workspace error: %w", err)
 	}
