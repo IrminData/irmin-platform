@@ -1,4 +1,4 @@
-package main
+package examples
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func main() {
+func TestWorkspaces() {
 	// Load .env file
 	err := godotenv.Load()
 	if err != nil {
