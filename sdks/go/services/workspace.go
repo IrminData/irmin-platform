@@ -48,12 +48,22 @@ func (s *WorkspaceService) FetchWorkspace(slug string) (*models.Workspace, error
 	return &workspace, nil
 }
 
-func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*models.Workspace, error) {
-	endpoint := fmt.Sprintf("/v1/workspaces/%s", slug)
-	body := map[string]string{"name": name, "description": description}
-	response, err := s.client.Request("PUT", endpoint, body)
+func (s *WorkspaceService) TransferWorkspaceOwnership(slug, userID string) error {
+	endpoint := fmt.Sprintf("/v1/workspaces/%s/reassign", slug)
+	body := map[string]string{"user": userID}
+	_, err := s.client.Request("POST", endpoint, body)
 	if err != nil {
-		return nil, fmt.Errorf("update workspace error: %w", err)
+		return fmt.Errorf("transfer workspace ownership error: %w", err)
+	}
+
+	return nil
+}
+
+func (s *WorkspaceService) CreateWorkspace(name, description string) (*models.Workspace, error) {
+	body := map[string]string{"name": name, "description": description}
+	response, err := s.client.Request("POST", "/v1/workspaces", body)
+	if err != nil {
+		return nil, fmt.Errorf("create workspace error: %w", err)
 	}
 
 	var workspace models.Workspace
@@ -65,11 +75,12 @@ func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*mod
 	return &workspace, nil
 }
 
-func (s *WorkspaceService) CreateWorkspace(name, description string) (*models.Workspace, error) {
+func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*models.Workspace, error) {
+	endpoint := fmt.Sprintf("/v1/workspaces/%s", slug)
 	body := map[string]string{"name": name, "description": description}
-	response, err := s.client.Request("POST", "/v1/workspaces", body)
+	response, err := s.client.Request("PUT", endpoint, body)
 	if err != nil {
-		return nil, fmt.Errorf("create workspace error: %w", err)
+		return nil, fmt.Errorf("update workspace error: %w", err)
 	}
 
 	var workspace models.Workspace
@@ -96,6 +107,16 @@ func (s *WorkspaceService) SwitchWorkspace(slug string) error {
 	_, err := s.client.Request("POST", endpoint, nil)
 	if err != nil {
 		return fmt.Errorf("switch workspace error: %w", err)
+	}
+
+	return nil
+}
+
+func (s *WorkspaceService) LeaveWorkspace(slug string) error {
+	endpoint := fmt.Sprintf("/v1/workspaces/%s/leave", slug)
+	_, err := s.client.Request("GET", endpoint, nil)
+	if err != nil {
+		return fmt.Errorf("leave workspace error: %w", err)
 	}
 
 	return nil
