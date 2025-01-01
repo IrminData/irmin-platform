@@ -11,6 +11,7 @@ import BranchService from './resources/BranchService';
 import CommitService from './resources/CommitService';
 import ConnectionService from './resources/ConnectionService';
 import ConnectorService from './resources/ConnectorService';
+import CredentialService from './resources/CredentialService';
 import DiffService from './resources/DiffService';
 import EditorItemsService from './resources/EditorItemsService';
 import InviteService from './resources/InviteService';
@@ -61,6 +62,7 @@ class IrminCore {
   public diffService: DiffService;
   public tagService: TagService;
   public objectService: ObjectService;
+  public credentialService: CredentialService;
 
   constructor(locale: Locale, apiToken: string) {
     // Set locale and token
@@ -86,6 +88,7 @@ class IrminCore {
     this.diffService = new DiffService(this);
     this.tagService = new TagService(this);
     this.objectService = new ObjectService(this);
+    this.credentialService = new CredentialService(this);
   }
 
   private _fetch = async (

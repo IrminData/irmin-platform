@@ -611,6 +611,20 @@ const fi = {
     noLogsFound: 'Ei lokeja löytynyt',
     system: 'Järjestelmä',
   },
+  tokens: {
+    apiTokens: 'API avaimet',
+    createAPIToken: 'Luo API avain',
+    validFor: 'Voimassa (sekunneissa)',
+    expiresAt: 'Vanhenee',
+    revokeToken: 'Poista avain',
+    yourAPIToken: 'Sinun API avain',
+    storeTokenDescription:
+      'Tämä avain näytetään vain kerran. Ole hyvä ja kopio se, sekä säilytä turvallisesti.',
+    tokenRevealed: 'Avain näytetty',
+    revealToken: 'Näytä avain',
+    copied: 'Kopioitu!',
+    copyToken: 'Kopioi avain',
+  },
 };
 
 export default fi;

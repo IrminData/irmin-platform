@@ -606,6 +606,20 @@ const en = {
     noLogsFound: 'No logs found',
     system: 'System',
   },
+  tokens: {
+    apiTokens: 'API tokens',
+    createAPIToken: 'Create API token',
+    validFor: 'Valid for (in seconds)',
+    expiresAt: 'Expires at',
+    revokeToken: 'Revoke token',
+    yourAPIToken: 'Your API Token',
+    storeTokenDescription:
+      'This token will only be shown once. Please copy it and store it securely.',
+    tokenRevealed: 'Token Revealed',
+    revealToken: 'Reveal token',
+    copied: 'Copied!',
+    copyToken: 'Copy token',
+  },
 };
 
 export default en;

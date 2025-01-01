@@ -90,9 +90,9 @@ export default function UserProfileForm() {
   }, [watchProfilePicture]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
-      <div className='mb-6 flex justify-center'>
-        <Avatar className='h-16 w-16'>
+    <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+      <div className='mb-4 flex justify-center'>
+        <Avatar className='h-24 w-24'>
           <AvatarImage
             src={previewUrl || profile?.profile_picture || undefined}
             alt='Profile picture'

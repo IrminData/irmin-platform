@@ -33,6 +33,7 @@ import { profile } from './profile';
 import { queries, queryExecutionResult } from './queries';
 import { repositories } from './repositories';
 import { roles } from './roles';
+import { systemTokens } from './systemToken';
 import { tags } from './tags';
 import { workspaceUsers } from './users';
 import { workflowRuns } from './workflowRuns';
@@ -83,6 +84,11 @@ export const exampleWorkspaces = workspaces();
  * Fake profile {@link profile}
  */
 export const exampleProfile = profile();
+
+/**
+ * Fake system tokens {@link systemTokens}
+ */
+export const exampleSystemTokens = systemTokens();
 
 /**
  * Fake invites {@link invites}
