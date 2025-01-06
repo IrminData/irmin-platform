@@ -32,7 +32,7 @@ func TestUsers() {
 	userService := services.NewUserService(apiClient)
 
 	// Fetch the current user
-	profile, err := profileService.GetProfile()
+	profile, _, err := profileService.GetProfile()
 	if err != nil {
 		fmt.Println("Error fetching profile:", err)
 		return
@@ -40,7 +40,7 @@ func TestUsers() {
 	fmt.Printf("Current User: %s (%s)\n", profile.FirstName, profile.Email)
 
 	// Fetch users in the current workspace
-	users, err := userService.FetchWorkspaceUsers()
+	users, _, err := userService.FetchWorkspaceUsers()
 	if err != nil {
 		fmt.Println("Error fetching users:", err)
 		return

@@ -31,7 +31,7 @@ func TestWorkspaces() {
 	workspaceService := services.NewWorkspaceService(apiClient)
 
 	// Fetch workspaces
-	workspaces, err := workspaceService.FetchWorkspaces()
+	workspaces, _, err := workspaceService.FetchWorkspaces()
 	if err != nil {
 		fmt.Println("Error fetching workspaces:", err)
 		return
@@ -46,14 +46,14 @@ func TestWorkspaces() {
 		fmt.Println("No workspaces found")
 		return
 	}
-	err = workspaceService.SwitchWorkspace(workspaces[0].Slug)
+	_, err = workspaceService.SwitchWorkspace(workspaces[0].Slug)
 	if err != nil {
 		fmt.Println("Error switching workspace:", err)
 		return
 	}
 
 	// Fetch the current workspace
-	currentWorkspace, err := workspaceService.FetchWorkspace(workspaces[0].Slug)
+	currentWorkspace, _, err := workspaceService.FetchWorkspace(workspaces[0].Slug)
 	if err != nil {
 		fmt.Println("Error fetching workspace:", err)
 		return
