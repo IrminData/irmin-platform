@@ -12,15 +12,22 @@ import (
 	"time"
 )
 
-// Client represents the Irmin API client
+// Client represents the Irmin API client.
 type Client struct {
-	BaseURL    string
-	Token      string
+	// BaseURL is your Irmin Core API base: e.g. "https://api.irmin.dev"
+	BaseURL string
+
+	// Token is your Irmin Core API token.
+	Token string
+
+	// Locale is used to request localised messages from the Irmin Core API.
+	Locale string
+
+	// HTTPClient is a customisable HTTP client. You can set timeouts, proxies, etc.
 	HTTPClient *http.Client
-	Locale     string
 }
 
-// NewClient creates a new Irmin API client
+// NewClient creates a new Irmin API client with default settings.
 func NewClient(baseURL, token, locale string) *Client {
 	return &Client{
 		BaseURL: baseURL,
@@ -32,41 +39,47 @@ func NewClient(baseURL, token, locale string) *Client {
 	}
 }
 
-// RequestOptions allows you to specify how you'd like to send data
+// RequestOptions allows you to specify how you'd like to send data in the request.
 type RequestOptions struct {
 	Method      string
 	Endpoint    string
 	Body        interface{}       // For JSON, this can be a struct or map to JSON-encode
-	FormFields  map[string]string // Key-Value form fields (for multipart/form-data)
-	Files       []FormFile        // File attachments (for multipart/form-data)
-	Headers     map[string]string // Extra headers if needed
+	FormFields  map[string]string // Key-value form fields (for multipart/form-data)
+	Files       []FormFile        // Files to attach (for multipart/form-data)
+	Headers     map[string]string // Extra headers, if needed
 	ContentType string            // e.g. "application/json", "multipart/form-data", etc.
 }
 
-// FormFile holds information about the file you want to upload
+// FormFile holds information about a file you want to upload with multipart/form-data.
 type FormFile struct {
 	FieldName string    // The form field name
-	FilePath  string    // Local path to the file
-	Reader    io.Reader // If you have a stream, e.g. os.Open(filePath). Use one or the other
-	FileName  string    // Override the default file name (otherwise uses base name of FilePath)
+	FilePath  string    // Local path to the file on disk
+	Reader    io.Reader // Use if you already have a stream (os.Open, bytes.Buffer, etc.)
+	FileName  string    // Optional override for the actual filename
 }
 
-// Request is the main method to handle various request types and return raw response data
+// Request is the main method that sends requests to the Irmin API and returns raw response data.
 func (c *Client) Request(opts RequestOptions) ([]byte, error) {
-	// Construct URL
 	url := fmt.Sprintf("%s%s", c.BaseURL, opts.Endpoint)
 
 	var bodyReader io.Reader
+	headers := make(map[string]string)
+	if opts.Headers != nil {
+		for k, v := range opts.Headers {
+			headers[k] = v
+		}
+	}
 
 	switch opts.ContentType {
 	case "application/json":
-		// Encode the Body as JSON
+		// Encode Body as JSON
 		if opts.Body != nil {
 			jsonData, err := json.Marshal(opts.Body)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to marshal JSON body: %w", err)
 			}
 			bodyReader = bytes.NewReader(jsonData)
+			headers["Content-Type"] = "application/json"
 		}
 	case "multipart/form-data":
 		// Build a multipart form
@@ -82,7 +95,6 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 
 		// Write files
 		for _, file := range opts.Files {
-			// Determine file name
 			var fileName string
 			if file.FileName != "" {
 				fileName = file.FileName
@@ -90,11 +102,12 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 				fileName = filepath.Base(file.FilePath)
 			}
 
-			// Obtain the reader if not provided
 			var r io.Reader
 			if file.Reader != nil {
+				// If a reader is provided, use it
 				r = file.Reader
 			} else if file.FilePath != "" {
+				// Otherwise open the file from disk
 				f, err := os.Open(file.FilePath)
 				if err != nil {
 					return nil, fmt.Errorf("failed to open file %q: %w", file.FilePath, err)
@@ -102,7 +115,6 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 				defer f.Close()
 				r = f
 			} else {
-				// If no file source is provided, skip
 				continue
 			}
 
@@ -118,23 +130,21 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 		if err := writer.Close(); err != nil {
 			return nil, fmt.Errorf("failed to close multipart writer: %w", err)
 		}
-		bodyReader = &b
 
-		// Set the content type to include the boundary
-		opts.Headers["Content-Type"] = writer.FormDataContentType()
+		bodyReader = &b
+		headers["Content-Type"] = writer.FormDataContentType()
 
 	default:
-		// If content type is not specified or something else,
-		// just assume there's no body or it is handled externally
+		// If the content type is something else (or unspecified)
+		// let the user provide raw bytes or a string.
 		if opts.Body != nil {
-			// Use raw bytes if user manually encodes them
-			switch b := opts.Body.(type) {
+			switch data := opts.Body.(type) {
 			case []byte:
-				bodyReader = bytes.NewReader(b)
+				bodyReader = bytes.NewReader(data)
 			case string:
-				bodyReader = bytes.NewReader([]byte(b))
+				bodyReader = bytes.NewReader([]byte(data))
 			default:
-				return nil, fmt.Errorf("unsupported body type for unspecified content type")
+				return nil, fmt.Errorf("unsupported body type for content type %q", opts.ContentType)
 			}
 		}
 	}
@@ -145,37 +155,69 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Default headers
+	// Set default headers
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
 	req.Header.Set("Accept-Language", c.Locale)
-
-	// If the user hasn't explicitly set Content-Type in headers, do so here.
-	if opts.ContentType == "application/json" {
-		req.Header.Set("Content-Type", "application/json")
-	}
+	req.Header.Set("Accept", "application/json")
 
 	// Add any extra headers
-	for k, v := range opts.Headers {
+	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
 
 	// Perform the request
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return nil, fmt.Errorf("request to %s failed: %w", url, err)
 	}
 	defer resp.Body.Close()
 
-	// Handle HTTP error status codes (non-2xx)
+	// Non-2xx means an error
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("API request failed with status %d", resp.StatusCode)
 	}
 
-	// Read the response body (could be JSON, octet-stream, file, etc.)
+	// Read the response body
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	return responseBody, nil
+}
+
+// FetchAPI is analogous to your "fetchAPI" in TypeScript.
+// It sends a request and attempts to parse the response into IrminAPIResponse[T].
+func (c *Client) FetchAPI(opts RequestOptions, out interface{}) (*IrminAPIResponse, error) {
+	// 1) Make the HTTP request using your existing `Request` method.
+	body, err := c.Request(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2) Unmarshal the main response.
+	var apiResp IrminAPIResponse
+	if err := json.Unmarshal(body, &apiResp); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response JSON: %w", err)
+	}
+
+	// 3) Check for top-level errors.
+	if len(apiResp.Errors) > 0 {
+		return &apiResp, fmt.Errorf("irmin core API errors: %v", apiResp.Errors)
+	}
+
+	// 4) If the caller passed a destination for `Data`, unmarshal it.
+	if out != nil && len(apiResp.Data) > 0 {
+		if err := json.Unmarshal(apiResp.Data, out); err != nil {
+			return &apiResp, fmt.Errorf("failed to unmarshal Data field: %w", err)
+		}
+	}
+
+	return &apiResp, nil
+}
+
+// FetchBinary is analogous to your "fetchBinary" in TypeScript.
+// It sends a request and returns the raw bytes (which you can treat as a file, or parse further).
+func (c *Client) FetchBinary(opts RequestOptions) ([]byte, error) {
+	return c.Request(opts)
 }

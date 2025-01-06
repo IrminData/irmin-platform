@@ -1,7 +1,6 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
 	"irmin-sdk/client"
 	"irmin-sdk/models"
@@ -22,24 +21,28 @@ func NewProfileService(client *client.Client) *ProfileService {
 }
 
 // GetProfile fetches the current user's profile
-func (s *ProfileService) GetProfile() (*models.User, error) {
-	resp, err := s.client.Request(client.RequestOptions{
+// Returns the user struct and the full IrminAPIResponse for inspection (e.g. message, errors, metadata).
+func (s *ProfileService) GetProfile() (*models.User, *client.IrminAPIResponse, error) {
+	var profile models.User
+
+	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: "/v1/profile",
-	})
+	}, &profile)
 	if err != nil {
-		return nil, fmt.Errorf("fetch profile error: %w", err)
+		return nil, nil, fmt.Errorf("fetch profile error: %w", err)
 	}
 
-	var profile models.User
-	if err := json.Unmarshal(resp, &profile); err != nil {
-		return nil, fmt.Errorf("parse profile error: %w", err)
-	}
-	return &profile, nil
+	return &profile, apiResp, nil
 }
 
-// UpdateProfile updates the user's profile fields and optionally uploads an avatar image
-func (s *ProfileService) UpdateProfile(firstName, lastName, email, phone, company string, avatar *os.File) (*models.User, error) {
+// UpdateProfile updates the user's profile fields and optionally uploads an avatar image.
+// Returns the updated user struct, plus the IrminAPIResponse object.
+func (s *ProfileService) UpdateProfile(
+	firstName, lastName, email, phone, company string,
+	avatar *os.File,
+) (*models.User, *client.IrminAPIResponse, error) {
+
 	// Build form fields for multipart data
 	formFields := map[string]string{
 		"_method":    "PATCH",
@@ -60,21 +63,20 @@ func (s *ProfileService) UpdateProfile(firstName, lastName, email, phone, compan
 		})
 	}
 
-	// Perform the request using multipart/form-data
-	resp, err := s.client.Request(client.RequestOptions{
+	// We'll parse the updated user from the `Data` field
+	var updatedProfile models.User
+
+	// Call FetchAPI with multipart/form-data
+	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/profile",
 		ContentType: "multipart/form-data",
 		FormFields:  formFields,
 		Files:       files,
-	})
+	}, &updatedProfile)
 	if err != nil {
-		return nil, fmt.Errorf("update profile error: %w", err)
+		return nil, nil, fmt.Errorf("update profile error: %w", err)
 	}
 
-	var profile models.User
-	if err := json.Unmarshal(resp, &profile); err != nil {
-		return nil, fmt.Errorf("parse profile error: %w", err)
-	}
-	return &profile, nil
+	return &updatedProfile, apiResp, nil
 }
