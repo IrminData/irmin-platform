@@ -109,39 +109,55 @@ type Action struct {
 
 // Pipeline represents the configuration for a pipeline workflow.
 type Pipeline struct {
-	Live   bool            `json:"live"`
-	Stages []PipelineStage `json:"stages"`
+	Live   bool            `json:"live"`   // Whether the pipeline runs continuously
+	Stages []PipelineStage `json:"stages"` // Chain of stages in the pipeline
 }
 
-// PipelineStage represents a single stage in a pipeline.
-type PipelineStage struct {
-	Description     string                   `json:"description"`
-	Write           bool                     `json:"write"`
-	Read            bool                     `json:"read"`
-	Type            string                   `json:"type"` // "action", "connection", or "repository"
-	ActionStage     *PipelineStageAction     `json:"action_stage,omitempty"`
-	ConnectionStage *PipelineStageConnection `json:"connection_stage,omitempty"`
-	RepositoryStage *PipelineStageRepository `json:"repository_stage,omitempty"`
+// PipelineStage interface for dynamic type handling
+type PipelineStage interface {
+	GetType() string
 }
 
-// PipelineStageAction represents a pipeline stage that executes an action.
+// CommonProperties holds common fields for all pipeline stages
+type CommonProperties struct {
+	Description string `json:"description"` // Explanation of the stage's responsibility
+	Write       bool   `json:"write"`       // Whether the input of the stage should be used
+	Read        bool   `json:"read"`        // Whether the result should be passed to the next stage
+}
+
+// PipelineStageAction represents a stage that executes an action
 type PipelineStageAction struct {
-	Type       string `json:"type"` // "action"
-	Executable string `json:"executable"`
+	CommonProperties
+	Type       string `json:"type"`       // Always "action"
+	Executable string `json:"executable"` // Path to the action script
 }
 
-// PipelineStageConnection represents a pipeline stage that uses a connection.
+func (a *PipelineStageAction) GetType() string {
+	return "action"
+}
+
+// PipelineStageConnection represents a stage that uses a connection
 type PipelineStageConnection struct {
-	Type                string     `json:"type"` // "connection"
-	Connection          Connection `json:"connection"`
-	ConnectionWritePath string     `json:"connection_write_path"`
-	ConnectionReadPath  string     `json:"connection_read_path"`
+	CommonProperties
+	Type                string     `json:"type"`                  // Always "connection"
+	Connection          Connection `json:"connection"`            // Connection details
+	ConnectionWritePath string     `json:"connection_write_path"` // Path to write within the connection
+	ConnectionReadPath  string     `json:"connection_read_path"`  // Path to read within the connection
 }
 
-// PipelineStageRepository represents a pipeline stage that uses a repository.
+func (c *PipelineStageConnection) GetType() string {
+	return "connection"
+}
+
+// PipelineStageRepository represents a stage that uses a repository
 type PipelineStageRepository struct {
-	Type       string     `json:"type"` // "repository"
-	Repository Repository `json:"repository"`
-	Branch     string     `json:"branch"`
-	Path       string     `json:"path"`
+	CommonProperties
+	Type       string     `json:"type"`       // Always "repository"
+	Repository Repository `json:"repository"` // Repository details
+	Branch     string     `json:"branch"`     // Branch in the repository
+	Path       string     `json:"path"`       // Path within the repository
+}
+
+func (r *PipelineStageRepository) GetType() string {
+	return "repository"
 }

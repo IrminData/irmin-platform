@@ -1,27 +1,6 @@
 package models
 
-type WorkflowSchedule struct {
-	Triggers    []WorkflowTrigger `json:"triggers"`
-	MaxRetries  *int              `json:"max_retries,omitempty"`
-	MaxRuntime  *int              `json:"max_runtime,omitempty"`
-	MinInterval *int              `json:"min_interval,omitempty"`
-}
-
-// WorkflowTrigger represents the different trigger configurations that can activate a workflow to run.
-type WorkflowTrigger struct {
-	Type               string              `json:"type"`
-	TimeTrigger        *TimeTrigger        `json:"time_trigger,omitempty"`
-	RepositoryTrigger  *RepositoryTrigger  `json:"repository_trigger,omitempty"`
-	WorkflowRunTrigger *WorkflowRunTrigger `json:"workflow_run_trigger,omitempty"`
-}
-
-// TimeTrigger represents a time-based trigger using cron syntax.
-type TimeTrigger struct {
-	Type  string `json:"type"`
-	RRule string `json:"rrule"`
-}
-
-// RepositoryEvent defines the events that can trigger a workflow in a repository.
+// RepositoryEvent represents repository-related events that can trigger a workflow.
 type RepositoryEvent string
 
 const (
@@ -39,15 +18,7 @@ const (
 	PostDeleteTag    RepositoryEvent = "post-delete-tag"
 )
 
-// RepositoryTrigger defines trigger configuration for repository events.
-type RepositoryTrigger struct {
-	Type       string          `json:"type"`
-	Event      RepositoryEvent `json:"event"`
-	Repository *string         `json:"repository,omitempty"`
-	Ref        *string         `json:"ref,omitempty"`
-}
-
-// WorkflowRunEvent defines the events that can trigger a workflow run.
+// WorkflowRunEvent represents workflow run-related events that can trigger a workflow.
 type WorkflowRunEvent string
 
 const (
@@ -55,9 +26,48 @@ const (
 	PostWorkflowRun WorkflowRunEvent = "post-workflow-run"
 )
 
-// WorkflowRunTrigger defines trigger configuration for workflow run events.
+// WorkflowTrigger is an interface for different trigger types.
+type WorkflowTrigger interface {
+	GetType() string
+}
+
+// TimeTrigger represents a time-based trigger using an RRULE.
+type TimeTrigger struct {
+	Type  string `json:"type"`  // Always "time"
+	RRule string `json:"rrule"` // Recurrence rule
+}
+
+func (t TimeTrigger) GetType() string {
+	return t.Type
+}
+
+// RepositoryTrigger represents a trigger for repository-related events.
+type RepositoryTrigger struct {
+	Type       string          `json:"type"`       // Always "repository-event"
+	Event      RepositoryEvent `json:"event"`      // The repository event
+	Repository *string         `json:"repository"` // Optional repository slug
+	Ref        *string         `json:"ref"`        // Optional ref (branch, tag, etc.)
+}
+
+func (t RepositoryTrigger) GetType() string {
+	return t.Type
+}
+
+// WorkflowRunTrigger represents a trigger for workflow run-related events.
 type WorkflowRunTrigger struct {
-	Type     string           `json:"type"`
-	Event    WorkflowRunEvent `json:"event"`
-	Workflow *string          `json:"workflow,omitempty"`
+	Type     string           `json:"type"`     // Always "workflow-run-event"
+	Event    WorkflowRunEvent `json:"event"`    // The workflow run event
+	Workflow *string          `json:"workflow"` // Optional workflow ID
+}
+
+func (t WorkflowRunTrigger) GetType() string {
+	return t.Type
+}
+
+// WorkflowSchedule represents the schedule configuration for a workflow.
+type WorkflowSchedule struct {
+	Triggers    []WorkflowTrigger `json:"triggers"`
+	MaxRetries  *int              `json:"max_retries,omitempty"`
+	MaxRuntime  *int              `json:"max_runtime,omitempty"`
+	MinInterval *int              `json:"min_interval,omitempty"`
 }
