@@ -47,14 +47,18 @@ func (s *ConnectionService) FetchConnection(connectionID string) (*models.Connec
 
 // UpdateConnection updates an existing connection
 func (s *ConnectionService) UpdateConnection(
-	connectionID string,
-	data map[string]interface{},
+	connectionID,
+	name,
+	description,
+	documentation string,
 ) (*models.Connection, *client.IrminAPIResponse, error) {
 	form := url.Values{}
+
 	form.Set("_method", "PATCH")
-	for key, value := range data {
-		form.Set(key, fmt.Sprintf("%v", value))
-	}
+
+	form.Set("name", name)
+	form.Set("description", description)
+	form.Set("documentation", documentation)
 
 	var updatedConnection models.Connection
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{

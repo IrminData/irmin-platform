@@ -137,21 +137,24 @@ func (s *RepositoryService) UpdateRepository(
 }
 
 // GetRepositoryDownloadLink retrieves a download link for a repository
-func (s *RepositoryService) GetRepositoryDownloadLink(slug, ref, path string) (*client.IrminAPIResponse, error) {
+func (s *RepositoryService) GetRepositoryDownloadLink(slug, ref, path string) (*string, *client.IrminAPIResponse, error) {
 	form := url.Values{}
 
-	form.Set("_method", "PATCH")
 	form.Set("ref", ref)
 	form.Set("path", path)
+
+	var response struct {
+		DownloadURL string `json:"download_url"`
+	}
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/download", slug),
 		ContentType: "application/x-www-form-urlencoded",
 		Body:        strings.NewReader(form.Encode()),
-	}, nil)
+	}, &response)
 	if err != nil {
-		return nil, fmt.Errorf("get repository download link error: %w", err)
+		return nil, nil, fmt.Errorf("get repository download link error: %w", err)
 	}
-	return apiResp, nil
+	return &response.DownloadURL, apiResp, nil
 }

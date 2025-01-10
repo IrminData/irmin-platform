@@ -4,10 +4,12 @@ Structure of the SDK project:
 
 ```bash
 irmin-sdk/
-├── client/          # SDK core client
-├── services/        # Service implementations
+├── client/          # API core client
+├── services/        # API Service implementations
 ├── models/          # Data models
+├── utils/           # Utility functions
 ├── examples/        # Example usage files
+├── test.go          # Test file to execute all the examples in a correct order
 ├── go.mod           # Go module file
 ```
 
@@ -26,4 +28,12 @@ go mod tidy
 BASE_URL=https://api.irmin.dev
 API_TOKEN=your-api-token
 LOCALE=en
+```
+
+## Running the examples
+
+To execute the `test.go` file and run all the examples in the correct order, use the following command:
+
+```bash
+go run test.go
 ```

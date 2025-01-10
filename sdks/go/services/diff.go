@@ -42,7 +42,7 @@ func (s *DiffService) MergeRefs(repository, baseRef, compareRef, description, st
 	form.Set("base_ref", baseRef)
 	form.Set("compare_ref", compareRef)
 	form.Set("description", description)
-	form.Set("strategy", strategy)
+	form.Set("strategy", strategy) // The merge strategy (default, source-wins, dest-wins)
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
