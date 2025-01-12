@@ -25,7 +25,7 @@ func TestVersioningAndObjects(baseURL, apiToken, locale string) {
 	fmt.Println(res.Message)
 
 	// Read the contents of the Lakes.json file
-	lakesPath := "../static/Lakes.json"
+	lakesPath := "./static/Lakes.json"
 	lakesContent, err := os.ReadFile(lakesPath)
 	if err != nil {
 		fmt.Println("Error reading Lakes.json file:", err)
@@ -33,7 +33,7 @@ func TestVersioningAndObjects(baseURL, apiToken, locale string) {
 	}
 
 	// Read the contents of the Meteo.json file
-	meteoPath := "../static/Meteo.json"
+	meteoPath := "./static/Meteo.json"
 	meteoContent, err := os.ReadFile(meteoPath)
 	if err != nil {
 		fmt.Println("Error reading Meteo.json file:", err)

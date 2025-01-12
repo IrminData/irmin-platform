@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"irmin-sdk/client"
 	"irmin-sdk/models"
-	"mime/multipart"
 	"net/http"
 )
 
@@ -23,7 +22,13 @@ func NewObjectService(client *client.Client) *ObjectService {
 
 // FetchObjects retrieves objects at a given path in a repository and ref
 func (s *ObjectService) FetchObjects(repository, path, ref string) ([]models.Object, *client.IrminAPIResponse, error) {
+	// Build the endpoint: /v1/repositories/:repository/objects/:path removing the first / from path if it exists
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
 	endpoint := fmt.Sprintf("/v1/repositories/%s/objects/%s", repository, path)
+
+	// Add ref query parameter if provided
 	if ref != "" {
 		endpoint += fmt.Sprintf("?ref=%s", ref)
 	}
@@ -41,7 +46,13 @@ func (s *ObjectService) FetchObjects(repository, path, ref string) ([]models.Obj
 
 // FetchObject retrieves a single object by its name and path in a repository
 func (s *ObjectService) FetchObject(repository, path, ref string) (*models.Object, *client.IrminAPIResponse, error) {
+	// Build the endpoint: /v1/repositories/:repository/objects/:path removing the first / from path if it exists
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
 	endpoint := fmt.Sprintf("/v1/repositories/%s/objects/%s", repository, path)
+
+	// Add ref query parameter if provided
 	if ref != "" {
 		endpoint += fmt.Sprintf("?ref=%s", ref)
 	}
@@ -96,41 +107,55 @@ func (s *ObjectService) FetchContent(repository, path, ref string, raw bool) ([]
 }
 
 // UploadObject creates or updates an object in the repository
-func (s *ObjectService) UploadObject(repository, ref, path, name string, files map[string][]byte) (*models.Object, *client.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/repositories/%s/objects/%s/%s", repository, path, name)
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
+func (s *ObjectService) UploadObject(
+	repository string,
+	ref string,
+	path string,
+	name string,
+	files map[string][]byte,
+) (*models.Object, *client.IrminAPIResponse, error) {
 
-	// Add ref field
-	if err := writer.WriteField("ref", ref); err != nil {
-		return nil, nil, fmt.Errorf("write ref field error: %w", err)
+	// Build the endpoint: /v1/repositories/:repository/objects/:path removing the first / from path if it exists
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
 	}
+	endpoint := fmt.Sprintf("/v1/repositories/%s/objects/%s", repository, path)
 
-	// Add files
+	// Convert files map into []client.FormFile
+	var formFiles []client.FormFile
 	for fileName, fileContent := range files {
-		part, err := writer.CreateFormFile("file", fileName)
-		if err != nil {
-			return nil, nil, fmt.Errorf("create form file error: %w", err)
-		}
-		if _, err := part.Write(fileContent); err != nil {
-			return nil, nil, fmt.Errorf("write file content error: %w", err)
-		}
+		// Use bytes.NewReader for in-memory file data
+		reader := bytes.NewReader(fileContent)
+		formFiles = append(formFiles, client.FormFile{
+			FieldName: "file",   // The multipart form field name
+			FileName:  fileName, // The filename to send in the multipart
+			Reader:    reader,   // The file contents
+		})
 	}
 
-	if err := writer.Close(); err != nil {
-		return nil, nil, fmt.Errorf("close writer error: %w", err)
+	// Build form fields for non-file data
+	formFields := map[string]string{
+		"ref": ref,
 	}
 
-	var object models.Object
-	apiResp, err := s.client.FetchAPI(client.RequestOptions{
+	// Construct your RequestOptions for a multipart form upload
+	reqOpts := client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    endpoint,
-		ContentType: writer.FormDataContentType(),
-		Body:        body,
-	}, &object)
+		FormFields:  formFields,
+		Files:       formFiles,
+		ContentType: "multipart/form-data",
+	}
+
+	// Prepare an object to hold the response data
+	var object models.Object
+
+	// FetchAPI will also parse the IrminAPIResponse
+	apiResp, err := s.client.FetchAPI(reqOpts, &object)
 	if err != nil {
 		return nil, nil, fmt.Errorf("upload object error: %w", err)
 	}
+
 	return &object, apiResp, nil
 }
 
@@ -143,10 +168,16 @@ func (s *ObjectService) MoveObject(repository, ref, path, newPath, newName strin
 		"new_name": newName,
 	}
 
+	// Build the endpoint: /v1/repositories/:repository/objects/:path removing the first / from path if it exists
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	endpoint := fmt.Sprintf("/v1/repositories/%s/objects/%s", repository, path)
+
 	var object models.Object
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/repositories/%s/objects/%s", repository, path),
+		Endpoint:    endpoint,
 		ContentType: "application/x-www-form-urlencoded",
 		FormFields:  form,
 	}, &object)
@@ -163,9 +194,15 @@ func (s *ObjectService) DeleteObject(repository, ref, path, name string) (*clien
 		"ref":     ref,
 	}
 
+	// Build the endpoint: /v1/repositories/:repository/objects/:path removing the first / from path if it exists
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	endpoint := fmt.Sprintf("/v1/repositories/%s/objects/%s", repository, path)
+
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/repositories/%s/objects/%s/%s", repository, path, name),
+		Endpoint:    endpoint,
 		ContentType: "application/x-www-form-urlencoded",
 		FormFields:  form,
 	}, nil)
