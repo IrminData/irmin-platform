@@ -5,8 +5,6 @@ import (
 	"irmin-sdk/client"
 	"irmin-sdk/models"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 // RepositoryService handles repository-related API calls
@@ -57,17 +55,18 @@ func (s *RepositoryService) CreateRepository(
 	description,
 	documentation string,
 ) (*models.Repository, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("name", name)
-	form.Set("description", description)
-	form.Set("documentation", documentation)
+	form := map[string]string{
+		"name":          name,
+		"description":   description,
+		"documentation": documentation,
+	}
 
 	var repository models.Repository
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/repositories",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &repository)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create repository error: %w", err)
@@ -78,14 +77,15 @@ func (s *RepositoryService) CreateRepository(
 
 // ReassignRepository reassigns ownership of a repository
 func (s *RepositoryService) ReassignRepository(slug, ownerID string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("owner", ownerID)
+	form := map[string]string{
+		"owner": ownerID,
+	}
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/reassign", slug),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("reassign repository error: %w", err)
@@ -95,14 +95,15 @@ func (s *RepositoryService) ReassignRepository(slug, ownerID string) (*client.Ir
 
 // DeleteRepository deletes a repository by its slug
 func (s *RepositoryService) DeleteRepository(slug string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("_method", "DELETE")
+	form := map[string]string{
+		"_method": "DELETE",
+	}
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s", slug),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete repository error: %w", err)
@@ -117,18 +118,18 @@ func (s *RepositoryService) UpdateRepository(
 	description,
 	documentation string,
 ) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-
-	form.Set("_method", "PATCH")
-	form.Set("name", name)
-	form.Set("description", description)
-	form.Set("documentation", documentation)
+	form := map[string]string{
+		"_method":       "PATCH",
+		"name":          name,
+		"description":   description,
+		"documentation": documentation,
+	}
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s", slug),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("update repository error: %w", err)
@@ -138,10 +139,10 @@ func (s *RepositoryService) UpdateRepository(
 
 // GetRepositoryDownloadLink retrieves a download link for a repository
 func (s *RepositoryService) GetRepositoryDownloadLink(slug, ref, path string) (*string, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-
-	form.Set("ref", ref)
-	form.Set("path", path)
+	form := map[string]string{
+		"ref":  ref,
+		"path": path,
+	}
 
 	var response struct {
 		DownloadURL string `json:"download_url"`
@@ -151,7 +152,7 @@ func (s *RepositoryService) GetRepositoryDownloadLink(slug, ref, path string) (*
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/download", slug),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &response)
 	if err != nil {
 		return nil, nil, fmt.Errorf("get repository download link error: %w", err)

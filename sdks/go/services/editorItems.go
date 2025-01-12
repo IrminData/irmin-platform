@@ -5,8 +5,6 @@ import (
 	"irmin-sdk/client"
 	"irmin-sdk/models"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 // EditorItemsService handles editor item-related operations
@@ -38,19 +36,20 @@ func (s *EditorItemsService) FetchEditorItems() (*models.EditorItems, *client.Ir
 
 // CreateFile creates a new file in the editor items
 func (s *EditorItemsService) CreateFile(file *models.EditorItemsFile, isDraft bool) (*models.EditorItemsFile, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("name", file.Name)
-	form.Set("path", file.Path)
-	form.Set("contents", file.Contents)
-	form.Set("extension", string(file.Type))
-	form.Set("is_draft", fmt.Sprintf("%v", isDraft))
+	form := map[string]string{
+		"name":      file.Name,
+		"path":      file.Path,
+		"contents":  file.Contents,
+		"extension": string(file.Type),
+		"is_draft":  fmt.Sprintf("%v", isDraft),
+	}
 
 	var createdFile models.EditorItemsFile
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/editor-items/files",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &createdFile)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create file error: %w", err)
@@ -62,24 +61,23 @@ func (s *EditorItemsService) CreateFile(file *models.EditorItemsFile, isDraft bo
 func (s *EditorItemsService) UpdateFile(
 	name, path, contents, extension, owner, originalPath string, isDraft bool,
 ) (*models.EditorItemsFile, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-
-	form.Set("_method", "PATCH")
-
-	form.Set("name", name)
-	form.Set("path", path)
-	form.Set("contents", contents)
-	form.Set("extension", extension)
-	form.Set("owner", owner)
-	form.Set("original_path", originalPath)
-	form.Set("is_draft", fmt.Sprintf("%v", isDraft))
+	form := map[string]string{
+		"_method":       "PATCH",
+		"name":          name,
+		"path":          path,
+		"contents":      contents,
+		"extension":     extension,
+		"owner":         owner,
+		"original_path": originalPath,
+		"is_draft":      fmt.Sprintf("%v", isDraft),
+	}
 
 	var updatedFile models.EditorItemsFile
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/editor-items/files",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &updatedFile)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create file error: %w", err)
@@ -89,16 +87,19 @@ func (s *EditorItemsService) UpdateFile(
 }
 
 // DeleteFile deletes a file from the editor items
-func (s *EditorItemsService) DeleteFile(path string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("_method", "DELETE")
-	form.Set("path", path)
+func (s *EditorItemsService) DeleteFile(name, extension, path string) (*client.IrminAPIResponse, error) {
+	form := map[string]string{
+		"_method":   "DELETE",
+		"name":      name,
+		"extension": extension,
+		"path":      path,
+	}
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/editor-items/files",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete file error: %w", err)
@@ -108,16 +109,17 @@ func (s *EditorItemsService) DeleteFile(path string) (*client.IrminAPIResponse, 
 
 // CreateFolder creates a new folder in the editor items
 func (s *EditorItemsService) CreateFolder(folder *models.EditorItemsFolder) (*models.EditorItemsFolder, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("name", folder.Name)
-	form.Set("path", folder.Path)
+	form := map[string]string{
+		"name": folder.Name,
+		"path": folder.Path,
+	}
 
 	var createdFolder models.EditorItemsFolder
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/editor-items/folders",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &createdFolder)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create folder error: %w", err)
@@ -126,16 +128,18 @@ func (s *EditorItemsService) CreateFolder(folder *models.EditorItemsFolder) (*mo
 }
 
 // DeleteFolder deletes a folder from the editor items
-func (s *EditorItemsService) DeleteFolder(path string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("_method", "DELETE")
-	form.Set("path", path)
+func (s *EditorItemsService) DeleteFolder(name, path string) (*client.IrminAPIResponse, error) {
+	form := map[string]string{
+		"_method": "DELETE",
+		"name":    name,
+		"path":    path,
+	}
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/editor-items/folders",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete folder error: %w", err)

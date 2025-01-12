@@ -5,8 +5,6 @@ import (
 	"irmin-sdk/client"
 	"irmin-sdk/models"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 // TagService handles repository tag-related API calls
@@ -53,17 +51,17 @@ func (s *TagService) FetchTag(repository, tag string) (*models.Tag, *client.Irmi
 
 // CreateTag creates a new tag in the specified repository
 func (s *TagService) CreateTag(repository, name, ref string) (*models.Tag, *client.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/repositories/%s/tags", repository)
-	form := url.Values{}
-	form.Set("name", name)
-	form.Set("ref", ref)
-	var newTag models.Tag
+	form := map[string]string{
+		"name": name,
+		"ref":  ref,
+	}
 
+	var newTag models.Tag
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    endpoint,
+		Endpoint:    fmt.Sprintf("/v1/repositories/%s/tags", repository),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &newTag)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create tag error: %w", err)
@@ -73,22 +71,18 @@ func (s *TagService) CreateTag(repository, name, ref string) (*models.Tag, *clie
 
 // UpdateTag updates the name or ref of an existing tag
 func (s *TagService) UpdateTag(repository, tag, name, ref string) (*models.Tag, *client.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/repositories/%s/tags/%s", repository, tag)
-	form := url.Values{}
-	form.Set("_method", "PATCH")
-	if name != "" {
-		form.Set("name", name)
+	form := map[string]string{
+		"_method": "PATCH",
+		"name":    name,
+		"ref":     ref,
 	}
-	if ref != "" {
-		form.Set("ref", ref)
-	}
-	var updatedTag models.Tag
 
+	var updatedTag models.Tag
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    endpoint,
+		Endpoint:    fmt.Sprintf("/v1/repositories/%s/tags/%s", repository, tag),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &updatedTag)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update tag error: %w", err)
@@ -98,15 +92,15 @@ func (s *TagService) UpdateTag(repository, tag, name, ref string) (*models.Tag, 
 
 // DeleteTag deletes a tag from the repository
 func (s *TagService) DeleteTag(repository, tag string) (*client.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/repositories/%s/tags/%s", repository, tag)
-	form := url.Values{}
-	form.Set("_method", "DELETE")
+	form := map[string]string{
+		"_method": "DELETE",
+	}
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    endpoint,
+		Endpoint:    fmt.Sprintf("/v1/repositories/%s/tags/%s", repository, tag),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete tag error: %w", err)

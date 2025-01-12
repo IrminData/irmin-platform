@@ -5,8 +5,6 @@ import (
 	"irmin-sdk/client"
 	"irmin-sdk/models"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 // BranchService handles branch-related API operations.
@@ -49,15 +47,14 @@ func (s *BranchService) FetchBranch(branchName, repository string) (models.Branc
 
 // CreateBranch creates a new branch in the repository.
 func (s *BranchService) CreateBranch(repository, name, from string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("name", name)
-	form.Set("from", from)
-
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/branches", repository),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields: map[string]string{
+			"name": name,
+			"from": from,
+		},
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create branch error: %w", err)
@@ -68,14 +65,13 @@ func (s *BranchService) CreateBranch(repository, name, from string) (*client.Irm
 
 // DeleteBranch deletes a branch in the repository.
 func (s *BranchService) DeleteBranch(repository, branch string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("_method", "DELETE")
-
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/branches/%s", repository, branch),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields: map[string]string{
+			"_method": "DELETE",
+		},
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete branch error: %w", err)
@@ -86,15 +82,14 @@ func (s *BranchService) DeleteBranch(repository, branch string) (*client.IrminAP
 
 // UpdateBranch updates a branch name in the repository.
 func (s *BranchService) UpdateBranch(repository, oldName, newName string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("_method", "PATCH")
-	form.Set("name", newName)
-
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/branches/%s", repository, oldName),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields: map[string]string{
+			"_method": "DELETE",
+			"name":    newName,
+		},
 	}, nil)
 
 	if err != nil {

@@ -5,8 +5,6 @@ import (
 	"irmin-sdk/client"
 	"irmin-sdk/models"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 // DiffService provides methods to compare and merge refs
@@ -38,17 +36,18 @@ func (s *DiffService) CompareRefs(repository, baseRef, compareRef string) (*mode
 
 // MergeRefs merges one ref into another
 func (s *DiffService) MergeRefs(repository, baseRef, compareRef, description, strategy string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("base_ref", baseRef)
-	form.Set("compare_ref", compareRef)
-	form.Set("description", description)
-	form.Set("strategy", strategy) // The merge strategy (default, source-wins, dest-wins)
+	form := map[string]string{
+		"base_ref":    baseRef,
+		"compare_ref": compareRef,
+		"description": description,
+		"strategy":    strategy, // The merge strategy (default, source-wins, dest-wins)
+	}
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/merge", repository),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("merge refs error: %w", err)

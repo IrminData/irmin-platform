@@ -5,8 +5,6 @@ import (
 	"irmin-sdk/client"
 	"irmin-sdk/models"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 // QueryService handles query-related API calls
@@ -23,16 +21,17 @@ func NewQueryService(client *client.Client) *QueryService {
 
 // ExecuteScript executes a script (e.g., Irmin SQL query or Compute Sandbox script)
 func (s *QueryService) ExecuteScript(scriptType, content string) (*models.QueryExecutionResult, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("type", scriptType)
-	form.Set("content", content)
+	form := map[string]string{
+		"type":    scriptType,
+		"content": content,
+	}
 
 	var result models.QueryExecutionResult
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/queries/execute",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &result)
 	if err != nil {
 		return nil, nil, fmt.Errorf("execute script error: %w", err)
@@ -45,24 +44,25 @@ func (s *QueryService) CreateQuery(
 	scriptType, content, name, description string,
 	stored, run bool,
 ) (*models.Query, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("type", scriptType)
-	form.Set("content", content)
+	form := map[string]string{
+		"type":    scriptType,
+		"content": content,
+		"stored":  fmt.Sprintf("%t", stored),
+		"run":     fmt.Sprintf("%t", run),
+	}
 	if name != "" {
-		form.Set("name", name)
+		form["name"] = name
 	}
 	if description != "" {
-		form.Set("description", description)
+		form["description"] = description
 	}
-	form.Set("stored", fmt.Sprintf("%t", stored))
-	form.Set("run", fmt.Sprintf("%t", run))
 
 	var query models.Query
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/queries",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &query)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create query error: %w", err)
@@ -102,14 +102,15 @@ func (s *QueryService) GetQuery(queryID string) (*models.Query, *client.IrminAPI
 
 // DeleteQuery deletes a query by ID
 func (s *QueryService) DeleteQuery(queryID string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("_method", "DELETE")
+	form := map[string]string{
+		"_method": "DELETE",
+	}
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/queries/%s", queryID),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete query error: %w", err)
@@ -122,20 +123,21 @@ func (s *QueryService) UpdateQuery(
 	queryID, scriptType, content, name, description string,
 	stored bool,
 ) (*models.Query, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("_method", "PATCH")
-	form.Set("type", scriptType)
-	form.Set("content", content)
-	form.Set("name", name)
-	form.Set("description", description)
-	form.Set("stored", fmt.Sprintf("%t", stored))
+	form := map[string]string{
+		"_method":     "PATCH",
+		"type":        scriptType,
+		"content":     content,
+		"name":        name,
+		"description": description,
+		"stored":      fmt.Sprintf("%t", stored),
+	}
 
 	var query models.Query
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/queries/%s", queryID),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &query)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update query error: %w", err)

@@ -5,8 +5,6 @@ import (
 	"irmin-sdk/client"
 	"irmin-sdk/models"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 // WorkspaceService wraps operations on workspaces
@@ -55,14 +53,14 @@ func (s *WorkspaceService) FetchWorkspace(slug string) (*models.Workspace, *clie
 // TransferWorkspaceOwnership reassigns ownership of a workspace
 func (s *WorkspaceService) TransferWorkspaceOwnership(slug, userID string) (*client.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/workspaces/%s/reassign", slug)
-	form := url.Values{}
-	form.Set("user", userID)
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    endpoint,
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields: map[string]string{
+			"user": userID,
+		},
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("transfer workspace ownership error: %w", err)
@@ -72,16 +70,15 @@ func (s *WorkspaceService) TransferWorkspaceOwnership(slug, userID string) (*cli
 
 // CreateWorkspace creates a new workspace
 func (s *WorkspaceService) CreateWorkspace(name, description string) (*models.Workspace, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("name", name)
-	form.Set("description", description)
-
 	var workspace models.Workspace
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/workspaces",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields: map[string]string{
+			"name":        name,
+			"description": description,
+		},
 	}, &workspace)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create workspace error: %w", err)
@@ -93,17 +90,17 @@ func (s *WorkspaceService) CreateWorkspace(name, description string) (*models.Wo
 // UpdateWorkspace updates an existing workspace
 func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*models.Workspace, *client.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/workspaces/%s", slug)
-	form := url.Values{}
-	form.Set("_method", "PATCH")
-	form.Set("name", name)
-	form.Set("description", description)
 	var workspace models.Workspace
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    endpoint,
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields: map[string]string{
+			"_method":     "PATCH",
+			"name":        name,
+			"description": description,
+		},
 	}, &workspace)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update workspace error: %w", err)
@@ -115,14 +112,14 @@ func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*mod
 // DeleteWorkspace deletes a workspace
 func (s *WorkspaceService) DeleteWorkspace(slug string) (*client.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/workspaces/%s", slug)
-	form := url.Values{}
-	form.Set("_method", "DELETE")
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    endpoint,
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields: map[string]string{
+			"_method": "DELETE",
+		},
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete workspace error: %w", err)

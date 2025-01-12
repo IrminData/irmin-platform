@@ -36,7 +36,7 @@ func DeleteTestScriptFile(baseURL, apiToken, locale string) {
 	editorItemsService := services.NewEditorItemsService(apiClient)
 
 	// Delete the script
-	res, err := editorItemsService.DeleteFile("/test.js")
+	res, err := editorItemsService.DeleteFile("test.js", "js", "/test.js")
 	if err != nil {
 		fmt.Println("Error deleting file:", err)
 		return
@@ -94,7 +94,7 @@ func TestEditorItems(baseURL, apiToken, locale string) {
 	fmt.Println("File updated:", file.Path)
 
 	// Delete the example folder
-	res, err = editorItemsService.DeleteFolder("/example")
+	res, err = editorItemsService.DeleteFolder("example", "/example")
 	if err != nil {
 		fmt.Println("Error deleting folder:", err)
 		return

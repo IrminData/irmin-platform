@@ -6,7 +6,6 @@ import (
 	"irmin-sdk/models"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 // ConnectionService handles operations related to connections
@@ -52,20 +51,17 @@ func (s *ConnectionService) UpdateConnection(
 	description,
 	documentation string,
 ) (*models.Connection, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-
-	form.Set("_method", "PATCH")
-
-	form.Set("name", name)
-	form.Set("description", description)
-	form.Set("documentation", documentation)
-
 	var updatedConnection models.Connection
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/connections/%s", connectionID),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields: map[string]string{
+			"_method":       "PATCH",
+			"name":          name,
+			"description":   description,
+			"documentation": documentation,
+		},
 	}, &updatedConnection)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update connection error: %w", err)
@@ -77,15 +73,14 @@ func (s *ConnectionService) UpdateConnection(
 func (s *ConnectionService) ReassignConnection(
 	connectionID, newOwnerID string,
 ) (*models.Connection, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("owner", newOwnerID)
-
 	var updatedConnection models.Connection
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/connections/%s/reassign", connectionID),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields: map[string]string{
+			"owner": newOwnerID,
+		},
 	}, &updatedConnection)
 	if err != nil {
 		return nil, nil, fmt.Errorf("reassign connection error: %w", err)
@@ -97,13 +92,15 @@ func (s *ConnectionService) ReassignConnection(
 func (s *ConnectionService) DeleteConnection(connectionID string) (*client.IrminAPIResponse, error) {
 	form := url.Values{}
 	form.Set("_method", "DELETE")
-	form.Set("connection", connectionID)
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    "/v1/connections",
+		Endpoint:    fmt.Sprintf("/v1/connections/%s", connectionID),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields: map[string]string{
+			"_method":    "DELETE",
+			"connection": connectionID,
+		},
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete connection error: %w", err)
@@ -117,16 +114,17 @@ func (s *ConnectionService) CreateConnection(
 	connectionDetails, connectionSettings map[string]string,
 	name, description string,
 ) (*models.Connection, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("connector", connectorID)
-	form.Set("name", name)
-	form.Set("description", description)
 
+	fields := map[string]string{
+		"connector":   connectorID,
+		"name":        name,
+		"description": description,
+	}
 	for key, value := range connectionDetails {
-		form.Set(fmt.Sprintf("details[%s]", key), value)
+		fields[fmt.Sprintf("details[%s]", key)] = value
 	}
 	for key, value := range connectionSettings {
-		form.Set(fmt.Sprintf("settings[%s]", key), value)
+		fields[fmt.Sprintf("settings[%s]", key)] = value
 	}
 
 	var newConnection models.Connection
@@ -134,7 +132,7 @@ func (s *ConnectionService) CreateConnection(
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/connections",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  fields,
 	}, &newConnection)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create connection error: %w", err)

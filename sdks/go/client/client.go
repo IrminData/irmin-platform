@@ -81,6 +81,7 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 			bodyReader = bytes.NewReader(jsonData)
 			headers["Content-Type"] = "application/json"
 		}
+
 	case "multipart/form-data":
 		// Build a multipart form
 		var b bytes.Buffer
@@ -134,9 +135,23 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 		bodyReader = &b
 		headers["Content-Type"] = writer.FormDataContentType()
 
+	case "application/x-www-form-urlencoded":
+		// Encode form fields as URL-encoded data
+		var buf bytes.Buffer
+		firstField := true
+		for key, val := range opts.FormFields {
+			if !firstField {
+				buf.WriteByte('&')
+			}
+			buf.WriteString(fmt.Sprintf("%s=%s", key, val))
+			firstField = false
+		}
+		bodyReader = bytes.NewReader(buf.Bytes())
+		headers["Content-Type"] = "application/x-www-form-urlencoded"
+
 	default:
-		// If the content type is something else (or unspecified)
-		// let the user provide raw bytes or a string.
+		// If the content type is something else (or unspecified),
+		// let the user provide raw bytes or a string
 		if opts.Body != nil {
 			switch data := opts.Body.(type) {
 			case []byte:
@@ -172,15 +187,15 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	// Non-2xx means an error
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("API request failed with status %d", resp.StatusCode)
-	}
-
-	// Read the response body
+	// Read the response body, regardless of status code
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Check for non-2xx status codes and include body in error
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, responseBody)
 	}
 
 	return responseBody, nil

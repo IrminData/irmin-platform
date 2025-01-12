@@ -6,8 +6,6 @@ import (
 	"irmin-sdk/models"
 	"irmin-sdk/utils"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 // WorkflowService handles workflow-related operations
@@ -57,14 +55,13 @@ func (s *WorkflowService) UpdateWorkflow(
 	documentation string,
 	workflowSchedule *models.WorkflowSchedule,
 ) (*models.Workflow, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-
-	form.Set("_method", "PATCH")
-
-	// Workflow properties
-	form.Set("name", name)
-	form.Set("description", description)
-	form.Set("documentation", documentation)
+	form := map[string]string{
+		"_method": "PATCH",
+		// Workflow properties
+		"name":          name,
+		"description":   description,
+		"documentation": documentation,
+	}
 
 	// Workflow schedule
 	if workflowSchedule != nil {
@@ -73,7 +70,7 @@ func (s *WorkflowService) UpdateWorkflow(
 			return nil, nil, fmt.Errorf("prepare workflow schedule data error: %w", err)
 		}
 		for key, value := range scheduleFields {
-			form.Set(key, value)
+			form[key] = value
 		}
 	}
 
@@ -82,7 +79,7 @@ func (s *WorkflowService) UpdateWorkflow(
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workflows/%s", workflowID),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &workflow)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update workflow error: %w", err)
@@ -92,13 +89,13 @@ func (s *WorkflowService) UpdateWorkflow(
 
 // DeleteWorkflow deletes a workflow by its ID
 func (s *WorkflowService) DeleteWorkflow(workflowID string) (*client.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/workflows/%s", workflowID)
-	body := map[string]string{"_method": "DELETE"}
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    endpoint,
-		ContentType: "application/json",
-		Body:        body,
+		Endpoint:    fmt.Sprintf("/v1/workflows/%s", workflowID),
+		ContentType: "application/x-www-form-urlencoded",
+		FormFields: map[string]string{
+			"_method": "DELETE",
+		},
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete workflow error: %w", err)
@@ -108,10 +105,9 @@ func (s *WorkflowService) DeleteWorkflow(workflowID string) (*client.IrminAPIRes
 
 // TriggerWorkflowRun triggers a workflow run manually
 func (s *WorkflowService) TriggerWorkflowRun(workflowID string) (*client.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/workflows/%s/run", workflowID)
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: endpoint,
+		Endpoint: fmt.Sprintf("/v1/workflows/%s/run", workflowID),
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("trigger workflow run error: %w", err)
@@ -130,18 +126,17 @@ func (s *WorkflowService) CreateImportWorkflow(
 	documentation string,
 	workflowSchedule *models.WorkflowSchedule,
 ) (*models.Workflow, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-
-	// Import Workflow properties
-	form.Set("connection", connection)
-	form.Set("repository", repository)
-	form.Set("branch", branch)
-	form.Set("path", path)
-
-	// Workflow properties
-	form.Set("name", name)
-	form.Set("description", description)
-	form.Set("documentation", documentation)
+	form := map[string]string{
+		// Import Workflow properties
+		"connection": connection,
+		"repository": repository,
+		"branch":     branch,
+		"path":       path,
+		// Workflow properties
+		"name":          name,
+		"description":   description,
+		"documentation": documentation,
+	}
 
 	// Workflow schedule
 	if workflowSchedule != nil {
@@ -150,7 +145,7 @@ func (s *WorkflowService) CreateImportWorkflow(
 			return nil, nil, fmt.Errorf("prepare workflow schedule data error: %w", err)
 		}
 		for key, value := range scheduleFields {
-			form.Set(key, value)
+			form[key] = value
 		}
 	}
 
@@ -159,7 +154,7 @@ func (s *WorkflowService) CreateImportWorkflow(
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/workflows/imports",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &workflow)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create import workflow error: %w", err)
@@ -179,23 +174,18 @@ func (s *WorkflowService) CreateExportWorkflow(
 	documentation string,
 	workflowSchedule *models.WorkflowSchedule,
 ) (*models.Workflow, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-
-	// Import Workflow properties
-	form.Set("connection", connection)
-	form.Set("repository", repository)
-	form.Set("branch", branch)
-	form.Set("path", path)
-	if recursive {
-		form.Set("recursive", "true")
-	} else {
-		form.Set("recursive", "false")
+	form := map[string]string{
+		// Import Workflow properties
+		"connection": connection,
+		"repository": repository,
+		"branch":     branch,
+		"path":       path,
+		"recursive":  fmt.Sprintf("%t", recursive),
+		// Workflow properties
+		"name":          name,
+		"description":   description,
+		"documentation": documentation,
 	}
-
-	// Workflow properties
-	form.Set("name", name)
-	form.Set("description", description)
-	form.Set("documentation", documentation)
 
 	// Workflow schedule
 	if workflowSchedule != nil {
@@ -204,7 +194,7 @@ func (s *WorkflowService) CreateExportWorkflow(
 			return nil, nil, fmt.Errorf("prepare workflow schedule data error: %w", err)
 		}
 		for key, value := range scheduleFields {
-			form.Set(key, value)
+			form[key] = value
 		}
 	}
 
@@ -213,7 +203,7 @@ func (s *WorkflowService) CreateExportWorkflow(
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/workflows/exports",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &workflow)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create export workflow error: %w", err)
@@ -232,18 +222,17 @@ func (s *WorkflowService) CreateActionWorkflow(
 	documentation string,
 	schedule *models.WorkflowSchedule,
 ) (*models.Workflow, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-
-	// Action Workflow properties
-	form.Set("executable", executable)
-	form.Set("repository", repository)
-	form.Set("branch", branch)
-	form.Set("path", path)
-
-	// Workflow properties
-	form.Set("name", name)
-	form.Set("description", description)
-	form.Set("documentation", documentation)
+	form := map[string]string{
+		// Action Workflow properties
+		"executable": executable,
+		"repository": repository,
+		"branch":     branch,
+		"path":       path,
+		// Workflow properties
+		"name":          name,
+		"description":   description,
+		"documentation": documentation,
+	}
 
 	// Workflow schedule
 	if schedule != nil {
@@ -252,7 +241,7 @@ func (s *WorkflowService) CreateActionWorkflow(
 			return nil, nil, fmt.Errorf("prepare workflow schedule data error: %w", err)
 		}
 		for key, value := range scheduleFields {
-			form.Set(key, value)
+			form[key] = value
 		}
 	}
 
@@ -261,7 +250,7 @@ func (s *WorkflowService) CreateActionWorkflow(
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/workflows/actions",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &workflow)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create action workflow error: %w", err)
@@ -278,48 +267,44 @@ func (s *WorkflowService) CreatePipelineWorkflow(
 	documentation string,
 	schedule *models.WorkflowSchedule,
 ) (*models.Workflow, *client.IrminAPIResponse, error) {
-	form := url.Values{}
+	form := map[string]string{
+		"live": fmt.Sprintf("%t", live),
+		// Workflow properties
+		"name":          name,
+		"description":   description,
+		"documentation": documentation,
+	}
 
 	// Pipeline Workflow properties
-	if live {
-		form.Set("live", "true")
-	} else {
-		form.Set("live", "false")
-	}
 	for i, stage := range stages {
-		form.Set(fmt.Sprintf("stages[%d][type]", i), stage.GetType())
+		form[fmt.Sprintf("stages[%d][type]", i)] = stage.GetType()
 		switch stage.GetType() {
 		case "action":
 			actionStage := stage.(*models.PipelineStageAction)
-			form.Set(fmt.Sprintf("stages[%d][description]", i), actionStage.Description)
-			form.Set(fmt.Sprintf("stages[%d][write]", i), fmt.Sprintf("%t", actionStage.Write))
-			form.Set(fmt.Sprintf("stages[%d][read]", i), fmt.Sprintf("%t", actionStage.Read))
-			form.Set(fmt.Sprintf("stages[%d][executable]", i), actionStage.Executable)
+			form[fmt.Sprintf("stages[%d][description]", i)] = actionStage.Description
+			form[fmt.Sprintf("stages[%d][write]", i)] = fmt.Sprintf("%t", actionStage.Write)
+			form[fmt.Sprintf("stages[%d][read]", i)] = fmt.Sprintf("%t", actionStage.Read)
+			form[fmt.Sprintf("stages[%d][executable]", i)] = actionStage.Executable
 		case "connection":
 			connectionStage := stage.(*models.PipelineStageConnection)
-			form.Set(fmt.Sprintf("stages[%d][description]", i), connectionStage.Description)
-			form.Set(fmt.Sprintf("stages[%d][write]", i), fmt.Sprintf("%t", connectionStage.Write))
-			form.Set(fmt.Sprintf("stages[%d][read]", i), fmt.Sprintf("%t", connectionStage.Read))
-			form.Set(fmt.Sprintf("stages[%d][connection]", i), connectionStage.Connection.ID)
-			form.Set(fmt.Sprintf("stages[%d][connection_write_path]", i), connectionStage.ConnectionWritePath)
-			form.Set(fmt.Sprintf("stages[%d][connection_read_path]", i), connectionStage.ConnectionReadPath)
+			form[fmt.Sprintf("stages[%d][description]", i)] = connectionStage.Description
+			form[fmt.Sprintf("stages[%d][write]", i)] = fmt.Sprintf("%t", connectionStage.Write)
+			form[fmt.Sprintf("stages[%d][read]", i)] = fmt.Sprintf("%t", connectionStage.Read)
+			form[fmt.Sprintf("stages[%d][connection]", i)] = connectionStage.Connection.ID
+			form[fmt.Sprintf("stages[%d][connection_write_path]", i)] = connectionStage.ConnectionWritePath
+			form[fmt.Sprintf("stages[%d][connection_read_path]", i)] = connectionStage.ConnectionReadPath
 		case "repository":
 			repositoryStage := stage.(*models.PipelineStageRepository)
-			form.Set(fmt.Sprintf("stages[%d][description]", i), repositoryStage.Description)
-			form.Set(fmt.Sprintf("stages[%d][write]", i), fmt.Sprintf("%t", repositoryStage.Write))
-			form.Set(fmt.Sprintf("stages[%d][read]", i), fmt.Sprintf("%t", repositoryStage.Read))
-			form.Set(fmt.Sprintf("stages[%d][repository]", i), repositoryStage.Repository.Slug)
-			form.Set(fmt.Sprintf("stages[%d][branch]", i), repositoryStage.Branch)
-			form.Set(fmt.Sprintf("stages[%d][path]", i), repositoryStage.Path)
+			form[fmt.Sprintf("stages[%d][description]", i)] = repositoryStage.Description
+			form[fmt.Sprintf("stages[%d][write]", i)] = fmt.Sprintf("%t", repositoryStage.Write)
+			form[fmt.Sprintf("stages[%d][read]", i)] = fmt.Sprintf("%t", repositoryStage.Read)
+			form[fmt.Sprintf("stages[%d][repository]", i)] = repositoryStage.Repository.Slug
+			form[fmt.Sprintf("stages[%d][branch]", i)] = repositoryStage.Branch
+			form[fmt.Sprintf("stages[%d][path]", i)] = repositoryStage.Path
 		default:
 			return nil, nil, fmt.Errorf("unknown pipeline stage type: %s", stage.GetType())
 		}
 	}
-
-	// Workflow properties
-	form.Set("name", name)
-	form.Set("description", description)
-	form.Set("documentation", documentation)
 
 	// Workflow schedule
 	if schedule != nil {
@@ -328,7 +313,7 @@ func (s *WorkflowService) CreatePipelineWorkflow(
 			return nil, nil, fmt.Errorf("prepare workflow schedule data error: %w", err)
 		}
 		for key, value := range scheduleFields {
-			form.Set(key, value)
+			form[key] = value
 		}
 	}
 
@@ -337,7 +322,7 @@ func (s *WorkflowService) CreatePipelineWorkflow(
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/workflows/pipelines",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &workflow)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create pipeline workflow error: %w", err)

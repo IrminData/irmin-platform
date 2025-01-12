@@ -7,7 +7,6 @@ import (
 	"irmin-sdk/models"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 // ConnectorService handles operations related to connectors
@@ -54,13 +53,12 @@ func (s *ConnectorService) FetchConnectorConfigurationFields(
 	currentDetails map[string]string,
 	currentSettings map[string]string,
 ) (map[string]interface{}, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-
+	form := map[string]string{}
 	for key, value := range currentDetails {
-		form.Set(fmt.Sprintf("details[%s]", key), value)
+		form[fmt.Sprintf("details[%s]", key)] = value
 	}
 	for key, value := range currentSettings {
-		form.Set(fmt.Sprintf("settings[%s]", key), value)
+		form[fmt.Sprintf("settings[%s]", key)] = value
 	}
 
 	var fields map[string]interface{}
@@ -68,7 +66,7 @@ func (s *ConnectorService) FetchConnectorConfigurationFields(
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/connectors/%s/%s", connectorID, configType),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &fields)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch connector configuration fields error: %w", err)
@@ -82,13 +80,12 @@ func (s *ConnectorService) ValidateConnectorConfiguration(
 	details map[string]string,
 	settings map[string]string,
 ) (*models.ConnectorConfigurationValidationResult, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-
+	form := map[string]string{}
 	for key, value := range details {
-		form.Set(fmt.Sprintf("details[%s]", key), value)
+		form[fmt.Sprintf("details[%s]", key)] = value
 	}
 	for key, value := range settings {
-		form.Set(fmt.Sprintf("settings[%s]", key), value)
+		form[fmt.Sprintf("settings[%s]", key)] = value
 	}
 
 	var validationResult models.ConnectorConfigurationValidationResult
@@ -96,7 +93,7 @@ func (s *ConnectorService) ValidateConnectorConfiguration(
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/connectors/%s/validate", connectorID),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &validationResult)
 	if err != nil {
 		return nil, nil, fmt.Errorf("validate connector configuration error: %w", err)
@@ -110,13 +107,12 @@ func (s *ConnectorService) FetchConnectorSchema(
 	details map[string]string,
 	settings map[string]string,
 ) (*models.ObjectSchema, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-
+	form := map[string]string{}
 	for key, value := range details {
-		form.Set(fmt.Sprintf("details[%s]", key), value)
+		form[fmt.Sprintf("details[%s]", key)] = value
 	}
 	for key, value := range settings {
-		form.Set(fmt.Sprintf("settings[%s]", key), value)
+		form[fmt.Sprintf("settings[%s]", key)] = value
 	}
 
 	var schema models.ObjectSchema
@@ -124,7 +120,7 @@ func (s *ConnectorService) FetchConnectorSchema(
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/connectors/%s/schema/%s", connectorID, operation),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &schema)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch connector schema error: %w", err)
@@ -166,7 +162,7 @@ func (s *ConnectorService) ValidateConnectorData(
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/connectors/%s/schema/%s/validate", connectorID, operation),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		Body:        []byte(form.Encode()),
 	}, &validationResult)
 	if err != nil {
 		return nil, nil, fmt.Errorf("validate connector data error: %w", err)

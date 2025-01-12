@@ -14,18 +14,11 @@ type IrminAPIPaginationMetadata struct {
 	PrevPageURL  string `json:"prev_page_url"`
 }
 
-// IrminAPIResponseMetadata can be any additional metadata fields returned by the API.
-type IrminAPIResponseMetadata map[string]interface{}
-
 // IrminAPIResponse is a “raw” response type where the `Data` is `json.RawMessage`.
 // This lets us unmarshal it a second time into the type we actually want.
 type IrminAPIResponse struct {
-	Metadata *struct {
-		IrminAPIPaginationMetadata
-		IrminAPIResponseMetadata
-	} `json:"metadata,omitempty"`
-
-	Message *string         `json:"message,omitempty"`
-	Errors  []string        `json:"errors,omitempty"`
-	Data    json.RawMessage `json:"data,omitempty"`
+	Metadata *interface{}    `json:"metadata,omitempty"`
+	Message  *string         `json:"message,omitempty"`
+	Errors   []string        `json:"errors,omitempty"`
+	Data     json.RawMessage `json:"data,omitempty"`
 }

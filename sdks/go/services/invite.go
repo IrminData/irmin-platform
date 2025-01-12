@@ -5,8 +5,6 @@ import (
 	"irmin-sdk/client"
 	"irmin-sdk/models"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 // InviteService handles invite-related API calls
@@ -23,20 +21,21 @@ func NewInviteService(client *client.Client) *InviteService {
 
 // InviteUserToWorkspace invites a user to the workspace
 func (s *InviteService) InviteUserToWorkspace(firstName, lastName, email, phone, company, role string) (*models.Invite, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("first_name", firstName)
-	form.Set("last_name", lastName)
-	form.Set("email", email)
-	form.Set("phone", phone)
-	form.Set("company", company)
-	form.Set("role", role)
+	form := map[string]string{
+		"first_name": firstName,
+		"last_name":  lastName,
+		"email":      email,
+		"phone":      phone,
+		"company":    company,
+		"role":       role,
+	}
 
 	var invite models.Invite
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/invites",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &invite)
 	if err != nil {
 		return nil, nil, fmt.Errorf("invite user error: %w", err)
@@ -58,14 +57,15 @@ func (s *InviteService) ResendUserInvite(inviteID string) (*client.IrminAPIRespo
 
 // CancelUserInvite cancels an invite
 func (s *InviteService) CancelUserInvite(inviteID string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("_method", "DELETE")
+	form := map[string]string{
+		"_method": "DELETE",
+	}
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/invites/%s", inviteID),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cancel invite error: %w", err)
@@ -108,19 +108,16 @@ func (s *InviteService) FetchInvites(workspace, user string, trashed, expired bo
 
 // AcceptInvite accepts an invite
 func (s *InviteService) AcceptInvite(inviteID, hash, password, passwordConfirmation string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	if password != "" {
-		form.Set("password", password)
-	}
-	if passwordConfirmation != "" {
-		form.Set("password_confirmation", passwordConfirmation)
+	form := map[string]string{
+		"password":              password,
+		"password_confirmation": passwordConfirmation,
 	}
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/invites/%s/accept/%s", inviteID, hash),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("accept invite error: %w", err)

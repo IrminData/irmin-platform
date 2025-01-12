@@ -10,28 +10,14 @@ func CreateTestConnection(baseURL, apiToken, locale string) *string {
 	// Initialise the client and service
 	apiClient := client.NewClient(baseURL, apiToken, locale)
 	connectionService := services.NewConnectionService(apiClient)
-	connectorService := services.NewConnectorService(apiClient)
-
-	// Find the example connector
-	connectors, res, err := connectorService.FetchAllConnectors()
-	if err != nil {
-		fmt.Println("Error fetching connectors:", err)
-		return nil
-	}
-	fmt.Println(res.Message)
-	if len(connectors) == 0 {
-		fmt.Println("No connectors found")
-		return nil
-	}
-
-	// Use the first connector
-	connector := connectors[0]
-
-	// NOTE: For now, we are not using any configuration fields
-	// TODO: Change this to use an actual configuration with connection details and settings
 
 	// Create a new connection
-	connection, res, err := connectionService.CreateConnection(connector.ID, map[string]string{}, map[string]string{}, "Test connection", "Example connection for testing")
+	connection, res, err := connectionService.CreateConnection("connector-f817ec7768badf505a3bac3d4c3079fd", map[string]string{
+		"host":     "127.0.0.1",
+		"password": "secret",
+	}, map[string]string{
+		"username": "admin",
+	}, "Test connection", "Example connection for testing")
 	if err != nil {
 		fmt.Println("Error creating connection:", err)
 		return nil

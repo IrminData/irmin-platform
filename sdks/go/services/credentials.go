@@ -5,8 +5,6 @@ import (
 	"irmin-sdk/client"
 	"irmin-sdk/models"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 // CredentialService handles operations related to system tokens
@@ -36,16 +34,17 @@ func (s *CredentialService) GetSystemTokens() ([]models.SystemToken, *client.Irm
 
 // CreateSystemToken creates a new system token
 func (s *CredentialService) CreateSystemToken(name string, expiry int) (*models.SystemToken, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("name", name)
-	form.Set("expiry", fmt.Sprintf("%d", expiry))
+	form := map[string]string{
+		"name":   name,
+		"expiry": fmt.Sprintf("%d", expiry),
+	}
 
 	var token models.SystemToken
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/credentials",
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &token)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create system token error: %w", err)
@@ -55,14 +54,15 @@ func (s *CredentialService) CreateSystemToken(name string, expiry int) (*models.
 
 // RevokeSystemToken revokes a system token
 func (s *CredentialService) RevokeSystemToken(tokenID string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("_method", "DELETE")
+	form := map[string]string{
+		"_method": "DELETE",
+	}
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/credentials/%s", tokenID),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("revoke system token error: %w", err)

@@ -7,8 +7,6 @@ import (
 	"irmin-sdk/models"
 	"mime/multipart"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 // ObjectService handles repository object-related API calls
@@ -138,18 +136,19 @@ func (s *ObjectService) UploadObject(repository, ref, path, name string, files m
 
 // MoveObject moves or renames an object in the repository
 func (s *ObjectService) MoveObject(repository, ref, path, newPath, newName string) (*models.Object, *client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("_method", "MOVE")
-	form.Set("ref", ref)
-	form.Set("new_path", newPath)
-	form.Set("new_name", newName)
+	form := map[string]string{
+		"_method":  "MOVE",
+		"ref":      ref,
+		"new_path": newPath,
+		"new_name": newName,
+	}
 
 	var object models.Object
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/objects/%s", repository, path),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, &object)
 	if err != nil {
 		return nil, nil, fmt.Errorf("move object error: %w", err)
@@ -159,15 +158,16 @@ func (s *ObjectService) MoveObject(repository, ref, path, newPath, newName strin
 
 // DeleteObject deletes an object from the repository
 func (s *ObjectService) DeleteObject(repository, ref, path, name string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("_method", "DELETE")
-	form.Set("ref", ref)
+	form := map[string]string{
+		"_method": "DELETE",
+		"ref":     ref,
+	}
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/objects/%s/%s", repository, path, name),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields:  form,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete object error: %w", err)

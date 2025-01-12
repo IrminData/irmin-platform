@@ -5,8 +5,6 @@ import (
 	"irmin-sdk/client"
 	"irmin-sdk/models"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 // CommitService handles operations related to repository commits
@@ -52,15 +50,14 @@ func (s *CommitService) FetchCommit(repository, hash string) (*models.Commit, *c
 
 // CreateCommit creates a new commit in a repository for the specified branch
 func (s *CommitService) CreateCommit(repository, branch, message string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("branch", branch)
-	form.Set("message", message)
-
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/commits", repository),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields: map[string]string{
+			"branch":  branch,
+			"message": message,
+		},
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create commit error: %w", err)
@@ -70,14 +67,13 @@ func (s *CommitService) CreateCommit(repository, branch, message string) (*clien
 
 // RevertUncommittedChanges reverts uncommitted changes in a branch
 func (s *CommitService) RevertUncommittedChanges(repository, branch string) (*client.IrminAPIResponse, error) {
-	form := url.Values{}
-	form.Set("branch", branch)
-
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/commits/revert", repository),
 		ContentType: "application/x-www-form-urlencoded",
-		Body:        strings.NewReader(form.Encode()),
+		FormFields: map[string]string{
+			"branch": branch,
+		},
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("revert uncommitted changes error: %w", err)
