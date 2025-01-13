@@ -34,6 +34,7 @@ func main() {
 	if *runUtils {
 		log.Println("Running utility tests...")
 		examples.TestParquetUtils()
+		examples.TestSchemaUtils()
 	}
 
 	// API tests
