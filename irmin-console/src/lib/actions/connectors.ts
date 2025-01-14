@@ -108,7 +108,7 @@ export async function getConnectorSchema(
 export async function validateDataAgainstConnectorSchema(
   connectorId: string,
   operation: ConnectorCapability,
-  data: JSONValue,
+  data: Blob,
   details?: DynamicFieldValues,
   settings?: DynamicFieldValues,
   token?: string

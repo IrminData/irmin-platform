@@ -20,7 +20,6 @@ import {
   DynamicFields,
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';
-import { JSONValue } from '@/types/internal/GenericJSON';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -44,6 +43,8 @@ class ConnectorService {
       this.validateConnectorConfiguration.bind(this);
     this.fetchConnectorSchema = this.fetchConnectorSchema.bind(this);
     this.validateConnectorData = this.validateConnectorData.bind(this);
+    this.registerNewConnector = this.registerNewConnector.bind(this);
+    this.updateRegisteredConnector = this.updateRegisteredConnector.bind(this);
   }
 
   /**
@@ -286,7 +287,7 @@ class ConnectorService {
   async validateConnectorData(
     connectorId: string,
     operation: ConnectorCapability,
-    data: JSONValue,
+    data: Blob,
     details?: DynamicFieldValues,
     settings?: DynamicFieldValues
   ): Promise<IrminAPIResponse<ConnectorSchemaValidationResult>> {
@@ -296,22 +297,17 @@ class ConnectorService {
       }) as IrminAPIResponse<ConnectorSchemaValidationResult>;
     try {
       const formData = new FormData();
-      const configuration = new URLSearchParams();
       if (details) {
         Object.keys(details).forEach((key) => {
-          configuration.append(`details[${key}]`, details[key] as string);
+          formData.append(`details[${key}]`, details[key] as string);
         });
       }
       if (settings) {
         Object.keys(settings).forEach((key) => {
-          configuration.append(`settings[${key}]`, settings[key] as string);
+          formData.append(`settings[${key}]`, settings[key] as string);
         });
       }
-      formData.append('configuration', configuration.toString());
-      formData.append(
-        'data',
-        new Blob([JSON.stringify(data)], { type: 'application/json' })
-      );
+      formData.append('data', data);
       const response = (await this.irminCore.fetchAPI(
         `/v1/connectors/${connectorId}/schema/${operation}/validate`,
         {
@@ -329,6 +325,74 @@ class ConnectorService {
         return fake({
           ok: true,
         }) as IrminAPIResponse<ConnectorSchemaValidationResult>;
+      throw error;
+    }
+  }
+
+  /**
+   * Register a new connector with the system
+   *
+   * Note: This method is only available using the system token
+   *
+   * @param baseUrl - Base URL of the connector
+   * @param systemToken - System token for the connector
+   */
+  async registerNewConnector(
+    baseUrl: string,
+    systemToken: string
+  ): Promise<IrminAPIResponse<Connector>> {
+    if (isOfflineMode)
+      return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
+    try {
+      const formData = new FormData();
+      formData.append('url', baseUrl);
+      formData.append('system_token', systemToken);
+      const response = (await this.irminCore.fetchAPI(`/v1/connectors`, {
+        method: 'POST',
+        body: formData,
+      })) as IrminAPIResponse<Connector>;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Register new connector error');
+      if (isDevelopment)
+        return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
+      throw error;
+    }
+  }
+
+  /**
+   * Update a connector
+   *
+   * Note: This method is only available using the system token
+   *
+   * @param connectorId - ID of the connector to update
+   * @param baseUrl - Base URL of the connector
+   * @param systemToken - System token for the connector
+   */
+  async updateRegisteredConnector(
+    connectorId: string,
+    baseUrl: string,
+    systemToken: string
+  ): Promise<IrminAPIResponse<Connector>> {
+    if (isOfflineMode)
+      return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
+    try {
+      const formData = new FormData();
+      formData.append('_method', 'PATCH');
+      formData.append('url', baseUrl);
+      formData.append('system_token', systemToken);
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/connectors/${connectorId}`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )) as IrminAPIResponse<Connector>;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Update connector error');
+      if (isDevelopment)
+        return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
       throw error;
     }
   }
