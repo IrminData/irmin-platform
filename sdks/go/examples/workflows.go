@@ -2,9 +2,10 @@ package examples
 
 import (
 	"fmt"
-	"irmin-sdk/client"
-	"irmin-sdk/models"
-	"irmin-sdk/services"
+
+	"github.com/IrminData/irmin-sdk-go/client"
+	"github.com/IrminData/irmin-sdk-go/models"
+	"github.com/IrminData/irmin-sdk-go/services"
 )
 
 func TestWorkflows(exampleConnectionID, baseURL, apiToken, locale string) {

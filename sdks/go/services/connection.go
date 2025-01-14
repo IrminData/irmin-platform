@@ -2,10 +2,11 @@ package services
 
 import (
 	"fmt"
-	"irmin-sdk/client"
-	"irmin-sdk/models"
 	"net/http"
 	"net/url"
+
+	"github.com/IrminData/irmin-sdk-go/client"
+	"github.com/IrminData/irmin-sdk-go/models"
 )
 
 // ConnectionService handles operations related to connections

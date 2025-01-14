@@ -2,9 +2,10 @@ package services
 
 import (
 	"fmt"
-	"irmin-sdk/client"
-	"irmin-sdk/models"
 	"net/http"
+
+	"github.com/IrminData/irmin-sdk-go/client"
+	"github.com/IrminData/irmin-sdk-go/models"
 )
 
 // TagService handles repository tag-related API calls

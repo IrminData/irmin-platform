@@ -3,9 +3,10 @@ package services
 import (
 	"bytes"
 	"fmt"
-	"irmin-sdk/client"
-	"irmin-sdk/models"
 	"net/http"
+
+	"github.com/IrminData/irmin-sdk-go/client"
+	"github.com/IrminData/irmin-sdk-go/models"
 )
 
 // ObjectService handles repository object-related API calls

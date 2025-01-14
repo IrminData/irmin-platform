@@ -2,8 +2,9 @@ package examples
 
 import (
 	"fmt"
-	"irmin-sdk/client"
-	"irmin-sdk/services"
+
+	"github.com/IrminData/irmin-sdk-go/client"
+	"github.com/IrminData/irmin-sdk-go/services"
 )
 
 func TestInvites(workspaceSlug, baseURL, apiToken, locale string) {

@@ -3,10 +3,11 @@ package services
 import (
 	"bytes"
 	"fmt"
-	"irmin-sdk/client"
-	"irmin-sdk/models"
 	"mime/multipart"
 	"net/http"
+
+	"github.com/IrminData/irmin-sdk-go/client"
+	"github.com/IrminData/irmin-sdk-go/models"
 )
 
 // ConnectorService handles operations related to connectors

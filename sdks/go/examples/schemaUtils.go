@@ -2,7 +2,8 @@ package examples
 
 import (
 	"fmt"
-	"irmin-sdk/utils"
+
+	"github.com/IrminData/irmin-sdk-go/utils"
 )
 
 // Example struct for testing schema operations.

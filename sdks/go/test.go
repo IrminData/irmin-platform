@@ -2,9 +2,10 @@ package main
 
 import (
 	"flag"
-	"irmin-sdk/examples"
 	"log"
 	"os"
+
+	"github.com/IrminData/irmin-sdk-go/examples"
 
 	"github.com/joho/godotenv"
 )

@@ -2,10 +2,11 @@ package services
 
 import (
 	"fmt"
-	"irmin-sdk/client"
-	"irmin-sdk/models"
 	"net/http"
 	"os"
+
+	"github.com/IrminData/irmin-sdk-go/client"
+	"github.com/IrminData/irmin-sdk-go/models"
 )
 
 // ProfileService wraps operations on the user profile

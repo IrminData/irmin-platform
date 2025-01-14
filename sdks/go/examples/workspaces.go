@@ -2,9 +2,10 @@ package examples
 
 import (
 	"fmt"
-	"irmin-sdk/client"
-	"irmin-sdk/services"
 	"time"
+
+	"github.com/IrminData/irmin-sdk-go/client"
+	"github.com/IrminData/irmin-sdk-go/services"
 )
 
 // CreateTestWorkspace creates a new workspace for testing and switches to it

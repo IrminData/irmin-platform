@@ -2,10 +2,11 @@ package services
 
 import (
 	"fmt"
-	"irmin-sdk/client"
-	"irmin-sdk/models"
-	"irmin-sdk/utils"
 	"net/http"
+
+	"github.com/IrminData/irmin-sdk-go/client"
+	"github.com/IrminData/irmin-sdk-go/models"
+	"github.com/IrminData/irmin-sdk-go/utils"
 )
 
 // WorkflowService handles workflow-related operations

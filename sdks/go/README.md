@@ -3,7 +3,7 @@
 Structure of the SDK project:
 
 ```bash
-irmin-sdk/
+github.com/IrminData/irmin-sdk-go/
 ├── client/          # API core client
 ├── services/        # API service implementations
 ├── models/          # Data models for the API responses and other data structures

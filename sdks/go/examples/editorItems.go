@@ -2,9 +2,10 @@ package examples
 
 import (
 	"fmt"
-	"irmin-sdk/client"
-	"irmin-sdk/models"
-	"irmin-sdk/services"
+
+	"github.com/IrminData/irmin-sdk-go/client"
+	"github.com/IrminData/irmin-sdk-go/models"
+	"github.com/IrminData/irmin-sdk-go/services"
 )
 
 // CreateTestScriptFile creates a script file for testing the SDK

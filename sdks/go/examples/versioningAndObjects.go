@@ -2,9 +2,10 @@ package examples
 
 import (
 	"fmt"
-	"irmin-sdk/client"
-	"irmin-sdk/services"
 	"os"
+
+	"github.com/IrminData/irmin-sdk-go/client"
+	"github.com/IrminData/irmin-sdk-go/services"
 )
 
 func TestVersioningAndObjects(baseURL, apiToken, locale string) {

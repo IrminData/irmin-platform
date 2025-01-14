@@ -2,8 +2,9 @@ package examples
 
 import (
 	"fmt"
-	"irmin-sdk/utils"
 	"os"
+
+	"github.com/IrminData/irmin-sdk-go/utils"
 )
 
 func TestParquetUtils() {

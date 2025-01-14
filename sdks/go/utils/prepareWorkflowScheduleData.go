@@ -2,8 +2,9 @@ package utils
 
 import (
 	"fmt"
-	"irmin-sdk/models"
 	"strconv"
+
+	"github.com/IrminData/irmin-sdk-go/models"
 )
 
 // PrepareWorkflowScheduleData prepares a map of fields for a workflow schedule.
