@@ -4,7 +4,6 @@ import { initCore } from '@/lib/initCore';
 
 import { ConnectorCapability } from '@/types/core/Connector';
 import { DynamicFieldValues } from '@/types/internal/DynamicField';
-import { JSONValue } from '@/types/internal/GenericJSON';
 
 /**
  * Server action to get the list of all available connectors.
