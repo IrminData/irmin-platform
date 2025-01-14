@@ -1,12 +1,12 @@
 package services
 
 import (
-	"encoding/json"
+	"bytes"
 	"fmt"
 	"irmin-sdk/client"
 	"irmin-sdk/models"
+	"mime/multipart"
 	"net/http"
-	"net/url"
 )
 
 // ConnectorService handles operations related to connectors
@@ -130,42 +130,99 @@ func (s *ConnectorService) FetchConnectorSchema(
 
 // ValidateConnectorData validates data against a connector schema
 func (s *ConnectorService) ValidateConnectorData(
-	connectorID, operation string,
-	data map[string]interface{},
+	connectorID string,
+	operation string,
+	data []byte, // This can be arbitrary data: JSON, image bytes, etc.
+	dataFilename string, // Optional, e.g. "my-image.jpg", "data.json", ...
 	details map[string]string,
 	settings map[string]string,
 ) (*models.ConnectorSchemaValidationResult, *client.IrminAPIResponse, error) {
-	form := url.Values{}
+	// If no filename is provided, pick a default:
+	if dataFilename == "" {
+		dataFilename = "data.bin"
+	}
 
-	config := make(map[string]interface{})
+	// Prepare a buffer and multipart writer
+	var requestBody bytes.Buffer
+	writer := multipart.NewWriter(&requestBody)
+
+	// Write the main `data` as a file part
+	fileWriter, err := writer.CreateFormFile("data", dataFilename)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create form file for data: %w", err)
+	}
+	_, err = fileWriter.Write(data)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to write data bytes: %w", err)
+	}
+
+	// Write the configuration fields
 	for key, value := range details {
-		config[fmt.Sprintf("details[%s]", key)] = value
+		if err := writer.WriteField(fmt.Sprintf("details[%s]", key), value); err != nil {
+			return nil, nil, fmt.Errorf("failed to write details field: %w", err)
+		}
 	}
 	for key, value := range settings {
-		config[fmt.Sprintf("settings[%s]", key)] = value
+		if err := writer.WriteField(fmt.Sprintf("settings[%s]", key), value); err != nil {
+			return nil, nil, fmt.Errorf("failed to write settings field: %w", err)
+		}
 	}
 
-	configJSON, err := json.Marshal(config)
-	if err != nil {
-		return nil, nil, fmt.Errorf("marshal config error: %w", err)
+	// Close the multipart writer to finalise the body
+	if err := writer.Close(); err != nil {
+		return nil, nil, fmt.Errorf("failed to close writer: %w", err)
 	}
-	form.Set("configuration", string(configJSON))
 
-	dataJSON, err := json.Marshal(data)
-	if err != nil {
-		return nil, nil, fmt.Errorf("marshal data error: %w", err)
-	}
-	form.Set("data", string(dataJSON))
-
+	// Prepare the validation result
 	var validationResult models.ConnectorSchemaValidationResult
+
+	// Make the request with the multipart body
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/connectors/%s/schema/%s/validate", connectorID, operation),
-		ContentType: "application/x-www-form-urlencoded",
-		Body:        []byte(form.Encode()),
+		ContentType: "multipart/form-data",
+		Body:        &requestBody,
 	}, &validationResult)
 	if err != nil {
 		return nil, nil, fmt.Errorf("validate connector data error: %w", err)
 	}
+
 	return &validationResult, apiResp, nil
+}
+
+// RegisterNewConnector registers a new connector with the system. Requests to this endpoint must be authenticated with a system token.
+func (s *ConnectionService) RegisterNewConnector(baseURL, systemToken string) (*models.Connector, *client.IrminAPIResponse, error) {
+	var connector models.Connector
+	apiResp, err := s.client.FetchAPI(client.RequestOptions{
+		Method:      http.MethodPost,
+		Endpoint:    "/v1/connectors",
+		ContentType: "application/x-www-form-urlencoded",
+		FormFields: map[string]string{
+			"url":          baseURL,
+			"system_token": systemToken,
+		},
+	}, &connector)
+	if err != nil {
+		return nil, nil, fmt.Errorf("register new connector error: %w", err)
+	}
+	return &connector, apiResp, nil
+}
+
+// UpdateRegisteredConnector updates the details of a registered connector. Requests to this endpoint must be authenticated with a system token.
+func (s *ConnectionService) UpdateRegisteredConnector(connectorID, baseURL, systemToken string) (*models.Connector, *client.IrminAPIResponse, error) {
+	var connector models.Connector
+	apiResp, err := s.client.FetchAPI(client.RequestOptions{
+		Method:      http.MethodPost,
+		Endpoint:    fmt.Sprintf("/v1/connectors/%s", connectorID),
+		ContentType: "application/x-www-form-urlencoded",
+		FormFields: map[string]string{
+			"_method":      "PATCH",
+			"url":          baseURL,
+			"system_token": systemToken,
+		},
+	}, &connector)
+	if err != nil {
+		return nil, nil, fmt.Errorf("update registered connector error: %w", err)
+	}
+	return &connector, apiResp, nil
 }
