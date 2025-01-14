@@ -6,7 +6,7 @@ import (
 )
 
 // Example struct for testing schema operations.
-type TestUser struct {
+type testUserStruct struct {
 	ID          int                    `json:"id"`
 	Name        string                 `json:"name" jsonschema:"title=the name,description=The name of a friend,example=joe,example=lucy,default=alex"`
 	Friends     []int                  `json:"friends,omitempty" jsonschema_description:"The list of IDs, omitted when empty"`
@@ -21,7 +21,7 @@ type TestUser struct {
 func TestSchemaUtils() {
 	// Create JSON schema from struct
 	fmt.Println("Testing JSONSchemaFromStruct...")
-	schemaBytes, schemaMap, err := utils.JSONSchemaFromStruct(TestUser{}, "test_user")
+	schemaBytes, schemaMap, err := utils.JSONSchemaFromStruct(testUserStruct{})
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
