@@ -7,5 +7,7 @@ import (
 func SetupRoutes() *mux.Router {
 	r := mux.NewRouter()
 
+	r = setupPostgresRoutes(r)
+
 	return r
 }
