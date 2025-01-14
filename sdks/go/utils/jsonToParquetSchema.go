@@ -7,6 +7,10 @@ import (
 
 // JSONSchemaToParquet converts a JSON Schema to a Parquet schema.
 func JSONSchemaToParquet(jsonSchema map[string]interface{}, baseName string) map[string]interface{} {
+	// Resolve any "$ref" in the schema
+	jsonSchema, _ = resolveRef(jsonSchema)
+
+	// Start with a base schema Tag
 	parquetSchema := map[string]interface{}{
 		"Tag":    fmt.Sprintf("name=%s, repetitiontype=REQUIRED", baseName),
 		"Fields": []map[string]interface{}{},
@@ -218,4 +222,57 @@ func stringInSlice(s string, list []string) bool {
 		}
 	}
 	return false
+}
+
+// ResolveRef inspects the top-level schemaMap for a "$ref" key of the form "#/$defs/...",
+// then returns the referenced subschema from within schemaMap["$defs"].
+// If there's no "$ref" or if it's malformed, we just return schemaMap unchanged.
+func resolveRef(schemaMap map[string]interface{}) (map[string]interface{}, error) {
+	refVal, ok := schemaMap["$ref"].(string)
+	if !ok {
+		// No "$ref" found, so just return original schemaMap
+		return schemaMap, nil
+	}
+
+	// We only handle refs starting with "#/$defs/"
+	prefix := "#/$defs/"
+	if !strings.HasPrefix(refVal, prefix) {
+		// If it's a different kind of ref, e.g. external or #/definitions, handle as you wish
+		// For now, just return the original schema
+		return schemaMap, nil
+	}
+
+	// Strip off "#/$defs/" so we can parse the remainder
+	path := strings.TrimPrefix(refVal, prefix)
+	// Split the path on "/" in case of nested references, e.g. "#/$defs/Foo/Bar"
+	segments := strings.Split(path, "/")
+
+	// Start at the top-level schema map to get $defs
+	// Note: we must still keep the top-level so we can navigate properly
+	defsVal, ok := schemaMap["$defs"]
+	if !ok {
+		return schemaMap, fmt.Errorf("no $defs found in top-level schema")
+	}
+	defs, ok := defsVal.(map[string]interface{})
+	if !ok {
+		return schemaMap, fmt.Errorf("$defs is not a map[string]interface{}")
+	}
+
+	// Navigate into $defs following each segment
+	current := defs
+	for i, seg := range segments {
+		// The referenced entry must be a map
+		child, ok := current[seg].(map[string]interface{})
+		if !ok {
+			return schemaMap, fmt.Errorf("no map entry found at $defs/%s", strings.Join(segments[:i+1], "/"))
+		}
+		// If this is the last segment, we've arrived
+		if i == len(segments)-1 {
+			return child, nil
+		}
+		// Otherwise, continue drilling down
+		current = child
+	}
+	// Shouldn’t reach here, but fallback if needed
+	return schemaMap, nil
 }
