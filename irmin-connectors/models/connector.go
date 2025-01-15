@@ -1,4 +1,4 @@
-package models
+package connectorModels
 
 import (
 	"github.com/google/uuid"

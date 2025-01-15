@@ -11,3 +11,15 @@ Connectors are a universal way to interact with external services, data sources,
 #### Build
 
 `go build`
+
+#### Environment Variables
+
+Create a `.env` file in the root directory of the project and add the following environment variables:
+
+```bash
+PORT=8080
+URL=http://localhost:8080
+
+IRMIN_API_BASE_URL=https://api.irmin.dev
+IRMIN_API_TOKEN=...
+```
