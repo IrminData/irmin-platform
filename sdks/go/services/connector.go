@@ -192,7 +192,7 @@ func (s *ConnectorService) ValidateConnectorData(
 }
 
 // RegisterNewConnector registers a new connector with the system. Requests to this endpoint must be authenticated with a system token.
-func (s *ConnectionService) RegisterNewConnector(baseURL, systemToken string) (*models.Connector, *client.IrminAPIResponse, error) {
+func (s *ConnectorService) RegisterNewConnector(baseURL, systemToken string) (*models.Connector, *client.IrminAPIResponse, error) {
 	var connector models.Connector
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
@@ -210,7 +210,7 @@ func (s *ConnectionService) RegisterNewConnector(baseURL, systemToken string) (*
 }
 
 // UpdateRegisteredConnector updates the details of a registered connector. Requests to this endpoint must be authenticated with a system token.
-func (s *ConnectionService) UpdateRegisteredConnector(connectorID, baseURL, systemToken string) (*models.Connector, *client.IrminAPIResponse, error) {
+func (s *ConnectorService) UpdateRegisteredConnector(connectorID, baseURL, systemToken string) (*models.Connector, *client.IrminAPIResponse, error) {
 	var connector models.Connector
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
