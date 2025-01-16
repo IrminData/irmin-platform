@@ -92,8 +92,17 @@ func GetAllConnectorRegistrations() ([]connectorModels.ConnectorRegistration, er
 	return registrations, nil
 }
 
-// GetConnectorsByID retrieves a ConnectorInfo record from the database by its ID.
-func GetConnectorsByID(id string) (*connectorModels.ConnectorInfo, error) {
+// GetConnectorsByName retrieves ConnecttorInfo records from the database by the name
+func GetConnectorsByName(name string) ([]connectorModels.ConnectorInfo, error) {
+	var connectors []connectorModels.ConnectorInfo
+	if err := DB.Where("name = ?", name).Find(&connectors).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch connectors: %w", err)
+	}
+	return connectors, nil
+}
+
+// GetConnectorByID retrieves a ConnectorInfo record from the database by its ID.
+func GetConnectosByID(id string) (*connectorModels.ConnectorInfo, error) {
 	var connector connectorModels.ConnectorInfo
 	if err := DB.First(&connector, id).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch connector: %w", err)

@@ -29,21 +29,17 @@ func RegisterPostgresConnector(apiBaseURL, apiToken, baseUrl string) *models.Con
 	// Structure the base URL for the connector
 	connectorURL := fmt.Sprintf("%s/postgres", baseUrl)
 
-	// Fetch all connectors we have stored in the database
-	connectors, err := db.GetAllConnectors()
+	// Fetch matching registered connectors
+	connectors, err := db.GetConnectorsByName(connectorName)
 	if err != nil {
 		fmt.Printf("Error fetching connectors from the database: %v\n", err)
 		return nil
 	}
-
-	// Find the connector in the list of connectors
-	var connector connectorModels.ConnectorInfo
-	for _, conn := range connectors {
-		if conn.Name == connectorName {
-			connector = conn
-			break
-		}
+	var connector *connectorModels.ConnectorInfo
+	if len(connectors) > 0 {
+		connector = &connectors[0]
 	}
+
 	if connector.ID != "" {
 		// If the connector is already registered, request the update of the connector and return.
 		newConnector, res, err := connectorService.UpdateRegisteredConnector(connector.ID, connectorURL, token)
