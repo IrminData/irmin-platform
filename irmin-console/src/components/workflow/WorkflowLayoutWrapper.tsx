@@ -45,7 +45,7 @@ export default function WorkflowLayoutWrapper({
   const { dict } = useLocale();
   const { workflow, triggerWorkflowRun } = useWorkflow();
 
-  // The base URL for the workflow, eg. /en/console/workspace-slug/workflows/workflow-id
+  // The base URL for the workflow, eg. /en/workspace/workspace-slug/workflows/workflow-id
   const baseUrl = useBaseUrl({
     pathname: '',
     segment: 'workflows',
@@ -53,10 +53,10 @@ export default function WorkflowLayoutWrapper({
     segmentsAfter: 1,
   });
 
-  // The base URL for the workspace, eg. /en/console/workspace-slug
+  // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
     pathname: '',
-    segment: 'console',
+    segment: 'workspace',
     includeSegment: true,
     segmentsAfter: 1,
   });

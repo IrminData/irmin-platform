@@ -4,11 +4,7 @@ import { useEffect } from 'react';
 
 import * as Sentry from '@sentry/nextjs';
 
-import WebsiteFooter from '@/components/website/footer/WebsiteFooter';
-import WebsiteNavigation from '@/components/website/navigation/WebsiteNavigation';
-import WebsiteError from '@/components/website/websiteError';
-
-import { useLocale } from '@/context/LocaleContext';
+import WebsiteError from '@/components/WebsiteError';
 
 /**
  * Global error page to display when an error occurs
@@ -22,8 +18,6 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const { dict, locale } = useLocale();
-
   useEffect(() => {
     Sentry.captureException(error);
   }, [error]);
@@ -31,9 +25,7 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <WebsiteNavigation />
         <WebsiteError error={error} reset={reset} />
-        <WebsiteFooter dict={dict} locale={locale} />
       </body>
     </html>
   );

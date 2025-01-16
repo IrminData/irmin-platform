@@ -32,7 +32,7 @@ export default function ConsoleNavigationWorkspaceSwitcher({
   currentWorkspace?: Workspace;
   setIsMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const router = useRouter();
   const { irminAlert } = usePopup();
 
@@ -50,7 +50,7 @@ export default function ConsoleNavigationWorkspaceSwitcher({
         setProcessing(true);
         const value = selectedOption.value;
         if (value === 'create-new' || value === 'select-workspace') {
-          router.push('/console/manage-workspaces');
+          router.push(`/${locale}/workspace`);
           setIsMenuOpen(false);
           return;
         }
@@ -60,7 +60,7 @@ export default function ConsoleNavigationWorkspaceSwitcher({
           res?.message ?? 'Workspace switched successfully'
         );
         setIsMenuOpen(false);
-        router.push(`/console/${value}`);
+        router.push(`/${locale}/workspace/${value}`);
       } catch (error) {
         console.error('Failed to switch workspace: ', error);
         irminAlert(
@@ -71,7 +71,7 @@ export default function ConsoleNavigationWorkspaceSwitcher({
         setProcessing(false);
       }
     },
-    [router, irminAlert, setIsMenuOpen]
+    [router, irminAlert, setIsMenuOpen, locale]
   );
 
   const options = useMemo(

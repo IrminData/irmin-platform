@@ -65,46 +65,6 @@ const fi = {
     dark: 'Tumma',
     system: 'Järjestelmä',
   },
-  website: {
-    cms: {
-      homePageSlug: 'etusivu',
-      mainMenuSlug: 'primary-menu-fi',
-      footerMenuSlug: 'footer-menu-fi',
-    },
-    goToConsole: 'Konsoli',
-    getStarted: 'Aloita',
-    signIn: 'Kirjaudu sisään',
-    footer: {
-      description:
-        'Parempi koti tiedoillesi. Irmin on ETL- ja tietojenhallinta-alusta, joka auttaa sinua keräämään, puhdistamaan ja muuntamaan tietojasi.',
-      newsletter: {
-        title: 'Tilaa uutiskirjeemme',
-        subtitle:
-          'Pysy ajan tasalla Irminin viimeisimmistä uutisista ja päivityksistä.',
-      },
-      allRightsReserved: 'Kaikki oikeudet pidätetään.',
-    },
-    sections: {
-      careers: {
-        viewJob: 'Katso työpaikka',
-        allLocations: 'Kaikki sijainnit',
-        allTypes: 'Kaikki tyypit',
-      },
-      newsletter: {
-        email: 'Kirjoita sähköpostiosoitteesi...',
-        privacy_notice: 'Välitämme yksityisyydestäsi. Lue meidän',
-      },
-      pricing: {
-        billedMonthly: 'Kuukausittain',
-        billedAnnually: 'Vuosittain',
-        month: 'kk',
-        year: 'v',
-      },
-      articles: {
-        allArticles: 'Kaikki artikkelit',
-      },
-    },
-  },
   consoleNavigation: {
     searchPlaceholder: 'Etsi tietoja ja muuta',
     staticSearchItems: {

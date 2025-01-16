@@ -1,24 +1,12 @@
-import { dictionaries, Locale } from '@/lib/dict';
+import { Locale } from '@/lib/dict';
 
-import WebsiteFooter from '@/components/website/footer/WebsiteFooter';
-import WebsiteNavigation from '@/components/website/navigation/WebsiteNavigation';
-import WebsiteError from '@/components/website/websiteError';
+import WebsiteError from '@/components/WebsiteError';
 
 /**
  * The page component for the 404 Not Found page
  */
-export default async function NotFound(props: {
+export default async function NotFound(_: {
   params: Promise<{ lang: Locale }>;
 }) {
-  const params = await props.params;
-  return (
-    <>
-      <WebsiteNavigation />
-      <WebsiteError pageNotFound={true} />
-      <WebsiteFooter
-        locale={params?.lang ?? 'en'}
-        dict={dictionaries[params?.lang ?? 'en']}
-      />
-    </>
-  );
+  return <WebsiteError pageNotFound={true} />;
 }

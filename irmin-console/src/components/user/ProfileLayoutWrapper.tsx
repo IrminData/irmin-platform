@@ -10,8 +10,6 @@ import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-
 /**
  * Component to wrap the User's profile Settings pages in.
  * Provides tabs and title.
@@ -25,32 +23,24 @@ export default function ProfileLayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { dict } = useLocale();
-
-  // The base URL for the workspace, eg. /en/console
-  const consoleUrl = useBaseUrl({
-    pathname: '',
-    segment: 'console',
-    includeSegment: true,
-    segmentsAfter: 0,
-  });
+  const { dict, locale } = useLocale();
 
   const tabs = useMemo(
     () => [
       {
         name: dict.workspace.general,
-        link: `${consoleUrl}/profile`,
-        active: pathname === `${consoleUrl}/profile`,
+        link: `/${locale}/profile`,
+        active: pathname === `/${locale}/profile`,
         icon: <TbSettings size={14} />,
       },
       {
         name: dict.tokens.apiTokens,
-        link: `${consoleUrl}/profile/tokens`,
-        active: pathname === `${consoleUrl}/profile/tokens`,
+        link: `/${locale}/profile/tokens`,
+        active: pathname === `/${locale}/profile/tokens`,
         icon: <TbKey size={14} />,
       },
     ],
-    [pathname, dict, consoleUrl]
+    [pathname, dict, locale]
   );
 
   return (
@@ -62,7 +52,7 @@ export default function ProfileLayoutWrapper({
           </h1>
         </div>
         <TabsWithBackButton
-          backHref={`${consoleUrl}`}
+          backHref={`/${locale}/workspace`}
           backTooltip={dict.consoleNavigation.irminConsole}
           tabs={tabs}
         />

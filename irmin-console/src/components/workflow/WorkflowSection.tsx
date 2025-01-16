@@ -30,10 +30,10 @@ const WorkflowSection = () => {
 
   const { workflow, runs } = useWorkflow();
 
-  // The base URL for the workspace, eg. /en/console/workspace-slug
+  // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
     pathname: '',
-    segment: 'console',
+    segment: 'workspace',
     includeSegment: true,
     segmentsAfter: 1,
   });

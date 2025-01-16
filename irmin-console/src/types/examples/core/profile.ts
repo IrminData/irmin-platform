@@ -18,7 +18,7 @@ export const profile = (last = false): User => ({
   company: 'NASA',
   email: 'neil.armstrong@nasa.gov',
   phone: '+12014270935',
-  profile_picture: '/ui-assets/images/sign-up/avatar-men-sign-up.png',
+  profile_picture: '/ui-assets/elements/avatar-men-sign-up.png',
   roles: !last ? [roles()[0]] : undefined,
   workspace: !last ? workspaces()[0] : undefined,
 });

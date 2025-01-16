@@ -10,7 +10,7 @@ const workspaceName = process.env.TEST_USER_WORKSPACE ?? 'Test workspace';
 
 test('can switch to a workspace', async ({ page }) => {
   // Go to the workspace management page
-  await page.goto('/en/console/manage-workspaces');
+  await page.goto('/en/workspace');
 
   // Make sure workspace management page is loaded
   await expect(page.locator('h1')).toContainText('Manage Workspaces');
@@ -33,7 +33,7 @@ test('can switch to a workspace', async ({ page }) => {
 
 test('can create a new workspace', async ({ page }) => {
   // Go to the workspace management page
-  await page.goto('/en/console/manage-workspaces');
+  await page.goto('/en/workspace');
 
   // Make sure workspace management page is loaded and has the workspace creation form
   await expect(page.locator('#console-content')).toContainText(

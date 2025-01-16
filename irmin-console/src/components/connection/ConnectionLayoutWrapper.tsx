@@ -36,7 +36,7 @@ export default function ConnectionLayoutWrapper({
   const { dict } = useLocale();
   const { connection } = useConnection();
 
-  // The base URL for the connection, eg. /en/console/workspace-slug/connections/connection-id
+  // The base URL for the connection, eg. /en/workspace/workspace-slug/connections/connection-id
   const baseUrl = useBaseUrl({
     pathname: '',
     segment: 'connections',
@@ -44,10 +44,10 @@ export default function ConnectionLayoutWrapper({
     segmentsAfter: 1,
   });
 
-  // The base URL for the workspace, eg. /en/console/workspace-slug
+  // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
     pathname: '',
-    segment: 'console',
+    segment: 'workspace',
     includeSegment: true,
     segmentsAfter: 1,
   });

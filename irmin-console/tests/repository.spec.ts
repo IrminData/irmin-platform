@@ -11,25 +11,25 @@ const repositorySlug =
 const workspace = process.env.TEST_USER_WORKSPACE_SLUG ?? 'test-workspace';
 
 test('can open repositories page', async ({ page }) => {
-  await page.goto(`/en/console/${workspace}/home`);
+  await page.goto(`/en/workspace/${workspace}/home`);
   await page.getByRole('link', { name: 'Repositories', exact: true }).click();
 
   // Wait for the URL to change to the repositories page
-  await page.waitForURL(`/en/console/${workspace}/repositories`);
+  await page.waitForURL(`/en/workspace/${workspace}/repositories`);
 
   // Make sure h2 heading is correct
   await expect(page.locator('h2')).toContainText('Repositories');
 });
 
 test('test repository is visible', async ({ page }) => {
-  await page.goto(`/en/console/${workspace}/repositories`);
+  await page.goto(`/en/workspace/${workspace}/repositories`);
   await expect(
     page.locator('#card-list-on-large-screen').getByText(repository)
   ).toBeVisible();
 });
 
 test('can create repository', async ({ page }) => {
-  await page.goto(`/en/console/${workspace}/repositories`);
+  await page.goto(`/en/workspace/${workspace}/repositories`);
 
   // Make sure the create repository button is visible
   await expect(
@@ -69,7 +69,7 @@ test('can create repository', async ({ page }) => {
 });
 
 test('can open repository', async ({ page }) => {
-  await page.goto(`/en/console/${workspace}/repositories`);
+  await page.goto(`/en/workspace/${workspace}/repositories`);
 
   // Wait for the repository list to load
   await page.waitForSelector('#card-or-normal-list');
@@ -89,7 +89,7 @@ test('can open repository', async ({ page }) => {
 
   // Wait for the URL to change to the repository page
   await page.waitForURL(
-    `/en/console/${workspace}/repositories/${repositorySlug}`
+    `/en/workspace/${workspace}/repositories/${repositorySlug}`
   );
 
   // Make sure the repository page is shown
@@ -98,7 +98,7 @@ test('can open repository', async ({ page }) => {
 });
 
 test('can switch between branches', async ({ page }) => {
-  await page.goto(`/en/console/${workspace}/repositories/${repositorySlug}`);
+  await page.goto(`/en/workspace/${workspace}/repositories/${repositorySlug}`);
 
   // Make sure the branch selector is visible
   await expect(page.locator('#branch-selector')).toBeVisible();
@@ -115,7 +115,7 @@ test('can switch between branches', async ({ page }) => {
 });
 
 test('can run query', async ({ page }) => {
-  await page.goto(`/en/console/${workspace}/repositories/${repositorySlug}`);
+  await page.goto(`/en/workspace/${workspace}/repositories/${repositorySlug}`);
 
   // Select the first collection
   await page.locator('#collection-selector').first().click();
@@ -138,14 +138,14 @@ test('can run query', async ({ page }) => {
 });
 
 test('can view commits', async ({ page }) => {
-  await page.goto(`/en/console/${workspace}/repositories/${repositorySlug}`);
+  await page.goto(`/en/workspace/${workspace}/repositories/${repositorySlug}`);
 
   // Click on the commits tab
   await page.getByLabel('Tab Commits').click();
 
   // Wait for the URL to change to the commits page
   await page.waitForURL(
-    `/en/console/${workspace}/repositories/${repositorySlug}/commits`
+    `/en/workspace/${workspace}/repositories/${repositorySlug}/commits`
   );
 
   // Make sure the heading is correct and the commits table is visible
@@ -158,7 +158,7 @@ test('can open commit ref', async ({ page, context }) => {
 
   // Go to the commits page
   await page.goto(
-    `/en/console/${workspace}/repositories/${repositorySlug}/commits`
+    `/en/workspace/${workspace}/repositories/${repositorySlug}/commits`
   );
 
   // Click on the first commit to copy the hash
@@ -178,7 +178,7 @@ test('can open commit ref', async ({ page, context }) => {
 
   // Wait for the URL to change to the ref page
   await page.waitForURL(
-    `/en/console/${workspace}/repositories/${repositorySlug}/refs/${clipboardContent}`
+    `/en/workspace/${workspace}/repositories/${repositorySlug}/refs/${clipboardContent}`
   );
 
   // Make sure the heading is correct
@@ -188,14 +188,14 @@ test('can open commit ref', async ({ page, context }) => {
 });
 
 test('can view branches', async ({ page }) => {
-  await page.goto(`/en/console/${workspace}/repositories/${repositorySlug}`);
+  await page.goto(`/en/workspace/${workspace}/repositories/${repositorySlug}`);
 
   // Click on the branches tab
   await page.getByLabel('Tab Branches').click();
 
   // Wait for the URL to change to the branches page
   await page.waitForURL(
-    `/en/console/${workspace}/repositories/${repositorySlug}/branches`
+    `/en/workspace/${workspace}/repositories/${repositorySlug}/branches`
   );
 
   // Make sure the heading is correct and the branches list is visible
@@ -204,7 +204,7 @@ test('can view branches', async ({ page }) => {
 
 test('can create branch', async ({ page }) => {
   await page.goto(
-    `/en/console/${workspace}/repositories/${repositorySlug}/branches`
+    `/en/workspace/${workspace}/repositories/${repositorySlug}/branches`
   );
 
   // Make sure the create branch button is visible
@@ -237,7 +237,7 @@ test('can create branch', async ({ page }) => {
 
 test('can delete branch', async ({ page }) => {
   await page.goto(
-    `/en/console/${workspace}/repositories/${repositorySlug}/branches`
+    `/en/workspace/${workspace}/repositories/${repositorySlug}/branches`
   );
 
   // Make sure the delete branch button is visible on the first row
@@ -259,14 +259,14 @@ test('can delete branch', async ({ page }) => {
 });
 
 test('can view documentation', async ({ page }) => {
-  await page.goto(`/en/console/${workspace}/repositories/${repositorySlug}`);
+  await page.goto(`/en/workspace/${workspace}/repositories/${repositorySlug}`);
 
   // Click on the documentation tab
   await page.getByLabel('Tab Documentation').click();
 
   // Wait for the URL to change to the documentation page
   await page.waitForURL(
-    `/en/console/${workspace}/repositories/${repositorySlug}/documentation`
+    `/en/workspace/${workspace}/repositories/${repositorySlug}/documentation`
   );
 
   // Make sure the heading is correct and the MDX editor is visible
@@ -276,7 +276,7 @@ test('can view documentation', async ({ page }) => {
 
 test('can update documentation', async ({ page }) => {
   await page.goto(
-    `/en/console/${workspace}/repositories/${repositorySlug}/documentation`
+    `/en/workspace/${workspace}/repositories/${repositorySlug}/documentation`
   );
 
   // Click on the plain text button
@@ -309,14 +309,14 @@ test('can update documentation', async ({ page }) => {
 });
 
 test('can view settings', async ({ page }) => {
-  await page.goto(`/en/console/${workspace}/repositories/${repositorySlug}`);
+  await page.goto(`/en/workspace/${workspace}/repositories/${repositorySlug}`);
 
   // Click on the settings tab
   await page.getByLabel('Tab Settings').click();
 
   // Wait for the URL to change to the settings page
   await page.waitForURL(
-    `/en/console/${workspace}/repositories/${repositorySlug}/settings`
+    `/en/workspace/${workspace}/repositories/${repositorySlug}/settings`
   );
 
   // Make sure the heading is correct and the form is visible
@@ -329,7 +329,7 @@ test('can view settings', async ({ page }) => {
 
 test('can update settings', async ({ page }) => {
   await page.goto(
-    `/en/console/${workspace}/repositories/${repositorySlug}/settings`
+    `/en/workspace/${workspace}/repositories/${repositorySlug}/settings`
   );
 
   // Update the description field and save the changes
@@ -343,7 +343,7 @@ test('can update settings', async ({ page }) => {
 
 test('can delete repository', async ({ page }) => {
   await page.goto(
-    `/en/console/${workspace}/repositories/${repositorySlug}/settings`
+    `/en/workspace/${workspace}/repositories/${repositorySlug}/settings`
   );
 
   // Click on the delete repository button
@@ -371,7 +371,7 @@ test('can delete repository', async ({ page }) => {
 });
 
 test('can download repository', async ({ page }) => {
-  await page.goto(`/en/console/${workspace}/repositories/${repositorySlug}`);
+  await page.goto(`/en/workspace/${workspace}/repositories/${repositorySlug}`);
 
   // Click on the download button
   await page.getByRole('link', { name: 'Download' }).click();
@@ -384,7 +384,7 @@ test('can download repository', async ({ page }) => {
 test('collection upload checks required fields and closes', async ({
   page,
 }) => {
-  await page.goto(`/en/console/${workspace}/repositories/${repositorySlug}`);
+  await page.goto(`/en/workspace/${workspace}/repositories/${repositorySlug}`);
 
   // Click on the upload button
   await page.getByRole('button', { name: 'Upload collection' }).click();
@@ -408,7 +408,7 @@ test('collection upload checks required fields and closes', async ({
 });
 
 test('can upload collection to repository', async ({ page }) => {
-  await page.goto(`/en/console/${workspace}/repositories/${repositorySlug}`);
+  await page.goto(`/en/workspace/${workspace}/repositories/${repositorySlug}`);
 
   // Click on the upload button
   await page.getByRole('button', { name: 'Upload collection' }).click();

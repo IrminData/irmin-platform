@@ -47,7 +47,7 @@ export default function RepositoryHeader({
     updateCurrentRef,
   } = useRepository();
 
-  /** The base URL for the repository, eg. /en/console/workspace-slug/repositories/repository-slug */
+  /** The base URL for the repository, eg. /en/workspace/workspace-slug/repositories/repository-slug */
   const baseUrl = useBaseUrl({
     pathname: '',
     segment: 'repositories',
@@ -55,10 +55,10 @@ export default function RepositoryHeader({
     segmentsAfter: 1,
   });
 
-  // The base URL for the workspace, eg. /en/console/workspace-slug
+  // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
     pathname: '',
-    segment: 'console',
+    segment: 'workspace',
     includeSegment: true,
     segmentsAfter: 1,
   });

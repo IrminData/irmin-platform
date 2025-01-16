@@ -29,6 +29,8 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 
 import { ConsoleNavigationLinkType } from '@/types/internal/ConsoleNavigation';
 
+const websiteURL = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.co';
+
 /**
  * Hook to get console navigation links
  *
@@ -52,18 +54,14 @@ const useConsoleNavigationLinks = (): {
 
   // Check if the link is active
   const isActiveLink = useCallback(
-    (href: string) => {
-      if (href === '/console' || !href.includes('/console'))
-        return pathname === href;
-      return pathname.startsWith(href);
-    },
+    (href: string) => pathname.startsWith(href),
     [pathname]
   );
 
-  // The base URL for the workspace, eg. /en/console/workspace-slug
+  // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
     pathname: '',
-    segment: 'console',
+    segment: 'workspace',
     includeSegment: true,
     segmentsAfter: 1,
   });
@@ -121,12 +119,12 @@ const useConsoleNavigationLinks = (): {
   const noWorkspaceLinks = [
     {
       title: dict.consoleNavigation.workspaces,
-      href: `/${locale}/console/manage-workspaces`,
+      href: `/${locale}/workspace`,
       icon: <TbDashboard />,
     },
     {
       title: dict.consoleNavigation.goToWebsite,
-      href: '/',
+      href: `${websiteURL}/${locale}`,
       icon: <TbChevronLeft />,
     },
   ].map((link) => ({
@@ -143,9 +141,9 @@ const useConsoleNavigationLinks = (): {
     },
     {
       title: dict.consoleNavigation.myProfile,
-      href: `/${locale}/console/profile`,
+      href: `/${locale}/profile`,
       icon: <TbUser />,
-      active: isActiveLink(`/${locale}/console/profile`),
+      active: isActiveLink(`/${locale}/profile`),
     },
     {
       title: dict.consoleNavigation.signOut,
@@ -158,7 +156,7 @@ const useConsoleNavigationLinks = (): {
   const usefulLinks = [
     {
       title: dict.consoleNavigation.guides,
-      href: `/${locale}/legal`,
+      href: `${websiteURL}/${locale}/legal`,
       icon: <TbBook />,
       props: {
         target: '_blank',
@@ -167,7 +165,7 @@ const useConsoleNavigationLinks = (): {
     },
     {
       title: dict.consoleNavigation.developerDocs,
-      href: `/${locale}/docs`,
+      href: `${websiteURL}/${locale}/docs`,
       icon: <MdCode />,
       props: {
         target: '_blank',
@@ -176,7 +174,7 @@ const useConsoleNavigationLinks = (): {
     },
     {
       title: dict.consoleNavigation.contactSupport,
-      href: `/${locale}/contact`,
+      href: `${websiteURL}/${locale}/contact`,
       icon: <TbHelp />,
       props: {
         target: '_blank',
@@ -185,7 +183,7 @@ const useConsoleNavigationLinks = (): {
     },
     {
       title: dict.consoleNavigation.termsAndPrivacy,
-      href: `/${locale}/legal`,
+      href: `${websiteURL}/${locale}/legal`,
       icon: <MdOutlinePrivacyTip />,
       props: {
         target: '_blank',

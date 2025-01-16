@@ -64,46 +64,6 @@ const en = {
     dark: 'Dark',
     system: 'System',
   },
-  website: {
-    cms: {
-      homePageSlug: 'home',
-      mainMenuSlug: 'primary-menu-en',
-      footerMenuSlug: 'footer-menu-en',
-    },
-    goToConsole: 'Console',
-    getStarted: 'Get started',
-    signIn: 'Sign in',
-    footer: {
-      description:
-        'A better home for your data. Irmin is an ETL and data management platform that helps you to collect, clean, and transform your data.',
-      newsletter: {
-        title: 'Subscribe to our newsletter',
-        subtitle:
-          'Stay up to date with the latest news and updates from Irmin.',
-      },
-      allRightsReserved: 'All rights reserved.',
-    },
-    sections: {
-      careers: {
-        viewJob: 'View job',
-        allLocations: 'All locations',
-        allTypes: 'All types',
-      },
-      newsletter: {
-        email: 'Enter your email',
-        privacy_notice: 'We care for your data. Read our',
-      },
-      pricing: {
-        billedMonthly: 'Billed monthly',
-        billedAnnually: 'Billed annually',
-        month: 'mo',
-        year: 'yr',
-      },
-      articles: {
-        allArticles: 'All articles',
-      },
-    },
-  },
   consoleNavigation: {
     searchPlaceholder: 'Search for data and more',
     staticSearchItems: {

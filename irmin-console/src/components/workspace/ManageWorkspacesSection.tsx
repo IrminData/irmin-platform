@@ -45,7 +45,7 @@ const ManageWorkspacesSection = ({
   initialWorkspaces: Workspace[];
 }) => {
   const { irminAlert } = usePopup();
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const router = useRouter();
 
   const [processing, setProcessing] = useState(false);
@@ -84,7 +84,7 @@ const ManageWorkspacesSection = ({
           'success',
           res?.message ?? 'Workspace switched successfully'
         );
-        router.push(`/console/${slug}`);
+        router.push(`/${locale}/workspace/${slug}`);
       } catch (error) {
         console.error('Failed to switch workspace: ', error);
         irminAlert(
@@ -93,7 +93,7 @@ const ManageWorkspacesSection = ({
         );
       }
     },
-    [router, irminAlert]
+    [router, irminAlert, locale]
   );
 
   return (

@@ -31,7 +31,7 @@ export async function generateSearchItems({
       newItems.push({
         title: ws.name,
         description: ws.description ?? '-',
-        link: `/${locale}/console/${workspace}/home`,
+        link: `/${locale}/workspace/${workspace}/home`,
         type: ConsoleSearchItemType.Workspace,
       });
     });
@@ -77,21 +77,21 @@ export async function generateSearchItems({
         title: dict.consoleNavigation.staticSearchItems.myProfile,
         description:
           dict.consoleNavigation.staticSearchItems.description.myProfile,
-        link: `/${locale}/console/profile`,
+        link: `/${locale}/profile`,
         type: ConsoleSearchItemType.Irmin,
       },
       {
         title: dict.consoleNavigation.staticSearchItems.manageWorkspaces,
         description:
           dict.consoleNavigation.staticSearchItems.description.manageWorkspaces,
-        link: `/${locale}/console/manage-workspaces`,
+        link: `/${locale}/workspace`,
         type: ConsoleSearchItemType.Irmin,
       },
       {
         title: dict.consoleNavigation.staticSearchItems.createWorkspace,
         description:
           dict.consoleNavigation.staticSearchItems.description.createWorkspace,
-        link: `/${locale}/console/manage-workspaces`,
+        link: `/${locale}/workspace`,
         type: ConsoleSearchItemType.Irmin,
       }
     );
@@ -113,7 +113,7 @@ export async function generateSearchItems({
           title: dict.consoleNavigation.staticSearchItems.logs,
           description:
             dict.consoleNavigation.staticSearchItems.description.logs,
-          link: `/${locale}/console/${workspace}/logs`,
+          link: `/${locale}/workspace/${workspace}/logs`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
@@ -122,14 +122,14 @@ export async function generateSearchItems({
           description:
             dict.consoleNavigation.staticSearchItems.description
               .workspaceDocumentation,
-          link: `/${locale}/console/${workspace}/documentation`,
+          link: `/${locale}/workspace/${workspace}/documentation`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
           title: dict.consoleNavigation.staticSearchItems.editor,
           description:
             dict.consoleNavigation.staticSearchItems.description.editor,
-          link: `/${locale}/console/${workspace}/editor`,
+          link: `/${locale}/workspace/${workspace}/editor`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
@@ -137,56 +137,56 @@ export async function generateSearchItems({
           description:
             dict.consoleNavigation.staticSearchItems.description
               .workspaceSettings,
-          link: `/${locale}/console/${workspace}/settings`,
+          link: `/${locale}/workspace/${workspace}/settings`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
           title: dict.workflow.workflows,
           description:
             dict.consoleNavigation.staticSearchItems.description.workflows,
-          link: `/${locale}/console/${workspace}/workflows`,
+          link: `/${locale}/workspace/${workspace}/workflows`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
           title: dict.workflow.actionWorkflows,
           description:
             dict.consoleNavigation.staticSearchItems.description.actions,
-          link: `/${locale}/console/${workspace}/workflows/actions`,
+          link: `/${locale}/workspace/${workspace}/workflows/actions`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
           title: dict.workflow.importWorkflows,
           description:
             dict.consoleNavigation.staticSearchItems.description.imports,
-          link: `/${locale}/console/${workspace}/workflows/imports`,
+          link: `/${locale}/workspace/${workspace}/workflows/imports`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
           title: dict.workflow.exportWorkflows,
           description:
             dict.consoleNavigation.staticSearchItems.description.exports,
-          link: `/${locale}/console/${workspace}/workflows/exports`,
+          link: `/${locale}/workspace/${workspace}/workflows/exports`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
           title: dict.workflow.pipelineWorkflows,
           description:
             dict.consoleNavigation.staticSearchItems.description.pipelines,
-          link: `/${locale}/console/${workspace}/workflows/pipelines`,
+          link: `/${locale}/workspace/${workspace}/workflows/pipelines`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
           title: dict.consoleNavigation.staticSearchItems.createWorkflow,
           description:
             dict.consoleNavigation.staticSearchItems.description.createWorkflow,
-          link: `/${locale}/console/${workspace}/workflows/create`,
+          link: `/${locale}/workspace/${workspace}/workflows/create`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
           title: dict.connections.connections,
           description:
             dict.consoleNavigation.staticSearchItems.description.connections,
-          link: `/${locale}/console/${workspace}/connections`,
+          link: `/${locale}/workspace/${workspace}/connections`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
@@ -194,14 +194,14 @@ export async function generateSearchItems({
           description:
             dict.consoleNavigation.staticSearchItems.description
               .createConnection,
-          link: `/${locale}/console/${workspace}/connections/create`,
+          link: `/${locale}/workspace/${workspace}/connections/create`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
           title: dict.repository.repositories,
           description:
             dict.consoleNavigation.staticSearchItems.description.repositories,
-          link: `/${locale}/console/${workspace}/repositories`,
+          link: `/${locale}/workspace/${workspace}/repositories`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
@@ -209,7 +209,7 @@ export async function generateSearchItems({
           description:
             dict.consoleNavigation.staticSearchItems.description
               .createRepository,
-          link: `/${locale}/console/${workspace}/repositories/create`,
+          link: `/${locale}/workspace/${workspace}/repositories/create`,
           type: ConsoleSearchItemType.Irmin,
         }
       );
@@ -223,7 +223,7 @@ export async function generateSearchItems({
           description: `${user.email}${
             user.company ? ` - ${user.company}` : ''
           } - ${roleString}`,
-          link: `/${locale}/console/${workspace}/settings/users`,
+          link: `/${locale}/workspace/${workspace}/settings/users`,
           type: ConsoleSearchItemType.User,
         });
       });
@@ -234,7 +234,7 @@ export async function generateSearchItems({
         newItems.push({
           title: `${invite.first_name} ${invite.last_name}`,
           description: `${invite.email} - ${roleString} - ${dict.users.invite}`,
-          link: `/${locale}/console/${workspace}/settings/invites`,
+          link: `/${locale}/workspace/${workspace}/settings/invites`,
           type: ConsoleSearchItemType.User,
         });
       });
@@ -244,7 +244,7 @@ export async function generateSearchItems({
         newItems.push({
           title: workflow.name,
           description: workflow.description ?? '-',
-          link: `/${locale}/console/${workspace}/workflows/${workflow.id}`,
+          link: `/${locale}/workspace/${workspace}/workflows/${workflow.id}`,
           type: ConsoleSearchItemType.Workflow,
         });
       });
@@ -254,7 +254,7 @@ export async function generateSearchItems({
         newItems.push({
           title: connection.name,
           description: connection.description ?? '-',
-          link: `/${locale}/console/${workspace}/connections/${connection.id}`,
+          link: `/${locale}/workspace/${workspace}/connections/${connection.id}`,
           type: ConsoleSearchItemType.Connection,
         });
       });
@@ -264,7 +264,7 @@ export async function generateSearchItems({
         newItems.push({
           title: repository.name,
           description: repository.description ?? '-',
-          link: `/${locale}/console/${workspace}/repositories/${repository.slug}`,
+          link: `/${locale}/workspace/${workspace}/repositories/${repository.slug}`,
           type: ConsoleSearchItemType.Repository,
         });
       });

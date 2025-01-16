@@ -94,7 +94,7 @@ export const WorkspaceProvider = ({
               res.message ?? 'Workspace deleted successfully'
             );
             await switchWorkspace();
-            router.push('/console/manage-workspaces');
+            router.push('/workspace');
           } catch (error) {
             irminAlert(
               'error',
@@ -166,7 +166,7 @@ export const WorkspaceProvider = ({
     try {
       updating.current = true;
       const res = await leaveWorkspace();
-      router.push('/console/manage-workspaces');
+      router.push('/workspace');
       irminAlert('success', res.message ?? 'You have left the workspace');
     } catch (error) {
       irminAlert(

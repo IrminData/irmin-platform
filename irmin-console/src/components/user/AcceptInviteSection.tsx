@@ -49,7 +49,7 @@ export default function AcceptInviteSection({
         user ? undefined : confirmPassword
       );
       irminAlert('success', res.message ?? 'Invite accepted successfully');
-      router.push('/console');
+      router.push('/workspace');
     } catch (error) {
       setError((error as Error).message ?? 'Failed to accept invite');
     } finally {

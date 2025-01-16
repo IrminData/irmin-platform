@@ -20,7 +20,7 @@ export const workspaceUsers = (last = false): User[] => [
     company: 'Example Inc.',
     email: 'john@example.com',
     phone: '+12014270935',
-    profile_picture: '/ui-assets/images/sign-up/avatar-men-sign-up.png',
+    profile_picture: '/ui-assets/elements/avatar-men-sign-up.png',
     roles: !last ? [roles()[1]] : undefined,
   },
   {
@@ -31,7 +31,7 @@ export const workspaceUsers = (last = false): User[] => [
     company: 'Example Inc.',
     email: 'jane@example.com',
     phone: '+12014270935',
-    profile_picture: '/ui-assets/images/sign-up/avatar-men-sign-up.png',
+    profile_picture: '/ui-assets/elements/avatar-men-sign-up.png',
     roles: !last ? [roles()[2]] : undefined,
   },
   {
@@ -42,7 +42,7 @@ export const workspaceUsers = (last = false): User[] => [
     company: 'Example Inc.',
     email: 'jack@example.com',
     phone: '+12014270935',
-    profile_picture: '/ui-assets/images/sign-up/avatar-men-sign-up.png',
+    profile_picture: '/ui-assets/elements/avatar-men-sign-up.png',
     roles: !last ? [roles()[0]] : undefined,
   },
   {
@@ -53,7 +53,7 @@ export const workspaceUsers = (last = false): User[] => [
     company: 'Example Inc.',
     email: 'jill@example.com',
     phone: '+12014270935',
-    profile_picture: '/ui-assets/images/sign-up/avatar-men-sign-up.png',
+    profile_picture: '/ui-assets/elements/avatar-men-sign-up.png',
     roles: !last ? [roles()[3]] : undefined,
   },
 ];

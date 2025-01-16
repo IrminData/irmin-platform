@@ -57,7 +57,7 @@ const SignUpSection = () => {
             <div className='relative text-center'>
               <Image
                 className='mx-auto mb-6 h-24 w-24 rounded-full'
-                src='/ui-assets/images/sign-up/avatar-men-sign-up.png'
+                src='/ui-assets/elements/avatar-men-sign-up.png'
                 alt="John Doe's avatar"
                 width={88}
                 height={88}

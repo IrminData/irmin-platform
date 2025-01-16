@@ -26,10 +26,10 @@ export default function WorkflowsLayoutWrapper({
 }) {
   const { dict } = useLocale();
 
-  // The base URL for the workflow, eg. /en/console/workspace-slug/workflows
+  // The base URL for the workflow, eg. /en/workspace/workspace-slug/workflows
   const baseUrl = useBaseUrl({
     pathname: '',
-    segment: 'workflows',
+    segment: 'workspace',
     includeSegment: true,
   });
 

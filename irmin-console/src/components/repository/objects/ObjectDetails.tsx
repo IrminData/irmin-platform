@@ -126,7 +126,7 @@ export default function ObjectDetails({
     deleteObject,
   ]);
 
-  /** The base URL for the repository, eg. /en/console/workspace-slug/repositories/repository-slug */
+  /** The base URL for the repository, eg. /en/workspace/workspace-slug/repositories/repository-slug */
   const baseUrl = useBaseUrl({
     pathname: '',
     segment: 'repositories',

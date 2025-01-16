@@ -50,12 +50,12 @@ export default function IrminUserButton({
             variables: { colorPrimary: '#a3c2ac' },
           }}
           userProfileMode='navigation'
-          userProfileUrl={`/${locale}/console/profile`}
+          userProfileUrl={`/${locale}/profile`}
         />
       ) : (
         <Link
           className='contents'
-          href={`/${locale}/console/profile`}
+          href={`/${locale}/profile`}
           onClick={onLinkClick}
         >
           <ProfileImagePlaceholder

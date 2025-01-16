@@ -1,9 +1,9 @@
 import * as Sentry from '@sentry/nextjs';
 
 export async function register() {
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isProduction = process.env.NODE_ENV === 'production';
 
-  if (!isDevelopment) {
+  if (!isProduction) {
     return;
   }
 

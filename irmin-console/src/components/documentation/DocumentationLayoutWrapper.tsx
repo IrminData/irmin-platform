@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { WorkspaceLayoutParams } from '@/app/[lang]/console/[workspace]/layout';
+import { WorkspaceLayoutParams } from '@/app/[lang]/(console)/workspace/[workspace]/layout';
 
 import { IoDocumentText } from 'react-icons/io5';
 import { TbSchema } from 'react-icons/tb';
@@ -28,13 +28,13 @@ export default function DocumentationLayoutWrapper({
         icon: <IoDocumentText />,
         name: dict.documentation.documentation,
         slug: 'documentation',
-        link: `/${params.lang}/console/${params.workspace}/documentation`,
+        link: `/${params.lang}/workspace/${params.workspace}/documentation`,
       },
       {
         icon: <TbSchema />,
         name: dict.documentation.schema,
         slug: 'schemas',
-        link: `/${params.lang}/console/${params.workspace}/documentation/schema`,
+        link: `/${params.lang}/workspace/${params.workspace}/documentation/schema`,
       },
     ],
     [dict, params.lang, params.workspace]

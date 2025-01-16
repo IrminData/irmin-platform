@@ -9,7 +9,7 @@ const authOfflineMode = process.env.NEXT_PUBLIC_AUTH_OFFLINE_MODE ?? 'false';
 const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'true';
 const appPassword = process.env.ENV_PASSWORD ?? 'oiDeNuDEvenTICYc';
 
-// NormalList of available locales
+// List of available locales
 const locales = languages.map((lang) => lang.code);
 
 /**
@@ -54,7 +54,9 @@ function setLocaleCookie(response: NextResponse, locale: Locale) {
 }
 
 // Protected routes (Clerk)
-const isProtectedRoute = createRouteMatcher(['/:lang([a-z]{2})/console(.*)']);
+const isProtectedRoute = createRouteMatcher([
+  '/:lang([a-z]{2})?/:section(workspace|profile)/:rest*',
+]);
 
 /**
  * Main application middleware

@@ -30,10 +30,7 @@ function ConsoleErrorSection({
         </p>
         <div className='flex justify-center'>
           <div className='mx-2'>
-            <Button
-              variant='default'
-              href={`/${locale}/console/manage-workspaces`}
-            >
+            <Button variant='default' href={`/${locale}/workspace`}>
               {dict.common.goBackConsole}
             </Button>
           </div>

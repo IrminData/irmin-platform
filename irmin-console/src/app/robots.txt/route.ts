@@ -22,7 +22,6 @@ export async function GET() {
     Disallow: /api/
     Disallow: /_next/
     Disallow: /frontend-docs/
-    Disallow: /console/
     
     # Sitemaps
     Sitemap: ${app_base}/sitemap.xml
