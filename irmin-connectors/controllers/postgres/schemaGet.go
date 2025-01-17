@@ -1,13 +1,13 @@
 package postgresControllers
 
 import (
+	"irmin-connectors/utils"
 	"net/http"
 )
 
 func SchemaGet(w http.ResponseWriter, r *http.Request) {
-	_, err := w.Write([]byte("This is the Postgres connector"))
+	// Make sure the request is authorized by validating the system token
+	utils.ValidateConnectorSystemToken(connectorName, w, r)
 
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-	}
+	// TODO: Implement the SchemaGet endpoint
 }

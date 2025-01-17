@@ -5,11 +5,9 @@ import (
 	"net/http"
 )
 
-const connectorName = "PostgreSQL"
-
-func Info(w http.ResponseWriter, r *http.Request) {
+func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the system token
 	utils.ValidateConnectorSystemToken(connectorName, w, r)
 
-	// TODO: Implement the Info endpoint
+	// TODO: Implement the SubscribeToChanges endpoint
 }
