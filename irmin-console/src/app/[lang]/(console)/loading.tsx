@@ -10,7 +10,10 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
  */
 export default function ConsoleLoading() {
   return (
-    <div className='container relative mx-auto max-w-6xl py-12'>
+    <div
+      id='console-loading'
+      className='container relative mx-auto max-w-6xl py-12'
+    >
       <LoadingSkeleton className='h-96' />
     </div>
   );

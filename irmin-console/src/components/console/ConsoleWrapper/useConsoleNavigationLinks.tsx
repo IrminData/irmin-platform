@@ -29,7 +29,7 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 
 import { ConsoleNavigationLinkType } from '@/types/internal/ConsoleNavigation';
 
-const websiteURL = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.co';
+const websiteURL = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
 
 /**
  * Hook to get console navigation links

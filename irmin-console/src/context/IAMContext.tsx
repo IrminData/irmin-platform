@@ -15,6 +15,7 @@ import { useAuth, useUser } from '@clerk/nextjs';
 
 import { getProfile, updateProfile } from '@/lib/actions/profile';
 
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { User } from '@/types/core/User';
@@ -50,6 +51,7 @@ const IAMContext = createContext<{
  */
 export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
+  const { locale } = useLocale();
   const { irminAlert } = usePopup();
   const { isSignedIn, isLoaded: clerkIsLoaded } = useUser();
   const { sessionId, signOut: clerkSignOut } = useAuth();
@@ -122,13 +124,13 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       if (!isSignedIn) {
         resetIAMState();
-        router.replace('/sign-in');
+        router.replace(`/${locale}/sign-in`);
         return false;
       }
 
+      router.replace(`/${locale}/sign-in`);
       await clerkSignOut();
       resetIAMState();
-      router.replace('/sign-in');
       return true;
     } catch (error) {
       console.error('Error signing out in IAMContext:', error);
@@ -137,7 +139,7 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       signingOutRef.current = false;
     }
-  }, [clerkSignOut, resetIAMState, irminAlert, isSignedIn, router]);
+  }, [clerkSignOut, resetIAMState, irminAlert, locale, isSignedIn, router]);
 
   const handleUpdateProfile = useCallback(
     async (

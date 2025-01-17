@@ -14,9 +14,9 @@ export default function WebsiteLoading() {
   return (
     <div
       className='flex h-full w-full flex-col items-center justify-center p-2'
-      id='website-loading-skeleton'
+      id='website-loading'
     >
-      <LoadingSkeleton />
+      <LoadingSkeleton className='h-96' />
     </div>
   );
 }

@@ -97,93 +97,95 @@ const ManageWorkspacesSection = ({
   );
 
   return (
-    <div className='flex flex-col'>
-      <ConsoleTitle title={dict.workspaceSwitcher.manageWorkspaces} />
-      <div className='flex flex-col gap-4 px-4 pb-28 lg:flex-row-reverse'>
-        {/* Form for creating a new workspace */}
-        <div className='w-full pr-4 lg:max-w-80'>
-          <div className='rounded-xl bg-background p-2 text-xs text-foreground shadow sm:p-4 lg:p-4 lg:text-base'>
-            <form
-              onSubmit={handleSubmit(handleCreateWorkspace)}
-              className={`${processing && 'blur-sm'}`}
-            >
-              <Controller
-                name='newWorkspaceName'
-                control={control}
-                rules={{ required: dict.common.fieldRequired }}
-                render={({ field }) => (
-                  <Input
-                    type='text'
-                    placeholder={dict.workspace.workspaceName}
-                    required
-                    className='mb-2 md:mb-4'
-                    disabled={processing}
-                    {...field}
-                  />
-                )}
-              />
-              <Controller
-                name='newWorkspaceDescription'
-                control={control}
-                rules={{
-                  maxLength: {
-                    value: 255,
-                    message: dict.common.fieldInvalid,
-                  },
-                }}
-                render={({ field }) => (
-                  <Input
-                    type='text'
-                    placeholder={dict.workspace.workspaceDescription}
-                    maxLength={255}
-                    longtext={{
-                      rows: 3,
-                    }}
-                    className='mb-2 md:mb-4'
-                    disabled={processing}
-                    {...field}
-                  />
-                )}
-              />
-              {errorMessage && (
-                <p className='mb-2 text-destructive'>{errorMessage}</p>
-              )}
-              {successMessage && (
-                <p className='mb-2 text-irmin_green'>{successMessage}</p>
-              )}
-              <Button
-                variant='gradient'
-                size='sm'
-                className='mb-0 h-11 w-full'
-                type='submit'
-                disabled={processing}
-                loading={processing}
+    <div className='container relative mx-auto max-w-6xl'>
+      <div className='flex flex-col'>
+        <ConsoleTitle title={dict.workspaceSwitcher.manageWorkspaces} />
+        <div className='flex flex-col gap-4 px-4 pb-28 lg:flex-row-reverse'>
+          {/* Form for creating a new workspace */}
+          <div className='w-full pr-4 lg:max-w-80'>
+            <div className='rounded-xl bg-background p-2 text-xs text-foreground shadow sm:p-4 lg:p-4 lg:text-base'>
+              <form
+                onSubmit={handleSubmit(handleCreateWorkspace)}
+                className={`${processing && 'blur-sm'}`}
               >
-                {dict.workspaceSwitcher.createNewWorkspace}
-              </Button>
-            </form>
-          </div>
-        </div>
-        {/* Display existing workspaces */}
-        {workspaces.length > 0 && (
-          <div className='ml-auto flex-grow'>
-            <div
-              className={`flex w-full flex-wrap content-stretch items-stretch justify-start ${processing && 'blur-sm'} -mx-2`}
-            >
-              {workspaces.map((workspace, idx) => (
-                <div
-                  className='w-1/2 p-2 lg:w-full lg:max-w-60'
-                  key={`select-workspace-card-${idx}`}
+                <Controller
+                  name='newWorkspaceName'
+                  control={control}
+                  rules={{ required: dict.common.fieldRequired }}
+                  render={({ field }) => (
+                    <Input
+                      type='text'
+                      placeholder={dict.workspace.workspaceName}
+                      required
+                      className='mb-2 md:mb-4'
+                      disabled={processing}
+                      {...field}
+                    />
+                  )}
+                />
+                <Controller
+                  name='newWorkspaceDescription'
+                  control={control}
+                  rules={{
+                    maxLength: {
+                      value: 255,
+                      message: dict.common.fieldInvalid,
+                    },
+                  }}
+                  render={({ field }) => (
+                    <Input
+                      type='text'
+                      placeholder={dict.workspace.workspaceDescription}
+                      maxLength={255}
+                      longtext={{
+                        rows: 3,
+                      }}
+                      className='mb-2 md:mb-4'
+                      disabled={processing}
+                      {...field}
+                    />
+                  )}
+                />
+                {errorMessage && (
+                  <p className='mb-2 text-destructive'>{errorMessage}</p>
+                )}
+                {successMessage && (
+                  <p className='mb-2 text-irmin_green'>{successMessage}</p>
+                )}
+                <Button
+                  variant='gradient'
+                  size='sm'
+                  className='mb-0 h-11 w-full'
+                  type='submit'
+                  disabled={processing}
+                  loading={processing}
                 >
-                  <WorkspaceCard
-                    workspace={workspace}
-                    handleClick={handleSwitchWorkspace}
-                  />
-                </div>
-              ))}
+                  {dict.workspaceSwitcher.createNewWorkspace}
+                </Button>
+              </form>
             </div>
           </div>
-        )}
+          {/* Display existing workspaces */}
+          {workspaces.length > 0 && (
+            <div className='ml-auto flex-grow'>
+              <div
+                className={`flex w-full flex-wrap content-stretch items-stretch justify-start ${processing && 'blur-sm'} -mx-2`}
+              >
+                {workspaces.map((workspace, idx) => (
+                  <div
+                    className='w-1/2 p-2 lg:w-full lg:max-w-60'
+                    key={`select-workspace-card-${idx}`}
+                  >
+                    <WorkspaceCard
+                      workspace={workspace}
+                      handleClick={handleSwitchWorkspace}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

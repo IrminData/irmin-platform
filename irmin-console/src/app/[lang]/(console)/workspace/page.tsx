@@ -1,9 +1,20 @@
+import { Metadata } from 'next';
+
 import { notFound } from 'next/navigation';
 
 import { getWorkspaces } from '@/lib/actions/workspaces';
 import { getToken } from '@/lib/getToken';
 
 import ManageWorkspacesSection from '@/components/workspace/ManageWorkspacesSection';
+
+/**
+ * SEO metadata for the Manage Workspaces pages
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: `Manage workspaces | IRMIN Console`,
+  };
+}
 
 /**
  * Console home page
@@ -13,10 +24,7 @@ import ManageWorkspacesSection from '@/components/workspace/ManageWorkspacesSect
 const ManageWorkspacesPage = async () => {
   const token = await getToken();
   const workspaces = await getWorkspaces(token);
-
-  if (!workspaces) {
-    return notFound();
-  }
+  if (!workspaces) return notFound();
 
   return <ManageWorkspacesSection initialWorkspaces={workspaces} />;
 };
