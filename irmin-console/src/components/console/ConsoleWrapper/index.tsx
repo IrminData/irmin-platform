@@ -163,6 +163,7 @@ export default function ConsoleWrapper({
                         key={`Console-nav-noWorkspace-${index}`}
                         link={link}
                         isMenuFolded={foldMenu}
+                        hasWorkspace={currentWorkspace !== undefined}
                         setIsMenuOpen={setIsMenuOpen}
                       />
                     ))}
@@ -186,6 +187,7 @@ export default function ConsoleWrapper({
                         key={`Console-nav-hasWorkspace-${index}`}
                         link={link}
                         isMenuFolded={foldMenu}
+                        hasWorkspace={currentWorkspace !== undefined}
                         setIsMenuOpen={setIsMenuOpen}
                       />
                     ))}
@@ -208,6 +210,7 @@ export default function ConsoleWrapper({
                       key={`Console-nav-hasWorkspace-${index}`}
                       link={link}
                       isMenuFolded={foldMenu}
+                      hasWorkspace={currentWorkspace !== undefined}
                       setIsMenuOpen={setIsMenuOpen}
                     />
                   ))}

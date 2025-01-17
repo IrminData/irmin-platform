@@ -47,21 +47,22 @@ export async function getProfile(token?: string) {
  *
  * This action will also register the user as a subscriber in Novu.
  *
- * @param first_name - (optional) User's new first name
- * @param last_name - (optional) User's new last name
- * @param email - (optional) User's new email
- * @param phone - (optional) User's new phone number
- * @param company - (optional) User's new company name
+ * @param first_name - User's new first name
+ * @param last_name - User's new last name
+ * @param email - User's new email
+ * @param phone - User's new phone number
+ * @param company - User's new company name
  * @param avatar - (optional) User's new profile picture
+ * @param token - (optional) User's API token
  *
  * @returns The updated user's profile API response
  */
 export async function updateProfile(
-  first_name?: string,
-  last_name?: string,
-  email?: string,
-  phone?: string,
-  company?: string,
+  first_name: string,
+  last_name: string,
+  email: string,
+  phone: string,
+  company: string,
   avatar?: File | Blob,
   token?: string
 ) {

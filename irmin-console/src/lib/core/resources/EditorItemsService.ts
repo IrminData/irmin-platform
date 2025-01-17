@@ -61,9 +61,11 @@ class EditorItemsService {
    * Create a new file in the editorItems
    *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
+   * @param isDraft - whether the file is a draft or not
    */
   async createFile(
-    fileNavigatorItem: FileNavigatorItem
+    fileNavigatorItem: FileNavigatorItem,
+    isDraft?: boolean
   ): Promise<IrminAPIResponse<EditorItemsFile>> {
     if (isOfflineMode)
       return fake(exampleFiles[0]) as IrminAPIResponse<EditorItemsFile>;
@@ -73,15 +75,20 @@ class EditorItemsService {
         throw new Error('Item is not a file');
       }
       // Create the file
-      const body = new FormData();
-      body.append('name', fileNavigatorItem.current.name);
-      body.append('path', fileNavigatorItem.current.path);
-      body.append('contents', fileNavigatorItem.current.contents);
+      const formData = new FormData();
+      formData.append('name', fileNavigatorItem.current.name);
+      formData.append('path', fileNavigatorItem.current.path);
+      formData.append('contents', fileNavigatorItem.current.contents);
+      formData.append('extension', fileNavigatorItem.current.type);
+
+      if (isDraft) formData.append('is_draft', 'true');
+      else formData.append('is_draft', 'false');
+
       const response = (await this.irminCore.fetchAPI(
         `/v1/editor-items/files`,
         {
           method: 'POST',
-          body,
+          body: formData,
         }
       )) as IrminAPIResponse<EditorItemsFile>;
       return response;
@@ -97,9 +104,11 @@ class EditorItemsService {
    * Update a file in the editorItems
    *
    * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
+   * @param isDraft - whether the file is a draft or not
    */
   async updateFile(
-    fileNavigatorItem: FileNavigatorItem
+    fileNavigatorItem: FileNavigatorItem,
+    isDraft?: boolean
   ): Promise<IrminAPIResponse<EditorItemsFile>> {
     if (isOfflineMode)
       return fake(exampleFiles[0]) as IrminAPIResponse<EditorItemsFile>;
@@ -118,8 +127,11 @@ class EditorItemsService {
       formData.append('name', fileNavigatorItem.current.name);
       formData.append('path', fileNavigatorItem.current.path);
       formData.append('contents', fileNavigatorItem.current.contents);
+      formData.append('extension', fileNavigatorItem.current.type);
       formData.append('owner', fileNavigatorItem.current.owner);
       formData.append('original_path', fileNavigatorItem.original.path);
+      if (isDraft) formData.append('is_draft', 'true');
+      else formData.append('is_draft', 'false');
       const response = (await this.irminCore.fetchAPI(
         `/v1/editor-items/files`,
         {
@@ -153,6 +165,8 @@ class EditorItemsService {
       // Delete the file
       const formData = new FormData();
       formData.append('_method', 'DELETE');
+      formData.append('name', fileNavigatorItem.original.name);
+      formData.append('extension', fileNavigatorItem.original.type);
       formData.append('path', fileNavigatorItem.original.path);
       const response = await this.irminCore.fetchAPI(`/v1/editor-items/files`, {
         method: 'POST',
@@ -260,6 +274,7 @@ class EditorItemsService {
       // Delete the folder
       const body = new FormData();
       body.append('_method', 'DELETE');
+      body.append('name', fileNavigatorItem.original.name);
       body.append('path', fileNavigatorItem.original.path);
       const response = await this.irminCore.fetchAPI(
         `/v1/editor-items/folders`,

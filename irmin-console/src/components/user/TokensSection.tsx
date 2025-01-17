@@ -63,48 +63,54 @@ export default function TokensSection({
           <APITokenDisplay token={createdToken} />
         </div>
       )}
-      <table className='min-w-full'>
-        <thead>
-          <tr className='border-b dark:border-gray-800'>
-            <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
-              {dict.common.description}
-            </th>
-            <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
-              {dict.tokens.expiresAt}
-            </th>
-            <th className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
-              {/* Actions */}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {tokens.map((token, idx) => (
-            <tr
-              key={`user-api-token-${token.id}-${idx}`}
-              className='h-14 border-b dark:border-gray-800'
-            >
-              <td className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
-                {token.name}
-              </td>
-              <td className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
-                {new Date(token.expiry).toLocaleDateString(locale)}
-              </td>
-              <td className='px-4 py-2 text-right'>
-                <div className='flex w-full flex-row justify-end gap-2 align-middle'>
-                  <ButtonWithTooltip
-                    size='icon'
-                    variant='secondary'
-                    aria-label='Revoke token'
-                    icon={<TbTrash size={14} />}
-                    tooltip={dict.tokens.revokeToken}
-                    onClick={() => revokeToken(token)}
-                  />
-                </div>
-              </td>
+      {tokens.length === 0 ? (
+        <div className='py-12 text-center text-lg text-gray-500 lg:text-2xl dark:text-gray-400'>
+          {dict.tokens.noTokens}
+        </div>
+      ) : (
+        <table className='min-w-full'>
+          <thead>
+            <tr className='border-b dark:border-gray-800'>
+              <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
+                {dict.common.description}
+              </th>
+              <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+                {dict.tokens.expiresAt}
+              </th>
+              <th className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
+                {/* Actions */}
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {tokens.map((token, idx) => (
+              <tr
+                key={`user-api-token-${token.id}-${idx}`}
+                className='h-14 border-b dark:border-gray-800'
+              >
+                <td className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
+                  {token.name}
+                </td>
+                <td className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
+                  {new Date(token.expiry).toLocaleDateString(locale)}
+                </td>
+                <td className='px-4 py-2 text-right'>
+                  <div className='flex w-full flex-row justify-end gap-2 align-middle'>
+                    <ButtonWithTooltip
+                      size='icon'
+                      variant='secondary'
+                      aria-label='Revoke token'
+                      icon={<TbTrash size={14} />}
+                      tooltip={dict.tokens.revokeToken}
+                      onClick={() => revokeToken(token)}
+                    />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </ContentWrapper>
   );
 }

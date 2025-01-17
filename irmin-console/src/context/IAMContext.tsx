@@ -28,11 +28,11 @@ const authOfflineMode = process.env.NEXT_PUBLIC_AUTH_OFFLINE_MODE === 'true';
 const IAMContext = createContext<{
   profile: User | undefined;
   updateProfile: (
-    first_name?: string,
-    last_name?: string,
-    email?: string,
-    phone?: string,
-    company?: string,
+    first_name: string,
+    last_name: string,
+    email: string,
+    phone: string,
+    company: string,
     profile_picture?: FileList
   ) => Promise<boolean>;
   isLoading: boolean;
@@ -143,11 +143,11 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handleUpdateProfile = useCallback(
     async (
-      first_name?: string,
-      last_name?: string,
-      email?: string,
-      phone?: string,
-      company?: string,
+      first_name: string,
+      last_name: string,
+      email: string,
+      phone: string,
+      company: string,
       profile_picture?: FileList
     ) => {
       try {

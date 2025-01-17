@@ -9,6 +9,7 @@ import ConnectionSchemaSection from '@/components/connection/ConnectionSchemaSec
 import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
 
 import { ConnectorCapability } from '@/types/core/Connector';
+import { DynamicFieldValues } from '@/types/internal/DynamicField';
 
 import { SingleConnectionLayoutParams } from '../layout';
 
@@ -28,20 +29,11 @@ export default async function ConnectionSchemaPage(props: {
 
   if (!connection) return notFound();
 
-  let parsedDetails = {};
-  let parsedSettings = {};
-  try {
-    parsedDetails = JSON.parse(connection.details ?? '{}');
-    parsedSettings = JSON.parse(connection.settings ?? '{}');
-  } catch (error) {
-    console.error('Error parsing connection details or settings:', error);
-  }
-
   const pullSchema = await getConnectorSchema(
     connection.connector.id,
     ConnectorCapability.PullFullSync,
-    parsedDetails,
-    parsedSettings,
+    connection.details as DynamicFieldValues,
+    connection.settings as DynamicFieldValues,
     token
   );
 

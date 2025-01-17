@@ -33,31 +33,19 @@ const ConnectionSection = ({ workflows }: { workflows: Workflow[] }) => {
     [workflows, connection.id]
   );
 
-  const { details, settings } = useMemo(() => {
-    let parsedDetails = {};
-    let parsedSettings = {};
-    try {
-      parsedDetails = JSON.parse(connection.details ?? '{}');
-      parsedSettings = JSON.parse(connection.settings ?? '{}');
-    } catch (error) {
-      console.error('Error parsing connection details or settings:', error);
-    }
-    return { details: parsedDetails, settings: parsedSettings };
-  }, [connection.details, connection.settings]);
-
   return (
     <div className='container relative mx-auto max-w-6xl'>
       <div className='my-4 flex flex-col gap-4 p-4'>
         <div className='flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg bg-background p-4 text-sm text-foreground lg:text-lg'>
           <ConnectorInfoSmall connector={connection.connector} />
           <hr className='w-full border-b dark:border-gray-800' />
-          {Object.entries(details).map(([key, value]) => (
+          {Object.entries(connection.details).map(([key, value]) => (
             <div className='flex flex-col gap-1' key={`details-${key}`}>
               <p className='text-sm opacity-60'>{key}</p>
               <p className='text-base'>{`${value}`}</p>
             </div>
           ))}
-          {Object.entries(settings).map(([key, value]) => (
+          {Object.entries(connection.settings).map(([key, value]) => (
             <div className='flex flex-col gap-1' key={`settings-${key}`}>
               <p className='text-sm opacity-60'>{key}</p>
               <p className='text-base'>{`${value}`}</p>

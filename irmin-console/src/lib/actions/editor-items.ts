@@ -21,6 +21,7 @@ export async function getEditorItems(token?: string) {
  */
 export async function createEditorItem(
   file: FileNavigatorItem,
+  isDraft?: boolean,
   token?: string
 ) {
   const irminCore = await initCore(token);
@@ -28,7 +29,7 @@ export async function createEditorItem(
     const res = await irminCore.editorItemService.createFolder(file);
     return res;
   }
-  const res = await irminCore.editorItemService.createFile(file);
+  const res = await irminCore.editorItemService.createFile(file, isDraft);
   return res;
 }
 
@@ -53,6 +54,7 @@ export async function deleteEditorItem(
  */
 export async function updateEditorItem(
   file: FileNavigatorItem,
+  isDraft?: boolean,
   token?: string
 ) {
   const irminCore = await initCore(token);
@@ -60,6 +62,6 @@ export async function updateEditorItem(
     const res = await irminCore.editorItemService.updateFolder(file);
     return res;
   }
-  const res = await irminCore.editorItemService.updateFile(file);
+  const res = await irminCore.editorItemService.updateFile(file, isDraft);
   return res;
 }

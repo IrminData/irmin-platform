@@ -1,5 +1,6 @@
 import { Connector } from '@/types/core/Connector';
 import { User } from '@/types/core/User';
+import { JSONObject } from '@/types/internal/GenericJSON';
 
 /**
  * Connection object - used to store information on data sources and destinations
@@ -15,10 +16,10 @@ export interface Connection {
   description: string;
   /** Connection documentation as a markdown string */
   documentation: string;
-  /** String which contains a JSON object */
-  details: string;
-  /** String which contains a JSON object */
-  settings: string;
+  /** Object with key value pairs */
+  details: JSONObject;
+  /** Object with key value pairs */
+  settings: JSONObject;
   /** Connector object */
   connector: Connector;
   /** Connection creation date */

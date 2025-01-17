@@ -16,4 +16,6 @@ export interface ConsoleNavigationLinkType {
   action?: () => void;
   /** Link props */
   props?: ComponentPropsWithoutRef<'a'> | ComponentPropsWithoutRef<'button'>;
+  /** Only show this link if in a workspace */
+  workspaceOnly?: boolean;
 }

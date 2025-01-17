@@ -164,12 +164,14 @@ class ConnectionService {
       const formData = new FormData();
 
       formData.append('_method', 'DELETE');
-      formData.append('connection', connection);
 
-      const response = await this.irminCore.fetchAPI(`/v1/connections`, {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await this.irminCore.fetchAPI(
+        `/v1/connections/${connection}`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
 
       return response;
     } catch (error) {

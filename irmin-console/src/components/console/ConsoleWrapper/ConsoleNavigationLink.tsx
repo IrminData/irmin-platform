@@ -6,20 +6,30 @@ import { ConsoleNavigationLinkType } from '@/types/internal/ConsoleNavigation';
 
 /**
  * Navigation link for the console
+ *
+ * @param props - The props of the component
+ * @param props.link - The link object
+ * @param props.isMenuFolded - The menu folded status
+ * @param props.hasWorkspace - The workspace status - eg. if the user is in a workspace
+ * @param props.setIsMenuOpen - The function to set the menu open status
  */
 export default function ConsoleNavigationLink({
   link,
   isMenuFolded,
+  hasWorkspace,
   setIsMenuOpen,
 }: {
   link: ConsoleNavigationLinkType;
   isMenuFolded: boolean;
+  hasWorkspace: boolean;
   setIsMenuOpen: (_value: boolean) => void;
 }) {
   const menuIconStyles = `text-lg ${isMenuFolded ? 'ml-1' : 'mr-2'}`;
   const menuLinkStyles = `text-xs font-normal md:text-sm ${
     isMenuFolded ? 'hidden' : 'block'
   }`;
+
+  if (link.workspaceOnly && !hasWorkspace) return null;
 
   if (link.href) {
     return (

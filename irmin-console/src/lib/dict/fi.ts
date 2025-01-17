@@ -573,6 +573,7 @@ const fi = {
   },
   tokens: {
     apiTokens: 'API avaimet',
+    noTokens: 'Sinulla ei ole vielä luotuja API avaimia',
     createAPIToken: 'Luo API avain',
     validFor: 'Voimassa (sekunneissa)',
     expiresAt: 'Vanhenee',

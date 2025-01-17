@@ -46,29 +46,29 @@ class ProfileService {
   /**
    * Update the user's profile information
    *
-   * @param first_name - (optional) User's new first name
-   * @param last_name - (optional) User's new last name
-   * @param email - (optional) User's new email
-   * @param phone - (optional) User's new phone number
-   * @param company - (optional) User's new company name
+   * @param first_name - User's new first name
+   * @param last_name - User's new last name
+   * @param email - User's new email
+   * @param phone - User's new phone number
+   * @param company - User's new company name
    * @param avatar - (optional) User's new profile picture
    */
   async updateProfile(
-    first_name?: string,
-    last_name?: string,
-    email?: string,
-    phone?: string,
-    company?: string,
+    first_name: string,
+    last_name: string,
+    email: string,
+    phone: string,
+    company: string,
     avatar?: File | Blob
   ): Promise<IrminAPIResponse<User>> {
     if (isOfflineMode) return fake(exampleProfile) as IrminAPIResponse<User>;
     const formData = new FormData();
     formData.append('_method', 'PATCH');
-    if (first_name) formData.append('first_name', first_name);
-    if (last_name) formData.append('last_name', last_name);
-    if (email) formData.append('email', email);
-    if (phone) formData.append('phone', phone);
-    if (company) formData.append('company', company);
+    formData.append('first_name', first_name);
+    formData.append('last_name', last_name);
+    formData.append('email', email);
+    formData.append('phone', phone);
+    formData.append('company', company);
     if (avatar) formData.append('avatar', avatar);
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/profile`, {

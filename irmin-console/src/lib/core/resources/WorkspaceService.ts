@@ -221,7 +221,7 @@ class WorkspaceService {
       const newWorkspace = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspaceSlug}/switch`,
         {
-          method: 'GET',
+          method: 'POST',
         }
       )) as IrminAPIResponse<Workspace>;
       return newWorkspace;

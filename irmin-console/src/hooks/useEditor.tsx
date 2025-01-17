@@ -205,7 +205,7 @@ export const useEditor = (editorItems: EditorItems) => {
     async (fileItem: FileNavigatorItem) => {
       if (fileItem.type !== 'file' || !fileItem.current) return;
 
-      const res = await createEditorItem(fileItem);
+      const res = await createEditorItem(fileItem, false);
       setCurrentEditorItems((prev) => ({
         ...prev,
         files: [...prev.files, fileItem.current as EditorItemsFile],
@@ -234,11 +234,14 @@ export const useEditor = (editorItems: EditorItems) => {
       }
 
       const updatedFile = { ...file, contents: currentEditor.contents };
-      const res = await updateEditorItem({
-        original: file,
-        current: updatedFile,
-        type: 'file',
-      });
+      const res = await updateEditorItem(
+        {
+          original: file,
+          current: updatedFile,
+          type: 'file',
+        },
+        false
+      );
 
       if (!res || res.errors) {
         // Handle update error
@@ -339,7 +342,7 @@ export const useEditor = (editorItems: EditorItems) => {
         editorItems={currentEditorItems}
         createFolder={async (folderItem) => {
           if (folderItem.type !== 'folder' || !folderItem.current) return;
-          const res = await createEditorItem(folderItem);
+          const res = await createEditorItem(folderItem, false);
           setCurrentEditorItems((prev) => ({
             ...prev,
             folders: [...prev.folders, folderItem.current as EditorItemsFile],
@@ -377,7 +380,7 @@ export const useEditor = (editorItems: EditorItems) => {
             )
               return;
 
-            const res = await updateEditorItem(updatedItem);
+            const res = await updateEditorItem(updatedItem, false);
             setCurrentEditorItems((prev) => ({
               ...prev,
               files: prev.files.map((f) =>
@@ -396,7 +399,7 @@ export const useEditor = (editorItems: EditorItems) => {
             )
               return;
 
-            const res = await updateEditorItem(updatedItem);
+            const res = await updateEditorItem(updatedItem, false);
             setCurrentEditorItems((prev) => ({
               ...prev,
               folders: prev.folders.map((f) =>

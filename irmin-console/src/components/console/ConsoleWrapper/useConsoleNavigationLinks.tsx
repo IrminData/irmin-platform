@@ -138,6 +138,7 @@ const useConsoleNavigationLinks = (): {
       href: `${workspaceUrl}/settings`,
       icon: <TbSettings />,
       active: isActiveLink(`${workspaceUrl}/settings`),
+      workspaceOnly: true,
     },
     {
       title: dict.consoleNavigation.myProfile,

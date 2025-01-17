@@ -35,7 +35,7 @@ export default function UserProfileForm() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, dirtyFields },
+    formState: { errors, isSubmitting },
     watch,
   } = useForm<ProfileFormInputs>({
     defaultValues: {
@@ -50,32 +50,16 @@ export default function UserProfileForm() {
 
   const onSubmit: SubmitHandler<ProfileFormInputs> = useCallback(
     async (data) => {
-      const changedFields: Partial<ProfileFormInputs> = {};
-
-      (Object.keys(dirtyFields) as Array<keyof ProfileFormInputs>).forEach(
-        (key) => {
-          if (key === 'profile_picture') {
-            if (data.profile_picture && data.profile_picture.length > 0) {
-              changedFields[key] = data.profile_picture;
-            }
-          } else {
-            changedFields[key] = data[key];
-          }
-        }
+      await updateProfile(
+        data.first_name,
+        data.last_name,
+        data.email,
+        data.phone,
+        data.company,
+        data.profile_picture ?? undefined
       );
-
-      if (Object.keys(changedFields).length > 0) {
-        await updateProfile(
-          changedFields.first_name,
-          changedFields.last_name,
-          changedFields.email,
-          changedFields.phone,
-          changedFields.company,
-          changedFields.profile_picture ?? undefined
-        );
-      }
     },
-    [updateProfile, dirtyFields]
+    [updateProfile]
   );
 
   const watchProfilePicture = watch('profile_picture');
