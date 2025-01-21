@@ -7,7 +7,7 @@ import (
 
 func OperationInit(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the system token
-	utils.ValidateConnectorSystemToken(connectorName, w, r)
+	utils.ValidateConnectorSystemToken(defaultConnectorInfo.Name, w, r)
 
 	// TODO: Implement the OperationInit endpoint
 }
