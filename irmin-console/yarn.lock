@@ -286,40 +286,40 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@clerk/backend@npm:^1.23.2":
-  version: 1.23.2
-  resolution: "@clerk/backend@npm:1.23.2"
+"@clerk/backend@npm:^1.23.3":
+  version: 1.23.3
+  resolution: "@clerk/backend@npm:1.23.3"
   dependencies:
-    "@clerk/shared": "npm:^2.20.9"
+    "@clerk/shared": "npm:^2.20.10"
     "@clerk/types": "npm:^4.41.1"
     cookie: "npm:1.0.2"
     snakecase-keys: "npm:8.0.1"
     tslib: "npm:2.4.1"
-  checksum: 10c0/ef747e578a11485c05eca40b66cdbdf88522abc365f201b81f18a5bdf1c5fd0f1979464b05f068b714c0766ba97d192d212828122d3bf19d9ada00fbbd9afbea
+  checksum: 10c0/c1a238fa2c61e44f27043d5beb8ca7f58d9b4259a6faee1c1cd23aef2ab68b12bb02bce6042d372b1d3b4f6099a6397d554872f5f8cacaec58cca1c3a91f52cc
   languageName: node
   linkType: hard
 
-"@clerk/clerk-react@npm:^5.22.1":
-  version: 5.22.1
-  resolution: "@clerk/clerk-react@npm:5.22.1"
+"@clerk/clerk-react@npm:^5.22.2":
+  version: 5.22.2
+  resolution: "@clerk/clerk-react@npm:5.22.2"
   dependencies:
-    "@clerk/shared": "npm:^2.20.9"
+    "@clerk/shared": "npm:^2.20.10"
     "@clerk/types": "npm:^4.41.1"
     tslib: "npm:2.4.1"
   peerDependencies:
     react: ^18.0.0 || ^19.0.0 || ^19.0.0-0
     react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-0
-  checksum: 10c0/42ac75f41eb59b0d9f86cce2fc8b562a9d18cf1be6cfeb31c8f4699985cb1a72fd4e21a539e90c2608173fcf70001e56fde85c0691295baeee0c62abf45899c2
+  checksum: 10c0/4cfef7171dea9a283d374de334a18b62fb3643d8b37ff77be2748d3184a1be30d128ca62afbfbdb0b164ea500e3d9aa742951a2e59f2b4ed760c560b5398fd63
   languageName: node
   linkType: hard
 
-"@clerk/nextjs@npm:^6.9.13":
-  version: 6.9.13
-  resolution: "@clerk/nextjs@npm:6.9.13"
+"@clerk/nextjs@npm:^6.9.14":
+  version: 6.9.14
+  resolution: "@clerk/nextjs@npm:6.9.14"
   dependencies:
-    "@clerk/backend": "npm:^1.23.2"
-    "@clerk/clerk-react": "npm:^5.22.1"
-    "@clerk/shared": "npm:^2.20.9"
+    "@clerk/backend": "npm:^1.23.3"
+    "@clerk/clerk-react": "npm:^5.22.2"
+    "@clerk/shared": "npm:^2.20.10"
     "@clerk/types": "npm:^4.41.1"
     crypto-js: "npm:4.2.0"
     server-only: "npm:0.0.1"
@@ -328,13 +328,13 @@ __metadata:
     next: ^13.5.4 || ^14.0.3 || ^15.0.0
     react: ^18.0.0 || ^19.0.0 || ^19.0.0-0
     react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-0
-  checksum: 10c0/8e201a8c281e26c19366bb4a0da8ddd829885dcf4ce33c7f7f710bb76224e82babc026da41ea5d510822b643278f014055277d12b149c533c324c8cb961b3c2e
+  checksum: 10c0/46fe837c9e4c41fe1e3afce6f2400e6ce921d2f6bbe0b8a360eaed6911aa2c074e891100a52bdecf04d18bb195346bbffbb9e6c521ca4c9cfcf3e9aa0c14c098
   languageName: node
   linkType: hard
 
-"@clerk/shared@npm:^2.20.9":
-  version: 2.20.9
-  resolution: "@clerk/shared@npm:2.20.9"
+"@clerk/shared@npm:^2.20.10":
+  version: 2.20.10
+  resolution: "@clerk/shared@npm:2.20.10"
   dependencies:
     "@clerk/types": "npm:^4.41.1"
     dequal: "npm:2.0.3"
@@ -350,7 +350,7 @@ __metadata:
       optional: true
     react-dom:
       optional: true
-  checksum: 10c0/982b609ac226f5c6a06bb485c1c2e2344744cfe90f97e356f11ff58c9edd11a259b4ac3ae394d94e45a388ae1308c660cc52f198a41bc6c48518a1fa768b48a4
+  checksum: 10c0/b4e5d25946d19b251c14da11ba8da9211dc989218c2812aca54dc8296b71f3b05b6c684fd69a83e5325c1cccc2a8cb908ddb5f2b70d49bcdb8340d9e6ed1992b
   languageName: node
   linkType: hard
 
@@ -7597,7 +7597,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "irmin-frontend@workspace:."
   dependencies:
-    "@clerk/nextjs": "npm:^6.9.13"
+    "@clerk/nextjs": "npm:^6.9.14"
     "@clerk/themes": "npm:^2.2.8"
     "@clerk/types": "npm:^4.41.1"
     "@codemirror/lang-go": "npm:^6.0.1"
