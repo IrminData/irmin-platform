@@ -1,5 +1,10 @@
 package models
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 type ObjectSchemaType string
 
 const (
@@ -101,4 +106,46 @@ type JSONSchema struct {
 	MinLength            *int                  `json:"minLength,omitempty"`
 	MaxLength            *int                  `json:"maxLength,omitempty"`
 	Pattern              *string               `json:"pattern,omitempty"`
+}
+
+type objectSchemaWire struct {
+	Type ObjectSchemaType `json:"type"`
+}
+
+// UnmarshalObjectSchema helps us decode JSON into the correct subtype.
+func UnmarshalObjectSchema(data []byte) (ObjectSchema, error) {
+	// Step 1: unmarshal into a “wire” struct to get the type
+	var wire objectSchemaWire
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return nil, fmt.Errorf("could not unmarshal to detect type: %w", err)
+	}
+
+	// Step 2: use the wire.Type to decide which real struct to unmarshal
+	switch wire.Type {
+	case ObjectSchemaTypeStructured:
+		var s ObjectSchemaStructured
+		if err := json.Unmarshal(data, &s); err != nil {
+			return nil, fmt.Errorf("could not unmarshal structured schema: %w", err)
+		}
+		return s, nil
+	case ObjectSchemaTypeBinary:
+		var b ObjectSchemaBinary
+		if err := json.Unmarshal(data, &b); err != nil {
+			return nil, fmt.Errorf("could not unmarshal binary schema: %w", err)
+		}
+		return b, nil
+	case ObjectSchemaTypeGroup:
+		var g ObjectSchemaGroup
+		if err := json.Unmarshal(data, &g); err != nil {
+			return nil, fmt.Errorf("could not unmarshal group schema: %w", err)
+		}
+		return g, nil
+	default:
+		return nil, fmt.Errorf("unrecognised type %q", wire.Type)
+	}
+}
+
+// MarshalObjectSchema helps us encode the correct subtype into JSON.
+func MarshalObjectSchema(obj ObjectSchema) ([]byte, error) {
+	return json.Marshal(obj) // This just works if `obj` is a concrete type
 }
