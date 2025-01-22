@@ -2,18 +2,12 @@ package postgresControllers
 
 import (
 	"encoding/json"
-	"net/http"
-
 	connectorModels "irmin-connectors/models"
 	"irmin-connectors/utils"
+	"net/http"
 )
 
-var primaryCategory = connectorModels.ConnectorCategoryDatabase
-var authorEmail = "hello@irmin.co"
-var docsUrl = "/postgres/docs"
-var readMoreUrl = "/postgres/read-more"
-
-var defaultConnectorInfo = connectorModels.ConnectorInfo{
+var defaultConnectorInfo = connectorModels.ConnectorDetails{
 	Name:             "PostgreSQL",
 	Description:      "Connector for PostgreSQL databases",
 	Version:          "0.1.0",
@@ -21,29 +15,23 @@ var defaultConnectorInfo = connectorModels.ConnectorInfo{
 	Author:           "Tim Borovkov / Irmin",
 	APIBaseURL:       "/postgres",
 	LogoURL:          "/public/irmin-logo.png",
-	Capabilities: func() []byte {
-		capabilities, _ := json.Marshal([]string{"pull", "push", "webhook_patch", "webhook_pull"})
-		return capabilities
-	}(),
-	Locales: func() []byte {
-		locales, _ := json.Marshal([]string{"en"})
-		return locales
-	}(),
-	PrimaryCategory: &primaryCategory,
-	Categories: func() []byte {
-		categories, _ := json.Marshal([]string{"database"})
-		return categories
-	}(),
-	AuthorEmail:   &authorEmail,
-	Documentation: &docsUrl,
-	ReadMoreURL:   &readMoreUrl,
+	Capabilities:     []string{"pull", "push", "webhook_patch", "webhook_pull"},
+	Locales:          []string{"en"},
+	PrimaryCategory:  "database",
+	Categories:       []string{"database"},
+	AuthorEmail:      "hello@irmin.co",
+	Documentation:    "/postgres/docs",
+	ReadMoreURL:      "/postgres/read-more",
 }
 
 func Info(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the system token
-	utils.ValidateConnectorSystemToken(defaultConnectorInfo.Name, w, r)
+	if !utils.ValidateConnectorSystemToken(defaultConnectorInfo.Name, w, r) {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-	// Send the default connector info
+	// Send the default connector details
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(defaultConnectorInfo)
 }

@@ -7,7 +7,10 @@ import (
 
 func ConfigFields(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the system token
-	utils.ValidateConnectorSystemToken(defaultConnectorInfo.Name, w, r)
+	if !utils.ValidateConnectorSystemToken(defaultConnectorInfo.Name, w, r) {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	// TODO: Implement the ConfigFields endpoint
 }

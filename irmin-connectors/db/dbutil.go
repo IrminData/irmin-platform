@@ -25,9 +25,6 @@ func InitialiseDB(path string) error {
 	DB = db
 
 	// Auto-migrate models (which include GORM annotations).
-	if err := DB.AutoMigrate(&connectorModels.ConnectorInfo{}); err != nil {
-		return fmt.Errorf("failed to migrate ConnectorInfo to the db: %w", err)
-	}
 	if err = DB.AutoMigrate(&connectorModels.Operation{}); err != nil {
 		return fmt.Errorf("failed to migrate Operation to the db: %w", err)
 	}
@@ -38,21 +35,12 @@ func InitialiseDB(path string) error {
 	return nil
 }
 
-// CreateConnector inserts a new ConnectorInfo record into the database.
-func CreateConnector(connector *connectorModels.ConnectorInfo) error {
-	if err := DB.Create(connector).Error; err != nil {
-		return fmt.Errorf("failed to create connector record: %w", err)
-	}
-	log.Printf("Created connector with ID: %s\n", connector.ID)
-	return nil
-}
-
 // CreateOperation inserts a new Operation record into the database.
 func CreateOperation(operation *connectorModels.Operation) error {
 	if err := DB.Create(operation).Error; err != nil {
 		return fmt.Errorf("failed to create operation record: %w", err)
 	}
-	log.Printf("Created operation with ID: %s\n", operation.ID)
+	log.Printf("Created operation with ID: %d\n", operation.ID)
 	return nil
 }
 
@@ -61,17 +49,8 @@ func CreateConnectorRegistration(registration *connectorModels.ConnectorRegistra
 	if err := DB.Create(registration).Error; err != nil {
 		return fmt.Errorf("failed to create connector registration record: %w", err)
 	}
-	log.Printf("Created connector registration with ID: %s\n", registration.ID)
+	log.Printf("Created connector registration with ID: %d\n", registration.ID)
 	return nil
-}
-
-// GetAllConnectors retrieves all ConnectorInfo records from the database.
-func GetAllConnectors() ([]connectorModels.ConnectorInfo, error) {
-	var connectors []connectorModels.ConnectorInfo
-	if err := DB.Find(&connectors).Error; err != nil {
-		return nil, fmt.Errorf("failed to fetch connectors: %w", err)
-	}
-	return connectors, nil
 }
 
 // GetAllOperations retrieves all Operation records from the database.
@@ -92,61 +71,26 @@ func GetAllConnectorRegistrations() ([]connectorModels.ConnectorRegistration, er
 	return registrations, nil
 }
 
-// GetConnectorsByName retrieves ConnecttorInfo records from the database by the name
-func GetConnectorsByName(name string) ([]connectorModels.ConnectorInfo, error) {
-	var connectors []connectorModels.ConnectorInfo
-	if err := DB.Where("name = ?", name).Find(&connectors).Error; err != nil {
-		return nil, fmt.Errorf("failed to fetch connectors: %w", err)
-	}
-	return connectors, nil
-}
-
-// GetConnectorByID retrieves a ConnectorInfo record from the database by its ID.
-func GetConnectosByID(id string) (*connectorModels.ConnectorInfo, error) {
-	var connector connectorModels.ConnectorInfo
-	if err := DB.First(&connector, id).Error; err != nil {
-		return nil, fmt.Errorf("failed to fetch connector: %w", err)
-	}
-	return &connector, nil
-}
-
-// GetConnectorInfosByID retrieves a ConnectorInfo record from the database by associated connector ID.
-func GetConnectorInfosByConnectorID(id string) ([]connectorModels.ConnectorInfo, error) {
-	var infos []connectorModels.ConnectorInfo
-	if err := DB.Where("id = ?", id).Find(&infos).Error; err != nil {
-		return nil, fmt.Errorf("failed to fetch connector info: %w", err)
-	}
-	return infos, nil
-}
-
-// GetOperationsByID retrieves an Operation record from the database by associated connector ID.
-func GetOperationsByConnectorID(id string) ([]connectorModels.Operation, error) {
+// GetOperationsByID retrieves an Operation record from the database by associated connector registration ID.
+func GetOperationsByConnectorRegistrationID(id uint) ([]connectorModels.Operation, error) {
 	var operations []connectorModels.Operation
-	if err := DB.Where("connectorId = ?", id).Find(&operations).Error; err != nil {
+	if err := DB.Where("connector_registration_id = ?", id).Find(&operations).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch operations: %w", err)
 	}
 	return operations, nil
 }
 
-// GetConnectorRegistrationByID retrieves a ConnectorRegistration record from the database by associated connector ID.
-func GetConnectorRegistrationsByConnectorID(id string) ([]connectorModels.ConnectorRegistration, error) {
+// GetConnectorRegistrationByConnectorName retrieves a ConnectorRegistration record from the database by the name of the connector.
+func GetConnectorRegistrationByConnectorName(name string) ([]connectorModels.ConnectorRegistration, error) {
 	var registrations []connectorModels.ConnectorRegistration
-	if err := DB.Where("connectorId = ?", id).Find(&registrations).Error; err != nil {
+	if err := DB.Where("connector_name = ?", name).Find(&registrations).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch connector registration: %w", err)
 	}
 	return registrations, nil
 }
 
-// DeleteConnector removes the record with the specified ID from the database.
-func DeleteConnector(id string) error {
-	if err := DB.Delete(&connectorModels.ConnectorInfo{}, id).Error; err != nil {
-		return fmt.Errorf("failed to delete connector: %w", err)
-	}
-	return nil
-}
-
 // DeleteOperation removes the record with the specified ID from the database.
-func DeleteOperation(id string) error {
+func DeleteOperation(id uint) error {
 	if err := DB.Delete(&connectorModels.Operation{}, id).Error; err != nil {
 		return fmt.Errorf("failed to delete operation: %w", err)
 	}
@@ -154,7 +98,7 @@ func DeleteOperation(id string) error {
 }
 
 // DeleteConnectorRegistration removes the record with the specified ID from the database.
-func DeleteConnectorRegistration(id string) error {
+func DeleteConnectorRegistration(id uint) error {
 	if err := DB.Delete(&connectorModels.ConnectorRegistration{}, id).Error; err != nil {
 		return fmt.Errorf("failed to delete connector registration: %w", err)
 	}
