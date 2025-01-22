@@ -71,6 +71,24 @@ func GetAllConnectorRegistrations() ([]connectorModels.ConnectorRegistration, er
 	return registrations, nil
 }
 
+// GetOperationByID retrieves an Operation record from the database by ID.
+func GetOperationByID(id uint) (*connectorModels.Operation, error) {
+	var operation connectorModels.Operation
+	if err := DB.First(&operation, id).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch operation: %w", err)
+	}
+	return &operation, nil
+}
+
+// GetConnectorRegistrationByID retrieves a ConnectorRegistration record from the database by ID.
+func GetConnectorRegistrationByID(id uint) (*connectorModels.ConnectorRegistration, error) {
+	var registration connectorModels.ConnectorRegistration
+	if err := DB.First(&registration, id).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch connector registration: %w", err)
+	}
+	return &registration, nil
+}
+
 // GetOperationsByID retrieves an Operation record from the database by associated connector registration ID.
 func GetOperationsByConnectorRegistrationID(id uint) ([]connectorModels.Operation, error) {
 	var operations []connectorModels.Operation
