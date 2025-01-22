@@ -36,21 +36,21 @@ func InitialiseDB(path string) error {
 }
 
 // CreateOperation inserts a new Operation record into the database.
-func CreateOperation(operation *connectorModels.Operation) error {
+func CreateOperation(operation *connectorModels.Operation) (*connectorModels.Operation, error) {
 	if err := DB.Create(operation).Error; err != nil {
-		return fmt.Errorf("failed to create operation record: %w", err)
+		return nil, fmt.Errorf("failed to create operation record: %w", err)
 	}
 	log.Printf("Created operation with ID: %d\n", operation.ID)
-	return nil
+	return operation, nil
 }
 
 // CreateConnectorRegistration inserts a new ConnectorRegistration record into the database.
-func CreateConnectorRegistration(registration *connectorModels.ConnectorRegistration) error {
+func CreateConnectorRegistration(registration *connectorModels.ConnectorRegistration) (*connectorModels.ConnectorRegistration, error) {
 	if err := DB.Create(registration).Error; err != nil {
-		return fmt.Errorf("failed to create connector registration record: %w", err)
+		return nil, fmt.Errorf("failed to create connector registration record: %w", err)
 	}
 	log.Printf("Created connector registration with ID: %d\n", registration.ID)
-	return nil
+	return registration, nil
 }
 
 // GetAllOperations retrieves all Operation records from the database.

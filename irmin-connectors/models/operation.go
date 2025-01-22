@@ -10,6 +10,6 @@ type Operation struct {
 
 	Token string `json:"token" gorm:"type:varchar(255);not null"`
 
-	ConnectorRegistrationID int                    `json:"connectorRegistrationID"`
+	ConnectorRegistrationID uint                   `json:"connectorRegistrationID"`
 	Connector               *ConnectorRegistration `json:"connectorRegistration,omitempty" gorm:"foreignKey:ConnectorRegistrationID"`
 }

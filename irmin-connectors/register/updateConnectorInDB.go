@@ -8,7 +8,6 @@ import (
 
 // updateConnectorInDB updates the connector registration in the database.
 func updateConnectorInDB(irminId, token, connectorName string) error {
-
 	// Remove current connector registrations from the database
 	regs, err := db.GetConnectorRegistrationByConnectorName(connectorName)
 	if err != nil {
@@ -38,7 +37,7 @@ func updateConnectorInDB(irminId, token, connectorName string) error {
 	}
 
 	// Create a new connector registration
-	err = db.CreateConnectorRegistration(&connectorModels.ConnectorRegistration{
+	registration, err := db.CreateConnectorRegistration(&connectorModels.ConnectorRegistration{
 		IrminID:       irminId,
 		ConnectorName: connectorName,
 		SystemToken:   token,
@@ -48,7 +47,7 @@ func updateConnectorInDB(irminId, token, connectorName string) error {
 		return err
 	}
 
-	fmt.Printf("Connector registered: %s, token: %s\n", connectorName, token)
+	fmt.Printf("Connector registered: %s, token: %s, registration ID: %d\n", connectorName, token, registration.ID)
 
 	return nil
 }
