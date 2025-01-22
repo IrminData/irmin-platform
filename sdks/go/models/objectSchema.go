@@ -8,7 +8,13 @@ const (
 	ObjectSchemaTypeGroup      ObjectSchemaType = "group"
 )
 
-// ObjectSchema represents the schema of an object.
+type ObjectSchema interface {
+	// method that subtypes must implement, so we can do type switches.
+	ObjectSchemaType() ObjectSchemaType
+	// Method that subtypes must implement for common base properties.
+	Base() ObjectSchemaBase
+}
+
 type ObjectSchemaBase struct {
 	Name         string  `json:"name"`
 	Path         string  `json:"path"`
@@ -16,35 +22,50 @@ type ObjectSchemaBase struct {
 	Description  *string `json:"description,omitempty"`
 }
 
-// ObjectSchema represents a schema of an object.
-type ObjectSchema struct {
-	ObjectSchemaBase
-	Type ObjectSchemaType `json:"type"`
-}
-
-// ObjectSchemaStructured defines properties for structured items.
+// ObjectSchemaStructured describes a structured object.
 type ObjectSchemaStructured struct {
 	ObjectSchemaBase
-	Type        ObjectSchemaType `json:"type"` // structured
-	Schema      JSONSchema       `json:"schema"`
-	Size        *int             `json:"size,omitempty"`
-	ContentType *string          `json:"content_type,omitempty"`
+	Schema      JSONSchema `json:"schema"`
+	Size        *int       `json:"size,omitempty"`
+	ContentType *string    `json:"content_type,omitempty"`
 }
 
-// ObjectSchemaBinary defines properties for binary items.
+// Ensure ObjectSchemaStructured implements ObjectSchema.
+func (s ObjectSchemaStructured) ObjectSchemaType() ObjectSchemaType {
+	return ObjectSchemaTypeStructured
+}
+func (s ObjectSchemaStructured) Base() ObjectSchemaBase {
+	return s.ObjectSchemaBase
+}
+
+// ObjectSchemaBinary describes a binary object.
 type ObjectSchemaBinary struct {
 	ObjectSchemaBase
-	Type        ObjectSchemaType `json:"type"` // "binary"
-	Size        *int             `json:"size,omitempty"`
-	ContentType *string          `json:"content_type,omitempty"`
+	Size        *int    `json:"size,omitempty"`
+	ContentType *string `json:"content_type,omitempty"`
 }
 
-// ObjectSchemaGroup defines properties for groups of objects.
+// Ensure ObjectSchemaBinary implements ObjectSchema.
+func (b ObjectSchemaBinary) ObjectSchemaType() ObjectSchemaType {
+	return ObjectSchemaTypeBinary
+}
+func (b ObjectSchemaBinary) Base() ObjectSchemaBase {
+	return b.ObjectSchemaBase
+}
+
+// ObjectSchemaGroup describes a group object (folder).
 type ObjectSchemaGroup struct {
 	ObjectSchemaBase
-	Type         ObjectSchemaType         `json:"type"` // "group"
 	Children     []ObjectSchema           `json:"children"`
 	Restrictions *GroupSchemaRestrictions `json:"restrictions,omitempty"`
+}
+
+// Ensure ObjectSchemaGroup implements ObjectSchema.
+func (g ObjectSchemaGroup) ObjectSchemaType() ObjectSchemaType {
+	return ObjectSchemaTypeGroup
+}
+func (g ObjectSchemaGroup) Base() ObjectSchemaBase {
+	return g.ObjectSchemaBase
 }
 
 // GroupSchemaRestrictions defines restrictions on group schemas.
@@ -66,7 +87,7 @@ type GroupSchemaRestrictions struct {
 
 // JSONSchema represents a JSON Schema for structured data.
 type JSONSchema struct {
-	Type                 string                `json:"type"` // "object", "array", "string", "number", "boolean", "null"
+	Type                 string                `json:"type"` // e.g. "object", "array", etc.
 	Properties           map[string]JSONSchema `json:"properties,omitempty"`
 	Required             []string              `json:"required,omitempty"`
 	Items                *JSONSchema           `json:"items,omitempty"`
