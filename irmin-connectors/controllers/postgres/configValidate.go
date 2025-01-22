@@ -1,6 +1,11 @@
 package postgresControllers
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	postgresClient "irmin-connectors/controllers/postgres/client"
+	connectorModels "irmin-connectors/models"
 	"irmin-connectors/utils"
 	"net/http"
 )
@@ -12,5 +17,88 @@ func ConfigValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Implement the ConfigValidate endpoint
+	// Prepare a context for database ops, plus a slice to store errors.
+	ctx := context.Background()
+	var errors []string
+
+	// Default states
+	canConnect := false
+	connectionDetailsValid := false
+	connectionSettingsValid := false
+
+	// Parse the form data
+	if err := r.ParseForm(); err != nil {
+		errors = append(errors, "Invalid form data: "+err.Error())
+	}
+
+	// Extract fields for "details"
+	host := r.FormValue("details[host]")
+	portStr := r.FormValue("details[port]")
+	user := r.FormValue("details[user]")
+	password := r.FormValue("details[password]")
+
+	// Extract optional database (a "settings" field)
+	database := r.FormValue("settings[database]")
+
+	// Check for missing required fields
+	if host == "" || portStr == "" || user == "" {
+		errors = append(errors, "Missing required connection details: host, port, or user.")
+	}
+
+	// If no blocking errors so far, try to connect to the server
+	if len(errors) == 0 {
+		port := utils.StringToUint(portStr)
+		pc, err := postgresClient.NewPostgresClient(host, int(port), user, password)
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("Failed to connect to PostgreSQL server: %v", err))
+		} else {
+			defer pc.Close()
+
+			// Validate server credentials
+			if err := pc.ValidateCredentials(ctx); err != nil {
+				errors = append(errors, fmt.Sprintf("Invalid server credentials or unable to connect: %v", err))
+			} else {
+				// If we get here, we can connect at the server level
+				canConnect = true
+				connectionDetailsValid = true
+
+				// 6. If a specific database is provided, test connectivity to it
+				if database != "" {
+					dbClient, err := pc.WithDatabase(database)
+					if err != nil {
+						errors = append(errors, fmt.Sprintf("Error connecting to database '%s': %v", database, err))
+					} else {
+						defer dbClient.Close()
+						if err := dbClient.ValidateCredentials(ctx); err != nil {
+							errors = append(errors, fmt.Sprintf("Unable to validate credentials for database '%s': %v", database, err))
+						} else {
+							connectionSettingsValid = true
+						}
+					}
+				} else {
+					// No database provided, so we can't test connectivity to it
+					connectionSettingsValid = false
+				}
+			}
+		}
+	}
+
+	// Final "ok" means no errors were accumulated
+	ok := (len(errors) == 0) && canConnect && connectionDetailsValid && connectionSettingsValid
+
+	// Build and send the final response
+	resp := connectorModels.ValidationResponse{
+		Ok:                      ok,
+		CanConnect:              canConnect,
+		ConnectionDetailsValid:  connectionDetailsValid,
+		ConnectionSettingsValid: connectionSettingsValid,
+		Errors:                  errors,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if !ok {
+		// You can choose a suitable error code. 400 is common for "invalid input / validation fails."
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	_ = json.NewEncoder(w).Encode(resp)
 }
