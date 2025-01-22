@@ -1,35 +1,48 @@
 package models
 
+type ObjectSchemaType string
+
+const (
+	ObjectSchemaTypeStructured ObjectSchemaType = "structured"
+	ObjectSchemaTypeBinary     ObjectSchemaType = "binary"
+	ObjectSchemaTypeGroup      ObjectSchemaType = "group"
+)
+
 // ObjectSchema represents the schema of an object.
+type ObjectSchemaBase struct {
+	Name         string  `json:"name"`
+	Path         string  `json:"path"`
+	LastModified *string `json:"last_modified,omitempty"`
+	Description  *string `json:"description,omitempty"`
+}
+
+// ObjectSchema represents a schema of an object.
 type ObjectSchema struct {
-	Name         string                      `json:"name"`
-	Path         string                      `json:"path"`
-	LastModified *string                     `json:"last_modified,omitempty"`
-	Description  *string                     `json:"description,omitempty"`
-	Type         string                      `json:"type"` // "structured", "binary", or "group"
-	Structured   *SchemaObjectStructuredItem `json:"structured,omitempty"`
-	Binary       *SchemaObjectBinaryItem     `json:"binary,omitempty"`
-	Group        *SchemaObjectGroup          `json:"group,omitempty"`
+	ObjectSchemaBase
+	Type ObjectSchemaType `json:"type"`
 }
 
-// SchemaObjectStructuredItem defines properties for structured items.
-type SchemaObjectStructuredItem struct {
-	Type        string     `json:"type"` // "structured"
-	Schema      JSONSchema `json:"schema"`
-	Size        *int       `json:"size,omitempty"`
-	ContentType *string    `json:"content_type,omitempty"`
+// ObjectSchemaStructured defines properties for structured items.
+type ObjectSchemaStructured struct {
+	ObjectSchemaBase
+	Type        ObjectSchemaType `json:"type"` // structured
+	Schema      JSONSchema       `json:"schema"`
+	Size        *int             `json:"size,omitempty"`
+	ContentType *string          `json:"content_type,omitempty"`
 }
 
-// SchemaObjectBinaryItem defines properties for binary items.
-type SchemaObjectBinaryItem struct {
-	Type        string  `json:"type"` // "binary"
-	Size        *int    `json:"size,omitempty"`
-	ContentType *string `json:"content_type,omitempty"`
+// ObjectSchemaBinary defines properties for binary items.
+type ObjectSchemaBinary struct {
+	ObjectSchemaBase
+	Type        ObjectSchemaType `json:"type"` // "binary"
+	Size        *int             `json:"size,omitempty"`
+	ContentType *string          `json:"content_type,omitempty"`
 }
 
-// SchemaObjectGroup defines properties for groups of objects.
-type SchemaObjectGroup struct {
-	Type         string                   `json:"type"` // "group"
+// ObjectSchemaGroup defines properties for groups of objects.
+type ObjectSchemaGroup struct {
+	ObjectSchemaBase
+	Type         ObjectSchemaType         `json:"type"` // "group"
 	Children     []ObjectSchema           `json:"children"`
 	Restrictions *GroupSchemaRestrictions `json:"restrictions,omitempty"`
 }
