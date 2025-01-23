@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	postgresClient "irmin-connectors/controllers/postgres/client"
 	"irmin-connectors/utils"
@@ -22,53 +21,10 @@ func SchemaGet(w http.ResponseWriter, r *http.Request) {
 	// Prepare a context for database operations
 	ctx := context.Background()
 
-	// Parse the form data
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form data: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Extract fields for "details"
-	host := r.FormValue("details[host]")
-	portStr := r.FormValue("details[port]")
-	user := r.FormValue("details[user]")
-	password := r.FormValue("details[password]")
-
-	// Extract fields for "settings"
-	database := r.FormValue("settings[database]")
-
-	// Check for missing required fields
-	if host == "" || portStr == "" || user == "" || database == "" {
-		http.Error(w, "Missing required connection details: host, port, user, or database.", http.StatusBadRequest)
-		return
-	}
-
-	// Convert port from string to int
-	port, err := strconv.Atoi(portStr)
-	if err != nil {
-		http.Error(w, "Invalid port value: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Establish a connection to the PostgreSQL server
-	pgClient, err := postgresClient.NewPostgresClient(host, port, user, password)
-	if err != nil {
-		http.Error(w, "Failed to connect to PostgreSQL server: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer pgClient.Close()
-
-	// Connect to the specified database
-	dbClient, err := pgClient.WithDatabase(database)
-	if err != nil {
-		http.Error(w, "Failed to connect to PostgreSQL database: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer dbClient.Close()
-
-	// Validate the credentials
-	if err := dbClient.ValidateCredentials(ctx); err != nil {
-		http.Error(w, "Invalid server credentials or unable to connect: "+err.Error(), http.StatusInternalServerError)
+	// Initialise the Postgres client
+	dbClient, database, err := postgresClient.InitPostgresClient(ctx, r)
+	if err != nil || database == nil || dbClient == nil {
+		http.Error(w, "Failed to initialize Postgres client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -96,8 +52,8 @@ func SchemaGet(w http.ResponseWriter, r *http.Request) {
 	}
 	schema := models.ObjectSchemaGroup{
 		ObjectSchemaBase: models.ObjectSchemaBase{
-			Name: database,
-			Path: "/" + database,
+			Name: *database,
+			Path: "/" + *database,
 		},
 		Restrictions: &schemaRestrictions,
 		Children:     []models.ObjectSchema{},
@@ -126,7 +82,7 @@ func SchemaGet(w http.ResponseWriter, r *http.Request) {
 		tableSchema := models.ObjectSchemaStructured{
 			ObjectSchemaBase: models.ObjectSchemaBase{
 				Name: tbl + ".json",
-				Path: "/" + database + "/" + tbl + ".json",
+				Path: "/" + *database + "/" + tbl + ".json",
 			},
 			ContentType: func(s string) *string { return &s }("application/json"),
 			Schema: models.JSONSchema{
