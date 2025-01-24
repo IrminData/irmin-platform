@@ -27,6 +27,7 @@ func SchemaGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to initialize Postgres client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer dbClient.Close() // Close the client at the end of the function
 
 	// Get list of tables in the database
 	tables, err := dbClient.GetTables(ctx)

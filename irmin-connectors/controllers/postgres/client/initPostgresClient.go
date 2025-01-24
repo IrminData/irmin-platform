@@ -41,19 +41,22 @@ func InitPostgresClient(ctx context.Context, r *http.Request) (*PostgresClient, 
 	if err != nil {
 		return nil, nil, err
 	}
-	defer pgClient.Close()
+	defer pgClient.Close() // Close the client at the end of the function
 
 	// Connect to the specified database
 	dbClient, err := pgClient.WithDatabase(database)
 	if err != nil {
+		pgClient.Close() // Close the initial client before returning
 		return nil, nil, err
 	}
-	defer dbClient.Close()
 
 	// Validate the credentials
 	if err := dbClient.ValidateCredentials(ctx); err != nil {
+		dbClient.Close() // Close the database client before returning
+		pgClient.Close()
 		return nil, nil, err
 	}
 
+	// Return the valid client without closing it prematurely
 	return dbClient, &database, nil
 }

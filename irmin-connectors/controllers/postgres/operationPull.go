@@ -29,6 +29,7 @@ func OperationPull(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to initialize Postgres client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer dbClient.Close() // Close the client at the end of the function
 
 	// Parse the form data
 	if err := r.ParseForm(); err != nil {
