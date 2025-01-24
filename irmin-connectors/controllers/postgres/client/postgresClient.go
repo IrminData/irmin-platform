@@ -17,13 +17,14 @@ type PostgresClient struct {
 	port     int
 	user     string
 	password string
+	ssl_mode bool
 	dbName   string // May be empty if no specific database is chosen
 }
 
 // NewPostgresClient connects to Postgres without specifying a database.
 // This is useful for listing available databases or validating credentials without
 // "locking" into a specific dbName.
-func NewPostgresClient(host string, port int, user, password string, sslMode bool) (*PostgresClient, error) {
+func NewPostgresClient(host string, port int, user, password, defaultDB string, sslMode bool) (*PostgresClient, error) {
 	if host == "" || port == 0 || user == "" {
 		return nil, fmt.Errorf("missing required connection details: host, port, user")
 	}
@@ -31,13 +32,13 @@ func NewPostgresClient(host string, port int, user, password string, sslMode boo
 	var dsn string
 	if sslMode {
 		dsn = fmt.Sprintf(
-			"host=%s port=%d user=%s password=%s sslmode=require",
-			host, port, user, password,
+			"host=%s port=%d user=%s password=%s dbname=%s sslmode=require",
+			host, port, user, password, defaultDB,
 		)
 	} else {
 		dsn = fmt.Sprintf(
-			"host=%s port=%d user=%s password=%s sslmode=disable",
-			host, port, user, password,
+			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+			host, port, user, password, defaultDB,
 		)
 	}
 
@@ -64,17 +65,26 @@ func NewPostgresClient(host string, port int, user, password string, sslMode boo
 		port:     port,
 		user:     user,
 		password: password,
-		dbName:   "",
+		dbName:   defaultDB,
+		ssl_mode: sslMode,
 	}, nil
 }
 
 // WithDatabase creates a new client instance *connected to a specific database*.
 // This is handy once you decide which database you want to use (e.g. after listing them).
 func (pc *PostgresClient) WithDatabase(dbName string) (*PostgresClient, error) {
-	dsn := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		pc.host, pc.port, pc.user, pc.password, dbName,
-	)
+	var dsn string
+	if pc.ssl_mode {
+		dsn = fmt.Sprintf(
+			"host=%s port=%d user=%s password=%s dbname=%s sslmode=require",
+			pc.host, pc.port, pc.user, pc.password, dbName,
+		)
+	} else {
+		dsn = fmt.Sprintf(
+			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+			pc.host, pc.port, pc.user, pc.password, dbName,
+		)
+	}
 
 	poolConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {

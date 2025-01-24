@@ -19,6 +19,7 @@ func InitPostgresClient(ctx context.Context, r *http.Request) (*PostgresClient, 
 	portStr := r.FormValue("details[port]")
 	user := r.FormValue("details[user]")
 	password := r.FormValue("details[password]")
+	defaultDB := r.FormValue("details[default_db]")
 	sslMode := r.FormValue("details[ssl_mode]") == "true"
 
 	// Extract fields for "settings"
@@ -36,7 +37,7 @@ func InitPostgresClient(ctx context.Context, r *http.Request) (*PostgresClient, 
 	}
 
 	// Establish a connection to the PostgreSQL server
-	pgClient, err := NewPostgresClient(host, port, user, password, sslMode)
+	pgClient, err := NewPostgresClient(host, port, user, password, defaultDB, sslMode)
 	if err != nil {
 		return nil, nil, err
 	}

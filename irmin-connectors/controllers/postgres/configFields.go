@@ -67,6 +67,13 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 				Required: true,
 				HelpText: "The password for the specified PostgreSQL user.",
 			},
+			"default_db": {
+				Type:     "text",
+				Label:    "Default Database",
+				Example:  "postgres",
+				Required: false,
+				HelpText: "The default database to connect to (optional).",
+			},
 			"ssl_mode": {
 				Type:     "select",
 				Label:    "SSL Mode",
@@ -87,6 +94,7 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 		portStr := r.FormValue("details[port]")
 		user := r.FormValue("details[user]")
 		password := r.FormValue("details[password]")
+		defaultDB := r.FormValue("details[default_db]")
 		sslMode := r.FormValue("details[ssl_mode]") == "true"
 
 		// Quick validation
@@ -100,7 +108,7 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 
 		// Create a client WITHOUT specifying a database (so we can fetch them)
 		ctx := context.Background()
-		pc, err := postgresClient.NewPostgresClient(host, int(port), user, password, sslMode)
+		pc, err := postgresClient.NewPostgresClient(host, int(port), user, password, defaultDB, sslMode)
 		if err != nil {
 			fmt.Printf("Error initialising Postgres client: %v\n", err)
 			http.Error(w, "Failed to connect to the PostgreSQL server", http.StatusInternalServerError)
