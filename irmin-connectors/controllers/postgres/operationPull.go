@@ -116,13 +116,44 @@ func writeTableAsPart(ctx context.Context, mw *multipart.Writer, dbClient *postg
 	}
 
 	// Query all rows from the specified table
-	rows, err := dbClient.Query(ctx, fmt.Sprintf("SELECT * FROM %s", tableName))
+	query := fmt.Sprintf(`SELECT * FROM "%s"`, tableName)
+	rows, err := dbClient.Query(ctx, query)
 	if err != nil {
 		return fmt.Errorf("failed to query table '%s': %w", tableName, err)
 	}
+	defer rows.Close()
+
+	// Collect the rows into a struct
+	var results []map[string]interface{}
+
+	// Get column names
+	fieldDescriptions := rows.FieldDescriptions()
+	columns := make([]string, len(fieldDescriptions))
+	for i, fd := range fieldDescriptions {
+		columns[i] = string(fd.Name)
+	}
+
+	// Iterate through the rows and build records
+	for rows.Next() {
+		values, err := rows.Values()
+		if err != nil {
+			return fmt.Errorf("failed to retrieve values from table '%s': %w", tableName, err)
+		}
+
+		record := make(map[string]interface{})
+		for i, col := range columns {
+			record[col] = values[i]
+		}
+
+		results = append(results, record)
+	}
+
+	if rows.Err() != nil {
+		return fmt.Errorf("failed to iterate through rows for table '%s': %w", tableName, rows.Err())
+	}
 
 	// Marshal rows into JSON
-	jsonData, err := json.Marshal(rows)
+	jsonData, err := json.MarshalIndent(results, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal data from table '%s': %w", tableName, err)
 	}
@@ -138,14 +169,47 @@ func writeTableAsPart(ctx context.Context, mw *multipart.Writer, dbClient *postg
 
 func fetchSingleTable(ctx context.Context, w http.ResponseWriter, dbClient *postgresClient.PostgresClient, tableName string) {
 	// Fetch the data from the database based on the table name
-	data, err := dbClient.Query(ctx, fmt.Sprintf("SELECT * FROM %s", tableName))
+	query := fmt.Sprintf(`SELECT * FROM "%s"`, tableName)
+	rows, err := dbClient.Query(ctx, query)
 	if err != nil {
 		http.Error(w, "Failed to fetch data: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer rows.Close()
+
+	// Collect the rows into a struct
+	var results []map[string]interface{}
+
+	// Get column names
+	fieldDescriptions := rows.FieldDescriptions()
+	columns := make([]string, len(fieldDescriptions))
+	for i, fd := range fieldDescriptions {
+		columns[i] = string(fd.Name)
+	}
+
+	// Iterate through the rows and build records
+	for rows.Next() {
+		values, err := rows.Values()
+		if err != nil {
+			http.Error(w, "Failed to retrieve values: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		record := make(map[string]interface{})
+		for i, col := range columns {
+			record[col] = values[i]
+		}
+
+		results = append(results, record)
+	}
+
+	if rows.Err() != nil {
+		http.Error(w, "Failed to iterate through rows: "+rows.Err().Error(), http.StatusInternalServerError)
+		return
+	}
 
 	// Marshal the data to JSON
-	jsonData, err := json.Marshal(data)
+	jsonData, err := json.MarshalIndent(results, "", "  ")
 	if err != nil {
 		http.Error(w, "Failed to marshal data: "+err.Error(), http.StatusInternalServerError)
 		return
