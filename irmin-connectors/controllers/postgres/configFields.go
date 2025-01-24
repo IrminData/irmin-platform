@@ -67,6 +67,16 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 				Required: true,
 				HelpText: "The password for the specified PostgreSQL user.",
 			},
+			"ssl_mode": {
+				Type:     "select",
+				Label:    "SSL Mode",
+				Required: true,
+				HelpText: "Enable or disable SSL mode for the connection.",
+				Options: []connectorModels.SelectOption{
+					{Key: "true", Value: "Enabled"},
+					{Key: "false", Value: "Disabled"},
+				},
+			},
 		}
 
 	// "settings" -> once the user has provided details (host, port, user, password),
@@ -77,6 +87,7 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 		portStr := r.FormValue("details[port]")
 		user := r.FormValue("details[user]")
 		password := r.FormValue("details[password]")
+		sslMode := r.FormValue("details[ssl_mode]") == "true"
 
 		// Quick validation
 		if host == "" || portStr == "" || user == "" {
@@ -89,7 +100,7 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 
 		// Create a client WITHOUT specifying a database (so we can fetch them)
 		ctx := context.Background()
-		pc, err := postgresClient.NewPostgresClient(host, int(port), user, password)
+		pc, err := postgresClient.NewPostgresClient(host, int(port), user, password, sslMode)
 		if err != nil {
 			fmt.Printf("Error initialising Postgres client: %v\n", err)
 			http.Error(w, "Failed to connect to the PostgreSQL server", http.StatusInternalServerError)

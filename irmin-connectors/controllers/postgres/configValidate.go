@@ -36,6 +36,7 @@ func ConfigValidate(w http.ResponseWriter, r *http.Request) {
 	portStr := r.FormValue("details[port]")
 	user := r.FormValue("details[user]")
 	password := r.FormValue("details[password]")
+	sslMode := r.FormValue("details[ssl_mode]") == "true"
 
 	// Extract optional database (a "settings" field)
 	database := r.FormValue("settings[database]")
@@ -48,7 +49,7 @@ func ConfigValidate(w http.ResponseWriter, r *http.Request) {
 	// If no blocking errors so far, try to connect to the server
 	if len(errors) == 0 {
 		port := utils.StringToUint(portStr)
-		pc, err := postgresClient.NewPostgresClient(host, int(port), user, password)
+		pc, err := postgresClient.NewPostgresClient(host, int(port), user, password, sslMode)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("Failed to connect to PostgreSQL server: %v", err))
 		} else {

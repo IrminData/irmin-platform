@@ -23,12 +23,23 @@ type PostgresClient struct {
 // NewPostgresClient connects to Postgres without specifying a database.
 // This is useful for listing available databases or validating credentials without
 // "locking" into a specific dbName.
-func NewPostgresClient(host string, port int, user, password string) (*PostgresClient, error) {
-	// Build the DSN without a database. (pgx also supports "Config" objects if you prefer.)
-	dsn := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s sslmode=disable",
-		host, port, user, password,
-	)
+func NewPostgresClient(host string, port int, user, password string, sslMode bool) (*PostgresClient, error) {
+	if host == "" || port == 0 || user == "" {
+		return nil, fmt.Errorf("missing required connection details: host, port, user")
+	}
+	// Build the DSN without a database.
+	var dsn string
+	if sslMode {
+		dsn = fmt.Sprintf(
+			"host=%s port=%d user=%s password=%s sslmode=require",
+			host, port, user, password,
+		)
+	} else {
+		dsn = fmt.Sprintf(
+			"host=%s port=%d user=%s password=%s sslmode=disable",
+			host, port, user, password,
+		)
+	}
 
 	poolConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
