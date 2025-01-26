@@ -279,3 +279,62 @@ func (pc *PostgresClient) GetTablesAndStructures(ctx context.Context) (map[strin
 
 	return result, nil
 }
+
+// Tx provides methods for executing queries within a PostgreSQL transaction.
+// It wraps a pgx.Tx and also stores the pool connection so that it can be released
+// on Commit or Rollback.
+type Tx struct {
+	pgxTx pgx.Tx
+	conn  *pgxpool.Conn
+}
+
+// BeginTransaction acquires a connection from the pool and begins a database transaction.
+// Remember to call either .Commit() or .Rollback() on the returned Tx to release the connection.
+func (pc *PostgresClient) BeginTransaction(ctx context.Context) (*Tx, error) {
+	if pc.db_name == "" {
+		return nil, fmt.Errorf("cannot begin a transaction without specifying a database - use .WithDatabase() first")
+	}
+
+	conn, err := pc.pool.Acquire(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire connection from pool: %w", err)
+	}
+
+	pgxTx, err := conn.Begin(ctx)
+	if err != nil {
+		conn.Release()
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	return &Tx{
+		pgxTx: pgxTx,
+		conn:  conn,
+	}, nil
+}
+
+// Exec executes a query that does not return rows (e.g. INSERT/UPDATE/DELETE, DDL statements).
+// This will be run inside the current transaction context.
+func (t *Tx) Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error) {
+	return t.pgxTx.Exec(ctx, sql, args...)
+}
+
+// Query executes a query that returns rows (e.g. SELECT). The caller is responsible
+// for closing the returned pgx.Rows.
+func (t *Tx) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
+	return t.pgxTx.Query(ctx, sql, args...)
+}
+
+// Commit commits the transaction and releases the underlying connection to the pool.
+func (t *Tx) Commit(ctx context.Context) error {
+	err := t.pgxTx.Commit(ctx)
+	t.conn.Release() // Release the connection back to the pool
+	return err
+}
+
+// Rollback aborts the transaction and releases the underlying connection to the pool.
+// It is safe to call Rollback even if the transaction is already committed or rolled back.
+func (t *Tx) Rollback(ctx context.Context) error {
+	err := t.pgxTx.Rollback(ctx)
+	t.conn.Release() // Release the connection back to the pool
+	return err
+}
