@@ -38,14 +38,14 @@ export default function EditorLayoutWrapper({
       className='flex h-full flex-row content-stretch items-stretch overflow-hidden'
     >
       <div
-        className={`absolute z-10 h-full w-full overflow-y-scroll border-r bg-background dark:border-r-gray-800 ${
+        className={`bg-background absolute z-10 h-full w-full overflow-y-scroll border-r dark:border-r-gray-800 ${
           !sidebarOpen ? 'max-w-10' : 'max-w-72'
-        } lg:static lg:min-w-72 lg:max-w-72`}
+        } lg:static lg:max-w-72 lg:min-w-72`}
       >
         <button
           id='editor-sidebar-toggle-mobile'
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className={`absolute z-20 w-10 bg-gray-100 px-1 py-1 text-center text-foreground opacity-60 transition-all hover:opacity-100 focus:outline-none lg:hidden dark:bg-gray-800 ${sidebarOpen ? 'right-0' : ''}`}
+          className={`text-foreground absolute z-20 w-10 bg-gray-100 px-1 py-1 text-center opacity-60 transition-all hover:opacity-100 focus:outline-hidden lg:hidden dark:bg-gray-800 ${sidebarOpen ? 'right-0' : ''}`}
           aria-label='Toggle editor sidebar'
         >
           {sidebarOpen ? (
@@ -81,9 +81,9 @@ export default function EditorLayoutWrapper({
           />
         </div>
       </div>
-      <div className='ml-10 flex-1 flex-shrink overflow-hidden lg:ml-0'>
+      <div className='ml-10 flex-1 shrink overflow-hidden lg:ml-0'>
         <div
-          className='flex h-full w-full flex-col bg-background'
+          className='bg-background flex h-full w-full flex-col'
           id='editor-page-content'
         >
           <QueryProvider>{children}</QueryProvider>

@@ -115,18 +115,18 @@ export default function RepositoryUncommittedChangesSection() {
 
   if (immutable)
     return (
-      <div className='container relative mx-auto max-w-7xl px-2 py-12 pt-4 md:px-4'>
+      <div className='relative container mx-auto max-w-7xl px-2 py-12 pt-4 md:px-4'>
         <ImmutableWarning />
       </div>
     );
 
   return (
-    <div className='container relative mx-auto max-w-7xl px-2 pb-12 pt-4 md:px-4'>
+    <div className='relative container mx-auto max-w-7xl px-2 pt-4 pb-12 md:px-4'>
       <div className='mb-8 flex w-full flex-wrap items-center justify-between gap-4 lg:flex-row'>
         {/* Title */}
         <h3 className='text-sm text-gray-900 lg:text-base dark:text-gray-100'>
           {dict.repository.commit.showingUncommittedChangesFor}{' '}
-          <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
+          <span className='text-irmin_blue dark:text-irmin_green font-semibold'>
             {currentRef}
           </span>
         </h3>

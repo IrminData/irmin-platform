@@ -40,11 +40,11 @@ export default function SideModal({
 }) {
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm ${isOpen ? '' : 'hidden'}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs ${isOpen ? '' : 'hidden'}`}
     >
       <div className='relative h-full w-full'>
         <div
-          className={`absolute bottom-0 right-0 top-0 h-full w-full max-w-3xl border-l bg-background shadow-lg transition-transform duration-200 dark:border-gray-800 ${
+          className={`bg-background absolute top-0 right-0 bottom-0 h-full w-full max-w-3xl border-l shadow-lg transition-transform duration-200 dark:border-gray-800 ${
             isOpen ? 'animate-slideIn' : 'animate-slideOut'
           }`}
         >
@@ -80,7 +80,7 @@ export default function SideModal({
                       {index + 1}
                     </div>
                     <span
-                      className={`mt-2 flex-shrink text-xs sm:mt-0 lg:text-sm ${
+                      className={`mt-2 shrink text-xs sm:mt-0 lg:text-sm ${
                         currentStep >= index + 1
                           ? 'text-accent'
                           : 'text-gray-700 dark:text-gray-300'
@@ -92,7 +92,7 @@ export default function SideModal({
                 ))}
               </div>
             )}
-            <hr className='border-t shadow-sm dark:border-gray-800' />
+            <hr className='border-t shadow-xs dark:border-gray-800' />
             <div className='grow overflow-y-scroll pb-12'>{children}</div>
           </div>
         </div>

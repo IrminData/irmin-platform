@@ -45,10 +45,10 @@ const Alert = ({
   return (
     <div
       id='alert'
-      className='fixed bottom-[20px] z-50 flex w-screen animate-slideInUp justify-center p-4 align-middle'
+      className='animate-slideInUp fixed bottom-[20px] z-50 flex w-screen justify-center p-4 align-middle'
     >
       <div
-        className={`flex w-[400px] max-w-[90vw] flex-row items-start justify-between rounded-lg border bg-popover p-4 shadow-md ${
+        className={`bg-popover flex w-[400px] max-w-[90vw] flex-row items-start justify-between rounded-lg border p-4 shadow-md ${
           type === 'success' ? 'border-accent' : ''
         } ${type === 'error' ? 'border-destructive' : ''} ${
           type === 'info' ? 'border-blue-500' : ''

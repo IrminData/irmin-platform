@@ -76,11 +76,11 @@ const QueryResults = ({
 
   return (
     <div
-      className='flex flex-1 flex-col overflow-hidden border-t border-gray-200 bg-background dark:border-gray-800'
+      className='bg-background flex flex-1 flex-col overflow-hidden border-t border-gray-200 dark:border-gray-800'
       id='query-results'
     >
       {/* Tab Buttons */}
-      <div className='mb-0 mt-1 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b dark:border-gray-800'>
+      <div className='mt-1 mb-0 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b dark:border-gray-800'>
         <div
           className={`border-accent ${activeTab === 'data' ? 'border-b-2' : ''}`}
         >
@@ -227,7 +227,7 @@ const QueryResults = ({
       {activeTab === 'documentation' && (
         <div className='flex h-0 flex-1 flex-col overflow-scroll px-2 pt-2'>
           {documentationTab === 'plain' && (
-            <div className='h-full w-full bg-background p-2 text-foreground'>
+            <div className='bg-background text-foreground h-full w-full p-2'>
               <CodeMirrorEditor
                 language='md'
                 content={currentDocumentation}

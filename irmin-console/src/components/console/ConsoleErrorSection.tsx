@@ -16,15 +16,15 @@ function ConsoleErrorSection({
 }) {
   const { dict, locale } = useLocale();
   return (
-    <div className='container relative z-10 mx-auto px-4 py-16 text-center'>
+    <div className='relative z-10 container mx-auto px-4 py-16 text-center'>
       <div className='py-16'>
-        <span className='mb-4 inline-block rounded-full bg-irmin_green px-2 py-px text-xs font-medium leading-5 text-white shadow-sm'>
+        <span className='bg-irmin_green mb-4 inline-block rounded-full px-2 py-px text-xs leading-5 font-medium text-white shadow-xs'>
           {dict.common.error}
         </span>
-        <h2 className='mb-4 text-4xl font-bold leading-tight tracking-tighter md:text-5xl'>
+        <h2 className='mb-4 text-4xl leading-tight font-bold tracking-tighter md:text-5xl'>
           {dict.common.ohNo} {dict.common.somethingWentWrong}
         </h2>
-        <p className='mb-6 text-lg text-foreground md:text-xl'>
+        <p className='text-foreground mb-6 text-lg md:text-xl'>
           {dict.common.weEncounteredError} {error.message}.{' '}
           {dict.common.tryAgainOrContactSupport}
         </p>

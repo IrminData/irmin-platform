@@ -72,7 +72,7 @@ export default function ConfigureWorkflow({
             }
           />
         </div>
-        <div className='rounded-md border border-foreground/20 px-2 py-4'>
+        <div className='border-foreground/20 rounded-md border px-2 py-4'>
           <WorkflowScheduleForm
             initialData={initialWorkflowSchedule.current}
             disableSaveButton={true}
@@ -85,7 +85,7 @@ export default function ConfigureWorkflow({
           />
         </div>
       </div>
-      <div className='flex-grow'></div>
+      <div className='grow'></div>
       <div className='mt-auto border-t pt-4 dark:border-gray-800'>
         <Button
           className='mb-6 inline-block w-full'

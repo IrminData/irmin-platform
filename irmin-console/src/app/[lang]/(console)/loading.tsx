@@ -12,7 +12,7 @@ export default function ConsoleLoading() {
   return (
     <div
       id='console-loading'
-      className='container relative mx-auto max-w-6xl py-12'
+      className='relative container mx-auto max-w-6xl py-12'
     >
       <LoadingSkeleton className='h-96' />
     </div>

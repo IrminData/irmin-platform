@@ -52,18 +52,18 @@ const EditorWithTabs = () => {
   return (
     <>
       {openFileTabs.length > 0 && (
-        <div className='mb-0 flex items-center justify-between gap-1 border-b border-gray-200 pb-0 pr-2 dark:border-irmin_black'>
+        <div className='dark:border-irmin_black mb-0 flex items-center justify-between gap-1 border-b border-gray-200 pr-2 pb-0'>
           <div className='scrollbar-hide flex h-full items-center overflow-x-auto'>
             {openFileTabs.map((tab, index) => (
               <div
                 key={index}
                 className={`flex h-full w-40 items-center justify-between ${
-                  activeTab === index ? 'border-b-2 border-accent' : ''
+                  activeTab === index ? 'border-accent border-b-2' : ''
                 } `}
               >
                 <button
                   type='button'
-                  className={`scrollbar-hide min-w-20 max-w-32 overflow-x-scroll whitespace-nowrap px-2 py-1 text-sm hover:no-underline`}
+                  className={`scrollbar-hide max-w-32 min-w-20 overflow-x-scroll px-2 py-1 text-sm whitespace-nowrap hover:no-underline`}
                   onClick={() => setActiveTab(index)}
                 >
                   {tab ? getNameFromPath(tab) : 'Untitled'}
@@ -95,7 +95,7 @@ const EditorWithTabs = () => {
                 const newValue = event.target.value;
                 changeLanguage(newValue);
               }}
-              className='py-1 pl-2 pr-8 text-xs'
+              className='py-1 pr-8 pl-2 text-xs'
             >
               {irminFileTypes.map((fileType) => (
                 <option key={fileType.extension} value={fileType.extension}>
@@ -128,7 +128,7 @@ const EditorWithTabs = () => {
         </div>
       )}
       {openFileTabs.length > 0 && currentEditor && (
-        <div className='scrollbar-hide w-full overflow-x-scroll border-b border-gray-200 px-2 py-1 dark:border-irmin_black'>
+        <div className='scrollbar-hide dark:border-irmin_black w-full overflow-x-scroll border-b border-gray-200 px-2 py-1'>
           <p className='text-xs opacity-60'>{currentEditor.path}</p>
         </div>
       )}

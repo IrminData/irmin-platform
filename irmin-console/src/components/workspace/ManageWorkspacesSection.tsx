@@ -97,16 +97,16 @@ const ManageWorkspacesSection = ({
   );
 
   return (
-    <div className='container relative mx-auto max-w-6xl'>
+    <div className='relative container mx-auto max-w-6xl'>
       <div className='flex flex-col'>
         <ConsoleTitle title={dict.workspaceSwitcher.manageWorkspaces} />
         <div className='flex flex-col gap-4 px-4 pb-28 lg:flex-row-reverse'>
           {/* Form for creating a new workspace */}
           <div className='w-full pr-4 lg:max-w-80'>
-            <div className='rounded-xl bg-background p-2 text-xs text-foreground shadow sm:p-4 lg:p-4 lg:text-base'>
+            <div className='bg-background text-foreground rounded-xl p-2 text-xs shadow-sm sm:p-4 lg:p-4 lg:text-base'>
               <form
                 onSubmit={handleSubmit(handleCreateWorkspace)}
-                className={`${processing && 'blur-sm'}`}
+                className={`${processing && 'blur-xs'}`}
               >
                 <Controller
                   name='newWorkspaceName'
@@ -147,10 +147,10 @@ const ManageWorkspacesSection = ({
                   )}
                 />
                 {errorMessage && (
-                  <p className='mb-2 text-destructive'>{errorMessage}</p>
+                  <p className='text-destructive mb-2'>{errorMessage}</p>
                 )}
                 {successMessage && (
-                  <p className='mb-2 text-irmin_green'>{successMessage}</p>
+                  <p className='text-irmin_green mb-2'>{successMessage}</p>
                 )}
                 <Button
                   variant='gradient'
@@ -167,9 +167,9 @@ const ManageWorkspacesSection = ({
           </div>
           {/* Display existing workspaces */}
           {workspaces.length > 0 && (
-            <div className='ml-auto flex-grow'>
+            <div className='ml-auto grow'>
               <div
-                className={`flex w-full flex-wrap content-stretch items-stretch justify-start ${processing && 'blur-sm'} -mx-2`}
+                className={`flex w-full flex-wrap content-stretch items-stretch justify-start ${processing && 'blur-xs'} -mx-2`}
               >
                 {workspaces.map((workspace, idx) => (
                   <div

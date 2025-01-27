@@ -76,7 +76,7 @@ const WorkspaceSendInviteModalContent = ({
             )}
           />
           {errors.firstName && (
-            <p className='mt-1 text-destructive'>{errors.firstName.message}</p>
+            <p className='text-destructive mt-1'>{errors.firstName.message}</p>
           )}
         </div>
         <div className='flex flex-col gap-2'>
@@ -95,7 +95,7 @@ const WorkspaceSendInviteModalContent = ({
             )}
           />
           {errors.lastName && (
-            <p className='mt-1 text-destructive'>{errors.lastName.message}</p>
+            <p className='text-destructive mt-1'>{errors.lastName.message}</p>
           )}
         </div>
         <div className='flex flex-col gap-2'>
@@ -117,7 +117,7 @@ const WorkspaceSendInviteModalContent = ({
             )}
           />
           {errors.email && (
-            <p className='mt-1 text-destructive'>{errors.email.message}</p>
+            <p className='text-destructive mt-1'>{errors.email.message}</p>
           )}
         </div>
         <div className='flex flex-col gap-2'>
@@ -138,7 +138,7 @@ const WorkspaceSendInviteModalContent = ({
             )}
           />
           {errors.phone && (
-            <p className='mt-1 text-destructive'>{errors.phone.message}</p>
+            <p className='text-destructive mt-1'>{errors.phone.message}</p>
           )}
         </div>
         <div className='flex flex-col gap-2'>
@@ -159,7 +159,7 @@ const WorkspaceSendInviteModalContent = ({
             )}
           />
           {errors.company && (
-            <p className='mt-1 text-destructive'>{errors.company.message}</p>
+            <p className='text-destructive mt-1'>{errors.company.message}</p>
           )}
         </div>
         <div className='flex flex-col gap-2'>
@@ -198,7 +198,7 @@ const WorkspaceSendInviteModalContent = ({
             />
           </div>
           {errors.role && (
-            <p className='mt-1 text-destructive'>{errors.role.message}</p>
+            <p className='text-destructive mt-1'>{errors.role.message}</p>
           )}
         </div>
         <div className='flex flex-row gap-2'>

@@ -104,7 +104,7 @@ export default function SelectConnector({
               {filteredConnectors.map((connector, index) => (
                 <button
                   type='button'
-                  className={`flex w-max max-w-[50%] flex-row items-center justify-start gap-4 rounded-lg bg-gray-100 px-4 py-2 text-left text-sm text-foreground shadow transition-all hover:opacity-80 dark:bg-gray-800 dark:text-gray-200 ${
+                  className={`text-foreground flex w-max max-w-[50%] flex-row items-center justify-start gap-4 rounded-lg bg-gray-100 px-4 py-2 text-left text-sm shadow transition-all hover:opacity-80 dark:bg-gray-800 dark:text-gray-200 ${
                     field.value?.id === connector.id
                       ? 'outline outline-gray-800 dark:outline-gray-200'
                       : ''

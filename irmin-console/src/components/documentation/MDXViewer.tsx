@@ -7,7 +7,7 @@ import Markdown from 'markdown-to-jsx';
  */
 const MDXViewer = ({ content }: { content: string }) => {
   return (
-    <div className='mdx-viewer w-full bg-background'>
+    <div className='mdx-viewer bg-background w-full'>
       <Markdown options={{ wrapper: 'article' }}>{content}</Markdown>
     </div>
   );

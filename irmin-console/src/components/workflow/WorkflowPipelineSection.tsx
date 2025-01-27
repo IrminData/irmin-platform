@@ -23,7 +23,7 @@ const WorkflowPipelineSection = ({
 
   return (
     <div
-      className='container relative mx-auto my-8 max-w-4xl bg-background'
+      className='bg-background relative container mx-auto my-8 max-w-4xl'
       id='workflow-pipeline-section'
     >
       <PipelineStageEditor

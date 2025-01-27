@@ -88,7 +88,7 @@ export default function SelectWorkflowTypeModalContent() {
           </Button>
         ))}
       </div>
-      <div className='flex-grow'></div>
+      <div className='grow'></div>
       <div className='mt-auto border-t pt-4 dark:border-gray-800'>
         <Button
           className='mb-6 inline-block w-full'

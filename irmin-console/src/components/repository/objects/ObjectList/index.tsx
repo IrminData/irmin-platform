@@ -92,14 +92,14 @@ export default function ObjectList({
   };
 
   return (
-    <div className='mb-4 w-full overflow-hidden rounded-lg border border-card'>
+    <div className='border-card mb-4 w-full overflow-hidden rounded-lg border'>
       <ObjectListHeader
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         currentPath={currentPath}
         updateCurrentPath={updateCurrentPath}
       />
-      <div className='max-h-[400px] w-full overflow-scroll bg-background'>
+      <div className='bg-background max-h-[400px] w-full overflow-scroll'>
         {loadingObjects ? (
           <TableSkeleton />
         ) : (

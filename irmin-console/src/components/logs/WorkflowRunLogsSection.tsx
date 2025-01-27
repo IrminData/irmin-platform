@@ -64,7 +64,7 @@ export default function WorkflowRunLogsSection({
             aria-label={dict.common.back}
           />
           <div>
-            <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
+            <h2 className='font-display text-opacity-80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
               {dict.logs.workflowRunLogs}
             </h2>
             {workflow && (
@@ -82,7 +82,7 @@ export default function WorkflowRunLogsSection({
             )}
           </div>
         </div>
-        <div className='flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg bg-card p-4 text-sm text-card-foreground lg:text-lg'>
+        <div className='bg-card text-card-foreground flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg p-4 text-sm lg:text-lg'>
           <div className='flex flex-col gap-1'>
             <p className='text-sm opacity-60'>{dict.workflow.startedAt}</p>
             <p className='text-base'>

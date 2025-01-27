@@ -67,7 +67,7 @@ const WorkflowSection = () => {
             <Tooltip.Content
               side='top'
               align='center'
-              className='tooltip-content rounded bg-background p-2'
+              className='tooltip-content bg-background rounded p-2'
             >
               <p className='text-xs lg:text-sm'>
                 {dict.workflow.startedAt}
@@ -103,9 +103,9 @@ const WorkflowSection = () => {
   );
 
   return (
-    <div className='container relative mx-auto max-w-6xl'>
+    <div className='relative container mx-auto max-w-6xl'>
       <div className='my-4 flex flex-col gap-4 p-4'>
-        <div className='flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg bg-card p-4 text-sm text-foreground lg:text-lg'>
+        <div className='bg-card text-foreground flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg p-4 text-sm lg:text-lg'>
           <div className='flex flex-col gap-1'>
             <p className='text-sm opacity-60'>
               {dict.workflow.schedule.workflowSchedule}

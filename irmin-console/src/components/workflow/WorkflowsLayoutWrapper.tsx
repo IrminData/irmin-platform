@@ -69,7 +69,7 @@ export default function WorkflowsLayoutWrapper({
     [dict, baseUrl]
   );
   return (
-    <div className='container relative mx-auto max-w-6xl'>
+    <div className='relative container mx-auto max-w-6xl'>
       <Tabs tabs={tabs} />
       <div className='relative'>{children}</div>
     </div>

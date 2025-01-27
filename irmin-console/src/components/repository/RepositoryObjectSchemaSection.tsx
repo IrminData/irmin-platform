@@ -93,13 +93,13 @@ const RepositoryObjectSchemaSection = ({
 
   return (
     <>
-      <div className='container relative mx-auto mb-4 flex max-w-7xl flex-col gap-4 px-2 md:px-4'>
+      <div className='relative container mx-auto mb-4 flex max-w-7xl flex-col gap-4 px-2 md:px-4'>
         <div
           className={`flex flex-col items-start gap-4 lg:flex-row ${selectedObject.type === 'structured' ? 'justify-between' : 'justify-end'}`}
         >
           <div className='flex w-full flex-col gap-2'>
             {selectedObject.type === 'structured' && (
-              <div className='w-full max-w-full overflow-hidden rounded-md border border-gray-100 bg-background dark:border-gray-800'>
+              <div className='bg-background w-full max-w-full overflow-hidden rounded-md border border-gray-100 dark:border-gray-800'>
                 <div className='flex w-full flex-row items-center justify-between bg-gray-100 pl-4 dark:bg-gray-800'>
                   <div className='py-2 text-sm font-semibold'>
                     {dict.repository.sqlQuery}
@@ -125,7 +125,7 @@ const RepositoryObjectSchemaSection = ({
             {!queryResultsOpen && (
               <>
                 <div className='flex w-full flex-wrap items-center justify-between gap-4'>
-                  <div className='inline max-w-full overflow-x-scroll whitespace-nowrap text-xs text-gray-600 lg:text-sm dark:text-gray-400'>
+                  <div className='inline max-w-full overflow-x-scroll text-xs whitespace-nowrap text-gray-600 lg:text-sm dark:text-gray-400'>
                     <Link
                       className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
                       href={`${workspaceUrl}/repositories`}
@@ -144,7 +144,7 @@ const RepositoryObjectSchemaSection = ({
                   </div>
                 </div>
                 {objectSchema ? (
-                  <div className='min-h-96 w-full overflow-y-scroll rounded bg-background'>
+                  <div className='bg-background min-h-96 w-full overflow-y-scroll rounded'>
                     <SchemaViewer
                       object={selectedObject}
                       objectSchema={objectSchema}

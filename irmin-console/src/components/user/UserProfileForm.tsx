@@ -96,7 +96,7 @@ export default function UserProfileForm() {
           type='file'
           accept='image/*'
           {...register('profile_picture')}
-          className='file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:file:bg-primary/90'
+          className='file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:mr-4 file:rounded-full file:border-0 file:px-4 file:py-2 file:text-sm file:font-semibold'
         />
       </div>
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>

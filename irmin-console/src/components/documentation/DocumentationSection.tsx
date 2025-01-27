@@ -52,7 +52,7 @@ export default function DocumentationSection({
 
   return (
     <div className='bg-background'>
-      <div className='container relative mx-auto max-w-6xl'>
+      <div className='relative container mx-auto max-w-6xl'>
         <div className='flex flex-col px-2 md:px-4'>
           <Button
             variant='gray'
@@ -83,7 +83,7 @@ export default function DocumentationSection({
                   height={100}
                 />
               </div>
-              <div className='flex w-full flex-col justify-start pb-4 text-sm text-foreground dark:text-gray-200'>
+              <div className='text-foreground flex w-full flex-col justify-start pb-4 text-sm dark:text-gray-200'>
                 {profile && (
                   <p>
                     <b>{dict.documentation.createdBy}: </b>
@@ -118,7 +118,7 @@ export default function DocumentationSection({
                       className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
                     >
                       <div className='flex flex-row justify-between gap-2'>
-                        <h3 className='text-xl font-semibold text-foreground'>
+                        <h3 className='text-foreground text-xl font-semibold'>
                           {item.name}
                         </h3>
                         <StatusBadge status={'private'} label={'private'} />
@@ -137,7 +137,7 @@ export default function DocumentationSection({
                         </span>
                       </p>
                       {item.documentation && item.documentation.length > 0 && (
-                        <div className='rounded-md bg-card px-2 pb-6 pt-8'>
+                        <div className='bg-card rounded-md px-2 pt-8 pb-6'>
                           <MDXViewer content={item.documentation} />
                         </div>
                       )}
@@ -157,7 +157,7 @@ export default function DocumentationSection({
                       key={`connection-${i}`}
                       className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
                     >
-                      <h3 className='text-xl font-semibold text-foreground'>
+                      <h3 className='text-foreground text-xl font-semibold'>
                         {item.name}
                       </h3>
                       <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
@@ -180,7 +180,7 @@ export default function DocumentationSection({
                         </span>
                       </p>
                       {item.documentation && item.documentation.length > 0 && (
-                        <div className='rounded-md bg-card px-2 pb-6 pt-8'>
+                        <div className='bg-card rounded-md px-2 pt-8 pb-6'>
                           <MDXViewer content={item.documentation} />
                         </div>
                       )}
@@ -203,7 +203,7 @@ export default function DocumentationSection({
                         className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
                       >
                         <div className='flex flex-row justify-between gap-2'>
-                          <h3 className='text-xl text-foreground'>
+                          <h3 className='text-foreground text-xl'>
                             {item.name}
                           </h3>
                           <StatusBadge
@@ -234,7 +234,7 @@ export default function DocumentationSection({
                         </p>
                         {item.documentation &&
                           item.documentation.length > 0 && (
-                            <div className='rounded-md bg-card px-2 pb-6 pt-8'>
+                            <div className='bg-card rounded-md px-2 pt-8 pb-6'>
                               <MDXViewer content={item.documentation} />
                             </div>
                           )}
@@ -257,7 +257,7 @@ export default function DocumentationSection({
                         className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
                       >
                         <div className='flex flex-row justify-between gap-2'>
-                          <h3 className='text-xl text-foreground'>
+                          <h3 className='text-foreground text-xl'>
                             {item.name}
                           </h3>
                           <StatusBadge
@@ -288,7 +288,7 @@ export default function DocumentationSection({
                         </p>
                         {item.documentation &&
                           item.documentation.length > 0 && (
-                            <div className='rounded-md bg-card px-2 pb-6 pt-8'>
+                            <div className='bg-card rounded-md px-2 pt-8 pb-6'>
                               <MDXViewer content={item.documentation} />
                             </div>
                           )}
@@ -311,7 +311,7 @@ export default function DocumentationSection({
                         className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
                       >
                         <div className='flex flex-row justify-between gap-2'>
-                          <h3 className='text-xl text-foreground'>
+                          <h3 className='text-foreground text-xl'>
                             {item.name}
                           </h3>
                           <StatusBadge
@@ -342,7 +342,7 @@ export default function DocumentationSection({
                         </p>
                         {item.documentation &&
                           item.documentation.length > 0 && (
-                            <div className='rounded-md bg-card px-2 pb-6 pt-8'>
+                            <div className='bg-card rounded-md px-2 pt-8 pb-6'>
                               <MDXViewer content={item.documentation} />
                             </div>
                           )}
@@ -366,7 +366,7 @@ export default function DocumentationSection({
                         className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
                       >
                         <div className='flex flex-row justify-between gap-2'>
-                          <h3 className='text-xl text-foreground'>
+                          <h3 className='text-foreground text-xl'>
                             {item.name}
                           </h3>
                           <StatusBadge
@@ -397,7 +397,7 @@ export default function DocumentationSection({
                         </p>
                         {item.documentation &&
                           item.documentation.length > 0 && (
-                            <div className='rounded-md bg-card px-2 pb-6 pt-8'>
+                            <div className='bg-card rounded-md px-2 pt-8 pb-6'>
                               <MDXViewer content={item.documentation} />
                             </div>
                           )}

@@ -60,11 +60,11 @@ export default function Tabs({ tabs }: { tabs: TabsType }) {
 
   return (
     <>
-      <div className='mb-4 mt-4 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b dark:border-gray-800'>
+      <div className='mt-4 mb-4 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b dark:border-gray-800'>
         {tabs.map((tab, idx) => (
           <Button
             key={`tab-${idx}-${tab.slug}`}
-            className={`border-0 border-accent shadow-none hover:no-underline ${activeTab === tab.slug ? 'rounded-b-none border-b-2' : ''}`}
+            className={`border-accent border-0 shadow-none hover:no-underline ${activeTab === tab.slug ? 'rounded-b-none border-b-2' : ''}`}
             size='sm'
             variant={'outline'}
             aria-label={`Switch to ${tab.name} tab`}

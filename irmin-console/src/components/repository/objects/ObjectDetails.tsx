@@ -137,7 +137,7 @@ export default function ObjectDetails({
   if (!selectedObject) return <></>;
 
   return (
-    <div className='mb-4 flex w-max min-w-80 flex-col overflow-scroll rounded-lg border border-card bg-background text-xs'>
+    <div className='border-card bg-background mb-4 flex w-max min-w-80 flex-col overflow-scroll rounded-lg border text-xs'>
       <div
         className={`flex items-center justify-between border-b border-gray-200 p-2 py-4 dark:border-gray-800`}
       >

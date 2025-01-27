@@ -79,7 +79,7 @@ export default function LogsSection({
   }, [searchQuery, logEvents]);
 
   return (
-    <div className='container relative mx-auto max-w-6xl'>
+    <div className='relative container mx-auto max-w-6xl'>
       <div className='flex flex-col px-2 py-12 md:px-4'>
         <div className='mb-12 flex items-center gap-8'>
           {(workflow || repository || connection) && (
@@ -92,7 +92,7 @@ export default function LogsSection({
             />
           )}
           <div>
-            <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
+            <h2 className='font-display text-opacity-80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
               {title}
             </h2>
             {workflow && (
@@ -127,7 +127,7 @@ export default function LogsSection({
             )}
           </div>
         </div>
-        <div className='mb-4 flex w-full items-center gap-2 rounded-md bg-gray-100 p-2 text-gray-900 focus:outline-none dark:bg-gray-800 dark:text-gray-200'>
+        <div className='mb-4 flex w-full items-center gap-2 rounded-md bg-gray-100 p-2 text-gray-900 focus:outline-hidden dark:bg-gray-800 dark:text-gray-200'>
           <TbSearch />
           <input
             type='text'

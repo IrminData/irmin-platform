@@ -13,7 +13,7 @@ export default function AuthLayoutWrapper({
   return (
     <div
       id='auth-layout-wrapper'
-      className='pattern-bg relative overflow-hidden bg-background bg-cover bg-top bg-no-repeat'
+      className='pattern-bg bg-background relative overflow-hidden bg-cover bg-top bg-no-repeat'
     >
       <div className='container mx-auto mb-16 flex min-h-screen max-w-7xl flex-wrap px-4 py-12 md:mb-0 md:py-20'>
         {children}

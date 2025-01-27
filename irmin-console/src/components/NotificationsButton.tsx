@@ -25,7 +25,7 @@ const NotificationsButton = ({ profile }: { profile: User }) => {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
   if (isOfflineMode) {
-    return <TbBell className='text-xl text-accent' />;
+    return <TbBell className='text-accent text-xl' />;
   }
   if (!profile.clerk_id) return <></>;
   return (

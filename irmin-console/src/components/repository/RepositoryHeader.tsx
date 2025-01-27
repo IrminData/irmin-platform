@@ -129,7 +129,7 @@ export default function RepositoryHeader({
 
   return (
     <div
-      className='container relative mx-auto max-w-7xl'
+      className='relative container mx-auto max-w-7xl'
       id='repository-header'
     >
       <div className='mx-auto my-4 flex w-full flex-col px-2 md:px-4 lg:flex-row lg:items-center'>
@@ -153,7 +153,7 @@ export default function RepositoryHeader({
             </span>
           </div>
           <div className='flex flex-wrap items-center gap-2'>
-            <h1 className='text-lg font-normal text-foreground md:text-2xl'>
+            <h1 className='text-foreground text-lg font-normal md:text-2xl'>
               {currentRepository.name}
             </h1>
             <StatusBadge status={'private'} label={'Private'} />

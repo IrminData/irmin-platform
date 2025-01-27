@@ -12,24 +12,24 @@ import { cn } from '@/utils/tw';
 import ButtonWithTooltip from './ButtonWithTooltip';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-normal transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-normal transition-all focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow hover:bg-primary/80',
+          'bg-primary text-primary-foreground shadow-sm hover:bg-primary/80',
         destructive:
-          'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/80',
+          'bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive/80',
         outline:
-          'border border-solid border-accent-foreground/50 text-foreground/80 shadow-sm hover:bg-background hover:text-foreground',
+          'border border-solid border-accent-foreground/50 text-foreground/80 shadow-xs hover:bg-background hover:text-foreground',
         secondary:
-          'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
-        accent: 'bg-accent text-accent-foreground shadow-sm hover:bg-accent/80',
-        gray: 'bg-card text-card-foreground shadow-sm hover:bg-card/80',
+          'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
+        accent: 'bg-accent text-accent-foreground shadow-xs hover:bg-accent/80',
+        gray: 'bg-card text-card-foreground shadow-xs hover:bg-card/80',
         ghost: 'hover:bg-accent/20',
         link: 'text-foreground underline-offset-4 hover:underline hover:text-foreground/80',
         gradient:
-          'bg-gradient-to-r from-irmin_green-700 to-irmin_green-600 text-white shadow hover:opacity-80',
+          'bg-linear-to-r from-irmin_green-700 to-irmin_green-600 text-white shadow-sm hover:opacity-80',
       },
       size: {
         sm: 'h-9 rounded-md px-2 text-xs',

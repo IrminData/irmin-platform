@@ -58,7 +58,7 @@ export default function ConsoleWrapper({
     [params.workspace, workspaces]
   );
 
-  const isLargeScreen = useBreakpoint('lg');
+  const isLargeScreen = useBreakpoint('@lg');
   const foldMenu = useMemo(
     () => (isLargeScreen ? isMenuFolded : false),
     [isLargeScreen, isMenuFolded]
@@ -71,7 +71,7 @@ export default function ConsoleWrapper({
         {/* Console navigation sidebar */}
         <div
           id='console-sidebar-wrapper'
-          className={`scrollbar-hide h-screen overflow-x-hidden overflow-y-scroll border-r bg-background transition-all duration-300 dark:border-gray-800 ${
+          className={`scrollbar-hide bg-background h-screen overflow-x-hidden overflow-y-scroll border-r transition-all duration-300 dark:border-gray-800 ${
             isMenuOpen ? 'absolute z-10 block' : 'hidden lg:relative lg:block'
           } ${foldMenu ? 'w-20' : 'w-60'}`}
         >
@@ -151,7 +151,7 @@ export default function ConsoleWrapper({
               {!currentWorkspace && (
                 <div id='console-sidebar-links-no-workspace'>
                   <p
-                    className={`mb-2 w-max pl-8 text-xs font-medium uppercase text-accent transition-all duration-300 ${
+                    className={`text-accent mb-2 w-max pl-8 text-xs font-medium uppercase transition-all duration-300 ${
                       foldMenu ? 'hidden opacity-0' : 'opacity-100'
                     }`}
                   >
@@ -175,7 +175,7 @@ export default function ConsoleWrapper({
               {currentWorkspace && (
                 <div id='console-sidebar-links-workspace'>
                   <p
-                    className={`mb-2 w-max pl-8 text-xs font-medium uppercase text-accent transition-all duration-300 ${
+                    className={`text-accent mb-2 w-max pl-8 text-xs font-medium uppercase transition-all duration-300 ${
                       foldMenu ? 'hidden opacity-0' : 'opacity-100'
                     }`}
                   >
@@ -198,7 +198,7 @@ export default function ConsoleWrapper({
               {/* Settings links */}
               <div id='console-sidebar-links-settings'>
                 <p
-                  className={`mb-2 w-max pl-8 text-xs font-medium uppercase text-accent transition-all duration-300 ${
+                  className={`text-accent mb-2 w-max pl-8 text-xs font-medium uppercase transition-all duration-300 ${
                     foldMenu ? 'hidden opacity-0' : 'opacity-100'
                   }`}
                 >
@@ -217,9 +217,9 @@ export default function ConsoleWrapper({
                 </ul>
               </div>
             </div>
-            <div className='flex-grow'></div>
+            <div className='grow'></div>
             {foldMenu && (
-              <div className='mx-auto mb-8 mt-auto'>
+              <div className='mx-auto mt-auto mb-8'>
                 <ThemeSwitch />
               </div>
             )}
@@ -235,7 +235,7 @@ export default function ConsoleWrapper({
                 id='console-sidebar-useful-links'
               >
                 <p
-                  className={`w-max pl-8 text-xs font-medium uppercase text-accent transition-all duration-300 ${
+                  className={`text-accent w-max pl-8 text-xs font-medium uppercase transition-all duration-300 ${
                     foldMenu ? 'hidden opacity-0' : 'opacity-100'
                   }`}
                 >
@@ -265,12 +265,12 @@ export default function ConsoleWrapper({
         {/* Console content to the right of the sidebar */}
         <div
           id='console-content-wrapper'
-          className={`flex h-screen flex-1 flex-col gap-0 transition-all duration-300 ${isMenuOpen ? 'w-screen blur-sm lg:blur-none' : ''} max-w-full overflow-scroll`}
+          className={`flex h-screen flex-1 flex-col gap-0 transition-all duration-300 ${isMenuOpen ? 'w-screen blur-xs lg:blur-none' : ''} max-w-full overflow-scroll`}
         >
           {/* Top menu bar */}
           <div
             id='console-top-bar'
-            className={`z-20 w-full border-b bg-background dark:border-gray-800 ${isMenuOpen ? 'pl-0' : 'pl-12 lg:pl-0'}`}
+            className={`bg-background z-20 w-full border-b dark:border-gray-800 ${isMenuOpen ? 'pl-0' : 'pl-12 lg:pl-0'}`}
           >
             <div className='group flex h-14 w-full items-center px-2 py-1 xl:px-4'>
               <div
@@ -303,7 +303,7 @@ export default function ConsoleWrapper({
           {/* Console content */}
           <div
             id='console-content'
-            className='pattern-bg relative min-h-[calc(100vh-4rem)] overflow-y-scroll bg-background bg-contain bg-top bg-no-repeat'
+            className='pattern-bg bg-background relative min-h-[calc(100vh-4rem)] overflow-y-scroll bg-contain bg-top bg-no-repeat'
           >
             {children}
           </div>
@@ -312,7 +312,7 @@ export default function ConsoleWrapper({
       {/* Console navigation toggle on mobile */}
       <div
         id='console-navigation-toggle-mobile'
-        className='fixed left-4 top-[8px] z-50 block lg:hidden'
+        className='fixed top-[8px] left-4 z-50 block lg:hidden'
       >
         <Button
           className='relative aspect-square h-10 w-10'
@@ -321,7 +321,7 @@ export default function ConsoleWrapper({
           variant='link'
         >
           <div
-            className={`absolute left-4 top-1/2 block w-5 -translate-x-1/2 -translate-y-1/2 transform`}
+            className={`absolute top-1/2 left-4 block w-5 -translate-x-1/2 -translate-y-1/2 transform`}
           >
             <span
               className={`absolute block h-0.5 w-7 transform bg-current transition duration-500 ease-in-out ${

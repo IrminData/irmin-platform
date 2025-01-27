@@ -71,7 +71,7 @@ const BlobViewer = ({ blob }: { blob: Blob }) => {
     );
   } else {
     return (
-      <div className='w-full pb-12 pt-4 text-center text-gray-600 dark:text-gray-400'>
+      <div className='w-full pt-4 pb-12 text-center text-gray-600 dark:text-gray-400'>
         <p className='text-sm lg:text-lg'>
           {dict.repository.compare.unsupportedContentType}
         </p>

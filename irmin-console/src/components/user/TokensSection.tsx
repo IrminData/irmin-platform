@@ -59,7 +59,7 @@ export default function TokensSection({
         </Button>
       </div>
       {createdToken && createToken.length > 0 && (
-        <div className='pb-8 pt-4'>
+        <div className='pt-4 pb-8'>
           <APITokenDisplay token={createdToken} />
         </div>
       )}

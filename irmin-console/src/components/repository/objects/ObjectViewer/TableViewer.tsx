@@ -90,14 +90,14 @@ const TableViewer = ({
       {/* Title, metadata, and actions */}
       <div className='flex items-center justify-start px-4 py-1 text-xs'>
         <p className='ml-0 hidden text-gray-400 lg:inline'>{title}</p>
-        <p className='inline text-[8px] text-irmin_blue md:ml-auto md:pl-2 lg:text-xs dark:text-irmin_green'>
+        <p className='text-irmin_blue dark:text-irmin_green inline text-[8px] md:ml-auto md:pl-2 lg:text-xs'>
           {metadata && metadata.rowsReturned && metadata.timeTaken
             ? `
           ${metadata.rowsReturned} ${dict.query.rowsReturnedIn} ${metadata.timeTaken}ms
         `
             : ``}
         </p>
-        <div className='flex-grow'></div>
+        <div className='grow'></div>
         <div className='ml-auto flex flex-row items-center gap-2'>
           {isSimpleArrayOfObjects && data && (
             <Button
@@ -123,7 +123,7 @@ const TableViewer = ({
               <input
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
-                className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible placeholder:opacity-40 focus:outline-none group-focus-within:placeholder:visible md:placeholder:visible lg:text-sm dark:bg-irmin_black dark:text-white'
+                className='bg-opacity-50 dark:bg-irmin_black block w-full rounded-full bg-gray-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible placeholder:opacity-40 group-focus-within:placeholder:visible focus:outline-hidden md:placeholder:visible lg:text-sm dark:text-white'
                 placeholder={dict.query.search}
               />
             </div>

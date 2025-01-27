@@ -160,13 +160,13 @@ export default function RepositoryCompareSection() {
 
   if (loadingBranches)
     return (
-      <div className='container relative mx-auto max-w-7xl px-2 md:px-4'>
+      <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
         <LoadingSkeleton className='h-96' />
       </div>
     );
 
   return (
-    <div className='container relative mx-auto flex max-w-7xl flex-col gap-4 px-2 pb-12 pt-4 md:px-4'>
+    <div className='relative container mx-auto flex max-w-7xl flex-col gap-4 px-2 pt-4 pb-12 md:px-4'>
       <div className='flex w-full flex-wrap items-center justify-between gap-4 lg:flex-row'>
         {/* Select branches being compared */}
         <div className='flex w-max flex-wrap items-center justify-start gap-4 lg:flex-row lg:gap-2'>

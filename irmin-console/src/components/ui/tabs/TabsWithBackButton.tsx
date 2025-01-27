@@ -36,7 +36,7 @@ const TabsWithBackButton = ({
             return (
               <Button
                 key={`tab-${idx}`}
-                className={`rounded-b-none border shadow-none hover:no-underline ${tab.active ? 'border-0 border-b-2 border-solid border-accent' : ''}`}
+                className={`rounded-b-none border shadow-none hover:no-underline ${tab.active ? 'border-accent border-0 border-b-2 border-solid' : ''}`}
                 size='sm'
                 variant={'ghost'}
                 href={tab.link}

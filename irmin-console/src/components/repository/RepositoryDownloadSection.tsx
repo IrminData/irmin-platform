@@ -54,8 +54,8 @@ const RepositoryDownloadSection = ({
   if (downloadResult === 'error') return <DownloadFailed />;
 
   return (
-    <div className='container relative mx-auto flex max-w-7xl flex-col gap-4 py-4'>
-      <h2 className='w-full text-center font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
+    <div className='relative container mx-auto flex max-w-7xl flex-col gap-4 py-4'>
+      <h2 className='font-display text-opacity-80 w-full text-center text-3xl font-bold sm:text-4xl lg:text-5xl'>
         {`${dict.common.pleaseWait}`}
       </h2>
       <p className='w-full pb-4 text-center font-mono text-base sm:text-lg lg:text-xl'>

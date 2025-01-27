@@ -261,7 +261,7 @@ export default function WorkflowScheduleForm({
         return (
           <div
             key={triggerField.id}
-            className='flex flex-col border-t border-foreground/10 py-4'
+            className='border-foreground/10 flex flex-col border-t py-4'
           >
             <div className='mb-4 flex items-center justify-between'>
               <h4 className='text-md pl-1 font-semibold'>

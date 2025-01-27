@@ -143,7 +143,7 @@ export default function SettingsForm<T extends FieldValues>({
       </form>
       {deleteItem && (
         <div className='mt-8'>
-          <p className='text-sm font-normal capitalize text-destructive md:text-xl'>
+          <p className='text-destructive text-sm font-normal capitalize md:text-xl'>
             {dict.common.dangerZone}
           </p>
           <p className='mt-2 max-w-sm text-xs md:text-sm'>

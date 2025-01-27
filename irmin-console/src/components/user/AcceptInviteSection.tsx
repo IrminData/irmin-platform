@@ -192,12 +192,12 @@ export default function AcceptInviteSection({
         <LanguageSwitcher />
         <ThemeSwitch />
       </div>
-      <div className='w-screen max-w-sm space-y-4 rounded bg-background p-4'>
+      <div className='bg-background w-screen max-w-sm space-y-4 rounded p-4'>
         <div>
-          <h2 className='text-2xl font-semibold text-foreground'>
+          <h2 className='text-foreground text-2xl font-semibold'>
             {dict.invite.workspaceInvitation}
           </h2>
-          <p className='mt-1 text-sm text-muted-foreground'>
+          <p className='text-muted-foreground mt-1 text-sm'>
             {dict.invite.workspaceInvitationDescription}
           </p>
         </div>

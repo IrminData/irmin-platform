@@ -131,7 +131,7 @@ export default function MoveRenameObjectModal({
           {selectedObject.name ?? 'example.txt'}
         </p>
       </div>
-      {error && <div className='py-2 text-destructive'>{error}</div>}
+      {error && <div className='text-destructive py-2'>{error}</div>}
       <div className='pb-3'>
         <Button
           variant='default'

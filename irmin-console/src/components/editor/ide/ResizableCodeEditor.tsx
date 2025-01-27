@@ -60,7 +60,7 @@ const ResizableCodeEditor = ({
       style={{ maxHeight: editorHeight }}
       ref={editorRef}
       id='code-editor'
-      className='flex h-full flex-col bg-gray-200 text-xs lg:text-sm dark:bg-irmin_black'
+      className='dark:bg-irmin_black flex h-full flex-col bg-gray-200 text-xs lg:text-sm'
     >
       <CodeMirrorEditor
         language={language}
@@ -69,7 +69,7 @@ const ResizableCodeEditor = ({
         updateEditorContent={updateTabContent}
       />
       <div
-        className='resizer h-1 cursor-ns-resize bg-gray-200 dark:bg-irmin_blue'
+        className='resizer dark:bg-irmin_blue h-1 cursor-ns-resize bg-gray-200'
         onMouseDown={handleMouseDown}
       ></div>
     </div>

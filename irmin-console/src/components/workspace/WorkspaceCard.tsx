@@ -31,17 +31,17 @@ const WorkspaceCard = ({
       }}
       aria-label={`Go to ${workspace.name} workspace`}
     >
-      <div className='flex h-full flex-col rounded-xl bg-card p-2 text-xs text-card-foreground shadow lg:p-4 lg:text-base'>
-        <span className='md:text-normal text-xs font-semibold uppercase tracking-wide text-irmin_green'>
+      <div className='bg-card text-card-foreground flex h-full flex-col rounded-xl p-2 text-xs shadow-sm lg:p-4 lg:text-base'>
+        <span className='md:text-normal text-irmin_green text-xs font-semibold tracking-wide uppercase'>
           {dict.workspaceSwitcher.workspace}
         </span>
-        <h3 className='mt-2 block text-base font-normal leading-tight md:text-lg'>
+        <h3 className='mt-2 block text-base leading-tight font-normal md:text-lg'>
           {workspace.name}
         </h3>
-        <p className='mb-4 mt-2 text-xs font-normal leading-tight opacity-60'>
+        <p className='mt-2 mb-4 text-xs leading-tight font-normal opacity-60'>
           {workspace.description ?? '-'}
         </p>
-        <div className='flex-grow'></div>
+        <div className='grow'></div>
         {workspace.users && workspace.users.length > 0 && (
           <div className='mt-auto flex items-center justify-between gap-0'>
             <div className='flex -space-x-2'>
@@ -53,12 +53,12 @@ const WorkspaceCard = ({
                     width={30}
                     height={30}
                     alt={`${user.first_name} ${user.last_name}`}
-                    className='inline-block h-6 w-6 rounded-full ring-1 ring-white dark:ring-irmin_black-900'
+                    className='dark:ring-irmin_black-900 inline-block h-6 w-6 rounded-full ring-1 ring-white'
                   />
                 ) : (
                   <div
                     key={`select-workspace-card-${workspace.id}-user-${idx}`}
-                    className='relative inline-block rounded-full bg-background text-xs ring-1 ring-white dark:ring-irmin_black-900'
+                    className='bg-background dark:ring-irmin_black-900 relative inline-block rounded-full text-xs ring-1 ring-white'
                   >
                     <ProfileImagePlaceholder
                       user={user}
@@ -68,7 +68,7 @@ const WorkspaceCard = ({
                 )
               )}
               {workspace.users.length > 3 && (
-                <span className='z-10 inline-block h-6 w-6 rounded-full bg-background text-center text-xs font-medium leading-6'>
+                <span className='bg-background z-10 inline-block h-6 w-6 rounded-full text-center text-xs leading-6 font-medium'>
                   +{workspace.users.length - 3}
                 </span>
               )}

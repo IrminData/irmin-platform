@@ -26,7 +26,7 @@ const ConsoleTitle: React.FC<{
   return (
     <div
       className={cn(
-        'px-4 pb-4 pt-12 text-center text-2xl font-bold text-foreground text-opacity-90 sm:text-3xl md:text-left lg:text-5xl',
+        'text-foreground text-opacity-90 px-4 pt-12 pb-4 text-center text-2xl font-bold sm:text-3xl md:text-left lg:text-5xl',
         className
       )}
     >

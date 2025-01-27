@@ -35,7 +35,7 @@ export default function ConsoleNavigationLink({
     return (
       <li id='console-navigation-link'>
         <Link
-          className={`flex items-center justify-between rounded-md p-3 py-3 hover:bg-primary/20 ${
+          className={`hover:bg-primary/20 flex items-center justify-between rounded-md p-3 py-3 ${
             link.active ? 'bg-primary/10' : ''
           } overflow-hidden transition-all ${isMenuFolded ? 'w-12' : 'w-full'}`}
           href={link.href}
@@ -53,7 +53,7 @@ export default function ConsoleNavigationLink({
     return (
       <li id='console-navigation-link'>
         <button
-          className={`flex items-center justify-between rounded-md p-3 py-3 hover:bg-primary/20 ${
+          className={`hover:bg-primary/20 flex items-center justify-between rounded-md p-3 py-3 ${
             link.active ? 'bg-primary/10' : ''
           } overflow-hidden transition-all ${isMenuFolded ? 'w-12' : 'w-full'}`}
           onClick={() => {

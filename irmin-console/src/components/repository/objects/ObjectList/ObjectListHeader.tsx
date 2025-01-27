@@ -37,7 +37,7 @@ export function ObjectListHeader({
 
   return (
     <div
-      className={`flex items-center justify-start gap-2 rounded-lg border-b border-gray-200 bg-background px-1 py-2 dark:border-gray-800`}
+      className={`bg-background flex items-center justify-start gap-2 rounded-lg border-b border-gray-200 px-1 py-2 dark:border-gray-800`}
     >
       {currentPath !== '/' && (
         <Button variant='ghost' onClick={navigateUp}>
@@ -76,7 +76,7 @@ export function ObjectListHeader({
         placeholder={dict.repository.objects.filterObjects}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className='ml-auto max-w-sm bg-background text-sm'
+        className='bg-background ml-auto max-w-sm text-sm'
       />
     </div>
   );

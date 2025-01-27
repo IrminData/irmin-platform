@@ -29,10 +29,10 @@ const WorkspaceHomeSection = ({
     segmentsAfter: 1,
   });
   return (
-    <div className='container relative mx-auto my-12 max-w-6xl px-4'>
+    <div className='relative container mx-auto my-12 max-w-6xl px-4'>
       <div className='flex flex-col gap-8 px-4'>
         <div className='flex w-full flex-col gap-4'>
-          <h2 className='text-center font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
+          <h2 className='font-display text-opacity-80 text-center text-3xl font-bold sm:text-4xl lg:text-5xl'>
             {workspace?.name}
           </h2>
           <p className='text-center text-sm opacity-80'>

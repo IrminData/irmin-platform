@@ -90,9 +90,9 @@ export default function PipelineWorkflowsSection({
   };
 
   return (
-    <div className='container relative mx-auto max-w-6xl px-4 py-8'>
+    <div className='relative container mx-auto max-w-6xl px-4 py-8'>
       <div className='my-4 flex flex-row items-center justify-between gap-4'>
-        <h2 className='font-display text-3xl font-bold text-opacity-80 sm:text-4xl lg:text-5xl'>
+        <h2 className='font-display text-opacity-80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
           {dict.workflow.pipelineWorkflows}
         </h2>
         <Button
@@ -126,7 +126,7 @@ export default function PipelineWorkflowsSection({
         />
       </SideModal>
       <div className='py-4'>
-        <div className='mb-4 flex w-full items-center gap-2 rounded-md bg-gray-100 p-2 text-gray-900 focus:outline-none dark:bg-gray-800 dark:text-gray-200'>
+        <div className='mb-4 flex w-full items-center gap-2 rounded-md bg-gray-100 p-2 text-gray-900 focus:outline-hidden dark:bg-gray-800 dark:text-gray-200'>
           <TbSearch />
           <input
             type='text'

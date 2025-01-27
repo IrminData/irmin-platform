@@ -21,7 +21,7 @@ const ConnectorSection = ({ connector }: { connector: Connector }) => {
   const router = useRouter();
 
   return (
-    <div className='container relative mx-auto max-w-6xl'>
+    <div className='relative container mx-auto max-w-6xl'>
       <div className='flex flex-col px-2 py-12 md:px-4'>
         <Button
           size='icon'

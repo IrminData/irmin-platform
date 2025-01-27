@@ -42,7 +42,7 @@ export default function APITokenDisplay({ token }: { token: string }) {
         </p>
         <div className='mb-4 flex items-center justify-between rounded-md bg-gray-100 p-4 dark:bg-gray-700'>
           {isRevealed ? (
-            <code className='break-all font-mono text-sm text-gray-800 dark:text-gray-200'>
+            <code className='font-mono text-sm break-all text-gray-800 dark:text-gray-200'>
               {token}
             </code>
           ) : (

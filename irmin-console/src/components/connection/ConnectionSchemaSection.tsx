@@ -20,7 +20,7 @@ const ConnectionSchemaSection = ({
   const { dict } = useLocale();
   if (!pullSchema) {
     return (
-      <div className='container relative mx-auto max-w-6xl px-4'>
+      <div className='relative container mx-auto max-w-6xl px-4'>
         <div className='flex h-full items-center justify-center py-4'>
           <p className='text-2xl'>{dict.repository.schema.noSchema}</p>
         </div>
@@ -29,8 +29,8 @@ const ConnectionSchemaSection = ({
   }
 
   return (
-    <div className='container relative mx-auto max-w-6xl px-4'>
-      <div className='min-h-96 w-full overflow-y-scroll rounded bg-background'>
+    <div className='relative container mx-auto max-w-6xl px-4'>
+      <div className='bg-background min-h-96 w-full overflow-y-scroll rounded'>
         <SchemaViewer objectSchema={pullSchema} />
       </div>
     </div>

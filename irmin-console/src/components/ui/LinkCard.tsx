@@ -29,9 +29,9 @@ const LinkCard = ({
     <Link
       href={href ?? ''}
       onClick={onClick}
-      className='flex w-96 max-w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-transparent bg-card p-4 text-center text-card-foreground transition-all hover:border-accent md:p-6 md:py-8'
+      className='bg-card text-card-foreground hover:border-accent flex w-96 max-w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-transparent p-4 text-center transition-all md:p-6 md:py-8'
     >
-      <div className='aspect-square rounded-full bg-accent/20 p-4 text-2xl text-accent lg:text-4xl'>
+      <div className='bg-accent/20 text-accent aspect-square rounded-full p-4 text-2xl lg:text-4xl'>
         {icon}
       </div>
       <h2 className='text-base font-medium lg:text-lg'>{title}</h2>

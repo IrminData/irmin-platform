@@ -41,11 +41,11 @@ const Modal = ({
   return (
     <div
       id='irmin-modal'
-      className='fixed inset-0 z-50 flex animate-fadeIn items-center justify-center bg-background bg-opacity-30 backdrop-blur-[2px]'
+      className='animate-fadeIn bg-background bg-opacity-30 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[2px]'
     >
       <div className='w-[500px] max-w-[90vw] pt-[40px]'>
-        <div className='rounded-lg border border-border bg-popover shadow-lg'>
-          <div className='flex flex-row items-center justify-between border-b px-4 pb-2 pt-4 dark:border-b-gray-800'>
+        <div className='border-border bg-popover rounded-lg border shadow-lg'>
+          <div className='flex flex-row items-center justify-between border-b px-4 pt-4 pb-2 dark:border-b-gray-800'>
             <h2 className='text-lg font-normal'>{title}</h2>
             <ButtonWithTooltip
               size='icon'

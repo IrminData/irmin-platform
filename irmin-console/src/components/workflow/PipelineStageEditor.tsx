@@ -124,7 +124,7 @@ export default function PipelineStageEditor({
     <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
       <div className='space-y-4'>
         {fields.length === 0 && (
-          <p className='py-8 text-center text-xl text-foreground/50 lg:text-3xl'>
+          <p className='text-foreground/50 py-8 text-center text-xl lg:text-3xl'>
             {dict.workflow.pipeline.noStages}
           </p>
         )}
@@ -137,7 +137,7 @@ export default function PipelineStageEditor({
           return (
             <div
               key={field.id}
-              className='space-y-4 rounded-lg border border-foreground/20 p-4'
+              className='border-foreground/20 space-y-4 rounded-lg border p-4'
             >
               <div className='flex items-center justify-between'>
                 <h3 className='text-lg font-semibold'>

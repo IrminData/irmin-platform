@@ -8,7 +8,7 @@ import { cn } from '@/utils/tw';
 
 // Define the variant styles for the StatusBadge component using class-variance-authority (cva)
 const statusBadgeVariants = cva(
-  'flex h-full max-h-8 w-20 items-center justify-center rounded-full shadow-sm p-1 text-center text-white text-xs',
+  'flex h-full max-h-8 w-20 items-center justify-center rounded-full shadow-xs p-1 text-center text-white text-xs',
   {
     variants: {
       status: {

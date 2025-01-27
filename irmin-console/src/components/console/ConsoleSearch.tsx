@@ -188,19 +188,19 @@ export default function ConsoleSearch() {
         <input
           defaultValue={query}
           onChange={(e) => setQuery(e.target.value)}
-          className='block w-full rounded-full bg-gray-50 bg-opacity-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible placeholder:opacity-40 focus:outline-none group-focus-within:placeholder:visible md:placeholder:visible lg:text-sm dark:bg-irmin_black dark:text-white'
+          className='bg-opacity-50 dark:bg-irmin_black block w-full rounded-full bg-gray-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible placeholder:opacity-40 group-focus-within:placeholder:visible focus:outline-hidden md:placeholder:visible lg:text-sm dark:text-white'
           placeholder={dict.consoleNavigation.searchPlaceholder}
         />
       </form>
 
       {/* Results Modal */}
       {debouncedQuery.length > 3 && isFocused && (
-        <div className='absolute mt-1 max-h-[calc(100vh-200px)] w-full overflow-y-scroll rounded-xl border border-gray-200 bg-background shadow-lg dark:border-gray-900'>
+        <div className='bg-background absolute mt-1 max-h-[calc(100vh-200px)] w-full overflow-y-scroll rounded-xl border border-gray-200 shadow-lg dark:border-gray-900'>
           {results.length > 0 ? (
             <div className='px-2 pt-2 lg:px-4 lg:pt-4'>
               {Object.keys(groupedResults).map((type) => (
                 <div key={type} className='mb-2 lg:mb-4'>
-                  <div className='mb-1 flex items-center pl-2 text-primary lg:mb-2'>
+                  <div className='text-primary mb-1 flex items-center pl-2 lg:mb-2'>
                     {getIconForType(type as ConsoleSearchItemType)}
                     <span className='ml-2 text-base lg:text-lg'>
                       {type === 'workflow' && dict.workflow.workflows}

@@ -25,7 +25,7 @@ const ProfileImagePlaceholder = ({
 }) => {
   return (
     <div
-      className={`relative inline-flex items-center justify-center overflow-hidden rounded-full bg-accent/20 font-medium text-accent ${className ? className : 'h-10 w-10'}`}
+      className={`bg-accent/20 text-accent relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium ${className ? className : 'h-10 w-10'}`}
       id='profile-image-placeholder'
     >
       <span>

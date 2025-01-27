@@ -72,7 +72,7 @@ export default function RepositoryTagsSection() {
   );
 
   return (
-    <div className='container relative mx-auto max-w-7xl px-2 md:px-4'>
+    <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
       <div className='mb-4 flex flex-row items-center justify-end gap-4'>
         <Button
           variant='default'

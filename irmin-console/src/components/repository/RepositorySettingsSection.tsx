@@ -81,7 +81,7 @@ const RepositorySettingsSection = ({
 
   return (
     <div
-      className='container relative mx-auto my-8 max-w-7xl'
+      className='relative container mx-auto my-8 max-w-7xl'
       id='repository-settings-section'
     >
       <SettingsForm

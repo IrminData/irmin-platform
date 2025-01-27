@@ -53,7 +53,7 @@ export default function CreateSavedQueryModal({
     <form
       onSubmit={handleSubmit(onSubmit)}
       className={`transition-filter flex flex-col gap-4 pb-8 duration-200 ${
-        isSubmitting ? 'pointer-events-none blur-sm' : ''
+        isSubmitting ? 'pointer-events-none blur-xs' : ''
       }`}
     >
       <div className='flex flex-col gap-2'>

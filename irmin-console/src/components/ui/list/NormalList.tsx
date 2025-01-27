@@ -35,14 +35,14 @@ const NormalList: React.FC<ListProps> = ({
   return (
     <div className='scrollbar-hide h-full w-full overflow-scroll' id='list'>
       <div
-        className={`grid grid-cols-${totalColumns} box-border h-full w-full min-w-max items-center overflow-hidden rounded-lg bg-background text-left text-xs font-normal shadow-sm transition-all md:text-sm`}
+        className={`grid grid-cols-${totalColumns} bg-background box-border h-full w-full min-w-max items-center overflow-hidden rounded-lg text-left text-xs font-normal shadow-xs transition-all md:text-sm`}
       >
         {!hideHeaders && (
           <div className='contents'>
             {headers.map((header, index) => (
               <div
                 key={`list-header-${index}`}
-                className={`col-span-1 border-b border-gray-200 bg-gray-100 p-2 py-4 dark:border-gray-800 dark:bg-irmin_black-700 ${!noActions && index === headers.length - 1 ? 'pr-4 text-right' : ''}`}
+                className={`dark:bg-irmin_black-700 col-span-1 border-b border-gray-200 bg-gray-100 p-2 py-4 dark:border-gray-800 ${!noActions && index === headers.length - 1 ? 'pr-4 text-right' : ''}`}
               >
                 <div className='text-xs opacity-60'>{header}</div>
               </div>
@@ -103,7 +103,7 @@ const NormalList: React.FC<ListProps> = ({
                       <Button
                         size='lg'
                         variant='link'
-                        className='ml-2 mt-1 px-0'
+                        className='mt-1 ml-2 px-0'
                         onClick={() => {
                           if (openDetails.includes(rowIndex)) {
                             setOpenDetails(
@@ -153,7 +153,7 @@ const NormalList: React.FC<ListProps> = ({
           })
         )}
         {!loading && rows.length === 0 && (
-          <div className='col-span-full p-4 py-8 text-center text-sm text-foreground lg:text-base'>
+          <div className='text-foreground col-span-full p-4 py-8 text-center text-sm lg:text-base'>
             {dict.list.noItemsFound}
           </div>
         )}

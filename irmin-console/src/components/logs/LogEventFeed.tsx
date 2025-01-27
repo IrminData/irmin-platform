@@ -27,7 +27,7 @@ const LogEventFeed = ({
       {events.map((event) => (
         <div
           key={event.id}
-          className='flex items-center gap-4 rounded-lg bg-card/80 p-2'
+          className='bg-card/80 flex items-center gap-4 rounded-lg p-2'
         >
           {/* Event icon */}
           <LogEventIcon type={event.type} />

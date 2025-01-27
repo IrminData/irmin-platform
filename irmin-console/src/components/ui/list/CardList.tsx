@@ -43,7 +43,7 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
             <div
               key={`list-card-${rowIndex}`}
               id='list-card'
-              className='flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-4 text-xs md:text-sm xl:text-base dark:border-gray-900 dark:bg-irmin_black-600'
+              className='dark:bg-irmin_black-600 flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-4 text-xs md:text-sm xl:text-base dark:border-gray-900'
             >
               <div className='flex flex-wrap items-center justify-between gap-4'>
                 {card.columns.map((column, index) => (
@@ -118,7 +118,7 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
         )}
       </div>
       {!loading && rows.length === 0 && (
-        <div className='col-span-full p-4 py-8 text-center text-sm text-foreground lg:text-base'>
+        <div className='text-foreground col-span-full p-4 py-8 text-center text-sm lg:text-base'>
           {dict.list.noItemsFound}
         </div>
       )}

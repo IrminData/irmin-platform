@@ -106,11 +106,11 @@ const DiffView = ({
         <div className='mb-4'>
           <h3 className='text-sm text-gray-900 lg:text-base dark:text-gray-100'>
             {dict.repository.compare.comparing}{' '}
-            <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
+            <span className='text-irmin_blue dark:text-irmin_green font-semibold'>
               {baseRef ?? diff.base_ref}
             </span>{' '}
             {dict.repository.compare.and}{' '}
-            <span className='font-semibold text-irmin_blue dark:text-irmin_green'>
+            <span className='text-irmin_blue dark:text-irmin_green font-semibold'>
               {compareRef ?? diff.compare_ref}
             </span>
           </h3>
@@ -126,7 +126,7 @@ const DiffView = ({
           return (
             <div
               key={`diff-item-${index}`}
-              className='rounded-lg border border-gray-200 bg-card text-card-foreground dark:border-gray-800'
+              className='bg-card text-card-foreground rounded-lg border border-gray-200 dark:border-gray-800'
             >
               {/* Main Diff Item Row */}
               <div className='flex flex-row items-center justify-between gap-4 p-2'>

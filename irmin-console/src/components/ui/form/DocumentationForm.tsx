@@ -80,7 +80,7 @@ const DocumentationForm = ({
             control={control}
             render={({ field }) => (
               <div
-                className='h-full min-h-[400px] w-full bg-background p-2 text-foreground'
+                className='bg-background text-foreground h-full min-h-[400px] w-full p-2'
                 id='plain-text-documentation-editor'
               >
                 <CodeMirrorEditor
@@ -97,7 +97,7 @@ const DocumentationForm = ({
         {documentationEditorType === 'mdx' && (
           <div
             id='mdx-documentation-editor'
-            className='h-full max-h-full min-h-80 w-full overflow-y-scroll rounded-lg border border-gray-300 bg-background dark:border-gray-800'
+            className='bg-background h-full max-h-full min-h-80 w-full overflow-y-scroll rounded-lg border border-gray-300 dark:border-gray-800'
           >
             <Controller
               name='documentation'

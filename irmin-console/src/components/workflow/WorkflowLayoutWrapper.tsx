@@ -142,7 +142,7 @@ export default function WorkflowLayoutWrapper({
 
   return (
     <>
-      <div className='container relative mx-auto max-w-6xl'>
+      <div className='relative container mx-auto max-w-6xl'>
         <div className='mx-auto my-4 flex w-full flex-col px-2 md:px-4 lg:flex-row lg:items-center'>
           <div className='flex flex-1 flex-col gap-2 py-4'>
             <div className='flex flex-row items-center divide-x divide-gray-300 dark:divide-gray-700'>
@@ -167,7 +167,7 @@ export default function WorkflowLayoutWrapper({
               </span>
             </div>
             <div className='flex flex-wrap items-center gap-2'>
-              <h1 className='text-lg font-normal text-foreground md:text-2xl'>
+              <h1 className='text-foreground text-lg font-normal md:text-2xl'>
                 {workflow.name}
               </h1>
               {workflow ? (

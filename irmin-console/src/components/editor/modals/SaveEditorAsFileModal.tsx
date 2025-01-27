@@ -264,7 +264,7 @@ export default function SaveEditorAsFileModal({
           }}
         />
       )}
-      {error && <div className='py-2 text-destructive'>{error}</div>}
+      {error && <div className='text-destructive py-2'>{error}</div>}
       <Button
         variant='default'
         size='sm'
