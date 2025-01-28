@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"mime/multipart"
 	"net/http"
-	"strings"
 	"time"
 
 	postgresClient "irmin-connectors/controllers/postgres/client"
@@ -39,26 +38,6 @@ func OperationPull(w http.ResponseWriter, r *http.Request) {
 
 	// Extract the path
 	path := r.FormValue("path")
-	path = strings.TrimSpace(path)
-	if len(path) > 0 {
-		// Remove leading slash
-		if path[0] == '/' {
-			path = path[1:]
-		}
-		// Remove trailing slash
-		if len(path) > 0 && path[len(path)-1] == '/' {
-			path = path[:len(path)-1]
-		}
-		// Remove the database name prefix if present
-		if len(path) >= len(*database) && path[:len(*database)] == *database {
-			path = path[len(*database):]
-			if len(path) > 0 && path[0] == '/' {
-				path = path[1:]
-			}
-		}
-		// Remove .json suffix if present
-		path = strings.TrimSuffix(path, ".json")
-	}
 
 	// If path is empty or just "/", or matches the database name with no sub-path,
 	// we treat this as the root and return all tables in a multipart response.
@@ -67,8 +46,19 @@ func OperationPull(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Otherwise, fetch data from the specified table
-	fetchSingleTable(ctx, w, dbClient, path)
+	// If the path is not empty, get the details of the path
+	_, tableName, rowIdentifier, _ := utils.ExtractPathComponents(path)
+
+	if tableName != "" && rowIdentifier != "" {
+		// If both table name and row identifier are present, fetch a single row
+		fetchSingleRow(ctx, w, dbClient, tableName, rowIdentifier)
+		return
+	}
+	if tableName != "" {
+		// If only the table name is present, fetch the entire table
+		fetchSingleTable(ctx, w, dbClient, tableName)
+		return
+	}
 }
 
 func returnAllTablesAsMultipart(ctx context.Context, w http.ResponseWriter, dbClient *postgresClient.PostgresClient) {
@@ -218,5 +208,65 @@ func fetchSingleTable(ctx context.Context, w http.ResponseWriter, dbClient *post
 	// Write the JSON data as a single file download
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, tableName))
+	_, _ = w.Write(jsonData)
+}
+
+func fetchSingleRow(ctx context.Context, w http.ResponseWriter, dbClient *postgresClient.PostgresClient, tableName, rowID string) {
+	// Construct a query to select the entire row by "id".
+	query := fmt.Sprintf(`SELECT * FROM "%s" WHERE "id" = $1`, tableName)
+	rows, err := dbClient.Query(ctx, query, rowID)
+	if err != nil {
+		http.Error(w, "Failed to fetch data: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	// Collect column names
+	fieldDescriptions := rows.FieldDescriptions()
+	columns := make([]string, len(fieldDescriptions))
+	for i, fd := range fieldDescriptions {
+		columns[i] = string(fd.Name)
+	}
+
+	// We only expect one row (or none). Build a map to hold the data.
+	var result map[string]interface{}
+
+	if rows.Next() {
+		values, err := rows.Values()
+		if err != nil {
+			http.Error(w, "Failed to retrieve values: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		record := make(map[string]interface{})
+		for i, col := range columns {
+			record[col] = values[i]
+		}
+		result = record
+	}
+
+	// Check if any error occurred during iteration
+	if rows.Err() != nil {
+		http.Error(w, "Failed to iterate through rows: "+rows.Err().Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// If result is nil, it means no row was found
+	if result == nil {
+		http.Error(w, "No row found", http.StatusNotFound)
+		return
+	}
+
+	// Marshal the row into JSON
+	jsonData, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		http.Error(w, "Failed to marshal data: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Write the JSON data as a file download
+	fileName := fmt.Sprintf("%s_row_%d.json", tableName, rowID)
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, fileName))
 	_, _ = w.Write(jsonData)
 }

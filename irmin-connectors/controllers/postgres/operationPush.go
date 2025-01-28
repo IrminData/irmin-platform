@@ -39,27 +39,7 @@ func OperationPush(w http.ResponseWriter, r *http.Request) {
 
 	// Extract the 'path' parameter
 	path := r.FormValue("path")
-	path = strings.TrimSpace(path)
-	if len(path) > 0 {
-		// Remove leading slash
-		if path[0] == '/' {
-			path = path[1:]
-		}
-		// Remove trailing slash
-		if len(path) > 0 && path[len(path)-1] == '/' {
-			path = path[:len(path)-1]
-		}
-		// Remove the database name prefix if present
-		if len(path) >= len(*database) && path[:len(*database)] == *database {
-			path = path[len(*database):]
-			if len(path) > 0 && path[0] == '/' {
-				path = path[1:]
-			}
-		}
-		// Remove .json suffix if present
-		path = strings.TrimSuffix(path, ".json")
-	}
-	tableName := path
+	_, tableName, _, _ := utils.ExtractPathComponents(path)
 
 	// If no table name was provided, error out
 	if tableName == "" {
