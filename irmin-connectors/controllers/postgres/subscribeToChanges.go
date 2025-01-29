@@ -36,7 +36,6 @@ func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	defer dbClient.Close()
 
 	// Get the details from the request
-	subcription_type := r.FormValue("type")
 	webhook_url := r.FormValue("webhook_url")
 	webhook_access_token := r.FormValue("webhook_access_token")
 
@@ -75,7 +74,6 @@ func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	subscription, err := db.CreateSubscription(&connectorModels.Subscription{
 		ConnectorRegistrationID: registration.ID,
 		OperationID:             operation.ID,
-		SubscriptionType:        subcription_type,
 		WebhookUrl:              webhook_url,
 		WebhookAccessToken:      webhook_access_token,
 		ConnectionDetails:       string(connectionDetails),

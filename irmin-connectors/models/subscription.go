@@ -8,7 +8,6 @@ import (
 type Subscription struct {
 	gorm.Model
 
-	SubscriptionType   string `json:"subscriptionType" gorm:"type:varchar(255);not null"`
 	WebhookUrl         string `json:"webhookUrl" gorm:"type:varchar(255);not null"`
 	WebhookAccessToken string `json:"webhookAccessToken" gorm:"type:varchar(255);not null"`
 
