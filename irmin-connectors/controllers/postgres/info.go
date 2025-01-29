@@ -15,7 +15,7 @@ var defaultConnectorInfo = connectorModels.ConnectorDetails{
 	Name:             "PostgreSQL",
 	Description:      "Import and export data from PostgreSQL databases.",
 	Version:          "0.1.0",
-	StructureVersion: "0.0.1",
+	StructureVersion: "1.0.0",
 	Author:           "Tim Borovkov / Irmin",
 	APIBaseURL:       "/postgres",
 	LogoURL:          fmt.Sprintf("%s/public/logos/postgres.png", baseUrl),
