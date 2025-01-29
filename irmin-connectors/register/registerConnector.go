@@ -11,10 +11,8 @@ import (
 	"github.com/IrminData/irmin-sdk-go/services"
 )
 
-const connectorName = "PostgreSQL"
-
-// RegisterPostgresConnector registers the Postgres connector with the Irmin API.
-func RegisterPostgresConnector(apiBaseURL, apiToken, baseUrl string) *models.Connector {
+// RegisterConnector registers a new connector with the Irmin API.
+func RegisterConnector(apiBaseURL, apiToken, baseUrl, connectorName, connectorSlug string) *models.Connector {
 	// Initialise the client and service
 	apiClient := client.NewClient(apiBaseURL, apiToken, "en")
 	connectorService := services.NewConnectorService(apiClient)
@@ -27,7 +25,7 @@ func RegisterPostgresConnector(apiBaseURL, apiToken, baseUrl string) *models.Con
 	}
 
 	// Structure the base URL for the connector
-	connectorURL := fmt.Sprintf("%s/postgres", baseUrl)
+	connectorURL := fmt.Sprintf("%s/%s", baseUrl, connectorSlug)
 
 	// Fetch matching connector registrations from the database
 	connectorRegistrations, err := db.GetConnectorRegistrationByConnectorName(connectorName)

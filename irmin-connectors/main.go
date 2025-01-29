@@ -62,9 +62,9 @@ func main() {
 	}()
 
 	// Register connectors
-	register.RegisterPostgresConnector(apiBaseURL, apiToken, url)
+	register.RegisterConnector(apiBaseURL, apiToken, url, "PostgreSQL", "postgres")
 
-	log.Println("Connector registered successfully.")
+	log.Println("Connector registeration complete.")
 
 	// Block the main goroutine (so the program doesn’t exit immediately)
 	select {}
