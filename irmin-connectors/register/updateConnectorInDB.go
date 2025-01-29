@@ -22,6 +22,12 @@ func updateConnectorInDB(irminId, token, connectorName string) error {
 			return err
 		}
 		for _, op := range ops {
+			// Remove subscriptions associated with the operation
+			err = db.DeleteSubscriptionsByOperationID(op.ID)
+			if err != nil {
+				fmt.Printf("Error deleting subscriptions: %v\n", err)
+				return err
+			}
 			err = db.DeleteOperation(op.ID)
 			if err != nil {
 				fmt.Printf("Error deleting operation: %v\n", err)

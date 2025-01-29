@@ -130,3 +130,28 @@ func RunRawQuery(sqlQuery string, args ...interface{}) error {
 	}
 	return nil
 }
+
+// CreateSubscription inserts a new Subscription record into the database.
+func CreateSubscription(subscription *connectorModels.Subscription) (*connectorModels.Subscription, error) {
+	if err := DB.Create(subscription).Error; err != nil {
+		return nil, fmt.Errorf("failed to create subscription record: %w", err)
+	}
+	log.Printf("Created subscription with ID: %d\n", subscription.ID)
+	return subscription, nil
+}
+
+// DeleteSubscriptionsByOperationID removes all subscriptions associated with the specified operation ID.
+func DeleteSubscriptionsByOperationID(operationID uint) error {
+	if err := DB.Where("operation_id = ?", operationID).Delete(&connectorModels.Subscription{}).Error; err != nil {
+		return fmt.Errorf("failed to delete subscriptions: %w", err)
+	}
+	return nil
+}
+
+// DeleteSubscriptionsByConnectorRegistrationID removes all subscriptions associated with the specified connector registration ID.
+func DeleteSubscriptionsByConnectorRegistrationID(connectorRegistrationID uint) error {
+	if err := DB.Where("connector_registration_id = ?", connectorRegistrationID).Delete(&connectorModels.Subscription{}).Error; err != nil {
+		return fmt.Errorf("failed to delete subscriptions: %w", err)
+	}
+	return nil
+}

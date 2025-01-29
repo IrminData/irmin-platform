@@ -3,11 +3,12 @@ package utils
 import (
 	"fmt"
 	"irmin-connectors/db"
+	connectorModels "irmin-connectors/models"
 	"net/http"
 	"strings"
 )
 
-func ValidateOperationToken(connectorName string, w http.ResponseWriter, r *http.Request) bool {
+func ValidateOperationToken(connectorName string, w http.ResponseWriter, r *http.Request) (bool, *connectorModels.ConnectorRegistration, *connectorModels.Operation) {
 	// Get authentication bearer token from the request headers
 	token := r.Header.Get("Authorization")
 	token = strings.TrimPrefix(token, "Bearer ")
@@ -17,12 +18,12 @@ func ValidateOperationToken(connectorName string, w http.ResponseWriter, r *http
 	if err != nil {
 		fmt.Printf("Error fetching connectors from the database: %v\n", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return false
+		return false, nil, nil
 	}
 	if len(registrations) == 0 {
 		fmt.Printf("No connector registration found with the name %s\n", connectorName)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return false
+		return false, nil, nil
 	}
 	registration := registrations[0]
 
@@ -31,21 +32,24 @@ func ValidateOperationToken(connectorName string, w http.ResponseWriter, r *http
 	if err != nil {
 		fmt.Printf("Error fetching operations from the database: %v\n", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return false
+		return false, nil, nil
 	}
 
 	// Validate the provided token against the active operations
 	var validToken = false
+	var matchedOperation connectorModels.Operation
 	for _, operation := range operations {
 		if token == operation.Token {
 			validToken = true
+			matchedOperation = operation
+			break
 		}
 	}
 	if !validToken {
 		fmt.Println("Invalid token provided")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return false
+		return false, &registration, nil
 	}
-	return true
+	return true, &registration, &matchedOperation
 
 }

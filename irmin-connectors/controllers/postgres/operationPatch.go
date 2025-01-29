@@ -15,7 +15,8 @@ import (
 
 func OperationPatch(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the operation token
-	if !utils.ValidateOperationToken(defaultConnectorInfo.Name, w, r) {
+	tokenValid, _, _ := utils.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
+	if !tokenValid {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}

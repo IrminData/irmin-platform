@@ -2,26 +2,30 @@ package postgresControllers
 
 import (
 	"encoding/json"
+	"fmt"
 	connectorModels "irmin-connectors/models"
 	"irmin-connectors/utils"
 	"net/http"
+	"os"
 )
 
+// Read base URL from environment variables
+var baseUrl = os.Getenv("URL")
 var defaultConnectorInfo = connectorModels.ConnectorDetails{
 	Name:             "PostgreSQL",
-	Description:      "Connector for PostgreSQL databases",
+	Description:      "Import and export data from PostgreSQL databases.",
 	Version:          "0.1.0",
 	StructureVersion: "0.0.1",
 	Author:           "Tim Borovkov / Irmin",
 	APIBaseURL:       "/postgres",
-	LogoURL:          "/public/irmin-logo.png",
+	LogoURL:          fmt.Sprintf("%s/public/logos/postgres.png", baseUrl),
 	Capabilities:     []string{"pull", "push", "webhook_patch", "webhook_pull"},
 	Locales:          []string{"en"},
 	PrimaryCategory:  "database",
 	Categories:       []string{"database"},
 	AuthorEmail:      "hello@irmin.co",
-	Documentation:    "/postgres/docs",
-	ReadMoreURL:      "/postgres/read-more",
+	Documentation:    fmt.Sprintf("%s/postgres/docs", baseUrl),
+	ReadMoreURL:      fmt.Sprintf("%s/postgres/read-more", baseUrl),
 }
 
 func Info(w http.ResponseWriter, r *http.Request) {

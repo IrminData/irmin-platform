@@ -45,6 +45,12 @@ func OperationCancel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Delete subscriptions associated with the operation
+	if err := db.DeleteSubscriptionsByOperationID(operation.ID); err != nil {
+		http.Error(w, "Failed to delete subscriptions", http.StatusInternalServerError)
+		return
+	}
+
 	// Cancel the operation
 	if err := db.DeleteOperation(operation.ID); err != nil {
 		http.Error(w, "Failed to cancel operation", http.StatusInternalServerError)
