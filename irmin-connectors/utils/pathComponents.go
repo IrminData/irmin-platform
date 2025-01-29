@@ -4,6 +4,36 @@ import (
 	"strings"
 )
 
+// ConstructPath takes a database name, table name, row identifier, and column name
+// and returns a path matching the format used by ExtractPathComponents.
+// Example: "/myDatabase/myTable.json/42/name"
+func ConstructPath(databaseName, tableName, rowIdentifier, columnName string) string {
+	var parts []string
+
+	// 1) Database name (if not empty)
+	if databaseName != "" {
+		parts = append(parts, databaseName)
+	}
+
+	// 2) Table name, appended with ".json" (if not empty)
+	if tableName != "" {
+		parts = append(parts, tableName+".json")
+	}
+
+	// 3) Row identifier (if not empty)
+	if rowIdentifier != "" {
+		parts = append(parts, rowIdentifier)
+	}
+
+	// 4) Column name (if not empty)
+	if columnName != "" {
+		parts = append(parts, columnName)
+	}
+
+	// Join them with "/", then prepend a "/"
+	return "/" + strings.Join(parts, "/")
+}
+
 // ExtractPathComponents takes a path like "/database1/users.json/0/name"
 // and returns each piece: (databaseName, tableName, rowIdentifier, columnName).
 func ExtractPathComponents(path string) (databaseName, tableName, rowIdentifier, columnName string) {

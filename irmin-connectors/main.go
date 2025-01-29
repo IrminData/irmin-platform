@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	db "irmin-connectors/db"
 	"irmin-connectors/register"
 	"irmin-connectors/routes"
+	"irmin-connectors/subscriptions"
 	"log"
 	"net"
 	"net/http"
@@ -63,8 +65,14 @@ func main() {
 
 	// Register connectors
 	register.RegisterConnector(apiBaseURL, apiToken, url, "PostgreSQL", "postgres")
-
 	log.Println("Connector registeration complete.")
+
+	// Start the subscription listeners
+	ctx := context.Background() // Create a new context for the subscription listeners
+	err = subscriptions.StartSubscriptionListeners(ctx)
+	if err != nil {
+		log.Printf("Error starting subscription listeners: %v", err)
+	}
 
 	// Block the main goroutine (so the program doesn’t exit immediately)
 	select {}

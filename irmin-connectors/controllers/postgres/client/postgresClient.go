@@ -344,3 +344,47 @@ func (t *Tx) Rollback(ctx context.Context) error {
 	t.conn.Release() // Release the connection back to the pool
 	return err
 }
+
+// StartNotificationListener sets up a LISTEN on the given channel,
+// then loops on WaitForNotification and calls onNotify(payload) when a notification arrives.
+func (pc *PostgresClient) StartNotificationListener(
+	ctx context.Context,
+	channelName string,
+	onNotify func(payload string),
+) error {
+	// Acquire a dedicated connection
+	conn, err := pc.pool.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to acquire connection: %w", err)
+	}
+
+	// Release connection when ctx is cancelled
+	go func() {
+		<-ctx.Done()
+		conn.Release()
+	}()
+
+	// Actually LISTEN on channel
+	_, err = conn.Exec(ctx, "LISTEN "+channelName)
+	if err != nil {
+		conn.Release()
+		return fmt.Errorf("failed to listen on channel %q: %w", channelName, err)
+	}
+
+	// Background goroutine to handle notifications
+	go func() {
+		for {
+			n, err := conn.Conn().WaitForNotification(ctx)
+			if err != nil {
+				// Usually context cancellation or network error
+				fmt.Printf("Listener on channel %q stopped: %v\n", channelName, err)
+				return
+			}
+
+			// Call the callback with the payload
+			onNotify(n.Payload)
+		}
+	}()
+
+	return nil
+}

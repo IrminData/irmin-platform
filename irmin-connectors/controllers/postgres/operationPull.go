@@ -266,7 +266,7 @@ func fetchSingleRow(ctx context.Context, w http.ResponseWriter, dbClient *postgr
 	}
 
 	// Write the JSON data as a file download
-	fileName := fmt.Sprintf("%s_row_%d.json", tableName, rowID)
+	fileName := fmt.Sprintf("%s_row_%s.json", tableName, rowID)
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, fileName))
 	_, _ = w.Write(jsonData)

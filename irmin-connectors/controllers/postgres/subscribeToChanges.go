@@ -8,7 +8,6 @@ import (
 	connectorModels "irmin-connectors/models"
 	"irmin-connectors/utils"
 	"net/http"
-	"os"
 )
 
 func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
@@ -41,6 +40,37 @@ func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	webhook_url := r.FormValue("webhook_url")
 	webhook_access_token := r.FormValue("webhook_access_token")
 
+	// Extract fields for connection details
+	host := r.FormValue("details[host]")
+	portStr := r.FormValue("details[port]")
+	user := r.FormValue("details[user]")
+	password := r.FormValue("details[password]")
+	defaultDB := r.FormValue("details[default_db]")
+	sslMode := r.FormValue("details[ssl_mode]")
+
+	// Create JSON strings of the connection detail
+	connectionDetails, err := json.Marshal(map[string]string{
+		"host":       host,
+		"port":       portStr,
+		"user":       user,
+		"password":   password,
+		"default_db": defaultDB,
+		"ssl_mode":   sslMode,
+	})
+	if err != nil {
+		http.Error(w, "Failed to create connection details: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Create JSON strings of the connection settings
+	connectionSettings, err := json.Marshal(map[string]string{
+		"database": *database,
+	})
+	if err != nil {
+		http.Error(w, "Failed to create connection settings: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	// Create a new subscription record in the database
 	subscription, err := db.CreateSubscription(&connectorModels.Subscription{
 		ConnectorRegistrationID: registration.ID,
@@ -48,31 +78,18 @@ func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 		SubscriptionType:        subcription_type,
 		WebhookUrl:              webhook_url,
 		WebhookAccessToken:      webhook_access_token,
+		ConnectionDetails:       string(connectionDetails),
+		ConnectionSettings:      string(connectionSettings),
 	})
 	if err != nil {
 		http.Error(w, "Failed to create subscription: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Remove all existing notification triggers for all tables in the database
-	content, err := os.ReadFile("controllers/postgres/client/remove_triggers_for_all_tables.sql")
+	// Start the listener for the new subscription
+	err = SetupNotifications(dbClient)
 	if err != nil {
-		http.Error(w, "Failed to read trigger script: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if _, err := dbClient.Exec(context.Background(), string(content)); err != nil {
-		http.Error(w, "Failed to remove triggers: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Create notification triggers for all tables in the database
-	content, err = os.ReadFile("controllers/postgres/client/create_triggers_for_all_tables.sql")
-	if err != nil {
-		http.Error(w, "Failed to read trigger script: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if _, err := dbClient.Exec(context.Background(), string(content)); err != nil {
-		http.Error(w, "Failed to create triggers: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to setup notifications: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

@@ -28,7 +28,6 @@ BEGIN
     END IF;
 
     PERFORM pg_notify('data_change', payload::text);
-
     RETURN NEW;
 END;
 $$;
@@ -43,12 +42,13 @@ BEGIN
         FROM pg_catalog.pg_tables
         WHERE schemaname = 'public'
     LOOP
+        -- Safely build the trigger name as <tablename>_irmin_notify
         EXECUTE format(
-            'CREATE TRIGGER %I_notify
+            'CREATE TRIGGER %I
              AFTER INSERT OR UPDATE OR DELETE ON %I
              FOR EACH ROW
              EXECUTE FUNCTION notify_table_change()',
-            t.tablename,
+            t.tablename || '_irmin_notify', 
             t.tablename
         );
     END LOOP;

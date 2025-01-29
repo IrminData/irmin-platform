@@ -31,6 +31,9 @@ func InitialiseDB(path string) error {
 	if err = DB.AutoMigrate(&connectorModels.ConnectorRegistration{}); err != nil {
 		return fmt.Errorf("failed to migrate ConnectorRegistration to the db: %w", err)
 	}
+	if err = DB.AutoMigrate(&connectorModels.Subscription{}); err != nil {
+		return fmt.Errorf("failed to migrate Subscription to the db: %w", err)
+	}
 
 	return nil
 }
@@ -69,6 +72,15 @@ func GetAllConnectorRegistrations() ([]connectorModels.ConnectorRegistration, er
 		return nil, fmt.Errorf("failed to fetch connector registrations: %w", err)
 	}
 	return registrations, nil
+}
+
+// GetAllSubscriptions retrieves all Subscription records from the database.
+func GetAllSubscriptions() ([]connectorModels.Subscription, error) {
+	var subscriptions []connectorModels.Subscription
+	if err := DB.Find(&subscriptions).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch subscriptions: %w", err)
+	}
+	return subscriptions, nil
 }
 
 // GetOperationByID retrieves an Operation record from the database by ID.
