@@ -19,7 +19,7 @@ var defaultConnectorInfo = connectorModels.ConnectorDetails{
 	Author:           "Tim Borovkov / Irmin",
 	APIBaseURL:       "/postgres",
 	LogoURL:          fmt.Sprintf("%s/public/logos/postgres.png", baseUrl),
-	Capabilities:     []string{"pull", "push", "webhook_patch", "webhook_pull"},
+	Capabilities:     []string{"pull", "push", "event"},
 	Locales:          []string{"en"},
 	PrimaryCategory:  "database",
 	Categories:       []string{"database"},
