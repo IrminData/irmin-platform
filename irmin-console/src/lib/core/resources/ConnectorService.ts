@@ -6,7 +6,6 @@ import {
   Connector,
   ConnectorCapability,
   ConnectorConfigurationValidationResult,
-  ConnectorSchemaValidationResult,
 } from '@/types/core/Connector';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { ObjectSchema } from '@/types/core/ObjectSchema';
@@ -42,7 +41,6 @@ class ConnectorService {
     this.validateConnectorConfiguration =
       this.validateConnectorConfiguration.bind(this);
     this.fetchConnectorSchema = this.fetchConnectorSchema.bind(this);
-    this.validateConnectorData = this.validateConnectorData.bind(this);
     this.registerNewConnector = this.registerNewConnector.bind(this);
     this.updateRegisteredConnector = this.updateRegisteredConnector.bind(this);
   }
@@ -271,60 +269,6 @@ class ConnectorService {
       console.error((error as Error).message, 'Fetch object schema error');
       if (isDevelopment)
         return fake(exampleObjectSchema) as IrminAPIResponse<ObjectSchema>;
-      throw error;
-    }
-  }
-
-  /**
-   * Validate data against the schema of a connector.
-   *
-   * @param connectorId - ID of the connector to validate the data against
-   * @param operation - Operation to validate the data against
-   * @param data - Data to validate
-   * @param details - (optional) Details field values
-   * @param settings - (optional) Settings field values
-   */
-  async validateConnectorData(
-    connectorId: string,
-    operation: ConnectorCapability,
-    data: Blob,
-    details?: DynamicFieldValues,
-    settings?: DynamicFieldValues
-  ): Promise<IrminAPIResponse<ConnectorSchemaValidationResult>> {
-    if (isOfflineMode)
-      return fake({
-        ok: true,
-      }) as IrminAPIResponse<ConnectorSchemaValidationResult>;
-    try {
-      const formData = new FormData();
-      if (details) {
-        Object.keys(details).forEach((key) => {
-          formData.append(`details[${key}]`, details[key] as string);
-        });
-      }
-      if (settings) {
-        Object.keys(settings).forEach((key) => {
-          formData.append(`settings[${key}]`, settings[key] as string);
-        });
-      }
-      formData.append('data', data);
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/connectors/${connectorId}/schema/${operation}/validate`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          body: formData,
-        }
-      )) as IrminAPIResponse<ConnectorSchemaValidationResult>;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Validate connector data error');
-      if (isDevelopment)
-        return fake({
-          ok: true,
-        }) as IrminAPIResponse<ConnectorSchemaValidationResult>;
       throw error;
     }
   }

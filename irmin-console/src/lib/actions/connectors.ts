@@ -98,29 +98,3 @@ export async function getConnectorSchema(
   );
   return schema.data;
 }
-
-/**
- * Server action to validate data against a schema.
- *
- * @returns Data validation result
- */
-export async function validateDataAgainstConnectorSchema(
-  connectorId: string,
-  operation: ConnectorCapability,
-  data: Blob,
-  details?: DynamicFieldValues,
-  settings?: DynamicFieldValues,
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  // Validate the data
-  const validationResult =
-    await irminCore.connectorService.validateConnectorData(
-      connectorId,
-      operation,
-      data,
-      details,
-      settings
-    );
-  return validationResult;
-}

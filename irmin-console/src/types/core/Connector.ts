@@ -39,13 +39,11 @@ export interface Connector {
  */
 export enum ConnectorCapability {
   /** Can perform operation `pull` */
-  PullFullSync = 'pull',
+  Pull = 'pull',
   /** Can perform operation `push` */
-  PushFullSync = 'push',
-  /** Can send patch webhook events */
-  PushPatchSync = 'webhook_patch',
-  /** Can send full object webhook events */
-  PullPatchSync = 'webhook_pull',
+  Push = 'push',
+  /** Can send webhook events */
+  Event = 'event',
 }
 
 /**
@@ -82,12 +80,6 @@ export interface ConnectorConfigurationValidationResult {
   connection_details_valid: boolean;
   /** Indicates if the connection settings are valid */
   connection_settings_valid: boolean;
-}
-
-/**
- * Connector schema validation result object.
- */
-export interface ConnectorSchemaValidationResult {
-  /** Indicates if the data is valid against the schema */
-  valid: boolean;
+  /** List of errors encountered during validation */
+  errors: string[] | null;
 }
