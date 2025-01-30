@@ -41,7 +41,7 @@ const Modal = ({
   return (
     <div
       id='irmin-modal'
-      className='animate-fadeIn bg-background bg-opacity-30 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[2px]'
+      className='animate-fadeIn bg-background/30 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[2px]'
     >
       <div className='w-[500px] max-w-[90vw] pt-[40px]'>
         <div className='border-border bg-popover rounded-lg border shadow-lg'>

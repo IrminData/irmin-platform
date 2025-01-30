@@ -123,7 +123,7 @@ const TableViewer = ({
               <input
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
-                className='bg-opacity-50 dark:bg-irmin_black block w-full rounded-full bg-gray-50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible placeholder:opacity-40 group-focus-within:placeholder:visible focus:outline-hidden md:placeholder:visible lg:text-sm dark:text-white'
+                className='dark:bg-irmin_black/50 block w-full rounded-full bg-gray-50/50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible placeholder:opacity-40 group-focus-within:placeholder:visible focus:outline-hidden md:placeholder:visible lg:text-sm dark:text-white'
                 placeholder={dict.query.search}
               />
             </div>
