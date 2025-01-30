@@ -4,13 +4,21 @@
 
 Connectors are a universal way to interact with external services, data sources, and export targets. They are applications that interface with Irmin for data import and export.
 
-#### Run
+#### Commands
 
+**Install dependencies**
+`go mod download`
+
+**Update dependencies**
+`go mod tidy` and `go get -u ./...`
+
+**Build**
+`go build -o out`
+
+And then run the binary file `./out`
+
+**Run**
 `go run main.go`
-
-#### Build
-
-`go build`
 
 #### Environment Variables
 
