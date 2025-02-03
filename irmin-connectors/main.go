@@ -21,6 +21,7 @@ func main() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
+	// Get the port from the environment variables, default to 8080
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

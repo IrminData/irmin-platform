@@ -25,3 +25,6 @@ go.work
 
 # SQLite database files
 *.db
+
+# Mac OS X Finder directory files
+.DS_Store
