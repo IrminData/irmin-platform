@@ -4,7 +4,6 @@ import (
 	"context"
 	postgresControllers "irmin-connectors/controllers/postgres"
 	"irmin-connectors/db"
-	connectorModels "irmin-connectors/models"
 )
 
 func StartSubscriptionListeners(ctx context.Context) error {
@@ -23,7 +22,7 @@ func StartSubscriptionListeners(ctx context.Context) error {
 	// Loop through all subscriptions and start listeners
 	for _, subscription := range subscriptions {
 		// Find the registration for the subscription
-		var registration connectorModels.ConnectorRegistration
+		var registration db.ConnectorRegistration
 		for _, reg := range registrations {
 			if reg.ID == subscription.ConnectorRegistrationID {
 				registration = reg

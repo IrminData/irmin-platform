@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	postgresClient "irmin-connectors/controllers/postgres/client"
-	connectorModels "irmin-connectors/models"
+	"irmin-connectors/db"
 	"irmin-connectors/utils"
 	"log"
 	"net/http"
@@ -53,7 +53,7 @@ type postgresConnectionSettings struct {
 	Database string `json:"database"`
 }
 
-func StartListenerForSubscription(subscription connectorModels.Subscription, ctx context.Context) error {
+func StartListenerForSubscription(subscription db.Subscription, ctx context.Context) error {
 	// Get the connection details and settings from the subscription
 	var details postgresConnectionDetails
 	var settings postgresConnectionSettings

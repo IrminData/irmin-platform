@@ -3,12 +3,11 @@ package utils
 import (
 	"fmt"
 	"irmin-connectors/db"
-	connectorModels "irmin-connectors/models"
 	"net/http"
 	"strings"
 )
 
-func ValidateOperationToken(connectorName string, w http.ResponseWriter, r *http.Request) (bool, *connectorModels.ConnectorRegistration, *connectorModels.Operation) {
+func ValidateOperationToken(connectorName string, w http.ResponseWriter, r *http.Request) (bool, *db.ConnectorRegistration, *db.Operation) {
 	// Get authentication bearer token from the request headers
 	token := r.Header.Get("Authorization")
 	token = strings.TrimPrefix(token, "Bearer ")
@@ -37,7 +36,7 @@ func ValidateOperationToken(connectorName string, w http.ResponseWriter, r *http
 
 	// Validate the provided token against the active operations
 	var validToken = false
-	var matchedOperation connectorModels.Operation
+	var matchedOperation db.Operation
 	for _, operation := range operations {
 		if token == operation.Token {
 			validToken = true

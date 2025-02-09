@@ -3,7 +3,6 @@ package register
 import (
 	"fmt"
 	"irmin-connectors/db"
-	connectorModels "irmin-connectors/models"
 	"irmin-connectors/utils"
 
 	"github.com/IrminData/irmin-sdk-go/client"
@@ -33,7 +32,7 @@ func RegisterConnector(apiBaseURL, apiToken, baseUrl, connectorName, connectorSl
 		fmt.Printf("Error fetching connectors from the database: %v\n", err)
 		return nil
 	}
-	var connectorRegistration *connectorModels.ConnectorRegistration
+	var connectorRegistration *db.ConnectorRegistration
 	if len(connectorRegistrations) > 0 {
 		connectorRegistration = &connectorRegistrations[0]
 	}

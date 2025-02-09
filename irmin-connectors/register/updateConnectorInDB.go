@@ -3,7 +3,6 @@ package register
 import (
 	"fmt"
 	"irmin-connectors/db"
-	connectorModels "irmin-connectors/models"
 )
 
 // updateConnectorInDB updates the connector registration in the database.
@@ -43,7 +42,7 @@ func updateConnectorInDB(irminId, token, connectorName string) error {
 	}
 
 	// Create a new connector registration
-	registration, err := db.CreateConnectorRegistration(&connectorModels.ConnectorRegistration{
+	registration, err := db.CreateConnectorRegistration(&db.ConnectorRegistration{
 		IrminID:       irminId,
 		ConnectorName: connectorName,
 		SystemToken:   token,

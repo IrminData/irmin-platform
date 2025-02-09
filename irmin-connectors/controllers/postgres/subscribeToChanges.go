@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	postgresClient "irmin-connectors/controllers/postgres/client"
 	"irmin-connectors/db"
-	connectorModels "irmin-connectors/models"
 	"irmin-connectors/utils"
 	"net/http"
 )
@@ -71,7 +70,7 @@ func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create a new subscription record in the database
-	subscription, err := db.CreateSubscription(&connectorModels.Subscription{
+	subscription, err := db.CreateSubscription(&db.Subscription{
 		ConnectorRegistrationID: registration.ID,
 		OperationID:             operation.ID,
 		WebhookUrl:              webhook_url,

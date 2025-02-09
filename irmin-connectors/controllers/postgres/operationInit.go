@@ -3,7 +3,6 @@ package postgresControllers
 import (
 	"encoding/json"
 	"irmin-connectors/db"
-	connectorModels "irmin-connectors/models"
 	"irmin-connectors/utils"
 	"net/http"
 )
@@ -35,7 +34,7 @@ func OperationInit(w http.ResponseWriter, r *http.Request) {
 	connectorRegistration := connectorRegistrations[0]
 
 	// Create a new operation in the database
-	newOperation, err := db.CreateOperation(&connectorModels.Operation{
+	newOperation, err := db.CreateOperation(&db.Operation{
 		Token:                   operationToken,
 		ConnectorRegistrationID: connectorRegistration.ID,
 	})
