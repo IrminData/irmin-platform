@@ -27,6 +27,11 @@ func main() {
 
 	// Setup routes for all connectors
 	r := mux.NewRouter()
+
+	// Serve static files from the public directory.
+	r.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
+
+	// Setup routes for all connectors.
 	r = connectors.SetupConnectorRoutes(r)
 
 	// Manually create a net.Listener

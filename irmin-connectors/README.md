@@ -39,3 +39,5 @@ To add a new connector, create a new directory in the `connectors` directory wit
 As a base you can copy one of the existing connectors and modify it to your needs.
 
 Please make sure to point to your new connector in the `connectors/connectors.go` file. See the comments in the file for more information.
+
+You can store public assets, like the logo of the connector, in the `public` directory.

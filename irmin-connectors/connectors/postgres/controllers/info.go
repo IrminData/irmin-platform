@@ -15,14 +15,14 @@ var defaultConnectorInfo = connectorModels.ConnectorDetails{
 	StructureVersion: "1.0.0",
 	Author:           "Tim Borovkov / Irmin",
 	APIBaseURL:       "/postgres",
-	LogoURL:          "/public/logos/postgres.png",
+	LogoURL:          "/public/postgres.png",
 	Capabilities:     []string{"pull", "push", "event"},
 	Locales:          []string{"en"},
 	PrimaryCategory:  "database",
 	Categories:       []string{"database"},
 	AuthorEmail:      "hello@irmin.co",
 	Documentation:    "/postgres/docs",
-	ReadMoreURL:      "/postgres/read-more",
+	ReadMoreURL:      "/postgres/details",
 }
 
 func Info(w http.ResponseWriter, r *http.Request) {

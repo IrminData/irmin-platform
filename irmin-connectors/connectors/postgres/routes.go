@@ -10,6 +10,7 @@ import (
 func SetupRoutes(r *mux.Router) *mux.Router {
 	s := r.PathPrefix("/postgres").Subrouter()
 
+	// Connector API routes
 	s.HandleFunc("/info", postgresControllers.Info).Methods("GET")
 	s.HandleFunc("/configuration/{key}/fields", postgresControllers.ConfigFields).Methods("POST")
 	s.HandleFunc("/configuration/validate", postgresControllers.ConfigValidate).Methods("POST")
@@ -20,6 +21,10 @@ func SetupRoutes(r *mux.Router) *mux.Router {
 	s.HandleFunc("/operation/pull", postgresControllers.OperationPull).Methods("POST")
 	s.HandleFunc("/operation/subscribe", postgresControllers.SubscribeToChanges).Methods("POST")
 	s.HandleFunc("/operation/cancel", postgresControllers.OperationCancel).Methods("POST")
+
+	// Public information about the connector
+	s.HandleFunc("/details", postgresControllers.DetailsPage).Methods("GET")
+	s.HandleFunc("/docs", postgresControllers.DocsPage).Methods("GET")
 
 	return r
 }
