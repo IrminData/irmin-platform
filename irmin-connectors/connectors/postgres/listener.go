@@ -1,16 +1,16 @@
-package postgresControllers
+package postgresConnector
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	postgresClient "irmin-connectors/controllers/postgres/client"
+	postgresClient "irmin-connectors/connectors/postgres/client"
+	postgresModels "irmin-connectors/connectors/postgres/models"
 	"irmin-connectors/db"
 	"irmin-connectors/utils"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -18,45 +18,10 @@ import (
 	"github.com/IrminData/irmin-sdk-go/models"
 )
 
-func SetupNotifications(dbClient *postgresClient.PostgresClient) error {
-	// Remove all existing notification triggers for all tables in the database
-	content, err := os.ReadFile("controllers/postgres/client/remove_triggers_for_all_tables.sql")
-	if err != nil {
-		return fmt.Errorf("failed to read trigger script: %v", err)
-	}
-	if _, err := dbClient.Exec(context.Background(), string(content)); err != nil {
-		return fmt.Errorf("failed to remove triggers: %v", err)
-	}
-
-	// Create notification triggers for all tables in the database
-	content, err = os.ReadFile("controllers/postgres/client/create_triggers_for_all_tables.sql")
-	if err != nil {
-		return fmt.Errorf("failed to read trigger script: %v", err)
-	}
-	if _, err := dbClient.Exec(context.Background(), string(content)); err != nil {
-		return fmt.Errorf("failed to create triggers: %v", err)
-	}
-
-	return nil
-}
-
-type postgresConnectionDetails struct {
-	Host      string `json:"host"`
-	Port      string `json:"port"`
-	User      string `json:"user"`
-	Password  string `json:"password"`
-	SSLMode   string `json:"ssl_mode"`
-	DefaultDB string `json:"default_db"`
-}
-
-type postgresConnectionSettings struct {
-	Database string `json:"database"`
-}
-
-func StartListenerForSubscription(subscription db.Subscription, ctx context.Context) error {
+func StartListener(subscription db.Subscription, ctx context.Context) error {
 	// Get the connection details and settings from the subscription
-	var details postgresConnectionDetails
-	var settings postgresConnectionSettings
+	var details postgresModels.ConnectionDetails
+	var settings postgresModels.ConnectionSettings
 	if err := json.Unmarshal([]byte(subscription.ConnectionDetails), &details); err != nil {
 		return fmt.Errorf("failed to unmarshal connection details: %v", err)
 	}
@@ -86,7 +51,7 @@ func StartListenerForSubscription(subscription db.Subscription, ctx context.Cont
 	defer dbClient.Close() // Close the database client at the end of the function
 
 	// Setup the notification triggers for the database
-	if err := SetupNotifications(dbClient); err != nil {
+	if err := postgresClient.SetupNotifications(dbClient); err != nil {
 		return fmt.Errorf("failed to setup notifications: %v", err)
 	}
 

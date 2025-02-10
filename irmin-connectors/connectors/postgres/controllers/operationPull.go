@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	postgresClient "irmin-connectors/controllers/postgres/client"
+	postgresClient "irmin-connectors/connectors/postgres/client"
 	"irmin-connectors/utils"
 )
 

@@ -2,15 +2,12 @@ package postgresControllers
 
 import (
 	"encoding/json"
-	"fmt"
 	connectorModels "irmin-connectors/models"
 	"irmin-connectors/utils"
 	"net/http"
 	"os"
 )
 
-// Read base URL from environment variables
-var baseUrl = os.Getenv("URL")
 var defaultConnectorInfo = connectorModels.ConnectorDetails{
 	Name:             "PostgreSQL",
 	Description:      "Import and export data from PostgreSQL databases.",
@@ -18,24 +15,33 @@ var defaultConnectorInfo = connectorModels.ConnectorDetails{
 	StructureVersion: "1.0.0",
 	Author:           "Tim Borovkov / Irmin",
 	APIBaseURL:       "/postgres",
-	LogoURL:          fmt.Sprintf("%s/public/logos/postgres.png", baseUrl),
+	LogoURL:          "/public/postgres.png",
 	Capabilities:     []string{"pull", "push", "event"},
 	Locales:          []string{"en"},
 	PrimaryCategory:  "database",
 	Categories:       []string{"database"},
 	AuthorEmail:      "hello@irmin.co",
-	Documentation:    fmt.Sprintf("%s/postgres/docs", baseUrl),
-	ReadMoreURL:      fmt.Sprintf("%s/postgres/read-more", baseUrl),
+	Documentation:    "/postgres/docs",
+	ReadMoreURL:      "/postgres/details",
 }
 
 func Info(w http.ResponseWriter, r *http.Request) {
+	// Retrieve the base URL from the environment
+	baseUrl := os.Getenv("URL")
+
+	// Update the default connector info with the base URL
+	info := defaultConnectorInfo
+	info.LogoURL = baseUrl + info.LogoURL
+	info.APIBaseURL = baseUrl + info.APIBaseURL
+	info.Documentation = baseUrl + info.Documentation
+
 	// Make sure the request is authorized by validating the system token
-	if !utils.ValidateConnectorSystemToken(defaultConnectorInfo.Name, w, r) {
+	if !utils.ValidateConnectorSystemToken(info.Name, w, r) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	// Send the default connector details
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(defaultConnectorInfo)
+	json.NewEncoder(w).Encode(info)
 }

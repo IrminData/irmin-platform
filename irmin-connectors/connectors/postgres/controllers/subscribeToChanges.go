@@ -3,7 +3,7 @@ package postgresControllers
 import (
 	"context"
 	"encoding/json"
-	postgresClient "irmin-connectors/controllers/postgres/client"
+	postgresClient "irmin-connectors/connectors/postgres/client"
 	"irmin-connectors/db"
 	"irmin-connectors/utils"
 	"net/http"
@@ -84,7 +84,7 @@ func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Start the listener for the new subscription
-	err = SetupNotifications(dbClient)
+	err = postgresClient.SetupNotifications(dbClient)
 	if err != nil {
 		http.Error(w, "Failed to setup notifications: "+err.Error(), http.StatusInternalServerError)
 		return
