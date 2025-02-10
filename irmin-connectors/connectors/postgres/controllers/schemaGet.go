@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	postgresClient "irmin-connectors/controllers/postgres/client"
+	postgresClient "irmin-connectors/connectors/postgres/client"
 	"irmin-connectors/utils"
 
 	"github.com/IrminData/irmin-sdk-go/models"

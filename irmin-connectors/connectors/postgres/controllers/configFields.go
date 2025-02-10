@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	postgresClient "irmin-connectors/controllers/postgres/client"
+	postgresClient "irmin-connectors/connectors/postgres/client"
 	connectorModels "irmin-connectors/models"
 	"irmin-connectors/utils"
 	"net/http"

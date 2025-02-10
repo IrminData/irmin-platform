@@ -1,12 +1,12 @@
-package register
+package utils
 
 import (
 	"fmt"
 	"irmin-connectors/db"
 )
 
-// updateConnectorInDB updates the connector registration in the database.
-func updateConnectorInDB(irminId, token, connectorName string) error {
+// UpdateConnectorInDB updates the connector registration in the database.
+func UpdateConnectorInDB(irminId, token, connectorName string) error {
 	// Remove current connector registrations from the database
 	regs, err := db.GetConnectorRegistrationByConnectorName(connectorName)
 	if err != nil {

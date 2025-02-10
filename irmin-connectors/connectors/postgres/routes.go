@@ -1,13 +1,13 @@
-package routes
+package postgresConnector
 
 import (
-	postgresControllers "irmin-connectors/controllers/postgres"
+	postgresControllers "irmin-connectors/connectors/postgres/controllers"
 
 	"github.com/gorilla/mux"
 )
 
-// Setup routes for the Postgres connector.
-func setupPostgresRoutes(r *mux.Router) *mux.Router {
+// SetupRoutes sets up the routes for the PostgreSQL connector
+func SetupRoutes(r *mux.Router) *mux.Router {
 	s := r.PathPrefix("/postgres").Subrouter()
 
 	s.HandleFunc("/info", postgresControllers.Info).Methods("GET")
