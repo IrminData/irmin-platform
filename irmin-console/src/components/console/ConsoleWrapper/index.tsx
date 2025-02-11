@@ -15,7 +15,7 @@ import Button from '@/components/ui/button';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
-import { useBreakpoint } from '@/utils/tw';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 
 import { Workspace } from '@/types/core/Workspace';
 
