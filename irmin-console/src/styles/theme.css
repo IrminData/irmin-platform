@@ -2,6 +2,12 @@
 
 @config '../../tailwind.config.ts';
 
+/* 
+  ============================================================================
+  Application Theme Configuration
+  ============================================================================
+*/
+
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
@@ -20,6 +26,9 @@
   }
 }
 
+/**
+* Configurations for color palette and base theme variables
+*/
 @layer base {
   :root {
     /* Irmin Color Palette */

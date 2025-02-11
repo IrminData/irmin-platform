@@ -4,8 +4,8 @@ import { Big_Shoulders_Display, Inter } from 'next/font/google';
 
 import { ClerkProvider } from '@clerk/nextjs';
 
-import '@/styles/globals.css';
-import '@/styles/irmin-global.css';
+import '@/styles/main.css';
+import '@/styles/theme.css';
 
 import { IAMProvider } from '@/context/IAMContext';
 import { LocaleProvider } from '@/context/LocaleContext';
