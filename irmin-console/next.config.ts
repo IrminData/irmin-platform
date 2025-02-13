@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next';
 
-import { withSentryConfig } from '@sentry/nextjs';
+import MillionLint from '@million/lint';
+import { SentryBuildOptions, withSentryConfig } from '@sentry/nextjs';
 
 /**
  * Next.js configuration
@@ -48,7 +49,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
+/**
+ * Sentry configuration
+ */
+const sentryConfig: SentryBuildOptions = {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
 
@@ -76,9 +80,6 @@ export default withSentryConfig(nextConfig, {
   // side errors will fail.
   tunnelRoute: '/monitoring',
 
-  // Hides source maps from generated client bundles
-  hideSourceMaps: true,
-
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
 
@@ -87,4 +88,8 @@ export default withSentryConfig(nextConfig, {
   // https://docs.sentry.io/product/crons/
   // https://vercel.com/docs/cron-jobs
   automaticVercelMonitors: true,
-});
+};
+
+export default MillionLint.next({ enabled: true, rsc: true })(
+  withSentryConfig(nextConfig, sentryConfig)
+);
