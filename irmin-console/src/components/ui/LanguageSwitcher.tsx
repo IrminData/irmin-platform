@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import dynamic from 'next/dynamic';
 
@@ -26,7 +26,7 @@ const ReactSelect = dynamic(() => import('react-select'), {
  * It allows users to change the language of the application.
  * It uses the LocaleContext to switch the language. See {@link useLocale}
  */
-export default function LanguageSwitcher() {
+const LanguageSwitcher = () => {
   const { locale, dict, switchLocale } = useLocale();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -76,4 +76,6 @@ export default function LanguageSwitcher() {
       id='language-switcher'
     />
   );
-}
+};
+
+export default memo(LanguageSwitcher);
