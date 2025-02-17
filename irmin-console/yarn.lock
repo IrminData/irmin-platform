@@ -2737,9 +2737,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mdxeditor/editor@npm:^3.21.5":
-  version: 3.21.5
-  resolution: "@mdxeditor/editor@npm:3.21.5"
+"@mdxeditor/editor@npm:^3.23.0":
+  version: 3.23.0
+  resolution: "@mdxeditor/editor@npm:3.23.0"
   dependencies:
     "@codemirror/lang-markdown": "npm:^6.2.3"
     "@codemirror/language-data": "npm:^6.5.1"
@@ -2796,7 +2796,7 @@ __metadata:
   peerDependencies:
     react: ">= 18 || >= 19"
     react-dom: ">= 18 || >= 19"
-  checksum: 10c0/32e41e509aeb70712d3a024cdea5050c9dac1401c3275f12052088f4ccf82df5df7b87a6cd81849b1cd0e45e9b31d569a779c0178271357fd6940337384527fc
+  checksum: 10c0/96116aacaaa16a7f401e9b43e2af60b089210eb81a4ddce33921cf8259fd3844d4597a101418c9a070bf278eef7d719a814c66e0ca12e71a32a8bfd24ee06c9a
   languageName: node
   linkType: hard
 
@@ -9539,7 +9539,7 @@ __metadata:
     "@codemirror/lang-sql": "npm:^6.8.0"
     "@codemirror/view": "npm:^6.36.2"
     "@cyntler/react-doc-viewer": "npm:^1.17.0"
-    "@mdxeditor/editor": "npm:^3.21.5"
+    "@mdxeditor/editor": "npm:^3.23.0"
     "@melloware/react-logviewer": "npm:^6.1.2"
     "@microlink/react-json-view": "npm:^1.26.1"
     "@million/lint": "npm:^1.0.14"
