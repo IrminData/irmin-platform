@@ -1,6 +1,5 @@
 import type { NextConfig } from 'next';
 
-import MillionLint from '@million/lint';
 import { SentryBuildOptions, withSentryConfig } from '@sentry/nextjs';
 
 /**
@@ -90,6 +89,4 @@ const sentryConfig: SentryBuildOptions = {
   automaticVercelMonitors: true,
 };
 
-export default MillionLint.next({ enabled: true, rsc: true })(
-  withSentryConfig(nextConfig, sentryConfig)
-);
+export default withSentryConfig(nextConfig, sentryConfig);

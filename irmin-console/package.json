@@ -29,7 +29,6 @@
     "@mdxeditor/editor": "^3.23.2",
     "@melloware/react-logviewer": "^6.1.2",
     "@microlink/react-json-view": "^1.26.1",
-    "@million/lint": "^1.0.14",
     "@novu/node": "^2.6.5",
     "@novu/react": "^2.6.5",
     "@radix-ui/react-avatar": "^1.1.3",
