@@ -103,7 +103,7 @@ const ManageWorkspacesSection = ({
         <div className='flex flex-col gap-4 px-4 pb-28 lg:flex-row-reverse'>
           {/* Form for creating a new workspace */}
           <div className='w-full pr-4 lg:max-w-80'>
-            <div className='bg-background text-foreground rounded-xl p-2 text-xs shadow-sm sm:p-4 lg:p-4 lg:text-base'>
+            <div className='bg-background text-foreground rounded-xl p-2 text-xs shadow-xs sm:p-4 lg:p-4 lg:text-base'>
               <form
                 onSubmit={handleSubmit(handleCreateWorkspace)}
                 className={`${processing && 'blur-xs'}`}

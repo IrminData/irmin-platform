@@ -92,7 +92,7 @@ export default function LogsSection({
             />
           )}
           <div>
-            <h2 className='font-display text-opacity-80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
+            <h2 className='font-display text-foreground/80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
               {title}
             </h2>
             {workflow && (

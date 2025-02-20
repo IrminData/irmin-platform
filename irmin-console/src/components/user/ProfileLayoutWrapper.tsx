@@ -47,7 +47,7 @@ export default function ProfileLayoutWrapper({
     <>
       <div className='relative container mx-auto max-w-6xl'>
         <div className='mx-auto my-8 flex w-full flex-col gap-2 px-2 md:px-4'>
-          <h1 className='font-display text-opacity-80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
+          <h1 className='font-display text-foreground/80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
             {dict.consoleNavigation.myProfile}
           </h1>
         </div>

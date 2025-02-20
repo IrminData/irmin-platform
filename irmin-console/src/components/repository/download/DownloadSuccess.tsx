@@ -9,7 +9,7 @@ const DownloadSuccess = () => {
   return (
     <div className='flex flex-col items-center justify-center gap-4 py-12'>
       <AiOutlineCheckCircle className='text-irmin_green' size={60} />
-      <h2 className='font-display text-opacity-80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
+      <h2 className='font-display text-foreground/80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
         {dict.common.success}
       </h2>
     </div>

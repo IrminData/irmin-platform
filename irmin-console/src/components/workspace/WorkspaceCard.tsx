@@ -34,7 +34,7 @@ const WorkspaceCard = ({
       onClick={openWorkspace}
       aria-label={`Go to ${workspace.name} workspace`}
     >
-      <div className='bg-card text-card-foreground flex h-full flex-col rounded-xl p-2 text-xs shadow-sm lg:p-4 lg:text-base'>
+      <div className='bg-card text-card-foreground flex h-full flex-col rounded-xl p-2 text-xs shadow-xs lg:p-4 lg:text-base'>
         <span className='md:text-normal text-irmin_green text-xs font-semibold tracking-wide uppercase'>
           {dict.workspaceSwitcher.workspace}
         </span>

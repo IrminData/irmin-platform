@@ -92,7 +92,7 @@ export default function PipelineWorkflowsSection({
   return (
     <div className='relative container mx-auto max-w-6xl px-4 py-8'>
       <div className='my-4 flex flex-row items-center justify-between gap-4'>
-        <h2 className='font-display text-opacity-80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
+        <h2 className='font-display text-foreground/80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
           {dict.workflow.pipelineWorkflows}
         </h2>
         <Button
