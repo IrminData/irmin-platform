@@ -5,6 +5,7 @@ import {
   type JSX,
   useCallback,
   useContext,
+  useMemo,
   useState,
 } from 'react';
 
@@ -62,17 +63,20 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   const [alertType, setAlertType] = useState<
     'success' | 'error' | 'info' | null
   >(null);
-  const irminAlert = (
-    type: 'success' | 'error' | 'info',
-    message: string | JSX.Element
-  ) => {
-    setAlertType(type);
-    setAlertMessage(message);
-    setTimeout(() => {
-      setAlertType(null);
-      setAlertMessage(null);
-    }, 10000);
-  };
+  const irminAlert = useCallback(
+    (type: 'success' | 'error' | 'info', message: string | JSX.Element) => {
+      setAlertType(type);
+      setAlertMessage(message);
+      setTimeout(() => {
+        setAlertType(null);
+        setAlertMessage(null);
+      }, 10000);
+    },
+    []
+  );
+  const closeIrminAlert = useCallback(() => {
+    setAlertMessage(null);
+  }, []);
 
   // Handle confirmations
   const [confirmMessage, setConfirmMessage] = useState<string | null>(null);
@@ -82,14 +86,17 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   const [confirmResolver, setConfirmResolver] = useState<
     null | ((value: boolean) => void)
   >(null);
-  const handleConfirmSelection = (confirmed: boolean) => {
-    if (confirmResolver) {
-      confirmResolver(confirmed); // Resolve the stored promise
-      setConfirmResolver(null); // Clear the resolver
-    }
-    setConfirmMessage(null);
-    setConfirmType(null);
-  };
+  const handleConfirmSelection = useCallback(
+    (confirmed: boolean) => {
+      if (confirmResolver) {
+        confirmResolver(confirmed); // Resolve the stored promise
+        setConfirmResolver(null); // Clear the resolver
+      }
+      setConfirmMessage(null);
+      setConfirmType(null);
+    },
+    [confirmResolver]
+  );
   const irminConfirm = useCallback(
     (type: 'warning' | 'info', message: string): Promise<boolean> => {
       setConfirmType(type);
@@ -120,28 +127,29 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   );
   const closeModal = useCallback(() => {
     setModalOpen(false);
-    if (modalOnClose) {
-      modalOnClose();
-    }
+    if (modalOnClose && typeof modalOnClose === 'function') modalOnClose();
   }, [modalOnClose]);
 
+  const value = useMemo(
+    () => ({
+      irminAlert: irminAlert,
+      irminConfirm: irminConfirm,
+      irminModal: {
+        show: showIrminModal,
+        close: closeModal,
+      },
+    }),
+    [irminAlert, irminConfirm, showIrminModal, closeModal]
+  );
+
   return (
-    <PopupContext.Provider
-      value={{
-        irminAlert: irminAlert,
-        irminConfirm: irminConfirm,
-        irminModal: {
-          show: showIrminModal,
-          close: closeModal,
-        },
-      }}
-    >
+    <PopupContext.Provider value={value}>
       {children}
       {alertMessage && alertType && (
         <Alert
           type={alertType}
           message={alertMessage}
-          onClose={() => setAlertMessage(null)}
+          onClose={closeIrminAlert}
         />
       )}
       {confirmMessage && confirmType && (
@@ -152,14 +160,7 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
         />
       )}
       {modalOpen && (
-        <Modal
-          isOpen={modalOpen}
-          title={modalTitle}
-          onClose={() => {
-            setModalOpen(false);
-            if (typeof modalOnClose === 'function') modalOnClose();
-          }}
-        >
+        <Modal isOpen={modalOpen} title={modalTitle} onClose={closeModal}>
           {modalContent}
         </Modal>
       )}

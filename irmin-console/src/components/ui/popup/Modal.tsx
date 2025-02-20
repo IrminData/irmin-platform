@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 import { IoClose } from 'react-icons/io5';
 
@@ -66,4 +66,4 @@ const Modal = ({
   );
 };
 
-export default Modal;
+export default memo(Modal);

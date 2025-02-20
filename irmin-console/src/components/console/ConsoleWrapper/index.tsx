@@ -296,7 +296,7 @@ export default function ConsoleWrapper({
                 />
               </div>
               <div className='ml-auto w-full max-w-24 transition-all focus-within:max-w-full md:max-w-sm lg:max-w-md'>
-                <ConsoleSearch />
+                <ConsoleSearch dict={dict} />
               </div>
             </div>
           </div>

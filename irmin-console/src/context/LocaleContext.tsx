@@ -5,19 +5,12 @@ import {
   ReactNode,
   useCallback,
   useContext,
-  useEffect,
-  useState,
+  useMemo,
 } from 'react';
 
-import { useParams, usePathname } from 'next/navigation';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 
-import {
-  defaultLocale,
-  dictionaries,
-  Dictionary,
-  getDictionary,
-  Locale,
-} from '@/lib/dict';
+import { defaultLocale, dictionaries, Dictionary, Locale } from '@/lib/dict';
 
 import { setCookie } from '@/utils/cookie';
 
@@ -43,42 +36,36 @@ const LocaleContext = createContext<{
  */
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const params = useParams() as { lang: Locale };
+  const router = useRouter();
+  const { lang } = useParams();
 
-  const [locale, setLocale] = useState<Locale>(
-    dictionaries[params.lang] ? params.lang : defaultLocale
+  const locale = useMemo<Locale>(
+    () =>
+      typeof lang === 'string' && dictionaries[lang]
+        ? (lang as Locale)
+        : defaultLocale,
+    [lang]
   );
-  const [dict, setDict] = useState<Dictionary>(
-    dictionaries[params.lang] ?? dictionaries[defaultLocale]
-  );
+  const dict = useMemo<Dictionary>(() => dictionaries[locale], [locale]);
 
-  useEffect(() => {
-    const dictionary = getDictionary(locale);
-    setDict(dictionary);
-  }, [locale]);
-
+  /**
+   * Switch the locale and update the cookie
+   */
   const switchLocale = useCallback(
     (newLocale: Locale) => {
-      setLocale(newLocale);
       setCookie('locale', newLocale, 365);
-      // Redirect to the new locale
-      window.open(`/${newLocale}${pathname.substring(3)}`, '_self');
+      router.push(`/${newLocale}${pathname}`);
     },
-    [pathname]
+    [pathname, router]
   );
 
-  useEffect(() => {
-    if (params.lang !== locale) {
-      setLocale(params.lang);
-      setCookie('locale', params.lang, 365);
-    }
-  }, [params.lang, locale]);
+  const value = useMemo(
+    () => ({ locale, dict, switchLocale }),
+    [locale, dict, switchLocale]
+  );
 
-  if (!dict) return;
   return (
-    <LocaleContext.Provider value={{ locale, dict, switchLocale }}>
-      {children}
-    </LocaleContext.Provider>
+    <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>
   );
 }
 

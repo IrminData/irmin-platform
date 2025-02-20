@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useParams } from 'next/navigation';
 
@@ -19,8 +19,7 @@ import {
 } from 'react-icons/tb';
 
 import { generateSearchItems } from '@/lib/actions/searchItems';
-
-import { useLocale } from '@/context/LocaleContext';
+import { Dictionary } from '@/lib/dict';
 
 import {
   ConsoleSearchItem,
@@ -40,8 +39,7 @@ import {
  *
  * @returns The console search component with search bar and results
  */
-export default function ConsoleSearch() {
-  const { dict } = useLocale();
+export default function ConsoleSearch({ dict }: { dict: Dictionary }) {
   const params = useParams<{ workspace?: string }>();
 
   // State for query and results
@@ -140,19 +138,23 @@ export default function ConsoleSearch() {
   }, [searchRef]);
 
   // Grouping results by item type
-  const groupedResults = results.reduce(
-    (acc, result) => {
-      const type = result.type;
-      if (!acc[type]) {
-        acc[type] = [];
-      }
-      acc[type].push(result);
-      return acc;
-    },
-    {} as Record<ConsoleSearchItemType, ConsoleSearchItem[]>
+  const groupedResults = useMemo(
+    () =>
+      results.reduce(
+        (acc, result) => {
+          const type = result.type;
+          if (!acc[type]) {
+            acc[type] = [];
+          }
+          acc[type].push(result);
+          return acc;
+        },
+        {} as Record<ConsoleSearchItemType, ConsoleSearchItem[]>
+      ),
+    [results]
   );
 
-  const getIconForType = (type: ConsoleSearchItemType) => {
+  const getIconForType = useCallback((type: ConsoleSearchItemType) => {
     switch (type) {
       case ConsoleSearchItemType.User:
         return <TbUser size={22} />;
@@ -174,7 +176,7 @@ export default function ConsoleSearch() {
       default:
         return <TbTools />;
     }
-  };
+  }, []);
 
   return (
     <div ref={searchRef} className='relative' id='console-search'>

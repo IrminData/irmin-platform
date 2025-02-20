@@ -1,5 +1,7 @@
 'use client';
 
+import { memo, useCallback } from 'react';
+
 import Image from 'next/image';
 
 import ProfileImagePlaceholder from '@/components/ui/ProfileImagePlaceholder';
@@ -22,13 +24,14 @@ const WorkspaceCard = ({
   handleClick: (slug: string) => void;
 }) => {
   const { dict } = useLocale();
+  const openWorkspace = useCallback(() => {
+    handleClick(workspace.slug);
+  }, [workspace.slug, handleClick]);
   return (
     <div
       id='workspace-card'
       className='h-full w-full cursor-pointer transition-all duration-300 hover:scale-95'
-      onClick={() => {
-        handleClick(workspace.slug);
-      }}
+      onClick={openWorkspace}
       aria-label={`Go to ${workspace.name} workspace`}
     >
       <div className='bg-card text-card-foreground flex h-full flex-col rounded-xl p-2 text-xs shadow-sm lg:p-4 lg:text-base'>
@@ -80,4 +83,4 @@ const WorkspaceCard = ({
   );
 };
 
-export default WorkspaceCard;
+export default memo(WorkspaceCard);

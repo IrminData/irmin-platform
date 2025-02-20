@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import { type JSX, memo } from 'react';
 
 import {
   IoCheckbox,
@@ -87,4 +87,4 @@ const Alert = ({
   );
 };
 
-export default Alert;
+export default memo(Alert);

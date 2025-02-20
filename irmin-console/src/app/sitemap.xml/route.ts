@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 
 import { languages } from '@/lib/dict';
 
+export const dynamic = 'force-static'; // This is a static route
+
 /**
  * sitemap.xml route
  *

@@ -1,5 +1,7 @@
 'use client';
 
+import { memo } from 'react';
+
 import { IoClose } from 'react-icons/io5';
 
 import Button, { ButtonWithTooltip } from '@/components/ui/button';
@@ -80,4 +82,4 @@ const Confirm = ({
   );
 };
 
-export default Confirm;
+export default memo(Confirm);
