@@ -6679,12 +6679,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-plugin-react-compiler@npm:19.0.0-beta-e552027-20250112":
-  version: 19.0.0-beta-e552027-20250112
-  resolution: "babel-plugin-react-compiler@npm:19.0.0-beta-e552027-20250112"
+"babel-plugin-react-compiler@npm:19.0.0-beta-21e868a-20250216":
+  version: 19.0.0-beta-21e868a-20250216
+  resolution: "babel-plugin-react-compiler@npm:19.0.0-beta-21e868a-20250216"
   dependencies:
     "@babel/types": "npm:^7.19.0"
-  checksum: 10c0/f64c8f11b893b6bd355a8b3f20b4f15486cee18f98560f2df991abb315b4b037fbf6ccda832eede446fac6140a942e73984a6c5e7e8f5ea5fe1fb0b45d560482
+  checksum: 10c0/0c974ec45c8fe4521f70a479e01cc4a59a2ee2c025eab21c8492e45d07fbe789a69bea92bacbfe0c0503fa255e681ec905c6422f464aa0b72ab85a0ef6ad537b
   languageName: node
   linkType: hard
 
@@ -8473,9 +8473,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react-compiler@npm:19.0.0-beta-e552027-20250112":
-  version: 19.0.0-beta-e552027-20250112
-  resolution: "eslint-plugin-react-compiler@npm:19.0.0-beta-e552027-20250112"
+"eslint-plugin-react-compiler@npm:19.0.0-beta-21e868a-20250216":
+  version: 19.0.0-beta-21e868a-20250216
+  resolution: "eslint-plugin-react-compiler@npm:19.0.0-beta-21e868a-20250216"
   dependencies:
     "@babel/core": "npm:^7.24.4"
     "@babel/parser": "npm:^7.24.4"
@@ -8485,7 +8485,7 @@ __metadata:
     zod-validation-error: "npm:^3.0.3"
   peerDependencies:
     eslint: ">=7"
-  checksum: 10c0/d54bb2def851f79d88376ef108d5f682c07de820c9561a09051a8a5f3a4dbff0c22c8d014ad5e88db5f4db27947a371f497a8b07ddc561575f1601e47e0df6e4
+  checksum: 10c0/2ef61791797b2280fd044bbea8feecfd24b2b7455157866f5b1b3a2ddce7433481d4a03faf4d462465ee9097e1dbe80384a7062f2df30cf26e15b14967b9ecd2
   languageName: node
   linkType: hard
 
@@ -9591,18 +9591,18 @@ __metadata:
     "@uiw/react-codemirror": "npm:^4.23.8"
     "@xyflow/react": "npm:^12.4.3"
     autoprefixer: "npm:^10.4.20"
-    babel-plugin-react-compiler: "npm:19.0.0-beta-e552027-20250112"
+    babel-plugin-react-compiler: "npm:19.0.0-beta-21e868a-20250216"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     date-fns: "npm:^4.1.0"
     eslint: "npm:9.20.1"
     eslint-config-next: "npm:15.1.7"
     eslint-config-prettier: "npm:^10.0.1"
-    eslint-plugin-react-compiler: "npm:19.0.0-beta-e552027-20250112"
+    eslint-plugin-react-compiler: "npm:19.0.0-beta-21e868a-20250216"
     markdown-to-jsx: "npm:^7.7.4"
     next: "npm:15.1.7"
     next-themes: "npm:^0.4.4"
-    postcss: "npm:^8.5.2"
+    postcss: "npm:^8.5.3"
     postcss-flexbugs-fixes: "npm:^5.0.2"
     postcss-nested: "npm:^7.0.2"
     postcss-preset-env: "npm:^10.1.4"
@@ -9613,7 +9613,7 @@ __metadata:
     react-day-picker: "npm:^9.5.1"
     react-diff-viewer: "npm:^3.1.1"
     react-dom: "npm:19.0.0"
-    react-icons: "npm:^5.4.0"
+    react-icons: "npm:^5.5.0"
     react-responsive: "npm:^10.0.0"
     react-select: "npm:^5.10.0"
     react-to-pdf: "npm:^1.0.1"
@@ -12521,7 +12521,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.1.4, postcss@npm:^8.4.38, postcss@npm:^8.5.2":
+"postcss@npm:^8.1.4, postcss@npm:^8.4.38":
   version: 8.5.2
   resolution: "postcss@npm:8.5.2"
   dependencies:
@@ -12540,6 +12540,17 @@ __metadata:
     picocolors: "npm:^1.1.1"
     source-map-js: "npm:^1.2.1"
   checksum: 10c0/c4d90c59c98e8a0c102b77d3f4cac190f883b42d63dc60e2f3ed840f16197c0c8e25a4327d2e9a847b45a985612317dc0534178feeebd0a1cf3eb0eecf75cae4
+  languageName: node
+  linkType: hard
+
+"postcss@npm:^8.5.3":
+  version: 8.5.3
+  resolution: "postcss@npm:8.5.3"
+  dependencies:
+    nanoid: "npm:^3.3.8"
+    picocolors: "npm:^1.1.1"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10c0/b75510d7b28c3ab728c8733dd01538314a18c52af426f199a3c9177e63eb08602a3938bfb66b62dc01350b9aed62087eabbf229af97a1659eb8d3513cec823b3
   languageName: node
   linkType: hard
 
@@ -12941,12 +12952,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-icons@npm:^5.4.0":
-  version: 5.4.0
-  resolution: "react-icons@npm:5.4.0"
+"react-icons@npm:^5.5.0":
+  version: 5.5.0
+  resolution: "react-icons@npm:5.5.0"
   peerDependencies:
     react: "*"
-  checksum: 10c0/698b0c4616870152d86de2585fb709bf3eeb9292d971d689965dade5f0ee71cdc92d2125b728ab220cc39a4c6d6bad1ed526b9b934ab39a7b6001bc23b73ee16
+  checksum: 10c0/a24309bfc993c19cbcbfc928157e53a137851822779977b9588f6dd41ffc4d11ebc98b447f4039b0d309a858f0a42980f6bfb4477fb19f9f2d1bc2e190fcf79c
   languageName: node
   linkType: hard
 
