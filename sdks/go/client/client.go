@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 )
 
@@ -41,13 +42,14 @@ func NewClient(baseURL, token, locale string) *Client {
 
 // RequestOptions allows you to specify how you'd like to send data in the request.
 type RequestOptions struct {
-	Method      string
-	Endpoint    string
-	Body        interface{}       // For JSON, this can be a struct or map to JSON-encode
-	FormFields  map[string]string // Key-value form fields (for multipart/form-data)
-	Files       []FormFile        // Files to attach (for multipart/form-data)
-	Headers     map[string]string // Extra headers, if needed
-	ContentType string            // e.g. "application/json", "multipart/form-data", etc.
+	Method        string
+	Endpoint      string
+	AllowedStatus []int             // Status codes that are considered successful, e.g. 200, 201, 204
+	Body          interface{}       // For JSON, this can be a struct or map to JSON-encode
+	FormFields    map[string]string // Key-value form fields (for multipart/form-data)
+	Files         []FormFile        // Files to attach (for multipart/form-data)
+	Headers       map[string]string // Extra headers, if needed
+	ContentType   string            // e.g. "application/json", "multipart/form-data", etc.
 }
 
 // FormFile holds information about a file you want to upload with multipart/form-data.
@@ -193,16 +195,23 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	// Check for non-2xx status codes and include body in error
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, responseBody)
+	// If no allowed status codes provided, consider all 2xx codes sucessful
+	if len(opts.AllowedStatus) == 0 {
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, responseBody)
+		}
+	} else {
+		// Check if the response status code is allowed.
+		allowed := slices.Contains(opts.AllowedStatus, resp.StatusCode)
+		if !allowed {
+			return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, responseBody)
+		}
 	}
 
 	return responseBody, nil
 }
 
-// FetchAPI is analogous to your "fetchAPI" in TypeScript.
-// It sends a request and attempts to parse the response into IrminAPIResponse[T].
+// FetchAPI sends a request and attempts to parse the response into IrminAPIResponse[T].
 func (c *Client) FetchAPI(opts RequestOptions, out interface{}) (*IrminAPIResponse, error) {
 	// 1) Make the HTTP request using your existing `Request` method.
 	body, err := c.Request(opts)
@@ -231,8 +240,7 @@ func (c *Client) FetchAPI(opts RequestOptions, out interface{}) (*IrminAPIRespon
 	return &apiResp, nil
 }
 
-// FetchBinary is analogous to your "fetchBinary" in TypeScript.
-// It sends a request and returns the raw bytes (which you can treat as a file, or parse further).
+// FetchBinary sends a request and returns the raw bytes (which you can treat as a file, or parse further).
 func (c *Client) FetchBinary(opts RequestOptions) ([]byte, error) {
 	return c.Request(opts)
 }
