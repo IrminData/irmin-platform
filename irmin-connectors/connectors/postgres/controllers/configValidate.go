@@ -26,21 +26,18 @@ func ConfigValidate(w http.ResponseWriter, r *http.Request) {
 	connectionDetailsValid := false
 	connectionSettingsValid := false
 
-	// Parse the form data
-	if err := r.ParseForm(); err != nil {
-		errors = append(errors, "Invalid form data: "+err.Error())
+	// Get connection settings and details from the request
+	fields, err := utils.ParseFormFields(r, []string{"details[host]", "details[port]", "details[user]", "details[password]", "details[default_db]", "details[ssl_mode]", "settings[database]"})
+	if err != nil {
+		errors = append(errors, err.Error())
 	}
-
-	// Extract fields for "details"
-	host := r.FormValue("details[host]")
-	portStr := r.FormValue("details[port]")
-	user := r.FormValue("details[user]")
-	password := r.FormValue("details[password]")
-	defaultDB := r.FormValue("details[default_db]")
-	sslMode := r.FormValue("details[ssl_mode]") == "true"
-
-	// Extract optional database (a "settings" field)
-	database := r.FormValue("settings[database]")
+	host := fields["details[host]"]
+	portStr := fields["details[port]"]
+	user := fields["details[user]"]
+	password := fields["details[password]"]
+	defaultDB := fields["details[default_db]"]
+	sslMode := fields["details[ssl_mode]"] == "true"
+	database := fields["settings[database]"]
 
 	// Check for missing required fields
 	if host == "" || portStr == "" || user == "" {
@@ -49,7 +46,10 @@ func ConfigValidate(w http.ResponseWriter, r *http.Request) {
 
 	// If no blocking errors so far, try to connect to the server
 	if len(errors) == 0 {
-		port := utils.StringToUint(portStr)
+		port, err := utils.StringToInt(portStr)
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("Invalid port number: %v", err))
+		}
 		pc, err := postgresClient.NewPostgresClient(host, int(port), user, password, defaultDB, sslMode)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("Failed to connect to PostgreSQL server: %v", err))

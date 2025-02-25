@@ -11,9 +11,10 @@ import (
 	"github.com/IrminData/irmin-sdk-go/models"
 )
 
-func SchemaGet(w http.ResponseWriter, r *http.Request) {
-	// Make sure the request is authorized by validating the system token
-	if !utils.ValidateConnectorSystemToken(defaultConnectorInfo.Name, w, r) {
+func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
+	// Make sure the request is authorized by validating the operation token
+	tokenValid, _, operation := utils.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
+	if !tokenValid {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -22,7 +23,7 @@ func SchemaGet(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	// Initialise the Postgres client
-	dbClient, database, err := postgresClient.InitPostgresClient(ctx, r)
+	dbClient, database, err := postgresClient.InitPostgresClient(ctx, operation)
 	if err != nil || database == nil || dbClient == nil {
 		http.Error(w, "Failed to initialize Postgres client: "+err.Error(), http.StatusInternalServerError)
 		return

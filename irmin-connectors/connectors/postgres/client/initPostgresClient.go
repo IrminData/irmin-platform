@@ -2,42 +2,50 @@ package postgresClient
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"net/http"
-	"strconv"
+	"irmin-connectors/db"
+	"irmin-connectors/utils"
+	"log"
 )
 
-// InitPostgresClient initializes a PostgresClient instance based on the form data in the HTTP request.
-func InitPostgresClient(ctx context.Context, r *http.Request) (*PostgresClient, *string, error) {
-	// Parse the form data
-	if err := r.ParseForm(); err != nil {
+// InitPostgresClient initializes a PostgresClient instance based on the data provided in the operation.
+func InitPostgresClient(ctx context.Context, operation *db.Operation) (*PostgresClient, *string, error) {
+
+	// Extract operation connection details and settings
+	var details map[string]string
+	if err := json.Unmarshal(operation.Details, &details); err != nil {
+		log.Printf("failed to unmarshal details: %v", err)
+		return nil, nil, err
+	}
+	var settings map[string]string
+	if err := json.Unmarshal(operation.Settings, &settings); err != nil {
+		log.Printf("failed to unmarshal settings: %v", err)
 		return nil, nil, err
 	}
 
-	// Extract fields for "details"
-	host := r.FormValue("details[host]")
-	portStr := r.FormValue("details[port]")
-	user := r.FormValue("details[user]")
-	password := r.FormValue("details[password]")
-	defaultDB := r.FormValue("details[default_db]")
-	sslMode := r.FormValue("details[ssl_mode]") == "true"
-
-	// Extract fields for "settings"
-	database := r.FormValue("settings[database]")
-
-	// Check for missing required fields
-	if host == "" || portStr == "" || user == "" || database == "" {
-		return nil, nil, fmt.Errorf("missing required connection details: host, port, user, or database")
+	// Extract connection details and settings
+	host := details["host"]
+	port, err := utils.StringToInt(details["port"])
+	user := details["user"]
+	password := details["password"]
+	defaultDB := details["default_db"]
+	sslMode := details["ssl_mode"] == "true"
+	database := settings["database"]
+	if err != nil {
+		log.Printf("failed to extract connection details: %v", err)
+		return nil, nil, err
 	}
 
-	// Convert port from string to int
-	port, err := strconv.Atoi(portStr)
-	if err != nil {
+	// Check for missing required fields
+	if host == "" || port == 0 || user == "" || password == "" || defaultDB == "" || database == "" {
+		err := fmt.Errorf("missing required connection details or settings")
+		log.Printf("missing required connection details or settings: %v", err)
 		return nil, nil, err
 	}
 
 	// Establish a connection to the PostgreSQL server
-	pgClient, err := NewPostgresClient(host, port, user, password, defaultDB, sslMode)
+	pgClient, err := NewPostgresClient(host, int(port), user, password, defaultDB, sslMode)
 	if err != nil {
 		return nil, nil, err
 	}

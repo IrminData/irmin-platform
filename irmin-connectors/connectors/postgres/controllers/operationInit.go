@@ -5,12 +5,21 @@ import (
 	"irmin-connectors/db"
 	"irmin-connectors/utils"
 	"net/http"
+
+	"gorm.io/datatypes"
 )
 
 func OperationInit(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the system token
 	if !utils.ValidateConnectorSystemToken(defaultConnectorInfo.Name, w, r) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Get connection settings and details from the request
+	fields, err := utils.ParseRequiredFormFields(r, []string{"details[host]", "details[port]", "details[user]", "details[password]", "details[default_db]", "details[ssl_mode]", "settings[database]"})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -33,8 +42,33 @@ func OperationInit(w http.ResponseWriter, r *http.Request) {
 	}
 	connectorRegistration := connectorRegistrations[0]
 
+	// Construct the details JSON
+	details, err := json.Marshal(map[string]string{
+		"host":       fields["details[host]"],
+		"port":       fields["details[port]"],
+		"user":       fields["details[user]"],
+		"password":   fields["details[password]"],
+		"default_db": fields["details[default_db]"],
+		"ssl_mode":   fields["details[ssl_mode]"],
+	})
+	if err != nil {
+		http.Error(w, "Failed to marshal details", http.StatusInternalServerError)
+		return
+	}
+
+	// Construct the settings JSON
+	settings, err := json.Marshal(map[string]string{
+		"database": fields["settings[database]"],
+	})
+	if err != nil {
+		http.Error(w, "Failed to marshal settings", http.StatusInternalServerError)
+		return
+	}
+
 	// Create a new operation in the database
 	newOperation, err := db.CreateOperation(&db.Operation{
+		Details:                 datatypes.JSON(details),
+		Settings:                datatypes.JSON(settings),
 		Token:                   operationToken,
 		ConnectorRegistrationID: connectorRegistration.ID,
 	})

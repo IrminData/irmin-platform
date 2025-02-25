@@ -19,8 +19,12 @@ func OperationCancel(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Operation ID is required", http.StatusBadRequest)
 		return
 	}
-	operationID := utils.StringToUint(operationIDValue)
-	operation, err := db.GetOperationByID(operationID)
+	operationID, err := utils.StringToInt(operationIDValue)
+	if err != nil {
+		http.Error(w, "Invalid operation ID", http.StatusBadRequest)
+		return
+	}
+	operation, err := db.GetOperationByID(uint(operationID))
 	if err != nil {
 		http.Error(w, "Failed to find operation", http.StatusInternalServerError)
 		return

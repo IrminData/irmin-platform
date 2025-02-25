@@ -27,45 +27,17 @@ func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	// Initialise the Postgres client
-	dbClient, database, err := postgresClient.InitPostgresClient(ctx, r)
+	dbClient, database, err := postgresClient.InitPostgresClient(ctx, operation)
 	if err != nil || database == nil || dbClient == nil {
 		http.Error(w, "Failed to initialise Postgres client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer dbClient.Close()
 
-	// Get the details from the request
-	webhook_url := r.FormValue("webhook_url")
-	webhook_access_token := r.FormValue("webhook_access_token")
-
-	// Extract fields for connection details
-	host := r.FormValue("details[host]")
-	portStr := r.FormValue("details[port]")
-	user := r.FormValue("details[user]")
-	password := r.FormValue("details[password]")
-	defaultDB := r.FormValue("details[default_db]")
-	sslMode := r.FormValue("details[ssl_mode]")
-
-	// Create JSON strings of the connection detail
-	connectionDetails, err := json.Marshal(map[string]string{
-		"host":       host,
-		"port":       portStr,
-		"user":       user,
-		"password":   password,
-		"default_db": defaultDB,
-		"ssl_mode":   sslMode,
-	})
+	// Get required fields from the request
+	fields, err := utils.ParseRequiredFormFields(r, []string{"webhook_url", "webhook_access_token"})
 	if err != nil {
-		http.Error(w, "Failed to create connection details: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Create JSON strings of the connection settings
-	connectionSettings, err := json.Marshal(map[string]string{
-		"database": *database,
-	})
-	if err != nil {
-		http.Error(w, "Failed to create connection settings: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -73,10 +45,8 @@ func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	subscription, err := db.CreateSubscription(&db.Subscription{
 		ConnectorRegistrationID: registration.ID,
 		OperationID:             operation.ID,
-		WebhookUrl:              webhook_url,
-		WebhookAccessToken:      webhook_access_token,
-		ConnectionDetails:       string(connectionDetails),
-		ConnectionSettings:      string(connectionSettings),
+		WebhookUrl:              fields["webhook_url"],
+		WebhookAccessToken:      fields["webhook_access_token"],
 	})
 	if err != nil {
 		http.Error(w, "Failed to create subscription: "+err.Error(), http.StatusInternalServerError)

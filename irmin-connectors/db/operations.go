@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -11,7 +12,9 @@ import (
 type Operation struct {
 	gorm.Model
 
-	Token string `json:"token" gorm:"type:varchar(255);not null"`
+	Details  datatypes.JSON `json:"details" gorm:"type:json"`
+	Settings datatypes.JSON `json:"settings" gorm:"type:json"`
+	Token    string         `json:"token" gorm:"type:varchar(255);not null"`
 
 	ConnectorRegistrationID uint                   `json:"connectorRegistrationID"`
 	Connector               *ConnectorRegistration `json:"connectorRegistration,omitempty" gorm:"foreignKey:ConnectorRegistrationID"`

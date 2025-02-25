@@ -23,9 +23,10 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 
-	// Parse form data (expects application/x-www-form-urlencoded or similar).
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form data", http.StatusBadRequest)
+	// Get connection settings and details from the request
+	fields, err := utils.ParseFormFields(r, []string{"details[host]", "details[port]", "details[user]", "details[password]", "details[default_db]", "details[ssl_mode]", "settings[database]"})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -90,12 +91,12 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 	//               we connect, fetch available databases, and let them pick one.
 	case "settings":
 		// Extract the connection details from the form
-		host := r.FormValue("details[host]")
-		portStr := r.FormValue("details[port]")
-		user := r.FormValue("details[user]")
-		password := r.FormValue("details[password]")
-		defaultDB := r.FormValue("details[default_db]")
-		sslMode := r.FormValue("details[ssl_mode]") == "true"
+		host := fields["details[host]"]
+		portStr := fields["details[port]"]
+		user := fields["details[user]"]
+		password := fields["details[password]"]
+		defaultDB := fields["details[default_db]"]
+		sslMode := fields["details[ssl_mode]"] == "true"
 
 		// Quick validation
 		if host == "" || portStr == "" || user == "" {
@@ -104,7 +105,11 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Convert port from string
-		port := utils.StringToUint(portStr)
+		port, err := utils.StringToInt(portStr)
+		if err != nil {
+			http.Error(w, "Invalid port number", http.StatusBadRequest)
+			return
+		}
 
 		// Create a client WITHOUT specifying a database (so we can fetch them)
 		ctx := context.Background()

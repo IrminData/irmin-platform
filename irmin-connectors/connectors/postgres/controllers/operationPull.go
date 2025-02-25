@@ -14,7 +14,7 @@ import (
 
 func OperationPull(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the operation token
-	tokenValid, _, _ := utils.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
+	tokenValid, _, operation := utils.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
 	if !tokenValid {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -24,31 +24,29 @@ func OperationPull(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	// Initialise the Postgres client
-	dbClient, database, err := postgresClient.InitPostgresClient(ctx, r)
+	dbClient, database, err := postgresClient.InitPostgresClient(ctx, operation)
 	if err != nil || database == nil || dbClient == nil {
 		http.Error(w, "Failed to initialize Postgres client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer dbClient.Close() // Close the client at the end of the function
 
-	// Parse the form data
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form data: "+err.Error(), http.StatusBadRequest)
+	// Get the form values from the request
+	fields, err := utils.ParseRequiredFormFields(r, []string{"path"})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Extract the path
-	path := r.FormValue("path")
-
 	// If path is empty or just "/", or matches the database name with no sub-path,
 	// we treat this as the root and return all tables in a multipart response.
-	if path == "" || path == "/" {
+	if fields["path"] == "" || fields["path"] == "/" {
 		returnAllTablesAsMultipart(ctx, w, dbClient)
 		return
 	}
 
 	// If the path is not empty, get the details of the path
-	_, tableName, rowIdentifier, _ := utils.ExtractPathComponents(path)
+	_, tableName, rowIdentifier, _ := utils.ExtractPathComponents(fields["path"])
 
 	if tableName != "" && rowIdentifier != "" {
 		// If both table name and row identifier are present, fetch a single row

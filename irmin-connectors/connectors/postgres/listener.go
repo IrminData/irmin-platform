@@ -19,13 +19,19 @@ import (
 )
 
 func StartListener(subscription db.Subscription, ctx context.Context) error {
+	// Get the operation associated with the subscription
+	operation, err := db.GetOperationByID(subscription.OperationID)
+	if err != nil {
+		return fmt.Errorf("failed to get operation: %v", err)
+	}
+
 	// Get the connection details and settings from the subscription
 	var details postgresModels.ConnectionDetails
 	var settings postgresModels.ConnectionSettings
-	if err := json.Unmarshal([]byte(subscription.ConnectionDetails), &details); err != nil {
+	if err := json.Unmarshal(operation.Details, &details); err != nil {
 		return fmt.Errorf("failed to unmarshal connection details: %v", err)
 	}
-	if err := json.Unmarshal([]byte(subscription.ConnectionSettings), &settings); err != nil {
+	if err := json.Unmarshal(operation.Settings, &settings); err != nil {
 		return fmt.Errorf("failed to unmarshal connection settings: %v", err)
 	}
 
