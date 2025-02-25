@@ -38,9 +38,14 @@ func OperationPush(w http.ResponseWriter, r *http.Request) {
 	}
 	defer dbClient.Close()
 
-	// Extract the 'path' parameter
-	path := r.FormValue("path")
-	_, tableName, _, _ := utils.ExtractPathComponents(path)
+	// Get the form values from the request
+	fields, err := utils.ParseRequiredFormFields(r, []string{"path"})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, tableName, _, _ := utils.ExtractPathComponents(fields["path"])
 
 	// If no table name was provided, error out
 	if tableName == "" {

@@ -13,13 +13,15 @@ func OperationCancel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Find the operation
-	operationIDValue := r.FormValue("operation_id")
-	if operationIDValue == "" {
-		http.Error(w, "Operation ID is required", http.StatusBadRequest)
+	// Get the form values from the request
+	fields, err := utils.ParseRequiredFormFields(r, []string{"operation_id"})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	operationID, err := utils.StringToInt(operationIDValue)
+
+	// Find the operation
+	operationID, err := utils.StringToInt(fields["operation_id"])
 	if err != nil {
 		http.Error(w, "Invalid operation ID", http.StatusBadRequest)
 		return
