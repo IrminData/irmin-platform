@@ -22,7 +22,7 @@ func NewWorkflowService(client *client.Client) *WorkflowService {
 }
 
 // FetchWorkflows retrieves a list of all workflows
-func (s *WorkflowService) FetchWorkflows() ([]models.Workflow, *client.IrminAPIResponse, error) {
+func (s *WorkflowService) FetchWorkflows() ([]models.Workflow, *models.IrminAPIResponse, error) {
 	var workflows []models.Workflow
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:   http.MethodGet,
@@ -35,7 +35,7 @@ func (s *WorkflowService) FetchWorkflows() ([]models.Workflow, *client.IrminAPIR
 }
 
 // FetchWorkflow retrieves a single workflow by its ID
-func (s *WorkflowService) FetchWorkflow(workflowID string) (*models.Workflow, *client.IrminAPIResponse, error) {
+func (s *WorkflowService) FetchWorkflow(workflowID string) (*models.Workflow, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/workflows/%s", workflowID)
 	var workflow models.Workflow
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
@@ -55,7 +55,7 @@ func (s *WorkflowService) UpdateWorkflow(
 	description,
 	documentation string,
 	workflowSchedule *models.WorkflowSchedule,
-) (*models.Workflow, *client.IrminAPIResponse, error) {
+) (*models.Workflow, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method": "PATCH",
 		// Workflow properties
@@ -89,7 +89,7 @@ func (s *WorkflowService) UpdateWorkflow(
 }
 
 // DeleteWorkflow deletes a workflow by its ID
-func (s *WorkflowService) DeleteWorkflow(workflowID string) (*client.IrminAPIResponse, error) {
+func (s *WorkflowService) DeleteWorkflow(workflowID string) (*models.IrminAPIResponse, error) {
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workflows/%s", workflowID),
@@ -105,7 +105,7 @@ func (s *WorkflowService) DeleteWorkflow(workflowID string) (*client.IrminAPIRes
 }
 
 // TriggerWorkflowRun triggers a workflow run manually
-func (s *WorkflowService) TriggerWorkflowRun(workflowID string) (*client.IrminAPIResponse, error) {
+func (s *WorkflowService) TriggerWorkflowRun(workflowID string) (*models.IrminAPIResponse, error) {
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workflows/%s/run", workflowID),
@@ -126,7 +126,7 @@ func (s *WorkflowService) CreateImportWorkflow(
 	description,
 	documentation string,
 	workflowSchedule *models.WorkflowSchedule,
-) (*models.Workflow, *client.IrminAPIResponse, error) {
+) (*models.Workflow, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		// Import Workflow properties
 		"connection": connection,
@@ -174,7 +174,7 @@ func (s *WorkflowService) CreateExportWorkflow(
 	description,
 	documentation string,
 	workflowSchedule *models.WorkflowSchedule,
-) (*models.Workflow, *client.IrminAPIResponse, error) {
+) (*models.Workflow, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		// Import Workflow properties
 		"connection": connection,
@@ -222,7 +222,7 @@ func (s *WorkflowService) CreateActionWorkflow(
 	description,
 	documentation string,
 	schedule *models.WorkflowSchedule,
-) (*models.Workflow, *client.IrminAPIResponse, error) {
+) (*models.Workflow, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		// Action Workflow properties
 		"executable": executable,
@@ -267,7 +267,7 @@ func (s *WorkflowService) CreatePipelineWorkflow(
 	description,
 	documentation string,
 	schedule *models.WorkflowSchedule,
-) (*models.Workflow, *client.IrminAPIResponse, error) {
+) (*models.Workflow, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"live": fmt.Sprintf("%t", live),
 		// Workflow properties

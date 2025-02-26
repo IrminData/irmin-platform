@@ -21,7 +21,7 @@ func NewDiffService(client *client.Client) *DiffService {
 }
 
 // CompareRefs compares two refs in a repository and returns the differences
-func (s *DiffService) CompareRefs(repository, baseRef, compareRef string) (*models.Diff, *client.IrminAPIResponse, error) {
+func (s *DiffService) CompareRefs(repository, baseRef, compareRef string) (*models.Diff, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/repositories/%s/compare?base_ref=%s&compare_ref=%s", repository, baseRef, compareRef)
 
 	var diff models.Diff
@@ -36,7 +36,7 @@ func (s *DiffService) CompareRefs(repository, baseRef, compareRef string) (*mode
 }
 
 // MergeRefs merges one ref into another
-func (s *DiffService) MergeRefs(repository, baseRef, compareRef, description, strategy string) (*client.IrminAPIResponse, error) {
+func (s *DiffService) MergeRefs(repository, baseRef, compareRef, description, strategy string) (*models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"base_ref":    baseRef,
 		"compare_ref": compareRef,

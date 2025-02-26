@@ -21,7 +21,7 @@ func NewQueryService(client *client.Client) *QueryService {
 }
 
 // ExecuteScript executes a script (e.g., Irmin SQL query or Compute Sandbox script)
-func (s *QueryService) ExecuteScript(scriptType, content string) (*models.QueryExecutionResult, *client.IrminAPIResponse, error) {
+func (s *QueryService) ExecuteScript(scriptType, content string) (*models.QueryExecutionResult, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"type":    scriptType,
 		"content": content,
@@ -44,7 +44,7 @@ func (s *QueryService) ExecuteScript(scriptType, content string) (*models.QueryE
 func (s *QueryService) CreateQuery(
 	scriptType, content, name, description string,
 	stored, run bool,
-) (*models.Query, *client.IrminAPIResponse, error) {
+) (*models.Query, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"type":    scriptType,
 		"content": content,
@@ -72,7 +72,7 @@ func (s *QueryService) CreateQuery(
 }
 
 // GetQueries retrieves all queries in the workspace
-func (s *QueryService) GetQueries() ([]models.Query, *client.IrminAPIResponse, error) {
+func (s *QueryService) GetQueries() ([]models.Query, *models.IrminAPIResponse, error) {
 	endpoint := "/v1/queries"
 	var queries []models.Query
 
@@ -87,7 +87,7 @@ func (s *QueryService) GetQueries() ([]models.Query, *client.IrminAPIResponse, e
 }
 
 // GetQuery retrieves a single query by ID
-func (s *QueryService) GetQuery(queryID string) (*models.Query, *client.IrminAPIResponse, error) {
+func (s *QueryService) GetQuery(queryID string) (*models.Query, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/queries/%s", queryID)
 	var query models.Query
 
@@ -102,7 +102,7 @@ func (s *QueryService) GetQuery(queryID string) (*models.Query, *client.IrminAPI
 }
 
 // DeleteQuery deletes a query by ID
-func (s *QueryService) DeleteQuery(queryID string) (*client.IrminAPIResponse, error) {
+func (s *QueryService) DeleteQuery(queryID string) (*models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method": "DELETE",
 	}
@@ -123,7 +123,7 @@ func (s *QueryService) DeleteQuery(queryID string) (*client.IrminAPIResponse, er
 func (s *QueryService) UpdateQuery(
 	queryID, scriptType, content, name, description string,
 	stored bool,
-) (*models.Query, *client.IrminAPIResponse, error) {
+) (*models.Query, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method":     "PATCH",
 		"type":        scriptType,
@@ -147,7 +147,7 @@ func (s *QueryService) UpdateQuery(
 }
 
 // ExecuteQuery executes a query by ID
-func (s *QueryService) ExecuteQuery(queryID string) (*client.IrminAPIResponse, error) {
+func (s *QueryService) ExecuteQuery(queryID string) (*models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/queries/%s/execute", queryID)
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:   http.MethodGet,
@@ -160,7 +160,7 @@ func (s *QueryService) ExecuteQuery(queryID string) (*client.IrminAPIResponse, e
 }
 
 // GetQueryResults retrieves the results of a query, paginated
-func (s *QueryService) GetQueryResults(queryID string, page int) (*models.QueryExecutionResult, *client.IrminAPIResponse, error) {
+func (s *QueryService) GetQueryResults(queryID string, page int) (*models.QueryExecutionResult, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/queries/%s/results?page=%d", queryID, page)
 	var result models.QueryExecutionResult
 

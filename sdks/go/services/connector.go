@@ -23,7 +23,7 @@ func NewConnectorService(client *client.Client) *ConnectorService {
 }
 
 // FetchAllConnectors retrieves all available connectors
-func (s *ConnectorService) FetchAllConnectors() ([]models.Connector, *client.IrminAPIResponse, error) {
+func (s *ConnectorService) FetchAllConnectors() ([]models.Connector, *models.IrminAPIResponse, error) {
 	var connectors []models.Connector
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:   http.MethodGet,
@@ -36,7 +36,7 @@ func (s *ConnectorService) FetchAllConnectors() ([]models.Connector, *client.Irm
 }
 
 // FetchConnector retrieves a connector by its ID
-func (s *ConnectorService) FetchConnector(connectorID string) (*models.Connector, *client.IrminAPIResponse, error) {
+func (s *ConnectorService) FetchConnector(connectorID string) (*models.Connector, *models.IrminAPIResponse, error) {
 	var connector models.Connector
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:   http.MethodGet,
@@ -53,7 +53,7 @@ func (s *ConnectorService) FetchConnectorConfigurationFields(
 	connectorID, configType string,
 	currentDetails map[string]string,
 	currentSettings map[string]string,
-) (map[string]interface{}, *client.IrminAPIResponse, error) {
+) ([]models.DynamicField, *models.IrminAPIResponse, error) {
 	form := map[string]string{}
 	for key, value := range currentDetails {
 		form[fmt.Sprintf("details[%s]", key)] = value
@@ -62,7 +62,7 @@ func (s *ConnectorService) FetchConnectorConfigurationFields(
 		form[fmt.Sprintf("settings[%s]", key)] = value
 	}
 
-	var fields map[string]interface{}
+	var fields []models.DynamicField
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/connectors/%s/%s", connectorID, configType),
@@ -80,7 +80,7 @@ func (s *ConnectorService) ValidateConnectorConfiguration(
 	connectorID string,
 	details map[string]string,
 	settings map[string]string,
-) (*models.ConnectorConfigurationValidationResult, *client.IrminAPIResponse, error) {
+) (*models.ConnectorConfigurationValidationResult, *models.IrminAPIResponse, error) {
 	form := map[string]string{}
 	for key, value := range details {
 		form[fmt.Sprintf("details[%s]", key)] = value
@@ -107,7 +107,7 @@ func (s *ConnectorService) FetchConnectorSchema(
 	connectorID, operation string,
 	details map[string]string,
 	settings map[string]string,
-) (*models.ObjectSchema, *client.IrminAPIResponse, error) {
+) (*models.ObjectSchema, *models.IrminAPIResponse, error) {
 	form := map[string]string{}
 	for key, value := range details {
 		form[fmt.Sprintf("details[%s]", key)] = value
@@ -137,7 +137,7 @@ func (s *ConnectorService) ValidateConnectorData(
 	dataFilename string, // Optional, e.g. "my-image.jpg", "data.json", ...
 	details map[string]string,
 	settings map[string]string,
-) (*models.ConnectorSchemaValidationResult, *client.IrminAPIResponse, error) {
+) (*models.ConnectorSchemaValidationResult, *models.IrminAPIResponse, error) {
 	// If no filename is provided, pick a default:
 	if dataFilename == "" {
 		dataFilename = "data.bin"
@@ -192,7 +192,7 @@ func (s *ConnectorService) ValidateConnectorData(
 }
 
 // RegisterNewConnector registers a new connector with the system. Requests to this endpoint must be authenticated with a system token.
-func (s *ConnectorService) RegisterNewConnector(baseURL, systemToken string) (*models.Connector, *client.IrminAPIResponse, error) {
+func (s *ConnectorService) RegisterNewConnector(baseURL, systemToken string) (*models.Connector, *models.IrminAPIResponse, error) {
 	var connector models.Connector
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
@@ -210,7 +210,7 @@ func (s *ConnectorService) RegisterNewConnector(baseURL, systemToken string) (*m
 }
 
 // UpdateRegisteredConnector updates the details of a registered connector. Requests to this endpoint must be authenticated with a system token.
-func (s *ConnectorService) UpdateRegisteredConnector(connectorID, baseURL, systemToken string) (*models.Connector, *client.IrminAPIResponse, error) {
+func (s *ConnectorService) UpdateRegisteredConnector(connectorID, baseURL, systemToken string) (*models.Connector, *models.IrminAPIResponse, error) {
 	var connector models.Connector
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,

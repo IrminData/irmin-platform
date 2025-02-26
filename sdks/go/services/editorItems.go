@@ -21,7 +21,7 @@ func NewEditorItemsService(client *client.Client) *EditorItemsService {
 }
 
 // FetchEditorItems retrieves all editor items
-func (s *EditorItemsService) FetchEditorItems() (*models.EditorItems, *client.IrminAPIResponse, error) {
+func (s *EditorItemsService) FetchEditorItems() (*models.EditorItems, *models.IrminAPIResponse, error) {
 	endpoint := "/v1/editor-items"
 	var editorItems models.EditorItems
 
@@ -36,7 +36,7 @@ func (s *EditorItemsService) FetchEditorItems() (*models.EditorItems, *client.Ir
 }
 
 // CreateFile creates a new file in the editor items
-func (s *EditorItemsService) CreateFile(file *models.EditorItemsFile, isDraft bool) (*models.EditorItemsFile, *client.IrminAPIResponse, error) {
+func (s *EditorItemsService) CreateFile(file *models.EditorItemsFile, isDraft bool) (*models.EditorItemsFile, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"name":      file.Name,
 		"path":      file.Path,
@@ -61,7 +61,7 @@ func (s *EditorItemsService) CreateFile(file *models.EditorItemsFile, isDraft bo
 // UpdateFile updates an existing file in the editor items
 func (s *EditorItemsService) UpdateFile(
 	name, path, contents, extension, owner, originalPath string, isDraft bool,
-) (*models.EditorItemsFile, *client.IrminAPIResponse, error) {
+) (*models.EditorItemsFile, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method":       "PATCH",
 		"name":          name,
@@ -88,7 +88,7 @@ func (s *EditorItemsService) UpdateFile(
 }
 
 // DeleteFile deletes a file from the editor items
-func (s *EditorItemsService) DeleteFile(name, extension, path string) (*client.IrminAPIResponse, error) {
+func (s *EditorItemsService) DeleteFile(name, extension, path string) (*models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method":   "DELETE",
 		"name":      name,
@@ -109,7 +109,7 @@ func (s *EditorItemsService) DeleteFile(name, extension, path string) (*client.I
 }
 
 // CreateFolder creates a new folder in the editor items
-func (s *EditorItemsService) CreateFolder(folder *models.EditorItemsFolder) (*models.EditorItemsFolder, *client.IrminAPIResponse, error) {
+func (s *EditorItemsService) CreateFolder(folder *models.EditorItemsFolder) (*models.EditorItemsFolder, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"name": folder.Name,
 		"path": folder.Path,
@@ -129,7 +129,7 @@ func (s *EditorItemsService) CreateFolder(folder *models.EditorItemsFolder) (*mo
 }
 
 // DeleteFolder deletes a folder from the editor items
-func (s *EditorItemsService) DeleteFolder(name, path string) (*client.IrminAPIResponse, error) {
+func (s *EditorItemsService) DeleteFolder(name, path string) (*models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method": "DELETE",
 		"name":    name,

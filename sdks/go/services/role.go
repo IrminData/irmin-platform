@@ -21,7 +21,7 @@ func NewRoleService(client *client.Client) *RoleService {
 }
 
 // FetchRoles retrieves all available roles
-func (s *RoleService) FetchRoles() ([]models.IrminRole, *client.IrminAPIResponse, error) {
+func (s *RoleService) FetchRoles() ([]models.IrminRole, *models.IrminAPIResponse, error) {
 	endpoint := "/v1/roles"
 	var roles []models.IrminRole
 

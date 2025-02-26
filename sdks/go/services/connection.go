@@ -20,7 +20,7 @@ func NewConnectionService(client *client.Client) *ConnectionService {
 }
 
 // FetchConnections retrieves all connections for the current workspace
-func (s *ConnectionService) FetchConnections() ([]models.Connection, *client.IrminAPIResponse, error) {
+func (s *ConnectionService) FetchConnections() ([]models.Connection, *models.IrminAPIResponse, error) {
 	var connections []models.Connection
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:   http.MethodGet,
@@ -33,7 +33,7 @@ func (s *ConnectionService) FetchConnections() ([]models.Connection, *client.Irm
 }
 
 // FetchConnection retrieves a connection by its ID
-func (s *ConnectionService) FetchConnection(connectionID string) (*models.Connection, *client.IrminAPIResponse, error) {
+func (s *ConnectionService) FetchConnection(connectionID string) (*models.Connection, *models.IrminAPIResponse, error) {
 	var connection models.Connection
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:   http.MethodGet,
@@ -51,7 +51,7 @@ func (s *ConnectionService) UpdateConnection(
 	name,
 	description,
 	documentation string,
-) (*models.Connection, *client.IrminAPIResponse, error) {
+) (*models.Connection, *models.IrminAPIResponse, error) {
 	var updatedConnection models.Connection
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
@@ -73,7 +73,7 @@ func (s *ConnectionService) UpdateConnection(
 // ReassignConnection reassigns a connection to a new owner
 func (s *ConnectionService) ReassignConnection(
 	connectionID, newOwnerID string,
-) (*models.Connection, *client.IrminAPIResponse, error) {
+) (*models.Connection, *models.IrminAPIResponse, error) {
 	var updatedConnection models.Connection
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
@@ -90,7 +90,7 @@ func (s *ConnectionService) ReassignConnection(
 }
 
 // DeleteConnection deletes a connection by its ID
-func (s *ConnectionService) DeleteConnection(connectionID string) (*client.IrminAPIResponse, error) {
+func (s *ConnectionService) DeleteConnection(connectionID string) (*models.IrminAPIResponse, error) {
 	form := url.Values{}
 	form.Set("_method", "DELETE")
 
@@ -114,7 +114,7 @@ func (s *ConnectionService) CreateConnection(
 	connectorID string,
 	connectionDetails, connectionSettings map[string]string,
 	name, description string,
-) (*models.Connection, *client.IrminAPIResponse, error) {
+) (*models.Connection, *models.IrminAPIResponse, error) {
 
 	fields := map[string]string{
 		"connector":   connectorID,

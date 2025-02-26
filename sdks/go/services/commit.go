@@ -19,7 +19,7 @@ func NewCommitService(client *client.Client) *CommitService {
 }
 
 // FetchCommits retrieves all commits for a repository and optionally a ref
-func (s *CommitService) FetchCommits(repository, ref string) ([]models.Commit, *client.IrminAPIResponse, error) {
+func (s *CommitService) FetchCommits(repository, ref string) ([]models.Commit, *models.IrminAPIResponse, error) {
 	var commits []models.Commit
 	endpoint := fmt.Sprintf("/v1/repositories/%s/commits", repository)
 	if ref != "" {
@@ -37,7 +37,7 @@ func (s *CommitService) FetchCommits(repository, ref string) ([]models.Commit, *
 }
 
 // FetchCommit retrieves a commit by its hash
-func (s *CommitService) FetchCommit(repository, hash string) (*models.Commit, *client.IrminAPIResponse, error) {
+func (s *CommitService) FetchCommit(repository, hash string) (*models.Commit, *models.IrminAPIResponse, error) {
 	var commit models.Commit
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:   http.MethodGet,
@@ -50,7 +50,7 @@ func (s *CommitService) FetchCommit(repository, hash string) (*models.Commit, *c
 }
 
 // CreateCommit creates a new commit in a repository for the specified branch
-func (s *CommitService) CreateCommit(repository, branch, message string) (*client.IrminAPIResponse, error) {
+func (s *CommitService) CreateCommit(repository, branch, message string) (*models.IrminAPIResponse, error) {
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/commits", repository),
@@ -67,7 +67,7 @@ func (s *CommitService) CreateCommit(repository, branch, message string) (*clien
 }
 
 // RevertUncommittedChanges reverts uncommitted changes in a branch
-func (s *CommitService) RevertUncommittedChanges(repository, branch string) (*client.IrminAPIResponse, error) {
+func (s *CommitService) RevertUncommittedChanges(repository, branch string) (*models.IrminAPIResponse, error) {
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/commits/revert", repository),
@@ -83,7 +83,7 @@ func (s *CommitService) RevertUncommittedChanges(repository, branch string) (*cl
 }
 
 // FetchLastModification retrieves the last commit modifying a specific object
-func (s *CommitService) FetchLastModification(repository, branch, objectPath string) (*models.Commit, *client.IrminAPIResponse, error) {
+func (s *CommitService) FetchLastModification(repository, branch, objectPath string) (*models.Commit, *models.IrminAPIResponse, error) {
 	var commit models.Commit
 	urlParams := fmt.Sprintf("?branch=%s", branch)
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{

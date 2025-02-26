@@ -21,7 +21,7 @@ func NewWorkspaceService(client *client.Client) *WorkspaceService {
 }
 
 // FetchWorkspaces retrieves a list of workspaces
-func (s *WorkspaceService) FetchWorkspaces() ([]models.Workspace, *client.IrminAPIResponse, error) {
+func (s *WorkspaceService) FetchWorkspaces() ([]models.Workspace, *models.IrminAPIResponse, error) {
 	var workspaces []models.Workspace
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
@@ -36,7 +36,7 @@ func (s *WorkspaceService) FetchWorkspaces() ([]models.Workspace, *client.IrminA
 }
 
 // FetchWorkspace retrieves a single workspace by slug
-func (s *WorkspaceService) FetchWorkspace(slug string) (*models.Workspace, *client.IrminAPIResponse, error) {
+func (s *WorkspaceService) FetchWorkspace(slug string) (*models.Workspace, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/workspaces/%s", slug)
 	var workspace models.Workspace
 
@@ -52,7 +52,7 @@ func (s *WorkspaceService) FetchWorkspace(slug string) (*models.Workspace, *clie
 }
 
 // TransferWorkspaceOwnership reassigns ownership of a workspace
-func (s *WorkspaceService) TransferWorkspaceOwnership(slug, userID string) (*client.IrminAPIResponse, error) {
+func (s *WorkspaceService) TransferWorkspaceOwnership(slug, userID string) (*models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/workspaces/%s/reassign", slug)
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
@@ -70,7 +70,7 @@ func (s *WorkspaceService) TransferWorkspaceOwnership(slug, userID string) (*cli
 }
 
 // CreateWorkspace creates a new workspace
-func (s *WorkspaceService) CreateWorkspace(name, description string) (*models.Workspace, *client.IrminAPIResponse, error) {
+func (s *WorkspaceService) CreateWorkspace(name, description string) (*models.Workspace, *models.IrminAPIResponse, error) {
 	var workspace models.Workspace
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:      http.MethodPost,
@@ -89,7 +89,7 @@ func (s *WorkspaceService) CreateWorkspace(name, description string) (*models.Wo
 }
 
 // UpdateWorkspace updates an existing workspace
-func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*models.Workspace, *client.IrminAPIResponse, error) {
+func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*models.Workspace, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/workspaces/%s", slug)
 	var workspace models.Workspace
 
@@ -111,7 +111,7 @@ func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*mod
 }
 
 // DeleteWorkspace deletes a workspace
-func (s *WorkspaceService) DeleteWorkspace(slug string) (*client.IrminAPIResponse, error) {
+func (s *WorkspaceService) DeleteWorkspace(slug string) (*models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/workspaces/%s", slug)
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
@@ -129,7 +129,7 @@ func (s *WorkspaceService) DeleteWorkspace(slug string) (*client.IrminAPIRespons
 }
 
 // SwitchWorkspace switches to the specified workspace
-func (s *WorkspaceService) SwitchWorkspace(slug string) (*client.IrminAPIResponse, error) {
+func (s *WorkspaceService) SwitchWorkspace(slug string) (*models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/workspaces/%s/switch", slug)
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
@@ -143,7 +143,7 @@ func (s *WorkspaceService) SwitchWorkspace(slug string) (*client.IrminAPIRespons
 }
 
 // LeaveWorkspace lets the user leave the specified workspace
-func (s *WorkspaceService) LeaveWorkspace(slug string) (*client.IrminAPIResponse, error) {
+func (s *WorkspaceService) LeaveWorkspace(slug string) (*models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/workspaces/%s/leave", slug)
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{

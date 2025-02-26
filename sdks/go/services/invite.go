@@ -21,7 +21,7 @@ func NewInviteService(client *client.Client) *InviteService {
 }
 
 // InviteUserToWorkspace invites a user to the workspace
-func (s *InviteService) InviteUserToWorkspace(firstName, lastName, email, phone, company, role string) (*models.Invite, *client.IrminAPIResponse, error) {
+func (s *InviteService) InviteUserToWorkspace(firstName, lastName, email, phone, company, role string) (*models.Invite, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"first_name": firstName,
 		"last_name":  lastName,
@@ -45,7 +45,7 @@ func (s *InviteService) InviteUserToWorkspace(firstName, lastName, email, phone,
 }
 
 // ResendUserInvite resends an invite
-func (s *InviteService) ResendUserInvite(inviteID string) (*client.IrminAPIResponse, error) {
+func (s *InviteService) ResendUserInvite(inviteID string) (*models.IrminAPIResponse, error) {
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/invites/%s/resend", inviteID),
@@ -57,7 +57,7 @@ func (s *InviteService) ResendUserInvite(inviteID string) (*client.IrminAPIRespo
 }
 
 // CancelUserInvite cancels an invite
-func (s *InviteService) CancelUserInvite(inviteID string) (*client.IrminAPIResponse, error) {
+func (s *InviteService) CancelUserInvite(inviteID string) (*models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method": "DELETE",
 	}
@@ -75,7 +75,7 @@ func (s *InviteService) CancelUserInvite(inviteID string) (*client.IrminAPIRespo
 }
 
 // FetchInvites retrieves a list of invites
-func (s *InviteService) FetchInvites(workspace, user string, trashed, expired bool) ([]models.Invite, *client.IrminAPIResponse, error) {
+func (s *InviteService) FetchInvites(workspace, user string, trashed, expired bool) ([]models.Invite, *models.IrminAPIResponse, error) {
 	endpoint := "/v1/invites"
 	params := ""
 
@@ -108,7 +108,7 @@ func (s *InviteService) FetchInvites(workspace, user string, trashed, expired bo
 }
 
 // AcceptInvite accepts an invite
-func (s *InviteService) AcceptInvite(inviteID, hash, password, passwordConfirmation string) (*client.IrminAPIResponse, error) {
+func (s *InviteService) AcceptInvite(inviteID, hash, password, passwordConfirmation string) (*models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"password":              password,
 		"password_confirmation": passwordConfirmation,
@@ -127,7 +127,7 @@ func (s *InviteService) AcceptInvite(inviteID, hash, password, passwordConfirmat
 }
 
 // DeclineInvite declines an invite
-func (s *InviteService) DeclineInvite(inviteID, hash string) (*client.IrminAPIResponse, error) {
+func (s *InviteService) DeclineInvite(inviteID, hash string) (*models.IrminAPIResponse, error) {
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: fmt.Sprintf("/v1/invites/%s/decline/%s", inviteID, hash),

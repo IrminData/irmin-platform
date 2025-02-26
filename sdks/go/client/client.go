@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"slices"
 	"time"
+
+	"github.com/IrminData/irmin-sdk-go/models"
 )
 
 // Client represents the Irmin API client.
@@ -212,7 +214,7 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 }
 
 // FetchAPI sends a request and attempts to parse the response into IrminAPIResponse[T].
-func (c *Client) FetchAPI(opts RequestOptions, out interface{}) (*IrminAPIResponse, error) {
+func (c *Client) FetchAPI(opts RequestOptions, out interface{}) (*models.IrminAPIResponse, error) {
 	// 1) Make the HTTP request using your existing `Request` method.
 	body, err := c.Request(opts)
 	if err != nil {
@@ -220,7 +222,7 @@ func (c *Client) FetchAPI(opts RequestOptions, out interface{}) (*IrminAPIRespon
 	}
 
 	// 2) Unmarshal the main response.
-	var apiResp IrminAPIResponse
+	var apiResp models.IrminAPIResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response JSON: %w", err)
 	}

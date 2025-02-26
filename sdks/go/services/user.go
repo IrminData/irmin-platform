@@ -20,7 +20,7 @@ func NewUserService(client *client.Client) *UserService {
 
 // FetchWorkspaceUsers fetches all users in the current workspace.
 // Returns a list of users, the full response, and an error if any.
-func (s *UserService) FetchWorkspaceUsers() ([]models.User, *client.IrminAPIResponse, error) {
+func (s *UserService) FetchWorkspaceUsers() ([]models.User, *models.IrminAPIResponse, error) {
 	var users []models.User
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
@@ -36,7 +36,7 @@ func (s *UserService) FetchWorkspaceUsers() ([]models.User, *client.IrminAPIResp
 
 // FetchUser fetches a user by ID.
 // Returns the user object, the full response, and an error if any.
-func (s *UserService) FetchUser(userID string) (*models.User, *client.IrminAPIResponse, error) {
+func (s *UserService) FetchUser(userID string) (*models.User, *models.IrminAPIResponse, error) {
 	var user models.User
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
@@ -52,7 +52,7 @@ func (s *UserService) FetchUser(userID string) (*models.User, *client.IrminAPIRe
 
 // ChangeUserRole changes the role of a user in the current workspace.
 // The API endpoint does not return meaningful data, so we just return the response object for consistency.
-func (s *UserService) ChangeUserRole(userID, role string) (*client.IrminAPIResponse, error) {
+func (s *UserService) ChangeUserRole(userID, role string) (*models.IrminAPIResponse, error) {
 	body := map[string]string{
 		"_method": "PATCH",
 		"roles":   role,
@@ -72,7 +72,7 @@ func (s *UserService) ChangeUserRole(userID, role string) (*client.IrminAPIRespo
 
 // RemoveUserFromWorkspace removes a user from the current workspace.
 // Again, no data is returned, so we only return the response object.
-func (s *UserService) RemoveUserFromWorkspace(userID string) (*client.IrminAPIResponse, error) {
+func (s *UserService) RemoveUserFromWorkspace(userID string) (*models.IrminAPIResponse, error) {
 	body := map[string]string{
 		"_method": "DELETE",
 	}

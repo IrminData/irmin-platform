@@ -23,7 +23,7 @@ func NewProfileService(client *client.Client) *ProfileService {
 
 // GetProfile fetches the current user's profile
 // Returns the user struct and the full IrminAPIResponse for inspection (e.g. message, errors, metadata).
-func (s *ProfileService) GetProfile() (*models.User, *client.IrminAPIResponse, error) {
+func (s *ProfileService) GetProfile() (*models.User, *models.IrminAPIResponse, error) {
 	var profile models.User
 
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
@@ -42,7 +42,7 @@ func (s *ProfileService) GetProfile() (*models.User, *client.IrminAPIResponse, e
 func (s *ProfileService) UpdateProfile(
 	firstName, lastName, email, phone, company string,
 	avatar *os.File,
-) (*models.User, *client.IrminAPIResponse, error) {
+) (*models.User, *models.IrminAPIResponse, error) {
 
 	// Build form fields for multipart data
 	formFields := map[string]string{

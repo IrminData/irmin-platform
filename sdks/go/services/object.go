@@ -22,7 +22,7 @@ func NewObjectService(client *client.Client) *ObjectService {
 }
 
 // FetchObjects retrieves objects at a given path in a repository and ref
-func (s *ObjectService) FetchObjects(repository, path, ref string) ([]models.Object, *client.IrminAPIResponse, error) {
+func (s *ObjectService) FetchObjects(repository, path, ref string) ([]models.Object, *models.IrminAPIResponse, error) {
 	// Build the endpoint: /v1/repositories/:repository/objects/:path removing the first / from path if it exists
 	if len(path) > 0 && path[0] == '/' {
 		path = path[1:]
@@ -46,7 +46,7 @@ func (s *ObjectService) FetchObjects(repository, path, ref string) ([]models.Obj
 }
 
 // FetchObject retrieves a single object by its name and path in a repository
-func (s *ObjectService) FetchObject(repository, path, ref string) (*models.Object, *client.IrminAPIResponse, error) {
+func (s *ObjectService) FetchObject(repository, path, ref string) (*models.Object, *models.IrminAPIResponse, error) {
 	// Build the endpoint: /v1/repositories/:repository/objects/:path removing the first / from path if it exists
 	if len(path) > 0 && path[0] == '/' {
 		path = path[1:]
@@ -70,7 +70,7 @@ func (s *ObjectService) FetchObject(repository, path, ref string) (*models.Objec
 }
 
 // FetchObjectSchema retrieves the schema of an object in a repository
-func (s *ObjectService) FetchObjectSchema(repository, path, ref string) (*models.ObjectSchema, *client.IrminAPIResponse, error) {
+func (s *ObjectService) FetchObjectSchema(repository, path, ref string) (*models.ObjectSchema, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/repositories/%s/objects/schema/%s", repository, path)
 	if ref != "" {
 		endpoint += fmt.Sprintf("?ref=%s", ref)
@@ -114,7 +114,7 @@ func (s *ObjectService) UploadObject(
 	path string,
 	name string,
 	files map[string][]byte,
-) (*models.Object, *client.IrminAPIResponse, error) {
+) (*models.Object, *models.IrminAPIResponse, error) {
 
 	// Build the endpoint: /v1/repositories/:repository/objects/:path removing the first / from path if it exists
 	if len(path) > 0 && path[0] == '/' {
@@ -161,7 +161,7 @@ func (s *ObjectService) UploadObject(
 }
 
 // MoveObject moves or renames an object in the repository
-func (s *ObjectService) MoveObject(repository, ref, path, newPath, newName string) (*models.Object, *client.IrminAPIResponse, error) {
+func (s *ObjectService) MoveObject(repository, ref, path, newPath, newName string) (*models.Object, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method":  "MOVE",
 		"ref":      ref,
@@ -189,7 +189,7 @@ func (s *ObjectService) MoveObject(repository, ref, path, newPath, newName strin
 }
 
 // DeleteObject deletes an object from the repository
-func (s *ObjectService) DeleteObject(repository, ref, path, name string) (*client.IrminAPIResponse, error) {
+func (s *ObjectService) DeleteObject(repository, ref, path, name string) (*models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method": "DELETE",
 		"ref":     ref,

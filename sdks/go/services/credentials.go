@@ -21,7 +21,7 @@ func NewCredentialService(client *client.Client) *CredentialService {
 }
 
 // GetSystemTokens retrieves the user's system tokens
-func (s *CredentialService) GetSystemTokens() ([]models.SystemToken, *client.IrminAPIResponse, error) {
+func (s *CredentialService) GetSystemTokens() ([]models.SystemToken, *models.IrminAPIResponse, error) {
 	var tokens []models.SystemToken
 	apiResp, err := s.client.FetchAPI(client.RequestOptions{
 		Method:   http.MethodGet,
@@ -34,7 +34,7 @@ func (s *CredentialService) GetSystemTokens() ([]models.SystemToken, *client.Irm
 }
 
 // CreateSystemToken creates a new system token
-func (s *CredentialService) CreateSystemToken(name string, expiry int) (*models.SystemToken, *client.IrminAPIResponse, error) {
+func (s *CredentialService) CreateSystemToken(name string, expiry int) (*models.SystemToken, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"name":   name,
 		"expiry": fmt.Sprintf("%d", expiry),
@@ -54,7 +54,7 @@ func (s *CredentialService) CreateSystemToken(name string, expiry int) (*models.
 }
 
 // RevokeSystemToken revokes a system token
-func (s *CredentialService) RevokeSystemToken(tokenID string) (*client.IrminAPIResponse, error) {
+func (s *CredentialService) RevokeSystemToken(tokenID string) (*models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method": "DELETE",
 	}

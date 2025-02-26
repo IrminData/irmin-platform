@@ -21,7 +21,7 @@ func NewRepositoryService(client *client.Client) *RepositoryService {
 }
 
 // FetchRepositories retrieves all repositories
-func (s *RepositoryService) FetchRepositories() ([]models.Repository, *client.IrminAPIResponse, error) {
+func (s *RepositoryService) FetchRepositories() ([]models.Repository, *models.IrminAPIResponse, error) {
 	endpoint := "/v1/repositories"
 	var repositories []models.Repository
 
@@ -36,7 +36,7 @@ func (s *RepositoryService) FetchRepositories() ([]models.Repository, *client.Ir
 }
 
 // FetchRepository retrieves a single repository by its slug
-func (s *RepositoryService) FetchRepository(slug string) (*models.Repository, *client.IrminAPIResponse, error) {
+func (s *RepositoryService) FetchRepository(slug string) (*models.Repository, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/repositories/%s", slug)
 	var repository models.Repository
 
@@ -55,7 +55,7 @@ func (s *RepositoryService) CreateRepository(
 	name,
 	description,
 	documentation string,
-) (*models.Repository, *client.IrminAPIResponse, error) {
+) (*models.Repository, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"name":          name,
 		"description":   description,
@@ -77,7 +77,7 @@ func (s *RepositoryService) CreateRepository(
 }
 
 // ReassignRepository reassigns ownership of a repository
-func (s *RepositoryService) ReassignRepository(slug, ownerID string) (*client.IrminAPIResponse, error) {
+func (s *RepositoryService) ReassignRepository(slug, ownerID string) (*models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"owner": ownerID,
 	}
@@ -95,7 +95,7 @@ func (s *RepositoryService) ReassignRepository(slug, ownerID string) (*client.Ir
 }
 
 // DeleteRepository deletes a repository by its slug
-func (s *RepositoryService) DeleteRepository(slug string) (*client.IrminAPIResponse, error) {
+func (s *RepositoryService) DeleteRepository(slug string) (*models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method": "DELETE",
 	}
@@ -118,7 +118,7 @@ func (s *RepositoryService) UpdateRepository(
 	name,
 	description,
 	documentation string,
-) (*client.IrminAPIResponse, error) {
+) (*models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method":       "PATCH",
 		"name":          name,
@@ -139,7 +139,7 @@ func (s *RepositoryService) UpdateRepository(
 }
 
 // GetRepositoryDownloadLink retrieves a download link for a repository
-func (s *RepositoryService) GetRepositoryDownloadLink(slug, ref, path string) (*string, *client.IrminAPIResponse, error) {
+func (s *RepositoryService) GetRepositoryDownloadLink(slug, ref, path string) (*string, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"ref":  ref,
 		"path": path,

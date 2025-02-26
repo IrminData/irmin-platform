@@ -21,7 +21,7 @@ func NewLogService(client *client.Client) *LogService {
 }
 
 // FetchLogEvents retrieves general audit log events for the current workspace
-func (s *LogService) FetchLogEvents() ([]models.LogEvent, *client.IrminAPIResponse, error) {
+func (s *LogService) FetchLogEvents() ([]models.LogEvent, *models.IrminAPIResponse, error) {
 	endpoint := "/v1/logs"
 	var logEvents []models.LogEvent
 
@@ -36,7 +36,7 @@ func (s *LogService) FetchLogEvents() ([]models.LogEvent, *client.IrminAPIRespon
 }
 
 // FetchWorkflowLogEvents retrieves log events for a specific workflow
-func (s *LogService) FetchWorkflowLogEvents(workflowID string) ([]models.LogEvent, *client.IrminAPIResponse, error) {
+func (s *LogService) FetchWorkflowLogEvents(workflowID string) ([]models.LogEvent, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/workflows/%s/logs", workflowID)
 	var workflowLogs []models.LogEvent
 
@@ -51,7 +51,7 @@ func (s *LogService) FetchWorkflowLogEvents(workflowID string) ([]models.LogEven
 }
 
 // FetchWorkflowRunLogs retrieves logs for a specific workflow run
-func (s *LogService) FetchWorkflowRunLogs(workflowID, workflowRunID string) (*models.WorkflowRunLogs, *client.IrminAPIResponse, error) {
+func (s *LogService) FetchWorkflowRunLogs(workflowID, workflowRunID string) (*models.WorkflowRunLogs, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/workflows/%s/runs/%s/logs", workflowID, workflowRunID)
 	var workflowRunLogs models.WorkflowRunLogs
 
@@ -66,7 +66,7 @@ func (s *LogService) FetchWorkflowRunLogs(workflowID, workflowRunID string) (*mo
 }
 
 // FetchRepositoryLogs retrieves log events for a specific repository
-func (s *LogService) FetchRepositoryLogs(repository string) ([]models.LogEvent, *client.IrminAPIResponse, error) {
+func (s *LogService) FetchRepositoryLogs(repository string) ([]models.LogEvent, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/repositories/%s/logs", repository)
 	var repositoryLogs []models.LogEvent
 
@@ -81,7 +81,7 @@ func (s *LogService) FetchRepositoryLogs(repository string) ([]models.LogEvent, 
 }
 
 // FetchConnectionLogs retrieves log events for a specific connection
-func (s *LogService) FetchConnectionLogs(connectionID string) ([]models.LogEvent, *client.IrminAPIResponse, error) {
+func (s *LogService) FetchConnectionLogs(connectionID string) ([]models.LogEvent, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/connections/%s/logs", connectionID)
 	var connectionLogs []models.LogEvent
 

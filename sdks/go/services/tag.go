@@ -21,7 +21,7 @@ func NewTagService(client *client.Client) *TagService {
 }
 
 // FetchTags retrieves all tags for a specific repository
-func (s *TagService) FetchTags(repository string) ([]models.Tag, *client.IrminAPIResponse, error) {
+func (s *TagService) FetchTags(repository string) ([]models.Tag, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/repositories/%s/tags", repository)
 	var tags []models.Tag
 
@@ -36,7 +36,7 @@ func (s *TagService) FetchTags(repository string) ([]models.Tag, *client.IrminAP
 }
 
 // FetchTag retrieves a single tag by its ID
-func (s *TagService) FetchTag(repository, tag string) (*models.Tag, *client.IrminAPIResponse, error) {
+func (s *TagService) FetchTag(repository, tag string) (*models.Tag, *models.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf("/v1/repositories/%s/tags/%s", repository, tag)
 	var tagDetails models.Tag
 
@@ -51,7 +51,7 @@ func (s *TagService) FetchTag(repository, tag string) (*models.Tag, *client.Irmi
 }
 
 // CreateTag creates a new tag in the specified repository
-func (s *TagService) CreateTag(repository, name, ref string) (*models.Tag, *client.IrminAPIResponse, error) {
+func (s *TagService) CreateTag(repository, name, ref string) (*models.Tag, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"name": name,
 		"ref":  ref,
@@ -71,7 +71,7 @@ func (s *TagService) CreateTag(repository, name, ref string) (*models.Tag, *clie
 }
 
 // UpdateTag updates the name or ref of an existing tag
-func (s *TagService) UpdateTag(repository, tag, name, ref string) (*models.Tag, *client.IrminAPIResponse, error) {
+func (s *TagService) UpdateTag(repository, tag, name, ref string) (*models.Tag, *models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method": "PATCH",
 		"name":    name,
@@ -92,7 +92,7 @@ func (s *TagService) UpdateTag(repository, tag, name, ref string) (*models.Tag, 
 }
 
 // DeleteTag deletes a tag from the repository
-func (s *TagService) DeleteTag(repository, tag string) (*client.IrminAPIResponse, error) {
+func (s *TagService) DeleteTag(repository, tag string) (*models.IrminAPIResponse, error) {
 	form := map[string]string{
 		"_method": "DELETE",
 	}
