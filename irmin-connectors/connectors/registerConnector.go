@@ -5,16 +5,15 @@ import (
 	"irmin-connectors/db"
 	"irmin-connectors/utils"
 
-	"github.com/IrminData/irmin-sdk-go/client"
-	"github.com/IrminData/irmin-sdk-go/models"
-	"github.com/IrminData/irmin-sdk-go/services"
+	irminCore "github.com/IrminData/irmin-sdk-go/core-api"
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // registerConnector registers a new connector with the Irmin API.
-func registerConnector(apiBaseURL, apiToken, baseUrl, connectorName, connectorSlug string) (*models.Connector, error) {
+func registerConnector(apiBaseURL, apiToken, baseUrl, connectorName, connectorSlug string) (*irminModels.Connector, error) {
 	// Initialise the client and service
-	apiClient := client.NewClient(apiBaseURL, apiToken, "en")
-	connectorService := services.NewConnectorService(apiClient)
+	apiClient := irminCore.NewClient(apiBaseURL, apiToken, "en")
+	connectorService := irminCore.NewConnectorService(apiClient)
 
 	// Generate a random system token to be used by the Irmin API to access the connector.
 	token, err := utils.GenerateToken(32)

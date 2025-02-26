@@ -2,13 +2,13 @@ package postgresControllers
 
 import (
 	"encoding/json"
-	connectorModels "irmin-connectors/models"
+	"irmin-connectors/models"
 	"irmin-connectors/utils"
 	"net/http"
 	"os"
 )
 
-var defaultConnectorInfo = connectorModels.ConnectorDetails{
+var defaultConnectorInfo = models.ConnectorDetails{
 	Name:             "PostgreSQL",
 	Description:      "Import and export data from PostgreSQL databases.",
 	Version:          "0.1.0",

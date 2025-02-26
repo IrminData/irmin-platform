@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	postgresClient "irmin-connectors/connectors/postgres/client"
-	connectorModels "irmin-connectors/models"
+	"irmin-connectors/models"
 	"irmin-connectors/utils"
 	"net/http"
 )
@@ -89,7 +89,7 @@ func ConfigValidate(w http.ResponseWriter, r *http.Request) {
 	ok := (len(errors) == 0) && canConnect && connectionDetailsValid && connectionSettingsValid
 
 	// Build and send the final response
-	resp := connectorModels.ValidationResponse{
+	resp := models.ValidationResponse{
 		Ok:                      ok,
 		CanConnect:              canConnect,
 		ConnectionDetailsValid:  connectionDetailsValid,

@@ -8,7 +8,7 @@ import (
 	postgresClient "irmin-connectors/connectors/postgres/client"
 	"irmin-connectors/utils"
 
-	"github.com/IrminData/irmin-sdk-go/models"
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
@@ -49,29 +49,29 @@ func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build an Irmin-compatible schema object
-	schemaRestrictions := models.GroupSchemaRestrictions{
+	schemaRestrictions := irminModels.GroupSchemaRestrictions{
 		OnlyStructured: func(b bool) *bool { return &b }(true),
 	}
-	schema := models.ObjectSchemaGroup{
-		ObjectSchemaBase: models.ObjectSchemaBase{
+	schema := irminModels.ObjectSchemaGroup{
+		ObjectSchemaBase: irminModels.ObjectSchemaBase{
 			Name: *database,
 			Path: "/" + *database,
 		},
 		Restrictions: &schemaRestrictions,
-		Children:     []models.ObjectSchema{},
+		Children:     []irminModels.ObjectSchema{},
 	}
 
 	// Convert each table structure to a JSONSchema and append to schema children
 	for tbl, structure := range tableStructures {
-		rowSchema := models.JSONSchema{
+		rowSchema := irminModels.JSONSchema{
 			Type:       "object",
-			Properties: map[string]models.JSONSchema{},
+			Properties: map[string]irminModels.JSONSchema{},
 			Required:   []string{},
 		}
 
 		// Populate rowSchema properties
 		for _, column := range structure {
-			rowSchema.Properties[column.ColumnName] = models.JSONSchema{
+			rowSchema.Properties[column.ColumnName] = irminModels.JSONSchema{
 				// In a real-world scenario, map the Postgres data type to a valid JSON Schema type (e.g. "string", "number")
 				Type: column.DataType,
 			}
@@ -81,13 +81,13 @@ func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Each table is represented as an array of row objects
-		tableSchema := models.ObjectSchemaStructured{
-			ObjectSchemaBase: models.ObjectSchemaBase{
+		tableSchema := irminModels.ObjectSchemaStructured{
+			ObjectSchemaBase: irminModels.ObjectSchemaBase{
 				Name: tbl + ".json",
 				Path: "/" + *database + "/" + tbl + ".json",
 			},
 			ContentType: func(s string) *string { return &s }("application/json"),
-			Schema: models.JSONSchema{
+			Schema: irminModels.JSONSchema{
 				Type:  "array",
 				Items: &rowSchema,
 			},

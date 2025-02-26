@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/IrminData/irmin-sdk-go/models"
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 func OperationPatch(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +58,7 @@ func OperationPatch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Unmarshal the JSON into a slice of maps
-	var operations []models.PatchOperation
+	var operations []irminModels.PatchOperation
 	if err := json.Unmarshal(fileBytes, &operations); err != nil {
 		http.Error(w, "Failed to parse JSON data: "+err.Error(), http.StatusBadRequest)
 		return

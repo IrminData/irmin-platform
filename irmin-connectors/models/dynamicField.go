@@ -1,4 +1,4 @@
-package connectorModels
+package models
 
 type DynamicField struct {
 	Type         string         `json:"type"`

@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/IrminData/irmin-sdk-go/models"
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 func StartListener(subscription db.Subscription, ctx context.Context) error {
@@ -90,7 +90,7 @@ func StartListener(subscription db.Subscription, ctx context.Context) error {
 		timestampMillis := now.UnixMilli()
 
 		// Create the payload for the webhook
-		data := models.ConnectorEvent{
+		data := irminModels.ConnectorEvent{
 			// Type of the event (e.g. "create", "update", "delete")
 			Type: strings.ToLower(evt.Operation),
 			// Irmin path of the event (e.g. /maindb/users.json/1/name)

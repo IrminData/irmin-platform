@@ -1,4 +1,4 @@
-package connectorModels
+package models
 
 type ValidationResponse struct {
 	Ok                      bool     `json:"ok"`

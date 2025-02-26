@@ -1,4 +1,4 @@
-package connectorModels
+package models
 
 type ConnectorDetails struct {
 	Name             string   `json:"name"`

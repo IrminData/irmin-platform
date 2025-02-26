@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	postgresClient "irmin-connectors/connectors/postgres/client"
-	connectorModels "irmin-connectors/models"
+	"irmin-connectors/models"
 	"irmin-connectors/utils"
 	"net/http"
 
@@ -31,14 +31,14 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// We'll store our response fields in a map (keyed by string).
-	var dynamicFields map[string]connectorModels.DynamicField
+	var dynamicFields map[string]models.DynamicField
 
 	// Switch on the key to decide what to return
 	switch key {
 
 	// "details" -> base connection info for the PostgreSQL server
 	case "details":
-		dynamicFields = map[string]connectorModels.DynamicField{
+		dynamicFields = map[string]models.DynamicField{
 			"host": {
 				Type:     "text",
 				Label:    "Host",
@@ -80,7 +80,7 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 				Label:    "SSL Mode",
 				Required: true,
 				HelpText: "Enable or disable SSL mode for the connection.",
-				Options: []connectorModels.SelectOption{
+				Options: []models.SelectOption{
 					{Key: "true", Value: "Enabled"},
 					{Key: "false", Value: "Disabled"},
 				},
@@ -142,16 +142,16 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Build a list of select options
-		dbOptions := []connectorModels.SelectOption{}
+		dbOptions := []models.SelectOption{}
 		for _, dbName := range dbs {
-			dbOptions = append(dbOptions, connectorModels.SelectOption{
+			dbOptions = append(dbOptions, models.SelectOption{
 				Key:   dbName,
 				Value: dbName,
 			})
 		}
 
 		// Our dynamic field: a "select" so the user can pick from the list
-		dynamicFields = map[string]connectorModels.DynamicField{
+		dynamicFields = map[string]models.DynamicField{
 			"database": {
 				Type:     "select",
 				Label:    "Database Name",
