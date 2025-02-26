@@ -4,12 +4,12 @@ Structure of the SDK project:
 
 ```bash
 github.com/IrminData/irmin-sdk-go/
-├── client/          # API core client
-├── services/        # API service implementations
+├── core-api/        # Irmin Core API Client
+├── connector/       # Irmin Connector API Client, to talk with connectors
 ├── models/          # Data models for the API responses and other data structures
 ├── utils/           # Utility functions provided by the SDK
 ├── static/          # Mock data files for testing
-├── examples/        # Example usage files
+├── tests/           # Tests and example usage files
 ├── test.go          # Test file to execute all the examples in a correct order
 ├── go.mod           # Go module file
 ```
