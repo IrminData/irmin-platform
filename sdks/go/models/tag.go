@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 // Tag represents a repository tag object.
 type Tag struct {

@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 // EditorItems represents a single editor items instance.
 type EditorItems struct {

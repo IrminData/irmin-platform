@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 // WorkflowableType represents the types of workflows that can exist.
 type WorkflowableType string

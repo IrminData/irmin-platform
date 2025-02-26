@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 // Connection represents information on data sources and destinations.
 type Connection struct {

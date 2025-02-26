@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 // ObjectType represents the type of the object ("group", "structured", or "binary").
 type ObjectType string

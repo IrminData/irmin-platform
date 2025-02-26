@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 import "encoding/json"
 

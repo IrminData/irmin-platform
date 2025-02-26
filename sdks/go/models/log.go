@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 // LogEventType represents the types of log events.
 type LogEventType string

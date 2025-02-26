@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/IrminData/irmin-sdk-go/models"
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // GetConfigFields fetches the configuration fields for a given configuration type.
@@ -19,7 +19,7 @@ import (
 // Returns:
 // - A list of DynamicField objects representing the configuration fields if the request is successful.
 // - An error if the request fails.
-func (c *Client) GetConfigFields(configType string, details map[string]string, settings map[string]string) ([]models.DynamicField, error) {
+func (c *Client) GetConfigFields(configType string, details map[string]string, settings map[string]string) ([]irminModels.DynamicField, error) {
 	// Build the endpoint URL using the provided configuration type.
 	endpoint := fmt.Sprintf("/configuration/%s/fields", configType)
 
@@ -35,7 +35,7 @@ func (c *Client) GetConfigFields(configType string, details map[string]string, s
 	}
 
 	// Define a variable to hold the resulting configuration fields.
-	var fields []models.DynamicField
+	var fields []irminModels.DynamicField
 
 	// Send the POST request using FetchAPI with URL-encoded form fields.
 	if err := c.FetchAPI(RequestOptions{

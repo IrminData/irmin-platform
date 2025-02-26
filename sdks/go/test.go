@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/IrminData/irmin-sdk-go/examples"
+	irminSDKTests "github.com/IrminData/irmin-sdk-go/tests"
 
 	"github.com/joho/godotenv"
 )
@@ -34,8 +34,8 @@ func main() {
 	// Utility tests
 	if *runUtils {
 		log.Println("Running utility tests...")
-		examples.TestParquetUtils()
-		examples.TestSchemaUtils()
+		irminSDKTests.TestParquetUtils()
+		irminSDKTests.TestSchemaUtils()
 	}
 
 	// API tests
@@ -43,31 +43,31 @@ func main() {
 		log.Println("Running API tests...")
 
 		// Create objects used by the examples
-		workspaceSlug := examples.CreateTestWorkspace(baseURL, apiToken, locale)
-		examples.CreateTestRepository(baseURL, apiToken, locale)
-		examples.CreateTestScriptFile(baseURL, apiToken, locale)
-		connectionID := examples.CreateTestConnection(baseURL, apiToken, locale)
+		workspaceSlug := irminSDKTests.CreateTestWorkspace(baseURL, apiToken, locale)
+		irminSDKTests.CreateTestRepository(baseURL, apiToken, locale)
+		irminSDKTests.CreateTestScriptFile(baseURL, apiToken, locale)
+		connectionID := irminSDKTests.CreateTestConnection(baseURL, apiToken, locale)
 
 		// Run examples
-		examples.TestProfile(baseURL, apiToken, locale)
-		examples.TestRoles(baseURL, apiToken, locale)
-		examples.TestWorkspaces(*workspaceSlug, baseURL, apiToken, locale)
-		examples.TestUsers(baseURL, apiToken, locale)
-		examples.TestInvites(*workspaceSlug, baseURL, apiToken, locale)
-		examples.TestCredentials(baseURL, apiToken, locale)
-		examples.TestConnectors(baseURL, apiToken, locale)
-		examples.TestConnections(*connectionID, baseURL, apiToken, locale)
-		examples.TestWorkflows(*connectionID, baseURL, apiToken, locale)
-		examples.TestRepositories(baseURL, apiToken, locale)
-		examples.TestEditorItems(baseURL, apiToken, locale)
-		examples.TestVersioningAndObjects(baseURL, apiToken, locale)
-		examples.TestLogs(baseURL, apiToken, locale)
+		irminSDKTests.TestProfile(baseURL, apiToken, locale)
+		irminSDKTests.TestRoles(baseURL, apiToken, locale)
+		irminSDKTests.TestWorkspaces(*workspaceSlug, baseURL, apiToken, locale)
+		irminSDKTests.TestUsers(baseURL, apiToken, locale)
+		irminSDKTests.TestInvites(*workspaceSlug, baseURL, apiToken, locale)
+		irminSDKTests.TestCredentials(baseURL, apiToken, locale)
+		irminSDKTests.TestConnectors(baseURL, apiToken, locale)
+		irminSDKTests.TestConnections(*connectionID, baseURL, apiToken, locale)
+		irminSDKTests.TestWorkflows(*connectionID, baseURL, apiToken, locale)
+		irminSDKTests.TestRepositories(baseURL, apiToken, locale)
+		irminSDKTests.TestEditorItems(baseURL, apiToken, locale)
+		irminSDKTests.TestVersioningAndObjects(baseURL, apiToken, locale)
+		irminSDKTests.TestLogs(baseURL, apiToken, locale)
 
 		// Clean up and delete the example objects
-		examples.DeleteTestRepository(baseURL, apiToken, locale)
-		examples.DeleteTestScriptFile(baseURL, apiToken, locale)
-		examples.DeleteTestConnection(*connectionID, baseURL, apiToken, locale)
-		examples.DeleteTestWorkspace(*workspaceSlug, baseURL, apiToken, locale)
+		irminSDKTests.DeleteTestRepository(baseURL, apiToken, locale)
+		irminSDKTests.DeleteTestScriptFile(baseURL, apiToken, locale)
+		irminSDKTests.DeleteTestConnection(*connectionID, baseURL, apiToken, locale)
+		irminSDKTests.DeleteTestWorkspace(*workspaceSlug, baseURL, apiToken, locale)
 	}
 
 	// Check if no tests were selected

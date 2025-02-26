@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 // Repository represents a repository object.
 type Repository struct {

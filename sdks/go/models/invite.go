@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 // Invite represents an invitation object.
 type Invite struct {

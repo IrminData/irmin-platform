@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 // JSONValue represents a JSON-compatible value.
 type JSONValue interface{}

@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 type Workspace struct {
 	ID          string `json:"id"`

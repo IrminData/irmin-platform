@@ -1,4 +1,4 @@
-package utils
+package irminUtils
 
 import (
 	"bytes"

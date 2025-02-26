@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 type User struct {
 	ID             string       `json:"id"`

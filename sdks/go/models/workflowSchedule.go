@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 // RepositoryEvent represents repository-related events that can trigger a workflow.
 type RepositoryEvent string

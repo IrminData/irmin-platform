@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 type DynamicField struct {
 	Type         string         `json:"type"`

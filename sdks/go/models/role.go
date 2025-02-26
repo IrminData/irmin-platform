@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 // IrminRole represents a role object in the system.
 type IrminRole struct {

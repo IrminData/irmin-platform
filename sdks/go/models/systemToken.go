@@ -1,4 +1,4 @@
-package models
+package irminModels
 
 // SystemToken represents an Irmin system token.
 type SystemToken struct {
