@@ -75,7 +75,7 @@ export default function TagList({
             label: dict.list.delete,
             primary: false,
             onClick: () => {
-              handleDeleteTag(tag.id);
+              handleDeleteTag(tag.name);
             },
           },
         ],
