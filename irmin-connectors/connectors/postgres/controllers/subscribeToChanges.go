@@ -35,7 +35,7 @@ func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	defer dbClient.Close()
 
 	// Get required fields from the request
-	fields, err := utils.ParseRequiredFormFields(r, []string{"webhook_url", "webhook_access_token"})
+	fields, err := utils.ParseFormFields(r, []string{"webhook_url", "webhook_access_token"}, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

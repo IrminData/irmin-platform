@@ -8,8 +8,6 @@ import (
 	"irmin-connectors/models"
 	"irmin-connectors/utils"
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
 func ConfigFields(w http.ResponseWriter, r *http.Request) {
@@ -19,12 +17,15 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Retrieve the `key` from the path. E.g., "/configuration/details/fields" or "/configuration/settings/fields"
-	vars := mux.Vars(r)
-	key := vars["key"]
+	// Retreive the required route variables
+	routeParams, err := utils.ParseRouteParams(r, []string{"key"})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	// Get connection settings and details from the request
-	fields, err := utils.ParseFormFields(r, []string{"details[host]", "details[port]", "details[user]", "details[password]", "details[default_db]", "details[ssl_mode]", "settings[database]"})
+	fields, err := utils.ParseFormFields(r, []string{"details[host]", "details[port]", "details[user]", "details[password]", "details[default_db]", "details[ssl_mode]", "settings[database]"}, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -34,7 +35,7 @@ func ConfigFields(w http.ResponseWriter, r *http.Request) {
 	var dynamicFields map[string]models.DynamicField
 
 	// Switch on the key to decide what to return
-	switch key {
+	switch routeParams["key"] {
 
 	// "details" -> base connection info for the PostgreSQL server
 	case "details":

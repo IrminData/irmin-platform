@@ -27,7 +27,7 @@ func ConfigValidate(w http.ResponseWriter, r *http.Request) {
 	connectionSettingsValid := false
 
 	// Get connection settings and details from the request
-	fields, err := utils.ParseFormFields(r, []string{"details[host]", "details[port]", "details[user]", "details[password]", "details[default_db]", "details[ssl_mode]", "settings[database]"})
+	fields, err := utils.ParseFormFields(r, []string{"details[host]", "details[port]", "details[user]", "details[password]", "details[default_db]", "details[ssl_mode]", "settings[database]"}, nil)
 	if err != nil {
 		errors = append(errors, err.Error())
 	}

@@ -32,7 +32,7 @@ func OperationPull(w http.ResponseWriter, r *http.Request) {
 	defer dbClient.Close() // Close the client at the end of the function
 
 	// Get the form values from the request
-	fields, err := utils.ParseRequiredFormFields(r, []string{"path"})
+	fields, err := utils.ParseFormFields(r, []string{"path"}, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

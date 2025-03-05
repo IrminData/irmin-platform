@@ -14,7 +14,7 @@ func OperationCancel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the form values from the request
-	fields, err := utils.ParseRequiredFormFields(r, []string{"operation_id"})
+	fields, err := utils.ParseFormFields(r, []string{"operation_id"}, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
