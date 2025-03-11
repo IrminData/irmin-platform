@@ -21,6 +21,9 @@ func RegisterAPIRoutes(app *fiber.App) {
 
 	// Connector routes
 	v1.Get("/connectors", controllers.ConnectorsIndex)
+	v1.Post("/connectors", controllers.ConnectorsStore)
+	v1.Patch("/connectors/:connector", controllers.ConnectorsUpdate)
+	v1.Delete("/connectors/:connector", controllers.ConnectorsDestroy)
 	v1.Get("/connectors/:connector", controllers.ConnectorsShow)
 
 	// Credentials routes
