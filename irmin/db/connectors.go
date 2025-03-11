@@ -8,33 +8,33 @@ type Connector struct {
 	gorm.Model
 
 	// Base URL for the connector's REST API
-	APIBaseURL string `json:"api_base_url" gorm:"type:varchar(255);not null"`
+	APIBaseURL string `json:"api_base_url"`
 	// Token to authenticate system requests to the Connector's API
-	SystemToken string `json:"systemToken" gorm:"type:varchar(255);not null"`
+	SystemToken string `json:"systemToken"`
 	// Name of the connector
-	Name string `json:"name" gorm:"type:varchar(255);not null"`
+	Name string `json:"name"`
 	// Short description of the connector
-	Description string `json:"description" gorm:"type:varchar(255);not null"`
+	Description string `json:"description"`
 	// Current version of the connector
-	Version string `json:"version" gorm:"type:varchar(255);not null"`
+	Version string `json:"version"`
 	// Version of the Irmin Connector Structure this connector adheres to
-	StructureVersion string `json:"structure_version" gorm:"type:varchar(255);not null"`
+	StructureVersion string `json:"structure_version"`
 	// Name of the author of the connector
-	Author string `json:"author" gorm:"type:varchar(255);not null"`
+	Author string `json:"author"`
 	// URL to the connector's logo image
-	LogoURL string `json:"logo_url" gorm:"type:varchar(255);not null"`
+	LogoURL string `json:"logo_url"`
 	// List of capabilities supported by the connector
-	Capabilities []ConnectorCapability `json:"capabilities" gorm:"type:json"`
+	Capabilities []ConnectorCapability `json:"capabilities" gorm:"type:jsonb"`
 	// List of locales supported by the connector
-	Locales []string `json:"locales" gorm:"type:json"`
+	Locales []string `json:"locales" gorm:"type:jsonb"`
 	// (optional) Primary category of the connector
-	PrimaryCategory *ConnectorCategory `json:"primary_category,omitempty" gorm:"type:json"`
+	PrimaryCategory ConnectorCategory `json:"primary_category,omitempty" gorm:"type:varchar(255)"`
 	// (optional) List of categories the connector belongs to
-	Categories []ConnectorCategory `json:"categories,omitempty" gorm:"type:json"`
+	Categories []ConnectorCategory `json:"categories,omitempty" gorm:"type:jsonb"`
 	// (optional) Email address of the author
-	AuthorEmail *string `json:"author_email,omitempty" gorm:"type:varchar(255)"`
+	AuthorEmail string `json:"author_email,omitempty"`
 	// (optional) URL to read more about the connector, such as documentation
-	ReadMoreURL *string `json:"read_more_url,omitempty" gorm:"type:varchar(255)"`
+	ReadMoreURL string `json:"read_more_url,omitempty"`
 }
 
 // ConnectorCapability represents the capabilities of a connector.

@@ -29,8 +29,27 @@ func InitialiseDB() error {
 	DB = db
 
 	// Auto-migrate models (which include GORM annotations).
-	if err = DB.AutoMigrate(&Connector{}); err != nil {
-		return fmt.Errorf("failed to migrate Connector to the db: %w", err)
+	if err = DB.AutoMigrate(
+		&Connector{},
+		&Workspace{},
+		&User{},
+		&Role{},
+		&APIToken{},
+		&Connection{},
+		&Invite{},
+		&Repository{},
+		&ImportWorkflowable{},
+		&ExportWorkflowable{},
+		&ActionWorkflowable{},
+		&PipelineStage{},
+		&PipelineWorkflowable{},
+		&Workflow{},
+		&Schedule{},
+		&WorkflowTrigger{},
+		&WorkflowRun{},
+		&LogEvent{},
+	); err != nil {
+		return fmt.Errorf("failed to migrate models to the db: %w", err)
 	}
 
 	return nil
