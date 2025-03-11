@@ -147,7 +147,6 @@ class IrminCore {
    * @param options - Request options for the fetch call.
    * @param allowedStatusCodes - An optional list of allowed status codes.
    * @returns A promise that resolves with the parsed API response.
-   * @throws An error if the response status code is not allowed.
    */
   public fetchAPI = async (
     url: string,
@@ -172,8 +171,9 @@ class IrminCore {
         if (errorData && errorData.errors && Array.isArray(errorData.errors)) {
           errorMessage = errorData.errors.join('\n');
         }
-      } catch (error) {
+      } catch (e) {
         // Ignore errors from parsing JSON
+        console.warn('Failed to parse error data:', e);
       }
       throw new Error(errorMessage);
     }
@@ -217,7 +217,6 @@ class IrminCore {
    * @param options - Request options for the fetch call.
    * @param allowedStatusCodes - An optional list of allowed status codes.
    * @returns A promise that resolves with the binary API response.
-   * @throws An error if the response status code is not allowed.
    */
   public fetchBinary = async (
     url: string,
@@ -242,8 +241,9 @@ class IrminCore {
         if (errorData && errorData.errors && Array.isArray(errorData.errors)) {
           errorMessage = errorData.errors.join('\n');
         }
-      } catch (error) {
+      } catch (e) {
         // Ignore errors from parsing JSON
+        console.warn('Failed to parse error data:', e);
       }
       throw new Error(errorMessage);
     }
