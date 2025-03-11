@@ -28,8 +28,6 @@ type Connector struct {
 	Categories []ConnectorCategory `json:"categories,omitempty"`
 	// (optional) Email address of the author
 	AuthorEmail *string `json:"author_email,omitempty"`
-	// (optional) Markdown-formatted text providing more details about the connector
-	Documentation *string `json:"documentation,omitempty"`
 	// (optional) URL to read more about the connector, such as documentation
 	ReadMoreURL *string `json:"read_more_url,omitempty"`
 }
