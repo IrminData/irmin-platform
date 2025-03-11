@@ -21,7 +21,6 @@ var defaultConnectorInfo = models.ConnectorDetails{
 	PrimaryCategory:  "database",
 	Categories:       []string{"database"},
 	AuthorEmail:      "hello@irmin.co",
-	Documentation:    "/postgres/docs",
 	ReadMoreURL:      "/postgres/details",
 }
 
@@ -33,7 +32,6 @@ func Info(w http.ResponseWriter, r *http.Request) {
 	info := defaultConnectorInfo
 	info.LogoURL = baseUrl + info.LogoURL
 	info.APIBaseURL = baseUrl + info.APIBaseURL
-	info.Documentation = baseUrl + info.Documentation
 
 	// Make sure the request is authorized by validating the system token
 	if !utils.ValidateConnectorSystemToken(info.Name, w, r) {

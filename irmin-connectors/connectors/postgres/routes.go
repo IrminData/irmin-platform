@@ -24,7 +24,6 @@ func SetupRoutes(r *mux.Router) *mux.Router {
 
 	// Public information about the connector
 	s.HandleFunc("/details", postgresControllers.DetailsPage).Methods("GET")
-	s.HandleFunc("/docs", postgresControllers.DocsPage).Methods("GET")
 
 	return r
 }

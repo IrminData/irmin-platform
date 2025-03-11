@@ -13,6 +13,5 @@ type ConnectorDetails struct {
 	PrimaryCategory  string   `json:"primary_category"`
 	Categories       []string `json:"categories"`
 	AuthorEmail      string   `json:"author_email"`
-	Documentation    string   `json:"documentation"`
 	ReadMoreURL      string   `json:"read_more_url"`
 }
