@@ -64,6 +64,12 @@ class IrminCore {
   public objectService: ObjectService;
   public credentialService: CredentialService;
 
+  /**
+   * Creates an instance of IrminCore.
+   *
+   * @param locale - The locale to use for API messages.
+   * @param apiToken - The API token for authentication.
+   */
   constructor(locale: Locale, apiToken: string) {
     // Set locale and token
     this.locale = locale || defaultLocale;
@@ -91,6 +97,13 @@ class IrminCore {
     this.credentialService = new CredentialService(this);
   }
 
+  /**
+   * Internal fetch method to call the Irmin API.
+   *
+   * @param url - The API endpoint URL.
+   * @param options - Request options for the fetch call.
+   * @returns A promise that resolves with the response.
+   */
   private _fetch = async (
     url: string,
     options: RequestInit
@@ -127,12 +140,43 @@ class IrminCore {
     return response;
   };
 
+  /**
+   * Fetch data from the Irmin API and check allowed status codes.
+   *
+   * @param url - The API endpoint URL.
+   * @param options - Request options for the fetch call.
+   * @param allowedStatusCodes - An optional list of allowed status codes.
+   * @returns A promise that resolves with the parsed API response.
+   * @throws An error if the response status code is not allowed.
+   */
   public fetchAPI = async (
     url: string,
-    options: RequestInit
+    options: RequestInit,
+    allowedStatusCodes?: number[]
   ): Promise<IrminAPIResponse> => {
     // Call the Irmin API using the internal fetch method
     const response = await this._fetch(url, options);
+
+    // If allowedStatusCodes is provided, check the response status code
+    if (
+      allowedStatusCodes &&
+      allowedStatusCodes.length > 0 &&
+      !allowedStatusCodes.includes(response.status)
+    ) {
+      let errorMessage = `Unexpected status code: ${response.status} for ${
+        options.method ?? 'GET'
+      } ${url}`;
+      try {
+        // Clone response to safely parse JSON without consuming the original stream
+        const errorData = await response.clone().json();
+        if (errorData && errorData.errors && Array.isArray(errorData.errors)) {
+          errorMessage = errorData.errors.join('\n');
+        }
+      } catch (error) {
+        // Ignore errors from parsing JSON
+      }
+      throw new Error(errorMessage);
+    }
 
     // Parse the response as JSON
     const data = await response.json();
@@ -140,8 +184,12 @@ class IrminCore {
     if (isDevelopment)
       console.log('Fetch Response data:', JSON.stringify(data, null, 2));
 
-    // Check if the response is not OK and does not contain any error messages
-    if (!response.ok && (!data.errors || !Array.isArray(data.errors))) {
+    // Fallback check if no allowedStatusCodes were provided
+    if (
+      !allowedStatusCodes &&
+      !response.ok &&
+      (!data.errors || !Array.isArray(data.errors))
+    ) {
       throw new Error(
         `Irmin API fetch error: ${options.method ?? 'GET'} ${url}`
       );
@@ -162,27 +210,60 @@ class IrminCore {
     return result;
   };
 
+  /**
+   * Fetch binary data from the Irmin API and check allowed status codes.
+   *
+   * @param url - The API endpoint URL.
+   * @param options - Request options for the fetch call.
+   * @param allowedStatusCodes - An optional list of allowed status codes.
+   * @returns A promise that resolves with the binary API response.
+   * @throws An error if the response status code is not allowed.
+   */
   public fetchBinary = async (
     url: string,
-    options: RequestInit
+    options: RequestInit,
+    allowedStatusCodes?: number[]
   ): Promise<IrminAPIBinaryResponse> => {
     // Call the Irmin API using the internal _fetch method
     const response = await this._fetch(url, options);
 
+    // If allowedStatusCodes is provided, check the response status code
+    if (
+      allowedStatusCodes &&
+      allowedStatusCodes.length > 0 &&
+      !allowedStatusCodes.includes(response.status)
+    ) {
+      let errorMessage = `Unexpected status code: ${response.status} for ${
+        options.method ?? 'GET'
+      } ${url}`;
+      try {
+        // Use a clone of the response to avoid consuming the original stream
+        const errorData = await response.clone().json();
+        if (errorData && errorData.errors && Array.isArray(errorData.errors)) {
+          errorMessage = errorData.errors.join('\n');
+        }
+      } catch (error) {
+        // Ignore errors from parsing JSON
+      }
+      throw new Error(errorMessage);
+    }
+
     // Check the Content-Type of the response to determine how to process it
     const contentType = response.headers.get('Content-Type');
 
-    // Parse the response based on response data
+    // Try to parse the response as a Blob first
     try {
       return await response.blob();
     } catch (error) {
       console.warn('Failed to parse response as Blob:', error);
     }
+    // Fallback: try parsing as JSON
     try {
       return await response.json();
     } catch (error) {
       console.warn('Failed to parse response as text:', error);
     }
+    // Fallback: try parsing as ArrayBuffer and converting to Blob
     try {
       const arrayBuffer = await response.arrayBuffer();
       // Convert the ArrayBuffer to Blob
@@ -190,7 +271,7 @@ class IrminCore {
     } catch (error) {
       console.warn('Failed to parse response as ArrayBuffer:', error);
     }
-    // Parse and return the response as plain text if nothing else matches
+    // Fallback: return plain text
     return await response.text();
   };
 }
