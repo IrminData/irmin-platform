@@ -26,11 +26,21 @@ func CredentialsIndex(c fiber.Ctx) error {
 		})
 	}
 
+	// Create a new SQID generator.
+	s, err := utils.NewSQIDGenerator()
+	if err != nil {
+		log.Printf("Error creating SQID generator: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
 	// Map tokens to API token response, omitting the Token field.
 	listResponse := make([]db.APITokenResponse, len(tokens))
 	for i, token := range tokens {
+		sqid, _ := s.EncodeWithType("api_tokens", uint64(token.ID))
 		listResponse[i] = db.APITokenResponse{
-			ID:        token.ID,
+			ID:        sqid,
 			CreatedAt: token.CreatedAt,
 			UpdatedAt: token.UpdatedAt,
 			Name:      token.Name,
@@ -93,9 +103,19 @@ func CredentialsStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Create a new SQID generator.
+	s, err := utils.NewSQIDGenerator()
+	if err != nil {
+		log.Printf("Error creating SQID generator: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
 	// Conver the API token to an API token response.
+	sqid, _ := s.EncodeWithType("api_tokens", uint64(apiToken.ID))
 	apiTokenResponse := db.APITokenResponse{
-		ID:        apiToken.ID,
+		ID:        sqid,
 		CreatedAt: apiToken.CreatedAt,
 		UpdatedAt: apiToken.UpdatedAt,
 		Name:      apiToken.Name,
@@ -116,25 +136,32 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	user := c.Locals("user").(*db.User)
 
 	// Parse the token from the request URL.
-	tokenIDString := c.Params("credential")
-	if tokenIDString == "" {
+	tokenSqid := c.Params("credential")
+	if tokenSqid == "" {
 		log.Printf("No token provided")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occured")},
 		})
 	}
 
-	// Convert the token string to an unsigned integer.
-	tokenID, err := strconv.ParseUint(tokenIDString, 10, 32)
+	// Decode the SQID to get the token ID.
+	s, err := utils.NewSQIDGenerator()
 	if err != nil {
-		log.Printf("Error converting token to uint: %v", err)
+		log.Printf("Error creating SQID generator: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+	id, err := s.DecodeWithType("api_tokens", tokenSqid)
+	if err != nil {
+		log.Printf("Error decoding SQID: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occured")},
 		})
 	}
 
 	// Get the API token to ensure it exists and belongs to the user.
-	apiToken, err := db.GetAPIToken(uint(tokenID))
+	apiToken, err := db.GetAPIToken(uint(id))
 	if err != nil {
 		log.Printf("Error retrieving API token: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
@@ -149,7 +176,7 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	}
 
 	// Delete the API token.
-	if err := db.DeleteAPIToken(uint(tokenID)); err != nil {
+	if err := db.DeleteAPIToken(uint(id)); err != nil {
 		log.Printf("Error deleting API token: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occured")},

@@ -8,11 +8,12 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// DataEngineEnv is a struct that holds the environment variables for the data engine.
-type DataEngineEnv struct {
+// CoreAPIEnv is a struct that holds the environment variables for the data engine.
+type CoreAPIEnv struct {
 	Port                     string // Port to run the Core API server on
 	URL                      string // URL of the Core API server
 	SystemToken              string // Token to authenticate system requests to the API
+	SqidAlphabet             string // Alphabet to use for SQIDs
 	DatabaseConnectionString string // Postgres DB connection string
 	ResendAPIKey             string // Resend API Key for emails
 	DataEngineURL            string // URL of the Data Engine API server
@@ -65,8 +66,8 @@ func LoadRootEnv() error {
 
 // LoadEnv loads environment variables from the .env file in the project root,
 // sets default values for required system variables if not present, and returns
-// a DataEngineEnv struct with the loaded environment variables.
-func LoadEnv() (*DataEngineEnv, error) {
+// a CoreAPIEnv struct with the loaded environment variables.
+func LoadEnv() (*CoreAPIEnv, error) {
 	// Load environment variables from .env file
 	if err := LoadRootEnv(); err != nil {
 		return nil, err
@@ -85,38 +86,43 @@ func LoadEnv() (*DataEngineEnv, error) {
 		return nil, err
 	}
 
+	sqidAlphabet, err := getEnv("SQID_ALPHABET", false, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+	if err != nil {
+		return nil, err
+	}
+
 	databaseConnectionString, err := getEnv("DATABASE_CONNECTION_STRING", true, "")
 	if err != nil {
 		return nil, err
 	}
 
-	resendAPIKey, err := getEnv("RESEND_API_KEY", false, "")
+	resendAPIKey, err := getEnv("RESEND_API_KEY", true, "")
 	if err != nil {
 		return nil, err
 	}
 
-	dataEngineURL, err := getEnv("DATA_ENGINE_URL", false, "")
+	dataEngineURL, err := getEnv("DATA_ENGINE_URL", true, "")
 	if err != nil {
 		return nil, err
 	}
-	dataEngineToken, err := getEnv("DATA_ENGINE_TOKEN", false, "")
+	dataEngineToken, err := getEnv("DATA_ENGINE_TOKEN", true, "")
 	if err != nil {
 		return nil, err
 	}
 
-	clerkPublicKey, err := getEnv("CLERK_PUBLIC_KEY", false, "")
+	clerkPublicKey, err := getEnv("CLERK_PUBLIC_KEY", true, "")
 	if err != nil {
 		return nil, err
 	}
-	clerkSecretKey, err := getEnv("CLERK_SECRET_KEY", false, "")
+	clerkSecretKey, err := getEnv("CLERK_SECRET_KEY", true, "")
 	if err != nil {
 		return nil, err
 	}
-	clerkSigningKey, err := getEnv("CLERK_SIGNING_KEY", false, "")
+	clerkSigningKey, err := getEnv("CLERK_SIGNING_KEY", true, "")
 	if err != nil {
 		return nil, err
 	}
-	clerkSigningAlgorithm, err := getEnv("CLERK_SIGNING_ALGORITHM", false, "")
+	clerkSigningAlgorithm, err := getEnv("CLERK_SIGNING_ALGORITHM", true, "")
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +135,7 @@ func LoadEnv() (*DataEngineEnv, error) {
 	if err != nil {
 		return nil, err
 	}
-	s3Folder, err := getEnv("S3_FOLDER", false, "")
+	s3Folder, err := getEnv("S3_FOLDER", true, "")
 	if err != nil {
 		return nil, err
 	}
@@ -146,10 +152,11 @@ func LoadEnv() (*DataEngineEnv, error) {
 		return nil, err
 	}
 
-	return &DataEngineEnv{
+	return &CoreAPIEnv{
 		Port:                     port,
 		URL:                      url,
 		SystemToken:              token,
+		SqidAlphabet:             sqidAlphabet,
 		DatabaseConnectionString: databaseConnectionString,
 		ResendAPIKey:             resendAPIKey,
 		DataEngineURL:            dataEngineURL,

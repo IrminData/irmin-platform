@@ -29,6 +29,8 @@ PORT=8082
 URL=http://localhost:8082
 TOKEN=...
 
+SQID_ALPHABET=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
+
 DATABASE_CONNECTION_STRING=postgresql://user:pwd@localhost:5432/irmin
 
 RESEND_API_KEY=re_...
