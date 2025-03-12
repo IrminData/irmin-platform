@@ -7,6 +7,7 @@ import (
 	"irmin-api/utils"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 
@@ -51,32 +52,61 @@ func APIMiddleware(c fiber.Ctx) error {
 		})
 	}
 
-	// Validate the JWT token.
-	jwt, err := utils.ValidateJWT(token, []byte(env.ClerkSigningKey), env.ClerkSigningAlgorithm)
-	if err != nil {
-		log.Printf("Error validating JWT: %v", err)
-		return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
-			Errors: []string{dict.T("access_denied")},
-		})
-	}
+	var clerkID string
+	var irminUser *db.User
 
-	// Extract the subject (ClerkID) from the JWT.
-	sub, err := jwt.Claims.GetSubject()
-	if err != nil {
-		log.Printf("Error extracting subject from JWT: %v", err)
-		return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
-			Errors: []string{dict.T("access_denied")},
-		})
-	}
+	// If the token has a "cred_" prefix, it is an API token.
+	if strings.HasPrefix(token, "cred_") {
+		// Find the API token in our database.
+		apiToken, err := db.GetAPITokenByToken(token)
+		if err != nil {
+			log.Printf("Error retrieving API token: %v", err)
+			return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
+				Errors: []string{dict.T("access_denied")},
+			})
+		}
+		if apiToken == nil {
+			log.Printf("API token not found")
+			return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
+				Errors: []string{dict.T("access_denied")},
+			})
+		}
+		if apiToken.ExpiresAt.Before(time.Now()) {
+			log.Printf("API token expired")
+			return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
+				Errors: []string{dict.T("access_denied")},
+			})
+		}
+		irminUser = &apiToken.User
+		clerkID = apiToken.User.ClerkID
+	} else {
+		// Validate the JWT token.
+		jwt, err := utils.ValidateJWT(token, []byte(env.ClerkSigningKey), env.ClerkSigningAlgorithm)
+		if err != nil {
+			log.Printf("Error validating JWT: %v", err)
+			return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
+				Errors: []string{dict.T("access_denied")},
+			})
+		}
 
-	// Try to find the user in our database.
-	irminUser, _ := db.GetUserByClerkID(sub)
+		// Extract the subject (ClerkID) from the JWT.
+		clerkID, err = jwt.Claims.GetSubject()
+		if err != nil {
+			log.Printf("Error extracting subject from JWT: %v", err)
+			return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
+				Errors: []string{dict.T("access_denied")},
+			})
+		}
+
+		// Try to find the user in our database.
+		irminUser, _ = db.GetUserByClerkID(clerkID)
+	}
 
 	// Set the API key with your Clerk Secret Key.
 	clerk.SetKey(env.ClerkSecretKey)
 
 	// Get the user details from Clerk.
-	clerkUser, err := user.Get(ctx, sub)
+	clerkUser, err := user.Get(ctx, clerkID)
 	if err != nil {
 		log.Printf("Error getting user details from Clerk: %v", err)
 		return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
