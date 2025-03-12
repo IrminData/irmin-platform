@@ -14,8 +14,13 @@ type DataEngineEnv struct {
 	URL                      string // URL of the Core API server
 	SystemToken              string // Token to authenticate system requests to the API
 	DatabaseConnectionString string // Postgres DB connection string
+	ResendAPIKey             string // Resend API Key for emails
 	DataEngineURL            string // URL of the Data Engine API server
 	DataEngineToken          string // Token to authenticate system level requests to the Data Engine API
+	ClerkPublicKey           string // Clerk Public API Key
+	ClerkSecretKey           string // Clerk Secret API Key
+	ClerkSigningKey          string // Clerk Signing Key for JWT
+	ClerkSigningAlgorithm    string // Clerk Signing Algorithm for JWT
 	S3Endpoint               string // Endpoint of the S3-compatible object store
 	S3Bucket                 string // Bucket name of the S3-compatible object store
 	S3Folder                 string // Base folder name of the S3-compatible object store
@@ -85,11 +90,33 @@ func LoadEnv() (*DataEngineEnv, error) {
 		return nil, err
 	}
 
+	resendAPIKey, err := getEnv("RESEND_API_KEY", false, "")
+	if err != nil {
+		return nil, err
+	}
+
 	dataEngineURL, err := getEnv("DATA_ENGINE_URL", false, "")
 	if err != nil {
 		return nil, err
 	}
 	dataEngineToken, err := getEnv("DATA_ENGINE_TOKEN", false, "")
+	if err != nil {
+		return nil, err
+	}
+
+	clerkPublicKey, err := getEnv("CLERK_PUBLIC_KEY", false, "")
+	if err != nil {
+		return nil, err
+	}
+	clerkSecretKey, err := getEnv("CLERK_SECRET_KEY", false, "")
+	if err != nil {
+		return nil, err
+	}
+	clerkSigningKey, err := getEnv("CLERK_SIGNING_KEY", false, "")
+	if err != nil {
+		return nil, err
+	}
+	clerkSigningAlgorithm, err := getEnv("CLERK_SIGNING_ALGORITHM", false, "")
 	if err != nil {
 		return nil, err
 	}
@@ -124,8 +151,13 @@ func LoadEnv() (*DataEngineEnv, error) {
 		URL:                      url,
 		SystemToken:              token,
 		DatabaseConnectionString: databaseConnectionString,
+		ResendAPIKey:             resendAPIKey,
 		DataEngineURL:            dataEngineURL,
 		DataEngineToken:          dataEngineToken,
+		ClerkPublicKey:           clerkPublicKey,
+		ClerkSecretKey:           clerkSecretKey,
+		ClerkSigningKey:          clerkSigningKey,
+		ClerkSigningAlgorithm:    clerkSigningAlgorithm,
 		S3Endpoint:               s3Endpoint,
 		S3Bucket:                 s3Bucket,
 		S3Folder:                 s3Folder,

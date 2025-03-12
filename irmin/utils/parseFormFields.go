@@ -2,40 +2,31 @@ package utils
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
+
+	"github.com/gofiber/fiber/v3" // import the Fiber framework
 )
 
-// ParseFormFields parses the form data from an HTTP request and checks for required and optional fields.
+// ParseFormFields parses the form data from a Fiber context and checks for required and optional fields.
 //
 // Params:
-// - r: The HTTP request containing the form data.
+// - c: The Fiber context containing the form data.
 // - required: A slice of strings representing the required field names.
 // - optional: A slice of strings representing the optional field names.
 //
 // Returns:
 //   - A map where the key is the field name and the value is the field value.
 //     The map will include all required fields and any optional fields that are present.
-//   - An error if any required fields are missing or if form parsing fails.
-func ParseFormFields(r *http.Request, required, optional []string) (map[string]string, error) {
-	// Parse the form data.
-	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/") {
-		// Using a reasonable memory limit (e.g. 10MB).
-		if err := r.ParseMultipartForm(10 << 20); err != nil {
-			return nil, fmt.Errorf("unable to parse multipart form data: %v", err)
-		}
-	} else {
-		if err := r.ParseForm(); err != nil {
-			return nil, fmt.Errorf("unable to parse form data: %v", err)
-		}
-	}
-
+//   - An error if any required fields are missing.
+//
+// Note: Fiber automatically parses form data, so there's no need to manually parse multipart or URL-encoded forms.
+func ParseFormFields(c fiber.Ctx, required, optional []string) (map[string]string, error) {
 	values := make(map[string]string)
 	missingRequired := []string{}
 
-	// Iterate over required fields and validate each one.
+	// Check required form fields.
 	for _, field := range required {
-		value := r.FormValue(field)
+		value := c.FormValue(field) // Retrieve the form value from the context.
 		if value == "" {
 			missingRequired = append(missingRequired, field)
 		} else {
@@ -48,9 +39,9 @@ func ParseFormFields(r *http.Request, required, optional []string) (map[string]s
 		return nil, fmt.Errorf("missing required fields: %s", strings.Join(missingRequired, ", "))
 	}
 
-	// Retrieve optional fields if they are present.
+	// Retrieve optional fields if present.
 	for _, field := range optional {
-		value := r.FormValue(field)
+		value := c.FormValue(field)
 		if value != "" {
 			values[field] = value
 		}

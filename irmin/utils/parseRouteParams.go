@@ -2,29 +2,28 @@ package utils
 
 import (
 	"fmt"
-	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/gofiber/fiber/v3" // import the Fiber framework
 )
 
-// ParseRouteParams extracts and returns the route variables for the given keys.
+// ParseRouteParams extracts and returns the route parameters for the given keys from a Fiber context.
 //
 // Parameters:
-// - r: The current HTTP request.
-// - keys: A list of keys that are required to be present in the route.
+// - c: The Fiber context containing the route parameters.
+// - keys: A slice of strings representing the required parameter names.
 //
 // Returns:
-// - A map containing the required route variables.
-// - An error if one or more required variables are missing.
-func ParseRouteParams(r *http.Request, keys []string) (map[string]string, error) {
-	vars := mux.Vars(r)
-	result := make(map[string]string)
+// - A map containing the required route parameters.
+// - An error if one or more required parameters are missing.
+func ParseRouteParams(c fiber.Ctx, keys []string) (map[string]string, error) {
+	params := make(map[string]string)
 	for _, key := range keys {
-		if value, ok := vars[key]; ok {
-			result[key] = value
-		} else {
-			return nil, fmt.Errorf("missing required route variable: %s", key)
+		// Retrieve the route parameter from the context.
+		value := c.Params(key)
+		if value == "" {
+			return nil, fmt.Errorf("missing required route parameter: %s", key)
 		}
+		params[key] = value
 	}
-	return result, nil
+	return params, nil
 }

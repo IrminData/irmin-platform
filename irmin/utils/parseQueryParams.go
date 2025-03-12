@@ -2,15 +2,16 @@ package utils
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
+
+	"github.com/gofiber/fiber/v3" // import the Fiber framework
 )
 
-// ParseQueryParams parses the query parameters from an HTTP request,
+// ParseQueryParams parses the query parameters from a Fiber context,
 // retrieving both required and optional parameters.
 //
 // Params:
-// - r: The HTTP request containing the query parameters.
+// - c: The Fiber context containing the query parameters.
 // - required: A slice of strings representing the required parameter names.
 // - optional: A slice of strings representing the optional parameter names.
 //
@@ -18,16 +19,13 @@ import (
 //   - A map where the key is the parameter name and the value is the parameter value.
 //     The map will include all required parameters and any optional parameters that are present.
 //   - An error if any required parameters are missing.
-func ParseQueryParams(r *http.Request, required, optional []string) (map[string]string, error) {
-	// Retrieve the query parameters from the URL.
-	queryValues := r.URL.Query()
-
+func ParseQueryParams(c fiber.Ctx, required, optional []string) (map[string]string, error) {
 	params := make(map[string]string)
 	missingRequired := []string{}
 
 	// Check required parameters.
 	for _, param := range required {
-		value := queryValues.Get(param)
+		value := c.Query(param) // Retrieve the query parameter from the Fiber context.
 		if value == "" {
 			missingRequired = append(missingRequired, param)
 		} else {
@@ -42,7 +40,7 @@ func ParseQueryParams(r *http.Request, required, optional []string) (map[string]
 
 	// Retrieve optional parameters if present.
 	for _, param := range optional {
-		value := queryValues.Get(param)
+		value := c.Query(param)
 		if value != "" {
 			params[param] = value
 		}
