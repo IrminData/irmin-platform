@@ -4,6 +4,7 @@ var English = Dictionary{
 	"error_occured":                   "Error occured",
 	"access_denied":                   "Access denied",
 	"invalid_request":                 "Invalid request",
+	"profile_updated":                 "Profile updated",
 	"api_token_created":               "API token created",
 	"api_token_deleted":               "API token deleted",
 	"workspace_created":               "Workspace created",

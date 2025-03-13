@@ -4,6 +4,7 @@ var Finnish = Dictionary{
 	"error_occured":                   "Tapahtui virhe",
 	"access_denied":                   "Pääsy kielletty",
 	"invalid_request":                 "Virheellinen pyyntö",
+	"profile_updated":                 "Profiili päivitetty",
 	"api_token_created":               "API-avain luotu",
 	"api_token_deleted":               "API-avain poistettu",
 	"workspace_created":               "Työtila luotu",
