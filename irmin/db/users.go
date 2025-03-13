@@ -6,7 +6,8 @@ type UserWorkspaceRole string
 
 const (
 	RoleAdmin  UserWorkspaceRole = "admin"
-	RoleMember UserWorkspaceRole = "member"
+	RoleEditor UserWorkspaceRole = "editor"
+	RoleViewer UserWorkspaceRole = "viewer"
 )
 
 type User struct {
