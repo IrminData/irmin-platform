@@ -36,11 +36,10 @@ func RegisterAPIRoutes(app *fiber.App) {
 	v1.Post("/workspaces", controllers.WorkspacesStore)
 
 	// Workspace routes
-	workspace := v1.Group("/:workspace")
+	workspace := v1.Group("/workspaces/:workspace")
 	workspace.Get("/", controllers.WorkspacesShow)
 	workspace.Patch("/", controllers.WorkspacesUpdate)
 	workspace.Delete("/", controllers.WorkspacesDestroy)
-	workspace.Post("/switch", controllers.SwitchWorkspace)
 	workspace.Post("/transfer-ownership", controllers.TransferWorkspaceOwnership)
 	workspace.Post("/leave", controllers.LeaveWorkspace)
 

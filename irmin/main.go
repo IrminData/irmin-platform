@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"irmin-api/db"
 	"irmin-api/routes"
 	"irmin-api/utils"
@@ -10,6 +11,11 @@ import (
 )
 
 func main() {
+	// Define flags.
+	reset := flag.Bool("reset", false, "Reset the database")
+	migrate := flag.Bool("migrate", false, "Run database migrations")
+	flag.Parse()
+
 	// Load environment variables
 	env, err := utils.LoadEnv()
 	if err != nil {
@@ -19,6 +25,20 @@ func main() {
 	// Initialize the database
 	if err := db.InitialiseDB(); err != nil {
 		log.Fatalf("failed to initialise the database: %v", err)
+	}
+
+	// Reset the database
+	if *reset {
+		if err := db.Reset(); err != nil {
+			log.Fatalf("failed to run migrations: %v", err)
+		}
+	}
+
+	// Run migrations
+	if *migrate {
+		if err := db.Migrate(); err != nil {
+			log.Fatalf("failed to run migrations: %v", err)
+		}
 	}
 
 	// Initialize a new Fiber app

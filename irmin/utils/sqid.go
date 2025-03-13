@@ -7,13 +7,11 @@ import (
 	"github.com/sqids/sqids-go"
 )
 
-// Sqids wraps the sqids-go generator.
-type Sqids struct {
-	sqids *sqids.Sqids
-}
+// DB is a global handle to the database connection.
+var Sqids *sqids.Sqids
 
 // NewSQIDGenerator creates and returns a new SQID generator with custom options.
-func NewSQIDGenerator() (*Sqids, error) {
+func NewSQIDGenerator() (*sqids.Sqids, error) {
 	// Get the custom alphabet from the environment.
 	env, err := LoadEnv() // LoadEnv should load your configuration from the environment.
 	if err != nil {
@@ -28,9 +26,11 @@ func NewSQIDGenerator() (*Sqids, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Sqids{
-		sqids: s,
-	}, nil
+
+	// Store the instance globally.
+	Sqids = s
+
+	return s, nil
 }
 
 // hashStringToUint64 converts a string to a uint64 using the FNV-1a algorithm.
@@ -40,24 +40,35 @@ func hashStringToUint64(s string) uint64 {
 	return h.Sum64()
 }
 
-// EncodeWithType encodes the given ID with a content type identifier.
+// EncodeSqids encodes the given ID with a content type identifier.
 // The content type string is hashed to create a type code.
 // - contentType: a string representing the type (e.g. "workspace")
 // - id: the actual numeric ID to encode
 // Returns the SQID string or an error if something goes wrong.
-func (s Sqids) EncodeWithType(contentType string, id uint64) (string, error) {
+func EncodeSqids(contentType string, id uint64) (string, error) {
+	// Create a new SQID generator if one doesn't exist.
+	if Sqids == nil {
+		NewSQIDGenerator()
+	}
+	// Create a type code from the content type.
 	typeCode := hashStringToUint64(contentType)
 	// Encode both the type code and the actual ID.
-	return s.sqids.Encode([]uint64{typeCode, id})
+	return Sqids.Encode([]uint64{typeCode, id})
 }
 
-// DecodeWithType decodes the given SQID and verifies it matches the expected content type.
+// DecodeSqids decodes the given SQID and verifies it matches the expected content type.
 // - contentType: a string representing the expected content type (e.g. "workspace")
 // - sqid: the encoded SQID string
 // Returns the original ID if the type code matches, or an error.
-func (s Sqids) DecodeWithType(contentType string, sqid string) (uint64, error) {
+func DecodeSqids(contentType string, sqid string) (uint64, error) {
+	// Create a new SQID generator if one doesn't exist.
+	if Sqids == nil {
+		NewSQIDGenerator()
+	}
+	// Create a type code from the content type.
 	expectedTypeCode := hashStringToUint64(contentType)
-	ids := s.sqids.Decode(sqid)
+	// Decode the SQID and verify the type code.
+	ids := Sqids.Decode(sqid)
 	if len(ids) < 2 {
 		return 0, fmt.Errorf("invalid SQID")
 	}

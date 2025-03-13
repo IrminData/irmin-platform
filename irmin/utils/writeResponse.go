@@ -12,5 +12,8 @@ type IrminAPIResponse struct {
 }
 
 func WriteResponse(c fiber.Ctx, status int, response IrminAPIResponse) error {
+	if response.Message == "" && len(response.Errors) > 0 {
+		response.Message = response.Errors[0]
+	}
 	return c.Status(status).JSON(response)
 }

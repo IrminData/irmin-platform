@@ -145,6 +145,7 @@ func APIMiddleware(c fiber.Ctx) error {
 	if irminUser == nil {
 		// If the user does not exist in the database, create it synchronously.
 		irminUser, err = db.CreateUser(&db.User{
+			ClerkID:        clerkID,
 			FirstName:      *clerkUser.FirstName,
 			LastName:       *clerkUser.LastName,
 			Email:          primaryEmail,
