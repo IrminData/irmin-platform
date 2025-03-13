@@ -51,6 +51,12 @@ func APIMiddleware(c fiber.Ctx) error {
 		})
 	}
 
+	// Check if the token is a system token.
+	if token == env.SystemToken {
+		// No need to set the user in the context for system tokens, since it should not be used for user-specific actions.
+		return c.Next()
+	}
+
 	var clerkID string
 	var irminUser *db.User
 
