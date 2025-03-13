@@ -105,42 +105,8 @@ func WorkspacesStore(c fiber.Ctx) error {
 }
 
 func WorkspacesShow(c fiber.Ctx) error {
-	// Get the dictionary and user from the request context.
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-
-	// Parse the workspace slug from the request URL.
-	workspaceSlug := c.Params("workspace")
-	if workspaceSlug == "" {
-		log.Printf("No workspace selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-
-	// Get the workspace by its slug.
-	workspace, err := db.GetWorkspaceBySlug(workspaceSlug)
-	if err != nil {
-		log.Printf("Error retrieving workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-
-	// Check if the user is a member of the workspace.
-	isMember, err := db.IsUserInWorkspace(user.ID, workspace.ID)
-	if err != nil {
-		log.Printf("Error checking user membership: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-	if !isMember {
-		log.Printf("User not a member of the workspace")
-		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
-			Errors: []string{dict.T("access_denied")},
-		})
-	}
+	// Get the workspace from the request context.
+	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Create the workspace response.
 	sqid, _ := utils.EncodeSqids("workspaces", uint64(workspace.ID))
@@ -183,42 +149,9 @@ func WorkspacesShow(c fiber.Ctx) error {
 }
 
 func WorkspacesUpdate(c fiber.Ctx) error {
-	// Get the dictionary and user from the request context.
+	// Get the dictionary and workspace from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-
-	// Parse the workspace slug from the request URL.
-	workspaceSlug := c.Params("workspace")
-	if workspaceSlug == "" {
-		log.Printf("No workspace selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-
-	// Get the workspace by its slug.
-	workspace, err := db.GetWorkspaceBySlug(workspaceSlug)
-	if err != nil {
-		log.Printf("Error retrieving workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-
-	// Check if the user is a member of the workspace.
-	isMember, err := db.IsUserInWorkspace(user.ID, workspace.ID)
-	if err != nil {
-		log.Printf("Error checking user membership: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-	if !isMember {
-		log.Printf("User not a member of the workspace")
-		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
-			Errors: []string{dict.T("access_denied")},
-		})
-	}
+	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Parse the request body.
 	fields, err := utils.ParseFormFields(c, []string{"name", "description"}, nil)
@@ -259,27 +192,10 @@ func WorkspacesUpdate(c fiber.Ctx) error {
 }
 
 func WorkspacesDestroy(c fiber.Ctx) error {
-	// Get the dictionary and user from the request context.
+	// Get the dictionary, workspace, and user from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
-
-	// Parse the workspace slug from the request URL.
-	workspaceSlug := c.Params("workspace")
-	if workspaceSlug == "" {
-		log.Printf("No workspace selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-
-	// Get the workspace by its slug.
-	workspace, err := db.GetWorkspaceBySlug(workspaceSlug)
-	if err != nil {
-		log.Printf("Error retrieving workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
+	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Check if the workspace owner is deleting the workspace.
 	if workspace.OwnerID != user.ID {
@@ -290,7 +206,7 @@ func WorkspacesDestroy(c fiber.Ctx) error {
 	}
 
 	// Delete the workspace.
-	err = db.DeleteWorkspace(workspace.ID)
+	err := db.DeleteWorkspace(workspace.ID)
 	if err != nil {
 		log.Printf("Error deleting workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -305,27 +221,10 @@ func WorkspacesDestroy(c fiber.Ctx) error {
 }
 
 func TransferWorkspaceOwnership(c fiber.Ctx) error {
-	// Get the dictionary and user from the request context.
+	// Get the dictionary, workspace, and user from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
-
-	// Parse the workspace slug from the request URL.
-	workspaceSlug := c.Params("workspace")
-	if workspaceSlug == "" {
-		log.Printf("No workspace selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-
-	// Get the workspace by its slug.
-	workspace, err := db.GetWorkspaceBySlug(workspaceSlug)
-	if err != nil {
-		log.Printf("Error retrieving workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
+	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Check if the workspace owner is deleting the workspace.
 	if workspace.OwnerID != user.ID {
@@ -390,27 +289,10 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 }
 
 func LeaveWorkspace(c fiber.Ctx) error {
-	// Get the dictionary and user from the request context.
+	// Get the dictionary, workspace, and user from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
-
-	// Parse the workspace slug from the request URL.
-	workspaceSlug := c.Params("workspace")
-	if workspaceSlug == "" {
-		log.Printf("No workspace selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-
-	// Get the workspace by its slug.
-	workspace, err := db.GetWorkspaceBySlug(workspaceSlug)
-	if err != nil {
-		log.Printf("Error retrieving workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
+	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Make sure that the user is not the last user in the workspace.
 	if len(workspace.Users) == 1 {
@@ -429,7 +311,7 @@ func LeaveWorkspace(c fiber.Ctx) error {
 	}
 
 	// Leave the workspace.
-	err = db.RemoveUserFromWorkspace(user.ID, workspace.ID)
+	err := db.RemoveUserFromWorkspace(user.ID, workspace.ID)
 	if err != nil {
 		log.Printf("Error leaving workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{

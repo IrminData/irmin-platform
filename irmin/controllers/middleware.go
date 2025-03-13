@@ -15,9 +15,8 @@ import (
 	"github.com/clerk/clerk-sdk-go/v2/user"
 )
 
-// APIMiddleware sets the dictionary based on the requested locale,
-// verifies the user's JWT, retrieves their details from Clerk,
-// and ensures the database is up to date.
+// APIMiddleware sets the dictionary and handles the user authentication for the API, tokens and
+// user details syncing with Clerk.
 func APIMiddleware(c fiber.Ctx) error {
 	ctx := context.Background()
 
@@ -178,6 +177,51 @@ func APIMiddleware(c fiber.Ctx) error {
 
 	// Set the user in the context for subsequent handlers.
 	c.Locals("user", irminUser)
+
+	return c.Next()
+}
+
+// WorkspaceMiddleware verifies that the user has access to the workspace they are trying to access.
+func WorkspaceMiddleware(c fiber.Ctx) error {
+	// Get the dictionary and user from the request context.
+	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
+
+	// Parse the workspace slug from the request URL.
+	workspaceSlug := c.Params("workspace")
+	if workspaceSlug == "" {
+		log.Printf("No workspace selected")
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Get the workspace by its slug.
+	workspace, err := db.GetWorkspaceBySlug(workspaceSlug)
+	if err != nil {
+		log.Printf("Error retrieving workspace: %v", err)
+		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Check if the user is a member of the workspace.
+	isMember, err := db.IsUserInWorkspace(user.ID, workspace.ID)
+	if err != nil {
+		log.Printf("Error checking user membership: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+	if !isMember {
+		log.Printf("User not a member of the workspace")
+		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+			Errors: []string{dict.T("access_denied")},
+		})
+	}
+
+	// Set the workspace in the context for subsequent handlers.
+	c.Locals("workspace", workspace)
 
 	return c.Next()
 }
