@@ -21,13 +21,13 @@ func (d Dictionary) T(key string) string {
 	return key
 }
 
-// GetDictionary retrieves the appropriate dictionary based on the request's language header.
-func GetDictionary(c fiber.Ctx) Dictionary {
+// GetDictionary retrieves the appropriate dictionary and locale based on the request's language header.
+func GetDictionary(c fiber.Ctx) (Dictionary, string) {
 	langHeader := c.Get("Accept-Language")
 	// Check if the header contains "fi" (case-insensitive) for Finnish.
 	if strings.Contains(strings.ToLower(langHeader), "fi") {
-		return Finnish
+		return Finnish, "fi"
 	}
 	// Default to English.
-	return English
+	return English, "en"
 }

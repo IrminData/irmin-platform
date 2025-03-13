@@ -39,7 +39,7 @@ type UserResponse struct {
 	Phone          string              `json:"phone"`
 	Company        string              `json:"company"`
 	ProfilePicture string              `json:"profile_picture"`
-	Roles          []UserWorkspaceRole `json:"roles,omitempty" gorm:"type:jsonb;serializer:json"`
+	Roles          []UserWorkspaceRole `json:"roles,omitempty"`
 }
 
 // GetUser retrieves a user from the database by their ID

@@ -53,7 +53,7 @@ func WorkspacesStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("invalid_request")},
 		})
 	}
 
@@ -158,7 +158,7 @@ func WorkspacesUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("invalid_request")},
 		})
 	}
 
@@ -239,7 +239,7 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("invalid_request")},
 		})
 	}
 

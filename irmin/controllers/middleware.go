@@ -21,10 +21,11 @@ func APIMiddleware(c fiber.Ctx) error {
 	ctx := context.Background()
 
 	// Get the dictionary for the request's language.
-	dict := locales.GetDictionary(c)
+	dict, locale := locales.GetDictionary(c)
 
 	// Set the dictionary in the context for subsequent handlers.
 	c.Locals("dict", dict)
+	c.Locals("locale", locale)
 
 	// Load environment variables.
 	env, err := utils.LoadEnv()
@@ -51,14 +52,15 @@ func APIMiddleware(c fiber.Ctx) error {
 		})
 	}
 
+	var clerkID string
+	var irminUser *db.User
+
 	// Check if the token is a system token.
 	if token == env.SystemToken {
 		// No need to set the user in the context for system tokens, since it should not be used for user-specific actions.
+		c.Locals("is_system", true)
 		return c.Next()
 	}
-
-	var clerkID string
-	var irminUser *db.User
 
 	// If the token has a "cred_" prefix, it is an API token.
 	if strings.HasPrefix(token, "cred_") {
@@ -183,6 +185,7 @@ func APIMiddleware(c fiber.Ctx) error {
 
 	// Set the user in the context for subsequent handlers.
 	c.Locals("user", irminUser)
+	c.Locals("is_system", false)
 
 	return c.Next()
 }
