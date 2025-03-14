@@ -53,7 +53,29 @@ func UpdateWorkspace(id uint, updates interface{}) (*Workspace, error) {
 	return &workspace, nil
 }
 
-// DeleteWorkspace deletes a workspace.
+// DeleteWorkspace deletes a workspace and the related records.
 func DeleteWorkspace(id uint) error {
-	return DB.Where("id = ?", id).Delete(&Workspace{}).Error
+	return DB.Transaction(func(tx *gorm.DB) error {
+		// Delete the workspace.
+		if err := tx.Delete(&Workspace{}, id).Error; err != nil {
+			return err
+		}
+		// Delete the workspace users.
+		if err := tx.Delete(&WorkspaceUser{}, "workspace_id = ?", id).Error; err != nil {
+			return err
+		}
+		// Delete the workflows
+		if err := tx.Delete(&Workflow{}, "workspace_id = ?", id).Error; err != nil {
+			return err
+		}
+		// Delete the connections
+		if err := tx.Delete(&Connection{}, "workspace_id = ?", id).Error; err != nil {
+			return err
+		}
+		// Delete the repositories
+		if err := tx.Delete(&Repository{}, "workspace_id = ?", id).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 }
