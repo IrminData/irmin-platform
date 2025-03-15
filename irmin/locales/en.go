@@ -15,4 +15,8 @@ var English = Dictionary{
 	"workspace_left":                  "Workspace left",
 	"connector_refreshed":             "Connector refreshed",
 	"connector_deleted":               "Connector deleted",
+	"workflow_created":                "Workflow created",
+	"workflow_updated":                "Workflow updated",
+	"workflow_deleted":                "Workflow deleted",
+	"workflow_ownership_transferred":  "Workflow ownership transferred",
 }

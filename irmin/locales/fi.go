@@ -15,4 +15,8 @@ var Finnish = Dictionary{
 	"workspace_left":                  "Työtilasta poistuttu",
 	"connector_refreshed":             "Liitäntä päivitetty",
 	"connector_deleted":               "Liitäntä poistettu",
+	"workflow_created":                "Prosessi luotu",
+	"workflow_updated":                "Prosessi päivitetty",
+	"workflow_deleted":                "Prosessi poistettu",
+	"workflow_ownership_transferred":  "Prosessin omistajuus siirretty",
 }

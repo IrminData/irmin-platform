@@ -31,11 +31,9 @@ func RegisterAPIRoutes(app *fiber.App) {
 	v1.Post("/credentials", controllers.CredentialsStore)
 	v1.Delete("/credentials/:credential", controllers.CredentialsDestroy)
 
-	// Workspaces routes
+	// Workspace routes
 	v1.Get("/workspaces", controllers.WorkspacesIndex)
 	v1.Post("/workspaces", controllers.WorkspacesStore)
-
-	// Workspace routes
 	workspace := v1.Group("/workspaces/:workspace", controllers.WorkspaceMiddleware)
 	workspace.Get("/", controllers.WorkspacesShow)
 	workspace.Patch("/", controllers.WorkspacesUpdate)
@@ -43,23 +41,35 @@ func RegisterAPIRoutes(app *fiber.App) {
 	workspace.Post("/transfer-ownership", controllers.TransferWorkspaceOwnership)
 	workspace.Post("/leave", controllers.LeaveWorkspace)
 
-	// Workflows routes
+	// Workflow routes
 	workflows := workspace.Group("/workflows")
 	workflows.Get("/", controllers.WorkflowsIndex)
+	workflow := workflows.Group("/:workflow", controllers.WorkflowMiddleware)
+	workflow.Get("/", controllers.WorkflowsShow)
+	workflow.Patch("/", controllers.WorkflowsUpdate)
+	workflow.Delete("/", controllers.WorkflowsDestroy)
+	workflow.Post("/transfer-ownership", controllers.TransferWorkflowOwnership)
+
+	// Action workflow routes
 	workflows.Get("/actions", controllers.ActionWorkflowsIndex)
 	workflows.Post("/actions", controllers.ActionWorkflowsStore)
+
+	// Import workflow routes
 	workflows.Get("/imports", controllers.ImportWorkflowsIndex)
 	workflows.Post("/imports", controllers.ImportWorkflowsStore)
+
+	// Export workflow routes
 	workflows.Get("/exports", controllers.ExportWorkflowsIndex)
 	workflows.Post("/exports", controllers.ExportWorkflowsStore)
+
+	// Pipeline workflow routes
 	workflows.Get("/pipelines", controllers.PipelineWorkflowsIndex)
 	workflows.Post("/pipelines", controllers.PipelineWorkflowsStore)
-	workflows.Get("/:workflow", controllers.WorkflowsShow)
-	workflows.Patch("/:workflow", controllers.WorkflowsUpdate)
-	workflows.Delete("/:workflow", controllers.WorkflowsDestroy)
-	workflows.Post("/:workflow/transfer-ownership", controllers.TransferWorkflowOwnership)
-	workflows.Post("/:workflow/execute", controllers.ExecuteWorkflow)
+
+	// Workflow run routes
+	workflows.Post("/:workflow/runs", controllers.WorkflowRunsStore)
 	workflows.Get("/:workflow/runs", controllers.WorkflowRunsIndex)
+	workflows.Get("/:workflow/runs/:run", controllers.WorkflowRunsShow)
 
 	// Repositories routes
 	repositories := workspace.Group("/repositories")
@@ -76,7 +86,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	repository.Get("/compare", controllers.CompareRefs)
 	repository.Post("/merge", controllers.MergeRefs)
 
-	// Objects routes
+	// Object routes
 	objects := repository.Group("/objects")
 	objects.Get("/", controllers.ObjectsIndex)
 	objects.Get("/:path", controllers.ObjectsShow)
@@ -87,7 +97,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	objects.Get("/history/:path", controllers.ObjectsHistory)
 	objects.Get("/schema/:path", controllers.ObjectsSchema)
 
-	// Branches routes
+	// Branch routes
 	branches := repository.Group("/branches")
 	branches.Get("/", controllers.BranchesIndex)
 	branches.Post("/", controllers.BranchesStore)
@@ -95,7 +105,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	branches.Patch("/:branch", controllers.BranchesUpdate)
 	branches.Delete("/:branch", controllers.BranchesDestroy)
 
-	// Tags routes
+	// Tag routes
 	tags := repository.Group("/tags")
 	tags.Get("/", controllers.TagsIndex)
 	tags.Post("/", controllers.TagsStore)
@@ -110,7 +120,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	commits.Get("/last-commit", controllers.ShowLastCommit)
 	commits.Get("/:commit", controllers.CommitsShow)
 
-	// Queries routes
+	// Query routes
 	queries := workspace.Group("/queries")
 	queries.Get("/", controllers.QueriesIndex)
 	queries.Get("/:query", controllers.QueriesShow)
@@ -122,14 +132,14 @@ func RegisterAPIRoutes(app *fiber.App) {
 	queries.Get("/:query/results", controllers.QueryResultsShow)
 	queries.Delete("/:query/results", controllers.QueryResultsDestroy)
 
-	// Users routes
+	// User routes
 	users := workspace.Group("/users")
 	users.Get("/", controllers.UsersIndex)
 	users.Get("/:user", controllers.UsersShow)
 	users.Patch("/:user", controllers.UsersUpdate)
 	users.Delete("/:user", controllers.UsersDestroy)
 
-	// Invites routes
+	// Invite routes
 	invites := workspace.Group("/invites")
 	invites.Get("/", controllers.InvitesIndex)
 	invites.Post("/", controllers.InvitesStore)
@@ -137,7 +147,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	invites.Delete("/:invite", controllers.InvitesDestroy)
 	invites.Post("/:invite/resend", controllers.ResendInvite)
 
-	// Connections routes
+	// Connection routes
 	connections := workspace.Group("/connections")
 	connections.Post("/", controllers.ConnectionsStore)
 	connections.Get("/", controllers.ConnectionsIndex)
@@ -148,7 +158,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	connections.Delete("/:connection", controllers.ConnectionsDestroy)
 	connections.Post("/:connection/transfer-ownership", controllers.TransferConnectionOwnership)
 
-	// Editor items routes
+	// Editor item routes
 	editorItems := workspace.Group("/editor-items")
 	editorItems.Get("/", controllers.EditorItemsIndex)
 	editorItems.Post("/", controllers.EditorItemStore)

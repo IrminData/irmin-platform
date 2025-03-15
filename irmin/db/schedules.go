@@ -64,3 +64,59 @@ type Schedule struct {
 	MaxRuntime  int               `json:"max_runtime,omitempty"`
 	MinInterval int               `json:"min_interval,omitempty"`
 }
+
+type WorkflowTriggerResponse struct {
+	Type WorkflowTriggerType `json:"type"`
+	// Time trigger
+	RRule *string `json:"rrule,omitempty"`
+	Cron  *string `json:"cron,omitempty"`
+
+	// Repository event trigger
+	RepositoryEvent *RepositoryEvent `json:"repository_event,omitempty"`
+	Repository      *string          `json:"repository,omitempty"` // Slug of the repository
+	RepositoryRef   *string          `json:"repository_ref,omitempty"`
+
+	// Workflow run event trigger
+	WorkflowRunEvent *WorkflowRunEvent `json:"workflow_run_event,omitempty"`
+	WorkflowID       *string           `json:"workflow_id,omitempty"` // Sqid of the workflow
+}
+
+type ScheduleResponse struct {
+	Triggers    []WorkflowTriggerResponse `json:"triggers"`
+	MaxRetries  int                       `json:"max_retries,omitempty"`
+	MaxRuntime  int                       `json:"max_runtime,omitempty"`
+	MinInterval int                       `json:"min_interval,omitempty"`
+}
+
+// GetScheduleByID retrieves a schedule record from the database by its ID.
+func GetScheduleByID(id uint) (*Schedule, error) {
+	var schedule Schedule
+	if err := DB.Preload("Triggers").Preload("Triggers.Repository").Preload("Triggers.Workflow").First(&schedule, id).Error; err != nil {
+		return nil, err
+	}
+	return &schedule, nil
+}
+
+// CreateSchedule creates a new schedule record in the database.
+func CreateSchedule(schedule *Schedule) (*Schedule, error) {
+	if err := DB.Create(schedule).Error; err != nil {
+		return nil, err
+	}
+	return schedule, nil
+}
+
+// DeleteSchedule deletes a schedule record and associated triggers from the database by its ID.
+func DeleteSchedule(id uint) error {
+	if err := DB.Select("Triggers").Where("id = ?", id).Delete(&Schedule{}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+// UpdateSchedule updates a schedule record in the database.
+func UpdateSchedule(schedule *Schedule) (*Schedule, error) {
+	if err := DB.Save(schedule).Error; err != nil {
+		return nil, err
+	}
+	return schedule, nil
+}

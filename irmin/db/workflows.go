@@ -30,6 +30,8 @@ type Workflow struct {
 	Documentation string                `json:"documentation"`
 	Status        WorkflowStatus        `json:"status"`
 	Type          WorkflowableType      `json:"type"`
+	Workspace     Workspace             `json:"workspace" gorm:"foreignKey:WorkspaceID"`
+	WorkspaceID   uint                  `json:"workspace_id"`
 	Owner         User                  `json:"owner" gorm:"foreignKey:OwnerID"`
 	OwnerID       uint                  `json:"owner_id"`
 	Schedule      *Schedule             `json:"schedule,omitempty" gorm:"foreignKey:ScheduleID"`
@@ -110,4 +112,187 @@ type PipelineStage struct {
 	RepositoryID     *uint       `json:"repository_id,omitempty"`
 	RepositoryBranch *string     `json:"branch,omitempty"`
 	RepositoryPath   *string     `json:"path,omitempty"`
+}
+
+// GetWorkflowsByWorkspaceID retrieves all workflows for a workspace
+func GetWorkflowsByWorkspaceID(workspaceID uint) ([]Workflow, error) {
+	var workflows []Workflow
+	result := DB.Preload("Owner").Where("workspace_id = ?", workspaceID).Find(&workflows)
+	return workflows, result.Error
+}
+
+// GetWorkflowByID retrieves a workflow by its ID
+func GetWorkflowByID(id uint) (*Workflow, error) {
+	var workflow Workflow
+	result := DB.Preload("Owner").Preload("Schedule").Preload("Schedule.Triggers").Preload("Schedule.Triggers.Repository").First(&workflow, id)
+	return &workflow, result.Error
+}
+
+// GetImportWorkflowableByID retrieves an import workflowable by its ID
+func GetImportWorkflowableByID(id uint) (*ImportWorkflowable, error) {
+	var importWorkflow ImportWorkflowable
+	result := DB.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&importWorkflow, id)
+	return &importWorkflow, result.Error
+}
+
+// GetExportWorkflowableByID retrieves an export workflowable by its ID
+func GetExportWorkflowableByID(id uint) (*ExportWorkflowable, error) {
+	var exportWorkflow ExportWorkflowable
+	result := DB.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&exportWorkflow, id)
+	return &exportWorkflow, result.Error
+}
+
+// GetActionWorkflowableByID retrieves an action workflowable by its ID
+func GetActionWorkflowableByID(id uint) (*ActionWorkflowable, error) {
+	var actionWorkflow ActionWorkflowable
+	result := DB.Preload("Repository").First(&actionWorkflow, id)
+	return &actionWorkflow, result.Error
+}
+
+// GetPipelineWorkflowableByID retrieves a pipeline workflowable by its ID
+func GetPipelineWorkflowableByID(id uint) (*PipelineWorkflowable, error) {
+	var pipeline PipelineWorkflowable
+	result := DB.Preload("Stages").Preload("Stages.Connection").Preload("Stages.Connection.Connector").Preload("Stages.Repository").First(&pipeline, id)
+	return &pipeline, result.Error
+}
+
+// CreateWorkflow creates a new workflow record in the database.
+func CreateWorkflow(workflow *Workflow) (*Workflow, error) {
+	if err := DB.Create(workflow).Error; err != nil {
+		return nil, err
+	}
+	return workflow, nil
+}
+
+// UpdateWorkflow updates an existing workflow record in the database.
+func UpdateWorkflow(id uint, updates interface{}) (*Workflow, error) {
+	var workflow Workflow
+	// Update only the provided fields for the user with the specified ID.
+	if err := DB.Model(&Workflow{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		return nil, err
+	}
+	// Retrieve the updated workflow record.
+	if err := DB.Preload("Owner").Preload("Schedule").Preload("Schedule.Triggers").Preload("Schedule.Triggers.Repository").First(&workflow, id).Error; err != nil {
+		return nil, err
+	}
+	return &workflow, nil
+}
+
+// UpdateImportWorkflowable updates an existing import workflowable record in the database.
+func UpdateImportWorkflowable(id uint, updates interface{}) (*ImportWorkflowable, error) {
+	var importWorkflow ImportWorkflowable
+	// Update only the provided fields for the user with the specified ID.
+	if err := DB.Model(&ImportWorkflowable{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		return nil, err
+	}
+	// Retrieve the updated import workflowable record.
+	if err := DB.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&importWorkflow, id).Error; err != nil {
+		return nil, err
+	}
+	return &importWorkflow, nil
+}
+
+// UpdateExportWorkflowable updates an existing export workflowable record in the database.
+func UpdateExportWorkflowable(id uint, updates interface{}) (*ExportWorkflowable, error) {
+	var exportWorkflow ExportWorkflowable
+	// Update only the provided fields for the user with the specified ID.
+	if err := DB.Model(&ExportWorkflowable{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		return nil, err
+	}
+	// Retrieve the updated export workflowable record.
+	if err := DB.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&exportWorkflow, id).Error; err != nil {
+		return nil, err
+	}
+	return &exportWorkflow, nil
+}
+
+// UpdateActionWorkflowable updates an existing action workflowable record in the database.
+func UpdateActionWorkflowable(id uint, updates interface{}) (*ActionWorkflowable, error) {
+	var actionWorkflow ActionWorkflowable
+	// Update only the provided fields for the user with the specified ID.
+	if err := DB.Model(&ActionWorkflowable{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		return nil, err
+	}
+	// Retrieve the updated action workflowable record.
+	if err := DB.Preload("Repository").First(&actionWorkflow, id).Error; err != nil {
+		return nil, err
+	}
+	return &actionWorkflow, nil
+}
+
+// UpdatePipelineWorkflowable updates an existing pipeline workflowable record in the database.
+func UpdatePipelineWorkflowable(id uint, updates interface{}) (*PipelineWorkflowable, error) {
+	var pipeline PipelineWorkflowable
+	// Update only the provided fields for the user with the specified ID.
+	if err := DB.Model(&PipelineWorkflowable{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		return nil, err
+	}
+	// Retrieve the updated pipeline workflowable record.
+	if err := DB.Preload("Stages").Preload("Stages.Connection").Preload("Stages.Connection.Connector").Preload("Stages.Repository").First(&pipeline, id).Error; err != nil {
+		return nil, err
+	}
+	return &pipeline, nil
+}
+
+// UpdatePipelineStage updates an existing pipeline stage record in the database.
+func UpdatePipelineStage(id uint, updates interface{}) (*PipelineStage, error) {
+	var pipelineStage PipelineStage
+	// Update only the provided fields for the user with the specified ID.
+	if err := DB.Model(&PipelineStage{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		return nil, err
+	}
+	// Retrieve the updated pipeline stage record.
+	if err := DB.Preload("Pipeline").First(&pipelineStage, id).Error; err != nil {
+		return nil, err
+	}
+	return &pipelineStage, nil
+}
+
+// DeleteWorkflow deletes a workflow and the related records.
+func DeleteWorkflow(id uint) error {
+	return DB.Select("Schedule").Select("Schedule.Triggers").Select("Import").Select("Export").Select("Action").Select("Pipeline").Select("Pipeline.Stages").Where("id = ?", id).Delete(&Workflow{}).Error
+}
+
+// ------------------ Responses ------------------
+
+type PipelineStageResponse struct {
+	Description string            `json:"description"`
+	Write       bool              `json:"write"`
+	Read        bool              `json:"read"`
+	Type        PipelineStageType `json:"type"`
+	// Action
+	Executable *string `json:"executable,omitempty"`
+	// Connection
+	ConnectionID        *string `json:"connection_id,omitempty"`
+	ConnectionWritePath *string `json:"connection_write_path,omitempty"`
+	ConnectionReadPath  *string `json:"connection_read_path,omitempty"`
+	// Repository
+	Repository       *string `json:"repository,omitempty"`
+	RepositoryBranch *string `json:"branch,omitempty"`
+	RepositoryPath   *string `json:"path,omitempty"`
+}
+
+type WorkflowableResponse struct {
+	Type           WorkflowableType        `json:"type"`
+	ConnectionID   string                  `json:"connection_id,omitempty"`
+	ConnectionPath string                  `json:"connection_path,omitempty"`
+	Repository     string                  `json:"repository,omitempty"`
+	Branch         string                  `json:"branch,omitempty"`
+	Path           string                  `json:"path,omitempty"`
+	Recursive      bool                    `json:"recursive,omitempty"`
+	Executable     string                  `json:"executable,omitempty"`
+	Live           bool                    `json:"live,omitempty"`
+	Stages         []PipelineStageResponse `json:"stages,omitempty"`
+}
+
+type WorkflowResponse struct {
+	ID            string                `json:"id"`
+	Name          string                `json:"name"`
+	Description   string                `json:"description"`
+	Documentation string                `json:"documentation"`
+	Status        WorkflowStatus        `json:"status"`
+	Type          WorkflowableType      `json:"type"`
+	Owner         UserResponse          `json:"owner"`
+	Schedule      *ScheduleResponse     `json:"schedule,omitempty"`
+	Workflowable  *WorkflowableResponse `json:"workflowable,omitempty"`
 }
