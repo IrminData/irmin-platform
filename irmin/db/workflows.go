@@ -292,6 +292,26 @@ func DeleteWorkflow(id uint) error {
 	return DB.Select("Schedule").Select("Schedule.Triggers").Select("Import").Select("Export").Select("Action").Select("Pipeline").Select("Pipeline.Stages").Where("id = ?", id).Delete(&Workflow{}).Error
 }
 
+// DeleteActionWorkflowable deletes an action workflowable record.
+func DeleteActionWorkflowable(id uint) error {
+	return DB.Where("id = ?", id).Delete(&ActionWorkflowable{}).Error
+}
+
+// DeleteImportWorkflowable deletes an import workflowable record.
+func DeleteImportWorkflowable(id uint) error {
+	return DB.Where("id = ?", id).Delete(&ImportWorkflowable{}).Error
+}
+
+// DeleteExportWorkflowable deletes an export workflowable record.
+func DeleteExportWorkflowable(id uint) error {
+	return DB.Where("id = ?", id).Delete(&ExportWorkflowable{}).Error
+}
+
+// DeletePipelineWorkflowable deletes a pipeline workflowable record and its stages.
+func DeletePipelineWorkflowable(id uint) error {
+	return DB.Select("Stages").Where("id = ?", id).Delete(&PipelineWorkflowable{}).Error
+}
+
 // ------------------ Responses ------------------
 
 type PipelineStageResponse struct {
