@@ -16,3 +16,9 @@ type Repository struct {
 	Owner         User      `json:"owner" gorm:"foreignKey:OwnerID"`
 	OwnerID       uint      `json:"owner_id"`
 }
+
+func GetRepositoryBySlugAndWorkspaceID(slug string, workspaceID uint) (*Repository, error) {
+	var repository Repository
+	err := DB.Where("slug = ? AND workspace_id = ?", slug, workspaceID).First(&repository).Error
+	return &repository, err
+}

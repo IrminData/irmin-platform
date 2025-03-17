@@ -27,16 +27,16 @@ func CredentialsIndex(c fiber.Ctx) error {
 	}
 
 	// Map tokens to API token response, omitting the Token field.
-	listResponse := make([]db.APITokenResponse, len(tokens))
-	for i, token := range tokens {
+	var listResponse []db.APITokenResponse
+	for _, token := range tokens {
 		sqid, _ := utils.EncodeSqids("api_tokens", uint64(token.ID))
-		listResponse[i] = db.APITokenResponse{
+		listResponse = append(listResponse, db.APITokenResponse{
 			ID:        sqid,
 			CreatedAt: token.CreatedAt,
 			UpdatedAt: token.UpdatedAt,
 			Name:      token.Name,
 			ExpiresAt: token.ExpiresAt,
-		}
+		})
 	}
 
 	// Return the API tokens.

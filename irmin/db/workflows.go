@@ -121,6 +121,13 @@ func GetWorkflowsByWorkspaceID(workspaceID uint) ([]Workflow, error) {
 	return workflows, result.Error
 }
 
+// GetWorkflowsOfTypeByWorkspaceID retrieves all workflows of a specific type for a workspace
+func GetWorkflowsOfTypeByWorkspaceID(workspaceID uint, workflowType WorkflowableType) ([]Workflow, error) {
+	var workflows []Workflow
+	result := DB.Preload("Owner").Where("workspace_id = ? AND type = ?", workspaceID, workflowType).Find(&workflows)
+	return workflows, result.Error
+}
+
 // GetWorkflowByID retrieves a workflow by its ID
 func GetWorkflowByID(id uint) (*Workflow, error) {
 	var workflow Workflow
@@ -162,6 +169,38 @@ func CreateWorkflow(workflow *Workflow) (*Workflow, error) {
 		return nil, err
 	}
 	return workflow, nil
+}
+
+// CreateImportWorkflowable creates a new import workflowable record in the database.
+func CreateImportWorkflowable(importWorkflow *ImportWorkflowable) (*ImportWorkflowable, error) {
+	if err := DB.Create(&importWorkflow).Error; err != nil {
+		return nil, err
+	}
+	return importWorkflow, nil
+}
+
+// CreateExportWorkflowable creates a new export workflowable record in the database.
+func CreateExportWorkflowable(exportWorkflow *ExportWorkflowable) (*ExportWorkflowable, error) {
+	if err := DB.Create(&exportWorkflow).Error; err != nil {
+		return nil, err
+	}
+	return exportWorkflow, nil
+}
+
+// CreateActionWorkflowable creates a new action workflowable record in the database.
+func CreateActionWorkflowable(actionWorkflow *ActionWorkflowable) (*ActionWorkflowable, error) {
+	if err := DB.Create(&actionWorkflow).Error; err != nil {
+		return nil, err
+	}
+	return actionWorkflow, nil
+}
+
+// CreatePipelineWorkflowable creates a new pipeline workflowable record in the database.
+func CreatePipelineWorkflowable(pipeline *PipelineWorkflowable) (*PipelineWorkflowable, error) {
+	if err := DB.Create(&pipeline).Error; err != nil {
+		return nil, err
+	}
+	return pipeline, nil
 }
 
 // UpdateWorkflow updates an existing workflow record in the database.

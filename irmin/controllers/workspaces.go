@@ -25,16 +25,16 @@ func WorkspacesIndex(c fiber.Ctx) error {
 	}
 
 	// Map workspaces to workspace response.
-	workspacesResponse := make([]db.WorkspaceResponse, len(userWorkspaces))
-	for i, userWorkspace := range userWorkspaces {
+	var workspacesResponse []db.WorkspaceResponse
+	for _, userWorkspace := range userWorkspaces {
 		workspace := userWorkspace.Workspace
 		sqid, _ := utils.EncodeSqids("workspaces", uint64(workspace.ID))
-		workspacesResponse[i] = db.WorkspaceResponse{
+		workspacesResponse = append(workspacesResponse, db.WorkspaceResponse{
 			ID:          sqid,
 			Name:        workspace.Name,
 			Slug:        workspace.Slug,
 			Description: workspace.Description,
-		}
+		})
 	}
 
 	// Return the workspaces.

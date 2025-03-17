@@ -2,6 +2,8 @@ package utils
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v3" // import the Fiber framework
@@ -18,8 +20,6 @@ import (
 //   - A map where the key is the field name and the value is the field value.
 //     The map will include all required fields and any optional fields that are present.
 //   - An error if any required fields are missing.
-//
-// Note: Fiber automatically parses form data, so there's no need to manually parse multipart or URL-encoded forms.
 func ParseFormFields(c fiber.Ctx, required, optional []string) (map[string]string, error) {
 	values := make(map[string]string)
 	missingRequired := []string{}
@@ -48,4 +48,53 @@ func ParseFormFields(c fiber.Ctx, required, optional []string) (map[string]strin
 	}
 
 	return values, nil
+}
+
+// ParseArrayFormFields extracts array-like form fields from a Fiber context.
+// It groups fields with keys following the pattern prefix[index].key into a map
+// where the key is the array index and the value is another map of key-value pairs.
+//
+// Params:
+// - c: The Fiber context containing the form data.
+// - prefix: The prefix for the array field (e.g. "trigger").
+//
+// Returns:
+//   - A map where the key is the array index and the value is a map of field names to values.
+//   - An error if there is an issue parsing the form data.
+func ParseArrayFormFields(c fiber.Ctx, prefix string) (map[int]map[string]string, error) {
+	// Compile a regex to match keys like trigger[0].type
+	pattern := fmt.Sprintf(`^%s\[(\d+)\]\.(\w+)$`, regexp.QuoteMeta(prefix))
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return nil, err
+	}
+
+	// Retrieve the full multipart form from the request.
+	form, err := c.MultipartForm()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a map to store results.
+	results := make(map[int]map[string]string)
+
+	// Iterate over all form values.
+	for key, values := range form.Value {
+		matches := re.FindStringSubmatch(key)
+		if len(matches) == 3 {
+			// Convert the index from string to int.
+			idx, err := strconv.Atoi(matches[1])
+			if err != nil {
+				continue // skip invalid indices
+			}
+			// If not already present, initialise the map for this index.
+			if _, ok := results[idx]; !ok {
+				results[idx] = make(map[string]string)
+			}
+			// Use the first value (assuming one value per field).
+			results[idx][matches[2]] = values[0]
+		}
+	}
+
+	return results, nil
 }

@@ -9,3 +9,7 @@ func ImportWorkflowsIndex(c fiber.Ctx) error {
 func ImportWorkflowsStore(c fiber.Ctx) error {
 	return c.SendString("Import Workflows Store")
 }
+
+func ImportWorkflowsUpdate(c fiber.Ctx) error {
+	return c.SendString("Import Workflows Update")
+}
