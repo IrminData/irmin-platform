@@ -175,8 +175,45 @@ func WorkflowsStore(c fiber.Ctx) error {
 	switch db.WorkflowableType(fields["type"]) {
 	case db.WorkflowableTypeImport:
 		// Create the import workflowable object.
-		// TODO
-		importWorkflowable = &db.ImportWorkflowable{}
+		// Parse additional request body fields
+		workflowableFields, err := utils.ParseFormFields(c, []string{"connection", "connection_path", "repository", "branch", "path"}, nil)
+		if err != nil {
+			log.Printf("Error parsing form fields: %v", err)
+			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+				Errors: []string{dict.T("invalid_request")},
+			})
+		}
+		// Find the repository by slug.
+		repository, err := db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+		if err != nil {
+			log.Printf("Error retrieving repository: %v", err)
+			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+				Errors: []string{dict.T("invalid_request")},
+			})
+		}
+		// Find the connection by ID.
+		connectionID, err := utils.DecodeSqids("connections", workflowableFields["connection"])
+		if err != nil {
+			log.Printf("Error decoding connection sqid: %v", err)
+			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+				Errors: []string{dict.T("error_occured")},
+			})
+		}
+		connection, err := db.FindConnectionByID(uint(connectionID))
+		if err != nil {
+			log.Printf("Error retrieving connection: %v", err)
+			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+				Errors: []string{dict.T("invalid_request")},
+			})
+		}
+		// Create the workflowable object.
+		importWorkflowable = &db.ImportWorkflowable{
+			ConnectionID:   connection.ID,
+			ConnectionPath: workflowableFields["connection_path"],
+			RepositoryID:   repository.ID,
+			Branch:         workflowableFields["branch"],
+			Path:           workflowableFields["path"],
+		}
 	case db.WorkflowableTypeExport:
 		// Create the export workflowable object.
 		// TODO

@@ -19,3 +19,12 @@ type Connection struct {
 	ConnectorID   uint              `json:"connector_id,omitempty"`
 	Connector     Connector         `json:"connector,omitempty" gorm:"foreignKey:ConnectorID"`
 }
+
+// FindConnectionByID finds a connection by its ID
+func FindConnectionByID(id uint) (*Connection, error) {
+	var connection Connection
+	if err := DB.Preload("Owner").Preload("Workspace").Preload("Connector").First(&connection, id).Error; err != nil {
+		return nil, err
+	}
+	return &connection, nil
+}
