@@ -818,13 +818,88 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 }
 
 func ScheduleUpdate(c fiber.Ctx) error {
-	return c.SendString("Schedule Update")
+	// Get the dictionary and workflow from the request context.
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+	workflow := c.Locals("workflow").(*db.Workflow)
+
+	// Parse the schedule object from the request body.
+	schedule, err := lib.CreateScheduleObject(c, *workspace)
+	if err != nil {
+		log.Printf("Error creating schedule object: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Create the schedule in the database.
+	schedule, err = db.CreateSchedule(schedule)
+	if err != nil {
+		log.Printf("Error creating schedule: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Delete the current associated schedule object and its triggers.
+	if workflow.Schedule != nil {
+		db.DeleteSchedule(workflow.Schedule.ID)
+	}
+
+	// Update the workflow record with the new schedule object.
+	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]interface{}{
+		"schedule_id": &schedule.ID,
+	})
+	if err != nil {
+		log.Printf("Error updating workflow: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Get the workflow response.
+	workflowResponse, err := lib.GetWorkflowResponse(*updatedWorkflow)
+	if err != nil {
+		log.Printf("Error getting workflow response: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Return the response.
+	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+		Message: dict.T("schedule_updated"),
+		Data:    workflowResponse,
+	})
 }
 
 func WorkflowsDestroy(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	workflow := c.Locals("workflow").(*db.Workflow)
+
+	// Delete the current associated workflowable object.
+	if workflow.Action != nil {
+		// Delete the action workflowable object.
+		db.DeleteActionWorkflowable(workflow.Action.ID)
+	}
+	if workflow.Import != nil {
+		// Delete the import workflowable object.
+		db.DeleteImportWorkflowable(workflow.Import.ID)
+	}
+	if workflow.Export != nil {
+		// Delete the export workflowable object.
+		db.DeleteExportWorkflowable(workflow.Export.ID)
+	}
+	if workflow.Pipeline != nil {
+		// Delete the pipeline workflowable object and its stages.
+		db.DeletePipelineWorkflowable(workflow.Pipeline.ID)
+	}
+
+	// Delete the current associated schedule object and its triggers.
+	if workflow.Schedule != nil {
+		db.DeleteSchedule(workflow.Schedule.ID)
+	}
 
 	// Delete the workflow record.
 	err := db.DeleteWorkflow(workflow.ID)
