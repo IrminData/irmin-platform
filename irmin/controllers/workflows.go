@@ -320,8 +320,86 @@ func WorkflowsStore(c fiber.Ctx) error {
 		}
 	case db.WorkflowableTypePipeline:
 		// Create the pipeline workflowable object.
-		// TODO
-		pipelineWorkflowable = &db.PipelineWorkflowable{}
+		// Parse additional request body fields
+		workflowableFields, err := utils.ParseFormFields(c, nil, []string{"live"})
+		if err != nil {
+			log.Printf("Error parsing form fields: %v", err)
+			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+				Errors: []string{dict.T("invalid_request")},
+			})
+		}
+		// Parse stages from the request body.
+		requestStages, err := utils.ParseArrayFormFields(c, "stage")
+		if err != nil {
+			log.Printf("Error parsing array form fields: %v", err)
+			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+				Errors: []string{dict.T("invalid_request")},
+			})
+		}
+		// Build the pipeline stage objects.
+		var stages []db.PipelineStage
+		for _, stage := range requestStages {
+			newStage := db.PipelineStage{
+				Description: stage["description"],
+				Write:       stage["write"] == "true",
+				Read:        stage["read"] == "true",
+			}
+			switch stage["type"] {
+			case "action":
+				newStage.Type = db.PipelineStageTypeAction
+				executable := stage["executable"]
+				newStage.Executable = &executable
+			case "connection":
+				newStage.Type = db.PipelineStageTypeConnection
+				parsedConnID, err := utils.DecodeSqids("connections", stage["connection"])
+				if err != nil {
+					log.Printf("Error decoding connection sqid: %v", err)
+					continue
+				}
+				connection, err := db.FindConnectionByID(uint(parsedConnID))
+				if err != nil {
+					log.Printf("Error retrieving connection: %v", err)
+					continue
+				}
+				writePath := stage["connection_write_path"]
+				readPath := stage["connection_read_path"]
+				newStage.ConnectionID = &connection.ID
+				newStage.ConnectionWritePath = &writePath
+				newStage.ConnectionReadPath = &readPath
+			case "repository":
+				newStage.Type = db.PipelineStageTypeRepository
+				repositorySlug := stage["repository"]
+				repository, err := db.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
+				if err != nil {
+					log.Printf("Error retrieving repository: %v", err)
+					continue
+				}
+				branch := stage["branch"]
+				path := stage["path"]
+				newStage.RepositoryID = &repository.ID
+				newStage.RepositoryBranch = &branch
+				newStage.RepositoryPath = &path
+			default:
+				log.Printf("Invalid stage type: %s", stage["type"])
+			}
+			stages = append(stages, newStage)
+		}
+
+		// Create the pipeline workflowable object.
+		live := false
+		if workflowableFields["live"] == "true" {
+			live = true
+		}
+		pipelineWorkflowable, err = db.CreatePipelineWorkflowable(&db.PipelineWorkflowable{
+			Live:   live,
+			Stages: stages,
+		})
+		if err != nil {
+			log.Printf("Error creating workflowable: %v", err)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+				Errors: []string{dict.T("error_occured")},
+			})
+		}
 	default:
 		log.Printf("Invalid workflow type: %s", fields["type"])
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
