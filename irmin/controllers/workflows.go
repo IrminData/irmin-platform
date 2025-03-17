@@ -15,13 +15,34 @@ func WorkflowsIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
-	// Get the workflows for the workspace.
-	workflows, err := db.GetWorkflowsByWorkspaceID(workspace.ID)
+	// Get the filters from the query string.
+	query, err := utils.ParseQueryParams(c, nil, []string{"type"})
 	if err != nil {
-		log.Printf("Error retrieving workflows: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+		log.Printf("Error parsing query params: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
 		})
+	}
+
+	var workflows []db.Workflow
+	if query["type"] != "" {
+		// Get the workflows for the workspace filtered by type.
+		workflows, err = db.GetWorkflowsOfTypeByWorkspaceID(workspace.ID, db.WorkflowableType(query["type"]))
+		if err != nil {
+			log.Printf("Error retrieving workflows: %v", err)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+				Errors: []string{dict.T("error_occured")},
+			})
+		}
+	} else {
+		// Get the workflows for the workspace.
+		workflows, err = db.GetWorkflowsByWorkspaceID(workspace.ID)
+		if err != nil {
+			log.Printf("Error retrieving workflows: %v", err)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+				Errors: []string{dict.T("error_occured")},
+			})
+		}
 	}
 
 	// Structure the response.
@@ -127,6 +148,203 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 		Message: dict.T("workflow_updated"),
 		Data:    workflowResponse,
 	})
+}
+
+func WorkflowsStore(c fiber.Ctx) error {
+	// Get the dictionary and user from the request context.
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+	user := c.Locals("user").(*db.User)
+
+	// Parse the request body
+	fields, err := utils.ParseFormFields(c, []string{"type", "name"}, []string{"description", "documentation"})
+	if err != nil {
+		log.Printf("Error parsing form fields: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Create variables to store all possible workflowable objects.
+	var importWorkflowable *db.ImportWorkflowable
+	var exportWorkflowable *db.ExportWorkflowable
+	var actionWorkflowable *db.ActionWorkflowable
+	var pipelineWorkflowable *db.PipelineWorkflowable
+
+	// Procceed based on the workflow type.
+	switch db.WorkflowableType(fields["type"]) {
+	case db.WorkflowableTypeImport:
+		// Create the import workflowable object.
+		// TODO
+		importWorkflowable = &db.ImportWorkflowable{}
+	case db.WorkflowableTypeExport:
+		// Create the export workflowable object.
+		// TODO
+		exportWorkflowable = &db.ExportWorkflowable{}
+	case db.WorkflowableTypeAction:
+		// Create the action workflowable object.
+		// Parse additional request body fields
+		workflowableFields, err := utils.ParseFormFields(c, []string{"executable"}, []string{"repository", "branch", "path"})
+		if err != nil {
+			log.Printf("Error parsing form fields: %v", err)
+			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+				Errors: []string{dict.T("invalid_request")},
+			})
+		}
+		// Find the results repository by slug.
+		var repository *db.Repository
+		if workflowableFields["repository"] != "" {
+			repository, err = db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+			if err != nil {
+				log.Printf("Error retrieving repository: %v", err)
+				return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+					Errors: []string{dict.T("invalid_request")},
+				})
+			}
+		}
+		// Create the workflowable object.
+		var workflowable db.ActionWorkflowable
+		if repository != nil {
+			repositoryID := repository.ID
+			branch := workflowableFields["branch"]
+			path := workflowableFields["path"]
+			workflowable = db.ActionWorkflowable{
+				Executable:   workflowableFields["executable"],
+				RepositoryID: &repositoryID,
+				Branch:       &branch,
+				Path:         &path,
+			}
+		} else {
+			workflowable = db.ActionWorkflowable{
+				Executable: workflowableFields["executable"],
+			}
+		}
+		// Create the workflowable in the database.
+		actionWorkflowable, err = db.CreateActionWorkflowable(&workflowable)
+		if err != nil {
+			log.Printf("Error creating workflowable: %v", err)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+				Errors: []string{dict.T("error_occured")},
+			})
+		}
+	case db.WorkflowableTypePipeline:
+		// Create the pipeline workflowable object.
+		// TODO
+		pipelineWorkflowable = &db.PipelineWorkflowable{}
+	default:
+		log.Printf("Invalid workflow type: %s", fields["type"])
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Parse the schedule object from the request body.
+	schedule, err := lib.CreateScheduleObject(c, *workspace)
+	if err != nil {
+		log.Printf("Error creating schedule object: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Create the schedule in the database.
+	schedule, err = db.CreateSchedule(schedule)
+	if err != nil {
+		log.Printf("Error creating schedule: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Create the workflow in the database.
+	var workflow *db.Workflow
+	if importWorkflowable != nil {
+		workflow, err = db.CreateWorkflow(&db.Workflow{
+			Name:          fields["name"],
+			Description:   fields["description"],
+			Documentation: fields["documentation"],
+			Type:          db.WorkflowableTypeImport,
+			Status:        db.WorkflowStatusInitiating,
+			OwnerID:       user.ID,
+			WorkspaceID:   workspace.ID,
+			ScheduleID:    &schedule.ID,
+			ImportID:      &importWorkflowable.ID,
+		})
+	} else if exportWorkflowable != nil {
+		workflow, err = db.CreateWorkflow(&db.Workflow{
+			Name:          fields["name"],
+			Description:   fields["description"],
+			Documentation: fields["documentation"],
+			Type:          db.WorkflowableTypeExport,
+			Status:        db.WorkflowStatusInitiating,
+			OwnerID:       user.ID,
+			WorkspaceID:   workspace.ID,
+			ScheduleID:    &schedule.ID,
+			ExportID:      &exportWorkflowable.ID,
+		})
+	} else if actionWorkflowable != nil {
+		workflow, err = db.CreateWorkflow(&db.Workflow{
+			Name:          fields["name"],
+			Description:   fields["description"],
+			Documentation: fields["documentation"],
+			Type:          db.WorkflowableTypeAction,
+			Status:        db.WorkflowStatusInitiating,
+			OwnerID:       user.ID,
+			WorkspaceID:   workspace.ID,
+			ScheduleID:    &schedule.ID,
+			ActionID:      &actionWorkflowable.ID,
+		})
+	} else if pipelineWorkflowable != nil {
+		workflow, err = db.CreateWorkflow(&db.Workflow{
+			Name:          fields["name"],
+			Description:   fields["description"],
+			Documentation: fields["documentation"],
+			Type:          db.WorkflowableTypePipeline,
+			Status:        db.WorkflowStatusInitiating,
+			OwnerID:       user.ID,
+			WorkspaceID:   workspace.ID,
+			ScheduleID:    &schedule.ID,
+			PipelineID:    &pipelineWorkflowable.ID,
+		})
+	}
+	if err != nil {
+		log.Printf("Error creating workflow: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Fetch the full workflow object.
+	workflow, err = db.GetWorkflowByID(workflow.ID)
+	if err != nil {
+		log.Printf("Error retrieving workflow: %v", err)
+		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Get the workflow response.
+	workflowResponse, err := lib.GetWorkflowResponse(*workflow)
+	if err != nil {
+		log.Printf("Error getting workflow response: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Return the response.
+	return utils.WriteResponse(c, fiber.StatusCreated, utils.IrminAPIResponse{
+		Message: dict.T("workflow_created"),
+		Data:    workflowResponse,
+	})
+}
+
+func WorkflowableUpdate(c fiber.Ctx) error {
+	return c.SendString("Workflowable Update")
+}
+
+func ScheduleUpdate(c fiber.Ctx) error {
+	return c.SendString("Schedule Update")
 }
 
 func WorkflowsDestroy(c fiber.Ctx) error {

@@ -44,34 +44,17 @@ func RegisterAPIRoutes(app *fiber.App) {
 	// Workflow routes
 	workflows := workspace.Group("/workflows")
 	workflows.Get("/", controllers.WorkflowsIndex)
+	workflows.Post("/", controllers.WorkflowsStore)
 	workflow := workflows.Group("/:workflow", controllers.WorkflowMiddleware)
 	workflow.Get("/", controllers.WorkflowsShow)
 	workflow.Patch("/", controllers.WorkflowsUpdate)
+	workflow.Patch("/workflowable", controllers.WorkflowableUpdate)
+	workflow.Patch("/schedule", controllers.ScheduleUpdate)
 	workflow.Delete("/", controllers.WorkflowsDestroy)
 	workflow.Post("/transfer-ownership", controllers.TransferWorkflowOwnership)
 	workflow.Post("/runs", controllers.WorkflowRunsStore)
 	workflow.Get("/runs", controllers.WorkflowRunsIndex)
 	workflow.Get("/runs/:run", controllers.WorkflowRunsShow)
-
-	// Action workflow routes
-	workspace.Get("/action-workflows", controllers.ActionWorkflowsIndex)
-	workspace.Post("/action-workflows", controllers.ActionWorkflowsStore)
-	workspace.Patch("/action-workflows/:workflow", controllers.ActionWorkflowsUpdate)
-
-	// Import workflow routes
-	workspace.Get("/import-workflows", controllers.ImportWorkflowsIndex)
-	workspace.Post("/import-workflows", controllers.ImportWorkflowsStore)
-	workspace.Patch("/import-workflows/:workflow", controllers.ImportWorkflowsUpdate)
-
-	// Export workflow routes
-	workspace.Get("/export-workflows", controllers.ExportWorkflowsIndex)
-	workspace.Post("/export-workflows", controllers.ExportWorkflowsStore)
-	workspace.Patch("/export-workflows/:workflow", controllers.ExportWorkflowsUpdate)
-
-	// Pipeline workflow routes
-	workspace.Get("/pipeline-workflows", controllers.PipelineWorkflowsIndex)
-	workspace.Post("/pipeline-workflows", controllers.PipelineWorkflowsStore)
-	workspace.Patch("/pipeline-workflows/:workflow", controllers.PipelineWorkflowsUpdate)
 
 	// Repositories routes
 	repositories := workspace.Group("/repositories")
