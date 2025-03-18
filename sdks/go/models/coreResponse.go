@@ -17,8 +17,8 @@ type IrminAPIPaginationMetadata struct {
 // IrminAPIResponse is a “raw” response type where the `Data` is `json.RawMessage`.
 // This lets us unmarshal it a second time into the type we actually want.
 type IrminAPIResponse struct {
-	Metadata *interface{}    `json:"metadata,omitempty"`
-	Message  *string         `json:"message,omitempty"`
-	Errors   []string        `json:"errors,omitempty"`
-	Data     json.RawMessage `json:"data,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty"`
+	Message  string            `json:"message,omitempty"`
+	Errors   []string          `json:"errors,omitempty"`
+	Data     json.RawMessage   `json:"data,omitempty"`
 }
