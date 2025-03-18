@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.12.4",
-    "@clerk/themes": "^2.2.20",
+    "@clerk/themes": "^2.2.21",
     "@codemirror/lang-go": "^6.0.1",
     "@codemirror/lang-javascript": "^6.2.3",
     "@codemirror/lang-markdown": "^6.3.2",
