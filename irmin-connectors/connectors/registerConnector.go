@@ -52,12 +52,32 @@ func registerConnector(apiBaseURL, apiToken, baseUrl, connectorName, connectorSl
 		return newConnector, nil
 	}
 
+	// Make sure the connector is registered in the database for the token validation
+	//
+	// Explanation: The Irmin API will call /info endpoint of the connector with the provided
+	// system token to get information about it. If the connector is not registered in the database,
+	// the API will not be able to validate the token and the registration will fail.
+	tempRegistration, err := db.CreateConnectorRegistration(&db.ConnectorRegistration{
+		IrminID:       fmt.Sprintf("temp-%s", connectorSlug),
+		ConnectorName: connectorName,
+		SystemToken:   token,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error updating connector in the database: %v", err)
+	}
+
 	// Send a request to register the connector
 	newConnector, res, err := connectorService.RegisterNewConnector(connectorURL, token)
 	if err != nil {
 		return nil, fmt.Errorf("error registering connector: %v", err)
 	}
 	fmt.Println(res.Message)
+
+	// Delete the temporary registration
+	err = db.DeleteConnectorRegistration(tempRegistration.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error deleting temporary connector registration: %v", err)
+	}
 
 	// Create a new connector in the database
 	err = utils.UpdateConnectorInDB(newConnector.ID, token, connectorName)

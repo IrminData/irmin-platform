@@ -3,7 +3,7 @@ module irmin-connectors
 go 1.23.1
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250306170424-691b49b1113f
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250318185015-f39a7f646952
 	github.com/glebarez/sqlite v1.11.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgx/v5 v5.7.2
@@ -49,6 +49,6 @@ require (
 	gorm.io/driver/mysql v1.5.7 // indirect
 	modernc.org/libc v1.61.13 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.8.2 // indirect
-	modernc.org/sqlite v1.36.0 // indirect
+	modernc.org/memory v1.9.0 // indirect
+	modernc.org/sqlite v1.36.1 // indirect
 )

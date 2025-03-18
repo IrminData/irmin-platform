@@ -32,6 +32,7 @@ func Info(w http.ResponseWriter, r *http.Request) {
 	info := defaultConnectorInfo
 	info.LogoURL = baseUrl + info.LogoURL
 	info.APIBaseURL = baseUrl + info.APIBaseURL
+	info.ReadMoreURL = baseUrl + info.ReadMoreURL
 
 	// Make sure the request is authorized by validating the system token
 	if !utils.ValidateConnectorSystemToken(info.Name, w, r) {
