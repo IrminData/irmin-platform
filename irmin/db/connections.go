@@ -20,11 +20,61 @@ type Connection struct {
 	Connector     Connector         `json:"connector,omitempty" gorm:"foreignKey:ConnectorID"`
 }
 
-// FindConnectionByID finds a connection by its ID
-func FindConnectionByID(id uint) (*Connection, error) {
+type ConnectionResponse struct {
+	ID            string            `json:"id"`
+	Name          string            `json:"name"`
+	Description   string            `json:"description"`
+	Documentation string            `json:"documentation"`
+	Details       CustomFieldValues `json:"details"`
+	Settings      CustomFieldValues `json:"settings"`
+	Owner         UserResponse      `json:"owner"`
+	Connector     ConnectorResponse `json:"connector"`
+}
+
+// GetConnectionByID finds a connection by its ID
+func GetConnectionByID(id uint) (*Connection, error) {
 	var connection Connection
-	if err := DB.Preload("Owner").Preload("Workspace").Preload("Connector").First(&connection, id).Error; err != nil {
+	if err := DB.Preload("Owner").Preload("Connector").First(&connection, id).Error; err != nil {
 		return nil, err
 	}
 	return &connection, nil
+}
+
+// GetConnectionsByWorkspaceID finds all connections in a workspace
+func GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, error) {
+	var connections []Connection
+	if err := DB.Preload("Owner").Preload("Connector").Where("workspace_id = ?", workspaceID).Find(&connections).Error; err != nil {
+		return nil, err
+	}
+	return connections, nil
+}
+
+// CreateConnection creates a new connection
+func CreateConnection(connection *Connection) (*Connection, error) {
+	if err := DB.Create(connection).Error; err != nil {
+		return nil, err
+	}
+	return connection, nil
+}
+
+// UpdateConnection updates an existing connection record in the database.
+func UpdateConnection(id uint, updates interface{}) (*Connection, error) {
+	var connection Connection
+	// Update only the provided fields for the user with the specified ID.
+	if err := DB.Model(&Connection{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		return nil, err
+	}
+	// Retrieve the updated connection record.
+	if err := DB.Preload("Owner").Preload("Connector").First(&connection, id).Error; err != nil {
+		return nil, err
+	}
+	return &connection, nil
+}
+
+// DeleteConnection deletes a connection from the database
+func DeleteConnection(id uint) error {
+	if err := DB.Delete(&Connection{}, id).Error; err != nil {
+		return err
+	}
+	return nil
 }

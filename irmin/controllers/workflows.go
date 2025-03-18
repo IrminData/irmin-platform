@@ -93,7 +93,7 @@ func WorkflowsShow(c fiber.Ctx) error {
 	workflow := c.Locals("workflow").(*db.Workflow)
 
 	// Get the workflow response.
-	workflowResponse, err := lib.GetWorkflowResponse(*workflow)
+	workflowResponse, err := lib.FormatWorkflowResponse(*workflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -135,7 +135,7 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := lib.GetWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := lib.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -199,7 +199,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 				Errors: []string{dict.T("error_occured")},
 			})
 		}
-		connection, err := db.FindConnectionByID(uint(connectionID))
+		connection, err := db.GetConnectionByID(uint(connectionID))
 		if err != nil {
 			log.Printf("Error retrieving connection: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
@@ -246,7 +246,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 				Errors: []string{dict.T("error_occured")},
 			})
 		}
-		connection, err := db.FindConnectionByID(uint(connectionID))
+		connection, err := db.GetConnectionByID(uint(connectionID))
 		if err != nil {
 			log.Printf("Error retrieving connection: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
@@ -356,7 +356,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 					log.Printf("Error decoding connection sqid: %v", err)
 					continue
 				}
-				connection, err := db.FindConnectionByID(uint(parsedConnID))
+				connection, err := db.GetConnectionByID(uint(parsedConnID))
 				if err != nil {
 					log.Printf("Error retrieving connection: %v", err)
 					continue
@@ -408,7 +408,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	}
 
 	// Parse the schedule object from the request body.
-	schedule, err := lib.CreateScheduleObject(c, *workspace)
+	schedule, err := lib.ParseScheduleFromRequest(c, *workspace)
 	if err != nil {
 		log.Printf("Error creating schedule object: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
@@ -493,7 +493,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := lib.GetWorkflowResponse(*workflow)
+	workflowResponse, err := lib.FormatWorkflowResponse(*workflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -548,7 +548,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 				Errors: []string{dict.T("error_occured")},
 			})
 		}
-		connection, err := db.FindConnectionByID(uint(connectionID))
+		connection, err := db.GetConnectionByID(uint(connectionID))
 		if err != nil {
 			log.Printf("Error retrieving connection: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
@@ -595,7 +595,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 				Errors: []string{dict.T("error_occured")},
 			})
 		}
-		connection, err := db.FindConnectionByID(uint(connectionID))
+		connection, err := db.GetConnectionByID(uint(connectionID))
 		if err != nil {
 			log.Printf("Error retrieving connection: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
@@ -705,7 +705,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 					log.Printf("Error decoding connection sqid: %v", err)
 					continue
 				}
-				connection, err := db.FindConnectionByID(uint(parsedConnID))
+				connection, err := db.GetConnectionByID(uint(parsedConnID))
 				if err != nil {
 					log.Printf("Error retrieving connection: %v", err)
 					continue
@@ -802,7 +802,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := lib.GetWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := lib.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -824,7 +824,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	workflow := c.Locals("workflow").(*db.Workflow)
 
 	// Parse the schedule object from the request body.
-	schedule, err := lib.CreateScheduleObject(c, *workspace)
+	schedule, err := lib.ParseScheduleFromRequest(c, *workspace)
 	if err != nil {
 		log.Printf("Error creating schedule object: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
@@ -858,7 +858,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := lib.GetWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := lib.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -951,7 +951,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := lib.GetWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := lib.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{

@@ -62,7 +62,7 @@ func ParseFormFields(c fiber.Ctx, required, optional []string) (map[string]strin
 //   - A map where the key is the array index and the value is a map of field names to values.
 //   - An error if there is an issue parsing the form data.
 func ParseArrayFormFields(c fiber.Ctx, prefix string) (map[int]map[string]string, error) {
-	// Compile a regex to match keys like trigger[0].type
+	// Compile a regex to match keys like prefix[0].type
 	pattern := fmt.Sprintf(`^%s\[(\d+)\]\.(\w+)$`, regexp.QuoteMeta(prefix))
 	re, err := regexp.Compile(pattern)
 	if err != nil {
@@ -97,4 +97,42 @@ func ParseArrayFormFields(c fiber.Ctx, prefix string) (map[int]map[string]string
 	}
 
 	return results, nil
+}
+
+// ParseObjectFormFields extracts object-like form fields from a Fiber context.
+// It groups fields with keys following the pattern prefix[key] into a map where
+// the key is the field name and the value is the field value.
+// If no matching fields are found, it returns an empty map.
+// Params:
+// - c: The Fiber context containing the form data.
+// - prefix: The prefix for the object field (e.g. "user").
+// Returns:
+//   - A map where the key is the field name and the value is the field value.
+func ParseObjectFormFields(c fiber.Ctx, prefix string) map[string]string {
+	// Create a map to store results.
+	results := make(map[string]string)
+
+	// Compile a regex to match keys like prefix[key] (e.g. details[host]).
+	pattern := fmt.Sprintf(`^%s\[(\w+)\]$`, regexp.QuoteMeta(prefix))
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return results
+	}
+
+	// Retrieve the full multipart form from the request.
+	form, err := c.MultipartForm()
+	if err != nil {
+		return results
+	}
+
+	// Iterate over all form values.
+	for key, values := range form.Value {
+		matches := re.FindStringSubmatch(key)
+		if len(matches) == 2 {
+			results[matches[1]] = values[0]
+		}
+	}
+
+	// Always return a non-nil map, even if no matching fields were found.
+	return results
 }

@@ -3,11 +3,16 @@ module irmin-api
 go 1.23.1
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250311012043-91909167170b
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250318193630-ae1d28b35128
+	github.com/clerk/clerk-sdk-go/v2 v2.2.0
 	github.com/gofiber/fiber/v3 v3.0.0-beta.4
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/gorilla/mux v1.8.1
 	github.com/joho/godotenv v1.5.1
+	github.com/sqids/sqids-go v0.4.1
 	github.com/stretchr/testify v1.10.0
+	gorm.io/driver/postgres v1.5.11
+	gorm.io/gorm v1.25.12
 )
 
 require (
@@ -16,13 +21,11 @@ require (
 	github.com/apache/thrift v0.21.0 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
-	github.com/clerk/clerk-sdk-go/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/gofiber/schema v1.3.0 // indirect
 	github.com/gofiber/utils/v2 v2.0.0-beta.7 // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/invopop/jsonschema v0.13.0 // indirect
@@ -39,7 +42,6 @@ require (
 	github.com/philhofer/fwd v1.1.3-0.20240916144458-20a13a1f6b7c // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/sqids/sqids-go v0.4.1 // indirect
 	github.com/tinylib/msgp v1.2.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.59.0 // indirect
@@ -55,6 +57,4 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/postgres v1.5.11 // indirect
-	gorm.io/gorm v1.25.12 // indirect
 )

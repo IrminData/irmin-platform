@@ -6,7 +6,8 @@ import (
 	"log"
 )
 
-func GetWorkflowResponse(workflow db.Workflow) (*db.WorkflowResponse, error) {
+// FormatWorkflowResponse creates a workflow response object from a workflow object.
+func FormatWorkflowResponse(workflow db.Workflow) (*db.WorkflowResponse, error) {
 	// Find the workflowable
 	var workflowable interface{}
 	var err error

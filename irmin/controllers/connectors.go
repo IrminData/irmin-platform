@@ -411,3 +411,118 @@ func ConnectorsDestroy(c fiber.Ctx) error {
 		Message: dict.T("connector_deleted"),
 	})
 }
+
+func ShowConnectorConfigurationFields(c fiber.Ctx) error {
+	locale := c.Locals("locale").(string)
+	dict := c.Locals("dict").(locales.Dictionary)
+
+	// Get the type of the configuration fields to fetch
+	configurationType := c.Params("type")
+	if configurationType == "" {
+		log.Printf("Error fetching connection settings fields: configuration type is required")
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Parse the connector SQID from the request URL.
+	connectorSQID := c.Params("connector")
+	if connectorSQID == "" {
+		log.Printf("No connector selected")
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Find the connector ID
+	connectorID, err := utils.DecodeSqids("connectors", connectorSQID)
+	if err != nil {
+		log.Printf("Error decoding connector sqid: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Parse connection details and settings form the request body
+	details := utils.ParseObjectFormFields(c, "details")
+	settings := utils.ParseObjectFormFields(c, "settings")
+
+	// Get the connector from the database
+	connector, err := db.GetConnector(uint(connectorID))
+	if err != nil {
+		log.Printf("Error retrieving connector: %v", err)
+		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Create new connector client
+	connectorClient := irminConnectorClient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
+
+	// Get the connection settings
+	configurationFields, err := connectorClient.GetConfigFields(configurationType, details, settings)
+	if err != nil {
+		log.Printf("Error fetching connection configuration fields: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Return the array of the dynamic fields required for the connection settings
+	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+		Data: configurationFields,
+	})
+}
+
+func ValidateConnectorConfiguration(c fiber.Ctx) error {
+	locale := c.Locals("locale").(string)
+	dict := c.Locals("dict").(locales.Dictionary)
+
+	// Parse the connector SQID from the request URL.
+	connectorSQID := c.Params("connector")
+	if connectorSQID == "" {
+		log.Printf("No connector selected")
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Find the connector ID
+	connectorID, err := utils.DecodeSqids("connectors", connectorSQID)
+	if err != nil {
+		log.Printf("Error decoding connector sqid: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Parse connection details and settings form the request body
+	details := utils.ParseObjectFormFields(c, "details")
+	settings := utils.ParseObjectFormFields(c, "settings")
+
+	// Get the connector from the database
+	connector, err := db.GetConnector(uint(connectorID))
+	if err != nil {
+		log.Printf("Error retrieving connector: %v", err)
+		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Create new connector client
+	connectorClient := irminConnectorClient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
+
+	// Test the connection
+	testResponse, err := connectorClient.ValidateConfigFields(details, settings)
+	if err != nil {
+		log.Printf("Error testing connection: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Return the response.
+	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+		Data: testResponse,
+	})
+}

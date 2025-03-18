@@ -9,8 +9,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// CreateScheduleObject creates a schedule object from the request body.
-func CreateScheduleObject(c fiber.Ctx, workspace db.Workspace) (*db.Schedule, error) {
+// ParseScheduleFromRequest creates a schedule object from the request body.
+func ParseScheduleFromRequest(c fiber.Ctx, workspace db.Workspace) (*db.Schedule, error) {
 	// Parse the request body
 	fields, err := utils.ParseFormFields(c, nil, []string{"max_retries", "max_runtime", "min_interval"})
 	if err != nil {

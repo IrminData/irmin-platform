@@ -25,6 +25,8 @@ func RegisterAPIRoutes(app *fiber.App) {
 	v1.Patch("/connectors/:connector", controllers.ConnectorsUpdate)
 	v1.Delete("/connectors/:connector", controllers.ConnectorsDestroy)
 	v1.Get("/connectors/:connector", controllers.ConnectorsShow)
+	v1.Post("/connectors/:connector/fields/:type", controllers.ShowConnectorConfigurationFields)
+	v1.Post("/connectors/:connector/validate", controllers.ValidateConnectorConfiguration)
 
 	// Credentials routes
 	v1.Get("/credentials", controllers.CredentialsIndex)
@@ -40,6 +42,49 @@ func RegisterAPIRoutes(app *fiber.App) {
 	workspace.Delete("/", controllers.WorkspacesDestroy)
 	workspace.Post("/transfer-ownership", controllers.TransferWorkspaceOwnership)
 	workspace.Post("/leave", controllers.LeaveWorkspace)
+
+	// Query routes
+	queries := workspace.Group("/queries")
+	queries.Get("/", controllers.QueriesIndex)
+	queries.Get("/:query", controllers.QueriesShow)
+	queries.Post("/", controllers.QueriesStore)
+	queries.Patch("/:query", controllers.QueriesUpdate)
+	queries.Delete("/:query", controllers.QueriesDestroy)
+	queries.Post("/:query/execute", controllers.ExecuteQuery)
+	queries.Post("/execute", controllers.ExecuteAdhocQuery)
+	queries.Get("/:query/results", controllers.QueryResultsShow)
+	queries.Delete("/:query/results", controllers.QueryResultsDestroy)
+
+	// User routes
+	users := workspace.Group("/users")
+	users.Get("/", controllers.UsersIndex)
+	users.Get("/:user", controllers.UsersShow)
+	users.Patch("/:user", controllers.UsersUpdate)
+	users.Delete("/:user", controllers.UsersDestroy)
+
+	// Invite routes
+	invites := workspace.Group("/invites")
+	invites.Get("/", controllers.InvitesIndex)
+	invites.Post("/", controllers.InvitesStore)
+	invites.Patch("/:invite", controllers.InvitesUpdate)
+	invites.Delete("/:invite", controllers.InvitesDestroy)
+	invites.Post("/:invite/resend", controllers.ResendInvite)
+
+	// Connection routes
+	connections := workspace.Group("/connections")
+	connections.Get("/", controllers.ConnectionsIndex)
+	connections.Post("/", controllers.ConnectionsStore)
+	connection := connections.Group("/:connection", controllers.ConnectionMiddleware)
+	connection.Get("/", controllers.ConnectionsShow)
+	connection.Patch("/:connection", controllers.ConnectionsUpdate)
+	connection.Delete("/:connection", controllers.ConnectionsDestroy)
+	connection.Post("/:connection/transfer-ownership", controllers.TransferConnectionOwnership)
+
+	// Editor item routes
+	editorItems := workspace.Group("/editor-items")
+	editorItems.Get("/", controllers.EditorItemsIndex)
+	editorItems.Post("/", controllers.EditorItemStore)
+	editorItems.Get("/content", controllers.EditorItemContent)
 
 	// Workflow routes
 	workflows := workspace.Group("/workflows")
@@ -60,8 +105,6 @@ func RegisterAPIRoutes(app *fiber.App) {
 	repositories := workspace.Group("/repositories")
 	repositories.Get("/", controllers.RepositoriesIndex)
 	repositories.Post("/", controllers.RepositoriesStore)
-
-	// Repository routes
 	repository := repositories.Group("/:repository")
 	repository.Get("/", controllers.RepositoriesShow)
 	repository.Patch("/", controllers.RepositoriesUpdate)
@@ -104,48 +147,4 @@ func RegisterAPIRoutes(app *fiber.App) {
 	commits.Post("/revert", controllers.RevertUncommittedChanges)
 	commits.Get("/last-commit", controllers.ShowLastCommit)
 	commits.Get("/:commit", controllers.CommitsShow)
-
-	// Query routes
-	queries := workspace.Group("/queries")
-	queries.Get("/", controllers.QueriesIndex)
-	queries.Get("/:query", controllers.QueriesShow)
-	queries.Post("/", controllers.QueriesStore)
-	queries.Patch("/:query", controllers.QueriesUpdate)
-	queries.Delete("/:query", controllers.QueriesDestroy)
-	queries.Post("/:query/execute", controllers.ExecuteQuery)
-	queries.Post("/execute", controllers.ExecuteAdhocQuery)
-	queries.Get("/:query/results", controllers.QueryResultsShow)
-	queries.Delete("/:query/results", controllers.QueryResultsDestroy)
-
-	// User routes
-	users := workspace.Group("/users")
-	users.Get("/", controllers.UsersIndex)
-	users.Get("/:user", controllers.UsersShow)
-	users.Patch("/:user", controllers.UsersUpdate)
-	users.Delete("/:user", controllers.UsersDestroy)
-
-	// Invite routes
-	invites := workspace.Group("/invites")
-	invites.Get("/", controllers.InvitesIndex)
-	invites.Post("/", controllers.InvitesStore)
-	invites.Patch("/:invite", controllers.InvitesUpdate)
-	invites.Delete("/:invite", controllers.InvitesDestroy)
-	invites.Post("/:invite/resend", controllers.ResendInvite)
-
-	// Connection routes
-	connections := workspace.Group("/connections")
-	connections.Post("/", controllers.ConnectionsStore)
-	connections.Get("/", controllers.ConnectionsIndex)
-	connections.Get("/details", controllers.ConnectionDetails)
-	connections.Get("/test-connection", controllers.TestConnection)
-	connections.Get("/settings", controllers.ConnectionSettings)
-	connections.Patch("/:connection", controllers.ConnectionsUpdate)
-	connections.Delete("/:connection", controllers.ConnectionsDestroy)
-	connections.Post("/:connection/transfer-ownership", controllers.TransferConnectionOwnership)
-
-	// Editor item routes
-	editorItems := workspace.Group("/editor-items")
-	editorItems.Get("/", controllers.EditorItemsIndex)
-	editorItems.Post("/", controllers.EditorItemStore)
-	editorItems.Get("/content", controllers.EditorItemContent)
 }
