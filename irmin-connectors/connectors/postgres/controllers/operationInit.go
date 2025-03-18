@@ -17,7 +17,7 @@ func OperationInit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get connection settings and details from the request
-	fields, err := utils.ParseFormFields(r, []string{"details[host]", "details[port]", "details[user]", "details[password]", "details[default_db]", "details[ssl_mode]", "settings[database]"}, nil)
+	fields, err := utils.ParseFormFields(r, nil, []string{"details[host]", "details[port]", "details[user]", "details[password]", "details[default_db]", "details[ssl_mode]", "settings[database]"})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
