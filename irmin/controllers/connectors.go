@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"irmin-api/db"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -26,28 +27,16 @@ func ConnectorsIndex(c fiber.Ctx) error {
 	// Format the connectors for the response
 	var connectorsResponse []db.ConnectorResponse
 	for _, connector := range connectors {
-		// Encode the connector's ID as a SQID
-		sqid, err := utils.EncodeSqids("connectors", uint64(connector.ID))
+		// Create the response
+		connectorResponse, err := lib.FormatConnectorResponse(connector)
 		if err != nil {
-			log.Printf("Error encoding SQID: %v", err)
+			log.Printf("Error formatting connector response: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
 				Errors: []string{dict.T("error_occured")},
 			})
 		}
-		connectorsResponse = append(connectorsResponse, db.ConnectorResponse{
-			ID:              sqid,
-			Name:            connector.Name,
-			Description:     connector.Description,
-			Version:         connector.Version,
-			Author:          connector.Author,
-			LogoURL:         connector.LogoURL,
-			Capabilities:    connector.Capabilities,
-			Locales:         connector.Locales,
-			Categories:      connector.Categories,
-			PrimaryCategory: connector.PrimaryCategory,
-			AuthorEmail:     connector.AuthorEmail,
-			ReadMoreURL:     connector.ReadMoreURL,
-		})
+		// Append the connector to the response
+		connectorsResponse = append(connectorsResponse, *connectorResponse)
 	}
 
 	// Return the connectors
@@ -60,29 +49,13 @@ func ConnectorsShow(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	connector := c.Locals("connector").(*db.Connector)
 
-	// Format the connector SQID from the ID
-	connectorSQID, err := utils.EncodeSqids("connectors", uint64(connector.ID))
+	// Create the response
+	connectorResponse, err := lib.FormatConnectorResponse(*connector)
 	if err != nil {
-		log.Printf("Error encoding SQID: %v", err)
+		log.Printf("Error formatting connector response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occured")},
 		})
-	}
-
-	// Create the response
-	connectorResponse := db.ConnectorResponse{
-		ID:              connectorSQID,
-		Name:            connector.Name,
-		Description:     connector.Description,
-		Version:         connector.Version,
-		Author:          connector.Author,
-		LogoURL:         connector.LogoURL,
-		Capabilities:    connector.Capabilities,
-		Locales:         connector.Locales,
-		Categories:      connector.Categories,
-		PrimaryCategory: connector.PrimaryCategory,
-		AuthorEmail:     connector.AuthorEmail,
-		ReadMoreURL:     connector.ReadMoreURL,
 	}
 
 	// Return the connector info
@@ -191,29 +164,13 @@ func ConnectorsStore(c fiber.Ctx) error {
 		})
 	}
 
-	// Get SQID for the connector
-	sqid, err := utils.EncodeSqids("connectors", uint64(connector.ID))
+	// Create the response
+	connectorResponse, err := lib.FormatConnectorResponse(*connector)
 	if err != nil {
-		log.Printf("Error encoding SQID: %v", err)
+		log.Printf("Error formatting connector response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occured")},
 		})
-	}
-
-	// Create the response
-	connectorResponse := db.ConnectorResponse{
-		ID:              sqid,
-		Name:            connector.Name,
-		Description:     connector.Description,
-		Version:         connector.Version,
-		Author:          connector.Author,
-		LogoURL:         connector.LogoURL,
-		Capabilities:    connector.Capabilities,
-		Locales:         connector.Locales,
-		Categories:      connector.Categories,
-		PrimaryCategory: connector.PrimaryCategory,
-		AuthorEmail:     connector.AuthorEmail,
-		ReadMoreURL:     connector.ReadMoreURL,
 	}
 
 	// Return the connector info
@@ -234,15 +191,6 @@ func ConnectorsUpdate(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	locale := c.Locals("locale").(string)
 	connector := c.Locals("connector").(*db.Connector)
-
-	// Format the connector SQID from the ID
-	connectorSQID, err := utils.EncodeSqids("connectors", uint64(connector.ID))
-	if err != nil {
-		log.Printf("Error encoding SQID: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
 
 	// Parse the request body
 	fields, err := utils.ParseFormFields(c, []string{"url", "system_token"}, nil)
@@ -313,19 +261,12 @@ func ConnectorsUpdate(c fiber.Ctx) error {
 	}
 
 	// Create the response
-	connectorResponse := db.ConnectorResponse{
-		ID:              connectorSQID,
-		Name:            connector.Name,
-		Description:     connector.Description,
-		Version:         connector.Version,
-		Author:          connector.Author,
-		LogoURL:         connector.LogoURL,
-		Capabilities:    connector.Capabilities,
-		Locales:         connector.Locales,
-		Categories:      connector.Categories,
-		PrimaryCategory: connector.PrimaryCategory,
-		AuthorEmail:     connector.AuthorEmail,
-		ReadMoreURL:     connector.ReadMoreURL,
+	connectorResponse, err := lib.FormatConnectorResponse(*connector)
+	if err != nil {
+		log.Printf("Error formatting connector response: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
 	}
 
 	// Return the connector info
