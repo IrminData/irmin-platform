@@ -45,7 +45,7 @@ type UserResponse struct {
 // GetUser retrieves a user from the database by their ID
 func GetUser(id uint) (*User, error) {
 	var user User
-	if err := DB.Preload("Workspaces").Preload("CurrentWorkspace").First(&user, id).Error; err != nil {
+	if err := DB.Preload("Workspaces").First(&user, id).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -54,10 +54,19 @@ func GetUser(id uint) (*User, error) {
 // GetUserByClerkID retrieves a user from the database by their ClerkID.
 func GetUserByClerkID(clerkID string) (*User, error) {
 	var user User
-	if err := DB.Where("clerk_id = ?", clerkID).First(&user).Error; err != nil {
+	if err := DB.Preload("Workspaces").Where("clerk_id = ?", clerkID).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
+}
+
+// GetWorkspaceUser retrieves a workspace user record from the database by the workspace and user IDs.
+func GetWorkspaceUser(workspaceID, userID uint) (*WorkspaceUser, error) {
+	var workspaceUser WorkspaceUser
+	if err := DB.Preload("User").Where("workspace_id = ? AND user_id = ?", workspaceID, userID).First(&workspaceUser).Error; err != nil {
+		return nil, err
+	}
+	return &workspaceUser, nil
 }
 
 // CreateUser creates a new user record in the database.
@@ -112,6 +121,20 @@ func IsUserInWorkspace(userID, workspaceID uint) (bool, error) {
 	return true, nil
 }
 
+// GetUsersInWorkspace retrieves all users associated with a workspace.
+func GetUsersInWorkspace(workspaceID uint) ([]WorkspaceUser, error) {
+	// Define a slice to hold the WorkspaceUser records.
+	var workspaceUsers []WorkspaceUser
+	// Query the WorkspaceUser table using the provided workspace ID,
+	// and preload associated User.
+	if err := DB.Where("workspace_id = ?", workspaceID).
+		Preload("User").
+		Find(&workspaceUsers).Error; err != nil {
+		return nil, err
+	}
+	return workspaceUsers, nil
+}
+
 // AddUserToWorkspace adds a user to a workspace with the specified roles.
 func AddUserToWorkspace(userID, workspaceID uint, roles []UserWorkspaceRole) (*WorkspaceUser, error) {
 	// Create a new WorkspaceUser record.
@@ -121,7 +144,7 @@ func AddUserToWorkspace(userID, workspaceID uint, roles []UserWorkspaceRole) (*W
 		Roles:       roles,
 	}
 	// Insert the record into the database.
-	if err := DB.Create(workspaceUser).Error; err != nil {
+	if err := DB.Preload("User").Create(workspaceUser).Error; err != nil {
 		return nil, err
 	}
 	return workspaceUser, nil
@@ -142,7 +165,7 @@ func UpdateWorkspaceUserRoles(userID, workspaceID uint, roles []UserWorkspaceRol
 		Roles:       roles,
 	}
 	// Update the record in the database.
-	if err := DB.Where("user_id = ? AND workspace_id = ?", userID, workspaceID).Updates(workspaceUser).Error; err != nil {
+	if err := DB.Preload("User").Where("user_id = ? AND workspace_id = ?", userID, workspaceID).Updates(workspaceUser).Error; err != nil {
 		return nil, err
 	}
 	return workspaceUser, nil

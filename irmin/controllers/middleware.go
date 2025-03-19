@@ -183,6 +183,15 @@ func APIMiddleware(c fiber.Ctx) error {
 		})
 	}
 
+	// Refetch the Irmin user to ensure the latest data is used.
+	irminUser, err = db.GetUser(irminUser.ID)
+	if err != nil {
+		log.Printf("Error fetching user: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
 	// Set the user in the context for subsequent handlers.
 	c.Locals("user", irminUser)
 	c.Locals("is_system", false)
@@ -361,6 +370,44 @@ func ConnectorMiddleware(c fiber.Ctx) error {
 
 	// Set the connector in the context for subsequent handlers.
 	c.Locals("connector", connector)
+
+	return c.Next()
+}
+
+func UserMiddleware(c fiber.Ctx) error {
+	// Get the dictionary and workspace from the request context.
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+
+	// Parse the user sqid from the request URL.
+	userSqid := c.Params("user")
+	if userSqid == "" {
+		log.Printf("No user selected")
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Decode the user ID.
+	userID, err := utils.DecodeSqids("users", userSqid)
+	if err != nil {
+		log.Printf("Error decoding user sqid: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Find the workspace user by their ID and the workspace ID.
+	workspaceUser, err := db.GetWorkspaceUser(workspace.ID, uint(userID))
+	if err != nil {
+		log.Printf("Error retrieving user: %v", err)
+		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Set the workspace user in the context for subsequent handlers.
+	c.Locals("workspace_user", workspaceUser)
 
 	return c.Next()
 }
