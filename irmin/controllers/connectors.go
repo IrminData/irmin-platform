@@ -58,30 +58,13 @@ func ConnectorsIndex(c fiber.Ctx) error {
 
 func ConnectorsShow(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	connector := c.Locals("connector").(*db.Connector)
 
-	// Parse the connector SQID from the request URL.
-	connectorSQID := c.Params("connector")
-	if connectorSQID == "" {
-		log.Printf("No connector selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-
-	// Decode the connector SQID
-	connectorID, err := utils.DecodeSqids("connectors", connectorSQID)
+	// Format the connector SQID from the ID
+	connectorSQID, err := utils.EncodeSqids("connectors", uint64(connector.ID))
 	if err != nil {
-		log.Printf("Error decoding SQID: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-
-	// Get the connector from the database
-	connector, err := db.GetConnector(uint(connectorID))
-	if err != nil {
-		log.Printf("Error retrieving connector: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		log.Printf("Error encoding SQID: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occured")},
 		})
 	}
@@ -250,21 +233,13 @@ func ConnectorsUpdate(c fiber.Ctx) error {
 	}
 	dict := c.Locals("dict").(locales.Dictionary)
 	locale := c.Locals("locale").(string)
+	connector := c.Locals("connector").(*db.Connector)
 
-	// Parse the connector SQID from the request URL.
-	connectorSQID := c.Params("connector")
-	if connectorSQID == "" {
-		log.Printf("No connector selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-
-	// Decode the connector SQID
-	connectorID, err := utils.DecodeSqids("connectors", connectorSQID)
+	// Format the connector SQID from the ID
+	connectorSQID, err := utils.EncodeSqids("connectors", uint64(connector.ID))
 	if err != nil {
-		log.Printf("Error decoding SQID: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		log.Printf("Error encoding SQID: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occured")},
 		})
 	}
@@ -275,15 +250,6 @@ func ConnectorsUpdate(c fiber.Ctx) error {
 		log.Printf("Error parsing form fields: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
-		})
-	}
-
-	// Get the connector from the database
-	connector, err := db.GetConnector(uint(connectorID))
-	if err != nil {
-		log.Printf("Error retrieving connector: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
 		})
 	}
 
@@ -378,27 +344,10 @@ func ConnectorsDestroy(c fiber.Ctx) error {
 		})
 	}
 	dict := c.Locals("dict").(locales.Dictionary)
-
-	// Parse the connector SQID from the request URL.
-	connectorSQID := c.Params("connector")
-	if connectorSQID == "" {
-		log.Printf("No connector selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-
-	// Decode the connector SQID
-	connectorID, err := utils.DecodeSqids("connectors", connectorSQID)
-	if err != nil {
-		log.Printf("Error decoding SQID: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
+	connector := c.Locals("connector").(*db.Connector)
 
 	// Delete the connector from the database
-	err = db.DeleteConnector(uint(connectorID))
+	err := db.DeleteConnector(connector.ID)
 	if err != nil {
 		log.Printf("Error deleting connector: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -415,6 +364,7 @@ func ConnectorsDestroy(c fiber.Ctx) error {
 func ShowConnectorConfigurationFields(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	connector := c.Locals("connector").(*db.Connector)
 
 	// Get the type of the configuration fields to fetch
 	configurationType := c.Params("type")
@@ -425,36 +375,9 @@ func ShowConnectorConfigurationFields(c fiber.Ctx) error {
 		})
 	}
 
-	// Parse the connector SQID from the request URL.
-	connectorSQID := c.Params("connector")
-	if connectorSQID == "" {
-		log.Printf("No connector selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-
-	// Find the connector ID
-	connectorID, err := utils.DecodeSqids("connectors", connectorSQID)
-	if err != nil {
-		log.Printf("Error decoding connector sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
-		})
-	}
-
 	// Parse connection details and settings form the request body
 	details := utils.ParseObjectFormFields(c, "details")
 	settings := utils.ParseObjectFormFields(c, "settings")
-
-	// Get the connector from the database
-	connector, err := db.GetConnector(uint(connectorID))
-	if err != nil {
-		log.Printf("Error retrieving connector: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
 
 	// Create new connector client
 	connectorClient := irminConnectorClient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
@@ -477,37 +400,11 @@ func ShowConnectorConfigurationFields(c fiber.Ctx) error {
 func ValidateConnectorConfiguration(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
-
-	// Parse the connector SQID from the request URL.
-	connectorSQID := c.Params("connector")
-	if connectorSQID == "" {
-		log.Printf("No connector selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
-
-	// Find the connector ID
-	connectorID, err := utils.DecodeSqids("connectors", connectorSQID)
-	if err != nil {
-		log.Printf("Error decoding connector sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
-		})
-	}
+	connector := c.Locals("connector").(*db.Connector)
 
 	// Parse connection details and settings form the request body
 	details := utils.ParseObjectFormFields(c, "details")
 	settings := utils.ParseObjectFormFields(c, "settings")
-
-	// Get the connector from the database
-	connector, err := db.GetConnector(uint(connectorID))
-	if err != nil {
-		log.Printf("Error retrieving connector: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
-		})
-	}
 
 	// Create new connector client
 	connectorClient := irminConnectorClient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)

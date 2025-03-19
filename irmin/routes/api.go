@@ -22,11 +22,12 @@ func RegisterAPIRoutes(app *fiber.App) {
 	// Connector routes
 	v1.Get("/connectors", controllers.ConnectorsIndex)
 	v1.Post("/connectors", controllers.ConnectorsStore)
-	v1.Patch("/connectors/:connector", controllers.ConnectorsUpdate)
-	v1.Delete("/connectors/:connector", controllers.ConnectorsDestroy)
-	v1.Get("/connectors/:connector", controllers.ConnectorsShow)
-	v1.Post("/connectors/:connector/fields/:type", controllers.ShowConnectorConfigurationFields)
-	v1.Post("/connectors/:connector/validate", controllers.ValidateConnectorConfiguration)
+	connector := v1.Group("/connectors/:connector", controllers.ConnectorMiddleware)
+	connector.Get("/", controllers.ConnectorsShow)
+	connector.Patch("/", controllers.ConnectorsUpdate)
+	connector.Delete("/", controllers.ConnectorsDestroy)
+	connector.Post("/fields/:type", controllers.ShowConnectorConfigurationFields)
+	connector.Post("/validate", controllers.ValidateConnectorConfiguration)
 
 	// Credentials routes
 	v1.Get("/credentials", controllers.CredentialsIndex)

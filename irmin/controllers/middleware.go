@@ -328,3 +328,39 @@ func ConnectionMiddleware(c fiber.Ctx) error {
 
 	return c.Next()
 }
+
+func ConnectorMiddleware(c fiber.Ctx) error {
+	dict := c.Locals("dict").(locales.Dictionary)
+
+	// Parse the connector SQID from the request URL.
+	connectorSQID := c.Params("connector")
+	if connectorSQID == "" {
+		log.Printf("No connector selected")
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Decode the connector SQID
+	connectorID, err := utils.DecodeSqids("connectors", connectorSQID)
+	if err != nil {
+		log.Printf("Error decoding SQID: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Get the connector from the database
+	connector, err := db.GetConnector(uint(connectorID))
+	if err != nil {
+		log.Printf("Error retrieving connector: %v", err)
+		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Set the connector in the context for subsequent handlers.
+	c.Locals("connector", connector)
+
+	return c.Next()
+}
