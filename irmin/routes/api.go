@@ -65,12 +65,16 @@ func RegisterAPIRoutes(app *fiber.App) {
 	user.Delete("/", controllers.UsersDestroy)
 
 	// Invite routes
-	invites := workspace.Group("/invites")
-	invites.Get("/", controllers.InvitesIndex)
-	invites.Post("/", controllers.InvitesStore)
-	invites.Patch("/:invite", controllers.InvitesUpdate)
-	invites.Delete("/:invite", controllers.InvitesDestroy)
-	invites.Post("/:invite/resend", controllers.ResendInvite)
+	workspace.Get("/invites", controllers.WorkspaceInvitesIndex)
+	workspace.Post("/invites", controllers.SendInvite)
+	v1.Get("/invites", controllers.IndexMyInvites)
+	invite := v1.Group("/invites/:invite", controllers.InviteMiddleware)
+	invite.Get("/", controllers.InvitesShow)
+	invite.Patch("/", controllers.InvitesUpdate)
+	invite.Delete("/", controllers.InvitesDestroy)
+	invite.Post("/resend", controllers.ResendInvite)
+	invite.Post("/accept", controllers.AcceptInvite)
+	invite.Post("/decline", controllers.DeclineInvite)
 
 	// Connection routes
 	connections := workspace.Group("/connections")

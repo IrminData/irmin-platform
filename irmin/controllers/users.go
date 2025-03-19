@@ -85,7 +85,7 @@ func UsersDestroy(c fiber.Ctx) error {
 	}
 
 	// Make sure the person removing the user has the necessary permissions
-	allowed := workspaceUser.UserID == workspace.OwnerID // Owner can remove users from the workspace
+	allowed := user.ID == workspace.OwnerID // Owner can modify users in the workspace
 	for _, userWorkspace := range user.Workspaces {
 		if userWorkspace.WorkspaceID == workspace.ID {
 			for _, role := range userWorkspace.Roles {
@@ -137,7 +137,7 @@ func UsersUpdate(c fiber.Ctx) error {
 	}
 
 	// Make sure the person removing the user has the necessary permissions
-	allowed := workspaceUser.UserID == workspace.OwnerID // Owner can modify users in the workspace
+	allowed := user.ID == workspace.OwnerID // Owner can modify users in the workspace
 	for _, userWorkspace := range user.Workspaces {
 		if userWorkspace.WorkspaceID == workspace.ID {
 			for _, role := range userWorkspace.Roles {

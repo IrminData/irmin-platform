@@ -30,4 +30,11 @@ var English = Dictionary{
 	"cannot_update_self_in_workspace":    "Cannot update self in the workspace",
 	"cannot_update_owner_of_workspace":   "Cannot update the owner of the workspace",
 	"workspace_member_updated":           "Workspace member updated",
+	"already_in_workspace":               "User is already in the workspace",
+	"already_invited_to_workspace":       "User is already invited to the workspace",
+	"invite_sent":                        "Invite sent",
+	"invite_updated":                     "Invite updated",
+	"invite_deleted":                     "Invite deleted",
+	"invite_accepted":                    "Invite accepted",
+	"invite_declined":                    "Invite declined",
 }

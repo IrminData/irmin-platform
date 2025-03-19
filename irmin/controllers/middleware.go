@@ -375,7 +375,6 @@ func ConnectorMiddleware(c fiber.Ctx) error {
 }
 
 func UserMiddleware(c fiber.Ctx) error {
-	// Get the dictionary and workspace from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
@@ -410,4 +409,56 @@ func UserMiddleware(c fiber.Ctx) error {
 	c.Locals("workspace_user", workspaceUser)
 
 	return c.Next()
+}
+
+func InviteMiddleware(c fiber.Ctx) error {
+	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
+
+	// Parse the invite sqid from the request URL.
+	inviteSqid := c.Params("invite")
+	if inviteSqid == "" {
+		log.Printf("No invite selected")
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Decode the invite ID.
+	inviteID, err := utils.DecodeSqids("invites", inviteSqid)
+	if err != nil {
+		log.Printf("Error decoding invite sqid: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Find the invite by its ID.
+	invite, err := db.GetInviteByID(uint(inviteID))
+	if err != nil {
+		log.Printf("Error retrieving invite: %v", err)
+		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Make sure the invite is either to the workspace user has access to or to the user.
+	hasAccess := invite.Email == user.Email
+	for _, workspaceUser := range user.Workspaces {
+		if workspaceUser.WorkspaceID == invite.WorkspaceID {
+			hasAccess = true
+			break
+		}
+	}
+
+	if hasAccess {
+		// Set the invite in the context for subsequent handlers.
+		c.Locals("invite", invite)
+		return c.Next()
+	} else {
+		log.Printf("Invite does not belong to the workspace or the user")
+		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+			Errors: []string{dict.T("access_denied")},
+		})
+	}
 }

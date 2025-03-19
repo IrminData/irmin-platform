@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -18,6 +19,8 @@ type CoreAPIEnv struct {
 	ResendAPIKey             string // Resend API Key for emails
 	DataEngineURL            string // URL of the Data Engine API server
 	DataEngineToken          string // Token to authenticate system level requests to the Data Engine API
+	ConsoleURL               string // URL of the Irmin Console
+	InviteExpiresInDays      int    // Number of days before an invite expires
 	ClerkPublicKey           string // Clerk Public API Key
 	ClerkSecretKey           string // Clerk Secret API Key
 	ClerkSigningKey          string // Clerk Signing Key for JWT
@@ -110,6 +113,20 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
+	consoleURL, err := getEnv("CONSOLE_URL", false, "https://console.irmin.dev")
+	if err != nil {
+		return nil, err
+	}
+
+	inviteExpiresInDaysStr, err := getEnv("INVITE_EXPIRES_IN_DAYS", false, "7")
+	if err != nil {
+		return nil, err
+	}
+	inviteExpiresInDays, err := strconv.Atoi(inviteExpiresInDaysStr)
+	if err != nil {
+		return nil, err
+	}
+
 	clerkPublicKey, err := getEnv("CLERK_PUBLIC_KEY", true, "")
 	if err != nil {
 		return nil, err
@@ -161,6 +178,8 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		ResendAPIKey:             resendAPIKey,
 		DataEngineURL:            dataEngineURL,
 		DataEngineToken:          dataEngineToken,
+		ConsoleURL:               consoleURL,
+		InviteExpiresInDays:      inviteExpiresInDays,
 		ClerkPublicKey:           clerkPublicKey,
 		ClerkSecretKey:           clerkSecretKey,
 		ClerkSigningKey:          clerkSigningKey,

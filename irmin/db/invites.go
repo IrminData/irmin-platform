@@ -1,16 +1,86 @@
 package db
 
-import "gorm.io/gorm"
+import (
+	"database/sql"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Invite struct {
 	gorm.Model
 
-	FirstName   string            `json:"first_name"`
-	LastName    string            `json:"last_name"`
 	Email       string            `json:"email"`
-	Phone       string            `json:"phone"`
-	Company     string            `json:"company"`
+	ClerkID     string            `json:"clerk_id"`
+	AcceptedAt  sql.NullTime      `json:"accepted_at"`
+	DeclinedAt  sql.NullTime      `json:"declined_at"`
+	ExpiresAt   time.Time         `json:"expires_at"`
+	Role        UserWorkspaceRole `json:"role"`
 	InvitedBy   User              `json:"invited_by" gorm:"foreignKey:InvitedByID"`
 	InvitedByID uint              `json:"invited_by_id"`
-	Role        UserWorkspaceRole `json:"role"`
+	Workspace   Workspace         `json:"workspace" gorm:"foreignKey:WorkspaceID"`
+	WorkspaceID uint              `json:"workspace_id"`
+}
+
+type InviteResponse struct {
+	ID         string            `json:"id"`
+	Email      string            `json:"email"`
+	Role       UserWorkspaceRole `json:"role"`
+	AcceptedAt *time.Time        `json:"accepted_at,omitempty"`
+	DeclinedAt *time.Time        `json:"declined_at,omitempty"`
+	ExpiresAt  time.Time         `json:"expires_at"`
+	InvitedBy  UserResponse      `json:"invited_by"`
+	Workspace  WorkspaceResponse `json:"workspace"`
+}
+
+func GetInvitesByWorkspace(workspaceID uint) ([]Invite, error) {
+	var invites []Invite
+	result := DB.Preload("InvitedBy").Preload("Workspace").Where("workspace_id = ?", workspaceID).Find(&invites)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return invites, nil
+}
+
+func GetInvitesByEmail(email string) ([]Invite, error) {
+	var invites []Invite
+	result := DB.Preload("InvitedBy").Preload("Workspace").Where("email = ?", email).Find(&invites)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return invites, nil
+}
+
+func GetInviteByID(id uint) (*Invite, error) {
+	var invite Invite
+	result := DB.Preload("InvitedBy").Preload("Workspace").First(&invite, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &invite, nil
+}
+
+func CreateInvite(invite *Invite) (*Invite, error) {
+	if err := DB.Create(invite).Error; err != nil {
+		return nil, err
+	}
+	return invite, nil
+}
+
+func UpdateInvite(id uint, updates interface{}) (*Invite, error) {
+	var invite Invite
+	if err := DB.Model(&Invite{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		return nil, err
+	}
+	if err := DB.Preload("InvitedBy").Preload("Workspace").First(&invite, id).Error; err != nil {
+		return nil, err
+	}
+	return &invite, nil
+}
+
+func DeleteInvite(id uint) error {
+	if err := DB.Delete(&Invite{}, id).Error; err != nil {
+		return err
+	}
+	return nil
 }

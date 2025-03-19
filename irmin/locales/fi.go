@@ -30,4 +30,11 @@ var Finnish = Dictionary{
 	"cannot_update_self_in_workspace":    "Ei voi päivittää itseään työtilassa",
 	"cannot_update_owner_of_workspace":   "Ei voi päivittää työtilan omistajaa",
 	"workspace_member_updated":           "Työtilan jäsen päivitetty",
+	"already_in_workspace":               "Käyttäjä on jo työtilassa",
+	"already_invited_to_workspace":       "Käyttäjä on jo kutsuttu työtilaan",
+	"invite_sent":                        "Kutsu lähetetty",
+	"invite_updated":                     "Invite updated",
+	"invite_deleted":                     "Kutsu poistettu",
+	"invite_accepted":                    "Kutsu hyväksytty",
+	"invite_declined":                    "Kutsu hylätty",
 }

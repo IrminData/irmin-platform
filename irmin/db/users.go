@@ -121,6 +121,21 @@ func IsUserInWorkspace(userID, workspaceID uint) (bool, error) {
 	return true, nil
 }
 
+// IsUserInWorkspaceByEmail checks if a user with the provided email is a member of a workspace.
+func IsUserInWorkspaceByEmail(email string, workspaceID uint) (bool, error) {
+	// Query the User table for a record that matches the provided email.
+	var user User
+	if err := DB.Where("email = ?", email).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// Return false if the user is not found.
+			return false, nil
+		}
+		return false, err
+	}
+	// Check if the user is a member of the workspace.
+	return IsUserInWorkspace(user.ID, workspaceID)
+}
+
 // GetUsersInWorkspace retrieves all users associated with a workspace.
 func GetUsersInWorkspace(workspaceID uint) ([]WorkspaceUser, error) {
 	// Define a slice to hold the WorkspaceUser records.
