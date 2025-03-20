@@ -507,6 +507,15 @@ func AcceptInvite(c fiber.Ctx) error {
 		})
 	}
 
+	// Add the user to the workspace
+	_, err = db.AddUserToWorkspace(user.ID, invite.WorkspaceID, []db.UserWorkspaceRole{invite.Role})
+	if err != nil {
+		log.Printf("Error adding user to workspace: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
 		Message: dict.T("invite_accepted"),
