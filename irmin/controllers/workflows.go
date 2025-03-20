@@ -71,11 +71,16 @@ func WorkflowsIndex(c fiber.Ctx) error {
 				Errors: []string{dict.T("error_occured")},
 			})
 		}
+		latestStatus := db.WorkflowStatusInitiating
+		latestWorkflowRun, _ := db.GetLatestWorkflowRunByWorkflowID(workflow.ID)
+		if latestWorkflowRun != nil {
+			latestStatus = latestWorkflowRun.Status
+		}
 		workflowsResponse = append(workflowsResponse, db.WorkflowResponse{
 			ID:          workflowSqid,
 			Name:        workflow.Name,
 			Description: workflow.Description,
-			Status:      workflow.Status,
+			Status:      latestStatus,
 			Type:        workflow.Type,
 			Owner:       ownerResponse,
 		})
@@ -433,7 +438,6 @@ func WorkflowsStore(c fiber.Ctx) error {
 			Description:   fields["description"],
 			Documentation: fields["documentation"],
 			Type:          db.WorkflowableTypeImport,
-			Status:        db.WorkflowStatusInitiating,
 			OwnerID:       user.ID,
 			WorkspaceID:   workspace.ID,
 			ScheduleID:    &schedule.ID,
@@ -445,7 +449,6 @@ func WorkflowsStore(c fiber.Ctx) error {
 			Description:   fields["description"],
 			Documentation: fields["documentation"],
 			Type:          db.WorkflowableTypeExport,
-			Status:        db.WorkflowStatusInitiating,
 			OwnerID:       user.ID,
 			WorkspaceID:   workspace.ID,
 			ScheduleID:    &schedule.ID,
@@ -457,7 +460,6 @@ func WorkflowsStore(c fiber.Ctx) error {
 			Description:   fields["description"],
 			Documentation: fields["documentation"],
 			Type:          db.WorkflowableTypeAction,
-			Status:        db.WorkflowStatusInitiating,
 			OwnerID:       user.ID,
 			WorkspaceID:   workspace.ID,
 			ScheduleID:    &schedule.ID,
@@ -469,7 +471,6 @@ func WorkflowsStore(c fiber.Ctx) error {
 			Description:   fields["description"],
 			Documentation: fields["documentation"],
 			Type:          db.WorkflowableTypePipeline,
-			Status:        db.WorkflowStatusInitiating,
 			OwnerID:       user.ID,
 			WorkspaceID:   workspace.ID,
 			ScheduleID:    &schedule.ID,

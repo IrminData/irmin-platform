@@ -103,7 +103,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	workflow.Patch("/schedule", controllers.ScheduleUpdate)
 	workflow.Delete("/", controllers.WorkflowsDestroy)
 	workflow.Post("/transfer-ownership", controllers.TransferWorkflowOwnership)
-	workflow.Post("/runs", controllers.WorkflowRunsStore)
+	workflow.Post("/runs", controllers.TriggerWorkflowRun)
 	workflow.Get("/runs", controllers.WorkflowRunsIndex)
 	workflow.Get("/runs/:run", controllers.WorkflowRunsShow)
 

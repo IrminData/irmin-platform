@@ -134,6 +134,13 @@ func FormatWorkflowResponse(workflow db.Workflow) (*db.WorkflowResponse, error) 
 		}
 	}
 
+	// Find the latest workflow run status.
+	latestStatus := db.WorkflowStatusInitiating
+	latestWorkflowRun, _ := db.GetLatestWorkflowRunByWorkflowID(workflow.ID)
+	if latestWorkflowRun != nil {
+		latestStatus = latestWorkflowRun.Status
+	}
+
 	// Structure the workflow response.
 	workflowSqid, err := utils.EncodeSqids("workflows", uint64(workflow.ID))
 	if err != nil {
@@ -145,7 +152,7 @@ func FormatWorkflowResponse(workflow db.Workflow) (*db.WorkflowResponse, error) 
 		Name:          workflow.Name,
 		Description:   workflow.Description,
 		Documentation: workflow.Documentation,
-		Status:        workflow.Status,
+		Status:        latestStatus,
 		Type:          workflow.Type,
 		Owner:         ownerResponse,
 		Schedule:      &scheduleResponse,

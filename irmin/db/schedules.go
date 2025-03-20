@@ -38,7 +38,8 @@ type WorkflowTrigger struct {
 	gorm.Model
 
 	Type       WorkflowTriggerType `json:"type"`
-	ScheduleID uint                `json:"schedule_id,omitempty"`
+	Schedule   *Schedule           `json:"schedule,omitempty" gorm:"foreignKey:ScheduleID"`
+	ScheduleID *uint               `json:"schedule_id,omitempty"`
 
 	// Time trigger
 	RRule *string `json:"rrule,omitempty"`

@@ -28,7 +28,6 @@ type Workflow struct {
 	Name          string                `json:"name"`
 	Description   string                `json:"description"`
 	Documentation string                `json:"documentation"`
-	Status        WorkflowStatus        `json:"status"`
 	Type          WorkflowableType      `json:"type"`
 	Workspace     Workspace             `json:"workspace" gorm:"foreignKey:WorkspaceID"`
 	WorkspaceID   uint                  `json:"workspace_id"`
