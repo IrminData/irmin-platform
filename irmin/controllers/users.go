@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"irmin-api/db"
-	"irmin-api/lib"
+	"irmin-api/lib/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -28,7 +28,7 @@ func UsersIndex(c fiber.Ctx) error {
 	var usersResponse []db.UserResponse
 	for _, workspaceUser := range workspaceUsers {
 		// Format the user response
-		userResponse, err := lib.FormatUserResponse(workspaceUser)
+		userResponse, err := formatter.FormatUserResponse(workspaceUser)
 		if err != nil {
 			log.Printf("Error formatting user: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -50,7 +50,7 @@ func UsersShow(c fiber.Ctx) error {
 	workspaceUser := c.Locals("workspace_user").(*db.WorkspaceUser)
 
 	// Format the user response
-	userResponse, err := lib.FormatUserResponse(*workspaceUser)
+	userResponse, err := formatter.FormatUserResponse(*workspaceUser)
 	if err != nil {
 		log.Printf("Error formatting user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -200,7 +200,7 @@ func UsersUpdate(c fiber.Ctx) error {
 	}
 
 	// Format the updated user response
-	userResponse, err := lib.FormatUserResponse(*workspaceUser)
+	userResponse, err := formatter.FormatUserResponse(*workspaceUser)
 	if err != nil {
 		log.Printf("Error formatting user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{

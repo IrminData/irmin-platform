@@ -3,7 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"irmin-api/db"
-	"irmin-api/lib"
+	"irmin-api/lib/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -28,7 +28,7 @@ func ConnectorsIndex(c fiber.Ctx) error {
 	var connectorsResponse []db.ConnectorResponse
 	for _, connector := range connectors {
 		// Create the response
-		connectorResponse, err := lib.FormatConnectorResponse(connector)
+		connectorResponse, err := formatter.FormatConnectorResponse(connector)
 		if err != nil {
 			log.Printf("Error formatting connector response: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -50,7 +50,7 @@ func ConnectorsShow(c fiber.Ctx) error {
 	connector := c.Locals("connector").(*db.Connector)
 
 	// Create the response
-	connectorResponse, err := lib.FormatConnectorResponse(*connector)
+	connectorResponse, err := formatter.FormatConnectorResponse(*connector)
 	if err != nil {
 		log.Printf("Error formatting connector response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -165,7 +165,7 @@ func ConnectorsStore(c fiber.Ctx) error {
 	}
 
 	// Create the response
-	connectorResponse, err := lib.FormatConnectorResponse(*connector)
+	connectorResponse, err := formatter.FormatConnectorResponse(*connector)
 	if err != nil {
 		log.Printf("Error formatting connector response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -261,7 +261,7 @@ func ConnectorsUpdate(c fiber.Ctx) error {
 	}
 
 	// Create the response
-	connectorResponse, err := lib.FormatConnectorResponse(*connector)
+	connectorResponse, err := formatter.FormatConnectorResponse(*connector)
 	if err != nil {
 		log.Printf("Error formatting connector response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{

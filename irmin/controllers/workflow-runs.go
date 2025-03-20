@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"irmin-api/db"
-	"irmin-api/lib"
+	"irmin-api/lib/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -44,7 +44,7 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 	}
 
 	// Format the workflow run for the response.
-	formattedRun, err := lib.FormatWorkflowRunResponse(createdRun)
+	formattedRun, err := formatter.FormatWorkflowRunResponse(createdRun)
 	if err != nil {
 		log.Printf("error formatting workflow run: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -75,7 +75,7 @@ func WorkflowRunsIndex(c fiber.Ctx) error {
 	// Format the workflow runs for the response.
 	var response []db.WorkflowRunResponse
 	for _, run := range runs {
-		formattedRun, err := lib.FormatWorkflowRunResponse(&run)
+		formattedRun, err := formatter.FormatWorkflowRunResponse(&run)
 		if err != nil {
 			log.Printf("error formatting workflow run: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -131,7 +131,7 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 	}
 
 	// Format the workflow run for the response.
-	formattedRun, err := lib.FormatWorkflowRunResponse(workflowRun)
+	formattedRun, err := formatter.FormatWorkflowRunResponse(workflowRun)
 	if err != nil {
 		log.Printf("Error formatting workflow run: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{

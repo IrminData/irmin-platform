@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"irmin-api/db"
-	"irmin-api/lib"
+	"irmin-api/lib/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -27,7 +27,7 @@ func ConnectionsIndex(c fiber.Ctx) error {
 	var connectionsResponse []db.ConnectionResponse
 	for _, connection := range connections {
 		// Format the connection response
-		connectionResponse, err := lib.FormatConnectionResponse(connection)
+		connectionResponse, err := formatter.FormatConnectionResponse(connection)
 		if err != nil {
 			log.Printf("Error fetching connection: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -98,7 +98,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	}
 
 	// Format the connection response
-	connectionResponse, err := lib.FormatConnectionResponse(*connection)
+	connectionResponse, err := formatter.FormatConnectionResponse(*connection)
 	if err != nil {
 		log.Printf("Error fetching connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -118,7 +118,7 @@ func ConnectionsShow(c fiber.Ctx) error {
 	connection := c.Locals("connection").(*db.Connection)
 
 	// Format the connection response
-	connectionResponse, err := lib.FormatConnectionResponse(*connection)
+	connectionResponse, err := formatter.FormatConnectionResponse(*connection)
 	if err != nil {
 		log.Printf("Error formatting connection response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -183,7 +183,7 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 	}
 
 	// Format the connection response
-	connectionResponse, err := lib.FormatConnectionResponse(*updatedConnection)
+	connectionResponse, err := formatter.FormatConnectionResponse(*updatedConnection)
 	if err != nil {
 		log.Printf("Error formatting connection response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -250,7 +250,7 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	}
 
 	// Format the connection response
-	connectionResponse, err := lib.FormatConnectionResponse(*updatedConnection)
+	connectionResponse, err := formatter.FormatConnectionResponse(*updatedConnection)
 	if err != nil {
 		log.Printf("Error formatting connection response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{

@@ -1,4 +1,4 @@
-package lib
+package formatter
 
 import (
 	"irmin-api/db"

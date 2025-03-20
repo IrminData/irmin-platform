@@ -3,7 +3,7 @@ package controllers
 import (
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/lib"
+	"irmin-api/lib/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -31,7 +31,7 @@ func WorkspaceInvitesIndex(c fiber.Ctx) error {
 	var invitesResponse []db.InviteResponse
 	for _, invite := range invites {
 		// Format the invite
-		inviteResponse, err := lib.FormatInviteResponse(&invite)
+		inviteResponse, err := formatter.FormatInviteResponse(&invite)
 		if err != nil {
 			log.Printf("Error formatting invite response: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -198,7 +198,7 @@ func SendInvite(c fiber.Ctx) error {
 	}
 
 	// Format the invite
-	inviteResponse, err := lib.FormatInviteResponse(newInvite)
+	inviteResponse, err := formatter.FormatInviteResponse(newInvite)
 	if err != nil {
 		log.Printf("Error formatting invite response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -218,7 +218,7 @@ func InvitesShow(c fiber.Ctx) error {
 	invite := c.Locals("invite").(*db.Invite)
 
 	// Format the invite
-	inviteResponse, err := lib.FormatInviteResponse(invite)
+	inviteResponse, err := formatter.FormatInviteResponse(invite)
 	if err != nil {
 		log.Printf("Error formatting invite response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -283,7 +283,7 @@ func InvitesUpdate(c fiber.Ctx) error {
 	}
 
 	// Format the invite
-	inviteResponse, err := lib.FormatInviteResponse(updatedInvite)
+	inviteResponse, err := formatter.FormatInviteResponse(updatedInvite)
 	if err != nil {
 		log.Printf("Error formatting invite response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -434,7 +434,7 @@ func ResendInvite(c fiber.Ctx) error {
 	}
 
 	// Format the invite
-	inviteResponse, err := lib.FormatInviteResponse(updatedInvite)
+	inviteResponse, err := formatter.FormatInviteResponse(updatedInvite)
 	if err != nil {
 		log.Printf("Error formatting invite response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -466,7 +466,7 @@ func IndexMyInvites(c fiber.Ctx) error {
 	var invitesResponse []db.InviteResponse
 	for _, invite := range invites {
 		// Format the invite
-		inviteResponse, err := lib.FormatInviteResponse(&invite)
+		inviteResponse, err := formatter.FormatInviteResponse(&invite)
 		if err != nil {
 			log.Printf("Error formatting invite response: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{

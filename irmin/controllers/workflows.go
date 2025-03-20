@@ -3,6 +3,7 @@ package controllers
 import (
 	"irmin-api/db"
 	"irmin-api/lib"
+	"irmin-api/lib/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -98,7 +99,7 @@ func WorkflowsShow(c fiber.Ctx) error {
 	workflow := c.Locals("workflow").(*db.Workflow)
 
 	// Get the workflow response.
-	workflowResponse, err := lib.FormatWorkflowResponse(*workflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(*workflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -140,7 +141,7 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := lib.FormatWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -494,7 +495,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := lib.FormatWorkflowResponse(*workflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(*workflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -803,7 +804,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := lib.FormatWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -859,7 +860,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := lib.FormatWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -952,7 +953,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := lib.FormatWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
