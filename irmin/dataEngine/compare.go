@@ -27,8 +27,10 @@ func (c *Client) MergeRefs(workspace, repository, baseRef, compareRef, message, 
 	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/merge?base_ref=%s&compare_ref=%s", workspace, repository, baseRef, compareRef)
 	// Call the API endpoint.
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
+		Method:        http.MethodPost,
+		Endpoint:      endpoint,
+		AllowedStatus: []int{http.StatusCreated, http.StatusOK},
+		ContentType:   "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"message":     message,
 			"author":      author,

@@ -71,8 +71,10 @@ func (c *Client) CreateRepository(workspace, name, defaultBranch string, isImmut
 	endpoint := fmt.Sprintf("/workspace/%s/repositories", workspace)
 	// Call the API endpoint.
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
+		Method:        http.MethodPost,
+		Endpoint:      endpoint,
+		AllowedStatus: []int{http.StatusCreated, http.StatusOK},
+		ContentType:   "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"name":                                  name,
 			"default_branch":                        defaultBranch,
@@ -92,8 +94,9 @@ func (c *Client) UpdateRepository(workspace, repository string, gcDefaultRetenti
 	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s", workspace, repository)
 	// Call the API endpoint.
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
+		Method:      http.MethodPost,
+		Endpoint:    endpoint,
+		ContentType: "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"garbage_default_retention_days":        fmt.Sprintf("%d", gcDefaultRetentionDays),
 			"garbage_default_branch_retention_days": fmt.Sprintf("%d", gcDefaultBranchRetentionDays),

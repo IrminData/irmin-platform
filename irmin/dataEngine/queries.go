@@ -12,8 +12,9 @@ func (c *Client) ExecuteQuery(workspace, query string) ([]map[string]interface{}
 	endpoint := fmt.Sprintf("/workspace/%s/queries/execute", workspace)
 	// Call the API endpoint with a POST request and form data containing the query.
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
+		Method:      http.MethodPost,
+		Endpoint:    endpoint,
+		ContentType: "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"query": query,
 		},

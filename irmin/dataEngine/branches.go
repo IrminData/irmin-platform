@@ -41,8 +41,10 @@ func (c *Client) CreateBranch(workspace, repository, name, from string, is_immut
 	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/branches", workspace, repository)
 	// Call the API endpoint.
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
+		Method:        http.MethodPost,
+		Endpoint:      endpoint,
+		AllowedStatus: []int{http.StatusCreated, http.StatusOK},
+		ContentType:   "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"name":         name,
 			"from":         from,
@@ -60,8 +62,9 @@ func (c *Client) UpdateBranch(workspace, repository, branch, name string, is_imm
 	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/branches/%s", workspace, repository, branch)
 	// Call the API endpoint.
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
+		Method:      http.MethodPost,
+		Endpoint:    endpoint,
+		ContentType: "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"name":         name,
 			"is_immutable": fmt.Sprintf("%t", is_immutable),

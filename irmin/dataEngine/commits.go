@@ -41,8 +41,10 @@ func (c *Client) CommitChanges(workspace, repository, branch, message, author st
 	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/commits", workspace, repository)
 	// Call the API endpoint.
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
+		Method:        http.MethodPost,
+		Endpoint:      endpoint,
+		AllowedStatus: []int{http.StatusCreated, http.StatusOK},
+		ContentType:   "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"branch":      branch,
 			"message":     message,
@@ -61,8 +63,9 @@ func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pa
 	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/commits/revert", workspace, repository)
 	// Call the API endpoint.
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
+		Method:      http.MethodPost,
+		Endpoint:    endpoint,
+		ContentType: "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"branch": branch,
 			"path":   path,

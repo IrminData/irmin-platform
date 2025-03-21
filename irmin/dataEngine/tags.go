@@ -41,8 +41,9 @@ func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminModel
 	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/tags", workspace, repository)
 	// Call the API endpoint.
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
+		Method:      http.MethodPost,
+		Endpoint:    endpoint,
+		ContentType: "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"name": name,
 			"ref":  ref,

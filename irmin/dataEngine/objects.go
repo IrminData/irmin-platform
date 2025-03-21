@@ -55,9 +55,11 @@ func (c *Client) UploadObject(workspace, repository, path, ref string, file Form
 	// Call the API endpoint.
 	file.FieldName = "file"
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
-		Files:    []FormFile{file},
+		Method:        http.MethodPost,
+		Endpoint:      endpoint,
+		AllowedStatus: []int{http.StatusCreated, http.StatusOK},
+		ContentType:   "multipart/form-data",
+		Files:         []FormFile{file},
 	}, &data); err != nil {
 		return nil, err
 	}
@@ -80,8 +82,9 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/objects/move?path=%s&ref=%s", workspace, repository, path, ref)
 	// Call the API endpoint.
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
+		Method:      http.MethodPost,
+		Endpoint:    endpoint,
+		ContentType: "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"new_path": newPath,
 		},
@@ -97,8 +100,9 @@ func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*
 	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/objects/copy?path=%s&ref=%s", workspace, repository, path, ref)
 	// Call the API endpoint.
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
+		Method:      http.MethodPost,
+		Endpoint:    endpoint,
+		ContentType: "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"new_path": newPath,
 		},

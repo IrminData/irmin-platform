@@ -12,8 +12,10 @@ func (c *Client) DataImport(workspace, connector_token, connector_url, repositor
 	endpoint := fmt.Sprintf("/workspace/%s/data-movement/import", workspace)
 	// Call the API endpoint.
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
+		Method:        http.MethodPost,
+		Endpoint:      endpoint,
+		AllowedStatus: []int{http.StatusCreated, http.StatusOK},
+		ContentType:   "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"connector_token": connector_token,
 			"connector_url":   connector_url,
@@ -32,8 +34,10 @@ func (c *Client) DataExport(workspace, connector_token, connector_url, repositor
 	var message string
 	endpoint := fmt.Sprintf("/workspace/%s/data-movement/export", workspace)
 	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
+		Method:        http.MethodPost,
+		Endpoint:      endpoint,
+		AllowedStatus: []int{http.StatusCreated, http.StatusOK},
+		ContentType:   "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"connector_token": connector_token,
 			"connector_url":   connector_url,
