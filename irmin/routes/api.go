@@ -103,6 +103,8 @@ func RegisterAPIRoutes(app *fiber.App) {
 	workflow.Patch("/schedule", controllers.ScheduleUpdate)
 	workflow.Delete("/", controllers.WorkflowsDestroy)
 	workflow.Post("/transfer-ownership", controllers.TransferWorkflowOwnership)
+
+	// Workflow run routes
 	workflow.Post("/runs", controllers.TriggerWorkflowRun)
 	workflow.Get("/runs", controllers.WorkflowRunsIndex)
 	workflow.Get("/runs/:run", controllers.WorkflowRunsShow)
@@ -111,7 +113,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	repositories := workspace.Group("/repositories")
 	repositories.Get("/", controllers.RepositoriesIndex)
 	repositories.Post("/", controllers.RepositoriesStore)
-	repository := repositories.Group("/:repository")
+	repository := repositories.Group("/:repository", controllers.RepositoryMiddleware)
 	repository.Get("/", controllers.RepositoriesShow)
 	repository.Patch("/", controllers.RepositoriesUpdate)
 	repository.Delete("/", controllers.RepositoriesDestroy)

@@ -37,4 +37,9 @@ var English = Dictionary{
 	"invite_deleted":                     "Invite deleted",
 	"invite_accepted":                    "Invite accepted",
 	"invite_declined":                    "Invite declined",
+	"repository_already_exists":          "Repository already exists",
+	"repository_created":                 "Repository created",
+	"repository_updated":                 "Repository updated",
+	"repository_deleted":                 "Repository deleted",
+	"repository_ownership_transferred":   "Repository ownership transferred",
 }

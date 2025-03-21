@@ -3,6 +3,7 @@ package dataEngine
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 )
 
 // BranchGarbageCollectionRules represents the garbage collection rules for a branch.
@@ -79,8 +80,8 @@ func (c *Client) CreateRepository(workspace, name, defaultBranch string, isImmut
 			"name":                                  name,
 			"default_branch":                        defaultBranch,
 			"is_immutable":                          fmt.Sprintf("%t", isImmutable),
-			"garbage_default_retention_days":        fmt.Sprintf("%d", gcDefaultRetentionDays),
-			"garbage_default_branch_retention_days": fmt.Sprintf("%d", gcDefaultBranchRetentionDays),
+			"garbage_default_retention_days":        strconv.FormatInt(int64(*gcDefaultRetentionDays), 10),
+			"garbage_default_branch_retention_days": strconv.FormatInt(int64(*gcDefaultBranchRetentionDays), 10),
 		},
 	}, &data); err != nil {
 		return nil, err
@@ -98,8 +99,8 @@ func (c *Client) UpdateRepository(workspace, repository string, gcDefaultRetenti
 		Endpoint:    endpoint,
 		ContentType: "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
-			"garbage_default_retention_days":        fmt.Sprintf("%d", gcDefaultRetentionDays),
-			"garbage_default_branch_retention_days": fmt.Sprintf("%d", gcDefaultBranchRetentionDays),
+			"garbage_default_retention_days":        strconv.FormatInt(int64(*gcDefaultRetentionDays), 10),
+			"garbage_default_branch_retention_days": strconv.FormatInt(int64(*gcDefaultBranchRetentionDays), 10),
 		},
 	}, &data); err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"irmin-api/dataEngine"
 	"irmin-api/db"
 	"irmin-api/locales"
 	"irmin-api/utils"
@@ -461,4 +462,44 @@ func InviteMiddleware(c fiber.Ctx) error {
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
+}
+
+func RepositoryMiddleware(c fiber.Ctx) error {
+	locale := c.Locals("locale").(string)
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+
+	// Parse the repository slug from the request URL.
+	repositorySlug := c.Params("repository")
+	if repositorySlug == "" {
+		log.Printf("No repository selected")
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Get the repository by its slug and workspace ID.
+	repository, err := db.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
+	if err != nil {
+		log.Printf("Error retrieving repository: %v", err)
+		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Initialize Data Engine client
+	DataEngine := dataEngine.NewClient(locale)
+
+	// Get the repository from the data engine.
+	dataEngineRepository, err := DataEngine.GetRepository(workspace.Slug, repositorySlug)
+	if err != nil {
+		log.Printf("Error retrieving repository from Data Engine: %v", err)
+		dataEngineRepository = &dataEngine.Repository{}
+	}
+
+	// Set the repository in the context for subsequent handlers.
+	c.Locals("repository", repository)
+	c.Locals("data_engine_repository", dataEngineRepository)
+
+	return c.Next()
 }

@@ -37,4 +37,9 @@ var Finnish = Dictionary{
 	"invite_deleted":                     "Kutsu poistettu",
 	"invite_accepted":                    "Kutsu hyväksytty",
 	"invite_declined":                    "Kutsu hylätty",
+	"repository_already_exists":          "Data-arkisto on jo olemassa",
+	"repository_created":                 "Data-arkisto luotu",
+	"repository_updated":                 "Data-arkisto päivitetty",
+	"repository_deleted":                 "Data-arkisto poistettu",
+	"repository_ownership_transferred":   "Data-arkiston omistajuus siirretty",
 }

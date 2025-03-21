@@ -1,6 +1,11 @@
 package db
 
-import "gorm.io/gorm"
+import (
+	"irmin-api/dataEngine"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Repository struct {
 	gorm.Model
@@ -17,8 +22,60 @@ type Repository struct {
 	OwnerID       uint      `json:"owner_id"`
 }
 
+type RepositoryResponse struct {
+	ID                     string                             `json:"id"`
+	Name                   string                             `json:"name"`
+	Slug                   string                             `json:"slug"`
+	Description            string                             `json:"description"`
+	Documentation          string                             `json:"documentation"`
+	IsImmutable            bool                               `json:"is_immutable"`
+	DefaultBranch          string                             `json:"default_branch"`
+	WorkspaceID            string                             `json:"workspace_id"`
+	OwnerID                string                             `json:"owner_id"`
+	GarbageCollectionRules *dataEngine.GarbageCollectionRules `json:"garbage_collection_rules,omitempty"`
+	CreatedAt              time.Time                          `json:"created_at"`
+	UpdatedAt              time.Time                          `json:"updated_at"`
+}
+
 func GetRepositoryBySlugAndWorkspaceID(slug string, workspaceID uint) (*Repository, error) {
 	var repository Repository
 	err := DB.Where("slug = ? AND workspace_id = ?", slug, workspaceID).First(&repository).Error
 	return &repository, err
+}
+
+func CheckIfRepositoryExists(slug string, workspaceID uint) bool {
+	var repository Repository
+	DB.Where("slug = ? AND workspace_id = ?", slug, workspaceID).First(&repository)
+	return repository.ID != 0
+}
+
+func GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, error) {
+	var repositories []Repository
+	err := DB.Where("workspace_id = ?", workspaceID).Find(&repositories).Error
+	return repositories, err
+}
+
+func CreateRepository(repository *Repository) (*Repository, error) {
+	if err := DB.Create(repository).Error; err != nil {
+		return nil, err
+	}
+	return repository, nil
+}
+
+func UpdateRepository(id uint, updates interface{}) (*Repository, error) {
+	var repository Repository
+	if err := DB.Model(&Repository{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		return nil, err
+	}
+	if err := DB.First(&repository, id).Error; err != nil {
+		return nil, err
+	}
+	return &repository, nil
+}
+
+func DeleteRepository(id uint) error {
+	if err := DB.Delete(&Repository{}, id).Error; err != nil {
+		return err
+	}
+	return nil
 }
