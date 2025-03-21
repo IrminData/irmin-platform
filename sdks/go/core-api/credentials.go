@@ -3,6 +3,7 @@ package irminCore
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -36,7 +37,7 @@ func (s *CredentialService) GetSystemTokens() ([]irminModels.SystemToken, *irmin
 func (s *CredentialService) CreateSystemToken(name string, expiry int) (*irminModels.SystemToken, *irminModels.IrminAPIResponse, error) {
 	form := map[string]string{
 		"name":   name,
-		"expiry": fmt.Sprintf("%d", expiry),
+		"expiry": strconv.FormatInt(int64(expiry), 10),
 	}
 
 	var token irminModels.SystemToken

@@ -3,6 +3,7 @@ package irminConnectorClient
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 )
 
 // Operation represents a record of an initiated operation tied to a connector.
@@ -69,7 +70,7 @@ func (c *Client) CancelOperation(operation_id int) error {
 
 	// Prepare form fields by formatting keys with the appropriate prefixes.
 	formFields := map[string]string{
-		"operation_id": fmt.Sprintf("%d", operation_id),
+		"operation_id": strconv.FormatInt(int64(operation_id), 10),
 	}
 
 	// Send the POST request using FetchAPI with URL-encoded form fields.
