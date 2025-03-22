@@ -146,8 +146,9 @@ func RegisterAPIRoutes(app *fiber.App) {
 	tags := repository.Group("/tags")
 	tags.Get("/", controllers.TagsIndex)
 	tags.Post("/", controllers.TagsStore)
-	tags.Get("/:tag/", controllers.TagsShow)
-	tags.Delete("/:tag/", controllers.TagsDestroy)
+	tag := tags.Group("/:tag", controllers.TagMiddleware)
+	tag.Get("/", controllers.TagsShow)
+	tag.Delete("/", controllers.TagsDestroy)
 
 	// Commits routes
 	commits := repository.Group("/commits")

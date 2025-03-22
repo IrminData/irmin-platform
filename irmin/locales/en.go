@@ -47,4 +47,6 @@ var English = Dictionary{
 	"branch_deleted":                      "Branch deleted",
 	"commit_created":                      "Commit created",
 	"changes_reverted_to_previous_commit": "Changes reverted to previous commit",
+	"tag_created":                         "Tag created",
+	"tag_deleted":                         "Tag deleted",
 }

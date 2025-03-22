@@ -536,3 +536,36 @@ func BranchMiddleware(c fiber.Ctx) error {
 
 	return c.Next()
 }
+
+func TagMiddleware(c fiber.Ctx) error {
+	locale := c.Locals("locale").(string)
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+	repository := c.Locals("repository").(*db.Repository)
+
+	// Parse the tag name from the request URL.
+	tagName := c.Params("tag")
+	if tagName == "" {
+		log.Printf("No tag selected")
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Initialize Data Engine client
+	DataEngine := dataEngine.NewClient(locale)
+
+	// Get the tag from the data engine.
+	dataEngineTag, err := DataEngine.GetTag(workspace.Slug, repository.Slug, tagName)
+	if err != nil {
+		log.Printf("Error retrieving tag from Data Engine: %v", err)
+		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Set the tag in the context for subsequent handlers.
+	c.Locals("tag", dataEngineTag)
+
+	return c.Next()
+}

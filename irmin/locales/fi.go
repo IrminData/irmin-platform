@@ -47,4 +47,6 @@ var Finnish = Dictionary{
 	"branch_deleted":                      "Haara poistettu",
 	"commit_created":                      "Muutos tallennettu",
 	"changes_reverted_to_previous_commit": "Muutokset palautettu edelliseen tallennukseen",
+	"tag_created":                         "Tunniste luotu",
+	"tag_deleted":                         "Tunniste poistettu",
 }
