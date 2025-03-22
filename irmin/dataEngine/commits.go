@@ -57,8 +57,7 @@ func (c *Client) CommitChanges(workspace, repository, branch, message, author st
 	return &data, nil
 }
 
-func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pathType string) (*irminModels.Commit, error) {
-	var data irminModels.Commit
+func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pathType string) error {
 	// Format the endpoint.
 	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/commits/revert", workspace, repository)
 	// Call the API endpoint.
@@ -71,8 +70,8 @@ func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pa
 			"path":   path,
 			"type":   pathType,
 		},
-	}, &data); err != nil {
-		return nil, err
+	}, nil); err != nil {
+		return err
 	}
-	return &data, nil
+	return nil
 }
