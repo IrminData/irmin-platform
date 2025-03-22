@@ -75,16 +75,15 @@ func (c *Client) UpdateBranch(workspace, repository, branch, name string, is_imm
 	return &data, nil
 }
 
-func (c *Client) DeleteBranch(workspace, repository, branch string) (*string, error) {
-	var message string
+func (c *Client) DeleteBranch(workspace, repository, branch string) error {
 	// Format the endpoint.
 	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/branches/%s", workspace, repository, branch)
 	// Call the API endpoint.
 	if err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: endpoint,
-	}, &message); err != nil {
-		return nil, err
+	}, nil); err != nil {
+		return err
 	}
-	return &message, nil
+	return nil
 }

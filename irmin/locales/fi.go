@@ -42,4 +42,7 @@ var Finnish = Dictionary{
 	"repository_updated":                 "Data-arkisto päivitetty",
 	"repository_deleted":                 "Data-arkisto poistettu",
 	"repository_ownership_transferred":   "Data-arkiston omistajuus siirretty",
+	"branch_created":                     "Haara luotu",
+	"branch_updated":                     "Haara päivitetty",
+	"branch_deleted":                     "Haara poistettu",
 }

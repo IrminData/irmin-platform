@@ -42,4 +42,7 @@ var English = Dictionary{
 	"repository_updated":                 "Repository updated",
 	"repository_deleted":                 "Repository deleted",
 	"repository_ownership_transferred":   "Repository ownership transferred",
+	"branch_created":                     "Branch created",
+	"branch_updated":                     "Branch updated",
+	"branch_deleted":                     "Branch deleted",
 }

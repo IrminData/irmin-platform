@@ -503,3 +503,36 @@ func RepositoryMiddleware(c fiber.Ctx) error {
 
 	return c.Next()
 }
+
+func BranchMiddleware(c fiber.Ctx) error {
+	locale := c.Locals("locale").(string)
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+	repository := c.Locals("repository").(*db.Repository)
+
+	// Parse the branch name from the request URL.
+	branchName := c.Params("branch")
+	if branchName == "" {
+		log.Printf("No branch selected")
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Initialize Data Engine client
+	DataEngine := dataEngine.NewClient(locale)
+
+	// Get the branch from the data engine.
+	dataEngineBranch, err := DataEngine.GetBranch(workspace.Slug, repository.Slug, branchName)
+	if err != nil {
+		log.Printf("Error retrieving branch from Data Engine: %v", err)
+		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+
+	// Set the branch in the context for subsequent handlers.
+	c.Locals("branch", dataEngineBranch)
+
+	return c.Next()
+}
