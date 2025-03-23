@@ -49,4 +49,8 @@ var English = Dictionary{
 	"changes_reverted_to_previous_commit": "Changes reverted to previous commit",
 	"tag_created":                         "Tag created",
 	"tag_deleted":                         "Tag deleted",
+	"object_uploaded":                     "Object uploaded",
+	"object_deleted":                      "Object deleted",
+	"object_moved":                        "Object moved",
+	"object_copied":                       "Object copied",
 }

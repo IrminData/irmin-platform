@@ -49,4 +49,8 @@ var Finnish = Dictionary{
 	"changes_reverted_to_previous_commit": "Muutokset palautettu edelliseen tallennukseen",
 	"tag_created":                         "Tunniste luotu",
 	"tag_deleted":                         "Tunniste poistettu",
+	"object_uploaded":                     "Objekti ladattu",
+	"object_deleted":                      "Objekti poistettu",
+	"object_moved":                        "Objekti siirretty",
+	"object_copied":                       "Objekti kopioitu",
 }

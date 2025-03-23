@@ -119,19 +119,21 @@ func RegisterAPIRoutes(app *fiber.App) {
 	repository.Delete("/", controllers.RepositoriesDestroy)
 	repository.Post("/transfer-ownership", controllers.TransferRepositoryOwnership)
 	repository.Get("/download", controllers.DownloadRepository)
+
+	// Merge and compare routes
 	repository.Get("/compare", controllers.CompareRefs)
 	repository.Post("/merge", controllers.MergeRefs)
 
 	// Object routes
-	objects := repository.Group("/objects")
+	objects := repository.Group("/objects", controllers.ObjectMiddleware)
 	objects.Get("/", controllers.ObjectsIndex)
-	objects.Get("/:path", controllers.ObjectsShow)
-	objects.Post("/:path", controllers.ObjectsStore)
-	objects.Patch("/:path", controllers.ObjectsUpdate)
-	objects.Delete("/:path", controllers.ObjectsDestroy)
-	objects.Get("/content/:path", controllers.ObjectsContent)
-	objects.Get("/history/:path", controllers.ObjectsHistory)
-	objects.Get("/schema/:path", controllers.ObjectsSchema)
+	objects.Post("/", controllers.UploadObject)
+	objects.Delete("/", controllers.ObjectsDestroy)
+	objects.Post("/move", controllers.MoveObject)
+	objects.Post("/copy", controllers.CopyObject)
+	objects.Get("/content", controllers.ObjectsContent)
+	objects.Get("/history", controllers.ObjectsHistory)
+	objects.Get("/schema", controllers.ObjectsSchema)
 
 	// Branch routes
 	branches := repository.Group("/branches")

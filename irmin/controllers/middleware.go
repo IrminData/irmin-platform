@@ -569,3 +569,40 @@ func TagMiddleware(c fiber.Ctx) error {
 
 	return c.Next()
 }
+
+func ObjectMiddleware(c fiber.Ctx) error {
+	locale := c.Locals("locale").(string)
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+	repository := c.Locals("repository").(*db.Repository)
+
+	// Parse the query parameters.
+	params, err := utils.ParseQueryParams(c, nil, []string{"ref", "path"})
+	if err != nil {
+		log.Printf("Error parsing query parameters: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occured")},
+		})
+	}
+	ref := repository.DefaultBranch
+	if params["ref"] != "" {
+		ref = params["ref"]
+	}
+	path := "/"
+	if params["path"] != "" {
+		path = params["path"]
+	}
+
+	// Initialize Data Engine client
+	DataEngine := dataEngine.NewClient(locale)
+
+	// Get the object from the data engine.
+	repositoryObject, _ := DataEngine.GetPath(workspace.Slug, repository.Slug, path, ref)
+
+	// Set the object in the context for subsequent handlers.
+	c.Locals("object", repositoryObject)
+	c.Locals("object_ref", ref)
+	c.Locals("object_path", path)
+
+	return c.Next()
+}
