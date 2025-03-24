@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"irmin-api/db"
+	"irmin-api/lib"
 	"irmin-api/routes"
 	"irmin-api/utils"
 	"log"
@@ -25,6 +26,12 @@ func main() {
 	// Initialize the database
 	if err := db.InitialiseDB(); err != nil {
 		log.Fatalf("failed to initialise the database: %v", err)
+	}
+
+	// Initialize the bucket client to make sure we can connect to the S3 bucket
+	_, err = lib.CreateBucketClient()
+	if err != nil {
+		log.Fatalf("failed to create bucket client: %v", err)
 	}
 
 	// Reset the database
