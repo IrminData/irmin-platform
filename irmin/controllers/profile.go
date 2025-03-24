@@ -22,7 +22,7 @@ func ProfileShow(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating user SQID: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -55,7 +55,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error loading environment variables: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -82,7 +82,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -117,7 +117,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error creating email address: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		primaryEmailID = newClerkEmail.ID
@@ -142,7 +142,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error creating phone number: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		primaryPhoneID = newClerkPhone.ID
@@ -158,7 +158,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -168,7 +168,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error opening profile picture: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		clerkUser, err = user.UpdateProfileImage(ctx, irminUser.ClerkID, &user.UpdateProfileImageParams{
@@ -177,7 +177,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error updating profile picture: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	}
@@ -187,7 +187,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating user SQID: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 

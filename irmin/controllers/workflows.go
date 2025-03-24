@@ -32,7 +32,7 @@ func WorkflowsIndex(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error retrieving workflows: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	} else {
@@ -41,7 +41,7 @@ func WorkflowsIndex(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error retrieving workflows: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	}
@@ -53,7 +53,7 @@ func WorkflowsIndex(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error encoding owner sqid: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		ownerResponse := db.UserResponse{
@@ -69,7 +69,7 @@ func WorkflowsIndex(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error encoding workflow sqid: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		latestStatus := db.WorkflowStatusInitiating
@@ -103,7 +103,7 @@ func WorkflowsShow(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -136,7 +136,7 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -145,7 +145,7 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -202,7 +202,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error decoding connection sqid: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		connection, err := db.GetConnectionByID(uint(connectionID))
@@ -223,7 +223,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	case db.WorkflowableTypeExport:
@@ -249,7 +249,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error decoding connection sqid: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		connection, err := db.GetConnectionByID(uint(connectionID))
@@ -275,7 +275,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	case db.WorkflowableTypeAction:
@@ -321,7 +321,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	case db.WorkflowableTypePipeline:
@@ -403,7 +403,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	default:
@@ -427,7 +427,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating schedule: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -481,7 +481,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -490,7 +490,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -499,7 +499,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -547,7 +547,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error decoding connection sqid: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		connection, err := db.GetConnectionByID(uint(connectionID))
@@ -568,7 +568,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	case db.WorkflowableTypeExport:
@@ -594,7 +594,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error decoding connection sqid: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		connection, err := db.GetConnectionByID(uint(connectionID))
@@ -620,7 +620,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	case db.WorkflowableTypeAction:
@@ -666,7 +666,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	case db.WorkflowableTypePipeline:
@@ -748,7 +748,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	default:
@@ -799,7 +799,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -808,7 +808,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -839,7 +839,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating schedule: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -855,7 +855,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -864,7 +864,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -908,7 +908,7 @@ func WorkflowsDestroy(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error deleting workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -937,7 +937,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error decoding new owner sqid: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -948,7 +948,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -957,7 +957,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 

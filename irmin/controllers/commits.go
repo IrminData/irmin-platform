@@ -33,7 +33,7 @@ func CommitsIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving commits from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -67,7 +67,7 @@ func CommitsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error committing changes in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -101,7 +101,7 @@ func CommitsShow(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving commit from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -134,7 +134,7 @@ func RevertUncommittedChanges(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error reverting uncommitted changes in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 

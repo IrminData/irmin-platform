@@ -22,7 +22,7 @@ func CredentialsIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving API tokens: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -64,7 +64,7 @@ func CredentialsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error generating random string: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -73,7 +73,7 @@ func CredentialsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error parsing expiry field: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -90,7 +90,7 @@ func CredentialsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating API token: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -122,7 +122,7 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	if tokenSqid == "" {
 		log.Printf("No token provided")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -131,7 +131,7 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error decoding SQID: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -140,7 +140,7 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving API token: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	if apiToken.UserID != user.ID {
@@ -154,7 +154,7 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	if err := db.DeleteAPIToken(uint(id)); err != nil {
 		log.Printf("Error deleting API token: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 

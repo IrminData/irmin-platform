@@ -25,7 +25,7 @@ func BranchesIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving branches from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -63,7 +63,7 @@ func BranchesStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating branch in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -118,7 +118,7 @@ func BranchesUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating branch in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -144,7 +144,7 @@ func BranchesDestroy(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error deleting branch in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 

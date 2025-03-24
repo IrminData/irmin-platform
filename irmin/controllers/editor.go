@@ -35,7 +35,7 @@ func EditorIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving query parameters: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	path := strings.Trim(params["path"], "/")
@@ -45,7 +45,7 @@ func EditorIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	defer bucket.Close()
@@ -64,7 +64,7 @@ func EditorIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error listing objects: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -113,7 +113,7 @@ func EditorItemStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving query parameters: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	path := strings.Trim(params["path"], "/")
@@ -128,7 +128,7 @@ func EditorItemStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	content := fields["content"]
@@ -138,7 +138,7 @@ func EditorItemStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	defer bucket.Close()
@@ -158,7 +158,7 @@ func EditorItemStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error uploading object: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -176,7 +176,7 @@ func EditorItemDestroy(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving query parameters: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	path := strings.Trim(params["path"], "/")
@@ -191,7 +191,7 @@ func EditorItemDestroy(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	defer bucket.Close()
@@ -207,7 +207,7 @@ func EditorItemDestroy(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error listing objects for deletion: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -220,7 +220,7 @@ func EditorItemDestroy(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error deleting object %s: %v", *item.Key, err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	}
@@ -239,7 +239,7 @@ func MoveEditorItem(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving query parameters: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	path := strings.Trim(params["path"], "/")
@@ -254,7 +254,7 @@ func MoveEditorItem(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	destination_path := strings.Trim(fields["destination_path"], "/")
@@ -269,7 +269,7 @@ func MoveEditorItem(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	defer bucket.Close()
@@ -288,7 +288,7 @@ func MoveEditorItem(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error listing objects for move: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -308,7 +308,7 @@ func MoveEditorItem(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error copying object %s to %s: %v", *item.Key, destKey, err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 
@@ -320,7 +320,7 @@ func MoveEditorItem(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error deleting original object %s: %v", *item.Key, err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	}
@@ -339,7 +339,7 @@ func CopyEditorItem(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving query parameters: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	path := strings.Trim(params["path"], "/")
@@ -354,7 +354,7 @@ func CopyEditorItem(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	destination_path := strings.Trim(fields["destination_path"], "/")
@@ -369,7 +369,7 @@ func CopyEditorItem(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	defer bucket.Close()
@@ -388,7 +388,7 @@ func CopyEditorItem(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error listing objects for copy: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -406,7 +406,7 @@ func CopyEditorItem(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error copying object %s to %s: %v", *item.Key, destKey, err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	}
@@ -425,7 +425,7 @@ func EditorItemContent(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving query parameters: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	path := strings.Trim(params["path"], "/")
@@ -440,7 +440,7 @@ func EditorItemContent(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	defer bucket.Close()
@@ -456,7 +456,7 @@ func EditorItemContent(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving object content: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	defer obj.Body.Close()
@@ -466,7 +466,7 @@ func EditorItemContent(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error reading object content: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 

@@ -1,7 +1,7 @@
 package locales
 
 var English = Dictionary{
-	"error_occured":                       "Error occured",
+	"error_occurred":                      "Error occurred",
 	"access_denied":                       "Access denied",
 	"invalid_request":                     "Invalid request",
 	"insufficient_permissions":            "Insufficient permissions",

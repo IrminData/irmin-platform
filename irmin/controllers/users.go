@@ -20,7 +20,7 @@ func UsersIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching users: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -32,7 +32,7 @@ func UsersIndex(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error formatting user: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		// Append the user to the response
@@ -54,7 +54,7 @@ func UsersShow(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -106,7 +106,7 @@ func UsersDestroy(c fiber.Ctx) error {
 	if err := db.RemoveUserFromWorkspace(workspaceUser.UserID, workspace.ID); err != nil {
 		log.Printf("Error removing user from workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -186,7 +186,7 @@ func UsersUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating workspace user roles: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -195,7 +195,7 @@ func UsersUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching workspace user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -204,7 +204,7 @@ func UsersUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 

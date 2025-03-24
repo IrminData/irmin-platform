@@ -26,7 +26,7 @@ func TagsIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving tags from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -58,7 +58,7 @@ func TagsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating tag in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -90,7 +90,7 @@ func TagsDestroy(c fiber.Ctx) error {
 	if err := DataEngine.DeleteTag(workspace.Slug, repository.Slug, tag.Name); err != nil {
 		log.Printf("Error deleting tag in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 

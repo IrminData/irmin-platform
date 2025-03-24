@@ -21,7 +21,7 @@ func RepositoriesIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching repositories: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -33,7 +33,7 @@ func RepositoriesIndex(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error formatting repository: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		// Append the repository to the response
@@ -121,7 +121,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating repository: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -133,7 +133,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating repository in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -142,7 +142,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting repository: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -163,7 +163,7 @@ func RepositoriesShow(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting repository: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -183,7 +183,7 @@ func RepositoriesDestroy(c fiber.Ctx) error {
 	if err := db.DeleteRepository(repository.ID); err != nil {
 		log.Printf("Error deleting repository: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -194,7 +194,7 @@ func RepositoriesDestroy(c fiber.Ctx) error {
 	if err := DataEngine.DeleteRepository(workspace.Slug, repository.Slug, false); err != nil {
 		log.Printf("Error deleting repository in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -274,7 +274,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating repository in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -283,7 +283,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting repository: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -328,7 +328,7 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting repository: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 

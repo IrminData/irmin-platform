@@ -23,7 +23,7 @@ func WorkspaceInvitesIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching invites: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -35,7 +35,7 @@ func WorkspaceInvitesIndex(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error formatting invite response: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		// Append to response
@@ -101,7 +101,7 @@ func SendInvite(c fiber.Ctx) error {
 	alreadyInWorkspace, err := db.IsUserInWorkspaceByEmail(fields["email"], workspace.ID)
 	if err != nil {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	if alreadyInWorkspace {
@@ -114,7 +114,7 @@ func SendInvite(c fiber.Ctx) error {
 	existingInvites, err := db.GetInvitesByEmail(fields["email"])
 	if err != nil {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	for _, invite := range existingInvites {
@@ -130,7 +130,7 @@ func SendInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error loading environment variables: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -149,7 +149,7 @@ func SendInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating invite in the database: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -158,7 +158,7 @@ func SendInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error encoding invite sqid: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -173,7 +173,7 @@ func SendInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating Clerk invite: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -184,7 +184,7 @@ func SendInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating invite with Clerk ID: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -193,7 +193,7 @@ func SendInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching newly created invite: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -202,7 +202,7 @@ func SendInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting invite response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -222,7 +222,7 @@ func InvitesShow(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting invite response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -278,7 +278,7 @@ func InvitesUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating invite: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -287,7 +287,7 @@ func InvitesUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting invite response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -329,7 +329,7 @@ func InvitesDestroy(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error revoking invite in Clerk: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -338,7 +338,7 @@ func InvitesDestroy(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error deleting invite: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -380,7 +380,7 @@ func ResendInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error loading environment variables: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -389,7 +389,7 @@ func ResendInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error encoding invite sqid: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -401,7 +401,7 @@ func ResendInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error revoking existing invite in Clerk: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -416,7 +416,7 @@ func ResendInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating Clerk invite: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -429,7 +429,7 @@ func ResendInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating invite: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -438,7 +438,7 @@ func ResendInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting invite response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -458,7 +458,7 @@ func IndexMyInvites(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching invites: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -470,7 +470,7 @@ func IndexMyInvites(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error formatting invite response: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		// Append to response
@@ -503,7 +503,7 @@ func AcceptInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating invite: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -512,7 +512,7 @@ func AcceptInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error adding user to workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -542,7 +542,7 @@ func DeclineInvite(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating invite: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 

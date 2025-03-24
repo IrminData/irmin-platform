@@ -17,7 +17,7 @@ func ObjectsIndex(c fiber.Ctx) error {
 	if object == nil {
 		log.Printf("Error retrieving object from Data Engine")
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -62,7 +62,7 @@ func UploadObject(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error uploading object to Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -97,7 +97,7 @@ func MoveObject(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error moving object in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -132,7 +132,7 @@ func CopyObject(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error copying object in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -158,7 +158,7 @@ func ObjectsDestroy(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error deleting object from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -183,12 +183,12 @@ func ObjectsContent(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving object content from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	if len(files) == 0 {
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	file := files[0]
@@ -213,7 +213,7 @@ func ObjectsHistory(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving object history from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 

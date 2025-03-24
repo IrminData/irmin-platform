@@ -20,7 +20,7 @@ func ConnectorsIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving connectors: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -32,7 +32,7 @@ func ConnectorsIndex(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error formatting connector response: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		// Append the connector to the response
@@ -54,7 +54,7 @@ func ConnectorsShow(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting connector response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -92,7 +92,7 @@ func ConnectorsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching connector info: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -123,21 +123,21 @@ func ConnectorsStore(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error marshalling capabilities: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		localesJSON, err := json.Marshal(connectorInfo.Locales)
 		if err != nil {
 			log.Printf("Error marshalling locales: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		categoriesJSON, err := json.Marshal(connectorInfo.Categories)
 		if err != nil {
 			log.Printf("Error marshalling categories: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		// Update the connector
@@ -160,7 +160,7 @@ func ConnectorsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating/updating connector: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -169,7 +169,7 @@ func ConnectorsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting connector response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -209,7 +209,7 @@ func ConnectorsUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching connector info: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -218,21 +218,21 @@ func ConnectorsUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error marshalling capabilities: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	localesJSON, err := json.Marshal(connectorInfo.Locales)
 	if err != nil {
 		log.Printf("Error marshalling locales: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	categoriesJSON, err := json.Marshal(connectorInfo.Categories)
 	if err != nil {
 		log.Printf("Error marshalling categories: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -256,7 +256,7 @@ func ConnectorsUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating connector: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -265,7 +265,7 @@ func ConnectorsUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting connector response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -292,7 +292,7 @@ func ConnectorsDestroy(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error deleting connector: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -328,7 +328,7 @@ func ShowConnectorConfigurationFields(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching connection configuration fields: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -355,7 +355,7 @@ func ValidateConnectorConfiguration(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error testing connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 

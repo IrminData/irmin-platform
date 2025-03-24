@@ -1,7 +1,7 @@
 package locales
 
 var Finnish = Dictionary{
-	"error_occured":                       "Tapahtui virhe",
+	"error_occurred":                      "Tapahtui virhe",
 	"access_denied":                       "Pääsy kielletty",
 	"invalid_request":                     "Virheellinen pyyntö",
 	"insufficient_permissions":            "Riittämättömät oikeudet",

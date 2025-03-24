@@ -32,7 +32,7 @@ func APIMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error loading environment variables: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -162,7 +162,7 @@ func APIMiddleware(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error creating user: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	} else {
@@ -188,7 +188,7 @@ func APIMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -210,7 +210,7 @@ func WorkspaceMiddleware(c fiber.Ctx) error {
 	if workspaceSlug == "" {
 		log.Printf("No workspace selected")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -219,7 +219,7 @@ func WorkspaceMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -228,7 +228,7 @@ func WorkspaceMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error checking user membership: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	if !isMember {
@@ -255,7 +255,7 @@ func WorkflowMiddleware(c fiber.Ctx) error {
 	if workflowSqid == "" {
 		log.Printf("No workflow selected")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -264,7 +264,7 @@ func WorkflowMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error decoding workflow sqid: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -273,7 +273,7 @@ func WorkflowMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -302,7 +302,7 @@ func ConnectionMiddleware(c fiber.Ctx) error {
 	if connectionSqid == "" {
 		log.Printf("No connection selected")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -311,7 +311,7 @@ func ConnectionMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error decoding connection sqid: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -320,7 +320,7 @@ func ConnectionMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -346,7 +346,7 @@ func ConnectorMiddleware(c fiber.Ctx) error {
 	if connectorSQID == "" {
 		log.Printf("No connector selected")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -355,7 +355,7 @@ func ConnectorMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error decoding SQID: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -364,7 +364,7 @@ func ConnectorMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving connector: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -383,7 +383,7 @@ func UserMiddleware(c fiber.Ctx) error {
 	if userSqid == "" {
 		log.Printf("No user selected")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -392,7 +392,7 @@ func UserMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error decoding user sqid: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -401,7 +401,7 @@ func UserMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -420,7 +420,7 @@ func InviteMiddleware(c fiber.Ctx) error {
 	if inviteSqid == "" {
 		log.Printf("No invite selected")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -429,7 +429,7 @@ func InviteMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error decoding invite sqid: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -438,7 +438,7 @@ func InviteMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving invite: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -473,7 +473,7 @@ func RepositoryMiddleware(c fiber.Ctx) error {
 	if repositorySlug == "" {
 		log.Printf("No repository selected")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -482,7 +482,7 @@ func RepositoryMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving repository: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -514,7 +514,7 @@ func BranchMiddleware(c fiber.Ctx) error {
 	if branchName == "" {
 		log.Printf("No branch selected")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -526,7 +526,7 @@ func BranchMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving branch from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -547,7 +547,7 @@ func TagMiddleware(c fiber.Ctx) error {
 	if tagName == "" {
 		log.Printf("No tag selected")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -559,7 +559,7 @@ func TagMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving tag from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -580,7 +580,7 @@ func ObjectMiddleware(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error parsing query parameters: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	ref := repository.DefaultBranch

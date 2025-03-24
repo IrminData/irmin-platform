@@ -20,7 +20,7 @@ func WorkspacesIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving workspaces: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -67,7 +67,7 @@ func WorkspacesStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -76,7 +76,7 @@ func WorkspacesStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error adding user to workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -87,7 +87,7 @@ func WorkspacesStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error encoding SQID: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -172,7 +172,7 @@ func WorkspacesUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -211,7 +211,7 @@ func WorkspacesDestroy(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error deleting workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -251,7 +251,7 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error decoding SQID: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -262,7 +262,7 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -318,7 +318,7 @@ func LeaveWorkspace(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error leaving workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 

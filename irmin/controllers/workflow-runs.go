@@ -28,7 +28,7 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("error creating workflow run: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Message: dict.T("error_occured"),
+			Message: dict.T("error_occurred"),
 		})
 	}
 
@@ -39,7 +39,7 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("error fetching created workflow run: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Message: dict.T("error_occured"),
+			Message: dict.T("error_occurred"),
 		})
 	}
 
@@ -48,7 +48,7 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("error formatting workflow run: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Message: dict.T("error_occured"),
+			Message: dict.T("error_occurred"),
 		})
 	}
 
@@ -68,7 +68,7 @@ func WorkflowRunsIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("error getting workflow runs: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Message: dict.T("error_occured"),
+			Message: dict.T("error_occurred"),
 		})
 	}
 
@@ -79,7 +79,7 @@ func WorkflowRunsIndex(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("error formatting workflow run: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Message: dict.T("error_occured"),
+				Message: dict.T("error_occurred"),
 			})
 		}
 		response = append(response, *formattedRun)
@@ -100,7 +100,7 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 	if runSqid == "" {
 		log.Printf("No workflow run selected")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -109,7 +109,7 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error decoding invite sqid: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -118,7 +118,7 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error retrieving workflow run: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -126,7 +126,7 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 	if workflowRun.WorkflowID != workflow.ID {
 		log.Printf("Workflow run does not belong to workflow")
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -135,7 +135,7 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting workflow run: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Message: dict.T("error_occured"),
+			Message: dict.T("error_occurred"),
 		})
 	}
 

@@ -19,7 +19,7 @@ func ConnectionsIndex(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching connections: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -31,7 +31,7 @@ func ConnectionsIndex(c fiber.Ctx) error {
 		if err != nil {
 			log.Printf("Error fetching connection: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occured")},
+				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		connectionsResponse = append(connectionsResponse, *connectionResponse)
@@ -84,7 +84,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error creating connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -93,7 +93,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -102,7 +102,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error fetching connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -122,7 +122,7 @@ func ConnectionsShow(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting connection response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -178,7 +178,7 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -187,7 +187,7 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting connection response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -206,7 +206,7 @@ func ConnectionsDestroy(c fiber.Ctx) error {
 	if err := db.DeleteConnection(connection.ID); err != nil {
 		log.Printf("Error deleting connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -245,7 +245,7 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error updating connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
@@ -254,7 +254,7 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error formatting connection response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occured")},
+			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
