@@ -53,4 +53,8 @@ var English = Dictionary{
 	"object_deleted":                      "Object deleted",
 	"object_moved":                        "Object moved",
 	"object_copied":                       "Object copied",
+	"editor_item_saved":                   "Editor item saved",
+	"editor_item_deleted":                 "Editor item deleted",
+	"editor_item_moved":                   "Editor item moved",
+	"editor_item_copied":                  "Editor item copied",
 }

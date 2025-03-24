@@ -53,4 +53,8 @@ var Finnish = Dictionary{
 	"object_deleted":                      "Objekti poistettu",
 	"object_moved":                        "Objekti siirretty",
 	"object_copied":                       "Objekti kopioitu",
+	"editor_item_saved":                   "Kohde tallennettu",
+	"editor_item_deleted":                 "Kohde poistettu",
+	"editor_item_moved":                   "Kohde siirretty",
+	"editor_item_copied":                  "Kohde kopioitu",
 }

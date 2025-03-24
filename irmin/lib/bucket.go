@@ -8,6 +8,9 @@ import (
 
 type BucketClient struct {
 	s3.Storage
+	Bucket   string
+	Endpoint string
+	Region   string
 }
 
 func CreateBucketClient() (*BucketClient, error) {
@@ -32,6 +35,9 @@ func CreateBucketClient() (*BucketClient, error) {
 	store := s3.New(config)
 
 	return &BucketClient{
-		*store,
+		Storage:  *store,
+		Bucket:   env.S3Bucket,
+		Endpoint: env.S3Endpoint,
+		Region:   env.S3Region,
 	}, nil
 }

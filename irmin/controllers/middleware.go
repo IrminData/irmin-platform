@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"irmin-api/dataEngine"
 	"irmin-api/db"
 	"irmin-api/locales"
@@ -19,7 +18,7 @@ import (
 // APIMiddleware sets the dictionary and handles the user authentication for the API, tokens and
 // user details syncing with Clerk.
 func APIMiddleware(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 
 	// Get the dictionary for the request's language.
 	dict, locale := locales.GetDictionary(c)

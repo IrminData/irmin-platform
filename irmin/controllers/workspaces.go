@@ -80,6 +80,8 @@ func WorkspacesStore(c fiber.Ctx) error {
 		})
 	}
 
+	// TODO: Create a bucket folder for the editor files of the workspace.
+
 	// Create SQID for the workspace.
 	sqid, err := utils.EncodeSqids("workspaces", uint64(newWorkspace.ID))
 	if err != nil {
@@ -165,7 +167,6 @@ func WorkspacesUpdate(c fiber.Ctx) error {
 	// Update the workspace.
 	updatedWorkspace, err := db.UpdateWorkspace(workspace.ID, map[string]interface{}{
 		"name":        fields["name"],
-		"slug":        utils.Slugify(fields["name"]),
 		"description": fields["description"],
 	})
 	if err != nil {
@@ -213,6 +214,8 @@ func WorkspacesDestroy(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occured")},
 		})
 	}
+
+	// TODO: Delete all related data (bucket files, repositories, etc.)
 
 	// Return a success message.
 	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{

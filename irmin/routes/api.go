@@ -86,11 +86,14 @@ func RegisterAPIRoutes(app *fiber.App) {
 	connection.Delete("/:connection", controllers.ConnectionsDestroy)
 	connection.Post("/:connection/transfer-ownership", controllers.TransferConnectionOwnership)
 
-	// Editor item routes
-	editorItems := workspace.Group("/editor-items")
-	editorItems.Get("/", controllers.EditorItemsIndex)
-	editorItems.Post("/", controllers.EditorItemStore)
-	editorItems.Get("/content", controllers.EditorItemContent)
+	// Editor routes
+	editor := workspace.Group("/editor")
+	editor.Get("/", controllers.EditorIndex)
+	editor.Post("/", controllers.EditorItemStore)
+	editor.Delete("/", controllers.EditorItemDestroy)
+	editor.Post("/move", controllers.MoveEditorItem)
+	editor.Post("/copy", controllers.CopyEditorItem)
+	editor.Get("/content", controllers.EditorItemContent)
 
 	// Workflow routes
 	workflows := workspace.Group("/workflows")

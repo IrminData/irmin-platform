@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"irmin-api/db"
 	"irmin-api/locales"
 	"irmin-api/utils"
@@ -45,7 +44,7 @@ func ProfileShow(c fiber.Ctx) error {
 }
 
 func ProfileUpdate(c fiber.Ctx) error {
-	ctx := context.Background()
+	ctx := c.Context()
 
 	// Get the dictionary and user from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
