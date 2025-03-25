@@ -218,6 +218,7 @@ func ConnectionsDestroy(c fiber.Ctx) error {
 
 func TransferConnectionOwnership(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
 	connection := c.Locals("connection").(*db.Connection)
 
 	// Parse the request body
@@ -235,6 +236,20 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 		log.Printf("Error decoding connector sqid: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Make sure the new owner is valid and a member of the workspace
+	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
+	if err != nil {
+		log.Printf("Error checking if user is in workspace: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("new_owner_invalid")},
+		})
+	}
+	if !inWorkspace {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("new_owner_invalid")},
 		})
 	}
 

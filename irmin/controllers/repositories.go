@@ -235,6 +235,12 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 		"documentation": fields["documentation"],
 		"is_immutable":  isImmutable,
 	})
+	if err != nil {
+		log.Printf("Error updating repository: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
 
 	// Initialize Data Engine client
 	DataEngine := dataEngine.NewClient(locale)
@@ -296,6 +302,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 
 func TransferRepositoryOwnership(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
 	repository := c.Locals("repository").(*db.Repository)
 	dataEngineRepository := c.Locals("data_engine_repository").(*dataEngine.Repository)
 
@@ -318,10 +325,30 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 		})
 	}
 
+	// Make sure the new owner is valid and a member of the workspace
+	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
+	if err != nil {
+		log.Printf("Error checking if user is in workspace: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("new_owner_invalid")},
+		})
+	}
+	if !inWorkspace {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("new_owner_invalid")},
+		})
+	}
+
 	// Update the repository in the database
 	repository, err = db.UpdateRepository(repository.ID, map[string]any{
 		"owner_id": newOwnerID,
 	})
+	if err != nil {
+		log.Printf("Error updating repository: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
 
 	// Format the repository response
 	repositoryResponse, err := formatter.FormatRepositoryResponse(repository, dataEngineRepository)

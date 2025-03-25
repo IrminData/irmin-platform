@@ -921,6 +921,7 @@ func WorkflowsDestroy(c fiber.Ctx) error {
 func TransferWorkflowOwnership(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
 	workflow := c.Locals("workflow").(*db.Workflow)
 
 	// Parse the request body
@@ -938,6 +939,20 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 		log.Printf("Error decoding new owner sqid: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Make sure the new owner is valid and a member of the workspace
+	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
+	if err != nil {
+		log.Printf("Error checking if user is in workspace: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("new_owner_invalid")},
+		})
+	}
+	if !inWorkspace {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("new_owner_invalid")},
 		})
 	}
 

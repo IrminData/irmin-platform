@@ -6,6 +6,7 @@ var English = Dictionary{
 	"invalid_request":                     "Invalid request",
 	"insufficient_permissions":            "Insufficient permissions",
 	"profile_updated":                     "Profile updated",
+	"new_owner_invalid":                   "New owner is invalid",
 	"api_token_created":                   "API token created",
 	"api_token_deleted":                   "API token deleted",
 	"workspace_created":                   "Workspace created",

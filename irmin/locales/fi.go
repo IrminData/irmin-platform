@@ -6,6 +6,7 @@ var Finnish = Dictionary{
 	"invalid_request":                     "Virheellinen pyyntö",
 	"insufficient_permissions":            "Riittämättömät oikeudet",
 	"profile_updated":                     "Profiili päivitetty",
+	"new_owner_invalid":                   "Uusi omistaja on virheellinen",
 	"api_token_created":                   "API-avain luotu",
 	"api_token_deleted":                   "API-avain poistettu",
 	"workspace_created":                   "Työtila luotu",

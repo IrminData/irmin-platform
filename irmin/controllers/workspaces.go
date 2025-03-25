@@ -292,6 +292,20 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 		})
 	}
 
+	// Make sure the new owner is valid and a member of the workspace
+	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
+	if err != nil {
+		log.Printf("Error checking if user is in workspace: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("new_owner_invalid")},
+		})
+	}
+	if !inWorkspace {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("new_owner_invalid")},
+		})
+	}
+
 	// Update the workspace owner ID.
 	updatedWorkspace, err := db.UpdateWorkspace(workspace.ID, map[string]any{
 		"owner_id": newOwnerID,

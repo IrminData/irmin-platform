@@ -183,6 +183,7 @@ func QueriesDestroy(c fiber.Ctx) error {
 
 func TransferQueryOwnership(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
 	query := c.Locals("stored_query").(*db.StoredQuery)
 
 	// Parse the request body
@@ -200,6 +201,20 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 		log.Printf("Error decoding sqid: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Make sure the new owner is valid and a member of the workspace
+	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
+	if err != nil {
+		log.Printf("Error checking if user is in workspace: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("new_owner_invalid")},
+		})
+	}
+	if !inWorkspace {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("new_owner_invalid")},
 		})
 	}
 
@@ -230,4 +245,7 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 	})
 }
 
-func ExecuteQuery(c fiber.Ctx) error { return c.SendString("Execute query") }
+func ExecuteQuery(c fiber.Ctx) error {
+	// TODO: Implement this
+	return c.SendString("Execute query")
+}
