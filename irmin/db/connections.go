@@ -58,7 +58,7 @@ func CreateConnection(connection *Connection) (*Connection, error) {
 }
 
 // UpdateConnection updates an existing connection record in the database.
-func UpdateConnection(id uint, updates interface{}) (*Connection, error) {
+func UpdateConnection(id uint, updates map[string]any) (*Connection, error) {
 	var connection Connection
 	// Update only the provided fields for the user with the specified ID.
 	if err := DB.Model(&Connection{}).Where("id = ?", id).Updates(updates).Error; err != nil {

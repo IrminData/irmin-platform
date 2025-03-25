@@ -150,7 +150,7 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 	settings := utils.ParseObjectFormFields(c, "settings")
 
 	// Prepare the fields to update
-	updates := map[string]interface{}{
+	updates := map[string]any{
 		"name":          fields["name"],
 		"description":   fields["description"],
 		"documentation": fields["documentation"],
@@ -239,7 +239,7 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	}
 
 	// Update the connection
-	updatedConnection, err := db.UpdateConnection(connection.ID, map[string]interface{}{
+	updatedConnection, err := db.UpdateConnection(connection.ID, map[string]any{
 		"owner_id": newOwnerID,
 	})
 	if err != nil {

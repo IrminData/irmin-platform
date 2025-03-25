@@ -62,7 +62,7 @@ func CreateRepository(repository *Repository) (*Repository, error) {
 	return repository, nil
 }
 
-func UpdateRepository(id uint, updates interface{}) (*Repository, error) {
+func UpdateRepository(id uint, updates map[string]any) (*Repository, error) {
 	var repository Repository
 	if err := DB.Model(&Repository{}).Where("id = ?", id).Updates(updates).Error; err != nil {
 		return nil, err

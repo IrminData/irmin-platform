@@ -18,7 +18,7 @@ import (
 // - An error if the token is invalid or token parsing fails.
 func ValidateJWT(tokenString string, signingKey []byte, signingAlg string) (*jwt.Token, error) {
 	// Parse the token using the provided signing key and expected algorithm.
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		// Check that the token's signing method matches the expected algorithm.
 		if token.Method.Alg() != signingAlg {
 			return nil, fmt.Errorf("unexpected signing algorithm: %v, expected: %s", token.Header["alg"], signingAlg)

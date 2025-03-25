@@ -141,7 +141,7 @@ func ConnectorsStore(c fiber.Ctx) error {
 			})
 		}
 		// Update the connector
-		connector, err = db.UpdateConnector(connector.ID, map[string]interface{}{
+		connector, err = db.UpdateConnector(connector.ID, map[string]any{
 			"system_token":      fields["system_token"],
 			"name":              connectorInfo.Name,
 			"description":       connectorInfo.Description,
@@ -237,7 +237,7 @@ func ConnectorsUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the connector
-	connector, err = db.UpdateConnector(connector.ID, map[string]interface{}{
+	connector, err = db.UpdateConnector(connector.ID, map[string]any{
 		"api_base_url":      fields["url"],
 		"system_token":      fields["system_token"],
 		"name":              connectorInfo.Name,

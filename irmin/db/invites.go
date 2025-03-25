@@ -67,7 +67,7 @@ func CreateInvite(invite *Invite) (*Invite, error) {
 	return invite, nil
 }
 
-func UpdateInvite(id uint, updates interface{}) (*Invite, error) {
+func UpdateInvite(id uint, updates map[string]any) (*Invite, error) {
 	var invite Invite
 	if err := DB.Model(&Invite{}).Where("id = ?", id).Updates(updates).Error; err != nil {
 		return nil, err

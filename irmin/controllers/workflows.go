@@ -128,7 +128,7 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the workflow record.
-	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]interface{}{
+	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]any{
 		"name":          fields["name"],
 		"description":   fields["description"],
 		"documentation": fields["documentation"],
@@ -780,19 +780,19 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	var updatedWorkflow *db.Workflow
 	var err error
 	if importWorkflowable != nil {
-		updatedWorkflow, err = db.UpdateWorkflow(workflow.ID, map[string]interface{}{
+		updatedWorkflow, err = db.UpdateWorkflow(workflow.ID, map[string]any{
 			"import_id": &importWorkflowable.ID,
 		})
 	} else if exportWorkflowable != nil {
-		updatedWorkflow, err = db.UpdateWorkflow(workflow.ID, map[string]interface{}{
+		updatedWorkflow, err = db.UpdateWorkflow(workflow.ID, map[string]any{
 			"export_id": &exportWorkflowable.ID,
 		})
 	} else if actionWorkflowable != nil {
-		updatedWorkflow, err = db.UpdateWorkflow(workflow.ID, map[string]interface{}{
+		updatedWorkflow, err = db.UpdateWorkflow(workflow.ID, map[string]any{
 			"action_id": &actionWorkflowable.ID,
 		})
 	} else if pipelineWorkflowable != nil {
-		updatedWorkflow, err = db.UpdateWorkflow(workflow.ID, map[string]interface{}{
+		updatedWorkflow, err = db.UpdateWorkflow(workflow.ID, map[string]any{
 			"pipeline_id": &pipelineWorkflowable.ID,
 		})
 	}
@@ -849,7 +849,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the workflow record with the new schedule object.
-	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]interface{}{
+	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]any{
 		"schedule_id": &schedule.ID,
 	})
 	if err != nil {
@@ -942,7 +942,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	}
 
 	// Update the workflow record.
-	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]interface{}{
+	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]any{
 		"owner_id": newOwnerID,
 	})
 	if err != nil {

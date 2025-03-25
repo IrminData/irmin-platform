@@ -229,7 +229,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the repository in the database
-	repository, err = db.UpdateRepository(repository.ID, map[string]interface{}{
+	repository, err = db.UpdateRepository(repository.ID, map[string]any{
 		"name":          fields["name"],
 		"description":   fields["description"],
 		"documentation": fields["documentation"],
@@ -319,7 +319,7 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 	}
 
 	// Update the repository in the database
-	repository, err = db.UpdateRepository(repository.ID, map[string]interface{}{
+	repository, err = db.UpdateRepository(repository.ID, map[string]any{
 		"owner_id": newOwnerID,
 	})
 

@@ -88,7 +88,7 @@ func CreateConnector(connector *Connector) (*Connector, error) {
 }
 
 // UpdateConnector updates an existing connector record in the database.
-func UpdateConnector(id uint, updates interface{}) (*Connector, error) {
+func UpdateConnector(id uint, updates map[string]any) (*Connector, error) {
 	var connector Connector
 	// Update only the provided fields for the connector with the specified ID.
 	if err := DB.Model(&Connector{}).Where("id = ?", id).Updates(updates).Error; err != nil {

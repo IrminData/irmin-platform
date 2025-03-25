@@ -203,7 +203,7 @@ func CreatePipelineWorkflowable(pipeline *PipelineWorkflowable) (*PipelineWorkfl
 }
 
 // UpdateWorkflow updates an existing workflow record in the database.
-func UpdateWorkflow(id uint, updates interface{}) (*Workflow, error) {
+func UpdateWorkflow(id uint, updates map[string]any) (*Workflow, error) {
 	var workflow Workflow
 	// Update only the provided fields for the user with the specified ID.
 	if err := DB.Model(&Workflow{}).Where("id = ?", id).Updates(updates).Error; err != nil {
@@ -217,7 +217,7 @@ func UpdateWorkflow(id uint, updates interface{}) (*Workflow, error) {
 }
 
 // UpdateImportWorkflowable updates an existing import workflowable record in the database.
-func UpdateImportWorkflowable(id uint, updates interface{}) (*ImportWorkflowable, error) {
+func UpdateImportWorkflowable(id uint, updates map[string]any) (*ImportWorkflowable, error) {
 	var importWorkflow ImportWorkflowable
 	// Update only the provided fields for the user with the specified ID.
 	if err := DB.Model(&ImportWorkflowable{}).Where("id = ?", id).Updates(updates).Error; err != nil {
@@ -231,7 +231,7 @@ func UpdateImportWorkflowable(id uint, updates interface{}) (*ImportWorkflowable
 }
 
 // UpdateExportWorkflowable updates an existing export workflowable record in the database.
-func UpdateExportWorkflowable(id uint, updates interface{}) (*ExportWorkflowable, error) {
+func UpdateExportWorkflowable(id uint, updates map[string]any) (*ExportWorkflowable, error) {
 	var exportWorkflow ExportWorkflowable
 	// Update only the provided fields for the user with the specified ID.
 	if err := DB.Model(&ExportWorkflowable{}).Where("id = ?", id).Updates(updates).Error; err != nil {
@@ -245,7 +245,7 @@ func UpdateExportWorkflowable(id uint, updates interface{}) (*ExportWorkflowable
 }
 
 // UpdateActionWorkflowable updates an existing action workflowable record in the database.
-func UpdateActionWorkflowable(id uint, updates interface{}) (*ActionWorkflowable, error) {
+func UpdateActionWorkflowable(id uint, updates map[string]any) (*ActionWorkflowable, error) {
 	var actionWorkflow ActionWorkflowable
 	// Update only the provided fields for the user with the specified ID.
 	if err := DB.Model(&ActionWorkflowable{}).Where("id = ?", id).Updates(updates).Error; err != nil {
@@ -259,7 +259,7 @@ func UpdateActionWorkflowable(id uint, updates interface{}) (*ActionWorkflowable
 }
 
 // UpdatePipelineWorkflowable updates an existing pipeline workflowable record in the database.
-func UpdatePipelineWorkflowable(id uint, updates interface{}) (*PipelineWorkflowable, error) {
+func UpdatePipelineWorkflowable(id uint, updates map[string]any) (*PipelineWorkflowable, error) {
 	var pipeline PipelineWorkflowable
 	// Update only the provided fields for the user with the specified ID.
 	if err := DB.Model(&PipelineWorkflowable{}).Where("id = ?", id).Updates(updates).Error; err != nil {
@@ -273,7 +273,7 @@ func UpdatePipelineWorkflowable(id uint, updates interface{}) (*PipelineWorkflow
 }
 
 // UpdatePipelineStage updates an existing pipeline stage record in the database.
-func UpdatePipelineStage(id uint, updates interface{}) (*PipelineStage, error) {
+func UpdatePipelineStage(id uint, updates map[string]any) (*PipelineStage, error) {
 	var pipelineStage PipelineStage
 	// Update only the provided fields for the user with the specified ID.
 	if err := DB.Model(&PipelineStage{}).Where("id = ?", id).Updates(updates).Error; err != nil {

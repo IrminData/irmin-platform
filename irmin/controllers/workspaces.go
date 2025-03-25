@@ -182,7 +182,7 @@ func WorkspacesUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the workspace.
-	updatedWorkspace, err := db.UpdateWorkspace(workspace.ID, map[string]interface{}{
+	updatedWorkspace, err := db.UpdateWorkspace(workspace.ID, map[string]any{
 		"name":        fields["name"],
 		"description": fields["description"],
 	})
@@ -293,7 +293,7 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 	}
 
 	// Update the workspace owner ID.
-	updatedWorkspace, err := db.UpdateWorkspace(workspace.ID, map[string]interface{}{
+	updatedWorkspace, err := db.UpdateWorkspace(workspace.ID, map[string]any{
 		"owner_id": newOwnerID,
 	})
 	if err != nil {

@@ -78,7 +78,7 @@ func CreateUser(user *User) (*User, error) {
 }
 
 // UpdateUser updates an existing user record in the database.
-func UpdateUser(id uint, updates interface{}) (*User, error) {
+func UpdateUser(id uint, updates map[string]any) (*User, error) {
 	var user User
 	// Update only the provided fields for the user with the specified ID.
 	if err := DB.Model(&User{}).Where("id = ?", id).Updates(updates).Error; err != nil {

@@ -178,7 +178,7 @@ func SendInvite(c fiber.Ctx) error {
 	}
 
 	// Update the invite with the Clerk ID
-	newInvite, err = db.UpdateInvite(newInvite.ID, map[string]interface{}{
+	newInvite, err = db.UpdateInvite(newInvite.ID, map[string]any{
 		"clerk_id": clerkInvite.ID,
 	})
 	if err != nil {
@@ -272,7 +272,7 @@ func InvitesUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the invite
-	updatedInvite, err := db.UpdateInvite(invite.ID, map[string]interface{}{
+	updatedInvite, err := db.UpdateInvite(invite.ID, map[string]any{
 		"role": fields["role"],
 	})
 	if err != nil {
@@ -422,7 +422,7 @@ func ResendInvite(c fiber.Ctx) error {
 
 	// Update the invite with the Clerk ID and the new expiration date
 	expiresAt := time.Now().Add(time.Duration(env.InviteExpiresInDays) * 24 * time.Hour)
-	updatedInvite, err := db.UpdateInvite(invite.ID, map[string]interface{}{
+	updatedInvite, err := db.UpdateInvite(invite.ID, map[string]any{
 		"clerk_id":   clerkInvite.ID,
 		"expires_at": expiresAt,
 	})
@@ -497,7 +497,7 @@ func AcceptInvite(c fiber.Ctx) error {
 	}
 
 	// Update the invite
-	_, err := db.UpdateInvite(invite.ID, map[string]interface{}{
+	_, err := db.UpdateInvite(invite.ID, map[string]any{
 		"accepted_at": time.Now(),
 	})
 	if err != nil {
@@ -536,7 +536,7 @@ func DeclineInvite(c fiber.Ctx) error {
 	}
 
 	// Update the invite
-	_, err := db.UpdateInvite(invite.ID, map[string]interface{}{
+	_, err := db.UpdateInvite(invite.ID, map[string]any{
 		"declined_at": time.Now(),
 	})
 	if err != nil {

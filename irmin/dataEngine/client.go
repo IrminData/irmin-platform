@@ -56,7 +56,7 @@ type RequestOptions struct {
 	Method        string
 	Endpoint      string
 	AllowedStatus []int             // Status codes that are considered successful. If none provided, all 2xx codes are considered successful.
-	Body          interface{}       // For JSON, this can be a struct or map to JSON-encode.
+	Body          any               // For JSON, this can be a struct or map to JSON-encode.
 	FormFields    map[string]string // Key-value form fields (for multipart/form-data or URL-encoded).
 	Files         []FormFile        // Files to attach (for multipart/form-data).
 	Headers       map[string]string // Extra headers, if needed.
@@ -259,7 +259,7 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 }
 
 // FetchAPI sends a request and attempts to parse the JSON response into a struct if provided.
-func (c *Client) FetchAPI(opts RequestOptions, out interface{}) error {
+func (c *Client) FetchAPI(opts RequestOptions, out any) error {
 	// Make the HTTP request using the Request method.
 	body, err := c.Request(opts)
 	if err != nil {

@@ -40,7 +40,7 @@ func CreateWorkspace(workspace *Workspace) (*Workspace, error) {
 }
 
 // UpdateWorkspace updates an existing workspace record in the database.
-func UpdateWorkspace(id uint, updates interface{}) (*Workspace, error) {
+func UpdateWorkspace(id uint, updates map[string]any) (*Workspace, error) {
 	var workspace Workspace
 	// Update only the provided fields for the user with the specified ID.
 	if err := DB.Model(&Workspace{}).Where("id = ?", id).Updates(updates).Error; err != nil {

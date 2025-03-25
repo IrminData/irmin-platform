@@ -58,7 +58,7 @@ func CreateWorkflowRun(run *WorkflowRun) (*WorkflowRun, error) {
 	return run, nil
 }
 
-func UpdateWorkflowRun(id uint, updates interface{}) (*WorkflowRun, error) {
+func UpdateWorkflowRun(id uint, updates map[string]any) (*WorkflowRun, error) {
 	var run WorkflowRun
 	if err := DB.Model(&WorkflowRun{}).Where("id = ?", id).Updates(updates).Error; err != nil {
 		return nil, err

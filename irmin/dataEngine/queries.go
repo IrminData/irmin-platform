@@ -6,8 +6,8 @@ import (
 )
 
 // ExecuteQuery executes a query in the specified workspace and returns the results.
-func (c *Client) ExecuteQuery(workspace, query string) ([]map[string]interface{}, error) {
-	var results []map[string]interface{}
+func (c *Client) ExecuteQuery(workspace, query string) ([]map[string]any, error) {
+	var results []map[string]any
 	// Format the endpoint using the workspace path parameter.
 	endpoint := fmt.Sprintf("/workspace/%s/queries/execute", workspace)
 	// Call the API endpoint with a POST request and form data containing the query.
