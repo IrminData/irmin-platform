@@ -5,11 +5,9 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
-	"strings"
 
 	"irmin-api/db"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -93,11 +91,7 @@ func WorkspacesStore(c fiber.Ctx) error {
 	}
 	defer bucket.Close()
 	key := "editor/" + newWorkspace.Slug + "/"
-	_, err = bucket.Conn().PutObject(c.Context(), &s3.PutObjectInput{
-		Bucket: &bucket.Bucket,
-		Key:    &key,
-		Body:   strings.NewReader(""),
-	})
+	err = bucket.WritePath(c.Context(), key, "")
 	if err != nil {
 		log.Printf("Error creating workspace editor items folder object: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -238,7 +232,27 @@ func WorkspacesDestroy(c fiber.Ctx) error {
 		})
 	}
 
-	// TODO: Delete all related data (bucket files, repositories, etc.)
+	// Create bucket client
+	bucket, err := lib.CreateBucketClient()
+	if err != nil {
+		log.Printf("failed to create bucket client: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+	defer bucket.Close()
+
+	// Delete the workspace editor items folder.
+	key := "editor/" + workspace.Slug + "/"
+	err = bucket.DeletePath(c.Context(), key)
+	if err != nil {
+		log.Printf("Error deleting workspace editor items folder: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// TODO: Delete all related data (repositories, etc.)
 
 	// Return a success message.
 	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{

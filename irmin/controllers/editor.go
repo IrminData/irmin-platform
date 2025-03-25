@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"io"
 	"log"
 	"strings"
 	"time"
@@ -11,7 +10,6 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -57,12 +55,9 @@ func EditorIndex(c fiber.Ctx) error {
 	}
 
 	// Get the editor items at the specified path
-	items, err := bucket.Conn().ListObjects(ctx, &s3.ListObjectsInput{
-		Prefix: &pathPrefix,
-		Bucket: &bucket.Bucket,
-	})
+	items, err := bucket.ListObjects(ctx, pathPrefix)
 	if err != nil {
-		log.Printf("Error listing objects: %v", err)
+		log.Printf("Error listing editor items: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
@@ -70,7 +65,7 @@ func EditorIndex(c fiber.Ctx) error {
 
 	// Create a list of editor items
 	var editorItems []EditorItem
-	for _, item := range items.Contents {
+	for _, item := range items {
 		// Skip the base path
 		if *item.Key == pathPrefix {
 			continue
@@ -150,11 +145,7 @@ func EditorItemStore(c fiber.Ctx) error {
 	}
 
 	// Upload the content to S3
-	_, err = bucket.Conn().PutObject(c.Context(), &s3.PutObjectInput{
-		Bucket: &bucket.Bucket,
-		Key:    &key,
-		Body:   strings.NewReader(content),
-	})
+	err = bucket.WritePath(c.Context(), key, content)
 	if err != nil {
 		log.Printf("Error uploading object: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -199,30 +190,13 @@ func EditorItemDestroy(c fiber.Ctx) error {
 	// Construct full S3 key prefix for deletion
 	keyPrefix := "editor/" + workspace.Slug + "/" + path
 
-	// List all objects under the given prefix
-	objects, err := bucket.Conn().ListObjects(c.Context(), &s3.ListObjectsInput{
-		Bucket: &bucket.Bucket,
-		Prefix: &keyPrefix,
-	})
+	// Delete all objects under the prefix
+	err = bucket.DeletePath(c.Context(), keyPrefix)
 	if err != nil {
-		log.Printf("Error listing objects for deletion: %v", err)
+		log.Printf("Error deleting editor items: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
-	}
-
-	// Delete each object found
-	for _, item := range objects.Contents {
-		_, err := bucket.Conn().DeleteObject(c.Context(), &s3.DeleteObjectInput{
-			Bucket: &bucket.Bucket,
-			Key:    item.Key,
-		})
-		if err != nil {
-			log.Printf("Error deleting object %s: %v", *item.Key, err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
 	}
 
 	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
@@ -280,49 +254,13 @@ func MoveEditorItem(c fiber.Ctx) error {
 	sourcePrefix := "editor/" + workspace.Slug + "/" + path
 	destinationPrefix := "editor/" + workspace.Slug + "/" + destination_path
 
-	// List objects under the source prefix
-	objects, err := bucket.Conn().ListObjects(ctx, &s3.ListObjectsInput{
-		Bucket: &bucket.Bucket,
-		Prefix: &sourcePrefix,
-	})
+	// Move the source to the destination
+	err = bucket.DuplicatePath(ctx, sourcePrefix, destinationPrefix, true)
 	if err != nil {
-		log.Printf("Error listing objects for move: %v", err)
+		log.Printf("Error moving editor items: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
-	}
-
-	// For each object, copy to the destination and then delete the original
-	for _, item := range objects.Contents {
-		// Compute the relative path after the source prefix
-		relPath := strings.TrimPrefix(*item.Key, sourcePrefix)
-		destKey := destinationPrefix + relPath
-
-		// Construct the copy source (bucket/key)
-		copySource := bucket.Bucket + "/" + *item.Key
-		_, err := bucket.Conn().CopyObject(ctx, &s3.CopyObjectInput{
-			Bucket:     &bucket.Bucket,
-			CopySource: &copySource,
-			Key:        &destKey,
-		})
-		if err != nil {
-			log.Printf("Error copying object %s to %s: %v", *item.Key, destKey, err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-
-		// Delete the original object
-		_, err = bucket.Conn().DeleteObject(ctx, &s3.DeleteObjectInput{
-			Bucket: &bucket.Bucket,
-			Key:    item.Key,
-		})
-		if err != nil {
-			log.Printf("Error deleting original object %s: %v", *item.Key, err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
 	}
 
 	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
@@ -380,35 +318,13 @@ func CopyEditorItem(c fiber.Ctx) error {
 	sourcePrefix := "editor/" + workspace.Slug + "/" + path
 	destinationPrefix := "editor/" + workspace.Slug + "/" + destination_path
 
-	// List objects under the source prefix
-	objects, err := bucket.Conn().ListObjects(ctx, &s3.ListObjectsInput{
-		Bucket: &bucket.Bucket,
-		Prefix: &sourcePrefix,
-	})
+	// Copy the source to the destination
+	err = bucket.DuplicatePath(ctx, sourcePrefix, destinationPrefix, false)
 	if err != nil {
-		log.Printf("Error listing objects for copy: %v", err)
+		log.Printf("Error copying editor items: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
-	}
-
-	// Copy each object from source to destination
-	for _, item := range objects.Contents {
-		relPath := strings.TrimPrefix(*item.Key, sourcePrefix)
-		destKey := destinationPrefix + relPath
-
-		copySource := bucket.Bucket + "/" + *item.Key
-		_, err := bucket.Conn().CopyObject(ctx, &s3.CopyObjectInput{
-			Bucket:     &bucket.Bucket,
-			CopySource: &copySource,
-			Key:        &destKey,
-		})
-		if err != nil {
-			log.Printf("Error copying object %s to %s: %v", *item.Key, destKey, err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
 	}
 
 	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
@@ -449,22 +365,9 @@ func EditorItemContent(c fiber.Ctx) error {
 	key := "editor/" + workspace.Slug + "/" + path
 
 	// Retrieve the file from S3
-	obj, err := bucket.Conn().GetObject(c.Context(), &s3.GetObjectInput{
-		Bucket: &bucket.Bucket,
-		Key:    &key,
-	})
+	content, err := bucket.ReadPath(c.Context(), key)
 	if err != nil {
-		log.Printf("Error retrieving object content: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
-		})
-	}
-	defer obj.Body.Close()
-
-	// Read the object's content
-	contentBytes, err := io.ReadAll(obj.Body)
-	if err != nil {
-		log.Printf("Error reading object content: %v", err)
+		log.Printf("Error reading object: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
@@ -472,6 +375,6 @@ func EditorItemContent(c fiber.Ctx) error {
 
 	// Return the item's content
 	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
-		Data: string(contentBytes),
+		Data: content,
 	})
 }
