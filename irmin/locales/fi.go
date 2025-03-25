@@ -57,4 +57,9 @@ var Finnish = Dictionary{
 	"editor_item_deleted":                 "Kohde poistettu",
 	"editor_item_moved":                   "Kohde siirretty",
 	"editor_item_copied":                  "Kohde kopioitu",
+	"query_created":                       "Kysely luotu",
+	"query_updated":                       "Kysely päivitetty",
+	"query_deleted":                       "Kysely poistettu",
+	"query_executed":                      "Kysely suoritettu",
+	"query_ownership_transferred":         "Kyselyn omistajuus siirretty",
 }

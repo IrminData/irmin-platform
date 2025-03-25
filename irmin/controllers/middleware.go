@@ -168,13 +168,13 @@ func APIMiddleware(c fiber.Ctx) error {
 	} else {
 		// If the user exists, update the stored user details asynchronously.
 		utils.Async(func() (*db.User, error) {
-			updatedUser, err := db.UpdateUser(irminUser.ID, &db.User{
-				ClerkID:        clerkUser.ID,
-				FirstName:      *clerkUser.FirstName,
-				LastName:       *clerkUser.LastName,
-				Email:          primaryEmail,
-				Phone:          primaryPhone,
-				ProfilePicture: *clerkUser.ImageURL,
+			updatedUser, err := db.UpdateUser(irminUser.ID, map[string]interface{}{
+				"clerk_id":        clerkUser.ID,
+				"first_name":      *clerkUser.FirstName,
+				"last_name":       *clerkUser.LastName,
+				"email":           primaryEmail,
+				"phone":           primaryPhone,
+				"profile_picture": *clerkUser.ImageURL,
 			})
 			if err != nil {
 				log.Printf("Error updating user: %v", err)
@@ -602,6 +602,51 @@ func ObjectMiddleware(c fiber.Ctx) error {
 	c.Locals("object", repositoryObject)
 	c.Locals("object_ref", ref)
 	c.Locals("object_path", path)
+
+	return c.Next()
+}
+
+func QueryMiddleware(c fiber.Ctx) error {
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+
+	// Parse the stored query sqid from the request URL.
+	querySqid := c.Params("query")
+	if querySqid == "" {
+		log.Printf("No query selected")
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Decode the query ID.
+	queryID, err := utils.DecodeSqids("queries", querySqid)
+	if err != nil {
+		log.Printf("Error decoding query sqid: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Find the stored query by its ID.
+	storedQuery, err := db.GetStoredQueryByID(uint(queryID))
+	if err != nil {
+		log.Printf("Error retrieving stored query: %v", err)
+		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Check if the stored query belongs to the workspace.
+	if storedQuery.WorkspaceID != workspace.ID {
+		log.Printf("Stored query does not belong to the workspace")
+		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+			Errors: []string{dict.T("access_denied")},
+		})
+	}
+
+	// Set the stored query in the context for subsequent handlers.
+	c.Locals("stored_query", storedQuery)
 
 	return c.Next()
 }

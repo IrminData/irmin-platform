@@ -1,13 +1,233 @@
 package controllers
 
-import "github.com/gofiber/fiber/v3"
+import (
+	"irmin-api/db"
+	"irmin-api/lib/formatter"
+	"irmin-api/locales"
+	"irmin-api/utils"
+	"log"
+	"strconv"
+	"time"
 
-func QueriesIndex(c fiber.Ctx) error        { return c.SendString("Queries index") }
-func QueriesShow(c fiber.Ctx) error         { return c.SendString("Queries show") }
-func QueriesStore(c fiber.Ctx) error        { return c.SendString("Queries store") }
-func QueriesUpdate(c fiber.Ctx) error       { return c.SendString("Queries update") }
-func QueriesDestroy(c fiber.Ctx) error      { return c.SendString("Queries destroy") }
-func ExecuteQuery(c fiber.Ctx) error        { return c.SendString("Execute query") }
-func ExecuteAdhocQuery(c fiber.Ctx) error   { return c.SendString("Execute adhoc query") }
-func QueryResultsShow(c fiber.Ctx) error    { return c.SendString("Query results show") }
-func QueryResultsDestroy(c fiber.Ctx) error { return c.SendString("Query results destroy") }
+	"github.com/gofiber/fiber/v3"
+)
+
+func QueriesIndex(c fiber.Ctx) error {
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+
+	// Get all stored queries for the workspace
+	queries, err := db.GetStoredQueriesByWorkspaceID(workspace.ID)
+	if err != nil {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Format the stored queries
+	var formattedQueries []db.StoredQueryResponse
+	for _, query := range queries {
+		formattedQuery, err := formatter.FormatStoredQueryResponse(&query)
+		if err != nil {
+			log.Printf("Error formatting stored query: %v", err)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+				Errors: []string{dict.T("error_occurred")},
+			})
+		}
+		formattedQueries = append(formattedQueries, *formattedQuery)
+	}
+
+	// Send the response
+	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+		Data: formattedQueries,
+	})
+}
+
+func QueriesStore(c fiber.Ctx) error {
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+	user := c.Locals("user").(*db.User)
+
+	// Parse the request body
+	fields, err := utils.ParseFormFields(c, nil, []string{"name", "description", "sql"})
+	if err != nil {
+		log.Printf("Error parsing form fields: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Pick the name to use for the description, defaulting to the current time if not provided
+	name := fields["name"]
+	if name == "" {
+		name = strconv.FormatInt(time.Now().Unix(), 10)
+	}
+
+	// Create the stored query in the database
+	query := &db.StoredQuery{
+		Name:        name,
+		Description: fields["description"],
+		SQL:         fields["sql"],
+		OwnerID:     user.ID,
+		WorkspaceID: workspace.ID,
+	}
+	storedQuery, err := db.CreateStoredQuery(query)
+	if err != nil {
+		log.Printf("Error creating stored query: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Format the stored query
+	formattedQuery, err := formatter.FormatStoredQueryResponse(storedQuery)
+	if err != nil {
+		log.Printf("Error formatting stored query: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Send the response
+	return utils.WriteResponse(c, fiber.StatusCreated, utils.IrminAPIResponse{
+		Data: formattedQuery,
+	})
+}
+
+func QueriesShow(c fiber.Ctx) error {
+	dict := c.Locals("dict").(locales.Dictionary)
+	query := c.Locals("stored_query").(*db.StoredQuery)
+
+	// Format the stored query
+	formattedQuery, err := formatter.FormatStoredQueryResponse(query)
+	if err != nil {
+		log.Printf("Error formatting stored query: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Send the response
+	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+		Data: formattedQuery,
+	})
+}
+
+func QueriesUpdate(c fiber.Ctx) error {
+	dict := c.Locals("dict").(locales.Dictionary)
+	query := c.Locals("stored_query").(*db.StoredQuery)
+
+	// Parse the request body
+	fields, err := utils.ParseFormFields(c, nil, []string{"name", "description", "sql"})
+	if err != nil {
+		log.Printf("Error parsing form fields: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Construct the updates map
+	updates := map[string]any{}
+	if fields["name"] != "" {
+		updates["name"] = fields["name"]
+	}
+	if fields["description"] != "" {
+		updates["description"] = fields["description"]
+	}
+	if fields["sql"] != "" {
+		updates["sql"] = fields["sql"]
+	}
+
+	// Update the stored query in the database
+	updatedQuery, err := db.UpdateStoredQuery(query.ID, updates)
+	if err != nil {
+		log.Printf("Error updating stored query: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Format the stored query
+	formattedQuery, err := formatter.FormatStoredQueryResponse(updatedQuery)
+	if err != nil {
+		log.Printf("Error formatting stored query: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Send the response
+	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+		Message: dict.T("query_updated"),
+		Data:    formattedQuery,
+	})
+}
+
+func QueriesDestroy(c fiber.Ctx) error {
+	dict := c.Locals("dict").(locales.Dictionary)
+	query := c.Locals("stored_query").(*db.StoredQuery)
+
+	// Delete the stored query from the database
+	if err := db.DeleteStoredQuery(query.ID); err != nil {
+		log.Printf("Error deleting stored query: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Send the response
+	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+		Message: dict.T("query_deleted"),
+	})
+}
+
+func TransferQueryOwnership(c fiber.Ctx) error {
+	dict := c.Locals("dict").(locales.Dictionary)
+	query := c.Locals("stored_query").(*db.StoredQuery)
+
+	// Parse the request body
+	fields, err := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
+	if err != nil {
+		log.Printf("Error parsing form fields: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Parse the new owner ID from the sqid
+	newOwnerID, err := utils.DecodeSqids("users", fields["new_owner_id"])
+	if err != nil {
+		log.Printf("Error decoding sqid: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Update the stored query in the database
+	updatedQuery, err := db.UpdateStoredQuery(query.ID, map[string]any{
+		"owner_id": newOwnerID,
+	})
+	if err != nil {
+		log.Printf("Error updating stored query: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Format the stored query
+	formattedQuery, err := formatter.FormatStoredQueryResponse(updatedQuery)
+	if err != nil {
+		log.Printf("Error formatting stored query: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Send the response
+	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+		Message: dict.T("query_ownership_transferred"),
+		Data:    formattedQuery,
+	})
+}
+
+func ExecuteQuery(c fiber.Ctx) error { return c.SendString("Execute query") }

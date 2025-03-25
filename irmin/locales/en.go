@@ -57,4 +57,9 @@ var English = Dictionary{
 	"editor_item_deleted":                 "Editor item deleted",
 	"editor_item_moved":                   "Editor item moved",
 	"editor_item_copied":                  "Editor item copied",
+	"query_created":                       "Query created",
+	"query_updated":                       "Query updated",
+	"query_deleted":                       "Query deleted",
+	"query_executed":                      "Query executed",
+	"query_ownership_transferred":         "Query ownership transferred",
 }

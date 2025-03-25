@@ -85,6 +85,9 @@ func Migrate() error {
 	if err := DB.AutoMigrate(&WorkflowRun{}); err != nil {
 		return fmt.Errorf("failed to migrate WorkflowRun: %w", err)
 	}
+	if err := DB.AutoMigrate(&StoredQuery{}); err != nil {
+		return fmt.Errorf("failed to migrate StoredQuery: %w", err)
+	}
 	if err := DB.AutoMigrate(&LogEvent{}); err != nil {
 		return fmt.Errorf("failed to migrate LogEvent: %w", err)
 	}
@@ -113,6 +116,7 @@ func Reset() error {
 		&Schedule{},
 		&WorkflowTrigger{},
 		&WorkflowRun{},
+		&StoredQuery{},
 		&LogEvent{},
 	); err != nil {
 		return fmt.Errorf("failed to drop tables: %w", err)

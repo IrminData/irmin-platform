@@ -47,14 +47,13 @@ func RegisterAPIRoutes(app *fiber.App) {
 	// Query routes
 	queries := workspace.Group("/queries")
 	queries.Get("/", controllers.QueriesIndex)
-	queries.Get("/:query", controllers.QueriesShow)
 	queries.Post("/", controllers.QueriesStore)
-	queries.Patch("/:query", controllers.QueriesUpdate)
-	queries.Delete("/:query", controllers.QueriesDestroy)
-	queries.Post("/:query/execute", controllers.ExecuteQuery)
-	queries.Post("/execute", controllers.ExecuteAdhocQuery)
-	queries.Get("/:query/results", controllers.QueryResultsShow)
-	queries.Delete("/:query/results", controllers.QueryResultsDestroy)
+	query := queries.Group("/:query", controllers.QueryMiddleware)
+	query.Get("/", controllers.QueriesShow)
+	query.Patch("/", controllers.QueriesUpdate)
+	query.Delete("/", controllers.QueriesDestroy)
+	query.Post("/execute", controllers.ExecuteQuery)
+	query.Post("/transfer-ownership", controllers.TransferQueryOwnership)
 
 	// User routes
 	users := workspace.Group("/users")
@@ -82,9 +81,9 @@ func RegisterAPIRoutes(app *fiber.App) {
 	connections.Post("/", controllers.ConnectionsStore)
 	connection := connections.Group("/:connection", controllers.ConnectionMiddleware)
 	connection.Get("/", controllers.ConnectionsShow)
-	connection.Patch("/:connection", controllers.ConnectionsUpdate)
-	connection.Delete("/:connection", controllers.ConnectionsDestroy)
-	connection.Post("/:connection/transfer-ownership", controllers.TransferConnectionOwnership)
+	connection.Patch("/", controllers.ConnectionsUpdate)
+	connection.Delete("/", controllers.ConnectionsDestroy)
+	connection.Post("/transfer-ownership", controllers.TransferConnectionOwnership)
 
 	// Editor routes
 	editor := workspace.Group("/editor")
