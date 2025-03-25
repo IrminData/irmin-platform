@@ -1,12 +1,15 @@
 package controllers
 
 import (
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
+	"strings"
 
 	"irmin-api/db"
 
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -80,7 +83,27 @@ func WorkspacesStore(c fiber.Ctx) error {
 		})
 	}
 
-	// TODO: Create a bucket folder for the editor files of the workspace.
+	// Create a bucket folder for the editor files of the workspace.
+	bucket, err := lib.CreateBucketClient()
+	if err != nil {
+		log.Printf("failed to create bucket client: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+	defer bucket.Close()
+	key := "editor/" + newWorkspace.Slug + "/"
+	_, err = bucket.Conn().PutObject(c.Context(), &s3.PutObjectInput{
+		Bucket: &bucket.Bucket,
+		Key:    &key,
+		Body:   strings.NewReader(""),
+	})
+	if err != nil {
+		log.Printf("Error creating workspace editor items folder object: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
 
 	// Create SQID for the workspace.
 	sqid, err := utils.EncodeSqids("workspaces", uint64(newWorkspace.ID))
