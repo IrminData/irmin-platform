@@ -169,7 +169,7 @@ func APIMiddleware(c fiber.Ctx) error {
 	} else {
 		// If the user exists, update the stored user details asynchronously.
 		utils.Async(func() (*db.User, error) {
-			updatedUser, err := db.UpdateUser(irminUser.ID, map[string]interface{}{
+			updatedUser, err := db.UpdateUser(irminUser.ID, map[string]any{
 				"clerk_id":        clerkUser.ID,
 				"first_name":      *clerkUser.FirstName,
 				"last_name":       *clerkUser.LastName,

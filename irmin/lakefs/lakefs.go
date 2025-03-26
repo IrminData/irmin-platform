@@ -44,7 +44,7 @@ func NewClient(baseURL string) (*Client, error) {
 // doRequest is a helper method to make HTTP requests to LakeFS REST API endpoints.
 // It marshals the payload, sets the required headers (including Authorization),
 // checks that the response status is one of allowedStatus, and decodes the result.
-func (c *Client) doRequest(method, endpoint string, payload interface{}, allowedStatus []int, result interface{}) error {
+func (c *Client) doRequest(method, endpoint string, payload any, allowedStatus []int, result any) error {
 	var body io.Reader
 	if payload != nil {
 		data, err := json.Marshal(payload)
@@ -109,7 +109,7 @@ func (c *Client) doRequest(method, endpoint string, payload interface{}, allowed
 // such as octet-streams. It is similar to doRequest, but instead of decoding a JSON response into a result,
 // it returns the raw *http.Response. It also sets required headers (including authorisation) and disables
 // automatic following of redirects so that a 302 response is preserved.
-func (c *Client) doStreamRequest(method, endpoint string, payload interface{}, allowedStatus []int, acceptHeader string) (*http.Response, error) {
+func (c *Client) doStreamRequest(method, endpoint string, payload any, allowedStatus []int, acceptHeader string) (*http.Response, error) {
 	var body io.Reader
 	if payload != nil {
 		data, err := json.Marshal(payload)
@@ -165,7 +165,7 @@ func (c *Client) doStreamRequest(method, endpoint string, payload interface{}, a
 // It builds the full URL, sets the provided content type header (which should include the multipart boundary),
 // applies the required authorisation header, checks that the response status is acceptable,
 // and decodes the JSON response into result if provided.
-func (c *Client) doMultipartRequest(method, endpoint string, body io.Reader, contentType string, allowedStatus []int, result interface{}) error {
+func (c *Client) doMultipartRequest(method, endpoint string, body io.Reader, contentType string, allowedStatus []int, result any) error {
 	fullURL := c.baseURL + endpoint
 	req, err := http.NewRequest(method, fullURL, body)
 	if err != nil {

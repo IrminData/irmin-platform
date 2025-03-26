@@ -66,7 +66,7 @@ func NewQueryClient() (*QueryClient, error) {
 //
 // query: the SQL query to execute.
 // args: optional arguments for the query.
-func (c *QueryClient) ExecuteQuery(query string, args ...interface{}) (*sql.Rows, error) {
+func (c *QueryClient) ExecuteQuery(query string, args ...any) (*sql.Rows, error) {
 	// Execute the query and return the rows and any error encountered.
 	rows, err := c.db.Query(query, args...)
 	if err != nil {
@@ -79,7 +79,7 @@ func (c *QueryClient) ExecuteQuery(query string, args ...interface{}) (*sql.Rows
 //
 // query: the SQL statement to execute.
 // args: optional arguments for the statement.
-func (c *QueryClient) ExecuteNonQuery(query string, args ...interface{}) (sql.Result, error) {
+func (c *QueryClient) ExecuteNonQuery(query string, args ...any) (sql.Result, error) {
 	// Execute the statement and return the result and any error encountered.
 	result, err := c.db.Exec(query, args...)
 	if err != nil {

@@ -88,13 +88,13 @@ func (c *Client) ExecuteQuery(userWorkspace, query string) ([]map[string]any, er
 	}
 
 	// Prepare a slice to hold the results.
-	var results []map[string]interface{}
+	var results []map[string]any
 
 	// Iterate through the rows.
 	for rows.Next() {
-		// Create a slice of interface{}'s to represent each column, and a second slice to hold pointers to each item.
-		values := make([]interface{}, len(columns))
-		valuePtrs := make([]interface{}, len(columns))
+		// Create a slice of any's to represent each column, and a second slice to hold pointers to each item.
+		values := make([]any, len(columns))
+		valuePtrs := make([]any, len(columns))
 		for i := range values {
 			valuePtrs[i] = &values[i]
 		}
@@ -105,9 +105,9 @@ func (c *Client) ExecuteQuery(userWorkspace, query string) ([]map[string]any, er
 		}
 
 		// Create a map to store the column name to value mapping.
-		rowMap := make(map[string]interface{})
+		rowMap := make(map[string]any)
 		for i, colName := range columns {
-			var v interface{}
+			var v any
 			v = values[i]
 			// Convert []byte to string for readability.
 			if b, ok := v.([]byte); ok {

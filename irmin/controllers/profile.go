@@ -73,7 +73,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the user details in our database.
-	updatedUser, err := db.UpdateUser(irminUser.ID, map[string]interface{}{
+	updatedUser, err := db.UpdateUser(irminUser.ID, map[string]any{
 		"first_name": fields["first_name"],
 		"last_name":  fields["last_name"],
 		"email":      fields["email"],
