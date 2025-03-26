@@ -33,7 +33,7 @@ func CompareRefs(c fiber.Ctx) error {
 	DataEngine := dataEngine.NewClient(locale)
 
 	// Compare the refs
-	diff, err := DataEngine.CompareRefs(workspace.Slug, repository.Slug, baseRef, compareRef)
+	diff, err := DataEngine.CompareRefs(c.Context(), workspace.Slug, repository.Slug, baseRef, compareRef)
 	if err != nil {
 		log.Printf("Error comparing refs: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
