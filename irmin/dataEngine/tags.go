@@ -2,67 +2,110 @@ package dataEngine
 
 import (
 	"fmt"
-	"net/http"
+	"irmin-api/lakefs"
+	"irmin-api/utils"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 func (c *Client) ListTags(workspace, repository string) ([]irminModels.Tag, error) {
-	var data []irminModels.Tag
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/tags", workspace, repository)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: endpoint,
-	}, &data); err != nil {
-		return nil, err
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return data, nil
+
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Fetch tags
+	lakefsTags, err := lakefsClient.ListAllTags(lakeFSRepositoryName, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list tags: %w", err)
+	}
+
+	// Convert LakeFS tags to Irmin tags.
+	irminTags := make([]irminModels.Tag, len(lakefsTags))
+	for i, lakefsTag := range lakefsTags {
+		irminTags[i] = irminModels.Tag{
+			Name: lakefsTag.ID,
+			Ref:  lakefsTag.CommitID,
+		}
+	}
+
+	return irminTags, nil
 }
 
 func (c *Client) GetTag(workspace, repository, tag string) (*irminModels.Tag, error) {
-	var data irminModels.Tag
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/tags/%s", workspace, repository, tag)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: endpoint,
-	}, &data); err != nil {
-		return nil, err
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return &data, nil
+
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Get tag details.
+	lakefsTag, err := lakefsClient.GetTag(lakeFSRepositoryName, tag)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tag: %w", err)
+	}
+
+	// Convert LakeFS tag to Irmin tag.
+	irminTag := irminModels.Tag{
+		Name: lakefsTag.ID,
+		Ref:  lakefsTag.CommitID,
+	}
+
+	return &irminTag, nil
 }
 
 func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminModels.Tag, error) {
-	var data irminModels.Tag
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/tags", workspace, repository)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    endpoint,
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"name": name,
-			"ref":  ref,
-		},
-	}, &data); err != nil {
-		return nil, err
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return &data, nil
+
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Create tag.
+	tagCreateRequest := lakefs.TagCreateRequest{
+		ID:    name,
+		Ref:   ref,
+		Force: false,
+	}
+	lakefsTag, err := lakefsClient.CreateTag(lakeFSRepositoryName, tagCreateRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create tag: %w", err)
+	}
+
+	// Convert LakeFS tag to Irmin tag.
+	irminTag := irminModels.Tag{
+		Name: lakefsTag.ID,
+		Ref:  lakefsTag.CommitID,
+	}
+
+	return &irminTag, nil
 }
 
 func (c *Client) DeleteTag(workspace, repository, tag string) error {
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/tags/%s", workspace, repository, tag)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodDelete,
-		Endpoint: endpoint,
-	}, nil); err != nil {
-		return err
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
+
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Delete the tag.
+	err = lakefsClient.DeleteTag(lakeFSRepositoryName, tag)
+	if err != nil {
+		return fmt.Errorf("failed to delete tag: %w", err)
+	}
+
 	return nil
 }
