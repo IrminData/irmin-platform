@@ -1,25 +1,30 @@
 package irminModels
 
-// Repository represents a repository object.
+import "time"
+
+// BranchGarbageCollectionRules represents the garbage collection rules for a branch.
+type BranchGarbageCollectionRules struct {
+	BranchID      string `json:"branch_id"`
+	RetentionDays int    `json:"retention_days"`
+}
+
+// GarbageCollectionRules represents the garbage collection rules for a repository.
+type GarbageCollectionRules struct {
+	DefaultRetentionDays int                            `json:"default_retention_days,omitempty"`
+	Branches             []BranchGarbageCollectionRules `json:"branches,omitempty"`
+}
+
 type Repository struct {
-	// Repository ID
-	ID string `json:"id"`
-	// Name of the Repository
-	Name string `json:"name"`
-	// Slug of the Repository. Used by App router and to parse Queries
-	Slug string `json:"slug"`
-	// Short description of the Repository
-	Description string `json:"description"`
-	// Markdown documentation of the Repository. Allows for users to add explanations, examples, etc.
-	Documentation string `json:"documentation"`
-	// If the Repository is immutable, it cannot be changed or updated
-	IsImmutable bool `json:"is_immutable"`
-	// Default branch of the Repository
-	DefaultBranch string `json:"default_branch"`
-	// The user within the workspace that owns the Repository and is responsible for it
-	Owner User `json:"owner"`
-	// Timestamp of the creation of the Repository
-	CreatedAt string `json:"created_at"`
-	// Timestamp of the last update of the Repository
-	UpdatedAt string `json:"updated_at"`
+	ID                     string                  `json:"id"`
+	Name                   string                  `json:"name"`
+	Slug                   string                  `json:"slug"`
+	Description            string                  `json:"description"`
+	Documentation          string                  `json:"documentation"`
+	IsImmutable            bool                    `json:"is_immutable"`
+	DefaultBranch          string                  `json:"default_branch"`
+	WorkspaceID            string                  `json:"workspace_id"`
+	OwnerID                string                  `json:"owner_id"`
+	GarbageCollectionRules *GarbageCollectionRules `json:"garbage_collection_rules,omitempty"`
+	CreatedAt              time.Time               `json:"created_at"`
+	UpdatedAt              time.Time               `json:"updated_at"`
 }

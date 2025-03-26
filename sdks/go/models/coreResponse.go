@@ -1,7 +1,5 @@
 package irminModels
 
-import "encoding/json"
-
 // IrminAPIPaginationMetadata represents the pagination metadata from the Irmin Core API
 type IrminAPIPaginationMetadata struct {
 	Total        int    `json:"total"`
@@ -20,5 +18,5 @@ type IrminAPIResponse struct {
 	Metadata map[string]string `json:"metadata,omitempty"`
 	Message  string            `json:"message,omitempty"`
 	Errors   []string          `json:"errors,omitempty"`
-	Data     json.RawMessage   `json:"data,omitempty"`
+	Data     any               `json:"data,omitempty"`
 }

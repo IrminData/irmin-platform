@@ -6,14 +6,14 @@ import (
 )
 
 // JSONSchemaToParquet converts a JSON Schema to a Parquet schema.
-func JSONSchemaToParquet(jsonSchema map[string]interface{}, baseName string) map[string]interface{} {
+func JSONSchemaToParquet(jsonSchema map[string]any, baseName string) map[string]any {
 	// Resolve any "$ref" in the schema
 	jsonSchema, _ = resolveRef(jsonSchema)
 
 	// Start with a base schema Tag
-	parquetSchema := map[string]interface{}{
+	parquetSchema := map[string]any{
 		"Tag":    fmt.Sprintf("name=%s, repetitiontype=REQUIRED", baseName),
-		"Fields": []map[string]interface{}{},
+		"Fields": []map[string]any{},
 	}
 
 	// Safely extract "properties" from the JSON Schema
@@ -24,7 +24,7 @@ func JSONSchemaToParquet(jsonSchema map[string]interface{}, baseName string) map
 
 	// For each property, convert and add to Parquet
 	for key, value := range properties {
-		fieldSchema, isMap := value.(map[string]interface{})
+		fieldSchema, isMap := value.(map[string]any)
 		if !isMap {
 			continue
 		}
@@ -44,7 +44,7 @@ func JSONSchemaToParquet(jsonSchema map[string]interface{}, baseName string) map
 
 		// Add field to our list
 		parquetSchema["Fields"] = append(
-			parquetSchema["Fields"].([]map[string]interface{}),
+			parquetSchema["Fields"].([]map[string]any),
 			parquetField,
 		)
 	}
@@ -53,9 +53,9 @@ func JSONSchemaToParquet(jsonSchema map[string]interface{}, baseName string) map
 }
 
 // JSONSchemaToParquetField converts a JSON Schema field to a Parquet field.
-func JSONSchemaToParquetField(name string, jsonField map[string]interface{}) map[string]interface{} {
+func JSONSchemaToParquetField(name string, jsonField map[string]any) map[string]any {
 	// Start with a base field Tag
-	parquetField := map[string]interface{}{
+	parquetField := map[string]any{
 		"Tag": fmt.Sprintf("name=%s, repetitiontype=REQUIRED", name),
 	}
 
@@ -74,7 +74,7 @@ func JSONSchemaToParquetField(name string, jsonField map[string]interface{}) map
 	// Look for other JSON Schema attributes
 	format, _ := jsonField["format"].(string)
 	description, _ := jsonField["description"].(string)
-	possibleEnums, hasEnum := jsonField["enum"].([]interface{})
+	possibleEnums, hasEnum := jsonField["enum"].([]any)
 
 	// You might store additional metadata or documentation if desired:
 	if description != "" {
@@ -134,7 +134,7 @@ func JSONSchemaToParquetField(name string, jsonField map[string]interface{}) map
 		items, _ := extractMap(jsonField, "items")
 		elementField := JSONSchemaToParquetField("element", items)
 		// For arrays, you may choose 'repetitiontype=REPEATED' or use the official 3-level LIST structure in Parquet
-		parquetField["Fields"] = []map[string]interface{}{elementField}
+		parquetField["Fields"] = []map[string]any{elementField}
 
 	case "object":
 		// Nested object
@@ -165,11 +165,11 @@ func canBeNull(fieldTypes []string) bool {
 }
 
 // getTypeList normalises the type field. "type" can be string or array in JSON Schema.
-func getTypeList(t interface{}) []string {
+func getTypeList(t any) []string {
 	switch v := t.(type) {
 	case string:
 		return []string{v}
-	case []interface{}:
+	case []any:
 		var types []string
 		for _, item := range v {
 			if s, ok := item.(string); ok {
@@ -182,13 +182,13 @@ func getTypeList(t interface{}) []string {
 	}
 }
 
-// extractMap is a utility to safely get a map[string]interface{} from a parent map.
-func extractMap(parent map[string]interface{}, key string) (map[string]interface{}, bool) {
+// extractMap is a utility to safely get a map[string]any from a parent map.
+func extractMap(parent map[string]any, key string) (map[string]any, bool) {
 	val, ok := parent[key]
 	if !ok {
 		return nil, false
 	}
-	asMap, ok := val.(map[string]interface{})
+	asMap, ok := val.(map[string]any)
 	if !ok {
 		return nil, false
 	}
@@ -196,12 +196,12 @@ func extractMap(parent map[string]interface{}, key string) (map[string]interface
 }
 
 // extractStringArray is a utility to safely get a []string from a parent map.
-func extractStringArray(parent map[string]interface{}, key string) []string {
+func extractStringArray(parent map[string]any, key string) []string {
 	val, ok := parent[key]
 	if !ok {
 		return nil
 	}
-	rawList, ok := val.([]interface{})
+	rawList, ok := val.([]any)
 	if !ok {
 		return nil
 	}
@@ -227,7 +227,7 @@ func stringInSlice(s string, list []string) bool {
 // ResolveRef inspects the top-level schemaMap for a "$ref" key of the form "#/$defs/...",
 // then returns the referenced subschema from within schemaMap["$defs"].
 // If there's no "$ref" or if it's malformed, we just return schemaMap unchanged.
-func resolveRef(schemaMap map[string]interface{}) (map[string]interface{}, error) {
+func resolveRef(schemaMap map[string]any) (map[string]any, error) {
 	refVal, ok := schemaMap["$ref"].(string)
 	if !ok {
 		// No "$ref" found, so just return original schemaMap
@@ -253,16 +253,16 @@ func resolveRef(schemaMap map[string]interface{}) (map[string]interface{}, error
 	if !ok {
 		return schemaMap, fmt.Errorf("no $defs found in top-level schema")
 	}
-	defs, ok := defsVal.(map[string]interface{})
+	defs, ok := defsVal.(map[string]any)
 	if !ok {
-		return schemaMap, fmt.Errorf("$defs is not a map[string]interface{}")
+		return schemaMap, fmt.Errorf("$defs is not a map[string]any")
 	}
 
 	// Navigate into $defs following each segment
 	current := defs
 	for i, seg := range segments {
 		// The referenced entry must be a map
-		child, ok := current[seg].(map[string]interface{})
+		child, ok := current[seg].(map[string]any)
 		if !ok {
 			return schemaMap, fmt.Errorf("no map entry found at $defs/%s", strings.Join(segments[:i+1], "/"))
 		}

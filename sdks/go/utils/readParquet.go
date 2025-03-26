@@ -9,7 +9,7 @@ import (
 	"github.com/xitongsys/parquet-go/reader"
 )
 
-func ReadParquetToStruct(parquetData []byte, schema interface{}) ([]interface{}, error) {
+func ReadParquetToStruct(parquetData []byte, schema any) ([]any, error) {
 	// Write parquetData to a temporary file.
 	tmpFile, err := os.CreateTemp("", "temp_parquet_*.parquet")
 	if err != nil {
@@ -40,9 +40,9 @@ func ReadParquetToStruct(parquetData []byte, schema interface{}) ([]interface{},
 
 	// Read rows from the Parquet data.
 	num := int(pr.GetNumRows())
-	res := make([]interface{}, 0, num)
+	res := make([]any, 0, num)
 	for i := 0; i < num; i++ {
-		row := make([]interface{}, 1)
+		row := make([]any, 1)
 		err := pr.Read(&row)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read row %d: %w", i, err)
@@ -53,7 +53,7 @@ func ReadParquetToStruct(parquetData []byte, schema interface{}) ([]interface{},
 	return res, nil
 }
 
-func ParquetToJSON(parquetData []byte, schema interface{}) (string, error) {
+func ParquetToJSON(parquetData []byte, schema any) (string, error) {
 	res, err := ReadParquetToStruct(parquetData, schema)
 	if err != nil {
 		return "", err

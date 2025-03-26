@@ -9,7 +9,7 @@ type PatchOperation struct {
 	// Used for "move" or "copy" operations
 	From string `json:"from,omitempty"`
 	// Used for "add" or "replace" operations
-	Value interface{} `json:"value,omitempty"`
+	Value any `json:"value,omitempty"`
 }
 
 // Patch is a series of patch operations.

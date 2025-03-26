@@ -2,34 +2,19 @@ package irminModels
 
 // Connector represents general information about a connector.
 type Connector struct {
-	// Unique ID of the connector
-	ID string `json:"id"`
-	// Name of the connector
-	Name string `json:"name"`
-	// Short description of the connector
-	Description string `json:"description"`
-	// Current version of the connector
-	Version string `json:"version"`
-	// Version of the Irmin Connector Structure this connector adheres to
-	StructureVersion string `json:"structure_version"`
-	// Name of the author of the connector
-	Author string `json:"author"`
-	// Base URL for the connector's REST API
-	APIBaseURL string `json:"api_base_url"`
-	// URL to the connector's logo image
-	LogoURL string `json:"logo_url"`
-	// List of capabilities supported by the connector
-	Capabilities []ConnectorCapability `json:"capabilities"`
-	// List of locales supported by the connector
-	Locales []string `json:"locales"`
-	// (optional) Primary category of the connector
-	PrimaryCategory *ConnectorCategory `json:"primary_category,omitempty"`
-	// (optional) List of categories the connector belongs to
-	Categories []ConnectorCategory `json:"categories,omitempty"`
-	// (optional) Email address of the author
-	AuthorEmail *string `json:"author_email,omitempty"`
-	// (optional) URL to read more about the connector, such as documentation
-	ReadMoreURL *string `json:"read_more_url,omitempty"`
+	ID               string                `json:"id"`
+	Name             string                `json:"name"`
+	Description      string                `json:"description"`
+	Version          string                `json:"version"`
+	StructureVersion string                `json:"structure_version,omitempty"`
+	Author           string                `json:"author"`
+	LogoURL          string                `json:"logo_url"`
+	Capabilities     []ConnectorCapability `json:"capabilities"`
+	Locales          []string              `json:"locales"`
+	Categories       []ConnectorCategory   `json:"categories"`
+	PrimaryCategory  ConnectorCategory     `json:"primary_category"`
+	AuthorEmail      string                `json:"author_email"`
+	ReadMoreURL      string                `json:"read_more_url"`
 }
 
 // ConnectorCapability represents the capabilities of a connector.

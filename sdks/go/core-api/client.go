@@ -47,7 +47,7 @@ type RequestOptions struct {
 	Method        string
 	Endpoint      string
 	AllowedStatus []int             // Status codes that are considered successful, e.g. 200, 201, 204
-	Body          interface{}       // For JSON, this can be a struct or map to JSON-encode
+	Body          any               // For JSON, this can be a struct or map to JSON-encode
 	FormFields    map[string]string // Key-value form fields (for multipart/form-data)
 	Files         []FormFile        // Files to attach (for multipart/form-data)
 	Headers       map[string]string // Extra headers, if needed
@@ -214,7 +214,7 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 }
 
 // FetchAPI sends a request and attempts to parse the response into IrminAPIResponse[T].
-func (c *Client) FetchAPI(opts RequestOptions, out interface{}) (*irminModels.IrminAPIResponse, error) {
+func (c *Client) FetchAPI(opts RequestOptions, out any) (*irminModels.IrminAPIResponse, error) {
 	// 1) Make the HTTP request using your existing `Request` method.
 	body, err := c.Request(opts)
 	if err != nil {
@@ -233,9 +233,9 @@ func (c *Client) FetchAPI(opts RequestOptions, out interface{}) (*irminModels.Ir
 	}
 
 	// 4) If the caller passed a destination for `Data`, unmarshal it.
-	if out != nil && len(apiResp.Data) > 0 {
-		if err := json.Unmarshal(apiResp.Data, out); err != nil {
-			return &apiResp, fmt.Errorf("failed to unmarshal Data field: %w", err)
+	if out != nil && len(body) > 0 {
+		if err := json.Unmarshal(body, out); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal Data field: %w", err)
 		}
 	}
 

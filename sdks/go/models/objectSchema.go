@@ -97,9 +97,9 @@ type JSONSchema struct {
 	Required             []string              `json:"required,omitempty"`
 	Items                *JSONSchema           `json:"items,omitempty"`
 	Description          *string               `json:"description,omitempty"`
-	Default              interface{}           `json:"default,omitempty"`
-	Enum                 []interface{}         `json:"enum,omitempty"`
-	AdditionalProperties interface{}           `json:"additionalProperties,omitempty"`
+	Default              any                   `json:"default,omitempty"`
+	Enum                 []any                 `json:"enum,omitempty"`
+	AdditionalProperties any                   `json:"additionalProperties,omitempty"`
 	Format               *string               `json:"format,omitempty"`
 	Minimum              *float64              `json:"minimum,omitempty"`
 	Maximum              *float64              `json:"maximum,omitempty"`

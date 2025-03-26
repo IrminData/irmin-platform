@@ -1,6 +1,7 @@
 package irminModels
 
-// LogEventType represents the types of log events.
+import "time"
+
 type LogEventType string
 
 const (
@@ -14,30 +15,13 @@ const (
 	LogEventTypeWarning LogEventType = "WARNING"
 )
 
-// LogEvent represents the details of a log event.
 type LogEvent struct {
-	// Unique identifier of the event
-	ID string `json:"id"`
-	// Type of the activity (e.g., CREATE, UPDATE, DELETE, etc.)
-	Type LogEventType `json:"type"`
-	// Timestamp of the event
-	Timestamp string `json:"timestamp"`
-	// Description of the event
-	Description string `json:"description"`
-	// Optional: ID of the subject object of the event
-	SubjectID *string `json:"subject_id,omitempty"`
-	// Optional: Type of the subject object of the event (e.g., repository, workflow, connection)
-	SubjectType *string `json:"subject_type,omitempty"`
-	// Optional: User who is responsible for the event. Leave empty if system.
-	User *User `json:"user,omitempty"`
-}
-
-// WorkflowRunLogs represents logs associated with a workflow run.
-type WorkflowRunLogs struct {
-	// WorkflowRun represents the associated workflow run
-	WorkflowRun WorkflowRun `json:"workflowRun"`
-	// Workflow represents the associated workflow
-	Workflow Workflow `json:"workflow"`
-	// Logs is the log feed as text to be rendered in the UI
-	Logs []string `json:"logs"`
+	ID          string       `json:"id"`
+	Type        LogEventType `json:"type"`
+	Description string       `json:"description"`
+	CreatedAt   time.Time    `json:"created_at"`
+	User        *User        `json:"user,omitempty"`
+	WorkflowRun *WorkflowRun `json:"workflow_run,omitempty"`
+	Workflow    *Workflow    `json:"workflow,omitempty"`
+	Repository  *Repository  `json:"repository,omitempty"`
 }
