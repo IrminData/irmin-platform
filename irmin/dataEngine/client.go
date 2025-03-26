@@ -10,6 +10,7 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -165,7 +166,10 @@ func (c *Client) prepareBodyAndHeaders(opts RequestOptions) (io.Reader, map[stri
 			if !firstField {
 				buf.WriteByte('&')
 			}
-			buf.WriteString(fmt.Sprintf("%s=%s", key, val))
+			// URL-encode the key and value.
+			encodedKey := url.QueryEscape(key)
+			encodedVal := url.QueryEscape(val)
+			buf.WriteString(fmt.Sprintf("%s=%s", encodedKey, encodedVal))
 			firstField = false
 		}
 		bodyReader = bytes.NewReader(buf.Bytes())

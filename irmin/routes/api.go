@@ -45,6 +45,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	workspace.Post("/leave", controllers.LeaveWorkspace)
 
 	// Query routes
+	workspace.Post("/sql", controllers.ExecuteSQL)
 	queries := workspace.Group("/queries")
 	queries.Get("/", controllers.QueriesIndex)
 	queries.Post("/", controllers.QueriesStore)

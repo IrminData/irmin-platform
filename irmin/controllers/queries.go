@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"irmin-api/db"
+	"irmin-api/lib"
 	"irmin-api/lib/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
@@ -245,7 +246,50 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 	})
 }
 
+func ExecuteSQL(c fiber.Ctx) error {
+	locale := c.Locals("locale").(string)
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+
+	// Parse the request body
+	fields, err := utils.ParseFormFields(c, nil, []string{"sql"})
+	if err != nil {
+		log.Printf("Error parsing form fields: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+
+	// Execute the SQL query
+	results, err := lib.ExecuteIrminSQL(locale, workspace.Slug, fields["sql"])
+	if err != nil {
+		log.Printf("Error executing query: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Send the response
+	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+		Data: results,
+	})
+}
+
 func ExecuteQuery(c fiber.Ctx) error {
-	// TODO: Implement this
-	return c.SendString("Execute query")
+	locale := c.Locals("locale").(string)
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+	query := c.Locals("stored_query").(*db.StoredQuery)
+
+	results, err := lib.ExecuteIrminSQL(locale, workspace.Slug, query.SQL)
+	if err != nil {
+		log.Printf("Error executing query: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+		Data: results,
+	})
 }
