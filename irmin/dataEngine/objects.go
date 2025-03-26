@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
-	"net/http"
+	"mime/multipart"
 	"strings"
 	"time"
 
@@ -96,107 +96,315 @@ func getObject(path, lakeFSRepositoryName, ref string, lakefsClient lakefs.Clien
 }
 
 func (c *Client) GetPath(workspace, repository, path, ref string) (*Object, error) {
-	var data Object
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/objects?path=%s&ref=%s", workspace, repository, path, ref)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: endpoint,
-	}, &data); err != nil {
-		return nil, err
-	}
-	return &data, nil
-}
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
-func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]PulledFile, error) {
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/objects/content?path=%s&ref=%s", workspace, repository, path, ref)
-	// Call the API endpoint.
-	files, err := c.FetchStreamFiles(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: endpoint,
-	})
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return files, nil
+
+	// If the ref is not provided, use the default branch.
+	if ref == "" {
+		repository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get repository: %w", err)
+		}
+		ref = repository.DefaultBranch
+	}
+
+	// Fetch the object metadata from the repository.
+	irminObject, err := getObject(path, lakeFSRepositoryName, ref, *lakefsClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get object: %w", err)
+	}
+
+	return irminObject, nil
 }
 
-func (c *Client) UploadObject(workspace, repository, path, ref string, file FormFile) (*Object, error) {
-	var data Object
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/objects?path=%s&ref=%s", workspace, repository, path, ref)
-	// Call the API endpoint.
-	file.FieldName = "file"
-	if err := c.FetchAPI(RequestOptions{
-		Method:        http.MethodPost,
-		Endpoint:      endpoint,
-		AllowedStatus: []int{http.StatusCreated, http.StatusOK},
-		ContentType:   "multipart/form-data",
-		Files:         []FormFile{file},
-	}, &data); err != nil {
-		return nil, err
+func (c *Client) GetObjectContent(workspace, repository, path, ref string) (*Object, []byte, error) {
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return &data, nil
+
+	// If the ref is not provided, use the default branch.
+	if ref == "" {
+		repository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to get repository: %w", err)
+		}
+		ref = repository.DefaultBranch
+	}
+
+	// Fetch the object metadata from the repository.
+	irminObject, err := getObject(path, lakeFSRepositoryName, ref, *lakefsClient)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get object: %w", err)
+	}
+
+	// Fetch the content of the object.
+	content, err := lakefsClient.GetFullObjectContent(lakeFSRepositoryName, ref, irminObject.Path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get object content: %w", err)
+	}
+
+	return irminObject, content, nil
+}
+
+func (c *Client) UploadObject(workspace, repository, path, ref string, file multipart.File) (*Object, error) {
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
+	}
+
+	// If the ref is not provided, use the default branch.
+	if ref == "" {
+		repository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get repository: %w", err)
+		}
+		ref = repository.DefaultBranch
+	}
+
+	// Format the object path.
+	path = strings.Trim(path, "/")
+
+	// Upload the object to the repository using received file.
+	objectMetadata, err := lakefsClient.UploadObject(lakeFSRepositoryName, ref, path, file, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload object: %w", err)
+	}
+
+	// Parse the object details from the path.
+	objectPathDetails := utils.ParseObjectDetailsFromPath(path)
+
+	// Construct the resulting object
+	lastModified := time.Unix(int64(objectMetadata.Mtime), 0).Format(time.RFC3339)
+	irminObject := Object{
+		Name:                  objectPathDetails.Name,
+		Path:                  objectPathDetails.FullPath,
+		Type:                  objectPathDetails.Type,
+		ContentType:           objectPathDetails.ContentType,
+		PhysicalAddress:       objectMetadata.PhysicalAddress,
+		PhysicalAddressExpiry: objectMetadata.PhysicalAddressExpiry,
+		SizeBytes:             objectMetadata.SizeBytes,
+		LastModified:          lastModified,
+		Metadata:              objectMetadata.Metadata,
+	}
+
+	return &irminObject, nil
 }
 
 func (c *Client) DeleteObject(workspace, repository, path, ref string) error {
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/objects?path=%s&ref=%s", workspace, repository, path, ref)
-	// Call the API endpoint.
-	return c.FetchAPI(RequestOptions{
-		Method:   http.MethodDelete,
-		Endpoint: endpoint,
-	}, nil)
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return fmt.Errorf("failed to create LakeFS client: %w", err)
+	}
+
+	// If the ref is not provided, use the default branch.
+	if ref == "" {
+		repository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+		if err != nil {
+			return fmt.Errorf("failed to get repository: %w", err)
+		}
+		ref = repository.DefaultBranch
+	}
+
+	// Format the object path.
+	path = strings.Trim(path, "/")
+
+	// Delete the object from the repository.
+	err = lakefsClient.DeleteObject(lakeFSRepositoryName, ref, path, false)
+	if err != nil {
+		return fmt.Errorf("failed to delete object: %w", err)
+	}
+
+	return nil
 }
 
 func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*Object, error) {
-	var data Object
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/objects/move?path=%s&ref=%s", workspace, repository, path, ref)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    endpoint,
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"new_path": newPath,
-		},
-	}, &data); err != nil {
-		return nil, err
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return &data, nil
+
+	// If the ref is not provided, use the default branch.
+	if ref == "" {
+		repository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get repository: %w", err)
+		}
+		ref = repository.DefaultBranch
+	}
+
+	// Format the object paths.
+	path = strings.Trim(path, "/")
+	newPath = strings.Trim(newPath, "/")
+
+	// Copy the object in the repository to the new path.
+	objectMetadata, err := lakefsClient.CopyObject(lakeFSRepositoryName, ref, newPath, lakefs.ObjectCopyRequest{
+		SrcPath: path,
+		SrcRef:  ref,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to copy object: %w", err)
+	}
+
+	// Delete the original object from the repository.
+	err = lakefsClient.DeleteObject(lakeFSRepositoryName, ref, path, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete object: %w", err)
+	}
+
+	// Parse the object details from the path.
+	objectPathDetails := utils.ParseObjectDetailsFromPath(newPath)
+
+	// Construct the resulting object
+	lastModified := time.Unix(int64(objectMetadata.Mtime), 0).Format(time.RFC3339)
+	irminObject := Object{
+		Name:                  objectPathDetails.Name,
+		Path:                  objectPathDetails.FullPath,
+		Type:                  objectPathDetails.Type,
+		ContentType:           objectPathDetails.ContentType,
+		PhysicalAddress:       objectMetadata.PhysicalAddress,
+		PhysicalAddressExpiry: objectMetadata.PhysicalAddressExpiry,
+		SizeBytes:             objectMetadata.SizeBytes,
+		LastModified:          lastModified,
+		Metadata:              objectMetadata.Metadata,
+	}
+
+	return &irminObject, nil
 }
 
 func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*Object, error) {
-	var data Object
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/objects/copy?path=%s&ref=%s", workspace, repository, path, ref)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    endpoint,
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"new_path": newPath,
-		},
-	}, &data); err != nil {
-		return nil, err
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return &data, nil
+
+	// If the ref is not provided, use the default branch.
+	if ref == "" {
+		repository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get repository: %w", err)
+		}
+		ref = repository.DefaultBranch
+	}
+
+	// Format the object paths.
+	path = strings.Trim(path, "/")
+	newPath = strings.Trim(newPath, "/")
+
+	// Copy the object in the repository to the new path.
+	objectMetadata, err := lakefsClient.CopyObject(lakeFSRepositoryName, ref, newPath, lakefs.ObjectCopyRequest{
+		SrcPath: path,
+		SrcRef:  ref,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to copy object: %w", err)
+	}
+
+	// Parse the object details from the path.
+	objectPathDetails := utils.ParseObjectDetailsFromPath(newPath)
+
+	// Construct the resulting object
+	lastModified := time.Unix(int64(objectMetadata.Mtime), 0).Format(time.RFC3339)
+	irminObject := Object{
+		Name:                  objectPathDetails.Name,
+		Path:                  objectPathDetails.FullPath,
+		Type:                  objectPathDetails.Type,
+		ContentType:           objectPathDetails.ContentType,
+		PhysicalAddress:       objectMetadata.PhysicalAddress,
+		PhysicalAddressExpiry: objectMetadata.PhysicalAddressExpiry,
+		SizeBytes:             objectMetadata.SizeBytes,
+		LastModified:          lastModified,
+		Metadata:              objectMetadata.Metadata,
+	}
+
+	return &irminObject, nil
 }
 
 func (c *Client) GetObjectChanges(workspace, repository, path, ref string) ([]irminModels.Commit, error) {
-	var data []irminModels.Commit
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/objects/changes?path=%s&ref=%s", workspace, repository, path, ref)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: endpoint,
-	}, &data); err != nil {
-		return nil, err
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return data, nil
+
+	// If the ref is not provided, use the default branch.
+	if ref == "" {
+		repository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get repository: %w", err)
+		}
+		ref = repository.DefaultBranch
+	}
+
+	// Parse the object details from the path.
+	objectPathDetails := utils.ParseObjectDetailsFromPath(path)
+
+	// Fetch commits
+	var lakefsCommits []lakefs.Commit
+	err = nil
+	if objectPathDetails.Type == irminModels.ObjectTypeGroup {
+		// If object is a group - treat it as a prefix when fetching the commit list
+		lakefsCommits, err = lakefsClient.ListAllCommits(lakeFSRepositoryName, ref, "", "", "", nil, []string{
+			objectPathDetails.FullPath,
+		})
+	} else {
+		// If object is not a group - treat it as an object
+		lakefsCommits, err = lakefsClient.ListAllCommits(lakeFSRepositoryName, ref, "", "", "", []string{
+			objectPathDetails.FullPath,
+		}, nil)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get commits: %w", err)
+	}
+
+	// Convert LakeFS commits to Irmin commits.
+	irminCommits := make([]irminModels.Commit, len(lakefsCommits))
+	for i, lakeFSCommit := range lakefsCommits {
+		previousHash := ""
+		if len(lakeFSCommit.Parents) > 0 {
+			previousHash = lakeFSCommit.Parents[0]
+		}
+		author := lakeFSCommit.Committer
+		if authorValue, ok := lakeFSCommit.Metadata["author"]; ok && authorValue != "" {
+			author = authorValue
+		}
+		irminCommits[i] = irminModels.Commit{
+			Hash:         lakeFSCommit.ID,
+			Message:      lakeFSCommit.Message,
+			Timestamp:    time.Unix(int64(lakeFSCommit.CreationDate), 0).Format(time.RFC3339),
+			Author:       author,
+			PreviousHash: &previousHash,
+		}
+	}
+
+	return irminCommits, nil
 }

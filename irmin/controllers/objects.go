@@ -55,10 +55,7 @@ func UploadObject(c fiber.Ctx) error {
 	DataEngine := dataEngine.NewClient(locale)
 
 	// Upload the object to the path in the repository at ref
-	newObject, err := DataEngine.UploadObject(workspace.Slug, repository.Slug, object_path, object_ref, dataEngine.FormFile{
-		FieldName: "file",
-		Reader:    file,
-	})
+	newObject, err := DataEngine.UploadObject(workspace.Slug, repository.Slug, object_path, object_ref, file)
 	if err != nil {
 		log.Printf("Error uploading object to Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -179,22 +176,16 @@ func ObjectsContent(c fiber.Ctx) error {
 	DataEngine := dataEngine.NewClient(locale)
 
 	// Get the content of the object in the repository at ref
-	files, err := DataEngine.GetObjectContent(workspace.Slug, repository.Slug, object_path, object_ref)
+	object, content, err := DataEngine.GetObjectContent(workspace.Slug, repository.Slug, object_path, object_ref)
 	if err != nil {
 		log.Printf("Error retrieving object content from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
-	if len(files) == 0 {
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
-		})
-	}
-	file := files[0]
 
 	// Write the file content as a download response
-	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, file.Filename, file.Content)
+	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, object.Name, content)
 }
 
 func ObjectsHistory(c fiber.Ctx) error {
