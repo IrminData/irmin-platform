@@ -63,4 +63,5 @@ var English = Dictionary{
 	"query_deleted":                       "Query deleted",
 	"query_executed":                      "Query executed",
 	"query_ownership_transferred":         "Query ownership transferred",
+	"merge_commit_created":                "Merge commit created",
 }

@@ -63,4 +63,5 @@ var Finnish = Dictionary{
 	"query_deleted":                       "Kysely poistettu",
 	"query_executed":                      "Kysely suoritettu",
 	"query_ownership_transferred":         "Kyselyn omistajuus siirretty",
+	"merge_commit_created":                "Yhdistelmätallennus luotu",
 }
