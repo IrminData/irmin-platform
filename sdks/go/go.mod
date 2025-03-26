@@ -2,8 +2,6 @@ module github.com/IrminData/irmin-sdk-go
 
 go 1.23.1
 
-require github.com/joho/godotenv v1.5.1
-
 require (
 	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 // indirect
 	github.com/apache/thrift v0.21.0 // indirect

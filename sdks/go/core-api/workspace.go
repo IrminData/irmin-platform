@@ -19,56 +19,30 @@ func NewWorkspaceService(client *Client) *WorkspaceService {
 	}
 }
 
-// FetchWorkspaces retrieves a list of workspaces
-func (s *WorkspaceService) FetchWorkspaces() ([]irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
+func (s *WorkspaceService) ListWorkspaces() ([]irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
 	var workspaces []irminModels.Workspace
-
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: "/v1/workspaces",
 	}, &workspaces)
 	if err != nil {
-		return nil, nil, fmt.Errorf("fetch workspaces error: %w", err)
+		return nil, nil, fmt.Errorf("list workspaces error: %w", err)
 	}
-
 	return workspaces, apiResp, nil
 }
 
-// FetchWorkspace retrieves a single workspace by slug
-func (s *WorkspaceService) FetchWorkspace(slug string) (*irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/workspaces/%s", slug)
+func (s *WorkspaceService) GetWorkspace(slug string) (*irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
 	var workspace irminModels.Workspace
-
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: endpoint,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s", slug),
 	}, &workspace)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch workspace error: %w", err)
 	}
-
 	return &workspace, apiResp, nil
 }
 
-// TransferWorkspaceOwnership reassigns ownership of a workspace
-func (s *WorkspaceService) TransferWorkspaceOwnership(slug, userID string) (*irminModels.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/workspaces/%s/reassign", slug)
-
-	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    endpoint,
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"user": userID,
-		},
-	}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("transfer workspace ownership error: %w", err)
-	}
-	return apiResp, nil
-}
-
-// CreateWorkspace creates a new workspace
 func (s *WorkspaceService) CreateWorkspace(name, description string) (*irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
 	var workspace irminModels.Workspace
 	apiResp, err := s.client.FetchAPI(RequestOptions{
@@ -83,21 +57,16 @@ func (s *WorkspaceService) CreateWorkspace(name, description string) (*irminMode
 	if err != nil {
 		return nil, nil, fmt.Errorf("create workspace error: %w", err)
 	}
-
 	return &workspace, apiResp, nil
 }
 
-// UpdateWorkspace updates an existing workspace
 func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/workspaces/%s", slug)
 	var workspace irminModels.Workspace
-
 	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    endpoint,
+		Method:      http.MethodPut,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s", slug),
 		ContentType: "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
-			"_method":     "PATCH",
 			"name":        name,
 			"description": description,
 		},
@@ -105,21 +74,13 @@ func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*irm
 	if err != nil {
 		return nil, nil, fmt.Errorf("update workspace error: %w", err)
 	}
-
 	return &workspace, apiResp, nil
 }
 
-// DeleteWorkspace deletes a workspace
 func (s *WorkspaceService) DeleteWorkspace(slug string) (*irminModels.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/workspaces/%s", slug)
-
 	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    endpoint,
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"_method": "DELETE",
-		},
+		Method:   http.MethodDelete,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s", slug),
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete workspace error: %w", err)
@@ -127,27 +88,26 @@ func (s *WorkspaceService) DeleteWorkspace(slug string) (*irminModels.IrminAPIRe
 	return apiResp, nil
 }
 
-// SwitchWorkspace switches to the specified workspace
-func (s *WorkspaceService) SwitchWorkspace(slug string) (*irminModels.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/workspaces/%s/switch", slug)
-
+func (s *WorkspaceService) TransferWorkspace(slug, newOwnerID string) (*irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
+	var workspace irminModels.Workspace
 	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: endpoint,
-	}, nil)
+		Method:      http.MethodPatch,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s", slug),
+		ContentType: "application/x-www-form-urlencoded",
+		FormFields: map[string]string{
+			"new_owner_id": newOwnerID,
+		},
+	}, &workspace)
 	if err != nil {
-		return nil, fmt.Errorf("switch workspace error: %w", err)
+		return nil, nil, fmt.Errorf("transfer workspace error: %w", err)
 	}
-	return apiResp, nil
+	return &workspace, apiResp, nil
 }
 
-// LeaveWorkspace lets the user leave the specified workspace
 func (s *WorkspaceService) LeaveWorkspace(slug string) (*irminModels.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/workspaces/%s/leave", slug)
-
 	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: endpoint,
+		Method:   http.MethodPatch,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/leave", slug),
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("leave workspace error: %w", err)

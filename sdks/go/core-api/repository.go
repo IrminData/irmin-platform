@@ -3,6 +3,7 @@ package irminCore
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -19,14 +20,11 @@ func NewRepositoryService(client *Client) *RepositoryService {
 	}
 }
 
-// FetchRepositories retrieves all repositories
-func (s *RepositoryService) FetchRepositories() ([]irminModels.Repository, *irminModels.IrminAPIResponse, error) {
-	endpoint := "/v1/repositories"
+func (s *RepositoryService) ListRepositories(workspace string) ([]irminModels.Repository, *irminModels.IrminAPIResponse, error) {
 	var repositories []irminModels.Repository
-
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: endpoint,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories", workspace),
 	}, &repositories)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch repositories error: %w", err)
@@ -34,14 +32,11 @@ func (s *RepositoryService) FetchRepositories() ([]irminModels.Repository, *irmi
 	return repositories, apiResp, nil
 }
 
-// FetchRepository retrieves a single repository by its slug
-func (s *RepositoryService) FetchRepository(slug string) (*irminModels.Repository, *irminModels.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/repositories/%s", slug)
+func (s *RepositoryService) GetRepository(workspace, slug string) (*irminModels.Repository, *irminModels.IrminAPIResponse, error) {
 	var repository irminModels.Repository
-
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: endpoint,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s", workspace, slug),
 	}, &repository)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch repository error: %w", err)
@@ -49,24 +44,21 @@ func (s *RepositoryService) FetchRepository(slug string) (*irminModels.Repositor
 	return &repository, apiResp, nil
 }
 
-// CreateRepository creates a new repository
-func (s *RepositoryService) CreateRepository(
-	name,
-	description,
-	documentation string,
-) (*irminModels.Repository, *irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"name":          name,
-		"description":   description,
-		"documentation": documentation,
-	}
-
+func (s *RepositoryService) CreateRepository(workspace, name, description, documentation, default_branch string, isImmutable bool, garbageDefaultRetentionDays, garbadeDefaultBranchRetentionDays int) (*irminModels.Repository, *irminModels.IrminAPIResponse, error) {
 	var repository irminModels.Repository
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    "/v1/repositories",
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories", workspace),
 		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
+		FormFields: map[string]string{
+			"name":                                  name,
+			"description":                           description,
+			"documentation":                         documentation,
+			"default_branch":                        default_branch,
+			"is_immutable":                          strconv.FormatBool(isImmutable),
+			"garbage_default_retention_days":        strconv.Itoa(garbageDefaultRetentionDays),
+			"garbage_default_branch_retention_days": strconv.Itoa(garbadeDefaultBranchRetentionDays),
+		},
 	}, &repository)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create repository error: %w", err)
@@ -75,87 +67,71 @@ func (s *RepositoryService) CreateRepository(
 	return &repository, apiResp, nil
 }
 
-// ReassignRepository reassigns ownership of a repository
-func (s *RepositoryService) ReassignRepository(slug, ownerID string) (*irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"owner": ownerID,
+func (s *RepositoryService) UpdateRepository(workspace, slug, name, description, documentation, default_branch string, isImmutable bool, garbageDefaultRetentionDays, garbadeDefaultBranchRetentionDays int) (*irminModels.Repository, *irminModels.IrminAPIResponse, error) {
+	var repository irminModels.Repository
+	apiResp, err := s.client.FetchAPI(RequestOptions{
+		Method:      http.MethodPatch,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s", workspace, slug),
+		ContentType: "application/x-www-form-urlencoded",
+		FormFields: map[string]string{
+			"name":                                  name,
+			"description":                           description,
+			"documentation":                         documentation,
+			"default_branch":                        default_branch,
+			"is_immutable":                          strconv.FormatBool(isImmutable),
+			"garbage_default_retention_days":        strconv.Itoa(garbageDefaultRetentionDays),
+			"garbage_default_branch_retention_days": strconv.Itoa(garbadeDefaultBranchRetentionDays),
+		},
+	}, &repository)
+	if err != nil {
+		return nil, nil, fmt.Errorf("update repository error: %w", err)
 	}
 
-	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/repositories/%s/reassign", slug),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
-	}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("reassign repository error: %w", err)
-	}
-	return apiResp, nil
+	return &repository, apiResp, nil
 }
 
-// DeleteRepository deletes a repository by its slug
-func (s *RepositoryService) DeleteRepository(slug string) (*irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"_method": "DELETE",
+func (s *RepositoryService) TransferRepository(workspace, slug, newOwnerID string) (*irminModels.Repository, *irminModels.IrminAPIResponse, error) {
+	var repository irminModels.Repository
+	apiResp, err := s.client.FetchAPI(RequestOptions{
+		Method:      http.MethodPatch,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/transfer-ownership", workspace, slug),
+		ContentType: "application/x-www-form-urlencoded",
+		FormFields: map[string]string{
+			"new_owner_id": newOwnerID,
+		},
+	}, &repository)
+	if err != nil {
+		return nil, nil, fmt.Errorf("repository ownership transfer error: %w", err)
 	}
 
+	return &repository, apiResp, nil
+}
+
+func (s *RepositoryService) DeleteRepository(workspace, slug string) (*irminModels.IrminAPIResponse, error) {
 	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/repositories/%s", slug),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
+		Method:   http.MethodDelete,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s", workspace, slug),
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete repository error: %w", err)
 	}
+
 	return apiResp, nil
 }
 
-// UpdateRepository updates a repository's details
-func (s *RepositoryService) UpdateRepository(
-	slug,
-	name,
-	description,
-	documentation string,
-) (*irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"_method":       "PATCH",
-		"name":          name,
-		"description":   description,
-		"documentation": documentation,
-	}
-
-	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/repositories/%s", slug),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
-	}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("update repository error: %w", err)
-	}
-	return apiResp, nil
-}
-
-// GetRepositoryDownloadLink retrieves a download link for a repository
 func (s *RepositoryService) GetRepositoryDownloadLink(slug, ref, path string) (*string, *irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"ref":  ref,
-		"path": path,
-	}
-
-	var response struct {
-		DownloadURL string `json:"download_url"`
-	}
-
+	var response string
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/repositories/%s/download", slug),
 		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
+		FormFields: map[string]string{
+			"ref":  ref,
+			"path": path,
+		},
 	}, &response)
 	if err != nil {
 		return nil, nil, fmt.Errorf("get repository download link error: %w", err)
 	}
-	return &response.DownloadURL, apiResp, nil
+	return &response, apiResp, nil
 }

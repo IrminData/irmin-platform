@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"maps"
+
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	irminUtils "github.com/IrminData/irmin-sdk-go/utils"
 )
@@ -20,66 +22,87 @@ func NewWorkflowService(client *Client) *WorkflowService {
 	}
 }
 
-// FetchWorkflows retrieves a list of all workflows
-func (s *WorkflowService) FetchWorkflows() ([]irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+func (s *WorkflowService) ListWorkflows(workspace string) ([]irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
 	var workflows []irminModels.Workflow
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: "/v1/workflows",
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows", workspace),
 	}, &workflows)
 	if err != nil {
-		return nil, nil, fmt.Errorf("fetch workflows error: %w", err)
+		return nil, nil, fmt.Errorf("list workflows error: %w", err)
 	}
 	return workflows, apiResp, nil
 }
 
-// FetchWorkflow retrieves a single workflow by its ID
-func (s *WorkflowService) FetchWorkflow(workflowID string) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/workflows/%s", workflowID)
+func (s *WorkflowService) ListWorkflowsOfType(workspace, workflowType string) ([]irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+	var workflows []irminModels.Workflow
+	apiResp, err := s.client.FetchAPI(RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows?type=%s", workspace, workflowType),
+	}, &workflows)
+	if err != nil {
+		return nil, nil, fmt.Errorf("list workflows error: %w", err)
+	}
+	return workflows, apiResp, nil
+}
+
+func (s *WorkflowService) GetWorkflow(workspace, workflowID string) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
 	var workflow irminModels.Workflow
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: endpoint,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s", workspace, workflowID),
 	}, &workflow)
 	if err != nil {
-		return nil, nil, fmt.Errorf("fetch workflow error: %w", err)
+		return nil, nil, fmt.Errorf("get workflow error: %w", err)
 	}
 	return &workflow, apiResp, nil
 }
 
-// UpdateWorkflow updates an existing workflow
-func (s *WorkflowService) UpdateWorkflow(
-	workflowID,
-	name,
-	description,
-	documentation string,
-	workflowSchedule *irminModels.WorkflowSchedule,
-) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"_method": "PATCH",
-		// Workflow properties
+func (s *WorkflowService) CreateWorkflow(workspace, name, description, documentation string, workflowable irminModels.Workflowable, schedule irminModels.Schedule) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+	fields := map[string]string{
 		"name":          name,
 		"description":   description,
 		"documentation": documentation,
 	}
-
-	// Workflow schedule
-	if workflowSchedule != nil {
-		scheduleFields, err := irminUtils.PrepareWorkflowScheduleData(*workflowSchedule)
-		if err != nil {
-			return nil, nil, fmt.Errorf("prepare workflow schedule data error: %w", err)
-		}
-		for key, value := range scheduleFields {
-			form[key] = value
-		}
+	// Add schedule data
+	scheduleFields, err := irminUtils.PrepareWorkflowScheduleData(schedule)
+	if err != nil {
+		return nil, nil, fmt.Errorf("prepare schedule data error: %w", err)
 	}
+	maps.Copy(fields, scheduleFields)
 
+	// Add workflowable data
+	worklowableFields, err := irminUtils.PrepareWorkflowableData(workflowable)
+	if err != nil {
+		return nil, nil, fmt.Errorf("prepare workflowable data error: %w", err)
+	}
+	maps.Copy(fields, worklowableFields)
+
+	// Create the workflow
 	var workflow irminModels.Workflow
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/workflows/%s", workflowID),
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows", workspace),
 		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
+		FormFields:  fields,
+	}, &workflow)
+	if err != nil {
+		return nil, nil, fmt.Errorf("create workflow error: %w", err)
+	}
+	return &workflow, apiResp, nil
+}
+
+func (s *WorkflowService) UpdateWorkflow(workspace, workflowID, name, description, documentation string) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+	var workflow irminModels.Workflow
+	apiResp, err := s.client.FetchAPI(RequestOptions{
+		Method:      http.MethodPatch,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows/%s", workspace, workflowID),
+		ContentType: "application/x-www-form-urlencoded",
+		FormFields: map[string]string{
+			"name":          name,
+			"description":   description,
+			"documentation": documentation,
+		},
 	}, &workflow)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update workflow error: %w", err)
@@ -87,15 +110,46 @@ func (s *WorkflowService) UpdateWorkflow(
 	return &workflow, apiResp, nil
 }
 
-// DeleteWorkflow deletes a workflow by its ID
-func (s *WorkflowService) DeleteWorkflow(workflowID string) (*irminModels.IrminAPIResponse, error) {
+func (s *WorkflowService) UpdateWorkflowWorkflowable(workspace, workflowID string, workflowable irminModels.Workflowable) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+	workflowableFields, err := irminUtils.PrepareWorkflowableData(workflowable)
+	if err != nil {
+		return nil, nil, fmt.Errorf("prepare workflowable data error: %w", err)
+	}
+	var workflow irminModels.Workflow
 	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/workflows/%s", workflowID),
+		Method:      http.MethodPatch,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows/%s/workflowable", workspace, workflowID),
 		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"_method": "DELETE",
-		},
+		FormFields:  workflowableFields,
+	}, &workflow)
+	if err != nil {
+		return nil, nil, fmt.Errorf("update workflow workflowable error: %w", err)
+	}
+	return &workflow, apiResp, nil
+}
+
+func (s *WorkflowService) UpdateWorkflowSchedule(workspace, workflowID string, schedule irminModels.Schedule) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+	scheduleFields, err := irminUtils.PrepareWorkflowScheduleData(schedule)
+	if err != nil {
+		return nil, nil, fmt.Errorf("prepare workflow schedule data error: %w", err)
+	}
+	var workflow irminModels.Workflow
+	apiResp, err := s.client.FetchAPI(RequestOptions{
+		Method:      http.MethodPatch,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows/%s/schedule", workspace, workflowID),
+		ContentType: "application/x-www-form-urlencoded",
+		FormFields:  scheduleFields,
+	}, &workflow)
+	if err != nil {
+		return nil, nil, fmt.Errorf("update workflow schedule error: %w", err)
+	}
+	return &workflow, apiResp, nil
+}
+
+func (s *WorkflowService) DeleteWorkflow(workspace, workflowID string) (*irminModels.IrminAPIResponse, error) {
+	apiResp, err := s.client.FetchAPI(RequestOptions{
+		Method:   http.MethodDelete,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s", workspace, workflowID),
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete workflow error: %w", err)
@@ -103,229 +157,18 @@ func (s *WorkflowService) DeleteWorkflow(workflowID string) (*irminModels.IrminA
 	return apiResp, nil
 }
 
-// TriggerWorkflowRun triggers a workflow run manually
-func (s *WorkflowService) TriggerWorkflowRun(workflowID string) (*irminModels.IrminAPIResponse, error) {
-	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/workflows/%s/run", workflowID),
-	}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("trigger workflow run error: %w", err)
-	}
-	return apiResp, nil
-}
-
-// CreateImportWorkflow creates a new import workflow
-func (s *WorkflowService) CreateImportWorkflow(
-	connection,
-	repository,
-	branch,
-	path,
-	name,
-	description,
-	documentation string,
-	workflowSchedule *irminModels.WorkflowSchedule,
-) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		// Import Workflow properties
-		"connection": connection,
-		"repository": repository,
-		"branch":     branch,
-		"path":       path,
-		// Workflow properties
-		"name":          name,
-		"description":   description,
-		"documentation": documentation,
-	}
-
-	// Workflow schedule
-	if workflowSchedule != nil {
-		scheduleFields, err := irminUtils.PrepareWorkflowScheduleData(*workflowSchedule)
-		if err != nil {
-			return nil, nil, fmt.Errorf("prepare workflow schedule data error: %w", err)
-		}
-		for key, value := range scheduleFields {
-			form[key] = value
-		}
-	}
-
+func (s *WorkflowService) TransferWorkflow(workspace, workflowID, newOwnerID string) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
 	var workflow irminModels.Workflow
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    "/v1/workflows/imports",
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows/%s/transfer-ownership", workspace, workflowID),
 		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
+		FormFields: map[string]string{
+			"new_owner_id": newOwnerID,
+		},
 	}, &workflow)
 	if err != nil {
-		return nil, nil, fmt.Errorf("create import workflow error: %w", err)
-	}
-	return &workflow, apiResp, nil
-}
-
-// CreateExportWorkflow creates a new export workflow
-func (s *WorkflowService) CreateExportWorkflow(
-	connection,
-	repository,
-	path,
-	branch string,
-	recursive bool,
-	name,
-	description,
-	documentation string,
-	workflowSchedule *irminModels.WorkflowSchedule,
-) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		// Import Workflow properties
-		"connection": connection,
-		"repository": repository,
-		"branch":     branch,
-		"path":       path,
-		"recursive":  fmt.Sprintf("%t", recursive),
-		// Workflow properties
-		"name":          name,
-		"description":   description,
-		"documentation": documentation,
-	}
-
-	// Workflow schedule
-	if workflowSchedule != nil {
-		scheduleFields, err := irminUtils.PrepareWorkflowScheduleData(*workflowSchedule)
-		if err != nil {
-			return nil, nil, fmt.Errorf("prepare workflow schedule data error: %w", err)
-		}
-		for key, value := range scheduleFields {
-			form[key] = value
-		}
-	}
-
-	var workflow irminModels.Workflow
-	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    "/v1/workflows/exports",
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
-	}, &workflow)
-	if err != nil {
-		return nil, nil, fmt.Errorf("create export workflow error: %w", err)
-	}
-	return &workflow, apiResp, nil
-}
-
-// CreateActionWorkflow creates a new action workflow
-func (s *WorkflowService) CreateActionWorkflow(
-	executable,
-	repository,
-	branch,
-	path,
-	name,
-	description,
-	documentation string,
-	schedule *irminModels.WorkflowSchedule,
-) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		// Action Workflow properties
-		"executable": executable,
-		"repository": repository,
-		"branch":     branch,
-		"path":       path,
-		// Workflow properties
-		"name":          name,
-		"description":   description,
-		"documentation": documentation,
-	}
-
-	// Workflow schedule
-	if schedule != nil {
-		scheduleFields, err := irminUtils.PrepareWorkflowScheduleData(*schedule)
-		if err != nil {
-			return nil, nil, fmt.Errorf("prepare workflow schedule data error: %w", err)
-		}
-		for key, value := range scheduleFields {
-			form[key] = value
-		}
-	}
-
-	var workflow irminModels.Workflow
-	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    "/v1/workflows/actions",
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
-	}, &workflow)
-	if err != nil {
-		return nil, nil, fmt.Errorf("create action workflow error: %w", err)
-	}
-	return &workflow, apiResp, nil
-}
-
-// CreatePipelineWorkflow creates a new pipeline workflow
-func (s *WorkflowService) CreatePipelineWorkflow(
-	stages []irminModels.PipelineStage,
-	live bool,
-	name,
-	description,
-	documentation string,
-	schedule *irminModels.WorkflowSchedule,
-) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"live": fmt.Sprintf("%t", live),
-		// Workflow properties
-		"name":          name,
-		"description":   description,
-		"documentation": documentation,
-	}
-
-	// Pipeline Workflow properties
-	for i, stage := range stages {
-		form[fmt.Sprintf("stages[%d][type]", i)] = stage.GetType()
-		switch stage.GetType() {
-		case "action":
-			actionStage := stage.(*irminModels.PipelineStageAction)
-			form[fmt.Sprintf("stages[%d][description]", i)] = actionStage.Description
-			form[fmt.Sprintf("stages[%d][write]", i)] = fmt.Sprintf("%t", actionStage.Write)
-			form[fmt.Sprintf("stages[%d][read]", i)] = fmt.Sprintf("%t", actionStage.Read)
-			form[fmt.Sprintf("stages[%d][executable]", i)] = actionStage.Executable
-		case "connection":
-			connectionStage := stage.(*irminModels.PipelineStageConnection)
-			form[fmt.Sprintf("stages[%d][description]", i)] = connectionStage.Description
-			form[fmt.Sprintf("stages[%d][write]", i)] = fmt.Sprintf("%t", connectionStage.Write)
-			form[fmt.Sprintf("stages[%d][read]", i)] = fmt.Sprintf("%t", connectionStage.Read)
-			form[fmt.Sprintf("stages[%d][connection]", i)] = connectionStage.Connection.ID
-			form[fmt.Sprintf("stages[%d][connection_write_path]", i)] = connectionStage.ConnectionWritePath
-			form[fmt.Sprintf("stages[%d][connection_read_path]", i)] = connectionStage.ConnectionReadPath
-		case "repository":
-			repositoryStage := stage.(*irminModels.PipelineStageRepository)
-			form[fmt.Sprintf("stages[%d][description]", i)] = repositoryStage.Description
-			form[fmt.Sprintf("stages[%d][write]", i)] = fmt.Sprintf("%t", repositoryStage.Write)
-			form[fmt.Sprintf("stages[%d][read]", i)] = fmt.Sprintf("%t", repositoryStage.Read)
-			form[fmt.Sprintf("stages[%d][repository]", i)] = repositoryStage.Repository.Slug
-			form[fmt.Sprintf("stages[%d][branch]", i)] = repositoryStage.Branch
-			form[fmt.Sprintf("stages[%d][path]", i)] = repositoryStage.Path
-		default:
-			return nil, nil, fmt.Errorf("unknown pipeline stage type: %s", stage.GetType())
-		}
-	}
-
-	// Workflow schedule
-	if schedule != nil {
-		scheduleFields, err := irminUtils.PrepareWorkflowScheduleData(*schedule)
-		if err != nil {
-			return nil, nil, fmt.Errorf("prepare workflow schedule data error: %w", err)
-		}
-		for key, value := range scheduleFields {
-			form[key] = value
-		}
-	}
-
-	var workflow irminModels.Workflow
-	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    "/v1/workflows/pipelines",
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
-	}, &workflow)
-	if err != nil {
-		return nil, nil, fmt.Errorf("create pipeline workflow error: %w", err)
+		return nil, nil, fmt.Errorf("workflow ownership transfer error: %w", err)
 	}
 	return &workflow, apiResp, nil
 }

@@ -19,14 +19,11 @@ func NewTagService(client *Client) *TagService {
 	}
 }
 
-// FetchTags retrieves all tags for a specific repository
-func (s *TagService) FetchTags(repository string) ([]irminModels.Tag, *irminModels.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/repositories/%s/tags", repository)
+func (s *TagService) ListTags(workspace, repository string) ([]irminModels.Tag, *irminModels.IrminAPIResponse, error) {
 	var tags []irminModels.Tag
-
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: endpoint,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags", workspace, repository),
 	}, &tags)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch tags error: %w", err)
@@ -34,73 +31,39 @@ func (s *TagService) FetchTags(repository string) ([]irminModels.Tag, *irminMode
 	return tags, apiResp, nil
 }
 
-// FetchTag retrieves a single tag by its ID
-func (s *TagService) FetchTag(repository, tag string) (*irminModels.Tag, *irminModels.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/repositories/%s/tags/%s", repository, tag)
-	var tagDetails irminModels.Tag
-
+func (s *TagService) GetTag(workspace, repository, tag string) (*irminModels.Tag, *irminModels.IrminAPIResponse, error) {
+	var tagObj irminModels.Tag
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: endpoint,
-	}, &tagDetails)
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags/%s", workspace, repository, tag),
+	}, &tagObj)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch tag error: %w", err)
 	}
-	return &tagDetails, apiResp, nil
+	return &tagObj, apiResp, nil
 }
 
-// CreateTag creates a new tag in the specified repository
-func (s *TagService) CreateTag(repository, name, ref string) (*irminModels.Tag, *irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"name": name,
-		"ref":  ref,
-	}
-
-	var newTag irminModels.Tag
+func (s *TagService) CreateTag(workspace, repository, tag, ref string) (*irminModels.Tag, *irminModels.IrminAPIResponse, error) {
+	var tagObj irminModels.Tag
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/repositories/%s/tags", repository),
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags", workspace, repository),
 		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
-	}, &newTag)
+		FormFields: map[string]string{
+			"name": tag,
+			"ref":  ref,
+		},
+	}, &tagObj)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create tag error: %w", err)
 	}
-	return &newTag, apiResp, nil
+	return &tagObj, apiResp, nil
 }
 
-// UpdateTag updates the name or ref of an existing tag
-func (s *TagService) UpdateTag(repository, tag, name, ref string) (*irminModels.Tag, *irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"_method": "PATCH",
-		"name":    name,
-		"ref":     ref,
-	}
-
-	var updatedTag irminModels.Tag
+func (s *TagService) DeleteTag(workspace, repository, tag string) (*irminModels.IrminAPIResponse, error) {
 	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/repositories/%s/tags/%s", repository, tag),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
-	}, &updatedTag)
-	if err != nil {
-		return nil, nil, fmt.Errorf("update tag error: %w", err)
-	}
-	return &updatedTag, apiResp, nil
-}
-
-// DeleteTag deletes a tag from the repository
-func (s *TagService) DeleteTag(repository, tag string) (*irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"_method": "DELETE",
-	}
-
-	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/repositories/%s/tags/%s", repository, tag),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
+		Method:   http.MethodDelete,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags/%s", workspace, repository, tag),
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete tag error: %w", err)

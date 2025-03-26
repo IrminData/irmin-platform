@@ -2,7 +2,7 @@ package irminModels
 
 import "time"
 
-type InviteResponse struct {
+type Invite struct {
 	ID         string     `json:"id"`
 	Email      string     `json:"email"`
 	Role       IrminRole  `json:"role"`

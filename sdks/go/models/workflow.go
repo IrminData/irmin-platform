@@ -18,6 +18,7 @@ const (
 	WorkflowStatusRunning    WorkflowStatus = "running"
 	WorkflowStatusComplete   WorkflowStatus = "complete"
 	WorkflowStatusError      WorkflowStatus = "error"
+	WorkflowStatusCancelled  WorkflowStatus = "cancelled"
 )
 
 type PipelineStageType string

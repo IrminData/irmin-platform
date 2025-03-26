@@ -3,6 +3,7 @@ package irminCore
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -20,13 +21,11 @@ func NewDiffService(client *Client) *DiffService {
 }
 
 // CompareRefs compares two refs in a repository and returns the differences
-func (s *DiffService) CompareRefs(repository, baseRef, compareRef string) (*irminModels.Diff, *irminModels.IrminAPIResponse, error) {
-	endpoint := fmt.Sprintf("/v1/repositories/%s/compare?base_ref=%s&compare_ref=%s", repository, baseRef, compareRef)
-
+func (s *DiffService) CompareRefs(workspace, repository, baseRef, compareRef string) (*irminModels.Diff, *irminModels.IrminAPIResponse, error) {
 	var diff irminModels.Diff
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: endpoint,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/compare?base_ref=%s&compare_ref=%s", workspace, repository, baseRef, compareRef),
 	}, &diff)
 	if err != nil {
 		return nil, nil, fmt.Errorf("compare refs error: %w", err)
@@ -35,22 +34,23 @@ func (s *DiffService) CompareRefs(repository, baseRef, compareRef string) (*irmi
 }
 
 // MergeRefs merges one ref into another
-func (s *DiffService) MergeRefs(repository, baseRef, compareRef, description, strategy string) (*irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"base_ref":    baseRef,
-		"compare_ref": compareRef,
-		"description": description,
-		"strategy":    strategy, // The merge strategy (default, source-wins, dest-wins)
-	}
-
+func (s *DiffService) MergeRefs(workspace, repository, baseRef, compareRef, description, strategy string, squash, allowEmpty bool) (*irminModels.Commit, *irminModels.IrminAPIResponse, error) {
+	var mergeCommit irminModels.Commit
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/repositories/%s/merge", repository),
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/merge", workspace, repository),
 		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
-	}, nil)
+		FormFields: map[string]string{
+			"base_ref":    baseRef,
+			"compare_ref": compareRef,
+			"description": description,
+			"strategy":    strategy, // The merge strategy (default, source-wins, dest-wins)
+			"squash":      strconv.FormatBool(squash),
+			"allow_empty": strconv.FormatBool(allowEmpty),
+		},
+	}, &mergeCommit)
 	if err != nil {
-		return nil, fmt.Errorf("merge refs error: %w", err)
+		return nil, nil, fmt.Errorf("merge refs error: %w", err)
 	}
-	return apiResp, nil
+	return &mergeCommit, apiResp, nil
 }

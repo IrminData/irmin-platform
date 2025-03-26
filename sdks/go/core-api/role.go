@@ -19,17 +19,14 @@ func NewRoleService(client *Client) *RoleService {
 	}
 }
 
-// FetchRoles retrieves all available roles
-func (s *RoleService) FetchRoles() ([]irminModels.IrminRole, *irminModels.IrminAPIResponse, error) {
-	endpoint := "/v1/roles"
+func (s *RoleService) ListRoles() ([]irminModels.IrminRole, *irminModels.IrminAPIResponse, error) {
 	var roles []irminModels.IrminRole
-
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: endpoint,
+		Endpoint: "/v1/roles",
 	}, &roles)
 	if err != nil {
-		return nil, nil, fmt.Errorf("fetch roles error: %w", err)
+		return nil, nil, fmt.Errorf("list roles error: %w", err)
 	}
 	return roles, apiResp, nil
 }

@@ -1,9 +1,7 @@
 package irminCore
 
 import (
-	"bytes"
 	"fmt"
-	"mime/multipart"
 	"net/http"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
@@ -21,8 +19,7 @@ func NewConnectorService(client *Client) *ConnectorService {
 	}
 }
 
-// FetchAllConnectors retrieves all available connectors
-func (s *ConnectorService) FetchAllConnectors() ([]irminModels.Connector, *irminModels.IrminAPIResponse, error) {
+func (s *ConnectorService) ListConnectors() ([]irminModels.Connector, *irminModels.IrminAPIResponse, error) {
 	var connectors []irminModels.Connector
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
@@ -34,8 +31,7 @@ func (s *ConnectorService) FetchAllConnectors() ([]irminModels.Connector, *irmin
 	return connectors, apiResp, nil
 }
 
-// FetchConnector retrieves a connector by its ID
-func (s *ConnectorService) FetchConnector(connectorID string) (*irminModels.Connector, *irminModels.IrminAPIResponse, error) {
+func (s *ConnectorService) GetConnector(connectorID string) (*irminModels.Connector, *irminModels.IrminAPIResponse, error) {
 	var connector irminModels.Connector
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
@@ -47,7 +43,6 @@ func (s *ConnectorService) FetchConnector(connectorID string) (*irminModels.Conn
 	return &connector, apiResp, nil
 }
 
-// FetchConnectorConfigurationFields retrieves configuration fields for a connector
 func (s *ConnectorService) FetchConnectorConfigurationFields(
 	connectorID, configType string,
 	currentDetails map[string]string,
@@ -64,7 +59,7 @@ func (s *ConnectorService) FetchConnectorConfigurationFields(
 	var fields []irminModels.DynamicField
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/connectors/%s/%s", connectorID, configType),
+		Endpoint:    fmt.Sprintf("/v1/connectors/%s/fields/%s", connectorID, configType),
 		ContentType: "application/x-www-form-urlencoded",
 		FormFields:  form,
 	}, &fields)
@@ -74,7 +69,6 @@ func (s *ConnectorService) FetchConnectorConfigurationFields(
 	return fields, apiResp, nil
 }
 
-// ValidateConnectorConfiguration validates the configuration for a connector
 func (s *ConnectorService) ValidateConnectorConfiguration(
 	connectorID string,
 	details map[string]string,
@@ -101,95 +95,6 @@ func (s *ConnectorService) ValidateConnectorConfiguration(
 	return &validationResult, apiResp, nil
 }
 
-// FetchConnectorSchema retrieves the object schema for a connector
-func (s *ConnectorService) FetchConnectorSchema(
-	connectorID, operation string,
-	details map[string]string,
-	settings map[string]string,
-) (*irminModels.ObjectSchema, *irminModels.IrminAPIResponse, error) {
-	form := map[string]string{}
-	for key, value := range details {
-		form[fmt.Sprintf("details[%s]", key)] = value
-	}
-	for key, value := range settings {
-		form[fmt.Sprintf("settings[%s]", key)] = value
-	}
-
-	var schema irminModels.ObjectSchema
-	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/connectors/%s/schema/%s", connectorID, operation),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
-	}, &schema)
-	if err != nil {
-		return nil, nil, fmt.Errorf("fetch connector schema error: %w", err)
-	}
-	return &schema, apiResp, nil
-}
-
-// ValidateConnectorData validates data against a connector schema
-func (s *ConnectorService) ValidateConnectorData(
-	connectorID string,
-	operation string,
-	data []byte, // This can be arbitrary data: JSON, image bytes, etc.
-	dataFilename string, // Optional, e.g. "my-image.jpg", "data.json", ...
-	details map[string]string,
-	settings map[string]string,
-) (*irminModels.ConnectorSchemaValidationResult, *irminModels.IrminAPIResponse, error) {
-	// If no filename is provided, pick a default:
-	if dataFilename == "" {
-		dataFilename = "data.bin"
-	}
-
-	// Prepare a buffer and multipart writer
-	var requestBody bytes.Buffer
-	writer := multipart.NewWriter(&requestBody)
-
-	// Write the main `data` as a file part
-	fileWriter, err := writer.CreateFormFile("data", dataFilename)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create form file for data: %w", err)
-	}
-	_, err = fileWriter.Write(data)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to write data bytes: %w", err)
-	}
-
-	// Write the configuration fields
-	for key, value := range details {
-		if err := writer.WriteField(fmt.Sprintf("details[%s]", key), value); err != nil {
-			return nil, nil, fmt.Errorf("failed to write details field: %w", err)
-		}
-	}
-	for key, value := range settings {
-		if err := writer.WriteField(fmt.Sprintf("settings[%s]", key), value); err != nil {
-			return nil, nil, fmt.Errorf("failed to write settings field: %w", err)
-		}
-	}
-
-	// Close the multipart writer to finalise the body
-	if err := writer.Close(); err != nil {
-		return nil, nil, fmt.Errorf("failed to close writer: %w", err)
-	}
-
-	// Prepare the validation result
-	var validationResult irminModels.ConnectorSchemaValidationResult
-
-	// Make the request with the multipart body
-	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/connectors/%s/schema/%s/validate", connectorID, operation),
-		ContentType: "multipart/form-data",
-		Body:        &requestBody,
-	}, &validationResult)
-	if err != nil {
-		return nil, nil, fmt.Errorf("validate connector data error: %w", err)
-	}
-
-	return &validationResult, apiResp, nil
-}
-
 // RegisterNewConnector registers a new connector with the system. Requests to this endpoint must be authenticated with a system token.
 func (s *ConnectorService) RegisterNewConnector(baseURL, systemToken string) (*irminModels.Connector, *irminModels.IrminAPIResponse, error) {
 	var connector irminModels.Connector
@@ -212,11 +117,10 @@ func (s *ConnectorService) RegisterNewConnector(baseURL, systemToken string) (*i
 func (s *ConnectorService) UpdateRegisteredConnector(connectorID, baseURL, systemToken string) (*irminModels.Connector, *irminModels.IrminAPIResponse, error) {
 	var connector irminModels.Connector
 	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
+		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/connectors/%s", connectorID),
 		ContentType: "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
-			"_method":      "PATCH",
 			"url":          baseURL,
 			"system_token": systemToken,
 		},
@@ -225,4 +129,16 @@ func (s *ConnectorService) UpdateRegisteredConnector(connectorID, baseURL, syste
 		return nil, nil, fmt.Errorf("update registered connector error: %w", err)
 	}
 	return &connector, apiResp, nil
+}
+
+// DeleteConnector deletes a connector from the system. Requests to this endpoint must be authenticated with a system token.
+func (s *ConnectorService) DeleteConnector(connectorID string) (*irminModels.IrminAPIResponse, error) {
+	apiResp, err := s.client.FetchAPI(RequestOptions{
+		Method:   http.MethodDelete,
+		Endpoint: fmt.Sprintf("/v1/connectors/%s", connectorID),
+	}, nil)
+	if err != nil {
+		return nil, fmt.Errorf("delete connector error: %w", err)
+	}
+	return apiResp, nil
 }

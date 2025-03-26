@@ -20,9 +20,8 @@ func NewCredentialService(client *Client) *CredentialService {
 	}
 }
 
-// GetSystemTokens retrieves the user's system tokens
-func (s *CredentialService) GetSystemTokens() ([]irminModels.SystemToken, *irminModels.IrminAPIResponse, error) {
-	var tokens []irminModels.SystemToken
+func (s *CredentialService) ListTokens() ([]irminModels.APIToken, *irminModels.IrminAPIResponse, error) {
+	var tokens []irminModels.APIToken
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: "/v1/credentials",
@@ -33,19 +32,16 @@ func (s *CredentialService) GetSystemTokens() ([]irminModels.SystemToken, *irmin
 	return tokens, apiResp, nil
 }
 
-// CreateSystemToken creates a new system token
-func (s *CredentialService) CreateSystemToken(name string, expiry int) (*irminModels.SystemToken, *irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"name":   name,
-		"expiry": strconv.FormatInt(int64(expiry), 10),
-	}
-
-	var token irminModels.SystemToken
+func (s *CredentialService) CreateToken(name string, expiry int) (*irminModels.APIToken, *irminModels.IrminAPIResponse, error) {
+	var token irminModels.APIToken
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/credentials",
 		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
+		FormFields: map[string]string{
+			"name":   name,
+			"expiry": strconv.FormatInt(int64(expiry), 10),
+		},
 	}, &token)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create system token error: %w", err)
@@ -53,17 +49,11 @@ func (s *CredentialService) CreateSystemToken(name string, expiry int) (*irminMo
 	return &token, apiResp, nil
 }
 
-// RevokeSystemToken revokes a system token
-func (s *CredentialService) RevokeSystemToken(tokenID string) (*irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"_method": "DELETE",
-	}
-
+func (s *CredentialService) DeleteToken(tokenID string) (*irminModels.IrminAPIResponse, error) {
 	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
+		Method:      http.MethodDelete,
 		Endpoint:    fmt.Sprintf("/v1/credentials/%s", tokenID),
 		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("revoke system token error: %w", err)

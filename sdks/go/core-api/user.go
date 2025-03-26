@@ -3,6 +3,7 @@ package irminCore
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -17,73 +18,54 @@ func NewUserService(client *Client) *UserService {
 	return &UserService{client: client}
 }
 
-// FetchWorkspaceUsers fetches all users in the current workspace.
-// Returns a list of users, the full response, and an error if any.
-func (s *UserService) FetchWorkspaceUsers() ([]irminModels.User, *irminModels.IrminAPIResponse, error) {
+func (s *UserService) ListUsers(workspace string) ([]irminModels.User, *irminModels.IrminAPIResponse, error) {
 	var users []irminModels.User
-
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: "/v1/users",
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/users", workspace),
 	}, &users)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch users error: %w", err)
 	}
-
 	return users, apiResp, nil
 }
 
-// FetchUser fetches a user by ID.
-// Returns the user object, the full response, and an error if any.
-func (s *UserService) FetchUser(userID string) (*irminModels.User, *irminModels.IrminAPIResponse, error) {
+func (s *UserService) GetUser(workspace, userID string) (*irminModels.User, *irminModels.IrminAPIResponse, error) {
 	var user irminModels.User
-
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/users/%s", userID),
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/users/%s", workspace, userID),
 	}, &user)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch user error: %w", err)
 	}
-
 	return &user, apiResp, nil
 }
 
-// ChangeUserRole changes the role of a user in the current workspace.
-// The API endpoint does not return meaningful data, so we just return the response object for consistency.
-func (s *UserService) ChangeUserRole(userID, role string) (*irminModels.IrminAPIResponse, error) {
-	body := map[string]string{
-		"_method": "PATCH",
-		"roles":   role,
-	}
-
+func (s *UserService) UpdateUserRoles(workspace, userID string, roles []string) (*irminModels.User, *irminModels.IrminAPIResponse, error) {
+	updatedRoles := strings.Join(roles, ",")
+	var user irminModels.User
 	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: fmt.Sprintf("/v1/users/%s", userID),
-		Body:     body,
-	}, nil)
+		Method:      http.MethodPatch,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/users/%s", workspace, userID),
+		ContentType: "application/x-www-form-urlencoded",
+		FormFields: map[string]string{
+			"roles": updatedRoles,
+		},
+	}, &user)
 	if err != nil {
-		return nil, fmt.Errorf("change role error: %w", err)
+		return nil, nil, fmt.Errorf("update user roles error: %w", err)
 	}
-
-	return apiResp, nil
+	return &user, apiResp, nil
 }
 
-// RemoveUserFromWorkspace removes a user from the current workspace.
-// Again, no data is returned, so we only return the response object.
-func (s *UserService) RemoveUserFromWorkspace(userID string) (*irminModels.IrminAPIResponse, error) {
-	body := map[string]string{
-		"_method": "DELETE",
-	}
-
+func (s *UserService) RemoveUser(workspace, userID string) (*irminModels.IrminAPIResponse, error) {
 	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:   http.MethodPost,
-		Endpoint: fmt.Sprintf("/v1/users/%s", userID),
-		Body:     body,
+		Method:   http.MethodDelete,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/users/%s", workspace, userID),
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("remove user error: %w", err)
 	}
-
 	return apiResp, nil
 }

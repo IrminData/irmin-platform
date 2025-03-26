@@ -19,86 +19,11 @@ func NewInviteService(client *Client) *InviteService {
 	}
 }
 
-// InviteUserToWorkspace invites a user to the workspace
-func (s *InviteService) InviteUserToWorkspace(firstName, lastName, email, phone, company, role string) (*irminModels.Invite, *irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"first_name": firstName,
-		"last_name":  lastName,
-		"email":      email,
-		"phone":      phone,
-		"company":    company,
-		"role":       role,
-	}
-
-	var invite irminModels.Invite
-	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    "/v1/invites",
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
-	}, &invite)
-	if err != nil {
-		return nil, nil, fmt.Errorf("invite user error: %w", err)
-	}
-	return &invite, apiResp, nil
-}
-
-// ResendUserInvite resends an invite
-func (s *InviteService) ResendUserInvite(inviteID string) (*irminModels.IrminAPIResponse, error) {
-	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/invites/%s/resend", inviteID),
-	}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("resend invite error: %w", err)
-	}
-	return apiResp, nil
-}
-
-// CancelUserInvite cancels an invite
-func (s *InviteService) CancelUserInvite(inviteID string) (*irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"_method": "DELETE",
-	}
-
-	apiResp, err := s.client.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/invites/%s", inviteID),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
-	}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("cancel invite error: %w", err)
-	}
-	return apiResp, nil
-}
-
-// FetchInvites retrieves a list of invites
-func (s *InviteService) FetchInvites(workspace, user string, trashed, expired bool) ([]irminModels.Invite, *irminModels.IrminAPIResponse, error) {
-	endpoint := "/v1/invites"
-	params := ""
-
-	if workspace != "" {
-		params += fmt.Sprintf("workspace=%s&", workspace)
-	}
-	if user != "" {
-		params += fmt.Sprintf("user=%s&", user)
-	}
-	if trashed {
-		params += "trashed=1&"
-	}
-	if expired {
-		params += "expired=1&"
-	}
-
-	if len(params) > 0 {
-		endpoint += "?" + params[:len(params)-1] // Remove trailing "&"
-	}
-
+func (s *InviteService) ListInviteInbox() ([]irminModels.Invite, *irminModels.IrminAPIResponse, error) {
 	var invites []irminModels.Invite
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: endpoint,
+		Endpoint: "/v1/invites",
 	}, &invites)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch invites error: %w", err)
@@ -106,33 +31,106 @@ func (s *InviteService) FetchInvites(workspace, user string, trashed, expired bo
 	return invites, apiResp, nil
 }
 
-// AcceptInvite accepts an invite
-func (s *InviteService) AcceptInvite(inviteID, hash, password, passwordConfirmation string) (*irminModels.IrminAPIResponse, error) {
-	form := map[string]string{
-		"password":              password,
-		"password_confirmation": passwordConfirmation,
+func (s *InviteService) GetInvite(inviteID string) (*irminModels.Invite, *irminModels.IrminAPIResponse, error) {
+	var invite irminModels.Invite
+	apiResp, err := s.client.FetchAPI(RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: fmt.Sprintf("/v1/invites/%s", inviteID),
+	}, &invite)
+	if err != nil {
+		return nil, nil, fmt.Errorf("fetch invite error: %w", err)
 	}
+	return &invite, apiResp, nil
+}
 
+func (s *InviteService) ListInvitesToWorkspace(workspace string) ([]irminModels.Invite, *irminModels.IrminAPIResponse, error) {
+	var invites []irminModels.Invite
+	apiResp, err := s.client.FetchAPI(RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/invites", workspace),
+	}, &invites)
+	if err != nil {
+		return nil, nil, fmt.Errorf("fetch invites error: %w", err)
+	}
+	return invites, apiResp, nil
+}
+
+func (s *InviteService) SendInvite(workspace, email, role string) (*irminModels.Invite, *irminModels.IrminAPIResponse, error) {
+	var invite irminModels.Invite
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/invites/%s/accept/%s", inviteID, hash),
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/invites", workspace),
 		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
+		FormFields: map[string]string{
+			"email": email,
+			"role":  role,
+		},
+	}, &invite)
+	if err != nil {
+		return nil, nil, fmt.Errorf("send invite error: %w", err)
+	}
+	return &invite, apiResp, nil
+}
+
+func (s *InviteService) ResendInvite(inviteID string) (*irminModels.Invite, *irminModels.IrminAPIResponse, error) {
+	var invite irminModels.Invite
+	apiResp, err := s.client.FetchAPI(RequestOptions{
+		Method:   http.MethodPost,
+		Endpoint: fmt.Sprintf("/v1/invites/%s/resend", inviteID),
+	}, &invite)
+	if err != nil {
+		return nil, nil, fmt.Errorf("resend invite error: %w", err)
+	}
+	return &invite, apiResp, nil
+}
+
+func (s *InviteService) DeleteInvite(inviteID string) (*irminModels.IrminAPIResponse, error) {
+	apiResp, err := s.client.FetchAPI(RequestOptions{
+		Method:   http.MethodDelete,
+		Endpoint: fmt.Sprintf("/v1/invites/%s", inviteID),
 	}, nil)
 	if err != nil {
-		return nil, fmt.Errorf("accept invite error: %w", err)
+		return nil, fmt.Errorf("delete invite error: %w", err)
 	}
 	return apiResp, nil
 }
 
-// DeclineInvite declines an invite
-func (s *InviteService) DeclineInvite(inviteID, hash string) (*irminModels.IrminAPIResponse, error) {
+func (s *InviteService) UpdateInvite(inviteID, role string) (*irminModels.Invite, *irminModels.IrminAPIResponse, error) {
+	var invite irminModels.Invite
+	apiResp, err := s.client.FetchAPI(RequestOptions{
+		Method:      http.MethodPatch,
+		Endpoint:    fmt.Sprintf("/v1/invites/%s", inviteID),
+		ContentType: "application/x-www-form-urlencoded",
+		FormFields: map[string]string{
+			"role": role,
+		},
+	}, &invite)
+	if err != nil {
+		return nil, nil, fmt.Errorf("send invite error: %w", err)
+	}
+	return &invite, apiResp, nil
+}
+
+func (s *InviteService) AcceptInvite(inviteID string) (*irminModels.Invite, *irminModels.IrminAPIResponse, error) {
+	var invite irminModels.Invite
 	apiResp, err := s.client.FetchAPI(RequestOptions{
 		Method:   http.MethodPost,
-		Endpoint: fmt.Sprintf("/v1/invites/%s/decline/%s", inviteID, hash),
-	}, nil)
+		Endpoint: fmt.Sprintf("/v1/invites/%s/accept", inviteID),
+	}, &invite)
 	if err != nil {
-		return nil, fmt.Errorf("decline invite error: %w", err)
+		return nil, nil, fmt.Errorf("accept invite error: %w", err)
 	}
-	return apiResp, nil
+	return &invite, apiResp, nil
+}
+
+func (s *InviteService) DeclineInvite(inviteID string) (*irminModels.Invite, *irminModels.IrminAPIResponse, error) {
+	var invite irminModels.Invite
+	apiResp, err := s.client.FetchAPI(RequestOptions{
+		Method:   http.MethodPost,
+		Endpoint: fmt.Sprintf("/v1/invites/%s/decline", inviteID),
+	}, &invite)
+	if err != nil {
+		return nil, nil, fmt.Errorf("decline invite error: %w", err)
+	}
+	return &invite, apiResp, nil
 }

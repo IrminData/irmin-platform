@@ -17,7 +17,7 @@ import (
 
 // Client represents the Irmin API client.
 type Client struct {
-	// BaseURL is your Irmin Core API base: e.g. "https://api.irmin.dev"
+	// BaseURL is your Irmin Core API base: e.g. "https://api.irmin.dev/api"
 	BaseURL string
 
 	// Token is your Irmin Core API token.
