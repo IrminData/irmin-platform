@@ -21,24 +21,18 @@ func removeProtectionRule(rules []lakefs.BranchProtectionRule, branch string) []
 }
 
 func (c *Client) ListBranches(ctx context.Context, workspace, repository string) ([]irminModels.Branch, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Run the LakeFS calls concurrently.
 	repoFuture := utils.AsyncWithContext(ctx, func() (*lakefs.Repository, error) {
-		return lakefsClient.GetRepository(lakeFSRepositoryName)
+		return c.LakeFSClient.GetRepository(lakeFSRepositoryName)
 	})
 	branchesFuture := utils.AsyncWithContext(ctx, func() ([]lakefs.Branch, error) {
-		return lakefsClient.ListAllBranches(lakeFSRepositoryName, "", false)
+		return c.LakeFSClient.ListAllBranches(lakeFSRepositoryName, "", false)
 	})
 	rulesFuture := utils.AsyncWithContext(ctx, func() ([]lakefs.BranchProtectionRule, error) {
-		return lakefsClient.GetBranchProtectionRules(lakeFSRepositoryName)
+		return c.LakeFSClient.GetBranchProtectionRules(lakeFSRepositoryName)
 	})
 
 	// Await results.
@@ -79,24 +73,18 @@ func (c *Client) ListBranches(ctx context.Context, workspace, repository string)
 }
 
 func (c *Client) GetBranch(ctx context.Context, workspace, repository, branch string) (*irminModels.Branch, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Run LakeFS calls concurrently.
 	repoFuture := utils.AsyncWithContext(ctx, func() (*lakefs.Repository, error) {
-		return lakefsClient.GetRepository(lakeFSRepositoryName)
+		return c.LakeFSClient.GetRepository(lakeFSRepositoryName)
 	})
 	branchFuture := utils.AsyncWithContext(ctx, func() (*lakefs.Branch, error) {
-		return lakefsClient.GetBranch(lakeFSRepositoryName, branch)
+		return c.LakeFSClient.GetBranch(lakeFSRepositoryName, branch)
 	})
 	rulesFuture := utils.AsyncWithContext(ctx, func() ([]lakefs.BranchProtectionRule, error) {
-		return lakefsClient.GetBranchProtectionRules(lakeFSRepositoryName)
+		return c.LakeFSClient.GetBranchProtectionRules(lakeFSRepositoryName)
 	})
 
 	// Await results.
@@ -133,17 +121,11 @@ func (c *Client) GetBranch(ctx context.Context, workspace, repository, branch st
 }
 
 func (c *Client) CreateBranch(workspace, repository, name, from string, is_immutable bool) (*irminModels.Branch, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Check if "from" is a branch and find the latest commit ID.
-	fromBranch, err := lakefsClient.GetBranch(lakeFSRepositoryName, from)
+	fromBranch, err := c.LakeFSClient.GetBranch(lakeFSRepositoryName, from)
 	fromRef := from
 	if err != nil {
 		return nil, fmt.Errorf("failed to get branch %s: %w", from, err)
@@ -161,14 +143,14 @@ func (c *Client) CreateBranch(workspace, repository, name, from string, is_immut
 	}
 
 	// Create the branch.
-	err = lakefsClient.CreateBranch(lakeFSRepositoryName, reqData)
+	err = c.LakeFSClient.CreateBranch(lakeFSRepositoryName, reqData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create branch: %w", err)
 	}
 
 	// If immutability is requested, add branch protection.
 	if is_immutable {
-		branchProtectionRules, err := lakefsClient.GetBranchProtectionRules(lakeFSRepositoryName)
+		branchProtectionRules, err := c.LakeFSClient.GetBranchProtectionRules(lakeFSRepositoryName)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get branch protection rules: %w", err)
 		}
@@ -184,14 +166,14 @@ func (c *Client) CreateBranch(workspace, repository, name, from string, is_immut
 			branchProtectionRules = append(branchProtectionRules, lakefs.BranchProtectionRule{
 				Pattern: reqData.Name,
 			})
-			if err := lakefsClient.SetBranchProtectionRules(lakeFSRepositoryName, branchProtectionRules); err != nil {
+			if err := c.LakeFSClient.SetBranchProtectionRules(lakeFSRepositoryName, branchProtectionRules); err != nil {
 				return nil, fmt.Errorf("failed to set branch protection rules: %w", err)
 			}
 		}
 	}
 
 	// Fetch the newly created branch details.
-	branch, err := lakefsClient.GetBranch(lakeFSRepositoryName, reqData.Name)
+	branch, err := c.LakeFSClient.GetBranch(lakeFSRepositoryName, reqData.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get branch: %w", err)
 	}
@@ -207,24 +189,18 @@ func (c *Client) CreateBranch(workspace, repository, name, from string, is_immut
 }
 
 func (c *Client) UpdateBranch(ctx context.Context, workspace, repository, currentName, name string, is_immutable bool) (*irminModels.Branch, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Run LakeFS calls concurrently.
 	branchFuture := utils.AsyncWithContext(ctx, func() (*lakefs.Branch, error) {
-		return lakefsClient.GetBranch(lakeFSRepositoryName, currentName)
+		return c.LakeFSClient.GetBranch(lakeFSRepositoryName, currentName)
 	})
 	repoFuture := utils.AsyncWithContext(ctx, func() (*lakefs.Repository, error) {
-		return lakefsClient.GetRepository(lakeFSRepositoryName)
+		return c.LakeFSClient.GetRepository(lakeFSRepositoryName)
 	})
 	rulesFuture := utils.AsyncWithContext(ctx, func() ([]lakefs.BranchProtectionRule, error) {
-		return lakefsClient.GetBranchProtectionRules(lakeFSRepositoryName)
+		return c.LakeFSClient.GetBranchProtectionRules(lakeFSRepositoryName)
 	})
 
 	// Await results.
@@ -253,13 +229,13 @@ func (c *Client) UpdateBranch(ctx context.Context, workspace, repository, curren
 			Force:  false,
 			Hidden: false,
 		}
-		err = lakefsClient.CreateBranch(lakeFSRepositoryName, reqData)
+		err = c.LakeFSClient.CreateBranch(lakeFSRepositoryName, reqData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create branch: %w", err)
 		}
 
 		// Fetch the newly created branch.
-		branch, err := lakefsClient.GetBranch(lakeFSRepositoryName, reqData.Name)
+		branch, err := c.LakeFSClient.GetBranch(lakeFSRepositoryName, reqData.Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get branch: %w", err)
 		}
@@ -271,12 +247,12 @@ func (c *Client) UpdateBranch(ctx context.Context, workspace, repository, curren
 				Pattern: branch.ID,
 			})
 		}
-		if err := lakefsClient.SetBranchProtectionRules(lakeFSRepositoryName, newRules); err != nil {
+		if err := c.LakeFSClient.SetBranchProtectionRules(lakeFSRepositoryName, newRules); err != nil {
 			return nil, fmt.Errorf("failed to set branch protection rules: %w", err)
 		}
 
 		// Delete the old branch.
-		if err := lakefsClient.DeleteBranch(lakeFSRepositoryName, currentName); err != nil {
+		if err := c.LakeFSClient.DeleteBranch(lakeFSRepositoryName, currentName); err != nil {
 			return nil, fmt.Errorf("failed to delete branch: %w", err)
 		}
 
@@ -309,7 +285,7 @@ func (c *Client) UpdateBranch(ctx context.Context, workspace, repository, curren
 		})
 	}
 
-	if err := lakefsClient.SetBranchProtectionRules(lakeFSRepositoryName, newRules); err != nil {
+	if err := c.LakeFSClient.SetBranchProtectionRules(lakeFSRepositoryName, newRules); err != nil {
 		return nil, fmt.Errorf("failed to set branch protection rules: %w", err)
 	}
 
@@ -324,23 +300,17 @@ func (c *Client) UpdateBranch(ctx context.Context, workspace, repository, curren
 }
 
 func (c *Client) DeleteBranch(workspace, repository, branch string) error {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Ensure the branch exists.
-	_, err = lakefsClient.GetBranch(lakeFSRepositoryName, branch)
+	_, err := c.LakeFSClient.GetBranch(lakeFSRepositoryName, branch)
 	if err != nil {
 		return fmt.Errorf("failed to get branch: %w", err)
 	}
 
 	// Get the current branch protection rules.
-	branchProtectionRules, err := lakefsClient.GetBranchProtectionRules(lakeFSRepositoryName)
+	branchProtectionRules, err := c.LakeFSClient.GetBranchProtectionRules(lakeFSRepositoryName)
 	if err != nil {
 		return fmt.Errorf("failed to get branch protection rules: %w", err)
 	}
@@ -350,14 +320,14 @@ func (c *Client) DeleteBranch(workspace, repository, branch string) error {
 
 	// Update branch protection rules if changed.
 	if len(newRules) != len(branchProtectionRules) {
-		err = lakefsClient.SetBranchProtectionRules(lakeFSRepositoryName, newRules)
+		err = c.LakeFSClient.SetBranchProtectionRules(lakeFSRepositoryName, newRules)
 		if err != nil {
 			return fmt.Errorf("failed to set branch protection rules: %w", err)
 		}
 	}
 
 	// Delete the branch.
-	err = lakefsClient.DeleteBranch(lakeFSRepositoryName, branch)
+	err = c.LakeFSClient.DeleteBranch(lakeFSRepositoryName, branch)
 	if err != nil {
 		return fmt.Errorf("failed to delete branch: %w", err)
 	}

@@ -11,21 +11,15 @@ import (
 )
 
 func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef, compareRef string) (*irminModels.Diff, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Run LakeFS API calls concurrently.
 	mergeBaseFuture := utils.AsyncWithContext(ctx, func() (*lakefs.MergeBase, error) {
-		return lakefsClient.FindMergeBase(lakeFSRepositoryName, compareRef, baseRef)
+		return c.LakeFSClient.FindMergeBase(lakeFSRepositoryName, compareRef, baseRef)
 	})
 	diffFuture := utils.AsyncWithContext(ctx, func() ([]lakefs.Diff, error) {
-		return lakefsClient.ListAllRefDiffs(lakeFSRepositoryName, baseRef, compareRef, "", "")
+		return c.LakeFSClient.ListAllRefDiffs(lakeFSRepositoryName, baseRef, compareRef, "", "")
 	})
 
 	// Get the merge base, e.g. the common ancestor of the two references.
@@ -41,7 +35,7 @@ func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef
 	}
 
 	// Get the commits in the compare_ref after the merge base.
-	newCommits, err := lakefsClient.ListAllCommits(lakeFSRepositoryName, compareRef, "", "", mergeBase.BaseCommitID, nil, nil)
+	newCommits, err := c.LakeFSClient.ListAllCommits(lakeFSRepositoryName, compareRef, "", "", mergeBase.BaseCommitID, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get commits in compare_ref: %w", err)
 	}
@@ -99,12 +93,6 @@ func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef
 }
 
 func (c *Client) MergeRefs(workspace, repository, baseRef, compareRef, message, author, strategy string, squash, allowEmpty bool) (*irminModels.Commit, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -121,13 +109,13 @@ func (c *Client) MergeRefs(workspace, repository, baseRef, compareRef, message, 
 	}
 
 	// Merge the compare_ref into the base_ref.
-	merge, err := lakefsClient.MergeRefs(lakeFSRepositoryName, compareRef, baseRef, *mergeRequest)
+	merge, err := c.LakeFSClient.MergeRefs(lakeFSRepositoryName, compareRef, baseRef, *mergeRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to merge refs: %w", err)
 	}
 
 	// Get merge commit details.
-	lakeFSCommit, err := lakefsClient.GetCommit(lakeFSRepositoryName, merge.Reference)
+	lakeFSCommit, err := c.LakeFSClient.GetCommit(lakeFSRepositoryName, merge.Reference)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get commit: %w", err)
 	}

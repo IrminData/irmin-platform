@@ -43,17 +43,11 @@ type Repository struct {
 }
 
 func (c *Client) ListRepositories(workspace string) ([]Repository, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository prefix.
 	lakeFSRepositoryPrefix := utils.GetLakeFSRepositoryPrefix(workspace)
 
 	// Fetch repositories with the given prefix.
-	lakefsRepositories, err := lakefsClient.ListAllRepositories(lakeFSRepositoryPrefix, "")
+	lakefsRepositories, err := c.LakeFSClient.ListAllRepositories(lakeFSRepositoryPrefix, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list repositories: %w", err)
 	}
@@ -77,21 +71,16 @@ func (c *Client) ListRepositories(workspace string) ([]Repository, error) {
 }
 
 func (c *Client) GetRepository(ctx context.Context, workspace, repository string) (*Repository, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
 
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Run LakeFS calls concurrently.
 	repoFuture := utils.AsyncWithContext(ctx, func() (*lakefs.Repository, error) {
-		return lakefsClient.GetRepository(lakeFSRepositoryName)
+		return c.LakeFSClient.GetRepository(lakeFSRepositoryName)
 	})
 	gcRulesFuture := utils.AsyncWithContext(ctx, func() (*lakefs.GarbageCollectionRules, error) {
-		return lakefsClient.GetGarbageCollectionRules(lakeFSRepositoryName)
+		return c.LakeFSClient.GetGarbageCollectionRules(lakeFSRepositoryName)
 	})
 
 	// Get repository details.
@@ -137,13 +126,6 @@ func (c *Client) GetRepository(ctx context.Context, workspace, repository string
 }
 
 func (c *Client) CreateRepository(workspace, name, defaultBranch string, isImmutable bool, gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int) (*Repository, error) {
-
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, name)
 
@@ -162,7 +144,7 @@ func (c *Client) CreateRepository(workspace, name, defaultBranch string, isImmut
 		DefaultBranch:    defaultBranch,
 		ReadOnly:         isImmutable,
 	}
-	lakefsRepository, err := lakefsClient.CreateRepository(false, repositoryCreateRequest)
+	lakefsRepository, err := c.LakeFSClient.CreateRepository(false, repositoryCreateRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create repository: %w", err)
 	}
@@ -181,7 +163,7 @@ func (c *Client) CreateRepository(workspace, name, defaultBranch string, isImmut
 		}
 	}
 	if *gcDefaultBranchRetentionDays > 0 && *gcDefaultRetentionDays > 0 {
-		err = lakefsClient.SetGarbageCollectionRules(lakeFSRepositoryName, garbageCollectionRules)
+		err = c.LakeFSClient.SetGarbageCollectionRules(lakeFSRepositoryName, garbageCollectionRules)
 		if err != nil {
 			return nil, fmt.Errorf("failed to set garbage collection rules: %w", err)
 		}
@@ -218,17 +200,11 @@ func (c *Client) CreateRepository(workspace, name, defaultBranch string, isImmut
 }
 
 func (c *Client) UpdateRepository(workspace, repository string, gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int) (*Repository, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Get repository details.
-	lakefsRepository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+	lakefsRepository, err := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get repository details: %w", err)
 	}
@@ -248,13 +224,13 @@ func (c *Client) UpdateRepository(workspace, repository string, gcDefaultRetenti
 	}
 	if *gcDefaultBranchRetentionDays > 0 && *gcDefaultRetentionDays > 0 {
 		// Update garbage collection rules.
-		err = lakefsClient.SetGarbageCollectionRules(lakeFSRepositoryName, garbageCollectionRules)
+		err = c.LakeFSClient.SetGarbageCollectionRules(lakeFSRepositoryName, garbageCollectionRules)
 		if err != nil {
 			return nil, fmt.Errorf("failed to set garbage collection rules: %w", err)
 		}
 	} else {
 		// Delete garbage collection rules.
-		err = lakefsClient.DeleteGarbageCollectionRules(lakeFSRepositoryName)
+		err = c.LakeFSClient.DeleteGarbageCollectionRules(lakeFSRepositoryName)
 		if err != nil {
 			return nil, fmt.Errorf("failed to delete garbage collection rules: %w", err)
 		}
@@ -291,17 +267,11 @@ func (c *Client) UpdateRepository(workspace, repository string, gcDefaultRetenti
 }
 
 func (c *Client) DeleteRepository(ctx context.Context, workspace, repository string, keepObjects bool) error {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Get repository details and check if it exists.
-	lakefsRepository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+	lakefsRepository, err := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
 	if err != nil {
 		return fmt.Errorf("failed to get repository details: %w", err)
 	}
@@ -310,7 +280,7 @@ func (c *Client) DeleteRepository(ctx context.Context, workspace, repository str
 	}
 
 	// Delete repository.
-	err = lakefsClient.DeleteRepository(lakeFSRepositoryName)
+	err = c.LakeFSClient.DeleteRepository(lakeFSRepositoryName)
 	if err != nil {
 		return fmt.Errorf("failed to delete repository: %w", err)
 	}

@@ -9,17 +9,11 @@ import (
 )
 
 func (c *Client) ListTags(workspace, repository string) ([]irminModels.Tag, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Fetch tags
-	lakefsTags, err := lakefsClient.ListAllTags(lakeFSRepositoryName, "")
+	lakefsTags, err := c.LakeFSClient.ListAllTags(lakeFSRepositoryName, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list tags: %w", err)
 	}
@@ -37,17 +31,11 @@ func (c *Client) ListTags(workspace, repository string) ([]irminModels.Tag, erro
 }
 
 func (c *Client) GetTag(workspace, repository, tag string) (*irminModels.Tag, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Get tag details.
-	lakefsTag, err := lakefsClient.GetTag(lakeFSRepositoryName, tag)
+	lakefsTag, err := c.LakeFSClient.GetTag(lakeFSRepositoryName, tag)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tag: %w", err)
 	}
@@ -62,12 +50,6 @@ func (c *Client) GetTag(workspace, repository, tag string) (*irminModels.Tag, er
 }
 
 func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminModels.Tag, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -77,7 +59,7 @@ func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminModel
 		Ref:   ref,
 		Force: false,
 	}
-	lakefsTag, err := lakefsClient.CreateTag(lakeFSRepositoryName, tagCreateRequest)
+	lakefsTag, err := c.LakeFSClient.CreateTag(lakeFSRepositoryName, tagCreateRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create tag: %w", err)
 	}
@@ -92,17 +74,11 @@ func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminModel
 }
 
 func (c *Client) DeleteTag(workspace, repository, tag string) error {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Delete the tag.
-	err = lakefsClient.DeleteTag(lakeFSRepositoryName, tag)
+	err := c.LakeFSClient.DeleteTag(lakeFSRepositoryName, tag)
 	if err != nil {
 		return fmt.Errorf("failed to delete tag: %w", err)
 	}

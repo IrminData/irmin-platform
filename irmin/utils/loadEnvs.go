@@ -17,8 +17,6 @@ type CoreAPIEnv struct {
 	SqidAlphabet             string // Alphabet to use for SQIDs
 	DatabaseConnectionString string // Postgres DB connection string
 	ResendAPIKey             string // Resend API Key for emails
-	DataEngineURL            string // URL of the Data Engine API server
-	DataEngineToken          string // Token to authenticate system level requests to the Data Engine API
 	ConsoleURL               string // URL of the Irmin Console
 	InviteExpiresInDays      int    // Number of days before an invite expires
 	ClerkPublicKey           string // Clerk Public API Key
@@ -111,15 +109,6 @@ func LoadEnv() (*CoreAPIEnv, error) {
 	}
 
 	resendAPIKey, err := getEnv("RESEND_API_KEY", true, "")
-	if err != nil {
-		return nil, err
-	}
-
-	dataEngineURL, err := getEnv("DATA_ENGINE_URL", true, "")
-	if err != nil {
-		return nil, err
-	}
-	dataEngineToken, err := getEnv("DATA_ENGINE_TOKEN", true, "")
 	if err != nil {
 		return nil, err
 	}
@@ -233,8 +222,6 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		SqidAlphabet:             sqidAlphabet,
 		DatabaseConnectionString: databaseConnectionString,
 		ResendAPIKey:             resendAPIKey,
-		DataEngineURL:            dataEngineURL,
-		DataEngineToken:          dataEngineToken,
 		ConsoleURL:               consoleURL,
 		InviteExpiresInDays:      inviteExpiresInDays,
 		ClerkPublicKey:           clerkPublicKey,

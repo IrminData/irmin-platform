@@ -35,9 +35,6 @@ DATABASE_CONNECTION_STRING=postgresql://user:pwd@localhost:5432/irmin
 
 RESEND_API_KEY=re_...
 
-DATA_ENGINE_URL=http://localhost:8081
-DATA_ENGINE_TOKEN=...
-
 CONSOLE_URL=https://console.irmin.dev
 
 INVITE_EXPIRES_IN_DAYS=7

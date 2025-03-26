@@ -3,7 +3,6 @@ package dataEngine
 import (
 	"fmt"
 	"irmin-api/duckdb"
-	"irmin-api/lakefs"
 	"irmin-api/utils"
 	"strings"
 
@@ -12,12 +11,6 @@ import (
 
 // ExecuteQuery executes a query in the specified workspace and returns the results.
 func (c *Client) ExecuteQuery(userWorkspace, query string) ([]map[string]any, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Parse the query provided by the user.
 	parsedQuery, err := utils.ParseIrminQuery(query, func(pl *utils.ParsedQueryPlaceholder) (string, error) {
 		workspace := pl.Workspace
@@ -35,7 +28,7 @@ func (c *Client) ExecuteQuery(userWorkspace, query string) ([]map[string]any, er
 
 		// If the ref is not provided in the query, get the repository's default branch.
 		if ref == "" {
-			repository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+			repository, err := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
 			if err != nil {
 				return "", fmt.Errorf("failed to get repository: %v", err)
 			}

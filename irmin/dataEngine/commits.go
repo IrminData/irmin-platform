@@ -10,18 +10,12 @@ import (
 )
 
 func (c *Client) ListCommits(workspace, repository, ref string) ([]irminModels.Commit, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// If the "ref" query param is not provided, get the repository's default branch.
 	if ref == "" {
-		repository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+		repository, err := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get repository: %w", err)
 		}
@@ -29,7 +23,7 @@ func (c *Client) ListCommits(workspace, repository, ref string) ([]irminModels.C
 	}
 
 	// Fetch commits
-	lakefsCommits, err := lakefsClient.ListAllCommits(lakeFSRepositoryName, ref, "", "", "", nil, nil)
+	lakefsCommits, err := c.LakeFSClient.ListAllCommits(lakeFSRepositoryName, ref, "", "", "", nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list commits: %w", err)
 	}
@@ -58,17 +52,11 @@ func (c *Client) ListCommits(workspace, repository, ref string) ([]irminModels.C
 }
 
 func (c *Client) GetCommit(workspace, repository, hash string) (*irminModels.Commit, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Get commit details.
-	lakeFSCommit, err := lakefsClient.GetCommit(lakeFSRepositoryName, hash)
+	lakeFSCommit, err := c.LakeFSClient.GetCommit(lakeFSRepositoryName, hash)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get commit: %w", err)
 	}
@@ -94,17 +82,11 @@ func (c *Client) GetCommit(workspace, repository, hash string) (*irminModels.Com
 }
 
 func (c *Client) CommitChanges(workspace, repository, branch, message, author string, allow_empty bool) (*irminModels.Commit, error) {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Commit changes in the repository.
-	lakeFSCommit, err := lakefsClient.CreateCommit(lakeFSRepositoryName, branch, "", lakefs.CommitCreateRequest{
+	lakeFSCommit, err := c.LakeFSClient.CreateCommit(lakeFSRepositoryName, branch, "", lakefs.CommitCreateRequest{
 		Message: message,
 		Metadata: map[string]string{
 			"author": author,
@@ -137,12 +119,6 @@ func (c *Client) CommitChanges(workspace, repository, branch, message, author st
 }
 
 func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pathType string) error {
-	// Create LakeFS client.
-	lakefsClient, err := lakefs.CreateClient()
-	if err != nil {
-		return fmt.Errorf("failed to create LakeFS client: %w", err)
-	}
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -155,7 +131,7 @@ func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pa
 	if resetPath == "" {
 		resetPath = "/"
 	}
-	err = lakefsClient.ResetBranch(lakeFSRepositoryName, branch, lakefs.BranchResetRequest{
+	err := c.LakeFSClient.ResetBranch(lakeFSRepositoryName, branch, lakefs.BranchResetRequest{
 		Type: resetType,
 		Path: resetPath,
 	})
