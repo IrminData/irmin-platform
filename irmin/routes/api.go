@@ -111,6 +111,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	workflow.Post("/runs", controllers.TriggerWorkflowRun)
 	workflow.Get("/runs", controllers.WorkflowRunsIndex)
 	workflow.Get("/runs/:run", controllers.WorkflowRunsShow)
+	workflow.Delete("/runs/:run", controllers.WorkflowRunsDestroy)
 
 	// Repositories routes
 	repositories := workspace.Group("/repositories")

@@ -145,3 +145,71 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 		Data: formattedRun,
 	})
 }
+
+func WorkflowRunsDestroy(c fiber.Ctx) error {
+	dict := c.Locals("dict").(locales.Dictionary)
+	workflow := c.Locals("workflow").(*db.Workflow)
+
+	// Parse the run sqid from the request URL.
+	runSqid := c.Params("run")
+	if runSqid == "" {
+		log.Printf("No workflow run selected")
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Decode the workflow run ID.
+	workflowRunID, err := utils.DecodeSqids("workflow-runs", runSqid)
+	if err != nil {
+		log.Printf("Error decoding workflow run sqid: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Find the workflow run by its ID.
+	workflowRun, err := db.GetWorkflowRunByID(uint(workflowRunID))
+	if err != nil {
+		log.Printf("Error retrieving workflow run: %v", err)
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Make sure the workflow run belongs to the workflow.
+	if workflowRun.WorkflowID != workflow.ID {
+		log.Printf("Workflow run does not belong to workflow")
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// TODO: Cancel the workflow run and stop all running tasks.
+
+	// Change the workflow run status to cancelled.
+	workflowRun.Status = db.WorkflowStatusCancelled
+	workflowRun, err = db.UpdateWorkflowRun(uint(workflowRunID), map[string]any{
+		"status": db.WorkflowStatusCancelled,
+	})
+	if err != nil {
+		log.Printf("Error cancelling workflow run: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Message: dict.T("error_occurred"),
+		})
+	}
+
+	// Format the workflow run for the response.
+	formattedRun, err := formatter.FormatWorkflowRunResponse(workflowRun)
+	if err != nil {
+		log.Printf("Error formatting workflow run: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Message: dict.T("error_occurred"),
+		})
+	}
+
+	// Return the formatted workflow run.
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+		Data: formattedRun,
+	})
+}
