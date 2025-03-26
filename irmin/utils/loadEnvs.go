@@ -25,12 +25,23 @@ type CoreAPIEnv struct {
 	ClerkSecretKey           string // Clerk Secret API Key
 	ClerkSigningKey          string // Clerk Signing Key for JWT
 	ClerkSigningAlgorithm    string // Clerk Signing Algorithm for JWT
+	LakeFSURL                string // URL of the LakeFS instance to connect to
+	LakeFSAccessKey          string // Access key for the LakeFS instance
+	LakeFSSecretKey          string // Secret key for the LakeFS instance
 	S3Endpoint               string // Endpoint of the S3-compatible object store
 	S3Bucket                 string // Bucket name of the S3-compatible object store
 	S3Folder                 string // Base folder name of the S3-compatible object store
 	S3Region                 string // Region of the S3-compatible object store
 	S3AccessKeyID            string // Access key ID for the S3-compatible object store
 	S3AccessSecret           string // Secret access key for the S3-compatible object store
+	TestConnectorBaseURL     string // Base URL of the connector to test with
+	TestConnectorToken       string // Operation token for the connector to test with
+	TestConnectorPath        string // Path to the test file in the connector
+	TestObjectName           string // Name of the test object which is expected to be a structured JSON file
+	TestWorkspace            string // Workspace to test with
+	TestRepository           string // Repository to test with
+	TestBranch               string // Branch to test with
+	TestTag                  string // Tag to test with
 }
 
 // getEnv retrieves a single environment variable. If required and missing, returns an error.
@@ -144,6 +155,19 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
+	lakefsURL, err := getEnv("LAKE_FS_URL", true, "")
+	if err != nil {
+		return nil, err
+	}
+	lakefsAccessKey, err := getEnv("LAKE_FS_ACCESS_KEY_ID", true, "")
+	if err != nil {
+		return nil, err
+	}
+	lakefsSecretKey, err := getEnv("LAKE_FS_SECRET_ACCESS_KEY", true, "")
+	if err != nil {
+		return nil, err
+	}
+
 	s3Endpoint, err := getEnv("S3_ENDPOINT", true, "")
 	if err != nil {
 		return nil, err
@@ -169,6 +193,39 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
+	testConnectorBaseURL, err := getEnv("TEST_CONNECTOR_BASE_URL", false, "")
+	if err != nil {
+		return nil, err
+	}
+	testConnectorToken, err := getEnv("TEST_CONNECTOR_TOKEN", false, "")
+	if err != nil {
+		return nil, err
+	}
+	testConnectorPath, err := getEnv("TEST_CONNECTOR_PATH", false, "")
+	if err != nil {
+		return nil, err
+	}
+	testObjectName, err := getEnv("TEST_OBJECT_NAME", false, "")
+	if err != nil {
+		return nil, err
+	}
+	testWorkspace, err := getEnv("TEST_WORKSPACE", false, "")
+	if err != nil {
+		return nil, err
+	}
+	testRepository, err := getEnv("TEST_REPOSITORY", false, "")
+	if err != nil {
+		return nil, err
+	}
+	testBranch, err := getEnv("TEST_BRANCH", false, "")
+	if err != nil {
+		return nil, err
+	}
+	testTag, err := getEnv("TEST_TAG", false, "")
+	if err != nil {
+		return nil, err
+	}
+
 	return &CoreAPIEnv{
 		Port:                     port,
 		URL:                      url,
@@ -184,11 +241,22 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		ClerkSecretKey:           clerkSecretKey,
 		ClerkSigningKey:          clerkSigningKey,
 		ClerkSigningAlgorithm:    clerkSigningAlgorithm,
+		LakeFSURL:                lakefsURL,
+		LakeFSAccessKey:          lakefsAccessKey,
+		LakeFSSecretKey:          lakefsSecretKey,
 		S3Endpoint:               s3Endpoint,
 		S3Bucket:                 s3Bucket,
 		S3Folder:                 s3Folder,
 		S3Region:                 s3Region,
 		S3AccessKeyID:            s3AccessKeyID,
 		S3AccessSecret:           s3AccessSecret,
+		TestConnectorBaseURL:     testConnectorBaseURL,
+		TestConnectorToken:       testConnectorToken,
+		TestConnectorPath:        testConnectorPath,
+		TestObjectName:           testObjectName,
+		TestWorkspace:            testWorkspace,
+		TestRepository:           testRepository,
+		TestBranch:               testBranch,
+		TestTag:                  testTag,
 	}, nil
 }
