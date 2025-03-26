@@ -522,7 +522,7 @@ func BranchMiddleware(c fiber.Ctx) error {
 	DataEngine := dataEngine.NewClient(locale)
 
 	// Get the branch from the data engine.
-	dataEngineBranch, err := DataEngine.GetBranch(workspace.Slug, repository.Slug, branchName)
+	dataEngineBranch, err := DataEngine.GetBranch(c.Context(), workspace.Slug, repository.Slug, branchName)
 	if err != nil {
 		log.Printf("Error retrieving branch from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
