@@ -1,7 +1,7 @@
 package db
 
 import (
-	"irmin-api/dataEngine"
+	"irmin-api/engine"
 	"time"
 
 	"gorm.io/gorm"
@@ -23,18 +23,18 @@ type Repository struct {
 }
 
 type RepositoryResponse struct {
-	ID                     string                             `json:"id"`
-	Name                   string                             `json:"name"`
-	Slug                   string                             `json:"slug"`
-	Description            string                             `json:"description"`
-	Documentation          string                             `json:"documentation"`
-	IsImmutable            bool                               `json:"is_immutable"`
-	DefaultBranch          string                             `json:"default_branch"`
-	WorkspaceID            string                             `json:"workspace_id"`
-	OwnerID                string                             `json:"owner_id"`
-	GarbageCollectionRules *dataEngine.GarbageCollectionRules `json:"garbage_collection_rules,omitempty"`
-	CreatedAt              time.Time                          `json:"created_at"`
-	UpdatedAt              time.Time                          `json:"updated_at"`
+	ID                     string                         `json:"id"`
+	Name                   string                         `json:"name"`
+	Slug                   string                         `json:"slug"`
+	Description            string                         `json:"description"`
+	Documentation          string                         `json:"documentation"`
+	IsImmutable            bool                           `json:"is_immutable"`
+	DefaultBranch          string                         `json:"default_branch"`
+	WorkspaceID            string                         `json:"workspace_id"`
+	OwnerID                string                         `json:"owner_id"`
+	GarbageCollectionRules *engine.GarbageCollectionRules `json:"garbage_collection_rules,omitempty"`
+	CreatedAt              time.Time                      `json:"created_at"`
+	UpdatedAt              time.Time                      `json:"updated_at"`
 }
 
 func GetRepositoryBySlugAndWorkspaceID(slug string, workspaceID uint) (*Repository, error) {

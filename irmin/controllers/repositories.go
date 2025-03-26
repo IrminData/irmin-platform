@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"irmin-api/dataEngine"
 	"irmin-api/db"
-	"irmin-api/lib/formatter"
+	"irmin-api/engine"
+	"irmin-api/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -29,7 +29,7 @@ func RepositoriesIndex(c fiber.Ctx) error {
 	var repositoriesResponse []db.RepositoryResponse
 	for _, repository := range repositories {
 		// Format the repository response
-		repositoryResponse, err := formatter.FormatRepositoryResponse(&repository, &dataEngine.Repository{})
+		repositoryResponse, err := formatter.FormatRepositoryResponse(&repository, &engine.Repository{})
 		if err != nil {
 			log.Printf("Error formatting repository: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -126,7 +126,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Create the repository in the Data Engine
 	dataEngineRepository, err := DataEngine.CreateRepository(workspace.Slug, repositorySlug, defaultBranch, isImmutable, &gcDefaultRetentionDays, &gcDefaultBranchRetentionDays)
@@ -156,7 +156,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 func RepositoriesShow(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	repository := c.Locals("repository").(*db.Repository)
-	dataEngineRepository := c.Locals("data_engine_repository").(*dataEngine.Repository)
+	dataEngineRepository := c.Locals("data_engine_repository").(*engine.Repository)
 
 	// Format the repository response
 	repositoryResponse, err := formatter.FormatRepositoryResponse(repository, dataEngineRepository)
@@ -188,7 +188,7 @@ func RepositoriesDestroy(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Delete the repository from the Data Engine
 	if err := DataEngine.DeleteRepository(c.Context(), workspace.Slug, repository.Slug, false); err != nil {
@@ -208,7 +208,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	repository := c.Locals("repository").(*db.Repository)
-	dataEngineRepository := c.Locals("data_engine_repository").(*dataEngine.Repository)
+	dataEngineRepository := c.Locals("data_engine_repository").(*engine.Repository)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Parse the request body
@@ -243,7 +243,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Determine the garbage collection default retention days
 	gcDefaultRetentionDays := dataEngineRepository.GarbageCollectionRules.DefaultRetentionDays
@@ -304,7 +304,7 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	repository := c.Locals("repository").(*db.Repository)
-	dataEngineRepository := c.Locals("data_engine_repository").(*dataEngine.Repository)
+	dataEngineRepository := c.Locals("data_engine_repository").(*engine.Repository)
 
 	// Parse the request body
 	fields, err := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)

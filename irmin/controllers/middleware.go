@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"irmin-api/dataEngine"
 	"irmin-api/db"
+	"irmin-api/engine"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -487,13 +487,13 @@ func RepositoryMiddleware(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Get the repository from the data engine.
 	dataEngineRepository, err := DataEngine.GetRepository(c.Context(), workspace.Slug, repositorySlug)
 	if err != nil {
 		log.Printf("Error retrieving repository from Data Engine: %v", err)
-		dataEngineRepository = &dataEngine.Repository{}
+		dataEngineRepository = &engine.Repository{}
 	}
 
 	// Set the repository in the context for subsequent handlers.
@@ -519,7 +519,7 @@ func BranchMiddleware(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Get the branch from the data engine.
 	dataEngineBranch, err := DataEngine.GetBranch(c.Context(), workspace.Slug, repository.Slug, branchName)
@@ -552,7 +552,7 @@ func TagMiddleware(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Get the tag from the data engine.
 	dataEngineTag, err := DataEngine.GetTag(workspace.Slug, repository.Slug, tagName)
@@ -593,7 +593,7 @@ func ObjectMiddleware(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Get the object from the data engine.
 	repositoryObject, _ := DataEngine.GetPath(workspace.Slug, repository.Slug, path, ref)

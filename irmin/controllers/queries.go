@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"irmin-api/db"
-	"irmin-api/lib"
-	"irmin-api/lib/formatter"
+	"irmin-api/engine"
+	"irmin-api/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -260,8 +260,11 @@ func ExecuteSQL(c fiber.Ctx) error {
 		})
 	}
 
-	// Execute the SQL query
-	results, err := lib.ExecuteIrminSQL(locale, workspace.Slug, fields["sql"])
+	// Initialize Data Engine client
+	DataEngine := engine.NewClient(locale)
+
+	// Execute the SQL
+	results, err := DataEngine.ExecuteQuery(workspace.Description, fields["sql"])
 	if err != nil {
 		log.Printf("Error executing query: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -281,7 +284,11 @@ func ExecuteQuery(c fiber.Ctx) error {
 	workspace := c.Locals("workspace").(*db.Workspace)
 	query := c.Locals("stored_query").(*db.StoredQuery)
 
-	results, err := lib.ExecuteIrminSQL(locale, workspace.Slug, query.SQL)
+	// Initialize Data Engine client
+	DataEngine := engine.NewClient(locale)
+
+	// Execute the SQL
+	results, err := DataEngine.ExecuteQuery(workspace.Description, query.SQL)
 	if err != nil {
 		log.Printf("Error executing query: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{

@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"irmin-api/db"
+	"irmin-api/formatter"
 	"irmin-api/lib"
-	"irmin-api/lib/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"

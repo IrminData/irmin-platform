@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"irmin-api/dataEngine"
 	"irmin-api/db"
+	"irmin-api/engine"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -30,7 +30,7 @@ func CompareRefs(c fiber.Ctx) error {
 	compareRef := params["compare_ref"]
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Compare the refs
 	diff, err := DataEngine.CompareRefs(c.Context(), workspace.Slug, repository.Slug, baseRef, compareRef)
@@ -78,7 +78,7 @@ func MergeRefs(c fiber.Ctx) error {
 	allowEmpty := fields["allow_empty"] == "true"
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Merge the refs
 	mergeCommit, err := DataEngine.MergeRefs(workspace.Slug, repository.Slug, baseRef, compareRef, description, user.Email, strategy, squash, allowEmpty)

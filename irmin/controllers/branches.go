@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"irmin-api/dataEngine"
 	"irmin-api/db"
+	"irmin-api/engine"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -18,7 +18,7 @@ func BranchesIndex(c fiber.Ctx) error {
 	repository := c.Locals("repository").(*db.Repository)
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Get the branch from the data engine.
 	branches, err := DataEngine.ListBranches(c.Context(), workspace.Slug, repository.Slug)
@@ -56,7 +56,7 @@ func BranchesStore(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Create the branch in the data engine.
 	branch, err := DataEngine.CreateBranch(workspace.Slug, repository.Slug, fields["name"], fields["from"], isImmutable)
@@ -111,7 +111,7 @@ func BranchesUpdate(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Update the branch in the data engine.
 	branch, err = DataEngine.UpdateBranch(c.Context(), workspace.Slug, repository.Slug, branch.Name, newBranchName, isImmutable)
@@ -137,7 +137,7 @@ func BranchesDestroy(c fiber.Ctx) error {
 	branch := c.Locals("branch").(*irminModels.Branch)
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Delete the branch in the data engine.
 	err := DataEngine.DeleteBranch(workspace.Slug, repository.Slug, branch.Name)

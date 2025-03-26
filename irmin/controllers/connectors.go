@@ -3,7 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"irmin-api/db"
-	"irmin-api/lib/formatter"
+	"irmin-api/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"

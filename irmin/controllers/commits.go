@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"irmin-api/dataEngine"
 	"irmin-api/db"
+	"irmin-api/engine"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -26,7 +26,7 @@ func CommitsIndex(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Get the commits from the data engine.
 	commits, err := DataEngine.ListCommits(workspace.Slug, repository.Slug, params["ref"])
@@ -60,7 +60,7 @@ func CommitsStore(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Commit the changes in the data engine.
 	commit, err := DataEngine.CommitChanges(workspace.Slug, repository.Slug, fields["branch"], fields["message"], user.Email, true)
@@ -94,7 +94,7 @@ func CommitsShow(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Get the commit from the data engine.
 	commit, err := DataEngine.GetCommit(workspace.Slug, repository.Slug, hash)
@@ -127,7 +127,7 @@ func RevertUncommittedChanges(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Revert the uncommitted changes in the data engine.
 	err = DataEngine.RevertUncommitedChanges(workspace.Slug, repository.Slug, fields["branch"], fields["path"], fields["path_type"])

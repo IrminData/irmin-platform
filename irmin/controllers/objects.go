@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"irmin-api/dataEngine"
 	"irmin-api/db"
+	"irmin-api/engine"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -12,7 +12,7 @@ import (
 
 func ObjectsIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
-	object := c.Locals("object").(*dataEngine.Object)
+	object := c.Locals("object").(*engine.Object)
 
 	if object == nil {
 		log.Printf("Error retrieving object from Data Engine")
@@ -52,7 +52,7 @@ func UploadObject(c fiber.Ctx) error {
 	defer file.Close()
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Upload the object to the path in the repository at ref
 	newObject, err := DataEngine.UploadObject(workspace.Slug, repository.Slug, object_path, object_ref, file)
@@ -87,7 +87,7 @@ func MoveObject(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Move the object to the new path in the repository at ref
 	newObject, err := DataEngine.MoveObject(workspace.Slug, repository.Slug, object_path, object_ref, fields["new_path"])
@@ -122,7 +122,7 @@ func CopyObject(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Move the object to the new path in the repository at ref
 	newObject, err := DataEngine.CopyObject(workspace.Slug, repository.Slug, object_path, object_ref, fields["new_path"])
@@ -148,7 +148,7 @@ func ObjectsDestroy(c fiber.Ctx) error {
 	object_path := c.Locals("object_path").(string)
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Delete the object from the repository at ref
 	err := DataEngine.DeleteObject(workspace.Slug, repository.Slug, object_path, object_ref)
@@ -173,7 +173,7 @@ func ObjectsContent(c fiber.Ctx) error {
 	object_path := c.Locals("object_path").(string)
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Get the content of the object in the repository at ref
 	object, content, err := DataEngine.GetObjectContent(workspace.Slug, repository.Slug, object_path, object_ref)
@@ -197,7 +197,7 @@ func ObjectsHistory(c fiber.Ctx) error {
 	object_path := c.Locals("object_path").(string)
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Get the commit history of the object in the repository at ref
 	commits, err := DataEngine.GetObjectChanges(workspace.Slug, repository.Slug, object_path, object_ref)

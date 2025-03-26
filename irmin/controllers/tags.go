@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"irmin-api/dataEngine"
 	"irmin-api/db"
+	"irmin-api/engine"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -19,7 +19,7 @@ func TagsIndex(c fiber.Ctx) error {
 	repository := c.Locals("repository").(*db.Repository)
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Get the tag from the data engine.
 	tags, err := DataEngine.ListTags(workspace.Slug, repository.Slug)
@@ -51,7 +51,7 @@ func TagsStore(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Create the tag in the data engine.
 	tag, err := DataEngine.CreateTag(workspace.Slug, repository.Slug, fields["name"], fields["ref"])
@@ -84,7 +84,7 @@ func TagsDestroy(c fiber.Ctx) error {
 	tag := c.Locals("tag").(*irminModels.Tag)
 
 	// Initialize Data Engine client
-	DataEngine := dataEngine.NewClient(locale)
+	DataEngine := engine.NewClient(locale)
 
 	// Delete the tag from the data engine.
 	if err := DataEngine.DeleteTag(workspace.Slug, repository.Slug, tag.Name); err != nil {

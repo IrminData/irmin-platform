@@ -2,12 +2,12 @@ package formatter
 
 import (
 	"fmt"
-	"irmin-api/dataEngine"
 	"irmin-api/db"
+	"irmin-api/engine"
 	"irmin-api/utils"
 )
 
-func FormatRepositoryResponse(repository *db.Repository, dataEngineRepository *dataEngine.Repository) (*db.RepositoryResponse, error) {
+func FormatRepositoryResponse(repository *db.Repository, dataEngineRepository *engine.Repository) (*db.RepositoryResponse, error) {
 	// Get the sqid of the repository
 	repositorySqid, err := utils.EncodeSqids("repositories", uint64(repository.ID))
 	if err != nil {
