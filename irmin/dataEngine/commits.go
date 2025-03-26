@@ -2,76 +2,166 @@ package dataEngine
 
 import (
 	"fmt"
-	"net/http"
+	"irmin-api/lakefs"
+	"irmin-api/utils"
+	"time"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 func (c *Client) ListCommits(workspace, repository, ref string) ([]irminModels.Commit, error) {
-	var data []irminModels.Commit
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/commits?ref=%s", workspace, repository, ref)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: endpoint,
-	}, &data); err != nil {
-		return nil, err
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return data, nil
+
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// If the "ref" query param is not provided, get the repository's default branch.
+	if ref == "" {
+		repository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get repository: %w", err)
+		}
+		ref = repository.DefaultBranch
+	}
+
+	// Fetch commits
+	lakefsCommits, err := lakefsClient.ListAllCommits(lakeFSRepositoryName, ref, "", "", "", nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list commits: %w", err)
+	}
+
+	// Convert LakeFS commits to Irmin commits.
+	irminCommits := make([]irminModels.Commit, len(lakefsCommits))
+	for i, lakeFSCommit := range lakefsCommits {
+		previousHash := ""
+		if len(lakeFSCommit.Parents) > 0 {
+			previousHash = lakeFSCommit.Parents[0]
+		}
+		author := lakeFSCommit.Committer
+		if authorValue, ok := lakeFSCommit.Metadata["author"]; ok && authorValue != "" {
+			author = authorValue
+		}
+		irminCommits[i] = irminModels.Commit{
+			Hash:         lakeFSCommit.ID,
+			Message:      lakeFSCommit.Message,
+			Timestamp:    time.Unix(int64(lakeFSCommit.CreationDate), 0).Format(time.RFC3339),
+			Author:       author,
+			PreviousHash: &previousHash,
+		}
+	}
+
+	return irminCommits, nil
 }
 
 func (c *Client) GetCommit(workspace, repository, hash string) (*irminModels.Commit, error) {
-	var data irminModels.Commit
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/commits/%s", workspace, repository, hash)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: endpoint,
-	}, &data); err != nil {
-		return nil, err
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return &data, nil
+
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Get commit details.
+	lakeFSCommit, err := lakefsClient.GetCommit(lakeFSRepositoryName, hash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get commit: %w", err)
+	}
+
+	// Convert LakeFS commit to Irmin commit.
+	previousHash := ""
+	if len(lakeFSCommit.Parents) > 0 {
+		previousHash = lakeFSCommit.Parents[0]
+	}
+	author := lakeFSCommit.Committer
+	if authorValue, ok := lakeFSCommit.Metadata["author"]; ok && authorValue != "" {
+		author = authorValue
+	}
+	irminCommit := irminModels.Commit{
+		Hash:         lakeFSCommit.ID,
+		Message:      lakeFSCommit.Message,
+		Timestamp:    time.Unix(int64(lakeFSCommit.CreationDate), 0).Format(time.RFC3339),
+		Author:       author,
+		PreviousHash: &previousHash,
+	}
+
+	return &irminCommit, nil
 }
 
 func (c *Client) CommitChanges(workspace, repository, branch, message, author string, allow_empty bool) (*irminModels.Commit, error) {
-	var data irminModels.Commit
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/commits", workspace, repository)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:        http.MethodPost,
-		Endpoint:      endpoint,
-		AllowedStatus: []int{http.StatusCreated, http.StatusOK},
-		ContentType:   "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"branch":      branch,
-			"message":     message,
-			"author":      author,
-			"allow_empty": fmt.Sprintf("%t", allow_empty),
-		},
-	}, &data); err != nil {
-		return nil, err
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return &data, nil
+
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Commit changes in the repository.
+	lakeFSCommit, err := lakefsClient.CreateCommit(lakeFSRepositoryName, branch, "", lakefs.CommitCreateRequest{
+		Message: message,
+		Metadata: map[string]string{
+			"author": author,
+		},
+		Date:       time.Now().Unix(),
+		AllowEmpty: allow_empty,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create commit: %w", err)
+	}
+
+	// Convert LakeFS commit to Irmin commit.
+	previousHash := ""
+	if len(lakeFSCommit.Parents) > 0 {
+		previousHash = lakeFSCommit.Parents[0]
+	}
+	author = lakeFSCommit.Committer
+	if authorValue, ok := lakeFSCommit.Metadata["author"]; ok && authorValue != "" {
+		author = authorValue
+	}
+	irminCommit := irminModels.Commit{
+		Hash:         lakeFSCommit.ID,
+		Message:      lakeFSCommit.Message,
+		Timestamp:    time.Unix(int64(lakeFSCommit.CreationDate), 0).Format(time.RFC3339),
+		Author:       author,
+		PreviousHash: &previousHash,
+	}
+
+	return &irminCommit, nil
 }
 
 func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pathType string) error {
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s/commits/revert", workspace, repository)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    endpoint,
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"branch": branch,
-			"path":   path,
-			"type":   pathType,
-		},
-	}, nil); err != nil {
-		return err
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
+
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Reset the branch.
+	resetType := lakefs.PathTypeReset
+	if pathType != "" {
+		resetType = lakefs.PathType(pathType)
+	}
+	resetPath := path
+	if resetPath == "" {
+		resetPath = "/"
+	}
+	err = lakefsClient.ResetBranch(lakeFSRepositoryName, branch, lakefs.BranchResetRequest{
+		Type: resetType,
+		Path: resetPath,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to reset branch: %w", err)
+	}
+
 	return nil
 }
