@@ -1,9 +1,13 @@
 package dataEngine
 
 import (
+	"context"
 	"fmt"
-	"net/http"
-	"strconv"
+	"irmin-api/bucket"
+	"irmin-api/lakefs"
+	"irmin-api/utils"
+	"strings"
+	"time"
 )
 
 // BranchGarbageCollectionRules represents the garbage collection rules for a branch.
@@ -39,87 +43,301 @@ type Repository struct {
 }
 
 func (c *Client) ListRepositories(workspace string) ([]Repository, error) {
-	var data []Repository
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories", workspace)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: endpoint,
-	}, &data); err != nil {
-		return nil, err
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return data, nil
+
+	// Construct repository prefix.
+	lakeFSRepositoryPrefix := utils.GetLakeFSRepositoryPrefix(workspace)
+
+	// Fetch repositories with the given prefix.
+	lakefsRepositories, err := lakefsClient.ListAllRepositories(lakeFSRepositoryPrefix, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list repositories: %w", err)
+	}
+
+	// Convert LakeFS repositories to Irmin repositories.
+	irminRepositories := make([]Repository, len(lakefsRepositories))
+	for i, lakefsRepository := range lakefsRepositories {
+		irminRepositories[i] = Repository{
+			ID:                     lakefsRepository.ID,
+			Name:                   strings.ReplaceAll(lakefsRepository.ID, lakeFSRepositoryPrefix, ""),
+			Workspace:              workspace,
+			StorageNamespace:       lakefsRepository.StorageNamespace,
+			IsImmutable:            lakefsRepository.ReadOnly,
+			DefaultBranch:          lakefsRepository.DefaultBranch,
+			CreatedAt:              time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
+			GarbageCollectionRules: nil,
+		}
+	}
+
+	return irminRepositories, nil
 }
 
-func (c *Client) GetRepository(workspace, repository string) (*Repository, error) {
-	var data Repository
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s", workspace, repository)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: endpoint,
-	}, &data); err != nil {
-		return nil, err
+func (c *Client) GetRepository(ctx context.Context, workspace, repository string) (*Repository, error) {
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return &data, nil
+
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Run LakeFS calls concurrently.
+	repoFuture := utils.AsyncWithContext(ctx, func() (*lakefs.Repository, error) {
+		return lakefsClient.GetRepository(lakeFSRepositoryName)
+	})
+	gcRulesFuture := utils.AsyncWithContext(ctx, func() (*lakefs.GarbageCollectionRules, error) {
+		return lakefsClient.GetGarbageCollectionRules(lakeFSRepositoryName)
+	})
+
+	// Get repository details.
+	lakefsRepository, err := repoFuture.Await()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get repository details: %w", err)
+	}
+
+	// Get repository garbage collection rules.
+	lakefsGarbageCollectionRules, err := gcRulesFuture.Await()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get repository garbage collection rules: %w", err)
+	}
+
+	// Construct repository prefix.
+	lakeFSRepositoryPrefix := utils.GetLakeFSRepositoryPrefix(workspace)
+
+	// Convert LakeFS repository to Irmin repository.
+	irminRepository := Repository{
+		ID:               lakefsRepository.ID,
+		Name:             strings.ReplaceAll(lakefsRepository.ID, lakeFSRepositoryPrefix, ""),
+		Workspace:        workspace,
+		StorageNamespace: lakefsRepository.StorageNamespace,
+		IsImmutable:      lakefsRepository.ReadOnly,
+		DefaultBranch:    lakefsRepository.DefaultBranch,
+		CreatedAt:        time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
+		GarbageCollectionRules: &GarbageCollectionRules{
+			DefaultRetentionDays: lakefsGarbageCollectionRules.DefaultRetentionDays,
+			Branches: func() []BranchGarbageCollectionRules {
+				var branches []BranchGarbageCollectionRules
+				for _, branch := range lakefsGarbageCollectionRules.Branches {
+					branches = append(branches, BranchGarbageCollectionRules{
+						BranchID:      branch.BranchID,
+						RetentionDays: branch.RetentionDays,
+					})
+				}
+				return branches
+			}(),
+		},
+	}
+
+	return &irminRepository, nil
 }
 
 func (c *Client) CreateRepository(workspace, name, defaultBranch string, isImmutable bool, gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int) (*Repository, error) {
-	var data Repository
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories", workspace)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:        http.MethodPost,
-		Endpoint:      endpoint,
-		AllowedStatus: []int{http.StatusCreated, http.StatusOK},
-		ContentType:   "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"name":                                  name,
-			"default_branch":                        defaultBranch,
-			"is_immutable":                          fmt.Sprintf("%t", isImmutable),
-			"garbage_default_retention_days":        strconv.FormatInt(int64(*gcDefaultRetentionDays), 10),
-			"garbage_default_branch_retention_days": strconv.FormatInt(int64(*gcDefaultBranchRetentionDays), 10),
-		},
-	}, &data); err != nil {
-		return nil, err
+
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return &data, nil
+
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, name)
+
+	// Construct repository storage namespace.
+	lakeFSRepositoryStorageNamespace := utils.GetLakeFSRepositoryStorageNamespace(workspace, name)
+
+	// Select default branch.
+	if defaultBranch == "" {
+		defaultBranch = "main"
+	}
+
+	// Create repository.
+	repositoryCreateRequest := lakefs.RepositoryCreateRequest{
+		Name:             lakeFSRepositoryName,
+		StorageNamespace: lakeFSRepositoryStorageNamespace,
+		DefaultBranch:    defaultBranch,
+		ReadOnly:         isImmutable,
+	}
+	lakefsRepository, err := lakefsClient.CreateRepository(false, repositoryCreateRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create repository: %w", err)
+	}
+
+	// Create garbage collection rules.
+	garbageCollectionRules := lakefs.GarbageCollectionRules{}
+	if *gcDefaultRetentionDays > 0 {
+		garbageCollectionRules.DefaultRetentionDays = *gcDefaultRetentionDays
+	}
+	if *gcDefaultBranchRetentionDays > 0 {
+		garbageCollectionRules.Branches = []lakefs.BranchGarbageCollectionRules{
+			{
+				BranchID:      defaultBranch,
+				RetentionDays: *gcDefaultBranchRetentionDays,
+			},
+		}
+	}
+	if *gcDefaultBranchRetentionDays > 0 && *gcDefaultRetentionDays > 0 {
+		err = lakefsClient.SetGarbageCollectionRules(lakeFSRepositoryName, garbageCollectionRules)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set garbage collection rules: %w", err)
+		}
+	}
+
+	// Construct repository prefix.
+	lakeFSRepositoryPrefix := utils.GetLakeFSRepositoryPrefix(workspace)
+
+	// Convert LakeFS repository to Irmin repository.
+	irminRepository := Repository{
+		ID:               lakefsRepository.ID,
+		Name:             strings.ReplaceAll(lakefsRepository.ID, lakeFSRepositoryPrefix, ""),
+		Workspace:        workspace,
+		StorageNamespace: lakefsRepository.StorageNamespace,
+		IsImmutable:      lakefsRepository.ReadOnly,
+		DefaultBranch:    lakefsRepository.DefaultBranch,
+		CreatedAt:        time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
+		GarbageCollectionRules: &GarbageCollectionRules{
+			DefaultRetentionDays: garbageCollectionRules.DefaultRetentionDays,
+			Branches: func() []BranchGarbageCollectionRules {
+				var branches []BranchGarbageCollectionRules
+				for _, branch := range garbageCollectionRules.Branches {
+					branches = append(branches, BranchGarbageCollectionRules{
+						BranchID:      branch.BranchID,
+						RetentionDays: branch.RetentionDays,
+					})
+				}
+				return branches
+			}(),
+		},
+	}
+
+	return &irminRepository, nil
 }
 
 func (c *Client) UpdateRepository(workspace, repository string, gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int) (*Repository, error) {
-	var data Repository
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s", workspace, repository)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    endpoint,
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"garbage_default_retention_days":        strconv.FormatInt(int64(*gcDefaultRetentionDays), 10),
-			"garbage_default_branch_retention_days": strconv.FormatInt(int64(*gcDefaultBranchRetentionDays), 10),
-		},
-	}, &data); err != nil {
-		return nil, err
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
-	return &data, nil
+
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Get repository details.
+	lakefsRepository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get repository details: %w", err)
+	}
+
+	// Create garbage collection rules.
+	garbageCollectionRules := lakefs.GarbageCollectionRules{}
+	if *gcDefaultRetentionDays > 0 {
+		garbageCollectionRules.DefaultRetentionDays = *gcDefaultRetentionDays
+	}
+	if *gcDefaultBranchRetentionDays > 0 {
+		garbageCollectionRules.Branches = []lakefs.BranchGarbageCollectionRules{
+			{
+				BranchID:      lakefsRepository.DefaultBranch,
+				RetentionDays: *gcDefaultBranchRetentionDays,
+			},
+		}
+	}
+	if *gcDefaultBranchRetentionDays > 0 && *gcDefaultRetentionDays > 0 {
+		// Update garbage collection rules.
+		err = lakefsClient.SetGarbageCollectionRules(lakeFSRepositoryName, garbageCollectionRules)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set garbage collection rules: %w", err)
+		}
+	} else {
+		// Delete garbage collection rules.
+		err = lakefsClient.DeleteGarbageCollectionRules(lakeFSRepositoryName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete garbage collection rules: %w", err)
+		}
+	}
+
+	// Construct repository prefix.
+	lakeFSRepositoryPrefix := utils.GetLakeFSRepositoryPrefix(workspace)
+
+	// Convert LakeFS repository to Irmin repository.
+	irminRepository := Repository{
+		ID:               lakefsRepository.ID,
+		Name:             strings.ReplaceAll(lakefsRepository.ID, lakeFSRepositoryPrefix, ""),
+		Workspace:        workspace,
+		StorageNamespace: lakefsRepository.StorageNamespace,
+		IsImmutable:      lakefsRepository.ReadOnly,
+		DefaultBranch:    lakefsRepository.DefaultBranch,
+		CreatedAt:        time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
+		GarbageCollectionRules: &GarbageCollectionRules{
+			DefaultRetentionDays: garbageCollectionRules.DefaultRetentionDays,
+			Branches: func() []BranchGarbageCollectionRules {
+				var branches []BranchGarbageCollectionRules
+				for _, branch := range garbageCollectionRules.Branches {
+					branches = append(branches, BranchGarbageCollectionRules{
+						BranchID:      branch.BranchID,
+						RetentionDays: branch.RetentionDays,
+					})
+				}
+				return branches
+			}(),
+		},
+	}
+
+	return &irminRepository, nil
 }
 
-func (c *Client) DeleteRepository(workspace, repository string, keepObjects bool) error {
-	// Format the endpoint.
-	endpoint := fmt.Sprintf("/workspace/%s/repositories/%s", workspace, repository)
-	// Call the API endpoint.
-	if err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodDelete,
-		Endpoint: endpoint,
-		FormFields: map[string]string{
-			"keep_objects": fmt.Sprintf("%t", keepObjects),
-		},
-	}, nil); err != nil {
-		return err
+func (c *Client) DeleteRepository(ctx context.Context, workspace, repository string, keepObjects bool) error {
+	// Create LakeFS client.
+	lakefsClient, err := lakefs.CreateClient()
+	if err != nil {
+		return fmt.Errorf("failed to create LakeFS client: %w", err)
 	}
+
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	// Get repository details and check if it exists.
+	lakefsRepository, err := lakefsClient.GetRepository(lakeFSRepositoryName)
+	if err != nil {
+		return fmt.Errorf("failed to get repository details: %w", err)
+	}
+	if lakefsRepository == nil {
+		return fmt.Errorf("repository not found")
+	}
+
+	// Delete repository.
+	err = lakefsClient.DeleteRepository(lakeFSRepositoryName)
+	if err != nil {
+		return fmt.Errorf("failed to delete repository: %w", err)
+	}
+
+	// Delete repository storage namespace if keepObjects is false
+	if !keepObjects {
+		// Load environment variables
+		env, err := utils.LoadEnv()
+		if err != nil {
+			return fmt.Errorf("failed to load environment variables: %w", err)
+		}
+		// Create bucket client
+		bucket, err := bucket.CreateBucketClient()
+		if err != nil {
+			return fmt.Errorf("failed to create bucket client: %w", err)
+		}
+		defer bucket.Close()
+		// Construct the repository storage namespace
+		folderPath := strings.TrimSuffix(lakefsRepository.StorageNamespace, "/")
+		folderPath = strings.TrimPrefix(folderPath, "s3://")
+		folderPath = fmt.Sprintf("%s/%s", env.S3Folder, folderPath)
+		// Delete repository storage namespace
+		err = bucket.DeletePath(ctx, folderPath)
+		if err != nil {
+			return fmt.Errorf("failed to delete repository storage namespace: %w", err)
+		}
+	}
+
 	return nil
 }

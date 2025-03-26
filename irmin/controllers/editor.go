@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"irmin-api/bucket"
 	"irmin-api/db"
-	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
@@ -39,7 +39,7 @@ func EditorIndex(c fiber.Ctx) error {
 	path := strings.Trim(params["path"], "/")
 
 	// Initialize the bucket client
-	bucket, err := lib.CreateBucketClient()
+	bucket, err := bucket.CreateBucketClient()
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -129,7 +129,7 @@ func EditorItemStore(c fiber.Ctx) error {
 	content := fields["content"]
 
 	// Create bucket client
-	bucket, err := lib.CreateBucketClient()
+	bucket, err := bucket.CreateBucketClient()
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -178,7 +178,7 @@ func EditorItemDestroy(c fiber.Ctx) error {
 	}
 
 	// Create bucket client
-	bucket, err := lib.CreateBucketClient()
+	bucket, err := bucket.CreateBucketClient()
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -239,7 +239,7 @@ func MoveEditorItem(c fiber.Ctx) error {
 	}
 
 	// Create bucket client
-	bucket, err := lib.CreateBucketClient()
+	bucket, err := bucket.CreateBucketClient()
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -303,7 +303,7 @@ func CopyEditorItem(c fiber.Ctx) error {
 	}
 
 	// Create bucket client
-	bucket, err := lib.CreateBucketClient()
+	bucket, err := bucket.CreateBucketClient()
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -352,7 +352,7 @@ func EditorItemContent(c fiber.Ctx) error {
 	}
 
 	// Create bucket client
-	bucket, err := lib.CreateBucketClient()
+	bucket, err := bucket.CreateBucketClient()
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{

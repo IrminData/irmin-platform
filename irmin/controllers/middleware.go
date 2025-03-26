@@ -490,7 +490,7 @@ func RepositoryMiddleware(c fiber.Ctx) error {
 	DataEngine := dataEngine.NewClient(locale)
 
 	// Get the repository from the data engine.
-	dataEngineRepository, err := DataEngine.GetRepository(workspace.Slug, repositorySlug)
+	dataEngineRepository, err := DataEngine.GetRepository(c.Context(), workspace.Slug, repositorySlug)
 	if err != nil {
 		log.Printf("Error retrieving repository from Data Engine: %v", err)
 		dataEngineRepository = &dataEngine.Repository{}

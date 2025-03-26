@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"irmin-api/lib"
+	"irmin-api/bucket"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -82,7 +82,7 @@ func WorkspacesStore(c fiber.Ctx) error {
 	}
 
 	// Create a bucket folder for the editor files of the workspace.
-	bucket, err := lib.CreateBucketClient()
+	bucket, err := bucket.CreateBucketClient()
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
@@ -233,7 +233,7 @@ func WorkspacesDestroy(c fiber.Ctx) error {
 	}
 
 	// Create bucket client
-	bucket, err := lib.CreateBucketClient()
+	bucket, err := bucket.CreateBucketClient()
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{

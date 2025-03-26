@@ -191,7 +191,7 @@ func RepositoriesDestroy(c fiber.Ctx) error {
 	DataEngine := dataEngine.NewClient(locale)
 
 	// Delete the repository from the Data Engine
-	if err := DataEngine.DeleteRepository(workspace.Slug, repository.Slug, false); err != nil {
+	if err := DataEngine.DeleteRepository(c.Context(), workspace.Slug, repository.Slug, false); err != nil {
 		log.Printf("Error deleting repository in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
