@@ -7,6 +7,7 @@ import (
 	"irmin-api/utils"
 	"log"
 
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -20,7 +21,7 @@ func CompareRefs(c fiber.Ctx) error {
 	params, err := utils.ParseQueryParams(c, []string{"base_ref", "compare_ref"}, nil)
 	if err != nil {
 		log.Printf("Error parsing query parameters: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -36,12 +37,12 @@ func CompareRefs(c fiber.Ctx) error {
 	diff, err := DataEngine.CompareRefs(c.Context(), workspace.Slug, repository.Slug, baseRef, compareRef)
 	if err != nil {
 		log.Printf("Error comparing refs: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: diff,
 	})
 }
@@ -57,7 +58,7 @@ func MergeRefs(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"base_ref", "compare_ref"}, []string{"description", "strategy", "squash", "allow_empty"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -85,12 +86,12 @@ func MergeRefs(c fiber.Ctx) error {
 
 	if err != nil {
 		log.Printf("Error merging refs: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("merge_commit_created"),
 		Data:    mergeCommit,
 	})

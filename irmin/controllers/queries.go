@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -20,7 +21,7 @@ func QueriesIndex(c fiber.Ctx) error {
 	// Get all stored queries for the workspace
 	queries, err := db.GetStoredQueriesByWorkspaceID(workspace.ID)
 	if err != nil {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -31,7 +32,7 @@ func QueriesIndex(c fiber.Ctx) error {
 		formattedQuery, err := formatter.FormatStoredQueryResponse(&query)
 		if err != nil {
 			log.Printf("Error formatting stored query: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -39,7 +40,7 @@ func QueriesIndex(c fiber.Ctx) error {
 	}
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: formattedQueries,
 	})
 }
@@ -53,7 +54,7 @@ func QueriesStore(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, nil, []string{"name", "description", "sql"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -75,7 +76,7 @@ func QueriesStore(c fiber.Ctx) error {
 	storedQuery, err := db.CreateStoredQuery(query)
 	if err != nil {
 		log.Printf("Error creating stored query: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -84,13 +85,13 @@ func QueriesStore(c fiber.Ctx) error {
 	formattedQuery, err := formatter.FormatStoredQueryResponse(storedQuery)
 	if err != nil {
 		log.Printf("Error formatting stored query: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusCreated, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Data: formattedQuery,
 	})
 }
@@ -103,13 +104,13 @@ func QueriesShow(c fiber.Ctx) error {
 	formattedQuery, err := formatter.FormatStoredQueryResponse(query)
 	if err != nil {
 		log.Printf("Error formatting stored query: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: formattedQuery,
 	})
 }
@@ -122,7 +123,7 @@ func QueriesUpdate(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, nil, []string{"name", "description", "sql"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -143,7 +144,7 @@ func QueriesUpdate(c fiber.Ctx) error {
 	updatedQuery, err := db.UpdateStoredQuery(query.ID, updates)
 	if err != nil {
 		log.Printf("Error updating stored query: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -152,13 +153,13 @@ func QueriesUpdate(c fiber.Ctx) error {
 	formattedQuery, err := formatter.FormatStoredQueryResponse(updatedQuery)
 	if err != nil {
 		log.Printf("Error formatting stored query: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("query_updated"),
 		Data:    formattedQuery,
 	})
@@ -171,13 +172,13 @@ func QueriesDestroy(c fiber.Ctx) error {
 	// Delete the stored query from the database
 	if err := db.DeleteStoredQuery(query.ID); err != nil {
 		log.Printf("Error deleting stored query: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("query_deleted"),
 	})
 }
@@ -191,7 +192,7 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -200,7 +201,7 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 	newOwnerID, err := utils.DecodeSqids("users", fields["new_owner_id"])
 	if err != nil {
 		log.Printf("Error decoding sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -209,12 +210,12 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
 	if err != nil {
 		log.Printf("Error checking if user is in workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("new_owner_invalid")},
 		})
 	}
 	if !inWorkspace {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("new_owner_invalid")},
 		})
 	}
@@ -225,7 +226,7 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating stored query: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -234,13 +235,13 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 	formattedQuery, err := formatter.FormatStoredQueryResponse(updatedQuery)
 	if err != nil {
 		log.Printf("Error formatting stored query: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("query_ownership_transferred"),
 		Data:    formattedQuery,
 	})
@@ -255,7 +256,7 @@ func ExecuteSQL(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, nil, []string{"sql"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -267,13 +268,13 @@ func ExecuteSQL(c fiber.Ctx) error {
 	results, err := DataEngine.ExecuteQuery(workspace.Description, fields["sql"])
 	if err != nil {
 		log.Printf("Error executing query: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: results,
 	})
 }
@@ -291,12 +292,12 @@ func ExecuteQuery(c fiber.Ctx) error {
 	results, err := DataEngine.ExecuteQuery(workspace.Description, query.SQL)
 	if err != nil {
 		log.Printf("Error executing query: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: results,
 	})
 }

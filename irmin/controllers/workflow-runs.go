@@ -7,6 +7,7 @@ import (
 	"irmin-api/utils"
 	"log"
 
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -27,7 +28,7 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 	_, err := db.CreateWorkflowRun(run)
 	if err != nil {
 		log.Printf("error creating workflow run: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Message: dict.T("error_occurred"),
 		})
 	}
@@ -38,7 +39,7 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 	createdRun, err := db.GetWorkflowRunByID(run.ID)
 	if err != nil {
 		log.Printf("error fetching created workflow run: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Message: dict.T("error_occurred"),
 		})
 	}
@@ -47,13 +48,13 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 	formattedRun, err := formatter.FormatWorkflowRunResponse(createdRun)
 	if err != nil {
 		log.Printf("error formatting workflow run: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Message: dict.T("error_occurred"),
 		})
 	}
 
 	// Return the formatted workflow run.
-	return utils.WriteResponse(c, fiber.StatusCreated, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Data: formattedRun,
 	})
 }
@@ -67,7 +68,7 @@ func WorkflowRunsIndex(c fiber.Ctx) error {
 	runs, err := db.GetWorkflowRunsByWorkflowID(workflow.ID)
 	if err != nil {
 		log.Printf("error getting workflow runs: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Message: dict.T("error_occurred"),
 		})
 	}
@@ -78,7 +79,7 @@ func WorkflowRunsIndex(c fiber.Ctx) error {
 		formattedRun, err := formatter.FormatWorkflowRunResponse(&run)
 		if err != nil {
 			log.Printf("error formatting workflow run: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 				Message: dict.T("error_occurred"),
 			})
 		}
@@ -86,7 +87,7 @@ func WorkflowRunsIndex(c fiber.Ctx) error {
 	}
 
 	// Return the formatted workflow runs.
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: response,
 	})
 }
@@ -99,7 +100,7 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 	runSqid := c.Params("run")
 	if runSqid == "" {
 		log.Printf("No workflow run selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -108,7 +109,7 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 	workflowRunID, err := utils.DecodeSqids("workflow-runs", runSqid)
 	if err != nil {
 		log.Printf("Error decoding invite sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -117,7 +118,7 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 	workflowRun, err := db.GetWorkflowRunByID(uint(workflowRunID))
 	if err != nil {
 		log.Printf("Error retrieving workflow run: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -125,7 +126,7 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 	// Make sure the workflow run belongs to the workflow.
 	if workflowRun.WorkflowID != workflow.ID {
 		log.Printf("Workflow run does not belong to workflow")
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -134,13 +135,13 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 	formattedRun, err := formatter.FormatWorkflowRunResponse(workflowRun)
 	if err != nil {
 		log.Printf("Error formatting workflow run: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Message: dict.T("error_occurred"),
 		})
 	}
 
 	// Return the formatted workflow run.
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: formattedRun,
 	})
 }

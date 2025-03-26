@@ -9,6 +9,7 @@ import (
 	"log"
 	"strconv"
 
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -20,7 +21,7 @@ func RepositoriesIndex(c fiber.Ctx) error {
 	repositories, err := db.GetRepositoriesInWorkspace(workspace.ID)
 	if err != nil {
 		log.Printf("Error fetching repositories: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -32,7 +33,7 @@ func RepositoriesIndex(c fiber.Ctx) error {
 		repositoryResponse, err := formatter.FormatRepositoryResponse(&repository, &engine.Repository{})
 		if err != nil {
 			log.Printf("Error formatting repository: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -41,7 +42,7 @@ func RepositoriesIndex(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: repositoriesResponse,
 	})
 }
@@ -56,7 +57,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"name"}, []string{"description", "documentation", "default_branch", "is_immutable", "garbage_default_retention_days", "garbage_default_branch_retention_days"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -66,7 +67,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 
 	// Make sure such repository does not exist
 	if db.CheckIfRepositoryExists(repositorySlug, workspace.ID) {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("repository_already_exists")},
 		})
 	}
@@ -89,7 +90,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 		gcDefaultRetentionDays, err = strconv.Atoi(fields["garbage_default_retention_days"])
 		if err != nil {
 			log.Printf("Error parsing garbage_default_retention_days: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -101,7 +102,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 		gcDefaultBranchRetentionDays, err = strconv.Atoi(fields["garbage_default_branch_retention_days"])
 		if err != nil {
 			log.Printf("Error parsing garbage_default_branch_retention_days: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -120,7 +121,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error creating repository: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -132,7 +133,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 	dataEngineRepository, err := DataEngine.CreateRepository(workspace.Slug, repositorySlug, defaultBranch, isImmutable, &gcDefaultRetentionDays, &gcDefaultBranchRetentionDays)
 	if err != nil {
 		log.Printf("Error creating repository in Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -141,13 +142,13 @@ func RepositoriesStore(c fiber.Ctx) error {
 	repositoryResponse, err := formatter.FormatRepositoryResponse(repository, dataEngineRepository)
 	if err != nil {
 		log.Printf("Error formatting repository: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusCreated, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Message: dict.T("repository_created"),
 		Data:    *repositoryResponse,
 	})
@@ -162,13 +163,13 @@ func RepositoriesShow(c fiber.Ctx) error {
 	repositoryResponse, err := formatter.FormatRepositoryResponse(repository, dataEngineRepository)
 	if err != nil {
 		log.Printf("Error formatting repository: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: *repositoryResponse,
 	})
 }
@@ -182,7 +183,7 @@ func RepositoriesDestroy(c fiber.Ctx) error {
 	// Delete the repository from the database
 	if err := db.DeleteRepository(repository.ID); err != nil {
 		log.Printf("Error deleting repository: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -193,13 +194,13 @@ func RepositoriesDestroy(c fiber.Ctx) error {
 	// Delete the repository from the Data Engine
 	if err := DataEngine.DeleteRepository(c.Context(), workspace.Slug, repository.Slug, false); err != nil {
 		log.Printf("Error deleting repository in Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("repository_deleted"),
 	})
 }
@@ -215,7 +216,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"name"}, []string{"description", "documentation", "is_immutable", "garbage_default_retention_days", "garbage_default_branch_retention_days"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -237,7 +238,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating repository: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -251,7 +252,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 		gcDefaultRetentionDays, err = strconv.Atoi(fields["garbage_default_retention_days"])
 		if err != nil {
 			log.Printf("Error parsing garbage_default_retention_days: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -269,7 +270,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 		gcDefaultBranchRetentionDays, err = strconv.Atoi(fields["garbage_default_branch_retention_days"])
 		if err != nil {
 			log.Printf("Error parsing garbage_default_branch_retention_days: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -279,7 +280,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	dataEngineRepository, err = DataEngine.UpdateRepository(workspace.Slug, repository.Slug, &gcDefaultRetentionDays, &gcDefaultBranchRetentionDays)
 	if err != nil {
 		log.Printf("Error updating repository in Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -288,13 +289,13 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	repositoryResponse, err := formatter.FormatRepositoryResponse(repository, dataEngineRepository)
 	if err != nil {
 		log.Printf("Error formatting repository: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("repository_updated"),
 		Data:    *repositoryResponse,
 	})
@@ -310,7 +311,7 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -320,7 +321,7 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 	newOwnerID, err := utils.DecodeSqids("users", newOwnerSqid)
 	if err != nil {
 		log.Printf("Error decoding new owner sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -329,12 +330,12 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
 	if err != nil {
 		log.Printf("Error checking if user is in workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("new_owner_invalid")},
 		})
 	}
 	if !inWorkspace {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("new_owner_invalid")},
 		})
 	}
@@ -345,7 +346,7 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating repository: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -354,13 +355,13 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 	repositoryResponse, err := formatter.FormatRepositoryResponse(repository, dataEngineRepository)
 	if err != nil {
 		log.Printf("Error formatting repository: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("repository_ownership_transferred"),
 		Data:    *repositoryResponse,
 	})

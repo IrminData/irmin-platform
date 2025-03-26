@@ -9,6 +9,7 @@ import (
 	"log"
 	"time"
 
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/clerk/clerk-sdk-go/v2/invitation"
 	"github.com/gofiber/fiber/v3"
@@ -22,7 +23,7 @@ func WorkspaceInvitesIndex(c fiber.Ctx) error {
 	invites, err := db.GetInvitesByWorkspace(workspace.ID)
 	if err != nil {
 		log.Printf("Error fetching invites: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -34,7 +35,7 @@ func WorkspaceInvitesIndex(c fiber.Ctx) error {
 		inviteResponse, err := formatter.FormatInviteResponse(&invite)
 		if err != nil {
 			log.Printf("Error formatting invite response: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -43,7 +44,7 @@ func WorkspaceInvitesIndex(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: invitesResponse,
 	})
 }
@@ -70,7 +71,7 @@ func SendInvite(c fiber.Ctx) error {
 		}
 	}
 	if !allowed {
-		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("insufficient_permissions")},
 		})
 	}
@@ -78,7 +79,7 @@ func SendInvite(c fiber.Ctx) error {
 	// Parse the request
 	fields, err := utils.ParseFormFields(c, []string{"email", "role"}, nil)
 	if err != nil {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -86,13 +87,13 @@ func SendInvite(c fiber.Ctx) error {
 	// Validate fields
 	if !utils.ValidateEmail(fields["email"]) {
 		log.Printf("Invalid email: %s", fields["email"])
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
 	if fields["role"] != string(db.RoleAdmin) && fields["role"] != string(db.RoleEditor) && fields["role"] != string(db.RoleViewer) {
 		log.Printf("Invalid role: %s", fields["role"])
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -100,12 +101,12 @@ func SendInvite(c fiber.Ctx) error {
 	// Make sure the user is not already in the workspace
 	alreadyInWorkspace, err := db.IsUserInWorkspaceByEmail(fields["email"], workspace.ID)
 	if err != nil {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	if alreadyInWorkspace {
-		return utils.WriteResponse(c, fiber.StatusConflict, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusConflict, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("already_in_workspace")},
 		})
 	}
@@ -113,13 +114,13 @@ func SendInvite(c fiber.Ctx) error {
 	// Make sure the user is not already invited to the workspace
 	existingInvites, err := db.GetInvitesByEmail(fields["email"])
 	if err != nil {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	for _, invite := range existingInvites {
 		if invite.WorkspaceID == workspace.ID {
-			return utils.WriteResponse(c, fiber.StatusConflict, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusConflict, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("already_invited_to_workspace")},
 			})
 		}
@@ -129,7 +130,7 @@ func SendInvite(c fiber.Ctx) error {
 	env, err := utils.LoadEnv()
 	if err != nil {
 		log.Printf("Error loading environment variables: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -148,7 +149,7 @@ func SendInvite(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error creating invite in the database: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -157,7 +158,7 @@ func SendInvite(c fiber.Ctx) error {
 	inviteSqid, err := utils.EncodeSqids("invites", uint64(newInvite.ID))
 	if err != nil {
 		log.Printf("Error encoding invite sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -172,7 +173,7 @@ func SendInvite(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error creating Clerk invite: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -183,7 +184,7 @@ func SendInvite(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating invite with Clerk ID: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -192,7 +193,7 @@ func SendInvite(c fiber.Ctx) error {
 	newInvite, err = db.GetInviteByID(newInvite.ID)
 	if err != nil {
 		log.Printf("Error fetching newly created invite: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -201,13 +202,13 @@ func SendInvite(c fiber.Ctx) error {
 	inviteResponse, err := formatter.FormatInviteResponse(newInvite)
 	if err != nil {
 		log.Printf("Error formatting invite response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusCreated, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Message: dict.T("invite_sent"),
 		Data:    inviteResponse,
 	})
@@ -221,13 +222,13 @@ func InvitesShow(c fiber.Ctx) error {
 	inviteResponse, err := formatter.FormatInviteResponse(invite)
 	if err != nil {
 		log.Printf("Error formatting invite response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusCreated, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Data: inviteResponse,
 	})
 }
@@ -250,7 +251,7 @@ func InvitesUpdate(c fiber.Ctx) error {
 		}
 	}
 	if !allowed {
-		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("insufficient_permissions")},
 		})
 	}
@@ -258,7 +259,7 @@ func InvitesUpdate(c fiber.Ctx) error {
 	// Parse the request
 	fields, err := utils.ParseFormFields(c, []string{"role"}, nil)
 	if err != nil {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -266,7 +267,7 @@ func InvitesUpdate(c fiber.Ctx) error {
 	// Validate fields
 	if fields["role"] != string(db.RoleAdmin) && fields["role"] != string(db.RoleEditor) && fields["role"] != string(db.RoleViewer) {
 		log.Printf("Invalid role: %s", fields["role"])
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -277,7 +278,7 @@ func InvitesUpdate(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating invite: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -286,13 +287,13 @@ func InvitesUpdate(c fiber.Ctx) error {
 	inviteResponse, err := formatter.FormatInviteResponse(updatedInvite)
 	if err != nil {
 		log.Printf("Error formatting invite response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("invite_updated"),
 		Data:    inviteResponse,
 	})
@@ -319,7 +320,7 @@ func InvitesDestroy(c fiber.Ctx) error {
 		}
 	}
 	if !allowed {
-		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("insufficient_permissions")},
 		})
 	}
@@ -328,7 +329,7 @@ func InvitesDestroy(c fiber.Ctx) error {
 	_, err := invitation.Revoke(ctx, invite.ClerkID)
 	if err != nil {
 		log.Printf("Error revoking invite in Clerk: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -337,13 +338,13 @@ func InvitesDestroy(c fiber.Ctx) error {
 	err = db.DeleteInvite(invite.ID)
 	if err != nil {
 		log.Printf("Error deleting invite: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("invite_deleted"),
 	})
 }
@@ -370,7 +371,7 @@ func ResendInvite(c fiber.Ctx) error {
 		}
 	}
 	if !allowed {
-		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("insufficient_permissions")},
 		})
 	}
@@ -379,7 +380,7 @@ func ResendInvite(c fiber.Ctx) error {
 	env, err := utils.LoadEnv()
 	if err != nil {
 		log.Printf("Error loading environment variables: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -388,7 +389,7 @@ func ResendInvite(c fiber.Ctx) error {
 	inviteSqid, err := utils.EncodeSqids("invites", uint64(invite.ID))
 	if err != nil {
 		log.Printf("Error encoding invite sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -400,7 +401,7 @@ func ResendInvite(c fiber.Ctx) error {
 	_, err = invitation.Revoke(ctx, invite.ClerkID)
 	if err != nil {
 		log.Printf("Error revoking existing invite in Clerk: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -415,7 +416,7 @@ func ResendInvite(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error creating Clerk invite: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -428,7 +429,7 @@ func ResendInvite(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating invite: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -437,13 +438,13 @@ func ResendInvite(c fiber.Ctx) error {
 	inviteResponse, err := formatter.FormatInviteResponse(updatedInvite)
 	if err != nil {
 		log.Printf("Error formatting invite response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("invite_sent"),
 		Data:    inviteResponse,
 	})
@@ -457,7 +458,7 @@ func IndexMyInvites(c fiber.Ctx) error {
 	invites, err := db.GetInvitesByEmail(user.Email)
 	if err != nil {
 		log.Printf("Error fetching invites: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -469,7 +470,7 @@ func IndexMyInvites(c fiber.Ctx) error {
 		inviteResponse, err := formatter.FormatInviteResponse(&invite)
 		if err != nil {
 			log.Printf("Error formatting invite response: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -478,7 +479,7 @@ func IndexMyInvites(c fiber.Ctx) error {
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: invitesResponse,
 	})
 }
@@ -491,7 +492,7 @@ func AcceptInvite(c fiber.Ctx) error {
 	// Make sure the user is allowed to accept the invite
 	allowed := user.Email == invite.Email // User can accept the invite if it was sent to them
 	if !allowed {
-		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("insufficient_permissions")},
 		})
 	}
@@ -502,7 +503,7 @@ func AcceptInvite(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating invite: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -511,13 +512,13 @@ func AcceptInvite(c fiber.Ctx) error {
 	_, err = db.AddUserToWorkspace(user.ID, invite.WorkspaceID, []db.UserWorkspaceRole{invite.Role})
 	if err != nil {
 		log.Printf("Error adding user to workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("invite_accepted"),
 	})
 }
@@ -530,7 +531,7 @@ func DeclineInvite(c fiber.Ctx) error {
 	// Make sure the user is allowed to decline the invite
 	allowed := user.Email == invite.Email // User can decline the invite if it was sent to them
 	if !allowed {
-		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("insufficient_permissions")},
 		})
 	}
@@ -541,13 +542,13 @@ func DeclineInvite(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating invite: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("invite_declined"),
 	})
 }

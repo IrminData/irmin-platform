@@ -3,6 +3,7 @@ package controllers
 import (
 	"irmin-api/utils"
 
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -32,7 +33,7 @@ func RolesIndex(c fiber.Ctx) error {
 		},
 	}
 	// Return the roles.
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: rolesResponse,
 	})
 }

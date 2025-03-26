@@ -24,12 +24,12 @@ func BranchesIndex(c fiber.Ctx) error {
 	branches, err := DataEngine.ListBranches(c.Context(), workspace.Slug, repository.Slug)
 	if err != nil {
 		log.Printf("Error retrieving branches from Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: branches,
 	})
 }
@@ -44,7 +44,7 @@ func BranchesStore(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"name", "from"}, []string{"is_immutable"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -62,13 +62,13 @@ func BranchesStore(c fiber.Ctx) error {
 	branch, err := DataEngine.CreateBranch(workspace.Slug, repository.Slug, fields["name"], fields["from"], isImmutable)
 	if err != nil {
 		log.Printf("Error creating branch in Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the created branch
-	return utils.WriteResponse(c, fiber.StatusCreated, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Message: dict.T("branch_created"),
 		Data:    branch,
 	})
@@ -77,7 +77,7 @@ func BranchesStore(c fiber.Ctx) error {
 func BranchesShow(c fiber.Ctx) error {
 	branch := c.Locals("branch").(*irminModels.Branch)
 
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: branch,
 	})
 }
@@ -93,7 +93,7 @@ func BranchesUpdate(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, nil, []string{"name", "is_immutable"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -117,13 +117,13 @@ func BranchesUpdate(c fiber.Ctx) error {
 	branch, err = DataEngine.UpdateBranch(c.Context(), workspace.Slug, repository.Slug, branch.Name, newBranchName, isImmutable)
 	if err != nil {
 		log.Printf("Error updating branch in Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the updated branch
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("branch_updated"),
 		Data:    branch,
 	})
@@ -143,13 +143,13 @@ func BranchesDestroy(c fiber.Ctx) error {
 	err := DataEngine.DeleteBranch(workspace.Slug, repository.Slug, branch.Name)
 	if err != nil {
 		log.Printf("Error deleting branch in Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return a success message
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("branch_deleted"),
 	})
 }

@@ -7,6 +7,7 @@ import (
 	"irmin-api/utils"
 	"log"
 
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -16,12 +17,12 @@ func ObjectsIndex(c fiber.Ctx) error {
 
 	if object == nil {
 		log.Printf("Error retrieving object from Data Engine")
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: object,
 	})
 }
@@ -38,14 +39,14 @@ func UploadObject(c fiber.Ctx) error {
 	form, err := c.MultipartForm()
 	if err != nil {
 		log.Printf("Error parsing form data: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
 	file, err := form.File["file"][0].Open()
 	if err != nil {
 		log.Printf("Error opening file: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -58,12 +59,12 @@ func UploadObject(c fiber.Ctx) error {
 	newObject, err := DataEngine.UploadObject(workspace.Slug, repository.Slug, object_path, object_ref, file)
 	if err != nil {
 		log.Printf("Error uploading object to Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("object_uploaded"),
 		Data:    newObject,
 	})
@@ -81,7 +82,7 @@ func MoveObject(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"new_path"}, nil)
 	if err != nil {
 		log.Printf("Error parsing form data: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -93,12 +94,12 @@ func MoveObject(c fiber.Ctx) error {
 	newObject, err := DataEngine.MoveObject(workspace.Slug, repository.Slug, object_path, object_ref, fields["new_path"])
 	if err != nil {
 		log.Printf("Error moving object in Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("object_moved"),
 		Data:    newObject,
 	})
@@ -116,7 +117,7 @@ func CopyObject(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"new_path"}, nil)
 	if err != nil {
 		log.Printf("Error parsing form data: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -128,12 +129,12 @@ func CopyObject(c fiber.Ctx) error {
 	newObject, err := DataEngine.CopyObject(workspace.Slug, repository.Slug, object_path, object_ref, fields["new_path"])
 	if err != nil {
 		log.Printf("Error copying object in Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("object_copied"),
 		Data:    newObject,
 	})
@@ -154,12 +155,12 @@ func ObjectsDestroy(c fiber.Ctx) error {
 	err := DataEngine.DeleteObject(workspace.Slug, repository.Slug, object_path, object_ref)
 	if err != nil {
 		log.Printf("Error deleting object from Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("object_deleted"),
 	})
 }
@@ -179,7 +180,7 @@ func ObjectsContent(c fiber.Ctx) error {
 	object, content, err := DataEngine.GetObjectContent(workspace.Slug, repository.Slug, object_path, object_ref)
 	if err != nil {
 		log.Printf("Error retrieving object content from Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -203,12 +204,12 @@ func ObjectsHistory(c fiber.Ctx) error {
 	commits, err := DataEngine.GetObjectChanges(workspace.Slug, repository.Slug, object_path, object_ref)
 	if err != nil {
 		log.Printf("Error retrieving object history from Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, utils.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: commits,
 	})
 }

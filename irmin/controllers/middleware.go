@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 
 	"github.com/clerk/clerk-sdk-go/v2"
@@ -31,7 +32,7 @@ func APIMiddleware(c fiber.Ctx) error {
 	env, err := utils.LoadEnv()
 	if err != nil {
 		log.Printf("Error loading environment variables: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -40,14 +41,14 @@ func APIMiddleware(c fiber.Ctx) error {
 	headers, err := utils.ParseHeaders(c, []string{"Authorization"}, nil)
 	if err != nil {
 		log.Printf("Error parsing headers: %v", err)
-		return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
 	token := strings.TrimPrefix(headers["Authorization"], "Bearer ")
 	if token == "" {
 		log.Printf("No token provided")
-		return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
@@ -68,19 +69,19 @@ func APIMiddleware(c fiber.Ctx) error {
 		apiToken, err := db.GetAPITokenByToken(token)
 		if err != nil {
 			log.Printf("Error retrieving API token: %v", err)
-			return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusUnauthorized, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("access_denied")},
 			})
 		}
 		if apiToken == nil {
 			log.Printf("API token not found")
-			return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusUnauthorized, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("access_denied")},
 			})
 		}
 		if apiToken.ExpiresAt.Before(time.Now()) {
 			log.Printf("API token expired")
-			return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusUnauthorized, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("access_denied")},
 			})
 		}
@@ -91,7 +92,7 @@ func APIMiddleware(c fiber.Ctx) error {
 		jwt, err := utils.ValidateJWT(token, []byte(env.ClerkSigningKey), env.ClerkSigningAlgorithm)
 		if err != nil {
 			log.Printf("Error validating JWT: %v", err)
-			return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusUnauthorized, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("access_denied")},
 			})
 		}
@@ -100,7 +101,7 @@ func APIMiddleware(c fiber.Ctx) error {
 		clerkID, err = jwt.Claims.GetSubject()
 		if err != nil {
 			log.Printf("Error extracting subject from JWT: %v", err)
-			return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusUnauthorized, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("access_denied")},
 			})
 		}
@@ -116,7 +117,7 @@ func APIMiddleware(c fiber.Ctx) error {
 	clerkUser, err := user.Get(ctx, clerkID)
 	if err != nil {
 		log.Printf("Error getting user details from Clerk: %v", err)
-		return utils.WriteResponse(c, fiber.StatusUnauthorized, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
@@ -161,7 +162,7 @@ func APIMiddleware(c fiber.Ctx) error {
 		})
 		if err != nil {
 			log.Printf("Error creating user: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -187,7 +188,7 @@ func APIMiddleware(c fiber.Ctx) error {
 	irminUser, err = db.GetUser(irminUser.ID)
 	if err != nil {
 		log.Printf("Error fetching user: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -209,7 +210,7 @@ func WorkspaceMiddleware(c fiber.Ctx) error {
 	workspaceSlug := c.Params("workspace")
 	if workspaceSlug == "" {
 		log.Printf("No workspace selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -218,7 +219,7 @@ func WorkspaceMiddleware(c fiber.Ctx) error {
 	workspace, err := db.GetWorkspaceBySlug(workspaceSlug)
 	if err != nil {
 		log.Printf("Error retrieving workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -227,13 +228,13 @@ func WorkspaceMiddleware(c fiber.Ctx) error {
 	isMember, err := db.IsUserInWorkspace(user.ID, workspace.ID)
 	if err != nil {
 		log.Printf("Error checking user membership: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	if !isMember {
 		log.Printf("User not a member of the workspace")
-		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
@@ -254,7 +255,7 @@ func WorkflowMiddleware(c fiber.Ctx) error {
 	workflowSqid := c.Params("workflow")
 	if workflowSqid == "" {
 		log.Printf("No workflow selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -263,7 +264,7 @@ func WorkflowMiddleware(c fiber.Ctx) error {
 	workflowID, err := utils.DecodeSqids("workflows", workflowSqid)
 	if err != nil {
 		log.Printf("Error decoding workflow sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -272,7 +273,7 @@ func WorkflowMiddleware(c fiber.Ctx) error {
 	workflow, err := db.GetWorkflowByID(uint(workflowID))
 	if err != nil {
 		log.Printf("Error retrieving workflow: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -280,7 +281,7 @@ func WorkflowMiddleware(c fiber.Ctx) error {
 	// Check if the workflow belongs to the workspace.
 	if workflow.WorkspaceID != workspace.ID {
 		log.Printf("Workflow does not belong to the workspace")
-		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
@@ -301,7 +302,7 @@ func ConnectionMiddleware(c fiber.Ctx) error {
 	connectionSqid := c.Params("connection")
 	if connectionSqid == "" {
 		log.Printf("No connection selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -310,7 +311,7 @@ func ConnectionMiddleware(c fiber.Ctx) error {
 	connectionID, err := utils.DecodeSqids("connections", connectionSqid)
 	if err != nil {
 		log.Printf("Error decoding connection sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -319,7 +320,7 @@ func ConnectionMiddleware(c fiber.Ctx) error {
 	connection, err := db.GetConnectionByID(uint(connectionID))
 	if err != nil {
 		log.Printf("Error fetching connection: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -327,7 +328,7 @@ func ConnectionMiddleware(c fiber.Ctx) error {
 	// Check if the connection belongs to the workspace.
 	if connection.WorkspaceID != workspace.ID {
 		log.Printf("Connection does not belong to the workspace")
-		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
@@ -345,7 +346,7 @@ func ConnectorMiddleware(c fiber.Ctx) error {
 	connectorSQID := c.Params("connector")
 	if connectorSQID == "" {
 		log.Printf("No connector selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -354,7 +355,7 @@ func ConnectorMiddleware(c fiber.Ctx) error {
 	connectorID, err := utils.DecodeSqids("connectors", connectorSQID)
 	if err != nil {
 		log.Printf("Error decoding SQID: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -363,7 +364,7 @@ func ConnectorMiddleware(c fiber.Ctx) error {
 	connector, err := db.GetConnector(uint(connectorID))
 	if err != nil {
 		log.Printf("Error retrieving connector: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -382,7 +383,7 @@ func UserMiddleware(c fiber.Ctx) error {
 	userSqid := c.Params("user")
 	if userSqid == "" {
 		log.Printf("No user selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -391,7 +392,7 @@ func UserMiddleware(c fiber.Ctx) error {
 	userID, err := utils.DecodeSqids("users", userSqid)
 	if err != nil {
 		log.Printf("Error decoding user sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -400,7 +401,7 @@ func UserMiddleware(c fiber.Ctx) error {
 	workspaceUser, err := db.GetWorkspaceUser(workspace.ID, uint(userID))
 	if err != nil {
 		log.Printf("Error retrieving user: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -419,7 +420,7 @@ func InviteMiddleware(c fiber.Ctx) error {
 	inviteSqid := c.Params("invite")
 	if inviteSqid == "" {
 		log.Printf("No invite selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -428,7 +429,7 @@ func InviteMiddleware(c fiber.Ctx) error {
 	inviteID, err := utils.DecodeSqids("invites", inviteSqid)
 	if err != nil {
 		log.Printf("Error decoding invite sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -437,7 +438,7 @@ func InviteMiddleware(c fiber.Ctx) error {
 	invite, err := db.GetInviteByID(uint(inviteID))
 	if err != nil {
 		log.Printf("Error retrieving invite: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -457,7 +458,7 @@ func InviteMiddleware(c fiber.Ctx) error {
 		return c.Next()
 	} else {
 		log.Printf("Invite does not belong to the workspace or the user")
-		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
@@ -472,7 +473,7 @@ func RepositoryMiddleware(c fiber.Ctx) error {
 	repositorySlug := c.Params("repository")
 	if repositorySlug == "" {
 		log.Printf("No repository selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -481,7 +482,7 @@ func RepositoryMiddleware(c fiber.Ctx) error {
 	repository, err := db.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
 	if err != nil {
 		log.Printf("Error retrieving repository: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -513,7 +514,7 @@ func BranchMiddleware(c fiber.Ctx) error {
 	branchName := c.Params("branch")
 	if branchName == "" {
 		log.Printf("No branch selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -525,7 +526,7 @@ func BranchMiddleware(c fiber.Ctx) error {
 	dataEngineBranch, err := DataEngine.GetBranch(c.Context(), workspace.Slug, repository.Slug, branchName)
 	if err != nil {
 		log.Printf("Error retrieving branch from Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -546,7 +547,7 @@ func TagMiddleware(c fiber.Ctx) error {
 	tagName := c.Params("tag")
 	if tagName == "" {
 		log.Printf("No tag selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -558,7 +559,7 @@ func TagMiddleware(c fiber.Ctx) error {
 	dataEngineTag, err := DataEngine.GetTag(workspace.Slug, repository.Slug, tagName)
 	if err != nil {
 		log.Printf("Error retrieving tag from Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -579,7 +580,7 @@ func ObjectMiddleware(c fiber.Ctx) error {
 	params, err := utils.ParseQueryParams(c, nil, []string{"ref", "path"})
 	if err != nil {
 		log.Printf("Error parsing query parameters: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -614,7 +615,7 @@ func QueryMiddleware(c fiber.Ctx) error {
 	querySqid := c.Params("query")
 	if querySqid == "" {
 		log.Printf("No query selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -623,7 +624,7 @@ func QueryMiddleware(c fiber.Ctx) error {
 	queryID, err := utils.DecodeSqids("queries", querySqid)
 	if err != nil {
 		log.Printf("Error decoding query sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -632,7 +633,7 @@ func QueryMiddleware(c fiber.Ctx) error {
 	storedQuery, err := db.GetStoredQueryByID(uint(queryID))
 	if err != nil {
 		log.Printf("Error retrieving stored query: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -640,7 +641,7 @@ func QueryMiddleware(c fiber.Ctx) error {
 	// Check if the stored query belongs to the workspace.
 	if storedQuery.WorkspaceID != workspace.ID {
 		log.Printf("Stored query does not belong to the workspace")
-		return utils.WriteResponse(c, fiber.StatusForbidden, utils.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
