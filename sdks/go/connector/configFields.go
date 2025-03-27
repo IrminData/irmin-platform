@@ -51,14 +51,6 @@ func (c *Client) GetConfigFields(configType string, details map[string]string, s
 	return fields, nil
 }
 
-type ValidationResult struct {
-	Ok                      bool     `json:"ok"`
-	CanConnect              bool     `json:"can_connect"`
-	ConnectionDetailsValid  bool     `json:"connection_details_valid"`
-	ConnectionSettingsValid bool     `json:"connection_settings_valid"`
-	Errors                  []string `json:"errors"`
-}
-
 // ValidateConfigFields validates the configuration fields provided by the user.
 //
 // Note: System token is required for this operation.
@@ -70,7 +62,7 @@ type ValidationResult struct {
 // Returns:
 // - A validation result from the connector if the request is successful.
 // - An error if there is a problem with the request
-func (c *Client) ValidateConfigFields(details map[string]string, settings map[string]string) (ValidationResult, error) {
+func (c *Client) ValidateConfigFields(details map[string]string, settings map[string]string) (*irminModels.ConnectorConfigurationValidationResult, error) {
 
 	// Prepare form fields by formatting keys with the appropriate prefixes.
 	formFields := make(map[string]string)
@@ -84,7 +76,7 @@ func (c *Client) ValidateConfigFields(details map[string]string, settings map[st
 	}
 
 	// Define a variable to hold the validation result.
-	var result ValidationResult
+	var result irminModels.ConnectorConfigurationValidationResult
 
 	// Send the POST request using FetchAPI with URL-encoded form fields.
 	if err := c.FetchAPI(RequestOptions{
@@ -93,9 +85,9 @@ func (c *Client) ValidateConfigFields(details map[string]string, settings map[st
 		FormFields:  formFields,
 		ContentType: "application/x-www-form-urlencoded",
 	}, &result); err != nil {
-		return ValidationResult{}, err
+		return nil, err
 	}
 
 	// Return the validation result or an error.
-	return result, nil
+	return &result, nil
 }

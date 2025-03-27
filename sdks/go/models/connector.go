@@ -59,10 +59,6 @@ type ConnectorConfigurationValidationResult struct {
 	ConnectionDetailsValid bool `json:"connection_details_valid"`
 	// Indicates if the connection settings are valid
 	ConnectionSettingsValid bool `json:"connection_settings_valid"`
-}
-
-// ConnectorSchemaValidationResult represents the validation result of a schema.
-type ConnectorSchemaValidationResult struct {
-	// Indicates if the data is valid against the schema
-	Valid bool `json:"valid"`
+	// (Optional) Validation error messages
+	Errors []string `json:"errors,omitempty"`
 }
