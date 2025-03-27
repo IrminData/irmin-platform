@@ -1,51 +1,25 @@
 import { IrminRole } from '@/types/core/IrminRole';
+import { User } from '@/types/core/User';
+import { Workspace } from '@/types/core/Workspace';
 
 /**
- * Invite type
+ * Represents an invitation.
  */
 export interface Invite {
-  /** Invite ID */
+  /** Unique identifier of the invite */
   id: string;
-  /** First name of the invitee */
-  first_name: string;
-  /** Last name of the invitee */
-  last_name: string;
-  /** Email of the invitee */
+  /** Email address of the invitee */
   email: string;
-  /** Phone number of the invitee */
-  phone: string;
-  /** Company of the invitee */
-  company?: string;
-  /** Invitee's role object */
+  /** Role assigned in the invitation */
   role: IrminRole;
-  /** Invite created date */
-  invited_at: string;
-  /** Invite expired date */
-  expired_at: string | null;
-  /** Invite deleted date */
-  deleted_at: string | null;
-}
-
-/**
- * Invite signed URL payload
- */
-export interface InviteSignedURLPayload {
-  /** Invite hash ID */
-  invite: string;
-  /** First name of the invitee */
-  first_name: string;
-  /** Last name of the invitee */
-  last_name: string;
-  /** Email of the invitee */
-  email: string;
-  /** Phone number of the invitee */
-  phone: string;
-  /** (optional) Company name of the invitee */
-  company?: string;
-  /** Name of the workspace the invite is for */
-  workspace: string;
-  /** Inviter's full name */
-  inviter: string;
-  /** Whether the invitee has an account */
-  has_an_account: boolean;
+  /** (optional) Time when the invite was accepted */
+  accepted_at?: string;
+  /** (optional) Time when the invite was declined */
+  declined_at?: string;
+  /** Time when the invitation expires */
+  expires_at: string;
+  /** User who sent the invitation */
+  invited_by: User;
+  /** Workspace associated with the invite */
+  workspace: Workspace;
 }

@@ -12,7 +12,7 @@ import { usePopup } from '@/context/PopupContext';
 
 import { useSystemTokens } from '@/hooks/useSystemTokens';
 
-import { SystemToken } from '@/types/core/SystemToken';
+import { APIToken } from '@/types/core/APIToken';
 
 import APITokenDisplay from './APITokenDisplay';
 import CreateTokenModalContent from './CreateTokenModalContent';
@@ -28,7 +28,7 @@ import CreateTokenModalContent from './CreateTokenModalContent';
 export default function TokensSection({
   initialTokens,
 }: {
-  initialTokens: SystemToken[];
+  initialTokens: APIToken[];
 }) {
   const { dict, locale } = useLocale();
   const { irminModal } = usePopup();

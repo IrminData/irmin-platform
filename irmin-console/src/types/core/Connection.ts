@@ -1,29 +1,32 @@
 import { Connector } from '@/types/core/Connector';
 import { User } from '@/types/core/User';
-import { JSONObject } from '@/types/internal/GenericJSON';
 
 /**
- * Connection object - used to store information on data sources and destinations
+ * Represents a map of custom field values.
+ */
+export interface CustomFieldValues {
+  /** Custom field key-value pairs */
+  [key: string]: string;
+}
+
+/**
+ * Irmin connection type
  */
 export interface Connection {
-  /** Connection hash ID */
+  /** Unique identifier of the connection */
   id: string;
-  /** Connection name */
+  /** Name of the connection */
   name: string;
-  /** The workspace user that owns this connection and is responsible for it */
-  owner: User;
-  /** Connection description */
+  /** Description of the connection */
   description: string;
-  /** Connection documentation as a markdown string */
+  /** Documentation for the connection */
   documentation: string;
-  /** Object with key value pairs */
-  details: JSONObject;
-  /** Object with key value pairs */
-  settings: JSONObject;
-  /** Connector object */
+  /** Custom details for the connection */
+  details: CustomFieldValues;
+  /** Custom settings for the connection */
+  settings: CustomFieldValues;
+  /** Owner of the connection */
+  owner: User;
+  /** Connector associated with the connection */
   connector: Connector;
-  /** Connection creation date */
-  created_at: string;
-  /** Connection update date */
-  updated_at: string;
 }

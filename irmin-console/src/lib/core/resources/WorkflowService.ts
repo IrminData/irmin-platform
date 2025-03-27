@@ -4,6 +4,7 @@ import createWorkflowScheduleFormData from '@/utils/createWorkflwoScheduleFormDa
 import fake from '@/utils/prepareFakeResponse';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import { WorkflowSchedule } from '@/types/core/Schedule';
 import {
   ActionWorkflow,
   ExportWorkflow,
@@ -13,7 +14,6 @@ import {
   Workflow,
   WorkflowRun,
 } from '@/types/core/Workflow';
-import { WorkflowSchedule } from '@/types/core/WorkflowSchedule';
 import {
   exampleActions,
   exampleExports,

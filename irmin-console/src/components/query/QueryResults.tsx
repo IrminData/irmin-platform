@@ -22,7 +22,7 @@ import MDXEditor from '@/components/ui/markdown-editor/MDXEditor';
 import { useLocale } from '@/context/LocaleContext';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { QueryExecutionResult } from '@/types/core/Query';
+import { QueryExecutionResult } from '@/types/core/StoredQuery';
 import { ActionWorkflow } from '@/types/core/Workflow';
 
 import ErrorList from './ErrorList';

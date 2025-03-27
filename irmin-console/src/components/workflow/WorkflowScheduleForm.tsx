@@ -20,7 +20,6 @@ import { useLocale } from '@/context/LocaleContext';
 import deepEqual from '@/utils/deepEqual';
 
 import { Repository } from '@/types/core/Repository';
-import { Workflow } from '@/types/core/Workflow';
 import {
   RepositoryEvent,
   RepositoryTrigger,
@@ -28,7 +27,8 @@ import {
   WorkflowRunEvent,
   WorkflowRunTrigger,
   WorkflowSchedule,
-} from '@/types/core/WorkflowSchedule';
+} from '@/types/core/Schedule';
+import { Workflow } from '@/types/core/Workflow';
 
 interface FormTrigger {
   id: string;

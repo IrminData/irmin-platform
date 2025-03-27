@@ -11,7 +11,7 @@ import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkflow } from '@/context/WorkflowContext';
 
-import { WorkflowSchedule } from '@/types/core/WorkflowSchedule';
+import { WorkflowSchedule } from '@/types/core/Schedule';
 
 /**
  * Workflow Schedule section component

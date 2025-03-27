@@ -16,7 +16,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
 
-import { Query } from '@/types/core/Query';
+import { Query } from '@/types/core/StoredQuery';
 
 import CreateSavedQueryModal from './CreateQueryModal';
 import UpdateQueryModal from './UpdateQueryModal';

@@ -8,16 +8,16 @@ import {
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { SystemToken } from '@/types/core/SystemToken';
+import { APIToken } from '@/types/core/APIToken';
 
 export const useSystemTokens = ({
   initialTokens,
 }: {
-  initialTokens: SystemToken[];
+  initialTokens: APIToken[];
 }) => {
   const { dict } = useLocale();
   const { irminConfirm, irminAlert } = usePopup();
-  const [tokens, setTokens] = useState<SystemToken[]>(initialTokens);
+  const [tokens, setTokens] = useState<APIToken[]>(initialTokens);
 
   const creatingToken = useRef(false);
   const [createdToken, setCreatedToken] = useState('');
@@ -36,7 +36,7 @@ export const useSystemTokens = ({
             'success',
             res?.message ?? 'API token created successfully'
           );
-          setTokens((prev) => [...prev, res.data as SystemToken]);
+          setTokens((prev) => [...prev, res.data as APIToken]);
           setCreatedToken(res.data.token ?? '');
         }
       } catch (error) {
@@ -58,7 +58,7 @@ export const useSystemTokens = ({
    * Hook to revoke an API token
    */
   const revokeToken = useCallback(
-    async (token: SystemToken) => {
+    async (token: APIToken) => {
       const confirmed = await irminConfirm(
         'warning',
         `${dict.common.areYouSureYouWantToDelete}: ${token.name}`

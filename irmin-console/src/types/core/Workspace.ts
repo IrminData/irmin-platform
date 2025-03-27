@@ -1,23 +1,19 @@
 import { User } from '@/types/core/User';
 
 /**
- * Workspace type
+ * Represents a workspace.
  */
 export interface Workspace {
-  /** Workspace ID */
+  /** Unique identifier of the workspace */
   id: string;
-  /** Workspace name */
+  /** Name of the workspace */
   name: string;
-  /** Workspace slug */
+  /** Slug for the workspace */
   slug: string;
-  /** Workspace owner ID */
-  owner_id: string;
-  /** Workspace description to be displayed */
+  /** Description of the workspace */
   description: string;
-  /** Array of users in the workspace */
-  users: User[];
-  /** Timestamp of workspace creation */
-  created_at: string;
-  /** Timestamp of workspace update */
-  updated_at: string;
+  /** (optional) Owner of the workspace */
+  owner?: User;
+  /** (optional) List of users in the workspace */
+  users?: User[];
 }

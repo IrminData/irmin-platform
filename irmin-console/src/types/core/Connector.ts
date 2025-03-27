@@ -1,75 +1,67 @@
 /**
- * Connector general information object.
+ * Irmin connector type
  */
 export interface Connector {
-  /** Unique ID of the connector */
+  /** Unique identifier of the connector */
   id: string;
   /** Name of the connector */
   name: string;
-  /** Short description of the connector */
+  /** Description of the connector */
   description: string;
-  /** Current version of the connector */
+  /** Version of the connector */
   version: string;
-  /** Version of the Irmin Connector Structure this connector adheres to */
-  structure_version: string;
-  /** Name of the author of the connector */
+  /** (optional) Structure version of the connector */
+  structure_version?: string;
+  /** Author of the connector */
   author: string;
-  /** Base URL for the connector's REST API */
-  api_base_url: string;
-  /** URL to the connector's logo image */
+  /** URL to the connector's logo */
   logo_url: string;
-  /** List of capabilities supported by the connector */
+  /** Array of capabilities of the connector */
   capabilities: ConnectorCapability[];
-  /** List of locales supported by the connector */
+  /** Array of locales supported by the connector */
   locales: string[];
-  /** (optional) Primary category of the connector. */
-  primary_category?: ConnectorCategory;
-  /** (optional) List of categories the connector belongs to. */
-  categories?: ConnectorCategory[];
-  /** (optional) Email address of the author */
-  author_email?: string;
-  /** (optional) Markdown-formatted text providing more details about the connector */
-  documentation?: string;
-  /** (optional) URL to read more about the connector, such as documentation */
-  read_more_url?: string;
+  /** Array of categories associated with the connector */
+  categories: ConnectorCategory[];
+  /** Primary category of the connector */
+  primary_category: ConnectorCategory;
+  /** Author's email address */
+  author_email: string;
+  /** URL for more information about the connector */
+  read_more_url: string;
 }
 
 /**
- * Connector capability options, describing the features the connector supports.
+ * Represents the capabilities of a connector.
  */
-export enum ConnectorCapability {
-  /** Can perform operation `pull` */
-  Pull = 'pull',
-  /** Can perform operation `push` */
-  Push = 'push',
-  /** Can send webhook events */
-  Event = 'event',
-}
+export type ConnectorCapability =
+  | 'pull'
+  | 'push'
+  | 'webhook_patch'
+  | 'webhook_pull';
 
 /**
- * Connector category options, describing the type of service the connector is for.
+ * Represents the category of a connector.
  */
-export enum ConnectorCategory {
-  Database = 'database',
-  CRM = 'crm',
-  ERP = 'erp',
-  Warehouse = 'warehouse',
-  Marketing = 'marketing',
-  Analytics = 'analytics',
-  Storage = 'storage',
-  Messaging = 'messaging',
-  Payment = 'payment',
-  Social = 'social',
-  Calendar = 'calendar',
-  ProjectManagement = 'project_management',
-  ECommerce = 'ecommerce',
-  IoT = 'iot',
-  Monitoring = 'monitoring',
-  Other = 'other',
-}
+export type ConnectorCategory =
+  | 'database'
+  | 'crm'
+  | 'erp'
+  | 'warehouse'
+  | 'marketing'
+  | 'analytics'
+  | 'storage'
+  | 'messaging'
+  | 'payment'
+  | 'social'
+  | 'calendar'
+  | 'project_management'
+  | 'ecommerce'
+  | 'iot'
+  | 'monitoring'
+  | 'other';
 
 /**
- * Connector configuration validation result object.
+ * Represents the validation result of a connector configuration.
  */
 export interface ConnectorConfigurationValidationResult {
   /** Indicates if the configuration is valid */
@@ -80,6 +72,4 @@ export interface ConnectorConfigurationValidationResult {
   connection_details_valid: boolean;
   /** Indicates if the connection settings are valid */
   connection_settings_valid: boolean;
-  /** List of errors encountered during validation */
-  errors: string[] | null;
 }

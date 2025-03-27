@@ -1,13 +1,13 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { SystemToken } from '@/types/core/SystemToken';
+import { APIToken } from '@/types/core/APIToken';
 
 /**
  * Get example system tokens
  *
- * Array of {@link SystemToken}
+ * Array of {@link APIToken}
  */
-export const systemTokens: () => SystemToken[] = () => [
+export const systemTokens: () => APIToken[] = () => [
   {
     id: 'token-1',
     name: 'My device',

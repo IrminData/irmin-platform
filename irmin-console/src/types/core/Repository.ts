@@ -1,27 +1,49 @@
-import { User } from '@/types/core/User';
+/**
+ * Represents the garbage collection rules for a branch.
+ */
+export interface BranchGarbageCollectionRules {
+  /** ID of the branch */
+  branch_id: string;
+  /** Number of days to retain data */
+  retention_days: number;
+}
 
 /**
- * Repository object
+ * Represents the garbage collection rules for a repository.
+ */
+export interface GarbageCollectionRules {
+  /** (optional) Default number of retention days */
+  default_retention_days?: number;
+  /** (optional) List of garbage collection rules for branches */
+  branches?: BranchGarbageCollectionRules[];
+}
+
+/**
+ * Represents a repository.
  */
 export interface Repository {
-  /** Repository ID */
+  /** Unique identifier of the repository */
   id: string;
-  /** Name of the Repository */
+  /** Name of the repository */
   name: string;
-  /** Slug of the Repository. Used by App router and to parse Queries */
+  /** Slug of the repository */
   slug: string;
-  /** Short description of the Repository */
+  /** Description of the repository */
   description: string;
-  /** Markdown documentation of the Repository. Allows for users to add explanations, examples, etc. */
+  /** Documentation for the repository */
   documentation: string;
-  /** If the Repository is immutable, it cannot be changed or updated */
+  /** Whether the repository is immutable */
   is_immutable: boolean;
-  /** Default branch of the Repository */
+  /** Default branch of the repository */
   default_branch: string;
-  /** The user within the workspace that owns the Repository and is responsible for it */
-  owner: User;
-  /** Timestamp of the creation of the Repository */
+  /** ID of the workspace associated with the repository */
+  workspace_id: string;
+  /** ID of the owner of the repository */
+  owner_id: string;
+  /** (optional) Garbage collection rules for the repository */
+  garbage_collection_rules?: GarbageCollectionRules;
+  /** Timestamp when the repository was created */
   created_at: string;
-  /** Timestamp of the last update of the Repository */
+  /** Timestamp when the repository was last updated */
   updated_at: string;
 }

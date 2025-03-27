@@ -2,7 +2,7 @@ import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
 import { User } from '@/types/core/User';
 
-import { WorkflowSchedule } from './WorkflowSchedule';
+import { WorkflowSchedule } from './Schedule';
 
 /**
  * Types of workflows that can exist
@@ -17,22 +17,20 @@ interface WorkflowBase {
   id: string;
   /** Workflow name */
   name: string;
-  /** The workspace user that owns this workflow and is responsible for it */
-  owner: User;
-  /** (optional) Schedule configuration for the workflow (eg. triggers, max retries, max runtime) */
-  schedule?: WorkflowSchedule;
-  /** Status of the workflow */
-  status: WorkflowStatus;
-  /** Workflow's type specific configurations */
-  workflowable: Import | Export | Action | Pipeline;
   /** Workflow description */
   description: string;
   /** Workflow documentation as a markdown string */
   documentation: string;
-  /** Workflow creation date */
-  created_at: string;
-  /** Workflow update date */
-  updated_at: string;
+  /** Status of the workflow */
+  status: WorkflowStatus;
+  /** Type of the workflow */
+  type: WorkflowableType;
+  /** The workspace user that owns this workflow and is responsible for it */
+  owner: User;
+  /** (optional) Schedule configuration for the workflow (eg. triggers, max retries, max runtime) */
+  schedule?: WorkflowSchedule;
+  /** Workflow type specific configurations */
+  workflowable?: Import | Export | Action | Pipeline;
 }
 
 /**
@@ -75,24 +73,6 @@ export type Workflow =
   | ExportWorkflow
   | ActionWorkflow
   | PipelineWorkflow;
-
-/**
- * Workflow run object. eg. Single execution of a Workflow
- */
-export interface WorkflowRun {
-  /** Workflow run ID */
-  id: string;
-  /** ID of the workflow that was run */
-  workflow_id: string;
-  /** The workspace user that is responsible for this workflow run. Essentially the owner of the workflow that was run, at the time of the run. */
-  owner: User;
-  /** Status of the workflow run */
-  status: WorkflowStatus;
-  /** Timestamp of when the workflow run started */
-  started_at: string;
-  /** Timestamp of when the workflow run finished */
-  finished_at?: string;
-}
 
 /**
  * Workflow status options

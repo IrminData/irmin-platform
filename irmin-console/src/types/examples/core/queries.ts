@@ -1,6 +1,6 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { Query, QueryExecutionResult } from '@/types/core/Query';
+import { Query, QueryExecutionResult } from '@/types/core/StoredQuery';
 
 import { exampleWorkflowRunLogs } from '.';
 

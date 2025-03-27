@@ -2,8 +2,8 @@
 
 import { initCore } from '@/lib/initCore';
 
+import { WorkflowSchedule } from '@/types/core/Schedule';
 import { PipelineStage } from '@/types/core/Workflow';
-import { WorkflowSchedule } from '@/types/core/WorkflowSchedule';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 /**

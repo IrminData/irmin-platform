@@ -1,28 +1,23 @@
-import { IrminRole } from '@/types/core/IrminRole';
-import { Workspace } from '@/types/core/Workspace';
+import { Role } from '@/types/core/IrminRole';
 
 /**
- * Irmin user type
+ * Represents a user.
  */
 export interface User {
-  /** ID of the user in Irmin */
+  /** Unique identifier of the user */
   id: string;
-  /** ID of the user in Clerk */
-  clerk_id: string;
-  /** User's first name */
+  /** First name of the user */
   first_name: string;
-  /** User's last name */
+  /** Last name of the user */
   last_name: string;
-  /** User's email */
+  /** Email address of the user */
   email: string;
-  /** User's phone number */
+  /** Phone number of the user */
   phone: string;
-  /** User's company */
-  company?: string;
-  /** URL of the user's avatar */
-  profile_picture?: string;
-  /** (current user only) The currently active workspace of the user */
-  workspace?: Workspace;
-  /** Array of roles user has in the currently active workspace */
-  roles?: IrminRole[];
+  /** Company associated with the user */
+  company: string;
+  /** URL of the user's profile picture */
+  profile_picture: string;
+  /** (optional) Roles assigned to the user */
+  roles?: Role[];
 }

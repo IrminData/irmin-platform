@@ -4,7 +4,7 @@ import fake from '@/utils/prepareFakeResponse';
 
 import { IrminFileType } from '@/types/core/EditorItems';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { Query, QueryExecutionResult } from '@/types/core/Query';
+import { Query, QueryExecutionResult } from '@/types/core/StoredQuery';
 import {
   exampleQueries,
   exampleQueryExecutionResult,

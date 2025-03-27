@@ -3,7 +3,7 @@
  *
  * Represents the different trigger configurations that can activate a workflow to run.
  */
-export type WorkflowTrigger =
+export type ScheduleTrigger =
   | TimeTrigger
   | WorkflowRunTrigger
   | RepositoryTrigger;
@@ -75,7 +75,7 @@ export interface WorkflowRunTrigger {
  */
 export interface WorkflowSchedule {
   /** List of triggers that can activate the workflow */
-  triggers: WorkflowTrigger[];
+  triggers: ScheduleTrigger[];
   /** Number of times the workflow can be retried if it fails */
   max_retries?: number;
   /** Maximum runtime of the workflow in seconds */

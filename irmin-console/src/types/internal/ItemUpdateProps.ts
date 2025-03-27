@@ -1,4 +1,4 @@
-import { WorkflowSchedule } from '@/types/core/WorkflowSchedule';
+import { WorkflowSchedule } from '@/types/core/Schedule';
 
 /**
  * Object containing the properties that can be updated for an item.

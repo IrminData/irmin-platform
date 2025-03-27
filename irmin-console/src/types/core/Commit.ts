@@ -1,5 +1,5 @@
 /**
- * Repository commit type
+ * Irmin repository commit type
  */
 export interface Commit {
   /** Hash of the commit */
@@ -10,6 +10,6 @@ export interface Commit {
   timestamp: string;
   /** Commit author */
   author: string;
-  /** Previous commit hash, if any */
+  /** (optional) Previous commit hash, if any */
   previous_hash?: string;
 }

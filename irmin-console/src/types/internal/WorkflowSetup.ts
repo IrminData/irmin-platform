@@ -1,7 +1,7 @@
 import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
+import { WorkflowSchedule } from '@/types/core/Schedule';
 import { WorkflowableType } from '@/types/core/Workflow';
-import { WorkflowSchedule } from '@/types/core/WorkflowSchedule';
 
 /**
  * Pipeline stage input object.

@@ -3,7 +3,7 @@ import {
   TimeTrigger,
   WorkflowRunTrigger,
   WorkflowSchedule,
-} from '@/types/core/WorkflowSchedule';
+} from '@/types/core/Schedule';
 
 /**
  * Creates a FormData object from the provided `WorkflowSchedule` object.

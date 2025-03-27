@@ -2,7 +2,7 @@ import {
   RepositoryEvent,
   WorkflowRunEvent,
   WorkflowSchedule,
-} from '@/types/core/WorkflowSchedule';
+} from '@/types/core/Schedule';
 
 /**
  * Example workflow schedules with merged triggers and configurations

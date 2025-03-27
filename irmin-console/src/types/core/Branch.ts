@@ -1,5 +1,5 @@
 /**
- * Repository branch
+ * Irmin repository branch type
  */
 export interface Branch {
   /** Name of the branch */

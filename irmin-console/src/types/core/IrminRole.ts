@@ -1,11 +1,13 @@
+export type IrminRole = 'admin' | 'editor' | 'viewer';
+
 /**
- * Irmin role object
+ * Represents a role in the system
  */
-export interface IrminRole {
-  /** Human-readable description */
+export interface Role {
+  /** Description of the role */
   description: string;
-  /** Human-readable name */
+  /** Label of the role */
   label: string;
-  /** Slug of the role eg. 'admin', 'editor', 'billing', 'viewer', ... */
-  name: string;
+  /** Name of the role  */
+  name: IrminRole;
 }

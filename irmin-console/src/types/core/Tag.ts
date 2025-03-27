@@ -1,8 +1,8 @@
 /**
- * Repository tag object
+ * Represents a repository tag object.
  */
 export interface Tag {
-  /** Name of the tag */
+  /** Tag name */
   name: string;
   /** Commit hash referenced in a tag */
   ref: string;

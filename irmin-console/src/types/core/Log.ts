@@ -1,47 +1,38 @@
+import { Repository } from '@/types/core/Repository';
 import { User } from '@/types/core/User';
 import { Workflow, WorkflowRun } from '@/types/core/Workflow';
 
 /**
- * Enum for the types of log events.
+ * Represents the log event types.
  */
-export enum LogEventType {
-  CREATE = 'CREATE',
-  UPDATE = 'UPDATE',
-  DELETE = 'DELETE',
-  LOGIN = 'LOGIN',
-  LOGOUT = 'LOGOUT',
-  ERROR = 'ERROR',
-  INFO = 'INFO',
-  WARNING = 'WARNING',
-}
+export type LogEventType =
+  | 'CREATE'
+  | 'UPDATE'
+  | 'DELETE'
+  | 'LOGIN'
+  | 'LOGOUT'
+  | 'ERROR'
+  | 'INFO'
+  | 'WARNING';
 
 /**
- * Interface for the details of a log event.
+ * Represents a log event.
  */
 export interface LogEvent {
-  /** Unique identifier of the event */
+  /** Unique identifier of the log event */
   id: string;
-  /** Type of the activity (e.g., CREATE, UPDATE, DELETE, etc.) */
+  /** Type of the log event */
   type: LogEventType;
-  /** Timestamp of the event */
-  timestamp: string;
-  /** Description of the event */
+  /** Description of the log event */
   description: string;
-  /** Optional. ID of the subject object of the event */
-  subject_id?: string;
-  /** Optional. Type of the subject object of the event */
-  subject_type?: 'repository' | 'workflow' | 'connection';
-  /** Optional. User who is responsible for the event. Leave empty if system. */
+  /** Timestamp when the log event was created */
+  created_at: string;
+  /** (optional) User associated with the log event */
   user?: User;
+  /** (optional) Workflow run associated with the log event */
+  workflow_run?: WorkflowRun;
+  /** (optional) Workflow associated with the log event */
+  workflow?: Workflow;
+  /** (optional) Repository associated with the log event */
+  repository?: Repository;
 }
-
-/**
- * Workflow run logs.
- *
- * Log feed as a text to be rendered in the UI.
- */
-export type WorkflowRunLogs = {
-  workflowRun: WorkflowRun;
-  workflow: Workflow;
-  logs: string[];
-};

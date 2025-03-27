@@ -14,7 +14,7 @@ import { usePopup } from '@/context/PopupContext';
 
 import { IrminFileType } from '@/types/core/EditorItems';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { QueryExecutionResult } from '@/types/core/Query';
+import { QueryExecutionResult } from '@/types/core/StoredQuery';
 
 /**
  * Query context properties

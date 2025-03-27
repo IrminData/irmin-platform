@@ -2,8 +2,8 @@ import IrminCore from '@/lib/core';
 
 import fake from '@/utils/prepareFakeResponse';
 
+import { APIToken } from '@/types/core/APIToken';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { SystemToken } from '@/types/core/SystemToken';
 import { exampleSystemTokens } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -27,19 +27,19 @@ class CredentialService {
   /**
    * Get the user's system tokens
    */
-  async getSystemTokens(): Promise<IrminAPIResponse<SystemToken[]>> {
+  async getSystemTokens(): Promise<IrminAPIResponse<APIToken[]>> {
     if (isOfflineMode)
-      return fake(exampleSystemTokens) as IrminAPIResponse<SystemToken[]>;
+      return fake(exampleSystemTokens) as IrminAPIResponse<APIToken[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/credentials`, {
         method: 'GET',
-      })) as IrminAPIResponse<SystemToken[]>;
+      })) as IrminAPIResponse<APIToken[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Get system tokens error');
       // Ignore any other errors if in development mode
       if (isDevelopment)
-        return fake(exampleSystemTokens) as IrminAPIResponse<SystemToken[]>;
+        return fake(exampleSystemTokens) as IrminAPIResponse<APIToken[]>;
       // Otherwise, throw the error
       throw error;
     }
@@ -54,12 +54,12 @@ class CredentialService {
   async createSystemToken(
     name: string,
     expiry: number
-  ): Promise<IrminAPIResponse<SystemToken>> {
+  ): Promise<IrminAPIResponse<APIToken>> {
     if (isOfflineMode)
       return fake({
         ...exampleSystemTokens[0],
         name,
-      }) as IrminAPIResponse<SystemToken>;
+      }) as IrminAPIResponse<APIToken>;
     try {
       const formData = new FormData();
       formData.append('name', name);
@@ -67,7 +67,7 @@ class CredentialService {
       const response = (await this.irminCore.fetchAPI(`/v1/credentials`, {
         method: 'POST',
         body: formData,
-      })) as IrminAPIResponse<SystemToken>;
+      })) as IrminAPIResponse<APIToken>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create system token error');
@@ -76,7 +76,7 @@ class CredentialService {
         return fake({
           ...exampleSystemTokens[0],
           name,
-        }) as IrminAPIResponse<SystemToken>;
+        }) as IrminAPIResponse<APIToken>;
       // Otherwise, throw the error
       throw error;
     }
