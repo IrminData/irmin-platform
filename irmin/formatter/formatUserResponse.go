@@ -18,11 +18,7 @@ func FormatWorkspaceUserResponse(workspaceUser db.WorkspaceUser) (*irminModels.U
 	// Construct the roles
 	var roles []irminModels.IrminRole
 	for _, role := range workspaceUser.Roles {
-		roleResponse, err := FormatRoleResponse(role)
-		if err != nil {
-			return nil, fmt.Errorf("error formatting role response: %w", err)
-		}
-		roles = append(roles, *roleResponse)
+		roles = append(roles, irminModels.IrminRole(role))
 	}
 	// Construct the user object
 	userResponse := irminModels.User{

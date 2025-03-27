@@ -78,6 +78,9 @@ func FormatWorkflowRunResponse(workflowRun *db.WorkflowRun) (*irminModels.Workfl
 	return &irminModels.WorkflowRun{
 		ID:              workflowRunSqid,
 		CreatedAt:       workflowRun.CreatedAt,
+		UpdatedAt:       workflowRun.UpdatedAt,
+		StartedAt:       workflowRun.StartedAt,
+		FinishedAt:      workflowRun.FinishedAt,
 		Status:          irminModels.WorkflowStatus(workflowRun.Status),
 		Logs:            workflowRun.Logs,
 		TriggeredBy:     triggeredByResponse,

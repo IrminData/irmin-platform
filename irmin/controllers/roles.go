@@ -9,7 +9,7 @@ import (
 
 func RolesIndex(c fiber.Ctx) error {
 	// Define the roles.
-	rolesResponse := []irminModels.IrminRole{
+	rolesResponse := []irminModels.Role{
 		{
 			Description: "Can perform all actions on the workspace",
 			Label:       "Admin",

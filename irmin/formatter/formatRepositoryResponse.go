@@ -16,16 +16,10 @@ func FormatRepositoryResponse(repository *db.Repository, dataEngineRepository *e
 		return nil, fmt.Errorf("error encoding repository sqid: %w", err)
 	}
 
-	// Get the sqid of the user who owns the repository
-	ownerSqid, err := utils.EncodeSqids("users", uint64(repository.OwnerID))
+	// Format the repository owner
+	owner, err := FormatUserResponse(repository.Owner)
 	if err != nil {
-		return nil, fmt.Errorf("error encoding repository owner sqid: %w", err)
-	}
-
-	// Get the sqid of the workspace the repository belongs to
-	workspaceSqid, err := utils.EncodeSqids("workspaces", uint64(repository.WorkspaceID))
-	if err != nil {
-		return nil, fmt.Errorf("error encoding repository workspace sqid: %w", err)
+		return nil, fmt.Errorf("error formatting repository owner: %w", err)
 	}
 
 	// Determine if the repository is immutable
@@ -46,8 +40,7 @@ func FormatRepositoryResponse(repository *db.Repository, dataEngineRepository *e
 		Documentation:          repository.Documentation,
 		IsImmutable:            isImmutable,
 		DefaultBranch:          repository.DefaultBranch,
-		WorkspaceID:            workspaceSqid,
-		OwnerID:                ownerSqid,
+		Owner:                  *owner,
 		GarbageCollectionRules: dataEngineRepository.GarbageCollectionRules,
 		CreatedAt:              repository.CreatedAt,
 		UpdatedAt:              repository.UpdatedAt,

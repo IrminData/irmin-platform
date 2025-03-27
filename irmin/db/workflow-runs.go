@@ -1,12 +1,16 @@
 package db
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
 type WorkflowRun struct {
 	gorm.Model
 
+	StartedAt         *time.Time       `json:"started_at,omitempty"`
+	FinishedAt        *time.Time       `json:"finished_at,omitempty"`
 	Status            WorkflowStatus   `json:"status"`
 	Logs              []string         `json:"logs,omitempty" gorm:"type:jsonb;serializer:json"`
 	TriggeredBy       *WorkflowTrigger `json:"triggered_by" gorm:"foreignKey:TriggeredByID"`
