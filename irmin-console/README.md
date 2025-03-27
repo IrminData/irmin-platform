@@ -1,6 +1,6 @@
 <img src="https://github.com/IrminData/.github/blob/development/irmin-logo-light.svg" width="200">
 
-# Irmin Console (irmin-frontend)
+# Irmin Console
 
 This repository contains the code for Irmin Console frontend, built using Next.js, TypeScript and Tailwind.
 
@@ -84,15 +84,15 @@ yarn start
 With Docker:
 
 ```
-docker build -t irmin-frontend .
-docker run -p 3000:3000 irmin-frontend
+docker build -t irmin-console .
+docker run -p 3000:3000 irmin-console
 ```
 
 Creating Docker image:
 
 ```
 docker buildx create --use # Verify Buildx is active: docker buildx ls
-docker buildx build --platform linux/amd64/v2,linux/arm64/v8 -t YOUR_DOCKER_USERNAME/irmin-frontend:latest --push .
+docker buildx build --platform linux/amd64/v2,linux/arm64/v8 -t YOUR_DOCKER_USERNAME/irmin-console:latest --push .
 ```
 
 ## TypeDoc documentation
