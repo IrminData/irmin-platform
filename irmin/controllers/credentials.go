@@ -106,6 +106,13 @@ func CredentialsStore(c fiber.Ctx) error {
 		ExpiresAt: apiToken.ExpiresAt,
 	}
 
+	// Log the event.
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeCreate,
+		Description: fmt.Sprintf("API token %s created for the user", apiToken.Name),
+		UserID:      &user.ID,
+	})
+
 	// Return the API token.
 	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Message: dict.T("api_token_created"),
@@ -158,6 +165,13 @@ func CredentialsDestroy(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event.
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeDelete,
+		Description: fmt.Sprintf("API token %s deleted", apiToken.Name),
+		UserID:      &user.ID,
+	})
 
 	// Return a success message.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{

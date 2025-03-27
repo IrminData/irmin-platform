@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -111,6 +113,14 @@ func UsersDestroy(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeDelete,
+		Description: fmt.Sprintf("User %s removed from workspace", workspaceUser.User.Email),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
+
 	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusNoContent, irminModels.IrminAPIResponse{
 		Message: dict.T("member_removed_from_workspace"),
@@ -208,6 +218,14 @@ func UsersUpdate(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: fmt.Sprintf("User %s roles updated to %s", workspaceUser.User.Email, strings.Join(requestedRoles, ", ")),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
 
 	// Return the updated user
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{

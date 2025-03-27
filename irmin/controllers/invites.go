@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -207,6 +208,14 @@ func SendInvite(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeCreate,
+		Description: fmt.Sprintf("Invite sent to %s, role: %s", newInvite.Email, newInvite.Role),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
+
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Message: dict.T("invite_sent"),
@@ -292,6 +301,14 @@ func InvitesUpdate(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: fmt.Sprintf("Invite for %s updated, role: %s", updatedInvite.Email, updatedInvite.Role),
+		UserID:      &user.ID,
+		WorkspaceID: &invite.WorkspaceID,
+	})
+
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("invite_updated"),
@@ -342,6 +359,14 @@ func InvitesDestroy(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeDelete,
+		Description: fmt.Sprintf("Invite for %s deleted", invite.Email),
+		UserID:      &user.ID,
+		WorkspaceID: &invite.WorkspaceID,
+	})
 
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
@@ -443,6 +468,14 @@ func ResendInvite(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: fmt.Sprintf("Invite for %s resent", updatedInvite.Email),
+		UserID:      &user.ID,
+		WorkspaceID: &invite.WorkspaceID,
+	})
+
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("invite_sent"),
@@ -517,6 +550,14 @@ func AcceptInvite(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeCreate,
+		Description: fmt.Sprintf("User %s added to workspace %s with role %s", user.Email, invite.Workspace.Name, invite.Role),
+		UserID:      &user.ID,
+		WorkspaceID: &invite.WorkspaceID,
+	})
+
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("invite_accepted"),
@@ -546,6 +587,14 @@ func DeclineInvite(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeDelete,
+		Description: fmt.Sprintf("User %s declined invite to workspace %s", user.Email, invite.Workspace.Name),
+		UserID:      &user.ID,
+		WorkspaceID: &invite.WorkspaceID,
+	})
 
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{

@@ -1,9 +1,11 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/formatter"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -147,6 +149,15 @@ func RepositoriesStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeCreate,
+		Description:  fmt.Sprintf("Repository %s created", repository.Slug),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+	})
+
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Message: dict.T("repository_created"),
@@ -177,6 +188,7 @@ func RepositoriesShow(c fiber.Ctx) error {
 func RepositoriesDestroy(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	repository := c.Locals("repository").(*db.Repository)
 
@@ -199,6 +211,15 @@ func RepositoriesDestroy(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeDelete,
+		Description:  fmt.Sprintf("Repository %s deleted", repository.Slug),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+	})
+
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("repository_deleted"),
@@ -208,6 +229,7 @@ func RepositoriesDestroy(c fiber.Ctx) error {
 func RepositoriesUpdate(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	repository := c.Locals("repository").(*db.Repository)
 	dataEngineRepository := c.Locals("data_engine_repository").(*engine.Repository)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -294,6 +316,15 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeUpdate,
+		Description:  fmt.Sprintf("Repository %s settings updated", repository.Slug),
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+		UserID:       &user.ID,
+	})
+
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("repository_updated"),
@@ -303,6 +334,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 
 func TransferRepositoryOwnership(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	repository := c.Locals("repository").(*db.Repository)
 	dataEngineRepository := c.Locals("data_engine_repository").(*engine.Repository)
@@ -359,6 +391,15 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeUpdate,
+		Description:  fmt.Sprintf("Repository %s ownership transferred to %s", repository.Slug, repository.Owner.Email),
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+		UserID:       &user.ID,
+	})
 
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{

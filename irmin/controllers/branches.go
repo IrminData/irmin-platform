@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -37,6 +39,7 @@ func BranchesIndex(c fiber.Ctx) error {
 func BranchesStore(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	repository := c.Locals("repository").(*db.Repository)
 
@@ -67,6 +70,15 @@ func BranchesStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeCreate,
+		Description:  fmt.Sprintf("Branch %s created", branch.Name),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+	})
+
 	// Return the created branch
 	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Message: dict.T("branch_created"),
@@ -85,6 +97,7 @@ func BranchesShow(c fiber.Ctx) error {
 func BranchesUpdate(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	repository := c.Locals("repository").(*db.Repository)
 	branch := c.Locals("branch").(*irminModels.Branch)
@@ -122,6 +135,15 @@ func BranchesUpdate(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeUpdate,
+		Description:  fmt.Sprintf("Branch %s updated", branch.Name),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+	})
+
 	// Return the updated branch
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("branch_updated"),
@@ -132,6 +154,7 @@ func BranchesUpdate(c fiber.Ctx) error {
 func BranchesDestroy(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	repository := c.Locals("repository").(*db.Repository)
 	branch := c.Locals("branch").(*irminModels.Branch)
@@ -147,6 +170,15 @@ func BranchesDestroy(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeDelete,
+		Description:  fmt.Sprintf("Branch %s deleted", branch.Name),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+	})
 
 	// Return a success message
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{

@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -72,6 +74,15 @@ func CommitsStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeCreate,
+		Description:  fmt.Sprintf("Commit %s created on branch %s", commit.Hash, fields["branch"]),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+	})
+
 	// Return the created commit
 	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Message: dict.T("commit_created"),
@@ -115,6 +126,7 @@ func CommitsShow(c fiber.Ctx) error {
 func RevertUncommittedChanges(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	repository := c.Locals("repository").(*db.Repository)
 
@@ -139,12 +151,17 @@ func RevertUncommittedChanges(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeInfo,
+		Description:  fmt.Sprintf("Uncommitted changes reverted on branch %s", fields["branch"]),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+	})
+
 	// Return the created commit
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("changes_reverted_to_previous_commit"),
 	})
-}
-
-func ShowLastCommit(c fiber.Ctx) error {
-	return c.SendString("Show Last Modification Commit")
 }

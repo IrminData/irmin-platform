@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -38,6 +40,7 @@ func TagsIndex(c fiber.Ctx) error {
 func TagsStore(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	repository := c.Locals("repository").(*db.Repository)
 
@@ -62,6 +65,15 @@ func TagsStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeCreate,
+		Description:  fmt.Sprintf("Tag %s created to track %s", tag.Name, tag.Ref),
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+		UserID:       &user.ID,
+	})
+
 	// Return the created tag
 	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Data: tag,
@@ -79,6 +91,7 @@ func TagsShow(c fiber.Ctx) error {
 func TagsDestroy(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	repository := c.Locals("repository").(*db.Repository)
 	tag := c.Locals("tag").(*irminModels.Tag)
@@ -93,6 +106,15 @@ func TagsDestroy(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeDelete,
+		Description:  fmt.Sprintf("Tag %s deleted", tag.Name),
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+		UserID:       &user.ID,
+	})
 
 	// Return a success message
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{

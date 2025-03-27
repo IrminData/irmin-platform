@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/bucket"
 	"irmin-api/formatter"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -111,6 +113,14 @@ func WorkspacesStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeCreate,
+		Description: fmt.Sprintf("Workspace %s created", newWorkspace.Slug),
+		UserID:      &user.ID,
+		WorkspaceID: &newWorkspace.ID,
+	})
+
 	// Return the new workspace.
 	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Message: dict.T("workspace_created"),
@@ -140,6 +150,7 @@ func WorkspacesShow(c fiber.Ctx) error {
 func WorkspacesUpdate(c fiber.Ctx) error {
 	// Get the dictionary and workspace from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Parse the request body.
@@ -171,6 +182,14 @@ func WorkspacesUpdate(c fiber.Ctx) error {
 			Errors: []string{"error_occurred"},
 		})
 	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: fmt.Sprintf("Workspace %s updated", workspace.Slug),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
 
 	// Return the updated workspace.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
@@ -223,6 +242,14 @@ func WorkspacesDestroy(c fiber.Ctx) error {
 	}
 
 	// TODO: Delete all related data (repositories, etc.)
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeDelete,
+		Description: fmt.Sprintf("Workspace %s deleted", workspace.Slug),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
 
 	// Return a success message.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
@@ -296,6 +323,14 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: fmt.Sprintf("Workspace %s ownership transferred to %s", workspace.Slug, updatedWorkspace.Owner.Email),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
+
 	// Return the updated workspace.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("workspace_ownership_transferred"),
@@ -333,6 +368,14 @@ func LeaveWorkspace(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeInfo,
+		Description: fmt.Sprintf("User %s left workspace %s", user.Email, workspace.Slug),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
 
 	// Return a success message.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{

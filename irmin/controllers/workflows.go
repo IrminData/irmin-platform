@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/lib"
@@ -89,7 +90,9 @@ func WorkflowsShow(c fiber.Ctx) error {
 func WorkflowsUpdate(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workflow := c.Locals("workflow").(*db.Workflow)
+	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Parse the request body
 	fields, err := utils.ParseFormFields(c, []string{"name", "description", "documentation"}, nil)
@@ -121,6 +124,15 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: "Workflow settings updated",
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+		WorkflowID:  &workflow.ID,
+	})
 
 	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
@@ -476,6 +488,15 @@ func WorkflowsStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeCreate,
+		Description: "Workflow created",
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+		WorkflowID:  &workflow.ID,
+	})
+
 	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Message: dict.T("workflow_created"),
@@ -486,6 +507,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 func WorkflowableUpdate(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	workflow := c.Locals("workflow").(*db.Workflow)
 
@@ -785,6 +807,15 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: "Workflow workflowable configuration updated",
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+		WorkflowID:  &workflow.ID,
+	})
+
 	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("workflow_updated"),
@@ -796,6 +827,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
+	user := c.Locals("user").(*db.User)
 	workflow := c.Locals("workflow").(*db.Workflow)
 
 	// Parse the schedule object from the request body.
@@ -841,6 +873,15 @@ func ScheduleUpdate(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: "Workflow schedule updated",
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+		WorkflowID:  &workflow.ID,
+	})
+
 	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("schedule_updated"),
@@ -851,6 +892,8 @@ func ScheduleUpdate(c fiber.Ctx) error {
 func WorkflowsDestroy(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
+	workspace := c.Locals("workspace").(*db.Workspace)
 	workflow := c.Locals("workflow").(*db.Workflow)
 
 	// Delete the current associated workflowable object.
@@ -885,6 +928,15 @@ func WorkflowsDestroy(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeDelete,
+		Description: "Workflow deleted",
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+		WorkflowID:  &workflow.ID,
+	})
+
 	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("workflow_deleted"),
@@ -894,6 +946,7 @@ func WorkflowsDestroy(c fiber.Ctx) error {
 func TransferWorkflowOwnership(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	workflow := c.Locals("workflow").(*db.Workflow)
 
@@ -948,6 +1001,15 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: fmt.Sprintf("Workflow ownership transferred to %s", updatedWorkflow.Owner.Email),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+		WorkflowID:  &workflow.ID,
+	})
 
 	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{

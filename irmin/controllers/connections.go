@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
@@ -107,6 +108,14 @@ func ConnectionsStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeCreate,
+		Description: fmt.Sprintf("Connection %s created", connection.Name),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
+
 	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Message: dict.T("connection_created"),
@@ -135,6 +144,7 @@ func ConnectionsShow(c fiber.Ctx) error {
 
 func ConnectionsUpdate(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	connection := c.Locals("connection").(*db.Connection)
 
 	// Parse the request body
@@ -192,6 +202,14 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: fmt.Sprintf("Connection %s updated", updatedConnection.Name),
+		UserID:      &user.ID,
+		WorkspaceID: &updatedConnection.WorkspaceID,
+	})
+
 	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("connection_updated"),
@@ -201,6 +219,7 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 
 func ConnectionsDestroy(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	connection := c.Locals("connection").(*db.Connection)
 
 	// Delete the connection
@@ -211,6 +230,14 @@ func ConnectionsDestroy(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeDelete,
+		Description: fmt.Sprintf("Connection %s deleted", connection.Name),
+		UserID:      &user.ID,
+		WorkspaceID: &connection.WorkspaceID,
+	})
+
 	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("connection_deleted"),
@@ -219,6 +246,7 @@ func ConnectionsDestroy(c fiber.Ctx) error {
 
 func TransferConnectionOwnership(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	connection := c.Locals("connection").(*db.Connection)
 
@@ -273,6 +301,14 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: fmt.Sprintf("Connection %s ownership transferred to %s", updatedConnection.Name, updatedConnection.Owner.Email),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
 
 	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{

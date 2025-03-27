@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/formatter"
@@ -90,6 +91,14 @@ func QueriesStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeCreate,
+		Description: fmt.Sprintf("Query %s created", storedQuery.Name),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
+
 	// Send the response
 	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Data: formattedQuery,
@@ -117,6 +126,7 @@ func QueriesShow(c fiber.Ctx) error {
 
 func QueriesUpdate(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	query := c.Locals("stored_query").(*db.StoredQuery)
 
 	// Parse the request body
@@ -158,6 +168,14 @@ func QueriesUpdate(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeInfo,
+		Description: fmt.Sprintf("Query %s updated", updatedQuery.Name),
+		UserID:      &user.ID,
+		WorkspaceID: &updatedQuery.WorkspaceID,
+	})
+
 	// Send the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("query_updated"),
@@ -177,6 +195,14 @@ func QueriesDestroy(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeDelete,
+		Description: fmt.Sprintf("Query %s deleted", query.Name),
+		UserID:      &query.OwnerID,
+		WorkspaceID: &query.WorkspaceID,
+	})
+
 	// Send the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("query_deleted"),
@@ -185,6 +211,7 @@ func QueriesDestroy(c fiber.Ctx) error {
 
 func TransferQueryOwnership(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	query := c.Locals("stored_query").(*db.StoredQuery)
 
@@ -240,6 +267,14 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeInfo,
+		Description: fmt.Sprintf("Query %s ownership transferred to %s", updatedQuery.Name, updatedQuery.Owner.Email),
+		UserID:      &user.ID,
+		WorkspaceID: &updatedQuery.WorkspaceID,
+	})
+
 	// Send the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("query_ownership_transferred"),
@@ -250,6 +285,7 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 func ExecuteSQL(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Parse the request body
@@ -264,14 +300,36 @@ func ExecuteSQL(c fiber.Ctx) error {
 	// Initialize Data Engine client
 	DataEngine := engine.NewClient(locale)
 
+	// Log the event
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeInfo,
+		Description: "SQL query execution started",
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
+
 	// Execute the SQL
-	results, err := DataEngine.ExecuteQuery(workspace.Description, fields["sql"])
+	results, err := DataEngine.ExecuteQuery(workspace.Slug, fields["sql"])
 	if err != nil {
 		log.Printf("Error executing query: %v", err)
+		db.CreateLogEvent(&db.LogEvent{
+			Type:        db.LogEventTypeError,
+			Description: "SQL query execution failed",
+			UserID:      &user.ID,
+			WorkspaceID: &workspace.ID,
+		})
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeInfo,
+		Description: "SQL query execution completed",
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
 
 	// Send the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
@@ -282,20 +340,43 @@ func ExecuteSQL(c fiber.Ctx) error {
 func ExecuteQuery(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	query := c.Locals("stored_query").(*db.StoredQuery)
 
 	// Initialize Data Engine client
 	DataEngine := engine.NewClient(locale)
 
+	// Log the event
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeInfo,
+		Description: fmt.Sprintf("Query %s execution started", query.Name),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
+
 	// Execute the SQL
-	results, err := DataEngine.ExecuteQuery(workspace.Description, query.SQL)
+	results, err := DataEngine.ExecuteQuery(workspace.Slug, query.SQL)
 	if err != nil {
 		log.Printf("Error executing query: %v", err)
+		db.CreateLogEvent(&db.LogEvent{
+			Type:        db.LogEventTypeError,
+			Description: fmt.Sprintf("Query %s execution failed", query.Name),
+			UserID:      &user.ID,
+			WorkspaceID: &workspace.ID,
+		})
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event
+	db.CreateLogEvent(&db.LogEvent{
+		Type:        db.LogEventTypeInfo,
+		Description: fmt.Sprintf("Query %s execution completed", query.Name),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: results,

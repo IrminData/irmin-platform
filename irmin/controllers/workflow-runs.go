@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -16,6 +18,7 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workflow := c.Locals("workflow").(*db.Workflow)
 	user := c.Locals("user").(*db.User)
+	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Create a new workflow run.
 	run := &db.WorkflowRun{
@@ -52,6 +55,15 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 			Message: dict.T("error_occurred"),
 		})
 	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeCreate,
+		Description: fmt.Sprintf("Workflow run %s created", formattedRun.ID),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+		WorkflowID:  &workflow.ID,
+	})
 
 	// Return the formatted workflow run.
 	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
@@ -148,6 +160,8 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 
 func WorkflowRunsDestroy(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
+	workspace := c.Locals("workspace").(*db.Workspace)
 	workflow := c.Locals("workflow").(*db.Workflow)
 
 	// Parse the run sqid from the request URL.
@@ -207,6 +221,15 @@ func WorkflowRunsDestroy(c fiber.Ctx) error {
 			Message: dict.T("error_occurred"),
 		})
 	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeWarning,
+		Description: fmt.Sprintf("Workflow run %s cancelled", formattedRun.ID),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+		WorkflowID:  &workflow.ID,
+	})
 
 	// Return the formatted workflow run.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{

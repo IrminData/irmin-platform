@@ -1,11 +1,13 @@
 package controllers
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
 	"irmin-api/bucket"
 	"irmin-api/db"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
@@ -93,6 +95,7 @@ func EditorIndex(c fiber.Ctx) error {
 
 func EditorItemStore(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Get the path from query parameters
@@ -145,6 +148,15 @@ func EditorItemStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: fmt.Sprintf("Editor item %s saved", path),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
+
+	// Return a success response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("editor_item_saved"),
 	})
@@ -152,6 +164,7 @@ func EditorItemStore(c fiber.Ctx) error {
 
 func EditorItemDestroy(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Get the path from query parameters
@@ -191,6 +204,15 @@ func EditorItemDestroy(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeDelete,
+		Description: fmt.Sprintf("Editor item %s deleted", path),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
+
+	// Return a success response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("editor_item_deleted"),
 	})
@@ -198,6 +220,7 @@ func EditorItemDestroy(c fiber.Ctx) error {
 
 func MoveEditorItem(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Get the path from query parameters
@@ -255,6 +278,15 @@ func MoveEditorItem(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: fmt.Sprintf("Editor item %s moved to %s", path, destination_path),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
+
+	// Return a success response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("editor_item_moved"),
 	})
@@ -262,6 +294,7 @@ func MoveEditorItem(c fiber.Ctx) error {
 
 func CopyEditorItem(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Get the path from query parameters
@@ -319,6 +352,15 @@ func CopyEditorItem(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeCreate,
+		Description: fmt.Sprintf("Editor item %s copied to %s", path, destination_path),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
+
+	// Return a success response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("editor_item_copied"),
 	})

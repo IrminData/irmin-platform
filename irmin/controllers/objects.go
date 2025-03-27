@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -30,6 +32,7 @@ func ObjectsIndex(c fiber.Ctx) error {
 func UploadObject(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	repository := c.Locals("repository").(*db.Repository)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	object_ref := c.Locals("object_ref").(string)
@@ -64,6 +67,15 @@ func UploadObject(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeUpdate,
+		Description:  fmt.Sprintf("Object %s uploaded to branch %s", newObject.Path, object_ref),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+	})
+
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("object_uploaded"),
 		Data:    newObject,
@@ -73,6 +85,7 @@ func UploadObject(c fiber.Ctx) error {
 func MoveObject(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	repository := c.Locals("repository").(*db.Repository)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	object_ref := c.Locals("object_ref").(string)
@@ -99,6 +112,15 @@ func MoveObject(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeUpdate,
+		Description:  fmt.Sprintf("Object %s moved to %s on branch %s", object_path, newObject.Path, object_ref),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+	})
+
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("object_moved"),
 		Data:    newObject,
@@ -108,6 +130,7 @@ func MoveObject(c fiber.Ctx) error {
 func CopyObject(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	repository := c.Locals("repository").(*db.Repository)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	object_ref := c.Locals("object_ref").(string)
@@ -134,6 +157,15 @@ func CopyObject(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeUpdate,
+		Description:  fmt.Sprintf("Object %s copied to %s on branch %s", object_path, newObject.Path, object_ref),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+	})
+
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("object_copied"),
 		Data:    newObject,
@@ -143,6 +175,7 @@ func CopyObject(c fiber.Ctx) error {
 func ObjectsDestroy(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	repository := c.Locals("repository").(*db.Repository)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	object_ref := c.Locals("object_ref").(string)
@@ -159,6 +192,15 @@ func ObjectsDestroy(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:         db.LogEventTypeDelete,
+		Description:  fmt.Sprintf("Object %s deleted from branch %s", object_path, object_ref),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		RepositoryID: &repository.ID,
+	})
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("object_deleted"),

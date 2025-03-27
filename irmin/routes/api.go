@@ -164,6 +164,5 @@ func RegisterAPIRoutes(app *fiber.App) {
 	commits.Get("/", controllers.CommitsIndex)
 	commits.Post("/", controllers.CommitsStore)
 	commits.Post("/revert", controllers.RevertUncommittedChanges)
-	commits.Get("/last-commit", controllers.ShowLastCommit)
 	commits.Get("/:hash", controllers.CommitsShow)
 }
