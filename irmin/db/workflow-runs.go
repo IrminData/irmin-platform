@@ -8,6 +8,7 @@ type WorkflowRun struct {
 	gorm.Model
 
 	Status            WorkflowStatus   `json:"status"`
+	Logs              []string         `json:"logs,omitempty" gorm:"type:jsonb;serializer:json"`
 	TriggeredBy       *WorkflowTrigger `json:"triggered_by" gorm:"foreignKey:TriggeredByID"`
 	TriggeredByID     *uint            `json:"triggered_by_id"`
 	TriggeredByUser   *User            `json:"triggered_by_user" gorm:"foreignKey:TriggeredByUserID"`

@@ -79,6 +79,7 @@ func FormatWorkflowRunResponse(workflowRun *db.WorkflowRun) (*irminModels.Workfl
 		ID:              workflowRunSqid,
 		CreatedAt:       workflowRun.CreatedAt,
 		Status:          irminModels.WorkflowStatus(workflowRun.Status),
+		Logs:            workflowRun.Logs,
 		TriggeredBy:     triggeredByResponse,
 		TriggeredByUser: triggeredByUserResponse,
 		WorkflowID:      workflowSqid,
