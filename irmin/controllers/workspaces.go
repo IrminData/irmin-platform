@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"irmin-api/bucket"
+	"irmin-api/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -27,16 +28,17 @@ func WorkspacesIndex(c fiber.Ctx) error {
 	}
 
 	// Map workspaces to workspace response.
-	var workspacesResponse []db.WorkspaceResponse
+	var workspacesResponse []irminModels.Workspace
 	for _, userWorkspace := range userWorkspaces {
 		workspace := userWorkspace.Workspace
-		sqid, _ := utils.EncodeSqids("workspaces", uint64(workspace.ID))
-		workspacesResponse = append(workspacesResponse, db.WorkspaceResponse{
-			ID:          sqid,
-			Name:        workspace.Name,
-			Slug:        workspace.Slug,
-			Description: workspace.Description,
-		})
+		workspaceResponse, err := formatter.FormatWorkspaceResponse(workspace)
+		if err != nil {
+			log.Printf("Error formatting workspace response: %v", err)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+				Errors: []string{"error_occurred"},
+			})
+		}
+		workspacesResponse = append(workspacesResponse, *workspaceResponse)
 	}
 
 	// Return the workspaces.
@@ -100,27 +102,19 @@ func WorkspacesStore(c fiber.Ctx) error {
 		})
 	}
 
-	// Create SQID for the workspace.
-	sqid, err := utils.EncodeSqids("workspaces", uint64(newWorkspace.ID))
-	if err != nil {
-		log.Printf("Error encoding SQID: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
-		})
-	}
-
 	// Format the response.
-	response := db.WorkspaceResponse{
-		ID:          sqid,
-		Name:        newWorkspace.Name,
-		Slug:        newWorkspace.Slug,
-		Description: newWorkspace.Description,
+	workspaceResponse, err := formatter.FormatWorkspaceResponse(*newWorkspace)
+	if err != nil {
+		log.Printf("Error formatting workspace response: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Errors: []string{"error_occurred"},
+		})
 	}
 
 	// Return the new workspace.
 	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
 		Message: dict.T("workspace_created"),
-		Data:    response,
+		Data:    workspaceResponse,
 	})
 }
 
@@ -129,37 +123,12 @@ func WorkspacesShow(c fiber.Ctx) error {
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Create the workspace response.
-	sqid, _ := utils.EncodeSqids("workspaces", uint64(workspace.ID))
-	ownerSqid, _ := utils.EncodeSqids("users", uint64(workspace.Owner.ID))
-	workspaceUsers := make([]db.UserResponse, len(workspace.Users))
-	for i, userWorkspace := range workspace.Users {
-		userSqid, _ := utils.EncodeSqids("users", uint64(userWorkspace.User.ID))
-		workspaceUsers[i] = db.UserResponse{
-			ID:             userSqid,
-			FirstName:      userWorkspace.User.FirstName,
-			LastName:       userWorkspace.User.LastName,
-			Email:          userWorkspace.User.Email,
-			Phone:          userWorkspace.User.Phone,
-			Company:        userWorkspace.User.Company,
-			ProfilePicture: userWorkspace.User.ProfilePicture,
-			Roles:          userWorkspace.Roles,
-		}
-	}
-	workspaceResponse := db.WorkspaceResponse{
-		ID:          sqid,
-		Name:        workspace.Name,
-		Slug:        workspace.Slug,
-		Description: workspace.Description,
-		Users:       workspaceUsers,
-		Owner: &db.UserResponse{
-			ID:             ownerSqid,
-			FirstName:      workspace.Owner.FirstName,
-			LastName:       workspace.Owner.LastName,
-			Email:          workspace.Owner.Email,
-			Phone:          workspace.Owner.Phone,
-			Company:        workspace.Owner.Company,
-			ProfilePicture: workspace.Owner.ProfilePicture,
-		},
+	workspaceResponse, err := formatter.FormatWorkspaceResponse(*workspace)
+	if err != nil {
+		log.Printf("Error formatting workspace response: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Errors: []string{"error_occurred"},
+		})
 	}
 
 	// Return the workspace.
@@ -195,12 +164,12 @@ func WorkspacesUpdate(c fiber.Ctx) error {
 	}
 
 	// Create the workspace response.
-	sqid, _ := utils.EncodeSqids("workspaces", uint64(updatedWorkspace.ID))
-	workspaceResponse := db.WorkspaceResponse{
-		ID:          sqid,
-		Name:        updatedWorkspace.Name,
-		Slug:        updatedWorkspace.Slug,
-		Description: updatedWorkspace.Description,
+	workspaceResponse, err := formatter.FormatWorkspaceResponse(*updatedWorkspace)
+	if err != nil {
+		log.Printf("Error formatting workspace response: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Errors: []string{"error_occurred"},
+		})
 	}
 
 	// Return the updated workspace.
@@ -319,21 +288,12 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 	}
 
 	// Create the workspace response.
-	sqid, _ := utils.EncodeSqids("workspaces", uint64(updatedWorkspace.ID))
-	workspaceResponse := db.WorkspaceResponse{
-		ID:          sqid,
-		Name:        updatedWorkspace.Name,
-		Slug:        updatedWorkspace.Slug,
-		Description: updatedWorkspace.Description,
-		Owner: &db.UserResponse{
-			ID:             fields["new_owner_id"],
-			FirstName:      updatedWorkspace.Owner.FirstName,
-			LastName:       updatedWorkspace.Owner.LastName,
-			Email:          updatedWorkspace.Owner.Email,
-			Phone:          updatedWorkspace.Owner.Phone,
-			Company:        updatedWorkspace.Owner.Company,
-			ProfilePicture: updatedWorkspace.Owner.ProfilePicture,
-		},
+	workspaceResponse, err := formatter.FormatWorkspaceResponse(*updatedWorkspace)
+	if err != nil {
+		log.Printf("Error formatting workspace response: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Errors: []string{"error_occurred"},
+		})
 	}
 
 	// Return the updated workspace.

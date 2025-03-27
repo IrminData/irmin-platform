@@ -16,15 +16,6 @@ type APIToken struct {
 	UserID    uint      `json:"user_id"`
 }
 
-type APITokenResponse struct {
-	ID        string    `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Name      string    `json:"name"`
-	Token     string    `json:"token,omitempty"`
-	ExpiresAt time.Time `json:"expiry"`
-}
-
 // GetAPIToken retrieves an API token by its ID.
 func GetAPIToken(id uint) (*APIToken, error) {
 	var t APIToken

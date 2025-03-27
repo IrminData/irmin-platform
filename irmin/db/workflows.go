@@ -1,6 +1,8 @@
 package db
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type WorkflowableType string
 
@@ -310,48 +312,4 @@ func DeleteExportWorkflowable(id uint) error {
 // DeletePipelineWorkflowable deletes a pipeline workflowable record and its stages.
 func DeletePipelineWorkflowable(id uint) error {
 	return DB.Select("Stages").Where("id = ?", id).Delete(&PipelineWorkflowable{}).Error
-}
-
-// ------------------ Responses ------------------
-
-type PipelineStageResponse struct {
-	Description string            `json:"description"`
-	Write       bool              `json:"write"`
-	Read        bool              `json:"read"`
-	Type        PipelineStageType `json:"type"`
-	// Action
-	Executable *string `json:"executable,omitempty"`
-	// Connection
-	ConnectionID        *string `json:"connection_id,omitempty"`
-	ConnectionWritePath *string `json:"connection_write_path,omitempty"`
-	ConnectionReadPath  *string `json:"connection_read_path,omitempty"`
-	// Repository
-	Repository       *string `json:"repository,omitempty"`
-	RepositoryBranch *string `json:"branch,omitempty"`
-	RepositoryPath   *string `json:"path,omitempty"`
-}
-
-type WorkflowableResponse struct {
-	Type           WorkflowableType        `json:"type"`
-	ConnectionID   string                  `json:"connection_id,omitempty"`
-	ConnectionPath string                  `json:"connection_path,omitempty"`
-	Repository     string                  `json:"repository,omitempty"`
-	Branch         string                  `json:"branch,omitempty"`
-	Path           string                  `json:"path,omitempty"`
-	Recursive      bool                    `json:"recursive,omitempty"`
-	Executable     string                  `json:"executable,omitempty"`
-	Live           bool                    `json:"live,omitempty"`
-	Stages         []PipelineStageResponse `json:"stages,omitempty"`
-}
-
-type WorkflowResponse struct {
-	ID            string                `json:"id"`
-	Name          string                `json:"name"`
-	Description   string                `json:"description"`
-	Documentation string                `json:"documentation"`
-	Status        WorkflowStatus        `json:"status"`
-	Type          WorkflowableType      `json:"type"`
-	Owner         UserResponse          `json:"owner"`
-	Schedule      *ScheduleResponse     `json:"schedule,omitempty"`
-	Workflowable  *WorkflowableResponse `json:"workflowable,omitempty"`
 }

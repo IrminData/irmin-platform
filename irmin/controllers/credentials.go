@@ -28,10 +28,10 @@ func CredentialsIndex(c fiber.Ctx) error {
 	}
 
 	// Map tokens to API token response, omitting the Token field.
-	var listResponse []db.APITokenResponse
+	var listResponse []irminModels.APIToken
 	for _, token := range tokens {
 		sqid, _ := utils.EncodeSqids("api_tokens", uint64(token.ID))
-		listResponse = append(listResponse, db.APITokenResponse{
+		listResponse = append(listResponse, irminModels.APIToken{
 			ID:        sqid,
 			CreatedAt: token.CreatedAt,
 			UpdatedAt: token.UpdatedAt,
@@ -97,7 +97,7 @@ func CredentialsStore(c fiber.Ctx) error {
 
 	// Conver the API token to an API token response.
 	sqid, _ := utils.EncodeSqids("api_tokens", uint64(apiToken.ID))
-	apiTokenResponse := db.APITokenResponse{
+	apiTokenResponse := irminModels.APIToken{
 		ID:        sqid,
 		CreatedAt: apiToken.CreatedAt,
 		UpdatedAt: apiToken.UpdatedAt,

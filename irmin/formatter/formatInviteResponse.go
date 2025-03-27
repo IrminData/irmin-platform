@@ -5,9 +5,11 @@ import (
 	"irmin-api/db"
 	"irmin-api/utils"
 	"time"
+
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatInviteResponse(invite *db.Invite) (*db.InviteResponse, error) {
+func FormatInviteResponse(invite *db.Invite) (*irminModels.Invite, error) {
 	// Get the sqid of the invite
 	inviteSqid, err := utils.EncodeSqids("invites", uint64(invite.ID))
 	if err != nil {
@@ -26,6 +28,12 @@ func FormatInviteResponse(invite *db.Invite) (*db.InviteResponse, error) {
 		return nil, fmt.Errorf("error encoding workspace sqid: %w", err)
 	}
 
+	// Format the invite role
+	role, err := FormatRoleResponse(invite.Role)
+	if err != nil {
+		return nil, fmt.Errorf("error formatting invite role: %w", err)
+	}
+
 	// Format the invite response
 	var acceptedAt time.Time
 	if invite.AcceptedAt.Valid {
@@ -35,14 +43,14 @@ func FormatInviteResponse(invite *db.Invite) (*db.InviteResponse, error) {
 	if invite.DeclinedAt.Valid {
 		declinedAt = invite.DeclinedAt.Time
 	}
-	inviteResponse := db.InviteResponse{
+	inviteResponse := irminModels.Invite{
 		ID:         inviteSqid,
 		Email:      invite.Email,
-		Role:       invite.Role,
+		Role:       *role,
 		AcceptedAt: &acceptedAt,
 		DeclinedAt: &declinedAt,
 		ExpiresAt:  invite.ExpiresAt,
-		InvitedBy: db.UserResponse{
+		InvitedBy: irminModels.User{
 			ID:             invitedBySqid,
 			FirstName:      invite.InvitedBy.FirstName,
 			LastName:       invite.InvitedBy.LastName,
@@ -51,7 +59,7 @@ func FormatInviteResponse(invite *db.Invite) (*db.InviteResponse, error) {
 			Company:        invite.InvitedBy.Company,
 			ProfilePicture: invite.InvitedBy.ProfilePicture,
 		},
-		Workspace: db.WorkspaceResponse{
+		Workspace: irminModels.Workspace{
 			ID:          workspaceSqid,
 			Name:        invite.Workspace.Name,
 			Slug:        invite.Workspace.Slug,

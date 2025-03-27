@@ -59,7 +59,7 @@ func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef
 				Name:        objectDetails.Name,
 				Path:        objectDetails.FullPath,
 				Type:        objectDetails.Type,
-				ContentType: &objectDetails.ContentType,
+				ContentType: objectDetails.ContentType,
 			},
 		}
 	}

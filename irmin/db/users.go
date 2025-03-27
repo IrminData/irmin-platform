@@ -31,17 +31,6 @@ type WorkspaceUser struct {
 	Roles       []UserWorkspaceRole `json:"roles" gorm:"type:jsonb;serializer:json"`
 }
 
-type UserResponse struct {
-	ID             string              `json:"id"`
-	FirstName      string              `json:"first_name"`
-	LastName       string              `json:"last_name"`
-	Email          string              `json:"email"`
-	Phone          string              `json:"phone"`
-	Company        string              `json:"company"`
-	ProfilePicture string              `json:"profile_picture"`
-	Roles          []UserWorkspaceRole `json:"roles,omitempty"`
-}
-
 // GetUser retrieves a user from the database by their ID
 func GetUser(id uint) (*User, error) {
 	var user User

@@ -3,7 +3,6 @@ package controllers
 import (
 	"log"
 	"strings"
-	"time"
 
 	"irmin-api/bucket"
 	"irmin-api/db"
@@ -13,14 +12,6 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
-
-type EditorItem struct {
-	Name         string    `json:"name"`
-	Path         string    `json:"path"`
-	Type         string    `json:"type"` // file or folder
-	Content      *string   `json:"content,omitempty"`
-	LastModified time.Time `json:"last_modified"`
-}
 
 func EditorIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
@@ -65,7 +56,7 @@ func EditorIndex(c fiber.Ctx) error {
 	}
 
 	// Create a list of editor items
-	var editorItems []EditorItem
+	var editorItems []irminModels.EditorItem
 	for _, item := range items {
 		// Skip the base path
 		if *item.Key == pathPrefix {
@@ -87,7 +78,7 @@ func EditorIndex(c fiber.Ctx) error {
 			itemType = "folder"
 		}
 
-		editorItems = append(editorItems, EditorItem{
+		editorItems = append(editorItems, irminModels.EditorItem{
 			Name:         name,
 			Path:         itemPath,
 			Type:         itemType,

@@ -48,44 +48,16 @@ func WorkflowsIndex(c fiber.Ctx) error {
 	}
 
 	// Structure the response.
-	var workflowsResponse []db.WorkflowResponse
+	var workflowsResponse []irminModels.Workflow
 	for _, workflow := range workflows {
-		ownerSqid, err := utils.EncodeSqids("users", uint64(workflow.OwnerID))
+		workflowResponse, err := formatter.FormatWorkflowResponse(workflow)
 		if err != nil {
-			log.Printf("Error encoding owner sqid: %v", err)
+			log.Printf("Error getting workflow response: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
-		ownerResponse := db.UserResponse{
-			ID:             ownerSqid,
-			FirstName:      workflow.Owner.FirstName,
-			LastName:       workflow.Owner.LastName,
-			Email:          workflow.Owner.Email,
-			Phone:          workflow.Owner.Phone,
-			Company:        workflow.Owner.Company,
-			ProfilePicture: workflow.Owner.ProfilePicture,
-		}
-		workflowSqid, err := utils.EncodeSqids("workflows", uint64(workflow.ID))
-		if err != nil {
-			log.Printf("Error encoding workflow sqid: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-		latestStatus := db.WorkflowStatusInitiating
-		latestWorkflowRun, _ := db.GetLatestWorkflowRunByWorkflowID(workflow.ID)
-		if latestWorkflowRun != nil {
-			latestStatus = latestWorkflowRun.Status
-		}
-		workflowsResponse = append(workflowsResponse, db.WorkflowResponse{
-			ID:          workflowSqid,
-			Name:        workflow.Name,
-			Description: workflow.Description,
-			Status:      latestStatus,
-			Type:        workflow.Type,
-			Owner:       ownerResponse,
-		})
+		workflowsResponse = append(workflowsResponse, *workflowResponse)
 	}
 
 	// Return the response.

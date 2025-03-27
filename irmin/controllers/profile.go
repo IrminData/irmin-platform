@@ -28,7 +28,7 @@ func ProfileShow(c fiber.Ctx) error {
 	}
 
 	// Create the user response
-	response := db.UserResponse{
+	response := irminModels.User{
 		ID:             sqid,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
@@ -193,7 +193,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	}
 
 	// Structure the user response
-	userResponse := db.UserResponse{
+	userResponse := irminModels.User{
 		ID:             sqid,
 		FirstName:      updatedUser.FirstName,
 		LastName:       updatedUser.LastName,

@@ -8,19 +8,9 @@ import (
 	"irmin-api/utils"
 	"strings"
 	"time"
+
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
-
-// BranchGarbageCollectionRules represents the garbage collection rules for a branch.
-type BranchGarbageCollectionRules struct {
-	BranchID      string `json:"branch_id"`
-	RetentionDays int    `json:"retention_days"`
-}
-
-// GarbageCollectionRules represents the garbage collection rules for a repository.
-type GarbageCollectionRules struct {
-	DefaultRetentionDays int                            `json:"default_retention_days,omitempty"`
-	Branches             []BranchGarbageCollectionRules `json:"branches,omitempty"`
-}
 
 // Repository represents a returned by the data engine.
 type Repository struct {
@@ -39,7 +29,7 @@ type Repository struct {
 	// Timestamp of the creation of the Repository
 	CreatedAt string `json:"created_at"`
 	// Garbage collection rules for the Repository
-	GarbageCollectionRules *GarbageCollectionRules `json:"garbage_collection_rules,omitempty"`
+	GarbageCollectionRules *irminModels.GarbageCollectionRules `json:"garbage_collection_rules,omitempty"`
 }
 
 func (c *Client) ListRepositories(workspace string) ([]Repository, error) {
@@ -107,12 +97,12 @@ func (c *Client) GetRepository(ctx context.Context, workspace, repository string
 		IsImmutable:      lakefsRepository.ReadOnly,
 		DefaultBranch:    lakefsRepository.DefaultBranch,
 		CreatedAt:        time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
-		GarbageCollectionRules: &GarbageCollectionRules{
+		GarbageCollectionRules: &irminModels.GarbageCollectionRules{
 			DefaultRetentionDays: lakefsGarbageCollectionRules.DefaultRetentionDays,
-			Branches: func() []BranchGarbageCollectionRules {
-				var branches []BranchGarbageCollectionRules
+			Branches: func() []irminModels.BranchGarbageCollectionRules {
+				var branches []irminModels.BranchGarbageCollectionRules
 				for _, branch := range lakefsGarbageCollectionRules.Branches {
-					branches = append(branches, BranchGarbageCollectionRules{
+					branches = append(branches, irminModels.BranchGarbageCollectionRules{
 						BranchID:      branch.BranchID,
 						RetentionDays: branch.RetentionDays,
 					})
@@ -181,12 +171,12 @@ func (c *Client) CreateRepository(workspace, name, defaultBranch string, isImmut
 		IsImmutable:      lakefsRepository.ReadOnly,
 		DefaultBranch:    lakefsRepository.DefaultBranch,
 		CreatedAt:        time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
-		GarbageCollectionRules: &GarbageCollectionRules{
+		GarbageCollectionRules: &irminModels.GarbageCollectionRules{
 			DefaultRetentionDays: garbageCollectionRules.DefaultRetentionDays,
-			Branches: func() []BranchGarbageCollectionRules {
-				var branches []BranchGarbageCollectionRules
+			Branches: func() []irminModels.BranchGarbageCollectionRules {
+				var branches []irminModels.BranchGarbageCollectionRules
 				for _, branch := range garbageCollectionRules.Branches {
-					branches = append(branches, BranchGarbageCollectionRules{
+					branches = append(branches, irminModels.BranchGarbageCollectionRules{
 						BranchID:      branch.BranchID,
 						RetentionDays: branch.RetentionDays,
 					})
@@ -248,12 +238,12 @@ func (c *Client) UpdateRepository(workspace, repository string, gcDefaultRetenti
 		IsImmutable:      lakefsRepository.ReadOnly,
 		DefaultBranch:    lakefsRepository.DefaultBranch,
 		CreatedAt:        time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
-		GarbageCollectionRules: &GarbageCollectionRules{
+		GarbageCollectionRules: &irminModels.GarbageCollectionRules{
 			DefaultRetentionDays: garbageCollectionRules.DefaultRetentionDays,
-			Branches: func() []BranchGarbageCollectionRules {
-				var branches []BranchGarbageCollectionRules
+			Branches: func() []irminModels.BranchGarbageCollectionRules {
+				var branches []irminModels.BranchGarbageCollectionRules
 				for _, branch := range garbageCollectionRules.Branches {
-					branches = append(branches, BranchGarbageCollectionRules{
+					branches = append(branches, irminModels.BranchGarbageCollectionRules{
 						BranchID:      branch.BranchID,
 						RetentionDays: branch.RetentionDays,
 					})

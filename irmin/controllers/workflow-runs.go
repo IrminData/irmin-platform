@@ -74,7 +74,7 @@ func WorkflowRunsIndex(c fiber.Ctx) error {
 	}
 
 	// Format the workflow runs for the response.
-	var response []db.WorkflowRunResponse
+	var response []irminModels.WorkflowRun
 	for _, run := range runs {
 		formattedRun, err := formatter.FormatWorkflowRunResponse(&run)
 		if err != nil {

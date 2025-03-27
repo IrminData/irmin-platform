@@ -11,22 +11,9 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-type Object struct {
-	Name                  string                 `json:"name"`
-	Path                  string                 `json:"path"`
-	Type                  irminModels.ObjectType `json:"type"`
-	ContentType           string                 `json:"content_type,omitempty"`            // The MIME type of the object content, like "application/json" or "text/plain".
-	PhysicalAddress       string                 `json:"physical_address,omitempty"`        // The location of the object on the underlying object store. Formatted as a native URI with the object store type as scheme ("s3://...", "gs://...", etc.) Or, in the case of presign=true, will be an HTTP URL to be consumed via regular HTTP GET
-	PhysicalAddressExpiry *int64                 `json:"physical_address_expiry,omitempty"` // If present and nonzero, physical_address is a pre-signed URL and will expire at this Unix Epoch time. This will be shorter than the pre-signed URL lifetime if an authentication token is about to expire.
-	SizeBytes             int64                  `json:"size_bytes,omitempty"`              // The number of bytes in the object.
-	LastModified          string                 `json:"last_modified,omitempty"`           // The last modified time of the object in RFC3339 format.
-	Metadata              map[string]string      `json:"metadata,omitempty"`                // Key-value pairs of metadata about the object.
-	Children              []Object               `json:"children,omitempty"`                // If the object is a group, this will contain the children objects.
-}
-
 // getObject fetches the object from a workspace repository at a specific ref and path
 // and returns it as an Irmin formatted object.
-func getObject(path, lakeFSRepositoryName, ref string, lakefsClient lakefs.Client) (*Object, error) {
+func getObject(path, lakeFSRepositoryName, ref string, lakefsClient lakefs.Client) (*irminModels.Object, error) {
 	// Format the object path.
 	path = strings.Trim(path, "/")
 
@@ -53,11 +40,11 @@ func getObject(path, lakeFSRepositoryName, ref string, lakefsClient lakefs.Clien
 	}
 
 	// Convert LakeFS objects to Irmin objects.
-	irminObjectChildren := make([]Object, len(children))
-	for i, child := range children {
+	var irminObjectChildren []irminModels.Object
+	for _, child := range children {
 		objectDetails := utils.ParseObjectDetailsFromPath(child.Path)
 		lastModified := time.Unix(int64(child.Mtime), 0).Format(time.RFC3339)
-		irminObjectChildren[i] = Object{
+		irminObjectChildren = append(irminObjectChildren, irminModels.Object{
 			Name:                  objectDetails.Name,
 			Path:                  objectDetails.FullPath,
 			Type:                  objectDetails.Type,
@@ -67,7 +54,7 @@ func getObject(path, lakeFSRepositoryName, ref string, lakefsClient lakefs.Clien
 			SizeBytes:             child.SizeBytes,
 			LastModified:          lastModified,
 			Metadata:              child.Metadata,
-		}
+		})
 	}
 
 	// Construct the resulting object
@@ -79,7 +66,7 @@ func getObject(path, lakeFSRepositoryName, ref string, lakefsClient lakefs.Clien
 		// It's a file, thus it has metadata
 		lastModified = time.Unix(int64(objectMetadata.Mtime), 0).Format(time.RFC3339)
 	}
-	irminObject := Object{
+	irminObject := irminModels.Object{
 		Name:                  objectPathDetails.Name,
 		Path:                  objectPathDetails.FullPath,
 		Type:                  objectPathDetails.Type,
@@ -95,7 +82,7 @@ func getObject(path, lakeFSRepositoryName, ref string, lakefsClient lakefs.Clien
 	return &irminObject, nil
 }
 
-func (c *Client) GetPath(workspace, repository, path, ref string) (*Object, error) {
+func (c *Client) GetPath(workspace, repository, path, ref string) (*irminModels.Object, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -117,7 +104,7 @@ func (c *Client) GetPath(workspace, repository, path, ref string) (*Object, erro
 	return irminObject, nil
 }
 
-func (c *Client) GetObjectContent(workspace, repository, path, ref string) (*Object, []byte, error) {
+func (c *Client) GetObjectContent(workspace, repository, path, ref string) (*irminModels.Object, []byte, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -145,7 +132,7 @@ func (c *Client) GetObjectContent(workspace, repository, path, ref string) (*Obj
 	return irminObject, content, nil
 }
 
-func (c *Client) UploadObject(workspace, repository, path, ref string, file multipart.File) (*Object, error) {
+func (c *Client) UploadObject(workspace, repository, path, ref string, file multipart.File) (*irminModels.Object, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -172,7 +159,7 @@ func (c *Client) UploadObject(workspace, repository, path, ref string, file mult
 
 	// Construct the resulting object
 	lastModified := time.Unix(int64(objectMetadata.Mtime), 0).Format(time.RFC3339)
-	irminObject := Object{
+	irminObject := irminModels.Object{
 		Name:                  objectPathDetails.Name,
 		Path:                  objectPathDetails.FullPath,
 		Type:                  objectPathDetails.Type,
@@ -212,7 +199,7 @@ func (c *Client) DeleteObject(workspace, repository, path, ref string) error {
 	return nil
 }
 
-func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*Object, error) {
+func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*irminModels.Object, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -249,7 +236,7 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 
 	// Construct the resulting object
 	lastModified := time.Unix(int64(objectMetadata.Mtime), 0).Format(time.RFC3339)
-	irminObject := Object{
+	irminObject := irminModels.Object{
 		Name:                  objectPathDetails.Name,
 		Path:                  objectPathDetails.FullPath,
 		Type:                  objectPathDetails.Type,
@@ -264,7 +251,7 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 	return &irminObject, nil
 }
 
-func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*Object, error) {
+func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*irminModels.Object, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -295,7 +282,7 @@ func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*
 
 	// Construct the resulting object
 	lastModified := time.Unix(int64(objectMetadata.Mtime), 0).Format(time.RFC3339)
-	irminObject := Object{
+	irminObject := irminModels.Object{
 		Name:                  objectPathDetails.Name,
 		Path:                  objectPathDetails.FullPath,
 		Type:                  objectPathDetails.Type,

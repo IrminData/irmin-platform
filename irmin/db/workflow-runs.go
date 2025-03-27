@@ -1,8 +1,6 @@
 package db
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -16,15 +14,6 @@ type WorkflowRun struct {
 	TriggeredByUserID *uint            `json:"triggered_by_user_id"`
 	Workflow          Workflow         `json:"workflow" gorm:"foreignKey:WorkflowID"`
 	WorkflowID        uint             `json:"workflow_id"`
-}
-
-type WorkflowRunResponse struct {
-	ID              string                   `json:"id"`
-	CreatedAt       time.Time                `json:"created_at"`
-	Status          WorkflowStatus           `json:"status"`
-	TriggeredBy     *WorkflowTriggerResponse `json:"triggered_by,omitempty"`
-	TriggeredByUser *UserResponse            `json:"triggered_by_user,omitempty"`
-	WorkflowID      string                   `json:"workflow_id"`
 }
 
 func GetWorkflowRunsByWorkflowID(workflowID uint) ([]WorkflowRun, error) {

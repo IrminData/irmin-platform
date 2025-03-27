@@ -37,21 +37,6 @@ type Connector struct {
 	ReadMoreURL string `json:"read_more_url,omitempty"`
 }
 
-type ConnectorResponse struct {
-	ID              string   `json:"id"`
-	Name            string   `json:"name"`
-	Description     string   `json:"description"`
-	Version         string   `json:"version"`
-	Author          string   `json:"author"`
-	LogoURL         string   `json:"logo_url"`
-	Capabilities    []string `json:"capabilities"`
-	Locales         []string `json:"locales"`
-	Categories      []string `json:"categories"`
-	PrimaryCategory string   `json:"primary_category"`
-	AuthorEmail     string   `json:"author_email"`
-	ReadMoreURL     string   `json:"read_more_url"`
-}
-
 // GetAllConnectors retrieves all connectors from the database.
 func GetAllConnectors() ([]Connector, error) {
 	var connectors []Connector

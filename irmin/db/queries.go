@@ -1,8 +1,6 @@
 package db
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -15,16 +13,6 @@ type StoredQuery struct {
 	OwnerID     uint      `json:"owner_id"`
 	Workspace   Workspace `json:"workspace" gorm:"foreignKey:WorkspaceID"`
 	WorkspaceID uint      `json:"workspace_id"`
-}
-
-type StoredQueryResponse struct {
-	ID          string       `json:"id"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	SQL         string       `json:"sql"`
-	Owner       UserResponse `json:"owner"`
-	CreatedAt   time.Time    `json:"created_at"`
-	UpdatedAt   time.Time    `json:"updated_at"`
 }
 
 func GetStoredQueryByID(id uint) (*StoredQuery, error) {

@@ -27,7 +27,7 @@ func RepositoriesIndex(c fiber.Ctx) error {
 	}
 
 	// Structure the response.
-	var repositoriesResponse []db.RepositoryResponse
+	var repositoriesResponse []irminModels.Repository
 	for _, repository := range repositories {
 		// Format the repository response
 		repositoryResponse, err := formatter.FormatRepositoryResponse(&repository, &engine.Repository{})

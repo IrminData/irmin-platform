@@ -29,7 +29,7 @@ func WorkspaceInvitesIndex(c fiber.Ctx) error {
 	}
 
 	// Prepare response
-	var invitesResponse []db.InviteResponse
+	var invitesResponse []irminModels.Invite
 	for _, invite := range invites {
 		// Format the invite
 		inviteResponse, err := formatter.FormatInviteResponse(&invite)
@@ -464,7 +464,7 @@ func IndexMyInvites(c fiber.Ctx) error {
 	}
 
 	// Prepare response
-	var invitesResponse []db.InviteResponse
+	var invitesResponse []irminModels.Invite
 	for _, invite := range invites {
 		// Format the invite
 		inviteResponse, err := formatter.FormatInviteResponse(&invite)

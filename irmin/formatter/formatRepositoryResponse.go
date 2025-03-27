@@ -5,9 +5,11 @@ import (
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/utils"
+
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatRepositoryResponse(repository *db.Repository, dataEngineRepository *engine.Repository) (*db.RepositoryResponse, error) {
+func FormatRepositoryResponse(repository *db.Repository, dataEngineRepository *engine.Repository) (*irminModels.Repository, error) {
 	// Get the sqid of the repository
 	repositorySqid, err := utils.EncodeSqids("repositories", uint64(repository.ID))
 	if err != nil {
@@ -36,7 +38,7 @@ func FormatRepositoryResponse(repository *db.Repository, dataEngineRepository *e
 	}
 
 	// Create the repository response
-	repositoryResponse := &db.RepositoryResponse{
+	repositoryResponse := &irminModels.Repository{
 		ID:                     repositorySqid,
 		Name:                   repository.Name,
 		Slug:                   repository.Slug,

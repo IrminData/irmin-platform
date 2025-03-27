@@ -25,7 +25,7 @@ func ConnectionsIndex(c fiber.Ctx) error {
 	}
 
 	// Structure the response.
-	var connectionsResponse []db.ConnectionResponse
+	var connectionsResponse []irminModels.Connection
 	for _, connection := range connections {
 		// Format the connection response
 		connectionResponse, err := formatter.FormatConnectionResponse(connection)

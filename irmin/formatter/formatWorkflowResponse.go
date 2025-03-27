@@ -4,10 +4,12 @@ import (
 	"irmin-api/db"
 	"irmin-api/utils"
 	"log"
+
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // FormatWorkflowResponse creates a workflow response object from a workflow object.
-func FormatWorkflowResponse(workflow db.Workflow) (*db.WorkflowResponse, error) {
+func FormatWorkflowResponse(workflow db.Workflow) (*irminModels.Workflow, error) {
 	// Find the workflowable
 	var workflowable any
 	var err error
@@ -32,7 +34,7 @@ func FormatWorkflowResponse(workflow db.Workflow) (*db.WorkflowResponse, error) 
 		log.Printf("Error encoding owner sqid: %v", err)
 		return nil, err
 	}
-	ownerResponse := db.UserResponse{
+	ownerResponse := irminModels.User{
 		ID:             ownerSqid,
 		FirstName:      workflow.Owner.FirstName,
 		LastName:       workflow.Owner.LastName,
@@ -43,8 +45,8 @@ func FormatWorkflowResponse(workflow db.Workflow) (*db.WorkflowResponse, error) 
 	}
 
 	// Structure the workflowable response.
-	workflowableResponse := db.WorkflowableResponse{
-		Type: workflow.Type,
+	workflowableResponse := irminModels.Workflowable{
+		Type: irminModels.WorkflowableType(workflow.Type),
 	}
 	switch workflow.Type {
 	case db.WorkflowableTypeImport:
@@ -75,15 +77,15 @@ func FormatWorkflowResponse(workflow db.Workflow) (*db.WorkflowResponse, error) 
 	case db.WorkflowableTypePipeline:
 		pipelineWorkflowable := workflowable.(*db.PipelineWorkflowable)
 		workflowableResponse.Live = pipelineWorkflowable.Live
-		var stagesResponse []db.PipelineStageResponse
+		var stagesResponse []irminModels.PipelineStage
 		for _, stage := range pipelineWorkflowable.Stages {
 			connectionSqid, _ := utils.EncodeSqids("connections", uint64(*stage.ConnectionID))
 			repositorySlug := stage.Repository.Slug
-			stageResponse := db.PipelineStageResponse{
+			stageResponse := irminModels.PipelineStage{
 				Description:         stage.Description,
 				Write:               stage.Write,
 				Read:                stage.Read,
-				Type:                stage.Type,
+				Type:                irminModels.PipelineStageType(stage.Type),
 				Executable:          stage.Executable,
 				ConnectionWritePath: stage.ConnectionWritePath,
 				ConnectionReadPath:  stage.ConnectionReadPath,
@@ -98,9 +100,9 @@ func FormatWorkflowResponse(workflow db.Workflow) (*db.WorkflowResponse, error) 
 	}
 
 	// Structure the schedule response
-	var scheduleResponse db.ScheduleResponse
+	var scheduleResponse irminModels.Schedule
 	if workflow.Schedule != nil && workflow.Schedule.Triggers != nil {
-		var scheduleTriggersResponse []db.WorkflowTriggerResponse
+		var scheduleTriggersResponse []irminModels.ScheduleTrigger
 		for _, trigger := range workflow.Schedule.Triggers {
 			var repositorySlug *string
 			if trigger.Repository != nil {
@@ -115,18 +117,26 @@ func FormatWorkflowResponse(workflow db.Workflow) (*db.WorkflowResponse, error) 
 				}
 				workflowSqid = &sqid
 			}
-			scheduleTriggersResponse = append(scheduleTriggersResponse, db.WorkflowTriggerResponse{
-				Type:             trigger.Type,
+			var repositoryEvent irminModels.RepositoryEvent
+			if trigger.RepositoryEvent != nil {
+				repositoryEvent = irminModels.RepositoryEvent(*trigger.RepositoryEvent)
+			}
+			var workflowRunEvent irminModels.WorkflowRunEvent
+			if trigger.WorkflowRunEvent != nil {
+				workflowRunEvent = irminModels.WorkflowRunEvent(*trigger.WorkflowRunEvent)
+			}
+			scheduleTriggersResponse = append(scheduleTriggersResponse, irminModels.ScheduleTrigger{
+				Type:             irminModels.WorkflowTriggerType(trigger.Type),
 				RRule:            trigger.RRule,
 				Cron:             trigger.Cron,
-				RepositoryEvent:  trigger.RepositoryEvent,
+				RepositoryEvent:  &repositoryEvent,
 				Repository:       repositorySlug,
 				RepositoryRef:    trigger.RepositoryRef,
 				WorkflowID:       workflowSqid,
-				WorkflowRunEvent: trigger.WorkflowRunEvent,
+				WorkflowRunEvent: &workflowRunEvent,
 			})
 		}
-		scheduleResponse = db.ScheduleResponse{
+		scheduleResponse = irminModels.Schedule{
 			Triggers:    scheduleTriggersResponse,
 			MaxRetries:  workflow.Schedule.MaxRetries,
 			MaxRuntime:  workflow.Schedule.MaxRuntime,
@@ -135,10 +145,10 @@ func FormatWorkflowResponse(workflow db.Workflow) (*db.WorkflowResponse, error) 
 	}
 
 	// Find the latest workflow run status.
-	latestStatus := db.WorkflowStatusInitiating
+	latestStatus := irminModels.WorkflowStatusInitiating
 	latestWorkflowRun, _ := db.GetLatestWorkflowRunByWorkflowID(workflow.ID)
 	if latestWorkflowRun != nil {
-		latestStatus = latestWorkflowRun.Status
+		latestStatus = irminModels.WorkflowStatus(latestWorkflowRun.Status)
 	}
 
 	// Structure the workflow response.
@@ -147,13 +157,13 @@ func FormatWorkflowResponse(workflow db.Workflow) (*db.WorkflowResponse, error) 
 		log.Printf("Error encoding workflow sqid: %v", err)
 		return nil, err
 	}
-	workflowResponse := db.WorkflowResponse{
+	workflowResponse := irminModels.Workflow{
 		ID:            workflowSqid,
 		Name:          workflow.Name,
 		Description:   workflow.Description,
 		Documentation: workflow.Documentation,
 		Status:        latestStatus,
-		Type:          workflow.Type,
+		Type:          irminModels.WorkflowableType(workflow.Type),
 		Owner:         ownerResponse,
 		Schedule:      &scheduleResponse,
 		Workflowable:  &workflowableResponse,

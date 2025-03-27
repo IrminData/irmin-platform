@@ -13,7 +13,7 @@ import (
 
 func ObjectsIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
-	object := c.Locals("object").(*engine.Object)
+	object := c.Locals("object").(*irminModels.Object)
 
 	if object == nil {
 		log.Printf("Error retrieving object from Data Engine")

@@ -26,7 +26,7 @@ func ConnectorsIndex(c fiber.Ctx) error {
 	}
 
 	// Format the connectors for the response
-	var connectorsResponse []db.ConnectorResponse
+	var connectorsResponse []irminModels.Connector
 	for _, connector := range connectors {
 		// Create the response
 		connectorResponse, err := formatter.FormatConnectorResponse(connector)
@@ -117,6 +117,12 @@ func ConnectorsStore(c fiber.Ctx) error {
 			AuthorEmail:      connectorInfo.AuthorEmail,
 			ReadMoreURL:      connectorInfo.ReadMoreURL,
 		})
+		if err != nil {
+			log.Printf("Error creating connector: %v", err)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+				Errors: []string{dict.T("error_occurred")},
+			})
+		}
 	} else {
 		// If the connector is found, update the connector
 		// Marshal capabilities, locales, and categories to JSON
@@ -157,12 +163,12 @@ func ConnectorsStore(c fiber.Ctx) error {
 			"author_email":      connectorInfo.AuthorEmail,
 			"read_more_url":     connectorInfo.ReadMoreURL,
 		})
-	}
-	if err != nil {
-		log.Printf("Error creating/updating connector: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
-		})
+		if err != nil {
+			log.Printf("Error updating connector: %v", err)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+				Errors: []string{dict.T("error_occurred")},
+			})
+		}
 	}
 
 	// Create the response

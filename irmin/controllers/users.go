@@ -26,7 +26,7 @@ func UsersIndex(c fiber.Ctx) error {
 	}
 
 	// Structure the response.
-	var usersResponse []db.UserResponse
+	var usersResponse []irminModels.User
 	for _, workspaceUser := range workspaceUsers {
 		// Format the user response
 		userResponse, err := formatter.FormatUserResponse(workspaceUser)

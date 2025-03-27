@@ -1,6 +1,8 @@
 package db
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Workspace struct {
 	gorm.Model
@@ -11,15 +13,6 @@ type Workspace struct {
 	Owner       User            `json:"owner" gorm:"foreignKey:OwnerID"`
 	OwnerID     uint            `json:"owner_id"`
 	Users       []WorkspaceUser `json:"users" gorm:"foreignKey:WorkspaceID"`
-}
-
-type WorkspaceResponse struct {
-	ID          string         `json:"id"`
-	Name        string         `json:"name"`
-	Slug        string         `json:"slug"`
-	Description string         `json:"description"`
-	Owner       *UserResponse  `json:"owner,omitempty"`
-	Users       []UserResponse `json:"users,omitempty"`
 }
 
 // GetWorkspaceBySlug retrieves a workspace by its slug.

@@ -66,29 +66,6 @@ type Schedule struct {
 	MinInterval int               `json:"min_interval,omitempty"`
 }
 
-type WorkflowTriggerResponse struct {
-	Type WorkflowTriggerType `json:"type"`
-	// Time trigger
-	RRule *string `json:"rrule,omitempty"`
-	Cron  *string `json:"cron,omitempty"`
-
-	// Repository event trigger
-	RepositoryEvent *RepositoryEvent `json:"repository_event,omitempty"`
-	Repository      *string          `json:"repository,omitempty"` // Slug of the repository
-	RepositoryRef   *string          `json:"repository_ref,omitempty"`
-
-	// Workflow run event trigger
-	WorkflowRunEvent *WorkflowRunEvent `json:"workflow_run_event,omitempty"`
-	WorkflowID       *string           `json:"workflow_id,omitempty"` // Sqid of the workflow
-}
-
-type ScheduleResponse struct {
-	Triggers    []WorkflowTriggerResponse `json:"triggers"`
-	MaxRetries  int                       `json:"max_retries,omitempty"`
-	MaxRuntime  int                       `json:"max_runtime,omitempty"`
-	MinInterval int                       `json:"min_interval,omitempty"`
-}
-
 // GetScheduleByID retrieves a schedule record from the database by its ID.
 func GetScheduleByID(id uint) (*Schedule, error) {
 	var schedule Schedule

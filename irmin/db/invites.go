@@ -22,17 +22,6 @@ type Invite struct {
 	WorkspaceID uint              `json:"workspace_id"`
 }
 
-type InviteResponse struct {
-	ID         string            `json:"id"`
-	Email      string            `json:"email"`
-	Role       UserWorkspaceRole `json:"role"`
-	AcceptedAt *time.Time        `json:"accepted_at,omitempty"`
-	DeclinedAt *time.Time        `json:"declined_at,omitempty"`
-	ExpiresAt  time.Time         `json:"expires_at"`
-	InvitedBy  UserResponse      `json:"invited_by"`
-	Workspace  WorkspaceResponse `json:"workspace"`
-}
-
 func GetInvitesByWorkspace(workspaceID uint) ([]Invite, error) {
 	var invites []Invite
 	result := DB.Preload("InvitedBy").Preload("Workspace").Where("workspace_id = ?", workspaceID).Find(&invites)

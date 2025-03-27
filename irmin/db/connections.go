@@ -20,17 +20,6 @@ type Connection struct {
 	Connector     Connector         `json:"connector,omitempty" gorm:"foreignKey:ConnectorID"`
 }
 
-type ConnectionResponse struct {
-	ID            string            `json:"id"`
-	Name          string            `json:"name"`
-	Description   string            `json:"description"`
-	Documentation string            `json:"documentation"`
-	Details       CustomFieldValues `json:"details"`
-	Settings      CustomFieldValues `json:"settings"`
-	Owner         UserResponse      `json:"owner"`
-	Connector     ConnectorResponse `json:"connector"`
-}
-
 // GetConnectionByID finds a connection by its ID
 func GetConnectionByID(id uint) (*Connection, error) {
 	var connection Connection

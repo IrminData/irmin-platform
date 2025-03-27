@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/utils"
+
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatStoredQueryResponse(query *db.StoredQuery) (*db.StoredQueryResponse, error) {
+func FormatStoredQueryResponse(query *db.StoredQuery) (*irminModels.StoredQuery, error) {
 	// Construct the owner sqid
 	ownerSqid, err := utils.EncodeSqids("users", uint64(query.OwnerID))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding user sqid: %w", err)
 	}
 	// Construct the owner object
-	ownerResponse := db.UserResponse{
+	ownerResponse := irminModels.User{
 		ID:             ownerSqid,
 		FirstName:      query.Owner.FirstName,
 		LastName:       query.Owner.LastName,
@@ -28,7 +30,7 @@ func FormatStoredQueryResponse(query *db.StoredQuery) (*db.StoredQueryResponse, 
 		return nil, fmt.Errorf("error encoding query sqid: %w", err)
 	}
 	// Construct the query object
-	queryResponse := db.StoredQueryResponse{
+	queryResponse := irminModels.StoredQuery{
 		ID:          querySqid,
 		Name:        query.Name,
 		Description: query.Description,

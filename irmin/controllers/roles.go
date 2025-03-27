@@ -7,15 +7,9 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-type RoleResponse struct {
-	Description string `json:"description"`
-	Label       string `json:"label"`
-	Name        string `json:"name"` // e.g. "admin", "editor", "viewer"
-}
-
 func RolesIndex(c fiber.Ctx) error {
 	// Define the roles.
-	rolesResponse := []RoleResponse{
+	rolesResponse := []irminModels.IrminRole{
 		{
 			Description: "Can perform all actions on the workspace",
 			Label:       "Admin",

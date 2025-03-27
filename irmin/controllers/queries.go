@@ -27,7 +27,7 @@ func QueriesIndex(c fiber.Ctx) error {
 	}
 
 	// Format the stored queries
-	var formattedQueries []db.StoredQueryResponse
+	var formattedQueries []irminModels.StoredQuery
 	for _, query := range queries {
 		formattedQuery, err := formatter.FormatStoredQueryResponse(&query)
 		if err != nil {
