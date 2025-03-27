@@ -29,7 +29,7 @@ func UsersIndex(c fiber.Ctx) error {
 	var usersResponse []irminModels.User
 	for _, workspaceUser := range workspaceUsers {
 		// Format the user response
-		userResponse, err := formatter.FormatUserResponse(workspaceUser)
+		userResponse, err := formatter.FormatWorkspaceUserResponse(workspaceUser)
 		if err != nil {
 			log.Printf("Error formatting user: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
@@ -51,7 +51,7 @@ func UsersShow(c fiber.Ctx) error {
 	workspaceUser := c.Locals("workspace_user").(*db.WorkspaceUser)
 
 	// Format the user response
-	userResponse, err := formatter.FormatUserResponse(*workspaceUser)
+	userResponse, err := formatter.FormatWorkspaceUserResponse(*workspaceUser)
 	if err != nil {
 		log.Printf("Error formatting user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
@@ -201,7 +201,7 @@ func UsersUpdate(c fiber.Ctx) error {
 	}
 
 	// Format the updated user response
-	userResponse, err := formatter.FormatUserResponse(*workspaceUser)
+	userResponse, err := formatter.FormatWorkspaceUserResponse(*workspaceUser)
 	if err != nil {
 		log.Printf("Error formatting user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{

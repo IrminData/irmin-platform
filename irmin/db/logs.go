@@ -2,7 +2,6 @@ package db
 
 import "gorm.io/gorm"
 
-// LogEventType represents the types of log events.
 type LogEventType string
 
 const (
@@ -32,4 +31,19 @@ type LogEvent struct {
 	WorkflowID    *uint        `json:"workflow_id"`
 	WorkflowRun   *WorkflowRun `json:"workflow_run" gorm:"foreignKey:WorkflowRunID"`
 	WorkflowRunID *uint        `json:"workflow_run_id"`
+}
+
+func GetLogEventsForWorkspace(workspaceID uint) ([]LogEvent, error) {
+	var events []LogEvent
+	if err := DB.Preload("User").Preload("Workspace").Preload("Repository").Preload("Workflow").Preload("WorkflowRun").Where("workspace_id = ?", workspaceID).Find(&events).Error; err != nil {
+		return nil, err
+	}
+	return events, nil
+}
+
+func CreateLogEvent(event *LogEvent) (*LogEvent, error) {
+	if err := DB.Create(event).Error; err != nil {
+		return nil, err
+	}
+	return event, nil
 }

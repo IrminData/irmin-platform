@@ -44,6 +44,9 @@ func RegisterAPIRoutes(app *fiber.App) {
 	workspace.Post("/transfer-ownership", controllers.TransferWorkspaceOwnership)
 	workspace.Post("/leave", controllers.LeaveWorkspace)
 
+	// Log routes
+	workspace.Get("/logs", controllers.LogsIndex)
+
 	// Query routes
 	workspace.Post("/sql", controllers.ExecuteSQL)
 	queries := workspace.Group("/queries")

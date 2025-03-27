@@ -13,7 +13,7 @@ func FormatWorkspaceResponse(workspace db.Workspace) (*irminModels.Workspace, er
 	ownerSqid, _ := utils.EncodeSqids("users", uint64(workspace.Owner.ID))
 	var workspaceUsers []irminModels.User
 	for _, userWorkspace := range workspace.Users {
-		userResponse, err := FormatUserResponse(userWorkspace)
+		userResponse, err := FormatWorkspaceUserResponse(userWorkspace)
 		if err != nil {
 			return nil, fmt.Errorf("error formatting user response: %w", err)
 		}
