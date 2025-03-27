@@ -7,21 +7,9 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// TagService handles repository tag-related API calls
-type TagService struct {
-	client *Client
-}
-
-// NewTagService creates a new TagService
-func NewTagService(client *Client) *TagService {
-	return &TagService{
-		client: client,
-	}
-}
-
-func (s *TagService) ListTags(workspace, repository string) ([]irminModels.Tag, *irminModels.IrminAPIResponse, error) {
+func (c *Client) ListTags(workspace, repository string) ([]irminModels.Tag, *irminModels.IrminAPIResponse, error) {
 	var tags []irminModels.Tag
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags", workspace, repository),
 	}, &tags)
@@ -31,9 +19,9 @@ func (s *TagService) ListTags(workspace, repository string) ([]irminModels.Tag, 
 	return tags, apiResp, nil
 }
 
-func (s *TagService) GetTag(workspace, repository, tag string) (*irminModels.Tag, *irminModels.IrminAPIResponse, error) {
+func (c *Client) GetTag(workspace, repository, tag string) (*irminModels.Tag, *irminModels.IrminAPIResponse, error) {
 	var tagObj irminModels.Tag
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags/%s", workspace, repository, tag),
 	}, &tagObj)
@@ -43,9 +31,9 @@ func (s *TagService) GetTag(workspace, repository, tag string) (*irminModels.Tag
 	return &tagObj, apiResp, nil
 }
 
-func (s *TagService) CreateTag(workspace, repository, tag, ref string) (*irminModels.Tag, *irminModels.IrminAPIResponse, error) {
+func (c *Client) CreateTag(workspace, repository, tag, ref string) (*irminModels.Tag, *irminModels.IrminAPIResponse, error) {
 	var tagObj irminModels.Tag
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags", workspace, repository),
 		ContentType: "application/x-www-form-urlencoded",
@@ -60,8 +48,8 @@ func (s *TagService) CreateTag(workspace, repository, tag, ref string) (*irminMo
 	return &tagObj, apiResp, nil
 }
 
-func (s *TagService) DeleteTag(workspace, repository, tag string) (*irminModels.IrminAPIResponse, error) {
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+func (c *Client) DeleteTag(workspace, repository, tag string) (*irminModels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags/%s", workspace, repository, tag),
 	}, nil)

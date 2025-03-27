@@ -8,21 +8,9 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// ProfileService wraps operations on the user profile
-type ProfileService struct {
-	client *Client
-}
-
-// NewProfileService creates a new ProfileService
-func NewProfileService(client *Client) *ProfileService {
-	return &ProfileService{
-		client: client,
-	}
-}
-
-func (s *ProfileService) GetProfile() (*irminModels.User, *irminModels.IrminAPIResponse, error) {
+func (c *Client) GetProfile() (*irminModels.User, *irminModels.IrminAPIResponse, error) {
 	var profile irminModels.User
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: "/v1/profile",
 	}, &profile)
@@ -32,7 +20,7 @@ func (s *ProfileService) GetProfile() (*irminModels.User, *irminModels.IrminAPIR
 	return &profile, apiResp, nil
 }
 
-func (s *ProfileService) UpdateProfile(firstName, lastName, email, phone, company string, profilePicture *os.File) (*irminModels.User, *irminModels.IrminAPIResponse, error) {
+func (c *Client) UpdateProfile(firstName, lastName, email, phone, company string, profilePicture *os.File) (*irminModels.User, *irminModels.IrminAPIResponse, error) {
 	var files []FormFile
 	if profilePicture != nil {
 		files = append(files, FormFile{
@@ -43,7 +31,7 @@ func (s *ProfileService) UpdateProfile(firstName, lastName, email, phone, compan
 	}
 
 	var updatedProfile irminModels.User
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    "/v1/profile",
 		ContentType: "multipart/form-data",

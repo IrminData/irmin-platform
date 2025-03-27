@@ -8,21 +8,9 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// ObjectService handles repository object-related API calls
-type ObjectService struct {
-	client *Client
-}
-
-// NewObjectService creates a new ObjectService
-func NewObjectService(client *Client) *ObjectService {
-	return &ObjectService{
-		client: client,
-	}
-}
-
-func (s *ObjectService) GetObjectAtPath(workspace, repository, path, ref string) (*irminModels.Object, *irminModels.IrminAPIResponse, error) {
+func (c *Client) GetObjectAtPath(workspace, repository, path, ref string) (*irminModels.Object, *irminModels.IrminAPIResponse, error) {
 	var objects irminModels.Object
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s", workspace, repository, ref, path),
 	}, &objects)
@@ -32,9 +20,9 @@ func (s *ObjectService) GetObjectAtPath(workspace, repository, path, ref string)
 	return &objects, apiResp, nil
 }
 
-func (s *ObjectService) GetObjectHistory(workspace, repository, path, ref string) ([]irminModels.Commit, *irminModels.IrminAPIResponse, error) {
+func (c *Client) GetObjectHistory(workspace, repository, path, ref string) ([]irminModels.Commit, *irminModels.IrminAPIResponse, error) {
 	var commits []irminModels.Commit
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects/history?ref=%s&path=%s", workspace, repository, ref, path),
 	}, &commits)
@@ -44,9 +32,9 @@ func (s *ObjectService) GetObjectHistory(workspace, repository, path, ref string
 	return commits, apiResp, nil
 }
 
-func (s *ObjectService) GetObjectSchema(workspace, repository, path, ref string) (*irminModels.ObjectSchema, *irminModels.IrminAPIResponse, error) {
+func (c *Client) GetObjectSchema(workspace, repository, path, ref string) (*irminModels.ObjectSchema, *irminModels.IrminAPIResponse, error) {
 	var schema irminModels.ObjectSchema
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects/schema?ref=%s&path=%s", workspace, repository, ref, path),
 	}, &schema)
@@ -56,7 +44,7 @@ func (s *ObjectService) GetObjectSchema(workspace, repository, path, ref string)
 	return &schema, apiResp, nil
 }
 
-func (s *ObjectService) UploadObject(workspace, repository, ref, path, name string, files map[string][]byte) (*irminModels.Object, *irminModels.IrminAPIResponse, error) {
+func (c *Client) UploadObject(workspace, repository, ref, path, name string, files map[string][]byte) (*irminModels.Object, *irminModels.IrminAPIResponse, error) {
 	var formFiles []FormFile
 	for fileName, fileContent := range files {
 		// Use bytes.NewReader for in-memory file data
@@ -69,7 +57,7 @@ func (s *ObjectService) UploadObject(workspace, repository, ref, path, name stri
 	}
 
 	var object irminModels.Object
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s", workspace, repository, ref, path),
 		Files:       formFiles,
@@ -82,8 +70,8 @@ func (s *ObjectService) UploadObject(workspace, repository, ref, path, name stri
 	return &object, apiResp, nil
 }
 
-func (s *ObjectService) GetObjectContent(workspace, repository, path, ref string) ([]byte, error) {
-	apiResp, err := s.client.FetchBinary(RequestOptions{
+func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]byte, error) {
+	apiResp, err := c.FetchBinary(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects/content?ref=%s&path=%s", workspace, repository, ref, path),
 	})
@@ -93,9 +81,9 @@ func (s *ObjectService) GetObjectContent(workspace, repository, path, ref string
 	return apiResp, nil
 }
 
-func (s *ObjectService) MoveObject(workspace, repository, path, ref, newPath string) (*irminModels.Object, *irminModels.IrminAPIResponse, error) {
+func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*irminModels.Object, *irminModels.IrminAPIResponse, error) {
 	var object irminModels.Object
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects/move?ref=%s&path=%s", workspace, repository, ref, path),
 		ContentType: "application/x-www-form-urlencoded",
@@ -109,9 +97,9 @@ func (s *ObjectService) MoveObject(workspace, repository, path, ref, newPath str
 	return &object, apiResp, nil
 }
 
-func (s *ObjectService) CopyObject(workspace, repository, path, ref, newPath string) (*irminModels.Object, *irminModels.IrminAPIResponse, error) {
+func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*irminModels.Object, *irminModels.IrminAPIResponse, error) {
 	var object irminModels.Object
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects/copy?ref=%s&path=%s", workspace, repository, ref, path),
 		ContentType: "application/x-www-form-urlencoded",
@@ -125,8 +113,8 @@ func (s *ObjectService) CopyObject(workspace, repository, path, ref, newPath str
 	return &object, apiResp, nil
 }
 
-func (s *ObjectService) DeleteObject(workspace, repository, ref, path string) (*irminModels.IrminAPIResponse, error) {
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+func (c *Client) DeleteObject(workspace, repository, ref, path string) (*irminModels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s", workspace, repository, ref, path),
 	}, nil)

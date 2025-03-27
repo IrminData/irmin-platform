@@ -7,19 +7,9 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// ConnectionService handles operations related to connections
-type ConnectionService struct {
-	client *Client
-}
-
-// NewConnectionService creates a new instance of ConnectionService
-func NewConnectionService(client *Client) *ConnectionService {
-	return &ConnectionService{client: client}
-}
-
-func (s *ConnectionService) ListConnections(workspace string) ([]irminModels.Connection, *irminModels.IrminAPIResponse, error) {
+func (c *Client) ListConnections(workspace string) ([]irminModels.Connection, *irminModels.IrminAPIResponse, error) {
 	var connections []irminModels.Connection
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/connections", workspace),
 	}, &connections)
@@ -29,9 +19,9 @@ func (s *ConnectionService) ListConnections(workspace string) ([]irminModels.Con
 	return connections, apiResp, nil
 }
 
-func (s *ConnectionService) GetConnection(workspace, connectionID string) (*irminModels.Connection, *irminModels.IrminAPIResponse, error) {
+func (c *Client) GetConnection(workspace, connectionID string) (*irminModels.Connection, *irminModels.IrminAPIResponse, error) {
 	var connection irminModels.Connection
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/connections/%s", workspace, connectionID),
 	}, &connection)
@@ -41,7 +31,7 @@ func (s *ConnectionService) GetConnection(workspace, connectionID string) (*irmi
 	return &connection, apiResp, nil
 }
 
-func (s *ConnectionService) CreateConnection(workspace, connectorID, name, description, documentation string, connectionDetails, connectionSettings map[string]string) (*irminModels.Connection, *irminModels.IrminAPIResponse, error) {
+func (c *Client) CreateConnection(workspace, connectorID, name, description, documentation string, connectionDetails, connectionSettings map[string]string) (*irminModels.Connection, *irminModels.IrminAPIResponse, error) {
 	fields := map[string]string{
 		"connector":     connectorID,
 		"name":          name,
@@ -56,7 +46,7 @@ func (s *ConnectionService) CreateConnection(workspace, connectorID, name, descr
 	}
 
 	var newConnection irminModels.Connection
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections", workspace),
 		ContentType: "application/x-www-form-urlencoded",
@@ -68,7 +58,7 @@ func (s *ConnectionService) CreateConnection(workspace, connectorID, name, descr
 	return &newConnection, apiResp, nil
 }
 
-func (s *ConnectionService) UpdateConnection(workspace, connectionID, connectorID, name, description, documentation string, connectionDetails, connectionSettings map[string]string) (*irminModels.Connection, *irminModels.IrminAPIResponse, error) {
+func (c *Client) UpdateConnection(workspace, connectionID, connectorID, name, description, documentation string, connectionDetails, connectionSettings map[string]string) (*irminModels.Connection, *irminModels.IrminAPIResponse, error) {
 	fields := map[string]string{
 		"connector":     connectorID,
 		"name":          name,
@@ -82,7 +72,7 @@ func (s *ConnectionService) UpdateConnection(workspace, connectionID, connectorI
 		fields[fmt.Sprintf("settings[%s]", key)] = value
 	}
 	var updatedConnection irminModels.Connection
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections/%s", workspace, connectionID),
 		ContentType: "application/x-www-form-urlencoded",
@@ -95,9 +85,9 @@ func (s *ConnectionService) UpdateConnection(workspace, connectionID, connectorI
 }
 
 // TransferConnection reassigns a connection to a new owner
-func (s *ConnectionService) TransferConnection(workspace, connectionID, newOwnerID string) (*irminModels.Connection, *irminModels.IrminAPIResponse, error) {
+func (c *Client) TransferConnection(workspace, connectionID, newOwnerID string) (*irminModels.Connection, *irminModels.IrminAPIResponse, error) {
 	var updatedConnection irminModels.Connection
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections/%s/transfer-ownership", workspace, connectionID),
 		ContentType: "application/x-www-form-urlencoded",
@@ -112,8 +102,8 @@ func (s *ConnectionService) TransferConnection(workspace, connectionID, newOwner
 }
 
 // DeleteConnection deletes a connection by its ID
-func (s *ConnectionService) DeleteConnection(workspace, connectionID string) (*irminModels.IrminAPIResponse, error) {
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+func (c *Client) DeleteConnection(workspace, connectionID string) (*irminModels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodDelete,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections/%s", workspace, connectionID),
 		ContentType: "application/x-www-form-urlencoded",

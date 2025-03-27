@@ -10,21 +10,9 @@ import (
 	irminUtils "github.com/IrminData/irmin-sdk-go/utils"
 )
 
-// WorkflowService handles workflow-related operations
-type WorkflowService struct {
-	client *Client
-}
-
-// NewWorkflowService creates a new WorkflowService
-func NewWorkflowService(client *Client) *WorkflowService {
-	return &WorkflowService{
-		client: client,
-	}
-}
-
-func (s *WorkflowService) ListWorkflows(workspace string) ([]irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+func (c *Client) ListWorkflows(workspace string) ([]irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
 	var workflows []irminModels.Workflow
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows", workspace),
 	}, &workflows)
@@ -34,9 +22,9 @@ func (s *WorkflowService) ListWorkflows(workspace string) ([]irminModels.Workflo
 	return workflows, apiResp, nil
 }
 
-func (s *WorkflowService) ListWorkflowsOfType(workspace, workflowType string) ([]irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+func (c *Client) ListWorkflowsOfType(workspace, workflowType string) ([]irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
 	var workflows []irminModels.Workflow
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows?type=%s", workspace, workflowType),
 	}, &workflows)
@@ -46,9 +34,9 @@ func (s *WorkflowService) ListWorkflowsOfType(workspace, workflowType string) ([
 	return workflows, apiResp, nil
 }
 
-func (s *WorkflowService) GetWorkflow(workspace, workflowID string) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+func (c *Client) GetWorkflow(workspace, workflowID string) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
 	var workflow irminModels.Workflow
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s", workspace, workflowID),
 	}, &workflow)
@@ -58,7 +46,7 @@ func (s *WorkflowService) GetWorkflow(workspace, workflowID string) (*irminModel
 	return &workflow, apiResp, nil
 }
 
-func (s *WorkflowService) CreateWorkflow(workspace, name, description, documentation string, workflowable irminModels.Workflowable, schedule irminModels.Schedule) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+func (c *Client) CreateWorkflow(workspace, name, description, documentation string, workflowable irminModels.Workflowable, schedule irminModels.Schedule) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
 	fields := map[string]string{
 		"name":          name,
 		"description":   description,
@@ -80,7 +68,7 @@ func (s *WorkflowService) CreateWorkflow(workspace, name, description, documenta
 
 	// Create the workflow
 	var workflow irminModels.Workflow
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows", workspace),
 		ContentType: "application/x-www-form-urlencoded",
@@ -92,9 +80,9 @@ func (s *WorkflowService) CreateWorkflow(workspace, name, description, documenta
 	return &workflow, apiResp, nil
 }
 
-func (s *WorkflowService) UpdateWorkflow(workspace, workflowID, name, description, documentation string) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+func (c *Client) UpdateWorkflow(workspace, workflowID, name, description, documentation string) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
 	var workflow irminModels.Workflow
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows/%s", workspace, workflowID),
 		ContentType: "application/x-www-form-urlencoded",
@@ -110,13 +98,13 @@ func (s *WorkflowService) UpdateWorkflow(workspace, workflowID, name, descriptio
 	return &workflow, apiResp, nil
 }
 
-func (s *WorkflowService) UpdateWorkflowWorkflowable(workspace, workflowID string, workflowable irminModels.Workflowable) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+func (c *Client) UpdateWorkflowWorkflowable(workspace, workflowID string, workflowable irminModels.Workflowable) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
 	workflowableFields, err := irminUtils.PrepareWorkflowableData(workflowable)
 	if err != nil {
 		return nil, nil, fmt.Errorf("prepare workflowable data error: %w", err)
 	}
 	var workflow irminModels.Workflow
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows/%s/workflowable", workspace, workflowID),
 		ContentType: "application/x-www-form-urlencoded",
@@ -128,13 +116,13 @@ func (s *WorkflowService) UpdateWorkflowWorkflowable(workspace, workflowID strin
 	return &workflow, apiResp, nil
 }
 
-func (s *WorkflowService) UpdateWorkflowSchedule(workspace, workflowID string, schedule irminModels.Schedule) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+func (c *Client) UpdateWorkflowSchedule(workspace, workflowID string, schedule irminModels.Schedule) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
 	scheduleFields, err := irminUtils.PrepareWorkflowScheduleData(schedule)
 	if err != nil {
 		return nil, nil, fmt.Errorf("prepare workflow schedule data error: %w", err)
 	}
 	var workflow irminModels.Workflow
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows/%s/schedule", workspace, workflowID),
 		ContentType: "application/x-www-form-urlencoded",
@@ -146,8 +134,8 @@ func (s *WorkflowService) UpdateWorkflowSchedule(workspace, workflowID string, s
 	return &workflow, apiResp, nil
 }
 
-func (s *WorkflowService) DeleteWorkflow(workspace, workflowID string) (*irminModels.IrminAPIResponse, error) {
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+func (c *Client) DeleteWorkflow(workspace, workflowID string) (*irminModels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s", workspace, workflowID),
 	}, nil)
@@ -157,9 +145,9 @@ func (s *WorkflowService) DeleteWorkflow(workspace, workflowID string) (*irminMo
 	return apiResp, nil
 }
 
-func (s *WorkflowService) TransferWorkflow(workspace, workflowID, newOwnerID string) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+func (c *Client) TransferWorkflow(workspace, workflowID, newOwnerID string) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
 	var workflow irminModels.Workflow
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows/%s/transfer-ownership", workspace, workflowID),
 		ContentType: "application/x-www-form-urlencoded",

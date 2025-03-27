@@ -7,21 +7,9 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// WorkspaceService wraps operations on workspaces
-type WorkspaceService struct {
-	client *Client
-}
-
-// NewWorkspaceService creates a new WorkspaceService
-func NewWorkspaceService(client *Client) *WorkspaceService {
-	return &WorkspaceService{
-		client: client,
-	}
-}
-
-func (s *WorkspaceService) ListWorkspaces() ([]irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
+func (c *Client) ListWorkspaces() ([]irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
 	var workspaces []irminModels.Workspace
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: "/v1/workspaces",
 	}, &workspaces)
@@ -31,9 +19,9 @@ func (s *WorkspaceService) ListWorkspaces() ([]irminModels.Workspace, *irminMode
 	return workspaces, apiResp, nil
 }
 
-func (s *WorkspaceService) GetWorkspace(slug string) (*irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
+func (c *Client) GetWorkspace(slug string) (*irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
 	var workspace irminModels.Workspace
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s", slug),
 	}, &workspace)
@@ -43,9 +31,9 @@ func (s *WorkspaceService) GetWorkspace(slug string) (*irminModels.Workspace, *i
 	return &workspace, apiResp, nil
 }
 
-func (s *WorkspaceService) CreateWorkspace(name, description string) (*irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
+func (c *Client) CreateWorkspace(name, description string) (*irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
 	var workspace irminModels.Workspace
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/workspaces",
 		ContentType: "application/x-www-form-urlencoded",
@@ -60,9 +48,9 @@ func (s *WorkspaceService) CreateWorkspace(name, description string) (*irminMode
 	return &workspace, apiResp, nil
 }
 
-func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
+func (c *Client) UpdateWorkspace(slug, name, description string) (*irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
 	var workspace irminModels.Workspace
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPut,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s", slug),
 		ContentType: "application/x-www-form-urlencoded",
@@ -77,8 +65,8 @@ func (s *WorkspaceService) UpdateWorkspace(slug, name, description string) (*irm
 	return &workspace, apiResp, nil
 }
 
-func (s *WorkspaceService) DeleteWorkspace(slug string) (*irminModels.IrminAPIResponse, error) {
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+func (c *Client) DeleteWorkspace(slug string) (*irminModels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s", slug),
 	}, nil)
@@ -88,9 +76,9 @@ func (s *WorkspaceService) DeleteWorkspace(slug string) (*irminModels.IrminAPIRe
 	return apiResp, nil
 }
 
-func (s *WorkspaceService) TransferWorkspace(slug, newOwnerID string) (*irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
+func (c *Client) TransferWorkspace(slug, newOwnerID string) (*irminModels.Workspace, *irminModels.IrminAPIResponse, error) {
 	var workspace irminModels.Workspace
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s", slug),
 		ContentType: "application/x-www-form-urlencoded",
@@ -104,8 +92,8 @@ func (s *WorkspaceService) TransferWorkspace(slug, newOwnerID string) (*irminMod
 	return &workspace, apiResp, nil
 }
 
-func (s *WorkspaceService) LeaveWorkspace(slug string) (*irminModels.IrminAPIResponse, error) {
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+func (c *Client) LeaveWorkspace(slug string) (*irminModels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodPatch,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/leave", slug),
 	}, nil)

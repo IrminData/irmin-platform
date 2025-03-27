@@ -8,19 +8,9 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// UserService wraps operations on the user profile
-type UserService struct {
-	client *Client
-}
-
-// NewUserService creates a new UserService
-func NewUserService(client *Client) *UserService {
-	return &UserService{client: client}
-}
-
-func (s *UserService) ListUsers(workspace string) ([]irminModels.User, *irminModels.IrminAPIResponse, error) {
+func (c *Client) ListUsers(workspace string) ([]irminModels.User, *irminModels.IrminAPIResponse, error) {
 	var users []irminModels.User
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/users", workspace),
 	}, &users)
@@ -30,9 +20,9 @@ func (s *UserService) ListUsers(workspace string) ([]irminModels.User, *irminMod
 	return users, apiResp, nil
 }
 
-func (s *UserService) GetUser(workspace, userID string) (*irminModels.User, *irminModels.IrminAPIResponse, error) {
+func (c *Client) GetUser(workspace, userID string) (*irminModels.User, *irminModels.IrminAPIResponse, error) {
 	var user irminModels.User
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/users/%s", workspace, userID),
 	}, &user)
@@ -42,10 +32,10 @@ func (s *UserService) GetUser(workspace, userID string) (*irminModels.User, *irm
 	return &user, apiResp, nil
 }
 
-func (s *UserService) UpdateUserRoles(workspace, userID string, roles []string) (*irminModels.User, *irminModels.IrminAPIResponse, error) {
+func (c *Client) UpdateUserRoles(workspace, userID string, roles []string) (*irminModels.User, *irminModels.IrminAPIResponse, error) {
 	updatedRoles := strings.Join(roles, ",")
 	var user irminModels.User
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/users/%s", workspace, userID),
 		ContentType: "application/x-www-form-urlencoded",
@@ -59,8 +49,8 @@ func (s *UserService) UpdateUserRoles(workspace, userID string, roles []string) 
 	return &user, apiResp, nil
 }
 
-func (s *UserService) RemoveUser(workspace, userID string) (*irminModels.IrminAPIResponse, error) {
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+func (c *Client) RemoveUser(workspace, userID string) (*irminModels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/users/%s", workspace, userID),
 	}, nil)

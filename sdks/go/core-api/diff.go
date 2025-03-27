@@ -8,22 +8,10 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// DiffService provides methods to compare and merge refs
-type DiffService struct {
-	client *Client
-}
-
-// NewDiffService creates a new instance of DiffService
-func NewDiffService(client *Client) *DiffService {
-	return &DiffService{
-		client: client,
-	}
-}
-
 // CompareRefs compares two refs in a repository and returns the differences
-func (s *DiffService) CompareRefs(workspace, repository, baseRef, compareRef string) (*irminModels.Diff, *irminModels.IrminAPIResponse, error) {
+func (c *Client) CompareRefs(workspace, repository, baseRef, compareRef string) (*irminModels.Diff, *irminModels.IrminAPIResponse, error) {
 	var diff irminModels.Diff
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/compare?base_ref=%s&compare_ref=%s", workspace, repository, baseRef, compareRef),
 	}, &diff)
@@ -34,9 +22,9 @@ func (s *DiffService) CompareRefs(workspace, repository, baseRef, compareRef str
 }
 
 // MergeRefs merges one ref into another
-func (s *DiffService) MergeRefs(workspace, repository, baseRef, compareRef, description, strategy string, squash, allowEmpty bool) (*irminModels.Commit, *irminModels.IrminAPIResponse, error) {
+func (c *Client) MergeRefs(workspace, repository, baseRef, compareRef, description, strategy string, squash, allowEmpty bool) (*irminModels.Commit, *irminModels.IrminAPIResponse, error) {
 	var mergeCommit irminModels.Commit
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/merge", workspace, repository),
 		ContentType: "application/x-www-form-urlencoded",

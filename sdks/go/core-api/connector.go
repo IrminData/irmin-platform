@@ -7,21 +7,9 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// ConnectorService handles operations related to connectors
-type ConnectorService struct {
-	client *Client
-}
-
-// NewConnectorService creates a new instance of ConnectorService
-func NewConnectorService(client *Client) *ConnectorService {
-	return &ConnectorService{
-		client: client,
-	}
-}
-
-func (s *ConnectorService) ListConnectors() ([]irminModels.Connector, *irminModels.IrminAPIResponse, error) {
+func (c *Client) ListConnectors() ([]irminModels.Connector, *irminModels.IrminAPIResponse, error) {
 	var connectors []irminModels.Connector
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: "/v1/connectors",
 	}, &connectors)
@@ -31,9 +19,9 @@ func (s *ConnectorService) ListConnectors() ([]irminModels.Connector, *irminMode
 	return connectors, apiResp, nil
 }
 
-func (s *ConnectorService) GetConnector(connectorID string) (*irminModels.Connector, *irminModels.IrminAPIResponse, error) {
+func (c *Client) GetConnector(connectorID string) (*irminModels.Connector, *irminModels.IrminAPIResponse, error) {
 	var connector irminModels.Connector
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/connectors/%s", connectorID),
 	}, &connector)
@@ -43,7 +31,7 @@ func (s *ConnectorService) GetConnector(connectorID string) (*irminModels.Connec
 	return &connector, apiResp, nil
 }
 
-func (s *ConnectorService) FetchConnectorConfigurationFields(
+func (c *Client) FetchConnectorConfigurationFields(
 	connectorID, configType string,
 	currentDetails map[string]string,
 	currentSettings map[string]string,
@@ -57,7 +45,7 @@ func (s *ConnectorService) FetchConnectorConfigurationFields(
 	}
 
 	var fields []irminModels.DynamicField
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/connectors/%s/fields/%s", connectorID, configType),
 		ContentType: "application/x-www-form-urlencoded",
@@ -69,7 +57,7 @@ func (s *ConnectorService) FetchConnectorConfigurationFields(
 	return fields, apiResp, nil
 }
 
-func (s *ConnectorService) ValidateConnectorConfiguration(
+func (c *Client) ValidateConnectorConfiguration(
 	connectorID string,
 	details map[string]string,
 	settings map[string]string,
@@ -83,7 +71,7 @@ func (s *ConnectorService) ValidateConnectorConfiguration(
 	}
 
 	var validationResult irminModels.ConnectorConfigurationValidationResult
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/connectors/%s/validate", connectorID),
 		ContentType: "application/x-www-form-urlencoded",
@@ -96,9 +84,9 @@ func (s *ConnectorService) ValidateConnectorConfiguration(
 }
 
 // RegisterNewConnector registers a new connector with the system. Requests to this endpoint must be authenticated with a system token.
-func (s *ConnectorService) RegisterNewConnector(baseURL, systemToken string) (*irminModels.Connector, *irminModels.IrminAPIResponse, error) {
+func (c *Client) RegisterNewConnector(baseURL, systemToken string) (*irminModels.Connector, *irminModels.IrminAPIResponse, error) {
 	var connector irminModels.Connector
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/connectors",
 		ContentType: "application/x-www-form-urlencoded",
@@ -114,9 +102,9 @@ func (s *ConnectorService) RegisterNewConnector(baseURL, systemToken string) (*i
 }
 
 // UpdateRegisteredConnector updates the details of a registered connector. Requests to this endpoint must be authenticated with a system token.
-func (s *ConnectorService) UpdateRegisteredConnector(connectorID, baseURL, systemToken string) (*irminModels.Connector, *irminModels.IrminAPIResponse, error) {
+func (c *Client) UpdateRegisteredConnector(connectorID, baseURL, systemToken string) (*irminModels.Connector, *irminModels.IrminAPIResponse, error) {
 	var connector irminModels.Connector
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/connectors/%s", connectorID),
 		ContentType: "application/x-www-form-urlencoded",
@@ -132,8 +120,8 @@ func (s *ConnectorService) UpdateRegisteredConnector(connectorID, baseURL, syste
 }
 
 // DeleteConnector deletes a connector from the system. Requests to this endpoint must be authenticated with a system token.
-func (s *ConnectorService) DeleteConnector(connectorID string) (*irminModels.IrminAPIResponse, error) {
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+func (c *Client) DeleteConnector(connectorID string) (*irminModels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/connectors/%s", connectorID),
 	}, nil)

@@ -7,24 +7,14 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// CommitService handles operations related to repository commits
-type CommitService struct {
-	client *Client
-}
-
-// NewCommitService creates a new instance of CommitService
-func NewCommitService(client *Client) *CommitService {
-	return &CommitService{client: client}
-}
-
-func (s *CommitService) ListCommits(workspace, repository, ref string) ([]irminModels.Commit, *irminModels.IrminAPIResponse, error) {
+func (c *Client) ListCommits(workspace, repository, ref string) ([]irminModels.Commit, *irminModels.IrminAPIResponse, error) {
 	var commits []irminModels.Commit
 	endpoint := fmt.Sprintf("/v1/workspaces/%s/repositories/%s/commits", workspace, repository)
 	if ref != "" {
 		endpoint += fmt.Sprintf("?ref=%s", ref)
 	}
 
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: endpoint,
 	}, &commits)
@@ -34,9 +24,9 @@ func (s *CommitService) ListCommits(workspace, repository, ref string) ([]irminM
 	return commits, apiResp, nil
 }
 
-func (s *CommitService) GetCommit(workspace, repository, hash string) (*irminModels.Commit, *irminModels.IrminAPIResponse, error) {
+func (c *Client) GetCommit(workspace, repository, hash string) (*irminModels.Commit, *irminModels.IrminAPIResponse, error) {
 	var commit irminModels.Commit
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/commits/%s", workspace, repository, hash),
 	}, &commit)
@@ -46,9 +36,9 @@ func (s *CommitService) GetCommit(workspace, repository, hash string) (*irminMod
 	return &commit, apiResp, nil
 }
 
-func (s *CommitService) CreateCommit(workspace, repository, branch, message string) (*irminModels.Commit, *irminModels.IrminAPIResponse, error) {
+func (c *Client) CreateCommit(workspace, repository, branch, message string) (*irminModels.Commit, *irminModels.IrminAPIResponse, error) {
 	var commit irminModels.Commit
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/commits", workspace, repository),
 		ContentType: "application/x-www-form-urlencoded",
@@ -63,8 +53,8 @@ func (s *CommitService) CreateCommit(workspace, repository, branch, message stri
 	return &commit, apiResp, nil
 }
 
-func (s *CommitService) RevertChanges(workspace, repository, branch, pathType, path string) (*irminModels.IrminAPIResponse, error) {
-	apiResp, err := s.client.FetchAPI(RequestOptions{
+func (c *Client) RevertChanges(workspace, repository, branch, pathType, path string) (*irminModels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/commits/revert", workspace, repository),
 		ContentType: "application/x-www-form-urlencoded",
