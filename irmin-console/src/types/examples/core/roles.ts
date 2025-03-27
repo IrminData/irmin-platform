@@ -1,11 +1,11 @@
-import { IrminRole } from '@/types/core/IrminRole';
+import { Role } from '@/types/core/IrminRole';
 
 /**
  * Get example roles
  *
- * Array of {@link IrminRole}
+ * Array of {@link Role}
  */
-export const roles: () => IrminRole[] = () => [
+export const roles: () => Role[] = () => [
   {
     name: 'admin',
     label: 'Admin',
@@ -20,10 +20,5 @@ export const roles: () => IrminRole[] = () => [
     name: 'viewer',
     label: 'Viewer',
     description: 'Can view stuff',
-  },
-  {
-    name: 'billing',
-    label: 'Billing',
-    description: 'Can do billing stuff',
   },
 ];

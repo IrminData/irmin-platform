@@ -11,8 +11,7 @@ import { workspaces } from './workspaces';
  * @param last - If true, the item will avoid having children
  */
 export const profile = (last = false): User => ({
-  id: '0',
-  clerk_id: 'user_2nIZ9VtXOtJFepRAZUQLXdp7z9L',
+  id: 'user-0',
   first_name: 'Neil',
   last_name: 'Armstrong',
   company: 'NASA',
@@ -20,5 +19,4 @@ export const profile = (last = false): User => ({
   phone: '+12014270935',
   profile_picture: '/ui-assets/elements/avatar-men-sign-up.png',
   roles: !last ? [roles()[0]] : undefined,
-  workspace: !last ? workspaces()[0] : undefined,
 });

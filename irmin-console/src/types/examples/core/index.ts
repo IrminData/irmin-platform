@@ -7,6 +7,7 @@
  */
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
+import { apiTokens } from './apiTokens';
 import { branches } from './branches';
 import { commits } from './commits';
 import { connections } from './connections';
@@ -17,23 +18,14 @@ import {
 import { content } from './content';
 import { diff } from './diff';
 import { editorItems } from './editorItems';
-import { files } from './files';
-import { folders } from './folders';
-import { invites, inviteSignedURLPayload } from './invites';
-import {
-  connectionLogEvents,
-  logEvents,
-  repositoryLogEvents,
-  workflowLogEvents,
-  workflowRunLogs,
-} from './logs';
+import { invites } from './invites';
+import { logEvents } from './logs';
 import { objects } from './objects';
 import { objectSchema, tableObjectSchema } from './objectSchema';
 import { profile } from './profile';
 import { queries, queryExecutionResult } from './queries';
 import { repositories } from './repositories';
 import { roles } from './roles';
-import { systemTokens } from './systemToken';
 import { tags } from './tags';
 import { workspaceUsers } from './users';
 import { workflowRuns } from './workflowRuns';
@@ -86,19 +78,14 @@ export const exampleWorkspaces = workspaces();
 export const exampleProfile = profile();
 
 /**
- * Fake system tokens {@link systemTokens}
+ * Fake system tokens {@link apiTokens}
  */
-export const exampleSystemTokens = systemTokens();
+export const exampleAPITokens = apiTokens();
 
 /**
  * Fake invites {@link invites}
  */
 export const exampleInvites = invites();
-
-/**
- * Fake invite signed URL payload {@link inviteSignedURLPayload}
- */
-export const exampleInviteSignedURLPayload = inviteSignedURLPayload;
 
 /**
  * Fake workspace users {@link workspaceUsers}
@@ -188,16 +175,6 @@ export const examplePipelines = pipelines();
 export const exampleWorkflowRuns = workflowRuns();
 
 /**
- * Fake folders {@link folders}
- */
-export const exampleFolders = folders();
-
-/**
- * Fake files {@link files}
- */
-export const exampleFiles = files();
-
-/**
  * Fake editor items {@link editorItems}
  */
 export const exampleEditorItems = editorItems();
@@ -206,26 +183,6 @@ export const exampleEditorItems = editorItems();
  * Fake log events {@link logEvents}
  */
 export const exampleLogEvents = logEvents();
-
-/**
- * Fake workflow log events {@link logEvents}
- */
-export const exampleWorkflowLogEvents = workflowLogEvents();
-
-/**
- * Fake repository log events {@link logEvents}
- */
-export const exampleRepositoryLogEvents = repositoryLogEvents();
-
-/**
- * Fake connection log events {@link logEvents}
- */
-export const exampleConnectionLogEvents = connectionLogEvents();
-
-/**
- * Fake workflow run logs {@link workflowRunLogs}
- */
-export const exampleWorkflowRunLogs = workflowRunLogs();
 
 /**
  * Fake diff {@link diff}

@@ -1,5 +1,3 @@
-import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
-
 import { Connection } from '@/types/core/Connection';
 
 import { connectors } from './connectors';
@@ -23,8 +21,6 @@ export const connections = (): Connection[] => [
     },
     settings: { views: 'sessions,users,pageviews,events' },
     connector: connectors().find((c) => c.name === 'Google Analytics')!,
-    created_at: getRandomDateTimeString(500, 'past', 60),
-    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 'connection-1',
@@ -37,8 +33,6 @@ export const connections = (): Connection[] => [
     details: { file: 'kpis.xlsx' },
     settings: {},
     connector: connectors().find((c) => c.name === 'Excel')!,
-    created_at: getRandomDateTimeString(500, 'past', 60),
-    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 'connection-2',
@@ -51,8 +45,6 @@ export const connections = (): Connection[] => [
     details: { file: 'management-and-hr.xlsx' },
     settings: {},
     connector: connectors().find((c) => c.name === 'Excel')!,
-    created_at: getRandomDateTimeString(500, 'past', 60),
-    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 'connection-3',
@@ -64,8 +56,6 @@ export const connections = (): Connection[] => [
     details: { googleApiKey: 'pk-123123', username: 'admin' },
     settings: { path: '/business/financials/KPIs.xlsx' },
     connector: connectors().find((c) => c.name === 'Google Sheets')!,
-    created_at: getRandomDateTimeString(500, 'past', 60),
-    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
   {
     id: 'connection-4',
@@ -76,14 +66,12 @@ export const connections = (): Connection[] => [
     documentation: '# PostgreSQL connection explanation... ',
     details: {
       host: '123.123.123.123',
-      port: 5432,
+      port: '5432',
       user: 'example',
       password: 'hello-world',
       database: 'app',
     },
     settings: {},
     connector: connectors().find((c) => c.name === 'PostgreSQL')!,
-    created_at: getRandomDateTimeString(500, 'past', 60),
-    updated_at: getRandomDateTimeString(50, 'past', 10),
   },
 ];

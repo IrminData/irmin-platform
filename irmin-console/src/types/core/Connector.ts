@@ -72,4 +72,6 @@ export interface ConnectorConfigurationValidationResult {
   connection_details_valid: boolean;
   /** Indicates if the connection settings are valid */
   connection_settings_valid: boolean;
+  /** (optional) Array of validation errors */
+  errors?: string[];
 }

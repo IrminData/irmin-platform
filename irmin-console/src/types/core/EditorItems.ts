@@ -7,7 +7,7 @@ export interface EditorItem {
   /** Path of the item */
   path: string;
   /** Type of the item (file or folder) */
-  type: string;
+  type: 'file' | 'folder';
   /** (optional) Content of the item */
   content?: string;
   /** Timestamp when the item was last modified */

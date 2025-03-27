@@ -1,6 +1,7 @@
 import { Repository } from '@/types/core/Repository';
 import { User } from '@/types/core/User';
-import { Workflow, WorkflowRun } from '@/types/core/Workflow';
+import { Workflow } from '@/types/core/Workflow';
+import { WorkflowRun } from '@/types/core/WorkflowRun';
 
 /**
  * Represents the log event types.

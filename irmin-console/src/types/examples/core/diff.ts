@@ -38,7 +38,9 @@ export const diff = ({
     compare_ref: compare ?? 'feature',
     items: Array.from({ length: amountOfChanges }, () => ({
       object: getRandomArrayElement(allObjects),
-      type: getRandomArrayElement(Object.values(ChangeType)),
+      type: getRandomArrayElement(
+        Object.values(['added', 'removed', 'changed', 'conflict', 'moved'])
+      ),
       size: Math.floor(Math.random() * 100000),
     })),
     commits: amountOfChanges > 0 ? newCommits.slice(0, 10) : [],

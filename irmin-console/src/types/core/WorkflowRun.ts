@@ -10,6 +10,12 @@ export interface WorkflowRun {
   id: string;
   /** Timestamp when the workflow run was created */
   created_at: string;
+  /** Timestamp when the workflow run was last updated */
+  updated_at: string;
+  /** Timestamp when the workflow run was started */
+  started_at?: string;
+  /** (optional) Timestamp when the workflow run was finished */
+  finished_at?: string;
   /** Status of the workflow run */
   status: WorkflowStatus;
   /** (optional) The schedule trigger that initiated the workflow run */

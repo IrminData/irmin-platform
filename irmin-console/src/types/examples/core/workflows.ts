@@ -43,8 +43,6 @@ export const workflows = (): Workflow[] => {
         branch: 'main',
       },
       schedule: getRandomArrayElement(workflowSchedules),
-      created_at: getRandomDateTimeString(500, 'past', 60),
-      updated_at: getRandomDateTimeString(50, 'past', 10),
     },
     {
       id: 'import-workflow-2',
@@ -64,8 +62,6 @@ export const workflows = (): Workflow[] => {
         path: '/',
       },
       schedule: getRandomArrayElement(workflowSchedules),
-      created_at: getRandomDateTimeString(500, 'past', 60),
-      updated_at: getRandomDateTimeString(50, 'past', 10),
     },
     {
       id: 'import-workflow-3',
@@ -87,8 +83,6 @@ export const workflows = (): Workflow[] => {
         path: '/',
       },
       schedule: getRandomArrayElement(workflowSchedules),
-      created_at: getRandomDateTimeString(500, 'past', 60),
-      updated_at: getRandomDateTimeString(50, 'past', 10),
     },
   ];
   const exampleExports: ExportWorkflow[] = [
@@ -110,8 +104,6 @@ export const workflows = (): Workflow[] => {
         branch: 'main',
       },
       schedule: getRandomArrayElement(workflowSchedules),
-      created_at: getRandomDateTimeString(500, 'past', 60),
-      updated_at: getRandomDateTimeString(50, 'past', 10),
     },
   ];
   const exampleActions: ActionWorkflow[] = [
@@ -131,8 +123,6 @@ export const workflows = (): Workflow[] => {
         branch: 'main',
       },
       schedule: getRandomArrayElement(workflowSchedules),
-      created_at: getRandomDateTimeString(500, 'past', 60),
-      updated_at: getRandomDateTimeString(50, 'past', 10),
     },
     {
       id: 'action-workflow-2',
@@ -147,8 +137,6 @@ export const workflows = (): Workflow[] => {
         executable: '/send-receipt-on-order.js',
       },
       schedule: getRandomArrayElement(workflowSchedules),
-      created_at: getRandomDateTimeString(500, 'past', 60),
-      updated_at: getRandomDateTimeString(50, 'past', 10),
     },
     {
       id: 'action-workflow-3',
@@ -168,8 +156,6 @@ export const workflows = (): Workflow[] => {
         executable: '/find-top-100-ad-clicking-users.sql',
       },
       schedule: getRandomArrayElement(workflowSchedules),
-      created_at: getRandomDateTimeString(500, 'past', 60),
-      updated_at: getRandomDateTimeString(50, 'past', 10),
     },
   ];
   const examplePipelines: PipelineWorkflow[] = [
@@ -229,8 +215,6 @@ export const workflows = (): Workflow[] => {
         ],
       },
       schedule: getRandomArrayElement(workflowSchedules),
-      created_at: getRandomDateTimeString(500, 'past', 60),
-      updated_at: getRandomDateTimeString(50, 'past', 10),
     },
   ];
   return [

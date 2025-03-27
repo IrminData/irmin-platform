@@ -13,8 +13,7 @@ import { roles } from './roles';
 export const workspaceUsers = (last = false): User[] => [
   profile(last),
   {
-    id: '1',
-    clerk_id: 'clerk-id-1',
+    id: 'user-1',
     first_name: 'John',
     last_name: 'Doe',
     company: 'Example Inc.',
@@ -24,8 +23,7 @@ export const workspaceUsers = (last = false): User[] => [
     roles: !last ? [roles()[1]] : undefined,
   },
   {
-    id: '2',
-    clerk_id: 'clerk-id-2',
+    id: 'user-2',
     first_name: 'Jane',
     last_name: 'Doe',
     company: 'Example Inc.',
@@ -35,8 +33,7 @@ export const workspaceUsers = (last = false): User[] => [
     roles: !last ? [roles()[2]] : undefined,
   },
   {
-    id: '3',
-    clerk_id: 'clerk-id-3',
+    id: 'user-3',
     first_name: 'Jack',
     last_name: 'Doe',
     company: 'Example Inc.',
@@ -46,8 +43,7 @@ export const workspaceUsers = (last = false): User[] => [
     roles: !last ? [roles()[0]] : undefined,
   },
   {
-    id: '4',
-    clerk_id: 'clerk-id-4',
+    id: 'user-4',
     first_name: 'Jill',
     last_name: 'Doe',
     company: 'Example Inc.',

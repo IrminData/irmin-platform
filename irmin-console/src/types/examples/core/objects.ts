@@ -13,39 +13,47 @@ export const objects = (): Object[] => [
     path: '/photos',
     type: 'group',
     last_modified: getRandomDateTimeString(60, 'past', 1),
-  },
-  {
-    name: 'photo-123.jpg',
-    path: '/photos/photo-123.jpg',
-    type: 'binary',
-    content_type: 'image/jpeg',
-    last_modified: getRandomDateTimeString(60, 'past', 1),
-  },
-  {
-    name: 'photo-456.jpg',
-    path: '/photos/photo-456.jpg',
-    type: 'binary',
-    content_type: 'image/jpeg',
-    last_modified: getRandomDateTimeString(60, 'past', 1),
+    children: [
+      {
+        name: 'photo-123.jpg',
+        path: '/photos/photo-123.jpg',
+        type: 'binary',
+        content_type: 'image/jpeg',
+        size_bytes: 1024,
+        last_modified: getRandomDateTimeString(60, 'past', 1),
+      },
+      {
+        name: 'photo-456.jpg',
+        path: '/photos/photo-456.jpg',
+        type: 'binary',
+        content_type: 'image/jpeg',
+        size_bytes: 1024,
+        last_modified: getRandomDateTimeString(60, 'past', 1),
+      },
+    ],
   },
   {
     name: 'docs',
     path: '/docs',
     type: 'group',
     last_modified: getRandomDateTimeString(60, 'past', 1),
-  },
-  {
-    name: 'document.pdf',
-    path: '/docs/document.pdf',
-    type: 'binary',
-    content_type: 'application/pdf',
-    last_modified: getRandomDateTimeString(60, 'past', 1),
+    children: [
+      {
+        name: 'document.pdf',
+        path: '/docs/document.pdf',
+        type: 'binary',
+        content_type: 'application/pdf',
+        size_bytes: 1024,
+        last_modified: getRandomDateTimeString(60, 'past', 1),
+      },
+    ],
   },
   {
     name: 'data.csv',
     path: '/data.csv',
     type: 'structured',
     content_type: 'text/csv',
+    size_bytes: 1024,
     last_modified: getRandomDateTimeString(60, 'past', 1),
   },
   {
@@ -53,6 +61,7 @@ export const objects = (): Object[] => [
     path: '/product-info.json',
     type: 'structured',
     content_type: 'application/json',
+    size_bytes: 1024,
     last_modified: getRandomDateTimeString(60, 'past', 1),
   },
   {
@@ -60,6 +69,7 @@ export const objects = (): Object[] => [
     path: '/data.parquet',
     type: 'structured',
     content_type: 'application/vnd.apache.parquet',
+    size_bytes: 1024,
     last_modified: getRandomDateTimeString(60, 'past', 1),
   },
   {
@@ -67,6 +77,7 @@ export const objects = (): Object[] => [
     path: '/example.txt',
     type: 'binary',
     content_type: 'text/plain',
+    size_bytes: 1024,
     last_modified: getRandomDateTimeString(60, 'past', 1),
   },
 ];

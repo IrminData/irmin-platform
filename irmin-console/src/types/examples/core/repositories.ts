@@ -21,6 +21,17 @@ export const repositories = (): Repository[] => [
     owner: workspaceUsers()[0],
     is_immutable: false,
     default_branch: 'main',
+    garbage_collection_rules: {
+      /** (optional) Default number of retention days */
+      default_retention_days: 30,
+      /** (optional) List of garbage collection rules for branches */
+      branches: [
+        {
+          branch_id: 'main',
+          retention_days: 365,
+        },
+      ],
+    },
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -35,6 +46,17 @@ export const repositories = (): Repository[] => [
     owner: workspaceUsers()[1],
     is_immutable: false,
     default_branch: 'main',
+    garbage_collection_rules: {
+      /** (optional) Default number of retention days */
+      default_retention_days: 30,
+      /** (optional) List of garbage collection rules for branches */
+      branches: [
+        {
+          branch_id: 'main',
+          retention_days: 365,
+        },
+      ],
+    },
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -49,6 +71,17 @@ export const repositories = (): Repository[] => [
     owner: workspaceUsers()[2],
     is_immutable: false,
     default_branch: 'main',
+    garbage_collection_rules: {
+      /** (optional) Default number of retention days */
+      default_retention_days: 30,
+      /** (optional) List of garbage collection rules for branches */
+      branches: [
+        {
+          branch_id: 'main',
+          retention_days: 365,
+        },
+      ],
+    },
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -63,6 +96,17 @@ export const repositories = (): Repository[] => [
     is_immutable: false,
     default_branch: 'main',
     owner: workspaceUsers()[3],
+    garbage_collection_rules: {
+      /** (optional) Default number of retention days */
+      default_retention_days: 30,
+      /** (optional) List of garbage collection rules for branches */
+      branches: [
+        {
+          branch_id: 'main',
+          retention_days: 365,
+        },
+      ],
+    },
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -77,6 +121,17 @@ export const repositories = (): Repository[] => [
     is_immutable: false,
     default_branch: 'main',
     owner: workspaceUsers()[0],
+    garbage_collection_rules: {
+      /** (optional) Default number of retention days */
+      default_retention_days: 30,
+      /** (optional) List of garbage collection rules for branches */
+      branches: [
+        {
+          branch_id: 'main',
+          retention_days: 365,
+        },
+      ],
+    },
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },
@@ -89,6 +144,17 @@ export const repositories = (): Repository[] => [
     is_immutable: false,
     default_branch: 'main',
     owner: workspaceUsers()[2],
+    garbage_collection_rules: {
+      /** (optional) Default number of retention days */
+      default_retention_days: 30,
+      /** (optional) List of garbage collection rules for branches */
+      branches: [
+        {
+          branch_id: 'main',
+          retention_days: 365,
+        },
+      ],
+    },
     created_at: getRandomDateTimeString(500, 'past', 60),
     updated_at: getRandomDateTimeString(50, 'past', 10),
   },

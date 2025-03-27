@@ -1,8 +1,10 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { Invite, InviteSignedURLPayload } from '@/types/core/Invite';
+import { Invite } from '@/types/core/Invite';
 
 import { roles } from './roles';
+import { workspaceUsers } from './users';
+import { workspaces } from './workspaces';
 
 /**
  * Get example invites
@@ -12,51 +14,34 @@ import { roles } from './roles';
 export const invites: () => Invite[] = () => [
   {
     id: 'inv-0',
-    first_name: 'John',
-    last_name: 'Doe',
     email: 'john@example.com',
-    phone: '+12014270935',
-    company: 'Example Inc.',
     role: roles()[2],
-    invited_at: getRandomDateTimeString(50, 'past', 1),
-    expired_at: getRandomDateTimeString(10, 'future', 2),
-    deleted_at: null,
+    expires_at: getRandomDateTimeString(10, 'future', 2),
+    invited_by: workspaceUsers().find((c) => c.email === 'jane@example.com')!,
+    workspace: workspaces().find((c) => c.slug === 'example-core')!,
   },
   {
     id: 'inv-1',
-    first_name: 'Jane',
-    last_name: 'Doe',
-    email: 'jane@example.com',
-    phone: '+12014270935',
+    email: 'alice@example.com',
     role: roles()[1],
-    invited_at: getRandomDateTimeString(50, 'past', 1),
-    expired_at: null,
-    deleted_at: null,
+    expires_at: getRandomDateTimeString(10, 'future', 3),
+    invited_by: workspaceUsers().find((c) => c.email === 'jane@example.com')!,
+    workspace: workspaces().find((c) => c.slug === 'example-core')!,
   },
   {
     id: 'inv-2',
-    first_name: 'Nick',
-    last_name: 'Doe',
-    email: 'nick@example.com',
-    phone: '+12014270935',
-    role: roles()[3],
-    invited_at: getRandomDateTimeString(50, 'past', 1),
-    expired_at: null,
-    deleted_at: null,
+    email: 'bob@example.com',
+    role: roles()[0],
+    expires_at: getRandomDateTimeString(5, 'future', 5),
+    invited_by: workspaceUsers().find((c) => c.email === 'jane@example.com')!,
+    workspace: workspaces().find((c) => c.slug === 'example-core')!,
+  },
+  {
+    id: 'inv-3',
+    email: 'charlie@example.com',
+    role: roles()[2],
+    expires_at: getRandomDateTimeString(15, 'future', 1),
+    invited_by: workspaceUsers().find((c) => c.email === 'jane@example.com')!,
+    workspace: workspaces().find((c) => c.slug === 'example-core')!,
   },
 ];
-
-/**
- * Get example invite signed URL payload
- */
-export const inviteSignedURLPayload: InviteSignedURLPayload = {
-  invite: 'inv-0',
-  first_name: 'John',
-  last_name: 'Doe',
-  email: 'john@example.com',
-  phone: '+12014270935',
-  company: 'Example Inc.',
-  workspace: 'Example workspace',
-  inviter: 'Neil Armstrong',
-  has_an_account: false,
-};

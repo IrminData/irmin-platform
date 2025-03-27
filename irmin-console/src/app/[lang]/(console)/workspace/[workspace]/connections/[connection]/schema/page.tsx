@@ -31,7 +31,7 @@ export default async function ConnectionSchemaPage(props: {
 
   const pullSchema = await getConnectorSchema(
     connection.connector.id,
-    ConnectorCapability.Pull,
+    'pull',
     connection.details as DynamicFieldValues,
     connection.settings as DynamicFieldValues,
     token

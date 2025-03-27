@@ -1,3 +1,5 @@
+import { User } from './User';
+
 /**
  * Represents the garbage collection rules for a branch.
  */
@@ -36,10 +38,8 @@ export interface Repository {
   is_immutable: boolean;
   /** Default branch of the repository */
   default_branch: string;
-  /** ID of the workspace associated with the repository */
-  workspace_id: string;
-  /** ID of the owner of the repository */
-  owner_id: string;
+  /** Owner of the repository */
+  owner: User;
   /** (optional) Garbage collection rules for the repository */
   garbage_collection_rules?: GarbageCollectionRules;
   /** Timestamp when the repository was created */
