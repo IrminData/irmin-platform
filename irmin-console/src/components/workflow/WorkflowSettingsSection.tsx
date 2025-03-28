@@ -18,26 +18,26 @@ interface WorkflowFormValues {
 /**
  * Workflow Settings section component
  *
- * Handles workflow settings updates, reassignment, deletion, and pausing/resuming.
+ * Handles workflow settings updates, transferment, deletion, and pausing/resuming.
  * Uses {@link SettingsForm} to show and edit the workflow settings.
  */
 const WorkflowSettingsSection = () => {
   const { dict } = useLocale();
   const { users } = useUsers();
-  const { workflow, updateWorkflow, reassignWorkflow, deleteWorkflow } =
+  const { workflow, updateWorkflow, transferWorkflow, deleteWorkflow } =
     useWorkflow();
 
   const handleUpdateWorkflow = useCallback(
     async (data: WorkflowFormValues) => {
       if (data.owner !== workflow.owner.id) {
-        await reassignWorkflow(data.owner);
+        await transferWorkflow(data.owner);
       }
       await updateWorkflow({
         name: data.name,
         description: data.description,
       });
     },
-    [workflow, updateWorkflow, reassignWorkflow]
+    [workflow, updateWorkflow, transferWorkflow]
   );
 
   // Define field configurations

@@ -4,7 +4,7 @@ import fake from '@/utils/prepareFakeResponse';
 
 import { APIToken } from '@/types/core/APIToken';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { exampleSystemTokens } from '@/types/examples/core';
+import { exampleAPITokens } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -17,19 +17,27 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 class CredentialService {
   private irminCore: IrminCore;
 
+  /**
+   * Create a new CredentialService.
+   *
+   * @param irminCore - The IrminCore instance.
+   */
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
     this.getSystemTokens = this.getSystemTokens.bind(this);
     this.createSystemToken = this.createSystemToken.bind(this);
+    this.revokeSystemToken = this.revokeSystemToken.bind(this);
   }
 
   /**
-   * Get the user's system tokens
+   * Get the user's system tokens.
+   *
+   * @returns IrminAPIResponse containing an array of APIToken.
    */
   async getSystemTokens(): Promise<IrminAPIResponse<APIToken[]>> {
     if (isOfflineMode)
-      return fake(exampleSystemTokens) as IrminAPIResponse<APIToken[]>;
+      return fake(exampleAPITokens) as IrminAPIResponse<APIToken[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/credentials`, {
         method: 'GET',
@@ -37,27 +45,30 @@ class CredentialService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Get system tokens error');
-      // Ignore any other errors if in development mode
       if (isDevelopment)
-        return fake(exampleSystemTokens) as IrminAPIResponse<APIToken[]>;
-      // Otherwise, throw the error
+        return fake(exampleAPITokens) as IrminAPIResponse<APIToken[]>;
       throw error;
     }
   }
 
   /**
-   * Create a new system token
+   * Create a new system token.
    *
-   * @param name - Name of the new system token
-   * @param expiry - Time until expiration from the current date and time. In seconds.
+   * @param props - The parameters.
+   * @param props.name - The token name.
+   * @param props.expiry - The expiry time in seconds.
+   * @returns IrminAPIResponse containing the created APIToken.
    */
-  async createSystemToken(
-    name: string,
-    expiry: number
-  ): Promise<IrminAPIResponse<APIToken>> {
+  async createSystemToken({
+    name,
+    expiry,
+  }: {
+    name: string;
+    expiry: number;
+  }): Promise<IrminAPIResponse<APIToken>> {
     if (isOfflineMode)
       return fake({
-        ...exampleSystemTokens[0],
+        ...exampleAPITokens[0],
         name,
       }) as IrminAPIResponse<APIToken>;
     try {
@@ -71,40 +82,37 @@ class CredentialService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create system token error');
-      // Ignore any other errors if in development mode
       if (isDevelopment)
         return fake({
-          ...exampleSystemTokens[0],
+          ...exampleAPITokens[0],
           name,
         }) as IrminAPIResponse<APIToken>;
-      // Otherwise, throw the error
       throw error;
     }
   }
 
   /**
-   * Revoke a system token
+   * Revoke a system token.
    *
-   * @param token - ID of the system token to revoke
+   * @param props - The parameters.
+   * @param props.token - The token ID.
+   * @returns IrminAPIResponse containing the result of the revocation.
    */
-  async revokeSystemToken(token: string): Promise<IrminAPIResponse> {
+  async revokeSystemToken({
+    token,
+  }: {
+    token: string;
+  }): Promise<IrminAPIResponse> {
     if (isOfflineMode) return fake();
     try {
-      const formData = new FormData();
-      formData.append('_method', 'DELETE');
       const response = await this.irminCore.fetchAPI(
         `/v1/credentials/${token}`,
-        {
-          method: 'POST',
-          body: formData,
-        }
+        { method: 'DELETE' }
       );
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Revoke system token error');
-      // Ignore any other errors if in development mode
       if (isDevelopment) return fake();
-      // Otherwise, throw the error
       throw error;
     }
   }

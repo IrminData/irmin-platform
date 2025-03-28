@@ -3,7 +3,7 @@ import IrminCore from '@/lib/core';
 import fake from '@/utils/prepareFakeResponse';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { IrminRole } from '@/types/core/IrminRole';
+import { Role } from '@/types/core/IrminRole';
 import { exampleRoles } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
@@ -26,18 +26,16 @@ class RoleService {
   /**
    * Fetch all available roles
    */
-  async fetchRoles(): Promise<IrminAPIResponse<IrminRole[]>> {
-    if (isOfflineMode)
-      return fake(exampleRoles) as IrminAPIResponse<IrminRole[]>;
+  async fetchRoles(): Promise<IrminAPIResponse<Role[]>> {
+    if (isOfflineMode) return fake(exampleRoles) as IrminAPIResponse<Role[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/roles`, {
         method: 'GET',
-      })) as IrminAPIResponse<IrminRole[]>;
+      })) as IrminAPIResponse<Role[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch roles error');
-      if (isDevelopment)
-        return fake(exampleRoles) as IrminAPIResponse<IrminRole[]>;
+      if (isDevelopment) return fake(exampleRoles) as IrminAPIResponse<Role[]>;
       throw error;
     }
   }

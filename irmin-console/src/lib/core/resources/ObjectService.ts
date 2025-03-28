@@ -1,136 +1,159 @@
 import IrminCore from '@/lib/core';
 
-import { constructObjectUrlPath } from '@/utils/constructObjectUrlPath';
 import fake from '@/utils/prepareFakeResponse';
 
+import { Commit } from '@/types/core/Commit';
 import {
   IrminAPIBinaryResponse,
   IrminAPIResponse,
 } from '@/types/core/IrminAPIResponse';
-import { Object } from '@/types/core/Object';
+import { Object as RepoObject } from '@/types/core/Object';
 import { ObjectSchema } from '@/types/core/ObjectSchema';
 import {
   exampleAPIBinaryResponse,
+  exampleCommits,
   exampleObjects,
   exampleTableObjectSchema,
 } from '@/types/examples/core';
-import { ContentType } from '@/types/examples/core/content';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Get a fake object by its path or return the first object in the example objects list.
- */
-function getFakeObject(path: string): Object {
-  const object = exampleObjects.find((obj) => obj.path === path);
-  if (!object) return exampleObjects[0];
-  return object;
-}
-
-/**
  * Object API service
  *
- * Responsible for all repository object-related API calls
+ * Responsible for all repository object-related API calls.
  */
 class ObjectService {
   private irminCore: IrminCore;
 
+  /**
+   * Create a new ObjectService.
+   *
+   * @param irminCore - The IrminCore instance for API calls.
+   */
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
-    this.fetchObjects = this.fetchObjects.bind(this);
-    this.fetchObject = this.fetchObject.bind(this);
-    this.fetchObjectSchema = this.fetchObjectSchema.bind(this);
-    this.fetchContent = this.fetchContent.bind(this);
+    this.getObjectAtPath = this.getObjectAtPath.bind(this);
+    this.getObjectHistory = this.getObjectHistory.bind(this);
+    this.getObjectSchema = this.getObjectSchema.bind(this);
+    this.getObjectContent = this.getObjectContent.bind(this);
     this.uploadObject = this.uploadObject.bind(this);
     this.moveObject = this.moveObject.bind(this);
+    this.copyObject = this.copyObject.bind(this);
     this.deleteObject = this.deleteObject.bind(this);
   }
 
   /**
-   * Fetch objects at a given path in a repository and ref.
+   * Get an object at a given path.
    *
-   * @param repository - Repository slug to fetch objects for
-   * @param path - Path in the repository to fetch objects from
-   * @param ref - (optional) Ref to fetch objects from (branch, tag, or commit hash)
+   * @param props - The object properties.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @param props.path - The path of the object.
+   * @param props.ref - The ref (branch, tag or commit hash).
+   * @returns IrminAPIResponse containing the object.
    */
-  async fetchObjects(
-    repository: string,
-    path: string = '',
-    ref?: string
-  ): Promise<IrminAPIResponse<Object[]>> {
+  async getObjectAtPath({
+    workspace,
+    repository,
+    path,
+    ref,
+  }: {
+    workspace: string;
+    repository: string;
+    path: string;
+    ref: string;
+  }): Promise<IrminAPIResponse<RepoObject>> {
     if (isOfflineMode)
-      return fake(exampleObjects) as IrminAPIResponse<Object[]>;
+      return fake(
+        exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
+      ) as IrminAPIResponse<RepoObject>;
     try {
-      const urlParams = new URLSearchParams();
-      if (ref) urlParams.append('ref', ref);
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/objects/${path}?${urlParams.toString()}`,
-        { method: 'GET' }
-      )) as IrminAPIResponse<Object[]>;
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects?ref=${encodeURIComponent(ref)}&path=${encodeURIComponent(path)}`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'GET',
+      })) as IrminAPIResponse<RepoObject>;
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Fetch Objects error');
+      console.error((error as Error).message, 'Fetch object error');
       if (isDevelopment)
-        return fake(exampleObjects) as IrminAPIResponse<Object[]>;
+        return fake(
+          exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
+        ) as IrminAPIResponse<RepoObject>;
       throw error;
     }
   }
 
   /**
-   * Fetch a single object by its name and path in a repository.
+   * Get the history of an object.
    *
-   * @param repository - Repository slug
-   * @param path - Full path of the object
-   * @param ref - (optional) Ref to fetch the object at
+   * @param props - The object history properties.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @param props.path - The path of the object.
+   * @param props.ref - The ref (branch, tag or commit hash).
+   * @returns IrminAPIResponse containing an array of commits.
    */
-  async fetchObject(
-    repository: string,
-    path: string,
-    ref?: string
-  ): Promise<IrminAPIResponse<Object>> {
+  async getObjectHistory({
+    workspace,
+    repository,
+    path,
+    ref,
+  }: {
+    workspace: string;
+    repository: string;
+    path: string;
+    ref: string;
+  }): Promise<IrminAPIResponse<Commit[]>> {
     if (isOfflineMode)
-      return fake(getFakeObject(path)) as IrminAPIResponse<Object>;
+      return fake(exampleCommits) as IrminAPIResponse<Commit[]>;
     try {
-      const urlParams = ref ? `?ref=${ref}` : '';
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/objects/${path}${urlParams}`,
-        { method: 'GET' }
-      )) as IrminAPIResponse<Object>;
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/history?ref=${encodeURIComponent(ref)}&path=${encodeURIComponent(path)}`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'GET',
+      })) as IrminAPIResponse<Commit[]>;
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Fetch Object error');
+      console.error((error as Error).message, 'Fetch object history error');
       if (isDevelopment)
-        return fake(getFakeObject(path)) as IrminAPIResponse<Object>;
+        return fake(exampleCommits) as IrminAPIResponse<Commit[]>;
       throw error;
     }
   }
 
   /**
-   * Fetch schema of an object in a repository.
+   * Get the schema of an object.
    *
-   * @param repository - Repository slug
-   * @param path - Path of the object
-   * @param ref - (optional) Ref to fetch schema at
+   * @param props - The object schema properties.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @param props.path - The path of the object.
+   * @param props.ref - The ref (branch, tag or commit hash).
+   * @returns IrminAPIResponse containing the object schema.
    */
-  async fetchObjectSchema(
-    repository: string,
-    path: string,
-    ref?: string
-  ): Promise<IrminAPIResponse<ObjectSchema>> {
+  async getObjectSchema({
+    workspace,
+    repository,
+    path,
+    ref,
+  }: {
+    workspace: string;
+    repository: string;
+    path: string;
+    ref: string;
+  }): Promise<IrminAPIResponse<ObjectSchema>> {
     if (isOfflineMode)
       return fake(exampleTableObjectSchema) as IrminAPIResponse<ObjectSchema>;
     try {
-      const urlParams = new URLSearchParams();
-      if (ref) urlParams.append('ref', ref);
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/objects/schema/${path}?${urlParams.toString()}`,
-        { method: 'GET' }
-      )) as IrminAPIResponse<ObjectSchema>;
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/schema?ref=${encodeURIComponent(ref)}&path=${encodeURIComponent(path)}`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'GET',
+      })) as IrminAPIResponse<ObjectSchema>;
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Fetch Object Schema error');
+      console.error((error as Error).message, 'Fetch object schema error');
       if (isDevelopment)
         return fake(exampleTableObjectSchema) as IrminAPIResponse<ObjectSchema>;
       throw error;
@@ -138,159 +161,236 @@ class ObjectService {
   }
 
   /**
-   * Fetch the content of an object at a given path in the repository.
+   * Get the content of an object.
    *
-   * @param repository - Repository slug
-   * @param path - Path of the object
-   * @param ref - (optional) Ref to fetch content at
-   * @param raw - (optional) Return raw content without parsing tables to JSON
-   * @param exampleType - (optional) Type of the content to generate for the example response
+   * @param props - The object content properties.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @param props.path - The path of the object.
+   * @param props.ref - The ref (branch, tag or commit hash).
+   * @returns IrminAPIBinaryResponse containing the object content.
    */
-  async fetchContent(
-    repository: string,
-    path: string,
-    ref?: string,
-    raw?: boolean,
-    exampleType?: ContentType
-  ): Promise<IrminAPIBinaryResponse> {
+  async getObjectContent({
+    workspace,
+    repository,
+    path,
+    ref,
+  }: {
+    workspace: string;
+    repository: string;
+    path: string;
+    ref: string;
+  }): Promise<IrminAPIBinaryResponse> {
     if (isOfflineMode)
       return (await exampleAPIBinaryResponse(
-        exampleType,
-        raw
+        undefined,
+        false
       )) as IrminAPIBinaryResponse;
     try {
       const urlParams = new URLSearchParams();
-      if (ref) urlParams.append('ref', ref);
-      if (raw) urlParams.append('raw', 'true');
-      const response = await this.irminCore.fetchBinary(
-        `/v1/repositories/${repository}/objects/content/${path}?${urlParams.toString()}`,
-        { method: 'GET' }
-      );
+      urlParams.append('ref', ref);
+      urlParams.append('path', path);
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/content?${urlParams.toString()}`;
+      const response = await this.irminCore.fetchBinary(url, { method: 'GET' });
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Fetch Object Content error');
+      console.error((error as Error).message, 'Fetch object content error');
       if (isDevelopment)
         return (await exampleAPIBinaryResponse(
-          exampleType,
-          raw
+          undefined,
+          false
         )) as IrminAPIBinaryResponse;
       throw error;
     }
   }
 
   /**
-   * Update or create a new object in the repository.
+   * Upload an object.
    *
-   * Note: In order to create a group object (e.g. directory), pass empty files parameter.
-   *
-   * @param repository - Repository slug
-   * @param ref - Ref to upload the object to
-   * @param path - Path within the repository to upload the object to
-   * @param name - Name of the object to upload (example: 'file.txt')
-   * @param files - Files to upload as the object
+   * @param props - The object upload properties.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @param props.ref - The ref (branch, tag or commit hash) to upload to.
+   * @param props.path - The path within the repository where the object will be uploaded.
+   * @param props.name - The name of the object.
+   * @param props.files - A FileList containing files to upload.
+   * @returns IrminAPIResponse containing the uploaded object.
    */
-  async uploadObject(
-    repository: string,
-    ref: string,
-    path: string,
-    name: string,
-    files?: FileList
-  ): Promise<IrminAPIResponse<Object>> {
+  async uploadObject({
+    workspace,
+    repository,
+    ref,
+    path,
+    name,
+    files,
+  }: {
+    workspace: string;
+    repository: string;
+    ref: string;
+    path: string;
+    name: string;
+    files?: FileList;
+  }): Promise<IrminAPIResponse<RepoObject>> {
     if (isOfflineMode)
-      return fake(getFakeObject(path)) as IrminAPIResponse<Object>;
+      return fake(
+        exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
+      ) as IrminAPIResponse<RepoObject>;
     try {
       const formData = new FormData();
       formData.append('ref', ref);
-
+      // In the Go SDK, file uploads use in-memory bytes. Here we use FileList.
       if (files) {
         for (let i = 0; i < files.length; i++) {
           formData.append('file', files[i]);
         }
       }
-
-      const urlPath = constructObjectUrlPath(path, name);
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/objects/${urlPath}`,
-        { method: 'POST', body: formData }
-      )) as IrminAPIResponse<Object>;
+      // Note: The Go endpoint does not use the object name in the URL; it uses query parameters.
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects?ref=${encodeURIComponent(ref)}&path=${encodeURIComponent(path)}`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'POST',
+        body: formData,
+      })) as IrminAPIResponse<RepoObject>;
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Upload Object error');
+      console.error((error as Error).message, 'Upload object error');
       if (isDevelopment)
-        return fake(getFakeObject(path)) as IrminAPIResponse<Object>;
+        return fake(
+          exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
+        ) as IrminAPIResponse<RepoObject>;
       throw error;
     }
   }
 
   /**
-   * Move or rename an object in the repository.
+   * Move an object.
    *
-   * @param repository - Repository slug
-   * @param ref - Ref to move the object in
-   * @param path - Current path of the object
-   * @param newPath - New path for the object
+   * @param props - The object move properties.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @param props.ref - The ref to perform the move on.
+   * @param props.path - The current path of the object.
+   * @param props.newPath - The new path for the object.
+   * @returns IrminAPIResponse containing the moved object.
    */
-  async moveObject(
-    repository: string,
-    ref: string,
-    path: string,
-    newPath: string
-  ): Promise<IrminAPIResponse<Object>> {
+  async moveObject({
+    workspace,
+    repository,
+    ref,
+    path,
+    newPath,
+  }: {
+    workspace: string;
+    repository: string;
+    ref: string;
+    path: string;
+    newPath: string;
+  }): Promise<IrminAPIResponse<RepoObject>> {
     if (isOfflineMode)
-      return fake(getFakeObject(path)) as IrminAPIResponse<Object>;
+      return fake(
+        exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
+      ) as IrminAPIResponse<RepoObject>;
     try {
-      // Get new object name from new path and remove it from the new path
-      const newObject = newPath.split('/').pop();
-      newPath = newPath.substring(0, newPath.lastIndexOf('/'));
-
-      const formData = new FormData();
-      formData.append('_method', 'MOVE');
-      formData.append('ref', ref);
-      formData.append('new_name', newObject ?? '');
-      formData.append('new_path', newPath);
-
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/objects/${path}`,
-        { method: 'POST', body: formData }
-      )) as IrminAPIResponse<Object>;
+      const params = new URLSearchParams();
+      params.append('ref', ref);
+      params.append('path', path);
+      params.append('new_path', newPath);
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/move?${params.toString()}`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      })) as IrminAPIResponse<RepoObject>;
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Move Object error');
+      console.error((error as Error).message, 'Move object error');
       if (isDevelopment)
-        return fake(getFakeObject(path)) as IrminAPIResponse<Object>;
+        return fake(
+          exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
+        ) as IrminAPIResponse<RepoObject>;
       throw error;
     }
   }
 
   /**
-   * Delete an object from the repository.
+   * Copy an object.
    *
-   * @param repository - Repository slug
-   * @param ref - Ref to delete the object from
-   * @param path - Path of the object
-   * @param object - Name of the object to delete
+   * @param props - The object copy properties.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @param props.ref - The ref to perform the copy on.
+   * @param props.path - The current path of the object.
+   * @param props.newPath - The new path for the object.
+   * @returns IrminAPIResponse containing the copied object.
    */
-  async deleteObject(
-    repository: string,
-    ref: string,
-    path: string,
-    object: string
-  ): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake();
+  async copyObject({
+    workspace,
+    repository,
+    ref,
+    path,
+    newPath,
+  }: {
+    workspace: string;
+    repository: string;
+    ref: string;
+    path: string;
+    newPath: string;
+  }): Promise<IrminAPIResponse<RepoObject>> {
+    if (isOfflineMode)
+      return fake(
+        exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
+      ) as IrminAPIResponse<RepoObject>;
     try {
-      const formData = new FormData();
-      formData.append('_method', 'DELETE');
-      formData.append('ref', ref);
-
-      const urlPath = constructObjectUrlPath(path, object);
-      const response = await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/objects/${urlPath}`,
-        { method: 'POST', body: formData }
-      );
+      const params = new URLSearchParams();
+      params.append('ref', ref);
+      params.append('path', path);
+      params.append('new_path', newPath);
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/copy?${params.toString()}`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      })) as IrminAPIResponse<RepoObject>;
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Delete Object error');
-      if (isDevelopment) return fake();
+      console.error((error as Error).message, 'Copy object error');
+      if (isDevelopment)
+        return fake(
+          exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
+        ) as IrminAPIResponse<RepoObject>;
+      throw error;
+    }
+  }
+
+  /**
+   * Delete an object.
+   *
+   * @param props - The object delete properties.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @param props.ref - The ref to perform the delete on.
+   * @param props.path - The path of the object to delete.
+   * @returns IrminAPIResponse containing the deleted object.
+   */
+  async deleteObject({
+    workspace,
+    repository,
+    ref,
+    path,
+  }: {
+    workspace: string;
+    repository: string;
+    ref: string;
+    path: string;
+  }): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return fake() as IrminAPIResponse;
+    try {
+      const params = new URLSearchParams();
+      params.append('ref', ref);
+      params.append('path', path);
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects?${params.toString()}`;
+      const response = await this.irminCore.fetchAPI(url, { method: 'DELETE' });
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Delete object error');
+      if (isDevelopment) return fake() as IrminAPIResponse;
       throw error;
     }
   }

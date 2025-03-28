@@ -2,291 +2,311 @@ import IrminCore from '@/lib/core';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import {
-  EditorItems,
-  EditorItemsFile,
-  EditorItemsFolder,
-} from '@/types/core/EditorItems';
+import { EditorItem } from '@/types/core/EditorItems';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import {
-  exampleEditorItems,
-  exampleFiles,
-  exampleFolders,
-} from '@/types/examples/core';
-import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
+import { exampleEditorItems } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * EditorItems API service
+ * EditorItems service
  *
- * Responsible for all editorItems related API calls.
+ * Provides methods to interact with the editor API.
  */
 class EditorItemsService {
   private irminCore: IrminCore;
 
+  /**
+   * Create a new EditorItemsService.
+   */
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
-    this.fetchEditorItems = this.fetchEditorItems.bind(this);
-    this.createFile = this.createFile.bind(this);
-    this.updateFile = this.updateFile.bind(this);
-    this.deleteFile = this.deleteFile.bind(this);
-    this.createFolder = this.createFolder.bind(this);
-    this.updateFolder = this.updateFolder.bind(this);
-    this.deleteFolder = this.deleteFolder.bind(this);
+    this.listEditorItems = this.listEditorItems.bind(this);
+    this.getEditorItemContent = this.getEditorItemContent.bind(this);
+    this.moveEditorItem = this.moveEditorItem.bind(this);
+    this.copyEditorItem = this.copyEditorItem.bind(this);
+    this.deleteEditorItem = this.deleteEditorItem.bind(this);
+    this.saveEditorItem = this.saveEditorItem.bind(this);
+    this.createEditorFolder = this.createEditorFolder.bind(this);
   }
 
   /**
-   * Fetch the editorItems for the current workspace
+   * List editor items.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.path - The path of the editor item.
+   * @returns IrminAPIResponse containing an array of EditorItem.
    */
-  async fetchEditorItems(): Promise<IrminAPIResponse<EditorItems>> {
-    if (isOfflineMode)
-      return fake(exampleEditorItems) as IrminAPIResponse<EditorItems>;
+  async listEditorItems({
+    workspace,
+    path,
+  }: {
+    workspace: string;
+    path: string;
+  }): Promise<IrminAPIResponse<EditorItem[]>> {
+    if (isOfflineMode) {
+      return fake(exampleEditorItems) as IrminAPIResponse<EditorItem[]>;
+    }
     try {
-      const response = (await this.irminCore.fetchAPI(`/v1/editor-items`, {
+      const endpoint = `/v1/workspaces/${workspace}/editor?path=${encodeURIComponent(
+        path
+      )}`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
         method: 'GET',
-      })) as IrminAPIResponse<EditorItems>;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Fetch editorItems error');
-      if (isDevelopment)
-        return fake(exampleEditorItems) as IrminAPIResponse<EditorItems>;
+      });
+      return response as IrminAPIResponse<EditorItem[]>;
+    } catch (error: any) {
+      console.error(error.message, 'Fetch editor items error');
+      if (isDevelopment) {
+        return fake(exampleEditorItems) as IrminAPIResponse<EditorItem[]>;
+      }
       throw error;
     }
   }
 
   /**
-   * Create a new file in the editorItems
+   * Get editor item content.
    *
-   * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
-   * @param isDraft - whether the file is a draft or not
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.path - The path of the editor item.
+   * @returns IrminAPIResponse containing a string with the editor item content.
    */
-  async createFile(
-    fileNavigatorItem: FileNavigatorItem,
-    isDraft?: boolean
-  ): Promise<IrminAPIResponse<EditorItemsFile>> {
-    if (isOfflineMode)
-      return fake(exampleFiles[0]) as IrminAPIResponse<EditorItemsFile>;
+  async getEditorItemContent({
+    workspace,
+    path,
+  }: {
+    workspace: string;
+    path: string;
+  }): Promise<IrminAPIResponse<string>> {
+    if (isOfflineMode) {
+      return fake('Fake content') as IrminAPIResponse<string>;
+    }
     try {
-      // Make sure the item is a file
-      if (fileNavigatorItem.type !== 'file' || !fileNavigatorItem.current) {
-        throw new Error('Item is not a file');
+      const endpoint = `/v1/workspaces/${workspace}/editor/content?path=${encodeURIComponent(
+        path
+      )}`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'GET',
+      });
+      return response as IrminAPIResponse<string>;
+    } catch (error: any) {
+      console.error(error.message, 'Fetch editor item content error');
+      if (isDevelopment) {
+        return fake('Fake content') as IrminAPIResponse<string>;
       }
-      // Create the file
-      const formData = new FormData();
-      formData.append('name', fileNavigatorItem.current.name);
-      formData.append('path', fileNavigatorItem.current.path);
-      formData.append('contents', fileNavigatorItem.current.contents);
-      formData.append('extension', fileNavigatorItem.current.type);
-
-      if (isDraft) formData.append('is_draft', 'true');
-      else formData.append('is_draft', 'false');
-
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/editor-items/files`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      )) as IrminAPIResponse<EditorItemsFile>;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Create file error');
-      if (isDevelopment)
-        return fake(exampleFiles[0]) as IrminAPIResponse<EditorItemsFile>;
       throw error;
     }
   }
 
   /**
-   * Update a file in the editorItems
+   * Move an editor item.
    *
-   * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
-   * @param isDraft - whether the file is a draft or not
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.path - The current path of the editor item.
+   * @param props.destinationPath - The destination path to move the item.
+   * @returns IrminAPIResponse with the result of the move operation.
    */
-  async updateFile(
-    fileNavigatorItem: FileNavigatorItem,
-    isDraft?: boolean
-  ): Promise<IrminAPIResponse<EditorItemsFile>> {
-    if (isOfflineMode)
-      return fake(exampleFiles[0]) as IrminAPIResponse<EditorItemsFile>;
-    try {
-      // Make sure the item is a file
-      if (
-        fileNavigatorItem.type !== 'file' ||
-        !fileNavigatorItem.current ||
-        !fileNavigatorItem.original
-      ) {
-        throw new Error('Item is not a file');
-      }
-      // Update the file
-      const formData = new FormData();
-      formData.append('_method', 'PATCH');
-      formData.append('name', fileNavigatorItem.current.name);
-      formData.append('path', fileNavigatorItem.current.path);
-      formData.append('contents', fileNavigatorItem.current.contents);
-      formData.append('extension', fileNavigatorItem.current.type);
-      formData.append('owner', fileNavigatorItem.current.owner);
-      formData.append('original_path', fileNavigatorItem.original.path);
-      if (isDraft) formData.append('is_draft', 'true');
-      else formData.append('is_draft', 'false');
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/editor-items/files`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      )) as IrminAPIResponse<EditorItemsFile>;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Update file error');
-      if (isDevelopment)
-        return fake(exampleFiles[0]) as IrminAPIResponse<EditorItemsFile>;
-      throw error;
+  async moveEditorItem({
+    workspace,
+    path,
+    destinationPath,
+  }: {
+    workspace: string;
+    path: string;
+    destinationPath: string;
+  }): Promise<IrminAPIResponse> {
+    if (isOfflineMode) {
+      return fake(null) as IrminAPIResponse;
     }
-  }
-
-  /**
-   * Delete a file from the editorItems
-   *
-   * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
-   */
-  async deleteFile(
-    fileNavigatorItem: FileNavigatorItem
-  ): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake();
     try {
-      // Make sure the item is a file
-      if (fileNavigatorItem.type !== 'file' || !fileNavigatorItem.original) {
-        throw new Error('Item is not a file');
-      }
-      // Delete the file
-      const formData = new FormData();
-      formData.append('_method', 'DELETE');
-      formData.append('name', fileNavigatorItem.original.name);
-      formData.append('extension', fileNavigatorItem.original.type);
-      formData.append('path', fileNavigatorItem.original.path);
-      const response = await this.irminCore.fetchAPI(`/v1/editor-items/files`, {
+      const endpoint = `/v1/workspaces/${workspace}/editor/move?path=${encodeURIComponent(
+        path
+      )}`;
+      const body = new URLSearchParams();
+      body.append('destination_path', destinationPath);
+      const response = await this.irminCore.fetchAPI(endpoint, {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
       });
       return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Delete file error');
-      if (isDevelopment) return fake();
+    } catch (error: any) {
+      console.error(error.message, 'Move editor item error');
+      if (isDevelopment) {
+        return fake(null) as IrminAPIResponse;
+      }
       throw error;
     }
   }
 
   /**
-   * Create a new folder in the editorItems
+   * Copy an editor item.
    *
-   * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.path - The current path of the editor item.
+   * @param props.destinationPath - The destination path to copy the item.
+   * @returns IrminAPIResponse with the result of the copy operation.
    */
-  async createFolder(
-    fileNavigatorItem: FileNavigatorItem
-  ): Promise<IrminAPIResponse<EditorItemsFolder>> {
-    if (isOfflineMode)
-      return fake(exampleFolders[0]) as IrminAPIResponse<EditorItemsFolder>;
+  async copyEditorItem({
+    workspace,
+    path,
+    destinationPath,
+  }: {
+    workspace: string;
+    path: string;
+    destinationPath: string;
+  }): Promise<IrminAPIResponse> {
+    if (isOfflineMode) {
+      return fake(null) as IrminAPIResponse;
+    }
     try {
-      // Make sure the item is a folder
-      if (fileNavigatorItem.type !== 'folder' || !fileNavigatorItem.current) {
-        throw new Error('Item is not a folder');
-      }
-      // Create the folder
-      const formData = new FormData();
-      formData.append('name', fileNavigatorItem.current.name);
-      formData.append('path', fileNavigatorItem.current.path);
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/editor-items/folders`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      )) as IrminAPIResponse<EditorItemsFolder>;
+      const endpoint = `/v1/workspaces/${workspace}/editor/copy?path=${encodeURIComponent(
+        path
+      )}`;
+      const body = new URLSearchParams();
+      body.append('destination_path', destinationPath);
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
+      });
       return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Create folder error');
-      if (isDevelopment)
-        return fake(exampleFolders[0]) as IrminAPIResponse<EditorItemsFolder>;
+    } catch (error: any) {
+      console.error(error.message, 'Copy editor item error');
+      if (isDevelopment) {
+        return fake(null) as IrminAPIResponse;
+      }
       throw error;
     }
   }
 
   /**
-   * Update a folder in the editorItems
+   * Delete an editor item.
    *
-   * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.path - The path of the editor item.
+   * @returns IrminAPIResponse with the result of the deletion.
    */
-  async updateFolder(
-    fileNavigatorItem: FileNavigatorItem
-  ): Promise<IrminAPIResponse<EditorItemsFolder>> {
-    if (isOfflineMode)
-      return fake(exampleFolders[0]) as IrminAPIResponse<EditorItemsFolder>;
+  async deleteEditorItem({
+    workspace,
+    path,
+  }: {
+    workspace: string;
+    path: string;
+  }): Promise<IrminAPIResponse> {
+    if (isOfflineMode) {
+      return fake(null) as IrminAPIResponse;
+    }
     try {
-      // Make sure the item is a folder
-      if (
-        fileNavigatorItem.type !== 'folder' ||
-        !fileNavigatorItem.current ||
-        !fileNavigatorItem.original
-      ) {
-        throw new Error('Item is not a folder');
-      }
-      // Update the folder
-      const formData = new FormData();
-      formData.append('_method', 'PATCH');
-      formData.append('name', fileNavigatorItem.current.name);
-      formData.append('path', fileNavigatorItem.current.path);
-      formData.append('owner', fileNavigatorItem.current.owner);
-      formData.append('original_path', fileNavigatorItem.original.path);
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/editor-items/folders`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      )) as IrminAPIResponse<EditorItemsFolder>;
+      const endpoint = `/v1/workspaces/${workspace}/editor?path=${encodeURIComponent(
+        path
+      )}`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'DELETE',
+      });
       return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Update folder error');
-      if (isDevelopment)
-        return fake(exampleFolders[0]) as IrminAPIResponse<EditorItemsFolder>;
+    } catch (error: any) {
+      console.error(error.message, 'Delete editor item error');
+      if (isDevelopment) {
+        return fake(null) as IrminAPIResponse;
+      }
       throw error;
     }
   }
 
   /**
-   * Delete a folder from the editorItems
+   * Save an editor item.
    *
-   * @param fileNavigatorItem - the file navigator item to update, containing the original and updated file objects
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.path - The path of the editor item.
+   * @param props.content - The content to save.
+   * @returns IrminAPIResponse with the result of the save operation.
    */
-  async deleteFolder(
-    fileNavigatorItem: FileNavigatorItem
-  ): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake();
+  async saveEditorItem({
+    workspace,
+    path,
+    content,
+  }: {
+    workspace: string;
+    path: string;
+    content: string;
+  }): Promise<IrminAPIResponse> {
+    if (isOfflineMode) {
+      return fake(null) as IrminAPIResponse;
+    }
     try {
-      // Make sure the item is a folder
-      if (fileNavigatorItem.type !== 'folder' || !fileNavigatorItem.original) {
-        throw new Error('Item is not a folder');
-      }
-      // Delete the folder
-      const body = new FormData();
-      body.append('_method', 'DELETE');
-      body.append('name', fileNavigatorItem.original.name);
-      body.append('path', fileNavigatorItem.original.path);
-      const response = await this.irminCore.fetchAPI(
-        `/v1/editor-items/folders`,
-        {
-          method: 'POST',
-          body,
-        }
-      );
+      const endpoint = `/v1/workspaces/${workspace}/editor?path=${encodeURIComponent(
+        path
+      )}`;
+      const body = new URLSearchParams();
+      body.append('type', 'file');
+      body.append('content', content);
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
+      });
       return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Delete folder error');
-      if (isDevelopment) return fake();
+    } catch (error: any) {
+      console.error(error.message, 'Save editor item error');
+      if (isDevelopment) {
+        return fake(null) as IrminAPIResponse;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Create an editor folder.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.path - The path where the folder is to be created.
+   * @returns IrminAPIResponse with the result of the folder creation.
+   */
+  async createEditorFolder({
+    workspace,
+    path,
+  }: {
+    workspace: string;
+    path: string;
+  }): Promise<IrminAPIResponse> {
+    if (isOfflineMode) {
+      return fake(null) as IrminAPIResponse;
+    }
+    try {
+      const endpoint = `/v1/workspaces/${workspace}/editor?path=${encodeURIComponent(
+        path
+      )}`;
+      const body = new URLSearchParams();
+      body.append('type', 'folder');
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
+      });
+      return response;
+    } catch (error: any) {
+      console.error(error.message, 'Create editor folder error');
+      if (isDevelopment) {
+        return fake(null) as IrminAPIResponse;
+      }
       throw error;
     }
   }

@@ -16,7 +16,7 @@ import { useConfigureWorkflowable } from '@/hooks/useCreateWorkflow';
 import { Connection } from '@/types/core/Connection';
 import { EditorItems } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
-import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
+import { WorkflowSetup } from '@/types/internal/WorkflowInput';
 
 import PipelineStageEditor from '../PipelineStageEditor';
 

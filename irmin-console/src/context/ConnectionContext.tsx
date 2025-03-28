@@ -11,7 +11,7 @@ import {
 import {
   deleteConnection,
   getConnection,
-  reassignConnection,
+  transferConnection,
   updateConnection,
 } from '@/lib/actions/connections';
 
@@ -29,7 +29,7 @@ interface ConnectionContextProps {
   fetchConnection: () => Promise<void>;
   deleteConnection: () => Promise<void>;
   updateConnection: (data: ItemUpdateProps) => Promise<void>;
-  reassignConnection: (ownerID: string) => Promise<void>;
+  transferConnection: (ownerID: string) => Promise<void>;
 }
 
 const ConnectionContext = createContext<ConnectionContextProps | undefined>(
@@ -110,25 +110,25 @@ export const ConnectionProvider = ({
     [connection, fetchConnection, irminAlert]
   );
 
-  const handleReassignConnection = useCallback(
+  const handleTransferOwnershipConnection = useCallback(
     async (ownerID: string) => {
       const confirmed = await irminConfirm(
         'warning',
-        `${dict.common.areYouSureYouWantToReassign} (${connection.name})`
+        `${dict.common.areYouSureYouWantToTransferOwnership} (${connection.name})`
       );
       if (updating.current || !confirmed) return;
       try {
         updating.current = true;
-        const res = await reassignConnection(connection.id, ownerID);
+        const res = await transferConnection(connection.id, ownerID);
         await fetchConnection();
         irminAlert(
           'success',
-          res.message ?? 'Connection reassigned successfully'
+          res.message ?? 'Connection transfered successfully'
         );
       } catch (error) {
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Error reassigning the connection'
+          (error as Error)?.message ?? 'Error transfering the connection'
         );
       } finally {
         updating.current = false;
@@ -144,7 +144,7 @@ export const ConnectionProvider = ({
         fetchConnection,
         deleteConnection: handleDeleteConnection,
         updateConnection: handleUpdateConnection,
-        reassignConnection: handleReassignConnection,
+        transferConnection: handleTransferOwnershipConnection,
       }}
     >
       {children}

@@ -73,15 +73,15 @@ export async function deleteConnection(connectionID: string, token?: string) {
 }
 
 /**
- * Server action to reassign a connection to a new owner.
+ * Server action to transfer a connection to a new owner.
  */
-export async function reassignConnection(
+export async function transferConnection(
   connectionID: string,
   ownerID: string,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.connectionService.reassignConnection(
+  const res = await irminCore.connectionService.transferConnection(
     connectionID,
     ownerID
   );

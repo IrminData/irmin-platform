@@ -90,15 +90,15 @@ export async function updateWorkflow(
 }
 
 /**
- * Server action to reassign a workflow.
+ * Server action to transfer a workflow.
  */
-export async function reassignWorkflow(
+export async function transferWorkflow(
   workflowID: string,
   ownerID: string,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.workflowService.reassignWorkflow(
+  const res = await irminCore.workflowService.transferWorkflow(
     workflowID,
     ownerID
   );

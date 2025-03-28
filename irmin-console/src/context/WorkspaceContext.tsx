@@ -14,8 +14,8 @@ import {
   deleteWorkspace,
   getWorkspace,
   leaveWorkspace,
-  reassignWorkspace,
   switchWorkspace,
+  transferWorkspace,
   updateWorkspace,
 } from '@/lib/actions/workspaces';
 
@@ -35,7 +35,7 @@ interface WorkspaceContextProps {
   fetchWorkspace: () => Promise<void>;
   deleteWorkspace: () => Promise<void>;
   updateWorkspace: (data: ItemUpdateProps) => Promise<void>;
-  reassignWorkspace: (ownerID: string) => Promise<void>;
+  transferWorkspace: (ownerID: string) => Promise<void>;
   leaveWorkspace: () => Promise<void>;
 }
 
@@ -128,26 +128,26 @@ export const WorkspaceProvider = ({
     [workspaceSlug, fetchWorkspace, irminAlert]
   );
 
-  const handleReassignWorkspace = useCallback(
+  const handleTransferOwnershipWorkspace = useCallback(
     async (ownerID: string) => {
       if (!workspace) return;
       const confirmed = await irminConfirm(
         'warning',
-        `${dict.common.areYouSureYouWantToReassign} (${workspace.name})`
+        `${dict.common.areYouSureYouWantToTransferOwnership} (${workspace.name})`
       );
       if (updating.current || !confirmed) return;
       try {
         updating.current = true;
-        const res = await reassignWorkspace(workspace.slug, ownerID);
+        const res = await transferWorkspace(workspace.slug, ownerID);
         await fetchWorkspace();
         irminAlert(
           'success',
-          res.message ?? 'Workspace reassigned successfully'
+          res.message ?? 'Workspace transfered successfully'
         );
       } catch (error) {
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Error reassigning the workspace'
+          (error as Error)?.message ?? 'Error transfering the workspace'
         );
       } finally {
         updating.current = false;
@@ -185,7 +185,7 @@ export const WorkspaceProvider = ({
         fetchWorkspace,
         deleteWorkspace: handleDeleteWorkspace,
         updateWorkspace: handleUpdateWorkspace,
-        reassignWorkspace: handleReassignWorkspace,
+        transferWorkspace: handleTransferOwnershipWorkspace,
         leaveWorkspace: handleLeaveWorkspace,
       }}
     >

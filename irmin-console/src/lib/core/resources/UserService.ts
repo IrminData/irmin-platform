@@ -10,13 +10,18 @@ const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Workspace user API service
+ * Workspace User API service
  *
  * Responsible for Workspace User related API calls.
  */
 class UserService {
   private irminCore: IrminCore;
 
+  /**
+   * Create a new UserService.
+   *
+   * @param irminCore - The IrminCore instance for API calls.
+   */
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
@@ -27,15 +32,24 @@ class UserService {
   }
 
   /**
-   * Fetch all users from the current workspace
+   * Fetch all users from a workspace.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @returns IrminAPIResponse containing an array of User.
    */
-  async fetchWorkspaceUsers(): Promise<IrminAPIResponse<User[]>> {
+  async fetchWorkspaceUsers({
+    workspace,
+  }: {
+    workspace: string;
+  }): Promise<IrminAPIResponse<User[]>> {
     if (isOfflineMode)
       return fake(exampleWorkspaceUsers) as IrminAPIResponse<User[]>;
     try {
-      const response = (await this.irminCore.fetchAPI(`/v1/users`, {
-        method: 'GET',
-      })) as IrminAPIResponse<User[]>;
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/users`,
+        { method: 'GET' }
+      )) as IrminAPIResponse<User[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch users error');
@@ -46,17 +60,27 @@ class UserService {
   }
 
   /**
-   * Fetch a single user
+   * Fetch a single user by ID.
    *
-   * @param user - User ID
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.user - The user ID.
+   * @returns IrminAPIResponse containing the User.
    */
-  async fetchUser(user: string): Promise<IrminAPIResponse<User>> {
+  async fetchUser({
+    workspace,
+    user,
+  }: {
+    workspace: string;
+    user: string;
+  }): Promise<IrminAPIResponse<User>> {
     if (isOfflineMode)
       return fake(exampleWorkspaceUsers[1]) as IrminAPIResponse<User>;
     try {
-      const response = (await this.irminCore.fetchAPI(`/v1/users/${user}`, {
-        method: 'GET',
-      })) as IrminAPIResponse<User>;
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/users/${user}`,
+        { method: 'GET' }
+      )) as IrminAPIResponse<User>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch user error');
@@ -67,22 +91,37 @@ class UserService {
   }
 
   /**
-   * Change the role of a user in a workspace
+   * Change the roles of a user in a workspace.
    *
-   * @param user - The ID of the user to change the role of
-   * @param roles - The new roles to assign to the user
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.user - The user ID.
+   * @param props.roles - The new roles to assign to the user.
+   * @returns IrminAPIResponse containing the updated User.
    */
-  async changeUserRole(user: string, roles: string[]) {
-    if (isOfflineMode) return fake();
+  async changeUserRole({
+    workspace,
+    user,
+    roles,
+  }: {
+    workspace: string;
+    user: string;
+    roles: string[];
+  }): Promise<IrminAPIResponse<User>> {
+    if (isOfflineMode) return fake() as IrminAPIResponse<User>;
     try {
       const formData = new FormData();
-      formData.append('_method', 'PATCH');
-      for (const role of roles) formData.append('roles', role);
-      const response = await this.irminCore.fetchAPI(`/v1/users/${user}`, {
-        method: 'POST',
-        body: formData,
-      });
-
+      // Append each role; the server will combine them as needed
+      for (const role of roles) {
+        formData.append('roles', role);
+      }
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/users/${user}`,
+        {
+          method: 'PATCH',
+          body: formData,
+        }
+      )) as IrminAPIResponse<User>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Change user role error');
@@ -91,21 +130,26 @@ class UserService {
   }
 
   /**
-   * Remove a user from a workspace
+   * Remove a user from a workspace.
    *
-   * @param user - The ID of the user to remove
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.user - The user ID to remove.
+   * @returns IrminAPIResponse containing the result of the deletion.
    */
-  async removeUserFromWorkspace(user: string) {
-    if (isOfflineMode) return fake();
+  async removeUserFromWorkspace({
+    workspace,
+    user,
+  }: {
+    workspace: string;
+    user: string;
+  }): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
-      const formData = new FormData();
-      formData.append('_method', 'DELETE');
-
-      const response = await this.irminCore.fetchAPI(`/v1/users/${user}`, {
-        method: 'POST',
-        body: formData,
-      });
-
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/users/${user}`,
+        { method: 'DELETE' }
+      );
       return response;
     } catch (error) {
       console.error(

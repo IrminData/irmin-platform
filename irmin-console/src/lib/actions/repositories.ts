@@ -71,15 +71,15 @@ export async function updateRepository(
 }
 
 /**
- * Server action to reassign a repository to a different owner.
+ * Server action to transfer a repository to a different owner.
  */
-export async function reassignRepository(
+export async function transferRepository(
   repositorySlug: string,
   ownerID: string,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.repositoryService.reassignRepository(
+  const res = await irminCore.repositoryService.transferRepository(
     repositorySlug,
     ownerID
   );

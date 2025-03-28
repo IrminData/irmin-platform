@@ -2,9 +2,10 @@ import IrminCore from '@/lib/core';
 
 import fake from '@/utils/prepareFakeResponse';
 
+import { Commit } from '@/types/core/Commit';
 import { Diff, MergeStrategy } from '@/types/core/Diff';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { diff } from '@/types/examples/core/diff';
+import { exampleCommits, exampleDiff } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -12,11 +13,16 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 /**
  * Diff Service: Merge and Compare API
  *
- * Responsible for merging and comparing repository branches and refs.
+ * Provides methods to compare repository refs and merge them.
  */
 class DiffService {
   private irminCore: IrminCore;
 
+  /**
+   * Create a new DiffService.
+   *
+   * @param irminCore - The IrminCore instance for API calls.
+   */
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
@@ -25,89 +31,101 @@ class DiffService {
   }
 
   /**
-   * Compare two refs in a repository and return the differences
+   * Compare two refs in a repository and return the differences.
    *
-   * To get uncommitted changes, use the latest commit as the base ref and the current branch as the compare ref
-   *
-   * @param repository - The repository refs are in
-   * @param baseRef - The base ref to compare (branch, tag, commit)
-   * @param compareRef - The ref to compare against (branch, tag, commit)
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @param props.baseRef - The base ref.
+   * @param props.compareRef - The ref to compare.
+   * @returns IrminAPIResponse containing a Diff.
    */
-  async compareRefs(
-    repository: string,
-    baseRef: string,
-    compareRef: string
-  ): Promise<IrminAPIResponse<Diff>> {
-    if (isOfflineMode)
-      return fake(
-        diff({
-          repository,
-          base: baseRef,
-          compare: compareRef,
-        })
-      ) as IrminAPIResponse<Diff>;
+  async compareRefs({
+    workspace,
+    repository,
+    baseRef,
+    compareRef,
+  }: {
+    workspace: string;
+    repository: string;
+    baseRef: string;
+    compareRef: string;
+  }): Promise<IrminAPIResponse<Diff>> {
+    if (isOfflineMode) return fake(exampleDiff) as IrminAPIResponse<Diff>;
     try {
-      // Construct the query parameters from the props
       const urlParams = new URLSearchParams();
       urlParams.append('base_ref', baseRef);
       urlParams.append('compare_ref', compareRef);
       const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/compare?${urlParams.toString()}`,
-        {
-          method: 'GET',
-        }
+        `/v1/workspaces/${workspace}/repositories/${repository}/compare?${urlParams.toString()}`,
+        { method: 'GET' }
       )) as IrminAPIResponse<Diff>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Error comparing refs');
-      if (isDevelopment)
-        return fake(
-          diff({
-            repository,
-            base: baseRef,
-            compare: compareRef,
-          })
-        ) as IrminAPIResponse<Diff>;
+      if (isDevelopment) return fake(exampleDiff) as IrminAPIResponse<Diff>;
       throw error;
     }
   }
 
   /**
-   * Merge one ref in to another
+   * Merge one ref into another ref in a repository.
    *
-   * @param repository - The repository refs are in
-   * @param baseRef - The ref to merge into (branch, tag, commit)
-   * @param compareRef - The ref to merge (branch, tag, commit)
-   * @param description - The commit message
-   * @param mergeStrategy - The merge strategy (default, source-wins, dest-wins)
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @param props.baseRef - The base ref.
+   * @param props.compareRef - The ref to merge from.
+   * @param props.description - The merge commit description.
+   * @param props.mergeStrategy - The merge strategy.
+   * @param props.squash - Whether to squash changes.
+   * @param props.allowEmpty - Whether to allow an empty merge.
+   * @returns IrminAPIResponse containing the merge commit.
    */
-  async mergeRefs(
-    repository: string,
-    baseRef: string,
-    compareRef: string,
-    description: string,
-    mergeStrategy: MergeStrategy
-  ): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake() as IrminAPIResponse;
+  async mergeRefs({
+    workspace,
+    repository,
+    baseRef,
+    compareRef,
+    description,
+    mergeStrategy,
+    squash,
+    allowEmpty,
+  }: {
+    workspace: string;
+    repository: string;
+    baseRef: string;
+    compareRef: string;
+    description: string;
+    mergeStrategy: MergeStrategy;
+    squash: boolean;
+    allowEmpty: boolean;
+  }): Promise<IrminAPIResponse<Commit>> {
+    if (isOfflineMode)
+      return fake(exampleCommits[0]) as IrminAPIResponse<Commit>;
     try {
-      const formData = new FormData();
-
-      formData.append('base_ref', baseRef);
-      formData.append('compare_ref', compareRef);
-      formData.append('description', description);
-      formData.append('strategy', mergeStrategy);
-
-      const response = await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/merge`,
+      const params = new URLSearchParams();
+      params.append('base_ref', baseRef);
+      params.append('compare_ref', compareRef);
+      params.append('description', description);
+      params.append('strategy', mergeStrategy);
+      params.append('squash', squash.toString());
+      params.append('allow_empty', allowEmpty.toString());
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repository}/merge`,
         {
           method: 'POST',
-          body: formData,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: params.toString(),
         }
-      );
+      )) as IrminAPIResponse<Commit>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Error merging refs');
-      if (isDevelopment) return fake() as IrminAPIResponse;
+      if (isDevelopment)
+        return fake(exampleCommits[0]) as IrminAPIResponse<Commit>;
       throw error;
     }
   }

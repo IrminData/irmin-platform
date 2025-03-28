@@ -13,8 +13,8 @@ import {
   deleteWorkflow,
   getWorkflow,
   pauseWorkflow,
-  reassignWorkflow,
   resumeWorkflow,
+  transferWorkflow,
   triggerWorkflowRun,
   updateWorkflow,
 } from '@/lib/actions/workflows';
@@ -33,7 +33,7 @@ interface WorkflowContextProps {
   runs: WorkflowRun[];
   fetchWorkflow: () => Promise<void>;
   updateWorkflow: (data: ItemUpdateProps) => Promise<void>;
-  reassignWorkflow: (ownerID: string) => Promise<void>;
+  transferWorkflow: (ownerID: string) => Promise<void>;
   deleteWorkflow: () => Promise<void>;
   pauseWorkflow: () => Promise<void>;
   resumeWorkflow: () => Promise<void>;
@@ -124,25 +124,25 @@ export const WorkflowProvider = ({
     [workflow, fetchWorkflow, irminAlert]
   );
 
-  const handleReassignWorkflow = useCallback(
+  const handleTransferOwnershipWorkflow = useCallback(
     async (ownerID: string) => {
       const confirmed = await irminConfirm(
         'warning',
-        `${dict.common.areYouSureYouWantToReassign} (${workflow.name})`
+        `${dict.common.areYouSureYouWantToTransferOwnership} (${workflow.name})`
       );
       if (updating.current || !confirmed) return;
       try {
         updating.current = true;
-        const res = await reassignWorkflow(workflow.id, ownerID);
+        const res = await transferWorkflow(workflow.id, ownerID);
         await fetchWorkflow();
         irminAlert(
           'success',
-          res.message ?? 'Workflow reassigned successfully'
+          res.message ?? 'Workflow transfered successfully'
         );
       } catch (error) {
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Error reassigning the workflow'
+          (error as Error)?.message ?? 'Error transfering the workflow'
         );
       } finally {
         updating.current = false;
@@ -209,7 +209,7 @@ export const WorkflowProvider = ({
         fetchWorkflow,
         deleteWorkflow: handleDeleteWorkflow,
         updateWorkflow: handleUpdateWorkflow,
-        reassignWorkflow: handleReassignWorkflow,
+        transferWorkflow: handleTransferOwnershipWorkflow,
         pauseWorkflow: handlePauseWorkflow,
         resumeWorkflow: handleResumeWorkflow,
         triggerWorkflowRun: handleTriggerWorkflowRun,

@@ -15,7 +15,7 @@ import ImmutableWarning from './ImmutableWarning';
 /**
  * Repository Settings section component
  *
- * Handles repository settings updates, reassignment, and deletion.
+ * Handles repository settings updates, transferment, and deletion.
  * Uses {@link SettingsForm} to show and edit the repository settings.
  */
 const RepositorySettingsSection = ({
@@ -27,7 +27,7 @@ const RepositorySettingsSection = ({
 }) => {
   const {
     currentRepository,
-    reassignRepository,
+    transferRepository,
     updateRepository,
     deleteRepository,
   } = useRepository();
@@ -35,14 +35,14 @@ const RepositorySettingsSection = ({
   const handleUpdateRepository = useCallback(
     async (data: { name: string; description: string; owner: string }) => {
       if (data.owner !== currentRepository.owner.id) {
-        await reassignRepository(data.owner);
+        await transferRepository(data.owner);
       }
       await updateRepository({
         name: data.name,
         description: data.description,
       });
     },
-    [currentRepository, updateRepository, reassignRepository]
+    [currentRepository, updateRepository, transferRepository]
   );
 
   // Define field configurations

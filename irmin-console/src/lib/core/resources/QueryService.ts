@@ -2,13 +2,9 @@ import IrminCore from '@/lib/core';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { IrminFileType } from '@/types/core/EditorItems';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { Query, QueryExecutionResult } from '@/types/core/StoredQuery';
-import {
-  exampleQueries,
-  exampleQueryExecutionResult,
-} from '@/types/examples/core';
+import { StoredQuery } from '@/types/core/StoredQuery';
+import { exampleQueries } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -16,277 +12,323 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 /**
  * Query API service
  *
- * Responsible for query related API calls
+ * Responsible for all stored query related API calls.
  */
 class QueryService {
   private irminCore: IrminCore;
 
+  /**
+   * Create a new QueryService.
+   *
+   * @param irminCore - The IrminCore instance for API calls.
+   */
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
-    this.executeScript = this.executeScript.bind(this);
-    this.createQuery = this.createQuery.bind(this);
-    this.getQueries = this.getQueries.bind(this);
-    this.getQuery = this.getQuery.bind(this);
-    this.deleteQuery = this.deleteQuery.bind(this);
-    this.updateQuery = this.updateQuery.bind(this);
-    this.executeQuery = this.executeQuery.bind(this);
-    this.getQueryResults = this.getQueryResults.bind(this);
+    this.listStoredQueries = this.listStoredQueries.bind(this);
+    this.getStoredQuery = this.getStoredQuery.bind(this);
+    this.createStoredQuery = this.createStoredQuery.bind(this);
+    this.updateStoredQuery = this.updateStoredQuery.bind(this);
+    this.deleteStoredQuery = this.deleteStoredQuery.bind(this);
+    this.transferStoredQuery = this.transferStoredQuery.bind(this);
+    this.executeStoredQuery = this.executeStoredQuery.bind(this);
+    this.executeSQL = this.executeSQL.bind(this);
   }
+
   /**
-   * Execute a script
+   * List all stored queries in a workspace.
    *
-   * The script can be either Irmin SQL query or a script to be executed in the Compute Sandbox.
-   *
-   * Even if the script is invalid, the API will return a 200 status code. The response will contain the error messages.
-   *
-   * @param type - type of the script. Can be for example `sql`. See {@link IrminFileType}
-   * @param content - content of the script
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @returns IrminAPIResponse containing an array of stored queries.
    */
-  async executeScript(
-    type: IrminFileType,
-    content: string
-  ): Promise<IrminAPIResponse<QueryExecutionResult>> {
+  async listStoredQueries({
+    workspace,
+  }: {
+    workspace: string;
+  }): Promise<IrminAPIResponse<StoredQuery[]>> {
     if (isOfflineMode)
-      return fake(
-        exampleQueryExecutionResult()
-      ) as IrminAPIResponse<QueryExecutionResult>;
+      return fake(exampleQueries) as IrminAPIResponse<StoredQuery[]>;
     try {
-      const formData = new FormData();
-      formData.append('type', type);
-      formData.append('content', content);
-      const response = (await this.irminCore.fetchAPI(`/v1/queries/execute`, {
-        method: 'POST',
-        body: formData,
-      })) as IrminAPIResponse<QueryExecutionResult>;
-      return response;
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/queries`,
+        { method: 'GET' }
+      );
+      return response as IrminAPIResponse<StoredQuery[]>;
     } catch (error) {
-      console.error((error as Error).message, 'Execute script error');
+      console.error((error as Error).message, 'Fetch stored queries error');
       if (isDevelopment)
-        return fake(
-          exampleQueryExecutionResult()
-        ) as IrminAPIResponse<QueryExecutionResult>;
+        return fake(exampleQueries) as IrminAPIResponse<StoredQuery[]>;
       throw error;
     }
   }
 
   /**
-   * Create a new query
+   * Get a stored query by its ID.
    *
-   * @param type - Type of the query (e.g., `sql`, `js`, etc.)
-   * @param content - Content of the query
-   * @param name - (optional) Name of the query
-   * @param description - (optional) Description of the query
-   * @param stored - (optional) Whether the query results are stored in the system
-   * @param run - (optional) Whether to run the query immediately after creation.
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.queryID - The stored query's ID.
+   * @returns IrminAPIResponse containing the stored query.
    */
-  async createQuery(
-    type: IrminFileType,
-    content: string,
-    name?: string,
-    description?: string,
-    stored?: boolean,
-    run?: boolean
-  ): Promise<IrminAPIResponse<Query>> {
+  async getStoredQuery({
+    workspace,
+    queryID,
+  }: {
+    workspace: string;
+    queryID: string;
+  }): Promise<IrminAPIResponse<StoredQuery>> {
+    if (isOfflineMode)
+      return fake(
+        exampleQueries.find((q) => q.id === queryID) || exampleQueries[0]
+      ) as IrminAPIResponse<StoredQuery>;
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/queries/${queryID}`,
+        { method: 'GET' }
+      );
+      return response as IrminAPIResponse<StoredQuery>;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch stored query error');
+      if (isDevelopment)
+        return fake(exampleQueries[0]) as IrminAPIResponse<StoredQuery>;
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new stored query.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.name - Name of the query.
+   * @param props.description - Description of the query.
+   * @param props.sql - SQL statement of the query.
+   * @returns IrminAPIResponse containing the created stored query.
+   */
+  async createStoredQuery({
+    workspace,
+    name,
+    description,
+    sql,
+  }: {
+    workspace: string;
+    name: string;
+    description: string;
+    sql: string;
+  }): Promise<IrminAPIResponse<StoredQuery>> {
     if (isOfflineMode)
       return fake({
         ...exampleQueries[0],
-        id: Math.random().toString(36).substring(2, 12) + '-query',
-        type,
+        id: 'fake-query-id',
         name,
         description,
-        content,
-        stored,
-        started_at: new Date().toISOString(),
-        finished_at: new Date().toISOString(),
-        execution_time: 0,
-        logs: [],
-      }) as IrminAPIResponse<Query>;
+        sql,
+      }) as IrminAPIResponse<StoredQuery>;
     try {
-      const body = new FormData();
-      body.append('type', type);
-      body.append('content', content);
-      if (name) body.append('name', name);
-      if (description) body.append('description', description);
-      body.append('run', run ? 'true' : 'false');
-      body.append('stored', stored ? 'true' : 'false');
-      const response = (await this.irminCore.fetchAPI(`/v1/queries`, {
-        method: 'POST',
-        body,
-      })) as IrminAPIResponse<Query>;
-      return response;
+      const formData = new URLSearchParams();
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('sql', sql);
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/queries`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString(),
+        }
+      );
+      return response as IrminAPIResponse<StoredQuery>;
     } catch (error) {
-      console.error((error as Error).message, 'Create query error');
+      console.error((error as Error).message, 'Create stored query error');
       if (isDevelopment)
-        return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
+        return fake(exampleQueries[0]) as IrminAPIResponse<StoredQuery>;
       throw error;
     }
   }
 
   /**
-   * Get all queries in the workspace
-   */
-  async getQueries(): Promise<IrminAPIResponse<Query[]>> {
-    if (isOfflineMode) return fake(exampleQueries) as IrminAPIResponse<Query[]>;
-    try {
-      const response = (await this.irminCore.fetchAPI(`/v1/queries`, {
-        method: 'GET',
-      })) as IrminAPIResponse<Query[]>;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Get queries error');
-      if (isDevelopment)
-        return fake(exampleQueries) as IrminAPIResponse<Query[]>;
-      throw error;
-    }
-  }
-
-  /**
-   * Get single query by ID
+   * Update an existing stored query.
    *
-   * @param query - ID of the query to get
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.queryID - The stored query's ID.
+   * @param props.name - New name of the query.
+   * @param props.description - New description of the query.
+   * @param props.sql - New SQL statement of the query.
+   * @returns IrminAPIResponse containing the updated stored query.
    */
-  async getQuery(query: string): Promise<IrminAPIResponse<Query>> {
+  async updateStoredQuery({
+    workspace,
+    queryID,
+    name,
+    description,
+    sql,
+  }: {
+    workspace: string;
+    queryID: string;
+    name: string;
+    description: string;
+    sql: string;
+  }): Promise<IrminAPIResponse<StoredQuery>> {
     if (isOfflineMode)
-      return fake(
-        exampleQueries.find((item) => item.id === query)
-      ) as IrminAPIResponse<Query>;
-    try {
-      const response = (await this.irminCore.fetchAPI(`/v1/queries/${query}`, {
-        method: 'GET',
-      })) as IrminAPIResponse<Query>;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Get queries error');
-      if (isDevelopment)
-        return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
-      throw error;
-    }
-  }
-
-  /**
-   * Delete a query by ID
-   *
-   * @param query - ID of the query to delete
-   */
-  async deleteQuery(query: string): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake();
-    try {
-      const formData = new FormData();
-      formData.append('_method', 'DELETE');
-      const response = (await this.irminCore.fetchAPI(`/v1/queries/${query}`, {
-        method: 'POST',
-        body: formData,
-      })) as IrminAPIResponse<Query>;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Get queries error');
-      if (isDevelopment)
-        return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
-      throw error;
-    }
-  }
-
-  /**
-   * Update a query by ID
-   *
-   * @param query - ID of the query to update
-   * @param type - (optional) Type of the query (e.g., `sql`, `js`, etc.)
-   * @param content - (optional) Content of the query
-   * @param name - (optional) Name of the query
-   * @param description - (optional) Description of the query
-   * @param stored - (optional) Whether the query results are stored in the system
-   */
-  async updateQuery(
-    query: string,
-    type?: IrminFileType,
-    content?: string,
-    name?: string,
-    description?: string,
-    stored?: boolean
-  ): Promise<IrminAPIResponse<Query>> {
-    if (isOfflineMode) {
-      const currentExample = exampleQueries.find((item) => item.id === query);
-      if (!currentExample) throw new Error('Query not found');
       return fake({
-        ...currentExample,
-        type: type ?? currentExample.type,
-        name: name ?? currentExample.name,
-        description: description ?? currentExample.description,
-        content: content ?? currentExample.content,
-      }) as IrminAPIResponse<Query>;
-    }
+        ...(exampleQueries.find((q) => q.id === queryID) || exampleQueries[0]),
+        name,
+        description,
+        sql,
+      }) as IrminAPIResponse<StoredQuery>;
     try {
-      const body = new FormData();
-      body.append('_method', 'PATCH');
-      if (type) body.append('type', type);
-      if (content) body.append('content', content);
-      if (name) body.append('name', name);
-      if (description) body.append('description', description);
-      body.append('stored', stored ? 'true' : 'false');
-      const response = (await this.irminCore.fetchAPI(`/v1/queries/${query}`, {
-        method: 'POST',
-        body,
-      })) as IrminAPIResponse<Query>;
-      return response;
+      const formData = new URLSearchParams();
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('sql', sql);
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/queries/${queryID}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString(),
+        }
+      );
+      return response as IrminAPIResponse<StoredQuery>;
     } catch (error) {
-      console.error((error as Error).message, 'Update query error');
+      console.error((error as Error).message, 'Update stored query error');
       if (isDevelopment)
-        return fake(exampleQueries[0]) as IrminAPIResponse<Query>;
+        return fake(exampleQueries[0]) as IrminAPIResponse<StoredQuery>;
       throw error;
     }
   }
 
   /**
-   * Execute a query
+   * Delete a stored query.
    *
-   * @param queryId - ID of the query to execute
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.queryID - The stored query's ID.
+   * @returns IrminAPIResponse containing the deletion result.
    */
-  async executeQuery(queryId: string): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake();
+  async deleteStoredQuery({
+    workspace,
+    queryID,
+  }: {
+    workspace: string;
+    queryID: string;
+  }): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
       const response = await this.irminCore.fetchAPI(
-        `/v1/queries/${queryId}/execute`,
-        {
-          method: 'GET',
-        }
+        `/v1/workspaces/${workspace}/queries/${queryID}`,
+        { method: 'DELETE' }
       );
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Execute query error');
-      if (isDevelopment) return fake();
+      console.error((error as Error).message, 'Delete stored query error');
+      if (isDevelopment) return fake() as IrminAPIResponse;
       throw error;
     }
   }
 
   /**
-   * Get result of a query, paginated
+   * Transfer ownership of a stored query.
    *
-   * @param queryId - ID of the query to fetch results for
-   * @param page - Page number
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.queryID - The stored query's ID.
+   * @param props.newOwnerID - The new owner's ID.
+   * @returns IrminAPIResponse containing the stored query with updated ownership.
    */
-  async getQueryResults(
-    queryId: string,
-    page: number
-  ): Promise<IrminAPIResponse<QueryExecutionResult>> {
+  async transferStoredQuery({
+    workspace,
+    queryID,
+    newOwnerID,
+  }: {
+    workspace: string;
+    queryID: string;
+    newOwnerID: string;
+  }): Promise<IrminAPIResponse<StoredQuery>> {
     if (isOfflineMode)
-      return fake(
-        exampleQueryExecutionResult()
-      ) as IrminAPIResponse<QueryExecutionResult>;
+      return fake(exampleQueries[0]) as IrminAPIResponse<StoredQuery>;
     try {
+      const formData = new URLSearchParams();
+      formData.append('new_owner_id', newOwnerID);
       const response = await this.irminCore.fetchAPI(
-        `/v1/queries/${queryId}/results?page=${page}`,
+        `/v1/workspaces/${workspace}/queries/${queryID}/transfer-ownership`,
         {
-          method: 'GET',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString(),
         }
       );
-      return response as IrminAPIResponse<QueryExecutionResult>;
+      return response as IrminAPIResponse<StoredQuery>;
     } catch (error) {
-      console.error((error as Error).message, 'Get query results error');
+      console.error((error as Error).message, 'Transfer stored query error');
       if (isDevelopment)
-        return fake(
-          exampleQueryExecutionResult()
-        ) as IrminAPIResponse<QueryExecutionResult>;
+        return fake(exampleQueries[0]) as IrminAPIResponse<StoredQuery>;
+      throw error;
+    }
+  }
+
+  /**
+   * Execute a stored query.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.queryID - The stored query's ID.
+   * @returns IrminAPIResponse containing an array of result rows.
+   */
+  async executeStoredQuery({
+    workspace,
+    queryID,
+  }: {
+    workspace: string;
+    queryID: string;
+  }): Promise<IrminAPIResponse<any[]>> {
+    if (isOfflineMode) return fake([]) as IrminAPIResponse<any[]>;
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/queries/${queryID}/execute`,
+        { method: 'POST' }
+      );
+      return response as IrminAPIResponse<any[]>;
+    } catch (error) {
+      console.error((error as Error).message, 'Execute stored query error');
+      if (isDevelopment) return fake([]) as IrminAPIResponse<any[]>;
+      throw error;
+    }
+  }
+
+  /**
+   * Execute an SQL statement.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.sql - The SQL statement to execute.
+   * @returns IrminAPIResponse containing an array of result rows.
+   */
+  async executeSQL({
+    workspace,
+    sql,
+  }: {
+    workspace: string;
+    sql: string;
+  }): Promise<IrminAPIResponse<any[]>> {
+    if (isOfflineMode) return fake([]) as IrminAPIResponse<any[]>;
+    try {
+      const formData = new URLSearchParams();
+      formData.append('sql', sql);
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/sql`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString(),
+        }
+      );
+      return response as IrminAPIResponse<any[]>;
+    } catch (error) {
+      console.error((error as Error).message, 'Execute SQL error');
+      if (isDevelopment) return fake([]) as IrminAPIResponse<any[]>;
       throw error;
     }
   }

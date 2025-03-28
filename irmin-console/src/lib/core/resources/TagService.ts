@@ -12,36 +12,46 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 /**
  * Tag API service
  *
- * Responsible for all repository tag related API calls
+ * Responsible for all repository tag related API calls.
  */
 class TagService {
   private irminCore: IrminCore;
 
+  /**
+   * Create a new TagService.
+   *
+   * @param irminCore - The IrminCore instance for API calls.
+   */
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
     this.fetchTags = this.fetchTags.bind(this);
     this.fetchTag = this.fetchTag.bind(this);
-    this.updateTag = this.updateTag.bind(this);
     this.createTag = this.createTag.bind(this);
     this.deleteTag = this.deleteTag.bind(this);
   }
 
   /**
-   * Fetch all available tags for a repository
+   * Fetch all available tags for a repository.
    *
-   * @param repository - slug of the repository to fetch tags for
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @returns IrminAPIResponse containing an array of Tag.
    */
-  async fetchTags(repository: string): Promise<IrminAPIResponse<Tag[]>> {
+  async fetchTags({
+    workspace,
+    repository,
+  }: {
+    workspace: string;
+    repository: string;
+  }): Promise<IrminAPIResponse<Tag[]>> {
     if (isOfflineMode) return fake(exampleTags) as IrminAPIResponse<Tag[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/tags`,
-        {
-          method: 'GET',
-        }
+        `/v1/workspaces/${workspace}/repositories/${repository}/tags`,
+        { method: 'GET' }
       )) as IrminAPIResponse<Tag[]>;
-
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Tags error');
@@ -51,24 +61,29 @@ class TagService {
   }
 
   /**
-   * Fetch a single tag
+   * Fetch a single tag.
    *
-   * @param tag - The ID of the tag to fetch
-   * @param repository - The repository slug to fetch the tag from
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @param props.tag - The tag identifier.
+   * @returns IrminAPIResponse containing the Tag.
    */
-  async fetchTag(
-    tag: string,
-    repository: string
-  ): Promise<IrminAPIResponse<Tag>> {
+  async fetchTag({
+    workspace,
+    repository,
+    tag,
+  }: {
+    workspace: string;
+    repository: string;
+    tag: string;
+  }): Promise<IrminAPIResponse<Tag>> {
     if (isOfflineMode) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/tags/${tag}`,
-        {
-          method: 'GET',
-        }
+        `/v1/workspaces/${workspace}/repositories/${repository}/tags/${tag}`,
+        { method: 'GET' }
       )) as IrminAPIResponse<Tag>;
-
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Tag error');
@@ -78,98 +93,78 @@ class TagService {
   }
 
   /**
-   * Update a tag
+   * Create a new tag.
    *
-   * @param tag - The ID of the tag to update
-   * @param repository - The repository slug to update the tag in
-   * @param name - (optional) The new name for the tag
-   * @param ref - (optional) The new ref for the tag
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @param props.name - The name of the tag.
+   * @param props.ref - The ref to create the tag from.
+   * @returns IrminAPIResponse containing the created Tag.
    */
-  async updateTag(
-    tag: string,
-    repository: string,
-    name?: string,
-    ref?: string
-  ): Promise<IrminAPIResponse<Tag>> {
+  async createTag({
+    workspace,
+    repository,
+    name,
+    ref,
+  }: {
+    workspace: string;
+    repository: string;
+    name: string;
+    ref: string;
+  }): Promise<IrminAPIResponse<Tag>> {
     if (isOfflineMode) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
     try {
       const formData = new FormData();
-      formData.append('_method', 'PATCH');
-      if (name) formData.append('name', name);
-      if (ref) formData.append('ref', ref);
+      formData.append('name', name);
+      formData.append('ref', ref);
       const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/tags/${tag}`,
+        `/v1/workspaces/${workspace}/repositories/${repository}/tags`,
         {
           method: 'POST',
           body: formData,
         }
       )) as IrminAPIResponse<Tag>;
-
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Update tag error');
+      console.error((error as Error).message, 'Create Tag error');
       if (isDevelopment) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
       throw error;
     }
   }
 
   /**
-   * Delete a tag
+   * Delete a tag.
    *
-   * @param tag - The ID of the tag to delete
-   * @param repository - The repository slug to delete the tag from
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repository - The repository slug.
+   * @param props.tag - The tag identifier.
+   * @returns IrminAPIResponse containing the result of the deletion.
    */
-  async deleteTag(tag: string, repository: string) {
-    if (isOfflineMode) return fake();
+  async deleteTag({
+    workspace,
+    repository,
+    tag,
+  }: {
+    workspace: string;
+    repository: string;
+    tag: string;
+  }): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
       const formData = new FormData();
-      formData.append('_method', 'DELETE');
       const response = await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/tags/${tag}`,
+        `/v1/workspaces/${workspace}/repositories/${repository}/tags/${tag}`,
         {
-          method: 'POST',
+          method: 'DELETE',
           body: formData,
         }
       );
-
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Delete tag error');
-      if (isDevelopment) return fake();
-      throw error;
-    }
-  }
-
-  /**
-   * Create a new tag
-   *
-   * @param name - The name of the new tag
-   * @param ref - The ref to create the new tag from
-   * @param repository - The repository slug to create the tag in
-   */
-  async createTag(
-    name: string,
-    ref: string,
-    repository: string
-  ): Promise<IrminAPIResponse<Tag>> {
-    if (isOfflineMode) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
-    try {
-      const formData = new FormData();
-
-      formData.append('name', name);
-      formData.append('ref', ref);
-
-      const res = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/tags`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      )) as IrminAPIResponse<Tag>;
-      return res;
-    } catch (error) {
-      console.error((error as Error).message, 'Failed to create tag');
-      if (isDevelopment) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
+      console.error((error as Error).message, 'Delete Tag error');
+      if (isDevelopment) return fake() as IrminAPIResponse;
       throw error;
     }
   }

@@ -20,7 +20,7 @@ import { useWorkspace } from '@/context/WorkspaceContext';
 const WorkspaceUsersSection = () => {
   const { dict } = useLocale();
   const { users, roles, changeUserRole, deleteUser } = useUsers();
-  const { workspace, reassignWorkspace } = useWorkspace();
+  const { workspace, transferWorkspace } = useWorkspace();
 
   return (
     <ContentWrapper wrapperClassName='max-w-6xl py-4'>
@@ -112,7 +112,7 @@ const WorkspaceUsersSection = () => {
                     <ButtonWithTooltip
                       size='icon'
                       variant='secondary'
-                      onClick={() => reassignWorkspace(user.id)}
+                      onClick={() => transferWorkspace(user.id)}
                       icon={<IoKey size={14} />}
                       tooltip={dict.users.transferOwnership}
                     />

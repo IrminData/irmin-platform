@@ -17,26 +17,26 @@ interface ConnectionFormValues {
 /**
  * Connection Settings section component
  *
- * Handles connection settings updates, reassignment, and deletion.
+ * Handles connection settings updates, transferment, and deletion.
  * Uses {@link SettingsForm} to show and edit the connection settings.
  */
 const ConnectionSettingsSection = () => {
   const { dict } = useLocale();
   const { users } = useUsers();
-  const { connection, reassignConnection, updateConnection, deleteConnection } =
+  const { connection, transferConnection, updateConnection, deleteConnection } =
     useConnection();
 
   const handleUpdateConnection = useCallback(
     async (data: ConnectionFormValues) => {
       if (data.owner !== connection.owner.id) {
-        await reassignConnection(data.owner);
+        await transferConnection(data.owner);
       }
       await updateConnection({
         name: data.name,
         description: data.description,
       });
     },
-    [connection, updateConnection, reassignConnection]
+    [connection, updateConnection, transferConnection]
   );
 
   // Define field configurations

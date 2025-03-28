@@ -36,7 +36,7 @@ import {
   deleteRepository,
   getRepository,
   getRepositoryDownloadLink,
-  reassignRepository,
+  transferRepository,
   updateRepository,
 } from '@/lib/actions/repositories';
 import { createTag, deleteTag, getTags } from '@/lib/actions/tags';
@@ -76,7 +76,7 @@ interface RepositoryContextProps {
   fetchRepository: () => Promise<void>;
   updateRepository: (data: ItemUpdateProps) => Promise<void>;
   deleteRepository: () => Promise<void>;
-  reassignRepository: (ownerID: string) => Promise<void>;
+  transferRepository: (ownerID: string) => Promise<void>;
   downloadRepository: (selectedPath?: string) => Promise<void>;
   // Objects
   loadingObjects: boolean;
@@ -299,26 +299,26 @@ export const RepositoryProvider = ({
     [repositorySlug, fetchRepository, irminAlert]
   );
 
-  // Reassign the current repository
-  const handleReassignRepository = useCallback(
+  // TransferOwnership the current repository
+  const handleTransferOwnershipRepository = useCallback(
     async (ownerID: string) => {
       const confirmed = await irminConfirm(
         'warning',
-        `${dict.common.areYouSureYouWantToReassign} (${currentRepository.name})`
+        `${dict.common.areYouSureYouWantToTransferOwnership} (${currentRepository.name})`
       );
       if (updating.current || !confirmed) return;
       try {
         updating.current = true;
-        const res = await reassignRepository(repositorySlug, ownerID);
+        const res = await transferRepository(repositorySlug, ownerID);
         await fetchRepository();
         irminAlert(
           'success',
-          res.message ?? 'Repository reassigned successfully'
+          res.message ?? 'Repository transfered successfully'
         );
       } catch (error) {
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Error reassigning the repository'
+          (error as Error)?.message ?? 'Error transfering the repository'
         );
       } finally {
         updating.current = false;
@@ -931,7 +931,7 @@ export const RepositoryProvider = ({
         fetchRepository,
         updateRepository: handleUpdateRepository,
         deleteRepository: handleDeleteRepository,
-        reassignRepository: handleReassignRepository,
+        transferRepository: handleTransferOwnershipRepository,
         downloadRepository: handleRpositoryDownload,
         // Objects
         loadingObjects,

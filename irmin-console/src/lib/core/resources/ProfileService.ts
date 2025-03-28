@@ -17,6 +17,11 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 class ProfileService {
   private irminCore: IrminCore;
 
+  /**
+   * Create a new ProfileService.
+   *
+   * @param irminCore - The IrminCore instance for API calls.
+   */
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
@@ -25,7 +30,9 @@ class ProfileService {
   }
 
   /**
-   * Get the user's profile information
+   * Get the user's profile information.
+   *
+   * @returns IrminAPIResponse containing the user's profile.
    */
   async getProfile(): Promise<IrminAPIResponse<User>> {
     if (isOfflineMode) return fake(exampleProfile) as IrminAPIResponse<User>;
@@ -36,51 +43,55 @@ class ProfileService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Get profile error');
-      // Ignore any other errors if in development mode
       if (isDevelopment) return fake(exampleProfile) as IrminAPIResponse<User>;
-      // Otherwise, throw the error
       throw error;
     }
   }
 
   /**
-   * Update the user's profile information
+   * Update the user's profile information.
    *
-   * @param first_name - User's new first name
-   * @param last_name - User's new last name
-   * @param email - User's new email
-   * @param phone - User's new phone number
-   * @param company - User's new company name
-   * @param avatar - (optional) User's new profile picture
+   * @param props - The profile update properties.
+   * @param props.first_name - User's new first name.
+   * @param props.last_name - User's new last name.
+   * @param props.email - User's new email.
+   * @param props.phone - User's new phone number.
+   * @param props.company - User's new company name.
+   * @param props.avatar - (optional) User's new profile picture.
+   * @returns IrminAPIResponse containing the updated profile.
    */
-  async updateProfile(
-    first_name: string,
-    last_name: string,
-    email: string,
-    phone: string,
-    company: string,
-    avatar?: File | Blob
-  ): Promise<IrminAPIResponse<User>> {
+  async updateProfile({
+    first_name,
+    last_name,
+    email,
+    phone,
+    company,
+    avatar,
+  }: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+    company: string;
+    avatar?: File | Blob;
+  }): Promise<IrminAPIResponse<User>> {
     if (isOfflineMode) return fake(exampleProfile) as IrminAPIResponse<User>;
     const formData = new FormData();
-    formData.append('_method', 'PATCH');
     formData.append('first_name', first_name);
     formData.append('last_name', last_name);
     formData.append('email', email);
     formData.append('phone', phone);
     formData.append('company', company);
-    if (avatar) formData.append('avatar', avatar);
+    if (avatar) formData.append('profile_picture', avatar);
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/profile`, {
-        method: 'POST',
+        method: 'PATCH',
         body: formData,
       })) as IrminAPIResponse<User>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update profile error');
-      // Ignore any other errors if in development mode
       if (isDevelopment) return fake(exampleProfile) as IrminAPIResponse<User>;
-      // Otherwise, throw the error
       throw error;
     }
   }

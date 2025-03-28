@@ -30,14 +30,22 @@ class BranchService {
   /**
    * Fetch all available branches for a repository
    *
-   * @param repository - slug of the repository to fetch branches for
+   * @param props
+   * @param props.workspace - The workspace to fetch the branches from
+   * @param props.repository - The repository slug to fetch the branches from
    */
-  async fetchBranches(repository: string): Promise<IrminAPIResponse<Branch[]>> {
+  async fetchBranches({
+    workspace,
+    repository,
+  }: {
+    workspace: string;
+    repository: string;
+  }): Promise<IrminAPIResponse<Branch[]>> {
     if (isOfflineMode)
       return fake(exampleBranches) as IrminAPIResponse<Branch[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/branches`,
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches`,
         {
           method: 'GET',
         }
@@ -55,18 +63,25 @@ class BranchService {
   /**
    * Fetch a branch by name in a repository
    *
-   * @param branch - The branch name to fetch
-   * @param repository - The repository slug to fetch the branch from
+   * @param props
+   * @param props.workspace - The workspace to fetch the branch from
+   * @param props.repository - The repository slug to fetch the branch from
+   * @param props.branch - The branch name to fetch
    */
-  async fetchBranch(
-    branch: string,
-    repository: string
-  ): Promise<IrminAPIResponse<Branch>> {
+  async fetchBranch({
+    workspace,
+    repository,
+    branch,
+  }: {
+    workspace: string;
+    repository: string;
+    branch: string;
+  }): Promise<IrminAPIResponse<Branch>> {
     if (isOfflineMode)
       return fake(exampleBranches[0]) as IrminAPIResponse<Branch>;
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/branches/${branch}`,
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}`,
         {
           method: 'GET',
         }
@@ -84,23 +99,27 @@ class BranchService {
   /**
    * Delete a branch
    *
-   * @param branch - The branch name to delete
+   * @param workspace - The workspace to delete the branch from
    * @param repository - The repository slug to delete the branch from
+   * @param branch - The branch name to delete
    */
-  async deleteBranch(branch: string, repository: string) {
+  async deleteBranch({
+    workspace,
+    repository,
+    branch,
+  }: {
+    workspace: string;
+    repository: string;
+    branch: string;
+  }) {
     if (isOfflineMode) return fake();
     try {
-      const formData = new FormData();
-
-      formData.append('_method', 'DELETE');
-
       const response = await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/branches/${branch}`,
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}`,
         {
-          method: 'POST',
+          method: 'DELETE',
         }
       );
-
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete branch error');
@@ -112,11 +131,23 @@ class BranchService {
   /**
    * Create a new branch
    *
-   * @param name - The name of the new branch
-   * @param from - The branch to create the new branch from
-   * @param repository - The repository slug to create the branch in
+   * @param props
+   * @param props.workspace - The workspace to create the branch in
+   * @param props.repository - The repository slug to create the branch in
+   * @param props.name - The name of the new branch
+   * @param props.from - The branch to create the new branch from
    */
-  async createBranch(name: string, from: string, repository: string) {
+  async createBranch({
+    workspace,
+    repository,
+    name,
+    from,
+  }: {
+    workspace: string;
+    repository: string;
+    name: string;
+    from: string;
+  }) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
@@ -125,7 +156,7 @@ class BranchService {
       formData.append('from', from);
 
       const res = await this.irminCore.fetchAPI(
-        `/v1/repositorories/${repository}/branches`,
+        `/v1/workspaces/${workspace}/repositorories/${repository}/branches`,
         {
           method: 'POST',
           body: formData,
@@ -142,22 +173,32 @@ class BranchService {
   /**
    * Update a branch
    *
-   * @param branch - The branch to update
-   * @param repository - The repository slug to update the branch in
-   * @param name - The new name of the branch
+   * @param props
+   * @param props.workspace - The workspace to update the branch in
+   * @param props.branch - The branch to update
+   * @param props.repository - The repository slug to update the branch in
+   * @param props.name - The new name of the branch
    */
-  async updateBranch(branch: string, repository: string, name: string) {
+  async updateBranch({
+    workspace,
+    repository,
+    branch,
+    name,
+  }: {
+    workspace: string;
+    repository: string;
+    branch: string;
+    name: string;
+  }) {
     if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
-
-      formData.append('_method', 'PATCH');
       formData.append('name', name);
 
       const res = await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/branches/${branch}`,
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}`,
         {
-          method: 'POST',
+          method: 'PATCH',
           body: formData,
         }
       );

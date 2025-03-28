@@ -35,7 +35,7 @@ export async function deleteWorkspace(workspaceSlug: string, token?: string) {
 /**
  * Server action to delete a workspace.
  */
-export async function reassignWorkspace(
+export async function transferWorkspace(
   workspaceSlug: string,
   newOwnerID: string,
   token?: string

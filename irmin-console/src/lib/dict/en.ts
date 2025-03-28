@@ -34,8 +34,8 @@ const en = {
     close: 'Close',
     timestamp: 'Timestamp',
     areYouSureYouWantToDelete: 'Are you sure you want to delete this item?',
-    areYouSureYouWantToReassign:
-      'Are you sure you want to reassign the ownership of this item?',
+    areYouSureYouWantToTransferOwnership:
+      'Are you sure you want to transfer the ownership of this item?',
     name: 'Name',
     description: 'Description',
     save: 'Save',

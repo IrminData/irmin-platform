@@ -22,8 +22,10 @@ Create a `.env` file in the project root. Add the following environment variable
 NEXT_PUBLIC_BASE_URL=https://console.irmin.dev  # Base URL of the console
 NEXT_PUBLIC_WEBSITE_URL=https://irmin.dev  # Website URL
 NODE_ENV=development  # Environment type. Can be development, staging or production.
-NEXT_PUBLIC_API_URL=https://api.irmin.dev  # API endpoint URL
-IRMIN_SIGNED_URL_TOKEN=abcxyz  # Token for signed URL endpoints
+
+# API settings
+NEXT_PUBLIC_API_URL=https://api.irmin.dev/api  # API endpoint URL
+API_SYSTEM_TOKEN=abcxyz  # System token for API requests
 
 # Environment authentication requirements (eg. password protection for staging)
 REQUIRE_ENV_AUTH=true  # Enable environment-specific authentication

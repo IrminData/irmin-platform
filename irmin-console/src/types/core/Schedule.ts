@@ -14,7 +14,9 @@ export type ScheduleTrigger =
 export interface TimeTrigger {
   type: 'time';
   /** Recurrence Rule (rfc5545), like `RRULE:FREQ=DAILY;INTERVAL=1;`*/
-  rrule: string;
+  rrule?: string;
+  /** Cron expression, like `0 0 * * *` */
+  cron?: string;
 }
 
 /**

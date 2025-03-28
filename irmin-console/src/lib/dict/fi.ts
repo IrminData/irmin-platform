@@ -35,7 +35,7 @@ const fi = {
     timestamp: 'Aikaleima',
     areYouSureYouWantToDelete:
       'Oletko varma, että haluat poistaa tämän kohteen?',
-    areYouSureYouWantToReassign:
+    areYouSureYouWantToTransferOwnership:
       'Oletko varma, että haluat vaihtaa tämän kohteen omistajan?',
     name: 'Nimi',
     description: 'Kuvaus',

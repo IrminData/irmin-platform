@@ -40,10 +40,12 @@ export default function createWorkflowScheduleFormData(
     formData.append(`trigger[${index}].type`, trigger.type);
     if (trigger.type === 'time') {
       // Append properties specific to TimeTrigger
-      formData.append(
-        `trigger[${index}].rrule`,
-        (trigger as TimeTrigger).rrule
-      );
+      if (trigger.cron) {
+        formData.append(`trigger[${index}].cron`, trigger.cron);
+      }
+      if (trigger.rrule) {
+        formData.append(`trigger[${index}].rrule`, trigger.rrule);
+      }
     } else if (trigger.type === 'repository-event') {
       // Append properties specific to RepositoryTrigger
       const repositoryTrigger = trigger as RepositoryTrigger;

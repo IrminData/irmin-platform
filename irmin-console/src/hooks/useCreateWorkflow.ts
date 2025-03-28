@@ -9,7 +9,7 @@ import {
 import { usePopup } from '@/context/PopupContext';
 
 import { WorkflowableType } from '@/types/core/Workflow';
-import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
+import { WorkflowSetup } from '@/types/internal/WorkflowInput';
 
 /**
  * Empty workflow setup data

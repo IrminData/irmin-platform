@@ -11,7 +11,7 @@ import { Connection } from '@/types/core/Connection';
 import { EditorItems } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
 import { WorkflowableType } from '@/types/core/Workflow';
-import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
+import { WorkflowSetup } from '@/types/internal/WorkflowInput';
 
 import ConfigureWorkflow from './ConfigureWorkflow';
 import ConfigureWorkflowable from './ConfigureWorkflowable';

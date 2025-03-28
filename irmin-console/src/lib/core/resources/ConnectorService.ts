@@ -26,11 +26,14 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 /**
  * Connector API service
  *
- * Responsible for all connector related API calls.
+ * Provides methods to interact with the connector API.
  */
 class ConnectorService {
   private irminCore: IrminCore;
 
+  /**
+   * Create a new ConnectorService.
+   */
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
@@ -43,10 +46,13 @@ class ConnectorService {
     this.fetchConnectorSchema = this.fetchConnectorSchema.bind(this);
     this.registerNewConnector = this.registerNewConnector.bind(this);
     this.updateRegisteredConnector = this.updateRegisteredConnector.bind(this);
+    this.deleteConnector = this.deleteConnector.bind(this);
   }
 
   /**
-   * Fetch all available connectors
+   * Fetch all available connectors.
+   *
+   * @returns IrminAPIResponse containing an array of Connector.
    */
   async fetchAllConnectors(): Promise<IrminAPIResponse<Connector[]>> {
     if (isOfflineMode)
@@ -65,16 +71,21 @@ class ConnectorService {
   }
 
   /**
-   * Fetch a connector by id
+   * Fetch a connector by ID.
    *
-   * @param connectorId - ID of the connector to fetch
+   * @param props - The parameters.
+   * @param props.connectorId - The connector's identifier.
+   * @returns IrminAPIResponse containing the Connector.
    */
-  async fetchConnector(
-    connectorId: string
-  ): Promise<IrminAPIResponse<Connector>> {
+  async fetchConnector({
+    connectorId,
+  }: {
+    connectorId: string;
+  }): Promise<IrminAPIResponse<Connector>> {
     if (isOfflineMode)
       return fake(
-        exampleConnectors.find((item) => item.id === connectorId)
+        exampleConnectors.find((item) => item.id === connectorId) ||
+          exampleConnectors[0]
       ) as IrminAPIResponse<Connector>;
     try {
       const response = (await this.irminCore.fetchAPI(
@@ -93,24 +104,26 @@ class ConnectorService {
   }
 
   /**
-   * Get configuration fields for a connector
+   * Fetch configuration fields for a connector.
    *
-   * Details fields are used to establish a connection to the connector and the external system.
-   * Settings fields are used to further configure the established connection.
-   *
-   * @param connectorId - ID of the connector to fetch configuration fields for
-   * @param configurationType - Type of configuration fields to fetch (details or settings)
-   * @param currentDetails - (optional) Current details values
-   * @param currentSettings - (optional) Current settings values
-   *
-   * @returns Configuration fields for the connector
+   * @param props - The parameters.
+   * @param props.connectorId - The connector's identifier.
+   * @param props.configurationType - Type of configuration fields.
+   * @param props.currentDetails - Current details field values.
+   * @param props.currentSettings - Current settings field values.
+   * @returns IrminAPIResponse containing DynamicFields.
    */
-  async fetchConnectorConfigurationFields(
-    connectorId: string,
-    configurationType: 'details' | 'settings',
-    currentDetails?: DynamicFieldValues,
-    currentSettings?: DynamicFieldValues
-  ): Promise<IrminAPIResponse<DynamicFields>> {
+  async fetchConnectorConfigurationFields({
+    connectorId,
+    configurationType,
+    currentDetails,
+    currentSettings,
+  }: {
+    connectorId: string;
+    configurationType: 'details' | 'settings';
+    currentDetails?: DynamicFieldValues;
+    currentSettings?: DynamicFieldValues;
+  }): Promise<IrminAPIResponse<DynamicFields>> {
     if (isOfflineMode)
       return fake(exampleDynamicFields) as IrminAPIResponse<DynamicFields>;
     try {
@@ -126,7 +139,7 @@ class ConnectorService {
         });
       }
       const response = (await this.irminCore.fetchAPI(
-        `/v1/connectors/${connectorId}/${configurationType}`,
+        `/v1/connectors/${connectorId}/fields/${configurationType}`,
         {
           method: 'POST',
           body: formData,
@@ -145,38 +158,27 @@ class ConnectorService {
   }
 
   /**
-   * Validate the configuration for a connector
+   * Validate the configuration for a connector.
    *
-   * @param connectorId - ID of the connector to validate the configuration for
-   * @param details - (optional) Details field values
-   * @param settings - (optional) Settings field values
-   *
-   * @returns Validation result for the connector configuration
+   * @param props - The parameters.
+   * @param props.connectorId - The connector's identifier.
+   * @param props.details - Details field values.
+   * @param props.settings - Settings field values.
+   * @returns IrminAPIResponse containing ConnectorConfigurationValidationResult.
    */
-  async validateConnectorConfiguration(
-    connectorId: string,
-    details?: DynamicFieldValues,
-    settings?: DynamicFieldValues
-  ): Promise<IrminAPIResponse<ConnectorConfigurationValidationResult>> {
+  async validateConnectorConfiguration({
+    connectorId,
+    details,
+    settings,
+  }: {
+    connectorId: string;
+    details?: DynamicFieldValues;
+    settings?: DynamicFieldValues;
+  }): Promise<IrminAPIResponse<ConnectorConfigurationValidationResult>> {
     if (isOfflineMode) {
-      if (details && settings)
-        return fake(
-          exampleConnectorConfigurationValidationResult
-        ) as IrminAPIResponse<ConnectorConfigurationValidationResult>;
-      if (details) {
-        return fake({
-          ok: false,
-          can_connect: true,
-          connection_details_valid: true,
-          connection_settings_valid: false,
-        }) as IrminAPIResponse<ConnectorConfigurationValidationResult>;
-      }
-      return fake({
-        ok: false,
-        can_connect: false,
-        connection_details_valid: false,
-        connection_settings_valid: false,
-      }) as IrminAPIResponse<ConnectorConfigurationValidationResult>;
+      return fake(
+        exampleConnectorConfigurationValidationResult
+      ) as IrminAPIResponse<ConnectorConfigurationValidationResult>;
     }
     try {
       const formData = new FormData();
@@ -204,24 +206,9 @@ class ConnectorService {
         'Validate connector configuration error'
       );
       if (isDevelopment) {
-        if (details && settings)
-          return fake(
-            exampleConnectorConfigurationValidationResult
-          ) as IrminAPIResponse<ConnectorConfigurationValidationResult>;
-        if (details) {
-          return fake({
-            ok: false,
-            can_connect: true,
-            connection_details_valid: true,
-            connection_settings_valid: false,
-          }) as IrminAPIResponse<ConnectorConfigurationValidationResult>;
-        }
-        return fake({
-          ok: false,
-          can_connect: false,
-          connection_details_valid: false,
-          connection_settings_valid: false,
-        }) as IrminAPIResponse<ConnectorConfigurationValidationResult>;
+        return fake(
+          exampleConnectorConfigurationValidationResult
+        ) as IrminAPIResponse<ConnectorConfigurationValidationResult>;
       }
       throw error;
     }
@@ -230,19 +217,24 @@ class ConnectorService {
   /**
    * Fetch object schema for a connector.
    *
-   * Provides the format of the data used in the operation.
-   *
-   * @param connectorId - ID of the connector to fetch the object schema for
-   * @param operation - Operation to fetch the object schema for
-   * @param details - (optional) Details field values
-   * @param settings - (optional) Settings field values
+   * @param props - The parameters.
+   * @param props.connectorId - The connector's identifier.
+   * @param props.operation - The operation for which to fetch the schema.
+   * @param props.details - Details field values.
+   * @param props.settings - Settings field values.
+   * @returns IrminAPIResponse containing ObjectSchema.
    */
-  async fetchConnectorSchema(
-    connectorId: string,
-    operation: ConnectorCapability,
-    details?: DynamicFieldValues,
-    settings?: DynamicFieldValues
-  ): Promise<IrminAPIResponse<ObjectSchema>> {
+  async fetchConnectorSchema({
+    connectorId,
+    operation,
+    details,
+    settings,
+  }: {
+    connectorId: string;
+    operation: ConnectorCapability;
+    details?: DynamicFieldValues;
+    settings?: DynamicFieldValues;
+  }): Promise<IrminAPIResponse<ObjectSchema>> {
     if (isOfflineMode)
       return fake(exampleObjectSchema) as IrminAPIResponse<ObjectSchema>;
     try {
@@ -274,17 +266,20 @@ class ConnectorService {
   }
 
   /**
-   * Register a new connector with the system
+   * Register a new connector.
    *
-   * Note: This method is only available using the system token
-   *
-   * @param baseUrl - Base URL of the connector
-   * @param systemToken - System token for the connector
+   * @param props - The parameters.
+   * @param props.baseUrl - The base URL of the connector.
+   * @param props.systemToken - The system token.
+   * @returns IrminAPIResponse containing the Connector.
    */
-  async registerNewConnector(
-    baseUrl: string,
-    systemToken: string
-  ): Promise<IrminAPIResponse<Connector>> {
+  async registerNewConnector({
+    baseUrl,
+    systemToken,
+  }: {
+    baseUrl: string;
+    systemToken: string;
+  }): Promise<IrminAPIResponse<Connector>> {
     if (isOfflineMode)
       return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
     try {
@@ -305,30 +300,33 @@ class ConnectorService {
   }
 
   /**
-   * Update a connector
+   * Update a registered connector.
    *
-   * Note: This method is only available using the system token
-   *
-   * @param connectorId - ID of the connector to update
-   * @param baseUrl - Base URL of the connector
-   * @param systemToken - System token for the connector
+   * @param props - The parameters.
+   * @param props.connectorId - The connector's identifier.
+   * @param props.baseUrl - The base URL of the connector.
+   * @param props.systemToken - The system token.
+   * @returns IrminAPIResponse containing the updated Connector.
    */
-  async updateRegisteredConnector(
-    connectorId: string,
-    baseUrl: string,
-    systemToken: string
-  ): Promise<IrminAPIResponse<Connector>> {
+  async updateRegisteredConnector({
+    connectorId,
+    baseUrl,
+    systemToken,
+  }: {
+    connectorId: string;
+    baseUrl: string;
+    systemToken: string;
+  }): Promise<IrminAPIResponse<Connector>> {
     if (isOfflineMode)
       return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
     try {
       const formData = new FormData();
-      formData.append('_method', 'PATCH');
       formData.append('url', baseUrl);
       formData.append('system_token', systemToken);
       const response = (await this.irminCore.fetchAPI(
         `/v1/connectors/${connectorId}`,
         {
-          method: 'POST',
+          method: 'PATCH',
           body: formData,
         }
       )) as IrminAPIResponse<Connector>;
@@ -337,6 +335,34 @@ class ConnectorService {
       console.error((error as Error).message, 'Update connector error');
       if (isDevelopment)
         return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a connector.
+   *
+   * @param props - The parameters.
+   * @param props.connectorId - The connector's identifier.
+   * @returns IrminAPIResponse containing the result of deletion.
+   */
+  async deleteConnector({
+    connectorId,
+  }: {
+    connectorId: string;
+  }): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return fake(null) as IrminAPIResponse;
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/connectors/${connectorId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Delete connector error');
+      if (isDevelopment) return fake(null) as IrminAPIResponse;
       throw error;
     }
   }

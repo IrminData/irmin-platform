@@ -9,7 +9,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useConfigureWorkflow } from '@/hooks/useCreateWorkflow';
 
-import { WorkflowSetup } from '@/types/internal/WorkflowSetup';
+import { WorkflowSetup } from '@/types/internal/WorkflowInput';
 
 /**
  * Configure general workflow properties,

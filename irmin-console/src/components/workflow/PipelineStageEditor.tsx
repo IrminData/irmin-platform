@@ -23,7 +23,7 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 import { Connection } from '@/types/core/Connection';
 import { EditorItems } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
-import { PipelineStageInput } from '@/types/internal/WorkflowSetup';
+import { PipelineStageInput } from '@/types/internal/WorkflowInput';
 
 type Option = {
   value: 'action' | 'connection' | 'repository';

@@ -2,13 +2,9 @@ import IrminCore from '@/lib/core';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { Invite, InviteSignedURLPayload } from '@/types/core/Invite';
+import { Invite } from '@/types/core/Invite';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import {
-  exampleInvites,
-  exampleInviteSignedURLPayload,
-  exampleRoles,
-} from '@/types/examples/core';
+import { exampleInvites, exampleRoles } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -16,84 +12,161 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 /**
  * Invite API service
  *
- * Responsible for all invite related API calls.
+ * Provides methods to interact with the invite API.
  */
 class InviteService {
   private irminCore: IrminCore;
 
+  /**
+   * Create a new InviteService.
+   */
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
-    this.inviteUserToWorkspace = this.inviteUserToWorkspace.bind(this);
-    this.resendUserInvite = this.resendUserInvite.bind(this);
-    this.cancelUserInvite = this.cancelUserInvite.bind(this);
-    this.changeUserInviteRole = this.changeUserInviteRole.bind(this);
-    this.fetchInvites = this.fetchInvites.bind(this);
+    this.listInviteInbox = this.listInviteInbox.bind(this);
     this.fetchInvite = this.fetchInvite.bind(this);
-    this.verifyInvite = this.verifyInvite.bind(this);
+    this.listInvitesToWorkspace = this.listInvitesToWorkspace.bind(this);
+    this.sendInvite = this.sendInvite.bind(this);
+    this.resendInvite = this.resendInvite.bind(this);
+    this.deleteInvite = this.deleteInvite.bind(this);
+    this.updateInvite = this.updateInvite.bind(this);
     this.acceptInvite = this.acceptInvite.bind(this);
     this.declineInvite = this.declineInvite.bind(this);
   }
 
   /**
-   * Invite a user to the workspace.
+   * List invite inbox.
    *
-   * @param first_name - The invitee's first name.
-   * @param last_name - The invitee's last name.
-   * @param email - The invitee's email. Can be new or existing Irmin user.
-   * @param phone - The invitee's phone number.
-   * @param company - The invitee's company name.
-   * @param role - The invitee's role slug.
+   * @returns IrminAPIResponse containing an array of Invite.
    */
-  async inviteUserToWorkspace(
-    first_name: string,
-    last_name: string,
-    email: string,
-    phone: string,
-    company: string,
-    role: string
-  ): Promise<IrminAPIResponse<Invite>> {
-    if (isOfflineMode)
+  async listInviteInbox(): Promise<IrminAPIResponse<Invite[]>> {
+    if (isOfflineMode) {
+      return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
+    }
+    try {
+      const endpoint = `/v1/invites`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'GET',
+      });
+      return response as IrminAPIResponse<Invite[]>;
+    } catch (error: any) {
+      console.error(error.message, 'Fetch invites error');
+      if (isDevelopment) {
+        return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch invite by ID.
+   *
+   * @param props - The parameters.
+   * @param props.inviteID - The invite's identifier.
+   * @returns IrminAPIResponse containing the Invite.
+   */
+  async fetchInvite({
+    inviteID,
+  }: {
+    inviteID: string;
+  }): Promise<IrminAPIResponse<Invite>> {
+    if (isOfflineMode) {
+      return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
+    }
+    try {
+      const endpoint = `/v1/invites/${inviteID}`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'GET',
+      });
+      return response as IrminAPIResponse<Invite>;
+    } catch (error: any) {
+      console.error(error.message, 'Fetch invite error');
+      if (isDevelopment) {
+        return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * List invites to a workspace.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @returns IrminAPIResponse containing an array of Invite.
+   */
+  async listInvitesToWorkspace({
+    workspace,
+  }: {
+    workspace: string;
+  }): Promise<IrminAPIResponse<Invite[]>> {
+    if (isOfflineMode) {
+      return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
+    }
+    try {
+      const endpoint = `/v1/workspaces/${workspace}/invites`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'GET',
+      });
+      return response as IrminAPIResponse<Invite[]>;
+    } catch (error: any) {
+      console.error(error.message, 'Fetch invites to workspace error');
+      if (isDevelopment) {
+        return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Send an invite.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.email - The invitee's email.
+   * @param props.role - The role slug.
+   * @returns IrminAPIResponse containing the sent Invite.
+   */
+  async sendInvite({
+    workspace,
+    email,
+    role,
+  }: {
+    workspace: string;
+    email: string;
+    role: string;
+  }): Promise<IrminAPIResponse<Invite>> {
+    if (isOfflineMode) {
       return fake({
-        first_name,
-        last_name,
         email,
-        phone,
-        company,
         role: exampleRoles.find((r) => r.name === role) ?? exampleRoles[0],
         invited_at: new Date().toISOString(),
         expired_at: null,
         deleted_at: null,
       }) as IrminAPIResponse<Invite>;
+    }
     try {
-      const formData = new FormData();
-
-      formData.append('first_name', first_name);
-      formData.append('last_name', last_name);
-      formData.append('email', email);
-      formData.append('phone', phone);
-      formData.append('company', company);
-      formData.append('role', role);
-
-      const response = (await this.irminCore.fetchAPI(`/v1/invites`, {
+      const endpoint = `/v1/workspaces/${workspace}/invites`;
+      const body = new URLSearchParams();
+      body.append('email', email);
+      body.append('role', role);
+      const response = await this.irminCore.fetchAPI(endpoint, {
         method: 'POST',
-        body: formData,
-      })) as IrminAPIResponse<Invite>;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Invite user error');
-      if (isDevelopment)
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      });
+      return response as IrminAPIResponse<Invite>;
+    } catch (error: any) {
+      console.error(error.message, 'Send invite error');
+      if (isDevelopment) {
         return fake({
-          first_name,
-          last_name,
           email,
-          phone,
-          company,
           role: exampleRoles.find((r) => r.name === role) ?? exampleRoles[0],
           invited_at: new Date().toISOString(),
           expired_at: null,
           deleted_at: null,
         }) as IrminAPIResponse<Invite>;
+      }
       throw error;
     }
   }
@@ -101,220 +174,156 @@ class InviteService {
   /**
    * Resend an invite.
    *
-   * @param invite - The invite's ID.
+   * @param props - The parameters.
+   * @param props.inviteID - The invite's identifier.
+   * @returns IrminAPIResponse containing the Invite.
    */
-  async resendUserInvite(invite: string) {
-    if (isOfflineMode) return fake();
+  async resendInvite({
+    inviteID,
+  }: {
+    inviteID: string;
+  }): Promise<IrminAPIResponse<Invite>> {
+    if (isOfflineMode) {
+      return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
+    }
     try {
-      const response = await this.irminCore.fetchAPI(
-        `/v1/invites/${invite}/resend`,
-        {
-          method: 'GET',
-        }
-      );
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Resend invite error');
-      if (isDevelopment) return fake();
+      const endpoint = `/v1/invites/${inviteID}/resend`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'POST',
+      });
+      return response as IrminAPIResponse<Invite>;
+    } catch (error: any) {
+      console.error(error.message, 'Resend invite error');
+      if (isDevelopment) {
+        return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
+      }
       throw error;
     }
   }
 
   /**
-   * Cancel a user's invite to the workspace.
+   * Delete an invite.
    *
-   * @param invite - The invite's ID.
+   * @param props - The parameters.
+   * @param props.inviteID - The invite's identifier.
+   * @returns IrminAPIResponse containing the result of deletion.
    */
-  async cancelUserInvite(invite: string) {
-    if (isOfflineMode) return fake();
+  async deleteInvite({
+    inviteID,
+  }: {
+    inviteID: string;
+  }): Promise<IrminAPIResponse> {
+    if (isOfflineMode) {
+      return fake(null) as IrminAPIResponse;
+    }
     try {
-      const formData = new FormData();
-      formData.append('_method', 'DELETE');
-      const response = await this.irminCore.fetchAPI(`/v1/invites/${invite}`, {
-        method: 'POST',
-        body: formData,
+      const endpoint = `/v1/invites/${inviteID}`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'DELETE',
       });
       return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Cancel invite error');
-      if (isDevelopment) return fake();
+    } catch (error: any) {
+      console.error(error.message, 'Delete invite error');
+      if (isDevelopment) {
+        return fake(null) as IrminAPIResponse;
+      }
       throw error;
     }
   }
 
   /**
-   * Change the invited user's role in the workspace.
+   * Update an invite.
    *
-   * @param invite - The invite's ID.
-   * @param role - The role slug.
+   * @param props - The parameters.
+   * @param props.inviteID - The invite's identifier.
+   * @param props.role - The new role slug.
+   * @returns IrminAPIResponse containing the updated Invite.
    */
-  async changeUserInviteRole(
-    invite: string,
-    role: string
-  ): Promise<IrminAPIResponse<Invite>> {
-    if (isOfflineMode)
+  async updateInvite({
+    inviteID,
+    role,
+  }: {
+    inviteID: string;
+    role: string;
+  }): Promise<IrminAPIResponse<Invite>> {
+    if (isOfflineMode) {
       return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
+    }
     try {
-      const formData = new FormData();
-      formData.append('role', role);
-      formData.append('_method', 'PATCH');
-      const response = (await this.irminCore.fetchAPI(`/v1/invites/${invite}`, {
-        method: 'POST',
-        body: formData,
-      })) as IrminAPIResponse<Invite>;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Change invite role error');
-      if (isDevelopment)
+      const endpoint = `/v1/invites/${inviteID}`;
+      const body = new URLSearchParams();
+      body.append('role', role);
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      });
+      return response as IrminAPIResponse<Invite>;
+    } catch (error: any) {
+      console.error(error.message, 'Update invite error');
+      if (isDevelopment) {
         return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
+      }
       throw error;
     }
   }
 
   /**
-   * Get a list of invites to the workspace or for the user.
+   * Accept an invite.
    *
-   * Please provide either workspace or user, not both.
-   *
-   * @param workspace - (optional) The workspace slug to get invites for
-   * @param user - (optional) The user's ID to get invites for
-   * @param trashed - (optional) Include trashed invites
-   * @param expired - (optional) Include expired invites
+   * @param props - The parameters.
+   * @param props.inviteID - The invite's identifier.
+   * @returns IrminAPIResponse containing the accepted Invite.
    */
-  async fetchInvites(
-    workspace?: string,
-    user?: string,
-    trashed?: boolean,
-    expired?: boolean
-  ): Promise<IrminAPIResponse<Invite[]>> {
-    if (isOfflineMode)
-      return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
+  async acceptInvite({
+    inviteID,
+  }: {
+    inviteID: string;
+  }): Promise<IrminAPIResponse<Invite>> {
+    if (isOfflineMode) {
+      return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
+    }
     try {
-      const urlParams = new URLSearchParams();
-      if (workspace) urlParams.append('workspace', workspace);
-      if (user) urlParams.append('user', user);
-      if (trashed) urlParams.append('trashed', '1');
-      if (expired) urlParams.append('expired', '1');
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/invites?${urlParams.toString()}`,
-        {
-          method: 'GET',
-        }
-      )) as IrminAPIResponse<Invite[]>;
-
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Get invites error');
-      if (isDevelopment)
-        return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
+      const endpoint = `/v1/invites/${inviteID}/accept`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'POST',
+      });
+      return response as IrminAPIResponse<Invite>;
+    } catch (error: any) {
+      console.error(error.message, 'Accept invite error');
+      if (isDevelopment) {
+        return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
+      }
       throw error;
     }
   }
 
   /**
-   * Get invite by ID
+   * Decline an invite.
    *
-   * @param invite - ID of the invite
+   * @param props - The parameters.
+   * @param props.inviteID - The invite's identifier.
+   * @returns IrminAPIResponse containing the declined Invite.
    */
-  async fetchInvite(invite: string): Promise<IrminAPIResponse<Invite>> {
-    if (isOfflineMode) return fake(exampleInvites) as IrminAPIResponse<Invite>;
-    try {
-      const response = (await this.irminCore.fetchAPI(`/v1/invites/${invite}`, {
-        method: 'GET',
-      })) as IrminAPIResponse<Invite>;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Get invite by ID error');
-      if (isDevelopment)
-        return fake(exampleInvites) as IrminAPIResponse<Invite>;
-      throw error;
+  async declineInvite({
+    inviteID,
+  }: {
+    inviteID: string;
+  }): Promise<IrminAPIResponse<Invite>> {
+    if (isOfflineMode) {
+      return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
     }
-  }
-
-  /**
-   * Verify Invite signed URL hash.
-   *
-   * @param hash - The invite's signed URL hash.
-   */
-  async verifyInvite(
-    hash: string
-  ): Promise<IrminAPIResponse<InviteSignedURLPayload>> {
-    if (isOfflineMode)
-      return fake(
-        exampleInviteSignedURLPayload
-      ) as IrminAPIResponse<InviteSignedURLPayload>;
     try {
-      const response = await this.irminCore.fetchAPI(
-        `/v1/signed-urls/${hash}/verify`,
-        {
-          method: 'GET',
-        }
-      );
-      return response as IrminAPIResponse<InviteSignedURLPayload>;
-    } catch (error) {
-      console.error((error as Error).message, 'Verify user invite error');
-      if (isDevelopment)
-        return fake(
-          exampleInviteSignedURLPayload
-        ) as IrminAPIResponse<InviteSignedURLPayload>;
-      throw error;
-    }
-  }
-
-  /**
-   * Accept the invite to the workspace.
-   *
-   * @param invite - The invite's ID.
-   * @param hash - The invite's signed URL hash.
-   * @param password - (optional) The user's password. Only required if creating new account.
-   * @param password_confirmation - (optional) The user's password. Only required if creating new account.
-   */
-  async acceptInvite(
-    invite: string,
-    hash: string,
-    password?: string,
-    password_confirmation?: string
-  ) {
-    if (isOfflineMode) return fake();
-    try {
-      const formData = new FormData();
-      if (password) formData.append('password', password);
-      if (password_confirmation)
-        formData.append('password_confirmation', password_confirmation);
-      const response = await this.irminCore.fetchAPI(
-        `/v1/invites/${invite}/accept/${hash}`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Accept user invite error');
-      if (isDevelopment) return fake();
-      throw error;
-    }
-  }
-
-  /**
-   * Decline the invite
-   *
-   * @param invite - The ID of the invite to decline
-   * @param hash - The invite's signed URL hash.
-   */
-  async declineInvite(invite: string, hash: string) {
-    if (isOfflineMode) return fake();
-    try {
-      const response = await this.irminCore.fetchAPI(
-        `/v1/invites/${invite}/decline/${hash}`,
-        {
-          method: 'POST',
-        }
-      );
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Decline user invite error');
-      if (isDevelopment) return fake();
+      const endpoint = `/v1/invites/${inviteID}/decline`;
+      const response = await this.irminCore.fetchAPI(endpoint, {
+        method: 'POST',
+      });
+      return response as IrminAPIResponse<Invite>;
+    } catch (error: any) {
+      console.error(error.message, 'Decline invite error');
+      if (isDevelopment) {
+        return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
+      }
       throw error;
     }
   }

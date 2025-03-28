@@ -5,7 +5,6 @@ import fake from '@/utils/prepareFakeResponse';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { Repository } from '@/types/core/Repository';
 import { exampleRepositories } from '@/types/examples/core';
-import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -18,29 +17,42 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 class RepositoryService {
   private irminCore: IrminCore;
 
+  /**
+   * Create a new RepositoryService.
+   *
+   * @param irminCore - The IrminCore instance for API calls.
+   */
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
     // Bind methods
     this.fetchRepositories = this.fetchRepositories.bind(this);
     this.fetchRepository = this.fetchRepository.bind(this);
     this.createRepository = this.createRepository.bind(this);
-    this.reassignRepository = this.reassignRepository.bind(this);
-    this.deleteRepository = this.deleteRepository.bind(this);
     this.updateRepository = this.updateRepository.bind(this);
+    this.transferRepository = this.transferRepository.bind(this);
+    this.deleteRepository = this.deleteRepository.bind(this);
     this.getRepositoryDownloadLink = this.getRepositoryDownloadLink.bind(this);
   }
 
   /**
-   * Fetch all available repositories
+   * Fetch all available repositories in a workspace.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @returns IrminAPIResponse containing an array of Repository.
    */
-  async fetchRepositories(): Promise<IrminAPIResponse<Repository[]>> {
+  async fetchRepositories({
+    workspace,
+  }: {
+    workspace: string;
+  }): Promise<IrminAPIResponse<Repository[]>> {
     if (isOfflineMode)
       return fake(exampleRepositories) as IrminAPIResponse<Repository[]>;
     try {
-      const response = (await this.irminCore.fetchAPI(`/v1/repositories`, {
-        method: 'GET',
-      })) as IrminAPIResponse<Repository[]>;
-
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories`,
+        { method: 'GET' }
+      )) as IrminAPIResponse<Repository[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Repositories error');
@@ -51,19 +63,29 @@ class RepositoryService {
   }
 
   /**
-   * Fetch a repository by its slug
+   * Fetch a repository by its slug.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.slug - The repository slug.
+   * @returns IrminAPIResponse containing the Repository.
    */
-  async fetchRepository(slug: string): Promise<IrminAPIResponse<Repository>> {
+  async fetchRepository({
+    workspace,
+    slug,
+  }: {
+    workspace: string;
+    slug: string;
+  }): Promise<IrminAPIResponse<Repository>> {
     if (isOfflineMode)
       return fake(
-        exampleRepositories.find((item) => item.slug === slug)
+        exampleRepositories.find((item) => item.slug === slug) ||
+          exampleRepositories[0]
       ) as IrminAPIResponse<Repository>;
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${slug}`,
-        {
-          method: 'GET',
-        }
+        `/v1/workspaces/${workspace}/repositories/${slug}`,
+        { method: 'GET' }
       )) as IrminAPIResponse<Repository>;
       return response;
     } catch (error) {
@@ -75,31 +97,66 @@ class RepositoryService {
   }
 
   /**
-   * Create a new Repository
+   * Create a new repository.
    *
-   * @param repository - The Repository object to create
-   * @returns response from the API with data being the newly created Repository
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.name - Name of the repository.
+   * @param props.description - Description of the repository.
+   * @param props.documentation - Documentation for the repository.
+   * @param props.default_branch - Default branch for the repository.
+   * @param props.isImmutable - Whether the repository is immutable.
+   * @param props.garbageDefaultRetentionDays - Garbage collection default retention days.
+   * @param props.garbageDefaultBranchRetentionDays - Garbage collection default branch retention days.
+   * @returns IrminAPIResponse containing the newly created Repository.
    */
-  async createRepository(
-    repository: ItemUpdateProps
-  ): Promise<IrminAPIResponse<Repository>> {
+  async createRepository({
+    workspace,
+    name,
+    description,
+    documentation,
+    default_branch,
+    isImmutable,
+    garbageDefaultRetentionDays,
+    garbageDefaultBranchRetentionDays,
+  }: {
+    workspace: string;
+    name: string;
+    description: string;
+    documentation: string;
+    default_branch: string;
+    isImmutable: boolean;
+    garbageDefaultRetentionDays: number;
+    garbageDefaultBranchRetentionDays: number;
+  }): Promise<IrminAPIResponse<Repository>> {
     if (isOfflineMode)
       return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
     try {
-      const formData = new FormData();
-
-      formData.append('name', repository.name ?? '');
-      formData.append('description', repository.description ?? '');
-      formData.append('documentation', repository.documentation ?? '');
-
-      const response = (await this.irminCore.fetchAPI(`/v1/repositories`, {
-        method: 'POST',
-        body: formData,
-      })) as IrminAPIResponse<Repository>;
-
-      return response;
+      const params = new URLSearchParams();
+      params.append('name', name);
+      params.append('description', description);
+      params.append('documentation', documentation);
+      params.append('default_branch', default_branch);
+      params.append('is_immutable', isImmutable.toString());
+      params.append(
+        'garbage_default_retention_days',
+        garbageDefaultRetentionDays.toString()
+      );
+      params.append(
+        'garbage_default_branch_retention_days',
+        garbageDefaultBranchRetentionDays.toString()
+      );
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString(),
+        }
+      );
+      return response as IrminAPIResponse<Repository>;
     } catch (error) {
-      console.error((error as Error).message, 'Create Repositories error');
+      console.error((error as Error).message, 'Create Repository error');
       if (isDevelopment)
         return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
       throw error;
@@ -107,124 +164,188 @@ class RepositoryService {
   }
 
   /**
-   * Reassign the ownership of a Repository
+   * Update an existing repository.
    *
-   * @param repository - Slug of the Repository to reassign
-   * @param newOwner - ID of the new owner of the Repository
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.slug - The repository slug.
+   * @param props.name - New name of the repository.
+   * @param props.description - New description.
+   * @param props.documentation - New documentation.
+   * @param props.default_branch - New default branch.
+   * @param props.isImmutable - Whether the repository is immutable.
+   * @param props.garbageDefaultRetentionDays - Garbage collection default retention days.
+   * @param props.garbageDefaultBranchRetentionDays - Garbage collection default branch retention days.
+   * @returns IrminAPIResponse containing the updated Repository.
    */
-  async reassignRepository(repository: string, newOwner: string) {
-    if (isOfflineMode) return fake();
+  async updateRepository({
+    workspace,
+    slug,
+    name,
+    description,
+    documentation,
+    default_branch,
+    isImmutable,
+    garbageDefaultRetentionDays,
+    garbageDefaultBranchRetentionDays,
+  }: {
+    workspace: string;
+    slug: string;
+    name: string;
+    description: string;
+    documentation: string;
+    default_branch: string;
+    isImmutable: boolean;
+    garbageDefaultRetentionDays: number;
+    garbageDefaultBranchRetentionDays: number;
+  }): Promise<IrminAPIResponse<Repository>> {
+    if (isOfflineMode)
+      return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
     try {
-      const formData = new FormData();
-      formData.append('owner', newOwner);
-
+      const params = new URLSearchParams();
+      params.append('name', name);
+      params.append('description', description);
+      params.append('documentation', documentation);
+      params.append('default_branch', default_branch);
+      params.append('is_immutable', isImmutable.toString());
+      params.append(
+        'garbage_default_retention_days',
+        garbageDefaultRetentionDays.toString()
+      );
+      params.append(
+        'garbage_default_branch_retention_days',
+        garbageDefaultBranchRetentionDays.toString()
+      );
       const response = await this.irminCore.fetchAPI(
-        `/v1/repositories/${repository}/reassign`,
+        `/v1/workspaces/${workspace}/repositories/${slug}`,
         {
-          method: 'POST',
-          body: formData,
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString(),
         }
       );
-      return response;
+      return response as IrminAPIResponse<Repository>;
     } catch (error) {
-      console.error((error as Error).message, 'Reassign repository error');
-      if (isDevelopment) return fake();
+      console.error((error as Error).message, 'Update Repository error');
+      if (isDevelopment) return fake() as IrminAPIResponse<Repository>;
       throw error;
     }
   }
 
   /**
-   * Delete a Repository
+   * Transfer ownership of a repository.
    *
-   * @param repositorySlug - The slug of the Repository to delete
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.slug - The repository slug.
+   * @param props.newOwnerID - The new owner's ID.
+   * @returns IrminAPIResponse containing the repository with updated ownership.
    */
-  async deleteRepository(repositorySlug: string) {
-    if (isOfflineMode) return fake();
+  async transferRepository({
+    workspace,
+    slug,
+    newOwnerID,
+  }: {
+    workspace: string;
+    slug: string;
+    newOwnerID: string;
+  }): Promise<IrminAPIResponse<Repository>> {
+    if (isOfflineMode)
+      return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
     try {
-      const formData = new FormData();
-      formData.append('_method', 'DELETE');
+      const params = new URLSearchParams();
+      params.append('new_owner_id', newOwnerID);
       const response = await this.irminCore.fetchAPI(
-        `/v1/repositories/${repositorySlug}`,
+        `/v1/workspaces/${workspace}/repositories/${slug}/transfer-ownership`,
         {
-          method: 'POST',
-          body: formData,
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString(),
         }
       );
+      return response as IrminAPIResponse<Repository>;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Repository ownership transfer error'
+      );
+      if (isDevelopment)
+        return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
+      throw error;
+    }
+  }
 
+  /**
+   * Delete a repository.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repositorySlug - The repository slug.
+   * @returns IrminAPIResponse containing the deletion result.
+   */
+  async deleteRepository({
+    workspace,
+    repositorySlug,
+  }: {
+    workspace: string;
+    repositorySlug: string;
+  }): Promise<IrminAPIResponse> {
+    if (isOfflineMode) return fake() as IrminAPIResponse;
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repositorySlug}`,
+        { method: 'DELETE' }
+      );
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete Repository error');
-      if (isDevelopment) return fake();
+      if (isDevelopment) return fake() as IrminAPIResponse;
       throw error;
     }
   }
 
   /**
-   * Update a Repository
+   * Get a download link for a repository.
    *
-   * @param repositorySlug - The slug of the Repository to update
-   * @param data - The updated Repository properties
+   * @param props - The parameters.
+   * @param props.workspace - The workspace identifier.
+   * @param props.repositorySlug - The repository slug.
+   * @param props.ref - The ref to download.
+   * @param props.path - The path to download.
+   * @returns IrminAPIResponse containing an object with download_url.
    */
-  async updateRepository(repositorySlug: string, data: ItemUpdateProps) {
-    if (isOfflineMode) return fake();
-    try {
-      const formData = new FormData();
-      formData.append('_method', 'PATCH');
-      if (data.name) formData.append('name', data.name);
-      if (data.description) formData.append('description', data.description);
-      if (data.documentation)
-        formData.append('documentation', data.documentation);
-
-      const response = await this.irminCore.fetchAPI(
-        `/v1/repositories/${repositorySlug}`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
-
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Update Repository error');
-      if (isDevelopment) return fake();
-      throw error;
-    }
-  }
-
-  /**
-   * Get a download link for a repository
-   *
-   * @param repositorySlug - The slug of the repository
-   * @param ref - The ref to download
-   * @param path - The path to download
-   */
-  async getRepositoryDownloadLink(
-    repositorySlug: string,
-    ref: string,
-    path: string
-  ): Promise<IrminAPIResponse<{ download_url: string }>> {
+  async getRepositoryDownloadLink({
+    workspace,
+    repositorySlug,
+    ref,
+    path,
+  }: {
+    workspace: string;
+    repositorySlug: string;
+    ref: string;
+    path: string;
+  }): Promise<IrminAPIResponse<string>> {
     if (isOfflineMode)
-      return fake({ download_url: 'http://example.com' }) as IrminAPIResponse<{
-        download_url: string;
-      }>;
+      return fake('http://example.com') as IrminAPIResponse<string>;
     try {
       const formData = new FormData();
       formData.append('ref', ref);
       formData.append('path', path);
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/repositories/${repositorySlug}/download`,
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repositorySlug}/download`,
         {
           method: 'POST',
           body: formData,
         }
-      )) as IrminAPIResponse<{ download_url: string }>;
-      return response;
+      );
+      return response as IrminAPIResponse<string>;
     } catch (error) {
-      console.error((error as Error).message, 'Get Repository download link');
+      console.error(
+        (error as Error).message,
+        'Get Repository download link error'
+      );
       if (isDevelopment)
-        return fake({
-          download_url: 'http://example.com',
-        }) as IrminAPIResponse<{ download_url: string }>;
+        return fake('http://example.com') as IrminAPIResponse<string>;
       throw error;
     }
   }
