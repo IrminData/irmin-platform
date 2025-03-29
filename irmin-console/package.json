@@ -99,5 +99,5 @@
     "node": ">=22",
     "npm": "please-use-yarn"
   },
-  "packageManager": "yarn@4.7.0"
+  "packageManager": "yarn@4.8.0"
 }
