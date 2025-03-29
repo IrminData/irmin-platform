@@ -39,7 +39,7 @@ class QueryService {
    * List all stored queries in a workspace.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @returns IrminAPIResponse containing an array of stored queries.
    */
   async listStoredQueries({
@@ -67,7 +67,7 @@ class QueryService {
    * Get a stored query by its ID.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.queryID - The stored query's ID.
    * @returns IrminAPIResponse containing the stored query.
    */
@@ -100,7 +100,7 @@ class QueryService {
    * Create a new stored query.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.name - Name of the query.
    * @param props.description - Description of the query.
    * @param props.sql - SQL statement of the query.
@@ -151,7 +151,7 @@ class QueryService {
    * Update an existing stored query.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.queryID - The stored query's ID.
    * @param props.name - New name of the query.
    * @param props.description - New description of the query.
@@ -204,7 +204,7 @@ class QueryService {
    * Delete a stored query.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.queryID - The stored query's ID.
    * @returns IrminAPIResponse containing the deletion result.
    */
@@ -233,7 +233,7 @@ class QueryService {
    * Transfer ownership of a stored query.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.queryID - The stored query's ID.
    * @param props.newOwnerID - The new owner's ID.
    * @returns IrminAPIResponse containing the stored query with updated ownership.
@@ -273,7 +273,7 @@ class QueryService {
    * Execute a stored query.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.queryID - The stored query's ID.
    * @returns IrminAPIResponse containing an array of result rows.
    */
@@ -302,7 +302,7 @@ class QueryService {
    * Execute an SQL statement.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.sql - The SQL statement to execute.
    * @returns IrminAPIResponse containing an array of result rows.
    */

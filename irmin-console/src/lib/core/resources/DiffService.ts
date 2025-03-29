@@ -34,7 +34,7 @@ class DiffService {
    * Compare two refs in a repository and return the differences.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.baseRef - The base ref.
    * @param props.compareRef - The ref to compare.
@@ -72,7 +72,7 @@ class DiffService {
    * Merge one ref into another ref in a repository.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.baseRef - The base ref.
    * @param props.compareRef - The ref to merge from.

@@ -2,10 +2,12 @@
 
 import { initCore } from '@/lib/initCore';
 
-import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
-
 /**
- * Server action to get all workspaces for the current user.
+ * Get all workspaces for the current user.
+ *
+ * - token: Optional token for authentication.
+ *
+ * @returns The list of workspaces.
  */
 export async function getWorkspaces(token?: string) {
   const irminCore = await initCore(token);
@@ -14,26 +16,45 @@ export async function getWorkspaces(token?: string) {
 }
 
 /**
- * Server action to fetch a single workspace by slug.
+ * Fetch a single workspace by slug.
+ *
+ * - workspaceSlug: The workspace slug.
+ * - token: Optional token for authentication.
+ *
+ * @returns The workspace details.
  */
 export async function getWorkspace(workspaceSlug: string, token?: string) {
   const irminCore = await initCore(token);
-  const workspace =
-    await irminCore.workspaceService.fetchWorkspace(workspaceSlug);
+  const workspace = await irminCore.workspaceService.fetchWorkspace({
+    workspaceSlug,
+  });
   return workspace.data;
 }
 
 /**
- * Server action to delete a workspace.
+ * Delete a workspace.
+ *
+ * - workspaceSlug: The workspace slug.
+ * - token: Optional token for authentication.
+ *
+ * @returns The deletion result.
  */
 export async function deleteWorkspace(workspaceSlug: string, token?: string) {
   const irminCore = await initCore(token);
-  const res = await irminCore.workspaceService.deleteWorkspace(workspaceSlug);
+  const res = await irminCore.workspaceService.deleteWorkspace({
+    workspace: workspaceSlug,
+  });
   return res;
 }
 
 /**
- * Server action to delete a workspace.
+ * Transfer a workspace to a new owner.
+ *
+ * - workspaceSlug: The workspace slug.
+ * - newOwnerID: The new owner's ID.
+ * - token: Optional token for authentication.
+ *
+ * @returns The updated workspace.
  */
 export async function transferWorkspace(
   workspaceSlug: string,
@@ -41,31 +62,47 @@ export async function transferWorkspace(
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.workspaceService.transferWorkspaceOwnership(
-    workspaceSlug,
-    newOwnerID
-  );
+  const res = await irminCore.workspaceService.transferWorkspace({
+    workspace: workspaceSlug,
+    newOwnerID,
+  });
   return res;
 }
 
 /**
- * Server action to update a workspace.
+ * Update a workspace.
+ *
+ * - workspaceSlug: The workspace slug.
+ * - data: The updated workspace data (e.g. name, description).
+ * - token: Optional token for authentication.
+ *
+ * @returns The updated workspace.
  */
 export async function updateWorkspace(
   workspaceSlug: string,
-  data: ItemUpdateProps,
+  name?: string,
+  description?: string,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.workspaceService.updateWorkspace(
-    workspaceSlug,
-    data
-  );
+  const res = await irminCore.workspaceService.updateWorkspace({
+    workspace: workspaceSlug,
+    data: {
+      name,
+      description,
+    },
+  });
   return res;
 }
 
 /**
- * Server action to create a new workspace.
+ * Create a new workspace.
+ *
+ * - name: The workspace name.
+ * - description: The workspace description.
+ * - token: Optional token for authentication.
+ *
+ * @returns The created workspace.
  */
 export async function createWorkspace(
   name: string,
@@ -73,31 +110,25 @@ export async function createWorkspace(
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.workspaceService.createWorkspace(
+  const res = await irminCore.workspaceService.createWorkspace({
     name,
-    description
-  );
+    description,
+  });
   return res;
 }
 
 /**
- * Server action to switch the current workspace.
+ * Leave a workspace.
+ *
+ * - workspaceSlug: The workspace slug.
+ * - token: Optional token for authentication.
+ *
+ * @returns The result of the leave operation.
  */
-export async function switchWorkspace(workspaceSlug?: string, token?: string) {
+export async function leaveWorkspace(workspaceSlug: string, token?: string) {
   const irminCore = await initCore(token);
-  const res = await irminCore.workspaceService.switchWorkspace(
-    workspaceSlug ?? ''
-  );
-  return res;
-}
-
-/**
- * Server action to leave a workspace.
- */
-export async function leaveWorkspace(workspaceSlug?: string, token?: string) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.workspaceService.leaveWorkspace(
-    workspaceSlug ?? ''
-  );
+  const res = await irminCore.workspaceService.leaveWorkspace({
+    workspaceSlug,
+  });
   return res;
 }

@@ -49,7 +49,7 @@ class ObjectService {
    * Get an object at a given path.
    *
    * @param props - The object properties.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.path - The path of the object.
    * @param props.ref - The ref (branch, tag or commit hash).
@@ -90,7 +90,7 @@ class ObjectService {
    * Get the history of an object.
    *
    * @param props - The object history properties.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.path - The path of the object.
    * @param props.ref - The ref (branch, tag or commit hash).
@@ -127,7 +127,7 @@ class ObjectService {
    * Get the schema of an object.
    *
    * @param props - The object schema properties.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.path - The path of the object.
    * @param props.ref - The ref (branch, tag or commit hash).
@@ -164,7 +164,7 @@ class ObjectService {
    * Get the content of an object.
    *
    * @param props - The object content properties.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.path - The path of the object.
    * @param props.ref - The ref (branch, tag or commit hash).
@@ -208,7 +208,7 @@ class ObjectService {
    * Upload an object.
    *
    * @param props - The object upload properties.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.ref - The ref (branch, tag or commit hash) to upload to.
    * @param props.path - The path within the repository where the object will be uploaded.
@@ -265,7 +265,7 @@ class ObjectService {
    * Move an object.
    *
    * @param props - The object move properties.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.ref - The ref to perform the move on.
    * @param props.path - The current path of the object.
@@ -314,7 +314,7 @@ class ObjectService {
    * Copy an object.
    *
    * @param props - The object copy properties.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.ref - The ref to perform the copy on.
    * @param props.path - The current path of the object.
@@ -363,7 +363,7 @@ class ObjectService {
    * Delete an object.
    *
    * @param props - The object delete properties.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.ref - The ref to perform the delete on.
    * @param props.path - The path of the object to delete.

@@ -13,3 +13,5 @@ export interface Commit {
   /** (optional) Previous commit hash, if any */
   previous_hash?: string;
 }
+
+export type PathType = 'object' | 'common_prefix' | 'reset';

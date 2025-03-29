@@ -2,7 +2,7 @@ import IrminCore from '@/lib/core';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { Commit } from '@/types/core/Commit';
+import { Commit, PathType } from '@/types/core/Commit';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { exampleCommits } from '@/types/examples/core';
 
@@ -35,7 +35,7 @@ class CommitService {
    * Fetch all commits for a repository.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.ref - (Optional) The branch or tag reference.
    * @returns IrminAPIResponse containing an array of Commit.
@@ -71,7 +71,7 @@ class CommitService {
    * Fetch a commit by hash.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.hash - The commit hash.
    * @returns IrminAPIResponse containing the Commit.
@@ -105,7 +105,7 @@ class CommitService {
    * Create a new commit in a repository.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.branch - The branch to create the commit in.
    * @param props.message - The commit message.
@@ -146,7 +146,7 @@ class CommitService {
    * Revert uncommitted changes in a repository branch.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.branch - The branch name.
    * @param props.path - The object path to revert.
@@ -164,7 +164,7 @@ class CommitService {
     repository: string;
     branch: string;
     path: string;
-    pathType: string;
+    pathType: PathType;
   }): Promise<IrminAPIResponse> {
     if (isOfflineMode) return fake() as IrminAPIResponse;
     try {

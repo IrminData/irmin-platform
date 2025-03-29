@@ -38,7 +38,7 @@ class RepositoryService {
    * Fetch all available repositories in a workspace.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @returns IrminAPIResponse containing an array of Repository.
    */
   async fetchRepositories({
@@ -66,7 +66,7 @@ class RepositoryService {
    * Fetch a repository by its slug.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.slug - The repository slug.
    * @returns IrminAPIResponse containing the Repository.
    */
@@ -100,7 +100,7 @@ class RepositoryService {
    * Create a new repository.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.name - Name of the repository.
    * @param props.description - Description of the repository.
    * @param props.documentation - Documentation for the repository.
@@ -167,7 +167,7 @@ class RepositoryService {
    * Update an existing repository.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.slug - The repository slug.
    * @param props.name - New name of the repository.
    * @param props.description - New description.
@@ -191,31 +191,34 @@ class RepositoryService {
   }: {
     workspace: string;
     slug: string;
-    name: string;
-    description: string;
-    documentation: string;
-    default_branch: string;
-    isImmutable: boolean;
-    garbageDefaultRetentionDays: number;
-    garbageDefaultBranchRetentionDays: number;
+    name?: string;
+    description?: string;
+    documentation?: string;
+    default_branch?: string;
+    isImmutable?: boolean;
+    garbageDefaultRetentionDays?: number;
+    garbageDefaultBranchRetentionDays?: number;
   }): Promise<IrminAPIResponse<Repository>> {
     if (isOfflineMode)
       return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
     try {
       const params = new URLSearchParams();
-      params.append('name', name);
-      params.append('description', description);
-      params.append('documentation', documentation);
-      params.append('default_branch', default_branch);
-      params.append('is_immutable', isImmutable.toString());
-      params.append(
-        'garbage_default_retention_days',
-        garbageDefaultRetentionDays.toString()
-      );
-      params.append(
-        'garbage_default_branch_retention_days',
-        garbageDefaultBranchRetentionDays.toString()
-      );
+      if (name) params.append('name', name);
+      if (description) params.append('description', description);
+      if (documentation) params.append('documentation', documentation);
+      if (default_branch) params.append('default_branch', default_branch);
+      if (isImmutable !== undefined)
+        params.append('is_immutable', isImmutable.toString());
+      if (garbageDefaultRetentionDays !== undefined)
+        params.append(
+          'garbage_default_retention_days',
+          garbageDefaultRetentionDays.toString()
+        );
+      if (garbageDefaultBranchRetentionDays !== undefined)
+        params.append(
+          'garbage_default_branch_retention_days',
+          garbageDefaultBranchRetentionDays.toString()
+        );
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${slug}`,
         {
@@ -236,7 +239,7 @@ class RepositoryService {
    * Transfer ownership of a repository.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.slug - The repository slug.
    * @param props.newOwnerID - The new owner's ID.
    * @returns IrminAPIResponse containing the repository with updated ownership.
@@ -279,7 +282,7 @@ class RepositoryService {
    * Delete a repository.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repositorySlug - The repository slug.
    * @returns IrminAPIResponse containing the deletion result.
    */
@@ -308,7 +311,7 @@ class RepositoryService {
    * Get a download link for a repository.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repositorySlug - The repository slug.
    * @param props.ref - The ref to download.
    * @param props.path - The path to download.

@@ -36,7 +36,7 @@ class EditorItemsService {
    * List editor items.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.path - The path of the editor item.
    * @returns IrminAPIResponse containing an array of EditorItem.
    */
@@ -71,7 +71,7 @@ class EditorItemsService {
    * Get editor item content.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.path - The path of the editor item.
    * @returns IrminAPIResponse containing a string with the editor item content.
    */
@@ -106,7 +106,7 @@ class EditorItemsService {
    * Move an editor item.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.path - The current path of the editor item.
    * @param props.destinationPath - The destination path to move the item.
    * @returns IrminAPIResponse with the result of the move operation.
@@ -150,7 +150,7 @@ class EditorItemsService {
    * Copy an editor item.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.path - The current path of the editor item.
    * @param props.destinationPath - The destination path to copy the item.
    * @returns IrminAPIResponse with the result of the copy operation.
@@ -194,7 +194,7 @@ class EditorItemsService {
    * Delete an editor item.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.path - The path of the editor item.
    * @returns IrminAPIResponse with the result of the deletion.
    */
@@ -229,7 +229,7 @@ class EditorItemsService {
    * Save an editor item.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.path - The path of the editor item.
    * @param props.content - The content to save.
    * @returns IrminAPIResponse with the result of the save operation.
@@ -274,7 +274,7 @@ class EditorItemsService {
    * Create an editor folder.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.path - The path where the folder is to be created.
    * @returns IrminAPIResponse with the result of the folder creation.
    */

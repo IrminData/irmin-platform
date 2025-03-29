@@ -35,7 +35,7 @@ class WorkflowRunService {
    * List all workflow runs for a given workflow.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.workflowID - The workflow identifier.
    * @returns IrminAPIResponse containing an array of WorkflowRun.
    */
@@ -66,7 +66,7 @@ class WorkflowRunService {
    * Get a specific workflow run by its ID.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.workflowID - The workflow identifier.
    * @param props.runID - The run identifier.
    * @returns IrminAPIResponse containing the WorkflowRun.
@@ -100,7 +100,7 @@ class WorkflowRunService {
    * Cancel a workflow run.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.workflowID - The workflow identifier.
    * @param props.runID - The run identifier.
    * @returns IrminAPIResponse containing the canceled WorkflowRun.
@@ -134,7 +134,7 @@ class WorkflowRunService {
    * Trigger a new workflow run.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.workflowID - The workflow identifier.
    * @returns IrminAPIResponse containing the newly triggered WorkflowRun.
    */

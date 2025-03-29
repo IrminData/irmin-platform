@@ -2,153 +2,160 @@
 
 import { initCore } from '@/lib/initCore';
 
-import { ContentType } from '@/types/examples/core/content';
-
 /**
- * Server action to fetch objects at a given path in a repository and ref.
+ * Get a single object at a given path.
  *
- * @param repository - Repository slug to fetch objects for
- * @param path - (optional) Path in the repository to fetch objects from
- * @param ref - (optional) Ref to fetch objects from (branch, tag, or commit hash)
- * @param token - (optional) User token
- * @returns The list of objects
- */
-export async function getObjects(
-  repository: string,
-  path: string = '',
-  ref?: string,
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  // Get the objects
-  const objects = await irminCore.objectService.fetchObjects(
-    repository,
-    path,
-    ref
-  );
-  return objects.data;
-}
-
-/**
- * Server action to fetch a single object by its name and path in a repository.
- *
- * @param repository - Repository slug
- * @param path - Full path of the object
- * @param ref - (optional) Ref to fetch the object at
- * @param token - (optional) User token
- * @returns The object details
+ * @param workspace - The workspace slug.
+ * @param repository - The repository slug.
+ * @param path - The path of the object.
+ * @param ref - The ref (branch, tag or commit hash).
+ * @param token - Optional user token.
+ * @returns The object details.
  */
 export async function getObject(
+  workspace: string,
   repository: string,
   path: string,
-  ref?: string,
+  ref: string,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  // Get the object
-  const object = await irminCore.objectService.fetchObject(
-    repository,
-    path,
-    ref
-  );
-  return object.data;
-}
-
-/**
- * Server action to fetch the schema of an object in a repository at a specific path and ref.
- *
- * @param repository - Repository slug
- * @param path - Path of the object in the repository
- * @param ref - Ref to fetch the schema at
- * @param token - (optional) User token
- * @returns The object schema
- */
-export async function getObjectSchema(
-  repository: string,
-  path: string,
-  ref?: string,
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.objectService.fetchObjectSchema(
-    repository,
-    path,
-    ref
-  );
-  return res;
-}
-
-/**
- * Server action to fetch the content of an object in a repository at a specific path and ref.
- *
- * @param repository - Repository slug
- * @param path - Path of the object in the repository
- * @param ref - (optional) Ref to fetch content at
- * @param raw - (optional) Return raw content without parsing tables to JSON
- * @param exampleType - (optional) Type of the content to generate for the example response
- * @param token - (optional) User token
- * @returns The object content
- */
-export async function getObjectContent(
-  repository: string,
-  path: string,
-  ref?: string,
-  raw?: boolean,
-  exampleType?: ContentType,
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.objectService.fetchContent(
+  const res = await irminCore.objectService.getObjectAtPath({
+    workspace,
     repository,
     path,
     ref,
-    raw,
-    exampleType
-  );
+  });
+  return res.data;
+}
+
+/**
+ * Get the history of an object.
+ *
+ * @param workspace - The workspace identifier.
+ * @param repository - The repository identifier.
+ * @param path - The path of the object.
+ * @param ref - The ref (branch, tag or commit hash).
+ * @param token - Optional user token.
+ * @returns The list of commits (object history).
+ */
+export async function getObjectHistory(
+  workspace: string,
+  repository: string,
+  path: string,
+  ref: string,
+  token?: string
+) {
+  const irminCore = await initCore(token);
+  const res = await irminCore.objectService.getObjectHistory({
+    workspace,
+    repository,
+    path,
+    ref,
+  });
+  return res.data;
+}
+
+/**
+ * Get the schema of an object.
+ *
+ * @param workspace - The workspace identifier.
+ * @param repository - The repository identifier.
+ * @param path - The path of the object.
+ * @param ref - The ref for which to fetch the schema.
+ * @param token - Optional user token.
+ * @returns The object schema.
+ */
+export async function getObjectSchema(
+  workspace: string,
+  repository: string,
+  path: string,
+  ref: string,
+  token?: string
+) {
+  const irminCore = await initCore(token);
+  const res = await irminCore.objectService.getObjectSchema({
+    workspace,
+    repository,
+    path,
+    ref,
+  });
+  return res.data;
+}
+
+/**
+ * Get the binary content of an object.
+ *
+ * @param workspace - The workspace identifier.
+ * @param repository - The repository identifier.
+ * @param path - The path of the object.
+ * @param ref - The ref to fetch content at.
+ * @param token - Optional user token.
+ * @returns The binary content of the object.
+ */
+export async function getObjectContent(
+  workspace: string,
+  repository: string,
+  path: string,
+  ref: string,
+  token?: string
+) {
+  const irminCore = await initCore(token);
+  const res = await irminCore.objectService.getObjectContent({
+    workspace,
+    repository,
+    path,
+    ref,
+  });
   return res;
 }
 
 /**
- * Server action to upload an object to a repository.
+ * Upload an object to a repository.
  *
- * @param repository - Repository slug
- * @param ref - Ref to upload the object to
- * @param path - Path within the repository (example: /example/path)
- * @param object - Name of the object (example: file.txt)
- * @param files - (optional) Files to upload (leave undefined for group creation)
- * @param token - (optional) User token
- * @returns The created object
+ * @param workspace - The workspace identifier.
+ * @param repository - The repository identifier.
+ * @param ref - The ref (branch, tag or commit hash) to upload to.
+ * @param path - The path within the repository.
+ * @param name - The name of the object.
+ * @param files - (Optional) Files to upload.
+ * @param token - Optional user token.
+ * @returns The uploaded object.
  */
 export async function uploadObject(
+  workspace: string,
   repository: string,
   ref: string,
   path: string,
-  object: string,
+  name: string,
   files?: FileList,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.objectService.uploadObject(
+  const res = await irminCore.objectService.uploadObject({
+    workspace,
     repository,
     ref,
     path,
-    object,
-    files
-  );
+    name,
+    files,
+  });
   return res;
 }
 
 /**
- * Server action to move or rename an object in a repository.
+ * Move or rename an object.
  *
- * @param repository - Repository slug
- * @param ref - Ref to move the object in
- * @param path - Current path of the object
- * @param newPath - New path for the object
- * @param token - (optional) User token
- * @returns The moved/renamed object
+ * @param workspace - The workspace identifier.
+ * @param repository - The repository identifier.
+ * @param ref - The ref (branch, tag or commit hash) for the move.
+ * @param path - The current path of the object.
+ * @param newPath - The new path for the object.
+ * @param token - Optional user token.
+ * @returns The moved object.
  */
 export async function moveObject(
+  workspace: string,
   repository: string,
   ref: string,
   path: string,
@@ -156,38 +163,69 @@ export async function moveObject(
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.objectService.moveObject(
+  const res = await irminCore.objectService.moveObject({
+    workspace,
     repository,
     ref,
     path,
-    newPath
-  );
+    newPath,
+  });
   return res;
 }
 
 /**
- * Server action to delete an object from a repository.
+ * Copy an object.
  *
- * @param repository - Repository slug
- * @param ref - Ref to delete the object from
- * @param path - Path of the object
- * @param object - Name of the object to delete
- * @param token - (optional) User token
- * @returns The deletion result
+ * @param workspace - The workspace identifier.
+ * @param repository - The repository identifier.
+ * @param ref - The ref (branch, tag or commit hash) for the copy.
+ * @param path - The current path of the object.
+ * @param newPath - The new path for the copied object.
+ * @param token - Optional user token.
+ * @returns The copied object.
  */
-export async function deleteObject(
+export async function copyObject(
+  workspace: string,
   repository: string,
   ref: string,
   path: string,
-  object: string,
+  newPath: string,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.objectService.deleteObject(
+  const res = await irminCore.objectService.copyObject({
+    workspace,
     repository,
     ref,
     path,
-    object
-  );
+    newPath,
+  });
+  return res;
+}
+
+/**
+ * Delete an object from a repository.
+ *
+ * @param workspace - The workspace identifier.
+ * @param repository - The repository identifier.
+ * @param ref - The ref (branch, tag or commit hash) to delete from.
+ * @param path - The path of the object.
+ * @param token - Optional user token.
+ * @returns The deletion result.
+ */
+export async function deleteObject(
+  workspace: string,
+  repository: string,
+  ref: string,
+  path: string,
+  token?: string
+) {
+  const irminCore = await initCore(token);
+  const res = await irminCore.objectService.deleteObject({
+    workspace,
+    repository,
+    ref,
+    path,
+  });
   return res;
 }

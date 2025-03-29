@@ -3,6 +3,7 @@ import IrminCore from '@/lib/core';
 import fake from '@/utils/prepareFakeResponse';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import { IrminRole } from '@/types/core/IrminRole';
 import { User } from '@/types/core/User';
 import { exampleWorkspaceUsers } from '@/types/examples/core';
 
@@ -35,7 +36,7 @@ class UserService {
    * Fetch all users from a workspace.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @returns IrminAPIResponse containing an array of User.
    */
   async fetchWorkspaceUsers({
@@ -63,7 +64,7 @@ class UserService {
    * Fetch a single user by ID.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.user - The user ID.
    * @returns IrminAPIResponse containing the User.
    */
@@ -94,7 +95,7 @@ class UserService {
    * Change the roles of a user in a workspace.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.user - The user ID.
    * @param props.roles - The new roles to assign to the user.
    * @returns IrminAPIResponse containing the updated User.
@@ -106,7 +107,7 @@ class UserService {
   }: {
     workspace: string;
     user: string;
-    roles: string[];
+    roles: IrminRole[];
   }): Promise<IrminAPIResponse<User>> {
     if (isOfflineMode) return fake() as IrminAPIResponse<User>;
     try {
@@ -133,7 +134,7 @@ class UserService {
    * Remove a user from a workspace.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.user - The user ID to remove.
    * @returns IrminAPIResponse containing the result of the deletion.
    */

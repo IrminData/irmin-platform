@@ -6,13 +6,7 @@ import fake from '@/utils/prepareFakeResponse';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { WorkflowSchedule } from '@/types/core/Schedule';
-import {
-  Action,
-  Export,
-  Import,
-  Pipeline,
-  Workflow,
-} from '@/types/core/Workflow';
+import { Workflow } from '@/types/core/Workflow';
 import { exampleWorkflows } from '@/types/examples/core';
 import { WorkflowableInput } from '@/types/internal/WorkflowInput';
 
@@ -51,7 +45,7 @@ class WorkflowService {
    * List all workflows in a workspace.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @returns IrminAPIResponse containing an array of Workflow.
    */
   async fetchWorkflows({
@@ -79,7 +73,7 @@ class WorkflowService {
    * List workflows of a specific type in a workspace.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.workflowType - The workflow type.
    * @returns IrminAPIResponse containing an array of Workflow.
    */
@@ -108,7 +102,7 @@ class WorkflowService {
    * Get a workflow by its ID.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.workflowID - The workflow identifier.
    * @returns IrminAPIResponse containing the Workflow.
    */
@@ -141,7 +135,7 @@ class WorkflowService {
    * Create a new workflow.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.name - The workflow name.
    * @param props.description - The workflow description.
    * @param props.documentation - The workflow documentation.
@@ -202,7 +196,7 @@ class WorkflowService {
    * Update a workflow.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.workflowID - The workflow identifier.
    * @param props.name - The new workflow name.
    * @param props.description - The new workflow description.
@@ -250,7 +244,7 @@ class WorkflowService {
    * Update a workflow's workflowable data.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.workflowID - The workflow identifier.
    * @param props.workflowable - The new workflowable data.
    * @returns IrminAPIResponse containing the updated Workflow.
@@ -292,7 +286,7 @@ class WorkflowService {
    * Update a workflow's schedule.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.workflowID - The workflow identifier.
    * @param props.schedule - The new schedule.
    * @returns IrminAPIResponse containing the updated Workflow.
@@ -331,7 +325,7 @@ class WorkflowService {
    * Delete a workflow.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.workflowID - The workflow identifier.
    * @returns IrminAPIResponse containing the deletion result.
    */
@@ -360,7 +354,7 @@ class WorkflowService {
    * Transfer ownership of a workflow.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.workflowID - The workflow identifier.
    * @param props.newOwnerID - The new owner's ID.
    * @returns IrminAPIResponse containing the updated Workflow.

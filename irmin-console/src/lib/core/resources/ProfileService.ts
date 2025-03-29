@@ -68,20 +68,20 @@ class ProfileService {
     company,
     avatar,
   }: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone: string;
-    company: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string;
+    company?: string;
     avatar?: File | Blob;
   }): Promise<IrminAPIResponse<User>> {
     if (isOfflineMode) return fake(exampleProfile) as IrminAPIResponse<User>;
     const formData = new FormData();
-    formData.append('first_name', first_name);
-    formData.append('last_name', last_name);
-    formData.append('email', email);
-    formData.append('phone', phone);
-    formData.append('company', company);
+    if (first_name) formData.append('first_name', first_name);
+    if (last_name) formData.append('last_name', last_name);
+    if (email) formData.append('email', email);
+    if (phone) formData.append('phone', phone);
+    if (company) formData.append('company', company);
     if (avatar) formData.append('profile_picture', avatar);
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/profile`, {

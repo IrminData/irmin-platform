@@ -35,7 +35,7 @@ class TagService {
    * Fetch all available tags for a repository.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @returns IrminAPIResponse containing an array of Tag.
    */
@@ -64,7 +64,7 @@ class TagService {
    * Fetch a single tag.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.tag - The tag identifier.
    * @returns IrminAPIResponse containing the Tag.
@@ -96,7 +96,7 @@ class TagService {
    * Create a new tag.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.name - The name of the tag.
    * @param props.ref - The ref to create the tag from.
@@ -137,7 +137,7 @@ class TagService {
    * Delete a tag.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.tag - The tag identifier.
    * @returns IrminAPIResponse containing the result of the deletion.

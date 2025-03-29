@@ -2,248 +2,223 @@
 
 import { initCore } from '@/lib/initCore';
 
-import { WorkflowSchedule } from '@/types/core/Schedule';
-import { PipelineStage } from '@/types/core/Workflow';
-import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { WorkflowSchedule } from '@/types/core/Schedule';
+import type { Workflow } from '@/types/core/Workflow';
+import type { WorkflowableInput } from '@/types/internal/WorkflowInput';
 
 /**
- * Server action to get all workflows for the current workspace.
+ * Get all workflows in a workspace.
+ *
+ * @param workspace - The workspace slug.
+ * @param token - Optional token for authentication.
+ * @returns The list of workflows.
  */
-export async function getWorkflows(token?: string) {
+export async function getWorkflows(workspace: string, token?: string) {
   const irminCore = await initCore(token);
-  // Fetch the workflows
-  const workflows = await irminCore.workflowService.fetchWorkflows();
-  return workflows.data;
+  const res: IrminAPIResponse<Workflow[]> =
+    await irminCore.workflowService.fetchWorkflows({ workspace });
+  return res.data;
 }
 
 /**
- * Server action to get all action workflows for the current workspace.
+ * Get workflows of a specific type in a workspace.
+ *
+ * @param workspace - The workspace slug.
+ * @param workflowType - The workflow type.
+ * @param token - Optional token for authentication.
+ * @returns The list of workflows of the specified type.
  */
-export async function getActionWorkflows(token?: string) {
+export async function getWorkflowsOfType(
+  workspace: string,
+  workflowType: string,
+  token?: string
+) {
   const irminCore = await initCore(token);
-  // Fetch the workflows
-  const workflows = await irminCore.workflowService.fetchActionWorkflows();
-  return workflows.data;
+  const res: IrminAPIResponse<Workflow[]> =
+    await irminCore.workflowService.fetchWorkflowsOfType({
+      workspace,
+      workflowType,
+    });
+  return res.data;
 }
 
 /**
- * Server action to get all export workflows for the current workspace.
+ * Get a workflow by its ID.
+ *
+ * @param workspace - The workspace slug.
+ * @param workflowID - The workflow identifier.
+ * @param token - Optional token for authentication.
+ * @returns The workflow details.
  */
-export async function getExportWorkflows(token?: string) {
+export async function getWorkflow(
+  workspace: string,
+  workflowID: string,
+  token?: string
+) {
   const irminCore = await initCore(token);
-  // Fetch the workflows
-  const workflows = await irminCore.workflowService.fetchExportWorkflows();
-  return workflows.data;
+  const res: IrminAPIResponse<Workflow> =
+    await irminCore.workflowService.fetchWorkflow({ workspace, workflowID });
+  return res.data;
 }
 
 /**
- * Server action to get all import workflows for the current workspace.
+ * Create a new workflow.
+ *
+ * @param workspace - The workspace slug.
+ * @param name - The workflow name.
+ * @param description - The workflow description.
+ * @param documentation - The workflow documentation.
+ * @param workflowable - The workflowable input data.
+ * @param schedule - The workflow schedule.
+ * @param token - Optional token for authentication.
+ * @returns The created workflow.
  */
-export async function getImportWorkflows(token?: string) {
+export async function createWorkflow(
+  workspace: string,
+  name: string,
+  description: string,
+  documentation: string,
+  workflowable: WorkflowableInput,
+  schedule: WorkflowSchedule,
+  token?: string
+) {
   const irminCore = await initCore(token);
-  // Fetch the workflows
-  const workflows = await irminCore.workflowService.fetchImportWorkflows();
-  return workflows.data;
+  const res: IrminAPIResponse<Workflow> =
+    await irminCore.workflowService.createWorkflow({
+      workspace,
+      name,
+      description,
+      documentation,
+      workflowable,
+      schedule,
+    });
+  return res.data;
 }
 
 /**
- * Server action to get all pipeline workflows for the current workspace.
- */
-export async function getPipelineWorkflows(token?: string) {
-  const irminCore = await initCore(token);
-  // Fetch the workflows
-  const workflows = await irminCore.workflowService.fetchPipelineWorkflows();
-  return workflows.data;
-}
-
-/**
- * Server action to fetch a single workflow by ID.
- */
-export async function getWorkflow(workflowID: string, token?: string) {
-  const irminCore = await initCore(token);
-  // Fetch the workflow
-  const workflow = await irminCore.workflowService.fetchWorkflow(workflowID);
-  // Return the workflow
-  return workflow.data;
-}
-
-/**
- * Server action to delete a workflow.
- */
-export async function deleteWorkflow(workflowID: string, token?: string) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.workflowService.deleteWorkflow(workflowID);
-  return res;
-}
-
-/**
- * Server action to update a workflow.
+ * Update a workflow.
+ *
+ * @param workspace - The workspace slug.
+ * @param workflowID - The workflow identifier.
+ * @param name - The new workflow name.
+ * @param description - The new workflow description.
+ * @param documentation - The new workflow documentation.
+ * @param token - Optional token for authentication.
+ * @returns The updated workflow.
  */
 export async function updateWorkflow(
+  workspace: string,
   workflowID: string,
-  data: ItemUpdateProps,
+  name: string,
+  description: string,
+  documentation: string,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.workflowService.updateWorkflow(workflowID, data);
+  const res: IrminAPIResponse<Workflow> =
+    await irminCore.workflowService.updateWorkflow({
+      workspace,
+      workflowID,
+      name,
+      description,
+      documentation,
+    });
+  return res.data;
+}
+
+/**
+ * Update a workflow's workflowable data.
+ *
+ * @param workspace - The workspace slug.
+ * @param workflowID - The workflow identifier.
+ * @param workflowable - The new workflowable input data.
+ * @param token - Optional token for authentication.
+ * @returns The updated workflow.
+ */
+export async function updateWorkflowWorkflowable(
+  workspace: string,
+  workflowID: string,
+  workflowable: WorkflowableInput,
+  token?: string
+) {
+  const irminCore = await initCore(token);
+  const res: IrminAPIResponse<Workflow> =
+    await irminCore.workflowService.updateWorkflowWorkflowable({
+      workspace,
+      workflowID,
+      workflowable,
+    });
+  return res.data;
+}
+
+/**
+ * Update a workflow's schedule.
+ *
+ * @param workspace - The workspace slug.
+ * @param workflowID - The workflow identifier.
+ * @param schedule - The new workflow schedule.
+ * @param token - Optional token for authentication.
+ * @returns The updated workflow.
+ */
+export async function updateWorkflowSchedule(
+  workspace: string,
+  workflowID: string,
+  schedule: WorkflowSchedule,
+  token?: string
+) {
+  const irminCore = await initCore(token);
+  const res: IrminAPIResponse<Workflow> =
+    await irminCore.workflowService.updateWorkflowSchedule({
+      workspace,
+      workflowID,
+      schedule,
+    });
+  return res.data;
+}
+
+/**
+ * Delete a workflow.
+ *
+ * @param workspace - The workspace slug.
+ * @param workflowID - The workflow identifier.
+ * @param token - Optional token for authentication.
+ * @returns The deletion result.
+ */
+export async function deleteWorkflow(
+  workspace: string,
+  workflowID: string,
+  token?: string
+) {
+  const irminCore = await initCore(token);
+  const res = await irminCore.workflowService.deleteWorkflow({
+    workspace,
+    workflowID,
+  });
   return res;
 }
 
 /**
- * Server action to transfer a workflow.
+ * Transfer a workflow to a new owner.
+ *
+ * @param workspace - The workspace slug.
+ * @param workflowID - The workflow identifier.
+ * @param newOwnerID - The new owner's ID.
+ * @param token - Optional token for authentication.
+ * @returns The updated workflow with new ownership.
  */
 export async function transferWorkflow(
+  workspace: string,
   workflowID: string,
-  ownerID: string,
+  newOwnerID: string,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.workflowService.transferWorkflow(
-    workflowID,
-    ownerID
-  );
-  return res;
-}
-
-/**
- * Server action to pause a workflow.
- */
-export async function pauseWorkflow(workflowID: string, token?: string) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.workflowService.pauseWorkflow(workflowID);
-  return res;
-}
-
-/**
- * Server action to resume a workflow.
- */
-export async function resumeWorkflow(workflowID: string, token?: string) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.workflowService.resumeWorkflow(workflowID);
-  return res;
-}
-
-/**
- * Server action to trigger a workflow run.
- */
-export async function triggerWorkflowRun(workflowID: string, token?: string) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.workflowService.triggerWorkflowRun(workflowID);
-  return res;
-}
-
-/**
- * Server action to get a workflow runs for a workflow
- */
-export async function getWorkflowRuns(workflow: string, token?: string) {
-  const irminCore = await initCore(token);
-  const runs = await irminCore.workflowService.fetchRunsByWorkflow(workflow);
-  return runs.data;
-}
-
-/**
- * Server action to get a workflow run by ID.
- */
-export async function getWorkflowRun(
-  workflow: string,
-  runID: string,
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  const run = await irminCore.workflowService.fetchWorkflowRunByID(
-    workflow,
-    runID
-  );
-  return run.data;
-}
-
-/**
- * Server action to create an action workflow.
- */
-export async function createActionWorkflow(
-  data: {
-    // Workflow data
-    name: string;
-    description: string;
-    documentation: string;
-    schedule: WorkflowSchedule;
-    // Workflowable data
-    executable: string;
-    repository: string;
-    branch: string;
-    path: string;
-  },
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.workflowService.createActionWorkflow(data);
-  return res;
-}
-
-/**
- * Server action to create an import workflow.
- */
-export async function createImportWorkflow(
-  data: {
-    // Workflow data
-    name: string;
-    description: string;
-    documentation: string;
-    schedule: WorkflowSchedule;
-    // Workflowable data
-    repository: string;
-    branch: string;
-    path: string;
-    connection: string;
-  },
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.workflowService.createImportWorkflow(data);
-  return res;
-}
-
-/**
- * Server action to create an export workflow.
- */
-export async function createExportWorkflow(
-  data: {
-    // Workflow data
-    name: string;
-    description: string;
-    documentation: string;
-    schedule: WorkflowSchedule;
-    // Workflowable data
-    repository: string;
-    branch: string;
-    path: string;
-    connection: string;
-    recursive: boolean;
-  },
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.workflowService.createExportWorkflow(data);
-  return res;
-}
-
-/**
- * Server action to create a pipeline workflow.
- */
-export async function createPipelineWorkflow(
-  data: {
-    // Workflow data
-    name: string;
-    description: string;
-    documentation: string;
-    schedule: WorkflowSchedule;
-    // Workflowable data
-    stages: PipelineStage[];
-    live: boolean;
-  },
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  const res = await irminCore.workflowService.createPipelineWorkflow(data);
-  return res;
+  const res: IrminAPIResponse<Workflow> =
+    await irminCore.workflowService.transferWorkflow({
+      workspace,
+      workflowID,
+      newOwnerID,
+    });
+  return res.data;
 }

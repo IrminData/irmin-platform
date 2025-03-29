@@ -6,40 +6,68 @@ import { MergeStrategy } from '@/types/core/Diff';
 
 /**
  * Server action to get a diff between two refs in a repository.
+ *
+ * @param workspace - The workspace slug.
+ * @param repository - The repository slug.
+ * @param baseRef - The base reference.
+ * @param compareRef - The reference to compare.
+ * @param token - Optional token for authentication.
+ * @returns The API response containing the diff.
  */
 export async function getDiff(
+  workspace: string,
   repository: string,
-  ref: string,
+  baseRef: string,
   compareRef: string,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.diffService.compareRefs(
+  // Get the diff using updated service parameters
+  const res = await irminCore.diffService.compareRefs({
+    workspace,
     repository,
-    ref,
-    compareRef
-  );
+    baseRef,
+    compareRef,
+  });
   return res;
 }
 
 /**
  * Server action to merge refs in a repository.
+ *
+ * @param workspace - The workspace slug.
+ * @param repository - The repository slug.
+ * @param baseRef - The base reference.
+ * @param compareRef - The reference to merge from.
+ * @param description - The merge commit description.
+ * @param mergeStrategy - The merge strategy.
+ * @param squash - Whether to squash changes.
+ * @param allowEmpty - Whether to allow an empty merge.
+ * @param token - Optional token for authentication.
+ * @returns The API response containing the merge commit.
  */
 export async function mergeRefs(
+  workspace: string,
   repository: string,
-  base: string,
-  compare: string,
+  baseRef: string,
+  compareRef: string,
   description: string,
-  strategy: MergeStrategy,
+  mergeStrategy: MergeStrategy,
+  squash: boolean,
+  allowEmpty: boolean,
   token?: string
 ) {
   const irminCore = await initCore(token);
-  const res = await irminCore.diffService.mergeRefs(
+  // Merge refs using updated service parameters
+  const res = await irminCore.diffService.mergeRefs({
+    workspace,
     repository,
-    base,
-    compare,
+    baseRef,
+    compareRef,
     description,
-    strategy
-  );
+    mergeStrategy,
+    squash,
+    allowEmpty,
+  });
   return res;
 }

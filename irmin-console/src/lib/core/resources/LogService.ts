@@ -32,7 +32,7 @@ class LogService {
    * Fetch general audit log events for a workspace.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @returns IrminAPIResponse containing an array of LogEvent.
    */
   async fetchLogEvents({

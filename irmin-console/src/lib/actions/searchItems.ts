@@ -1,7 +1,6 @@
 'use server';
 
 import { getConnections } from '@/lib/actions/connections';
-import { getInvites } from '@/lib/actions/invites';
 import { getRepositories } from '@/lib/actions/repositories';
 import { getUsers } from '@/lib/actions/users';
 import { getWorkflows } from '@/lib/actions/workflows';
@@ -98,14 +97,12 @@ export async function generateSearchItems({
 
     if (workspace) {
       // Fetch workspace-dependent items
-      const [connections, invites, users, workflows, repositories] =
-        await Promise.all([
-          getConnections(token),
-          getInvites(workspace, undefined, false, false, token),
-          getUsers(token),
-          getWorkflows(token),
-          getRepositories(token),
-        ]);
+      const [connections, users, workflows, repositories] = await Promise.all([
+        getConnections(token),
+        getUsers(token),
+        getWorkflows(token),
+        getRepositories(token),
+      ]);
 
       // Add workspace-dependent static Irmin items
       newItems.push(
@@ -224,17 +221,6 @@ export async function generateSearchItems({
             user.company ? ` - ${user.company}` : ''
           } - ${roleString}`,
           link: `/${locale}/workspace/${workspace}/settings/users`,
-          type: ConsoleSearchItemType.User,
-        });
-      });
-
-      // Add invites
-      invites?.forEach((invite) => {
-        const roleString = invite.role.label;
-        newItems.push({
-          title: `${invite.first_name} ${invite.last_name}`,
-          description: `${invite.email} - ${roleString} - ${dict.users.invite}`,
-          link: `/${locale}/workspace/${workspace}/settings/invites`,
           type: ConsoleSearchItemType.User,
         });
       });

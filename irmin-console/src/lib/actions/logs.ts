@@ -3,65 +3,15 @@
 import { initCore } from '@/lib/initCore';
 
 /**
- * Server action to get the list of logs for the workspace.
+ * Server action to get the list of log events for a workspace.
  *
- * @returns List of log events
+ * @param workspace - The workspace identifier.
+ * @param token - Optional token for authentication.
+ * @returns The list of log events.
  */
-export async function getLogs(token?: string) {
+export async function getLogs(workspace: string, token?: string) {
   const irminCore = await initCore(token);
-  // Fetch the logs
-  const logs = await irminCore.logService.fetchLogEvents();
-  return logs.data;
-}
-
-/**
- * Server action to get the list of logs for a workflow
- */
-export async function getWorkflowLogs(workflowID: string, token?: string) {
-  const irminCore = await initCore(token);
-  // Fetch the logs
-  const logs = await irminCore.logService.fetchWorkflowLogEvents(workflowID);
-  return logs.data;
-}
-
-/**
- * Server action to get the list of logs for a repository
- */
-export async function getRepositoryLogs(
-  repositorySlug: string,
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  // Fetch the logs
-  const logs = await irminCore.logService.fetchRepositoryLogs(repositorySlug);
-  return logs.data;
-}
-
-/**
- * Server action to get the list of logs for a connection
- */
-export async function getConnectionLogs(connectionID: string, token?: string) {
-  const irminCore = await initCore(token);
-  // Fetch the logs
-  const logs = await irminCore.logService.fetchConnectionLogs(connectionID);
-  return logs.data;
-}
-
-/**
- * Server action to get the list of logs for a workflow run
- *
- * @returns List of logs
- */
-export async function getWorkflowRunLogs(
-  workflowID: string,
-  workflowRunID: string,
-  token?: string
-) {
-  const irminCore = await initCore(token);
-  // Fetch the logs
-  const logs = await irminCore.logService.fetchWorkflowRunLogs(
-    workflowID,
-    workflowRunID
-  );
+  // Fetch the logs using the fetchLogEvents method which requires a workspace parameter
+  const logs = await irminCore.logService.fetchLogEvents({ workspace });
   return logs.data;
 }

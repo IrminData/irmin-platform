@@ -37,7 +37,7 @@ class ConnectionService {
   /**
    * Fetch all connections for a workspace.
    *
-   * - workspace: The workspace identifier.
+   * - workspace: The workspace slug.
    *
    * @param props - The parameters.
    * @param props.workspace - The workspace to fetch connections from.
@@ -102,7 +102,7 @@ class ConnectionService {
    * Create a new connection.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.connectorID - The connector ID.
    * @param props.name - The connection name.
    * @param props.description - The connection description.
@@ -162,7 +162,7 @@ class ConnectionService {
    * Update an existing connection.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.connectionID - The connection's identifier.
    * @param props.connectorID - The connector ID.
    * @param props.name - The connection name.
@@ -184,12 +184,12 @@ class ConnectionService {
   }: {
     workspace: string;
     connectionID: string;
-    connectorID: string;
-    name: string;
-    description: string;
-    documentation: string;
-    connectionDetails: DynamicFieldValues;
-    connectionSettings: DynamicFieldValues;
+    connectorID?: string;
+    name?: string;
+    description?: string;
+    documentation?: string;
+    connectionDetails?: DynamicFieldValues;
+    connectionSettings?: DynamicFieldValues;
   }): Promise<IrminAPIResponse<Connection>> {
     if (isOfflineMode)
       return fake(
@@ -197,16 +197,23 @@ class ConnectionService {
       ) as IrminAPIResponse<Connection>;
     try {
       const formData = new FormData();
-      formData.append('connector', connectorID);
-      formData.append('name', name);
-      formData.append('description', description);
-      formData.append('documentation', documentation);
-      Object.keys(connectionDetails).forEach((key) => {
-        formData.append(`details[${key}]`, connectionDetails[key] as string);
-      });
-      Object.keys(connectionSettings).forEach((key) => {
-        formData.append(`settings[${key}]`, connectionSettings[key] as string);
-      });
+      if (connectorID) formData.append('connector', connectorID);
+      if (name) formData.append('name', name);
+      if (description) formData.append('description', description);
+      if (documentation) formData.append('documentation', documentation);
+      if (connectionDetails) {
+        Object.keys(connectionDetails).forEach((key) => {
+          formData.append(`details[${key}]`, connectionDetails[key] as string);
+        });
+      }
+      if (connectionSettings) {
+        Object.keys(connectionSettings).forEach((key) => {
+          formData.append(
+            `settings[${key}]`,
+            connectionSettings[key] as string
+          );
+        });
+      }
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/connections/${connectionID}`,
         { method: 'PATCH', body: formData }
@@ -225,7 +232,7 @@ class ConnectionService {
    *
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.connectionID - The connection's identifier.
    * @param props.newOwner - The new owner ID.
    * @returns IrminAPIResponse containing the updated Connection.
@@ -267,7 +274,7 @@ class ConnectionService {
    * Delete a connection.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.connectionID - The connection's identifier.
    * @returns IrminAPIResponse containing the result of deletion.
    */

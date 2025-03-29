@@ -92,7 +92,7 @@ class InviteService {
    * List invites to a workspace.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @returns IrminAPIResponse containing an array of Invite.
    */
   async listInvitesToWorkspace({
@@ -122,7 +122,7 @@ class InviteService {
    * Send an invite.
    *
    * @param props - The parameters.
-   * @param props.workspace - The workspace identifier.
+   * @param props.workspace - The workspace slug.
    * @param props.email - The invitee's email.
    * @param props.role - The role slug.
    * @returns IrminAPIResponse containing the sent Invite.
