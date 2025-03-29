@@ -2,6 +2,8 @@
 
 import { initCore } from '@/lib/initCore';
 
+import { IrminRole } from '@/types/core/IrminRole';
+
 /**
  * Server action to get the invite inbox.
  *
@@ -11,7 +13,7 @@ import { initCore } from '@/lib/initCore';
 export async function getInviteInbox(token?: string) {
   const irminCore = await initCore(token);
   const response = await irminCore.inviteService.listInviteInbox();
-  return response.data;
+  return response;
 }
 
 /**
@@ -54,7 +56,7 @@ export async function getInvite(inviteID: string, token?: string) {
 export async function sendInvite(
   workspace: string,
   email: string,
-  role: string,
+  role: IrminRole,
   token?: string
 ) {
   const irminCore = await initCore(token);
@@ -63,7 +65,7 @@ export async function sendInvite(
     email,
     role,
   });
-  return response.data;
+  return response;
 }
 
 /**
@@ -76,7 +78,7 @@ export async function sendInvite(
 export async function resendInvite(inviteID: string, token?: string) {
   const irminCore = await initCore(token);
   const response = await irminCore.inviteService.resendInvite({ inviteID });
-  return response.data;
+  return response;
 }
 
 /**
@@ -102,7 +104,7 @@ export async function deleteInvite(inviteID: string, token?: string) {
  */
 export async function updateInvite(
   inviteID: string,
-  role: string,
+  role: IrminRole,
   token?: string
 ) {
   const irminCore = await initCore(token);
@@ -110,7 +112,7 @@ export async function updateInvite(
     inviteID,
     role,
   });
-  return response.data;
+  return response;
 }
 
 /**
@@ -123,7 +125,7 @@ export async function updateInvite(
 export async function acceptInvite(inviteID: string, token?: string) {
   const irminCore = await initCore(token);
   const response = await irminCore.inviteService.acceptInvite({ inviteID });
-  return response.data;
+  return response;
 }
 
 /**
@@ -136,5 +138,5 @@ export async function acceptInvite(inviteID: string, token?: string) {
 export async function declineInvite(inviteID: string, token?: string) {
   const irminCore = await initCore(token);
   const response = await irminCore.inviteService.declineInvite({ inviteID });
-  return response.data;
+  return response;
 }

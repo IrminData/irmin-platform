@@ -1,10 +1,12 @@
 import { Metadata } from 'next';
 
+import { redirect } from 'next/navigation';
+
 import { currentUser } from '@clerk/nextjs/server';
 
 import { TbX } from 'react-icons/tb';
 
-import { verifyInviteHash } from '@/lib/actions/invites';
+import { getInvite } from '@/lib/actions/invites';
 
 import AcceptInviteSection from '@/components/user/AcceptInviteSection';
 
@@ -12,22 +14,33 @@ import AcceptInviteSection from '@/components/user/AcceptInviteSection';
  * Page metadata for SEO on the sign in page
  */
 export const metadata: Metadata = {
-  title: 'Accept invite | IRMIN',
-  description: 'Accept an invite to access IRMIN.',
+  title: 'You have been invited to join a workspace | IRMIN',
+};
+
+type InvitePageParams = {
+  inviteId: string;
+  lang: string;
 };
 
 /**
  * Invite acceptance page
  */
-export default async function AcceptInvitePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+export default async function InvitePage(props: {
+  params: Promise<InvitePageParams>;
 }) {
-  const { hash } = await searchParams;
+  const params = await props.params;
+
+  // Find the user
   const user = await currentUser();
-  const res = await verifyInviteHash(hash as string);
-  if (!res.data) {
+  if (!user) {
+    // User needs to sign in to accept the invite
+    // Redirect to sign in page
+    redirect('/sign-in');
+  }
+
+  // Get the invite by ID
+  const invite = await getInvite(params.inviteId);
+  if (!invite) {
     return (
       <div className='container mx-auto my-8 max-w-3xl'>
         <div
@@ -48,11 +61,6 @@ export default async function AcceptInvitePage({
       </div>
     );
   }
-  return (
-    <AcceptInviteSection
-      user={user ?? undefined}
-      invitePayload={res.data}
-      hash={hash as string}
-    />
-  );
+
+  return <AcceptInviteSection user={user} invite={invite} />;
 }

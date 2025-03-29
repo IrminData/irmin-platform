@@ -9,18 +9,18 @@ import {
 } from 'react';
 
 import {
-  cancelInvite,
-  changeInviteRole,
-  getInvites,
+  deleteInvite,
+  getWorkspaceInvites,
   resendInvite,
   sendInvite,
+  updateInvite,
 } from '@/lib/actions/invites';
 import { changeUserRole, deleteUser, getUsers } from '@/lib/actions/users';
 
 import WorkspaceSendInviteModalContent from '@/components/workspace/WorkspaceSendInviteModalContent';
 
 import { Invite } from '@/types/core/Invite';
-import { IrminRole } from '@/types/core/IrminRole';
+import { IrminRole, Role } from '@/types/core/IrminRole';
 import { User } from '@/types/core/User';
 
 import { useLocale } from './LocaleContext';
@@ -30,15 +30,15 @@ import { usePopup } from './PopupContext';
  * Users context properties
  */
 interface UsersContextProps {
-  roles: IrminRole[];
+  roles: Role[];
   users: User[];
   invites: Invite[];
   fetchUsers: () => void;
   fetchInvites: () => void;
   deleteUser: (userID: string) => Promise<void>;
   deleteInvite: (inviteID: string) => Promise<void>;
-  changeUserRole: (userID: string, roles: string[]) => Promise<void>;
-  changeInviteRole: (inviteID: string, role: string) => Promise<void>;
+  changeUserRole: (userID: string, roles: IrminRole[]) => Promise<void>;
+  changeInviteRole: (inviteID: string, role: IrminRole) => Promise<void>;
   resendInvite: (inviteID: string) => Promise<void>;
   sendInvite: () => void;
 }
@@ -57,7 +57,7 @@ export const UsersProvider = ({
 }: {
   children: React.ReactNode;
   currentWorkspace: string;
-  roles: IrminRole[];
+  roles: Role[];
   currentUsers: User[];
   currentInvites: Invite[];
 }) => {
@@ -72,7 +72,7 @@ export const UsersProvider = ({
 
   const fetchUsers = useCallback(async () => {
     try {
-      const newUsers = await getUsers();
+      const newUsers = await getUsers(currentWorkspace);
       if (!newUsers) return;
       setUsers(newUsers);
     } catch (error) {
@@ -81,11 +81,11 @@ export const UsersProvider = ({
         (error as Error)?.message ?? 'Failed to fetch the users'
       );
     }
-  }, [irminAlert]);
+  }, [irminAlert, currentWorkspace]);
 
   const fetchInvites = useCallback(async () => {
     try {
-      const newInvites = await getInvites(currentWorkspace);
+      const { data: newInvites } = await getWorkspaceInvites(currentWorkspace);
       if (!newInvites) return;
       setInvites(newInvites);
     } catch (error) {
@@ -101,7 +101,7 @@ export const UsersProvider = ({
       if (updatingUsers.current) return;
       try {
         updatingUsers.current = true;
-        const res = await deleteUser(userID);
+        const res = await deleteUser(currentWorkspace, userID);
         await fetchUsers();
         irminAlert('success', res.message ?? 'User deleted successfully');
       } catch (error) {
@@ -113,7 +113,7 @@ export const UsersProvider = ({
         updatingUsers.current = false;
       }
     },
-    [fetchUsers, irminAlert]
+    [fetchUsers, currentWorkspace, irminAlert]
   );
 
   const handleDeleteInvite = useCallback(
@@ -121,7 +121,7 @@ export const UsersProvider = ({
       if (updatingInvites.current) return;
       try {
         updatingInvites.current = true;
-        const res = await cancelInvite(inviteID);
+        const res = await deleteInvite(inviteID);
         await fetchInvites();
         irminAlert('success', res.message ?? 'Invite cancelled successfully');
       } catch (error) {
@@ -137,11 +137,11 @@ export const UsersProvider = ({
   );
 
   const handleChangeUserRole = useCallback(
-    async (userID: string, roles: string[]) => {
+    async (userID: string, roles: IrminRole[]) => {
       if (updatingUsers.current) return;
       try {
         updatingUsers.current = true;
-        const res = await changeUserRole(userID, roles);
+        const res = await changeUserRole(currentWorkspace, userID, roles);
         await fetchUsers();
         irminAlert('success', res.message ?? 'User role changed successfully');
       } catch (error) {
@@ -153,15 +153,15 @@ export const UsersProvider = ({
         updatingUsers.current = false;
       }
     },
-    [fetchUsers, irminAlert]
+    [fetchUsers, currentWorkspace, irminAlert]
   );
 
   const handleChangeInviteRole = useCallback(
-    async (inviteID: string, role: string) => {
+    async (inviteID: string, role: IrminRole) => {
       if (updatingInvites.current) return;
       try {
         updatingInvites.current = true;
-        const res = await changeInviteRole(inviteID, role);
+        const res = await updateInvite(inviteID, role);
         await fetchInvites();
         irminAlert(
           'success',
@@ -198,24 +198,14 @@ export const UsersProvider = ({
     irminModal.show(
       dict.users.inviteUser,
       <WorkspaceSendInviteModalContent
-        irminRoles={roles}
-        handleInvite={async (data: {
-          firstName: string;
-          lastName: string;
-          email: string;
-          phone: string;
-          company: string;
-          role: string;
-        }) => {
+        roles={roles}
+        handleInvite={async (data: { email: string; role: IrminRole }) => {
           if (updatingInvites.current) return;
           try {
             updatingInvites.current = true;
             const res = await sendInvite(
-              data.firstName,
-              data.lastName,
+              currentWorkspace,
               data.email,
-              data.phone,
-              data.company,
               data.role
             );
             await fetchInvites();
@@ -234,7 +224,7 @@ export const UsersProvider = ({
         }}
       />
     );
-  }, [dict, roles, fetchInvites, irminModal, irminAlert]);
+  }, [dict, roles, currentWorkspace, fetchInvites, irminModal, irminAlert]);
 
   return (
     <UsersContext.Provider

@@ -8,13 +8,11 @@ import { useRouter } from 'next/navigation';
 
 import { User } from '@clerk/nextjs/server';
 
-import { TbCheck, TbLogin, TbX } from 'react-icons/tb';
+import { TbCheck, TbX } from 'react-icons/tb';
 
 import { acceptInvite, declineInvite } from '@/lib/actions/invites';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import { Separator } from '@/components/ui/separator';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
@@ -22,145 +20,50 @@ import ThemeSwitch from '@/components/ui/ThemeSwitch';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { InviteSignedURLPayload } from '@/types/core/Invite';
+import { Invite } from '@/types/core/Invite';
 
 const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
 
 export default function AcceptInviteSection({
-  invitePayload,
+  invite,
   user,
-  hash,
 }: {
-  invitePayload: InviteSignedURLPayload;
-  user?: User;
-  hash: string;
+  invite: Invite;
+  user: User;
 }) {
   const router = useRouter();
   const { irminAlert } = usePopup();
   const { dict } = useLocale();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleAccept = useCallback(async () => {
     try {
       setError('');
       setIsLoading(true);
-      const res = await acceptInvite(
-        invitePayload.invite,
-        hash,
-        user ? undefined : password,
-        user ? undefined : confirmPassword
-      );
+      const res = await acceptInvite(invite.id);
       irminAlert('success', res.message ?? 'Invite accepted successfully');
-      router.push('/workspace');
+      router.push(`/workspace/${invite.workspace.slug}`);
     } catch (error) {
       setError((error as Error).message ?? 'Failed to accept invite');
     } finally {
       setIsLoading(false);
     }
-  }, [
-    invitePayload,
-    hash,
-    password,
-    confirmPassword,
-    irminAlert,
-    router,
-    user,
-  ]);
+  }, [invite, irminAlert, router, user]);
 
   const handleDecline = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await declineInvite(invitePayload.invite, hash);
+      const res = await declineInvite(invite.id);
       irminAlert('success', res.message ?? 'Invite declined successfully');
-      router.push('/');
+      router.push(`/`);
     } catch (error) {
       setError((error as Error).message ?? 'Failed to decline invite');
     } finally {
       setIsLoading(false);
     }
-  }, [invitePayload, hash, irminAlert, router]);
-
-  const handleLogin = useCallback(() => {
-    router.push('/sign-in');
-  }, [router]);
-
-  const renderActionButtons = () => {
-    if (invitePayload.has_an_account && !user) {
-      return (
-        <Button onClick={handleLogin} className='w-full'>
-          <TbLogin className='mr-2 h-4 w-4' /> {dict.invite.loginToAccept}
-        </Button>
-      );
-    }
-
-    if (!invitePayload.has_an_account) {
-      return (
-        <div className='space-y-4'>
-          <div className='space-y-2'>
-            <Label htmlFor='password'>{dict.invite.setPassword}</Label>
-            <Input
-              id='password'
-              type='password'
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={dict.invite.enterNewPassword}
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='confirm-password'>
-              {dict.invite.confirmPassword}
-            </Label>
-            <Input
-              id='confirm-password'
-              type='password'
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder={dict.invite.reenterPassword}
-            />
-          </div>
-          {error && <p className='text-sm text-red-500'>{error}</p>}
-          <div className='flex w-full flex-col gap-2'>
-            <Button
-              variant='outline'
-              onClick={handleDecline}
-              disabled={isLoading}
-              className='w-full'
-            >
-              <TbX className='mr-2 h-4 w-4' /> {dict.invite.declineInvitation}
-            </Button>
-            <Button
-              onClick={handleAccept}
-              disabled={isLoading || !password || !confirmPassword}
-              className='w-full'
-            >
-              <TbCheck className='mr-2 h-4 w-4' />{' '}
-              {dict.invite.acceptAndCreateAccount}
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className='flex w-full flex-col gap-2'>
-        <Button
-          variant='outline'
-          onClick={handleDecline}
-          disabled={isLoading}
-          className='w-full'
-        >
-          <TbX className='mr-2 h-4 w-4' /> {dict.invite.declineInvitation}
-        </Button>
-        <Button onClick={handleAccept} disabled={isLoading} className='w-full'>
-          <TbCheck className='mr-2 h-4 w-4' /> {dict.invite.acceptInvitation}
-        </Button>
-      </div>
-    );
-  };
+  }, [invite, irminAlert, router]);
 
   return (
     <div
@@ -207,31 +110,49 @@ export default function AcceptInviteSection({
         <div className='space-y-2 text-sm'>
           <p className='flex justify-between'>
             <span className='font-medium'>{dict.invite.invitedBy}:</span>{' '}
-            <span className='text-foreground'>{invitePayload.inviter}</span>
+            <span className='text-foreground'>{invite.invited_by.email}</span>
           </p>
           <p className='flex justify-between'>
             <span className='font-medium'>{dict.invite.workspace}:</span>{' '}
-            <span className='text-foreground'>{invitePayload.workspace}</span>
+            <span className='text-foreground'>{invite.workspace.name}</span>
           </p>
           <p className='flex justify-between'>
-            <span className='font-medium'>{dict.invite.yourEmail}:</span>{' '}
-            <span className='text-foreground'>{invitePayload.email}</span>
+            <span className='font-medium'>{dict.invite.role}:</span>{' '}
+            <span className='text-foreground'>{invite.role}</span>
           </p>
-          <p className='flex justify-between'>
-            <span className='font-medium'>{dict.invite.yourPhone}:</span>{' '}
-            <span className='text-foreground'>{invitePayload.phone}</span>
-          </p>
-          {invitePayload.company && (
-            <p className='flex justify-between'>
-              <span className='font-medium'>{dict.invite.yourCompany}:</span>{' '}
-              <span className='text-foreground'>{invitePayload.company}</span>
-            </p>
-          )}
         </div>
 
         <Separator />
 
-        {renderActionButtons()}
+        <div className='flex w-full flex-col gap-2'>
+          <Button
+            variant='outline'
+            onClick={handleDecline}
+            disabled={isLoading}
+            className='w-full'
+          >
+            <TbX className='mr-2 h-4 w-4' /> {dict.invite.declineInvitation}
+          </Button>
+          <Button
+            onClick={handleAccept}
+            disabled={isLoading}
+            className='w-full'
+          >
+            <TbCheck className='mr-2 h-4 w-4' /> {dict.invite.acceptInvitation}
+          </Button>
+        </div>
+
+        {error && (
+          <div className='rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700'>
+            <div className='flex gap-4'>
+              <TbX className='h-6 w-6 text-red-400' />
+              <div>
+                <p className='font-bold'>{dict.common.ohNo}:</p>
+                <p className='text-sm'>{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -4,10 +4,10 @@ import type { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { getInvites } from '@/lib/actions/invites';
+import { getWorkspaceInvites } from '@/lib/actions/invites';
 import { getRoles } from '@/lib/actions/roles';
 import { getUsers } from '@/lib/actions/users';
-import { getWorkspace, switchWorkspace } from '@/lib/actions/workspaces';
+import { getWorkspace } from '@/lib/actions/workspaces';
 import { Locale } from '@/lib/dict';
 import { getToken } from '@/lib/getToken';
 
@@ -48,15 +48,12 @@ export default async function ConsoleWorkspaceLayout(props: {
 
   const token = await getToken();
 
-  // Switch to the current workspace
-  await switchWorkspace(currentWorkspace, token);
-
   // Fetch the workspace, roles, users, and invites
   const [workspace, roles, users, invites] = await Promise.all([
     getWorkspace(currentWorkspace, token),
     getRoles(token),
     getUsers(token),
-    getInvites(currentWorkspace, undefined, false, false, token),
+    getWorkspaceInvites(currentWorkspace, token),
   ]);
 
   if (!workspace || !roles || !users || !invites) return notFound();
