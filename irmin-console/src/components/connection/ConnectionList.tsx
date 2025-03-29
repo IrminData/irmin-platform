@@ -80,16 +80,6 @@ const ConnectionList = ({
           details: (
             <div className='flex max-w-sm flex-col text-gray-600 dark:text-gray-400'>
               <p className='pb-4 text-sm'>{item.description}</p>
-              <p className='pb-1 text-xs'>
-                {dict.list.lastUpdated}
-                {': '}
-                {new Date(item.updated_at).toLocaleString(locale)}
-              </p>
-              <p className='text-xs'>
-                {dict.list.createdAt}
-                {': '}
-                {new Date(item.created_at).toLocaleString(locale)}
-              </p>
             </div>
           ),
         };

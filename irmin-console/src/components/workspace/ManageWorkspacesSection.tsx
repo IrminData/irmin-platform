@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import { getWorkspaces, switchWorkspace } from '@/lib/actions/workspaces';
+import { getWorkspaces } from '@/lib/actions/workspaces';
 
 import ConsoleTitle from '@/components/console/ConsoleTitle';
 import Button from '@/components/ui/button';
@@ -79,11 +79,6 @@ const ManageWorkspacesSection = ({
   const handleSwitchWorkspace = useCallback(
     async (slug: string) => {
       try {
-        const res = await switchWorkspace(slug);
-        irminAlert(
-          'success',
-          res?.message ?? 'Workspace switched successfully'
-        );
         router.push(`/${locale}/workspace/${slug}`);
       } catch (error) {
         console.error('Failed to switch workspace: ', error);

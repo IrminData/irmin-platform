@@ -92,7 +92,7 @@ export default function TokensSection({
                   {token.name}
                 </td>
                 <td className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
-                  {new Date(token.expiry).toLocaleDateString(locale)}
+                  {new Date(token.expires_at).toLocaleDateString(locale)}
                 </td>
                 <td className='px-4 py-2 text-right'>
                   <div className='flex w-full flex-row justify-end gap-2 align-middle'>

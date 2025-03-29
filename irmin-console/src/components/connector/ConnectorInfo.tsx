@@ -2,17 +2,11 @@
 
 import { useState } from 'react';
 
-import { TbChevronDown, TbChevronUp, TbMail } from 'react-icons/tb';
+import { TbMail } from 'react-icons/tb';
 
-import MDXViewer from '@/components/documentation/MDXViewer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -123,30 +117,6 @@ export function ConnectorInfo({ connector }: ConnectorInfoProps) {
           ))}
         </div>
       </div>
-
-      {connector.documentation && (
-        <Collapsible open={isDocsOpen} onOpenChange={setIsDocsOpen}>
-          <div className='flex items-center justify-between'>
-            <h3 className='font-semibold'>
-              {dict.documentation.documentation}
-            </h3>
-            <CollapsibleTrigger asChild>
-              <Button variant='ghost' size='sm'>
-                {isDocsOpen ? (
-                  <TbChevronUp className='h-4 w-4' />
-                ) : (
-                  <TbChevronDown className='h-4 w-4' />
-                )}
-              </Button>
-            </CollapsibleTrigger>
-          </div>
-          <CollapsibleContent>
-            <div className='mt-2 rounded-md bg-gray-100 p-4'>
-              <MDXViewer content={connector.documentation} />
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      )}
 
       {connector.read_more_url && (
         <div className='mt-4'>

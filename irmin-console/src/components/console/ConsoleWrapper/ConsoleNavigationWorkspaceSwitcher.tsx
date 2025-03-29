@@ -7,8 +7,6 @@ import { useRouter } from 'next/navigation';
 
 import { SingleValue } from 'react-select';
 
-import { switchWorkspace } from '@/lib/actions/workspaces';
-
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -54,11 +52,6 @@ export default function ConsoleNavigationWorkspaceSwitcher({
           setIsMenuOpen(false);
           return;
         }
-        const res = await switchWorkspace(value);
-        irminAlert(
-          'success',
-          res?.message ?? 'Workspace switched successfully'
-        );
         setIsMenuOpen(false);
         router.push(`/${locale}/workspace/${value}`);
       } catch (error) {
