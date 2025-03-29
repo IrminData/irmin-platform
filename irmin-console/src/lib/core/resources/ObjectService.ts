@@ -52,7 +52,7 @@ class ObjectService {
    * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.path - The path of the object.
-   * @param props.ref - The ref (branch, tag or commit hash).
+   * @param props.ref - (optional) The ref (branch, tag or commit hash).
    * @returns IrminAPIResponse containing the object.
    */
   async getObjectAtPath({
@@ -64,14 +64,15 @@ class ObjectService {
     workspace: string;
     repository: string;
     path: string;
-    ref: string;
+    ref?: string;
   }): Promise<IrminAPIResponse<RepoObject>> {
     if (isOfflineMode)
       return fake(
         exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
       ) as IrminAPIResponse<RepoObject>;
     try {
-      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects?ref=${encodeURIComponent(ref)}&path=${encodeURIComponent(path)}`;
+      let url = `/v1/workspaces/${workspace}/repositories/${repository}/objects?&path=${encodeURIComponent(path)}`;
+      if (ref) url += `ref=${encodeURIComponent(ref)}`;
       const response = (await this.irminCore.fetchAPI(url, {
         method: 'GET',
       })) as IrminAPIResponse<RepoObject>;
@@ -105,12 +106,13 @@ class ObjectService {
     workspace: string;
     repository: string;
     path: string;
-    ref: string;
+    ref?: string;
   }): Promise<IrminAPIResponse<Commit[]>> {
     if (isOfflineMode)
       return fake(exampleCommits) as IrminAPIResponse<Commit[]>;
     try {
-      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/history?ref=${encodeURIComponent(ref)}&path=${encodeURIComponent(path)}`;
+      let url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/history?path=${encodeURIComponent(path)}`;
+      if (ref) url += `&ref=${encodeURIComponent(ref)}`;
       const response = (await this.irminCore.fetchAPI(url, {
         method: 'GET',
       })) as IrminAPIResponse<Commit[]>;
@@ -142,12 +144,13 @@ class ObjectService {
     workspace: string;
     repository: string;
     path: string;
-    ref: string;
+    ref?: string;
   }): Promise<IrminAPIResponse<ObjectSchema>> {
     if (isOfflineMode)
       return fake(exampleTableObjectSchema) as IrminAPIResponse<ObjectSchema>;
     try {
-      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/schema?ref=${encodeURIComponent(ref)}&path=${encodeURIComponent(path)}`;
+      let url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/schema?path=${encodeURIComponent(path)}`;
+      if (ref) url += `&ref=${encodeURIComponent(ref)}`;
       const response = (await this.irminCore.fetchAPI(url, {
         method: 'GET',
       })) as IrminAPIResponse<ObjectSchema>;
@@ -179,7 +182,7 @@ class ObjectService {
     workspace: string;
     repository: string;
     path: string;
-    ref: string;
+    ref?: string;
   }): Promise<IrminAPIBinaryResponse> {
     if (isOfflineMode)
       return (await exampleAPIBinaryResponse(
@@ -188,8 +191,8 @@ class ObjectService {
       )) as IrminAPIBinaryResponse;
     try {
       const urlParams = new URLSearchParams();
-      urlParams.append('ref', ref);
       urlParams.append('path', path);
+      if (ref) urlParams.append('ref', ref);
       const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/content?${urlParams.toString()}`;
       const response = await this.irminCore.fetchBinary(url, { method: 'GET' });
       return response;

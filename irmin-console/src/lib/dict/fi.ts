@@ -219,6 +219,7 @@ const fi = {
       baseContent: 'Pohjasisältö',
       comparedContent: 'Vertailusisältö',
       mergeStrategy: 'Sulautusstrategia',
+      squashCommits: 'Yhdistä commitit',
       mergeCommitDescription: 'Sulautuscommitin kuvaus',
       defaultStrategy: 'Oletus',
       destWinsStrategy: 'Kohde voittaa',

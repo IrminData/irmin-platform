@@ -6,6 +6,7 @@ import { Controller, useForm } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
 import Button from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -34,7 +35,8 @@ export default function MergeModalContent({
     baseRef: string,
     compareRef: string,
     description: string,
-    mergeStrategy: MergeStrategy
+    mergeStrategy: MergeStrategy,
+    squash: boolean
   ) => Promise<boolean>;
   closeModal: () => void;
 }) {
@@ -48,6 +50,7 @@ export default function MergeModalContent({
     defaultValues: {
       description: '',
       mergeStrategy: 'default',
+      squashCommits: false,
     },
   });
 
@@ -69,14 +72,19 @@ export default function MergeModalContent({
    * Handle the merge refs form submission, merge one ref in to another.
    */
   const onSubmit = useCallback(
-    async (data: { description: string; mergeStrategy: string }) => {
+    async (data: {
+      description: string;
+      mergeStrategy: string;
+      squashCommits: boolean;
+    }) => {
       try {
         setLoading(true);
         const successful = await mergeRefs(
           baseRef,
           compareRef,
           data.description,
-          data.mergeStrategy as MergeStrategy
+          data.mergeStrategy as MergeStrategy,
+          data.squashCommits
         );
         if (successful) {
           closeModal();
@@ -137,6 +145,23 @@ export default function MergeModalContent({
         <p className='mt-2 px-1 text-xs opacity-70'>
           {dict.repository.compare.mergeExplanation}
         </p>
+      </div>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.compare.squashCommits}</Label>
+        <div className='w-full'>
+          <Controller
+            name='squashCommits'
+            control={control}
+            render={({ field }) => (
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={(checked) => field.onChange(checked)}
+              >
+                {dict.repository.compare.squashCommits}
+              </Checkbox>
+            )}
+          />
+        </div>
       </div>
       <Button
         className='mt-4 h-11 w-full'

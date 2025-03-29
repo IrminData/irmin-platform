@@ -14,7 +14,6 @@ import {
   deleteWorkspace,
   getWorkspace,
   leaveWorkspace,
-  switchWorkspace,
   transferWorkspace,
   updateWorkspace,
 } from '@/lib/actions/workspaces';
@@ -31,6 +30,7 @@ import { usePopup } from './PopupContext';
  * Workspace context properties
  */
 interface WorkspaceContextProps {
+  workspaceSlug: string;
   workspace: Workspace | null;
   fetchWorkspace: () => Promise<void>;
   deleteWorkspace: () => Promise<void>;
@@ -93,7 +93,6 @@ export const WorkspaceProvider = ({
               'success',
               res.message ?? 'Workspace deleted successfully'
             );
-            await switchWorkspace();
             router.push('/workspace');
           } catch (error) {
             irminAlert(
@@ -113,7 +112,11 @@ export const WorkspaceProvider = ({
       if (updating.current) return;
       try {
         updating.current = true;
-        const res = await updateWorkspace(workspaceSlug, data);
+        const res = await updateWorkspace(
+          workspaceSlug,
+          data.name,
+          data.description
+        );
         await fetchWorkspace();
         irminAlert('success', res.message ?? 'Workspace updated successfully');
       } catch (error) {
@@ -165,7 +168,7 @@ export const WorkspaceProvider = ({
     if (updating.current || !confirmed) return;
     try {
       updating.current = true;
-      const res = await leaveWorkspace();
+      const res = await leaveWorkspace(workspace.slug);
       router.push('/workspace');
       irminAlert('success', res.message ?? 'You have left the workspace');
     } catch (error) {
@@ -181,6 +184,7 @@ export const WorkspaceProvider = ({
   return (
     <WorkspaceContext.Provider
       value={{
+        workspaceSlug,
         workspace,
         fetchWorkspace,
         deleteWorkspace: handleDeleteWorkspace,

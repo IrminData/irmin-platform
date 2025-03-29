@@ -8,7 +8,7 @@ import { initCore } from '@/lib/initCore';
  * @param workspace - The workspace slug.
  * @param repository - The repository slug.
  * @param path - The path of the object.
- * @param ref - The ref (branch, tag or commit hash).
+ * @param ref - (optional) The ref (branch, tag or commit hash).
  * @param token - Optional user token.
  * @returns The object details.
  */
@@ -16,7 +16,7 @@ export async function getObject(
   workspace: string,
   repository: string,
   path: string,
-  ref: string,
+  ref?: string,
   token?: string
 ) {
   const irminCore = await initCore(token);
@@ -43,7 +43,7 @@ export async function getObjectHistory(
   workspace: string,
   repository: string,
   path: string,
-  ref: string,
+  ref?: string,
   token?: string
 ) {
   const irminCore = await initCore(token);
@@ -70,7 +70,7 @@ export async function getObjectSchema(
   workspace: string,
   repository: string,
   path: string,
-  ref: string,
+  ref?: string,
   token?: string
 ) {
   const irminCore = await initCore(token);
@@ -89,15 +89,15 @@ export async function getObjectSchema(
  * @param workspace - The workspace identifier.
  * @param repository - The repository identifier.
  * @param path - The path of the object.
- * @param ref - The ref to fetch content at.
- * @param token - Optional user token.
+ * @param ref - (optional) The ref to fetch content at.
+ * @param token - (optional) user token.
  * @returns The binary content of the object.
  */
 export async function getObjectContent(
   workspace: string,
   repository: string,
   path: string,
-  ref: string,
+  ref?: string,
   token?: string
 ) {
   const irminCore = await initCore(token);

@@ -40,7 +40,7 @@ export default function ObjectList({
   selectObject: (object: Object) => void;
 }) {
   const { locale, dict } = useLocale();
-  const { loadingObjects, updateCurrentPath, currentPath, objects } =
+  const { loadingObjects, updateCurrentPath, currentPath, directory } =
     useRepository();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{
@@ -49,10 +49,12 @@ export default function ObjectList({
   }>({ key: 'name', direction: 'ascending' });
 
   const filteredObjects = useMemo(() => {
-    return objects.filter((obj) =>
-      obj.name.toLowerCase().includes(searchTerm.toLowerCase())
+    return (
+      directory?.children?.filter((obj) =>
+        obj.name.toLowerCase().includes(searchTerm.toLowerCase())
+      ) ?? []
     );
-  }, [objects, searchTerm]);
+  }, [directory, searchTerm]);
 
   const sortedObjects = useMemo(() => {
     const sortableObjects = [...filteredObjects];
@@ -68,7 +70,9 @@ export default function ObjectList({
     return sortableObjects;
   }, [filteredObjects, sortConfig]);
 
-  const handleSort = (key: keyof Object) => {
+  const handleSort = (
+    key: 'name' | 'path' | 'type' | 'content_type' | 'last_modified'
+  ) => {
     setSortConfig((prevConfig) => ({
       key,
       direction:

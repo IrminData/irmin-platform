@@ -137,29 +137,29 @@ const DiffView = ({
                   </h4>
                   {/* Size Indicator */}
                   <div className='text-xs text-gray-500 dark:text-gray-400'>
-                    {item.type === ChangeType.ADDED && (
+                    {item.type === 'added' && (
                       <span className='rounded-md bg-green-100 p-1 text-green-700 dark:bg-green-900 dark:text-green-200'>
                         +{item.size} {dict.repository.compare.bytes}
                       </span>
                     )}
-                    {item.type === ChangeType.REMOVED && (
+                    {item.type === 'removed' && (
                       <span className='rounded-md bg-red-100 p-1 text-red-700 dark:bg-red-900 dark:text-red-200'>
                         -{item.size} {dict.repository.compare.bytes}
                       </span>
                     )}
-                    {item.type === ChangeType.CHANGED && (
+                    {item.type === 'changed' && (
                       <span className='rounded-md bg-blue-100 p-1 text-blue-700 dark:bg-blue-900 dark:text-blue-200'>
                         {item.size} {dict.repository.compare.bytes}{' '}
                         {dict.repository.compare.modified}
                       </span>
                     )}
-                    {item.type === ChangeType.MOVED && (
+                    {item.type === 'moved' && (
                       <span className='rounded-md bg-purple-100 p-1 text-purple-700 dark:bg-purple-900 dark:text-purple-200'>
                         {dict.repository.compare.moved} {item.size}{' '}
                         {dict.repository.compare.bytes}
                       </span>
                     )}
-                    {item.type === ChangeType.CONFLICT && (
+                    {item.type === 'conflict' && (
                       <span className='rounded-md bg-yellow-100 p-1 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200'>
                         {dict.repository.compare.conflict} {item.size}{' '}
                         {dict.repository.compare.bytes}

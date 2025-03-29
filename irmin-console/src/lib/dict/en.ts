@@ -216,6 +216,7 @@ const en = {
       baseContent: 'Base content',
       comparedContent: 'Compared content',
       mergeStrategy: 'Merge strategy',
+      squashCommits: 'Squash commits',
       mergeCommitDescription: 'Merge commit description',
       defaultStrategy: 'Default',
       destWinsStrategy: 'Destination wins',

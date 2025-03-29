@@ -108,7 +108,6 @@ export async function deleteRepository(
  * @param name - The new repository name.
  * @param description - The new repository description.
  * @param documentation - The new repository documentation.
- * @param default_branch - The new default branch name.
  * @param isImmutable - Whether the repository is immutable.
  * @param garbageDefaultRetentionDays - The new retention days for garbage collection.
  * @param garbageDefaultBranchRetentionDays - The new retention days for garbage collection on the default branch.
@@ -121,7 +120,6 @@ export async function updateRepository(
   name?: string,
   description?: string,
   documentation?: string,
-  default_branch?: string,
   isImmutable?: boolean,
   garbageDefaultRetentionDays?: number,
   garbageDefaultBranchRetentionDays?: number,
@@ -134,7 +132,6 @@ export async function updateRepository(
     name,
     description,
     documentation,
-    default_branch,
     isImmutable,
     garbageDefaultRetentionDays,
     garbageDefaultBranchRetentionDays,

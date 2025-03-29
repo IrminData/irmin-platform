@@ -172,7 +172,6 @@ class RepositoryService {
    * @param props.name - New name of the repository.
    * @param props.description - New description.
    * @param props.documentation - New documentation.
-   * @param props.default_branch - New default branch.
    * @param props.isImmutable - Whether the repository is immutable.
    * @param props.garbageDefaultRetentionDays - Garbage collection default retention days.
    * @param props.garbageDefaultBranchRetentionDays - Garbage collection default branch retention days.
@@ -184,7 +183,6 @@ class RepositoryService {
     name,
     description,
     documentation,
-    default_branch,
     isImmutable,
     garbageDefaultRetentionDays,
     garbageDefaultBranchRetentionDays,
@@ -194,7 +192,6 @@ class RepositoryService {
     name?: string;
     description?: string;
     documentation?: string;
-    default_branch?: string;
     isImmutable?: boolean;
     garbageDefaultRetentionDays?: number;
     garbageDefaultBranchRetentionDays?: number;
@@ -206,7 +203,6 @@ class RepositoryService {
       if (name) params.append('name', name);
       if (description) params.append('description', description);
       if (documentation) params.append('documentation', documentation);
-      if (default_branch) params.append('default_branch', default_branch);
       if (isImmutable !== undefined)
         params.append('is_immutable', isImmutable.toString());
       if (garbageDefaultRetentionDays !== undefined)
