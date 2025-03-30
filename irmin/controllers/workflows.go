@@ -1017,3 +1017,96 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 		Data:    workflowResponse,
 	})
 }
+
+func PauseWorkflow(c fiber.Ctx) error {
+	// Get the dictionary and workflow from the request context.
+	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
+	workspace := c.Locals("workspace").(*db.Workspace)
+	workflow := c.Locals("workflow").(*db.Workflow)
+
+	// Update the workflow record to pause it.
+	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]any{
+		"paused": true,
+	})
+	if err != nil {
+		log.Printf("Error pausing workflow: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Get the workflow response.
+	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
+	if err != nil {
+		log.Printf("Error getting workflow response: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: "Workflow paused",
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+		WorkflowID:  &workflow.ID,
+	})
+
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+		Message: dict.T("workflow_stopped"),
+		Data:    workflowResponse,
+	})
+}
+
+func StartWorkflow(c fiber.Ctx) error {
+	// Get the dictionary and workflow from the request context.
+	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
+	workspace := c.Locals("workspace").(*db.Workspace)
+	workflow := c.Locals("workflow").(*db.Workflow)
+
+	// Check if the workflow is already running.
+	if !workflow.Paused {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("workflow_already_running")},
+		})
+	}
+
+	// Update the workflow record to start it.
+	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]any{
+		"paused": false,
+	})
+	if err != nil {
+		log.Printf("Error starting workflow: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// TODO: Start the workflow execution.
+
+	// Get the workflow response.
+	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
+	if err != nil {
+		log.Printf("Error getting workflow response: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeUpdate,
+		Description: "Workflow started",
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+		WorkflowID:  &workflow.ID,
+	})
+
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+		Message: dict.T("workflow_started"),
+		Data:    workflowResponse,
+	})
+}

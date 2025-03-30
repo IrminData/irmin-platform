@@ -146,9 +146,13 @@ func FormatWorkflowResponse(workflow db.Workflow) (*irminModels.Workflow, error)
 
 	// Find the latest workflow run status.
 	latestStatus := irminModels.WorkflowStatusInitiating
-	latestWorkflowRun, _ := db.GetLatestWorkflowRunByWorkflowID(workflow.ID)
-	if latestWorkflowRun != nil {
-		latestStatus = irminModels.WorkflowStatus(latestWorkflowRun.Status)
+	if workflow.Paused {
+		latestStatus = irminModels.WorkflowStatusPaused
+	} else {
+		latestWorkflowRun, _ := db.GetLatestWorkflowRunByWorkflowID(workflow.ID)
+		if latestWorkflowRun != nil {
+			latestStatus = irminModels.WorkflowStatus(latestWorkflowRun.Status)
+		}
 	}
 
 	// Structure the workflow response.
