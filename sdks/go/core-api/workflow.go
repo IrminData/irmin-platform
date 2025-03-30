@@ -134,6 +134,30 @@ func (c *Client) UpdateWorkflowSchedule(workspace, workflowID string, schedule i
 	return &workflow, apiResp, nil
 }
 
+func (c *Client) PauseWorkflow(workspace, workflowID string) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+	var workflow irminModels.Workflow
+	apiResp, err := c.FetchAPI(RequestOptions{
+		Method:   http.MethodPost,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s/pause", workspace, workflowID),
+	}, &workflow)
+	if err != nil {
+		return nil, nil, fmt.Errorf("pause workflow error: %w", err)
+	}
+	return &workflow, apiResp, nil
+}
+
+func (c *Client) StartWorkflow(workspace, workflowID string) (*irminModels.Workflow, *irminModels.IrminAPIResponse, error) {
+	var workflow irminModels.Workflow
+	apiResp, err := c.FetchAPI(RequestOptions{
+		Method:   http.MethodPost,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s/start", workspace, workflowID),
+	}, &workflow)
+	if err != nil {
+		return nil, nil, fmt.Errorf("start workflow error: %w", err)
+	}
+	return &workflow, apiResp, nil
+}
+
 func (c *Client) DeleteWorkflow(workspace, workflowID string) (*irminModels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,
