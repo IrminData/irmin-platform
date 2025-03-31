@@ -9,16 +9,16 @@ import { initDict } from '@/lib/initDict';
  *
  * This action also registers the user as a subscriber in Novu.
  *
- * @param token - (Optional) User's API token.
+ * @param props.token - (Optional) User's API token.
  * @returns The current user's profile.
  */
-export async function getProfile(token?: string) {
+export async function getProfile({ token }: { token?: string }) {
   const { locale } = await initDict();
   const irminCore = await initCore(token);
   // Get the profile from the API
   const res = await irminCore.profileService.getProfile();
   if (res.data) {
-    const profile = res.data;
+    const profile = res;
     // Register the user as a subscriber in Novu
     await registerNovuSubscriber(res.data, locale);
     return profile;
@@ -31,24 +31,32 @@ export async function getProfile(token?: string) {
  *
  * This action also registers the user as a subscriber in Novu.
  *
- * @param first_name - User's new first name.
- * @param last_name - User's new last name.
- * @param email - User's new email.
- * @param phone - User's new phone number.
- * @param company - User's new company name.
- * @param avatar - (Optional) User's new profile picture.
- * @param token - (Optional) User's API token.
+ * @param props.first_name - User's new first name.
+ * @param props.last_name - User's new last name.
+ * @param props.email - User's new email.
+ * @param props.phone - User's new phone number.
+ * @param props.company - User's new company name.
+ * @param props.avatar - (Optional) User's new profile picture.
+ * @param props.token - (Optional) User's API token.
  * @returns The updated user's profile.
  */
-export async function updateProfile(
-  first_name?: string,
-  last_name?: string,
-  email?: string,
-  phone?: string,
-  company?: string,
-  avatar?: File | Blob,
-  token?: string
-) {
+export async function updateProfile({
+  first_name,
+  last_name,
+  email,
+  phone,
+  company,
+  avatar,
+  token,
+}: {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+  avatar?: File | Blob;
+  token?: string;
+}) {
   const { locale } = await initDict();
   const irminCore = await initCore(token);
   // Update the profile using the service method

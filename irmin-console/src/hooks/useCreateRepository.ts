@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import { createRepository } from '@/lib/actions/repositories';
 
 import { usePopup } from '@/context/PopupContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
@@ -14,6 +15,7 @@ export const useCreateRepository = ({
   closeModal: () => void;
 }) => {
   const { irminAlert } = usePopup();
+  const { workspaceSlug } = useWorkspace();
   const [processing, setProcessing] = useState(false);
 
   const creatingRepository = useRef(false);
@@ -22,14 +24,31 @@ export const useCreateRepository = ({
    * Create the repository with the provided data using the Irmin API
    */
   const handleCreate = useCallback(
-    async (repository: ItemUpdateProps) => {
+    async (repository: {
+      name: string;
+      description?: string;
+      documentation?: string;
+      default_branch?: string;
+      garbageDefaultRetentionDays?: number;
+      garbageDefaultBranchRetentionDays?: number;
+    }) => {
       // Prevent multiple requests
       if (creatingRepository.current) return;
       try {
         creatingRepository.current = true;
         setProcessing(true);
         // Create the repository
-        const res = await createRepository(repository);
+        const res = await createRepository({
+          workspace: workspaceSlug,
+          name: repository.name,
+          description: repository.description ?? '',
+          documentation: repository.documentation ?? '',
+          default_branch: repository.default_branch ?? 'main',
+          isImmutable: false,
+          garbageDefaultRetentionDays: repository.garbageDefaultRetentionDays,
+          garbageDefaultBranchRetentionDays:
+            repository.garbageDefaultBranchRetentionDays,
+        });
         // Show the result to the user
         irminAlert(
           'success',
@@ -50,7 +69,7 @@ export const useCreateRepository = ({
         creatingRepository.current = false;
       }
     },
-    [irminAlert, reset, closeModal]
+    [irminAlert, workspaceSlug, reset, closeModal]
   );
 
   return {

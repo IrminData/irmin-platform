@@ -20,7 +20,7 @@ export const useCreateWorkspace = ({ reset }: { reset: () => void }) => {
         setErrorMessage(null);
         setSuccessMessage(null);
         // Create the workspace
-        const res = await createWorkspace(name, description);
+        const res = await createWorkspace({ name, description });
         // Show the result to the user
         setSuccessMessage(res?.message ?? 'Workspace created successfully');
         // Reset the form values

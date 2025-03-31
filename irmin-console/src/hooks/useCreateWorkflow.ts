@@ -1,20 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  createActionWorkflow,
-  createExportWorkflow,
-  createImportWorkflow,
-} from '@/lib/actions/workflows';
+import { createWorkflow } from '@/lib/actions/workflows';
 
 import { usePopup } from '@/context/PopupContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 import { WorkflowableType } from '@/types/core/Workflow';
-import { WorkflowSetup } from '@/types/internal/WorkflowInput';
+import { WorkflowInput } from '@/types/internal/WorkflowInput';
 
 /**
  * Empty workflow setup data
  */
-export const emptyWorkflowSetupData: WorkflowSetup = {
+export const emptyWorkflowSetupData: WorkflowInput = {
   // Workflow properties
   name: '',
   description: '',
@@ -27,23 +24,19 @@ export const emptyWorkflowSetupData: WorkflowSetup = {
   },
   // Workflowable properties
   type: 'action',
-  connection: null,
-  path: '/',
-  branch: 'main',
-  repository: null,
-  recursive: false,
-  executable: '',
-  live: false,
-  stages: [],
+  workflowable: {
+    type: 'action',
+    executable: '',
+  },
 };
 
 export const useWorkflowCreation = (
   isOpen: boolean,
   workflowType: WorkflowableType,
-  initialWorkflowData: WorkflowSetup | undefined,
+  initialWorkflowData: WorkflowInput | undefined,
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>
 ) => {
-  const [workflowData, setWorkflowData] = useState<WorkflowSetup>({
+  const [workflowData, setWorkflowData] = useState<WorkflowInput>({
     ...emptyWorkflowSetupData,
     ...(initialWorkflowData ?? {}),
     type: workflowType,
@@ -71,29 +64,12 @@ export const useWorkflowCreation = (
 };
 
 export const useConfigureWorkflowable = (
-  workflowData: WorkflowSetup,
+  workflowData: WorkflowInput,
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>
 ) => {
   const handleContinue = useCallback(() => {
     // Validate the form data
-    if (workflowData.type === 'action') {
-      if (!workflowData.executable) return;
-      if (!workflowData.repository) return;
-      if (!workflowData.branch) return;
-      if (!workflowData.path) return;
-    }
-    if (workflowData.type === 'import') {
-      if (!workflowData.connection) return;
-      if (!workflowData.repository) return;
-      if (!workflowData.branch) return;
-      if (!workflowData.path) return;
-    }
-    if (workflowData.type === 'export') {
-      if (!workflowData.connection) return;
-      if (!workflowData.repository) return;
-      if (!workflowData.branch) return;
-      if (!workflowData.path) return;
-    }
+    if (workflowData.workflowable.type !== workflowData.type) return;
     // Continue to the next step
     setCurrentStep(2);
   }, [workflowData, setCurrentStep]);
@@ -104,64 +80,15 @@ export const useConfigureWorkflowable = (
 };
 
 export const useConfigureWorkflow = (
-  workflowData: WorkflowSetup,
+  workflowData: WorkflowInput,
   closeModal: () => void
 ) => {
   const { irminAlert } = usePopup();
+  const { workspaceSlug } = useWorkspace();
   const [processing, setProcessing] = useState(false);
 
   const initialWorkflowSchedule = useRef(workflowData.schedule);
   const creatingWorkflow = useRef(false);
-
-  const createWorkflow = useCallback(async () => {
-    if (workflowData.type === 'action') {
-      // Create the action workflow
-      const response = await createActionWorkflow({
-        // Workflow data
-        name: workflowData.name,
-        description: workflowData.description,
-        documentation: workflowData.documentation,
-        schedule: workflowData.schedule,
-        // Workflowable data
-        executable: workflowData.executable,
-        repository: workflowData.repository?.slug ?? '',
-        branch: workflowData.branch,
-        path: workflowData.path,
-      });
-      return response;
-    }
-    if (workflowData.type === 'import') {
-      const response = await createImportWorkflow({
-        // Workflow data
-        name: workflowData.name,
-        description: workflowData.description,
-        documentation: workflowData.documentation,
-        schedule: workflowData.schedule,
-        // Workflowable data
-        repository: workflowData.repository?.slug ?? '',
-        branch: workflowData.branch,
-        path: workflowData.path,
-        connection: workflowData.connection?.id ?? '',
-      });
-      return response;
-    }
-    if (workflowData.type === 'export') {
-      const response = await createExportWorkflow({
-        // Workflow data
-        name: workflowData.name,
-        description: workflowData.description,
-        documentation: workflowData.documentation,
-        schedule: workflowData.schedule,
-        // Workflowable data
-        repository: workflowData.repository?.slug ?? '',
-        branch: workflowData.branch,
-        path: workflowData.path,
-        connection: workflowData.connection?.id ?? '',
-        recursive: workflowData.recursive,
-      });
-      return response;
-    }
-  }, [workflowData]);
 
   /**
    * Create the workflow with the provided data using the Irmin API
@@ -173,7 +100,10 @@ export const useConfigureWorkflow = (
       creatingWorkflow.current = true;
       setProcessing(true);
       // Create the workflow
-      const res = await createWorkflow();
+      const res = await createWorkflow({
+        workspace: workspaceSlug,
+        ...workflowData,
+      });
       // Show the result to the user
       irminAlert('success', res?.message ?? 'Workflow created successfully');
       closeModal();
@@ -187,7 +117,7 @@ export const useConfigureWorkflow = (
       setProcessing(false);
       creatingWorkflow.current = false;
     }
-  }, [irminAlert, createWorkflow, closeModal]);
+  }, [irminAlert, workspaceSlug, closeModal]);
 
   return {
     processing,

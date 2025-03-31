@@ -101,9 +101,9 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
 
     try {
-      const profile = await getProfile();
-      if (profile) {
-        setProfile(profile);
+      const profile = await getProfile({});
+      if (profile.data) {
+        setProfile(profile.data);
       } else {
         resetIAMState();
       }
@@ -152,16 +152,17 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
       profile_picture?: FileList
     ) => {
       try {
-        const res = await updateProfile(
+        const res = await updateProfile({
           first_name,
           last_name,
           email,
           phone,
           company,
-          profile_picture && profile_picture.length > 0
-            ? profile_picture[0]
-            : undefined
-        );
+          avatar:
+            profile_picture && profile_picture.length > 0
+              ? profile_picture[0]
+              : undefined,
+        });
         if (res?.data) {
           setProfile(res?.data);
           irminAlert('success', res?.message ?? 'Profile updated successfully');

@@ -55,13 +55,25 @@ export default async function RepositoryLayoutWithContainer(props: {
 
   const token = await getToken();
   const [repository, branches, tags, { dict }] = await Promise.all([
-    getRepository(params.repository, token),
-    getBranches(params.repository, token),
-    getTags(params.repository, token),
+    getRepository({
+      workspace: params.workspace,
+      repositorySlug: params.repository,
+      token,
+    }),
+    getBranches({
+      workspace: params.workspace,
+      repository: params.repository,
+      token,
+    }),
+    getTags({
+      workspace: params.workspace,
+      repository: params.repository,
+      token,
+    }),
     initDict(),
   ]);
 
-  if (!repository || !branches || !tags) {
+  if (!repository.data) {
     return notFound();
   }
 
@@ -69,9 +81,10 @@ export default async function RepositoryLayoutWithContainer(props: {
     <RepositoryLayoutWrapper
       dict={dict}
       repositorySlug={params.repository}
-      initialRepository={repository}
-      initialBranches={branches}
-      initialTags={tags}
+      workspaceSlug={params.workspace}
+      initialRepository={repository.data}
+      initialBranches={branches.data ?? []}
+      initialTags={tags.data ?? []}
     >
       <QueryProvider>{children}</QueryProvider>
     </RepositoryLayoutWrapper>

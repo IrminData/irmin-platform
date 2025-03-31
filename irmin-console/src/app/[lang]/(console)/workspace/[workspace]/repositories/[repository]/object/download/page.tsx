@@ -17,6 +17,7 @@ export default async function RepositoryObjectDownloadPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await props.params;
+  const currentWorkspace = params.workspace;
   const searchParams = await props.searchParams;
 
   if (
@@ -27,16 +28,17 @@ export default async function RepositoryObjectDownloadPage(props: {
   }
 
   const token = await getToken();
-  const object = await getObject(
-    params.repository,
-    searchParams.path as string,
-    searchParams.ref as string,
-    token
-  );
+  const object = await getObject({
+    workspace: currentWorkspace,
+    repository: params.repository,
+    path: searchParams.path as string,
+    ref: searchParams.ref as string,
+    token,
+  });
 
-  if (!object) {
+  if (!object.data) {
     notFound();
   }
 
-  return <RepositoryObjectDownloadSection selectedObject={object} />;
+  return <RepositoryObjectDownloadSection selectedObject={object.data} />;
 }

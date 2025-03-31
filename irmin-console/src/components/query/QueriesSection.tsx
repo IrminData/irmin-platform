@@ -5,7 +5,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { MdPlayArrow } from 'react-icons/md';
 import { TbChevronRight, TbFile, TbPencil, TbTrash, TbX } from 'react-icons/tb';
 
-import { createQuery, deleteQuery, updateQuery } from '@/lib/actions/query';
+import {
+  createStoredQuery,
+  deleteStoredQuery,
+  updateStoredQuery,
+} from '@/lib/actions/query';
 
 import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import QueryResults from '@/components/query/QueryResults';
@@ -15,8 +19,9 @@ import Button from '@/components/ui/button';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
-import { Query } from '@/types/core/StoredQuery';
+import { StoredQuery } from '@/types/core/StoredQuery';
 
 import CreateSavedQueryModal from './CreateQueryModal';
 import UpdateQueryModal from './UpdateQueryModal';
@@ -32,14 +37,15 @@ import UpdateQueryModal from './UpdateQueryModal';
 export default function QueriesSection({
   initialQueries,
 }: {
-  initialQueries: Query[];
+  initialQueries: StoredQuery[];
 }) {
   const { dict } = useLocale();
   const { irminModal, irminAlert, irminConfirm } = usePopup();
-  const [queries, setQueries] = useState<Query[]>(initialQueries);
+  const { workspaceSlug } = useWorkspace();
+  const [queries, setQueries] = useState<StoredQuery[]>(initialQueries);
   const query = useQuery();
 
-  const [selectedQuery, setSelectedQuery] = useState<Query | null>(null);
+  const [selectedQuery, setSelectedQuery] = useState<StoredQuery | null>(null);
   const [editorContent, setEditorContent] = useState<string>('');
   const [edited, setEdited] = useState<boolean>(false);
 
@@ -48,10 +54,8 @@ export default function QueriesSection({
     if (!selectedQuery) return;
     if (queryContentId.current === selectedQuery.id) return;
     queryContentId.current = selectedQuery.id;
-    setEditorContent(selectedQuery.content);
+    setEditorContent(selectedQuery.sql);
     setEdited(false);
-    // If the selected query has a stored result, display it
-    if (selectedQuery.stored) query.getQueryResult(selectedQuery.id, 1);
   }, [selectedQuery, query]);
 
   /**
@@ -64,14 +68,12 @@ export default function QueriesSection({
         dict.query.newQuery,
         <CreateSavedQueryModal
           createQuery={async (queryName: string, queryDescription: string) => {
-            const res = await createQuery(
-              'sql',
-              editorContent,
-              queryName,
-              queryDescription,
-              true,
-              false
-            );
+            const res = await createStoredQuery({
+              workspace: workspaceSlug,
+              name: queryName,
+              description: queryDescription,
+              sql: editorContent,
+            });
             if (!res.data) {
               irminAlert('error', res.message ?? 'Failed to create query');
               return;
@@ -89,7 +91,7 @@ export default function QueriesSection({
         () => irminModal.close()
       );
     },
-    [irminModal, dict, irminAlert, editorContent]
+    [irminModal, dict, workspaceSlug, irminAlert, editorContent]
   );
 
   /**
@@ -99,7 +101,13 @@ export default function QueriesSection({
     () => async () => {
       try {
         if (!selectedQuery) throw new Error('No query selected');
-        const res = await updateQuery(selectedQuery.id, 'sql', editorContent);
+        const res = await updateStoredQuery({
+          workspace: workspaceSlug,
+          queryID: selectedQuery.id,
+          name: selectedQuery.name,
+          description: selectedQuery.description,
+          sql: editorContent,
+        });
         if (!res.data) throw new Error(res.message ?? 'Query not found');
         setQueries((prev) => {
           if (!res.data) return prev;
@@ -118,7 +126,7 @@ export default function QueriesSection({
         console.error(error);
       }
     },
-    [selectedQuery, editorContent, irminAlert]
+    [selectedQuery, workspaceSlug, editorContent, irminAlert]
   );
 
   /**
@@ -146,13 +154,13 @@ export default function QueriesSection({
           currentDescription={selectedQuery.description}
           updateQuery={async (queryName: string, queryDescription: string) => {
             try {
-              const res = await updateQuery(
-                selectedQuery.id,
-                'sql',
-                editorContent,
-                queryName,
-                queryDescription
-              );
+              const res = await updateStoredQuery({
+                workspace: workspaceSlug,
+                queryID: selectedQuery.id,
+                name: selectedQuery.name,
+                description: selectedQuery.description,
+                sql: editorContent,
+              });
               if (!res.data) throw new Error(res.message ?? 'Query not found');
               setQueries((prev) => {
                 if (!res.data) return prev;
@@ -180,7 +188,7 @@ export default function QueriesSection({
         () => irminModal.close()
       );
     },
-    [irminModal, dict, irminAlert, selectedQuery, editorContent]
+    [irminModal, dict, workspaceSlug, irminAlert, selectedQuery, editorContent]
   );
 
   /**
@@ -195,7 +203,10 @@ export default function QueriesSection({
       );
       if (!confirmed) return;
       try {
-        const res = await deleteQuery(selectedQuery.id);
+        const res = await deleteStoredQuery({
+          workspace: workspaceSlug,
+          queryID: selectedQuery.id,
+        });
         setQueries((prev) => prev.filter((q) => q.id !== selectedQuery.id));
         setSelectedQuery(null);
         setEdited(false);
@@ -208,7 +219,7 @@ export default function QueriesSection({
         console.error(error);
       }
     },
-    [selectedQuery, dict, irminAlert, irminConfirm]
+    [selectedQuery, dict, workspaceSlug, irminAlert, irminConfirm]
   );
 
   /**

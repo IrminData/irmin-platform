@@ -7,10 +7,10 @@ import { IrminRole } from '@/types/core/IrminRole';
 /**
  * Server action to get the invite inbox.
  *
- * @param token - Optional token for authentication.
+ * @param props.token - Optional token for authentication.
  * @returns The invite inbox data.
  */
-export async function getInviteInbox(token?: string) {
+export async function getInviteInbox({ token }: { token?: string }) {
   const irminCore = await initCore(token);
   const response = await irminCore.inviteService.listInviteInbox();
   return response;
@@ -19,46 +19,63 @@ export async function getInviteInbox(token?: string) {
 /**
  * Server action to get the invites for a specific workspace.
  *
- * @param workspace - The workspace slug.
- * @param token - Optional token for authentication.
+ * @param props.workspace - The workspace slug.
+ * @param props.token - Optional token for authentication.
  * @returns The workspace invites.
  */
-export async function getWorkspaceInvites(workspace: string, token?: string) {
+export async function getWorkspaceInvites({
+  workspace,
+  token,
+}: {
+  workspace: string;
+  token?: string;
+}) {
   const irminCore = await initCore(token);
   const response = await irminCore.inviteService.listInvitesToWorkspace({
     workspace,
   });
-  return response.data;
+  return response;
 }
 
 /**
  * Server action to fetch a single invite by ID.
  *
- * @param inviteID - The invite's identifier.
- * @param token - Optional token for authentication.
+ * @param props.inviteID - The invite's identifier.
+ * @param props.token - Optional token for authentication.
  * @returns The invite data.
  */
-export async function getInvite(inviteID: string, token?: string) {
+export async function getInvite({
+  inviteID,
+  token,
+}: {
+  inviteID: string;
+  token?: string;
+}) {
   const irminCore = await initCore(token);
   const response = await irminCore.inviteService.fetchInvite({ inviteID });
-  return response.data;
+  return response;
 }
 
 /**
  * Server action to send an invite.
  *
- * @param workspace - The workspace slug.
- * @param email - The invitee's email.
- * @param role - The role slug.
- * @param token - Optional token for authentication.
+ * @param props.workspace - The workspace slug.
+ * @param props.email - The invitee's email.
+ * @param props.role - The role slug.
+ * @param props.token - Optional token for authentication.
  * @returns The sent invite.
  */
-export async function sendInvite(
-  workspace: string,
-  email: string,
-  role: IrminRole,
-  token?: string
-) {
+export async function sendInvite({
+  workspace,
+  email,
+  role,
+  token,
+}: {
+  workspace: string;
+  email: string;
+  role: IrminRole;
+  token?: string;
+}) {
   const irminCore = await initCore(token);
   const response = await irminCore.inviteService.sendInvite({
     workspace,
@@ -71,11 +88,17 @@ export async function sendInvite(
 /**
  * Server action to resend an invite.
  *
- * @param inviteID - The invite's identifier.
- * @param token - Optional token for authentication.
+ * @param props.inviteID - The invite's identifier.
+ * @param props.token - Optional token for authentication.
  * @returns The resent invite.
  */
-export async function resendInvite(inviteID: string, token?: string) {
+export async function resendInvite({
+  inviteID,
+  token,
+}: {
+  inviteID: string;
+  token?: string;
+}) {
   const irminCore = await initCore(token);
   const response = await irminCore.inviteService.resendInvite({ inviteID });
   return response;
@@ -84,11 +107,17 @@ export async function resendInvite(inviteID: string, token?: string) {
 /**
  * Server action to delete an invite.
  *
- * @param inviteID - The invite's identifier.
- * @param token - Optional token for authentication.
+ * @param props.inviteID - The invite's identifier.
+ * @param props.token - Optional token for authentication.
  * @returns The API response from deletion.
  */
-export async function deleteInvite(inviteID: string, token?: string) {
+export async function deleteInvite({
+  inviteID,
+  token,
+}: {
+  inviteID: string;
+  token?: string;
+}) {
   const irminCore = await initCore(token);
   const response = await irminCore.inviteService.deleteInvite({ inviteID });
   return response;
@@ -97,16 +126,20 @@ export async function deleteInvite(inviteID: string, token?: string) {
 /**
  * Server action to update an invite's role.
  *
- * @param inviteID - The invite's identifier.
- * @param role - The new role slug.
- * @param token - Optional token for authentication.
+ * @param props.inviteID - The invite's identifier.
+ * @param props.role - The new role slug.
+ * @param props.token - Optional token for authentication.
  * @returns The updated invite.
  */
-export async function updateInvite(
-  inviteID: string,
-  role: IrminRole,
-  token?: string
-) {
+export async function updateInvite({
+  inviteID,
+  role,
+  token,
+}: {
+  inviteID: string;
+  role: IrminRole;
+  token?: string;
+}) {
   const irminCore = await initCore(token);
   const response = await irminCore.inviteService.updateInvite({
     inviteID,
@@ -118,11 +151,17 @@ export async function updateInvite(
 /**
  * Server action to accept an invite.
  *
- * @param inviteID - The invite's identifier.
- * @param token - Optional token for authentication.
+ * @param props.inviteID - The invite's identifier.
+ * @param props.token - Optional token for authentication.
  * @returns The accepted invite.
  */
-export async function acceptInvite(inviteID: string, token?: string) {
+export async function acceptInvite({
+  inviteID,
+  token,
+}: {
+  inviteID: string;
+  token?: string;
+}) {
   const irminCore = await initCore(token);
   const response = await irminCore.inviteService.acceptInvite({ inviteID });
   return response;
@@ -131,11 +170,17 @@ export async function acceptInvite(inviteID: string, token?: string) {
 /**
  * Server action to decline an invite.
  *
- * @param inviteID - The invite's identifier.
- * @param token - Optional token for authentication.
+ * @param props.inviteID - The invite's identifier.
+ * @param props.token - Optional token for authentication.
  * @returns The declined invite.
  */
-export async function declineInvite(inviteID: string, token?: string) {
+export async function declineInvite({
+  inviteID,
+  token,
+}: {
+  inviteID: string;
+  token?: string;
+}) {
   const irminCore = await initCore(token);
   const response = await irminCore.inviteService.declineInvite({ inviteID });
   return response;

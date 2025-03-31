@@ -48,6 +48,7 @@ export default async function ConnectionPagesLayout(props: {
   const params = await props.params;
 
   const { children } = props;
+  const currentWorkspace = params.workspace;
 
   const connectionID = params.connection;
   if (isInvalidRouteProp(connectionID)) {
@@ -55,13 +56,18 @@ export default async function ConnectionPagesLayout(props: {
   }
 
   const token = await getToken();
-  const connection = await getConnection(connectionID, token);
+  const connection = await getConnection({
+    workspace: currentWorkspace,
+    connectionID,
+    token,
+  });
 
-  if (!connection) return notFound();
+  if (!connection.data) return notFound();
 
   return (
     <ConnectionProvider
-      defaultConnection={connection}
+      workspaceSlug={currentWorkspace}
+      defaultConnection={connection.data}
       connectionID={connectionID}
     >
       <ConnectionLayoutWrapper connectionID={connectionID}>

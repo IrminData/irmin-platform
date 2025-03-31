@@ -8,22 +8,21 @@ import {
   useState,
 } from 'react';
 
-import { executeScript, getQueryResults } from '@/lib/actions/query';
+import { executeSQL } from '@/lib/actions/query';
 
 import { usePopup } from '@/context/PopupContext';
 
-import { IrminFileType } from '@/types/core/EditorItems';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { QueryExecutionResult } from '@/types/core/StoredQuery';
+
+import { useWorkspace } from './WorkspaceContext';
 
 /**
  * Query context properties
  */
 interface QueryContextProps {
   loading: boolean;
-  result: IrminAPIResponse<QueryExecutionResult> | null;
-  executeScript: (type: IrminFileType, content: string) => Promise<void>;
-  getQueryResult: (queryId: string, page: number) => Promise<void>;
+  result: IrminAPIResponse<any[]> | null;
+  executeSql: (content: string) => Promise<void>;
 }
 
 const QueryContext = createContext<QueryContextProps | undefined>(undefined);
@@ -38,11 +37,13 @@ const QueryContext = createContext<QueryContextProps | undefined>(undefined);
  */
 export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
   const { irminAlert } = usePopup();
+  const { workspaceSlug } = useWorkspace();
 
   // Query state
   const [loading, setLoading] = useState<boolean>(false);
-  const [queryResult, setQueryResult] =
-    useState<IrminAPIResponse<QueryExecutionResult> | null>(null);
+  const [queryResult, setQueryResult] = useState<IrminAPIResponse<
+    any[]
+  > | null>(null);
 
   // Flag to prevent multiple script executions at the same time
   const executing = useRef(false);
@@ -52,47 +53,28 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
    *
    * The script can be either Irmin SQL query or a script to be executed in the Compute Sandbox.
    */
-  const handleExecuteScript = useCallback(
-    async (type: IrminFileType, content: string) => {
+  const handleExecuteSql = useCallback(
+    async (content: string) => {
       if (executing.current) return;
       executing.current = true;
       setLoading(true);
       try {
-        const res = await executeScript(type, content);
+        const res = await executeSQL({
+          workspace: workspaceSlug,
+          sql: content,
+        });
         setQueryResult(res);
       } catch (error) {
-        console.error('QueryContext handleExecuteScript error', error);
+        console.error('QueryContext handleExecuteSql error', error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to run script'
+          (error as Error)?.message ?? 'Failed to execute SQL query'
         );
       }
       setLoading(false);
       executing.current = false;
     },
-    [irminAlert]
-  );
-
-  /**
-   * Set query result to a stored value
-   */
-  const handleGetQueryResult = useCallback(
-    async (queryId: string, page: number) => {
-      if (executing.current) return;
-      executing.current = true;
-      setLoading(true);
-      try {
-        const res = await getQueryResults(queryId, page);
-        if (!res.data)
-          throw new Error(res.message ?? 'Failed to get query results');
-        setQueryResult(res);
-      } catch (error) {
-        console.error('QueryContext handleGetQueryResult error', error);
-      }
-      setLoading(false);
-      executing.current = false;
-    },
-    []
+    [irminAlert, workspaceSlug]
   );
 
   return (
@@ -100,8 +82,7 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         loading,
         result: queryResult,
-        executeScript: handleExecuteScript,
-        getQueryResult: handleGetQueryResult,
+        executeSql: handleExecuteSql,
       }}
     >
       {children}

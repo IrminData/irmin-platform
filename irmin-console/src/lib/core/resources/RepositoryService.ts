@@ -126,8 +126,8 @@ class RepositoryService {
     documentation: string;
     default_branch: string;
     isImmutable: boolean;
-    garbageDefaultRetentionDays: number;
-    garbageDefaultBranchRetentionDays: number;
+    garbageDefaultRetentionDays?: number;
+    garbageDefaultBranchRetentionDays?: number;
   }): Promise<IrminAPIResponse<Repository>> {
     if (isOfflineMode)
       return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
@@ -138,14 +138,16 @@ class RepositoryService {
       params.append('documentation', documentation);
       params.append('default_branch', default_branch);
       params.append('is_immutable', isImmutable.toString());
-      params.append(
-        'garbage_default_retention_days',
-        garbageDefaultRetentionDays.toString()
-      );
-      params.append(
-        'garbage_default_branch_retention_days',
-        garbageDefaultBranchRetentionDays.toString()
-      );
+      if (garbageDefaultRetentionDays)
+        params.append(
+          'garbage_default_retention_days',
+          garbageDefaultRetentionDays.toString()
+        );
+      if (garbageDefaultBranchRetentionDays)
+        params.append(
+          'garbage_default_branch_retention_days',
+          garbageDefaultBranchRetentionDays.toString()
+        );
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories`,
         {

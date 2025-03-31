@@ -16,16 +16,21 @@ export default async function ConnectionConnectorPage(props: {
   params: Promise<SingleConnectionLayoutParams>;
 }) {
   const params = await props.params;
+  const currentWorkspace = params.workspace;
 
   const connectionID = params.connection;
   if (isInvalidRouteProp(connectionID)) return notFound();
 
   const token = await getToken();
-  const connection = await getConnection(connectionID, token);
+  const connection = await getConnection({
+    workspace: currentWorkspace,
+    connectionID,
+    token,
+  });
 
-  if (!connection) return notFound();
+  if (!connection.data) return notFound();
 
-  const connector = connection.connector;
+  const connector = connection.data.connector;
 
   return <ConnectorSection connector={connector} />;
 }

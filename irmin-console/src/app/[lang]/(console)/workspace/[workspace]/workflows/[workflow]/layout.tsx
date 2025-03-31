@@ -2,7 +2,8 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { getWorkflow, getWorkflowRuns } from '@/lib/actions/workflows';
+import { getWorkflowRuns } from '@/lib/actions/workflow-runs';
+import { getWorkflow } from '@/lib/actions/workflows';
 import { Locale } from '@/lib/dict';
 import { getToken } from '@/lib/getToken';
 
@@ -44,27 +45,37 @@ export async function generateMetadata(props: {
 export default async function WorkflowLayout(
   props: Readonly<{
     children: React.ReactNode;
-    params: SingleWorkflowLayoutParams;
+    params: Promise<SingleWorkflowLayoutParams>;
   }>
 ) {
   const params = await props.params;
 
   const { children } = props;
 
-  const workflowId = params.workflow;
-  if (isInvalidRouteProp(workflowId)) return notFound();
+  const workflowID = params.workflow;
+  const workspace = params.workspace;
+  if (isInvalidRouteProp(workflowID) || isInvalidRouteProp(workspace))
+    return notFound();
 
   const token = await getToken();
   const [runs, workflow] = await Promise.all([
-    getWorkflowRuns(workflowId, token),
-    getWorkflow(workflowId, token),
+    getWorkflowRuns({
+      workspace,
+      workflowID,
+      token,
+    }),
+    getWorkflow({
+      workspace,
+      workflowID,
+      token,
+    }),
   ]);
 
-  if (!workflow || !runs) return notFound();
+  if (!workflow.data) return notFound();
 
   return (
-    <WorkflowProvider runs={runs} initialWorkflow={workflow}>
-      <WorkflowLayoutWrapper workflowID={workflowId}>
+    <WorkflowProvider runs={runs.data ?? []} initialWorkflow={workflow.data}>
+      <WorkflowLayoutWrapper workflowID={workflowID}>
         {children}
       </WorkflowLayoutWrapper>
     </WorkflowProvider>

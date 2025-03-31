@@ -6,7 +6,7 @@ import fake from '@/utils/prepareFakeResponse';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { WorkflowSchedule } from '@/types/core/Schedule';
-import { Workflow } from '@/types/core/Workflow';
+import { Workflow, WorkflowableType } from '@/types/core/Workflow';
 import { exampleWorkflows } from '@/types/examples/core';
 import { WorkflowableInput } from '@/types/internal/WorkflowInput';
 
@@ -39,6 +39,8 @@ class WorkflowService {
     this.updateWorkflowSchedule = this.updateWorkflowSchedule.bind(this);
     this.deleteWorkflow = this.deleteWorkflow.bind(this);
     this.transferWorkflow = this.transferWorkflow.bind(this);
+    this.pauseWorkflow = this.pauseWorkflow.bind(this);
+    this.startWorflow = this.startWorflow.bind(this);
   }
 
   /**
@@ -82,7 +84,7 @@ class WorkflowService {
     workflowType,
   }: {
     workspace: string;
-    workflowType: string;
+    workflowType: WorkflowableType;
   }): Promise<IrminAPIResponse<Workflow[]>> {
     if (isOfflineMode)
       return fake(exampleWorkflows) as IrminAPIResponse<Workflow[]>;
@@ -212,17 +214,17 @@ class WorkflowService {
   }: {
     workspace: string;
     workflowID: string;
-    name: string;
-    description: string;
-    documentation: string;
+    name?: string;
+    description?: string;
+    documentation?: string;
   }): Promise<IrminAPIResponse<Workflow>> {
     if (isOfflineMode)
       return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
     try {
       const params = new URLSearchParams();
-      params.append('name', name);
-      params.append('description', description);
-      params.append('documentation', documentation);
+      if (name) params.append('name', name);
+      if (description) params.append('description', description);
+      if (documentation) params.append('documentation', documentation);
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows/${workflowID}`,
         {
@@ -387,6 +389,68 @@ class WorkflowService {
         (error as Error).message,
         'Workflow ownership transfer error'
       );
+      if (isDevelopment)
+        return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
+      throw error;
+    }
+  }
+
+  /**
+   * Pause a workflow.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.workflowID - The workflow identifier.
+   * @returns IrminAPIResponse containing the updated Workflow.
+   */
+  async pauseWorkflow({
+    workspace,
+    workflowID,
+  }: {
+    workspace: string;
+    workflowID: string;
+  }): Promise<IrminAPIResponse<Workflow>> {
+    if (isOfflineMode)
+      return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/workflows/${workflowID}/pause`,
+        { method: 'POST' }
+      );
+      return response as IrminAPIResponse<Workflow>;
+    } catch (error) {
+      console.error((error as Error).message, 'Pause workflow error');
+      if (isDevelopment)
+        return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
+      throw error;
+    }
+  }
+
+  /**
+   * Start a workflow.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.workflowID - The workflow identifier.
+   * @returns IrminAPIResponse containing the updated Workflow.
+   */
+  async startWorflow({
+    workspace,
+    workflowID,
+  }: {
+    workspace: string;
+    workflowID: string;
+  }): Promise<IrminAPIResponse<Workflow>> {
+    if (isOfflineMode)
+      return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/workflows/${workflowID}/start`,
+        { method: 'POST' }
+      );
+      return response as IrminAPIResponse<Workflow>;
+    } catch (error) {
+      console.error((error as Error).message, 'Start workflow error');
       if (isDevelopment)
         return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
       throw error;

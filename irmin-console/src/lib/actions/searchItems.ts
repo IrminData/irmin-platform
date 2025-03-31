@@ -25,7 +25,7 @@ export async function generateSearchItems({
     const newItems: ConsoleSearchItem[] = [];
 
     // Add workspaces
-    const workspaces = await getWorkspaces(token);
+    const { data: workspaces } = await getWorkspaces({ token });
     workspaces?.forEach((ws) => {
       newItems.push({
         title: ws.name,
@@ -98,10 +98,10 @@ export async function generateSearchItems({
     if (workspace) {
       // Fetch workspace-dependent items
       const [connections, users, workflows, repositories] = await Promise.all([
-        getConnections(token),
-        getUsers(token),
-        getWorkflows(token),
-        getRepositories(token),
+        getConnections({ workspace, token }),
+        getUsers({ workspace, token }),
+        getWorkflows({ workspace, token }),
+        getRepositories({ workspace, token }),
       ]);
 
       // Add workspace-dependent static Irmin items
@@ -212,7 +212,7 @@ export async function generateSearchItems({
       );
 
       // Add users
-      users?.forEach((user) => {
+      users.data?.forEach((user) => {
         const roleString =
           user.roles?.map((role) => role.label).join(', ') ?? '';
         newItems.push({
@@ -226,7 +226,7 @@ export async function generateSearchItems({
       });
 
       // Add workflows
-      workflows?.forEach((workflow) => {
+      workflows.data?.forEach((workflow) => {
         newItems.push({
           title: workflow.name,
           description: workflow.description ?? '-',
@@ -236,7 +236,7 @@ export async function generateSearchItems({
       });
 
       // Add connections
-      connections?.forEach((connection) => {
+      connections.data?.forEach((connection) => {
         newItems.push({
           title: connection.name,
           description: connection.description ?? '-',
@@ -246,7 +246,7 @@ export async function generateSearchItems({
       });
 
       // Add repositories
-      repositories?.forEach((repository) => {
+      repositories.data?.forEach((repository) => {
         newItems.push({
           title: repository.name,
           description: repository.description ?? '-',

@@ -50,24 +50,25 @@ export default async function ConsoleWorkspaceLayout(props: {
 
   // Fetch the workspace, roles, users, and invites
   const [workspace, roles, users, invites] = await Promise.all([
-    getWorkspace(currentWorkspace, token),
-    getRoles(token),
-    getUsers(token),
-    getWorkspaceInvites(currentWorkspace, token),
+    getWorkspace({ workspaceSlug: currentWorkspace, token }),
+    getRoles({ token }),
+    getUsers({ workspace: currentWorkspace, token }),
+    getWorkspaceInvites({ workspace: currentWorkspace, token }),
   ]);
 
-  if (!workspace || !roles || !users || !invites) return notFound();
+  if (!workspace.data || !roles.data || !users.data || !invites.data)
+    return notFound();
 
   return (
     <WorkspaceProvider
-      initialWorkspace={workspace}
+      initialWorkspace={workspace.data}
       workspaceSlug={currentWorkspace}
     >
       <UsersProvider
         currentWorkspace={currentWorkspace}
-        roles={roles}
-        currentUsers={users}
-        currentInvites={invites}
+        roles={roles.data}
+        currentUsers={users.data}
+        currentInvites={invites.data}
       >
         {children}
       </UsersProvider>

@@ -6,12 +6,21 @@ import { initDict } from '@/lib/initDict';
 
 import LogsSection from '@/components/logs/LogsSection';
 
+import { WorkspaceLayoutParams } from '../layout';
+
 /**
  * Logs page - showing all log events for the workspace.
  */
-export default async function LogsPage() {
+export default async function LogsPage(props: {
+  params: Promise<WorkspaceLayoutParams>;
+}) {
+  const params = await props.params;
+  const currentWorkspace = params.workspace;
   const token = await getToken();
-  const [logs, { dict }] = await Promise.all([getLogs(token), initDict()]);
-  if (!logs) return notFound();
-  return <LogsSection logEvents={logs} title={dict.logs.workspaceLogs} />;
+  const [logs, { dict }] = await Promise.all([
+    getLogs({ workspace: currentWorkspace, token }),
+    initDict(),
+  ]);
+  if (!logs.data) return notFound();
+  return <LogsSection logEvents={logs.data} title={dict.logs.workspaceLogs} />;
 }

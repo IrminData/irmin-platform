@@ -40,12 +40,18 @@ export async function generateMetadata(props: {
  */
 export default async function EditorLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
   params: Promise<EditorLayoutParams>;
 }) {
+  const { workspace } = await params;
   const token = await getToken();
-  const editorItems = await getEditorItems(token);
+  const editorItems = await getEditorItems({
+    workspace: workspace,
+    path: '',
+    token,
+  });
   if (!editorItems) return notFound();
   return (
     <EditorProvider editorItems={editorItems}>

@@ -8,16 +8,20 @@ import type { WorkflowRun } from '@/types/core/WorkflowRun';
 /**
  * Get all workflow runs for a given workflow.
  *
- * @param workspace - The workspace slug.
- * @param workflowID - The workflow identifier.
- * @param token - Optional token for authentication.
+ * @param props.workspace - The workspace slug.
+ * @param props.workflowID - The workflow identifier.
+ * @param props.token - Optional token for authentication.
  * @returns The list of workflow runs.
  */
-export async function getWorkflowRuns(
-  workspace: string,
-  workflowID: string,
-  token?: string
-) {
+export async function getWorkflowRuns({
+  workspace,
+  workflowID,
+  token,
+}: {
+  workspace: string;
+  workflowID: string;
+  token?: string;
+}): Promise<IrminAPIResponse<WorkflowRun[]>> {
   const irminCore = await initCore(token);
   const res: IrminAPIResponse<WorkflowRun[]> =
     await irminCore.workflowRunService.fetchWorkflowRuns({
@@ -30,18 +34,23 @@ export async function getWorkflowRuns(
 /**
  * Get a single workflow run by its ID.
  *
- * @param workspace - The workspace slug.
- * @param workflowID - The workflow identifier.
- * @param runID - The run identifier.
- * @param token - Optional token for authentication.
+ * @param props.workspace - The workspace slug.
+ * @param props.workflowID - The workflow identifier.
+ * @param props.runID - The run identifier.
+ * @param props.token - Optional token for authentication.
  * @returns The workflow run details.
  */
-export async function getWorkflowRun(
-  workspace: string,
-  workflowID: string,
-  runID: string,
-  token?: string
-) {
+export async function getWorkflowRun({
+  workspace,
+  workflowID,
+  runID,
+  token,
+}: {
+  workspace: string;
+  workflowID: string;
+  runID: string;
+  token?: string;
+}): Promise<IrminAPIResponse<WorkflowRun>> {
   const irminCore = await initCore(token);
   const res: IrminAPIResponse<WorkflowRun> =
     await irminCore.workflowRunService.fetchWorkflowRun({
@@ -55,18 +64,23 @@ export async function getWorkflowRun(
 /**
  * Cancel a workflow run.
  *
- * @param workspace - The workspace slug.
- * @param workflowID - The workflow identifier.
- * @param runID - The run identifier.
- * @param token - Optional token for authentication.
+ * @param props.workspace - The workspace slug.
+ * @param props.workflowID - The workflow identifier.
+ * @param props.runID - The run identifier.
+ * @param props.token - Optional token for authentication.
  * @returns The cancelled workflow run.
  */
-export async function cancelWorkflowRun(
-  workspace: string,
-  workflowID: string,
-  runID: string,
-  token?: string
-) {
+export async function cancelWorkflowRun({
+  workspace,
+  workflowID,
+  runID,
+  token,
+}: {
+  workspace: string;
+  workflowID: string;
+  runID: string;
+  token?: string;
+}): Promise<IrminAPIResponse<WorkflowRun>> {
   const irminCore = await initCore(token);
   const res: IrminAPIResponse<WorkflowRun> =
     await irminCore.workflowRunService.cancelWorkflowRun({
@@ -80,16 +94,20 @@ export async function cancelWorkflowRun(
 /**
  * Trigger a new workflow run.
  *
- * @param workspace - The workspace slug.
- * @param workflowID - The workflow identifier.
- * @param token - Optional token for authentication.
+ * @param props.workspace - The workspace slug.
+ * @param props.workflowID - The workflow identifier.
+ * @param props.token - Optional token for authentication.
  * @returns The newly triggered workflow run.
  */
-export async function triggerWorkflowRun(
-  workspace: string,
-  workflowID: string,
-  token?: string
-) {
+export async function triggerWorkflowRun({
+  workspace,
+  workflowID,
+  token,
+}: {
+  workspace: string;
+  workflowID: string;
+  token?: string;
+}): Promise<IrminAPIResponse<WorkflowRun>> {
   const irminCore = await initCore(token);
   const res: IrminAPIResponse<WorkflowRun> =
     await irminCore.workflowRunService.triggerWorkflowRun({

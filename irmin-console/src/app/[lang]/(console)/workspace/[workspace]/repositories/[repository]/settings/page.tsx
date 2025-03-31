@@ -19,11 +19,13 @@ export default async function RepositorySettingsPage(props: {
   const currentWorkspace = params.workspace;
   const token = await getToken();
   const [workspace, { dict }] = await Promise.all([
-    getWorkspace(currentWorkspace, token),
+    getWorkspace({ workspaceSlug: currentWorkspace, token }),
     getDict(),
   ]);
 
-  if (!workspace) return notFound();
+  if (!workspace.data) return notFound();
 
-  return <RepositorySettingsSection dict={dict} currentWorkspace={workspace} />;
+  return (
+    <RepositorySettingsSection dict={dict} currentWorkspace={workspace.data} />
+  );
 }

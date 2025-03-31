@@ -41,10 +41,12 @@ const ConnectionContext = createContext<ConnectionContextProps | undefined>(
  */
 export const ConnectionProvider = ({
   children,
+  workspaceSlug,
   connectionID,
   defaultConnection,
 }: {
   children: React.ReactNode;
+  workspaceSlug: string;
   connectionID: string;
   defaultConnection: Connection;
 }) => {
@@ -59,16 +61,19 @@ export const ConnectionProvider = ({
 
   const fetchConnection = useCallback(async () => {
     try {
-      const newConnection = await getConnection(connectionID);
-      if (!newConnection) return;
-      setConnection(newConnection);
+      const newConnection = await getConnection({
+        workspace: workspaceSlug,
+        connectionID,
+      });
+      if (!newConnection.data) return;
+      setConnection(newConnection.data);
     } catch (error) {
       irminAlert(
         'error',
         (error as Error)?.message ?? 'Failed to fetch the connection'
       );
     }
-  }, [connectionID, irminAlert]);
+  }, [connectionID, workspaceSlug, irminAlert]);
 
   const handleDeleteConnection = useCallback(async () => {
     const confirmed = await irminConfirm(
@@ -78,7 +83,10 @@ export const ConnectionProvider = ({
     if (updating.current || !confirmed) return;
     try {
       updating.current = true;
-      const res = await deleteConnection(connection.id);
+      const res = await deleteConnection({
+        workspace: workspaceSlug,
+        connectionID: connection.id,
+      });
       irminAlert('success', res.message ?? 'Connection deleted successfully');
     } catch (error) {
       irminAlert(
@@ -88,14 +96,20 @@ export const ConnectionProvider = ({
     } finally {
       updating.current = false;
     }
-  }, [connection, dict, irminAlert, irminConfirm]);
+  }, [connection, workspaceSlug, dict, irminAlert, irminConfirm]);
 
   const handleUpdateConnection = useCallback(
     async (data: ItemUpdateProps) => {
       if (updating.current) return;
       try {
         updating.current = true;
-        const res = await updateConnection(connection.id, data);
+        const res = await updateConnection({
+          workspace: workspaceSlug,
+          connectionID: connection.id,
+          name: data.name,
+          description: data.description,
+          documentation: data.documentation,
+        });
         await fetchConnection();
         irminAlert('success', res.message ?? 'Connection updated successfully');
       } catch (error) {
@@ -107,7 +121,7 @@ export const ConnectionProvider = ({
         updating.current = false;
       }
     },
-    [connection, fetchConnection, irminAlert]
+    [connection, workspaceSlug, fetchConnection, irminAlert]
   );
 
   const handleTransferOwnershipConnection = useCallback(
@@ -119,7 +133,11 @@ export const ConnectionProvider = ({
       if (updating.current || !confirmed) return;
       try {
         updating.current = true;
-        const res = await transferConnection(connection.id, ownerID);
+        const res = await transferConnection({
+          workspace: workspaceSlug,
+          connectionID: connection.id,
+          ownerID,
+        });
         await fetchConnection();
         irminAlert(
           'success',
@@ -134,7 +152,7 @@ export const ConnectionProvider = ({
         updating.current = false;
       }
     },
-    [connection, dict, fetchConnection, irminAlert, irminConfirm]
+    [connection, dict, workspaceSlug, fetchConnection, irminAlert, irminConfirm]
   );
 
   return (

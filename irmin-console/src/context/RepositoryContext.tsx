@@ -12,6 +12,8 @@ import {
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
+import { init } from '@sentry/nextjs';
+
 import {
   createBranch,
   deleteBranch,
@@ -252,9 +254,12 @@ export const RepositoryProvider = ({
   // Refetch the current repository
   const fetchRepository = useCallback(async () => {
     try {
-      const newRepository = await getRepository(workspaceSlug, repositorySlug);
-      if (!newRepository) return;
-      setRepository(newRepository);
+      const newRepository = await getRepository({
+        workspace: workspaceSlug,
+        repositorySlug,
+      });
+      if (!newRepository.data) return;
+      setRepository(newRepository.data);
     } catch (error) {
       irminAlert(
         'error',
@@ -272,7 +277,10 @@ export const RepositoryProvider = ({
     if (updating.current || !confirmed) return;
     try {
       updating.current = true;
-      const res = await deleteRepository(workspaceSlug, repositorySlug);
+      const res = await deleteRepository({
+        workspace: workspaceSlug,
+        repositorySlug,
+      });
       irminAlert('success', res.message ?? 'Repository deleted successfully');
     } catch (error) {
       irminAlert(
@@ -301,27 +309,15 @@ export const RepositoryProvider = ({
     garbageDefaultBranchRetentionDays?: number;
   };
   const handleUpdateRepository = useCallback(
-    async ({
-      name,
-      description,
-      documentation,
-      isImmutable,
-      garbageDefaultRetentionDays,
-      garbageDefaultBranchRetentionDays,
-    }: RepositoryUpdateInput) => {
+    async (updateInput: RepositoryUpdateInput) => {
       if (updating.current) return;
       try {
         updating.current = true;
-        const res = await updateRepository(
-          workspaceSlug,
+        const res = await updateRepository({
+          workspace: workspaceSlug,
           repositorySlug,
-          name,
-          description,
-          documentation,
-          isImmutable,
-          garbageDefaultRetentionDays,
-          garbageDefaultBranchRetentionDays
-        );
+          ...updateInput,
+        });
         await fetchRepository();
         irminAlert('success', res.message ?? 'Repository updated successfully');
       } catch (error) {
@@ -346,11 +342,11 @@ export const RepositoryProvider = ({
       if (updating.current || !confirmed) return;
       try {
         updating.current = true;
-        const res = await transferRepository(
-          workspaceSlug,
+        const res = await transferRepository({
+          workspace: workspaceSlug,
           repositorySlug,
-          ownerID
-        );
+          ownerID,
+        });
         await fetchRepository();
         irminAlert(
           'success',
@@ -380,12 +376,12 @@ export const RepositoryProvider = ({
   const handleRpositoryDownload = useCallback(
     async (selectedPath?: string) => {
       try {
-        const res = await getRepositoryDownloadLink(
-          workspaceSlug,
+        const res = await getRepositoryDownloadLink({
+          workspace: workspaceSlug,
           repositorySlug,
-          currentRef ?? 'main',
-          selectedPath ?? currentPath
-        );
+          ref: currentRef ?? initialRepository.default_branch,
+          path: selectedPath ?? currentPath,
+        });
         if (typeof res.data === 'string') {
           irminAlert(
             'success',
@@ -405,7 +401,14 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [workspaceSlug, repositorySlug, currentRef, currentPath, irminAlert]
+    [
+      workspaceSlug,
+      repositorySlug,
+      initialRepository,
+      currentRef,
+      currentPath,
+      irminAlert,
+    ]
   );
 
   // Objects state
@@ -430,13 +433,13 @@ export const RepositoryProvider = ({
   const fetchObjects = useCallback(async () => {
     setLoadingObjects(true);
     try {
-      const currentDirectory = await getObject(
-        workspaceSlug,
-        repositorySlug,
-        currentPath,
-        currentRef
-      );
-      setDirectory(currentDirectory);
+      const currentDirectory = await getObject({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        path: currentPath,
+        ref: currentRef,
+      });
+      setDirectory(currentDirectory.data);
     } catch (error) {
       console.error('RepositoryContext fetchObjects error', error);
       irminAlert(
@@ -454,12 +457,12 @@ export const RepositoryProvider = ({
   const handleDeleteObject = useCallback(
     async (objectPath: string) => {
       try {
-        const res = await deleteObject(
-          workspaceSlug,
-          repositorySlug,
-          currentRef ?? 'main',
-          objectPath
-        );
+        const res = await deleteObject({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          ref: currentRef ?? initialRepository.default_branch,
+          path: objectPath,
+        });
         irminAlert('success', res.message ?? 'Object deleted successfully');
         fetchObjects();
       } catch (error) {
@@ -472,6 +475,7 @@ export const RepositoryProvider = ({
     [
       workspaceSlug,
       repositorySlug,
+      initialRepository,
       currentRef,
       currentPath,
       fetchObjects,
@@ -485,13 +489,13 @@ export const RepositoryProvider = ({
   const handleMoveObject = useCallback(
     async (currentObjectPath: string, newObjectPath: string) => {
       try {
-        const res = await moveObject(
-          workspaceSlug,
-          repositorySlug,
-          currentRef ?? 'main',
-          currentObjectPath,
-          newObjectPath
-        );
+        const res = await moveObject({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          ref: currentRef ?? initialRepository.default_branch,
+          path: currentObjectPath,
+          newPath: newObjectPath,
+        });
         irminAlert('success', res.message ?? 'Object moved successfully');
         fetchObjects();
       } catch (error) {
@@ -501,7 +505,14 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [workspaceSlug, repositorySlug, currentRef, fetchObjects, irminAlert]
+    [
+      workspaceSlug,
+      initialRepository,
+      repositorySlug,
+      currentRef,
+      fetchObjects,
+      irminAlert,
+    ]
   );
 
   /**
@@ -510,13 +521,13 @@ export const RepositoryProvider = ({
   const handleCopyObject = useCallback(
     async (currentObjectPath: string, newObjectPath: string) => {
       try {
-        const res = await copyObject(
-          workspaceSlug,
-          repositorySlug,
-          currentRef ?? 'main',
-          currentObjectPath,
-          newObjectPath
-        );
+        const res = await copyObject({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          ref: currentRef ?? initialRepository.default_branch,
+          path: currentObjectPath,
+          newPath: newObjectPath,
+        });
         irminAlert('success', res.message ?? 'Object copied successfully');
         fetchObjects();
       } catch (error) {
@@ -526,7 +537,14 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [workspaceSlug, repositorySlug, currentRef, fetchObjects, irminAlert]
+    [
+      workspaceSlug,
+      repositorySlug,
+      initialRepository,
+      currentRef,
+      fetchObjects,
+      irminAlert,
+    ]
   );
 
   /**
@@ -535,13 +553,13 @@ export const RepositoryProvider = ({
   const handleCreateGroup = useCallback(
     async (name: string, path: string, ref: string) => {
       try {
-        const res = await uploadObject(
-          workspaceSlug,
-          repositorySlug,
+        const res = await uploadObject({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
           ref,
           path,
-          name
-        );
+          name,
+        });
         irminAlert('success', res.message ?? 'Group created successfully');
         fetchObjects();
       } catch (error) {
@@ -565,14 +583,14 @@ export const RepositoryProvider = ({
       files: FileList
     ) => {
       try {
-        const res = await uploadObject(
-          workspaceSlug,
-          repositorySlug,
-          ref ?? currentRef ?? 'main',
-          objectPath ?? currentPath ?? '/',
-          objectName,
-          files
-        );
+        const res = await uploadObject({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          ref: ref ?? currentRef ?? initialRepository.default_branch,
+          path: objectPath ?? currentPath ?? '/',
+          name: objectName,
+          files,
+        });
         irminAlert('success', res.message ?? 'Object uploaded successfully');
         fetchObjects();
       } catch (error) {
@@ -585,6 +603,7 @@ export const RepositoryProvider = ({
     [
       workspaceSlug,
       repositorySlug,
+      initialRepository,
       currentRef,
       currentPath,
       fetchObjects,
@@ -598,12 +617,12 @@ export const RepositoryProvider = ({
   const fetchObjectContent = useCallback(
     async (path: string) => {
       try {
-        const res = await getObjectContent(
-          workspaceSlug,
-          repositorySlug,
+        const res = await getObjectContent({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
           path,
-          currentRef
-        );
+          ref: currentRef,
+        });
         return res;
       } catch (error) {
         console.error('RepositoryContext fetchObjectContent error', error);
@@ -622,13 +641,13 @@ export const RepositoryProvider = ({
   const fetchObjectSchema = useCallback(
     async (path: string) => {
       try {
-        const res = await getObjectSchema(
-          workspaceSlug,
-          repositorySlug,
+        const res = await getObjectSchema({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
           path,
-          currentRef
-        );
-        return res;
+          ref: currentRef,
+        });
+        return res.data;
       } catch (error) {
         console.error('RepositoryContext fetchObjectSchema error', error);
         irminAlert(
@@ -646,8 +665,11 @@ export const RepositoryProvider = ({
   const fetchBranches = useCallback(async () => {
     setLoadingBranches(true);
     try {
-      const newBranches = await getBranches(workspaceSlug, repositorySlug);
-      setBranches(newBranches ?? []);
+      const newBranches = await getBranches({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+      });
+      setBranches(newBranches.data ?? []);
     } catch (error) {
       console.error('RepositoryContext fetchBranches error', error);
       irminAlert(
@@ -666,8 +688,11 @@ export const RepositoryProvider = ({
     setLoadingTags(true);
     try {
       // Fetch and set the tags
-      const tags = await getTags(workspaceSlug, repositorySlug);
-      setTags(tags ?? []);
+      const tags = await getTags({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+      });
+      setTags(tags.data ?? []);
     } catch (error) {
       console.error('RepositoryContext fetchTags error', error);
       irminAlert('error', (error as Error)?.message ?? 'Failed to fetch tags');
@@ -683,11 +708,11 @@ export const RepositoryProvider = ({
     async (ref?: string) => {
       setLoadingCommits(true);
       try {
-        const newCommits = await getCommits(
-          workspaceSlug,
-          repositorySlug,
-          ref ?? currentRef
-        );
+        const newCommits = await getCommits({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          ref: ref ?? currentRef,
+        });
         if (!ref) setCommits(newCommits);
         return newCommits;
       } catch (error) {
@@ -713,7 +738,12 @@ export const RepositoryProvider = ({
   const fetchDiff = useCallback(
     async (base: string, compare: string): Promise<Diff | null> => {
       try {
-        const res = await getDiff(workspaceSlug, repositorySlug, base, compare);
+        const res = await getDiff({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          baseRef: base,
+          compareRef: compare,
+        });
         return res?.data ?? null;
       } catch (error) {
         console.error(error);
@@ -741,8 +771,18 @@ export const RepositoryProvider = ({
     } | null> => {
       try {
         const [baseContent, compareContent] = await Promise.all([
-          getObjectContent(workspaceSlug, repositorySlug, objectPath, base),
-          getObjectContent(workspaceSlug, repositorySlug, objectPath, compare),
+          getObjectContent({
+            workspace: workspaceSlug,
+            repository: repositorySlug,
+            path: objectPath,
+            ref: base,
+          }),
+          getObjectContent({
+            workspace: workspaceSlug,
+            repository: repositorySlug,
+            path: objectPath,
+            ref: compare,
+          }),
         ]);
         return {
           base: baseContent,
@@ -770,12 +810,12 @@ export const RepositoryProvider = ({
     async (message: string): Promise<boolean> => {
       try {
         if (!currentRef) return false;
-        const res = await createCommit(
-          workspaceSlug,
-          repositorySlug,
-          currentRef,
-          message
-        );
+        const res = await createCommit({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          branch: currentRef,
+          message,
+        });
         fetchCommits();
         irminAlert('success', res.message ?? 'Changes committed');
         return true;
@@ -800,13 +840,13 @@ export const RepositoryProvider = ({
   const fetchObjectChangeHistory = useCallback(
     async (objectPath: string): Promise<Commit[]> => {
       try {
-        const res = await getObjectHistory(
-          workspaceSlug,
-          repositorySlug,
-          objectPath,
-          currentRef
-        );
-        return res ?? [];
+        const res = await getObjectHistory({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          path: objectPath,
+          ref: currentRef,
+        });
+        return res.data ?? [];
       } catch (error) {
         console.error('RepositoryContext fetchLastModification error', error);
         irminAlert(
@@ -827,13 +867,13 @@ export const RepositoryProvider = ({
   const revertChanges = useCallback(async (): Promise<boolean> => {
     try {
       if (!currentRef) return false;
-      const res = await revertUncommittedChanges(
-        workspaceSlug,
-        repositorySlug,
-        currentRef,
-        '/',
-        'reset'
-      );
+      const res = await revertUncommittedChanges({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        branch: currentRef,
+        path: '/',
+        pathType: 'reset',
+      });
       irminAlert('success', res.message ?? 'Changes reverted');
       return true;
     } catch (error) {
@@ -864,16 +904,16 @@ export const RepositoryProvider = ({
       squash: boolean
     ): Promise<boolean> => {
       try {
-        const res = await mergeRefs(
-          workspaceSlug,
-          repositorySlug,
-          base,
-          compare,
+        const res = await mergeRefs({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          baseRef: base,
+          compareRef: compare,
           description,
-          strategy,
+          mergeStrategy: strategy,
           squash,
-          true
-        );
+          allowEmpty: true,
+        });
         irminAlert('success', res.message ?? 'Successfully merged');
         return true;
       } catch (error) {
@@ -894,7 +934,11 @@ export const RepositoryProvider = ({
     async (branch: string) => {
       try {
         // Delete the branch
-        const res = await deleteBranch(workspaceSlug, repositorySlug, branch);
+        const res = await deleteBranch({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          branch,
+        });
         irminAlert('success', res.message ?? 'Branch deleted successfully');
         // Refetch the branches
         fetchBranches();
@@ -918,12 +962,12 @@ export const RepositoryProvider = ({
     async (name: string, from: string) => {
       try {
         // Create the branch
-        const res = await createBranch(
-          workspaceSlug,
-          repositorySlug,
+        const res = await createBranch({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
           from,
-          name
-        );
+          name,
+        });
         irminAlert('success', res.message ?? 'Branch created successfully');
         // Refetch the branches
         fetchBranches();
@@ -946,7 +990,11 @@ export const RepositoryProvider = ({
     async (tag: string) => {
       try {
         // Delete the tag
-        const res = await deleteTag(workspaceSlug, repositorySlug, tag);
+        const res = await deleteTag({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          tagID: tag,
+        });
         irminAlert('success', res.message ?? 'Tag deleted successfully');
         // Refetch the tags
         fetchTags();
@@ -970,7 +1018,12 @@ export const RepositoryProvider = ({
     async (name: string, ref: string) => {
       try {
         // Create the tag
-        const res = await createTag(workspaceSlug, repositorySlug, name, ref);
+        const res = await createTag({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          name,
+          ref,
+        });
         irminAlert('success', res.message ?? 'Tag created successfully');
         // Refetch the tags
         fetchTags();

@@ -29,17 +29,17 @@ export default async function ConnectorPage(props: {
 }) {
   const params = await props.params;
 
-  const connectorID = params.connector;
-  if (isInvalidRouteProp(connectorID)) return notFound();
+  const connectorId = params.connector;
+  if (isInvalidRouteProp(connectorId)) return notFound();
 
   const token = await getToken();
-  const connector = await getConnector(connectorID, token);
+  const connector = await getConnector({ connectorId, token });
 
-  if (!connector) return notFound();
+  if (!connector.data) return notFound();
 
   return (
     <div className='relative container mx-auto max-w-6xl py-8'>
-      <ConnectorSection connector={connector} />
+      <ConnectorSection connector={connector.data} />
     </div>
   );
 }

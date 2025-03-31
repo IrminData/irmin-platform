@@ -1,12 +1,14 @@
-import { notFound } from 'next/navigation';
-
 import { getConnections } from '@/lib/actions/connections';
 import { getEditorItems } from '@/lib/actions/editor-items';
 import { getRepositories } from '@/lib/actions/repositories';
-import { getActionWorkflows } from '@/lib/actions/workflows';
+import { getWorkflowsOfType } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
 
 import ActionWorkflowsSection from '@/components/workflow/ActionWorkflowsSection';
+
+import { ActionWorkflow } from '@/types/core/Workflow';
+
+import { WorkspaceLayoutParams } from '../../../layout';
 
 /**
  * Action Workflows page in the workspace
@@ -19,24 +21,29 @@ import ActionWorkflowsSection from '@/components/workflow/ActionWorkflowsSection
  * clicks on the create button, it navigates to the create page, where
  * the side modal is pre-opened.
  */
-export default async function ActionWorkflowsPage() {
+export default async function ActionWorkflowsPage(props: {
+  params: Promise<WorkspaceLayoutParams>;
+}) {
+  const params = await props.params;
   const token = await getToken();
   const [editorItems, workflows, connections, repositories] = await Promise.all(
     [
-      getEditorItems(token),
-      getActionWorkflows(token),
-      getConnections(token),
-      getRepositories(token),
+      getEditorItems({ workspace: params.workspace, path: '', token }),
+      getWorkflowsOfType({
+        workspace: params.workspace,
+        workflowType: 'action',
+        token,
+      }),
+      getConnections({ workspace: params.workspace, token }),
+      getRepositories({ workspace: params.workspace, token }),
     ]
   );
-  if (!workflows || !connections || !repositories || !editorItems)
-    return notFound();
   return (
     <ActionWorkflowsSection
-      editorItems={editorItems}
-      workflows={workflows}
-      connections={connections}
-      repositories={repositories}
+      editorItems={editorItems.data ?? []}
+      workflows={(workflows.data as ActionWorkflow[]) ?? []}
+      connections={connections.data ?? []}
+      repositories={repositories.data ?? []}
       sideModalOpen={false}
     />
   );

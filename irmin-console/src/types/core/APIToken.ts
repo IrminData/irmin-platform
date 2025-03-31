@@ -13,5 +13,5 @@ export interface APIToken {
   /** (optional) The token. Only provided on creation */
   token?: string;
   /** Time when the token expires */
-  expires_at: string;
+  expiry: string;
 }

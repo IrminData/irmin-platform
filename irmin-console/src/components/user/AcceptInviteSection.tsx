@@ -42,7 +42,9 @@ export default function AcceptInviteSection({
     try {
       setError('');
       setIsLoading(true);
-      const res = await acceptInvite(invite.id);
+      const res = await acceptInvite({
+        inviteID: invite.id,
+      });
       irminAlert('success', res.message ?? 'Invite accepted successfully');
       router.push(`/workspace/${invite.workspace.slug}`);
     } catch (error) {
@@ -55,7 +57,9 @@ export default function AcceptInviteSection({
   const handleDecline = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await declineInvite(invite.id);
+      const res = await declineInvite({
+        inviteID: invite.id,
+      });
       irminAlert('success', res.message ?? 'Invite declined successfully');
       router.push(`/`);
     } catch (error) {

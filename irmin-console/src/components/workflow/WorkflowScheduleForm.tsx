@@ -16,6 +16,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import RRuleGenerator from '@/components/ui/RRuleGenerator';
 
 import { useLocale } from '@/context/LocaleContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 import deepEqual from '@/utils/deepEqual';
 
@@ -65,6 +66,7 @@ export default function WorkflowScheduleForm({
   disableSaveButton?: boolean;
 }) {
   const { dict } = useLocale();
+  const { workspaceSlug } = useWorkspace();
 
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
@@ -76,11 +78,11 @@ export default function WorkflowScheduleForm({
         setLoading(true);
         const token = await getToken();
         const [_repositories, _workflows] = await Promise.all([
-          getRepositories(token),
-          getWorkflows(token),
+          getRepositories({ workspace: workspaceSlug, token }),
+          getWorkflows({ workspace: workspaceSlug, token }),
         ]);
-        if (_repositories) setRepositories(_repositories);
-        if (_workflows) setWorkflows(_workflows);
+        setRepositories(_repositories.data ?? []);
+        setWorkflows(_workflows.data ?? []);
       } catch (error) {
         console.error('Failed to fetch data:', error);
       } finally {
@@ -88,7 +90,7 @@ export default function WorkflowScheduleForm({
       }
     }
     fetchData();
-  }, []);
+  }, [workspaceSlug]);
 
   // Initialize react-hook-form
   const { register, handleSubmit, control, watch, setValue } =

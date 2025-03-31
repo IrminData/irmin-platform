@@ -7,26 +7,32 @@ import { getToken } from '@/lib/getToken';
 
 import DocumentationSection from '@/components/documentation/DocumentationSection';
 
+import { WorkspaceLayoutParams } from '../layout';
+
 /**
  * Page to show the full documentation for the workspace
  */
-export default async function DocumentationPage() {
+export default async function DocumentationPage(props: {
+  params: Promise<WorkspaceLayoutParams>;
+}) {
+  const params = await props.params;
+  const currentWorkspace = params.workspace;
   const token = await getToken();
   const [connections, workflows, repositories] = await Promise.all([
-    getConnections(token),
-    getWorkflows(token),
-    getRepositories(token),
+    getConnections({ workspace: currentWorkspace, token }),
+    getWorkflows({ workspace: currentWorkspace, token }),
+    getRepositories({ workspace: currentWorkspace, token }),
   ]);
 
-  if (!connections || !workflows || !repositories) {
+  if (!connections.data || !workflows.data || !repositories.data) {
     return notFound();
   }
 
   return (
     <DocumentationSection
-      connections={connections}
-      workflows={workflows}
-      repositories={repositories}
+      connections={connections.data}
+      workflows={workflows.data}
+      repositories={repositories.data}
     />
   );
 }

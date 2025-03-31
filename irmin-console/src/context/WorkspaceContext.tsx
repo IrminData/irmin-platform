@@ -67,9 +67,9 @@ export const WorkspaceProvider = ({
 
   const fetchWorkspace = useCallback(async () => {
     try {
-      const newWorkspace = await getWorkspace(workspaceSlug);
-      if (!newWorkspace) return;
-      setWorkspace(newWorkspace);
+      const newWorkspace = await getWorkspace({ workspaceSlug });
+      if (!newWorkspace.data) return;
+      setWorkspace(newWorkspace.data);
     } catch (error) {
       irminAlert(
         'error',
@@ -88,7 +88,7 @@ export const WorkspaceProvider = ({
           if (updating.current) return;
           try {
             updating.current = true;
-            const res = await deleteWorkspace(workspaceSlug);
+            const res = await deleteWorkspace({ workspaceSlug });
             irminAlert(
               'success',
               res.message ?? 'Workspace deleted successfully'
@@ -112,11 +112,11 @@ export const WorkspaceProvider = ({
       if (updating.current) return;
       try {
         updating.current = true;
-        const res = await updateWorkspace(
-          workspaceSlug,
-          data.name,
-          data.description
-        );
+        const res = await updateWorkspace({
+          workspaceSlug: workspaceSlug,
+          name: data.name,
+          description: data.description,
+        });
         await fetchWorkspace();
         irminAlert('success', res.message ?? 'Workspace updated successfully');
       } catch (error) {
@@ -141,7 +141,10 @@ export const WorkspaceProvider = ({
       if (updating.current || !confirmed) return;
       try {
         updating.current = true;
-        const res = await transferWorkspace(workspace.slug, ownerID);
+        const res = await transferWorkspace({
+          workspaceSlug: workspace.slug,
+          newOwnerID: ownerID,
+        });
         await fetchWorkspace();
         irminAlert(
           'success',
@@ -168,7 +171,7 @@ export const WorkspaceProvider = ({
     if (updating.current || !confirmed) return;
     try {
       updating.current = true;
-      const res = await leaveWorkspace(workspace.slug);
+      const res = await leaveWorkspace({ workspaceSlug: workspace.slug });
       router.push('/workspace');
       irminAlert('success', res.message ?? 'You have left the workspace');
     } catch (error) {

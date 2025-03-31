@@ -20,22 +20,27 @@ export default async function ConnectionSchemaPage(props: {
   params: Promise<SingleConnectionLayoutParams>;
 }) {
   const params = await props.params;
+  const currentWorkspace = params.workspace;
 
   const connectionID = params.connection;
   if (isInvalidRouteProp(connectionID)) return notFound();
 
   const token = await getToken();
-  const connection = await getConnection(connectionID, token);
+  const connection = await getConnection({
+    workspace: currentWorkspace,
+    connectionID,
+    token,
+  });
 
-  if (!connection) return notFound();
+  if (!connection.data) return notFound();
 
-  const pullSchema = await getConnectorSchema(
-    connection.connector.id,
-    'pull',
-    connection.details as DynamicFieldValues,
-    connection.settings as DynamicFieldValues,
-    token
-  );
+  const pullSchema = await getConnectorSchema({
+    connectorId: connection.data.connector.id,
+    operation: 'pull',
+    details: connection.data.details as DynamicFieldValues,
+    settings: connection.data.settings as DynamicFieldValues,
+    token,
+  });
 
-  return <ConnectionSchemaSection pullSchema={pullSchema} />;
+  return <ConnectionSchemaSection pullSchema={pullSchema.data} />;
 }

@@ -1,12 +1,14 @@
-import { notFound } from 'next/navigation';
-
 import { getConnections } from '@/lib/actions/connections';
 import { getEditorItems } from '@/lib/actions/editor-items';
 import { getRepositories } from '@/lib/actions/repositories';
-import { getImportWorkflows } from '@/lib/actions/workflows';
+import { getWorkflowsOfType } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
 
 import ImportWorkflowsSection from '@/components/workflow/ImportWorkflowsSection';
+
+import { ImportWorkflow } from '@/types/core/Workflow';
+
+import { WorkspaceLayoutParams } from '../../../../layout';
 
 /**
  * Page to create a new Import Workflow in the workspace
@@ -17,25 +19,30 @@ import ImportWorkflowsSection from '@/components/workflow/ImportWorkflowsSection
  *
  * If the user tries to close the modal, it navigates back to the import workflows page.
  */
-export default async function ImportWorkflowCreatePage() {
+export default async function ImportWorkflowCreatePage(props: {
+  params: Promise<WorkspaceLayoutParams>;
+}) {
+  const params = await props.params;
   const token = await getToken();
   const [editorItems, workflows, connections, repositories] = await Promise.all(
     [
-      getEditorItems(token),
-      getImportWorkflows(token),
-      getConnections(token),
-      getRepositories(token),
+      getEditorItems({ workspace: params.workspace, path: '', token }),
+      getWorkflowsOfType({
+        workspace: params.workspace,
+        workflowType: 'import',
+        token,
+      }),
+      getConnections({ workspace: params.workspace, token }),
+      getRepositories({ workspace: params.workspace, token }),
     ]
   );
-  if (!workflows || !connections || !repositories || !editorItems)
-    return notFound();
   return (
     <ImportWorkflowsSection
-      editorItems={editorItems}
-      workflows={workflows}
-      connections={connections}
-      repositories={repositories}
-      sideModalOpen={true}
+      editorItems={editorItems.data ?? []}
+      workflows={(workflows.data as ImportWorkflow[]) ?? []}
+      connections={connections.data ?? []}
+      repositories={repositories.data ?? []}
+      sideModalOpen={false}
     />
   );
 }

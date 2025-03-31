@@ -18,6 +18,6 @@ export const metadata: Metadata = {
  */
 export default async function TokensPage() {
   const token = await getToken();
-  const initialTokens = await getSystemTokens(token);
+  const initialTokens = await getSystemTokens({ token });
   return <TokensSection initialTokens={initialTokens.data ?? []} />;
 }

@@ -10,6 +10,7 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 import { Connector } from '@/types/core/Connector';
 import {
@@ -113,13 +114,13 @@ export function useFetchConnectionDetails(
       setLoading(true);
       fetchedFields.current = true;
       try {
-        const res = await getConnectorConfigurationFields(
-          connectorID,
-          'details'
-        );
+        const res = await getConnectorConfigurationFields({
+          connectorId: connectorID,
+          configurationType: 'details',
+        });
         setConnectionData((prev) => ({
           ...prev,
-          connectionDetailsFields: res,
+          connectionDetailsFields: res.data,
         }));
       } catch (error) {
         console.error('Fetch connection details error:', error);
@@ -165,10 +166,10 @@ export function useContinueAndTestConnection(
           connectionDetails: connectionDetails as DynamicFieldValues,
         });
 
-        const res = await validateConnectorConfiguration(
-          connectionData.connector?.id ?? '',
-          connectionDetails as DynamicFieldValues
-        );
+        const res = await validateConnectorConfiguration({
+          connectorId: connectionData.connector?.id ?? '',
+          details: connectionDetails,
+        });
         if (res.data?.can_connect && res.data.connection_details_valid) {
           irminAlert('success', dict.connections.create.success);
           setCurrentStep(3);
@@ -204,14 +205,14 @@ export function useFetchConnectionSettings(
       setLoading(true);
       fetchedFields.current = true;
       try {
-        const res = await getConnectorConfigurationFields(
-          connectorID,
-          'settings',
-          connectionDetails
-        );
+        const res = await getConnectorConfigurationFields({
+          connectorId: connectorID,
+          configurationType: 'settings',
+          currentDetails: connectionDetails,
+        });
         setConnectionData((prev) => ({
           ...prev,
-          connectionSettingsFields: res,
+          connectionSettingsFields: res.data,
         }));
       } catch (error) {
         console.error('Fetch new connection settings error:', error);
@@ -253,11 +254,11 @@ export function useContinueCreateConnection(
           ...connectionData,
           connectionSettings: data,
         });
-        const res = await validateConnectorConfiguration(
-          connectionData.connector?.id ?? '',
-          connectionData.connectionDetails,
-          data
-        );
+        const res = await validateConnectorConfiguration({
+          connectorId: connectionData.connector?.id ?? '',
+          details: connectionData.connectionDetails,
+          settings: data,
+        });
         if (res.data?.ok && res.data.connection_settings_valid) {
           irminAlert('success', dict.connections.create.configuration_valid);
           setCurrentStep(4);
@@ -284,6 +285,7 @@ export function useCreateConnection(
   connectionData: ConnectionSetup,
   closeModal: () => void
 ) {
+  const { workspaceSlug } = useWorkspace();
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
 
@@ -302,11 +304,13 @@ export function useCreateConnection(
 
       try {
         const res = await createConnection({
+          workspace: workspaceSlug,
+          name: connectionData.name,
+          description: (data.description as string) ?? '',
+          documentation: (data.documentation as string) ?? '',
           connectorID: connectionData.connector.id,
           connectionDetails: connectionData.connectionDetails,
           connectionSettings: connectionData.connectionSettings,
-          name: connectionData.name,
-          description: data.description as string,
         });
 
         irminAlert('success', res.message ?? 'Connection created successfully');
@@ -320,6 +324,7 @@ export function useCreateConnection(
       }
     },
     [
+      workspaceSlug,
       connectionData,
       irminAlert,
       dict.connections.create.requiredFieldsMissing,

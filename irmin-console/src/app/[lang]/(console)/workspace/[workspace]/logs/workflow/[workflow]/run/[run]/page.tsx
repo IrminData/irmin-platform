@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 
-import { getWorkflowRunLogs } from '@/lib/actions/logs';
-import { getWorkflow, getWorkflowRun } from '@/lib/actions/workflows';
+import { getLogs } from '@/lib/actions/logs';
+import { getWorkflowRun } from '@/lib/actions/workflow-runs';
+import { getWorkflow } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
 
 import WorkflowRunLogsSection from '@/components/logs/WorkflowRunLogsSection';
@@ -17,16 +18,28 @@ export default async function WorkflowRunLogsPage(props: {
   const params = await props.params;
   const token = await getToken();
   const [logs, run, workflow] = await Promise.all([
-    getWorkflowRunLogs(params.workflow, params.run, token),
-    getWorkflowRun(params.workflow, params.run, token),
-    getWorkflow(params.workflow, token),
+    getLogs({
+      workspace: params.workspace,
+      token,
+    }),
+    getWorkflowRun({
+      workspace: params.workspace,
+      workflowID: params.workflow,
+      runID: params.run,
+      token,
+    }),
+    getWorkflow({
+      workspace: params.workspace,
+      workflowID: params.workflow,
+      token,
+    }),
   ]);
-  if (!logs || !run || !workflow) return notFound();
+  if (!logs.data || !run.data || !workflow.data) return notFound();
   return (
     <WorkflowRunLogsSection
-      workflowRun={run}
-      workflowRunLogs={logs}
-      workflow={workflow}
+      workflowRun={run.data}
+      workflowRunLogs={logs.data}
+      workflow={workflow.data}
     />
   );
 }

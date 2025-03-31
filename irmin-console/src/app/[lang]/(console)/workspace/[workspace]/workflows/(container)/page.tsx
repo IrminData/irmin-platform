@@ -1,9 +1,9 @@
-import { notFound } from 'next/navigation';
-
 import { getWorkflows } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
 
 import WorkflowsSection from '@/components/workflow/WorkflowsSection';
+
+import { WorkspaceLayoutParams } from '../../layout';
 
 /**
  * Workflows page in the workspace
@@ -16,9 +16,13 @@ import WorkflowsSection from '@/components/workflow/WorkflowsSection';
  * clicks on the create button, it navigates to the create page, where
  * the side modal is pre-opened.
  */
-export default async function WorkflowsPage() {
+export default async function WorkflowsPage(props: {
+  params: Promise<WorkspaceLayoutParams>;
+}) {
+  const params = await props.params;
   const token = await getToken();
-  const workflows = await getWorkflows(token);
-  if (!workflows) return notFound();
-  return <WorkflowsSection workflows={workflows} sideModalOpen={false} />;
+  const workflows = await getWorkflows({ workspace: params.workspace, token });
+  return (
+    <WorkflowsSection workflows={workflows.data ?? []} sideModalOpen={false} />
+  );
 }

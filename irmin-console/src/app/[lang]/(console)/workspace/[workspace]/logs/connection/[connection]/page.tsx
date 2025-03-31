@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { getConnection } from '@/lib/actions/connections';
-import { getConnectionLogs } from '@/lib/actions/logs';
+import { getLogs } from '@/lib/actions/logs';
 import { Locale } from '@/lib/dict';
 import { getToken } from '@/lib/getToken';
 import { initDict } from '@/lib/initDict';
@@ -44,20 +44,25 @@ export default async function ConnectionLogsPage(props: {
   params: Promise<ConnectionLogsLayoutParams>;
 }) {
   const params = await props.params;
+  const currentWorkspace = params.workspace;
 
   const token = await getToken();
   const [logs, connection, { dict }] = await Promise.all([
-    getConnectionLogs(params.connection, token),
-    getConnection(params.connection, token),
+    getLogs({ workspace: currentWorkspace, token }),
+    getConnection({
+      workspace: currentWorkspace,
+      connectionID: params.connection,
+      token,
+    }),
     initDict(),
   ]);
 
-  if (!logs || !connection) return notFound();
+  if (!logs.data || !connection.data) return notFound();
 
   return (
     <LogsSection
-      connection={connection}
-      logEvents={logs}
+      connection={connection.data}
+      logEvents={logs.data}
       title={dict.logs.connectionLogs}
     />
   );

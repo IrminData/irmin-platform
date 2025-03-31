@@ -9,21 +9,24 @@ import {
   useState,
 } from 'react';
 
+import { triggerWorkflowRun } from '@/lib/actions/workflow-runs';
 import {
   deleteWorkflow,
   getWorkflow,
   pauseWorkflow,
-  resumeWorkflow,
+  startWorkflow,
   transferWorkflow,
-  triggerWorkflowRun,
   updateWorkflow,
+  updateWorkflowSchedule,
 } from '@/lib/actions/workflows';
 
-import { Workflow, WorkflowRun } from '@/types/core/Workflow';
+import { Workflow } from '@/types/core/Workflow';
+import { WorkflowRun } from '@/types/core/WorkflowRun';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 import { useLocale } from './LocaleContext';
 import { usePopup } from './PopupContext';
+import { useWorkspace } from './WorkspaceContext';
 
 /**
  * Workflow context properties
@@ -63,6 +66,7 @@ export const WorkflowProvider = ({
 }) => {
   const { dict } = useLocale();
   const { irminAlert, irminConfirm } = usePopup();
+  const { workspaceSlug } = useWorkspace();
 
   // Track if the workflow is being updated
   const updating = useRef(false);
@@ -73,16 +77,19 @@ export const WorkflowProvider = ({
 
   const fetchWorkflow = useCallback(async () => {
     try {
-      const newWorkflow = await getWorkflow(workflowID);
-      if (!newWorkflow) return;
-      setWorkflow(newWorkflow);
+      const newWorkflow = await getWorkflow({
+        workspace: workspaceSlug,
+        workflowID,
+      });
+      if (!newWorkflow.data) return;
+      setWorkflow(newWorkflow.data);
     } catch (error) {
       irminAlert(
         'error',
         (error as Error)?.message ?? 'Failed to fetch the workflow'
       );
     }
-  }, [workflowID, irminAlert]);
+  }, [workflowID, workspaceSlug, irminAlert]);
 
   const handleDeleteWorkflow = useCallback(async () => {
     const confirmed = await irminConfirm(
@@ -92,7 +99,10 @@ export const WorkflowProvider = ({
     if (updating.current || !confirmed) return;
     try {
       updating.current = true;
-      const res = await deleteWorkflow(workflow.id);
+      const res = await deleteWorkflow({
+        workspace: workspaceSlug,
+        workflowID: workflow.id,
+      });
       irminAlert('success', res.message ?? 'Workflow deleted successfully');
     } catch (error) {
       irminAlert(
@@ -102,14 +112,27 @@ export const WorkflowProvider = ({
     } finally {
       updating.current = false;
     }
-  }, [workflow, dict, irminAlert, irminConfirm]);
+  }, [workflow, dict, workspaceSlug, irminAlert, irminConfirm]);
 
   const handleUpdateWorkflow = useCallback(
     async (data: ItemUpdateProps) => {
       if (updating.current) return;
       try {
         updating.current = true;
-        const res = await updateWorkflow(workflow.id, data);
+        const res = await updateWorkflow({
+          workspace: workspaceSlug,
+          workflowID,
+          name: data.name,
+          description: data.description,
+          documentation: data.documentation,
+        });
+        if (data.schedule) {
+          await updateWorkflowSchedule({
+            workspace: workspaceSlug,
+            workflowID,
+            schedule: data.schedule,
+          });
+        }
         await fetchWorkflow();
         irminAlert('success', res.message ?? 'Workflow updated successfully');
       } catch (error) {
@@ -133,7 +156,11 @@ export const WorkflowProvider = ({
       if (updating.current || !confirmed) return;
       try {
         updating.current = true;
-        const res = await transferWorkflow(workflow.id, ownerID);
+        const res = await transferWorkflow({
+          workspace: workspaceSlug,
+          workflowID,
+          newOwnerID: ownerID,
+        });
         await fetchWorkflow();
         irminAlert(
           'success',
@@ -148,14 +175,17 @@ export const WorkflowProvider = ({
         updating.current = false;
       }
     },
-    [workflow, dict, fetchWorkflow, irminAlert, irminConfirm]
+    [workflow, workspaceSlug, dict, fetchWorkflow, irminAlert, irminConfirm]
   );
 
   const handlePauseWorkflow = useCallback(async () => {
     if (updating.current) return;
     try {
       updating.current = true;
-      const res = await pauseWorkflow(workflowID);
+      const res = await pauseWorkflow({
+        workspace: workspaceSlug,
+        workflowID,
+      });
       await fetchWorkflow();
       irminAlert('success', res.message ?? 'Workflow paused successfully');
     } catch (error) {
@@ -166,13 +196,16 @@ export const WorkflowProvider = ({
     } finally {
       updating.current = false;
     }
-  }, [workflowID, fetchWorkflow, irminAlert]);
+  }, [workflowID, workspaceSlug, fetchWorkflow, irminAlert]);
 
   const handleResumeWorkflow = useCallback(async () => {
     if (updating.current) return;
     try {
       updating.current = true;
-      const res = await resumeWorkflow(workflowID);
+      const res = await startWorkflow({
+        workspace: workspaceSlug,
+        workflowID,
+      });
       await fetchWorkflow();
       irminAlert('success', res.message ?? 'Workflow resumed successfully');
     } catch (error) {
@@ -183,13 +216,16 @@ export const WorkflowProvider = ({
     } finally {
       updating.current = false;
     }
-  }, [workflowID, fetchWorkflow, irminAlert]);
+  }, [workflowID, workspaceSlug, fetchWorkflow, irminAlert]);
 
   const handleTriggerWorkflowRun = useCallback(async () => {
     if (updating.current) return;
     try {
       updating.current = true;
-      const res = await triggerWorkflowRun(workflowID);
+      const res = await triggerWorkflowRun({
+        workspace: workspaceSlug,
+        workflowID,
+      });
       irminAlert('success', res.message ?? 'Workflow run triggered');
     } catch (error) {
       irminAlert(
@@ -199,7 +235,7 @@ export const WorkflowProvider = ({
     } finally {
       updating.current = false;
     }
-  }, [workflowID, irminAlert]);
+  }, [workflowID, workspaceSlug, irminAlert]);
 
   return (
     <WorkflowContext.Provider

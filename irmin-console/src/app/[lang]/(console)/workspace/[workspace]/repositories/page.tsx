@@ -1,9 +1,9 @@
-import { notFound } from 'next/navigation';
-
 import { getRepositories } from '@/lib/actions/repositories';
 import { getToken } from '@/lib/getToken';
 
 import RepositoriesSection from '@/components/repository/RepositoriesSection';
+
+import { WorkspaceLayoutParams } from '../layout';
 
 /**
  * Repositories page in the workspace
@@ -16,11 +16,19 @@ import RepositoriesSection from '@/components/repository/RepositoriesSection';
  * clicks on the create button, it navigates to the create page, where
  * the side modal is pre-opened.
  */
-export default async function RepositoriesPage() {
+export default async function RepositoriesPage(props: {
+  params: Promise<WorkspaceLayoutParams>;
+}) {
+  const params = await props.params;
   const token = await getToken();
-  const repositories = await getRepositories(token);
-  if (!repositories) return notFound();
+  const repositories = await getRepositories({
+    workspace: params.workspace,
+    token,
+  });
   return (
-    <RepositoriesSection repositories={repositories} sideModalOpen={false} />
+    <RepositoriesSection
+      repositories={repositories.data ?? []}
+      sideModalOpen={false}
+    />
   );
 }

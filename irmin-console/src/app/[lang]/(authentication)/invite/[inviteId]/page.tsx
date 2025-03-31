@@ -39,8 +39,8 @@ export default async function InvitePage(props: {
   }
 
   // Get the invite by ID
-  const invite = await getInvite(params.inviteId);
-  if (!invite) {
+  const invite = await getInvite({ inviteID: params.inviteId });
+  if (!invite || !invite.data) {
     return (
       <div className='container mx-auto my-8 max-w-3xl'>
         <div
@@ -62,5 +62,5 @@ export default async function InvitePage(props: {
     );
   }
 
-  return <AcceptInviteSection user={user} invite={invite} />;
+  return <AcceptInviteSection user={user} invite={invite.data} />;
 }

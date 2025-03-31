@@ -30,6 +30,7 @@ export default function RepositoryLayoutWrapper({
   children,
   dict,
   repositorySlug,
+  workspaceSlug,
   initialRepository,
   initialBranches,
   initialTags,
@@ -37,6 +38,7 @@ export default function RepositoryLayoutWrapper({
   children: React.ReactNode;
   dict: Dictionary;
   repositorySlug: string;
+  workspaceSlug: string;
   initialRepository: Repository;
   initialBranches: Branch[];
   initialTags: Tag[];
@@ -53,11 +55,15 @@ export default function RepositoryLayoutWrapper({
 
   useEffect(() => {
     const fetchInitialDataWithRef = async () => {
-      const newCommits = await getCommits(repositorySlug, initialRef);
+      const newCommits = await getCommits({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        ref: initialRef,
+      });
       setCommits(newCommits);
     };
     fetchInitialDataWithRef();
-  }, [initialRef, repositorySlug]);
+  }, [initialRef, workspaceSlug, repositorySlug]);
 
   if (!commits) {
     return (

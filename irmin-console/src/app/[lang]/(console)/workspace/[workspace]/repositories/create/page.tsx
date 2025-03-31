@@ -1,9 +1,9 @@
-import { notFound } from 'next/navigation';
-
 import { getRepositories } from '@/lib/actions/repositories';
 import { getToken } from '@/lib/getToken';
 
 import RepositoriesSection from '@/components/repository/RepositoriesSection';
+
+import { WorkspaceLayoutParams } from '../../layout';
 
 /**
  * Page to create a new Repository in the workspace
@@ -14,11 +14,19 @@ import RepositoriesSection from '@/components/repository/RepositoriesSection';
  *
  * If the user tries to close the modal, it navigates back to the repositories page.
  */
-export default async function RepositoryCreatePage() {
+export default async function RepositoryCreatePage(props: {
+  params: Promise<WorkspaceLayoutParams>;
+}) {
+  const params = await props.params;
   const token = await getToken();
-  const repositories = await getRepositories(token);
-  if (!repositories) return notFound();
+  const repositories = await getRepositories({
+    workspace: params.workspace,
+    token,
+  });
   return (
-    <RepositoriesSection repositories={repositories} sideModalOpen={true} />
+    <RepositoriesSection
+      repositories={repositories.data ?? []}
+      sideModalOpen={true}
+    />
   );
 }

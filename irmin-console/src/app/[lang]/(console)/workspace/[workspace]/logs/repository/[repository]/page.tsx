@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { getRepositoryLogs } from '@/lib/actions/logs';
+import { getLogs } from '@/lib/actions/logs';
 import { getRepository } from '@/lib/actions/repositories';
 import { Locale } from '@/lib/dict';
 import { getToken } from '@/lib/getToken';
@@ -44,20 +44,25 @@ export default async function RepositoryLogsPage(props: {
   params: Promise<RepositoryLogsLayoutParams>;
 }) {
   const params = await props.params;
+  const currentWorkspace = params.workspace;
 
   const token = await getToken();
   const [logs, repository, { dict }] = await Promise.all([
-    getRepositoryLogs(params.repository, token),
-    getRepository(params.repository, token),
+    getLogs({ workspace: currentWorkspace, token }),
+    getRepository({
+      workspace: currentWorkspace,
+      repositorySlug: params.repository,
+      token,
+    }),
     initDict(),
   ]);
 
-  if (!logs || !repository) return notFound();
+  if (!logs.data || !repository.data) return notFound();
 
   return (
     <LogsSection
-      repository={repository}
-      logEvents={logs}
+      repository={repository.data}
+      logEvents={logs.data}
       title={dict.logs.repositoryLogs}
     />
   );

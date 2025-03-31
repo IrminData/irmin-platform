@@ -5,6 +5,8 @@ import { getToken } from '@/lib/getToken';
 
 import WorkflowsSection from '@/components/workflow/WorkflowsSection';
 
+import { WorkspaceLayoutParams } from '../../../layout';
+
 /**
  * Page to create a new Workflow in the workspace
  *
@@ -14,9 +16,13 @@ import WorkflowsSection from '@/components/workflow/WorkflowsSection';
  *
  * If the user tries to close the modal, it navigates back to the workflows page.
  */
-export default async function WorkflowCreatePage() {
+export default async function WorkflowCreatePage(props: {
+  params: Promise<WorkspaceLayoutParams>;
+}) {
+  const params = await props.params;
   const token = await getToken();
-  const workflows = await getWorkflows(token);
-  if (!workflows) return notFound();
-  return <WorkflowsSection workflows={workflows} sideModalOpen={true} />;
+  const workflows = await getWorkflows({ workspace: params.workspace, token });
+  return (
+    <WorkflowsSection workflows={workflows.data ?? []} sideModalOpen={true} />
+  );
 }

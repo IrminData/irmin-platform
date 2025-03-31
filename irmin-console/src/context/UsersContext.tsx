@@ -72,9 +72,8 @@ export const UsersProvider = ({
 
   const fetchUsers = useCallback(async () => {
     try {
-      const newUsers = await getUsers(currentWorkspace);
-      if (!newUsers) return;
-      setUsers(newUsers);
+      const newUsers = await getUsers({ workspace: currentWorkspace });
+      setUsers(newUsers.data ?? []);
     } catch (error) {
       irminAlert(
         'error',
@@ -85,9 +84,10 @@ export const UsersProvider = ({
 
   const fetchInvites = useCallback(async () => {
     try {
-      const { data: newInvites } = await getWorkspaceInvites(currentWorkspace);
-      if (!newInvites) return;
-      setInvites(newInvites);
+      const newInvites = await getWorkspaceInvites({
+        workspace: currentWorkspace,
+      });
+      setInvites(newInvites.data ?? []);
     } catch (error) {
       irminAlert(
         'error',
@@ -101,7 +101,7 @@ export const UsersProvider = ({
       if (updatingUsers.current) return;
       try {
         updatingUsers.current = true;
-        const res = await deleteUser(currentWorkspace, userID);
+        const res = await deleteUser({ workspace: currentWorkspace, userID });
         await fetchUsers();
         irminAlert('success', res.message ?? 'User deleted successfully');
       } catch (error) {
@@ -121,7 +121,7 @@ export const UsersProvider = ({
       if (updatingInvites.current) return;
       try {
         updatingInvites.current = true;
-        const res = await deleteInvite(inviteID);
+        const res = await deleteInvite({ inviteID });
         await fetchInvites();
         irminAlert('success', res.message ?? 'Invite cancelled successfully');
       } catch (error) {
@@ -141,7 +141,11 @@ export const UsersProvider = ({
       if (updatingUsers.current) return;
       try {
         updatingUsers.current = true;
-        const res = await changeUserRole(currentWorkspace, userID, roles);
+        const res = await changeUserRole({
+          workspace: currentWorkspace,
+          userID,
+          roles,
+        });
         await fetchUsers();
         irminAlert('success', res.message ?? 'User role changed successfully');
       } catch (error) {
@@ -161,7 +165,7 @@ export const UsersProvider = ({
       if (updatingInvites.current) return;
       try {
         updatingInvites.current = true;
-        const res = await updateInvite(inviteID, role);
+        const res = await updateInvite({ inviteID, role });
         await fetchInvites();
         irminAlert(
           'success',
@@ -182,7 +186,7 @@ export const UsersProvider = ({
   const handleResendInvite = useCallback(
     async (inviteID: string) => {
       try {
-        const res = await resendInvite(inviteID);
+        const res = await resendInvite({ inviteID });
         irminAlert('success', res.message ?? 'Invite resent successfully');
       } catch (error) {
         irminAlert(
@@ -203,11 +207,11 @@ export const UsersProvider = ({
           if (updatingInvites.current) return;
           try {
             updatingInvites.current = true;
-            const res = await sendInvite(
-              currentWorkspace,
-              data.email,
-              data.role
-            );
+            const res = await sendInvite({
+              workspace: currentWorkspace,
+              email: data.email,
+              role: data.role,
+            });
             await fetchInvites();
             irminAlert('success', res.message ?? 'Invite sent successfully');
           } catch (error) {

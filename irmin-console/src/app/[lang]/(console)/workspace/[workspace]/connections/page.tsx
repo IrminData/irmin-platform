@@ -6,6 +6,8 @@ import { getToken } from '@/lib/getToken';
 
 import ConnectionsSection from '@/components/connection/ConnectionsSection';
 
+import { WorkspaceLayoutParams } from '../layout';
+
 /**
  * Connections page in the workspace
  *
@@ -17,17 +19,21 @@ import ConnectionsSection from '@/components/connection/ConnectionsSection';
  * clicks on the create button, it navigates to the create page, where
  * the side modal is pre-opened.
  */
-export default async function ConnectionsPage() {
+export default async function ConnectionsPage(props: {
+  params: Promise<WorkspaceLayoutParams>;
+}) {
+  const params = await props.params;
+  const currentWorkspace = params.workspace;
   const token = await getToken();
   const [connectors, connections] = await Promise.all([
-    getConnectors(token),
-    getConnections(token),
+    getConnectors({ token }),
+    getConnections({ workspace: currentWorkspace, token }),
   ]);
-  if (!connections || !connectors) return notFound();
+  if (!connections.data || !connectors.data) return notFound();
   return (
     <ConnectionsSection
-      connections={connections}
-      connectors={connectors}
+      connections={connections.data}
+      connectors={connectors.data}
       sideModalOpen={false}
     />
   );

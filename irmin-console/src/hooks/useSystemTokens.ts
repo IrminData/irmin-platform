@@ -30,7 +30,7 @@ export const useSystemTokens = ({
       if (creatingToken.current) return;
       creatingToken.current = true;
       try {
-        const res = await createSystemToken(name, validFor);
+        const res = await createSystemToken({ name, expiry: validFor });
         if (res.data) {
           irminAlert(
             'success',
@@ -67,7 +67,7 @@ export const useSystemTokens = ({
       if (removingToken.current) return;
       removingToken.current = true;
       try {
-        const res = await revokeSystemToken(token.id);
+        const res = await revokeSystemToken({ tokenId: token.id });
         irminAlert('success', res?.message ?? 'API token revoked successfully');
         setTokens((prev) => prev.filter((t) => t.id !== token.id));
       } catch (error) {

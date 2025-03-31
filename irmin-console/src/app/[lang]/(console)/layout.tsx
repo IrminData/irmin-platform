@@ -33,16 +33,16 @@ export default async function ConsoleLayout(props: {
 
   const token = await getToken();
   const [workspaces, { dict }] = await Promise.all([
-    getWorkspaces(token),
+    getWorkspaces({ token }),
     getDict(),
   ]);
 
-  if (!workspaces) {
+  if (!workspaces || !workspaces.data) {
     return notFound();
   }
 
   return (
-    <ConsoleWrapper workspaces={workspaces} dict={dict}>
+    <ConsoleWrapper workspaces={workspaces.data} dict={dict}>
       {children}
     </ConsoleWrapper>
   );
