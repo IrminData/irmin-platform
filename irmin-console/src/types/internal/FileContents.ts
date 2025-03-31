@@ -1,4 +1,4 @@
-import { IrminFileType } from '@/types/core/EditorItems';
+import { IrminFileLanguage } from '@/types/core/EditorItems';
 
 /**
  * Internal type for managing file contents and file state in the editor
@@ -15,5 +15,5 @@ export type FileContents = {
   /** Indicates if the file was created */
   created: boolean;
   /** Language of the file */
-  language: IrminFileType;
+  language: IrminFileLanguage;
 };

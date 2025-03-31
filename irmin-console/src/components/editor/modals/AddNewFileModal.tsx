@@ -7,6 +7,7 @@ import ReactSelect from 'react-select';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
+import PathSelector from '@/components/editor/PathSelector';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,37 +23,46 @@ import {
 } from '@/utils/editorItems';
 
 import {
-  EditorItems,
-  EditorItemsFile,
-  irminFileTypes,
-  IrminFileTypeWithDetails,
+  EditorItem,
+  IrminFileLanguage,
+  irminFileLanguages,
 } from '@/types/core/EditorItems';
-import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
-
-import PathSelector from '../PathSelector';
 
 type FormData = {
-  extension: IrminFileTypeWithDetails;
+  extension: IrminFileLanguage;
   name: string;
   path: string;
 };
 
+/**
+ * Modal for creating a new file.
+ * Allows the user to select the file type, specify a file name and choose the file path.
+ *
+ * @param options - Options for creating a new file.
+ * @param options.editorItems The list of current editor items (workspace context).
+ * @param options.createFile Function to create the new file.
+ * @returns JSX element for the add new file modal.
+ */
 export default function AddNewFileModal({
   editorItems,
   createFile,
 }: {
-  editorItems: EditorItems | null;
-  createFile: (file: FileNavigatorItem) => void;
+  editorItems: EditorItem[] | null;
+  createFile: (file: EditorItem) => void;
 }) {
   const { irminModal } = usePopup();
   const { dict } = useLocale();
 
+  // Local state for error messages and loading status
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPathSelector, setShowPathSelector] = useState(true);
 
+  // Prevent multiple submissions
   const creatingFileRef = useRef(false);
 
+  // Initialise the form with default values.
+  // Default extension is the first item in the list of file languages.
   const {
     handleSubmit,
     control,
@@ -61,7 +71,7 @@ export default function AddNewFileModal({
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
-      extension: irminFileTypes.find((a) => a.extension === 'sql')!,
+      extension: irminFileLanguages[0].value,
       name: '',
       path: '',
     },
@@ -72,10 +82,11 @@ export default function AddNewFileModal({
   const path = watch('path');
 
   /**
-   * Update the path and name when the extension or name changes
+   * Update the file name and path when the extension or name changes.
+   * This ensures that the file name always includes the correct extension and the path is updated accordingly.
    */
   const updatePathAndName = useCallback(() => {
-    const extensionValue = extension.extension;
+    const extensionValue = extension;
     const nameWithExtension = getCorrectNameWithExtension(
       name,
       'file',
@@ -83,7 +94,7 @@ export default function AddNewFileModal({
     );
     const newPath = getCorrectPath(path, nameWithExtension);
 
-    // Update the name without extension and path
+    // Update the form values: name without extension and the corrected path.
     setValue('name', getNameWithoutExtension(nameWithExtension), {
       shouldValidate: true,
       shouldDirty: true,
@@ -91,13 +102,15 @@ export default function AddNewFileModal({
     setValue('path', newPath, { shouldValidate: true, shouldDirty: true });
   }, [extension, name, path, setValue]);
 
-  // Update path and name whenever extension or name changes
+  // Recalculate the file name and path whenever the name or extension changes.
   useEffect(() => {
     updatePathAndName();
   }, [extension, name, updatePathAndName]);
 
   /**
-   * Create the file based on the values provided by the user
+   * Handles the form submission to create a new file.
+   *
+   * @param data The form data containing the selected extension, file name and file path.
    */
   const onSubmit = useCallback(
     async (data: FormData) => {
@@ -107,7 +120,7 @@ export default function AddNewFileModal({
         setError('');
         setLoading(true);
 
-        const extensionValue = data.extension.extension;
+        const extensionValue = data.extension;
         const nameWithExtension = getCorrectNameWithExtension(
           data.name,
           'file',
@@ -115,7 +128,7 @@ export default function AddNewFileModal({
         );
         const newPath = data.path;
 
-        // Ensure the item can be created
+        // Validate if the new file can be created.
         const canCreate = itemCanBeCreated(
           newPath,
           nameWithExtension,
@@ -127,21 +140,18 @@ export default function AddNewFileModal({
         if (!canCreate.canCreate) {
           throw new Error(canCreate.reason);
         }
-        // Create the new file
-        const newFile = {
-          is_draft: false,
-          workspace: editorItems?.workspace ?? '',
-          contents: '',
+
+        // Call the provided createFile function to add the new file.
+        createFile({
+          type: 'file',
           name: nameWithExtension,
           path: newPath,
-          type: extensionValue,
-        } as EditorItemsFile;
-        createFile({
-          original: null,
-          current: newFile,
-          type: 'file',
+          language: extensionValue,
+          content: '',
+          last_modified: new Date().toISOString(),
         });
-        // Close the modal after creation
+
+        // Close the modal on successful creation.
         irminModal.close();
       } catch (error) {
         console.error(error);
@@ -170,9 +180,11 @@ export default function AddNewFileModal({
               {...field}
               aria-label='Select the type of the file'
               isDisabled={loading}
-              options={irminFileTypes}
-              getOptionLabel={(option) => option.name}
-              getOptionValue={(option) => option.extension}
+              options={irminFileLanguages.map((lang) => lang.value)}
+              getOptionLabel={(option) =>
+                irminFileLanguages.find((lang) => lang.value === option)
+                  ?.label || option
+              }
               className='react-select-container'
               classNamePrefix='react-select'
             />
@@ -201,7 +213,7 @@ export default function AddNewFileModal({
           rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <div className='flex flex-row items-center'>
-              <Input type='text' disabled={true} {...field} />
+              <Input type='text' disabled {...field} />
               <Button
                 size='icon'
                 variant='ghost'
@@ -226,12 +238,8 @@ export default function AddNewFileModal({
       </div>
       {showPathSelector && (
         <PathSelector
-          editorItems={editorItems}
-          itemName={getCorrectNameWithExtension(
-            name,
-            'file',
-            extension.extension
-          )}
+          editorItems={editorItems ?? []}
+          itemName={getCorrectNameWithExtension(name, 'file', extension)}
           originalItemPath={null}
           currentSelected={path}
           onSelectPath={(selectedPath: string) => {

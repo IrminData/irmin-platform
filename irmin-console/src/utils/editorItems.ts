@@ -1,11 +1,9 @@
 import { Dictionary } from '@/lib/dict';
 
 import {
-  EditorItems,
-  EditorItemsFile,
-  EditorItemsFolder,
-  IrminFileType,
-  irminFileTypes,
+  EditorItem,
+  IrminFileLanguage,
+  irminFileLanguages,
 } from '@/types/core/EditorItems';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
@@ -20,7 +18,7 @@ import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 export const getCorrectNameWithExtension = (
   name: string,
   type: 'file' | 'folder',
-  desiredExtension?: IrminFileType
+  desiredExtension?: IrminFileLanguage
 ): string => {
   const nameWithoutExtensions = getNameWithoutExtension(name);
   // Replace all non-alphanumeric characters with underscores, except for dots
@@ -58,6 +56,21 @@ export const getNameFromPath = (path: string): string => {
 };
 
 /**
+ * Get flattened editor items by recursively traversing the editorItems object
+ * @param editorItems - The editor items to flatten
+ * @returns The flattened editor items
+ */
+export const flattenEditorItems = (editorItems: EditorItem[]) => {
+  // Flatten the editorItems object
+  const flatEditorItems: EditorItem[] = [];
+  for (const item of editorItems) {
+    const flatChildren = item.children ? flattenEditorItems(item.children) : [];
+    flatEditorItems.push(item, ...flatChildren);
+  }
+  return flatEditorItems;
+};
+
+/**
  * Make sure the item can be created before creating it
  * Runs a series of checks to make sure the item can be created
  * @param path The path of the item being created
@@ -72,7 +85,7 @@ export const itemCanBeCreated = function (
   path: string,
   name: string,
   type: string,
-  editorItems: EditorItems | null,
+  editorItems: EditorItem[] | null,
   dict: Dictionary,
   extension?: string
 ): {
@@ -92,7 +105,7 @@ export const itemCanBeCreated = function (
   if (type === 'file' && !extension)
     return { canCreate: false, reason: dict.fileNavigator.errors.noExtension };
   // Make sure extension is valid, if file
-  if (type === 'file' && !irminFileTypes.find((a) => a.extension === extension))
+  if (type === 'file' && !irminFileLanguages.find((a) => a.value === extension))
     return {
       canCreate: false,
       reason: dict.fileNavigator.errors.invalidExtension,
@@ -107,7 +120,7 @@ export const itemCanBeCreated = function (
   const correctName = getCorrectNameWithExtension(
     name,
     type,
-    extension as IrminFileType
+    extension as IrminFileLanguage
   );
   if (correctName !== name)
     return { canCreate: false, reason: dict.fileNavigator.errors.invalidName };
@@ -116,16 +129,15 @@ export const itemCanBeCreated = function (
   if (correctPath !== path)
     return { canCreate: false, reason: dict.fileNavigator.errors.invalidPath };
   // Make sure that the path is not already taken
-  if (
-    editorItems.files.some((file) => file.path === correctPath) ||
-    editorItems.folders.some((folder) => folder.path === correctPath)
-  )
+  if (editorItems.some((file) => file.path === correctPath))
     return { canCreate: false, reason: dict.fileNavigator.errors.pathExists };
+  // Flatten the editorItems object
+  const flatEditorItems = flattenEditorItems(editorItems);
   // Make sure that the parent paths exist
   const parentPath = getParentPath(correctPath, correctName);
   if (
     parentPath !== '/' &&
-    !editorItems.folders.some((folder) => folder.path === parentPath)
+    !flatEditorItems.some((item) => item.path === parentPath)
   )
     return {
       canCreate: false,
@@ -143,38 +155,12 @@ export const itemCanBeCreated = function (
  * @returns File items
  */
 export const transformEditorItemsToFileNavItem = (
-  editorItems: EditorItems
+  editorItems: EditorItem[]
 ): FileNavigatorItem[] => {
-  const transformFile = (file: EditorItemsFile): FileNavigatorItem => ({
-    type: 'file',
-    original: file,
-    current: file,
-  });
-  const transformFolder = (folder: EditorItemsFolder): FileNavigatorItem => ({
-    type: 'folder',
-    original: folder,
-    current: folder,
-    children: [
-      // Get the folders that are direct children of the current folder
-      ...editorItems.folders
-        .filter((a) => getParentPath(a.path, a.name) === folder.path)
-        .map(transformFolder),
-      // Get the files that are direct children of the current folder
-      ...editorItems.files
-        .filter((a) => getParentPath(a.path) === folder.path)
-        .map(transformFile),
-    ],
-  });
-  return [
-    // Get the folders in the root
-    ...editorItems.folders
-      .filter((folder) => getParentPath(folder.path, folder.name) === '/')
-      .map(transformFolder),
-    // Get the files in the root
-    ...editorItems.files
-      .filter((file) => getParentPath(file.path) === '/')
-      .map(transformFile),
-  ];
+  return editorItems.map((item) => ({
+    original: item,
+    current: item,
+  }));
 };
 
 /**
@@ -219,15 +205,28 @@ const getParentPath = (path: string, name?: string): string => {
 };
 
 /**
- * Utility function to get the language from a filename
- * @param filename - Filename to get the language from
+ * Determines the language for syntax highlighting based on the file's extension.
+ *
+ * @param path - The file path.
+ * @returns The language identifier for the file.
  */
-export const getLanguageFromFilename = (filename: string): IrminFileType => {
-  const extension = filename.split('.').pop();
-  if (extension === 'sql' || extension === 'js')
-    return extension as IrminFileType;
-  return 'sql';
-};
+export function getLanguageFromFilename(path: string): IrminFileLanguage {
+  // - Extract the file extension
+  const ext = path.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'js':
+      return 'js';
+    case 'go':
+      return 'go';
+    case 'py':
+      return 'py';
+    case 'sql':
+      return 'sql';
+    // - Default to plaintext if no match is found
+    default:
+      return 'txt';
+  }
+}
 
 /**
  * Utility function to find a file by path in the editorItems
@@ -235,29 +234,11 @@ export const getLanguageFromFilename = (filename: string): IrminFileType => {
  * @param editorItems - EditorItems to search in
  * @returns The file if found, undefined otherwise
  */
-export const getFileByPath = (
-  path: string,
-  editorItems: EditorItems | null
-): EditorItemsFile | undefined => {
-  if (!editorItems) return;
-  return editorItems.files.find((file) => file.path === path);
-};
-
-/**
- * Recursive function to get an item by path in the file navigator
- * @param path - Path of the item to find
- * @param items - Items to search in
- * @returns The item if found, undefined otherwise
- */
 export const getItemByPath = (
   path: string,
-  items: FileNavigatorItem[]
-): FileNavigatorItem | undefined => {
-  for (const item of items) {
-    if (item.current?.path === path) return item;
-    if (item.type === 'folder' && item.children) {
-      const found = getItemByPath(path, item.children);
-      if (found) return found;
-    }
-  }
+  editorItems: EditorItem[]
+): EditorItem | undefined => {
+  if (!editorItems) return;
+  const flattenedEditorItems = flattenEditorItems(editorItems);
+  return flattenedEditorItems.find((file) => file.path === path);
 };

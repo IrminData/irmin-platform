@@ -467,6 +467,8 @@ const fi = {
     createFolder: 'Luo kansio',
     updateFile: 'Päivitä tiedosto',
     updateFolder: 'Päivitä kansio',
+    copyFolder: 'Kopioi kansio',
+    copyFile: 'Kopioi tiedosto',
     open: 'Avaa',
     rename: 'Nimeä uudelleen',
     move: 'Siirrä',

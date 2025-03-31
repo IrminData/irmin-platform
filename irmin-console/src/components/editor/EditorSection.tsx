@@ -26,10 +26,7 @@ export default function EditorSection() {
           result={query.result}
           onRun={async () => {
             if (!currentEditor || !currentEditor.contents) return;
-            await query.executeScript(
-              currentEditor.language ?? 'sql',
-              currentEditor.contents ?? ''
-            );
+            await query.executeSql(currentEditor.contents ?? '');
           }}
         />
       )}

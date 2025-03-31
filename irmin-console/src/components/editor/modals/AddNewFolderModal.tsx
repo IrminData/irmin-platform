@@ -6,6 +6,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
+import PathSelector from '@/components/editor/PathSelector';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,32 +21,41 @@ import {
   itemCanBeCreated,
 } from '@/utils/editorItems';
 
-import { EditorItems, EditorItemsFolder } from '@/types/core/EditorItems';
-import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
-
-import PathSelector from '../PathSelector';
+import { EditorItem } from '@/types/core/EditorItems';
 
 type FormData = {
   name: string;
   path: string;
 };
 
+/**
+ * Modal for creating a new folder.
+ * Allows the user to specify a folder name and choose its path.
+ *
+ * @param options - Options for creating a new folder.
+ * @param options.editorItems The list of current editor items (workspace context).
+ * @param options.createFolder Function to create the new folder.
+ * @returns JSX element for the add new folder modal.
+ */
 export default function AddNewFolderModal({
   editorItems,
   createFolder,
 }: {
-  editorItems: EditorItems | null;
-  createFolder: (folder: FileNavigatorItem) => void;
+  editorItems: EditorItem[] | null;
+  createFolder: (folder: EditorItem) => void;
 }) {
   const { irminModal } = usePopup();
   const { dict } = useLocale();
 
+  // Local state for error messages, loading status and path selector visibility.
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPathSelector, setShowPathSelector] = useState(true);
 
+  // Prevent multiple submissions.
   const creatingNewFolderRef = useRef(false);
 
+  // Initialise the form with default values.
   const {
     handleSubmit,
     control,
@@ -63,27 +73,30 @@ export default function AddNewFolderModal({
   const path = watch('path');
 
   /**
-   * Update the path when the name changes
+   * Update the folder path when the folder name changes.
+   * This ensures the folder name (without extension) and the computed path are updated accordingly.
    */
   const updatePath = useCallback(() => {
-    const nameWithExtension = getCorrectNameWithExtension(name, 'folder');
-    const newPath = getCorrectPath(path, nameWithExtension);
+    const folderName = getCorrectNameWithExtension(name, 'folder');
+    const newPath = getCorrectPath(path, folderName);
 
-    // Update the name without extension and path
-    setValue('name', getNameWithoutExtension(nameWithExtension), {
+    // Update the form values.
+    setValue('name', getNameWithoutExtension(folderName), {
       shouldValidate: true,
       shouldDirty: true,
     });
     setValue('path', newPath, { shouldValidate: true, shouldDirty: true });
   }, [name, path, setValue]);
 
-  // Update path whenever the name changes
+  // Update the folder path whenever the name changes.
   useEffect(() => {
     updatePath();
   }, [name, updatePath]);
 
   /**
-   * Create the folder based on the values provided by the user
+   * Handles the form submission to create a new folder.
+   *
+   * @param data The form data containing the folder name and path.
    */
   const onSubmit = useCallback(
     async (data: FormData) => {
@@ -93,16 +106,13 @@ export default function AddNewFolderModal({
         setError('');
         setLoading(true);
 
-        const nameWithExtension = getCorrectNameWithExtension(
-          data.name,
-          'folder'
-        );
+        const folderName = getCorrectNameWithExtension(data.name, 'folder');
         const newPath = data.path;
 
-        // Ensure the item can be created
+        // Validate if the new folder can be created.
         const canCreate = itemCanBeCreated(
           newPath,
-          nameWithExtension,
+          folderName,
           'folder',
           editorItems,
           dict
@@ -110,19 +120,17 @@ export default function AddNewFolderModal({
         if (!canCreate.canCreate) {
           throw new Error(canCreate.reason);
         }
-        // Create the new folder
-        const newFolder = {
-          workspace: editorItems?.workspace ?? '',
-          name: nameWithExtension,
-          path: newPath,
-        } as EditorItemsFolder;
+
+        // Call the provided createFolder function to add the new folder.
         createFolder({
-          original: null,
-          current: newFolder,
-          children: [],
           type: 'folder',
+          name: folderName,
+          path: newPath,
+          children: [],
+          last_modified: new Date().toISOString(),
         });
-        // Close the modal after creation
+
+        // Close the modal on successful creation.
         irminModal.close();
       } catch (error) {
         console.error(error);
@@ -188,7 +196,7 @@ export default function AddNewFolderModal({
       </div>
       {showPathSelector && (
         <PathSelector
-          editorItems={editorItems}
+          editorItems={editorItems ?? []}
           itemName={getCorrectNameWithExtension(name, 'folder')}
           originalItemPath={null}
           currentSelected={path}

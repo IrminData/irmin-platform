@@ -4,8 +4,7 @@ import { createContext, useContext } from 'react';
 
 import { useEditor as useEditorHook } from '@/hooks/useEditor';
 
-import { EditorItems } from '@/types/core/EditorItems';
-import { IrminFileType } from '@/types/core/EditorItems';
+import { EditorItem, IrminFileLanguage } from '@/types/core/EditorItems';
 import { FileContents } from '@/types/internal/FileContents';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
@@ -26,11 +25,12 @@ interface EditorContextType {
   closeTab: (tab: string) => void;
   updateCurrentTabContent: (content: string) => void;
   saveActiveTabAsFile: () => void;
-  changeLanguage: (language: IrminFileType) => void;
+  changeLanguage: (language: IrminFileLanguage) => void;
   // Item Actions
   addNewFile: () => void;
   addNewFolder: () => void;
   renameOrMoveItem: (item: FileNavigatorItem) => void;
+  copyItem: (item: FileNavigatorItem) => void;
   deleteItem: (item: FileNavigatorItem) => void;
 }
 
@@ -41,7 +41,7 @@ export const EditorProvider = ({
   editorItems,
 }: {
   children: React.ReactNode;
-  editorItems: EditorItems;
+  editorItems: EditorItem[];
 }) => {
   const editor = useEditorHook(editorItems);
 

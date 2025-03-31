@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { CiMenuKebab } from 'react-icons/ci';
 import { FaTimes } from 'react-icons/fa';
@@ -13,12 +13,10 @@ import {
 
 import Button from '@/components/ui/button';
 
+import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import {
-  FileNavigatorFileItem,
-  FileNavigatorItem,
-} from '@/types/internal/FileNavigatorItem';
+import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
  * File navigator component
@@ -31,34 +29,17 @@ import {
  * It includes a context menu to open, delete, and rename files.
  *
  * The file navigator is used to browse and manage files in the console.
- *
- * @param fileNavigatorProps - The props for the file navigator
- * @param fileNavigatorProps.items - The items to display in the file navigator
- * @param fileNavigatorProps.addNewFile - Function to prompt the user to create a new file
- * @param fileNavigatorProps.addNewFolder - Function to prompt the user to create a new folder
- * @param fileNavigatorProps.onOpenFile - Function to open a specific file in the editor
- * @param fileNavigatorProps.onDelete - Function to delete a file or folder
- * @param fileNavigatorProps.onRename - Function to rename a file or folder
- * @param fileNavigatorProps.onMove - Function to move a file or folder
  */
-const FileNavigator = ({
-  items,
-  addNewFile,
-  addNewFolder,
-  onOpenFile,
-  onDelete,
-  onRename,
-  onMove,
-}: {
-  items: FileNavigatorItem[];
-  addNewFile: () => void;
-  addNewFolder: () => void;
-  onOpenFile: (_item: FileNavigatorFileItem) => void;
-  onDelete: (_item: FileNavigatorItem) => void;
-  onRename: (_item: FileNavigatorItem) => void;
-  onMove: (_item: FileNavigatorItem) => void;
-}) => {
+const FileNavigator = () => {
   const { dict } = useLocale();
+  const {
+    items,
+    addNewFile,
+    addNewFolder,
+    renameOrMoveItem,
+    deleteItem,
+    openFile,
+  } = useEditor();
 
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [contextMenu, setContextMenu] = useState<{
@@ -67,14 +48,14 @@ const FileNavigator = ({
     item: FileNavigatorItem;
   } | null>(null);
 
-  const toggleFolder = (item: FileNavigatorItem) => {
+  const toggleFolder = useCallback((item: FileNavigatorItem) => {
     if (item.current?.name) {
       setOpenFolders((prev) => ({
         ...prev,
         [item.current?.name ?? '']: !prev[item.current?.name ?? ''],
       }));
     }
-  };
+  }, []);
 
   /**
    * Handle right click on a folder or file in the file navigator
@@ -88,24 +69,24 @@ const FileNavigator = ({
    * @param event - The right click event, or the click event on the context menu button
    * @param item - The item clicked in the file navigator
    */
-  const handleContextMenu = (
-    event: React.MouseEvent,
-    item: FileNavigatorItem
-  ) => {
-    event.preventDefault();
-    setContextMenu({
-      visible: true,
-      top: event.clientY - 45,
-      item,
-    });
-  };
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent, item: FileNavigatorItem) => {
+      event.preventDefault();
+      setContextMenu({
+        visible: true,
+        top: event.clientY - 45,
+        item,
+      });
+    },
+    []
+  );
 
   /**
    * Close the context menu
    */
-  const closeContextMenu = () => {
+  const closeContextMenu = useCallback(() => {
     setContextMenu(null);
-  };
+  }, []);
 
   /**
    * Handle click on a folder or file in the file navigator
@@ -115,75 +96,89 @@ const FileNavigator = ({
    *
    * @props item - The item clicked in the file navigator
    */
-  const handleItemClick = (item: FileNavigatorItem) => {
-    if (contextMenu) {
-      setContextMenu({
-        ...contextMenu,
-        visible: false,
-      });
-    }
-    if (!item.current) return;
-    if (item.type === 'file') {
-      onOpenFile(item);
-    } else {
-      toggleFolder(item);
-    }
-  };
+  const handleItemClick = useCallback(
+    (item: FileNavigatorItem) => {
+      if (contextMenu) {
+        setContextMenu({
+          ...contextMenu,
+          visible: false,
+        });
+      }
+      if (!item.current) return;
+      if (item.current.type === 'file') {
+        openFile(item);
+      } else {
+        toggleFolder(item);
+      }
+    },
+    [contextMenu, openFile]
+  );
 
   /**
    * Recursive function that will render all items in the file navigator
    * @param items The items to render
    */
-  const renderItems = (items: FileNavigatorItem[]) =>
-    items.map((item) => {
-      if (!item.current) return;
-      return (
-        <div key={item.current.name} className='my-1'>
-          <div
-            className={`flex items-center justify-normal rounded-md p-1 text-sm`}
-          >
-            {item.type === 'folder' ? (
-              openFolders[item.current.name] ? (
-                <FiChevronDown
-                  className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
-                  aria-label={`Close folder ${item.current.name} in the file navigator`}
-                  onClick={() => handleItemClick(item)}
-                />
-              ) : (
-                <FiChevronRight
-                  className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
-                  aria-label={`Open folder ${item.current.name} in the file navigator`}
-                  onClick={() => handleItemClick(item)}
-                />
-              )
-            ) : null}
-            <span className='ml-2'>
-              {item.type === 'folder' ? <FiFolder /> : <FiFileText />}
-            </span>
-            <span
-              className='ml-2 cursor-pointer hover:underline'
-              aria-label={`Open ${item.current.name} ${item.type}`}
-              onClick={() => handleItemClick(item)}
-              onContextMenu={(e) => handleContextMenu(e, item)}
+  const renderItems = useCallback(
+    (items: FileNavigatorItem[]) =>
+      items.map((item) => {
+        if (!item.current) return;
+        return (
+          <div key={item.current.name} className='my-1'>
+            <div
+              className={`flex items-center justify-normal rounded-md p-1 text-sm`}
             >
-              {item.current.name}
-            </span>
-            <button
-              className='ml-auto cursor-pointer rounded-full py-1 hover:bg-gray-100 dark:hover:bg-gray-700'
-              aria-label={`Open context menu for ${item.current.name}`}
-              onClick={(e) => {
-                handleContextMenu(e, item);
-              }}
-            >
-              <CiMenuKebab />
-            </button>
+              {item.current.type === 'folder' ? (
+                openFolders[item.current.name] ? (
+                  <FiChevronDown
+                    className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
+                    aria-label={`Close folder ${item.current.name} in the file navigator`}
+                    onClick={() => handleItemClick(item)}
+                  />
+                ) : (
+                  <FiChevronRight
+                    className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
+                    aria-label={`Open folder ${item.current.name} in the file navigator`}
+                    onClick={() => handleItemClick(item)}
+                  />
+                )
+              ) : null}
+              <span className='ml-2'>
+                {item.current.type === 'folder' ? <FiFolder /> : <FiFileText />}
+              </span>
+              <span
+                className='ml-2 cursor-pointer hover:underline'
+                aria-label={`Open ${item.current.name} ${item.current.type}`}
+                onClick={() => handleItemClick(item)}
+                onContextMenu={(e) => handleContextMenu(e, item)}
+              >
+                {item.current.name}
+              </span>
+              <button
+                className='ml-auto cursor-pointer rounded-full py-1 hover:bg-gray-100 dark:hover:bg-gray-700'
+                aria-label={`Open context menu for ${item.current.name}`}
+                onClick={(e) => {
+                  handleContextMenu(e, item);
+                }}
+              >
+                <CiMenuKebab />
+              </button>
+            </div>
+            {item.current.type === 'folder' &&
+              openFolders[item.current.name] && (
+                <div className='pl-6'>
+                  {renderItems(
+                    (item.current?.children ?? []).map((child) => ({
+                      current: child,
+                      original: child,
+                    }))
+                  )}
+                </div>
+              )}
           </div>
-          {item.type === 'folder' && openFolders[item.current.name] && (
-            <div className='pl-6'>{renderItems(item.children ?? [])}</div>
-          )}
-        </div>
-      );
-    });
+        );
+      }),
+    [openFolders, handleItemClick, handleContextMenu]
+  );
 
   return (
     <div id='file-navigator' className='relative'>
@@ -228,14 +223,14 @@ const FileNavigator = ({
           <li className='border-border border-b p-1 pb-2 text-xs'>
             {contextMenu.item.current?.name ?? contextMenu.item.original?.name}
           </li>
-          {contextMenu.item.type === 'file' && (
+          {contextMenu.item?.current?.type === 'file' && (
             <>
               <li
                 className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
                 onClick={() => {
-                  if (contextMenu.item.type === 'file') {
+                  if (contextMenu.item.current?.type === 'file') {
                     closeContextMenu();
-                    onOpenFile(contextMenu.item);
+                    openFile(contextMenu.item);
                   }
                 }}
               >
@@ -247,7 +242,7 @@ const FileNavigator = ({
             className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
             onClick={() => {
               closeContextMenu();
-              onMove(contextMenu.item);
+              renameOrMoveItem(contextMenu.item);
             }}
           >
             {dict.fileNavigator.move}
@@ -256,7 +251,7 @@ const FileNavigator = ({
             className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
             onClick={() => {
               closeContextMenu();
-              onRename(contextMenu.item);
+              renameOrMoveItem(contextMenu.item);
             }}
           >
             {dict.fileNavigator.rename}
@@ -265,7 +260,7 @@ const FileNavigator = ({
             className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
             onClick={() => {
               closeContextMenu();
-              onDelete(contextMenu.item);
+              deleteItem(contextMenu.item);
             }}
           >
             {dict.list.delete}

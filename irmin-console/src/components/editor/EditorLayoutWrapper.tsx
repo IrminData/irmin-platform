@@ -4,7 +4,6 @@ import { useState } from 'react';
 
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 
-import { useEditor } from '@/context/EditorContext';
 import { QueryProvider } from '@/context/QueryContext';
 
 import FileNavigator from './FileNavigator';
@@ -21,15 +20,6 @@ export default function EditorLayoutWrapper({
 }: {
   children: React.ReactNode;
 }) {
-  const {
-    items,
-    addNewFile,
-    addNewFolder,
-    renameOrMoveItem,
-    deleteItem,
-    openFile,
-  } = useEditor();
-
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -58,27 +48,7 @@ export default function EditorLayoutWrapper({
           id='editor-sidebar'
           className={`flex h-full max-h-full w-full flex-col gap-4 transition-all lg:visible lg:ml-0 ${!sidebarOpen ? 'invisible -ml-72' : 'visible ml-0'}`}
         >
-          <FileNavigator
-            addNewFile={() => {
-              addNewFile();
-            }}
-            addNewFolder={() => {
-              addNewFolder();
-            }}
-            onRename={(item) => {
-              renameOrMoveItem(item);
-            }}
-            onMove={(item) => {
-              renameOrMoveItem(item);
-            }}
-            onOpenFile={(file) => {
-              openFile(file);
-            }}
-            onDelete={(item) => {
-              deleteItem(item);
-            }}
-            items={items}
-          />
+          <FileNavigator />
         </div>
       </div>
       <div className='ml-10 flex-1 shrink overflow-hidden lg:ml-0'>

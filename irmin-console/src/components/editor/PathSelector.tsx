@@ -7,10 +7,7 @@ import { FiChevronDown, FiChevronRight, FiFolder } from 'react-icons/fi';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { transformEditorItemsToFileNavItem } from '@/utils/editorItems';
-
-import { EditorItems } from '@/types/core/EditorItems';
-import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
+import { EditorItem } from '@/types/core/EditorItems';
 
 /**
  * Path selector component
@@ -22,7 +19,7 @@ import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
  * It will only show folder items that are not the item being edited.
  *
  * @param pathSelectorProps - The props for the path selector
- * @param pathSelectorProps.editorItems - The editorItems get the list of files to show
+ * @param pathSelectorProps.editorItems - The list of editor items to display in the file navigator
  * @param pathSelectorProps.itemName - The name of the item being edited. For files, should include the extension
  * @param pathSelectorProps.originalItemPath - The original path of the item being edited
  * @param pathSelectorProps.currentSelected - The currently selected path, if any
@@ -35,7 +32,7 @@ const PathSelector = ({
   currentSelected,
   onSelectPath,
 }: {
-  editorItems: EditorItems | null;
+  editorItems: EditorItem[];
   itemName: string | null;
   originalItemPath: string | null;
   currentSelected: string | null;
@@ -50,12 +47,6 @@ const PathSelector = ({
     (currentSelected ?? '').replace(new RegExp(`/${itemName}$`), '')
   );
 
-  // Transform the editorItems into a file navigator item
-  const items = useMemo(
-    () => (editorItems ? transformEditorItemsToFileNavItem(editorItems) : []),
-    [editorItems]
-  );
-
   /**
    * Toggle a folder in the file navigator
    *
@@ -63,11 +54,11 @@ const PathSelector = ({
    *
    * @param item - The item to toggle
    */
-  const toggleFolder = useCallback((item: FileNavigatorItem) => {
-    if (item.current?.name) {
+  const toggleFolder = useCallback((item: EditorItem) => {
+    if (item.name) {
       setOpenFolders((prev) => ({
         ...prev,
-        [item.current?.name ?? '']: !prev[item.current?.name ?? ''],
+        [item.name ?? '']: !prev[item.name ?? ''],
       }));
     }
   }, []);
@@ -80,7 +71,7 @@ const PathSelector = ({
    * @param item - The item clicked in the file navigator, empty if root
    */
   const handleItemClick = useCallback(
-    (item?: FileNavigatorItem) => {
+    (item?: EditorItem) => {
       // Handle root click
       if (!item) {
         setSelectedPath('');
@@ -89,13 +80,13 @@ const PathSelector = ({
         return;
       }
       // Handle folder click
-      if (!item.current) return;
+      if (!item) return;
       if (item.type === 'folder') {
         toggleFolder(item);
       }
-      setSelectedPath(item.current.path);
+      setSelectedPath(item.path);
       // Update the parent component with the new path
-      const newPath = item.current.path + (itemName ? `/${itemName}` : '');
+      const newPath = item.path + (itemName ? `/${itemName}` : '');
       onSelectPath(newPath);
     },
     [itemName, onSelectPath, toggleFolder]
@@ -106,30 +97,24 @@ const PathSelector = ({
    * @param items The items to render
    */
   const renderItems = useCallback(
-    (items: FileNavigatorItem[]) =>
+    (items: EditorItem[]) =>
       items.map((item) => {
-        if (
-          !item.current ||
-          item.type !== 'folder' ||
-          item.current.path === originalItemPath ||
-          item.original?.path === originalItemPath
-        )
-          return;
+        if (item.type !== 'folder' || item.path === originalItemPath) return;
         return (
-          <div key={item.current.path} className='my-1'>
+          <div key={item.path} className='my-1'>
             <div
-              className={`flex items-center justify-normal rounded-md p-1 text-sm ${item.current.path === selectedPath ? 'bg-gray-200 dark:bg-gray-800' : ''}`}
+              className={`flex items-center justify-normal rounded-md p-1 text-sm ${item.path === selectedPath ? 'bg-gray-200 dark:bg-gray-800' : ''}`}
               onClick={() => handleItemClick(item)}
             >
-              {openFolders[item.current.name] ? (
+              {openFolders[item.name] ? (
                 <FiChevronDown
                   className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
-                  aria-label={`Close folder ${item.current.name} in the file navigator`}
+                  aria-label={`Close folder ${item.name} in the file navigator`}
                 />
               ) : (
                 <FiChevronRight
                   className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
-                  aria-label={`Open folder ${item.current.name} in the file navigator`}
+                  aria-label={`Open folder ${item.name} in the file navigator`}
                 />
               )}
               <span className='ml-2'>
@@ -137,12 +122,12 @@ const PathSelector = ({
               </span>
               <span
                 className='ml-2 cursor-pointer hover:underline'
-                aria-label={`Open ${item.current.name} ${item.type}`}
+                aria-label={`Open ${item.name}`}
               >
-                {item.current.name}
+                {item.name}
               </span>
             </div>
-            {openFolders[item.current.name] && (
+            {openFolders[item.name] && (
               <div className='pl-6'>{renderItems(item.children ?? [])}</div>
             )}
           </div>
@@ -174,7 +159,7 @@ const PathSelector = ({
             {dict.fileNavigator.rootDirectory}
           </span>
         </button>
-        {renderItems(items)}
+        {renderItems(editorItems)}
       </div>
     </div>
   );

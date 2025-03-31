@@ -36,22 +36,22 @@ type FormData = {
 };
 
 /**
- * Content for the "Rename or move item" modal
- * Allows the user to change the name, path, and type of the item
+ * Content for the "Copy item" modal.
+ * Allows the user to copy an item by selecting a new name, path and type (for files).
  *
- * @param options - The options for the item to rename or move
- * @param options.item The item to rename
- * @param options.editorItems The editorItems the item is in
- * @param options.updateItem Function to update an item
+ * @param options - The options for the item to copy
+ * @param options.item The item to copy
+ * @param options.editorItems The list of editor items in which the new copy will be created
+ * @param options.copyItem Function to copy an item
  */
-export default function RenameOrMoveItemModal({
+export default function CopyItemModal({
   item,
   editorItems,
-  updateItem,
+  copyItem,
 }: {
   item: FileNavigatorItem;
   editorItems: EditorItem[];
-  updateItem: (item: FileNavigatorItem) => void;
+  copyItem: (item: FileNavigatorItem) => void;
 }) {
   const { irminModal } = usePopup();
   const { dict } = useLocale();
@@ -60,8 +60,11 @@ export default function RenameOrMoveItemModal({
   const [loading, setLoading] = useState(false);
   const [showPathSelector, setShowPathSelector] = useState(true);
 
-  const updatingRef = useRef(false);
+  // Prevent multiple submissions
+  const copyingRef = useRef(false);
 
+  // Set default values for the copy modal
+  const defaultName = `${getNameWithoutExtension(item.current?.name || '')} copy`;
   const {
     control,
     handleSubmit,
@@ -70,7 +73,7 @@ export default function RenameOrMoveItemModal({
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
-      name: getNameWithoutExtension(item.current?.name || ''),
+      name: defaultName,
       path: item.current?.path || '',
       extension: item.current?.language,
     },
@@ -81,7 +84,8 @@ export default function RenameOrMoveItemModal({
   const extension = watch('extension');
 
   /**
-   * Update the path and name when the extension or name changes
+   * Update the path and name when the name or extension changes.
+   * For files, it adds the appropriate extension.
    */
   const updatePathAndName = useCallback(() => {
     if (!item.current) return;
@@ -93,7 +97,7 @@ export default function RenameOrMoveItemModal({
     );
     const newPath = getCorrectPath(path, nameWithExtension);
 
-    // Update the name without extension and path
+    // Update the name without extension and the path
     setValue('name', getNameWithoutExtension(nameWithExtension), {
       shouldValidate: true,
       shouldDirty: true,
@@ -101,19 +105,21 @@ export default function RenameOrMoveItemModal({
     setValue('path', newPath, { shouldValidate: true, shouldDirty: true });
   }, [name, path, extension, item.current?.type, setValue]);
 
-  // Update path and name whenever name or extension changes
+  // Update the path and name whenever name or extension changes
   useEffect(() => {
     updatePathAndName();
   }, [name, extension, updatePathAndName]);
 
   /**
-   * Update the file/folder based on the values provided by the user
+   * Copy the file or folder based on the values provided by the user.
+   *
+   * @param data - The data submitted from the form
    */
   const onSubmit = useCallback(
     async (data: FormData) => {
-      if (updatingRef.current) return;
+      if (copyingRef.current) return;
       if (!item.current) return;
-      updatingRef.current = true;
+      copyingRef.current = true;
       try {
         setError('');
         setLoading(true);
@@ -127,7 +133,7 @@ export default function RenameOrMoveItemModal({
         );
         const newPath = data.path;
 
-        // Ensure the item can be created
+        // Ensure the new copy can be created
         const canCreate = itemCanBeCreated(
           newPath,
           nameWithExtension,
@@ -140,7 +146,7 @@ export default function RenameOrMoveItemModal({
           throw new Error(canCreate.reason);
         }
 
-        // Update the item
+        // Create the new copy of the item
         if (item.current.type === 'file') {
           const newFile: EditorItem = {
             ...item.current,
@@ -148,7 +154,7 @@ export default function RenameOrMoveItemModal({
             path: newPath,
             type: 'file',
           };
-          updateItem({
+          copyItem({
             ...item,
             current: newFile,
           });
@@ -157,24 +163,25 @@ export default function RenameOrMoveItemModal({
             ...item.current,
             name: nameWithExtension,
             path: newPath,
+            type: 'folder',
           };
-          updateItem({
+          copyItem({
             ...item,
             current: newFolder,
           });
         }
 
-        // Close the modal after updating
+        // Close the modal after copying the item
         irminModal.close();
       } catch (error) {
         console.error(error);
         setError((error as Error).message);
       } finally {
         setLoading(false);
-        updatingRef.current = false;
+        copyingRef.current = false;
       }
     },
-    [item, editorItems, dict, updateItem, irminModal]
+    [item, editorItems, dict, copyItem, irminModal]
   );
 
   if (!item.current) return <></>;
@@ -183,7 +190,7 @@ export default function RenameOrMoveItemModal({
     <form
       onSubmit={handleSubmit(onSubmit)}
       className='flex flex-col gap-4 pb-6'
-      id='rename-or-move-item-modal'
+      id='copy-item-modal'
     >
       {item.current.type === 'file' && (
         <div>
@@ -213,8 +220,8 @@ export default function RenameOrMoveItemModal({
       <div className='flex flex-col gap-2'>
         <Label>
           {item.current.type === 'file'
-            ? dict.fileNavigator.newNameOfTheFile
-            : dict.fileNavigator.newNameOfTheFolder}
+            ? dict.fileNavigator.newFileName
+            : dict.fileNavigator.newFolderName}
         </Label>
         <Controller
           name='name'
@@ -234,8 +241,8 @@ export default function RenameOrMoveItemModal({
       <div className='flex flex-col gap-2'>
         <Label>
           {item.current.type === 'file'
-            ? dict.fileNavigator.newPathOfTheFile
-            : dict.fileNavigator.newPathOfTheFolder}
+            ? dict.fileNavigator.newFilePath
+            : dict.fileNavigator.newFolderPath}
         </Label>
         <Controller
           name='path'
@@ -294,8 +301,8 @@ export default function RenameOrMoveItemModal({
         {loading
           ? dict.common.loading
           : item.current.type === 'folder'
-            ? dict.fileNavigator.updateFolder
-            : dict.fileNavigator.updateFile}
+            ? dict.fileNavigator.copyFolder
+            : dict.fileNavigator.copyFile}
       </Button>
     </form>
   );

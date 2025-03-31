@@ -464,6 +464,8 @@ const en = {
     createFolder: 'Create folder',
     updateFile: 'Update file',
     updateFolder: 'Update folder',
+    copyFolder: 'Copy folder',
+    copyFile: 'Copy file',
     open: 'Open',
     rename: 'Rename',
     move: 'Move',

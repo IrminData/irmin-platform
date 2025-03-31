@@ -12,7 +12,10 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 
 import { getNameFromPath } from '@/utils/editorItems';
 
-import { irminFileTypes } from '@/types/core/EditorItems';
+import {
+  IrminFileLanguage,
+  irminFileLanguages,
+} from '@/types/core/EditorItems';
 
 import NewTabContent from './NewTabContent';
 import ResizableCodeEditor from './ResizableCodeEditor';
@@ -90,16 +93,16 @@ const EditorWithTabs = () => {
             <select
               aria-label='Select the type of the file'
               disabled={!currentEditor}
-              value={currentEditor?.language ?? irminFileTypes[0].extension}
+              value={currentEditor?.language ?? irminFileLanguages[0].value}
               onChange={(event) => {
-                const newValue = event.target.value;
+                const newValue = event.target.value as IrminFileLanguage;
                 changeLanguage(newValue);
               }}
               className='py-1 pr-8 pl-2 text-xs'
             >
-              {irminFileTypes.map((fileType) => (
-                <option key={fileType.extension} value={fileType.extension}>
-                  {fileType.name}
+              {irminFileLanguages.map((fileType) => (
+                <option key={fileType.value} value={fileType.value}>
+                  {fileType.label}
                 </option>
               ))}
             </select>
