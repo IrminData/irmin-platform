@@ -57,35 +57,113 @@ func EditorIndex(c fiber.Ctx) error {
 		})
 	}
 
-	// Create a list of editor items
+	// Recursively constructs a nested tree of EditorItem objects.
 	var editorItems []irminModels.EditorItem
 	for _, item := range items {
-		// Skip the base path
-		if *item.Key == pathPrefix {
+		// Skip items matching the base path if necessary. In this case, we assume
+		// that items equal to the base path have been filtered out elsewhere.
+		// Remove the "editor/<workspace.Slug>/" prefix from the key to get the relative path.
+		relativePath := strings.TrimPrefix(*item.Key, "editor/"+workspace.Slug+"/")
+
+		// Split the relative path into non-empty segments (folder names or file name)
+		var segments []string
+		for _, seg := range strings.Split(relativePath, "/") {
+			if seg != "" {
+				segments = append(segments, seg)
+			}
+		}
+		if len(segments) == 0 {
 			continue
 		}
 
-		// Get the item's name
-		name := strings.TrimPrefix(*item.Key, pathPrefix)
-		if strings.Contains(name, "/") {
-			name = strings.Split(name, "/")[0]
-		}
-
-		// Get the item's path
-		itemPath := strings.TrimPrefix(*item.Key, "editor/"+workspace.Slug+"/")
-
-		// Determine the item's type
+		// Determine the item's type: "file" or "folder"
 		itemType := "file"
 		if strings.HasSuffix(*item.Key, "/") {
 			itemType = "folder"
 		}
 
-		editorItems = append(editorItems, irminModels.EditorItem{
-			Name:         name,
-			Path:         itemPath,
-			Type:         itemType,
-			LastModified: *item.LastModified,
-		})
+		// Determine the language for file items
+		language := utils.ParseEditorItemLanguageFromPath(relativePath)
+
+		// 'current' points to the slice where the next item should be inserted.
+		current := &editorItems
+
+		// Build the folder path gradually from the segments.
+		// Start with an empty path.
+		var accumulatedPath string
+
+		// Iterate over segments. For segments except the last, create or reuse folder nodes.
+		for i, segment := range segments {
+			// Append the current segment to the accumulated path.
+			if accumulatedPath == "" {
+				accumulatedPath = segment
+			} else {
+				accumulatedPath = accumulatedPath + "/" + segment
+			}
+
+			// For folder nodes, always include a trailing slash.
+			folderPath := accumulatedPath + "/"
+
+			// If we're not at the last segment, this segment represents a folder.
+			if i < len(segments)-1 {
+				// Look for an existing folder with this name in the current slice.
+				var folder *irminModels.EditorItem
+				for j := range *current {
+					if (*current)[j].Name == segment && (*current)[j].Type == "folder" {
+						folder = &(*current)[j]
+						break
+					}
+				}
+				// If the folder does not exist, create it.
+				if folder == nil {
+					newFolder := irminModels.EditorItem{
+						// Folder name is the current segment
+						Name: segment,
+						// Folder path is the accumulated folder path
+						Path: folderPath,
+						// Mark as folder
+						Type: "folder",
+						// Use the item's last modified (or update as needed)
+						LastModified: *item.LastModified,
+					}
+					*current = append(*current, newFolder)
+					folder = &(*current)[len(*current)-1]
+				}
+				// Continue traversing into the folder's children.
+				current = &folder.Children
+			} else {
+				// Last segment: this is the actual item (file or folder) to be inserted.
+				if itemType == "folder" {
+					// For a folder item, check if it already exists.
+					var folderExists bool
+					for j := range *current {
+						if (*current)[j].Name == segment && (*current)[j].Type == "folder" {
+							folderExists = true
+							break
+						}
+					}
+					if !folderExists {
+						newFolder := irminModels.EditorItem{
+							Name:         segment,
+							Path:         folderPath, // Folder paths include a trailing slash
+							Type:         "folder",
+							LastModified: *item.LastModified,
+						}
+						*current = append(*current, newFolder)
+					}
+				} else {
+					// For a file, create the file EditorItem using the full relative path.
+					fileItem := irminModels.EditorItem{
+						Name:         segment,
+						Path:         relativePath,
+						Type:         "file",
+						Language:     language,
+						LastModified: *item.LastModified,
+					}
+					*current = append(*current, fileItem)
+				}
+			}
+		}
 	}
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
