@@ -285,6 +285,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/types@npm:^7.19.0":
+  version: 7.27.0
+  resolution: "@babel/types@npm:7.27.0"
+  dependencies:
+    "@babel/helper-string-parser": "npm:^7.25.9"
+    "@babel/helper-validator-identifier": "npm:^7.25.9"
+  checksum: 10c0/6f1592eabe243c89a608717b07b72969be9d9d2fce1dee21426238757ea1fa60fdfc09b29de9e48d8104311afc6e6fb1702565a9cc1e09bc1e76f2b2ddb0f6e1
+  languageName: node
+  linkType: hard
+
 "@babel/types@npm:^7.25.9, @babel/types@npm:^7.26.7, @babel/types@npm:^7.26.9":
   version: 7.26.9
   resolution: "@babel/types@npm:7.26.9"
@@ -292,16 +302,6 @@ __metadata:
     "@babel/helper-string-parser": "npm:^7.25.9"
     "@babel/helper-validator-identifier": "npm:^7.25.9"
   checksum: 10c0/999c56269ba00e5c57aa711fbe7ff071cd6990bafd1b978341ea7572cc78919986e2aa6ee51dacf4b6a7a6fa63ba4eb3f1a03cf55eee31b896a56d068b895964
-  languageName: node
-  linkType: hard
-
-"@babel/types@npm:^7.26.0":
-  version: 7.27.0
-  resolution: "@babel/types@npm:7.27.0"
-  dependencies:
-    "@babel/helper-string-parser": "npm:^7.25.9"
-    "@babel/helper-validator-identifier": "npm:^7.25.9"
-  checksum: 10c0/6f1592eabe243c89a608717b07b72969be9d9d2fce1dee21426238757ea1fa60fdfc09b29de9e48d8104311afc6e6fb1702565a9cc1e09bc1e76f2b2ddb0f6e1
   languageName: node
   linkType: hard
 
@@ -799,14 +799,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/view@npm:^6.36.4":
-  version: 6.36.4
-  resolution: "@codemirror/view@npm:6.36.4"
+"@codemirror/view@npm:^6.36.5":
+  version: 6.36.5
+  resolution: "@codemirror/view@npm:6.36.5"
   dependencies:
     "@codemirror/state": "npm:^6.5.0"
     style-mod: "npm:^4.1.0"
     w3c-keyname: "npm:^2.2.4"
-  checksum: 10c0/6381ddfefba1564f17d4782980c02bb6b5356848ecf683435928a17d166fbd37dfece9db6bbcacf40be81d5e60c473acb1a192c3199f269a8651fdd73da5c2bc
+  checksum: 10c0/013dc47cb4dde111f4f0818f7c3ee5e4f505359f26d891ca5bbc839a674da8ac201b4d091c5ad73a889f950d4aeb402f2b4c7fcf1e075cc15a3138792dd9e3f0
   languageName: node
   linkType: hard
 
@@ -5939,12 +5939,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-plugin-react-compiler@npm:19.0.0-beta-aeaed83-20250323":
-  version: 19.0.0-beta-aeaed83-20250323
-  resolution: "babel-plugin-react-compiler@npm:19.0.0-beta-aeaed83-20250323"
+"babel-plugin-react-compiler@npm:19.0.0-beta-e552027-20250112":
+  version: 19.0.0-beta-e552027-20250112
+  resolution: "babel-plugin-react-compiler@npm:19.0.0-beta-e552027-20250112"
   dependencies:
-    "@babel/types": "npm:^7.26.0"
-  checksum: 10c0/d0beb55b365b2045047ab8b497b087d07217c722d6218439620120747cb26f4f1253b22b94027eac1d1c154fb099ad87b6d1fd23898c210a47ccf881af597dc4
+    "@babel/types": "npm:^7.19.0"
+  checksum: 10c0/f64c8f11b893b6bd355a8b3f20b4f15486cee18f98560f2df991abb315b4b037fbf6ccda832eede446fac6140a942e73984a6c5e7e8f5ea5fe1fb0b45d560482
   languageName: node
   linkType: hard
 
@@ -7443,9 +7443,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react-compiler@npm:19.0.0-beta-aeaed83-20250323":
-  version: 19.0.0-beta-aeaed83-20250323
-  resolution: "eslint-plugin-react-compiler@npm:19.0.0-beta-aeaed83-20250323"
+"eslint-plugin-react-compiler@npm:19.0.0-beta-e552027-20250112":
+  version: 19.0.0-beta-e552027-20250112
+  resolution: "eslint-plugin-react-compiler@npm:19.0.0-beta-e552027-20250112"
   dependencies:
     "@babel/core": "npm:^7.24.4"
     "@babel/parser": "npm:^7.24.4"
@@ -7455,7 +7455,7 @@ __metadata:
     zod-validation-error: "npm:^3.0.3"
   peerDependencies:
     eslint: ">=7"
-  checksum: 10c0/a9e941d6dd6dd7ff424f1c6f31475c1b9aed25d90bc7e499d1daf7e9fe0ba373b57574af66d62fd6095d8b6cc027976c1e84e064c0c59cf45217b5909136d206
+  checksum: 10c0/d54bb2def851f79d88376ef108d5f682c07de820c9561a09051a8a5f3a4dbff0c22c8d014ad5e88db5f4db27947a371f497a8b07ddc561575f1601e47e0df6e4
   languageName: node
   linkType: hard
 
@@ -8421,7 +8421,7 @@ __metadata:
     "@codemirror/lang-javascript": "npm:^6.2.3"
     "@codemirror/lang-markdown": "npm:^6.3.2"
     "@codemirror/lang-sql": "npm:^6.8.0"
-    "@codemirror/view": "npm:^6.36.4"
+    "@codemirror/view": "npm:^6.36.5"
     "@cyntler/react-doc-viewer": "npm:^1.17.0"
     "@mdxeditor/editor": "npm:^3.29.1"
     "@melloware/react-logviewer": "npm:^6.2.0"
@@ -8453,14 +8453,14 @@ __metadata:
     "@uiw/react-codemirror": "npm:^4.23.10"
     "@xyflow/react": "npm:^12.5.1"
     autoprefixer: "npm:^10.4.21"
-    babel-plugin-react-compiler: "npm:19.0.0-beta-aeaed83-20250323"
+    babel-plugin-react-compiler: "npm:19.0.0-beta-e552027-20250112"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     date-fns: "npm:^4.1.0"
     eslint: "npm:9.23.0"
     eslint-config-next: "npm:15.2.4"
     eslint-config-prettier: "npm:^10.1.1"
-    eslint-plugin-react-compiler: "npm:19.0.0-beta-aeaed83-20250323"
+    eslint-plugin-react-compiler: "npm:19.0.0-beta-e552027-20250112"
     markdown-to-jsx: "npm:^7.7.4"
     next: "npm:15.2.4"
     next-themes: "npm:^0.4.6"
@@ -8472,7 +8472,7 @@ __metadata:
     prettier-plugin-tailwindcss: "npm:^0.6.11"
     react: "npm:19.1.0"
     react-datasheet-grid: "npm:^4.11.5"
-    react-day-picker: "npm:^9.6.3"
+    react-day-picker: "npm:^9.6.4"
     react-diff-viewer: "npm:^3.1.1"
     react-dom: "npm:19.1.0"
     react-icons: "npm:^5.5.0"
@@ -11527,16 +11527,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-day-picker@npm:^9.6.3":
-  version: 9.6.3
-  resolution: "react-day-picker@npm:9.6.3"
+"react-day-picker@npm:^9.6.4":
+  version: 9.6.4
+  resolution: "react-day-picker@npm:9.6.4"
   dependencies:
     "@date-fns/tz": "npm:^1.2.0"
     date-fns: "npm:^4.1.0"
     date-fns-jalali: "npm:^4.1.0-0"
   peerDependencies:
     react: ">=16.8.0"
-  checksum: 10c0/9d5a93ffae808144bbc140be9f5b454658881b98dd7d6093855e5139ee883e4f4e94db8f802dffbf0e34b52d8c0e77ab55261b71417f0f66fe80093060e90c7f
+  checksum: 10c0/bd720c18e661bc35932048f57fd2c648ca2dfe0bff641d736d065365d35959c6ef0d8bc5e09787cc8beae912d145a8a1503c054dd61339e566129922ad98f0c2
   languageName: node
   linkType: hard
 
