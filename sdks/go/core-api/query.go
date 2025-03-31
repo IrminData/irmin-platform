@@ -94,8 +94,8 @@ func (c *Client) TransferStoredQuery(workspace, queryID, newOwnerID string) (*ir
 	return &storedQuery, apiResp, nil
 }
 
-func (c *Client) ExecuteStoredQuery(workspace, queryID string) ([]map[string]any, *irminModels.IrminAPIResponse, error) {
-	var result []map[string]any
+func (c *Client) ExecuteStoredQuery(workspace, queryID string) (*irminModels.QueryResult, *irminModels.IrminAPIResponse, error) {
+	var result irminModels.QueryResult
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/queries/%s/execute", workspace, queryID),
@@ -104,11 +104,11 @@ func (c *Client) ExecuteStoredQuery(workspace, queryID string) ([]map[string]any
 	if err != nil {
 		return nil, nil, fmt.Errorf("execute stored query error: %w", err)
 	}
-	return result, apiResp, nil
+	return &result, apiResp, nil
 }
 
-func (c *Client) ExecuteSQL(workspace, sql string) ([]map[string]any, *irminModels.IrminAPIResponse, error) {
-	var result []map[string]any
+func (c *Client) ExecuteSQL(workspace, sql string) (*irminModels.QueryResult, *irminModels.IrminAPIResponse, error) {
+	var result irminModels.QueryResult
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/sql", workspace),
@@ -120,5 +120,5 @@ func (c *Client) ExecuteSQL(workspace, sql string) ([]map[string]any, *irminMode
 	if err != nil {
 		return nil, nil, fmt.Errorf("execute script error: %w", err)
 	}
-	return result, apiResp, nil
+	return &result, apiResp, nil
 }
