@@ -102,3 +102,16 @@ func (c *Client) CreateEditorFolder(workspace, path string) (*irminModels.IrminA
 	}
 	return apiResp, nil
 }
+
+func (c *Client) RunScript(workspace, path string) (*irminModels.ScriptResult, *irminModels.IrminAPIResponse, error) {
+	var scriptResult irminModels.ScriptResult
+	apiResp, err := c.FetchAPI(RequestOptions{
+		Method:      http.MethodPost,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor/run?path=%s", workspace, path),
+		ContentType: "application/x-www-form-urlencoded",
+	}, &scriptResult)
+	if err != nil {
+		return nil, nil, fmt.Errorf("run script error: %w", err)
+	}
+	return &scriptResult, apiResp, nil
+}
