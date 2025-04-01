@@ -17,7 +17,7 @@ import {
 } from './connectors';
 import { content } from './content';
 import { diff } from './diff';
-import { editorItems } from './editorItems';
+import { editorItems, scriptResult } from './editorItems';
 import { invites } from './invites';
 import { logEvents } from './logs';
 import { objects } from './objects';
@@ -178,6 +178,11 @@ export const exampleWorkflowRuns = workflowRuns();
  * Fake editor items {@link editorItems}
  */
 export const exampleEditorItems = editorItems();
+
+/**
+ * Fake script execution results {@link scriptResult}
+ */
+export const exampleScriptResult = () => scriptResult();
 
 /**
  * Fake log events {@link logEvents}

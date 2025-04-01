@@ -193,3 +193,28 @@ export async function createEditorFolder({
   });
   return res;
 }
+
+/**
+ * Server action to execute an editor item as a script.
+ *
+ * @param props.workspace - The workspace slug.
+ * @param props.item - The editor item to be executed.
+ * @param props.token - Optional token for authentication.
+ * @returns The API response for the execution operation.
+ */
+export async function executeEditorItem({
+  workspace,
+  item,
+  token,
+}: {
+  workspace: string;
+  item: EditorItem;
+  token?: string;
+}) {
+  const irminCore = await initCore(token);
+  const res = await irminCore.editorItemService.createEditorFolder({
+    workspace,
+    path: item.path,
+  });
+  return res;
+}

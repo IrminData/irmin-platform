@@ -1,6 +1,6 @@
 import { getRandomDateTimeString } from '@/utils/getRandomDateTimeString';
 
-import { EditorItem } from '@/types/core/EditorItems';
+import { EditorItem, ScriptResult } from '@/types/core/EditorItems';
 
 import exampleActionFiles from '../exampleActionFiles';
 
@@ -83,3 +83,51 @@ export const editorItems: () => EditorItem[] = () => [
     ],
   },
 ];
+
+const exampleScriptResult = {
+  columns: ['store_id', 'city', 'country', 'annual_revenue', 'annual_cost'],
+  data: [
+    {
+      store_id: 'store_1',
+      city: 'New York',
+      country: 'USA',
+      annual_revenue: 500000,
+      annual_cost: 600000,
+    },
+    {
+      store_id: 'store_2',
+      city: 'Los Angeles',
+      country: 'USA',
+      annual_revenue: 300000,
+      annual_cost: 400000,
+    },
+  ],
+  has_errors: false,
+  duration: 120,
+  started_at: '2023-10-01T12:00:00Z',
+  finished_at: '2023-10-01T12:00:02Z',
+  logs: ['Query executed successfully', 'Rows returned: 2'],
+};
+
+const exampleScriptResultWithErrors = {
+  columns: ['store_id', 'city', 'country', 'annual_revenue', 'annual_cost'],
+  data: [],
+  has_errors: true,
+  duration: 150,
+  started_at: '2023-10-01T12:00:00Z',
+  finished_at: '2023-10-01T12:00:02Z',
+  logs: [
+    'Query execution failed',
+    'Error: Invalid SQL syntax near "WHERE annual_cost > annual_revenue"',
+  ],
+};
+
+export const scriptResult = (): ScriptResult => {
+  const random = Math.random();
+
+  if (random < 0.5) {
+    return exampleScriptResult;
+  } else {
+    return exampleScriptResultWithErrors;
+  }
+};

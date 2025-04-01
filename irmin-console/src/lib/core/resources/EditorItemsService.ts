@@ -2,9 +2,9 @@ import IrminCore from '@/lib/core';
 
 import fake from '@/utils/prepareFakeResponse';
 
-import { EditorItem } from '@/types/core/EditorItems';
+import { EditorItem, ScriptResult } from '@/types/core/EditorItems';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { exampleEditorItems } from '@/types/examples/core';
+import { exampleEditorItems, exampleScriptResult } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -30,6 +30,7 @@ class EditorItemsService {
     this.deleteEditorItem = this.deleteEditorItem.bind(this);
     this.saveEditorItem = this.saveEditorItem.bind(this);
     this.createEditorFolder = this.createEditorFolder.bind(this);
+    this.runScript = this.runScript.bind(this);
   }
 
   /**
@@ -307,6 +308,40 @@ class EditorItemsService {
       if (isDevelopment) {
         return fake(null) as IrminAPIResponse;
       }
+      throw error;
+    }
+  }
+
+  /**
+   * Execute a script.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.path - The path of the editor item.
+   * @returns IrminAPIResponse containing an array of result rows.
+   */
+  async runScript({
+    workspace,
+    path,
+  }: {
+    workspace: string;
+    path: string;
+  }): Promise<IrminAPIResponse<ScriptResult>> {
+    if (isOfflineMode)
+      return fake(exampleScriptResult()) as IrminAPIResponse<ScriptResult>;
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/editor/run?path=${path}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        }
+      );
+      return response as IrminAPIResponse<ScriptResult>;
+    } catch (error) {
+      console.error((error as Error).message, 'Execute SQL error');
+      if (isDevelopment)
+        return fake(exampleScriptResult()) as IrminAPIResponse<ScriptResult>;
       throw error;
     }
   }

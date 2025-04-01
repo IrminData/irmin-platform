@@ -25,10 +25,8 @@ export interface StoredQuery {
  * Represents the result of a query execution.
  */
 export interface QueryResult {
-  columns: string[];
-  data: {
-    [key: string]: JSONValue;
-  }[];
+  columns?: string[];
+  data?: Record<string, JSONValue>[];
   has_errors?: boolean;
   duration?: number;
   started_at?: string;

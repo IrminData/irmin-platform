@@ -1,3 +1,5 @@
+import { JSONValue } from '../internal/GenericJSON';
+
 export type IrminFileLanguage = 'js' | 'go' | 'py' | 'sql' | 'txt';
 export const irminFileLanguages: {
   label: string;
@@ -43,4 +45,25 @@ export interface EditorItem {
   children?: EditorItem[];
   /** Timestamp when the item was last modified */
   last_modified: string;
+}
+
+/**
+ * Represents results of a script execution.
+ * This can include the output of a script, errors, and other metadata.
+ */
+export interface ScriptResult {
+  /** Columns of the result */
+  columns?: string[];
+  /** Data of the result */
+  data?: Record<string, JSONValue>[];
+  /** Indicates if there were errors */
+  has_errors?: boolean;
+  /** Duration of the script execution */
+  duration?: number;
+  /** Timestamp when the script started executing */
+  started_at?: string;
+  /** Timestamp when the script finished executing */
+  finished_at?: string;
+  /** Logs generated during the script execution */
+  logs?: string[];
 }
