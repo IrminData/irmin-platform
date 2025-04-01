@@ -490,3 +490,56 @@ func EditorItemContent(c fiber.Ctx) error {
 		Data: content,
 	})
 }
+
+func EditorItemExecute(c fiber.Ctx) error {
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+
+	// Get the file path from query parameters
+	params, err := utils.ParseQueryParams(c, nil, []string{"path"})
+	if err != nil {
+		log.Printf("Error retrieving query parameters: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+	path := strings.Trim(params["path"], "/")
+	if path == "" {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			Errors: []string{"path is required"},
+		})
+	}
+
+	// Create bucket client
+	bucket, err := bucket.CreateBucketClient()
+	if err != nil {
+		log.Printf("failed to create bucket client: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+	defer bucket.Close()
+
+	// Construct the full S3 key for the file
+	key := "editor/" + workspace.Slug + "/" + path
+
+	// Retrieve the file from S3
+	content, err := bucket.ReadPath(c.Context(), key)
+	if err != nil {
+		log.Printf("Error reading object: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Execute the content of the file
+	// TODO: Implement the execution logic here
+	log.Printf("Executing script: %s", *content)
+
+	// Return the results
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+		Data: &irminModels.ScriptResult{
+			// TODO: Populate with actual execution results
+		},
+	})
+}

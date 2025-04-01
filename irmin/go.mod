@@ -5,8 +5,8 @@ go 1.24
 toolchain go1.24.1
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250331093412-8c503b5a981e
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.78.2
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250401075906-f1f9c7365fcf
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.0
 	github.com/clerk/clerk-sdk-go/v2 v2.2.0
 	github.com/gofiber/fiber/v3 v3.0.0-beta.4
 	github.com/gofiber/storage/s3/v2 v2.2.1
@@ -27,7 +27,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.12 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.65 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.69 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.70 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.34 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.34 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
@@ -46,7 +46,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gofiber/schema v1.3.0 // indirect
-	github.com/gofiber/utils/v2 v2.0.0-beta.7 // indirect
+	github.com/gofiber/utils/v2 v2.0.0-beta.8 // indirect
 	github.com/google/flatbuffers v25.2.10+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

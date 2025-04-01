@@ -6,6 +6,8 @@ github.com/IrminData/irmin-sdk-go v0.0.0-20250330225008-2dc8defa2e01 h1:Veej83CR
 github.com/IrminData/irmin-sdk-go v0.0.0-20250330225008-2dc8defa2e01/go.mod h1:5WzBQVWKX4dJmJU38zAniHFECHJhVx5dKYmMUvE24PE=
 github.com/IrminData/irmin-sdk-go v0.0.0-20250331093412-8c503b5a981e h1:DinpyoKeaivb4LD78tEvwtqyHEi6xj39iEKbzr728IQ=
 github.com/IrminData/irmin-sdk-go v0.0.0-20250331093412-8c503b5a981e/go.mod h1:5WzBQVWKX4dJmJU38zAniHFECHJhVx5dKYmMUvE24PE=
+github.com/IrminData/irmin-sdk-go v0.0.0-20250401075906-f1f9c7365fcf h1:9MTjDpt3Y999xJ6I1IV7TfBtOMoBtZ4EW5iTcaylOKk=
+github.com/IrminData/irmin-sdk-go v0.0.0-20250401075906-f1f9c7365fcf/go.mod h1:5WzBQVWKX4dJmJU38zAniHFECHJhVx5dKYmMUvE24PE=
 github.com/andybalholm/brotli v1.1.1 h1:PR2pgnyFznKEugtsUo0xLdDop5SKXd5Qf5ysW+7XdTA=
 github.com/andybalholm/brotli v1.1.1/go.mod h1:05ib4cKhjx3OQYUY22hTVd34Bc8upXjOLL2rKwwZBoA=
 github.com/apache/arrow-go/v18 v18.2.0 h1:QhWqpgZMKfWOniGPhbUxrHohWnooGURqL2R2Gg4SO1Q=
@@ -24,6 +26,8 @@ github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30 h1:x793wxmUWVDhshP8WW2mln
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30/go.mod h1:Jpne2tDnYiFascUEs2AWHJL9Yp7A5ZVy3TNyxaAjD6M=
 github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.69 h1:6VFPH/Zi9xYFMJKPQOX5URYkQoXRWeJ7V/7Y6ZDYoms=
 github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.69/go.mod h1:GJj8mmO6YT6EqgduWocwhMoxTLFitkhIrK+owzrYL2I=
+github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.70 h1:pgaM86/BFt7dR0b/Jj+OU+taT34nkQlKPkjkYH1POAo=
+github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.70/go.mod h1:vnoXXAU4FFW5JqLC/ZPF67IA5N0f8gah0t0aGI+N9+4=
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.34 h1:ZK5jHhnrioRkUNOc+hOgQKlUL5JeC3S6JgLxtQ+Rm0Q=
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.34/go.mod h1:p4VfIceZokChbA9FzMbRGz5OV+lekcVtHlPKEO0gSZY=
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.34 h1:SZwFm17ZUNNg5Np0ioo/gq8Mn6u9w19Mri8DnJ15Jf0=
@@ -42,6 +46,8 @@ github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.15 h1:moLQUoVq91Liq
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.15/go.mod h1:ZH34PJUc8ApjBIfgQCFvkWcUDBtl/WTD+uiYHjd8igA=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.78.2 h1:jIiopHEV22b4yQP2q36Y0OmwLbsxNWdWwfZRR5QRRO4=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.78.2/go.mod h1:U5SNqwhXB3Xe6F47kXvWihPl/ilGaEDe8HD/50Z9wxc=
+github.com/aws/aws-sdk-go-v2/service/s3 v1.79.0 h1:OIw2nryEApESTYI5deCZGcq4Gvz8DBAt4tJlNyg3v5o=
+github.com/aws/aws-sdk-go-v2/service/s3 v1.79.0/go.mod h1:U5SNqwhXB3Xe6F47kXvWihPl/ilGaEDe8HD/50Z9wxc=
 github.com/aws/aws-sdk-go-v2/service/sso v1.25.2 h1:pdgODsAhGo4dvzC3JAG5Ce0PX8kWXrTZGx+jxADD+5E=
 github.com/aws/aws-sdk-go-v2/service/sso v1.25.2/go.mod h1:qs4a9T5EMLl/Cajiw2TcbNt2UNo/Hqlyp+GiuG4CFDI=
 github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.0 h1:90uX0veLKcdHVfvxhkWUQSCi5VabtwMLFutYiRke4oo=
@@ -73,6 +79,8 @@ github.com/gofiber/storage/s3/v2 v2.2.1 h1:SPmLEbCSGuKgzvIl7p1tWNamFubuyJFmOPLtb
 github.com/gofiber/storage/s3/v2 v2.2.1/go.mod h1:bwFZJTqOl+cK40D283M+HFZ+zzmLapyohQCH1mIUVqg=
 github.com/gofiber/utils/v2 v2.0.0-beta.7 h1:NnHFrRHvhrufPABdWajcKZejz9HnCWmT/asoxRsiEbQ=
 github.com/gofiber/utils/v2 v2.0.0-beta.7/go.mod h1:J/M03s+HMdZdvhAeyh76xT72IfVqBzuz/OJkrMa7cwU=
+github.com/gofiber/utils/v2 v2.0.0-beta.8 h1:ZifwbHZqZO3YJsx1ZhDsWnPjaQ7C0YD20LHt+DQeXOU=
+github.com/gofiber/utils/v2 v2.0.0-beta.8/go.mod h1:1lCBo9vEF4RFEtTgWntipnaScJZQiM8rrsYycLZ4n9c=
 github.com/golang-jwt/jwt/v5 v5.2.2 h1:Rl4B7itRWVtYIHFrSNd7vhTiz9UpLdi6gZhZ3wEeDy8=
 github.com/golang-jwt/jwt/v5 v5.2.2/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=
 github.com/golang/snappy v0.0.4 h1:yAGX7huGHXlcLOEtBnF4w7FQwA26wojNCwOYAEhLjQM=

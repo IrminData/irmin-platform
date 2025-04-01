@@ -97,6 +97,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	editor.Post("/move", controllers.MoveEditorItem)
 	editor.Post("/copy", controllers.CopyEditorItem)
 	editor.Get("/content", controllers.EditorItemContent)
+	editor.Post("/run", controllers.EditorItemExecute)
 
 	// Workflow routes
 	workflows := workspace.Group("/workflows")
