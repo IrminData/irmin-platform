@@ -3,8 +3,8 @@ import IrminCore from '@/lib/core';
 import fake from '@/utils/prepareFakeResponse';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { StoredQuery } from '@/types/core/StoredQuery';
-import { exampleQueries } from '@/types/examples/core';
+import { QueryResult, StoredQuery } from '@/types/core/StoredQuery';
+import { exampleQueries, exampleQueryResult } from '@/types/examples/core';
 
 const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -283,17 +283,19 @@ class QueryService {
   }: {
     workspace: string;
     queryID: string;
-  }): Promise<IrminAPIResponse<any[]>> {
-    if (isOfflineMode) return fake([]) as IrminAPIResponse<any[]>;
+  }): Promise<IrminAPIResponse<QueryResult>> {
+    if (isOfflineMode)
+      return fake(exampleQueryResult()) as IrminAPIResponse<QueryResult>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/queries/${queryID}/execute`,
         { method: 'POST' }
       );
-      return response as IrminAPIResponse<any[]>;
+      return response as IrminAPIResponse<QueryResult>;
     } catch (error) {
       console.error((error as Error).message, 'Execute stored query error');
-      if (isDevelopment) return fake([]) as IrminAPIResponse<any[]>;
+      if (isDevelopment)
+        return fake(exampleQueryResult()) as IrminAPIResponse<QueryResult>;
       throw error;
     }
   }
@@ -312,8 +314,9 @@ class QueryService {
   }: {
     workspace: string;
     sql: string;
-  }): Promise<IrminAPIResponse<any[]>> {
-    if (isOfflineMode) return fake([]) as IrminAPIResponse<any[]>;
+  }): Promise<IrminAPIResponse<QueryResult>> {
+    if (isOfflineMode)
+      return fake(exampleQueryResult()) as IrminAPIResponse<QueryResult>;
     try {
       const formData = new URLSearchParams();
       formData.append('sql', sql);
@@ -325,10 +328,11 @@ class QueryService {
           body: formData.toString(),
         }
       );
-      return response as IrminAPIResponse<any[]>;
+      return response as IrminAPIResponse<QueryResult>;
     } catch (error) {
       console.error((error as Error).message, 'Execute SQL error');
-      if (isDevelopment) return fake([]) as IrminAPIResponse<any[]>;
+      if (isDevelopment)
+        return fake(exampleQueryResult()) as IrminAPIResponse<QueryResult>;
       throw error;
     }
   }

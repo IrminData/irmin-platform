@@ -23,7 +23,7 @@ import { logEvents } from './logs';
 import { objects } from './objects';
 import { objectSchema, tableObjectSchema } from './objectSchema';
 import { profile } from './profile';
-import { queries } from './queries';
+import { queries, queryResult } from './queries';
 import { repositories } from './repositories';
 import { roles } from './roles';
 import { tags } from './tags';
@@ -193,3 +193,8 @@ export const exampleDiff = diff();
  * Fake queries {@link queries}
  */
 export const exampleQueries = queries();
+
+/**
+ * Fake query result {@link queryResult}
+ */
+export const exampleQueryResult = () => queryResult();
