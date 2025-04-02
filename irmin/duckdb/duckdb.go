@@ -70,7 +70,7 @@ func (c *QueryClient) ExecuteQuery(query string, args ...any) (*sql.Rows, error)
 	// Execute the query and return the rows and any error encountered.
 	rows, err := c.db.Query(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute query: %v", err)
+		return nil, err
 	}
 	return rows, nil
 }
@@ -83,7 +83,7 @@ func (c *QueryClient) ExecuteNonQuery(query string, args ...any) (sql.Result, er
 	// Execute the statement and return the result and any error encountered.
 	result, err := c.db.Exec(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute non-query: %v", err)
+		return nil, err
 	}
 	return result, nil
 }
@@ -92,7 +92,7 @@ func (c *QueryClient) ExecuteNonQuery(query string, args ...any) (sql.Result, er
 func (c *QueryClient) Close() error {
 	// Close the database connection.
 	if err := c.db.Close(); err != nil {
-		return fmt.Errorf("failed to close database: %v", err)
+		return err
 	}
 	return nil
 }

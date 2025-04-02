@@ -309,31 +309,31 @@ func ExecuteSQL(c fiber.Ctx) error {
 	})
 
 	// Execute the SQL
-	results, err := DataEngine.ExecuteQuery(workspace.Slug, fields["sql"])
-	if err != nil {
-		log.Printf("Error executing query: %v", err)
+	result := DataEngine.ExecuteQuery(workspace.Slug, fields["sql"])
+	// Check for errors
+	if result.HasErrors {
+		log.Printf("Error executing SQL query: %v", result.Logs)
 		db.CreateLogEvent(&db.LogEvent{
 			Type:        db.LogEventTypeError,
 			Description: "SQL query execution failed",
 			UserID:      &user.ID,
 			WorkspaceID: &workspace.ID,
 		})
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+	} else {
+		// Log the event
+		db.CreateLogEvent(&db.LogEvent{
+			Type:        db.LogEventTypeInfo,
+			Description: "SQL query execution completed",
+			UserID:      &user.ID,
+			WorkspaceID: &workspace.ID,
 		})
-	}
 
-	// Log the event
-	db.CreateLogEvent(&db.LogEvent{
-		Type:        db.LogEventTypeInfo,
-		Description: "SQL query execution completed",
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
-	})
+	}
 
 	// Send the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
-		Data: results,
+		Message: dict.T("query_executed"),
+		Data:    result,
 	})
 }
 
@@ -356,29 +356,31 @@ func ExecuteQuery(c fiber.Ctx) error {
 	})
 
 	// Execute the SQL
-	results, err := DataEngine.ExecuteQuery(workspace.Slug, query.SQL)
-	if err != nil {
-		log.Printf("Error executing query: %v", err)
+	result := DataEngine.ExecuteQuery(workspace.Slug, query.SQL)
+
+	// Check for errors
+	if result.HasErrors {
+		log.Printf("Error executing SQL query: %v", result.Logs)
 		db.CreateLogEvent(&db.LogEvent{
 			Type:        db.LogEventTypeError,
-			Description: fmt.Sprintf("Query %s execution failed", query.Name),
+			Description: "SQL query execution failed",
 			UserID:      &user.ID,
 			WorkspaceID: &workspace.ID,
 		})
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+	} else {
+		// Log the event
+		db.CreateLogEvent(&db.LogEvent{
+			Type:        db.LogEventTypeInfo,
+			Description: "SQL query execution completed",
+			UserID:      &user.ID,
+			WorkspaceID: &workspace.ID,
 		})
+
 	}
 
-	// Log the event
-	db.CreateLogEvent(&db.LogEvent{
-		Type:        db.LogEventTypeInfo,
-		Description: fmt.Sprintf("Query %s execution completed", query.Name),
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
-	})
-
+	// Send the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
-		Data: results,
+		Message: dict.T("query_executed"),
+		Data:    result,
 	})
 }

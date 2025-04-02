@@ -5,12 +5,16 @@ import (
 	"irmin-api/duckdb"
 	"irmin-api/utils"
 	"strings"
+	"time"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // ExecuteQuery executes a query in the specified workspace and returns the results.
-func (c *Client) ExecuteQuery(userWorkspace, query string) ([]map[string]any, error) {
+func (c *Client) ExecuteQuery(userWorkspace, query string) *irminModels.QueryResult {
+	// Collect errors and logs encountered during query execution.
+	var errors []error
+	var logs []string
 	// Parse the query provided by the user.
 	parsedQuery, err := utils.ParseIrminQuery(query, func(pl *utils.ParsedQueryPlaceholder) (string, error) {
 		workspace := pl.Workspace
@@ -64,31 +68,34 @@ func (c *Client) ExecuteQuery(userWorkspace, query string) ([]map[string]any, er
 		return objectSelector, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse query: %w", err)
+		errors = append(errors, fmt.Errorf("failed to parse query: %w", err))
 	}
 
 	// Create a new query client.
 	queryClient, err := duckdb.NewQueryClient()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create query client: %w", err)
+		errors = append(errors, fmt.Errorf("failed to create query client: %w", err))
 	}
 	defer queryClient.Close()
 
+	// Prepare a slice to hold the resulting rows.
+	var data []map[string]any
+
 	// Execute the query.
+	startedAt := time.Now()
 	rows, err := queryClient.ExecuteQuery(parsedQuery.FormattedQuery)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute query: %w", err)
+		errors = append(errors, fmt.Errorf("failed to execute query: %w", err))
 	}
+	finishedAt := time.Now()
+	// Close the rows after processing.
 	defer rows.Close()
 
 	// Retrieve column names.
 	columns, err := rows.Columns()
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve column names: %w", err)
+		errors = append(errors, fmt.Errorf("failed to retrieve column names: %w", err))
 	}
-
-	// Prepare a slice to hold the results.
-	var results []map[string]any
 
 	// Iterate through the rows.
 	for rows.Next() {
@@ -101,7 +108,8 @@ func (c *Client) ExecuteQuery(userWorkspace, query string) ([]map[string]any, er
 
 		// Scan the row into the value pointers.
 		if err := rows.Scan(valuePtrs...); err != nil {
-			return nil, fmt.Errorf("failed to scan row: %w", err)
+			errors = append(errors, fmt.Errorf("failed to scan row: %w", err))
+			continue
 		}
 
 		// Create a map to store the column name to value mapping.
@@ -116,13 +124,31 @@ func (c *Client) ExecuteQuery(userWorkspace, query string) ([]map[string]any, er
 			rowMap[colName] = v
 		}
 
-		results = append(results, rowMap)
+		data = append(data, rowMap)
 	}
 
 	// Check for any errors encountered during iteration.
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("failed to iterate rows: %w", err)
+		errors = append(errors, fmt.Errorf("error encountered during row iteration: %w", err))
 	}
 
-	return results, nil
+	// If there are any errors, log them.
+	if len(errors) > 0 {
+		for _, err := range errors {
+			logs = append(logs, err.Error())
+		}
+	}
+
+	// Create a QueryResult object to hold the results.
+	queryResult := &irminModels.QueryResult{
+		Columns:    columns,
+		Data:       data,
+		HasErrors:  len(errors) > 0,
+		Duration:   finishedAt.Sub(startedAt),
+		StartedAt:  startedAt,
+		FinishedAt: finishedAt,
+		Logs:       logs,
+	}
+
+	return queryResult
 }
