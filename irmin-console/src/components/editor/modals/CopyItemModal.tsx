@@ -103,7 +103,7 @@ export default function CopyItemModal({
       shouldDirty: true,
     });
     setValue('path', newPath, { shouldValidate: true, shouldDirty: true });
-  }, [name, path, extension, item.current?.type, setValue]);
+  }, [name, path, extension, item, setValue]);
 
   // Update the path and name whenever name or extension changes
   useEffect(() => {

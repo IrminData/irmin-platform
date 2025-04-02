@@ -2,8 +2,6 @@
 
 import { initCore } from '@/lib/initCore';
 
-import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
-
 /**
  * Server action to get all repositories for a workspace.
  *

@@ -1,7 +1,5 @@
 import {
   Connector,
-  ConnectorCapability,
-  ConnectorCategory,
   ConnectorConfigurationValidationResult,
 } from '@/types/core/Connector';
 

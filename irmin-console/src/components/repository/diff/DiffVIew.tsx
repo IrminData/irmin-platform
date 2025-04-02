@@ -10,7 +10,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { useLocale } from '@/context/LocaleContext';
 import { useRepository } from '@/context/RepositoryContext';
 
-import { ChangeType, Diff } from '@/types/core/Diff';
+import { Diff } from '@/types/core/Diff';
 import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 
 import CommitList from '../commits/CommitList';

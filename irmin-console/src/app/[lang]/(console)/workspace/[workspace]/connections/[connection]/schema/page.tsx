@@ -8,7 +8,6 @@ import ConnectionSchemaSection from '@/components/connection/ConnectionSchemaSec
 
 import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
 
-import { ConnectorCapability } from '@/types/core/Connector';
 import { DynamicFieldValues } from '@/types/internal/DynamicField';
 
 import { SingleConnectionLayoutParams } from '../layout';

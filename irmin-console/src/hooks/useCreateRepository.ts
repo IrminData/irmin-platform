@@ -5,8 +5,6 @@ import { createRepository } from '@/lib/actions/repositories';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
-import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
-
 export const useCreateRepository = ({
   reset,
   closeModal,

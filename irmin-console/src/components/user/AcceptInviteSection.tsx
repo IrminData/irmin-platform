@@ -26,7 +26,6 @@ const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
 
 export default function AcceptInviteSection({
   invite,
-  user,
 }: {
   invite: Invite;
   user: User;
@@ -52,7 +51,7 @@ export default function AcceptInviteSection({
     } finally {
       setIsLoading(false);
     }
-  }, [invite, irminAlert, router, user]);
+  }, [invite, irminAlert, router]);
 
   const handleDecline = useCallback(async () => {
     try {

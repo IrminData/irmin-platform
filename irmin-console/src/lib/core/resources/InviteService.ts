@@ -49,8 +49,8 @@ class InviteService {
         method: 'GET',
       });
       return response as IrminAPIResponse<Invite[]>;
-    } catch (error: any) {
-      console.error(error.message, 'Fetch invites error');
+    } catch (error) {
+      console.error('Fetch invites error', error);
       if (isDevelopment) {
         return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
       }
@@ -79,8 +79,8 @@ class InviteService {
         method: 'GET',
       });
       return response as IrminAPIResponse<Invite>;
-    } catch (error: any) {
-      console.error(error.message, 'Fetch invite error');
+    } catch (error) {
+      console.error('Fetch invite error', error);
       if (isDevelopment) {
         return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
       }
@@ -109,8 +109,8 @@ class InviteService {
         method: 'GET',
       });
       return response as IrminAPIResponse<Invite[]>;
-    } catch (error: any) {
-      console.error(error.message, 'Fetch invites to workspace error');
+    } catch (error) {
+      console.error('Fetch invites to workspace error', error);
       if (isDevelopment) {
         return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
       }
@@ -156,8 +156,8 @@ class InviteService {
         body: body.toString(),
       });
       return response as IrminAPIResponse<Invite>;
-    } catch (error: any) {
-      console.error(error.message, 'Send invite error');
+    } catch (error) {
+      console.error('Send invite error', error);
       if (isDevelopment) {
         return fake({
           email,
@@ -192,8 +192,8 @@ class InviteService {
         method: 'POST',
       });
       return response as IrminAPIResponse<Invite>;
-    } catch (error: any) {
-      console.error(error.message, 'Resend invite error');
+    } catch (error) {
+      console.error('Resend invite error', error);
       if (isDevelopment) {
         return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
       }
@@ -214,7 +214,7 @@ class InviteService {
     inviteID: string;
   }): Promise<IrminAPIResponse> {
     if (isOfflineMode) {
-      return fake(null) as IrminAPIResponse;
+      return fake();
     }
     try {
       const endpoint = `/v1/invites/${inviteID}`;
@@ -222,10 +222,10 @@ class InviteService {
         method: 'DELETE',
       });
       return response;
-    } catch (error: any) {
-      console.error(error.message, 'Delete invite error');
+    } catch (error) {
+      console.error('Delete invite error', error);
       if (isDevelopment) {
-        return fake(null) as IrminAPIResponse;
+        return fake();
       }
       throw error;
     }
@@ -259,8 +259,8 @@ class InviteService {
         body: body.toString(),
       });
       return response as IrminAPIResponse<Invite>;
-    } catch (error: any) {
-      console.error(error.message, 'Update invite error');
+    } catch (error) {
+      console.error('Update invite error', error);
       if (isDevelopment) {
         return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
       }
@@ -289,8 +289,8 @@ class InviteService {
         method: 'POST',
       });
       return response as IrminAPIResponse<Invite>;
-    } catch (error: any) {
-      console.error(error.message, 'Accept invite error');
+    } catch (error) {
+      console.error('Accept invite error', error);
       if (isDevelopment) {
         return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
       }
@@ -319,8 +319,8 @@ class InviteService {
         method: 'POST',
       });
       return response as IrminAPIResponse<Invite>;
-    } catch (error: any) {
-      console.error(error.message, 'Decline invite error');
+    } catch (error) {
+      console.error('Decline invite error', error);
       if (isDevelopment) {
         return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
       }

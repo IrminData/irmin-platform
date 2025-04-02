@@ -423,8 +423,12 @@ const en = {
     newScriptTitle: 'Create a new script',
     newScriptSubtitle:
       'Start writing your script in your preferred language and save it as a workflow',
+    scriptExecutionStarted: 'Script execution started',
+    scriptNeedsToBeSaved:
+      'Script needs to be saved before running. Save the script in the editor and run it again.',
   },
   query: {
+    queryExecutionStarted: 'Query execution started',
     results: 'Results',
     errors: 'Errors',
     logs: 'Logs',

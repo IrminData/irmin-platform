@@ -1,6 +1,6 @@
 import { getRandomArrayElement } from '@/utils/getRandomArrayElement';
 
-import { ChangeType, Diff } from '@/types/core/Diff';
+import { Diff } from '@/types/core/Diff';
 
 import { commits } from './commits';
 import { objects } from './objects';

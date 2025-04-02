@@ -117,7 +117,7 @@ export const useConfigureWorkflow = (
       setProcessing(false);
       creatingWorkflow.current = false;
     }
-  }, [irminAlert, workspaceSlug, closeModal]);
+  }, [irminAlert, workspaceSlug, closeModal, workflowData]);
 
   return {
     processing,

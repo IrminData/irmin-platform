@@ -76,7 +76,7 @@ export default function RepositorySection({
     if (!selectedObject) return;
     if (queryChanged) return;
     setQueryField(
-      `SELECT * FROM $["${currentRepository.slug}.${selectedObject.path.replaceAll('/', '.')}${currentRef ? `@${currentRef}` : ''}"]`
+      `SELECT * FROM $["${currentRepository.slug};${selectedObject.path}${currentRef ? `@${currentRef}` : ''}"] LIMIT 10`
     );
   }, [currentRepository, selectedObject, queryChanged, currentRef]);
 
@@ -120,7 +120,7 @@ export default function RepositorySection({
 
   const runCurrentQuery = useCallback(() => {
     if (!queryField || queryField.length < 3) return;
-    query.executeScript('sql', queryField);
+    query.executeSql(queryField);
     setQueryResultsOpen(true);
   }, [queryField, query]);
 

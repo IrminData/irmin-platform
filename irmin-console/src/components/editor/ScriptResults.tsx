@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { AiOutlineSave } from 'react-icons/ai';
 import { MdPlayArrow } from 'react-icons/md';
@@ -12,12 +12,12 @@ import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { QueryResult } from '@/types/core/StoredQuery';
+import { ScriptResult } from '@/types/core/EditorItems';
 
 /**
- * Query Results component
+ * Script Results component
  *
- * Used to display the results of a query execution.
+ * Used to display the results of a script execution in the editor.
  *
  * @param props - The props to pass to the component
  * @param props.title - Title of the query results
@@ -27,7 +27,7 @@ import { QueryResult } from '@/types/core/StoredQuery';
  * @param props.onRun - Function to run the data
  * @param props.workflow - Workflow object
  */
-const QueryResults = ({
+const ScriptResults = ({
   title,
   result,
   loading,
@@ -35,7 +35,7 @@ const QueryResults = ({
   onRun,
 }: {
   title: string;
-  result: QueryResult | null;
+  result: ScriptResult | null;
   loading?: boolean;
   onSave?: () => Promise<void>;
   onRun?: () => Promise<void>;
@@ -47,11 +47,8 @@ const QueryResults = ({
   const [processingSave, setProcessingSave] = useState(false);
   const [processingRun, setProcessingRun] = useState(false);
 
-  const showLoadingOnData = useMemo(
-    () => loading || processingRun,
-    [loading, processingRun]
-  );
-  const logs = useMemo(() => result?.logs ?? [], [result?.logs]);
+  const showLoadingOnData = loading || processingRun;
+  const logs = result?.logs ?? [];
 
   return (
     <div
@@ -155,4 +152,4 @@ const QueryResults = ({
   );
 };
 
-export default QueryResults;
+export default ScriptResults;

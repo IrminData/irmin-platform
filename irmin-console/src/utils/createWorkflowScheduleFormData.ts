@@ -1,6 +1,5 @@
 import {
   RepositoryTrigger,
-  TimeTrigger,
   WorkflowRunTrigger,
   WorkflowSchedule,
 } from '@/types/core/Schedule';

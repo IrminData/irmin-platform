@@ -25,7 +25,7 @@ const ConnectionList = ({
   loading?: boolean;
   connections: Connection[];
 }) => {
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -84,7 +84,7 @@ const ConnectionList = ({
           ),
         };
       }),
-    [items, dict, locale, workspaceUrl]
+    [items, dict, workspaceUrl]
   );
 
   return (

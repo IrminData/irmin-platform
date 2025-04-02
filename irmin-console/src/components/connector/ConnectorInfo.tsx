@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 import { TbMail } from 'react-icons/tb';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -26,7 +24,6 @@ interface ConnectorInfoProps {
  */
 export function ConnectorInfo({ connector }: ConnectorInfoProps) {
   const { dict } = useLocale();
-  const [isDocsOpen, setIsDocsOpen] = useState(false);
 
   return (
     <div className='flex flex-col space-y-4 p-6'>

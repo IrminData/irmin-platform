@@ -351,7 +351,7 @@ class ConnectorService {
   }: {
     connectorId: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake(null) as IrminAPIResponse;
+    if (isOfflineMode) return fake();
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/connectors/${connectorId}`,
@@ -362,7 +362,7 @@ class ConnectorService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete connector error');
-      if (isDevelopment) return fake(null) as IrminAPIResponse;
+      if (isDevelopment) return fake();
       throw error;
     }
   }

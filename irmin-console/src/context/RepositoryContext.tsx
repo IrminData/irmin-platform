@@ -12,8 +12,6 @@ import {
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-import { init } from '@sentry/nextjs';
-
 import {
   createBranch,
   deleteBranch,
@@ -86,16 +84,11 @@ interface RepositoryContextProps {
   // Objects
   loadingObjects: boolean;
   directory: Object | undefined;
-  deleteObject: (objectName: string) => Promise<void>;
+  deleteObject: (objectPath: string) => Promise<void>;
   moveObject: (oldPath: string, newPath: string) => Promise<void>;
   copyObject: (oldPath: string, newPath: string) => Promise<void>;
-  createGroup: (name: string, path: string, ref: string) => Promise<void>;
-  uploadObject: (
-    objectName: string,
-    objectPath: string | undefined,
-    ref: string | undefined,
-    files: FileList
-  ) => Promise<void>;
+  createGroup: (path: string, ref: string) => Promise<void>;
+  uploadObject: (path: string, ref: string, files: FileList) => Promise<void>;
   getObjectContent: (
     objectPath: string,
     raw?: boolean,
@@ -449,7 +442,7 @@ export const RepositoryProvider = ({
     } finally {
       setLoadingObjects(false);
     }
-  }, [irminAlert, repositorySlug, currentPath, currentRef]);
+  }, [irminAlert, repositorySlug, workspaceSlug, currentPath, currentRef]);
 
   /**
    * Delete an object from the repository at path
@@ -477,7 +470,6 @@ export const RepositoryProvider = ({
       repositorySlug,
       initialRepository,
       currentRef,
-      currentPath,
       fetchObjects,
       irminAlert,
     ]
@@ -551,14 +543,13 @@ export const RepositoryProvider = ({
    * Create a group (e.g. directory) in the repository at path
    */
   const handleCreateGroup = useCallback(
-    async (name: string, path: string, ref: string) => {
+    async (path: string, ref: string) => {
       try {
         const res = await uploadObject({
           workspace: workspaceSlug,
           repository: repositorySlug,
-          ref,
+          ref: ref ?? currentRef ?? initialRepository.default_branch,
           path,
-          name,
         });
         irminAlert('success', res.message ?? 'Group created successfully');
         fetchObjects();
@@ -569,26 +560,27 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [workspaceSlug, repositorySlug, fetchObjects, irminAlert]
+    [
+      workspaceSlug,
+      currentRef,
+      initialRepository,
+      repositorySlug,
+      fetchObjects,
+      irminAlert,
+    ]
   );
 
   /**
    * Upload an object to the repository at path
    */
   const handleUploadObject = useCallback(
-    async (
-      objectName: string,
-      objectPath: string | undefined,
-      ref: string | undefined,
-      files: FileList
-    ) => {
+    async (path: string, ref: string | undefined, files: FileList) => {
       try {
         const res = await uploadObject({
           workspace: workspaceSlug,
           repository: repositorySlug,
           ref: ref ?? currentRef ?? initialRepository.default_branch,
-          path: objectPath ?? currentPath ?? '/',
-          name: objectName,
+          path,
           files,
         });
         irminAlert('success', res.message ?? 'Object uploaded successfully');
@@ -605,7 +597,6 @@ export const RepositoryProvider = ({
       repositorySlug,
       initialRepository,
       currentRef,
-      currentPath,
       fetchObjects,
       irminAlert,
     ]
@@ -656,7 +647,7 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [repositorySlug, currentRef, irminAlert]
+    [repositorySlug, currentRef, irminAlert, workspaceSlug]
   );
 
   /**

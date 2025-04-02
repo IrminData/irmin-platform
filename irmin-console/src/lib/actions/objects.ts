@@ -151,7 +151,6 @@ export async function uploadObject({
   repository,
   ref,
   path,
-  name,
   files,
   token,
 }: {
@@ -159,7 +158,6 @@ export async function uploadObject({
   repository: string;
   ref: string;
   path: string;
-  name: string;
   files?: FileList;
   token?: string;
 }) {
@@ -169,7 +167,6 @@ export async function uploadObject({
     repository,
     ref,
     path,
-    name,
     files,
   });
   return res;

@@ -11,17 +11,18 @@ import {
 import { executeSQL } from '@/lib/actions/query';
 
 import { usePopup } from '@/context/PopupContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import { QueryResult } from '@/types/core/StoredQuery';
 
-import { useWorkspace } from './WorkspaceContext';
+import { useLocale } from './LocaleContext';
 
 /**
  * Query context properties
  */
 interface QueryContextProps {
   loading: boolean;
-  result: IrminAPIResponse<any[]> | null;
+  result: QueryResult | null;
   executeSql: (content: string) => Promise<void>;
 }
 
@@ -37,13 +38,12 @@ const QueryContext = createContext<QueryContextProps | undefined>(undefined);
  */
 export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
   const { irminAlert } = usePopup();
+  const { dict } = useLocale();
   const { workspaceSlug } = useWorkspace();
 
   // Query state
   const [loading, setLoading] = useState<boolean>(false);
-  const [queryResult, setQueryResult] = useState<IrminAPIResponse<
-    any[]
-  > | null>(null);
+  const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
 
   // Flag to prevent multiple script executions at the same time
   const executing = useRef(false);
@@ -59,11 +59,13 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
       executing.current = true;
       setLoading(true);
       try {
+        irminAlert('info', dict.query.queryExecutionStarted);
         const res = await executeSQL({
           workspace: workspaceSlug,
           sql: content,
         });
-        setQueryResult(res);
+        if (res.message) irminAlert('info', res.message);
+        setQueryResult(res.data ?? null);
       } catch (error) {
         console.error('QueryContext handleExecuteSql error', error);
         irminAlert(
@@ -74,7 +76,7 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
       executing.current = false;
     },
-    [irminAlert, workspaceSlug]
+    [irminAlert, dict, workspaceSlug]
   );
 
   return (

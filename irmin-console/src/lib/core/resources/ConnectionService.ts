@@ -285,7 +285,7 @@ class ConnectionService {
     workspace: string;
     connectionID: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake(null) as IrminAPIResponse;
+    if (isOfflineMode) return fake();
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/connections/${connectionID}`,
@@ -294,7 +294,7 @@ class ConnectionService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete connection error');
-      if (isDevelopment) return fake(null) as IrminAPIResponse;
+      if (isDevelopment) return fake();
       throw error;
     }
   }

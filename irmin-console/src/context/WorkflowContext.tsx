@@ -144,7 +144,7 @@ export const WorkflowProvider = ({
         updating.current = false;
       }
     },
-    [workflow, fetchWorkflow, irminAlert]
+    [workflowID, workspaceSlug, fetchWorkflow, irminAlert]
   );
 
   const handleTransferOwnershipWorkflow = useCallback(
@@ -175,7 +175,15 @@ export const WorkflowProvider = ({
         updating.current = false;
       }
     },
-    [workflow, workspaceSlug, dict, fetchWorkflow, irminAlert, irminConfirm]
+    [
+      workflow,
+      workflowID,
+      workspaceSlug,
+      dict,
+      fetchWorkflow,
+      irminAlert,
+      irminConfirm,
+    ]
   );
 
   const handlePauseWorkflow = useCallback(async () => {

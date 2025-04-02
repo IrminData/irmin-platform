@@ -111,7 +111,7 @@ const FileNavigator = () => {
         toggleFolder(item);
       }
     },
-    [contextMenu, openFile]
+    [contextMenu, openFile, toggleFolder]
   );
 
   /**

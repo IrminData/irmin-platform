@@ -81,14 +81,14 @@ const RepositoryObjectViewerSection = ({
    */
   useEffect(() => {
     setQueryField(
-      `SELECT * FROM $["${currentRepository.slug}.${selectedObject.path.replaceAll('/', '.')}${currentRef ? `@${currentRef}` : ''}"]`
+      `SELECT * FROM $["${currentRepository.slug};${selectedObject.path}${currentRef ? `@${currentRef}` : ''}"] LIMIT 10`
     );
   }, [currentRepository, selectedObject, currentRef]);
 
   /** Hook to run the currently written query and show the results of that query */
   const runCurrentQuery = useCallback(() => {
     if (!queryField || queryField.length < 3) return;
-    query.executeScript('sql', queryField);
+    query.executeSql(queryField);
     setQueryResultsOpen(true);
   }, [queryField, query]);
 

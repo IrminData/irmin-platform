@@ -1,7 +1,6 @@
 import { User } from '@/types/core/User';
 
 import { roles } from './roles';
-import { workspaces } from './workspaces';
 
 /**
  * Example user profile (eg. currently logged in user)

@@ -426,8 +426,12 @@ const fi = {
     newScriptTitle: 'Luo uusi skripti',
     newScriptSubtitle:
       'Kirjoita skripti haluamallasi kielellä ja tallenna se prosessina',
+    scriptExecutionStarted: 'Skriptin suoritus aloitettu',
+    scriptNeedsToBeSaved:
+      'Skripti on tallennettava ennen suorittamista. Tallenna skripti editoriin ja suorita se uudelleen.',
   },
   query: {
+    queryExecutionStarted: 'Kyselyn suoritus aloitettu',
     results: 'Tulokset',
     errors: 'Virheet',
     logs: 'Lokit',

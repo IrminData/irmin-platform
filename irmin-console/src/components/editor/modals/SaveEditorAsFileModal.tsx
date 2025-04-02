@@ -27,7 +27,6 @@ import {
   IrminFileLanguage,
   irminFileLanguages,
 } from '@/types/core/EditorItems';
-import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 type FormData = {
   name: string;

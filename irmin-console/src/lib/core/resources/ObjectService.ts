@@ -224,14 +224,12 @@ class ObjectService {
     repository,
     ref,
     path,
-    name,
     files,
   }: {
     workspace: string;
     repository: string;
     ref: string;
     path: string;
-    name: string;
     files?: FileList;
   }): Promise<IrminAPIResponse<RepoObject>> {
     if (isOfflineMode)

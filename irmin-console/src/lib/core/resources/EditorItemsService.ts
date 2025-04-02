@@ -59,8 +59,8 @@ class EditorItemsService {
         method: 'GET',
       });
       return response as IrminAPIResponse<EditorItem[]>;
-    } catch (error: any) {
-      console.error(error.message, 'Fetch editor items error');
+    } catch (error) {
+      console.error('Fetch editor items error', error);
       if (isDevelopment) {
         return fake(exampleEditorItems) as IrminAPIResponse<EditorItem[]>;
       }
@@ -94,8 +94,8 @@ class EditorItemsService {
         method: 'GET',
       });
       return response as IrminAPIResponse<string>;
-    } catch (error: any) {
-      console.error(error.message, 'Fetch editor item content error');
+    } catch (error) {
+      console.error('Fetch editor item content error', error);
       if (isDevelopment) {
         return fake('Fake content') as IrminAPIResponse<string>;
       }
@@ -122,7 +122,7 @@ class EditorItemsService {
     destinationPath: string;
   }): Promise<IrminAPIResponse> {
     if (isOfflineMode) {
-      return fake(null) as IrminAPIResponse;
+      return fake();
     }
     try {
       const endpoint = `/v1/workspaces/${workspace}/editor/move?path=${encodeURIComponent(
@@ -138,10 +138,10 @@ class EditorItemsService {
         body: body.toString(),
       });
       return response;
-    } catch (error: any) {
-      console.error(error.message, 'Move editor item error');
+    } catch (error) {
+      console.error('Move editor item error', error);
       if (isDevelopment) {
-        return fake(null) as IrminAPIResponse;
+        return fake();
       }
       throw error;
     }
@@ -166,7 +166,7 @@ class EditorItemsService {
     destinationPath: string;
   }): Promise<IrminAPIResponse> {
     if (isOfflineMode) {
-      return fake(null) as IrminAPIResponse;
+      return fake();
     }
     try {
       const endpoint = `/v1/workspaces/${workspace}/editor/copy?path=${encodeURIComponent(
@@ -182,10 +182,10 @@ class EditorItemsService {
         body: body.toString(),
       });
       return response;
-    } catch (error: any) {
-      console.error(error.message, 'Copy editor item error');
+    } catch (error) {
+      console.error('Copy editor item error', error);
       if (isDevelopment) {
-        return fake(null) as IrminAPIResponse;
+        return fake();
       }
       throw error;
     }
@@ -207,7 +207,7 @@ class EditorItemsService {
     path: string;
   }): Promise<IrminAPIResponse> {
     if (isOfflineMode) {
-      return fake(null) as IrminAPIResponse;
+      return fake();
     }
     try {
       const endpoint = `/v1/workspaces/${workspace}/editor?path=${encodeURIComponent(
@@ -217,10 +217,10 @@ class EditorItemsService {
         method: 'DELETE',
       });
       return response;
-    } catch (error: any) {
-      console.error(error.message, 'Delete editor item error');
+    } catch (error) {
+      console.error('Delete editor item error', error);
       if (isDevelopment) {
-        return fake(null) as IrminAPIResponse;
+        return fake();
       }
       throw error;
     }
@@ -245,7 +245,7 @@ class EditorItemsService {
     content: string;
   }): Promise<IrminAPIResponse> {
     if (isOfflineMode) {
-      return fake(null) as IrminAPIResponse;
+      return fake();
     }
     try {
       const endpoint = `/v1/workspaces/${workspace}/editor?path=${encodeURIComponent(
@@ -262,10 +262,10 @@ class EditorItemsService {
         body: body.toString(),
       });
       return response;
-    } catch (error: any) {
-      console.error(error.message, 'Save editor item error');
+    } catch (error) {
+      console.error('Save editor item error', error);
       if (isDevelopment) {
-        return fake(null) as IrminAPIResponse;
+        return fake();
       }
       throw error;
     }
@@ -287,7 +287,7 @@ class EditorItemsService {
     path: string;
   }): Promise<IrminAPIResponse> {
     if (isOfflineMode) {
-      return fake(null) as IrminAPIResponse;
+      return fake();
     }
     try {
       const endpoint = `/v1/workspaces/${workspace}/editor?path=${encodeURIComponent(
@@ -303,10 +303,10 @@ class EditorItemsService {
         body: body.toString(),
       });
       return response;
-    } catch (error: any) {
-      console.error(error.message, 'Create editor folder error');
+    } catch (error) {
+      console.error('Create editor folder error', error);
       if (isDevelopment) {
-        return fake(null) as IrminAPIResponse;
+        return fake();
       }
       throw error;
     }
@@ -339,7 +339,7 @@ class EditorItemsService {
       );
       return response as IrminAPIResponse<ScriptResult>;
     } catch (error) {
-      console.error((error as Error).message, 'Execute SQL error');
+      console.error('Run script error', error);
       if (isDevelopment)
         return fake(exampleScriptResult()) as IrminAPIResponse<ScriptResult>;
       throw error;

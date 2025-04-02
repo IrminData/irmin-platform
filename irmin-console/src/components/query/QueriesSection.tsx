@@ -135,7 +135,7 @@ export default function QueriesSection({
    */
   const handleRunQuery = useMemo(
     () => async () => {
-      query.executeScript('sql', editorContent);
+      query.executeSql(editorContent);
     },
     [query, editorContent]
   );
@@ -157,8 +157,8 @@ export default function QueriesSection({
               const res = await updateStoredQuery({
                 workspace: workspaceSlug,
                 queryID: selectedQuery.id,
-                name: selectedQuery.name,
-                description: selectedQuery.description,
+                name: queryName,
+                description: queryDescription,
                 sql: editorContent,
               });
               if (!res.data) throw new Error(res.message ?? 'Query not found');

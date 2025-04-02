@@ -1,12 +1,11 @@
 'use client';
 
-import QueryResults from '@/components/query/QueryResults';
-
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useQuery } from '@/context/QueryContext';
+import { usePopup } from '@/context/PopupContext';
 
 import EditorWithTabs from './ide/EditorWithTabs';
+import ScriptResults from './ScriptResults';
 
 /**
  * Editor Section, provides UI for the Editor Page.
@@ -14,19 +13,33 @@ import EditorWithTabs from './ide/EditorWithTabs';
  */
 export default function EditorSection() {
   const { dict } = useLocale();
-  const { currentEditor, openFileTabs } = useEditor();
-  const query = useQuery();
+  const { irminAlert } = usePopup();
+  const {
+    enableSaveButton,
+    currentEditor,
+    openFileTabs,
+    scriptExecutionInProgress,
+    scriptExecutionResult,
+    executeScript,
+  } = useEditor();
 
   return (
     <>
       <EditorWithTabs />
       {openFileTabs.length > 0 && (
-        <QueryResults
+        <ScriptResults
           title={dict.query.results}
-          result={query.result}
+          result={scriptExecutionResult}
+          loading={scriptExecutionInProgress}
           onRun={async () => {
-            if (!currentEditor || !currentEditor.contents) return;
-            await query.executeSql(currentEditor.contents ?? '');
+            if (!currentEditor || !currentEditor.path) return;
+            if (scriptExecutionInProgress) return;
+            // Make sure the script is saved before executing
+            if (enableSaveButton || !currentEditor.created) {
+              irminAlert('info', dict.editor.scriptNeedsToBeSaved);
+              return;
+            }
+            executeScript(currentEditor.path);
           }}
         />
       )}
