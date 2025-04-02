@@ -7,6 +7,7 @@ import { DynamicFieldValues } from '@/types/internal/DynamicField';
 /**
  * Server action to get the list of all connections for a given workspace.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.token - Optional token for authentication.
  * @returns The list of connections.
@@ -28,6 +29,7 @@ export async function getConnections({
 /**
  * Server action to get a connection by its ID.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.connectionID - The connection's identifier.
  * @param props.token - Optional token for authentication.
@@ -54,6 +56,7 @@ export async function getConnection({
 /**
  * Server action to create a new connection.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.name - The connection name.
  * @param props.description - The connection description.
@@ -100,6 +103,7 @@ export async function createConnection({
 /**
  * Server action to update an existing connection.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.connectionID - The connection's identifier.
  * @param props.name - The connection name.
@@ -150,6 +154,7 @@ export async function updateConnection({
 /**
  * Server action to delete a connection.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.connectionID - The connection's identifier.
  * @param props.token - Optional token for authentication.
@@ -176,6 +181,7 @@ export async function deleteConnection({
 /**
  * Server action to transfer a connection to a new owner.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.connectionID - The connection's identifier.
  * @param props.ownerID - The new owner ID.

@@ -27,11 +27,11 @@ const NotificationsButton = ({ profile }: { profile: User }) => {
   if (isOfflineMode) {
     return <TbBell className='text-accent text-xl' />;
   }
-  if (!profile.clerk_id) return <></>;
+  if (!profile.id) return <></>;
   return (
     <Inbox
       applicationIdentifier={novuApplicationIdentifier}
-      subscriberId={profile.clerk_id}
+      subscriberId={profile.id}
       routerPush={(path: string) => router.push(path)}
       appearance={{
         variables: {

@@ -5,6 +5,7 @@ import { initCore } from '@/lib/initCore';
 /**
  * Server action to get all available roles.
  *
+ * @param props - The properties for the function.
  * @param props.token - Optional user token.
  * @returns The list of roles.
  */

@@ -5,6 +5,7 @@ import { initCore } from '@/lib/initCore';
 /**
  * Server action to get all repositories for a workspace.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.token - Optional user token.
  * @returns The list of repositories.
@@ -26,6 +27,7 @@ export async function getRepositories({
 /**
  * Server action to fetch a single repository by its slug.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.repositorySlug - The repository slug.
  * @param props.token - Optional user token.
@@ -51,6 +53,7 @@ export async function getRepository({
 /**
  * Server action to create a new repository.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.name - The repository name.
  * @param props.description - The repository description.
@@ -100,6 +103,7 @@ export async function createRepository({
 /**
  * Server action to delete a repository.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.repositorySlug - The repository slug to delete.
  * @param props.token - Optional user token.
@@ -125,6 +129,7 @@ export async function deleteRepository({
 /**
  * Server action to update an existing repository.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.repositorySlug - The repository slug to update.
  * @param props.name - The new repository name.
@@ -174,6 +179,7 @@ export async function updateRepository({
 /**
  * Server action to transfer a repository to a different owner.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.repositorySlug - The repository slug.
  * @param props.ownerID - The new owner's ID.
@@ -203,6 +209,7 @@ export async function transferRepository({
 /**
  * Server action to get a download link for a repository.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.repositorySlug - The repository slug.
  * @param props.ref - The ref (branch, tag, or commit hash) to download.

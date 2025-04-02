@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import CardOrNormalList from '@/components/ui/list/CardOrNormalList';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -24,7 +24,7 @@ const ActionWorkflowList = ({
   loading: boolean;
   actionWorkflows: ActionWorkflow[];
 }) => {
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -88,21 +88,11 @@ const ActionWorkflowList = ({
           details: (
             <div className='flex max-w-sm flex-col text-gray-600 dark:text-gray-400'>
               <p className='pb-4 text-sm'>{item.description}</p>
-              <p className='pb-1 text-xs'>
-                {dict.list.lastUpdated}
-                {': '}
-                {new Date(item.updated_at).toLocaleString(locale)}
-              </p>
-              <p className='text-xs'>
-                {dict.list.createdAt}
-                {': '}
-                {new Date(item.created_at).toLocaleString(locale)}
-              </p>
             </div>
           ),
         };
       }),
-    [items, workspaceUrl, dict, locale]
+    [items, workspaceUrl, dict]
   );
 
   return (
@@ -115,4 +105,4 @@ const ActionWorkflowList = ({
   );
 };
 
-export default ActionWorkflowList;
+export default React.memo(ActionWorkflowList);

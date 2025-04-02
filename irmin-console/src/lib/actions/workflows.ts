@@ -10,6 +10,7 @@ import type { WorkflowableInput } from '@/types/internal/WorkflowInput';
 /**
  * Get all workflows in a workspace.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.token - Optional token for authentication.
  * @returns The list of workflows.
@@ -30,6 +31,7 @@ export async function getWorkflows({
 /**
  * Get workflows of a specific type in a workspace.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.workflowType - The workflow type.
  * @param props.token - Optional token for authentication.
@@ -56,6 +58,7 @@ export async function getWorkflowsOfType({
 /**
  * Get a workflow by its ID.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.workflowID - The workflow identifier.
  * @param props.token - Optional token for authentication.
@@ -79,6 +82,7 @@ export async function getWorkflow({
 /**
  * Create a new workflow.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.name - The workflow name.
  * @param props.description - The workflow description.
@@ -121,6 +125,7 @@ export async function createWorkflow({
 /**
  * Update a workflow.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.workflowID - The workflow identifier.
  * @param props.name - The new workflow name.
@@ -159,6 +164,7 @@ export async function updateWorkflow({
 /**
  * Update a workflow's workflowable data.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.workflowID - The workflow identifier.
  * @param props.workflowable - The new workflowable input data.
@@ -189,6 +195,7 @@ export async function updateWorkflowWorkflowable({
 /**
  * Update a workflow's schedule.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.workflowID - The workflow identifier.
  * @param props.schedule - The new workflow schedule.
@@ -219,6 +226,7 @@ export async function updateWorkflowSchedule({
 /**
  * Delete a workflow.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.workflowID - The workflow identifier.
  * @param props.token - Optional token for authentication.
@@ -244,6 +252,7 @@ export async function deleteWorkflow({
 /**
  * Transfer a workflow to a new owner.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.workflowID - The workflow identifier.
  * @param props.newOwnerID - The new owner's ID.
@@ -274,6 +283,7 @@ export async function transferWorkflow({
 /**
  * Pause a workflow.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.workflowID - The workflow identifier.
  * @param props.token - Optional token for authentication.
@@ -300,6 +310,7 @@ export async function pauseWorkflow({
 /**
  * Start a workflow.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.workflowID - The workflow identifier.
  * @param props.token - Optional token for authentication.

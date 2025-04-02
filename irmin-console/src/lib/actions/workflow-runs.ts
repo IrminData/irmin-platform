@@ -8,6 +8,7 @@ import type { WorkflowRun } from '@/types/core/WorkflowRun';
 /**
  * Get all workflow runs for a given workflow.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.workflowID - The workflow identifier.
  * @param props.token - Optional token for authentication.
@@ -34,6 +35,7 @@ export async function getWorkflowRuns({
 /**
  * Get a single workflow run by its ID.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.workflowID - The workflow identifier.
  * @param props.runID - The run identifier.
@@ -64,6 +66,7 @@ export async function getWorkflowRun({
 /**
  * Cancel a workflow run.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.workflowID - The workflow identifier.
  * @param props.runID - The run identifier.
@@ -94,6 +97,7 @@ export async function cancelWorkflowRun({
 /**
  * Trigger a new workflow run.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.workflowID - The workflow identifier.
  * @param props.token - Optional token for authentication.

@@ -9,7 +9,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useConfigureWorkflow } from '@/hooks/useCreateWorkflow';
 
-import { WorkflowSetup } from '@/types/internal/WorkflowInput';
+import { WorkflowInput } from '@/types/internal/WorkflowInput';
 
 /**
  * Configure general workflow properties,
@@ -28,8 +28,8 @@ export default function ConfigureWorkflow({
   setCurrentStep,
   closeModal,
 }: {
-  workflowData: WorkflowSetup;
-  setWorkflowData: React.Dispatch<React.SetStateAction<WorkflowSetup>>;
+  workflowData: WorkflowInput;
+  setWorkflowData: React.Dispatch<React.SetStateAction<WorkflowInput>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   closeModal: () => void;
 }) {

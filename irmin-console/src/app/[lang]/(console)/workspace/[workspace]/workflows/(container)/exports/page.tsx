@@ -40,7 +40,7 @@ export default async function ExportWorkflowsPage(props: {
   );
   return (
     <ExportWorkflowsSection
-      editorItems={editorItems}
+      editorItems={editorItems.data ?? []}
       workflows={(workflows.data as ExportWorkflow[]) ?? []}
       connections={connections.data ?? []}
       repositories={repositories.data ?? []}

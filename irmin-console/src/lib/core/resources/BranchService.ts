@@ -99,9 +99,10 @@ class BranchService {
   /**
    * Delete a branch
    *
-   * @param workspace - The workspace to delete the branch from
-   * @param repository - The repository slug to delete the branch from
-   * @param branch - The branch name to delete
+   * @param props
+   * @param props.workspace - The workspace to delete the branch from
+   * @param props.repository - The repository slug to delete the branch from
+   * @param props.branch - The branch name to delete
    */
   async deleteBranch({
     workspace,

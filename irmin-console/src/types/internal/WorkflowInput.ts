@@ -1,5 +1,4 @@
 import { WorkflowSchedule } from '@/types/core/Schedule';
-import { WorkflowableType } from '@/types/core/Workflow';
 
 export interface ImportWorkflowableInput {
   type: 'import';
@@ -82,6 +81,5 @@ export interface WorkflowInput {
   description: string;
   documentation: string;
   schedule: WorkflowSchedule;
-  type: WorkflowableType;
   workflowable: WorkflowableInput;
 }

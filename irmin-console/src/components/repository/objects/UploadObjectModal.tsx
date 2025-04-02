@@ -36,12 +36,7 @@ export default function UploadObjectModal({
   currentRef,
   prefilledName,
 }: {
-  uploadObject: (
-    name: string,
-    path: string,
-    ref: string,
-    files: FileList
-  ) => Promise<void>;
+  uploadObject: (path: string, ref: string, files: FileList) => Promise<void>;
   currentPath: string;
   currentRepository: string;
   currentRef: string;
@@ -62,9 +57,8 @@ export default function UploadObjectModal({
     defaultValues: {
       repository: currentRepository,
       ref: currentRef,
-      name: prefilledName ?? 'example.txt',
       files: null,
-      path: currentPath,
+      path: `${currentPath}/${prefilledName ?? 'example.txt'}`,
     },
   });
 
@@ -81,7 +75,7 @@ export default function UploadObjectModal({
         }
 
         // Upload the object
-        await uploadObject(data.name, data.path, data.ref, data.files);
+        await uploadObject(data.path, data.ref, data.files);
 
         // Close the modal and show success message
         irminModal.close();

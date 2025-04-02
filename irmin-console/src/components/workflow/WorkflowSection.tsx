@@ -47,7 +47,7 @@ const WorkflowSection = () => {
               <div className='inline-flex cursor-pointer flex-col gap-2'>
                 <p className='flex items-center text-xs lg:text-sm'>
                   <TbClock className='mr-1' />
-                  {formatDistanceToNow(new Date(run.started_at), {
+                  {formatDistanceToNow(new Date(run.started_at ?? ''), {
                     addSuffix: true,
                   })}
                 </p>
@@ -56,7 +56,7 @@ const WorkflowSection = () => {
                   {run.finished_at
                     ? formatDurationForUI(
                         intervalToDuration({
-                          start: new Date(run.started_at),
+                          start: new Date(run.started_at ?? ''),
                           end: new Date(run.finished_at),
                         })
                       )
@@ -72,7 +72,7 @@ const WorkflowSection = () => {
               <p className='text-xs lg:text-sm'>
                 {dict.workflow.startedAt}
                 {': '}
-                {new Date(run.started_at).toLocaleString(locale)}
+                {new Date(run.started_at ?? '').toLocaleString(locale)}
               </p>
               <p className='text-xs lg:text-sm'>
                 {dict.workflow.finishedAt}
@@ -81,11 +81,40 @@ const WorkflowSection = () => {
                   ? new Date(run.finished_at).toLocaleString(locale)
                   : '-'}
               </p>
+              <p className='text-xs lg:text-sm'>
+                {dict.workflow.duration}
+                {': '}
+                {run.finished_at
+                  ? formatDurationForUI(
+                      intervalToDuration({
+                        start: new Date(run.started_at ?? ''),
+                        end: new Date(run.finished_at),
+                      })
+                    )
+                  : '-'}
+              </p>
+              <p className='text-xs opacity-60'>{dict.workflow.triggeredBy}</p>
+              {run.triggered_by_user && (
+                <p className='text-xs lg:text-sm'>
+                  {run.triggered_by_user.email}
+                </p>
+              )}
+              {run.triggered_by && (
+                <p className='text-xs lg:text-sm'>{run.triggered_by.type}</p>
+              )}
+              {/* TODO: Add more information on what triggered the workflow to run */}
               <Tooltip.Arrow />
             </Tooltip.Content>
           </Tooltip.Root>,
           <div key={`run-${i}-owner`} className='inline-flex flex-col gap-2'>
-            <p className='text-xs lg:text-sm'>{run.owner.email}</p>
+            {run.triggered_by_user && (
+              <p className='text-xs lg:text-sm'>
+                {run.triggered_by_user.email}
+              </p>
+            )}
+            {run.triggered_by && (
+              <p className='text-xs lg:text-sm'>{run.triggered_by.type}</p>
+            )}
           </div>,
           <div key={`run-${i}-status`} className='inline-flex flex-col gap-2'>
             <StatusBadge status={run.status} label={run.status} />
@@ -280,7 +309,7 @@ const WorkflowSection = () => {
           <NormalList
             headers={[
               dict.workflow.run,
-              dict.list.owner,
+              dict.workflow.triggeredBy,
               dict.list.status,
               dict.list.actions,
             ]}

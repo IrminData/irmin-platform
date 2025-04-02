@@ -5,6 +5,7 @@ import { initCore } from '@/lib/initCore';
 /**
  * Server action to list all stored queries in a workspace.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.token - Optional user token.
  * @returns The list of stored queries.
@@ -24,6 +25,7 @@ export async function getStoredQueries({
 /**
  * Server action to get a stored query by its ID.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.queryID - The stored query's ID.
  * @param props.token - Optional user token.
@@ -49,6 +51,7 @@ export async function getStoredQuery({
 /**
  * Server action to create a new stored query.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.name - The name of the query.
  * @param props.description - The description of the query.
@@ -82,6 +85,7 @@ export async function createStoredQuery({
 /**
  * Server action to update an existing stored query.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.queryID - The stored query's ID.
  * @param props.name - The new name of the query.
@@ -119,6 +123,7 @@ export async function updateStoredQuery({
 /**
  * Server action to delete a stored query.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.queryID - The stored query's ID.
  * @param props.token - Optional user token.
@@ -144,6 +149,7 @@ export async function deleteStoredQuery({
 /**
  * Server action to transfer ownership of a stored query.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.queryID - The stored query's ID.
  * @param props.newOwnerID - The new owner's ID.
@@ -173,6 +179,7 @@ export async function transferStoredQuery({
 /**
  * Server action to execute a stored query.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.queryID - The stored query's ID.
  * @param props.token - Optional user token.
@@ -198,6 +205,7 @@ export async function executeStoredQuery({
 /**
  * Server action to execute an arbitrary SQL statement.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.sql - The SQL statement to execute.
  * @param props.token - Optional user token.

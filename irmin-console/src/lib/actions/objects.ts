@@ -5,6 +5,7 @@ import { initCore } from '@/lib/initCore';
 /**
  * Get a single object at a given path.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.repository - The repository slug.
  * @param props.path - The path of the object.
@@ -38,6 +39,7 @@ export async function getObject({
 /**
  * Get the history of an object.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace identifier.
  * @param props.repository - The repository identifier.
  * @param props.path - The path of the object.
@@ -71,6 +73,7 @@ export async function getObjectHistory({
 /**
  * Get the schema of an object.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace identifier.
  * @param props.repository - The repository identifier.
  * @param props.path - The path of the object.
@@ -104,6 +107,7 @@ export async function getObjectSchema({
 /**
  * Get the binary content of an object.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace identifier.
  * @param props.repository - The repository identifier.
  * @param props.path - The path of the object.
@@ -137,11 +141,11 @@ export async function getObjectContent({
 /**
  * Upload an object to a repository.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace identifier.
  * @param props.repository - The repository identifier.
  * @param props.ref - The ref (branch, tag or commit hash) to upload to.
  * @param props.path - The path within the repository.
- * @param props.name - The name of the object.
  * @param props.files - (Optional) Files to upload.
  * @param props.token - Optional user token.
  * @returns The uploaded object.
@@ -175,6 +179,7 @@ export async function uploadObject({
 /**
  * Move or rename an object.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace identifier.
  * @param props.repository - The repository identifier.
  * @param props.ref - The ref (branch, tag or commit hash) for the move.
@@ -212,6 +217,7 @@ export async function moveObject({
 /**
  * Copy an object.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace identifier.
  * @param props.repository - The repository identifier.
  * @param props.ref - The ref (branch, tag or commit hash) for the copy.
@@ -249,6 +255,7 @@ export async function copyObject({
 /**
  * Delete an object from a repository.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace identifier.
  * @param props.repository - The repository identifier.
  * @param props.ref - The ref (branch, tag or commit hash) to delete from.

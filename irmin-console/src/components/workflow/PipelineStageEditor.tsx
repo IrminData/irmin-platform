@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import React from 'react';
 
 import {
   Controller,
@@ -21,7 +22,7 @@ import { useLocale } from '@/context/LocaleContext';
 import useBaseUrl from '@/hooks/useBaseUrl';
 
 import { Connection } from '@/types/core/Connection';
-import { EditorItems } from '@/types/core/EditorItems';
+import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
 import { PipelineStageInput } from '@/types/internal/WorkflowInput';
 
@@ -35,7 +36,7 @@ type FormData = {
 };
 
 type PipelineStageEditorProps = {
-  editorItems?: EditorItems;
+  editorItems?: EditorItem[];
   repositories: Repository[];
   connections: Connection[];
   initialStages?: PipelineStageInput[];
@@ -58,7 +59,7 @@ type PipelineStageEditorProps = {
  *
  * @returns The rendered component.
  */
-export default function PipelineStageEditor({
+function PipelineStageEditor({
   initialStages = [],
   editorItems,
   repositories,
@@ -103,12 +104,6 @@ export default function PipelineStageEditor({
       read: true,
       type: 'action',
       executable: '',
-      connection: '',
-      connection_write_path: '/',
-      connection_read_path: '/',
-      repository: '',
-      branch: '',
-      path: '',
     });
   };
 
@@ -512,3 +507,5 @@ export default function PipelineStageEditor({
     </form>
   );
 }
+
+export default React.memo(PipelineStageEditor);

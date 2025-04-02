@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { FaFolderTree } from 'react-icons/fa6';
 import {
@@ -16,10 +16,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
-import { transformEditorItemsToFileNavItem } from '@/utils/editorItems';
-
-import { EditorItems } from '@/types/core/EditorItems';
-import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
+import { EditorItem } from '@/types/core/EditorItems';
 
 /**
  * File selector component
@@ -41,7 +38,7 @@ const FileSelector = ({
   currentSelectedFile,
   onSelectFile,
 }: {
-  editorItems: EditorItems | null;
+  editorItems: EditorItem[];
   currentSelectedFile: string | null;
   onSelectFile: (filePath: string) => void;
 }) => {
@@ -54,22 +51,16 @@ const FileSelector = ({
     currentSelectedFile ?? ''
   );
 
-  // Transform the editorItems into a file navigator item
-  const items = useMemo(
-    () => (editorItems ? transformEditorItemsToFileNavItem(editorItems) : []),
-    [editorItems]
-  );
-
   /**
    * Toggle a folder in the file navigator
    *
    * @param item - The item to toggle
    */
-  const toggleFolder = useCallback((item: FileNavigatorItem) => {
-    if (item.current?.name) {
+  const toggleFolder = useCallback((item: EditorItem) => {
+    if (item.name) {
       setOpenFolders((prev) => ({
         ...prev,
-        [item.current?.name ?? '']: !prev[item.current?.name ?? ''],
+        [item.name ?? '']: !prev[item.name ?? ''],
       }));
     }
   }, []);
@@ -80,15 +71,14 @@ const FileSelector = ({
    * @param item - The clicked item
    */
   const handleItemClick = useCallback(
-    (item: FileNavigatorItem) => {
-      if (!item.current) return;
+    (item: EditorItem) => {
       if (item.type === 'folder') {
         // Toggle folder open/close
         toggleFolder(item);
       } else if (item.type === 'file') {
         // Select file
-        setSelectedFile(item.current.path);
-        onSelectFile(item.current.path);
+        setSelectedFile(item.path);
+        onSelectFile(item.path);
       }
     },
     [onSelectFile, toggleFolder]
@@ -101,27 +91,25 @@ const FileSelector = ({
    * @param itemsToRender The items to render (folders or files)
    */
   const renderItems = useCallback(
-    (itemsToRender: FileNavigatorItem[]) =>
+    (itemsToRender: EditorItem[]) =>
       itemsToRender.map((item) => {
-        if (!item.current) return null;
-
         // Render folder
         if (item.type === 'folder') {
           return (
-            <div key={item.current.path} className='my-1'>
+            <div key={item.path} className='my-1'>
               <div
                 className='flex cursor-pointer items-center justify-normal rounded-md p-1 text-sm hover:bg-gray-200 dark:hover:bg-gray-800'
                 onClick={() => handleItemClick(item)}
               >
-                {openFolders[item.current.name] ? (
+                {openFolders[item.name] ? (
                   <FiChevronDown
                     className='inline-block'
-                    aria-label={`Close folder ${item.current.name} in the file navigator`}
+                    aria-label={`Close folder ${item.name} in the file navigator`}
                   />
                 ) : (
                   <FiChevronRight
                     className='inline-block'
-                    aria-label={`Open folder ${item.current.name} in the file navigator`}
+                    aria-label={`Open folder ${item.name} in the file navigator`}
                   />
                 )}
                 <span className='ml-2'>
@@ -129,12 +117,12 @@ const FileSelector = ({
                 </span>
                 <span
                   className='ml-2 hover:underline'
-                  aria-label={`Open ${item.current.name} folder`}
+                  aria-label={`Open ${item.name} folder`}
                 >
-                  {item.current.name}
+                  {item.name}
                 </span>
               </div>
-              {openFolders[item.current.name] && (
+              {openFolders[item.name] && (
                 <div className='pl-6'>{renderItems(item.children ?? [])}</div>
               )}
             </div>
@@ -143,10 +131,10 @@ const FileSelector = ({
 
         // Render file
         if (item.type === 'file') {
-          const isSelected = item.current.path === selectedFile;
+          const isSelected = item.path === selectedFile;
           return (
             <div
-              key={item.current.path}
+              key={item.path}
               className={`my-1 ml-6 flex cursor-pointer items-center justify-normal rounded-md p-1 text-sm ${
                 isSelected
                   ? 'bg-gray-200 dark:bg-gray-800'
@@ -159,9 +147,9 @@ const FileSelector = ({
               </span>
               <span
                 className='ml-2 hover:underline'
-                aria-label={`Select file ${item.current.name}`}
+                aria-label={`Select file ${item.name}`}
               >
-                {item.current.name}
+                {item.name}
               </span>
             </div>
           );
@@ -206,7 +194,7 @@ const FileSelector = ({
             {dict.fileNavigator.rootDirectory}
           </span>
         </div>
-        {renderItems(items)}
+        {renderItems(editorItems)}
       </div>
     </div>
   );

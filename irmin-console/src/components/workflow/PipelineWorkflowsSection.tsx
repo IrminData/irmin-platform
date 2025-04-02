@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -13,7 +13,7 @@ import SideModal from '@/components/ui/popup/SideModal';
 import { useLocale } from '@/context/LocaleContext';
 
 import { Connection } from '@/types/core/Connection';
-import { EditorItems } from '@/types/core/EditorItems';
+import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
 import { PipelineWorkflow } from '@/types/core/Workflow';
 
@@ -40,7 +40,7 @@ export default function PipelineWorkflowsSection({
   workflows,
   sideModalOpen = false,
 }: {
-  editorItems: EditorItems;
+  editorItems: EditorItem[];
   connections: Connection[];
   repositories: Repository[];
   workflows: PipelineWorkflow[];
@@ -73,21 +73,22 @@ export default function PipelineWorkflowsSection({
     };
   }, [searchQuery, workflows]);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     if (sideModalOpen) {
-      router.push('../pipelines');
+      router.push('../actions');
     } else {
       setIsOpen(false);
     }
-  };
-  const openModal = () => {
+  }, [sideModalOpen, router]);
+
+  const openModal = useCallback(() => {
     if (!sideModalOpen) {
-      router.push('pipelines/create');
+      router.push('actions/create');
     } else {
       setIsOpen(true);
       setCurrentStep(1);
     }
-  };
+  }, [sideModalOpen, router]);
 
   return (
     <div className='relative container mx-auto max-w-6xl px-4 py-8'>
@@ -122,7 +123,24 @@ export default function PipelineWorkflowsSection({
           closeModal={closeModal}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}
-          workflowType={'pipeline'}
+          initialWorkflowData={{
+            // Workflow properties
+            name: '',
+            description: '',
+            documentation: '',
+            schedule: {
+              triggers: [],
+              max_retries: 3,
+              max_runtime: 15,
+              min_interval: 120,
+            },
+            // Workflowable properties
+            workflowable: {
+              type: 'pipeline',
+              live: false,
+              stages: [],
+            },
+          }}
         />
       </SideModal>
       <div className='py-4'>

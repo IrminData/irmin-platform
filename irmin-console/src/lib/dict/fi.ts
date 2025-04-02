@@ -345,6 +345,8 @@ const fi = {
     exportSourcePath: 'Vientilähteen polku',
     exportRecursive: 'Rekursiivinen vienti',
     livePipeline: 'Live-dataputki',
+    triggeredBy: 'Laukaisija',
+    duration: 'Kesto',
     tabs: {
       data: 'Data',
       logs: 'Lokit',
@@ -419,9 +421,11 @@ const fi = {
     },
   },
   editor: {
-    writeYourSQL: 'Kirjoita SQL-kyselysi tähän...',
     writeYourJS: 'Kirjoita JavaScript-koodisi tähän...',
     writeYourGo: 'Kirjoita Go-koodisi tähän...',
+    writeYourSQL: 'Kirjoita SQL-kyselysi tähän...',
+    writeYourPython: 'Kirjoita Python-koodisi tähän...',
+    writeYourText: 'Kirjoita teksti tähän...',
     writeYourMarkdown: 'Kirjoita Markdown-tekstisi tähän...',
     newScriptTitle: 'Luo uusi skripti',
     newScriptSubtitle:

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useSearchParams } from 'next/navigation';
+
 import { createWorkflow } from '@/lib/actions/workflows';
 
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
-import { WorkflowableType } from '@/types/core/Workflow';
 import { WorkflowInput } from '@/types/internal/WorkflowInput';
 
 /**
@@ -23,7 +24,6 @@ export const emptyWorkflowSetupData: WorkflowInput = {
     min_interval: 120,
   },
   // Workflowable properties
-  type: 'action',
   workflowable: {
     type: 'action',
     executable: '',
@@ -32,27 +32,41 @@ export const emptyWorkflowSetupData: WorkflowInput = {
 
 export const useWorkflowCreation = (
   isOpen: boolean,
-  workflowType: WorkflowableType,
   initialWorkflowData: WorkflowInput | undefined,
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>
 ) => {
   const [workflowData, setWorkflowData] = useState<WorkflowInput>({
     ...emptyWorkflowSetupData,
     ...(initialWorkflowData ?? {}),
-    type: workflowType,
+    workflowable: {
+      ...emptyWorkflowSetupData.workflowable,
+      ...(initialWorkflowData?.workflowable ?? {}),
+    },
   });
+
+  const searchParams = useSearchParams();
+  const executable = searchParams.get('executable');
 
   useEffect(() => {
     setCurrentStep(1);
-    setWorkflowData({
+    const newWorkflowInputData: WorkflowInput = {
       ...emptyWorkflowSetupData,
       ...(initialWorkflowData ?? {}),
-      type: workflowType,
-    });
+      workflowable: {
+        ...emptyWorkflowSetupData.workflowable,
+        ...(initialWorkflowData?.workflowable ?? {}),
+      },
+    };
+    // Set initial values based on query params and the workflow type
+    if (executable && newWorkflowInputData.workflowable.type === 'action') {
+      newWorkflowInputData.workflowable.executable = executable;
+    }
+    // Set the workflow data
+    setWorkflowData(newWorkflowInputData);
   }, [
     isOpen,
-    workflowType,
     initialWorkflowData,
+    executable,
     setCurrentStep,
     setWorkflowData,
   ]);
@@ -60,22 +74,6 @@ export const useWorkflowCreation = (
   return {
     workflowData,
     setWorkflowData,
-  };
-};
-
-export const useConfigureWorkflowable = (
-  workflowData: WorkflowInput,
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>
-) => {
-  const handleContinue = useCallback(() => {
-    // Validate the form data
-    if (workflowData.workflowable.type !== workflowData.type) return;
-    // Continue to the next step
-    setCurrentStep(2);
-  }, [workflowData, setCurrentStep]);
-
-  return {
-    handleContinue,
   };
 };
 

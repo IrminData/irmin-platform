@@ -7,7 +7,7 @@ import exampleActionFiles from '../exampleActionFiles';
 /**
  * Get example Workspace EditorItems object
  *
- * Type: {@link EditorItems}
+ * Type: Array of {@link EditorItem}
  */
 export const editorItems: () => EditorItem[] = () => [
   {

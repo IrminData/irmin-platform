@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5';
 
@@ -203,4 +203,4 @@ const NormalList: React.FC<ListProps> = ({
   );
 };
 
-export default memo(NormalList);
+export default React.memo(NormalList);

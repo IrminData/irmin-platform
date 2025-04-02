@@ -1,7 +1,5 @@
 import { Metadata } from 'next';
 
-import { notFound } from 'next/navigation';
-
 import { getEditorItems } from '@/lib/actions/editor-items';
 import { Locale } from '@/lib/dict';
 import { getToken } from '@/lib/getToken';
@@ -52,9 +50,8 @@ export default async function EditorLayout({
     path: '',
     token,
   });
-  if (!editorItems) return notFound();
   return (
-    <EditorProvider editorItems={editorItems}>
+    <EditorProvider editorItems={editorItems.data ?? []}>
       <EditorLayoutWrapper>{children}</EditorLayoutWrapper>
     </EditorProvider>
   );

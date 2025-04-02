@@ -9,6 +9,7 @@ import { initDict } from '@/lib/initDict';
  *
  * This action also registers the user as a subscriber in Novu.
  *
+ * @param props - The properties for the function.
  * @param props.token - (Optional) User's API token.
  * @returns The current user's profile.
  */
@@ -31,6 +32,7 @@ export async function getProfile({ token }: { token?: string }) {
  *
  * This action also registers the user as a subscriber in Novu.
  *
+ * @param props - The properties for the function.
  * @param props.first_name - User's new first name.
  * @param props.last_name - User's new last name.
  * @param props.email - User's new email.

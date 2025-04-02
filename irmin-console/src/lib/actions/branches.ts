@@ -5,8 +5,8 @@ import { initCore } from '@/lib/initCore';
 /**
  * Server action to get a list of branches in a repository.
  *
- * @param props
- * @param prop.workspace - The workspace to fetch the branches from
+ * @param props - The properties for the function
+ * @param props.workspace - The workspace to fetch the branches from
  * @param props.repository - The repository slug to fetch the branches from
  * @param props.token - Optional token for authentication
  * @returns The list of branches
@@ -32,7 +32,7 @@ export async function getBranches({
 /**
  * Server action to get a branch in a repository.
  *
- * @param props
+ * @param props - The properties for the function
  * @param props.workspace - The workspace to fetch the branch from
  * @param props.repository - The repository slug to fetch the branch from
  * @param props.branch - The branch name to fetch
@@ -63,7 +63,7 @@ export async function getBranch({
 /**
  * Server action to create a branch in a repository.
  *
- * @param props
+ * @param props - The properties for the function
  * @param props.workspace - The workspace to create the branch in
  * @param props.repository - The repository slug to create the branch in
  * @param props.name - The branch name to create
@@ -98,7 +98,7 @@ export async function createBranch({
 /**
  * Server action to delete a branch in a repository.
  *
- * @param props
+ * @param props - The properties for the function
  * @param props.workspace - The workspace to delete the branch from
  * @param props.repository - The repository slug to delete the branch from
  * @param props.branch - The branch name to delete

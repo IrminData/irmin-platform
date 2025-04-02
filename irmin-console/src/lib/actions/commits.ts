@@ -9,6 +9,7 @@ import { PathType } from '@/types/core/Commit';
 /**
  * Server action to get a list of commits in a repository at a specific ref.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace to fetch the commits from
  * @param props.repository - The repository slug to fetch the commits from
  * @param props.ref - (Optional) The reference (branch, tag, etc.) to filter commits
@@ -34,13 +35,14 @@ export async function getCommits({
     ref,
   });
   // Sort the commits by hash
-  const sortedCommits = sortCommits(res ?? []);
+  const sortedCommits = sortCommits(res.data ?? []);
   return sortedCommits;
 }
 
 /**
  * Server action to get a commit by hash.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace to fetch the commit from
  * @param props.repository - The repository slug to fetch the commit from
  * @param props.hash - The commit hash to fetch
@@ -71,6 +73,7 @@ export async function getCommit({
 /**
  * Server action to create a commit in a repository.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace to create the commit in
  * @param props.repository - The repository slug to create the commit in
  * @param props.branch - The current branch to create the commit on
@@ -105,6 +108,7 @@ export async function createCommit({
 /**
  * Server action to revert uncommitted changes in a repository on a specific ref.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace to revert changes in
  * @param props.repository - The repository slug to revert changes in
  * @param props.branch - The branch to revert changes on

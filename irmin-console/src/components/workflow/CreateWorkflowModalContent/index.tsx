@@ -1,17 +1,13 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import React from 'react';
 
-import {
-  emptyWorkflowSetupData,
-  useWorkflowCreation,
-} from '@/hooks/useCreateWorkflow';
+import { useWorkflowCreation } from '@/hooks/useCreateWorkflow';
 
 import { Connection } from '@/types/core/Connection';
-import { EditorItems } from '@/types/core/EditorItems';
+import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
-import { WorkflowableType } from '@/types/core/Workflow';
-import { WorkflowSetup } from '@/types/internal/WorkflowInput';
+import { WorkflowInput } from '@/types/internal/WorkflowInput';
 
 import ConfigureWorkflow from './ConfigureWorkflow';
 import ConfigureWorkflowable from './ConfigureWorkflowable';
@@ -38,33 +34,20 @@ const CreateWorkflowModalContent = ({
   closeModal,
   currentStep,
   setCurrentStep,
-  workflowType,
   initialWorkflowData,
 }: {
-  editorItems: EditorItems;
+  editorItems: EditorItem[];
   repositories: Repository[];
   connections: Connection[];
   isOpen: boolean;
   closeModal: () => void;
   currentStep: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-  workflowType: WorkflowableType;
-  initialWorkflowData?: WorkflowSetup;
+  initialWorkflowData?: WorkflowInput;
 }) => {
-  const searchParams = useSearchParams();
-  const executable = searchParams.get('executable');
-
   const { workflowData, setWorkflowData } = useWorkflowCreation(
     isOpen,
-    workflowType,
-    {
-      ...emptyWorkflowSetupData,
-      ...(initialWorkflowData ?? {}),
-      executable:
-        executable ??
-        initialWorkflowData?.executable ??
-        emptyWorkflowSetupData.executable,
-    },
+    initialWorkflowData,
     setCurrentStep
   );
 
@@ -92,4 +75,4 @@ const CreateWorkflowModalContent = ({
   );
 };
 
-export default CreateWorkflowModalContent;
+export default React.memo(CreateWorkflowModalContent);

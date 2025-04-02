@@ -15,7 +15,7 @@ export const invites: () => Invite[] = () => [
   {
     id: 'inv-0',
     email: 'john@example.com',
-    role: roles()[2],
+    role: roles()[2].name,
     expires_at: getRandomDateTimeString(10, 'future', 2),
     invited_by: workspaceUsers().find((c) => c.email === 'jane@example.com')!,
     workspace: workspaces().find((c) => c.slug === 'example-core')!,
@@ -23,7 +23,7 @@ export const invites: () => Invite[] = () => [
   {
     id: 'inv-1',
     email: 'alice@example.com',
-    role: roles()[1],
+    role: roles()[1].name,
     expires_at: getRandomDateTimeString(10, 'future', 3),
     invited_by: workspaceUsers().find((c) => c.email === 'jane@example.com')!,
     workspace: workspaces().find((c) => c.slug === 'example-core')!,
@@ -31,7 +31,7 @@ export const invites: () => Invite[] = () => [
   {
     id: 'inv-2',
     email: 'bob@example.com',
-    role: roles()[0],
+    role: roles()[0].name,
     expires_at: getRandomDateTimeString(5, 'future', 5),
     invited_by: workspaceUsers().find((c) => c.email === 'jane@example.com')!,
     workspace: workspaces().find((c) => c.slug === 'example-core')!,
@@ -39,7 +39,7 @@ export const invites: () => Invite[] = () => [
   {
     id: 'inv-3',
     email: 'charlie@example.com',
-    role: roles()[2],
+    role: roles()[2].name,
     expires_at: getRandomDateTimeString(15, 'future', 1),
     invited_by: workspaceUsers().find((c) => c.email === 'jane@example.com')!,
     workspace: workspaces().find((c) => c.slug === 'example-core')!,

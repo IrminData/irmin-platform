@@ -37,17 +37,8 @@ const WorkspaceInvitesSection = () => {
       <table className='min-w-full'>
         <thead>
           <tr className='border-b dark:border-gray-800'>
-            <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
-              {dict.common.name}
-            </th>
             <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
               {dict.users.email}
-            </th>
-            <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
-              {dict.users.phone}
-            </th>
-            <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
-              {dict.users.company}
             </th>
             <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
               {dict.users.role}
@@ -64,27 +55,15 @@ const WorkspaceInvitesSection = () => {
               className='h-14 border-b dark:border-gray-800'
             >
               <td className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
-                {invite.first_name} {invite.last_name}
-                {/* Only for mobile screens */}
-                <span className='block text-xs opacity-70 md:hidden'>
-                  {invite.email} | {invite.phone} | {invite.company}
-                </span>
-              </td>
-              {/* Only for larger screens */}
-              <td className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
                 {invite.email}
-              </td>
-              <td className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
-                {invite.phone}
-              </td>
-              <td className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
-                {invite.company}
               </td>
               <td className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
                 <ReactSelect
                   value={{
-                    value: invite.role.name,
-                    label: invite.role.label,
+                    value: roles.find((role) => role.name === invite.role)
+                      ?.name,
+                    label: roles.find((role) => role.name === invite.role)
+                      ?.label,
                   }}
                   onChange={(val) => {
                     if (!val || !val.value) return;

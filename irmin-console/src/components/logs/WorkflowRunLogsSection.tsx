@@ -17,8 +17,8 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
 
-import { WorkflowRunLogs } from '@/types/core/Log';
-import { Workflow, WorkflowRun } from '@/types/core/Workflow';
+import { Workflow } from '@/types/core/Workflow';
+import { WorkflowRun } from '@/types/core/WorkflowRun';
 
 import LogFeed from './LogFeed';
 
@@ -27,16 +27,13 @@ import LogFeed from './LogFeed';
  *
  * @param props - The component properties
  * @param props.workflowRun - The workflow run to display logs for
- * @param props.workflowRunLogs - The logs for the workflow run
  * @param props.workflow - The workflow the run belongs to
  */
 export default function WorkflowRunLogsSection({
   workflowRun,
-  workflowRunLogs,
   workflow,
 }: {
   workflowRun: WorkflowRun;
-  workflowRunLogs: WorkflowRunLogs;
   workflow?: Workflow;
 }) {
   const router = useRouter();
@@ -86,7 +83,7 @@ export default function WorkflowRunLogsSection({
           <div className='flex flex-col gap-1'>
             <p className='text-sm opacity-60'>{dict.workflow.startedAt}</p>
             <p className='text-base'>
-              {new Date(workflowRun.started_at).toLocaleString(locale)}
+              {new Date(workflowRun.started_at ?? '').toLocaleString(locale)}
             </p>
           </div>
           <div className='flex flex-col gap-1'>
@@ -98,8 +95,14 @@ export default function WorkflowRunLogsSection({
             </p>
           </div>
           <div className='flex flex-col gap-1'>
-            <p className='text-sm opacity-60'>{dict.list.owner}</p>
-            <p className='text-base'>{workflowRun.owner.email}</p>
+            <p className='text-sm opacity-60'>{dict.workflow.triggeredBy}</p>
+            {workflowRun.triggered_by_user && (
+              <p className='text-base'>{workflowRun.triggered_by_user.email}</p>
+            )}
+            {workflowRun.triggered_by && (
+              <p className='text-base'>{workflowRun.triggered_by.type}</p>
+            )}
+            {/* TODO: Add more information on what triggered the workflow to run */}
           </div>
           <div className='flex flex-col gap-1'>
             <p className='text-sm opacity-60'>{dict.list.status}</p>
@@ -111,7 +114,7 @@ export default function WorkflowRunLogsSection({
           <div className='flex flex-col gap-1'>
             <p className='flex items-center text-sm lg:text-base'>
               <TbClock className='mr-1' />
-              {formatDistanceToNow(new Date(workflowRun.started_at), {
+              {formatDistanceToNow(new Date(workflowRun.started_at ?? ''), {
                 addSuffix: true,
               })}
             </p>
@@ -120,7 +123,7 @@ export default function WorkflowRunLogsSection({
               {workflowRun.finished_at
                 ? formatDurationForUI(
                     intervalToDuration({
-                      start: new Date(workflowRun.started_at),
+                      start: new Date(workflowRun.started_at ?? ''),
                       end: new Date(workflowRun.finished_at),
                     })
                   )
@@ -129,9 +132,9 @@ export default function WorkflowRunLogsSection({
           </div>
         </div>
       </div>
-      {workflowRunLogs && workflowRunLogs.logs ? (
+      {workflowRun.logs ? (
         <div className='h-[calc(100vh-347px)]'>
-          <LogFeed logs={workflowRunLogs.logs} />
+          <LogFeed logs={workflowRun.logs ?? []} />
         </div>
       ) : (
         <p className='text-center text-lg text-gray-600 dark:text-gray-400'>

@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import { go } from '@codemirror/lang-go';
 import { javascript } from '@codemirror/lang-javascript';
 import { markdown } from '@codemirror/lang-markdown';
+import { python } from '@codemirror/lang-python';
 import { PostgreSQL, sql } from '@codemirror/lang-sql';
 import {
   vscodeDark,
@@ -19,6 +20,8 @@ import { useTheme } from 'next-themes';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { IrminFileLanguage } from '@/types/core/EditorItems';
+
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
   ssr: false,
 });
@@ -30,7 +33,7 @@ const CodeMirrorEditor = ({
   updateEditorContent,
   ...editorProps
 }: {
-  language: string;
+  language: IrminFileLanguage;
   content: string;
   editorHeight?: string;
   updateEditorContent: (value: string) => void;
@@ -51,6 +54,9 @@ const CodeMirrorEditor = ({
   const placeholder = useMemo(() => {
     if (language === 'js') return dict.editor.writeYourJS;
     if (language === 'go') return dict.editor.writeYourGo;
+    if (language === 'py') return dict.editor.writeYourPython;
+    if (language === 'sql') return dict.editor.writeYourSQL;
+    if (language === 'txt') return dict.editor.writeYourText;
     if (language === 'md') return dict.editor.writeYourMarkdown;
     return dict.editor.writeYourSQL;
   }, [language, dict]);
@@ -60,8 +66,10 @@ const CodeMirrorEditor = ({
     if (language === 'js')
       return [editorTheme, javascript({ jsx: false, typescript: false })];
     if (language === 'go') return [editorTheme, go()];
+    if (language === 'py') return [editorTheme, python()];
     if (language === 'md') return [editorTheme, markdown()];
-    return [editorTheme, sql({ dialect: PostgreSQL })];
+    if (language === 'sql') return [editorTheme, sql({ dialect: PostgreSQL })];
+    return [editorTheme];
   }, [language, editorTheme]);
 
   return (

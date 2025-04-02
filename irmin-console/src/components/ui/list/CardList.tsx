@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5';
 
@@ -126,4 +126,4 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
   );
 };
 
-export default CardList;
+export default React.memo(CardList);

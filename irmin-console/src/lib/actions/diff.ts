@@ -7,6 +7,7 @@ import { MergeStrategy } from '@/types/core/Diff';
 /**
  * Server action to get a diff between two refs in a repository.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.repository - The repository slug.
  * @param props.baseRef - The base reference.
@@ -41,6 +42,7 @@ export async function getDiff({
 /**
  * Server action to merge refs in a repository.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.repository - The repository slug.
  * @param props.baseRef - The base reference.

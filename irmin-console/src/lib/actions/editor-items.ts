@@ -7,6 +7,7 @@ import { EditorItem } from '@/types/core/EditorItems';
 /**
  * Server action to get the list of files and folders in the Workspace's EditorItems.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.path - The path within the editor.
  * @param props.token - Optional token for authentication.
@@ -35,6 +36,7 @@ export async function getEditorItems({
 /**
  * Server action to get the content of a file in the Workspace's EditorItems.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.path - The path of the file within the editor.
  * @param props.token - Optional token for authentication.
@@ -62,6 +64,7 @@ export async function getEditorItemContent({
 /**
  * Server action to move a file or folder in the Workspace's EditorItems.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.item - The file or folder information to be moved.
  * @param props.destinationPath - The destination path where the item should be moved.
@@ -91,6 +94,7 @@ export async function moveEditorItem({
 /**
  * Server action to copy a file or folder in the Workspace's EditorItems.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.item - The file or folder information to be copied.
  * @param props.destinationPath - The destination path where the item should be copied.
@@ -120,6 +124,7 @@ export async function copyEditorItem({
 /**
  * Server action to delete a file or folder in the Workspace's EditorItems.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.item - The file or folder information to be deleted.
  * @param props.token - Optional token for authentication.
@@ -146,6 +151,7 @@ export async function deleteEditorItem({
 /**
  * Server action to save a file in the Workspace's EditorItems.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.item - The file information to be saved.
  * @param props.token - Optional token for authentication.
@@ -172,6 +178,7 @@ export async function saveEditorItem({
 /**
  * Server action to create a new file in the Workspace's EditorItems.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.item - The file information to be created.
  * @param props.token - Optional token for authentication.
@@ -197,6 +204,7 @@ export async function createEditorFolder({
 /**
  * Server action to execute an editor item as a script.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.path - The path of the file to be executed.
  * @param props.token - Optional token for authentication.

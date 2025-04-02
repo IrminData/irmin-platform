@@ -25,7 +25,6 @@ import { ScriptResult } from '@/types/core/EditorItems';
  * @param props.loading - Whether to show a loading skeleton
  * @param props.onSave - Function to save the data
  * @param props.onRun - Function to run the data
- * @param props.workflow - Workflow object
  */
 const ScriptResults = ({
   title,

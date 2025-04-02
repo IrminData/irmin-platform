@@ -11,6 +11,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { useUsers } from '@/context/UsersContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
+import { IrminRole } from '@/types/core/IrminRole';
+
 /**
  * Workspace Users section
  *
@@ -71,7 +73,7 @@ const WorkspaceUsersSection = () => {
                 {user.company}
               </td>
               <td className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
-                {workspace?.owner_id === user.id ? (
+                {workspace?.owner?.id === user.id ? (
                   dict.list.owner
                 ) : (
                   <ReactSelect
@@ -91,7 +93,7 @@ const WorkspaceUsersSection = () => {
                       // Change roles of a user
                       changeUserRole(
                         user.id,
-                        val.map((v) => v.value)
+                        val.map((v) => v.value as IrminRole)
                       );
                     }}
                     options={roles.map((role) => ({
@@ -107,7 +109,7 @@ const WorkspaceUsersSection = () => {
                 )}
               </td>
               <td className='px-4 py-2 text-right'>
-                {workspace?.owner_id !== user.id && (
+                {workspace?.owner?.id !== user.id && (
                   <div className='flex w-full flex-row justify-end gap-2 align-middle'>
                     <ButtonWithTooltip
                       size='icon'

@@ -8,6 +8,7 @@ import { DynamicFieldValues } from '@/types/internal/DynamicField';
 /**
  * Server action to get the list of all available connectors.
  *
+ * @param props - The properties for the function.
  * @param props.token - Optional token for authentication.
  * @returns The list of connectors.
  */
@@ -21,6 +22,7 @@ export async function getConnectors({ token }: { token?: string }) {
 /**
  * Server action to get a connector by its identifier.
  *
+ * @param props - The properties for the function.
  * @param props.connectorId - The connector's identifier.
  * @param props.token - Optional token for authentication.
  * @returns The connector.
@@ -43,6 +45,7 @@ export async function getConnector({
 /**
  * Server action to get the configuration fields for a connector.
  *
+ * @param props - The properties for the function.
  * @param props.connectorId - The connector's identifier.
  * @param props.configurationType - Type of configuration fields: 'details' or 'settings'.
  * @param props.currentDetails - Optional current details field values.
@@ -78,6 +81,7 @@ export async function getConnectorConfigurationFields({
 /**
  * Server action to validate the configuration for a connector.
  *
+ * @param props - The properties for the function.
  * @param props.connectorId - The connector's identifier.
  * @param props.details - Optional details field values.
  * @param props.settings - Optional settings field values.
@@ -109,6 +113,7 @@ export async function validateConnectorConfiguration({
 /**
  * Server action to fetch the connector schema for a specific operation.
  *
+ * @param props - The properties for the function.
  * @param props.connectorId - The connector's identifier.
  * @param props.operation - The connector capability for which to fetch the schema.
  * @param props.details - Optional details field values.

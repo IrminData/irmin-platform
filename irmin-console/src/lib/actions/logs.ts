@@ -5,6 +5,7 @@ import { initCore } from '@/lib/initCore';
 /**
  * Server action to get the list of log events for a workspace.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace identifier.
  * @param props.token - Optional token for authentication.
  * @returns The list of log events.

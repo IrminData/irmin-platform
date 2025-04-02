@@ -45,7 +45,7 @@ const LogEventFeed = ({
           {/* Event timestamp and user */}
           <div className='ml-auto flex w-36 flex-col'>
             <span className='text-xs text-gray-500 dark:text-gray-400'>
-              {new Date(event.timestamp).toLocaleString()}
+              {new Date(event.created_at).toLocaleString()}
             </span>
             <span className='text-xs text-gray-500 dark:text-gray-400'>
               {event.user ? event.user.email : systemLabel}

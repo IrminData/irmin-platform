@@ -1,3 +1,5 @@
+import React from 'react';
+
 import CardList from '@/components/ui/list/CardList';
 import NormalList from '@/components/ui/list/NormalList';
 
@@ -21,4 +23,4 @@ const CardOrNormalList = (props: ListProps) => {
   );
 };
 
-export default CardOrNormalList;
+export default React.memo(CardOrNormalList);

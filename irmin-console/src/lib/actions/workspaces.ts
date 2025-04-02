@@ -5,6 +5,7 @@ import { initCore } from '@/lib/initCore';
 /**
  * Get all workspaces for the current user.
  *
+ * @param props - The properties for the function.
  * @param props.token - Optional token for authentication.
  * @returns The list of workspaces.
  */
@@ -17,6 +18,7 @@ export async function getWorkspaces({ token }: { token?: string }) {
 /**
  * Fetch a single workspace by slug.
  *
+ * @param props - The properties for the function.
  * @param props.workspaceSlug - The workspace slug.
  * @param props.token - Optional token for authentication.
  * @returns The workspace details.
@@ -38,6 +40,7 @@ export async function getWorkspace({
 /**
  * Delete a workspace.
  *
+ * @param props - The properties for the function.
  * @param props.workspaceSlug - The workspace slug.
  * @param props.token - Optional token for authentication.
  * @returns The deletion result.
@@ -59,6 +62,7 @@ export async function deleteWorkspace({
 /**
  * Transfer a workspace to a new owner.
  *
+ * @param props - The properties for the function.
  * @param props.workspaceSlug - The workspace slug.
  * @param props.newOwnerID - The new owner's ID.
  * @param props.token - Optional token for authentication.
@@ -84,6 +88,7 @@ export async function transferWorkspace({
 /**
  * Update a workspace.
  *
+ * @param props - The properties for the function.
  * @param props.workspaceSlug - The workspace slug.
  * @param props.name - The updated workspace name.
  * @param props.description - The updated workspace description.
@@ -112,6 +117,7 @@ export async function updateWorkspace({
 /**
  * Create a new workspace.
  *
+ * @param props - The properties for the function.
  * @param props.name - The workspace name.
  * @param props.description - The workspace description.
  * @param props.token - Optional token for authentication.
@@ -137,6 +143,7 @@ export async function createWorkspace({
 /**
  * Leave a workspace.
  *
+ * @param props - The properties for the function.
  * @param props.workspaceSlug - The workspace slug.
  * @param props.token - Optional token for authentication.
  * @returns The result of the leave operation.

@@ -5,6 +5,7 @@ import { initCore } from '@/lib/initCore';
 /**
  * Server action to get a list of tags in a repository.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.repository - The repository slug.
  * @param props.token - Optional user token.
@@ -27,6 +28,7 @@ export async function getTags({
 /**
  * Server action to get a tag from a repository.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.repository - The repository slug.
  * @param props.tagID - The tag identifier.
@@ -56,6 +58,7 @@ export async function getTag({
 /**
  * Server action to create a tag in a repository.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.repository - The repository slug.
  * @param props.name - The name of the tag.
@@ -89,6 +92,7 @@ export async function createTag({
 /**
  * Server action to delete a tag in a repository.
  *
+ * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.repository - The repository slug.
  * @param props.tagID - The tag identifier.

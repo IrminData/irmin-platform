@@ -342,6 +342,8 @@ const en = {
     exportSourcePath: 'Export from path',
     exportRecursive: 'Recursive export',
     livePipeline: 'Live pipeline',
+    triggeredBy: 'Triggered by',
+    duration: 'Duration',
     tabs: {
       data: 'Data',
       logs: 'Logs',
@@ -416,9 +418,11 @@ const en = {
     },
   },
   editor: {
-    writeYourSQL: 'Write your SQL query here...',
     writeYourJS: 'Write your JavaScript script here...',
     writeYourGo: 'Write your Go script here...',
+    writeYourSQL: 'Write your SQL query here...',
+    writeYourPython: 'Write your Python script here...',
+    writeYourText: 'Write your text here...',
     writeYourMarkdown: 'Write your Markdown here...',
     newScriptTitle: 'Create a new script',
     newScriptSubtitle:

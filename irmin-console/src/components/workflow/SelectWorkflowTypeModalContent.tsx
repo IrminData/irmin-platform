@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useMemo, useState } from 'react';
+import { type JSX, useCallback, useMemo, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -27,7 +27,7 @@ export default function SelectWorkflowTypeModalContent() {
   const [workflowableType, setWorkflowableType] =
     useState<WorkflowableType | null>(null);
 
-  const handleContinue = () => {
+  const handleContinue = useCallback(() => {
     // Direct to the next step
     if (workflowableType === 'action') {
       router.push('../workflows/actions/create');
@@ -41,7 +41,7 @@ export default function SelectWorkflowTypeModalContent() {
     if (workflowableType === 'pipeline') {
       router.push('../workflows/pipelines/create');
     }
-  };
+  }, [router, workflowableType]);
 
   const workflowTypeOptions: {
     type: WorkflowableType;
