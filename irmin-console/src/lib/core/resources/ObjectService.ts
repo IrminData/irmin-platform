@@ -215,7 +215,6 @@ class ObjectService {
    * @param props.repository - The repository slug.
    * @param props.ref - The ref (branch, tag or commit hash) to upload to.
    * @param props.path - The path within the repository where the object will be uploaded.
-   * @param props.name - The name of the object.
    * @param props.files - A FileList containing files to upload.
    * @returns IrminAPIResponse containing the uploaded object.
    */

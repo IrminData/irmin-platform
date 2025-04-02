@@ -23,7 +23,6 @@ import ConfigureWorkflowable from './ConfigureWorkflowable';
  * @param props.closeModal - Function to close the modal
  * @param props.currentStep - Current step in the workflow creation
  * @param props.setCurrentStep - Function to set the current step
- * @param props.workflowType - Workflow type to create
  * @param props.initialWorkflowData - (optional) Initial workflow data
  */
 const CreateWorkflowModalContent = ({
