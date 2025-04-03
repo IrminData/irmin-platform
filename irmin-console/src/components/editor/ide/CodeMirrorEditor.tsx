@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 
 import { go } from '@codemirror/lang-go';
 import { javascript } from '@codemirror/lang-javascript';
+import { json } from '@codemirror/lang-json';
 import { markdown } from '@codemirror/lang-markdown';
 import { python } from '@codemirror/lang-python';
 import { PostgreSQL, sql } from '@codemirror/lang-sql';
@@ -56,9 +57,9 @@ const CodeMirrorEditor = ({
     if (language === 'go') return dict.editor.writeYourGo;
     if (language === 'py') return dict.editor.writeYourPython;
     if (language === 'sql') return dict.editor.writeYourSQL;
-    if (language === 'txt') return dict.editor.writeYourText;
     if (language === 'md') return dict.editor.writeYourMarkdown;
-    return dict.editor.writeYourSQL;
+    if (language === 'json') return dict.editor.writeYourJSON;
+    return dict.editor.writeYourText;
   }, [language, dict]);
 
   const extensions = useMemo(() => {
@@ -69,6 +70,7 @@ const CodeMirrorEditor = ({
     if (language === 'py') return [editorTheme, python()];
     if (language === 'md') return [editorTheme, markdown()];
     if (language === 'sql') return [editorTheme, sql({ dialect: PostgreSQL })];
+    if (language === 'json') return [editorTheme, json()];
     return [editorTheme];
   }, [language, editorTheme]);
 

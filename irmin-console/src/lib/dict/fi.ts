@@ -427,6 +427,7 @@ const fi = {
     writeYourPython: 'Kirjoita Python-koodisi tähän...',
     writeYourText: 'Kirjoita teksti tähän...',
     writeYourMarkdown: 'Kirjoita Markdown-tekstisi tähän...',
+    writeYourJSON: 'Kirjoita JSON-objektisi tähän...',
     newScriptTitle: 'Luo uusi skripti',
     newScriptSubtitle:
       'Kirjoita skripti haluamallasi kielellä ja tallenna se prosessina',

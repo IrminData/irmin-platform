@@ -1,6 +1,13 @@
 import { JSONValue } from '../internal/GenericJSON';
 
-export type IrminFileLanguage = 'js' | 'go' | 'py' | 'sql' | 'md' | 'txt';
+export type IrminFileLanguage =
+  | 'js'
+  | 'go'
+  | 'py'
+  | 'sql'
+  | 'md'
+  | 'txt'
+  | 'json';
 export const irminFileLanguages: {
   label: string;
   value: IrminFileLanguage;
@@ -28,6 +35,10 @@ export const irminFileLanguages: {
   {
     label: 'Plaintext',
     value: 'txt',
+  },
+  {
+    label: 'JSON',
+    value: 'json',
   },
 ];
 

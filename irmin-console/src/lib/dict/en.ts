@@ -1,3 +1,5 @@
+import { write } from 'fs';
+
 /**
  * English dictionary, key-value pairs for static strings in the application
  */
@@ -424,6 +426,7 @@ const en = {
     writeYourPython: 'Write your Python script here...',
     writeYourText: 'Write your text here...',
     writeYourMarkdown: 'Write your Markdown here...',
+    writeYourJSON: 'Write your JSON here...',
     newScriptTitle: 'Create a new script',
     newScriptSubtitle:
       'Start writing your script in your preferred language and save it as a workflow',

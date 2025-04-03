@@ -507,7 +507,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/lang-json@npm:^6.0.0":
+"@codemirror/lang-json@npm:^6.0.0, @codemirror/lang-json@npm:^6.0.1":
   version: 6.0.1
   resolution: "@codemirror/lang-json@npm:6.0.1"
   dependencies:
@@ -8419,6 +8419,7 @@ __metadata:
     "@clerk/types": "npm:^4.50.1"
     "@codemirror/lang-go": "npm:^6.0.1"
     "@codemirror/lang-javascript": "npm:^6.2.3"
+    "@codemirror/lang-json": "npm:^6.0.1"
     "@codemirror/lang-markdown": "npm:^6.3.2"
     "@codemirror/lang-python": "npm:^6.1.7"
     "@codemirror/lang-sql": "npm:^6.8.0"
