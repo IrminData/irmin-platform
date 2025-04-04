@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"irmin-api/utils"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -149,6 +151,76 @@ func (bucket *BucketClient) DuplicatePath(ctx context.Context, sourceKey, destKe
 			if err != nil {
 				return fmt.Errorf("error deleting object %s: %v", *item.Key, err)
 			}
+		}
+	}
+
+	return nil
+}
+
+// DownloadFolder downloads all objects under the given folder prefix from the S3 bucket
+// and saves them to the specified local directory. It creates any necessary local directories.
+// - ctx: the context for the request
+// - folderPrefix: the prefix for the folder in the bucket
+// - localDir: the local directory where files will be saved
+// Returns an error if any step fails.
+func (bucket *BucketClient) DownloadFolder(ctx context.Context, folderPrefix, localDir string) error {
+	// List all objects under the given folder prefix
+	objects, err := bucket.ListObjects(ctx, folderPrefix)
+	if err != nil {
+		return fmt.Errorf("error listing objects for download: %v", err)
+	}
+
+	// Loop through each object and download its content
+	for _, object := range objects {
+		if object.Key == nil {
+			// Skip objects with nil key
+			continue
+		}
+
+		// Compute the relative path by removing the folder prefix from the object key
+		relPath := strings.TrimPrefix(*object.Key, folderPrefix)
+		// Construct the local file path
+		localPath := filepath.Join(localDir, relPath)
+
+		// Create local directory structure if it does not exist
+		dir := filepath.Dir(localPath)
+
+		// Check if the target directory exists but is not a directory
+		if stat, err := os.Stat(dir); err == nil && !stat.IsDir() {
+			// Remove the file that conflicts with the directory path
+			if err := os.Remove(dir); err != nil {
+				return fmt.Errorf("error removing conflicting file at %s: %v", dir, err)
+			}
+		}
+
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("error creating directory %s: %v", dir, err)
+		}
+
+		// Retrieve the object from S3
+		obj, err := bucket.Conn().GetObject(ctx, &s3.GetObjectInput{
+			Bucket: &bucket.Bucket,
+			Key:    object.Key,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to get object %s: %v", *object.Key, err)
+		}
+
+		// Open the local file for writing
+		file, err := os.Create(localPath)
+		if err != nil {
+			obj.Body.Close() // ensure the S3 object body is closed before returning
+			return fmt.Errorf("failed to create local file %s: %v", localPath, err)
+		}
+
+		// Copy the object's content to the local file
+		_, err = io.Copy(file, obj.Body)
+		// Close both file and S3 object body immediately after the copy
+		file.Close()
+		obj.Body.Close()
+
+		if err != nil {
+			return fmt.Errorf("error writing to local file %s: %v", localPath, err)
 		}
 	}
 

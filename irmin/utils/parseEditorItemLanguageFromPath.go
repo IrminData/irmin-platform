@@ -31,18 +31,21 @@ func ParseEditorItemLanguageFromPath(inputPath string) *string {
 	}
 
 	// If the extension is not empty, we can determine the language.
-	var language string
+	language := "txt"
 	if ext == ".js" {
 		language = "js"
+	}
+	if ext == ".json" {
+		language = "json"
+	}
+	if ext == ".sql" {
+		language = "sql"
 	}
 	if ext == ".go" {
 		language = "go"
 	}
 	if ext == ".py" {
 		language = "py"
-	}
-	if ext == ".txt" {
-		language = "txt"
 	}
 
 	return &language
