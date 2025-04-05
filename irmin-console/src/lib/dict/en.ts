@@ -1,5 +1,3 @@
-import { write } from 'fs';
-
 /**
  * English dictionary, key-value pairs for static strings in the application
  */
