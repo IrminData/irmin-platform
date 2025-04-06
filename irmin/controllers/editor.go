@@ -494,6 +494,7 @@ func EditorItemContent(c fiber.Ctx) error {
 
 func EditorItemExecute(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
+	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Get the file path from query parameters
@@ -513,7 +514,7 @@ func EditorItemExecute(c fiber.Ctx) error {
 
 	// Execute the file in the compute sandbox
 	ctx := c.Context()
-	computeResult, err := sandbox.ExecuteEditorItem(ctx, path, workspace.Slug)
+	computeResult, err := sandbox.ExecuteEditorItem(ctx, *user, path, workspace.Slug)
 	if err != nil {
 		log.Printf("Error executing editor item in the compute sandbox: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{

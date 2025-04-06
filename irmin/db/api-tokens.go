@@ -10,6 +10,7 @@ type APIToken struct {
 	gorm.Model
 
 	Name      string    `json:"name"`
+	Hidden    bool      `json:"hidden"`
 	Token     string    `json:"token,omitempty" gorm:"uniqueIndex"`
 	ExpiresAt time.Time `json:"expiry"`
 	User      User      `json:"user" gorm:"foreignKey:UserID"`

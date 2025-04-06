@@ -30,7 +30,12 @@ func CredentialsIndex(c fiber.Ctx) error {
 	// Map tokens to API token response, omitting the Token field.
 	var listResponse []irminModels.APIToken
 	for _, token := range tokens {
+		if token.Hidden {
+			continue
+		}
+		// Convert the token ID to a SQID.
 		sqid, _ := utils.EncodeSqids("api_tokens", uint64(token.ID))
+		// Create the API token response object.
 		listResponse = append(listResponse, irminModels.APIToken{
 			ID:        sqid,
 			CreatedAt: token.CreatedAt,
@@ -153,6 +158,12 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	}
 	if apiToken.UserID != user.ID {
 		log.Printf("API token does not belong to user")
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("access_denied")},
+		})
+	}
+	if apiToken.Hidden {
+		log.Printf("API token is hidden")
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})

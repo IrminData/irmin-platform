@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"irmin-api/bucket"
+	"irmin-api/db"
 	"irmin-api/utils"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 )
 
 // installGoSDK retrieves the Go SDK by running "go get" in the destination directory.
@@ -48,8 +50,15 @@ func installGoSDK(destDir string, projectName string) error {
 //		}
 //		fmt.Printf("Execution result:\n%s\n", resultJson)
 //	}
-func ExecuteEditorItem(ctx context.Context, executablePath, workspaceSlug string) (ExecutionResult, error) {
+func ExecuteEditorItem(ctx context.Context, responsibleUser db.User, executablePath, workspaceSlug string) (ExecutionResult, error) {
 	var result ExecutionResult
+
+	// Get the API URL from the environment variable.
+	env, err := utils.LoadEnv()
+	if err != nil {
+		return result, err
+	}
+	apiBaseURL := fmt.Sprintf("%s/api", env.URL)
 
 	// Initialize the bucket client
 	bucket, err := bucket.CreateBucketClient()
@@ -107,8 +116,34 @@ func ExecuteEditorItem(ctx context.Context, executablePath, workspaceSlug string
 		executableType = "python"
 		// TODO: Install the Python SDK in the temp directory, when such SDK exists.
 	}
+
+	// Generate a random 64-character token.
+	token, err := utils.GenerateRandomString()
+	if err != nil {
+		return result, err
+	}
+
+	// Create a temporary token for the user
+	apiToken, err := db.CreateAPIToken(&db.APIToken{
+		Name:      tempDirName,
+		Token:     fmt.Sprintf("cred_%s", token),
+		ExpiresAt: time.Now().Add(60 * time.Minute).UTC(), // 1 hour expiry
+		UserID:    responsibleUser.ID,
+	})
+	if err != nil {
+		return result, err
+	}
+
+	// Revoke the token after the execution
+	defer func() {
+		err := db.DeleteAPIToken(apiToken.ID)
+		if err != nil {
+			log.Printf("error revoking token after sandbox execution: %v\n", err)
+		}
+	}()
+
 	// Execute the code in the sandbox
-	result, err = runInDocker(executablePath, workspaceTempDir, executableType, "api-key", "https://api.irmin.co/api")
+	result, err = runInDocker(executablePath, workspaceTempDir, executableType, apiToken.Token, apiBaseURL)
 	if err != nil {
 		return result, err
 	}
