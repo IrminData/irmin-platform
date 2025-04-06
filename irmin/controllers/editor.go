@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"irmin-api/bucket"
+	sandbox "irmin-api/compute-sandbox"
 	"irmin-api/db"
 	"irmin-api/lib"
 	"irmin-api/locales"
@@ -510,36 +511,29 @@ func EditorItemExecute(c fiber.Ctx) error {
 		})
 	}
 
-	// Create bucket client
-	bucket, err := bucket.CreateBucketClient()
+	// Execute the file in the compute sandbox
+	ctx := c.Context()
+	computeResult, err := sandbox.ExecuteEditorItem(ctx, path, workspace.Slug)
 	if err != nil {
-		log.Printf("failed to create bucket client: %v", err)
+		log.Printf("Error executing editor item in the compute sandbox: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
-	defer bucket.Close()
-
-	// Construct the full S3 key for the file
-	key := "editor/" + workspace.Slug + "/" + path
-
-	// Retrieve the file from S3
-	content, err := bucket.ReadPath(c.Context(), key)
-	if err != nil {
-		log.Printf("Error reading object: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
-		})
+	// Check if the logs contain errors
+	hasErrors := false
+	if strings.Contains(strings.ToLower(computeResult.Logs), "error") {
+		hasErrors = true
 	}
-
-	// Execute the content of the file
-	// TODO: Implement the execution logic here
-	log.Printf("Executing script: %s", *content)
 
 	// Return the results
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: &irminModels.ScriptResult{
-			// TODO: Populate with actual execution results
+			StartedAt:  computeResult.StartTime,
+			FinishedAt: computeResult.EndTime,
+			Duration:   computeResult.EndTime.Sub(computeResult.StartTime),
+			HasErrors:  hasErrors,
+			Logs:       strings.Split(computeResult.Logs, "\n"),
 		},
 	})
 }

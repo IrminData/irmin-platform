@@ -28,20 +28,20 @@ import (
 //		}
 //		fmt.Printf("Execution result:\n%s\n", resultJson)
 //	}
-func ExecuteEditorItem(ctx context.Context, executablePath, workspaceSlug string) (*ExecutionResult, error) {
+func ExecuteEditorItem(ctx context.Context, executablePath, workspaceSlug string) (ExecutionResult, error) {
 	var result ExecutionResult
 
 	// Initialize the bucket client
 	bucket, err := bucket.CreateBucketClient()
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 	defer bucket.Close()
 
 	// Generate a random temporary folder name (assuming GenerateRandomString exists)
 	tempDirName, err := utils.GenerateRandomString()
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
 	// Use the system's temporary directory instead of /sandbox.
@@ -50,14 +50,14 @@ func ExecuteEditorItem(ctx context.Context, executablePath, workspaceSlug string
 	// Create the directory and any necessary parents.
 	err = os.MkdirAll(workspaceTempDir, 0755) // use 0755 for directory permissions
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 	log.Printf("Temporary directory created: %s\n", workspaceTempDir)
 
 	// Download the workspace files into the writable directory.
 	err = bucket.DownloadFolder(ctx, fmt.Sprintf("editor/%s/", workspaceSlug), workspaceTempDir)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
 	// Delete the workspace files after execution
@@ -83,8 +83,8 @@ func ExecuteEditorItem(ctx context.Context, executablePath, workspaceSlug string
 	// Execute the code in the sandbox
 	result, err = runInDocker(executablePath, workspaceTempDir, executableType)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
-	return &result, nil
+	return result, nil
 }
