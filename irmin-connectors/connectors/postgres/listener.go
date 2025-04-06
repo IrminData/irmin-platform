@@ -65,9 +65,9 @@ func StartListener(subscription db.Subscription, ctx context.Context) error {
 	err = dbClient.StartNotificationListener(ctx, "data_change", func(payload string) {
 		// Parse the JSON
 		var evt struct {
-			Operation string      `json:"operation"`
-			Table     string      `json:"table"`
-			ID        interface{} `json:"id"`
+			Operation string `json:"operation"`
+			Table     string `json:"table"`
+			ID        any    `json:"id"`
 		}
 		if err := json.Unmarshal([]byte(payload), &evt); err != nil {
 			fmt.Println("Invalid payload:", err)

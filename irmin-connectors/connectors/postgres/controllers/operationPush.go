@@ -73,7 +73,7 @@ func OperationPush(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Unmarshal the JSON into a slice of maps
-	var records []map[string]interface{}
+	var records []map[string]any
 	if err := json.Unmarshal(fileBytes, &records); err != nil {
 		http.Error(w, "Failed to parse JSON data: "+err.Error(), http.StatusBadRequest)
 		return
@@ -126,7 +126,7 @@ func OperationPush(w http.ResponseWriter, r *http.Request) {
 
 	// Insert each record
 	for _, rec := range records {
-		args := make([]interface{}, len(columns))
+		args := make([]any, len(columns))
 		for i, col := range columns {
 			args[i] = rec[col]
 		}

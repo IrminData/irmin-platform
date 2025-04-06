@@ -162,7 +162,7 @@ func (pc *PostgresClient) GetAvailableDatabases(ctx context.Context) ([]string, 
 
 // Query performs a generic query returning rows.
 // Remember to close the returned pgx.Rows when you're done with them.
-func (pc *PostgresClient) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
+func (pc *PostgresClient) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
 	if pc.db_name == "" {
 		return nil, fmt.Errorf("cannot Query without a specific database - create a client with db first")
 	}
@@ -170,7 +170,7 @@ func (pc *PostgresClient) Query(ctx context.Context, sql string, args ...interfa
 }
 
 // Exec performs a statement (INSERT/UPDATE/DELETE/DDL) that doesn't return rows.
-func (pc *PostgresClient) Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error) {
+func (pc *PostgresClient) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
 	cmdTag, err := pc.pool.Exec(ctx, sql, args...)
 	if pc.db_name == "" {
 		return cmdTag, fmt.Errorf("cannot Exec without a specific database - create a client with db first")
@@ -314,19 +314,19 @@ func (pc *PostgresClient) BeginTransaction(ctx context.Context) (*Tx, error) {
 
 // Exec executes a query that does not return rows (e.g. INSERT/UPDATE/DELETE, DDL statements).
 // This will be run inside the current transaction context.
-func (t *Tx) Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error) {
+func (t *Tx) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
 	return t.pgxTx.Exec(ctx, sql, args...)
 }
 
 // QueryRow returns a single row from the transaction context,
 // a convenience wrapper around pgxTx.QueryRow.
-func (t *Tx) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
+func (t *Tx) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row {
 	return t.pgxTx.QueryRow(ctx, sql, args...)
 }
 
 // Query executes a query that returns rows (e.g. SELECT). The caller is responsible
 // for closing the returned pgx.Rows.
-func (t *Tx) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
+func (t *Tx) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
 	return t.pgxTx.Query(ctx, sql, args...)
 }
 

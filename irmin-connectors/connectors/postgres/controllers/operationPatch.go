@@ -80,7 +80,7 @@ func OperationPatch(w http.ResponseWriter, r *http.Request) {
 		switch op.Op {
 		case "add":
 			// Make sure the value is an object
-			newRow, ok := op.Value.(map[string]interface{})
+			newRow, ok := op.Value.(map[string]any)
 			if !ok {
 				http.Error(w, "Expected patch value to be an object", http.StatusBadRequest)
 				return
@@ -106,7 +106,7 @@ func OperationPatch(w http.ResponseWriter, r *http.Request) {
 			)
 
 			// Prepare the arguments
-			args := make([]interface{}, len(columns))
+			args := make([]any, len(columns))
 			for i, col := range columns {
 				args[i] = newRow[col]
 			}
@@ -141,7 +141,7 @@ func OperationPatch(w http.ResponseWriter, r *http.Request) {
 				// Otherwise, we're doing a row-level replace
 
 				// Make sure the value is an object
-				updatedRow, ok := op.Value.(map[string]interface{})
+				updatedRow, ok := op.Value.(map[string]any)
 				if !ok {
 					http.Error(w, "Expected patch value to be an object", http.StatusBadRequest)
 					return
@@ -149,7 +149,7 @@ func OperationPatch(w http.ResponseWriter, r *http.Request) {
 
 				// Build an UPDATE statement for every column in the JSON
 				setClauses := make([]string, 0, len(updatedRow))
-				args := make([]interface{}, 0, len(updatedRow)+1)
+				args := make([]any, 0, len(updatedRow)+1)
 
 				i := 1
 				for col, val := range updatedRow {
@@ -199,7 +199,7 @@ func OperationPatch(w http.ResponseWriter, r *http.Request) {
 					`SELECT "%s" FROM "%s" WHERE id = $1`,
 					fromColumnName, fromTable,
 				)
-				var columnValue interface{}
+				var columnValue any
 				if err := tx.QueryRow(ctx, selectSQL, fromRowID).Scan(&columnValue); err != nil {
 					http.Error(w, "Failed to retrieve source column for move: "+err.Error(), http.StatusInternalServerError)
 					return
@@ -251,7 +251,7 @@ func OperationPatch(w http.ResponseWriter, r *http.Request) {
 				}
 
 				// Build a map[columnName -> value]
-				rowData := make(map[string]interface{}, len(fieldDescriptions))
+				rowData := make(map[string]any, len(fieldDescriptions))
 				for i, fd := range fieldDescriptions {
 					colName := string(fd.Name)
 					rowData[colName] = values[i]
@@ -269,7 +269,7 @@ func OperationPatch(w http.ResponseWriter, r *http.Request) {
 				rowData["id"] = rowIdentifier // Optionally override or reuse the original.
 				columns := make([]string, 0, len(rowData))
 				placeholders := make([]string, 0, len(rowData))
-				args := make([]interface{}, 0, len(rowData))
+				args := make([]any, 0, len(rowData))
 
 				i := 1
 				for col, val := range rowData {
@@ -316,7 +316,7 @@ func OperationPatch(w http.ResponseWriter, r *http.Request) {
 					`SELECT "%s" FROM "%s" WHERE id = $1`,
 					fromColumnName, fromTable,
 				)
-				var columnValue interface{}
+				var columnValue any
 				if err := tx.QueryRow(ctx, selectSQL, fromRowID).Scan(&columnValue); err != nil {
 					http.Error(w, "Failed to retrieve source column for copy: "+err.Error(), http.StatusInternalServerError)
 					return
@@ -356,7 +356,7 @@ func OperationPatch(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				rowData := make(map[string]interface{}, len(fieldDescriptions))
+				rowData := make(map[string]any, len(fieldDescriptions))
 				for i, fd := range fieldDescriptions {
 					colName := string(fd.Name)
 					rowData[colName] = values[i]
@@ -366,7 +366,7 @@ func OperationPatch(w http.ResponseWriter, r *http.Request) {
 				rowData["id"] = rowIdentifier // Reuse or set a new ID
 				columns := make([]string, 0, len(rowData))
 				placeholders := make([]string, 0, len(rowData))
-				args := make([]interface{}, 0, len(rowData))
+				args := make([]any, 0, len(rowData))
 
 				i := 1
 				for col, val := range rowData {

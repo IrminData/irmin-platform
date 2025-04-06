@@ -36,7 +36,7 @@ func InitialiseDB(path string) error {
 }
 
 // RunRawQuery can be used to execute a raw SQL query against the database.
-func RunRawQuery(sqlQuery string, args ...interface{}) error {
+func RunRawQuery(sqlQuery string, args ...any) error {
 	if err := DB.Exec(sqlQuery, args...).Error; err != nil {
 		return fmt.Errorf("failed to execute raw query: %w", err)
 	}

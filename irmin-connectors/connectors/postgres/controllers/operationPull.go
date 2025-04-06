@@ -113,7 +113,7 @@ func writeTableAsPart(ctx context.Context, mw *multipart.Writer, dbClient *postg
 	defer rows.Close()
 
 	// Collect the rows into a struct
-	var results []map[string]interface{}
+	var results []map[string]any
 
 	// Get column names
 	fieldDescriptions := rows.FieldDescriptions()
@@ -129,7 +129,7 @@ func writeTableAsPart(ctx context.Context, mw *multipart.Writer, dbClient *postg
 			return fmt.Errorf("failed to retrieve values from table '%s': %w", tableName, err)
 		}
 
-		record := make(map[string]interface{})
+		record := make(map[string]any)
 		for i, col := range columns {
 			record[col] = values[i]
 		}
@@ -167,7 +167,7 @@ func fetchSingleTable(ctx context.Context, w http.ResponseWriter, dbClient *post
 	defer rows.Close()
 
 	// Collect the rows into a struct
-	var results []map[string]interface{}
+	var results []map[string]any
 
 	// Get column names
 	fieldDescriptions := rows.FieldDescriptions()
@@ -184,7 +184,7 @@ func fetchSingleTable(ctx context.Context, w http.ResponseWriter, dbClient *post
 			return
 		}
 
-		record := make(map[string]interface{})
+		record := make(map[string]any)
 		for i, col := range columns {
 			record[col] = values[i]
 		}
@@ -228,7 +228,7 @@ func fetchSingleRow(ctx context.Context, w http.ResponseWriter, dbClient *postgr
 	}
 
 	// We only expect one row (or none). Build a map to hold the data.
-	var result map[string]interface{}
+	var result map[string]any
 
 	if rows.Next() {
 		values, err := rows.Values()
@@ -237,7 +237,7 @@ func fetchSingleRow(ctx context.Context, w http.ResponseWriter, dbClient *postgr
 			return
 		}
 
-		record := make(map[string]interface{})
+		record := make(map[string]any)
 		for i, col := range columns {
 			record[col] = values[i]
 		}
