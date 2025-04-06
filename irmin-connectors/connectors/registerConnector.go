@@ -13,7 +13,6 @@ import (
 func registerConnector(apiBaseURL, apiToken, baseUrl, connectorName, connectorSlug string) (*irminModels.Connector, error) {
 	// Initialise the client and service
 	apiClient := irminCore.NewClient(apiBaseURL, apiToken, "en")
-	connectorService := irminCore.NewConnectorService(apiClient)
 
 	// Generate a random system token to be used by the Irmin API to access the connector.
 	token, err := utils.GenerateToken(32)
@@ -37,7 +36,7 @@ func registerConnector(apiBaseURL, apiToken, baseUrl, connectorName, connectorSl
 	// Check if the connector is already registered
 	if connectorRegistration != nil {
 		// If the connector is already registered, request the update of the connector and return.
-		newConnector, res, err := connectorService.UpdateRegisteredConnector(connectorRegistration.IrminID, connectorURL, token)
+		newConnector, res, err := apiClient.UpdateRegisteredConnector(connectorRegistration.IrminID, connectorURL, token)
 		if err != nil {
 			return nil, fmt.Errorf("error updating connector: %v", err)
 		}
@@ -67,7 +66,7 @@ func registerConnector(apiBaseURL, apiToken, baseUrl, connectorName, connectorSl
 	}
 
 	// Send a request to register the connector
-	newConnector, res, err := connectorService.RegisterNewConnector(connectorURL, token)
+	newConnector, res, err := apiClient.RegisterNewConnector(connectorURL, token)
 	if err != nil {
 		return nil, fmt.Errorf("error registering connector: %v", err)
 	}
