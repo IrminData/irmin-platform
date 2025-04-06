@@ -20,35 +20,17 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
-	// Create a new workflow run.
-	run := &db.WorkflowRun{
-		Status:            db.WorkflowStatusPending,
-		TriggeredByUserID: &user.ID,
-		WorkflowID:        workflow.ID,
-	}
-
-	// Save the workflow run to the database.
-	_, err := db.CreateWorkflowRun(run)
+	// Execute the workflow.
+	run, err := lib.ExecuteWorkflow(*workflow, user, nil)
 	if err != nil {
-		log.Printf("error creating workflow run: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
-			Message: dict.T("error_occurred"),
-		})
-	}
-
-	// TODO: Execute the workflow run.
-
-	// Fetch the newly created workflow run.
-	createdRun, err := db.GetWorkflowRunByID(run.ID)
-	if err != nil {
-		log.Printf("error fetching created workflow run: %v", err)
+		log.Printf("error executing workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Message: dict.T("error_occurred"),
 		})
 	}
 
 	// Format the workflow run for the response.
-	formattedRun, err := formatter.FormatWorkflowRunResponse(createdRun)
+	formattedRun, err := formatter.FormatWorkflowRunResponse(run)
 	if err != nil {
 		log.Printf("error formatting workflow run: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{

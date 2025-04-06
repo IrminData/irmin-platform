@@ -46,7 +46,10 @@ func GetWorkflowRunByID(id uint) (*WorkflowRun, error) {
 }
 
 func CreateWorkflowRun(run *WorkflowRun) (*WorkflowRun, error) {
-	if err := DB.Preload("TriggeredBy").Preload("TriggeredByUser").Preload("Workflow").Create(&run).Error; err != nil {
+	if err := DB.Create(&run).Error; err != nil {
+		return nil, err
+	}
+	if err := DB.Preload("TriggeredBy").Preload("TriggeredByUser").Preload("Workflow").First(&run, run.ID).Error; err != nil {
 		return nil, err
 	}
 	return run, nil
