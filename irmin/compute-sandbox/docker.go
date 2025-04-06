@@ -24,7 +24,7 @@ type ExecutionResult struct {
 // The tmpDir parameter is the path to the temporary directory where the executable code is located.
 // The executable parameter is the name of the executable file to run inside the container.
 // The function returns an ExecutionResult struct containing the container logs and resource usage metrics.
-func runInDocker(executable, tmpDir, executableType string) (ExecutionResult, error) {
+func runInDocker(executable, tmpDir, executableType, apiKey, apiURL string) (ExecutionResult, error) {
 	var result ExecutionResult
 
 	// Record the start time.
@@ -36,17 +36,23 @@ func runInDocker(executable, tmpDir, executableType string) (ExecutionResult, er
 		runCmd = exec.Command("docker", "run", "-d",
 			"-v", fmt.Sprintf("%s:/usr/src/app", tmpDir),
 			"-w", "/usr/src/app",
-			"python:latest", "python", executable)
+			"python:latest", "python", executable,
+			"--api-key", apiKey,
+			"--api-url", apiURL)
 	} else if executableType == "go" {
 		runCmd = exec.Command("docker", "run", "-d",
 			"-v", fmt.Sprintf("%s:/usr/src/app", tmpDir),
 			"-w", "/usr/src/app",
-			"golang:latest", "go", "run", executable)
+			"golang:latest", "go", "run", executable,
+			"--api-key", apiKey,
+			"--api-url", apiURL)
 	} else if executableType == "node" {
 		runCmd = exec.Command("docker", "run", "-d",
 			"-v", fmt.Sprintf("%s:/usr/src/app", tmpDir),
 			"-w", "/usr/src/app",
-			"node:latest", "node", executable)
+			"node:latest", "node", executable,
+			"--api-key", apiKey,
+			"--api-url", apiURL)
 	} else {
 		return result, fmt.Errorf("unsupported executable type: %s", executableType)
 	}
