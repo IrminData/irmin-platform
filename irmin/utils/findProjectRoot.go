@@ -7,9 +7,17 @@ import (
 	"runtime"
 )
 
-// FindProjectRoot traverses upwards from the current file's directory until it finds a "go.mod" file.
+// FindProjectRoot traverses upwards from the current directory until it finds a "go.mod" file.
+// If a ".env" file is found in the current working directory, it returns that directory.
 func FindProjectRoot() (string, error) {
-	// Determine the directory of this file using runtime.Caller
+	// First, check if the current working directory has a .env file.
+	if cwd, err := os.Getwd(); err == nil {
+		if _, err := os.Stat(filepath.Join(cwd, ".env")); err == nil {
+			return cwd, nil
+		}
+	}
+
+	// Otherwise, use runtime.Caller to locate the source file and search upward.
 	_, currentFile, _, ok := runtime.Caller(0)
 	if !ok {
 		return "", fmt.Errorf("failed to get caller info")
