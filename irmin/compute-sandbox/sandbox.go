@@ -129,6 +129,7 @@ func ExecuteEditorItem(ctx context.Context, responsibleUser db.User, executableP
 		Token:     fmt.Sprintf("cred_%s", token),
 		ExpiresAt: time.Now().Add(60 * time.Minute).UTC(), // 1 hour expiry
 		UserID:    responsibleUser.ID,
+		Hidden:    true,
 	})
 	if err != nil {
 		return result, err

@@ -92,6 +92,7 @@ func CredentialsStore(c fiber.Ctx) error {
 		Token:     fmt.Sprintf("cred_%s", token),
 		ExpiresAt: expiresAt,
 		UserID:    user.ID,
+		Hidden:    false,
 	})
 	if err != nil {
 		log.Printf("Error creating API token: %v", err)

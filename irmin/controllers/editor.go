@@ -512,6 +512,14 @@ func EditorItemExecute(c fiber.Ctx) error {
 		})
 	}
 
+	// Log the event
+	lib.CreateAuditLogEventAsync(&db.LogEvent{
+		Type:        db.LogEventTypeCreate,
+		Description: fmt.Sprintf("Editor item '%s' executed", path),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
+	})
+
 	// Execute the file in the compute sandbox
 	ctx := c.Context()
 	computeResult, err := sandbox.ExecuteEditorItem(ctx, *user, path, workspace.Slug)
@@ -527,14 +535,21 @@ func EditorItemExecute(c fiber.Ctx) error {
 		hasErrors = true
 	}
 
+	// Parse the structured result files if any
+	parsedResults, err := lib.ParseStructuredFile(computeResult.ResultsData)
+	if err != nil {
+		log.Printf("Error parsing structured files: %v", err)
+	}
+
 	// Return the results
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: &irminModels.ScriptResult{
-			StartedAt:  computeResult.StartTime,
-			FinishedAt: computeResult.EndTime,
-			Duration:   computeResult.EndTime.Sub(computeResult.StartTime),
-			HasErrors:  hasErrors,
-			Logs:       strings.Split(computeResult.Logs, "\n"),
+			StructuredResults: parsedResults,
+			StartedAt:         computeResult.StartTime,
+			FinishedAt:        computeResult.EndTime,
+			Duration:          computeResult.EndTime.Sub(computeResult.StartTime),
+			HasErrors:         hasErrors,
+			Logs:              strings.Split(computeResult.Logs, "\n"),
 		},
 	})
 }

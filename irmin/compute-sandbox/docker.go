@@ -3,6 +3,7 @@ package sandbox
 import (
 	"fmt" // Make sure utils.ParseBytes converts e.g. "9.602MiB" to bytes.
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -14,6 +15,7 @@ type ExecutionResult struct {
 	ContainerID          string               `json:"container_id"`           // Container ID (short form)
 	Logs                 string               `json:"logs"`                   // Output logs from container execution
 	ResourceUsageMetrics ResourceUsageMetrics `json:"resource_usage_metrics"` // Averace metric values, sampled every 10 milliseconds of execution
+	ResultsData          map[string][]byte    `json:"results_data"`
 }
 
 // RunInDocker executes the provided executable code using a Docker container,
@@ -82,6 +84,28 @@ func runInDocker(executable, tmpDir, executableType, apiKey, apiURL string) (Exe
 		return result, err
 	}
 	result.Logs = string(logsOutput)
+
+	// Parse all result files from logs.
+	resultFiles := parseResultFiles(string(logsOutput))
+
+	// Create a map to store multiple result files.
+	resultsData := make(map[string][]byte)
+
+	// Process each result file.
+	// The file is read from the container's file system rather than the local file system.
+	for _, fileName := range resultFiles {
+		// Construct the container's path to the file, using the working directory from the docker run command.
+		containerFilePath := filepath.Join("/usr/src/app", fileName)
+		data, err := readResultFileFromContainer(containerID, containerFilePath)
+		if err == nil {
+			resultsData[fileName] = data
+		}
+	}
+
+	// Only set ResultsData if we have results.
+	if len(resultsData) > 0 {
+		result.ResultsData = resultsData
+	}
 
 	return result, nil
 }

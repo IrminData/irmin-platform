@@ -1,4 +1,4 @@
-package main // change from package sandbox to package main
+package main
 
 import (
 	"encoding/json"
@@ -8,7 +8,6 @@ import (
 	irminUtils "github.com/IrminData/irmin-sdk-go/utils"
 )
 
-// main is the entry point of the application.
 func main() {
 	// Parse command line flags for API key and URL.
 	apiURL, apiKey, err := irminUtils.GetAPIFromFlags()
@@ -50,9 +49,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error sending compute result: %v", err)
 	}
-
-	// Print the log events.
-	println(string(logEventsJSON))
 
 	// Print that everything is done.
 	println("Done!")
