@@ -20,20 +20,17 @@ import { ScriptResult } from '@/types/core/EditorItems';
  * Used to display the results of a script execution in the editor.
  *
  * @param props - The props to pass to the component
- * @param props.title - Title of the query results
  * @param props.result - The result data to display
  * @param props.loading - Whether to show a loading skeleton
  * @param props.onSave - Function to save the data
  * @param props.onRun - Function to run the data
  */
 const ScriptResults = ({
-  title,
   result,
   loading,
   onSave,
   onRun,
 }: {
-  title: string;
   result: ScriptResult | null;
   loading?: boolean;
   onSave?: () => Promise<void>;
@@ -120,22 +117,27 @@ const ScriptResults = ({
           )}
         </div>
       </div>
-      {activeTab === 'data' && result?.data && (
-        <TableViewer
-          title={title}
-          data={result.data}
-          metadata={{
-            rowsReturned: result.data.length,
-            timeTaken: result.duration,
-          }}
-          loading={showLoadingOnData}
-        />
-      )}
-      {activeTab === 'data' && !result?.data && (
-        <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
-          {dict.common.noResults}
-        </div>
-      )}
+      {activeTab === 'data' &&
+        result?.structured_results &&
+        Object.keys(result.structured_results).length > 0 && (
+          <>
+            {Object.entries(result.structured_results).map(([key, value]) => {
+              const title = key.split('/').pop() || key;
+              return (
+                <TableViewer
+                  key={key}
+                  title={title}
+                  data={value}
+                  metadata={{
+                    rowsReturned: value.length,
+                    timeTaken: result.duration,
+                  }}
+                  loading={showLoadingOnData}
+                />
+              );
+            })}
+          </>
+        )}
       {activeTab === 'logs' && (
         <>
           {logs && logs.length > 0 ? (

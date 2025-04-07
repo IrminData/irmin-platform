@@ -28,7 +28,6 @@ export default function EditorSection() {
       <EditorWithTabs />
       {openFileTabs.length > 0 && (
         <ScriptResults
-          title={dict.query.results}
           result={scriptExecutionResult}
           loading={scriptExecutionInProgress}
           onRun={async () => {

@@ -84,24 +84,49 @@ export const editorItems: () => EditorItem[] = () => [
   },
 ];
 
-const exampleScriptResult = {
-  columns: ['store_id', 'city', 'country', 'annual_revenue', 'annual_cost'],
-  data: [
-    {
-      store_id: 'store_1',
-      city: 'New York',
-      country: 'USA',
-      annual_revenue: 500000,
-      annual_cost: 600000,
-    },
-    {
-      store_id: 'store_2',
-      city: 'Los Angeles',
-      country: 'USA',
-      annual_revenue: 300000,
-      annual_cost: 400000,
-    },
-  ],
+const exampleScriptResult: ScriptResult = {
+  structured_results: {
+    'cities.json': [
+      {
+        store_id: 'store_1',
+        city: 'New York',
+        country: 'USA',
+        annual_revenue: 500000,
+        annual_cost: 600000,
+      },
+      {
+        store_id: 'store_2',
+        city: 'Los Angeles',
+        country: 'USA',
+        annual_revenue: 300000,
+        annual_cost: 400000,
+      },
+    ],
+    'users.json': [
+      {
+        user_id: 'user_1',
+        name: 'John Doe',
+      },
+      {
+        user_id: 'user_2',
+        name: 'Jane Smith',
+      },
+    ],
+    'orders.json': [
+      {
+        order_id: 'order_1',
+        user_id: 'user_1',
+        store_id: 'store_1',
+        amount: 100,
+      },
+      {
+        order_id: 'order_2',
+        user_id: 'user_2',
+        store_id: 'store_2',
+        amount: 200,
+      },
+    ],
+  },
   has_errors: false,
   duration: 120,
   started_at: '2023-10-01T12:00:00Z',
@@ -109,9 +134,7 @@ const exampleScriptResult = {
   logs: ['Query executed successfully', 'Rows returned: 2'],
 };
 
-const exampleScriptResultWithErrors = {
-  columns: ['store_id', 'city', 'country', 'annual_revenue', 'annual_cost'],
-  data: [],
+const exampleScriptResultWithErrors: ScriptResult = {
   has_errors: true,
   duration: 150,
   started_at: '2023-10-01T12:00:00Z',

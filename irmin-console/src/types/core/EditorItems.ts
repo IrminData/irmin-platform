@@ -67,10 +67,8 @@ export interface EditorItem {
  * This can include the output of a script, errors, and other metadata.
  */
 export interface ScriptResult {
-  /** Columns of the result */
-  columns?: string[];
-  /** Data of the result */
-  data?: Record<string, JSONValue>[];
+  /** Parsed structured result files */
+  structured_results?: Record<string, Array<Record<string, JSONValue>>>;
   /** Indicates if there were errors */
   has_errors?: boolean;
   /** Duration of the script execution */
