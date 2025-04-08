@@ -15,7 +15,7 @@ type ExecutionResult struct {
 	ContainerID          string               `json:"container_id"`           // Container ID (short form)
 	Logs                 string               `json:"logs"`                   // Output logs from container execution
 	ResourceUsageMetrics ResourceUsageMetrics `json:"resource_usage_metrics"` // Averace metric values, sampled every 10 milliseconds of execution
-	ResultsData          map[string][]byte    `json:"results_data"`
+	ResultFiles          map[string][]byte    `json:"result_files"`           // Map of result files and their contents
 }
 
 // RunInDocker executes the provided executable code using a Docker container,
@@ -89,7 +89,7 @@ func runInDocker(executable, tmpDir, executableType, apiKey, apiURL string) (Exe
 	resultFiles := parseResultFiles(string(logsOutput))
 
 	// Create a map to store multiple result files.
-	resultsData := make(map[string][]byte)
+	resultFileData := make(map[string][]byte)
 
 	// Process each result file.
 	// The file is read from the container's file system rather than the local file system.
@@ -98,13 +98,13 @@ func runInDocker(executable, tmpDir, executableType, apiKey, apiURL string) (Exe
 		containerFilePath := filepath.Join("/usr/src/app", fileName)
 		data, err := readResultFileFromContainer(containerID, containerFilePath)
 		if err == nil {
-			resultsData[fileName] = data
+			resultFileData[fileName] = data
 		}
 	}
 
-	// Only set ResultsData if we have results.
-	if len(resultsData) > 0 {
-		result.ResultsData = resultsData
+	// Only set ResultFiles if we have results.
+	if len(resultFileData) > 0 {
+		result.ResultFiles = resultFileData
 	}
 
 	return result, nil

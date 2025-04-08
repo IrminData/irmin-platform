@@ -2,9 +2,9 @@ package engine
 
 import (
 	"fmt"
+	"io"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
-	"mime/multipart"
 	"strings"
 	"time"
 
@@ -132,7 +132,7 @@ func (c *Client) GetObjectContent(workspace, repository, path, ref string) (*irm
 	return irminObject, content, nil
 }
 
-func (c *Client) UploadObject(workspace, repository, path, ref string, file multipart.File) (*irminModels.Object, error) {
+func (c *Client) UploadObject(workspace, repository, path, ref string, file io.Reader) (*irminModels.Object, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 

@@ -20,8 +20,11 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
+	// Get the request context.
+	ctx := c.Context()
+
 	// Execute the workflow.
-	run, err := lib.ExecuteWorkflow(*workflow, user, nil)
+	run, err := lib.ExecuteWorkflow(ctx, *workflow, user, nil)
 	if err != nil {
 		log.Printf("error executing workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{

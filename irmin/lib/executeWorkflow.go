@@ -1,16 +1,18 @@
 package lib
 
 import (
+	"context"
 	"fmt"
 	"irmin-api/db"
+	"log"
 	"time"
 )
 
-func ExecuteWorkflow(workflow db.Workflow, user *db.User, trigger *db.WorkflowTrigger) (*db.WorkflowRun, error) {
+func ExecuteWorkflow(ctx context.Context, workflow db.Workflow, user *db.User, trigger *db.WorkflowTrigger) (*db.WorkflowRun, error) {
 	// Save the workflow run to the database.
 	startedAt := time.Now()
 	run, err := db.CreateWorkflowRun(&db.WorkflowRun{
-		Status:            db.WorkflowStatusPending,
+		Status:            db.WorkflowStatusRunning,
 		StartedAt:         &startedAt,
 		WorkflowID:        workflow.ID,
 		TriggeredByUserID: &user.ID,
@@ -27,6 +29,13 @@ func ExecuteWorkflow(workflow db.Workflow, user *db.User, trigger *db.WorkflowTr
 	// Process further based on the workflow type.
 	switch workflow.Type {
 	case db.WorkflowableTypeAction:
+		// Execute the action workflowable.
+		executionLogs, err := ExecuteActionWorkflowable(ctx, &workflow, workflow.Action, run)
+		if err != nil {
+			log.Printf("Failed to execute action workflowable: %v", err)
+			hasError = true
+		}
+		logs = append(logs, executionLogs...)
 	case db.WorkflowableTypeExport:
 	case db.WorkflowableTypeImport:
 	case db.WorkflowableTypePipeline:

@@ -536,7 +536,7 @@ func EditorItemExecute(c fiber.Ctx) error {
 	}
 
 	// Parse the structured result files if any
-	parsedResults, err := lib.ParseStructuredFile(computeResult.ResultsData)
+	parsedResults, err := lib.ParseStructuredFile(computeResult.ResultFiles)
 	if err != nil {
 		log.Printf("Error parsing structured files: %v", err)
 	}
