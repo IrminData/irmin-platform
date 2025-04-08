@@ -77,9 +77,11 @@ func ExecutePipelineWorkflowable(ctx context.Context, workflow *db.Workflow, wor
 				// Loop through the results and save them to the connection
 				for fileName, fileContent := range previousStageResults {
 					// Construct the path to save the file to
-					uploadObjectToPath := strings.Trim(*stage.ConnectionWritePath, "/") + "/" + fileName
+					filePath := strings.Trim(*stage.ConnectionWritePath, "/")
+					filePath = strings.Trim(filePath, fileName)
+					filePath = fmt.Sprintf("%s/%s", filePath, fileName)
 					// Push the file to the connector
-					_, err := connectorOpClient.OperationPush(uploadObjectToPath, irminConnectorClient.FormFile{
+					_, err := connectorOpClient.OperationPush(filePath, irminConnectorClient.FormFile{
 						Reader: bytes.NewBuffer(fileContent),
 					})
 					if err != nil {

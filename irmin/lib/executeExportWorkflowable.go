@@ -2,8 +2,10 @@ package lib
 
 import (
 	"context"
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
+	"log"
 )
 
 // ExecuteExportWorkflowable executes the export workflow for a given workflowable.
@@ -12,10 +14,11 @@ import (
 func ExecuteExportWorkflowable(ctx context.Context, workflow *db.Workflow, workflowable *db.ExportWorkflowable, run *db.WorkflowRun) ([]string, error) {
 	var logs []string
 
-	// Get the connector information
-	connector, err := db.GetConnector(workflowable.Connection.ConnectorID)
+	// Fetch the connection and it's connector information
+	connection, err := db.GetConnectionByID(workflowable.ConnectionID)
 	if err != nil {
-		logs = append(logs, "Failed to get connector information")
+		log.Printf("Error getting connection: %v", err)
+		logs = append(logs, fmt.Sprintf("Error getting connection: %v", err))
 		return logs, err
 	}
 
@@ -23,7 +26,7 @@ func ExecuteExportWorkflowable(ctx context.Context, workflow *db.Workflow, workf
 	DataEngine := engine.NewClient("en")
 
 	// Export data from the connector to the requested repository
-	err = DataEngine.DataExport(workflow.Workspace.Slug, connector.SystemToken, connector.APIBaseURL, workflowable.Repository.Slug, workflowable.Branch, workflowable.Path)
+	err = DataEngine.DataExport(ctx, connection, workflow.Workspace.Slug, workflowable.Repository.Slug, workflowable.Branch, workflowable.Path)
 	if err != nil {
 		logs = append(logs, "Failed to export data from the connector")
 		return logs, err
