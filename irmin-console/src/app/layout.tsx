@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Big_Shoulders_Display, Inter } from 'next/font/google';
 
 import { ClerkProvider } from '@clerk/nextjs';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import '@/styles/main.css';
 import '@/styles/theme.css';
@@ -61,6 +62,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
             </PopupProvider>
           </LocaleProvider>
         </ClerkProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
