@@ -1,5 +1,3 @@
-import { notFound } from 'next/navigation';
-
 import { getConnections } from '@/lib/actions/connections';
 import { getConnectors } from '@/lib/actions/connectors';
 import { getToken } from '@/lib/getToken';

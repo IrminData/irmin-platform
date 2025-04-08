@@ -1,5 +1,3 @@
-import { notFound } from 'next/navigation';
-
 import { getConnections } from '@/lib/actions/connections';
 import { getRepositories } from '@/lib/actions/repositories';
 import { getWorkflows } from '@/lib/actions/workflows';

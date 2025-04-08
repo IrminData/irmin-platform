@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 
-import { notFound } from 'next/navigation';
-
 import { getDict } from '@/lib/actions/dict';
 import { getWorkspaces } from '@/lib/actions/workspaces';
 import { Locale } from '@/lib/dict';

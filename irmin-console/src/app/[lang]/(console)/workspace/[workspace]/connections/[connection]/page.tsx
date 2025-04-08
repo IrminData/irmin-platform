@@ -1,5 +1,3 @@
-import { notFound } from 'next/navigation';
-
 import { getWorkflows } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
 

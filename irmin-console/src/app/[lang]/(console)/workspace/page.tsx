@@ -1,7 +1,5 @@
 import { Metadata } from 'next';
 
-import { notFound } from 'next/navigation';
-
 import { getWorkspaces } from '@/lib/actions/workspaces';
 import { getToken } from '@/lib/getToken';
 

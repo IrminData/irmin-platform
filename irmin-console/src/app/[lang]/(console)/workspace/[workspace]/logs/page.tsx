@@ -1,5 +1,3 @@
-import { notFound } from 'next/navigation';
-
 import { getLogs } from '@/lib/actions/logs';
 import { getToken } from '@/lib/getToken';
 import { initDict } from '@/lib/initDict';
