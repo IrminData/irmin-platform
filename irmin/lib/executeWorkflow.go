@@ -37,6 +37,13 @@ func ExecuteWorkflow(ctx context.Context, workflow db.Workflow, user *db.User, t
 		}
 		logs = append(logs, executionLogs...)
 	case db.WorkflowableTypeExport:
+		// Execute the export workflowable.
+		executionLogs, err := ExecuteExportWorkflowable(ctx, &workflow, workflow.Export, run)
+		if err != nil {
+			log.Printf("Failed to execute export workflowable: %v", err)
+			hasError = true
+		}
+		logs = append(logs, executionLogs...)
 	case db.WorkflowableTypeImport:
 		// Execute the import workflowable.
 		executionLogs, err := ExecuteImportWorkflowable(ctx, &workflow, workflow.Import, run)
