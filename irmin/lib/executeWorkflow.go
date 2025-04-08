@@ -53,6 +53,13 @@ func ExecuteWorkflow(ctx context.Context, workflow db.Workflow, user *db.User, t
 		}
 		logs = append(logs, executionLogs...)
 	case db.WorkflowableTypePipeline:
+		// Execute the pipeline workflowable.
+		executionLogs, err := ExecutePipelineWorkflowable(ctx, &workflow, workflow.Pipeline, run)
+		if err != nil {
+			log.Printf("Failed to execute pipeline workflowable: %v", err)
+			hasError = true
+		}
+		logs = append(logs, executionLogs...)
 	default:
 		logs = append(logs, fmt.Sprintf("Unknown workflow type: %s", workflow.Type))
 		hasError = true
