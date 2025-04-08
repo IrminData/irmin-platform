@@ -56,8 +56,7 @@ export default async function ConsoleWorkspaceLayout(props: {
     getWorkspaceInvites({ workspace: currentWorkspace, token }),
   ]);
 
-  if (!workspace.data || !roles.data || !users.data || !invites.data)
-    return notFound();
+  if (!workspace.data || !roles.data) return notFound();
 
   return (
     <WorkspaceProvider
@@ -67,8 +66,8 @@ export default async function ConsoleWorkspaceLayout(props: {
       <UsersProvider
         currentWorkspace={currentWorkspace}
         roles={roles.data}
-        currentUsers={users.data}
-        currentInvites={invites.data}
+        currentUsers={users.data ?? []}
+        currentInvites={invites.data ?? []}
       >
         {children}
       </UsersProvider>

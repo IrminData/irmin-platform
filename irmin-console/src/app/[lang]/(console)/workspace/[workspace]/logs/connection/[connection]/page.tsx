@@ -48,7 +48,7 @@ export default async function ConnectionLogsPage(props: {
 
   const token = await getToken();
   const [logs, connection, { dict }] = await Promise.all([
-    getLogs({ workspace: currentWorkspace, token }),
+    getLogs({ workspace: currentWorkspace, token }), // TODO: Get logs specific to the connection
     getConnection({
       workspace: currentWorkspace,
       connectionID: params.connection,
@@ -57,12 +57,12 @@ export default async function ConnectionLogsPage(props: {
     initDict(),
   ]);
 
-  if (!logs.data || !connection.data) return notFound();
+  if (!connection.data) return notFound();
 
   return (
     <LogsSection
       connection={connection.data}
-      logEvents={logs.data}
+      logEvents={logs.data ?? []}
       title={dict.logs.connectionLogs}
     />
   );

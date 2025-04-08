@@ -37,12 +37,8 @@ export default async function ConsoleLayout(props: {
     getDict(),
   ]);
 
-  if (!workspaces || !workspaces.data) {
-    return notFound();
-  }
-
   return (
-    <ConsoleWrapper workspaces={workspaces.data} dict={dict}>
+    <ConsoleWrapper workspaces={workspaces.data ?? []} dict={dict}>
       {children}
     </ConsoleWrapper>
   );

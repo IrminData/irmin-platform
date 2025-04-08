@@ -20,7 +20,7 @@ export default async function WorkflowLogsPage(props: {
 
   const token = await getToken();
   const [logs, workflow, { dict }] = await Promise.all([
-    getLogs({ workspace: currentWorkspace, token }),
+    getLogs({ workspace: currentWorkspace, token }), // TODO: Get logs specific to the workflow
     getWorkflow({
       workspace: currentWorkspace,
       workflowID: params.workflow,
@@ -29,11 +29,11 @@ export default async function WorkflowLogsPage(props: {
     initDict(),
   ]);
 
-  if (!logs.data || !workflow.data) return notFound();
+  if (!workflow.data) return notFound();
   return (
     <LogsSection
       workflow={workflow.data}
-      logEvents={logs.data}
+      logEvents={logs.data ?? []}
       title={dict.logs.workflowLogs}
     />
   );

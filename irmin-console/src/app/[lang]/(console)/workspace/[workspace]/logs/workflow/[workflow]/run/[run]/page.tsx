@@ -9,9 +9,9 @@ import WorkflowRunLogsSection from '@/components/logs/WorkflowRunLogsSection';
 import { WorkflowRunLogsLayoutParams } from './layout';
 
 /**
- * Workflow Run Logs page - showing logs for a specific workflow run.
+ * Workflow Run page - showing logs for a specific workflow run.
  */
-export default async function WorkflowRunLogsPage(props: {
+export default async function WorkflowRunPage(props: {
   params: Promise<WorkflowRunLogsLayoutParams>;
 }) {
   const params = await props.params;

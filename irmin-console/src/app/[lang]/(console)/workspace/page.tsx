@@ -24,8 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 const ManageWorkspacesPage = async () => {
   const token = await getToken();
   const workspaces = await getWorkspaces({ token });
-  if (!workspaces || !workspaces.data) return notFound();
-  return <ManageWorkspacesSection initialWorkspaces={workspaces.data} />;
+  return <ManageWorkspacesSection initialWorkspaces={workspaces.data ?? []} />;
 };
 
 export default ManageWorkspacesPage;

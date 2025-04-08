@@ -16,9 +16,6 @@ export default async function ConnectionOverviewPage(props: {
   const params = await props.params;
   const currentWorkspace = params.workspace;
   const token = await getToken();
-  const workflows = await getWorkflows({ workspace: currentWorkspace, token });
-  if (!workflows.data) {
-    return notFound();
-  }
-  return <ConnectionSection workflows={workflows.data} />;
+  const workflows = await getWorkflows({ workspace: currentWorkspace, token }); // TODO: We need to fetch workflows specific to this connection
+  return <ConnectionSection workflows={workflows.data ?? []} />;
 }

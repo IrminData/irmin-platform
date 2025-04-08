@@ -21,6 +21,7 @@ export default async function LogsPage(props: {
     getLogs({ workspace: currentWorkspace, token }),
     initDict(),
   ]);
-  if (!logs.data) return notFound();
-  return <LogsSection logEvents={logs.data} title={dict.logs.workspaceLogs} />;
+  return (
+    <LogsSection logEvents={logs.data ?? []} title={dict.logs.workspaceLogs} />
+  );
 }

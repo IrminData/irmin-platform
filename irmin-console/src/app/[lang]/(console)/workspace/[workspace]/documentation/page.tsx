@@ -24,15 +24,11 @@ export default async function DocumentationPage(props: {
     getRepositories({ workspace: currentWorkspace, token }),
   ]);
 
-  if (!connections.data || !workflows.data || !repositories.data) {
-    return notFound();
-  }
-
   return (
     <DocumentationSection
-      connections={connections.data}
-      workflows={workflows.data}
-      repositories={repositories.data}
+      connections={connections.data ?? []}
+      workflows={workflows.data ?? []}
+      repositories={repositories.data ?? []}
     />
   );
 }

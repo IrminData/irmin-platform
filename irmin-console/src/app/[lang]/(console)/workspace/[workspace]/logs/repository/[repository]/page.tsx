@@ -48,7 +48,7 @@ export default async function RepositoryLogsPage(props: {
 
   const token = await getToken();
   const [logs, repository, { dict }] = await Promise.all([
-    getLogs({ workspace: currentWorkspace, token }),
+    getLogs({ workspace: currentWorkspace, token }), // TODO: Get logs specific to the repository
     getRepository({
       workspace: currentWorkspace,
       repositorySlug: params.repository,
@@ -57,12 +57,12 @@ export default async function RepositoryLogsPage(props: {
     initDict(),
   ]);
 
-  if (!logs.data || !repository.data) return notFound();
+  if (!repository.data) return notFound();
 
   return (
     <LogsSection
       repository={repository.data}
-      logEvents={logs.data}
+      logEvents={logs.data ?? []}
       title={dict.logs.repositoryLogs}
     />
   );

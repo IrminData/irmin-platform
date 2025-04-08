@@ -29,11 +29,10 @@ export default async function ConnectionsPage(props: {
     getConnectors({ token }),
     getConnections({ workspace: currentWorkspace, token }),
   ]);
-  if (!connections.data || !connectors.data) return notFound();
   return (
     <ConnectionsSection
-      connections={connections.data}
-      connectors={connectors.data}
+      connections={connections.data ?? []}
+      connectors={connectors.data ?? []}
       sideModalOpen={false}
     />
   );
