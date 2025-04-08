@@ -53,7 +53,6 @@ type Workflowable struct {
 	Repository     string           `json:"repository,omitempty"`
 	Branch         string           `json:"branch,omitempty"`
 	Path           string           `json:"path,omitempty"`
-	Recursive      bool             `json:"recursive,omitempty"`
 	Executable     string           `json:"executable,omitempty"`
 	Live           bool             `json:"live,omitempty"`
 	Stages         []PipelineStage  `json:"stages,omitempty"`
