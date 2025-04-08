@@ -8,7 +8,7 @@ type Repository struct {
 	gorm.Model
 
 	Name          string    `json:"name"`
-	Slug          string    `json:"slug"`
+	Slug          string    `json:"slug" gorm:"uniqueIndex"`
 	Description   string    `json:"description"`
 	Documentation string    `json:"documentation"`
 	IsImmutable   bool      `json:"is_immutable"`
