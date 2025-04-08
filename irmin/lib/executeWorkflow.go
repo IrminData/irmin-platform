@@ -38,6 +38,13 @@ func ExecuteWorkflow(ctx context.Context, workflow db.Workflow, user *db.User, t
 		logs = append(logs, executionLogs...)
 	case db.WorkflowableTypeExport:
 	case db.WorkflowableTypeImport:
+		// Execute the import workflowable.
+		executionLogs, err := ExecuteImportWorkflowable(ctx, &workflow, workflow.Import, run)
+		if err != nil {
+			log.Printf("Failed to execute import workflowable: %v", err)
+			hasError = true
+		}
+		logs = append(logs, executionLogs...)
 	case db.WorkflowableTypePipeline:
 	default:
 		logs = append(logs, fmt.Sprintf("Unknown workflow type: %s", workflow.Type))
