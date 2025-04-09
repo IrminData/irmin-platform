@@ -22,7 +22,6 @@ func PrepareWorkflowableData(workflowable irminModels.Workflowable) (map[string]
 		fields["repository"] = workflowable.Repository
 		fields["branch"] = workflowable.Branch
 		fields["path"] = workflowable.Path
-		fields["recursive"] = fmt.Sprintf("%t", workflowable.Recursive)
 	case irminModels.WorkflowableTypeAction:
 		fields["executable"] = workflowable.Executable
 		fields["repository"] = workflowable.Repository

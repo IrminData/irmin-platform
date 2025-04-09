@@ -20,8 +20,10 @@ type LogEvent struct {
 	Type        LogEventType `json:"type"`
 	Description string       `json:"description"`
 	CreatedAt   time.Time    `json:"created_at"`
+	Workspace   *Workspace   `json:"workspace,omitempty"`
 	User        *User        `json:"user,omitempty"`
 	WorkflowRun *WorkflowRun `json:"workflow_run,omitempty"`
 	Workflow    *Workflow    `json:"workflow,omitempty"`
 	Repository  *Repository  `json:"repository,omitempty"`
+	Connection  *Connection  `json:"connection,omitempty"`
 }
