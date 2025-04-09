@@ -116,8 +116,6 @@ export interface Export {
   branch: string;
   /** Path within the repository to export data from */
   path: string;
-  /** Determines if the export should be recursive */
-  recursive: boolean;
 }
 
 /**

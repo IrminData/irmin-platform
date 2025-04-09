@@ -99,7 +99,6 @@ export const workflows = (): Workflow[] => {
         connection_path: '/',
         repository: repositories().find((a) => a.slug === 'kpis-from-excel')!,
         path: '/',
-        recursive: false,
         branch: 'main',
       },
       schedule: getRandomArrayElement(workflowSchedules),

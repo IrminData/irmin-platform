@@ -284,18 +284,6 @@ const WorkflowSection = () => {
               <p className='text-base'>{workflow.workflowable.path}</p>
             </div>
           )}
-          {workflow.type === 'export' && (
-            <div className='flex flex-col gap-1'>
-              <p className='text-sm opacity-60'>
-                {dict.workflow.exportRecursive}
-              </p>
-              <p className='text-base'>
-                {workflow.workflowable.recursive
-                  ? dict.common.yes
-                  : dict.common.no}
-              </p>
-            </div>
-          )}
           {workflow.type === 'pipeline' && (
             <div className='flex flex-col gap-1'>
               <p className='text-sm opacity-60'>{dict.workflow.livePipeline}</p>
