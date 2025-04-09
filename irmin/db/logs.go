@@ -37,7 +37,14 @@ type LogEvent struct {
 
 func GetLogEventsForWorkspace(workspaceID uint) ([]LogEvent, error) {
 	var events []LogEvent
-	if err := DB.Preload("User").Preload("Workspace").Preload("Repository").Preload("Workflow").Preload("WorkflowRun").Where("workspace_id = ?", workspaceID).Find(&events).Error; err != nil {
+	if err := DB.Preload("User").
+		Preload("Workspace").
+		Preload("Repository").
+		Preload("Workflow").
+		Preload("WorkflowRun").
+		Preload("Connection").
+		Where("workspace_id = ?", workspaceID).
+		Find(&events).Error; err != nil {
 		return nil, err
 	}
 	return events, nil
@@ -53,6 +60,7 @@ func GetLogEventsByWorkspaceAndAsset(workspaceID uint, assetType string, assetID
 		Preload("Repository").
 		Preload("Workflow").
 		Preload("WorkflowRun").
+		Preload("Connection").
 		Where("workspace_id = ?", workspaceID)
 
 	// Append additional asset-specific filtering

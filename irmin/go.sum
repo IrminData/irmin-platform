@@ -2,6 +2,8 @@ github.com/IrminData/irmin-sdk-go v0.0.0-20250407231009-53c3f150899a h1:IRUuLYjG
 github.com/IrminData/irmin-sdk-go v0.0.0-20250407231009-53c3f150899a/go.mod h1:5WzBQVWKX4dJmJU38zAniHFECHJhVx5dKYmMUvE24PE=
 github.com/IrminData/irmin-sdk-go v0.0.0-20250408235211-681aa1950fa0 h1:DkO6aFC/sJLUulOAuOW6EV70RFjGTbU6TKyXAX9xWfk=
 github.com/IrminData/irmin-sdk-go v0.0.0-20250408235211-681aa1950fa0/go.mod h1:5WzBQVWKX4dJmJU38zAniHFECHJhVx5dKYmMUvE24PE=
+github.com/IrminData/irmin-sdk-go v0.0.0-20250409203645-e134a2469e0e h1:IIV/kP4kK1TCxR6PBVmugWY9MCaSVyhypBGt/4Ckur4=
+github.com/IrminData/irmin-sdk-go v0.0.0-20250409203645-e134a2469e0e/go.mod h1:5WzBQVWKX4dJmJU38zAniHFECHJhVx5dKYmMUvE24PE=
 github.com/andybalholm/brotli v1.1.1 h1:PR2pgnyFznKEugtsUo0xLdDop5SKXd5Qf5ysW+7XdTA=
 github.com/andybalholm/brotli v1.1.1/go.mod h1:05ib4cKhjx3OQYUY22hTVd34Bc8upXjOLL2rKwwZBoA=
 github.com/apache/arrow-go/v18 v18.2.0 h1:QhWqpgZMKfWOniGPhbUxrHohWnooGURqL2R2Gg4SO1Q=
@@ -52,6 +54,8 @@ github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMU
 github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
 github.com/clerk/clerk-sdk-go/v2 v2.2.0 h1:7z2HBQ7L1sW+xVm5LM/bOpzmfhExwa4xgII4fMNFk64=
 github.com/clerk/clerk-sdk-go/v2 v2.2.0/go.mod h1:tA+JDYh9xEmysBRs+BfJH9HeR0J0HOh8txfsiB115zY=
+github.com/clerk/clerk-sdk-go/v2 v2.3.0 h1:0tC1SKh84Cu1wu2/l+RuJJ8ZoImE156U8NMA4T1VzwY=
+github.com/clerk/clerk-sdk-go/v2 v2.3.0/go.mod h1:tA+JDYh9xEmysBRs+BfJH9HeR0J0HOh8txfsiB115zY=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

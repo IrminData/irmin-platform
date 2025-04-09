@@ -21,6 +21,22 @@ func FormatLogEventResponse(logEvent db.LogEvent) (*irminModels.LogEvent, error)
 		}
 	}
 
+	var workspace *irminModels.Workspace
+	if logEvent.Workspace != nil {
+		workspace, err = FormatWorkspaceResponse(*logEvent.Workspace)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var connection *irminModels.Connection
+	if logEvent.Connection != nil {
+		connection, err = FormatConnectionResponse(*logEvent.Connection)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var workflowRun *irminModels.WorkflowRun
 	if logEvent.WorkflowRun != nil {
 		workflowRun, err = FormatWorkflowRunResponse(logEvent.WorkflowRun)
@@ -51,10 +67,12 @@ func FormatLogEventResponse(logEvent db.LogEvent) (*irminModels.LogEvent, error)
 		Type:        eventType,
 		Description: logEvent.Description,
 		CreatedAt:   logEvent.CreatedAt,
+		Workspace:   workspace,
 		User:        user,
 		WorkflowRun: workflowRun,
 		Workflow:    workflow,
 		Repository:  repository,
+		Connection:  connection,
 	}
 
 	return event, nil
