@@ -214,7 +214,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	case db.WorkflowableTypeExport:
 		// Create the export workflowable object.
 		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(c, []string{"connection", "connection_path", "repository", "branch", "path"}, []string{"recursive"})
+		workflowableFields, err := utils.ParseFormFields(c, []string{"connection", "connection_path", "repository", "branch", "path"}, nil)
 		if err != nil {
 			log.Printf("Error parsing form fields: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
@@ -245,17 +245,12 @@ func WorkflowsStore(c fiber.Ctx) error {
 			})
 		}
 		// Create the workflowable in the database.
-		recursive := false
-		if workflowableFields["recursive"] == "true" {
-			recursive = true
-		}
 		exportWorkflowable, err = db.CreateExportWorkflowable(&db.ExportWorkflowable{
 			ConnectionID:   connection.ID,
 			ConnectionPath: workflowableFields["connection_path"],
 			RepositoryID:   repository.ID,
 			Branch:         workflowableFields["branch"],
 			Path:           workflowableFields["path"],
-			Recursive:      recursive,
 		})
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
@@ -569,7 +564,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	case db.WorkflowableTypeExport:
 		// Create the export workflowable object.
 		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(c, []string{"connection", "connection_path", "repository", "branch", "path"}, []string{"recursive"})
+		workflowableFields, err := utils.ParseFormFields(c, []string{"connection", "connection_path", "repository", "branch", "path"}, nil)
 		if err != nil {
 			log.Printf("Error parsing form fields: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
@@ -600,17 +595,12 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 			})
 		}
 		// Create the workflowable in the database.
-		recursive := false
-		if workflowableFields["recursive"] == "true" {
-			recursive = true
-		}
 		exportWorkflowable, err = db.CreateExportWorkflowable(&db.ExportWorkflowable{
 			ConnectionID:   connection.ID,
 			ConnectionPath: workflowableFields["connection_path"],
 			RepositoryID:   repository.ID,
 			Branch:         workflowableFields["branch"],
 			Path:           workflowableFields["path"],
-			Recursive:      recursive,
 		})
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)

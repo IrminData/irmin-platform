@@ -69,7 +69,6 @@ type ExportWorkflowable struct {
 	RepositoryID   uint       `json:"repository_id"`
 	Branch         string     `json:"branch"`
 	Path           string     `json:"path"`
-	Recursive      bool       `json:"recursive"`
 }
 
 type ActionWorkflowable struct {

@@ -1,5 +1,7 @@
 github.com/IrminData/irmin-sdk-go v0.0.0-20250407231009-53c3f150899a h1:IRUuLYjG+UdfTvRNUPxoH7bTMn+bk0qrHXRwe2AYdj0=
 github.com/IrminData/irmin-sdk-go v0.0.0-20250407231009-53c3f150899a/go.mod h1:5WzBQVWKX4dJmJU38zAniHFECHJhVx5dKYmMUvE24PE=
+github.com/IrminData/irmin-sdk-go v0.0.0-20250408235211-681aa1950fa0 h1:DkO6aFC/sJLUulOAuOW6EV70RFjGTbU6TKyXAX9xWfk=
+github.com/IrminData/irmin-sdk-go v0.0.0-20250408235211-681aa1950fa0/go.mod h1:5WzBQVWKX4dJmJU38zAniHFECHJhVx5dKYmMUvE24PE=
 github.com/andybalholm/brotli v1.1.1 h1:PR2pgnyFznKEugtsUo0xLdDop5SKXd5Qf5ysW+7XdTA=
 github.com/andybalholm/brotli v1.1.1/go.mod h1:05ib4cKhjx3OQYUY22hTVd34Bc8upXjOLL2rKwwZBoA=
 github.com/apache/arrow-go/v18 v18.2.0 h1:QhWqpgZMKfWOniGPhbUxrHohWnooGURqL2R2Gg4SO1Q=

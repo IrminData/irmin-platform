@@ -65,7 +65,6 @@ func FormatWorkflowResponse(workflow db.Workflow) (*irminModels.Workflow, error)
 		workflowableResponse.Repository = exportWorkflowable.Repository.Slug
 		workflowableResponse.Branch = exportWorkflowable.Branch
 		workflowableResponse.Path = exportWorkflowable.Path
-		workflowableResponse.Recursive = exportWorkflowable.Recursive
 	case db.WorkflowableTypeAction:
 		actionWorkflowable := workflowable.(*db.ActionWorkflowable)
 		workflowableResponse.Executable = actionWorkflowable.Executable
