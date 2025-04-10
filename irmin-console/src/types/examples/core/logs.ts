@@ -66,4 +66,25 @@ export const logEvents: () => LogEvent[] = () => [
     description: 'Warning message.',
     created_at: getRandomDateTimeString(20, 'past', 5),
   },
+  {
+    id: 'log-event-9',
+    type: 'CREATE',
+    description: 'Created a new connection.',
+    created_at: getRandomDateTimeString(20, 'past', 5),
+    user: workspaceUsers()[0],
+  },
+  {
+    id: 'log-event-10',
+    type: 'UPDATE',
+    description: 'Updated a connection.',
+    created_at: getRandomDateTimeString(20, 'past', 5),
+    user: workspaceUsers()[1],
+  },
+  {
+    id: 'log-event-11',
+    type: 'DELETE',
+    description: 'Deleted a connection.',
+    created_at: getRandomDateTimeString(20, 'past', 5),
+    user: workspaceUsers()[2],
+  },
 ];

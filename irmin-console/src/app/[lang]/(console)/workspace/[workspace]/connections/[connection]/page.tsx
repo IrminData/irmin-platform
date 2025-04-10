@@ -3,13 +3,13 @@ import { getToken } from '@/lib/getToken';
 
 import ConnectionSection from '@/components/connection/ConnectionSection';
 
-import { WorkspaceLayoutParams } from '../../layout';
+import { SingleConnectionLayoutParams } from './layout';
 
 /**
  * Page for the Connection overview
  */
 export default async function ConnectionOverviewPage(props: {
-  params: Promise<WorkspaceLayoutParams>;
+  params: Promise<SingleConnectionLayoutParams>;
 }) {
   const params = await props.params;
   const currentWorkspace = params.workspace;

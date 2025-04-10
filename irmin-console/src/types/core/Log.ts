@@ -1,7 +1,9 @@
+import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
 import { User } from '@/types/core/User';
 import { Workflow } from '@/types/core/Workflow';
 import { WorkflowRun } from '@/types/core/WorkflowRun';
+import { Workspace } from '@/types/core/Workspace';
 
 /**
  * Represents the log event types.
@@ -28,6 +30,8 @@ export interface LogEvent {
   description: string;
   /** Timestamp when the log event was created */
   created_at: string;
+  /** (optional) Workspace associated with the log event */
+  workspace?: Workspace;
   /** (optional) User associated with the log event */
   user?: User;
   /** (optional) Workflow run associated with the log event */
@@ -36,4 +40,6 @@ export interface LogEvent {
   workflow?: Workflow;
   /** (optional) Repository associated with the log event */
   repository?: Repository;
+  /** (optional) Connection associated with the log event */
+  connection?: Connection;
 }

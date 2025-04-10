@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { getLogs } from '@/lib/actions/logs';
+import { getRepositoryLogs } from '@/lib/actions/logs';
 import { getRepository } from '@/lib/actions/repositories';
 import { Locale } from '@/lib/dict';
 import { getToken } from '@/lib/getToken';
@@ -47,8 +47,7 @@ export default async function RepositoryLogsPage(props: {
   const currentWorkspace = params.workspace;
 
   const token = await getToken();
-  const [logs, repository, { dict }] = await Promise.all([
-    getLogs({ workspace: currentWorkspace, token }), // TODO: Get logs specific to the repository
+  const [repository, { dict }] = await Promise.all([
     getRepository({
       workspace: currentWorkspace,
       repositorySlug: params.repository,
@@ -58,6 +57,12 @@ export default async function RepositoryLogsPage(props: {
   ]);
 
   if (!repository.data) return notFound();
+
+  const logs = await getRepositoryLogs({
+    workspace: currentWorkspace,
+    repository_id: repository.data.id,
+    token,
+  });
 
   return (
     <LogsSection

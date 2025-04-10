@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import { getLogs } from '@/lib/actions/logs';
+import { getWorkflowLogs } from '@/lib/actions/logs';
 import { getWorkflow } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
 import { initDict } from '@/lib/initDict';
@@ -17,13 +17,18 @@ export default async function WorkflowLogsPage(props: {
 }) {
   const params = await props.params;
   const currentWorkspace = params.workspace;
+  const workflowID = params.workflow;
 
   const token = await getToken();
   const [logs, workflow, { dict }] = await Promise.all([
-    getLogs({ workspace: currentWorkspace, token }), // TODO: Get logs specific to the workflow
+    getWorkflowLogs({
+      workspace: currentWorkspace,
+      workflow_id: workflowID,
+      token,
+    }),
     getWorkflow({
       workspace: currentWorkspace,
-      workflowID: params.workflow,
+      workflowID,
       token,
     }),
     initDict(),
