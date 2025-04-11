@@ -8,19 +8,11 @@ import { SentryBuildOptions, withSentryConfig } from '@sentry/nextjs';
 const nextConfig: NextConfig = {
   output: 'standalone',
   reactStrictMode: true,
+  turbopack: {
+    resolveExtensions: ['.mdx', '.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
+  },
   experimental: {
     reactCompiler: true,
-    turbo: {
-      resolveExtensions: [
-        '.mdx',
-        '.tsx',
-        '.ts',
-        '.jsx',
-        '.js',
-        '.mjs',
-        '.json',
-      ],
-    },
   },
   images: {
     remotePatterns: [
