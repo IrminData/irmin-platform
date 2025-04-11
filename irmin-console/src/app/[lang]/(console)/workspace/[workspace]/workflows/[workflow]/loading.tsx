@@ -1,9 +1,12 @@
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
-export default function ConsoleLoading() {
+/**
+ * Workflow loading UI
+ */
+export default function WorkflowLoading() {
   return (
     <div
-      id='console-loading'
+      id='workflow-loading'
       className='relative container mx-auto max-w-6xl py-12'
     >
       <LoadingSkeleton className='h-96' />
