@@ -1,14 +1,8 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { IrminRole } from '@/types/core/IrminRole';
 import { User } from '@/types/core/User';
-import { exampleWorkspaceUsers } from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Workspace User API service
@@ -44,8 +38,6 @@ class UserService {
   }: {
     workspace: string;
   }): Promise<IrminAPIResponse<User[]>> {
-    if (isOfflineMode)
-      return fake(exampleWorkspaceUsers) as IrminAPIResponse<User[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/users`,
@@ -54,8 +46,6 @@ class UserService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch users error');
-      if (isDevelopment)
-        return fake(exampleWorkspaceUsers) as IrminAPIResponse<User[]>;
       throw error;
     }
   }
@@ -75,8 +65,6 @@ class UserService {
     workspace: string;
     user: string;
   }): Promise<IrminAPIResponse<User>> {
-    if (isOfflineMode)
-      return fake(exampleWorkspaceUsers[1]) as IrminAPIResponse<User>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/users/${user}`,
@@ -85,8 +73,6 @@ class UserService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch user error');
-      if (isDevelopment)
-        return fake(exampleWorkspaceUsers[1]) as IrminAPIResponse<User>;
       throw error;
     }
   }
@@ -109,7 +95,6 @@ class UserService {
     user: string;
     roles: IrminRole[];
   }): Promise<IrminAPIResponse<User>> {
-    if (isOfflineMode) return fake() as IrminAPIResponse<User>;
     try {
       const formData = new FormData();
       // Append each role; the server will combine them as needed
@@ -145,7 +130,6 @@ class UserService {
     workspace: string;
     user: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/users/${user}`,

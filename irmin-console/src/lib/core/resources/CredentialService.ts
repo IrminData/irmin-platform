@@ -1,13 +1,7 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { APIToken } from '@/types/core/APIToken';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { exampleAPITokens } from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Credential API service
@@ -36,8 +30,6 @@ class CredentialService {
    * @returns IrminAPIResponse containing an array of APIToken.
    */
   async getSystemTokens(): Promise<IrminAPIResponse<APIToken[]>> {
-    if (isOfflineMode)
-      return fake(exampleAPITokens) as IrminAPIResponse<APIToken[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/credentials`, {
         method: 'GET',
@@ -45,8 +37,6 @@ class CredentialService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Get system tokens error');
-      if (isDevelopment)
-        return fake(exampleAPITokens) as IrminAPIResponse<APIToken[]>;
       throw error;
     }
   }
@@ -66,11 +56,6 @@ class CredentialService {
     name: string;
     expiry: number;
   }): Promise<IrminAPIResponse<APIToken>> {
-    if (isOfflineMode)
-      return fake({
-        ...exampleAPITokens[0],
-        name,
-      }) as IrminAPIResponse<APIToken>;
     try {
       const formData = new FormData();
       formData.append('name', name);
@@ -82,11 +67,6 @@ class CredentialService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create system token error');
-      if (isDevelopment)
-        return fake({
-          ...exampleAPITokens[0],
-          name,
-        }) as IrminAPIResponse<APIToken>;
       throw error;
     }
   }
@@ -103,7 +83,6 @@ class CredentialService {
   }: {
     token: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake();
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/credentials/${token}`,
@@ -112,7 +91,6 @@ class CredentialService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Revoke system token error');
-      if (isDevelopment) return fake();
       throw error;
     }
   }

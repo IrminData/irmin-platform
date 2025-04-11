@@ -10,7 +10,6 @@ import { useRepository } from '@/context/RepositoryContext';
 import { downloadFile } from '@/utils/downloadFile';
 
 import { Object } from '@/types/core/Object';
-import { ContentType } from '@/types/examples/core/content';
 
 import DownloadFailed from './download/DownloadFailed';
 import DownloadSuccess from './download/DownloadSuccess';
@@ -42,15 +41,7 @@ const RepositoryObjectDownloadSection = ({
     loadingObjectContent.current = true;
     (async () => {
       try {
-        const type =
-          selectedObject.type === 'binary'
-            ? ContentType.image
-            : ContentType.json;
-        const fetchedContent = await getObjectContent(
-          selectedObject.path,
-          true,
-          type
-        );
+        const fetchedContent = await getObjectContent(selectedObject.path);
         // Download the content as a file
         if (fetchedContent instanceof Blob) {
           downloadFile(

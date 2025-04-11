@@ -2,16 +2,11 @@ import IrminCore from '@/lib/core';
 
 import createWorkflowableFormData from '@/utils/createWorkflowableFormData';
 import createWorkflowScheduleFormData from '@/utils/createWorkflowScheduleFormData';
-import fake from '@/utils/prepareFakeResponse';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { WorkflowSchedule } from '@/types/core/Schedule';
 import { Workflow, WorkflowableType } from '@/types/core/Workflow';
-import { exampleWorkflows } from '@/types/examples/core';
 import { WorkflowableInput } from '@/types/internal/WorkflowInput';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Workflow API service
@@ -55,8 +50,6 @@ class WorkflowService {
   }: {
     workspace: string;
   }): Promise<IrminAPIResponse<Workflow[]>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflows) as IrminAPIResponse<Workflow[]>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows`,
@@ -65,8 +58,6 @@ class WorkflowService {
       return response as IrminAPIResponse<Workflow[]>;
     } catch (error) {
       console.error((error as Error).message, 'List workflows error');
-      if (isDevelopment)
-        return fake(exampleWorkflows) as IrminAPIResponse<Workflow[]>;
       throw error;
     }
   }
@@ -86,16 +77,12 @@ class WorkflowService {
     workspace: string;
     workflowType: WorkflowableType;
   }): Promise<IrminAPIResponse<Workflow[]>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflows) as IrminAPIResponse<Workflow[]>;
     try {
       const url = `/v1/workspaces/${workspace}/workflows?type=${encodeURIComponent(workflowType)}`;
       const response = await this.irminCore.fetchAPI(url, { method: 'GET' });
       return response as IrminAPIResponse<Workflow[]>;
     } catch (error) {
       console.error((error as Error).message, 'List workflows of type error');
-      if (isDevelopment)
-        return fake(exampleWorkflows) as IrminAPIResponse<Workflow[]>;
       throw error;
     }
   }
@@ -115,10 +102,6 @@ class WorkflowService {
     workspace: string;
     workflowID: string;
   }): Promise<IrminAPIResponse<Workflow>> {
-    if (isOfflineMode)
-      return fake(
-        exampleWorkflows.find((w) => w.id === workflowID) || exampleWorkflows[0]
-      ) as IrminAPIResponse<Workflow>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows/${workflowID}`,
@@ -127,8 +110,6 @@ class WorkflowService {
       return response as IrminAPIResponse<Workflow>;
     } catch (error) {
       console.error((error as Error).message, 'Get workflow error');
-      if (isDevelopment)
-        return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
       throw error;
     }
   }
@@ -160,8 +141,6 @@ class WorkflowService {
     workflowable: WorkflowableInput;
     schedule: WorkflowSchedule;
   }): Promise<IrminAPIResponse<Workflow>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
     try {
       const params = new URLSearchParams();
       params.append('name', name);
@@ -188,8 +167,6 @@ class WorkflowService {
       return response as IrminAPIResponse<Workflow>;
     } catch (error) {
       console.error((error as Error).message, 'Create workflow error');
-      if (isDevelopment)
-        return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
       throw error;
     }
   }
@@ -218,8 +195,6 @@ class WorkflowService {
     description?: string;
     documentation?: string;
   }): Promise<IrminAPIResponse<Workflow>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
     try {
       const params = new URLSearchParams();
       if (name) params.append('name', name);
@@ -236,8 +211,6 @@ class WorkflowService {
       return response as IrminAPIResponse<Workflow>;
     } catch (error) {
       console.error((error as Error).message, 'Update workflow error');
-      if (isDevelopment)
-        return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
       throw error;
     }
   }
@@ -260,8 +233,6 @@ class WorkflowService {
     workflowID: string;
     workflowable: WorkflowableInput;
   }): Promise<IrminAPIResponse<Workflow>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
     try {
       const workflowableFormData = createWorkflowableFormData(workflowable);
       const response = await this.irminCore.fetchAPI(
@@ -278,8 +249,6 @@ class WorkflowService {
         (error as Error).message,
         'Update workflow workflowable error'
       );
-      if (isDevelopment)
-        return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
       throw error;
     }
   }
@@ -302,8 +271,6 @@ class WorkflowService {
     workflowID: string;
     schedule: WorkflowSchedule;
   }): Promise<IrminAPIResponse<Workflow>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
     try {
       const scheduleFormData = createWorkflowScheduleFormData(schedule);
       const response = await this.irminCore.fetchAPI(
@@ -317,8 +284,6 @@ class WorkflowService {
       return response as IrminAPIResponse<Workflow>;
     } catch (error) {
       console.error((error as Error).message, 'Update workflow schedule error');
-      if (isDevelopment)
-        return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
       throw error;
     }
   }
@@ -338,7 +303,6 @@ class WorkflowService {
     workspace: string;
     workflowID: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows/${workflowID}`,
@@ -347,7 +311,6 @@ class WorkflowService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete workflow error');
-      if (isDevelopment) return fake() as IrminAPIResponse;
       throw error;
     }
   }
@@ -370,8 +333,6 @@ class WorkflowService {
     workflowID: string;
     newOwnerID: string;
   }): Promise<IrminAPIResponse<Workflow>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
     try {
       const params = new URLSearchParams();
       params.append('new_owner_id', newOwnerID);
@@ -389,8 +350,6 @@ class WorkflowService {
         (error as Error).message,
         'Workflow ownership transfer error'
       );
-      if (isDevelopment)
-        return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
       throw error;
     }
   }
@@ -410,8 +369,6 @@ class WorkflowService {
     workspace: string;
     workflowID: string;
   }): Promise<IrminAPIResponse<Workflow>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows/${workflowID}/pause`,
@@ -420,8 +377,6 @@ class WorkflowService {
       return response as IrminAPIResponse<Workflow>;
     } catch (error) {
       console.error((error as Error).message, 'Pause workflow error');
-      if (isDevelopment)
-        return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
       throw error;
     }
   }
@@ -441,8 +396,6 @@ class WorkflowService {
     workspace: string;
     workflowID: string;
   }): Promise<IrminAPIResponse<Workflow>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows/${workflowID}/start`,
@@ -451,8 +404,6 @@ class WorkflowService {
       return response as IrminAPIResponse<Workflow>;
     } catch (error) {
       console.error((error as Error).message, 'Start workflow error');
-      if (isDevelopment)
-        return fake(exampleWorkflows[0]) as IrminAPIResponse<Workflow>;
       throw error;
     }
   }

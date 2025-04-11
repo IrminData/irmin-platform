@@ -136,7 +136,7 @@ export default function ConsoleWrapper({
                 className={`transition-all ${foldMenu ? 'hidden w-0' : 'block w-full'}`}
               >
                 <div className='w-full min-w-36 px-4'>
-                  <ConsoleNavigationProfile setIsMenuOpen={setIsMenuOpen} />
+                  <ConsoleNavigationProfile />
                   <ConsoleNavigationWorkspaceSwitcher
                     workspaces={workspaces}
                     currentWorkspace={currentWorkspace}

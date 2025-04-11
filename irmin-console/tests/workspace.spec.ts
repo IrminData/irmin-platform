@@ -49,34 +49,25 @@ test('can create a new workspace', async ({ page }) => {
   // Submit the form
   await page.getByRole('button', { name: 'Create new workspace' }).click();
 
-  // This will only work if the system is not in offline mode
-  if (process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true') {
-    // If in offline mode, the workspace will not be created
-    // The example response from the API is shown instead
-    await expect(page.locator('#console-content')).toContainText(
-      'This is example for IrminAPIResponse'
-    );
-  } else {
-    // Make sure that the workspace has been created
-    await expect(page.locator('#console-content')).toContainText(
-      'The workspace has been successfully created.'
-    );
+  // Make sure that the workspace has been created
+  await expect(page.locator('#console-content')).toContainText(
+    'The workspace has been successfully created.'
+  );
 
-    // Make sure that the workspace is visible in the switcher
-    await expect(page.getByText(`Workspace${workspaceName}`)).toBeVisible();
+  // Make sure that the workspace is visible in the switcher
+  await expect(page.getByText(`Workspace${workspaceName}`)).toBeVisible();
 
-    // Switch to the new workspace
-    await page.getByRole('heading', { name: newWorkspaceName }).click();
+  // Switch to the new workspace
+  await page.getByRole('heading', { name: newWorkspaceName }).click();
 
-    // Make sure that the workspace has been switched
-    await expect(page.locator('#console-content')).toContainText(
-      newWorkspaceName
-    );
-    await expect(page.locator('#console-content')).toContainText(
-      'Get started on Irmin with these quick actions:'
-    );
-    await expect(page.locator('#console-nav-workspace-switcher')).toContainText(
-      newWorkspaceName
-    );
-  }
+  // Make sure that the workspace has been switched
+  await expect(page.locator('#console-content')).toContainText(
+    newWorkspaceName
+  );
+  await expect(page.locator('#console-content')).toContainText(
+    'Get started on Irmin with these quick actions:'
+  );
+  await expect(page.locator('#console-nav-workspace-switcher')).toContainText(
+    newWorkspaceName
+  );
 });

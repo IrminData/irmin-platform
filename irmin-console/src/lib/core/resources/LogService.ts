@@ -1,13 +1,7 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { LogEvent } from '@/types/core/Log';
-import { exampleLogEvents } from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Log API service
@@ -45,8 +39,6 @@ class LogService {
   }: {
     workspace: string;
   }): Promise<IrminAPIResponse<LogEvent[]>> {
-    if (isOfflineMode)
-      return fake(exampleLogEvents) as IrminAPIResponse<LogEvent[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/logs`,
@@ -55,8 +47,7 @@ class LogService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Log Events error');
-      if (isDevelopment)
-        return fake(exampleLogEvents) as IrminAPIResponse<LogEvent[]>;
+
       throw error;
     }
   }
@@ -75,8 +66,6 @@ class LogService {
     workspace: string;
     user_id: string;
   }): Promise<IrminAPIResponse<LogEvent[]>> {
-    if (isOfflineMode)
-      return fake(exampleLogEvents) as IrminAPIResponse<LogEvent[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/logs?user_id=${user_id}`,
@@ -85,8 +74,7 @@ class LogService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch User Log Events error');
-      if (isDevelopment)
-        return fake(exampleLogEvents) as IrminAPIResponse<LogEvent[]>;
+
       throw error;
     }
   }
@@ -105,8 +93,6 @@ class LogService {
     workspace: string;
     connection_id: string;
   }): Promise<IrminAPIResponse<LogEvent[]>> {
-    if (isOfflineMode)
-      return fake(exampleLogEvents) as IrminAPIResponse<LogEvent[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/logs?connection_id=${connection_id}`,
@@ -118,8 +104,6 @@ class LogService {
         (error as Error).message,
         'Fetch Connection Log Events error'
       );
-      if (isDevelopment)
-        return fake(exampleLogEvents) as IrminAPIResponse<LogEvent[]>;
       throw error;
     }
   }
@@ -138,8 +122,6 @@ class LogService {
     workspace: string;
     workflow_run_id: string;
   }): Promise<IrminAPIResponse<LogEvent[]>> {
-    if (isOfflineMode)
-      return fake(exampleLogEvents) as IrminAPIResponse<LogEvent[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/logs?workflow_run_id=${workflow_run_id}`,
@@ -151,8 +133,6 @@ class LogService {
         (error as Error).message,
         'Fetch Workflow Run Log Events error'
       );
-      if (isDevelopment)
-        return fake(exampleLogEvents) as IrminAPIResponse<LogEvent[]>;
       throw error;
     }
   }
@@ -171,8 +151,6 @@ class LogService {
     workspace: string;
     repository_id: string;
   }): Promise<IrminAPIResponse<LogEvent[]>> {
-    if (isOfflineMode)
-      return fake(exampleLogEvents) as IrminAPIResponse<LogEvent[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/logs?repository_id=${repository_id}`,
@@ -184,8 +162,6 @@ class LogService {
         (error as Error).message,
         'Fetch Repository Log Events error'
       );
-      if (isDevelopment)
-        return fake(exampleLogEvents) as IrminAPIResponse<LogEvent[]>;
       throw error;
     }
   }
@@ -204,8 +180,6 @@ class LogService {
     workspace: string;
     workflow_id: string;
   }): Promise<IrminAPIResponse<LogEvent[]>> {
-    if (isOfflineMode)
-      return fake(exampleLogEvents) as IrminAPIResponse<LogEvent[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/logs?workflow_id=${workflow_id}`,
@@ -217,8 +191,6 @@ class LogService {
         (error as Error).message,
         'Fetch Workflow Log Events error'
       );
-      if (isDevelopment)
-        return fake(exampleLogEvents) as IrminAPIResponse<LogEvent[]>;
       throw error;
     }
   }

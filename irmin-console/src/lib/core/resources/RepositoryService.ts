@@ -1,13 +1,7 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { Repository } from '@/types/core/Repository';
-import { exampleRepositories } from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Repository API service
@@ -46,8 +40,6 @@ class RepositoryService {
   }: {
     workspace: string;
   }): Promise<IrminAPIResponse<Repository[]>> {
-    if (isOfflineMode)
-      return fake(exampleRepositories) as IrminAPIResponse<Repository[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories`,
@@ -56,8 +48,6 @@ class RepositoryService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Repositories error');
-      if (isDevelopment)
-        return fake(exampleRepositories) as IrminAPIResponse<Repository[]>;
       throw error;
     }
   }
@@ -77,11 +67,6 @@ class RepositoryService {
     workspace: string;
     slug: string;
   }): Promise<IrminAPIResponse<Repository>> {
-    if (isOfflineMode)
-      return fake(
-        exampleRepositories.find((item) => item.slug === slug) ||
-          exampleRepositories[0]
-      ) as IrminAPIResponse<Repository>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${slug}`,
@@ -90,8 +75,6 @@ class RepositoryService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Repository error');
-      if (isDevelopment)
-        return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
       throw error;
     }
   }
@@ -129,8 +112,6 @@ class RepositoryService {
     garbageDefaultRetentionDays?: number;
     garbageDefaultBranchRetentionDays?: number;
   }): Promise<IrminAPIResponse<Repository>> {
-    if (isOfflineMode)
-      return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
     try {
       const params = new URLSearchParams();
       params.append('name', name);
@@ -159,8 +140,6 @@ class RepositoryService {
       return response as IrminAPIResponse<Repository>;
     } catch (error) {
       console.error((error as Error).message, 'Create Repository error');
-      if (isDevelopment)
-        return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
       throw error;
     }
   }
@@ -198,8 +177,6 @@ class RepositoryService {
     garbageDefaultRetentionDays?: number;
     garbageDefaultBranchRetentionDays?: number;
   }): Promise<IrminAPIResponse<Repository>> {
-    if (isOfflineMode)
-      return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
     try {
       const params = new URLSearchParams();
       if (name) params.append('name', name);
@@ -228,7 +205,6 @@ class RepositoryService {
       return response as IrminAPIResponse<Repository>;
     } catch (error) {
       console.error((error as Error).message, 'Update Repository error');
-      if (isDevelopment) return fake() as IrminAPIResponse<Repository>;
       throw error;
     }
   }
@@ -251,8 +227,6 @@ class RepositoryService {
     slug: string;
     newOwnerID: string;
   }): Promise<IrminAPIResponse<Repository>> {
-    if (isOfflineMode)
-      return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
     try {
       const params = new URLSearchParams();
       params.append('new_owner_id', newOwnerID);
@@ -270,8 +244,6 @@ class RepositoryService {
         (error as Error).message,
         'Repository ownership transfer error'
       );
-      if (isDevelopment)
-        return fake(exampleRepositories[0]) as IrminAPIResponse<Repository>;
       throw error;
     }
   }
@@ -291,7 +263,6 @@ class RepositoryService {
     workspace: string;
     repositorySlug: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repositorySlug}`,
@@ -300,7 +271,6 @@ class RepositoryService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete Repository error');
-      if (isDevelopment) return fake() as IrminAPIResponse;
       throw error;
     }
   }
@@ -326,8 +296,6 @@ class RepositoryService {
     ref: string;
     path: string;
   }): Promise<IrminAPIResponse<string>> {
-    if (isOfflineMode)
-      return fake('http://example.com') as IrminAPIResponse<string>;
     try {
       const formData = new FormData();
       formData.append('ref', ref);
@@ -345,8 +313,6 @@ class RepositoryService {
         (error as Error).message,
         'Get Repository download link error'
       );
-      if (isDevelopment)
-        return fake('http://example.com') as IrminAPIResponse<string>;
       throw error;
     }
   }

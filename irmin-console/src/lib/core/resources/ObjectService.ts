@@ -1,7 +1,5 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { Commit } from '@/types/core/Commit';
 import {
   IrminAPIBinaryResponse,
@@ -9,15 +7,6 @@ import {
 } from '@/types/core/IrminAPIResponse';
 import { Object as RepoObject } from '@/types/core/Object';
 import { ObjectSchema } from '@/types/core/ObjectSchema';
-import {
-  exampleAPIBinaryResponse,
-  exampleCommits,
-  exampleObjects,
-  exampleTableObjectSchema,
-} from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Object API service
@@ -66,10 +55,6 @@ class ObjectService {
     path: string;
     ref?: string;
   }): Promise<IrminAPIResponse<RepoObject>> {
-    if (isOfflineMode)
-      return fake(
-        exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
-      ) as IrminAPIResponse<RepoObject>;
     try {
       let url = `/v1/workspaces/${workspace}/repositories/${repository}/objects?&path=${encodeURIComponent(path)}`;
       if (ref) url += `ref=${encodeURIComponent(ref)}`;
@@ -79,10 +64,6 @@ class ObjectService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch object error');
-      if (isDevelopment)
-        return fake(
-          exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
-        ) as IrminAPIResponse<RepoObject>;
       throw error;
     }
   }
@@ -108,8 +89,6 @@ class ObjectService {
     path: string;
     ref?: string;
   }): Promise<IrminAPIResponse<Commit[]>> {
-    if (isOfflineMode)
-      return fake(exampleCommits) as IrminAPIResponse<Commit[]>;
     try {
       let url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/history?path=${encodeURIComponent(path)}`;
       if (ref) url += `&ref=${encodeURIComponent(ref)}`;
@@ -119,8 +98,6 @@ class ObjectService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch object history error');
-      if (isDevelopment)
-        return fake(exampleCommits) as IrminAPIResponse<Commit[]>;
       throw error;
     }
   }
@@ -146,8 +123,6 @@ class ObjectService {
     path: string;
     ref?: string;
   }): Promise<IrminAPIResponse<ObjectSchema>> {
-    if (isOfflineMode)
-      return fake(exampleTableObjectSchema) as IrminAPIResponse<ObjectSchema>;
     try {
       let url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/schema?path=${encodeURIComponent(path)}`;
       if (ref) url += `&ref=${encodeURIComponent(ref)}`;
@@ -157,8 +132,6 @@ class ObjectService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch object schema error');
-      if (isDevelopment)
-        return fake(exampleTableObjectSchema) as IrminAPIResponse<ObjectSchema>;
       throw error;
     }
   }
@@ -184,11 +157,6 @@ class ObjectService {
     path: string;
     ref?: string;
   }): Promise<IrminAPIBinaryResponse> {
-    if (isOfflineMode)
-      return (await exampleAPIBinaryResponse(
-        undefined,
-        false
-      )) as IrminAPIBinaryResponse;
     try {
       const urlParams = new URLSearchParams();
       urlParams.append('path', path);
@@ -198,11 +166,6 @@ class ObjectService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch object content error');
-      if (isDevelopment)
-        return (await exampleAPIBinaryResponse(
-          undefined,
-          false
-        )) as IrminAPIBinaryResponse;
       throw error;
     }
   }
@@ -231,10 +194,6 @@ class ObjectService {
     path: string;
     files?: FileList;
   }): Promise<IrminAPIResponse<RepoObject>> {
-    if (isOfflineMode)
-      return fake(
-        exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
-      ) as IrminAPIResponse<RepoObject>;
     try {
       const formData = new FormData();
       formData.append('ref', ref);
@@ -253,10 +212,6 @@ class ObjectService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Upload object error');
-      if (isDevelopment)
-        return fake(
-          exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
-        ) as IrminAPIResponse<RepoObject>;
       throw error;
     }
   }
@@ -285,10 +240,6 @@ class ObjectService {
     path: string;
     newPath: string;
   }): Promise<IrminAPIResponse<RepoObject>> {
-    if (isOfflineMode)
-      return fake(
-        exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
-      ) as IrminAPIResponse<RepoObject>;
     try {
       const params = new URLSearchParams();
       params.append('ref', ref);
@@ -302,10 +253,6 @@ class ObjectService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Move object error');
-      if (isDevelopment)
-        return fake(
-          exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
-        ) as IrminAPIResponse<RepoObject>;
       throw error;
     }
   }
@@ -334,10 +281,6 @@ class ObjectService {
     path: string;
     newPath: string;
   }): Promise<IrminAPIResponse<RepoObject>> {
-    if (isOfflineMode)
-      return fake(
-        exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
-      ) as IrminAPIResponse<RepoObject>;
     try {
       const params = new URLSearchParams();
       params.append('ref', ref);
@@ -351,10 +294,6 @@ class ObjectService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Copy object error');
-      if (isDevelopment)
-        return fake(
-          exampleObjects.find((obj) => obj.path === path) || exampleObjects[0]
-        ) as IrminAPIResponse<RepoObject>;
       throw error;
     }
   }
@@ -380,7 +319,6 @@ class ObjectService {
     ref: string;
     path: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
       const params = new URLSearchParams();
       params.append('ref', ref);
@@ -390,7 +328,6 @@ class ObjectService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete object error');
-      if (isDevelopment) return fake() as IrminAPIResponse;
       throw error;
     }
   }

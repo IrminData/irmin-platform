@@ -20,7 +20,6 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 
 import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 import { Object } from '@/types/core/Object';
-import { ContentType } from '@/types/examples/core/content';
 
 import ObjectDetails from './objects/ObjectDetails';
 import ObjectViewer from './objects/ObjectViewer';
@@ -57,15 +56,7 @@ const RepositoryObjectViewerSection = ({
     loadingObjectContent.current = true;
     (async () => {
       try {
-        const type =
-          selectedObject.type === 'binary'
-            ? ContentType.image
-            : ContentType.json;
-        const fetchedContent = await getObjectContent(
-          selectedObject.path,
-          false,
-          type
-        );
+        const fetchedContent = await getObjectContent(selectedObject.path);
         setObjectContent(fetchedContent);
       } catch (error) {
         console.error('Failed to fetch object content', error);

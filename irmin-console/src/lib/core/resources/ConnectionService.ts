@@ -1,14 +1,8 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { Connection } from '@/types/core/Connection';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { exampleConnections } from '@/types/examples/core';
 import { DynamicFieldValues } from '@/types/internal/DynamicField';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Connection API service
@@ -48,8 +42,6 @@ class ConnectionService {
   }: {
     workspace: string;
   }): Promise<IrminAPIResponse<Connection[]>> {
-    if (isOfflineMode)
-      return fake(exampleConnections) as IrminAPIResponse<Connection[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/connections`,
@@ -58,8 +50,6 @@ class ConnectionService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch connections error');
-      if (isDevelopment)
-        return fake(exampleConnections) as IrminAPIResponse<Connection[]>;
       throw error;
     }
   }
@@ -79,11 +69,6 @@ class ConnectionService {
     workspace: string;
     connectionID: string;
   }): Promise<IrminAPIResponse<Connection>> {
-    if (isOfflineMode)
-      return fake(
-        exampleConnections.find((item) => item.id === connectionID) ||
-          exampleConnections[0]
-      ) as IrminAPIResponse<Connection>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/connections/${connectionID}`,
@@ -92,8 +77,6 @@ class ConnectionService {
       return response as IrminAPIResponse<Connection>;
     } catch (error) {
       console.error((error as Error).message, 'Fetch connection error');
-      if (isDevelopment)
-        return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
       throw error;
     }
   }
@@ -128,8 +111,6 @@ class ConnectionService {
     connectionDetails: DynamicFieldValues;
     connectionSettings: DynamicFieldValues;
   }): Promise<IrminAPIResponse<Connection>> {
-    if (isOfflineMode)
-      return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
     try {
       const formData = new FormData();
       formData.append('connector', connectorID);
@@ -152,8 +133,6 @@ class ConnectionService {
         (error as Error).message,
         'Failed to create new connection'
       );
-      if (isDevelopment)
-        return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
       throw error;
     }
   }
@@ -191,10 +170,6 @@ class ConnectionService {
     connectionDetails?: DynamicFieldValues;
     connectionSettings?: DynamicFieldValues;
   }): Promise<IrminAPIResponse<Connection>> {
-    if (isOfflineMode)
-      return fake(
-        exampleConnections.find((item) => item.id === connectionID)
-      ) as IrminAPIResponse<Connection>;
     try {
       const formData = new FormData();
       if (connectorID) formData.append('connector', connectorID);
@@ -221,8 +196,6 @@ class ConnectionService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update connection error');
-      if (isDevelopment)
-        return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
       throw error;
     }
   }
@@ -246,10 +219,6 @@ class ConnectionService {
     connectionID: string;
     newOwner: string;
   }): Promise<IrminAPIResponse<Connection>> {
-    if (isOfflineMode)
-      return fake(
-        exampleConnections.find((item) => item.id === connectionID)
-      ) as IrminAPIResponse<Connection>;
     try {
       const formData = new FormData();
       // Use the field name 'new_owner_id' to match the Go endpoint
@@ -264,8 +233,6 @@ class ConnectionService {
         (error as Error).message,
         'Transfer connection ownership error'
       );
-      if (isDevelopment)
-        return fake(exampleConnections[0]) as IrminAPIResponse<Connection>;
       throw error;
     }
   }
@@ -285,7 +252,6 @@ class ConnectionService {
     workspace: string;
     connectionID: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake();
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/connections/${connectionID}`,
@@ -294,7 +260,6 @@ class ConnectionService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete connection error');
-      if (isDevelopment) return fake();
       throw error;
     }
   }

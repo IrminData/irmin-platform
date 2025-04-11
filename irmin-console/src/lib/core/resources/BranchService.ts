@@ -1,13 +1,7 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { Branch } from '@/types/core/Branch';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { exampleBranches } from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Branch API service
@@ -41,8 +35,6 @@ class BranchService {
     workspace: string;
     repository: string;
   }): Promise<IrminAPIResponse<Branch[]>> {
-    if (isOfflineMode)
-      return fake(exampleBranches) as IrminAPIResponse<Branch[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/branches`,
@@ -54,8 +46,6 @@ class BranchService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Branches error');
-      if (isDevelopment)
-        return fake(exampleBranches) as IrminAPIResponse<Branch[]>;
       throw error;
     }
   }
@@ -77,8 +67,6 @@ class BranchService {
     repository: string;
     branch: string;
   }): Promise<IrminAPIResponse<Branch>> {
-    if (isOfflineMode)
-      return fake(exampleBranches[0]) as IrminAPIResponse<Branch>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}`,
@@ -90,8 +78,6 @@ class BranchService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Branch error');
-      if (isDevelopment)
-        return fake(exampleBranches[0]) as IrminAPIResponse<Branch>;
       throw error;
     }
   }
@@ -113,7 +99,6 @@ class BranchService {
     repository: string;
     branch: string;
   }) {
-    if (isOfflineMode) return fake();
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}`,
@@ -124,7 +109,6 @@ class BranchService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete branch error');
-      if (isDevelopment) return fake();
       throw error;
     }
   }
@@ -149,7 +133,6 @@ class BranchService {
     name: string;
     from: string;
   }) {
-    if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
 
@@ -166,7 +149,6 @@ class BranchService {
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Failed to create branch');
-      if (isDevelopment) return fake();
       throw error;
     }
   }
@@ -191,7 +173,6 @@ class BranchService {
     branch: string;
     name: string;
   }) {
-    if (isOfflineMode) return fake();
     try {
       const formData = new FormData();
       formData.append('name', name);
@@ -206,7 +187,6 @@ class BranchService {
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Failed to update branch');
-      if (isDevelopment) return fake();
       throw error;
     }
   }

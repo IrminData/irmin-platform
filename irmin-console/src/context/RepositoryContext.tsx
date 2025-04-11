@@ -56,7 +56,6 @@ import { Object } from '@/types/core/Object';
 import { ObjectSchema } from '@/types/core/ObjectSchema';
 import { Repository } from '@/types/core/Repository';
 import { Tag } from '@/types/core/Tag';
-import { ContentType } from '@/types/examples/core/content';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 import { useWorkspace } from './WorkspaceContext';
@@ -90,9 +89,7 @@ interface RepositoryContextProps {
   createGroup: (path: string, ref: string) => Promise<void>;
   uploadObject: (path: string, ref: string, files: FileList) => Promise<void>;
   getObjectContent: (
-    objectPath: string,
-    raw?: boolean,
-    type?: ContentType
+    path: string
   ) => Promise<IrminAPIBinaryResponse | undefined>;
   getObjectSchema: (objectPath: string) => Promise<ObjectSchema | undefined>;
   getObjectCommitHistory: (objectPath: string) => Promise<Commit[]>;

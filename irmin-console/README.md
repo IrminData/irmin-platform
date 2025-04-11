@@ -31,10 +31,6 @@ API_SYSTEM_TOKEN=abcxyz  # System token for API requests
 REQUIRE_ENV_AUTH=true  # Enable environment-specific authentication
 ENV_PASSWORD=devpassword  # Password for environment authentication
 
-# Offline mode
-NEXT_PUBLIC_OFFLINE_MODE=false  # Toggle offline mode for the Irmin API
-NEXT_PUBLIC_AUTH_OFFLINE_MODE=false # Toggle offline mode for authentication eg. Clerk
-
 # Sentry for error tracking
 SENTRY_AUTH_TOKEN=sntryu_xxxxx  # Sentry token for error tracking
 NEXT_PUBLIC_SENTRY_DSN=https://ingest.de.sentry.io/xxxxx  # Sentry DSN for error tracking

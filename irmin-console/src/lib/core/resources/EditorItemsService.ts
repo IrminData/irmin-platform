@@ -1,13 +1,7 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { EditorItem, ScriptResult } from '@/types/core/EditorItems';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { exampleEditorItems, exampleScriptResult } from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * EditorItems service
@@ -48,9 +42,6 @@ class EditorItemsService {
     workspace: string;
     path: string;
   }): Promise<IrminAPIResponse<EditorItem[]>> {
-    if (isOfflineMode) {
-      return fake(exampleEditorItems) as IrminAPIResponse<EditorItem[]>;
-    }
     try {
       const endpoint = `/v1/workspaces/${workspace}/editor?path=${encodeURIComponent(
         path
@@ -61,9 +52,6 @@ class EditorItemsService {
       return response as IrminAPIResponse<EditorItem[]>;
     } catch (error) {
       console.error('Fetch editor items error', error);
-      if (isDevelopment) {
-        return fake(exampleEditorItems) as IrminAPIResponse<EditorItem[]>;
-      }
       throw error;
     }
   }
@@ -83,9 +71,6 @@ class EditorItemsService {
     workspace: string;
     path: string;
   }): Promise<IrminAPIResponse<string>> {
-    if (isOfflineMode) {
-      return fake('Fake content') as IrminAPIResponse<string>;
-    }
     try {
       const endpoint = `/v1/workspaces/${workspace}/editor/content?path=${encodeURIComponent(
         path
@@ -96,9 +81,6 @@ class EditorItemsService {
       return response as IrminAPIResponse<string>;
     } catch (error) {
       console.error('Fetch editor item content error', error);
-      if (isDevelopment) {
-        return fake('Fake content') as IrminAPIResponse<string>;
-      }
       throw error;
     }
   }
@@ -121,9 +103,6 @@ class EditorItemsService {
     path: string;
     destinationPath: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) {
-      return fake();
-    }
     try {
       const endpoint = `/v1/workspaces/${workspace}/editor/move?path=${encodeURIComponent(
         path
@@ -140,9 +119,6 @@ class EditorItemsService {
       return response;
     } catch (error) {
       console.error('Move editor item error', error);
-      if (isDevelopment) {
-        return fake();
-      }
       throw error;
     }
   }
@@ -165,9 +141,6 @@ class EditorItemsService {
     path: string;
     destinationPath: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) {
-      return fake();
-    }
     try {
       const endpoint = `/v1/workspaces/${workspace}/editor/copy?path=${encodeURIComponent(
         path
@@ -184,9 +157,6 @@ class EditorItemsService {
       return response;
     } catch (error) {
       console.error('Copy editor item error', error);
-      if (isDevelopment) {
-        return fake();
-      }
       throw error;
     }
   }
@@ -206,9 +176,6 @@ class EditorItemsService {
     workspace: string;
     path: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) {
-      return fake();
-    }
     try {
       const endpoint = `/v1/workspaces/${workspace}/editor?path=${encodeURIComponent(
         path
@@ -219,9 +186,6 @@ class EditorItemsService {
       return response;
     } catch (error) {
       console.error('Delete editor item error', error);
-      if (isDevelopment) {
-        return fake();
-      }
       throw error;
     }
   }
@@ -244,9 +208,6 @@ class EditorItemsService {
     path: string;
     content: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) {
-      return fake();
-    }
     try {
       const endpoint = `/v1/workspaces/${workspace}/editor?path=${encodeURIComponent(
         path
@@ -264,9 +225,6 @@ class EditorItemsService {
       return response;
     } catch (error) {
       console.error('Save editor item error', error);
-      if (isDevelopment) {
-        return fake();
-      }
       throw error;
     }
   }
@@ -286,9 +244,6 @@ class EditorItemsService {
     workspace: string;
     path: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) {
-      return fake();
-    }
     try {
       const endpoint = `/v1/workspaces/${workspace}/editor?path=${encodeURIComponent(
         path
@@ -305,9 +260,6 @@ class EditorItemsService {
       return response;
     } catch (error) {
       console.error('Create editor folder error', error);
-      if (isDevelopment) {
-        return fake();
-      }
       throw error;
     }
   }
@@ -327,8 +279,6 @@ class EditorItemsService {
     workspace: string;
     path: string;
   }): Promise<IrminAPIResponse<ScriptResult>> {
-    if (isOfflineMode)
-      return fake(exampleScriptResult()) as IrminAPIResponse<ScriptResult>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/editor/run?path=${path}`,
@@ -340,8 +290,6 @@ class EditorItemsService {
       return response as IrminAPIResponse<ScriptResult>;
     } catch (error) {
       console.error('Run script error', error);
-      if (isDevelopment)
-        return fake(exampleScriptResult()) as IrminAPIResponse<ScriptResult>;
       throw error;
     }
   }

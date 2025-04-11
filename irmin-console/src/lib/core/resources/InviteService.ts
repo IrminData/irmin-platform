@@ -1,13 +1,7 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { Invite } from '@/types/core/Invite';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { exampleInvites, exampleRoles } from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Invite API service
@@ -40,9 +34,6 @@ class InviteService {
    * @returns IrminAPIResponse containing an array of Invite.
    */
   async listInviteInbox(): Promise<IrminAPIResponse<Invite[]>> {
-    if (isOfflineMode) {
-      return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
-    }
     try {
       const endpoint = `/v1/invites`;
       const response = await this.irminCore.fetchAPI(endpoint, {
@@ -51,9 +42,6 @@ class InviteService {
       return response as IrminAPIResponse<Invite[]>;
     } catch (error) {
       console.error('Fetch invites error', error);
-      if (isDevelopment) {
-        return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
-      }
       throw error;
     }
   }
@@ -70,9 +58,6 @@ class InviteService {
   }: {
     inviteID: string;
   }): Promise<IrminAPIResponse<Invite>> {
-    if (isOfflineMode) {
-      return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
-    }
     try {
       const endpoint = `/v1/invites/${inviteID}`;
       const response = await this.irminCore.fetchAPI(endpoint, {
@@ -81,9 +66,6 @@ class InviteService {
       return response as IrminAPIResponse<Invite>;
     } catch (error) {
       console.error('Fetch invite error', error);
-      if (isDevelopment) {
-        return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
-      }
       throw error;
     }
   }
@@ -100,9 +82,6 @@ class InviteService {
   }: {
     workspace: string;
   }): Promise<IrminAPIResponse<Invite[]>> {
-    if (isOfflineMode) {
-      return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
-    }
     try {
       const endpoint = `/v1/workspaces/${workspace}/invites`;
       const response = await this.irminCore.fetchAPI(endpoint, {
@@ -111,9 +90,6 @@ class InviteService {
       return response as IrminAPIResponse<Invite[]>;
     } catch (error) {
       console.error('Fetch invites to workspace error', error);
-      if (isDevelopment) {
-        return fake(exampleInvites) as IrminAPIResponse<Invite[]>;
-      }
       throw error;
     }
   }
@@ -136,15 +112,6 @@ class InviteService {
     email: string;
     role: string;
   }): Promise<IrminAPIResponse<Invite>> {
-    if (isOfflineMode) {
-      return fake({
-        email,
-        role: exampleRoles.find((r) => r.name === role) ?? exampleRoles[0],
-        invited_at: new Date().toISOString(),
-        expired_at: null,
-        deleted_at: null,
-      }) as IrminAPIResponse<Invite>;
-    }
     try {
       const endpoint = `/v1/workspaces/${workspace}/invites`;
       const body = new URLSearchParams();
@@ -158,15 +125,6 @@ class InviteService {
       return response as IrminAPIResponse<Invite>;
     } catch (error) {
       console.error('Send invite error', error);
-      if (isDevelopment) {
-        return fake({
-          email,
-          role: exampleRoles.find((r) => r.name === role) ?? exampleRoles[0],
-          invited_at: new Date().toISOString(),
-          expired_at: null,
-          deleted_at: null,
-        }) as IrminAPIResponse<Invite>;
-      }
       throw error;
     }
   }
@@ -183,9 +141,6 @@ class InviteService {
   }: {
     inviteID: string;
   }): Promise<IrminAPIResponse<Invite>> {
-    if (isOfflineMode) {
-      return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
-    }
     try {
       const endpoint = `/v1/invites/${inviteID}/resend`;
       const response = await this.irminCore.fetchAPI(endpoint, {
@@ -194,9 +149,6 @@ class InviteService {
       return response as IrminAPIResponse<Invite>;
     } catch (error) {
       console.error('Resend invite error', error);
-      if (isDevelopment) {
-        return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
-      }
       throw error;
     }
   }
@@ -213,9 +165,6 @@ class InviteService {
   }: {
     inviteID: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) {
-      return fake();
-    }
     try {
       const endpoint = `/v1/invites/${inviteID}`;
       const response = await this.irminCore.fetchAPI(endpoint, {
@@ -224,9 +173,6 @@ class InviteService {
       return response;
     } catch (error) {
       console.error('Delete invite error', error);
-      if (isDevelopment) {
-        return fake();
-      }
       throw error;
     }
   }
@@ -246,9 +192,6 @@ class InviteService {
     inviteID: string;
     role: string;
   }): Promise<IrminAPIResponse<Invite>> {
-    if (isOfflineMode) {
-      return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
-    }
     try {
       const endpoint = `/v1/invites/${inviteID}`;
       const body = new URLSearchParams();
@@ -261,9 +204,6 @@ class InviteService {
       return response as IrminAPIResponse<Invite>;
     } catch (error) {
       console.error('Update invite error', error);
-      if (isDevelopment) {
-        return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
-      }
       throw error;
     }
   }
@@ -280,9 +220,6 @@ class InviteService {
   }: {
     inviteID: string;
   }): Promise<IrminAPIResponse<Invite>> {
-    if (isOfflineMode) {
-      return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
-    }
     try {
       const endpoint = `/v1/invites/${inviteID}/accept`;
       const response = await this.irminCore.fetchAPI(endpoint, {
@@ -291,9 +228,6 @@ class InviteService {
       return response as IrminAPIResponse<Invite>;
     } catch (error) {
       console.error('Accept invite error', error);
-      if (isDevelopment) {
-        return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
-      }
       throw error;
     }
   }
@@ -310,9 +244,6 @@ class InviteService {
   }: {
     inviteID: string;
   }): Promise<IrminAPIResponse<Invite>> {
-    if (isOfflineMode) {
-      return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
-    }
     try {
       const endpoint = `/v1/invites/${inviteID}/decline`;
       const response = await this.irminCore.fetchAPI(endpoint, {
@@ -321,9 +252,6 @@ class InviteService {
       return response as IrminAPIResponse<Invite>;
     } catch (error) {
       console.error('Decline invite error', error);
-      if (isDevelopment) {
-        return fake(exampleInvites[0]) as IrminAPIResponse<Invite>;
-      }
       throw error;
     }
   }

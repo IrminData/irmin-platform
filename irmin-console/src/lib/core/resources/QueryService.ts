@@ -1,13 +1,7 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { QueryResult, StoredQuery } from '@/types/core/StoredQuery';
-import { exampleQueries, exampleQueryResult } from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Query API service
@@ -47,8 +41,6 @@ class QueryService {
   }: {
     workspace: string;
   }): Promise<IrminAPIResponse<StoredQuery[]>> {
-    if (isOfflineMode)
-      return fake(exampleQueries) as IrminAPIResponse<StoredQuery[]>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/queries`,
@@ -57,8 +49,6 @@ class QueryService {
       return response as IrminAPIResponse<StoredQuery[]>;
     } catch (error) {
       console.error((error as Error).message, 'Fetch stored queries error');
-      if (isDevelopment)
-        return fake(exampleQueries) as IrminAPIResponse<StoredQuery[]>;
       throw error;
     }
   }
@@ -78,10 +68,6 @@ class QueryService {
     workspace: string;
     queryID: string;
   }): Promise<IrminAPIResponse<StoredQuery>> {
-    if (isOfflineMode)
-      return fake(
-        exampleQueries.find((q) => q.id === queryID) || exampleQueries[0]
-      ) as IrminAPIResponse<StoredQuery>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/queries/${queryID}`,
@@ -90,8 +76,6 @@ class QueryService {
       return response as IrminAPIResponse<StoredQuery>;
     } catch (error) {
       console.error((error as Error).message, 'Fetch stored query error');
-      if (isDevelopment)
-        return fake(exampleQueries[0]) as IrminAPIResponse<StoredQuery>;
       throw error;
     }
   }
@@ -117,14 +101,6 @@ class QueryService {
     description: string;
     sql: string;
   }): Promise<IrminAPIResponse<StoredQuery>> {
-    if (isOfflineMode)
-      return fake({
-        ...exampleQueries[0],
-        id: 'fake-query-id',
-        name,
-        description,
-        sql,
-      }) as IrminAPIResponse<StoredQuery>;
     try {
       const formData = new URLSearchParams();
       formData.append('name', name);
@@ -141,8 +117,6 @@ class QueryService {
       return response as IrminAPIResponse<StoredQuery>;
     } catch (error) {
       console.error((error as Error).message, 'Create stored query error');
-      if (isDevelopment)
-        return fake(exampleQueries[0]) as IrminAPIResponse<StoredQuery>;
       throw error;
     }
   }
@@ -171,13 +145,6 @@ class QueryService {
     description: string;
     sql: string;
   }): Promise<IrminAPIResponse<StoredQuery>> {
-    if (isOfflineMode)
-      return fake({
-        ...(exampleQueries.find((q) => q.id === queryID) || exampleQueries[0]),
-        name,
-        description,
-        sql,
-      }) as IrminAPIResponse<StoredQuery>;
     try {
       const formData = new URLSearchParams();
       formData.append('name', name);
@@ -194,8 +161,6 @@ class QueryService {
       return response as IrminAPIResponse<StoredQuery>;
     } catch (error) {
       console.error((error as Error).message, 'Update stored query error');
-      if (isDevelopment)
-        return fake(exampleQueries[0]) as IrminAPIResponse<StoredQuery>;
       throw error;
     }
   }
@@ -215,7 +180,6 @@ class QueryService {
     workspace: string;
     queryID: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/queries/${queryID}`,
@@ -224,7 +188,6 @@ class QueryService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete stored query error');
-      if (isDevelopment) return fake() as IrminAPIResponse;
       throw error;
     }
   }
@@ -247,8 +210,6 @@ class QueryService {
     queryID: string;
     newOwnerID: string;
   }): Promise<IrminAPIResponse<StoredQuery>> {
-    if (isOfflineMode)
-      return fake(exampleQueries[0]) as IrminAPIResponse<StoredQuery>;
     try {
       const formData = new URLSearchParams();
       formData.append('new_owner_id', newOwnerID);
@@ -263,8 +224,6 @@ class QueryService {
       return response as IrminAPIResponse<StoredQuery>;
     } catch (error) {
       console.error((error as Error).message, 'Transfer stored query error');
-      if (isDevelopment)
-        return fake(exampleQueries[0]) as IrminAPIResponse<StoredQuery>;
       throw error;
     }
   }
@@ -284,8 +243,6 @@ class QueryService {
     workspace: string;
     queryID: string;
   }): Promise<IrminAPIResponse<QueryResult>> {
-    if (isOfflineMode)
-      return fake(exampleQueryResult()) as IrminAPIResponse<QueryResult>;
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/queries/${queryID}/execute`,
@@ -294,8 +251,6 @@ class QueryService {
       return response as IrminAPIResponse<QueryResult>;
     } catch (error) {
       console.error((error as Error).message, 'Execute stored query error');
-      if (isDevelopment)
-        return fake(exampleQueryResult()) as IrminAPIResponse<QueryResult>;
       throw error;
     }
   }
@@ -315,8 +270,6 @@ class QueryService {
     workspace: string;
     sql: string;
   }): Promise<IrminAPIResponse<QueryResult>> {
-    if (isOfflineMode)
-      return fake(exampleQueryResult()) as IrminAPIResponse<QueryResult>;
     try {
       const formData = new URLSearchParams();
       formData.append('sql', sql);
@@ -331,8 +284,6 @@ class QueryService {
       return response as IrminAPIResponse<QueryResult>;
     } catch (error) {
       console.error((error as Error).message, 'Execute SQL error');
-      if (isDevelopment)
-        return fake(exampleQueryResult()) as IrminAPIResponse<QueryResult>;
       throw error;
     }
   }

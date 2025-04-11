@@ -1,7 +1,5 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import {
   Connector,
   ConnectorCapability,
@@ -10,18 +8,9 @@ import {
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { ObjectSchema } from '@/types/core/ObjectSchema';
 import {
-  exampleConnectorConfigurationValidationResult,
-  exampleConnectors,
-  exampleObjectSchema,
-} from '@/types/examples/core';
-import exampleDynamicFields from '@/types/examples/exampleDynamicFields';
-import {
   DynamicFields,
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Connector API service
@@ -55,8 +44,6 @@ class ConnectorService {
    * @returns IrminAPIResponse containing an array of Connector.
    */
   async fetchAllConnectors(): Promise<IrminAPIResponse<Connector[]>> {
-    if (isOfflineMode)
-      return fake(exampleConnectors) as IrminAPIResponse<Connector[]>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/connectors`, {
         method: 'GET',
@@ -64,8 +51,6 @@ class ConnectorService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch connectors error');
-      if (isDevelopment)
-        return fake(exampleConnectors) as IrminAPIResponse<Connector[]>;
       throw error;
     }
   }
@@ -82,11 +67,6 @@ class ConnectorService {
   }: {
     connectorId: string;
   }): Promise<IrminAPIResponse<Connector>> {
-    if (isOfflineMode)
-      return fake(
-        exampleConnectors.find((item) => item.id === connectorId) ||
-          exampleConnectors[0]
-      ) as IrminAPIResponse<Connector>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/connectors/${connectorId}`,
@@ -97,8 +77,6 @@ class ConnectorService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch connector error');
-      if (isDevelopment)
-        return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
       throw error;
     }
   }
@@ -124,8 +102,6 @@ class ConnectorService {
     currentDetails?: DynamicFieldValues;
     currentSettings?: DynamicFieldValues;
   }): Promise<IrminAPIResponse<DynamicFields>> {
-    if (isOfflineMode)
-      return fake(exampleDynamicFields) as IrminAPIResponse<DynamicFields>;
     try {
       const formData = new FormData();
       if (currentDetails) {
@@ -151,8 +127,6 @@ class ConnectorService {
         (error as Error).message,
         'Fetch connector configuration fields error'
       );
-      if (isDevelopment)
-        return fake(exampleDynamicFields) as IrminAPIResponse<DynamicFields>;
       throw error;
     }
   }
@@ -175,11 +149,6 @@ class ConnectorService {
     details?: DynamicFieldValues;
     settings?: DynamicFieldValues;
   }): Promise<IrminAPIResponse<ConnectorConfigurationValidationResult>> {
-    if (isOfflineMode) {
-      return fake(
-        exampleConnectorConfigurationValidationResult
-      ) as IrminAPIResponse<ConnectorConfigurationValidationResult>;
-    }
     try {
       const formData = new FormData();
       if (details) {
@@ -205,11 +174,6 @@ class ConnectorService {
         (error as Error).message,
         'Validate connector configuration error'
       );
-      if (isDevelopment) {
-        return fake(
-          exampleConnectorConfigurationValidationResult
-        ) as IrminAPIResponse<ConnectorConfigurationValidationResult>;
-      }
       throw error;
     }
   }
@@ -235,8 +199,6 @@ class ConnectorService {
     details?: DynamicFieldValues;
     settings?: DynamicFieldValues;
   }): Promise<IrminAPIResponse<ObjectSchema>> {
-    if (isOfflineMode)
-      return fake(exampleObjectSchema) as IrminAPIResponse<ObjectSchema>;
     try {
       const formData = new FormData();
       if (details) {
@@ -259,8 +221,6 @@ class ConnectorService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch object schema error');
-      if (isDevelopment)
-        return fake(exampleObjectSchema) as IrminAPIResponse<ObjectSchema>;
       throw error;
     }
   }
@@ -280,8 +240,6 @@ class ConnectorService {
     baseUrl: string;
     systemToken: string;
   }): Promise<IrminAPIResponse<Connector>> {
-    if (isOfflineMode)
-      return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
     try {
       const formData = new FormData();
       formData.append('url', baseUrl);
@@ -293,8 +251,6 @@ class ConnectorService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Register new connector error');
-      if (isDevelopment)
-        return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
       throw error;
     }
   }
@@ -317,8 +273,6 @@ class ConnectorService {
     baseUrl: string;
     systemToken: string;
   }): Promise<IrminAPIResponse<Connector>> {
-    if (isOfflineMode)
-      return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
     try {
       const formData = new FormData();
       formData.append('url', baseUrl);
@@ -333,8 +287,6 @@ class ConnectorService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update connector error');
-      if (isDevelopment)
-        return fake(exampleConnectors[0]) as IrminAPIResponse<Connector>;
       throw error;
     }
   }
@@ -351,7 +303,6 @@ class ConnectorService {
   }: {
     connectorId: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake();
     try {
       const response = await this.irminCore.fetchAPI(
         `/v1/connectors/${connectorId}`,
@@ -362,7 +313,6 @@ class ConnectorService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete connector error');
-      if (isDevelopment) return fake();
       throw error;
     }
   }

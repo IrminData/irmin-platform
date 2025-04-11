@@ -20,10 +20,6 @@ import { defaultLocale } from '@/lib/dict';
 import { usePopup } from '@/context/PopupContext';
 
 import { User } from '@/types/core/User';
-import { exampleProfile } from '@/types/examples/core';
-
-// Determine if we're in offline mode
-const authOfflineMode = process.env.NEXT_PUBLIC_AUTH_OFFLINE_MODE === 'true';
 
 // Create IAM context
 const IAMContext = createContext<{
@@ -78,12 +74,6 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
    * Fetches the Irmin profile and updates the IAM context
    */
   const fetchIrminProfile = useCallback(async () => {
-    if (authOfflineMode) {
-      setProfile(exampleProfile);
-      setIsLoading(false);
-      return;
-    }
-
     if (!clerkIsLoaded) return;
 
     if (!isSignedIn || !sessionId) {

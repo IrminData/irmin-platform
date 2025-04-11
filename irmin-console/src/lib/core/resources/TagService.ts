@@ -1,13 +1,7 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { Tag } from '@/types/core/Tag';
-import { exampleTags } from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Tag API service
@@ -46,7 +40,6 @@ class TagService {
     workspace: string;
     repository: string;
   }): Promise<IrminAPIResponse<Tag[]>> {
-    if (isOfflineMode) return fake(exampleTags) as IrminAPIResponse<Tag[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/tags`,
@@ -55,7 +48,6 @@ class TagService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Tags error');
-      if (isDevelopment) return fake(exampleTags) as IrminAPIResponse<Tag[]>;
       throw error;
     }
   }
@@ -78,7 +70,6 @@ class TagService {
     repository: string;
     tag: string;
   }): Promise<IrminAPIResponse<Tag>> {
-    if (isOfflineMode) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/tags/${tag}`,
@@ -87,7 +78,6 @@ class TagService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Tag error');
-      if (isDevelopment) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
       throw error;
     }
   }
@@ -113,7 +103,6 @@ class TagService {
     name: string;
     ref: string;
   }): Promise<IrminAPIResponse<Tag>> {
-    if (isOfflineMode) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
     try {
       const formData = new FormData();
       formData.append('name', name);
@@ -128,7 +117,6 @@ class TagService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create Tag error');
-      if (isDevelopment) return fake(exampleTags[0]) as IrminAPIResponse<Tag>;
       throw error;
     }
   }
@@ -151,7 +139,6 @@ class TagService {
     repository: string;
     tag: string;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
       const formData = new FormData();
       const response = await this.irminCore.fetchAPI(
@@ -164,7 +151,6 @@ class TagService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete Tag error');
-      if (isDevelopment) return fake() as IrminAPIResponse;
       throw error;
     }
   }

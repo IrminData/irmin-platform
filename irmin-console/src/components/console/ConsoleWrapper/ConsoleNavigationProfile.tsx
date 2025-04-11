@@ -16,11 +16,7 @@ import { useIAM } from '@/context/IAMContext';
  * This component is used to display the profile information in the console navigation sidebar.
  * Uses {@link useIAM} to interact with the user's identity and APIs.
  */
-export default function ConsoleNavigationProfile({
-  setIsMenuOpen,
-}: {
-  setIsMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}) {
+export default function ConsoleNavigationProfile() {
   const { profile, isLoading } = useIAM();
 
   if (!profile || isLoading) {
@@ -34,7 +30,7 @@ export default function ConsoleNavigationProfile({
   return (
     <div className='flex w-full flex-wrap items-center'>
       <div className='flex w-auto items-center p-1'>
-        <IrminUserButton onLinkClick={() => setIsMenuOpen(false)} />
+        <IrminUserButton />
       </div>
       <div className='w-auto overflow-hidden p-1'>
         <p className='text-foreground text-sm font-normal dark:text-gray-200'>

@@ -1,13 +1,7 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { User } from '@/types/core/User';
-import { exampleProfile } from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Profile API service
@@ -35,7 +29,6 @@ class ProfileService {
    * @returns IrminAPIResponse containing the user's profile.
    */
   async getProfile(): Promise<IrminAPIResponse<User>> {
-    if (isOfflineMode) return fake(exampleProfile) as IrminAPIResponse<User>;
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/profile`, {
         method: 'GET',
@@ -43,7 +36,6 @@ class ProfileService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Get profile error');
-      if (isDevelopment) return fake(exampleProfile) as IrminAPIResponse<User>;
       throw error;
     }
   }
@@ -75,7 +67,6 @@ class ProfileService {
     company?: string;
     avatar?: File | Blob;
   }): Promise<IrminAPIResponse<User>> {
-    if (isOfflineMode) return fake(exampleProfile) as IrminAPIResponse<User>;
     const formData = new FormData();
     if (first_name) formData.append('first_name', first_name);
     if (last_name) formData.append('last_name', last_name);
@@ -91,7 +82,6 @@ class ProfileService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update profile error');
-      if (isDevelopment) return fake(exampleProfile) as IrminAPIResponse<User>;
       throw error;
     }
   }

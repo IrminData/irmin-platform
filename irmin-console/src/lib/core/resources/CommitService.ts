@@ -1,13 +1,7 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { Commit, PathType } from '@/types/core/Commit';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { exampleCommits } from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Commit API service
@@ -49,8 +43,6 @@ class CommitService {
     repository: string;
     ref?: string;
   }): Promise<IrminAPIResponse<Commit[]>> {
-    if (isOfflineMode)
-      return fake(exampleCommits) as IrminAPIResponse<Commit[]>;
     try {
       const urlParams = new URLSearchParams();
       if (ref) urlParams.append('ref', ref);
@@ -61,8 +53,6 @@ class CommitService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Commits error');
-      if (isDevelopment)
-        return fake(exampleCommits) as IrminAPIResponse<Commit[]>;
       throw error;
     }
   }
@@ -85,8 +75,6 @@ class CommitService {
     repository: string;
     hash: string;
   }): Promise<IrminAPIResponse<Commit>> {
-    if (isOfflineMode)
-      return fake(exampleCommits[0]) as IrminAPIResponse<Commit>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/commits/${hash}`,
@@ -95,8 +83,6 @@ class CommitService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Commit error');
-      if (isDevelopment)
-        return fake(exampleCommits[0]) as IrminAPIResponse<Commit>;
       throw error;
     }
   }
@@ -122,8 +108,6 @@ class CommitService {
     branch: string;
     message: string;
   }): Promise<IrminAPIResponse<Commit>> {
-    if (isOfflineMode)
-      return fake(exampleCommits[0]) as IrminAPIResponse<Commit>;
     try {
       const formData = new FormData();
       formData.append('branch', branch);
@@ -136,8 +120,6 @@ class CommitService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create Commit error');
-      if (isDevelopment)
-        return fake(exampleCommits[0]) as IrminAPIResponse<Commit>;
       throw error;
     }
   }
@@ -166,7 +148,6 @@ class CommitService {
     path: string;
     pathType: PathType;
   }): Promise<IrminAPIResponse> {
-    if (isOfflineMode) return fake() as IrminAPIResponse;
     try {
       const formData = new FormData();
       formData.append('branch', branch);
@@ -183,7 +164,6 @@ class CommitService {
         (error as Error).message,
         'Revert Uncommitted Changes error'
       );
-      if (isDevelopment) return fake() as IrminAPIResponse;
       throw error;
     }
   }

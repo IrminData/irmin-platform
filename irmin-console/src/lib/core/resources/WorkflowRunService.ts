@@ -1,13 +1,7 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { WorkflowRun } from '@/types/core/WorkflowRun';
-import { exampleWorkflowRuns } from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Workflow Run API service
@@ -46,8 +40,6 @@ class WorkflowRunService {
     workspace: string;
     workflowID: string;
   }): Promise<IrminAPIResponse<WorkflowRun[]>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflowRuns) as IrminAPIResponse<WorkflowRun[]>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows/${workflowID}/runs`,
@@ -56,8 +48,6 @@ class WorkflowRunService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch workflow runs error');
-      if (isDevelopment)
-        return fake(exampleWorkflowRuns) as IrminAPIResponse<WorkflowRun[]>;
       throw error;
     }
   }
@@ -80,8 +70,6 @@ class WorkflowRunService {
     workflowID: string;
     runID: string;
   }): Promise<IrminAPIResponse<WorkflowRun>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflowRuns[0]) as IrminAPIResponse<WorkflowRun>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows/${workflowID}/runs/${runID}`,
@@ -90,8 +78,6 @@ class WorkflowRunService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch workflow run error');
-      if (isDevelopment)
-        return fake(exampleWorkflowRuns[0]) as IrminAPIResponse<WorkflowRun>;
       throw error;
     }
   }
@@ -114,8 +100,6 @@ class WorkflowRunService {
     workflowID: string;
     runID: string;
   }): Promise<IrminAPIResponse<WorkflowRun>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflowRuns[0]) as IrminAPIResponse<WorkflowRun>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows/${workflowID}/runs/${runID}`,
@@ -124,8 +108,6 @@ class WorkflowRunService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Cancel workflow run error');
-      if (isDevelopment)
-        return fake(exampleWorkflowRuns[0]) as IrminAPIResponse<WorkflowRun>;
       throw error;
     }
   }
@@ -145,8 +127,6 @@ class WorkflowRunService {
     workspace: string;
     workflowID: string;
   }): Promise<IrminAPIResponse<WorkflowRun>> {
-    if (isOfflineMode)
-      return fake(exampleWorkflowRuns[0]) as IrminAPIResponse<WorkflowRun>;
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows/${workflowID}/runs`,
@@ -155,8 +135,6 @@ class WorkflowRunService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Trigger workflow run error');
-      if (isDevelopment)
-        return fake(exampleWorkflowRuns[0]) as IrminAPIResponse<WorkflowRun>;
       throw error;
     }
   }

@@ -1,14 +1,8 @@
 import IrminCore from '@/lib/core';
 
-import fake from '@/utils/prepareFakeResponse';
-
 import { Commit } from '@/types/core/Commit';
 import { Diff, MergeStrategy } from '@/types/core/Diff';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { exampleCommits, exampleDiff } from '@/types/examples/core';
-
-const isOfflineMode = process.env.NEXT_PUBLIC_OFFLINE_MODE === 'true';
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * Diff Service: Merge and Compare API
@@ -51,7 +45,6 @@ class DiffService {
     baseRef: string;
     compareRef: string;
   }): Promise<IrminAPIResponse<Diff>> {
-    if (isOfflineMode) return fake(exampleDiff) as IrminAPIResponse<Diff>;
     try {
       const urlParams = new URLSearchParams();
       urlParams.append('base_ref', baseRef);
@@ -63,7 +56,6 @@ class DiffService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Error comparing refs');
-      if (isDevelopment) return fake(exampleDiff) as IrminAPIResponse<Diff>;
       throw error;
     }
   }
@@ -101,8 +93,6 @@ class DiffService {
     squash: boolean;
     allowEmpty: boolean;
   }): Promise<IrminAPIResponse<Commit>> {
-    if (isOfflineMode)
-      return fake(exampleCommits[0]) as IrminAPIResponse<Commit>;
     try {
       const params = new URLSearchParams();
       params.append('base_ref', baseRef);
@@ -124,8 +114,6 @@ class DiffService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Error merging refs');
-      if (isDevelopment)
-        return fake(exampleCommits[0]) as IrminAPIResponse<Commit>;
       throw error;
     }
   }
