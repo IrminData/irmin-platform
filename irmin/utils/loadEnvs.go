@@ -14,6 +14,8 @@ type CoreAPIEnv struct {
 	Port                     string // Port to run the Core API server on
 	URL                      string // URL of the Core API server
 	SystemToken              string // Token to authenticate system requests to the API
+	CorsEnabled              bool   // Flag to enable CORS
+	CorsOrigins              string // Allowed origins for CORS
 	SqidAlphabet             string // Alphabet to use for SQIDs
 	DatabaseConnectionString string // Postgres DB connection string
 	ResendAPIKey             string // Resend API Key for emails
@@ -94,6 +96,19 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 	token, err := getEnv("TOKEN", false, "token-undefined")
+	if err != nil {
+		return nil, err
+	}
+
+	corsEnabledStr, err := getEnv("CORS_ENABLED", false, "false")
+	if err != nil {
+		return nil, err
+	}
+	corsEnabled, err := strconv.ParseBool(corsEnabledStr)
+	if err != nil {
+		return nil, err
+	}
+	corsOrigins, err := getEnv("CORS_ORIGINS", false, "https://localhost:3000")
 	if err != nil {
 		return nil, err
 	}
@@ -219,6 +234,8 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		Port:                     port,
 		URL:                      url,
 		SystemToken:              token,
+		CorsEnabled:              corsEnabled,
+		CorsOrigins:              corsOrigins,
 		SqidAlphabet:             sqidAlphabet,
 		DatabaseConnectionString: databaseConnectionString,
 		ResendAPIKey:             resendAPIKey,

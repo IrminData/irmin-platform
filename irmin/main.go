@@ -8,11 +8,13 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cache"
 	"github.com/gofiber/fiber/v3/middleware/compress"
+	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/requestid"
 )
 
@@ -48,7 +50,10 @@ func main() {
 	}
 
 	// Initialize a new Fiber app
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		AppName:   "Irmin API",
+		BodyLimit: 100 * 1024 * 1024, // 100 MB
+	})
 
 	// Return request ID in the response headers
 	app.Use(requestid.New())
@@ -90,6 +95,23 @@ func main() {
 			},
 		},
 	))
+
+	// Enable CORS if configured
+	if env.CorsEnabled {
+		log.Println("CORS is enabled")
+		// Split the allowed origins into a slice
+		allowedOrigins := strings.Split(env.CorsOrigins, ",")
+		// Trim whitespace from each origin
+		for i, origin := range allowedOrigins {
+			allowedOrigins[i] = strings.TrimSpace(origin)
+		}
+		log.Println("Allowed origins:", allowedOrigins)
+		// Enable CORS with default settings
+		app.Use(cors.New(cors.Config{
+			AllowOrigins:     allowedOrigins,
+			AllowCredentials: true,
+		}))
+	}
 
 	// Register the API routes
 	routes.RegisterAPIRoutes(app)

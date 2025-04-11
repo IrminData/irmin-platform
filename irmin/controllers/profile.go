@@ -64,7 +64,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	newProfilePicture, _ := c.FormFile("profile_picture")
 
 	// Parse the request body.
-	fields, err := utils.ParseFormFields(c, []string{"first_name", "last_name", "email", "phone", "company"}, nil)
+	fields, err := utils.ParseFormFields(c, []string{"first_name", "last_name", "email", "phone"}, []string{"company"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{

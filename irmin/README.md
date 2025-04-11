@@ -29,6 +29,9 @@ PORT=8082
 URL=http://localhost:8082
 TOKEN=...
 
+CORS_ENABLED=true
+CORS_ORIGINS=https://console.irmin.dev,https://connectors.irmin.dev
+
 SQID_ALPHABET=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
 
 DATABASE_CONNECTION_STRING=postgresql://user:pwd@localhost:5432/irmin
