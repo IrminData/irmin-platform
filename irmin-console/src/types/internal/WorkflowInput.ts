@@ -20,7 +20,6 @@ export interface ExportWorkflowableInput {
   repository: string;
   branch: string;
   path: string;
-  recursive: boolean;
 }
 
 export interface ActionWorkflowableInput {

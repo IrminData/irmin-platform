@@ -1,5 +1,8 @@
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
+/**
+ * Workflows loading UI
+ */
 export default function WorkflowsLoading() {
   return (
     <div

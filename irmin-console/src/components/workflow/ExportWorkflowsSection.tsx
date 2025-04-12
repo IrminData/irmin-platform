@@ -137,12 +137,12 @@ export default function ExportWorkflowsSection({
             // Workflowable properties
             workflowable: {
               type: 'export',
-              connection: connections[0].id ?? '',
+              connection: connections.length > 0 ? connections[0].id : '',
               connection_path: '',
-              repository: repositories[0].slug ?? '',
-              branch: repositories[0].default_branch ?? '',
+              repository: repositories.length > 0 ? repositories[0].slug : '',
+              branch:
+                repositories.length > 0 ? repositories[0].default_branch : '',
               path: '',
-              recursive: false,
             },
           }}
         />

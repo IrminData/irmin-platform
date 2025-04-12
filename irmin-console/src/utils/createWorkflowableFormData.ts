@@ -15,15 +15,6 @@ import {
  * This function serialises the `WorkflowableInput` into a FormData object by appending each of its properties
  * as individual fields. Depending on the input type, it processes and appends the relevant properties accordingly.
  *
- * - For import workflowable input:
- *   - connection, connection_path, repository, branch, path
- * - For export workflowable input:
- *   - connection, connection_path, repository, branch, path, recursive
- * - For action workflowable input:
- *   - executable, repository, branch, path (optional)
- * - For pipeline workflowable input:
- *   - live, stages (with properties per stage)
- *
  * @param input - The `WorkflowableInput` object containing the workflowable configuration.
  * @returns A FormData object containing the `WorkflowableInput` fields, ready to be used in an HTTP request.
  *
@@ -36,7 +27,6 @@ import {
  *   repository: 'my-repo',
  *   branch: 'main',
  *   path: '/path/to/repo',
- *   recursive: true,
  * };
  * const formData = createWorkflowableFormData(input);
  * ```
@@ -117,7 +107,6 @@ export default function createWorkflowableFormData(
       formData.append('repository', exportInput.repository);
       formData.append('branch', exportInput.branch);
       formData.append('path', exportInput.path);
-      formData.append('recursive', exportInput.recursive.toString());
       break;
     }
     case 'import': {

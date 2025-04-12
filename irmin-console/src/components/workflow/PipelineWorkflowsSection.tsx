@@ -75,7 +75,7 @@ export default function PipelineWorkflowsSection({
 
   const closeModal = useCallback(() => {
     if (sideModalOpen) {
-      router.push('../actions');
+      router.push('../pipelines');
     } else {
       setIsOpen(false);
     }
@@ -83,7 +83,7 @@ export default function PipelineWorkflowsSection({
 
   const openModal = useCallback(() => {
     if (!sideModalOpen) {
-      router.push('actions/create');
+      router.push('pipelines/create');
     } else {
       setIsOpen(true);
       setCurrentStep(1);

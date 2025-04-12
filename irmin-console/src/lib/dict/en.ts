@@ -340,7 +340,6 @@ const en = {
     exportSourceRepository: 'Export from repository',
     exportSourceBranch: 'Export from branch',
     exportSourcePath: 'Export from path',
-    exportRecursive: 'Recursive export',
     livePipeline: 'Live pipeline',
     triggeredBy: 'Triggered by',
     duration: 'Duration',

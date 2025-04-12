@@ -75,7 +75,7 @@ export default function ImportWorkflowsSection({
 
   const closeModal = useCallback(() => {
     if (sideModalOpen) {
-      router.push('../actions');
+      router.push('../imports');
     } else {
       setIsOpen(false);
     }
@@ -83,7 +83,7 @@ export default function ImportWorkflowsSection({
 
   const openModal = useCallback(() => {
     if (!sideModalOpen) {
-      router.push('actions/create');
+      router.push('imports/create');
     } else {
       setIsOpen(true);
       setCurrentStep(1);
@@ -137,10 +137,11 @@ export default function ImportWorkflowsSection({
             // Workflowable properties
             workflowable: {
               type: 'import',
-              connection: connections[0].id ?? '',
+              connection: connections.length > 0 ? connections[0].id : '',
               connection_path: '',
-              repository: repositories[0].slug ?? '',
-              branch: repositories[0].default_branch ?? '',
+              repository: repositories.length > 0 ? repositories[0].slug : '',
+              branch:
+                repositories.length > 0 ? repositories[0].default_branch : '',
               path: '',
             },
           }}

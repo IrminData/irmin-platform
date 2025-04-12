@@ -381,37 +381,6 @@ function ConfigureWorkflowable({
                 }
               />
             </div>
-            <div className='flex flex-col gap-2'>
-              <Label>{dict.workflow.exportRecursive}</Label>
-              <ReactSelect
-                value={
-                  workflowable.recursive
-                    ? { value: true, label: dict.common.yes }
-                    : { value: false, label: dict.common.no }
-                }
-                onChange={(newValue) =>
-                  setWorkflowData({
-                    ...workflowData,
-                    workflowable: {
-                      ...(workflowable as ExportWorkflowableInput),
-                      recursive: newValue ? newValue.value : false,
-                    },
-                  })
-                }
-                options={[
-                  {
-                    value: true,
-                    label: dict.common.yes,
-                  },
-                  {
-                    value: false,
-                    label: dict.common.no,
-                  },
-                ]}
-                className='react-select-container w-full'
-                classNamePrefix='react-select'
-              />
-            </div>
           </>
         )}
         {workflowable.type === 'pipeline' && (

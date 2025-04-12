@@ -29,7 +29,7 @@ export default function WorkflowsLayoutWrapper({
   // The base URL for the workflow, eg. /en/workspace/workspace-slug/workflows
   const baseUrl = useBaseUrl({
     pathname: '',
-    segment: 'workspace',
+    segment: 'workflows',
     includeSegment: true,
   });
 

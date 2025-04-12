@@ -343,7 +343,6 @@ const fi = {
     exportSourceRepository: 'Vientilähteen data-arkisto',
     exportSourceBranch: 'Vientilähteen haara',
     exportSourcePath: 'Vientilähteen polku',
-    exportRecursive: 'Rekursiivinen vienti',
     livePipeline: 'Live-dataputki',
     triggeredBy: 'Laukaisija',
     duration: 'Kesto',
