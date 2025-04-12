@@ -10,13 +10,15 @@ import {
   useState,
 } from 'react';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 
-import { getProfile, updateProfile } from '@/lib/actions/profile';
-import { defaultLocale } from '@/lib/dict';
+import { getProfile } from '@/lib/actions/profile';
+import IrminCore from '@/lib/core';
+import { getToken } from '@/lib/getToken';
 
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { User } from '@/types/core/User';
@@ -48,7 +50,7 @@ const IAMContext = createContext<{
  */
 export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
-  const { lang } = useParams();
+  const { locale } = useLocale();
   const { irminAlert } = usePopup();
   const { isSignedIn, isLoaded: clerkIsLoaded } = useUser();
   const { sessionId, signOut: clerkSignOut } = useAuth();
@@ -115,11 +117,11 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       if (!isSignedIn) {
         resetIAMState();
-        router.replace(`/${lang ?? defaultLocale}/sign-in`);
+        router.replace(`/${locale}/sign-in`);
         return false;
       }
 
-      router.replace(`/${lang ?? defaultLocale}/sign-in`);
+      router.replace(`/${locale}/sign-in`);
       await clerkSignOut();
       resetIAMState();
       return true;
@@ -130,7 +132,7 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       signingOutRef.current = false;
     }
-  }, [clerkSignOut, resetIAMState, irminAlert, lang, isSignedIn, router]);
+  }, [clerkSignOut, resetIAMState, irminAlert, locale, isSignedIn, router]);
 
   const handleUpdateProfile = useCallback(
     async (
@@ -142,7 +144,9 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
       profile_picture?: FileList
     ) => {
       try {
-        const res = await updateProfile({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.profileService.updateProfile({
           first_name,
           last_name,
           email,

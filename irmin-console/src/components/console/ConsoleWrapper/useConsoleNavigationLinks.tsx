@@ -116,82 +116,92 @@ const useConsoleNavigationLinks = (): {
     [workspaceUrl, dict, isActiveLink]
   );
 
-  const noWorkspaceLinks = [
-    {
-      title: dict.consoleNavigation.workspaces,
-      href: `/${locale}/workspace`,
-      icon: <TbDashboard />,
-    },
-    {
-      title: dict.consoleNavigation.goToWebsite,
-      href: `${websiteURL}/${locale}`,
-      icon: <TbChevronLeft />,
-    },
-  ].map((link) => ({
-    ...link,
-    active: isActiveLink(link.href),
-  }));
+  const noWorkspaceLinks = useMemo(
+    () =>
+      [
+        {
+          title: dict.consoleNavigation.workspaces,
+          href: `/${locale}/workspace`,
+          icon: <TbDashboard />,
+        },
+        {
+          title: dict.consoleNavigation.goToWebsite,
+          href: `${websiteURL}/${locale}`,
+          icon: <TbChevronLeft />,
+        },
+      ].map((link) => ({
+        ...link,
+        active: isActiveLink(link.href),
+      })),
+    [locale, isActiveLink, dict]
+  );
 
-  const settingsLinks = [
-    {
-      title: dict.consoleNavigation.workspaceSettings,
-      href: `${workspaceUrl}/settings`,
-      icon: <TbSettings />,
-      active: isActiveLink(`${workspaceUrl}/settings`),
-      workspaceOnly: true,
-    },
-    {
-      title: dict.consoleNavigation.myProfile,
-      href: `/${locale}/profile`,
-      icon: <TbUser />,
-      active: isActiveLink(`/${locale}/profile`),
-    },
-    {
-      title: dict.consoleNavigation.signOut,
-      action: signOut,
-      icon: <TbLogout />,
-      active: false,
-    },
-  ];
+  const settingsLinks = useMemo(
+    () => [
+      {
+        title: dict.consoleNavigation.workspaceSettings,
+        href: `${workspaceUrl}/settings`,
+        icon: <TbSettings />,
+        active: isActiveLink(`${workspaceUrl}/settings`),
+        workspaceOnly: true,
+      },
+      {
+        title: dict.consoleNavigation.myProfile,
+        href: `/${locale}/profile`,
+        icon: <TbUser />,
+        active: isActiveLink(`/${locale}/profile`),
+      },
+      {
+        title: dict.consoleNavigation.signOut,
+        action: signOut,
+        icon: <TbLogout />,
+        active: false,
+      },
+    ],
+    [locale, isActiveLink, signOut, workspaceUrl, dict]
+  );
 
-  const usefulLinks = [
-    {
-      title: dict.consoleNavigation.guides,
-      href: `${websiteURL}/${locale}/legal`,
-      icon: <TbBook />,
-      props: {
-        target: '_blank',
+  const usefulLinks = useMemo(
+    () => [
+      {
+        title: dict.consoleNavigation.guides,
+        href: `${websiteURL}/${locale}/legal`,
+        icon: <TbBook />,
+        props: {
+          target: '_blank',
+        },
+        active: false,
       },
-      active: false,
-    },
-    {
-      title: dict.consoleNavigation.developerDocs,
-      href: `${websiteURL}/${locale}/docs`,
-      icon: <MdCode />,
-      props: {
-        target: '_blank',
+      {
+        title: dict.consoleNavigation.developerDocs,
+        href: `${websiteURL}/${locale}/docs`,
+        icon: <MdCode />,
+        props: {
+          target: '_blank',
+        },
+        active: false,
       },
-      active: false,
-    },
-    {
-      title: dict.consoleNavigation.contactSupport,
-      href: `${websiteURL}/${locale}/contact`,
-      icon: <TbHelp />,
-      props: {
-        target: '_blank',
+      {
+        title: dict.consoleNavigation.contactSupport,
+        href: `${websiteURL}/${locale}/contact`,
+        icon: <TbHelp />,
+        props: {
+          target: '_blank',
+        },
+        active: false,
       },
-      active: false,
-    },
-    {
-      title: dict.consoleNavigation.termsAndPrivacy,
-      href: `${websiteURL}/${locale}/legal`,
-      icon: <MdOutlinePrivacyTip />,
-      props: {
-        target: '_blank',
+      {
+        title: dict.consoleNavigation.termsAndPrivacy,
+        href: `${websiteURL}/${locale}/legal`,
+        icon: <MdOutlinePrivacyTip />,
+        props: {
+          target: '_blank',
+        },
+        active: false,
       },
-      active: false,
-    },
-  ];
+    ],
+    [locale, dict]
+  );
 
   return {
     hasWorkspace: workspaceLinks,

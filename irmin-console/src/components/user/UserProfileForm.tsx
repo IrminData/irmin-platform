@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { SubmitHandler, useForm } from 'react-hook-form';
 
@@ -62,17 +62,6 @@ export default function UserProfileForm() {
     [updateProfile]
   );
 
-  const watchProfilePicture = watch('profile_picture');
-
-  useEffect(() => {
-    if (watchProfilePicture && watchProfilePicture.length > 0) {
-      const file = watchProfilePicture[0];
-      if (file) {
-        setPreviewUrl(URL.createObjectURL(file));
-      }
-    }
-  }, [watchProfilePicture]);
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
       <div className='mb-4 flex justify-center'>
@@ -96,6 +85,12 @@ export default function UserProfileForm() {
           type='file'
           accept='image/*'
           {...register('profile_picture')}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              setPreviewUrl(URL.createObjectURL(file));
+            }
+          }}
           className='file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:mr-4 file:rounded-full file:border-0 file:px-4 file:py-2 file:text-sm file:font-semibold'
         />
       </div>
