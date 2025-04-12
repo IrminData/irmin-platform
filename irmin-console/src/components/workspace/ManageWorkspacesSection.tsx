@@ -92,7 +92,7 @@ const ManageWorkspacesSection = ({
   );
 
   return (
-    <div className='relative container mx-auto max-w-6xl'>
+    <div className='relative container mx-auto max-w-7xl'>
       <div className='flex flex-col'>
         <ConsoleTitle title={dict.workspaceSwitcher.manageWorkspaces} />
         <div className='flex flex-col gap-4 px-4 pb-28 lg:flex-row-reverse'>

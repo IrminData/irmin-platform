@@ -38,7 +38,7 @@ export default async function ConnectorPage(props: {
   if (!connector.data) return notFound();
 
   return (
-    <div className='relative container mx-auto max-w-6xl py-8'>
+    <div className='relative container mx-auto max-w-7xl py-8'>
       <ConnectorSection connector={connector.data} />
     </div>
   );

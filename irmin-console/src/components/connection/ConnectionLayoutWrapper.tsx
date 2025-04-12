@@ -102,14 +102,14 @@ export default function ConnectionLayoutWrapper({
 
   if (!connection)
     return (
-      <div className='relative container mx-auto max-w-6xl py-12'>
+      <div className='relative container mx-auto max-w-7xl py-12'>
         <LoadingSkeleton className='h-96' />
       </div>
     );
 
   return (
     <>
-      <div className='relative container mx-auto max-w-6xl'>
+      <div className='relative container mx-auto max-w-7xl'>
         <div className='mx-auto my-4 flex w-full flex-col px-2 md:px-4 lg:flex-row lg:items-center'>
           <div className='flex flex-col gap-2 py-4'>
             <div className='flex flex-row items-center divide-x divide-gray-300 dark:divide-gray-700'>

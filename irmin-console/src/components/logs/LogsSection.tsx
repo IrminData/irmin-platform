@@ -79,7 +79,7 @@ export default function LogsSection({
   }, [searchQuery, logEvents]);
 
   return (
-    <div className='relative container mx-auto max-w-6xl'>
+    <div className='relative container mx-auto max-w-7xl'>
       <div className='flex flex-col px-2 py-12 md:px-4'>
         <div className='mb-12 flex items-center gap-8'>
           {(workflow || repository || connection) && (

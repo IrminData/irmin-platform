@@ -52,7 +52,7 @@ export default function TokensSection({
   }, [irminModal, dict, createToken]);
 
   return (
-    <ContentWrapper wrapperClassName='max-w-6xl py-4'>
+    <ContentWrapper wrapperClassName='max-w-7xl py-4'>
       <div className='flex flex-row items-center justify-end px-2'>
         <Button size='sm' variant='default' onClick={handleCreateToken}>
           {dict.tokens.createAPIToken}

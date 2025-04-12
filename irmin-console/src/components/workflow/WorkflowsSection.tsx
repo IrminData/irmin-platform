@@ -80,7 +80,7 @@ export default function WorkflowsSection({
   };
 
   return (
-    <div className='relative container mx-auto max-w-6xl px-4 py-8'>
+    <div className='relative container mx-auto max-w-7xl px-4 py-8'>
       <div className='my-4 flex flex-row items-center justify-between gap-4'>
         <h2 className='font-display text-foreground/80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
           {dict.workflow.workflows}

@@ -50,7 +50,7 @@ const DocumentationForm = ({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <div className='container mx-auto mb-4 flex max-w-6xl flex-row items-center justify-end gap-2'>
+      <div className='container mx-auto mb-4 flex max-w-7xl flex-row items-center justify-end gap-2'>
         <Button
           onClick={() =>
             setDocumentationEditorType(

@@ -34,7 +34,7 @@ const ConnectionSection = ({ workflows }: { workflows: Workflow[] }) => {
   );
 
   return (
-    <div className='relative container mx-auto max-w-6xl'>
+    <div className='relative container mx-auto max-w-7xl'>
       <div className='my-4 flex flex-col gap-4 p-4'>
         <div className='bg-background text-foreground flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg p-4 text-sm lg:text-lg'>
           <ConnectorInfoSmall connector={connection.connector} />

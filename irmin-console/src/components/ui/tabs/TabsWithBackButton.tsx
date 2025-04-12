@@ -37,7 +37,7 @@ const TabsWithBackButton = ({
               <Button
                 key={`tab-${idx}`}
                 className={`rounded-b-none border shadow-none hover:no-underline ${tab.active ? 'border-accent border-0 border-b-2 border-solid' : ''}`}
-                size='sm'
+                size='default'
                 variant={'ghost'}
                 href={tab.link}
                 aria-label={`Tab ${tab.name}`}

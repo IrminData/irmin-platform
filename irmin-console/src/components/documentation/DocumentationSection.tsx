@@ -52,7 +52,7 @@ export default function DocumentationSection({
 
   return (
     <div className='bg-background'>
-      <div className='relative container mx-auto max-w-6xl'>
+      <div className='relative container mx-auto max-w-7xl'>
         <div className='flex flex-col px-2 md:px-4'>
           <Button
             variant='gray'

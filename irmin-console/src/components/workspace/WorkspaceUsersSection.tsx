@@ -25,7 +25,7 @@ const WorkspaceUsersSection = () => {
   const { workspace, transferWorkspace } = useWorkspace();
 
   return (
-    <ContentWrapper wrapperClassName='max-w-6xl py-4'>
+    <ContentWrapper wrapperClassName='max-w-7xl py-4'>
       <table className='min-w-full'>
         <thead>
           <tr className='border-b dark:border-gray-800'>

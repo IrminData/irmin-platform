@@ -49,7 +49,7 @@ export default function WorkflowRunLogsSection({
 
   return (
     <div className='flex flex-col px-2 pt-12 md:px-4'>
-      <div className='container mx-auto mb-12 max-w-6xl'>
+      <div className='container mx-auto mb-12 max-w-7xl'>
         <div className='mb-12 flex items-center gap-8'>
           <ButtonWithTooltip
             size='icon'

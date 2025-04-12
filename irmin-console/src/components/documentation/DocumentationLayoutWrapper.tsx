@@ -41,7 +41,7 @@ export default function DocumentationLayoutWrapper({
   );
   return (
     <div id='console-documentation-layout-wrapper'>
-      <div className='relative container mx-auto max-w-6xl'>
+      <div className='relative container mx-auto max-w-7xl'>
         <Tabs tabs={tabs} />
       </div>
       {children}
