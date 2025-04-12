@@ -2756,9 +2756,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@novu/js@npm:3.0.3":
-  version: 3.0.3
-  resolution: "@novu/js@npm:3.0.3"
+"@novu/js@npm:3.1.0":
+  version: 3.1.0
+  resolution: "@novu/js@npm:3.1.0"
   dependencies:
     "@floating-ui/dom": "npm:^1.6.13"
     class-variance-authority: "npm:^0.7.0"
@@ -2769,7 +2769,7 @@ __metadata:
     solid-js: "npm:^1.8.11"
     solid-motionone: "npm:^1.0.3"
     tailwind-merge: "npm:^2.4.0"
-  checksum: 10c0/101622829de079f8bb4e6dab84e247f84b95d5a4c498cf26547cd310092a1f2e3fae2d7fa1dafadfdc4a6d4eedce9e9a525837923911423dac4f05433645e74b
+  checksum: 10c0/9d4cbc58cd89cb3a3ae8e024dc973dd7d832f49f1ec6725ffdd9b3dca0846a6b8b5777035f194858f28f33627e76831931792c23adc94790a025290e3ce3d65e
   languageName: node
   linkType: hard
 
@@ -2788,18 +2788,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@novu/react@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "@novu/react@npm:3.0.3"
+"@novu/react@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "@novu/react@npm:3.1.0"
   dependencies:
-    "@novu/js": "npm:3.0.3"
+    "@novu/js": "npm:3.1.0"
   peerDependencies:
     react: ^18.0.0 || ^19.0.0 || ^19.0.0-0
     react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-0
   peerDependenciesMeta:
     react-dom:
       optional: true
-  checksum: 10c0/3ab7155efa964d1228852ba3ee7f4ff14f8ad870d367bef5435b3581823db2d68e6d139a3eeda48f3f336d106b89a3650a2c479da102d13bd911b5a56beccd64
+  checksum: 10c0/9ad4ed710687eab2baadc7b50945221e2a3c2a187afef3a595427ccaaf6f0eb094a55ba298fc081402aace05efc73d3d15ba84a0fd7f01e43bdd1c509b8ea4bf
   languageName: node
   linkType: hard
 
@@ -5561,12 +5561,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^22.14.0":
-  version: 22.14.0
-  resolution: "@types/node@npm:22.14.0"
+"@types/node@npm:^22.14.1":
+  version: 22.14.1
+  resolution: "@types/node@npm:22.14.1"
   dependencies:
     undici-types: "npm:~6.21.0"
-  checksum: 10c0/9d79f3fa1af9c2c869514f419c4a4905b34c10e12915582fd1784868ac4e74c6d306cf5eb47ef889b6750ab85a31be96618227b86739c4a3e0b1c15063f384c6
+  checksum: 10c0/d49c4d00403b1c2348cf0701b505fd636d80aabe18102105998dc62fdd36dcaf911e73c7a868c48c21c1022b825c67b475b65b1222d84b704d8244d152bb7f86
   languageName: node
   linkType: hard
 
@@ -5651,12 +5651,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:^19.1.0":
-  version: 19.1.0
-  resolution: "@types/react@npm:19.1.0"
+"@types/react@npm:^19.1.1":
+  version: 19.1.1
+  resolution: "@types/react@npm:19.1.1"
   dependencies:
     csstype: "npm:^3.0.2"
-  checksum: 10c0/632fd20ee176e55801a61c5f854141b043571a3e363ef106b047b766a813a12735cbb37abb3d61d126346979f530f2ed269a60c8ef3cdee54e5e9fe4174e5dad
+  checksum: 10c0/d22417857460ade4250806135a3d1e2558737a7ae76f120f88afbc6419ab04312977a5208a70d4f85059b9493c0f1f16c9ba1483aa8ea1dad581da666c95773e
   languageName: node
   linkType: hard
 
@@ -8950,7 +8950,7 @@ __metadata:
     "@melloware/react-logviewer": "npm:^6.2.0"
     "@microlink/react-json-view": "npm:^1.26.1"
     "@novu/node": "npm:^2.6.6"
-    "@novu/react": "npm:^3.0.3"
+    "@novu/react": "npm:^3.1.0"
     "@playwright/test": "npm:^1.51.1"
     "@radix-ui/react-avatar": "npm:^1.1.4"
     "@radix-ui/react-checkbox": "npm:^1.1.5"
@@ -8966,9 +8966,9 @@ __metadata:
     "@tailwindcss/postcss": "npm:^4.1.3"
     "@trivago/prettier-plugin-sort-imports": "npm:^5.2.2"
     "@types/eslint": "npm:9.6.1"
-    "@types/node": "npm:^22.14.0"
+    "@types/node": "npm:^22.14.1"
     "@types/postcss-flexbugs-fixes": "npm:^5.0.3"
-    "@types/react": "npm:^19.1.0"
+    "@types/react": "npm:^19.1.1"
     "@types/react-dom": "npm:^19.1.2"
     "@typescript-eslint/eslint-plugin": "npm:8.29.1"
     "@typescript-eslint/parser": "npm:8.29.1"
@@ -8996,7 +8996,7 @@ __metadata:
     prettier-plugin-tailwindcss: "npm:^0.6.11"
     react: "npm:19.1.0"
     react-datasheet-grid: "npm:^4.11.5"
-    react-day-picker: "npm:^9.6.5"
+    react-day-picker: "npm:^9.6.6"
     react-diff-viewer: "npm:^3.1.1"
     react-dom: "npm:19.1.0"
     react-icons: "npm:^5.5.0"
@@ -12051,16 +12051,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-day-picker@npm:^9.6.5":
-  version: 9.6.5
-  resolution: "react-day-picker@npm:9.6.5"
+"react-day-picker@npm:^9.6.6":
+  version: 9.6.6
+  resolution: "react-day-picker@npm:9.6.6"
   dependencies:
     "@date-fns/tz": "npm:^1.2.0"
     date-fns: "npm:^4.1.0"
     date-fns-jalali: "npm:^4.1.0-0"
   peerDependencies:
     react: ">=16.8.0"
-  checksum: 10c0/a5669ef02b5383e375371353ee012e22ed22d1cbee18f2e4d18fcebeb177a10fa850396c4773c2931cbde45b7ad10df2300550d315546db0988a2e1d4b4b6492
+  checksum: 10c0/0283a4a0598addf711318c68131262f83faa937cde5c0495ffb78f9e9c543c89f590c85fe9107ead32ca374d8b34dc1535cff5c92f37cb00cf396914e2d5b85f
   languageName: node
   linkType: hard
 

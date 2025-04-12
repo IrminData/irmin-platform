@@ -36,7 +36,6 @@ export default function UserProfileForm() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    watch,
   } = useForm<ProfileFormInputs>({
     defaultValues: {
       first_name: profile?.first_name || '',

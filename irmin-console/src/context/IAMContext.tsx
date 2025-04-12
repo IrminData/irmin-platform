@@ -172,7 +172,7 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
         return false;
       }
     },
-    [irminAlert]
+    [irminAlert, locale]
   );
 
   /**
