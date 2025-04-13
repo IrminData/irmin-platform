@@ -6,14 +6,14 @@ import (
 	"net/http"
 
 	postgresClient "irmin-connectors/connectors/postgres/client"
-	"irmin-connectors/utils"
+	"irmin-connectors/lib"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the operation token
-	tokenValid, _, operation := utils.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
+	tokenValid, _, operation := lib.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
 	if !tokenValid {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return

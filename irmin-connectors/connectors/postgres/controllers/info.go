@@ -2,8 +2,8 @@ package postgresControllers
 
 import (
 	"encoding/json"
+	"irmin-connectors/lib"
 	"irmin-connectors/models"
-	"irmin-connectors/utils"
 	"net/http"
 	"os"
 )
@@ -35,7 +35,7 @@ func Info(w http.ResponseWriter, r *http.Request) {
 	info.ReadMoreURL = baseUrl + info.ReadMoreURL
 
 	// Make sure the request is authorized by validating the system token
-	if !utils.ValidateConnectorSystemToken(info.Name, w, r) {
+	if !lib.ValidateConnectorSystemToken(info.Name, w, r) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}

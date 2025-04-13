@@ -2,18 +2,25 @@ package db
 
 import (
 	"fmt"
+	"irmin-connectors/utils"
 
-	"github.com/glebarez/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 // DB is a global handle to the database connection.
 var DB *gorm.DB
 
-// InitialiseDB opens (or creates) a SQLite database file, performs any necessary migrations,
+// InitialiseDB opens a Postgres DB connections, performs any necessary migrations,
 // and returns an error if something goes wrong.
-func InitialiseDB(path string) error {
-	db, err := gorm.Open(sqlite.Open(path), &gorm.Config{})
+func InitialiseDB() error {
+	env, err := utils.LoadEnv()
+	if err != nil {
+		return fmt.Errorf("failed to load environment variables: %w", err)
+	}
+
+	// Open the connection to the Postgres database.
+	db, err := gorm.Open(postgres.Open(env.DatabaseConnectionString), &gorm.Config{})
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
 	}

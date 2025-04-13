@@ -30,6 +30,8 @@ URL=http://localhost:8080
 
 IRMIN_API_BASE_URL=https://api.irmin.dev
 IRMIN_API_TOKEN=...
+
+DATABASE_CONNECTION_STRING=postgres://user:password@localhost:5432/database
 ```
 
 ## Creating a new connector

@@ -2,13 +2,14 @@ package postgresControllers
 
 import (
 	"irmin-connectors/db"
+	"irmin-connectors/lib"
 	"irmin-connectors/utils"
 	"net/http"
 )
 
 func OperationCancel(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the system token
-	if !utils.ValidateConnectorSystemToken(defaultConnectorInfo.Name, w, r) {
+	if !lib.ValidateConnectorSystemToken(defaultConnectorInfo.Name, w, r) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}

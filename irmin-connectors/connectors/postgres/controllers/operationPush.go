@@ -9,13 +9,14 @@ import (
 	"strings"
 
 	postgresClient "irmin-connectors/connectors/postgres/client"
+	"irmin-connectors/lib"
 	"irmin-connectors/utils"
 )
 
 // OperationPush receives data for a specific table as a JSON file and replaces all rows in that table.
 func OperationPush(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the operation token
-	tokenValid, _, operation := utils.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
+	tokenValid, _, operation := lib.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
 	if !tokenValid {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return

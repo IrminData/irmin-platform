@@ -10,10 +10,11 @@ import (
 
 // ConnectorsEnv is a struct that holds the environment variables for the connectors server.
 type ConnectorsEnv struct {
-	Port       string // Port to run the connectors server on
-	URL        string // URL of the connectors server
-	APIBaseURL string // Base URL of the Irmin Core API
-	APIToken   string // Token to authenticate system requests to the Irmin Core API
+	Port                     string // Port to run the connectors server on
+	URL                      string // URL of the connectors server
+	APIBaseURL               string // Base URL of the Irmin Core API
+	APIToken                 string // Token to authenticate system requests to the Irmin Core API
+	DatabaseConnectionString string // Connection string for the database
 }
 
 // getEnv retrieves a single environment variable. If required and missing, returns an error.
@@ -77,10 +78,16 @@ func LoadEnv() (*ConnectorsEnv, error) {
 		return nil, err
 	}
 
+	dbConnStr, err := getEnv("DATABASE_CONNECTION_STRING", true, "")
+	if err != nil {
+		return nil, err
+	}
+
 	return &ConnectorsEnv{
-		Port:       port,
-		URL:        url,
-		APIBaseURL: apiBaseURL,
-		APIToken:   apiToken,
+		Port:                     port,
+		URL:                      url,
+		APIBaseURL:               apiBaseURL,
+		APIToken:                 apiToken,
+		DatabaseConnectionString: dbConnStr,
 	}, nil
 }

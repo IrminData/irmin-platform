@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	postgresClient "irmin-connectors/connectors/postgres/client"
 	"irmin-connectors/db"
+	"irmin-connectors/lib"
 	"irmin-connectors/utils"
 	"net/http"
 )
 
 func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the operation token
-	tokenValid, registration, operation := utils.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
+	tokenValid, registration, operation := lib.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
 	if !tokenValid {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return

@@ -3,6 +3,7 @@ package connectors
 import (
 	"fmt"
 	"irmin-connectors/db"
+	"irmin-connectors/lib"
 	"irmin-connectors/utils"
 
 	irminCore "github.com/IrminData/irmin-sdk-go/core-api"
@@ -43,7 +44,7 @@ func registerConnector(apiBaseURL, apiToken, baseUrl, connectorName, connectorSl
 		fmt.Println(res.Message)
 
 		// Update the connector in the database
-		err = utils.UpdateConnectorInDB(newConnector.ID, token, connectorName)
+		err = lib.UpdateConnectorInDB(newConnector.ID, token, connectorName)
 		if err != nil {
 			return nil, fmt.Errorf("error updating connector in the database: %v", err)
 		}
@@ -79,7 +80,7 @@ func registerConnector(apiBaseURL, apiToken, baseUrl, connectorName, connectorSl
 	}
 
 	// Create a new connector in the database
-	err = utils.UpdateConnectorInDB(newConnector.ID, token, connectorName)
+	err = lib.UpdateConnectorInDB(newConnector.ID, token, connectorName)
 	if err != nil {
 		return nil, fmt.Errorf("error updating connector in the database: %v", err)
 	}

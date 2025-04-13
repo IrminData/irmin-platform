@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// Initialise the database
-	err = db.InitialiseDB("connectors.db")
+	err = db.InitialiseDB()
 	if err != nil {
 		log.Fatalf("Cannot initialise DB: %v", err)
 	}
