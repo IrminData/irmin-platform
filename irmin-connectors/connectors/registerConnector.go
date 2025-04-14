@@ -36,18 +36,18 @@ func registerConnector(apiBaseURL, apiToken, baseUrl, connectorName, connectorSl
 
 	// Check if the connector is already registered
 	if connectorRegistration != nil {
+		// Update the connector in the database
+		err = lib.UpdateConnectorInDB(connectorRegistration.IrminID, token, connectorName)
+		if err != nil {
+			return nil, fmt.Errorf("error updating connector in the database: %v", err)
+		}
+
 		// If the connector is already registered, request the update of the connector and return.
 		newConnector, res, err := apiClient.UpdateRegisteredConnector(connectorRegistration.IrminID, connectorURL, token)
 		if err != nil {
 			return nil, fmt.Errorf("error updating connector: %v", err)
 		}
 		fmt.Println(res.Message)
-
-		// Update the connector in the database
-		err = lib.UpdateConnectorInDB(newConnector.ID, token, connectorName)
-		if err != nil {
-			return nil, fmt.Errorf("error updating connector in the database: %v", err)
-		}
 
 		return newConnector, nil
 	}
