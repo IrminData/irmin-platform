@@ -359,7 +359,7 @@ func ValidateConnectorConfiguration(c fiber.Ctx) error {
 
 	// Test the connection
 	testResponse, err := connectorClient.ValidateConfigFields(details, settings)
-	if err != nil {
+	if err != nil && testResponse == nil {
 		log.Printf("Error testing connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
