@@ -6,6 +6,14 @@ import { IoExit, IoMailOpenOutline } from 'react-icons/io5';
 
 import Button, { ButtonWithTooltip } from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useUsers } from '@/context/UsersContext';
@@ -14,7 +22,9 @@ import { useUsers } from '@/context/UsersContext';
  * Workspace Invites section
  *
  * This component is used to display the list of invites for the workspace.
- * It allows to manage the invites and send new ones.
+ * It allows one to manage the invites and send new ones.
+ *
+ * @returns {JSX.Element} The workspace invites section component.
  */
 const WorkspaceInvitesSection = () => {
   const { dict } = useLocale();
@@ -29,36 +39,38 @@ const WorkspaceInvitesSection = () => {
 
   return (
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>
+      {/* Row containing the invite button */}
       <div className='flex flex-row items-center justify-end px-2'>
         <Button size='sm' variant='default' onClick={() => sendInvite()}>
           {dict.users.inviteUser}
         </Button>
       </div>
-      <table className='min-w-full'>
-        <thead>
-          <tr className='border-b dark:border-gray-800'>
-            <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
               {dict.users.email}
-            </th>
-            <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
+            </TableHead>
+            <TableHead className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
               {dict.users.role}
-            </th>
-            <th className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
+            </TableHead>
+            <TableHead className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
               {/* Actions */}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {invites.map((invite, idx) => (
-            <tr
+            <TableRow
               key={`workspace-invite-${invite.id}-${idx}`}
               className='h-14 border-b dark:border-gray-800'
             >
-              <td className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
+              <TableCell className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
                 {invite.email}
-              </td>
-              <td className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
+              </TableCell>
+              <TableCell className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
                 <ReactSelect
+                  // Set the current role for the invited user
                   value={{
                     value: roles.find((role) => role.name === invite.role)
                       ?.name,
@@ -79,8 +91,8 @@ const WorkspaceInvitesSection = () => {
                   className='react-select-container'
                   classNamePrefix='react-select'
                 />
-              </td>
-              <td className='px-4 py-2 text-right'>
+              </TableCell>
+              <TableCell className='px-4 py-2 text-right'>
                 <div className='flex w-full flex-row justify-end gap-2 align-middle'>
                   <ButtonWithTooltip
                     size='icon'
@@ -99,11 +111,11 @@ const WorkspaceInvitesSection = () => {
                     tooltip={dict.users.cancelInvite}
                   />
                 </div>
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </ContentWrapper>
   );
 };

@@ -6,6 +6,14 @@ import { TbTrash } from 'react-icons/tb';
 
 import Button, { ButtonWithTooltip } from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -20,10 +28,11 @@ import CreateTokenModalContent from './CreateTokenModalContent';
 /**
  * User tokens section
  *
- * Displays the user's API tokens, allows to create new ones and revoke existing ones.
+ * Displays the user's API tokens, allows one to create new ones and revoke existing ones.
  *
  * @param props - The component props.
  * @param props.initialTokens - The initial tokens to display.
+ * @returns {JSX.Element} The tokens section component.
  */
 export default function TokensSection({
   initialTokens,
@@ -36,6 +45,9 @@ export default function TokensSection({
     initialTokens,
   });
 
+  /**
+   * Handle the creation of a new API token.
+   */
   const handleCreateToken = useCallback(() => {
     irminModal.show(
       dict.tokens.createAPIToken,
@@ -53,6 +65,7 @@ export default function TokensSection({
 
   return (
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>
+      {/* Row with the create token button */}
       <div className='flex flex-row items-center justify-end px-2'>
         <Button size='sm' variant='default' onClick={handleCreateToken}>
           {dict.tokens.createAPIToken}
@@ -68,33 +81,33 @@ export default function TokensSection({
           {dict.tokens.noTokens}
         </div>
       ) : (
-        <table className='min-w-full'>
-          <thead>
-            <tr className='border-b dark:border-gray-800'>
-              <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
+        <Table className='min-w-full'>
+          <TableHeader>
+            <TableRow className='border-b dark:border-gray-800'>
+              <TableHead className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
                 {dict.common.description}
-              </th>
-              <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+              </TableHead>
+              <TableHead className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
                 {dict.tokens.expiresAt}
-              </th>
-              <th className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
+              </TableHead>
+              <TableHead className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
                 {/* Actions */}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {tokens.map((token, idx) => (
-              <tr
+              <TableRow
                 key={`user-api-token-${token.id}-${idx}`}
                 className='h-14 border-b dark:border-gray-800'
               >
-                <td className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
+                <TableCell className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
                   {token.name}
-                </td>
-                <td className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
+                </TableCell>
+                <TableCell className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
                   {new Date(token.expiry).toLocaleDateString(locale)}
-                </td>
-                <td className='px-4 py-2 text-right'>
+                </TableCell>
+                <TableCell className='px-4 py-2 text-right'>
                   <div className='flex w-full flex-row justify-end gap-2 align-middle'>
                     <ButtonWithTooltip
                       size='icon'
@@ -105,11 +118,11 @@ export default function TokensSection({
                       onClick={() => revokeToken(token)}
                     />
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       )}
     </ContentWrapper>
   );

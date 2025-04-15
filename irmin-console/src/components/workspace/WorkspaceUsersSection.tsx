@@ -6,6 +6,14 @@ import { IoExit, IoKey } from 'react-icons/io5';
 
 import { ButtonWithTooltip } from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useUsers } from '@/context/UsersContext';
@@ -14,10 +22,12 @@ import { useWorkspace } from '@/context/WorkspaceContext';
 import { IrminRole } from '@/types/core/IrminRole';
 
 /**
- * Workspace Users section
+ * Workspace users section
  *
  * This component is used to display the list of users and their permissions in the workspace.
- * It allows to manage the users and their roles in the workspace.
+ * It allows one to manage the users and their roles in the workspace.
+ *
+ * @returns {JSX.Element} The workspace users section component.
  */
 const WorkspaceUsersSection = () => {
   const { dict } = useLocale();
@@ -26,57 +36,57 @@ const WorkspaceUsersSection = () => {
 
   return (
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>
-      <table className='min-w-full'>
-        <thead>
-          <tr className='border-b dark:border-gray-800'>
-            <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
+      <Table className='min-w-full'>
+        <TableHeader>
+          <TableRow className='border-b dark:border-gray-800'>
+            <TableHead className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
               {dict.common.name}
-            </th>
-            <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+            </TableHead>
+            <TableHead className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
               {dict.users.email}
-            </th>
-            <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+            </TableHead>
+            <TableHead className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
               {dict.users.phone}
-            </th>
-            <th className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+            </TableHead>
+            <TableHead className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
               {dict.users.company}
-            </th>
-            <th className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
+            </TableHead>
+            <TableHead className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
               {dict.users.role}
-            </th>
-            <th className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
+            </TableHead>
+            <TableHead className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
               {/* Actions */}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {users.map((user, idx) => (
-            <tr
+            <TableRow
               key={`workspace-user-${user.id}-${idx}`}
               className='h-14 border-b dark:border-gray-800'
             >
-              <td className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
+              <TableCell className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
                 {user.first_name} {user.last_name}
-                {/* Only for mobile screens */}
+                {/* Mobile screen details */}
                 <span className='block text-xs opacity-70 md:hidden'>
                   {user.email} | {user.phone} | {user.company}
                 </span>
-              </td>
-              {/* Only for larger screens */}
-              <td className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
+              </TableCell>
+              <TableCell className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
                 {user.email}
-              </td>
-              <td className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
+              </TableCell>
+              <TableCell className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
                 {user.phone}
-              </td>
-              <td className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
+              </TableCell>
+              <TableCell className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
                 {user.company}
-              </td>
-              <td className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
+              </TableCell>
+              <TableCell className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
                 {workspace?.owner?.id === user.id ? (
                   dict.list.owner
                 ) : (
                   <ReactSelect
+                    // Set the current roles for the user
                     value={
                       user.roles && user.roles.length > 0
                         ? {
@@ -89,7 +99,8 @@ const WorkspaceUsersSection = () => {
                           }
                     }
                     onChange={(val) => {
-                      if (!val || !val.length) return;
+                      // For multi-select, ensure an array is provided
+                      if (!val || !Array.isArray(val) || !val.length) return;
                       // Change roles of a user
                       changeUserRole(
                         user.id,
@@ -107,8 +118,8 @@ const WorkspaceUsersSection = () => {
                     classNamePrefix='react-select'
                   />
                 )}
-              </td>
-              <td className='px-4 py-2 text-right'>
+              </TableCell>
+              <TableCell className='px-4 py-2 text-right'>
                 {workspace?.owner?.id !== user.id && (
                   <div className='flex w-full flex-row justify-end gap-2 align-middle'>
                     <ButtonWithTooltip
@@ -128,11 +139,11 @@ const WorkspaceUsersSection = () => {
                     />
                   </div>
                 )}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </ContentWrapper>
   );
 };
