@@ -299,7 +299,6 @@ const en = {
     connector: 'Connector',
     connectors: 'Connectors',
     version: 'Version',
-    structureVersion: 'Irmin Structure Version',
     author: 'Author',
     authorEmail: 'Author email',
     categories: 'Categories',

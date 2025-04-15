@@ -5,40 +5,16 @@ import Button from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
+import { useCreateConnection } from '@/context/CreateConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import {
-  useContinueCreateConnection,
-  useFetchConnectionSettings,
-} from '@/hooks/useCreateConnection';
-
-import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
-
-export default function DefineSettings({
-  connectionData,
-  setConnectionData,
-  setCurrentStep,
-}: {
-  connectionData: ConnectionSetup;
-  setConnectionData: React.Dispatch<React.SetStateAction<ConnectionSetup>>;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-}) {
+export default function DefineSettings() {
   const { dict } = useLocale();
-  const { loading: loadingSettings } = useFetchConnectionSettings(
-    connectionData,
-    setConnectionData
-  );
-  const { loading: loadingContinue, continueCreateConnection } =
-    useContinueCreateConnection(
-      connectionData,
-      setConnectionData,
-      setCurrentStep
-    );
+  const connectionCreation = useCreateConnection();
 
   if (
-    loadingSettings ||
-    loadingContinue ||
-    !connectionData.connectionSettingsFields
+    connectionCreation.loading.fetchSettings ||
+    !connectionCreation.connectionData.connectionSettingsFields
   ) {
     return <LoadingSpinner />;
   }
@@ -46,20 +22,30 @@ export default function DefineSettings({
   return (
     <div className='p-4 pb-6'>
       {/* Display Connector Information */}
-      {connectionData.connector && (
+      {connectionCreation.connectionData.connector && (
         <div className='flex flex-col justify-center border-b py-4 dark:border-gray-800'>
           <p className='mb-2 text-sm opacity-80'>
             {dict.connections.create.selectedConnector}:
           </p>
-          <ConnectorInfoSmall connector={connectionData.connector} />
+          <ConnectorInfoSmall
+            connector={connectionCreation.connectionData.connector}
+          />
         </div>
       )}
 
       {/* Dynamic Form Render */}
       <DynamicForm
-        fields={connectionData.connectionSettingsFields}
-        onSubmit={continueCreateConnection}
+        fields={connectionCreation.connectionData.connectionSettingsFields}
+        onSubmit={connectionCreation.continueCreateConnection}
         submitButtonText={dict.connections.create.continue}
+        loading={connectionCreation.loading.continueCreate}
+        formProps={{
+          autoCapitalize: 'none',
+          autoComplete: 'off',
+          autoCorrect: 'off',
+          autoSave: 'off',
+          autoFocus: true,
+        }}
       />
 
       {/* Go Back Button */}
@@ -67,7 +53,7 @@ export default function DefineSettings({
         className='mb-6 inline-block w-full'
         variant='ghost'
         size='sm'
-        onClick={() => setCurrentStep((currentStep) => currentStep - 1)}
+        onClick={connectionCreation.goBack}
       >
         {dict.connections.create.goBack}
       </Button>

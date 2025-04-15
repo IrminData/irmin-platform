@@ -48,12 +48,6 @@ export function ConnectorInfo({ connector }: ConnectorInfoProps) {
           <span>{connector.version}</span>
         </div>
         <div className='flex items-center justify-between'>
-          <span className='font-semibold'>
-            {dict.connectors.structureVersion}:
-          </span>
-          <span>{connector.structure_version}</span>
-        </div>
-        <div className='flex items-center justify-between'>
           <span className='font-semibold'>{dict.connectors.author}:</span>
           <span>{connector.author}</span>
         </div>

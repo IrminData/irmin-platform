@@ -1,5 +1,7 @@
 'use client';
 
+import { FormHTMLAttributes, useCallback } from 'react';
+
 import { Controller, useForm } from 'react-hook-form';
 
 import Button from '@/components/ui/button';
@@ -20,15 +22,21 @@ import {
  * @param props.fields - An object containing dynamic field definitions.
  * @param props.onSubmit - Function to handle form submission.
  * @param props.submitButtonText - Text to display on the submit button.
+ * @param props.formProps - Additional form attributes.
+ * @param props.loading - Boolean indicating if the form is in a loading state.
  */
 export default function DynamicForm({
   fields,
   onSubmit,
   submitButtonText,
+  formProps,
+  loading = false,
 }: {
   fields: DynamicFields;
   onSubmit: (data: DynamicFieldValues) => void;
   submitButtonText: string;
+  formProps?: FormHTMLAttributes<HTMLFormElement>;
+  loading?: boolean;
 }) {
   const { dict } = useLocale();
   const {
@@ -44,7 +52,7 @@ export default function DynamicForm({
     }, {} as DynamicFieldValues),
   });
 
-  const renderFields = () => {
+  const renderFields = useCallback(() => {
     return Object.entries(fields).map(([key, field]) => (
       <div key={key}>
         <Controller
@@ -92,13 +100,14 @@ export default function DynamicForm({
         />
       </div>
     ));
-  };
+  }, [control, getValues, fields]);
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
       id='dynamic-form'
-      className='my-4 flex flex-col gap-4'
+      className='my-4 flex flex-col gap-2'
+      {...formProps}
     >
       {renderFields()}
       {Object.keys(errors).length > 0 && (
@@ -110,7 +119,7 @@ export default function DynamicForm({
         type='submit'
         variant='default'
         size='lg'
-        loading={isSubmitting}
+        loading={loading || isSubmitting}
         className='w-full'
       >
         {submitButtonText}
@@ -118,9 +127,8 @@ export default function DynamicForm({
       <Button
         type='button'
         onClick={() => reset()}
-        disabled={isSubmitting}
+        disabled={loading || isSubmitting}
         variant='ghost'
-        size='sm'
         className='w-full'
       >
         {dict.common.resetForm}

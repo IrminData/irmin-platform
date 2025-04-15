@@ -302,7 +302,6 @@ const fi = {
     connector: 'Yhdistin',
     connectors: 'Yhdistimet',
     version: 'Versio',
-    structureVersion: 'Irminin rakenneversio',
     author: 'Tekijä',
     authorEmail: 'Tekijän sähköposti',
     categories: 'Kategoriat',

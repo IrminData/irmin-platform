@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef } from 'react';
+import { forwardRef, useCallback, useMemo } from 'react';
 
 import ReactSelect, { MultiValue, SingleValue } from 'react-select';
 
@@ -27,9 +27,11 @@ type SelectOption = {
 function DynamicFormField(
   {
     field,
+    disabled = false,
     fieldProps,
   }: {
     field: DynamicField;
+    disabled?: boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fieldProps?: any;
   },
@@ -38,14 +40,17 @@ function DynamicFormField(
 ) {
   const { dict } = useLocale();
 
-  const options: SelectOption[] =
-    field.options?.map((option) => ({
-      value: option.key,
-      label: option.value,
-    })) ?? [];
+  const options: SelectOption[] = useMemo(
+    () =>
+      field.options?.map((option) => ({
+        value: option.key,
+        label: option.value,
+      })) ?? [],
+    [field.options]
+  );
 
   // Map fieldProps.value to the corresponding option(s) for ReactSelect
-  const getSelectedOption = () => {
+  const getSelectedOption = useCallback(() => {
     if (field.multiple) {
       return options.filter((option) =>
         (fieldProps.value ?? []).includes(option.value)
@@ -55,10 +60,10 @@ function DynamicFormField(
         options.find((option) => option.value === fieldProps.value) || null
       );
     }
-  };
+  }, [field.multiple, fieldProps.value, options]);
 
   // Render the appropriate input type based on the field's type
-  const renderField = () => {
+  const renderField = useCallback(() => {
     switch (field.type) {
       case 'integer':
       case 'float':
@@ -69,6 +74,7 @@ function DynamicFormField(
             min={field.min ? (field.min as number) : undefined}
             max={field.max ? (field.max as number) : undefined}
             ref={ref}
+            disabled={disabled}
             {...fieldProps}
           />
         );
@@ -79,6 +85,7 @@ function DynamicFormField(
             longtext={{ rows: 3 }}
             placeholder={field.example}
             ref={ref}
+            disabled={disabled}
             {...fieldProps}
           />
         );
@@ -88,6 +95,7 @@ function DynamicFormField(
             <Checkbox
               checked={fieldProps.value || false}
               ref={ref}
+              disabled={disabled}
               {...fieldProps}
             />
             <Label>{field.label}</Label>
@@ -118,6 +126,7 @@ function DynamicFormField(
             className='react-select-container'
             classNamePrefix='react-select'
             ref={ref}
+            disabled={disabled}
           />
         );
       case 'radio':
@@ -131,6 +140,7 @@ function DynamicFormField(
                   className='mr-2'
                   checked={fieldProps.value === option.value}
                   ref={ref}
+                  disabled={disabled}
                   {...fieldProps}
                 />
                 {option.value}
@@ -154,6 +164,7 @@ function DynamicFormField(
             min={field.min ? (field.min as string) : undefined}
             max={field.max ? (field.max as string) : undefined}
             ref={ref}
+            disabled={disabled}
             {...fieldProps}
           />
         );
@@ -163,6 +174,7 @@ function DynamicFormField(
             type='file'
             multiple={field.multiple}
             ref={ref}
+            disabled={disabled}
             {...fieldProps}
           />
         );
@@ -180,11 +192,12 @@ function DynamicFormField(
             }
             placeholder={field.example}
             ref={ref}
+            disabled={disabled}
             {...fieldProps}
           />
         );
     }
-  };
+  }, [field, fieldProps, options, dict, disabled, getSelectedOption, ref]);
 
   return (
     <div id='dynamic-form-field' className='mb-2 flex flex-col gap-1'>

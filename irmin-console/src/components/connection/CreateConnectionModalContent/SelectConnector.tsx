@@ -9,69 +9,32 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/button';
 
+import { useCreateConnection } from '@/context/CreateConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import {
-  useConnectorCategoryFilter,
-  useHandleConnectorClick,
-  useHandleConnectorSelected,
-} from '@/hooks/useCreateConnection';
-
-import { Connector } from '@/types/core/Connector';
-import {
-  ConnectionSetup,
-  SelectConnectorFormValues,
-} from '@/types/internal/ConnectionSetup';
+import { SelectConnectorFormValues } from '@/types/internal/ConnectionSetup';
 
 /**
  * Component to select a connector for the connection setup.
- *
- * @param props - Component props
- * @param props.connectors - List of available connectors
- * @param props.connectionData - Current state of the connection setup
- * @param props.setConnectionData - Setter for the connection state
- * @param props.setCurrentStep - Setter for the current step of the connection setup
  */
-export default function SelectConnector({
-  connectors,
-  setConnectionData,
-  setCurrentStep,
-}: {
-  connectors: Connector[];
-  connectionData: ConnectionSetup;
-  setConnectionData: React.Dispatch<React.SetStateAction<ConnectionSetup>>;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-}) {
+export default function SelectConnector() {
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
+  const connectionCreation = useCreateConnection();
 
-  const {
-    control,
-    handleSubmit,
-    setValue,
-    formState: { isDirty },
-  } = useForm<SelectConnectorFormValues>({
-    defaultValues: {
-      connector: null,
-    },
-  });
+  const { control, handleSubmit, setValue, watch } =
+    useForm<SelectConnectorFormValues>({
+      defaultValues: {
+        connector: null,
+      },
+    });
 
-  const {
-    filteredConnectors,
-    activeCategory,
-    categoryFilterOptions,
-    selectCategoryFilter,
-  } = useConnectorCategoryFilter(connectors);
-  const handleConnectorClick = useHandleConnectorClick(setValue);
-  const handleContinue = useHandleConnectorSelected(
-    setConnectionData,
-    setCurrentStep
-  );
+  const formValues = watch();
 
   return (
     <form
-      onSubmit={handleSubmit(handleContinue)}
+      onSubmit={handleSubmit(connectionCreation.handleConnectorSelected)}
       className='flex w-full flex-col px-4 pb-6'
     >
       <Controller
@@ -89,28 +52,40 @@ export default function SelectConnector({
             )}
             {/* Category Filter */}
             <div className='flex w-full flex-wrap gap-2 border-b py-4 dark:border-gray-800'>
-              {categoryFilterOptions.map((category, index) => (
-                <Button
-                  variant={category === activeCategory ? 'accent' : 'secondary'}
-                  key={`category-${index}`}
-                  onClick={() => selectCategoryFilter(category ?? '')}
-                >
-                  {category}
-                </Button>
-              ))}
+              {connectionCreation.categoryFilterOptions.map(
+                (category, index) => (
+                  <Button
+                    variant={
+                      category === connectionCreation.activeCategory
+                        ? 'accent'
+                        : 'secondary'
+                    }
+                    key={`category-${index}`}
+                    onClick={() =>
+                      connectionCreation.selectCategoryFilter(category ?? '')
+                    }
+                    className='capitalize'
+                  >
+                    {category}
+                  </Button>
+                )
+              )}
             </div>
             {/* Connector Selection */}
             <div className='flex flex-wrap gap-2 py-4'>
-              {filteredConnectors.map((connector, index) => (
+              {connectionCreation.filteredConnectors.map((connector, index) => (
                 <button
                   type='button'
-                  className={`text-foreground flex w-max max-w-[50%] flex-row items-center justify-start gap-4 rounded-lg bg-gray-100 px-4 py-2 text-left text-sm shadow transition-all hover:opacity-80 dark:bg-gray-800 dark:text-gray-200 ${
+                  className={`text-foreground flex w-max max-w-[50%] cursor-pointer flex-row items-center justify-start gap-4 rounded-lg bg-gray-100 px-4 py-2 text-left text-sm shadow transition-all hover:opacity-80 dark:bg-gray-800 dark:text-gray-200 ${
                     field.value?.id === connector.id
                       ? 'outline outline-gray-800 dark:outline-gray-200'
                       : ''
                   } `}
                   key={`connector-${index}`}
-                  onClick={() => handleConnectorClick(connector)}
+                  onClick={() => {
+                    setValue('connector', connector);
+                    connectionCreation.handleConnectorClick(connector);
+                  }}
                 >
                   <Avatar className='h-12 w-12 rounded-none'>
                     <AvatarImage
@@ -142,7 +117,7 @@ export default function SelectConnector({
           size='lg'
           variant='default'
           type='submit'
-          disabled={!isDirty}
+          disabled={!formValues.connector}
         >
           {dict.connections.create.confirmConnectorSelection}
         </Button>

@@ -4,34 +4,17 @@ import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import Button from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 
+import { useCreateConnection } from '@/context/CreateConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { useCreateConnection } from '@/hooks/useCreateConnection';
-
-import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 import { DynamicFields } from '@/types/internal/DynamicField';
 
 /**
  * Configure connection component for finalizing the connection setup.
- *
- * @param props - Component props
- * @param props.connectionData - Current state of the connection setup
- * @param props.setConnectionData - Setter for the connection state
- * @param props.setCurrentStep - Setter for the current step of the connection setup
- * @param props.closeModal - Function to close the modal
  */
-export default function ConfigureConnection({
-  connectionData,
-  setCurrentStep,
-  closeModal,
-}: {
-  connectionData: ConnectionSetup;
-  setConnectionData: React.Dispatch<React.SetStateAction<ConnectionSetup>>;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-  closeModal: () => void;
-}) {
+export default function ConfigureConnection() {
   const { dict } = useLocale();
-  const { createConnection } = useCreateConnection(connectionData, closeModal);
+  const connectionCreation = useCreateConnection();
 
   // Prepare the fields for DynamicForm
   const formFields: DynamicFields = {
@@ -39,27 +22,36 @@ export default function ConfigureConnection({
       type: 'textarea',
       label: dict.connections.create.connectionDescription,
       required: true,
-      default: connectionData.description,
+      default: connectionCreation.connectionData.description,
       example: dict.connections.create.connectionDescriptionPlaceholder,
     },
   };
 
   return (
     <div className='p-4 pb-6'>
-      {connectionData.connector && (
+      {connectionCreation.connectionData.connector && (
         <div className='flex flex-col justify-center border-b py-4 dark:border-gray-800'>
           <p className='mb-2 text-sm opacity-80'>
             {dict.connections.create.selectedConnector}:
           </p>
-          <ConnectorInfoSmall connector={connectionData.connector} />
+          <ConnectorInfoSmall
+            connector={connectionCreation.connectionData.connector}
+          />
         </div>
       )}
 
       {/* Dynamic Form Render */}
       <DynamicForm
         fields={formFields}
-        onSubmit={createConnection}
+        onSubmit={connectionCreation.createConnection}
         submitButtonText={dict.connections.create.createConnection}
+        formProps={{
+          autoCapitalize: 'none',
+          autoComplete: 'off',
+          autoCorrect: 'off',
+          autoSave: 'off',
+          autoFocus: true,
+        }}
       />
 
       {/* Go Back Button */}
@@ -67,7 +59,7 @@ export default function ConfigureConnection({
         className='mb-6 inline-block w-full'
         variant='ghost'
         size='sm'
-        onClick={() => setCurrentStep((currentStep) => currentStep - 1)}
+        onClick={connectionCreation.goBack}
       >
         {dict.connections.create.goBack}
       </Button>

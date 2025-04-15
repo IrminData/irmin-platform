@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
-import { initialConnectionData } from '@/hooks/useCreateConnection';
+import {
+  CreateConnectionProvider,
+  useCreateConnection,
+} from '@/context/CreateConnectionContext';
 
 import { Connector } from '@/types/core/Connector';
-import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 
 import ConfigureConnection from './ConfigureConnection';
 import DefineDetails from './DefineDetails';
@@ -15,18 +17,38 @@ import DefineSettings from './DefineSettings';
 import SelectConnector from './SelectConnector';
 
 /**
- * Connection setup view
+ * Inner component that consumes the connection creation context.
  *
- * @remarks
+ * It renders the appropriate step of the connection creation process,
+ * and resets the state when the modal is opened.
+ */
+const CreateConnectionModalContentInner = ({ isOpen }: { isOpen: boolean }) => {
+  const { currentStep, filteredConnectors, resetCreateConnection } =
+    useCreateConnection();
+
+  // Reset connection data and step when the modal is opened or closed.
+  useEffect(() => {
+    resetCreateConnection();
+  }, [isOpen, resetCreateConnection]);
+
+  if (filteredConnectors.length === 0) {
+    return <LoadingSpinner />;
+  }
+
+  return (
+    <>
+      {currentStep === 1 && <SelectConnector />}
+      {currentStep === 2 && <DefineDetails />}
+      {currentStep === 3 && <DefineSettings />}
+      {currentStep === 4 && <ConfigureConnection />}
+    </>
+  );
+};
+
+/**
+ * Modal content wrapper for creating a connection.
  *
- * View to setup a new connection.
- *
- * It is wrapped in a side modal and is used to setup a new
- * connection. It includes steps to select a connector, define
- * connection details, connection settings and sync settings.
- *
- * This component fetches all available connectors and is responsible
- * for maanging the state of the connection creation process.
+ * This component provides the create connection context to its children.
  */
 const CreateConnectionModalContent = ({
   connectors,
@@ -41,55 +63,15 @@ const CreateConnectionModalContent = ({
   currentStep: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) => {
-  const [connectionData, setConnectionData] = useState<ConnectionSetup>(
-    initialConnectionData
-  );
-
-  // Reset connection data when modal is closed
-  useEffect(() => {
-    setCurrentStep(1);
-    setConnectionData(initialConnectionData);
-  }, [isOpen, setCurrentStep, setConnectionData]);
-
-  if (
-    connectors.length === 0 ||
-    (currentStep > 1 && !connectionData.connector)
-  ) {
-    return <LoadingSpinner />;
-  }
   return (
-    <>
-      {currentStep === 1 && (
-        <SelectConnector
-          connectors={connectors}
-          connectionData={connectionData}
-          setConnectionData={setConnectionData}
-          setCurrentStep={setCurrentStep}
-        />
-      )}
-      {currentStep === 2 && (
-        <DefineDetails
-          connectionData={connectionData}
-          setConnectionData={setConnectionData}
-          setCurrentStep={setCurrentStep}
-        />
-      )}
-      {currentStep === 3 && (
-        <DefineSettings
-          connectionData={connectionData}
-          setConnectionData={setConnectionData}
-          setCurrentStep={setCurrentStep}
-        />
-      )}
-      {currentStep === 4 && (
-        <ConfigureConnection
-          connectionData={connectionData}
-          setConnectionData={setConnectionData}
-          setCurrentStep={setCurrentStep}
-          closeModal={closeModal}
-        />
-      )}
-    </>
+    <CreateConnectionProvider
+      connectors={connectors}
+      closeModal={closeModal}
+      currentStep={currentStep}
+      setCurrentStep={setCurrentStep}
+    >
+      <CreateConnectionModalContentInner isOpen={isOpen} />
+    </CreateConnectionProvider>
   );
 };
 

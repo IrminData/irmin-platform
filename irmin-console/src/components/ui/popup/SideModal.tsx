@@ -44,7 +44,7 @@ export default function SideModal({
     >
       <div className='relative h-full w-full'>
         <div
-          className={`bg-background absolute top-0 right-0 bottom-0 h-full w-full max-w-3xl border-l shadow-lg transition-transform duration-200 dark:border-gray-800 ${
+          className={`bg-background absolute top-0 right-0 bottom-0 h-full w-full max-w-5xl border-l shadow-lg transition-transform duration-200 dark:border-gray-800 ${
             isOpen ? 'animate-slideIn' : 'animate-slideOut'
           }`}
         >
@@ -62,7 +62,7 @@ export default function SideModal({
               />
             </div>
             {steps && currentStep && steps.length > 1 && (
-              <div className='flex items-center justify-start space-x-4 px-6 py-4'>
+              <div className='flex items-center justify-start gap-3 space-x-4 px-6 py-4'>
                 {steps.map((step, index) => (
                   <div
                     className={`flex flex-col items-center justify-center gap-2 text-center sm:flex-row sm:text-left ${
