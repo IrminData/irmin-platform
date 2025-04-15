@@ -100,9 +100,6 @@ func ConfigValidate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if !ok {
-		// You can choose a suitable error code. 400 is common for "invalid input / validation fails."
-		w.WriteHeader(http.StatusBadRequest)
-	}
+	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(resp)
 }
