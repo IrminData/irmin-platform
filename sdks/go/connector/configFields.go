@@ -79,15 +79,13 @@ func (c *Client) ValidateConfigFields(details map[string]string, settings map[st
 	var result irminModels.ConnectorConfigurationValidationResult
 
 	// Send the POST request using FetchAPI with URL-encoded form fields.
-	if err := c.FetchAPI(RequestOptions{
+	err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/configuration/validate",
 		FormFields:  formFields,
 		ContentType: "application/x-www-form-urlencoded",
-	}, &result); err != nil {
-		return nil, err
-	}
+	}, &result)
 
-	// Return the validation result or an error.
-	return &result, nil
+	// Return the validation result and the error (if any).
+	return &result, err
 }
