@@ -11,6 +11,10 @@ html {
   color: hsl(var(--foreground));
   .pattern-bg {
     background-image: url('/ui-assets/elements/pattern-white.svg');
+    background-size: cover;
+    background-position: top center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
   }
 
   &.dark {

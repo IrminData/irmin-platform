@@ -303,7 +303,7 @@ export default function ConsoleWrapper({
           {/* Console content */}
           <div
             id='console-content'
-            className='pattern-bg bg-background relative min-h-[calc(100vh-4rem)] overflow-y-scroll bg-contain bg-top bg-no-repeat'
+            className='bg-background relative min-h-[calc(100vh-4rem)] overflow-y-scroll'
           >
             {children}
           </div>

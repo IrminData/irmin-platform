@@ -10,7 +10,7 @@ import { useLocale } from '@/context/LocaleContext';
 const NewTabContent = ({ addNewTab }: { addNewTab: () => void }) => {
   const { dict } = useLocale();
   return (
-    <div className='pattern-bg h-screen w-full'>
+    <div className='h-screen w-full'>
       <div className='my-12 flex w-full flex-wrap items-center justify-center gap-8'>
         <LinkCard
           onClick={addNewTab}
