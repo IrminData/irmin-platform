@@ -21,24 +21,27 @@ type Repository struct {
 
 func GetRepositoryBySlugAndWorkspaceID(slug string, workspaceID uint) (*Repository, error) {
 	var repository Repository
-	err := DB.Where("slug = ? AND workspace_id = ?", slug, workspaceID).First(&repository).Error
+	err := DB.Where("slug = ? AND workspace_id = ?", slug, workspaceID).Preload("Owner").First(&repository).Error
 	return &repository, err
 }
 
 func CheckIfRepositoryExists(slug string, workspaceID uint) bool {
 	var repository Repository
-	DB.Where("slug = ? AND workspace_id = ?", slug, workspaceID).First(&repository)
+	DB.Where("slug = ? AND workspace_id = ?", slug, workspaceID).Preload("Owner").First(&repository)
 	return repository.ID != 0
 }
 
 func GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, error) {
 	var repositories []Repository
-	err := DB.Where("workspace_id = ?", workspaceID).Find(&repositories).Error
+	err := DB.Where("workspace_id = ?", workspaceID).Preload("Owner").Find(&repositories).Error
 	return repositories, err
 }
 
 func CreateRepository(repository *Repository) (*Repository, error) {
 	if err := DB.Create(repository).Error; err != nil {
+		return nil, err
+	}
+	if err := DB.Preload("Owner").First(&repository, repository.ID).Error; err != nil {
 		return nil, err
 	}
 	return repository, nil
