@@ -125,6 +125,12 @@ class IrminCore {
         Authorization: `Bearer ${this.token}`,
         ...options.headers,
       },
+      next: {
+        revalidate:
+          options.next?.revalidate ??
+          parseInt(process.env.NEXT_PUBLIC_REVALIDATE ?? '60'),
+        ...options.next,
+      },
     };
 
     const requestURL = `${api_base}${url}`;

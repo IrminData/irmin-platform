@@ -11,7 +11,7 @@ This repository contains the code for Irmin Console frontend, built using Next.j
 Ensure you have the following installed:
 
 - Node.js (22.x)
-- Yarn (4.5.1). See [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration details.
+- Yarn (4.9.1). See [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration details.
 
 ## Environment Configuration (.env)
 
@@ -22,6 +22,7 @@ Create a `.env` file in the project root. Add the following environment variable
 NEXT_PUBLIC_BASE_URL=https://console.irmin.dev  # Base URL of the console
 NEXT_PUBLIC_WEBSITE_URL=https://irmin.dev  # Website URL
 NODE_ENV=development  # Environment type. Can be development, staging or production.
+NEXT_PUBLIC_REVALIDATE="60" # Revalidation time in seconds for ISR (Incremental Static Regeneration)
 
 # API settings
 NEXT_PUBLIC_API_URL=https://api.irmin.dev/api  # API endpoint URL
