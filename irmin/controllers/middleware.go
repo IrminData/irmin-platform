@@ -110,87 +110,82 @@ func APIMiddleware(c fiber.Ctx) error {
 		irminUser, _ = db.GetUserByClerkID(clerkID)
 	}
 
-	// Set the API key with your Clerk Secret Key.
-	clerk.SetKey(env.ClerkSecretKey)
+	// If the user is not found or the last update was more than 5 minutes ago, fetch the user from Clerk.
+	// This is to ensure that we have the latest user details.
+	if irminUser == nil || irminUser.UpdatedAt.Before(time.Now().Add(-(time.Minute * 5))) {
+		// Set the API key with your Clerk Secret Key.
+		clerk.SetKey(env.ClerkSecretKey)
 
-	// Get the user details from Clerk.
-	clerkUser, err := user.Get(ctx, clerkID)
-	if err != nil {
-		log.Printf("Error getting user details from Clerk: %v", err)
-		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminModels.IrminAPIResponse{
-			Errors: []string{dict.T("access_denied")},
-		})
-	}
-
-	// Find the user's primary email address.
-	var primaryEmail string
-	if clerkUser.PrimaryEmailAddressID != nil && len(clerkUser.EmailAddresses) > 0 {
-		for _, email := range clerkUser.EmailAddresses {
-			if email.ID == *clerkUser.PrimaryEmailAddressID {
-				primaryEmail = email.EmailAddress
-				break
-			}
-		}
-	}
-	if primaryEmail == "" && len(clerkUser.EmailAddresses) > 0 {
-		primaryEmail = clerkUser.EmailAddresses[0].EmailAddress
-	}
-
-	// Find the user's primary phone number.
-	var primaryPhone string
-	if clerkUser.PrimaryPhoneNumberID != nil && len(clerkUser.PhoneNumbers) > 0 {
-		for _, phone := range clerkUser.PhoneNumbers {
-			if phone.ID == *clerkUser.PrimaryPhoneNumberID {
-				primaryPhone = phone.PhoneNumber
-				break
-			}
-		}
-	}
-	if primaryPhone == "" && len(clerkUser.PhoneNumbers) > 0 {
-		primaryPhone = clerkUser.PhoneNumbers[0].PhoneNumber
-	}
-
-	if irminUser == nil {
-		// If the user does not exist in the database, create it synchronously.
-		irminUser, err = db.CreateUser(&db.User{
-			ClerkID:        clerkID,
-			FirstName:      *clerkUser.FirstName,
-			LastName:       *clerkUser.LastName,
-			Email:          primaryEmail,
-			Phone:          primaryPhone,
-			ProfilePicture: *clerkUser.ImageURL,
-		})
+		// Get the user details from Clerk.
+		clerkUser, err := user.Get(ctx, clerkID)
 		if err != nil {
-			log.Printf("Error creating user: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
+			log.Printf("Error getting user details from Clerk: %v", err)
+			return utils.WriteResponse(c, fiber.StatusUnauthorized, irminModels.IrminAPIResponse{
+				Errors: []string{dict.T("access_denied")},
 			})
 		}
-	} else {
-		// If the user exists, update the stored user details asynchronously.
-		utils.Async(func() (*db.User, error) {
-			updatedUser, err := db.UpdateUser(irminUser.ID, map[string]any{
-				"clerk_id":        clerkUser.ID,
-				"first_name":      *clerkUser.FirstName,
-				"last_name":       *clerkUser.LastName,
-				"email":           primaryEmail,
-				"phone":           primaryPhone,
-				"profile_picture": *clerkUser.ImageURL,
+
+		// Find the user's primary email address.
+		var primaryEmail string
+		if clerkUser.PrimaryEmailAddressID != nil && len(clerkUser.EmailAddresses) > 0 {
+			for _, email := range clerkUser.EmailAddresses {
+				if email.ID == *clerkUser.PrimaryEmailAddressID {
+					primaryEmail = email.EmailAddress
+					break
+				}
+			}
+		}
+		if primaryEmail == "" && len(clerkUser.EmailAddresses) > 0 {
+			primaryEmail = clerkUser.EmailAddresses[0].EmailAddress
+		}
+
+		// Find the user's primary phone number.
+		var primaryPhone string
+		if clerkUser.PrimaryPhoneNumberID != nil && len(clerkUser.PhoneNumbers) > 0 {
+			for _, phone := range clerkUser.PhoneNumbers {
+				if phone.ID == *clerkUser.PrimaryPhoneNumberID {
+					primaryPhone = phone.PhoneNumber
+					break
+				}
+			}
+		}
+		if primaryPhone == "" && len(clerkUser.PhoneNumbers) > 0 {
+			primaryPhone = clerkUser.PhoneNumbers[0].PhoneNumber
+		}
+
+		if irminUser == nil {
+			// If the user does not exist in the database, create it synchronously.
+			irminUser, err = db.CreateUser(&db.User{
+				ClerkID:        clerkID,
+				FirstName:      *clerkUser.FirstName,
+				LastName:       *clerkUser.LastName,
+				Email:          primaryEmail,
+				Phone:          primaryPhone,
+				ProfilePicture: *clerkUser.ImageURL,
 			})
 			if err != nil {
-				log.Printf("Error updating user: %v", err)
+				log.Printf("Error creating user: %v", err)
+				return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+					Errors: []string{dict.T("error_occurred")},
+				})
 			}
-			return updatedUser, err
-		})
-	}
-
-	// Refetch the Irmin user to ensure the latest data is used.
-	irminUser, err = db.GetUser(irminUser.ID)
-	if err != nil {
-		log.Printf("Error fetching user: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
-		})
+		} else {
+			// If the user exists, update the stored user details asynchronously.
+			utils.Async(func() (*db.User, error) {
+				updatedUser, err := db.UpdateUser(irminUser.ID, map[string]any{
+					"clerk_id":        clerkUser.ID,
+					"first_name":      *clerkUser.FirstName,
+					"last_name":       *clerkUser.LastName,
+					"email":           primaryEmail,
+					"phone":           primaryPhone,
+					"profile_picture": *clerkUser.ImageURL,
+				})
+				if err != nil {
+					log.Printf("Error updating user: %v", err)
+				}
+				return updatedUser, err
+			})
+		}
 	}
 
 	// Set the user in the context for subsequent handlers.
