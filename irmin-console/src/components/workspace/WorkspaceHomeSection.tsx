@@ -33,7 +33,7 @@ const WorkspaceHomeSection = ({
       <div className='relative container mx-auto my-12 max-w-6xl px-4'>
         <div className='flex flex-col gap-8 px-4'>
           <div className='flex w-full flex-col gap-4'>
-            <h2 className='font-display text-foreground/80 text-center text-3xl font-bold sm:text-4xl lg:text-5xl'>
+            <h2 className='font-display text-foreground/90 text-center text-3xl font-bold sm:text-4xl lg:text-5xl'>
               {workspace?.name}
             </h2>
             <p className='text-center text-sm opacity-80'>

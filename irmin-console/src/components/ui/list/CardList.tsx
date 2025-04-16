@@ -27,7 +27,10 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
   const [openDetails, setOpenDetails] = useState<number[]>([]);
 
   return (
-    <div className='scrollbar-hide h-full w-full overflow-scroll' id='list'>
+    <div
+      className='scrollbar-hide bg-popover/10 h-full w-full max-w-3xl max-w-full overflow-scroll rounded-lg border p-2 dark:border-gray-800'
+      id='list'
+    >
       <div className='grid grid-cols-1 items-start gap-2 sm:grid-cols-2 lg:grid-cols-3'>
         {loading ? (
           <div id='card-list-loading' className='contents'>

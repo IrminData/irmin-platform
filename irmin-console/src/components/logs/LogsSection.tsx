@@ -92,7 +92,7 @@ export default function LogsSection({
             />
           )}
           <div>
-            <h2 className='font-display text-foreground/80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
+            <h2 className='font-display text-foreground/90 text-3xl font-bold sm:text-4xl lg:text-5xl'>
               {title}
             </h2>
             {workflow && (
@@ -133,7 +133,7 @@ export default function LogsSection({
             type='text'
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className='w-full bg-transparent p-2'
+            className='w-full bg-transparent p-2 focus:outline-hidden'
             placeholder={dict.list.searchPlaceholder}
           />
         </div>

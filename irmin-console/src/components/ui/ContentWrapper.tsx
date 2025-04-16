@@ -18,10 +18,15 @@ const ContentWrapper = ({
   wrapperClassName?: string;
 }) => {
   return (
-    <div className={cn('relative container mx-auto my-8 max-w-7xl', className)}>
+    <div
+      className={cn(
+        'relative container my-8 max-w-7xl px-2 sm:mx-auto',
+        className
+      )}
+    >
       <div
         className={cn(
-          'bg-background w-full max-w-3xl rounded-lg border px-4 py-4 md:mx-4 dark:border-gray-800',
+          'bg-popover/10 w-full max-w-3xl max-w-full rounded-lg border p-2 dark:border-gray-800',
           wrapperClassName
         )}
       >

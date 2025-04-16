@@ -21,13 +21,13 @@ const buttonVariants = cva(
         destructive:
           'bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive/80',
         outline:
-          'border border-solid border-accent-foreground/50 text-foreground/80 shadow-xs hover:bg-background hover:text-foreground',
+          'border border-solid border-accent-foreground/50 text-foreground/90 shadow-xs hover:bg-background hover:text-foreground',
         secondary:
           'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
         accent: 'bg-accent text-accent-foreground shadow-xs hover:bg-accent/80',
         gray: 'bg-card text-card-foreground shadow-xs hover:bg-card/80',
         ghost: 'hover:bg-accent/20',
-        link: 'text-foreground underline-offset-4 hover:underline hover:text-foreground/80',
+        link: 'text-foreground underline-offset-4 hover:underline hover:text-foreground/90',
         gradient:
           'bg-linear-to-r from-irmin_green-700 to-irmin_green-600 text-white shadow-xs hover:opacity-80',
       },

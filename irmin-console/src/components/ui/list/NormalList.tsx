@@ -45,7 +45,7 @@ const NormalList: React.FC<ListProps> = ({
 
   return (
     <div className='scrollbar-hide h-full w-full overflow-auto' id='list'>
-      <table className='bg-background w-full border-collapse text-sm shadow-xs transition-all'>
+      <table className='bg-background bg-popover/10 w-full max-w-3xl max-w-full border-collapse rounded-lg border p-2 text-sm shadow-xs transition-all dark:border-gray-800'>
         {/* Table head */}
         {!hideHeaders && (
           <thead>
@@ -118,7 +118,7 @@ const NormalList: React.FC<ListProps> = ({
                             <div className='flex items-center justify-end space-x-2'>
                               {sortedActions.map((action, actionIndex) => (
                                 <Button
-                                  size='sm'
+                                  size='default'
                                   key={`list-row-${rowIndex}-actions-${actionIndex}`}
                                   variant={action.primary ? 'gray' : 'link'}
                                   aria-label={action.label}

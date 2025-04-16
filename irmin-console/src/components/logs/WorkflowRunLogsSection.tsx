@@ -61,7 +61,7 @@ export default function WorkflowRunLogsSection({
             aria-label={dict.common.back}
           />
           <div>
-            <h2 className='font-display text-foreground/80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
+            <h2 className='font-display text-foreground/90 text-3xl font-bold sm:text-4xl lg:text-5xl'>
               {dict.logs.workflowRunLogs}
             </h2>
             {workflow && (

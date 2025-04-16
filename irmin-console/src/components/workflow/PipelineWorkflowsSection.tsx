@@ -93,7 +93,7 @@ export default function PipelineWorkflowsSection({
   return (
     <div className='relative container mx-auto max-w-7xl px-4 py-8'>
       <div className='my-4 flex flex-row items-center justify-between gap-4'>
-        <h2 className='font-display text-foreground/80 text-3xl font-bold sm:text-4xl lg:text-5xl'>
+        <h2 className='font-display text-foreground/90 text-3xl font-bold sm:text-4xl lg:text-5xl'>
           {dict.workflow.pipelineWorkflows}
         </h2>
         <Button
@@ -150,7 +150,7 @@ export default function PipelineWorkflowsSection({
             type='text'
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className='w-full bg-transparent p-2'
+            className='w-full bg-transparent p-2 focus:outline-hidden'
             placeholder={dict.list.searchPlaceholder}
           />
         </div>
