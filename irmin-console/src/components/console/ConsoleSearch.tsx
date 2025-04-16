@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useParams } from 'next/navigation';
-
 import { GoWorkflow } from 'react-icons/go';
 import { LuSearchX } from 'react-icons/lu';
 import {
@@ -18,8 +16,8 @@ import {
   TbUser,
 } from 'react-icons/tb';
 
-import { generateSearchItems } from '@/lib/actions/searchItems';
-import { Dictionary } from '@/lib/dict';
+import { useConsoleSearchContext } from '@/context/ConsoleSearchContext';
+import { useLocale } from '@/context/LocaleContext';
 
 import {
   ConsoleSearchItem,
@@ -39,30 +37,15 @@ import {
  *
  * @returns The console search component with search bar and results
  */
-export default function ConsoleSearch({ dict }: { dict: Dictionary }) {
-  const params = useParams<{ workspace?: string }>();
+export default function ConsoleSearch() {
+  const { dict } = useLocale();
+  const { searchItems } = useConsoleSearchContext();
 
   // State for query and results
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ConsoleSearchItem[]>([]);
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [isFocused, setIsFocused] = useState(false);
-
-  // Get the search items
-  const [items, setItems] = useState<ConsoleSearchItem[]>([]);
-  useEffect(() => {
-    const fetchSearchItems = async () => {
-      try {
-        const searchItems = await generateSearchItems({
-          workspace: params.workspace,
-        });
-        setItems(searchItems);
-      } catch (error) {
-        console.error('Error fetching search items:', error);
-      }
-    };
-    fetchSearchItems();
-  }, [params.workspace]);
 
   // Ref for the search container
   const searchRef = useRef<HTMLDivElement | null>(null);
@@ -85,7 +68,7 @@ export default function ConsoleSearch({ dict }: { dict: Dictionary }) {
       const formattedQuery = debouncedQuery
         .toLowerCase()
         .replace(/[^a-zA-Z0-9]/g, '');
-      const filteredResults = items.filter((item) => {
+      const filteredResults = searchItems.filter((item) => {
         const formattedTitle = item.title
           .toLowerCase()
           .replace(/[^a-zA-Z0-9]/g, '');
@@ -117,7 +100,7 @@ export default function ConsoleSearch({ dict }: { dict: Dictionary }) {
     } else {
       setResults([]);
     }
-  }, [debouncedQuery, items]);
+  }, [debouncedQuery, searchItems]);
 
   // Detect clicks outside the search component and close modal
   useEffect(() => {

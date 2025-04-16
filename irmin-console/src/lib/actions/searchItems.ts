@@ -15,12 +15,16 @@ import {
 
 export async function generateSearchItems({
   workspace,
+  token,
 }: {
   workspace?: string;
+  token?: string;
 }): Promise<ConsoleSearchItem[]> {
   try {
     const { dict, locale } = await initDict();
-    const token = await getToken();
+    if (!token) {
+      token = await getToken();
+    }
 
     const newItems: ConsoleSearchItem[] = [];
 

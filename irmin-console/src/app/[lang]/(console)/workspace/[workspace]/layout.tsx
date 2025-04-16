@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 
 import { getWorkspaceInvites } from '@/lib/actions/invites';
 import { getRoles } from '@/lib/actions/roles';
+import { generateSearchItems } from '@/lib/actions/searchItems';
 import { getUsers } from '@/lib/actions/users';
 import { getWorkspace } from '@/lib/actions/workspaces';
 import { Locale } from '@/lib/dict';
@@ -49,23 +50,25 @@ export default async function ConsoleWorkspaceLayout(props: {
   const token = await getToken();
 
   // Fetch the workspace, roles, users, and invites
-  const [workspace, roles, users, invites] = await Promise.all([
+  const [workspace, roles, users, invites, searchItems] = await Promise.all([
     getWorkspace({ workspaceSlug: currentWorkspace, token }),
     getRoles({ token }),
     getUsers({ workspace: currentWorkspace, token }),
     getWorkspaceInvites({ workspace: currentWorkspace, token }),
+    generateSearchItems({ workspace: currentWorkspace, token }),
   ]);
 
-  if (!workspace.data || !roles.data) return notFound();
+  if (!workspace.data) return notFound();
 
   return (
     <WorkspaceProvider
       initialWorkspace={workspace.data}
       workspaceSlug={currentWorkspace}
+      searchItems={searchItems}
     >
       <UsersProvider
         currentWorkspace={currentWorkspace}
-        roles={roles.data}
+        roles={roles.data ?? []}
         currentUsers={users.data ?? []}
         currentInvites={invites.data ?? []}
       >

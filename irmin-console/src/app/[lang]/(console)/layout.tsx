@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 
-import { getDict } from '@/lib/actions/dict';
+import { generateSearchItems } from '@/lib/actions/searchItems';
 import { getWorkspaces } from '@/lib/actions/workspaces';
 import { Locale } from '@/lib/dict';
 import { getToken } from '@/lib/getToken';
 
 import ConsoleWrapper from '@/components/console/ConsoleWrapper';
+
+import { ConsoleSearchProvider } from '@/context/ConsoleSearchContext';
 
 /**
  * Default layout level metadata for SEO on the console
@@ -30,14 +32,16 @@ export default async function ConsoleLayout(props: {
   const { children } = props;
 
   const token = await getToken();
-  const [workspaces, { dict }] = await Promise.all([
+  const [workspaces, searchItems] = await Promise.all([
     getWorkspaces({ token }),
-    getDict(),
+    generateSearchItems({ token }),
   ]);
 
   return (
-    <ConsoleWrapper workspaces={workspaces.data ?? []} dict={dict}>
-      {children}
-    </ConsoleWrapper>
+    <ConsoleSearchProvider initialSearchItems={searchItems}>
+      <ConsoleWrapper workspaces={workspaces.data ?? []}>
+        {children}
+      </ConsoleWrapper>
+    </ConsoleSearchProvider>
   );
 }

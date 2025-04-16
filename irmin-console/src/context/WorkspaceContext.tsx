@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -21,8 +22,10 @@ import {
 import WorkspaceDeletionConfirmationModal from '@/components/workspace/WorkspaceDeletionConfirmationModal';
 
 import { Workspace } from '@/types/core/Workspace';
+import { ConsoleSearchItem } from '@/types/internal/ConsoleSearch';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
+import { useConsoleSearchContext } from './ConsoleSearchContext';
 import { useLocale } from './LocaleContext';
 import { usePopup } from './PopupContext';
 
@@ -50,14 +53,17 @@ export const WorkspaceProvider = ({
   children,
   workspaceSlug,
   initialWorkspace,
+  searchItems,
 }: {
   children: React.ReactNode;
   workspaceSlug: string;
   initialWorkspace: Workspace | null;
+  searchItems: ConsoleSearchItem[];
 }) => {
   const router = useRouter();
   const { dict } = useLocale();
   const { irminAlert, irminConfirm, irminModal } = usePopup();
+  const { setSearchItems } = useConsoleSearchContext();
 
   // Track if the workspace is being updated
   const updating = useRef(false);
@@ -183,6 +189,16 @@ export const WorkspaceProvider = ({
       updating.current = false;
     }
   }, [workspace, dict, irminAlert, irminConfirm, router]);
+
+  // Update the search items in the context when the workspace changes
+  useEffect(() => {
+    if (!workspace) return;
+    const newSearchItems = searchItems.map((item) => ({
+      ...item,
+      workspace: workspace.name,
+    }));
+    setSearchItems(newSearchItems);
+  }, [workspace, searchItems, setSearchItems]);
 
   return (
     <WorkspaceContext.Provider

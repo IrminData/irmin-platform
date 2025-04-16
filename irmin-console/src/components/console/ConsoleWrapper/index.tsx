@@ -8,12 +8,12 @@ import { useParams } from 'next/navigation';
 
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
-import { Dictionary } from '@/lib/dict';
-
 import ConsoleSearch from '@/components/console/ConsoleSearch';
 import Button from '@/components/ui/button';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
+
+import { useLocale } from '@/context/LocaleContext';
 
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 
@@ -39,14 +39,13 @@ import useConsoleNavigationLinks from './useConsoleNavigationLinks';
  * Links are fetched from {@link useConsoleNavigationLinks} context and displayed using {@link ConsoleNavigationLink}.
  */
 export default function ConsoleWrapper({
-  dict,
   workspaces,
   children,
 }: {
-  dict: Dictionary;
   workspaces: Workspace[];
   children: React.ReactNode;
 }) {
+  const { dict } = useLocale();
   const params = useParams<{ workspace?: string }>();
   const links = useConsoleNavigationLinks();
 
@@ -296,7 +295,7 @@ export default function ConsoleWrapper({
                 />
               </div>
               <div className='ml-auto w-full max-w-24 transition-all focus-within:max-w-full md:max-w-sm lg:max-w-md'>
-                <ConsoleSearch dict={dict} />
+                <ConsoleSearch />
               </div>
             </div>
           </div>
