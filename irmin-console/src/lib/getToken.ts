@@ -37,10 +37,9 @@ export async function getToken(): Promise<string> {
         path: '/',
         maxAge: 60, // Token expires in 60 seconds
       });
-    } catch (e) {
-      console.log('Failed to set token cookie', e);
+    } finally {
+      return token;
     }
-    return token;
   }
 
   return token;
