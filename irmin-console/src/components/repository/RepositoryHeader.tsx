@@ -5,20 +5,13 @@ import { useMemo } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 import { GoGitBranch, GoGitCommit, GoGitCompare } from 'react-icons/go';
-import {
-  TbDatabase,
-  TbFileText,
-  TbLogs,
-  TbSettings,
-  TbTags,
-} from 'react-icons/tb';
-
-import { Dictionary } from '@/lib/dict';
+import { TbDatabase, TbFileText, TbSettings, TbTags } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 
+import { useLocale } from '@/context/LocaleContext';
 import { useRepository } from '@/context/RepositoryContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
@@ -29,13 +22,8 @@ import BranchSelector from './branches/BranchSelector';
  * Single Repository page header.
  * Provides tabs and title for the repository.
  */
-export default function RepositoryHeader({
-  dict,
-  repositorySlug,
-}: {
-  dict: Dictionary;
-  repositorySlug: string;
-}) {
+export default function RepositoryHeader() {
+  const { dict } = useLocale();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -108,23 +96,8 @@ export default function RepositoryHeader({
         icon: <TbSettings size={14} />,
         hidden: immutable,
       },
-      {
-        name: dict.workflow.tabs.logs,
-        link: `${workspaceUrl}/logs/repository/${repositorySlug}`,
-        active: false,
-        icon: <TbLogs size={14} />,
-        hidden: false,
-      },
     ],
-    [
-      pathname,
-      workspaceUrl,
-      searchParams,
-      baseUrl,
-      repositorySlug,
-      dict,
-      immutable,
-    ]
+    [pathname, searchParams, baseUrl, dict, immutable]
   );
 
   return (

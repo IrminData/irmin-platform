@@ -25,6 +25,10 @@ import {
 
 import '@mdxeditor/editor/style.css';
 
+export type InitialisedMDXEditorProps = {
+  children: React.ReactNode;
+} & MDXEditorProps;
+
 /**
  * Initialized MDX editor
  *
@@ -37,8 +41,12 @@ import '@mdxeditor/editor/style.css';
  */
 export default function InitialisedMDXEditor({
   editorRef,
+  children,
   ...props
-}: { editorRef: ForwardedRef<MDXEditorMethods> | null } & MDXEditorProps) {
+}: {
+  children: React.ReactNode;
+  editorRef: ForwardedRef<MDXEditorMethods> | null;
+} & MDXEditorProps) {
   return (
     <MDXEditor
       plugins={[
@@ -52,18 +60,20 @@ export default function InitialisedMDXEditor({
         codeBlockPlugin({ defaultCodeBlockLanguage: 'js' }),
         toolbarPlugin({
           toolbarContents: () => (
-            <>
+            <div className='flex w-full flex-row justify-end gap-2 px-2'>
               <BlockTypeSelect />
               <UndoRedo />
               <BoldItalicUnderlineToggles />
               <CodeToggle />
               <CreateLink />
               <InsertTable />
-            </>
+              {children}
+            </div>
           ),
         }),
       ]}
       {...props}
+      contentEditableClassName='mdx-editor-prose'
       ref={editorRef}
     />
   );

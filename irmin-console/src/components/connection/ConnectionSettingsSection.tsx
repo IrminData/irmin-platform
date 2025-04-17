@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
@@ -26,15 +26,23 @@ const ConnectionSettingsSection = () => {
   const { connection, transferConnection, updateConnection, deleteConnection } =
     useConnection();
 
+  const [submitting, setSubmitting] = useState(false);
   const handleUpdateConnection = useCallback(
     async (data: ConnectionFormValues) => {
-      if (data.owner !== connection.owner.id) {
-        await transferConnection(data.owner);
+      try {
+        setSubmitting(true);
+        if (data.owner !== connection.owner.id) {
+          await transferConnection(data.owner);
+        }
+        await updateConnection({
+          name: data.name,
+          description: data.description,
+        });
+      } catch (error) {
+        console.error('Error updating connection:', error);
+      } finally {
+        setSubmitting(false);
       }
-      await updateConnection({
-        name: data.name,
-        description: data.description,
-      });
     },
     [connection, updateConnection, transferConnection]
   );
@@ -74,6 +82,7 @@ const ConnectionSettingsSection = () => {
           owner: connection.owner.id,
         }}
         onSubmit={handleUpdateConnection}
+        submitting={submitting}
         fieldConfiguration={fieldConfiguration}
         deleteItem={deleteConnection}
         itemName='Connection'

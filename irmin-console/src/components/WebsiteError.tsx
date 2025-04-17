@@ -2,23 +2,24 @@
 
 import Image from 'next/image';
 
-import Button from '@/components/ui/button';
+import { Dictionary } from '@/lib/dict';
 
-import { useLocale } from '@/context/LocaleContext';
+import Button from '@/components/ui/button';
 
 /**
  * Error UI for the website
  */
 export default function WebsiteError({
+  dict,
   pageNotFound,
   error,
   reset,
 }: {
+  dict: Dictionary;
   pageNotFound?: boolean;
   error?: Error & { digest?: string };
   reset?: () => void;
 }) {
-  const { dict } = useLocale();
   return (
     <div id='website-error-section'>
       <Image
@@ -49,7 +50,7 @@ export default function WebsiteError({
                   : dict.common.somethingWentWrong}
               </h2>
               <p className='text-foreground mb-6 text-xs md:text-sm dark:text-gray-300'>
-                {error?.message}
+                {error?.message ?? ''}
               </p>
               <div className='flex flex-wrap gap-2'>
                 <div className='w-[calc(50%-4px)]'>

@@ -1,3 +1,4 @@
+import { getDict } from '@/lib/actions/dict';
 import { Locale } from '@/lib/dict';
 
 import WebsiteError from '@/components/WebsiteError';
@@ -8,5 +9,6 @@ import WebsiteError from '@/components/WebsiteError';
 export default async function NotFound(_: {
   params: Promise<{ lang: Locale }>;
 }) {
-  return <WebsiteError pageNotFound={true} />;
+  const { dict } = await getDict();
+  return <WebsiteError pageNotFound={true} dict={dict} />;
 }

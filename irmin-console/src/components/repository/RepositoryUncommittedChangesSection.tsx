@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { GoGitCommit } from 'react-icons/go';
 import { GrRevert } from 'react-icons/gr';
@@ -12,8 +12,6 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepository } from '@/context/RepositoryContext';
-
-import { Diff } from '@/types/core/Diff';
 
 import CommitChangesModalContent from './commits/CommitChangesModalContent';
 import NoUncommittedChangesWarning from './commits/NoUncommittedChangesWarning';
@@ -29,14 +27,13 @@ export default function RepositoryUncommittedChangesSection() {
   const {
     commits,
     currentRef,
+    diff,
+    loadingDiff,
     fetchDiff,
     commitChanges,
     revertChanges,
     immutable,
   } = useRepository();
-
-  const [diff, setDiff] = useState<Diff | null>(null);
-  const [loadingDiff, setLoadingDiff] = useState<boolean>(false);
 
   const diffFetchedBase = useRef<string | null>(null);
   const diffFetchedCompare = useRef<string | null>(null);
@@ -48,14 +45,12 @@ export default function RepositoryUncommittedChangesSection() {
    * Fetch the diff between the base and compare branches.
    */
   const handleFetchDiff = useCallback(async () => {
-    if (!latestCommit || !currentRef) {
-      setDiff(null);
-      return;
+    try {
+      if (!latestCommit || !currentRef) return;
+      await fetchDiff(latestCommit.hash, currentRef);
+    } catch (error) {
+      console.error('Failed to fetch diff', error);
     }
-    setLoadingDiff(true);
-    const res = await fetchDiff(latestCommit.hash, currentRef);
-    if (res) setDiff(res);
-    setLoadingDiff(false);
   }, [latestCommit, currentRef, fetchDiff]);
 
   /**
@@ -157,15 +152,21 @@ export default function RepositoryUncommittedChangesSection() {
           </Button>
         </div>
       </div>
-      {loadingDiff && <LoadingSkeleton className='h-96' />}
-      {!loadingDiff && !canCommit && <NoUncommittedChangesWarning />}
-      {!loadingDiff && canCommit && diff && (
-        <DiffView
-          diff={diff}
-          hideHeader={true}
-          hideCommits={true}
-          noDiffWarning={<NoUncommittedChangesWarning />}
-        />
+      {loadingDiff ? (
+        <LoadingSkeleton className='h-96' />
+      ) : (
+        <>
+          {canCommit && diff ? (
+            <DiffView
+              diff={diff}
+              hideHeader={true}
+              hideCommits={true}
+              noDiffWarning={<NoUncommittedChangesWarning />}
+            />
+          ) : (
+            <NoUncommittedChangesWarning />
+          )}
+        </>
       )}
     </div>
   );

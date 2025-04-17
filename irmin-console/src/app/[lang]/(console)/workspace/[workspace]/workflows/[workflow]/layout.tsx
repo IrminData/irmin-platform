@@ -75,9 +75,7 @@ export default async function WorkflowLayout(
 
   return (
     <WorkflowProvider runs={runs.data ?? []} initialWorkflow={workflow.data}>
-      <WorkflowLayoutWrapper workflowID={workflowID}>
-        {children}
-      </WorkflowLayoutWrapper>
+      <WorkflowLayoutWrapper>{children}</WorkflowLayoutWrapper>
     </WorkflowProvider>
   );
 }

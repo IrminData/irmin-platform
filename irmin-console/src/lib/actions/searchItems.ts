@@ -29,7 +29,9 @@ export async function generateSearchItems({
     const newItems: ConsoleSearchItem[] = [];
 
     // Add workspaces
-    const { data: workspaces } = await getWorkspaces({ token });
+    const { data: workspaces } = await getWorkspaces({ token }).catch(() => ({
+      data: [],
+    }));
     workspaces?.forEach((ws) => {
       newItems.push({
         title: ws.name,
@@ -102,10 +104,10 @@ export async function generateSearchItems({
     if (workspace) {
       // Fetch workspace-dependent items
       const [connections, users, workflows, repositories] = await Promise.all([
-        getConnections({ workspace, token }),
-        getUsers({ workspace, token }),
-        getWorkflows({ workspace, token }),
-        getRepositories({ workspace, token }),
+        getConnections({ workspace, token }).catch(() => ({ data: [] })),
+        getUsers({ workspace, token }).catch(() => ({ data: [] })),
+        getWorkflows({ workspace, token }).catch(() => ({ data: [] })),
+        getRepositories({ workspace, token }).catch(() => ({ data: [] })),
       ]);
 
       // Add workspace-dependent static Irmin items

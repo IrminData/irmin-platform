@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
@@ -27,15 +27,23 @@ const WorkflowSettingsSection = () => {
   const { workflow, updateWorkflow, transferWorkflow, deleteWorkflow } =
     useWorkflow();
 
+  const [submitting, setSubmitting] = useState(false);
   const handleUpdateWorkflow = useCallback(
     async (data: WorkflowFormValues) => {
-      if (data.owner !== workflow.owner.id) {
-        await transferWorkflow(data.owner);
+      try {
+        setSubmitting(true);
+        if (data.owner !== workflow.owner.id) {
+          await transferWorkflow(data.owner);
+        }
+        await updateWorkflow({
+          name: data.name,
+          description: data.description,
+        });
+      } catch (error) {
+        console.error('Error updating workflow:', error);
+      } finally {
+        setSubmitting(false);
       }
-      await updateWorkflow({
-        name: data.name,
-        description: data.description,
-      });
     },
     [workflow, updateWorkflow, transferWorkflow]
   );
@@ -75,6 +83,7 @@ const WorkflowSettingsSection = () => {
           owner: workflow.owner.id,
         }}
         onSubmit={handleUpdateWorkflow}
+        submitting={submitting}
         fieldConfiguration={fieldConfiguration}
         deleteItem={deleteWorkflow}
         itemName='Workflow'

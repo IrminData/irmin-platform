@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import { getCommits } from '@/lib/actions/commits';
-import { Dictionary } from '@/lib/dict';
 
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
@@ -28,7 +27,6 @@ import RepositoryHeader from './RepositoryHeader';
  */
 export default function RepositoryLayoutWrapper({
   children,
-  dict,
   repositorySlug,
   workspaceSlug,
   initialRepository,
@@ -36,7 +34,6 @@ export default function RepositoryLayoutWrapper({
   initialTags,
 }: {
   children: React.ReactNode;
-  dict: Dictionary;
   repositorySlug: string;
   workspaceSlug: string;
   initialRepository: Repository;
@@ -74,7 +71,6 @@ export default function RepositoryLayoutWrapper({
   }
   return (
     <RepositoryProvider
-      dict={dict}
       repositorySlug={repositorySlug}
       initialRef={initialRef}
       initialRepository={initialRepository}
@@ -82,7 +78,7 @@ export default function RepositoryLayoutWrapper({
       initialTags={initialTags}
       initialCommits={commits}
     >
-      <RepositoryHeader repositorySlug={repositorySlug} dict={dict} />
+      <RepositoryHeader />
       <div>{children}</div>
     </RepositoryProvider>
   );

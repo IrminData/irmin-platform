@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
+import { LuSearchX } from 'react-icons/lu';
 import {
   TbArrowsSort,
   TbDotsVertical,
@@ -40,7 +41,7 @@ export default function ObjectList({
   selectObject: (object: Object) => void;
 }) {
   const { locale, dict } = useLocale();
-  const { loadingObjects, updateCurrentPath, currentPath, directory } =
+  const { loadingDirectory, updateCurrentPath, currentPath, directory } =
     useRepository();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{
@@ -70,19 +71,20 @@ export default function ObjectList({
     return sortableObjects;
   }, [filteredObjects, sortConfig]);
 
-  const handleSort = (
-    key: 'name' | 'path' | 'type' | 'content_type' | 'last_modified'
-  ) => {
-    setSortConfig((prevConfig) => ({
-      key,
-      direction:
-        prevConfig.key === key && prevConfig.direction === 'ascending'
-          ? 'descending'
-          : 'ascending',
-    }));
-  };
+  const handleSort = useCallback(
+    (key: 'name' | 'path' | 'type' | 'content_type' | 'last_modified') => {
+      setSortConfig((prevConfig) => ({
+        key,
+        direction:
+          prevConfig.key === key && prevConfig.direction === 'ascending'
+            ? 'descending'
+            : 'ascending',
+      }));
+    },
+    []
+  );
 
-  const getIcon = (type: Object['type']) => {
+  const getIcon = useCallback((type: Object['type']) => {
     switch (type) {
       case 'group':
         return (
@@ -93,7 +95,7 @@ export default function ObjectList({
       case 'binary':
         return <TbFile className='h-5 w-5 text-gray-500 dark:text-gray-400' />;
     }
-  };
+  }, []);
 
   return (
     <div className='border-card mb-4 w-full overflow-hidden rounded-lg border'>
@@ -104,80 +106,94 @@ export default function ObjectList({
         updateCurrentPath={updateCurrentPath}
       />
       <div className='bg-background max-h-[400px] w-full overflow-scroll'>
-        {loadingObjects ? (
+        {loadingDirectory ? (
           <TableSkeleton />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className='w-[300px]'>
-                  <Button variant='ghost' onClick={() => handleSort('name')}>
-                    {dict.common.name}
-                    <TbArrowsSort className='ml-2 h-4 w-4' />
-                  </Button>
-                </TableHead>
-                <TableHead className='font-normal'>
-                  <Button
-                    variant='ghost'
-                    onClick={() => handleSort('content_type')}
-                  >
-                    {dict.repository.objects.contentType}
-                    <TbArrowsSort className='ml-2 h-4 w-4' />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant='ghost'
-                    onClick={() => handleSort('last_modified')}
-                  >
-                    {dict.common.lastModified}
-                    <TbArrowsSort className='ml-2 h-4 w-4' />
-                  </Button>
-                </TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedObjects.map((obj) => (
-                <TableRow key={obj.path}>
-                  <TableCell>
-                    <div className='flex items-center space-x-2'>
-                      {getIcon(obj.type)}
-                      <Button
-                        variant='link'
-                        onClick={() => {
-                          if (obj.type === 'group') {
-                            updateCurrentPath(obj.path);
-                          } else {
-                            selectObject(obj);
-                          }
-                        }}
-                      >
-                        {obj.name}
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell>{obj.content_type || '-'}</TableCell>
-                  <TableCell>
-                    {obj.last_modified
-                      ? new Date(obj.last_modified).toLocaleString(locale)
-                      : '-'}
-                  </TableCell>
-                  <TableCell className='text-right'>
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className='w-[300px]'>
+                    <Button variant='ghost' onClick={() => handleSort('name')}>
+                      {dict.common.name}
+                      <TbArrowsSort className='ml-2 h-4 w-4' />
+                    </Button>
+                  </TableHead>
+                  <TableHead className='font-normal'>
                     <Button
                       variant='ghost'
-                      className='p-2'
-                      onClick={() => {
-                        selectObject(obj);
-                      }}
+                      onClick={() => handleSort('content_type')}
                     >
-                      <TbDotsVertical className='h-5 w-5' />
+                      {dict.repository.objects.contentType}
+                      <TbArrowsSort className='ml-2 h-4 w-4' />
                     </Button>
-                  </TableCell>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant='ghost'
+                      onClick={() => handleSort('last_modified')}
+                    >
+                      {dict.common.lastModified}
+                      <TbArrowsSort className='ml-2 h-4 w-4' />
+                    </Button>
+                  </TableHead>
+                  <TableHead />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {sortedObjects.map((obj) => (
+                  <TableRow key={obj.path}>
+                    <TableCell>
+                      <div className='flex items-center space-x-2'>
+                        {getIcon(obj.type)}
+                        <Button
+                          variant='link'
+                          onClick={() => {
+                            if (obj.type === 'group') {
+                              updateCurrentPath(obj.path);
+                            } else {
+                              selectObject(obj);
+                            }
+                          }}
+                        >
+                          {obj.name}
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell>{obj.content_type || '-'}</TableCell>
+                    <TableCell>
+                      {obj.last_modified
+                        ? new Date(obj.last_modified).toLocaleString(locale)
+                        : '-'}
+                    </TableCell>
+                    <TableCell className='text-right'>
+                      <Button
+                        variant='ghost'
+                        className='p-2'
+                        onClick={() => {
+                          selectObject(obj);
+                        }}
+                      >
+                        <TbDotsVertical className='h-5 w-5' />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {!directory?.children && (
+              <div className='flex h-full min-h-96 w-full flex-col items-center justify-center gap-4'>
+                <LuSearchX className='h-12 w-12 text-gray-400' />
+                <div className='text-base text-gray-600 lg:text-lg dark:text-gray-300'>
+                  {dict.repository.objects.noObjects}
+                </div>
+                <div className='text-sm text-gray-500 dark:text-gray-400'>
+                  {dict.repository.objects.noObjectsMessage}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

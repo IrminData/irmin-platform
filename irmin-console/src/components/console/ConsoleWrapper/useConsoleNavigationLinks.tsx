@@ -70,11 +70,6 @@ const useConsoleNavigationLinks = (): {
     () =>
       [
         {
-          title: dict.consoleNavigation.workspace,
-          href: `${workspaceUrl}/home`,
-          icon: <TbDashboard />,
-        },
-        {
           title: dict.repository.repositories,
           href: `${workspaceUrl}/repositories`,
           icon: <TbDatabase />,

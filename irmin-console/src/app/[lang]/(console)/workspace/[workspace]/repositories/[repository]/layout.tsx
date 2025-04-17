@@ -7,7 +7,6 @@ import { getRepository } from '@/lib/actions/repositories';
 import { getTags } from '@/lib/actions/tags';
 import { Locale } from '@/lib/dict';
 import { getToken } from '@/lib/getToken';
-import { initDict } from '@/lib/initDict';
 
 import RepositoryLayoutWrapper from '@/components/repository/RepositoryLayoutWrapper';
 
@@ -54,7 +53,7 @@ export default async function RepositoryLayoutWithContainer(props: {
   }
 
   const token = await getToken();
-  const [repository, branches, tags, { dict }] = await Promise.all([
+  const [repository, branches, tags] = await Promise.all([
     getRepository({
       workspace: params.workspace,
       repositorySlug: params.repository,
@@ -64,13 +63,12 @@ export default async function RepositoryLayoutWithContainer(props: {
       workspace: params.workspace,
       repository: params.repository,
       token,
-    }),
+    }).catch(() => ({ data: [] })),
     getTags({
       workspace: params.workspace,
       repository: params.repository,
       token,
-    }),
-    initDict(),
+    }).catch(() => ({ data: [] })),
   ]);
 
   if (!repository.data) {
@@ -79,7 +77,6 @@ export default async function RepositoryLayoutWithContainer(props: {
 
   return (
     <RepositoryLayoutWrapper
-      dict={dict}
       repositorySlug={params.repository}
       workspaceSlug={params.workspace}
       initialRepository={repository.data}

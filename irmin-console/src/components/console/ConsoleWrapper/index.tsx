@@ -80,12 +80,12 @@ export default function ConsoleWrapper({
           >
             <div
               id='console-sidebar-main-content'
-              className={`mt-12 flex flex-col justify-start ${foldMenu ? 'mt-24 gap-0' : 'gap-6'} md:mt-1`}
+              className={`mt-12 flex flex-col justify-start ${foldMenu ? 'mt-24 gap-0' : 'gap-6'} lg:mt-1`}
             >
               {/* Logo, notifications and fold button */}
               <div
                 id='console-sidebar-header'
-                className='z-40 flex w-full items-center justify-start gap-4 px-4 pt-4 md:pl-6'
+                className='z-40 flex w-full items-center justify-start gap-4 px-4 pt-2 md:pl-6'
               >
                 <div
                   className={`block transition-all duration-300 ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}`}
@@ -113,7 +113,7 @@ export default function ConsoleWrapper({
                   </div>
                 )}
                 <Button
-                  className={`absolute top-[16px] hidden lg:top-[18px] lg:block ${
+                  className={`absolute top-[12px] hidden lg:block ${
                     !foldMenu ? 'right-0' : 'left-6'
                   }`}
                   aria-label='Fold the side navigation'

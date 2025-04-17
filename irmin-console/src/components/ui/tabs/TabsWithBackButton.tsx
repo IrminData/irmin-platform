@@ -21,9 +21,9 @@ const TabsWithBackButton = ({
   return (
     <div className='scrollbar-hide mb-6 flex w-full justify-start gap-2 overflow-y-scroll px-4'>
       <ButtonWithTooltip
-        size='icon'
+        size='lg'
         variant='gray'
-        className='rounded-full'
+        className='aspect-square overflow-hidden rounded-full'
         icon={<IoChevronBack size={24} />}
         href={backHref}
         tooltip={backTooltip}
@@ -37,7 +37,7 @@ const TabsWithBackButton = ({
               <Button
                 key={`tab-${idx}`}
                 className={`rounded-b-none border shadow-none hover:no-underline ${tab.active ? 'border-accent border-0 border-b-2 border-solid' : ''}`}
-                size='default'
+                size='lg'
                 variant={'ghost'}
                 href={tab.link}
                 aria-label={`Tab ${tab.name}`}

@@ -32,10 +32,11 @@ export default function CreateRepositoryModalContent({
     defaultValues: {
       name: '',
       description: '',
+      default_branch: 'main',
     },
   });
 
-  const { handleCreate } = useCreateRepository({
+  const { handleCreate, processing } = useCreateRepository({
     reset,
     closeModal,
   });
@@ -87,7 +88,25 @@ export default function CreateRepositoryModalContent({
           )}
         />
       </div>
-      <Button className='h-11 w-full' type='submit' size='sm' variant='default'>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.branches.primaryBranch}</Label>
+        <Controller
+          name='default_branch'
+          control={control}
+          rules={{ required: dict.common.fieldRequired }}
+          render={({ field }) => (
+            <>
+              <Input {...field} />
+              {errors.default_branch && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.default_branch.message}
+                </p>
+              )}
+            </>
+          )}
+        />
+      </div>
+      <Button type='submit' size='lg' variant='gray' loading={processing}>
         {dict.repository.createNewRepository}
       </Button>
     </form>

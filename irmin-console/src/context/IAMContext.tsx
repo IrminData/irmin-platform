@@ -14,18 +14,26 @@ import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 
-import { getProfile } from '@/lib/actions/profile';
 import IrminCore from '@/lib/core';
-import { getToken } from '@/lib/getToken';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { User } from '@/types/core/User';
 
-// Create IAM context
-const IAMContext = createContext<{
+/**
+ * IAM context shape
+ */
+interface IAMContextValue {
+  /**
+   * Returns a valid JWT token, fetching a new one only if the cached token has expired.
+   *
+   * @returns promise resolving to the current token string
+   */
+  getToken: () => Promise<string>;
+  /** user’s Irmin profile */
   profile: User | undefined;
+  /** update profile in Irmin */
   updateProfile: (
     first_name: string,
     last_name: string,
@@ -34,107 +42,152 @@ const IAMContext = createContext<{
     company: string,
     profile_picture?: FileList
   ) => Promise<boolean>;
+  /** loading state for auth/profile */
   isLoading: boolean;
+  /** sign the user out */
   signOut: () => Promise<boolean>;
-}>({
+}
+
+const IAMContext = createContext<IAMContextValue>({
+  getToken: async () => {
+    throw new Error('IAMProvider not initialised');
+  },
   profile: undefined,
-  updateProfile: () => Promise.resolve(false),
+  updateProfile: async () => false,
   isLoading: false,
-  signOut: () => Promise.resolve(false),
+  signOut: async () => false,
 });
 
-/**
- * Identity and Access Management (IAM) context provider
- *
- * Provides user profile data and authentication state.
- */
 export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { locale } = useLocale();
   const { irminAlert } = usePopup();
-  const { isSignedIn, isLoaded: clerkIsLoaded } = useUser();
-  const { sessionId, signOut: clerkSignOut } = useAuth();
 
-  const [profile, setProfile] = useState<User | undefined>();
+  // clerk hooks
+  const {
+    isLoaded: authLoaded,
+    isSignedIn,
+    sessionClaims,
+    getToken: getClerkToken,
+  } = useAuth();
+  const { sessionId, signOut: clerkSignOut } = useAuth();
+  const { isLoaded: userLoaded } = useUser();
+
+  const [profile, setProfile] = useState<User>();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Track the session ID to avoid redundant fetches
-  const initializedSessionIdRef = useRef<string | null>(null);
-
-  // Prevent multiple concurrent sign-out operations
-  const signingOutRef = useRef(false);
+  // internally cache token and expiry
+  const tokenRef = useRef<string | null>(null);
+  const expiryRef = useRef<number>(0);
+  const initSessionRef = useRef<string | null>(null);
 
   /**
-   * Resets the IAM state
+   * Clears all IAM state and cached token
    */
-  const resetIAMState = useCallback(() => {
+  const resetIAM = useCallback(() => {
     setProfile(undefined);
-    initializedSessionIdRef.current = null;
+    tokenRef.current = null;
+    expiryRef.current = 0;
+    initSessionRef.current = null;
   }, []);
 
   /**
-   * Fetches the Irmin profile and updates the IAM context
+   * Returns a valid token, only calling Clerk if the cached one is expired.
+   *
+   * @returns current JWT token
    */
-  const fetchIrminProfile = useCallback(async () => {
-    if (!clerkIsLoaded) return;
+  const getToken = useCallback(async (): Promise<string> => {
+    const now = Date.now();
+    const bufferMs = 5 * 1000; // 5s before expiry
 
+    // if we have a token and it's still valid, return it
+    if (tokenRef.current && expiryRef.current - bufferMs > now) {
+      return tokenRef.current;
+    }
+
+    // otherwise fetch a new one from the server action
+    const newToken =
+      (await getClerkToken({
+        template: 'irmin-core',
+      })) ?? '';
+    tokenRef.current = newToken;
+
+    // use Clerk's native exp claim (in seconds) if available
+    if (sessionClaims?.exp) {
+      expiryRef.current = sessionClaims.exp * 1000;
+    } else {
+      // fallback: set a short TTL
+      expiryRef.current = now + 60 * 1000;
+    }
+
+    return newToken;
+  }, [sessionClaims, getClerkToken]);
+
+  /**
+   * Fetch the Irmin profile once per session, and prime the token cache.
+   */
+  const fetchProfile = useCallback(async () => {
+    if (!authLoaded || !userLoaded) return;
     if (!isSignedIn || !sessionId) {
-      resetIAMState();
+      resetIAM();
+      setIsLoading(false);
+      return;
+    }
+    if (initSessionRef.current === sessionId) {
       setIsLoading(false);
       return;
     }
 
-    if (initializedSessionIdRef.current === sessionId) {
-      setIsLoading(false);
-      return;
-    }
-
-    initializedSessionIdRef.current = sessionId;
+    initSessionRef.current = sessionId;
     setIsLoading(true);
 
     try {
-      const profile = await getProfile({});
-      if (profile.data) {
-        setProfile(profile.data);
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.profileService.getProfile();
+      if (res.data) {
+        setProfile(res.data);
       } else {
-        resetIAMState();
+        resetIAM();
       }
-    } catch (error) {
-      console.error('Error fetching Irmin profile in IAMContext:', error);
-      resetIAMState();
+    } catch (err) {
+      console.error('Error fetching profile', err);
+      resetIAM();
     } finally {
       setIsLoading(false);
     }
-  }, [clerkIsLoaded, isSignedIn, resetIAMState, sessionId]);
+  }, [
+    authLoaded,
+    userLoaded,
+    isSignedIn,
+    sessionId,
+    getToken,
+    resetIAM,
+    locale,
+  ]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   /**
-   * Signs the user out and cleans up the IAM context state
+   * Signs the user out and resets IAM state
+   *
+   * @returns whether sign‑out succeeded
    */
-  const signOut = useCallback(async () => {
-    if (signingOutRef.current) return false;
-    signingOutRef.current = true;
+  const signOut = useCallback(async (): Promise<boolean> => {
+    resetIAM();
+    router.replace(`/${locale}/sign-in`);
+    await clerkSignOut();
+    return true;
+  }, [clerkSignOut, locale, resetIAM, router]);
 
-    try {
-      if (!isSignedIn) {
-        resetIAMState();
-        router.replace(`/${locale}/sign-in`);
-        return false;
-      }
-
-      router.replace(`/${locale}/sign-in`);
-      await clerkSignOut();
-      resetIAMState();
-      return true;
-    } catch (error) {
-      console.error('Error signing out in IAMContext:', error);
-      irminAlert('error', (error as Error).message ?? 'Failed to sign out');
-      return false;
-    } finally {
-      signingOutRef.current = false;
-    }
-  }, [clerkSignOut, resetIAMState, irminAlert, locale, isSignedIn, router]);
-
-  const handleUpdateProfile = useCallback(
+  /**
+   * Update the user's Irmin profile using the current token
+   *
+   * @returns whether the update succeeded
+   */
+  const updateProfile = useCallback(
     async (
       first_name: string,
       last_name: string,
@@ -142,66 +195,51 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
       phone: string,
       company: string,
       profile_picture?: FileList
-    ) => {
+    ): Promise<boolean> => {
       try {
         const token = await getToken();
-        const irminCore = new IrminCore(locale, token);
-        const res = await irminCore.profileService.updateProfile({
+        const core = new IrminCore(locale, token);
+        const r = await core.profileService.updateProfile({
           first_name,
           last_name,
           email,
           phone,
           company,
-          avatar:
-            profile_picture && profile_picture.length > 0
-              ? profile_picture[0]
-              : undefined,
+          avatar: profile_picture?.[0],
         });
-        if (res?.data) {
-          setProfile(res?.data);
-          irminAlert('success', res?.message ?? 'Profile updated successfully');
+        if (r.data) {
+          setProfile(r.data);
+          irminAlert('success', r.message ?? 'Profile updated');
+          return true;
         }
-        if (!res?.data)
-          throw new Error(res?.message ?? 'Failed to update profile');
-        return true;
-      } catch (error) {
-        irminAlert(
-          'error',
-          (error as Error).message ?? 'Failed to update profile'
-        );
+        throw new Error(r.message);
+      } catch (err) {
+        irminAlert('error', (err as Error).message ?? 'Error updating profile');
         return false;
       }
     },
-    [irminAlert, locale]
+    [irminAlert, locale, getToken]
   );
 
-  /**
-   * Fetches the Irmin profile data on component mount and when dependencies change
-   */
-  useEffect(() => {
-    fetchIrminProfile();
-  }, [fetchIrminProfile]);
-
-  const value = useMemo(
+  const value = useMemo<IAMContextValue>(
     () => ({
+      getToken,
       profile,
-      updateProfile: handleUpdateProfile,
+      updateProfile,
       isLoading,
       signOut,
     }),
-    [profile, handleUpdateProfile, isLoading, signOut]
+    [getToken, profile, updateProfile, isLoading, signOut]
   );
 
   return <IAMContext.Provider value={value}>{children}</IAMContext.Provider>;
 };
 
 /**
- * Custom hook to use the IAM context
+ * Hook to consume the IAM context
  */
 export const useIAM = () => {
-  const context = useContext(IAMContext);
-  if (context === undefined) {
-    throw new Error('useIAM must be used within an IAMProvider');
-  }
-  return context;
+  const ctx = useContext(IAMContext);
+  if (!ctx) throw new Error('useIAM must be used within IAMProvider');
+  return ctx;
 };

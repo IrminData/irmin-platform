@@ -19,7 +19,7 @@ export async function getToken(): Promise<string> {
   if (!userId) throw new Error('User not signed in');
 
   // Define the cookie name
-  const tokenCookieName = 'irmin-core-token';
+  const tokenCookieName = 'irmin-console-token';
 
   // Try to get the token from the cookie
   let token = cookieStore.get(tokenCookieName)?.value ?? null;
@@ -29,16 +29,16 @@ export async function getToken(): Promise<string> {
     token = await getToken({ template: 'irmin-core' });
     if (!token) throw new Error('Failed to get token');
 
+    // Set the token in an HTTP-only, secure cookie with expiry shorter than the token expiry
     try {
-      // Set the token in an HTTP-only, secure cookie with expiry
       cookieStore.set(tokenCookieName, token, {
         httpOnly: true,
         secure: true,
         path: '/',
         maxAge: 60, // Token expires in 60 seconds
       });
-    } finally {
-      return token;
+    } catch (error) {
+      console.warn('Failed to set token cookie', error);
     }
   }
 

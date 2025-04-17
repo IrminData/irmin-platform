@@ -23,6 +23,7 @@ NEXT_PUBLIC_BASE_URL=https://console.irmin.dev  # Base URL of the console
 NEXT_PUBLIC_WEBSITE_URL=https://irmin.dev  # Website URL
 NODE_ENV=development  # Environment type. Can be development, staging or production.
 NEXT_PUBLIC_REVALIDATE="60" # Revalidation time in seconds for ISR (Incremental Static Regeneration)
+NEXT_PUBLIC_LOG_NETWORK_REQUESTS="true" # Enable logging of network requests
 
 # API settings
 NEXT_PUBLIC_API_URL=https://api.irmin.dev/api  # API endpoint URL

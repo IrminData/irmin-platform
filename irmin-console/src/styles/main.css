@@ -12,7 +12,7 @@ html {
   .pattern-bg {
     background-image: url('/ui-assets/elements/pattern-white.svg');
     background-size: cover;
-    background-position: top center;
+    background-position: center center;
     background-attachment: fixed;
     background-repeat: no-repeat;
   }
@@ -222,6 +222,11 @@ input[type='radio'] {
   line-height: 1.6;
   color: #333;
 
+  .mdxeditor-toolbar {
+    background-color: hsl(var(--card));
+    border-radius: 0;
+  }
+
   h1,
   h2,
   h3,
@@ -354,11 +359,10 @@ input[type='radio'] {
 }
 .dark .mdxeditor,
 .dark .mdx-viewer {
-  background-color: #01161e;
-  color: #fff;
+  color: #ccc;
 
-  .mdxeditor-toolbar {
-    color: #01161e;
+  .mdxeditor-toolbar * {
+    filter: invert(0.98) !important;
   }
 
   h1,
@@ -368,7 +372,7 @@ input[type='radio'] {
   h5,
   h6,
   p {
-    color: #fff;
+    color: #ccc;
   }
 
   a {

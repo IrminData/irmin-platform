@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useMemo } from 'react';
+import { CSSProperties, memo, useMemo } from 'react';
 
 import dynamic from 'next/dynamic';
 
@@ -32,11 +32,13 @@ const CodeMirrorEditor = ({
   content,
   editorHeight,
   updateEditorContent,
+  containerStyles,
   ...editorProps
 }: {
   language: IrminFileLanguage;
   content: string;
   editorHeight?: string;
+  containerStyles?: CSSProperties;
   updateEditorContent: (value: string) => void;
 } & ReactCodeMirrorProps) => {
   const { dict } = useLocale();
@@ -78,6 +80,7 @@ const CodeMirrorEditor = ({
     <div
       style={{
         maxHeight: editorHeight ?? '100%',
+        ...containerStyles,
       }}
       className='codemirror-editor relative h-full w-full overflow-scroll bg-white dark:bg-gray-950'
     >

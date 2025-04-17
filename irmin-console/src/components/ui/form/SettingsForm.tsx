@@ -40,6 +40,8 @@ interface SettingsFormProps<T extends FieldValues> {
   initialValues: DefaultValues<T>;
   /** The function to call when the form is submitted */
   onSubmit: (data: T) => void;
+  /** Whether the form is submitting */
+  submitting?: boolean;
   /** The configuration for each field in the form */
   fieldConfiguration: FieldConfig<T>[];
   /** The function to call when the delete button is clicked */
@@ -62,6 +64,7 @@ interface SettingsFormProps<T extends FieldValues> {
 export default function SettingsForm<T extends FieldValues>({
   initialValues,
   onSubmit,
+  submitting,
   fieldConfiguration,
   deleteItem,
   itemName = 'Item',
@@ -80,8 +83,11 @@ export default function SettingsForm<T extends FieldValues>({
   });
 
   return (
-    <ContentWrapper wrapperClassName='py-8'>
-      <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-4'>
+    <ContentWrapper wrapperClassName='py-8 flex flex-col md:flex-row gap-8 md:gap-12 px-4'>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className='flex flex-1 flex-col gap-4'
+      >
         {fieldConfiguration.map((field, idx) => (
           <div
             key={`field-${idx}-${field.name}`}
@@ -103,6 +109,7 @@ export default function SettingsForm<T extends FieldValues>({
                       longtext={
                         field.type === 'textarea' ? { rows: 3 } : undefined
                       }
+                      disabled={submitting}
                     />
                   ) : field.type === 'select' && field.options ? (
                     <ReactSelect
@@ -116,6 +123,7 @@ export default function SettingsForm<T extends FieldValues>({
                       getOptionLabel={(option) => option.label}
                       className='react-select-container'
                       classNamePrefix='react-select'
+                      isDisabled={submitting}
                     />
                   ) : null}
                   {errors[field.name] && (
@@ -137,12 +145,13 @@ export default function SettingsForm<T extends FieldValues>({
           size='sm'
           variant='default'
           disabled={!isDirty}
+          loading={submitting}
         >
           {submitButtonLabel}
         </Button>
       </form>
       {deleteItem && (
-        <div className='mt-8'>
+        <div>
           <p className='text-destructive text-sm font-normal capitalize md:text-xl'>
             {dict.common.dangerZone}
           </p>

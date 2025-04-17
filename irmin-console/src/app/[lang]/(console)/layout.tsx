@@ -32,6 +32,7 @@ export default async function ConsoleLayout(props: {
   const { children } = props;
 
   const token = await getToken();
+
   const [workspaces, searchItems] = await Promise.all([
     getWorkspaces({ token }),
     generateSearchItems({ token }),

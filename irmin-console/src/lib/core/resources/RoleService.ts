@@ -24,6 +24,9 @@ class RoleService {
     try {
       const response = (await this.irminCore.fetchAPI(`/v1/roles`, {
         method: 'GET',
+        next: {
+          revalidate: 3600, // 1 hour
+        },
       })) as IrminAPIResponse<Role[]>;
       return response;
     } catch (error) {

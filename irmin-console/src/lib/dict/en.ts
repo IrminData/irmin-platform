@@ -162,6 +162,7 @@ const en = {
       branch: 'Branch',
       createBranch: 'Create branch',
       primary: 'Primary',
+      primaryBranch: 'Primary branch',
       newBranchName: 'New branch name',
       fromBranch: 'From branch',
       confirmDeleteBranch: 'Are you sure you want to delete this branch?',
@@ -226,6 +227,9 @@ const en = {
     },
     objects: {
       objects: 'Objects',
+      noObjects: 'No objects found',
+      noObjectsMessage:
+        'Start by uploading files or create a workflow to populate this repository.',
       uploadObject: 'Upload object',
       path: 'Path',
       currentPath: 'Current path',
@@ -502,8 +506,6 @@ const en = {
   },
   documentation: {
     documentation: 'Documentation',
-    switchToPlainText: 'Plain text',
-    switchToVisualEditor: 'Visual editor',
     startTypingDocumentation:
       'Start typing your documentation and notes here...',
     schema: 'Schema',

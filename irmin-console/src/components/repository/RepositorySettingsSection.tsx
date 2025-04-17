@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Dictionary } from '@/lib/dict';
 
@@ -32,15 +32,23 @@ const RepositorySettingsSection = ({
     deleteRepository,
   } = useRepository();
 
+  const [submitting, setSubmitting] = useState(false);
   const handleUpdateRepository = useCallback(
     async (data: { name: string; description: string; owner: string }) => {
-      if (data.owner !== currentRepository.owner.id) {
-        await transferRepository(data.owner);
+      try {
+        setSubmitting(true);
+        if (data.owner !== currentRepository.owner.id) {
+          await transferRepository(data.owner);
+        }
+        await updateRepository({
+          name: data.name,
+          description: data.description,
+        });
+      } catch (error) {
+        console.error('Error updating repository:', error);
+      } finally {
+        setSubmitting(false);
       }
-      await updateRepository({
-        name: data.name,
-        description: data.description,
-      });
     },
     [currentRepository, updateRepository, transferRepository]
   );
@@ -91,6 +99,7 @@ const RepositorySettingsSection = ({
           owner: currentRepository?.owner.id ?? '',
         }}
         onSubmit={handleUpdateRepository}
+        submitting={submitting}
         fieldConfiguration={fieldConfiguration}
         deleteItem={deleteRepository}
         itemName='Repository'

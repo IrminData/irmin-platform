@@ -27,7 +27,8 @@ import WorkflowRunService from './resources/WorkflowRunService';
 import WorkflowService from './resources/WorkflowService';
 import WorkspaceService from './resources/WorkspaceService';
 
-const isDevelopment = process.env.NODE_ENV === 'development';
+const logNetworkRequests =
+  process.env.NEXT_PUBLIC_LOG_NETWORK_REQUESTS === 'true';
 
 /**
  * All Core API Services centralised in one place.
@@ -135,16 +136,12 @@ class IrminCore {
 
     const requestURL = `${api_base}${url}`;
 
-    if (isDevelopment) {
-      console.log('IrminCore fetch request');
-      console.log('Fetch URL:', requestURL);
-      console.log('Fetch Options:', requestOptions);
+    if (logNetworkRequests) {
+      console.log('IrminCore fetch request: ', requestURL, requestOptions);
     }
 
     // Fetch Core Irmin API
     const response = await fetch(requestURL, requestOptions);
-
-    if (isDevelopment) console.log('Fetch Response:', response);
 
     return response;
   };
@@ -190,8 +187,8 @@ class IrminCore {
     // Parse the response as JSON
     const data = await response.json();
 
-    if (isDevelopment)
-      console.log('Fetch Response data:', JSON.stringify(data, null, 2));
+    if (logNetworkRequests)
+      console.log(`${url} response: `, JSON.stringify(data, null, 2));
 
     // Fallback check if no allowedStatusCodes were provided
     if (

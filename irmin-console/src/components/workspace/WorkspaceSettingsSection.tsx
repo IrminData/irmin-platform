@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { TbLogout } from 'react-icons/tb';
 
@@ -22,12 +22,20 @@ const WorkspaceSettingsSection = () => {
   const { workspace, updateWorkspace, deleteWorkspace, leaveWorkspace } =
     useWorkspace();
 
+  const [submitting, setSubmitting] = useState(false);
   const handleUpdateWorkspace = useCallback(
     async (data: { name: string; description: string }) => {
-      await updateWorkspace({
-        name: data.name,
-        description: data.description,
-      });
+      try {
+        setSubmitting(true);
+        await updateWorkspace({
+          name: data.name,
+          description: data.description,
+        });
+      } catch (error) {
+        console.error('Error updating workspace:', error);
+      } finally {
+        setSubmitting(false);
+      }
     },
     [updateWorkspace]
   );
@@ -68,6 +76,7 @@ const WorkspaceSettingsSection = () => {
         description: workspace.description ?? '',
       }}
       onSubmit={handleUpdateWorkspace}
+      submitting={submitting}
       fieldConfiguration={fieldConfiguration}
       deleteItem={handleDeleteWorkspace}
       itemName={dict.consoleNavigation.workspace}

@@ -3,9 +3,9 @@
 import { GoWorkflow } from 'react-icons/go';
 import { TbDatabase, TbPlayerPlay, TbRun } from 'react-icons/tb';
 
-import { Dictionary } from '@/lib/dict';
-
 import LinkCard from '@/components/ui/LinkCard';
+
+import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
@@ -14,13 +14,8 @@ import { Workspace } from '@/types/core/Workspace';
 /**
  * Home page section for the workspace.
  */
-const WorkspaceHomeSection = ({
-  dict,
-  workspace,
-}: {
-  dict: Dictionary;
-  workspace: Workspace;
-}) => {
+const WorkspaceHomeSection = ({ workspace }: { workspace: Workspace }) => {
+  const { dict } = useLocale();
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
     pathname: '',
@@ -29,8 +24,8 @@ const WorkspaceHomeSection = ({
     segmentsAfter: 1,
   });
   return (
-    <div className='pattern-bg h-full'>
-      <div className='relative container mx-auto my-12 max-w-6xl px-4'>
+    <div className='pattern-bg h-full py-12'>
+      <div className='relative container mx-auto max-w-6xl px-4'>
         <div className='flex flex-col gap-8 px-4'>
           <div className='flex w-full flex-col gap-4'>
             <h2 className='font-display text-foreground/90 text-center text-3xl font-bold sm:text-4xl lg:text-5xl'>

@@ -189,7 +189,7 @@ export default function UploadObjectModal({
         <Button
           variant='default'
           className='w-full'
-          disabled={loading}
+          loading={loading}
           type='submit'
         >
           {loading ? dict.common.loading : dict.repository.objects.uploadObject}

@@ -164,6 +164,7 @@ const fi = {
       branch: 'Haara',
       createBranch: 'Luo haara',
       primary: 'Päähaara',
+      primaryBranch: 'Päähaara',
       newBranchName: 'Uuden haaran nimi',
       fromBranch: 'Haarasta',
       confirmDeleteBranch: 'Oletko varma, että haluat poistaa tämän haaran?',
@@ -229,6 +230,9 @@ const fi = {
     },
     objects: {
       objects: 'Objektit',
+      noObjects: 'Ei objekteja',
+      noObjectsMessage:
+        'Aloita lataamalla tiedostoja tai luomalla tuontiprosessin',
       uploadObject: 'Lataa objekti',
       path: 'Polku',
       currentPath: 'Nykyinen polku',
@@ -506,8 +510,6 @@ const fi = {
   },
   documentation: {
     documentation: 'Dokumentaatio',
-    switchToPlainText: 'Teksti',
-    switchToVisualEditor: 'Visuaalinen muokkaaja',
     startTypingDocumentation:
       'Aloita dokumentaation ja muistiinpanojen kirjoittaminen tähän...',
     schema: 'Rakenne',

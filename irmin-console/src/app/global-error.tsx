@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 
 import * as Sentry from '@sentry/nextjs';
 
+import { defaultLocale, dictionaries } from '@/lib/dict';
+
 import WebsiteError from '@/components/WebsiteError';
 
 /**
@@ -18,6 +20,9 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // Get the dictionary for the default locale
+  const dict = dictionaries[defaultLocale];
+
   useEffect(() => {
     Sentry.captureException(error);
   }, [error]);
@@ -25,7 +30,7 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <WebsiteError error={error} reset={reset} />
+        <WebsiteError error={error} reset={reset} dict={dict} />
       </body>
     </html>
   );

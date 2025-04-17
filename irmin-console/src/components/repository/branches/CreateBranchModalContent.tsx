@@ -1,5 +1,7 @@
 'use client';
 
+import { useCallback, useState } from 'react';
+
 import { Controller, useForm } from 'react-hook-form';
 import Select from 'react-select';
 
@@ -41,9 +43,20 @@ export default function CreateBranchModalContent({
     },
   });
 
-  const onSubmit = async (data: FormValues) => {
-    await createBranch(data.branchName, data.fromBranch);
-  };
+  const [loading, setLoading] = useState(false);
+  const onSubmit = useCallback(
+    async (data: FormValues) => {
+      setLoading(true);
+      try {
+        await createBranch(data.branchName, data.fromBranch);
+      } catch (error) {
+        console.error('Failed to create branch', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [createBranch]
+  );
 
   return (
     <form
@@ -58,7 +71,7 @@ export default function CreateBranchModalContent({
           rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
-              <Input {...field} />
+              <Input {...field} disabled={loading} />
               {errors.branchName && (
                 <p className='mt-1 text-xs text-red-600'>
                   {errors.branchName.message}
@@ -93,6 +106,7 @@ export default function CreateBranchModalContent({
                 noOptionsMessage={() => dict.common.noOptionsMessage}
                 className='react-select-container'
                 classNamePrefix='react-select'
+                isDisabled={loading}
               />
               {errors.fromBranch && (
                 <p className='mt-1 text-xs text-red-600'>
@@ -103,7 +117,12 @@ export default function CreateBranchModalContent({
           )}
         />
       </div>
-      <Button variant='default' size='sm' className='w-full' type='submit'>
+      <Button
+        variant='default'
+        className='w-full'
+        type='submit'
+        loading={loading}
+      >
         {dict.repository.branches.createBranch}
       </Button>
     </form>

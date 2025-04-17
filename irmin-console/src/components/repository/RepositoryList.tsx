@@ -40,11 +40,6 @@ const RepositoryList = ({
       items.map((item, i) => {
         const actions = [
           {
-            label: dict.common.actions.download,
-            primary: false,
-            href: `${workspaceUrl}/${item.slug}/download`,
-          },
-          {
             label: dict.list.view,
             primary: true,
             href: `${workspaceUrl}/repositories/${item.slug}`,

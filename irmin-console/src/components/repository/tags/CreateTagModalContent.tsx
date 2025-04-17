@@ -1,5 +1,7 @@
 'use client';
 
+import { useCallback, useState } from 'react';
+
 import { Controller, useForm } from 'react-hook-form';
 
 import Button from '@/components/ui/button';
@@ -40,9 +42,20 @@ export default function CreateTagModalContent({
     },
   });
 
-  const onSubmit = async (data: FormValues) => {
-    await createTag(data.tagName, data.ref);
-  };
+  const [loading, setLoading] = useState(false);
+  const onSubmit = useCallback(
+    async (data: FormValues) => {
+      try {
+        setLoading(true);
+        await createTag(data.tagName, data.ref);
+      } catch (error) {
+        console.error('Failed to create tag', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [createTag]
+  );
 
   return (
     <form
@@ -57,7 +70,7 @@ export default function CreateTagModalContent({
           rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
-              <Input {...field} />
+              <Input {...field} disabled={loading} />
               {errors.tagName && (
                 <p className='mt-1 text-xs text-red-600'>
                   {errors.tagName.message}
@@ -85,7 +98,12 @@ export default function CreateTagModalContent({
           )}
         />
       </div>
-      <Button variant='default' size='sm' className='w-full' type='submit'>
+      <Button
+        variant='default'
+        loading={loading}
+        className='w-full'
+        type='submit'
+      >
         {dict.repository.tags.createTag}
       </Button>
     </form>

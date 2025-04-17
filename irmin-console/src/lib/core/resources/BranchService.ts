@@ -140,7 +140,7 @@ class BranchService {
       formData.append('from', from);
 
       const res = await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/repositorories/${repository}/branches`,
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches`,
         {
           method: 'POST',
           body: formData,

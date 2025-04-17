@@ -9,7 +9,6 @@ import {
   TbClockCog,
   TbDatabase,
   TbFileText,
-  TbLogs,
   TbPlayerPlay,
   TbRun,
   TbSettings,
@@ -30,16 +29,13 @@ import useBaseUrl from '@/hooks/useBaseUrl';
  *
  * @param props - The properties of the component
  * @param props.children - The children to render
- * @param props.workflowID - The ID of the workflow to show
  *
  * @returns The Workflow layout wrapper
  */
 export default function WorkflowLayoutWrapper({
   children,
-  workflowID,
 }: {
   children: React.ReactNode;
-  workflowID: string;
 }) {
   const pathname = usePathname();
   const { dict } = useLocale();
@@ -114,13 +110,6 @@ export default function WorkflowLayoutWrapper({
         hidden: !repositorySlug,
       },
       {
-        name: dict.workflow.tabs.logs,
-        link: `${workspaceUrl}/logs/workflow/${workflowID}`,
-        active: false,
-        icon: <TbLogs size={14} />,
-        hidden: false,
-      },
-      {
         name: dict.consoleNavigation.settings,
         link: `${baseUrl}/settings`,
         active: pathname === `${baseUrl}/settings`,
@@ -132,7 +121,6 @@ export default function WorkflowLayoutWrapper({
       workflow,
       pathname,
       dict,
-      workflowID,
       repositoryBranch,
       repositorySlug,
       baseUrl,

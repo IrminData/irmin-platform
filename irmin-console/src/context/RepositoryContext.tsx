@@ -22,11 +22,10 @@ import {
   getCommits,
   revertUncommittedChanges,
 } from '@/lib/actions/commits';
-import { getDiff, mergeRefs } from '@/lib/actions/diff';
+import { mergeRefs } from '@/lib/actions/diff';
 import {
   copyObject,
   deleteObject,
-  getObject,
   getObjectContent,
   getObjectHistory,
   getObjectSchema,
@@ -41,7 +40,7 @@ import {
   updateRepository,
 } from '@/lib/actions/repositories';
 import { createTag, deleteTag, getTags } from '@/lib/actions/tags';
-import { Dictionary } from '@/lib/dict';
+import IrminCore from '@/lib/core';
 
 import { usePopup } from '@/context/PopupContext';
 
@@ -58,6 +57,8 @@ import { Repository } from '@/types/core/Repository';
 import { Tag } from '@/types/core/Tag';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
+import { useIAM } from './IAMContext';
+import { useLocale } from './LocaleContext';
 import { useWorkspace } from './WorkspaceContext';
 
 /**
@@ -81,7 +82,7 @@ interface RepositoryContextProps {
   transferRepository: (ownerID: string) => Promise<void>;
   downloadRepository: (selectedPath?: string) => Promise<void>;
   // Objects
-  loadingObjects: boolean;
+  loadingDirectory: boolean;
   directory: Object | undefined;
   deleteObject: (objectPath: string) => Promise<void>;
   moveObject: (oldPath: string, newPath: string) => Promise<void>;
@@ -112,6 +113,8 @@ interface RepositoryContextProps {
   commitChanges: (message: string) => Promise<boolean>;
   revertChanges: () => Promise<boolean>;
   // Diff
+  loadingDiff: boolean;
+  diff: Diff | null;
   fetchDiff: (base: string, compare: string) => Promise<Diff | null>;
   fetchDiffContent: (
     objectPath: string,
@@ -139,7 +142,6 @@ const RepositoryContext = createContext<RepositoryContextProps | undefined>(
  *
  * @param config - Repository context provider configuration
  * @param config.children - Child components
- * @param config.dict - Dictionary with translations
  * @param config.repositorySlug - Initial active repository to set
  * @param config.initialRef - (optional) Initial active ref to set (eg. branch, commit, tag
  * @param config.initialRepository - Initial repository object to set
@@ -151,7 +153,6 @@ const RepositoryContext = createContext<RepositoryContextProps | undefined>(
  */
 export const RepositoryProvider = ({
   children,
-  dict,
   repositorySlug,
   initialRef,
   initialRepository,
@@ -160,7 +161,6 @@ export const RepositoryProvider = ({
   initialCommits,
 }: {
   children: React.ReactNode;
-  dict: Dictionary;
   repositorySlug: string;
   initialRef?: string;
   initialRepository: Repository;
@@ -168,6 +168,8 @@ export const RepositoryProvider = ({
   initialTags: Tag[];
   initialCommits: Commit[];
 }) => {
+  const { getToken } = useIAM();
+  const { dict, locale } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -298,6 +300,7 @@ export const RepositoryProvider = ({
     garbageDefaultRetentionDays?: number;
     garbageDefaultBranchRetentionDays?: number;
   };
+
   const handleUpdateRepository = useCallback(
     async (updateInput: RepositoryUpdateInput) => {
       if (updating.current) return;
@@ -402,7 +405,7 @@ export const RepositoryProvider = ({
   );
 
   // Objects state
-  const [loadingObjects, setLoadingObjects] = useState(false);
+  const [loadingDirectory, setLoadingDirectory] = useState(false);
   const [directory, setDirectory] = useState<Object | undefined>(undefined);
 
   // Branches state
@@ -417,29 +420,46 @@ export const RepositoryProvider = ({
   const [loadingCommits, setLoadingCommits] = useState<boolean>(false);
   const [commits, setCommits] = useState<Commit[]>(initialCommits);
 
+  // Diff state
+  const [loadingDiff, setLoadingDiff] = useState<boolean>(false);
+  const [diff, setDiff] = useState<Diff | null>(null);
+
   /**
-   * Fetch the current directory of objects in the repository at the current path and ref
+   * Fetch the current directory of objects in the repository at the current path and ref or the requested path and ref
    */
-  const fetchObjects = useCallback(async () => {
-    setLoadingObjects(true);
-    try {
-      const currentDirectory = await getObject({
-        workspace: workspaceSlug,
-        repository: repositorySlug,
-        path: currentPath,
-        ref: currentRef,
-      });
-      setDirectory(currentDirectory.data);
-    } catch (error) {
-      console.error('RepositoryContext fetchObjects error', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to fetch objects'
-      );
-    } finally {
-      setLoadingObjects(false);
-    }
-  }, [irminAlert, repositorySlug, workspaceSlug, currentPath, currentRef]);
+  const fetchObject = useCallback(
+    async (path?: string, ref?: string) => {
+      try {
+        setLoadingDirectory(true);
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const currentDirectory = await irminCore.objectService.getObjectAtPath({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          path: path ?? currentPath,
+          ref: ref ?? currentRef,
+        });
+        setDirectory(currentDirectory.data);
+      } catch (error) {
+        console.error('RepositoryContext fetchObject error', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to fetch objects'
+        );
+      } finally {
+        setLoadingDirectory(false);
+      }
+    },
+    [
+      irminAlert,
+      repositorySlug,
+      workspaceSlug,
+      currentPath,
+      currentRef,
+      locale,
+      getToken,
+    ]
+  );
 
   /**
    * Delete an object from the repository at path
@@ -454,7 +474,7 @@ export const RepositoryProvider = ({
           path: objectPath,
         });
         irminAlert('success', res.message ?? 'Object deleted successfully');
-        fetchObjects();
+        fetchObject();
       } catch (error) {
         irminAlert(
           'error',
@@ -467,7 +487,7 @@ export const RepositoryProvider = ({
       repositorySlug,
       initialRepository,
       currentRef,
-      fetchObjects,
+      fetchObject,
       irminAlert,
     ]
   );
@@ -486,7 +506,7 @@ export const RepositoryProvider = ({
           newPath: newObjectPath,
         });
         irminAlert('success', res.message ?? 'Object moved successfully');
-        fetchObjects();
+        fetchObject();
       } catch (error) {
         irminAlert(
           'error',
@@ -499,7 +519,7 @@ export const RepositoryProvider = ({
       initialRepository,
       repositorySlug,
       currentRef,
-      fetchObjects,
+      fetchObject,
       irminAlert,
     ]
   );
@@ -518,7 +538,7 @@ export const RepositoryProvider = ({
           newPath: newObjectPath,
         });
         irminAlert('success', res.message ?? 'Object copied successfully');
-        fetchObjects();
+        fetchObject();
       } catch (error) {
         irminAlert(
           'error',
@@ -531,7 +551,7 @@ export const RepositoryProvider = ({
       repositorySlug,
       initialRepository,
       currentRef,
-      fetchObjects,
+      fetchObject,
       irminAlert,
     ]
   );
@@ -549,7 +569,7 @@ export const RepositoryProvider = ({
           path,
         });
         irminAlert('success', res.message ?? 'Group created successfully');
-        fetchObjects();
+        fetchObject();
       } catch (error) {
         irminAlert(
           'error',
@@ -562,7 +582,7 @@ export const RepositoryProvider = ({
       currentRef,
       initialRepository,
       repositorySlug,
-      fetchObjects,
+      fetchObject,
       irminAlert,
     ]
   );
@@ -573,7 +593,9 @@ export const RepositoryProvider = ({
   const handleUploadObject = useCallback(
     async (path: string, ref: string | undefined, files: FileList) => {
       try {
-        const res = await uploadObject({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.objectService.uploadObject({
           workspace: workspaceSlug,
           repository: repositorySlug,
           ref: ref ?? currentRef ?? initialRepository.default_branch,
@@ -581,7 +603,7 @@ export const RepositoryProvider = ({
           files,
         });
         irminAlert('success', res.message ?? 'Object uploaded successfully');
-        fetchObjects();
+        fetchObject();
       } catch (error) {
         irminAlert(
           'error',
@@ -590,12 +612,14 @@ export const RepositoryProvider = ({
       }
     },
     [
+      locale,
       workspaceSlug,
       repositorySlug,
       initialRepository,
       currentRef,
-      fetchObjects,
+      fetchObject,
       irminAlert,
+      getToken,
     ]
   );
 
@@ -724,25 +748,31 @@ export const RepositoryProvider = ({
    * @returns Diff - The diff between the two refs, null if failed
    */
   const fetchDiff = useCallback(
-    async (base: string, compare: string): Promise<Diff | null> => {
+    async (base: string, compare: string) => {
       try {
-        const res = await getDiff({
+        setLoadingDiff(true);
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.diffService.compareRefs({
           workspace: workspaceSlug,
           repository: repositorySlug,
           baseRef: base,
           compareRef: compare,
         });
-        return res?.data ?? null;
+        setDiff(res.data ?? null);
+        return res.data ?? null;
       } catch (error) {
         console.error(error);
         irminAlert(
           'error',
           (error as Error)?.message ?? 'Failed to fetch diff for refs'
         );
+      } finally {
+        setLoadingDiff(false);
       }
       return null;
     },
-    [workspaceSlug, repositorySlug, irminAlert]
+    [workspaceSlug, repositorySlug, irminAlert, locale, getToken]
   );
 
   /**
@@ -758,14 +788,16 @@ export const RepositoryProvider = ({
       compare: IrminAPIBinaryResponse;
     } | null> => {
       try {
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
         const [baseContent, compareContent] = await Promise.all([
-          getObjectContent({
+          irminCore.objectService.getObjectContent({
             workspace: workspaceSlug,
             repository: repositorySlug,
             path: objectPath,
             ref: base,
           }),
-          getObjectContent({
+          irminCore.objectService.getObjectContent({
             workspace: workspaceSlug,
             repository: repositorySlug,
             path: objectPath,
@@ -785,7 +817,7 @@ export const RepositoryProvider = ({
       }
       return null;
     },
-    [workspaceSlug, repositorySlug, irminAlert]
+    [workspaceSlug, repositorySlug, irminAlert, locale, getToken]
   );
 
   /**
@@ -1034,8 +1066,8 @@ export const RepositoryProvider = ({
     if (!currentPath || !currentRef) return;
     if (objectsFetchedFor.current === `${currentPath}@${currentRef}`) return;
     objectsFetchedFor.current = `${currentPath}@${currentRef}`;
-    fetchObjects();
-  }, [currentPath, currentRef, fetchObjects]);
+    fetchObject();
+  }, [currentPath, currentRef, fetchObject]);
 
   /**
    * Update current ref if not set
@@ -1085,7 +1117,7 @@ export const RepositoryProvider = ({
         transferRepository: handleTransferOwnershipRepository,
         downloadRepository: handleRpositoryDownload,
         // Objects
-        loadingObjects,
+        loadingDirectory,
         directory,
         deleteObject: handleDeleteObject,
         moveObject: handleMoveObject,
@@ -1114,6 +1146,8 @@ export const RepositoryProvider = ({
         commitChanges,
         revertChanges,
         // Diff
+        loadingDiff,
+        diff,
         fetchDiff,
         fetchDiffContent,
         mergeRefs: handleMergeRefs,

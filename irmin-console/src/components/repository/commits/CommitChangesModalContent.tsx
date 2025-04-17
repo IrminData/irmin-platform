@@ -73,6 +73,7 @@ export default function CommitChangesModalContent({
             <Input
               {...field}
               placeholder={dict.repository.commit.commitMessagePlaceholder}
+              disabled={loading}
             />
           )}
         />
@@ -83,9 +84,8 @@ export default function CommitChangesModalContent({
       <Button
         className='mt-4 h-11 w-full'
         type='submit'
-        size='sm'
         variant='default'
-        disabled={loading}
+        loading={loading}
       >
         {dict.repository.commit.commitChanges}
       </Button>

@@ -2,8 +2,6 @@
 
 import { useCallback } from 'react';
 
-import { TbFile } from 'react-icons/tb';
-
 import Button from '@/components/ui/button';
 import DocumentationForm, {
   DocumentationFormValues,
@@ -33,7 +31,7 @@ const RepositoryDocumentationSection = () => {
       initialDocumentation={currentRepository.documentation ?? ''}
       onSubmit={handleSaveDocumentation}
     >
-      <Button size='sm' variant='default' type='submit' icon={<TbFile />}>
+      <Button size='default' variant='default' type='submit'>
         {dict.common.save}
       </Button>
     </DocumentationForm>
