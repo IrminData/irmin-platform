@@ -1,10 +1,8 @@
 import { useCallback, useRef, useState } from 'react';
 
-import {
-  createSystemToken,
-  revokeSystemToken,
-} from '@/lib/actions/credentials';
+import IrminCore from '@/lib/core';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -15,7 +13,8 @@ export const useSystemTokens = ({
 }: {
   initialTokens: APIToken[];
 }) => {
-  const { dict } = useLocale();
+  const { getToken } = useIAM();
+  const { dict, locale } = useLocale();
   const { irminConfirm, irminAlert } = usePopup();
   const [tokens, setTokens] = useState<APIToken[]>(initialTokens);
 
@@ -30,7 +29,12 @@ export const useSystemTokens = ({
       if (creatingToken.current) return;
       creatingToken.current = true;
       try {
-        const res = await createSystemToken({ name, expiry: validFor });
+        const irminCoreToken = await getToken();
+        const irminCore = new IrminCore(locale, irminCoreToken);
+        const res = await irminCore.credentialService.createSystemToken({
+          name,
+          expiry: validFor,
+        });
         if (res.data) {
           irminAlert(
             'success',
@@ -49,7 +53,7 @@ export const useSystemTokens = ({
         creatingToken.current = false;
       }
     },
-    [irminAlert]
+    [irminAlert, getToken, locale]
   );
 
   const removingToken = useRef(false);
@@ -67,7 +71,11 @@ export const useSystemTokens = ({
       if (removingToken.current) return;
       removingToken.current = true;
       try {
-        const res = await revokeSystemToken({ tokenId: token.id });
+        const irminCoreToken = await getToken();
+        const irminCore = new IrminCore(locale, irminCoreToken);
+        const res = await irminCore.credentialService.revokeSystemToken({
+          token: token.id,
+        });
         irminAlert('success', res?.message ?? 'API token revoked successfully');
         setTokens((prev) => prev.filter((t) => t.id !== token.id));
       } catch (error) {
@@ -80,7 +88,7 @@ export const useSystemTokens = ({
         removingToken.current = false;
       }
     },
-    [dict, irminConfirm, irminAlert]
+    [dict, irminConfirm, irminAlert, getToken, locale]
   );
 
   return {

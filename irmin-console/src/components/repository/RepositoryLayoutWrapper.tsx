@@ -4,10 +4,12 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
-import { getCommits } from '@/lib/actions/commits';
+import IrminCore from '@/lib/core';
 
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
+import { useIAM } from '@/context/IAMContext';
+import { useLocale } from '@/context/LocaleContext';
 import { RepositoryProvider } from '@/context/RepositoryContext';
 
 import { Branch } from '@/types/core/Branch';
@@ -40,6 +42,8 @@ export default function RepositoryLayoutWrapper({
   initialBranches: Branch[];
   initialTags: Tag[];
 }) {
+  const { locale } = useLocale();
+  const { getToken } = useIAM();
   const searchParams = useSearchParams();
   const refSearchParam = searchParams.get('ref');
 
@@ -52,15 +56,17 @@ export default function RepositoryLayoutWrapper({
 
   useEffect(() => {
     const fetchInitialDataWithRef = async () => {
-      const newCommits = await getCommits({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const newCommits = await irminCore.commitService.fetchCommits({
         workspace: workspaceSlug,
         repository: repositorySlug,
         ref: initialRef,
       });
-      setCommits(newCommits);
+      setCommits(newCommits.data ?? []);
     };
     fetchInitialDataWithRef();
-  }, [initialRef, workspaceSlug, repositorySlug]);
+  }, [initialRef, workspaceSlug, repositorySlug, locale, getToken]);
 
   if (!commits) {
     return (

@@ -1,12 +1,9 @@
 import React, { createContext, useContext } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { createConnection } from '@/lib/actions/connections';
-import {
-  getConnectorConfigurationFields,
-  validateConnectorConfiguration,
-} from '@/lib/actions/connectors';
+import IrminCore from '@/lib/core';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
@@ -84,9 +81,10 @@ export const CreateConnectionProvider: React.FC<{
   currentStep: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }> = ({ connectors, closeModal, children, currentStep, setCurrentStep }) => {
-  const { dict } = useLocale(); // Get translated strings
-  const { irminAlert } = usePopup(); // Get alert functionality
-  const { workspaceSlug } = useWorkspace(); // Get workspace information
+  const { getToken } = useIAM();
+  const { dict, locale } = useLocale();
+  const { irminAlert } = usePopup();
+  const { workspaceSlug } = useWorkspace();
 
   // State to hold connection data
   const [connectionData, setConnectionData] = useState<ConnectionSetup>(
@@ -183,10 +181,13 @@ export const CreateConnectionProvider: React.FC<{
       setLoading((prev) => ({ ...prev, fetchDetails: true }));
       detailsFetched.current = true;
       try {
-        const res = await getConnectorConfigurationFields({
-          connectorId,
-          configurationType: 'details',
-        });
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res =
+          await irminCore.connectorService.fetchConnectorConfigurationFields({
+            connectorId,
+            configurationType: 'details',
+          });
         setConnectionData((prev) => ({
           ...prev,
           connectionDetailsFields: res.data,
@@ -200,7 +201,7 @@ export const CreateConnectionProvider: React.FC<{
       }
       setLoading((prev) => ({ ...prev, fetchDetails: false }));
     },
-    [irminAlert]
+    [irminAlert, getToken, locale]
   );
 
   useEffect(() => {
@@ -231,10 +232,13 @@ export const CreateConnectionProvider: React.FC<{
         };
         setConnectionData(updatedData);
         // Validate the configuration with the connection details.
-        const res = await validateConnectorConfiguration({
-          connectorId: connectionData.connector?.id ?? '',
-          details: connectionDetails,
-        });
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res =
+          await irminCore.connectorService.validateConnectorConfiguration({
+            connectorId: connectionData.connector?.id ?? '',
+            details: connectionDetails,
+          });
         if (res.data?.can_connect && res.data.connection_details_valid) {
           irminAlert('success', dict.connections.create.success);
           setCurrentStep(3);
@@ -251,7 +255,7 @@ export const CreateConnectionProvider: React.FC<{
         setLoading((prev) => ({ ...prev, testConnection: false }));
       }
     },
-    [connectionData, irminAlert, dict, setCurrentStep]
+    [connectionData, irminAlert, dict, setCurrentStep, getToken, locale]
   );
 
   const settingsFetched = useRef(false);
@@ -266,11 +270,16 @@ export const CreateConnectionProvider: React.FC<{
     setLoading((prev) => ({ ...prev, fetchSettings: true }));
     settingsFetched.current = true;
     try {
-      const res = await getConnectorConfigurationFields({
-        connectorId: connectionData.connector.id,
-        configurationType: 'settings',
-        currentDetails: connectionData.connectionDetails,
-      });
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+
+      const res =
+        await irminCore.connectorService.fetchConnectorConfigurationFields({
+          connectorId: connectionData.connector.id,
+          configurationType: 'settings',
+          currentDetails: connectionData.connectionDetails,
+        });
+
       setConnectionData((prev) => ({
         ...prev,
         connectionSettingsFields: res.data,
@@ -283,7 +292,13 @@ export const CreateConnectionProvider: React.FC<{
       );
     }
     setLoading((prev) => ({ ...prev, fetchSettings: false }));
-  }, [connectionData.connector, connectionData.connectionDetails, irminAlert]);
+  }, [
+    connectionData.connector,
+    connectionData.connectionDetails,
+    irminAlert,
+    getToken,
+    locale,
+  ]);
 
   useEffect(() => {
     if (
@@ -314,11 +329,14 @@ export const CreateConnectionProvider: React.FC<{
           connectionSettings: data,
         }));
         // Validate the configuration with both details and settings.
-        const res = await validateConnectorConfiguration({
-          connectorId: connectionData.connector?.id ?? '',
-          details: connectionData.connectionDetails,
-          settings: data,
-        });
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res =
+          await irminCore.connectorService.validateConnectorConfiguration({
+            connectorId: connectionData.connector?.id ?? '',
+            details: connectionData.connectionDetails,
+            settings: data,
+          });
         if (res.data?.ok && res.data.connection_settings_valid) {
           irminAlert('success', dict.connections.create.configuration_valid);
           setCurrentStep(4);
@@ -335,7 +353,7 @@ export const CreateConnectionProvider: React.FC<{
         setLoading((prev) => ({ ...prev, continueCreate: false }));
       }
     },
-    [connectionData, dict, irminAlert, setCurrentStep]
+    [connectionData, dict, irminAlert, setCurrentStep, getToken, locale]
   );
 
   /**
@@ -357,7 +375,9 @@ export const CreateConnectionProvider: React.FC<{
       }
       setLoading((prev) => ({ ...prev, create: true }));
       try {
-        const res = await createConnection({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.connectionService.createConnection({
           workspace: workspaceSlug,
           name: connectionData.name,
           description: data.description as string,
@@ -378,7 +398,15 @@ export const CreateConnectionProvider: React.FC<{
         setLoading((prev) => ({ ...prev, create: false }));
       }
     },
-    [workspaceSlug, connectionData, irminAlert, dict, closeModal]
+    [
+      workspaceSlug,
+      connectionData,
+      irminAlert,
+      dict,
+      closeModal,
+      getToken,
+      locale,
+    ]
   );
 
   /**

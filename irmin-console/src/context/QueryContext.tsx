@@ -8,13 +8,14 @@ import {
   useState,
 } from 'react';
 
-import { executeSQL } from '@/lib/actions/query';
+import IrminCore from '@/lib/core';
 
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
 import { QueryResult } from '@/types/core/StoredQuery';
 
+import { useIAM } from './IAMContext';
 import { useLocale } from './LocaleContext';
 
 /**
@@ -37,8 +38,9 @@ const QueryContext = createContext<QueryContextProps | undefined>(undefined);
  * @returns Query context provider
  */
 export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
+  const { getToken } = useIAM();
   const { irminAlert } = usePopup();
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const { workspaceSlug } = useWorkspace();
 
   // Query state
@@ -60,7 +62,9 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
       try {
         irminAlert('info', dict.query.queryExecutionStarted);
-        const res = await executeSQL({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.queryService.executeSQL({
           workspace: workspaceSlug,
           sql: content,
         });
@@ -76,7 +80,7 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
       executing.current = false;
     },
-    [irminAlert, dict, workspaceSlug]
+    [irminAlert, dict, workspaceSlug, getToken, locale]
   );
 
   return (

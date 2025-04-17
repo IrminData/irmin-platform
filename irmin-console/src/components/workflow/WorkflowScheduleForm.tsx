@@ -5,9 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
-import { getRepositories } from '@/lib/actions/repositories';
-import { getWorkflows } from '@/lib/actions/workflows';
-import { getToken } from '@/lib/getToken';
+import IrminCore from '@/lib/core';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import RRuleGenerator from '@/components/ui/RRuleGenerator';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
@@ -65,7 +64,8 @@ export default function WorkflowScheduleForm({
   updateSchedule: (schedule: WorkflowSchedule) => void;
   disableSaveButton?: boolean;
 }) {
-  const { dict } = useLocale();
+  const { getToken } = useIAM();
+  const { dict, locale } = useLocale();
   const { workspaceSlug } = useWorkspace();
 
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -77,9 +77,14 @@ export default function WorkflowScheduleForm({
       try {
         setLoading(true);
         const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
         const [_repositories, _workflows] = await Promise.all([
-          getRepositories({ workspace: workspaceSlug, token }),
-          getWorkflows({ workspace: workspaceSlug, token }),
+          irminCore.repositoryService.fetchRepositories({
+            workspace: workspaceSlug,
+          }),
+          irminCore.workflowService.fetchWorkflows({
+            workspace: workspaceSlug,
+          }),
         ]);
         setRepositories(_repositories.data ?? []);
         setWorkflows(_workflows.data ?? []);
@@ -90,7 +95,7 @@ export default function WorkflowScheduleForm({
       }
     }
     fetchData();
-  }, [workspaceSlug]);
+  }, [workspaceSlug, getToken, locale]);
 
   // Initialize react-hook-form
   const { register, handleSubmit, control, watch, setValue } =

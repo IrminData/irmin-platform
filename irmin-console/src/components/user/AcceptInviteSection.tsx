@@ -10,13 +10,14 @@ import { User } from '@clerk/nextjs/server';
 
 import { TbCheck, TbX } from 'react-icons/tb';
 
-import { acceptInvite, declineInvite } from '@/lib/actions/invites';
+import IrminCore from '@/lib/core';
 
 import { Button } from '@/components/ui/button';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import { Separator } from '@/components/ui/separator';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -31,8 +32,9 @@ export default function AcceptInviteSection({
   user: User;
 }) {
   const router = useRouter();
+  const { getToken } = useIAM();
   const { irminAlert } = usePopup();
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -41,7 +43,9 @@ export default function AcceptInviteSection({
     try {
       setError('');
       setIsLoading(true);
-      const res = await acceptInvite({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.inviteService.acceptInvite({
         inviteID: invite.id,
       });
       irminAlert('success', res.message ?? 'Invite accepted successfully');
@@ -51,12 +55,14 @@ export default function AcceptInviteSection({
     } finally {
       setIsLoading(false);
     }
-  }, [invite, irminAlert, router]);
+  }, [invite, irminAlert, router, getToken, locale]);
 
   const handleDecline = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await declineInvite({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.inviteService.declineInvite({
         inviteID: invite.id,
       });
       irminAlert('success', res.message ?? 'Invite declined successfully');
@@ -66,7 +72,7 @@ export default function AcceptInviteSection({
     } finally {
       setIsLoading(false);
     }
-  }, [invite, irminAlert, router]);
+  }, [invite, irminAlert, router, getToken, locale]);
 
   return (
     <div

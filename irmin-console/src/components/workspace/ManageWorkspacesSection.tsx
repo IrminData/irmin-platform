@@ -6,13 +6,14 @@ import { useRouter } from 'next/navigation';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import { getWorkspaces } from '@/lib/actions/workspaces';
+import IrminCore from '@/lib/core';
 
 import ConsoleTitle from '@/components/console/ConsoleTitle';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import WorkspaceCard from '@/components/workspace/WorkspaceCard';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -44,6 +45,7 @@ const ManageWorkspacesSection = ({
 }: {
   initialWorkspaces: Workspace[];
 }) => {
+  const { getToken } = useIAM();
   const { irminAlert } = usePopup();
   const { dict, locale } = useLocale();
   const router = useRouter();
@@ -69,11 +71,14 @@ const ManageWorkspacesSection = ({
       // Create the workspace
       await handleCreate(data.newWorkspaceName, data.newWorkspaceDescription);
       // Refetch the workspaces
-      const newWorkspaces = await getWorkspaces({});
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const newWorkspaces = await irminCore.workspaceService.fetchWorkspaces();
+      // Update the workspaces state
       setWorkspaces(newWorkspaces.data ?? []);
       setProcessing(false);
     },
-    [handleCreate]
+    [handleCreate, getToken, locale]
   );
 
   const handleSwitchWorkspace = useCallback(

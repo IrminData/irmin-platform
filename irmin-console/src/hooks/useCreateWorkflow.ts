@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
-import { createWorkflow } from '@/lib/actions/workflows';
+import IrminCore from '@/lib/core';
 
+import { useIAM } from '@/context/IAMContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
@@ -81,6 +83,8 @@ export const useConfigureWorkflow = (
   workflowData: WorkflowInput,
   closeModal: () => void
 ) => {
+  const { getToken } = useIAM();
+  const { locale } = useLocale();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspace();
   const [processing, setProcessing] = useState(false);
@@ -98,7 +102,9 @@ export const useConfigureWorkflow = (
       creatingWorkflow.current = true;
       setProcessing(true);
       // Create the workflow
-      const res = await createWorkflow({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.workflowService.createWorkflow({
         workspace: workspaceSlug,
         ...workflowData,
       });
@@ -115,7 +121,7 @@ export const useConfigureWorkflow = (
       setProcessing(false);
       creatingWorkflow.current = false;
     }
-  }, [irminAlert, workspaceSlug, closeModal, workflowData]);
+  }, [irminAlert, workspaceSlug, closeModal, workflowData, getToken, locale]);
 
   return {
     processing,

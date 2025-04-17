@@ -5,15 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-import {
-  copyEditorItem,
-  createEditorFolder,
-  deleteEditorItem,
-  executeEditorItem,
-  getEditorItemContent,
-  moveEditorItem,
-  saveEditorItem,
-} from '@/lib/actions/editor-items';
+import IrminCore from '@/lib/core';
 
 import AddNewFileModal from '@/components/editor/modals/AddNewFileModal';
 import AddNewFolderModal from '@/components/editor/modals/AddNewFolderModal';
@@ -21,6 +13,7 @@ import CopyItemModal from '@/components/editor/modals/CopyItemModal';
 import RenameOrMoveItemModal from '@/components/editor/modals/RenameOrMoveItemModal';
 import SaveEditorAsFileModal from '@/components/editor/modals/SaveEditorAsFileModal';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
@@ -78,7 +71,8 @@ export const EditorProvider = ({
   children: React.ReactNode;
   editorItems: EditorItem[];
 }) => {
-  const { dict } = useLocale();
+  const { getToken } = useIAM();
+  const { dict, locale } = useLocale();
   const { workspaceSlug } = useWorkspace();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -150,10 +144,13 @@ export const EditorProvider = ({
         let fileContents = '';
         try {
           // - Fetch file content from the server
-          const fileContentsRes = await getEditorItemContent({
-            workspace: workspaceSlug,
-            path: filePath,
-          });
+          const token = await getToken();
+          const irminCore = new IrminCore(locale, token);
+          const fileContentsRes =
+            await irminCore.editorItemService.getEditorItemContent({
+              workspace: workspaceSlug,
+              path: filePath,
+            });
           fileContents = fileContentsRes.data ?? '';
         } catch (error) {
           irminAlert('error', 'Could not load file content.');
@@ -182,7 +179,7 @@ export const EditorProvider = ({
         setActiveTabIndex(existingTabIndex);
       }
     },
-    [workspaceSlug, openTabs, irminAlert]
+    [workspaceSlug, openTabs, irminAlert, getToken, locale]
   );
 
   /**
@@ -264,9 +261,12 @@ export const EditorProvider = ({
 
       try {
         // - Save new file using the server action
-        const res = await saveEditorItem({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.editorItemService.saveEditorItem({
           workspace: workspaceSlug,
-          item: fileItem,
+          path: fileItem.path,
+          content: fileItem.content ?? '',
         });
         irminAlert('success', res.message ?? 'File created successfully');
         setCurrentEditorItems((prev) => [...prev, fileItem]);
@@ -275,7 +275,7 @@ export const EditorProvider = ({
         console.error('File creation error', error);
       }
     },
-    [workspaceSlug, irminAlert]
+    [workspaceSlug, irminAlert, getToken, locale]
   );
 
   /**
@@ -286,15 +286,12 @@ export const EditorProvider = ({
     if (currentEditor.created) {
       try {
         // - Save the file using the server action
-        const res = await saveEditorItem({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.editorItemService.saveEditorItem({
           workspace: workspaceSlug,
-          item: {
-            name: currentEditor.path.split('/').pop() ?? 'Untitled',
-            path: currentEditor.path,
-            type: 'file',
-            content: currentEditor.contents,
-            last_modified: new Date().toISOString(),
-          },
+          path: currentEditor.path,
+          content: currentEditor.contents,
         });
         // - Update the editor items state by mapping over the array
         setCurrentEditorItems((prev) =>
@@ -342,6 +339,8 @@ export const EditorProvider = ({
     createFile,
     irminAlert,
     irminModal,
+    getToken,
+    locale,
   ]);
 
   /**
@@ -397,9 +396,11 @@ export const EditorProvider = ({
         createFolder={async (folderItem: EditorItem) => {
           if (folderItem.type !== 'folder') return;
           try {
-            const res = await createEditorFolder({
+            const token = await getToken();
+            const irminCore = new IrminCore(locale, token);
+            const res = await irminCore.editorItemService.createEditorFolder({
               workspace: workspaceSlug,
-              item: folderItem,
+              path: folderItem.path,
             });
             setCurrentEditorItems((prev) => [...prev, folderItem]);
             irminAlert('success', res.message ?? 'Folder created successfully');
@@ -411,6 +412,8 @@ export const EditorProvider = ({
       />
     );
   }, [
+    getToken,
+    locale,
     workspaceSlug,
     currentEditorItems,
     dict.fileNavigator.createFolder,
@@ -438,9 +441,11 @@ export const EditorProvider = ({
             // - Move file if its path has changed
             if (updatedItem.original.path !== updatedItem.current.path) {
               try {
-                const res = await moveEditorItem({
+                const token = await getToken();
+                const irminCore = new IrminCore(locale, token);
+                const res = await irminCore.editorItemService.moveEditorItem({
                   workspace: workspaceSlug,
-                  item: updatedItem.current,
+                  path: updatedItem.original.path,
                   destinationPath: updatedItem.current.path,
                 });
                 setCurrentEditorItems((prev) =>
@@ -469,6 +474,8 @@ export const EditorProvider = ({
       dict.fileNavigator,
       irminAlert,
       irminModal,
+      getToken,
+      locale,
     ]
   );
 
@@ -490,9 +497,11 @@ export const EditorProvider = ({
           copyItem={async (updatedItem) => {
             if (!updatedItem.original || !updatedItem.current) return;
             try {
-              const res = await copyEditorItem({
+              const token = await getToken();
+              const irminCore = new IrminCore(locale, token);
+              const res = await irminCore.editorItemService.copyEditorItem({
                 workspace: workspaceSlug,
-                item: updatedItem.original,
+                path: updatedItem.original.path,
                 destinationPath: updatedItem.current.path,
               });
               setCurrentEditorItems((prev) => [...prev, updatedItem.current!]);
@@ -511,6 +520,8 @@ export const EditorProvider = ({
       dict.fileNavigator,
       irminAlert,
       irminModal,
+      getToken,
+      locale,
     ]
   );
 
@@ -531,9 +542,11 @@ export const EditorProvider = ({
         try {
           const editorItem = item.original ?? item.current;
           if (!editorItem) return;
-          const res = await deleteEditorItem({
+          const token = await getToken();
+          const irminCore = new IrminCore(locale, token);
+          const res = await irminCore.editorItemService.deleteEditorItem({
             workspace: workspaceSlug,
-            item: editorItem,
+            path: editorItem.path,
           });
           // - Update state by filtering out the deleted item
           setCurrentEditorItems((prev) =>
@@ -554,6 +567,8 @@ export const EditorProvider = ({
       closeTab,
       dict.fileNavigator.deleteConfirmation,
       irminAlert,
+      getToken,
+      locale,
       irminConfirm,
     ]
   );
@@ -576,7 +591,9 @@ export const EditorProvider = ({
       setScriptExecutionInProgress(true);
       try {
         irminAlert('info', dict.editor.scriptExecutionStarted);
-        const res = await executeEditorItem({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.editorItemService.createEditorFolder({
           workspace: workspaceSlug,
           path,
         });
@@ -594,7 +611,7 @@ export const EditorProvider = ({
       setScriptExecutionInProgress(false);
       scriptExecuting.current = false;
     },
-    [dict, workspaceSlug, irminAlert]
+    [dict, workspaceSlug, irminAlert, getToken, locale]
   );
 
   return (

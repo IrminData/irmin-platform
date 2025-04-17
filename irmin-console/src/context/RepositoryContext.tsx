@@ -12,34 +12,6 @@ import {
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-import {
-  createBranch,
-  deleteBranch,
-  getBranches,
-} from '@/lib/actions/branches';
-import {
-  createCommit,
-  getCommits,
-  revertUncommittedChanges,
-} from '@/lib/actions/commits';
-import { mergeRefs } from '@/lib/actions/diff';
-import {
-  copyObject,
-  deleteObject,
-  getObjectContent,
-  getObjectHistory,
-  getObjectSchema,
-  moveObject,
-  uploadObject,
-} from '@/lib/actions/objects';
-import {
-  deleteRepository,
-  getRepository,
-  getRepositoryDownloadLink,
-  transferRepository,
-  updateRepository,
-} from '@/lib/actions/repositories';
-import { createTag, deleteTag, getTags } from '@/lib/actions/tags';
 import IrminCore from '@/lib/core';
 
 import { usePopup } from '@/context/PopupContext';
@@ -246,9 +218,11 @@ export const RepositoryProvider = ({
   // Refetch the current repository
   const fetchRepository = useCallback(async () => {
     try {
-      const newRepository = await getRepository({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const newRepository = await irminCore.repositoryService.fetchRepository({
         workspace: workspaceSlug,
-        repositorySlug,
+        slug: repositorySlug,
       });
       if (!newRepository.data) return;
       setRepository(newRepository.data);
@@ -258,7 +232,7 @@ export const RepositoryProvider = ({
         (error as Error)?.message ?? 'Failed to fetch the repository'
       );
     }
-  }, [workspaceSlug, repositorySlug, irminAlert]);
+  }, [workspaceSlug, repositorySlug, irminAlert, getToken, locale]);
 
   // Delete the current repository
   const handleDeleteRepository = useCallback(async () => {
@@ -269,7 +243,9 @@ export const RepositoryProvider = ({
     if (updating.current || !confirmed) return;
     try {
       updating.current = true;
-      const res = await deleteRepository({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.repositoryService.deleteRepository({
         workspace: workspaceSlug,
         repositorySlug,
       });
@@ -289,6 +265,8 @@ export const RepositoryProvider = ({
     dict,
     irminAlert,
     irminConfirm,
+    getToken,
+    locale,
   ]);
 
   // Update the current repository
@@ -306,9 +284,11 @@ export const RepositoryProvider = ({
       if (updating.current) return;
       try {
         updating.current = true;
-        const res = await updateRepository({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.repositoryService.updateRepository({
           workspace: workspaceSlug,
-          repositorySlug,
+          slug: repositorySlug,
           ...updateInput,
         });
         await fetchRepository();
@@ -322,7 +302,14 @@ export const RepositoryProvider = ({
         updating.current = false;
       }
     },
-    [workspaceSlug, repositorySlug, fetchRepository, irminAlert]
+    [
+      workspaceSlug,
+      repositorySlug,
+      fetchRepository,
+      irminAlert,
+      getToken,
+      locale,
+    ]
   );
 
   // TransferOwnership the current repository
@@ -335,10 +322,12 @@ export const RepositoryProvider = ({
       if (updating.current || !confirmed) return;
       try {
         updating.current = true;
-        const res = await transferRepository({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.repositoryService.transferRepository({
           workspace: workspaceSlug,
-          repositorySlug,
-          ownerID,
+          slug: repositorySlug,
+          newOwnerID: ownerID,
         });
         await fetchRepository();
         irminAlert(
@@ -362,6 +351,8 @@ export const RepositoryProvider = ({
       fetchRepository,
       irminAlert,
       irminConfirm,
+      getToken,
+      locale,
     ]
   );
 
@@ -369,12 +360,16 @@ export const RepositoryProvider = ({
   const handleRpositoryDownload = useCallback(
     async (selectedPath?: string) => {
       try {
-        const res = await getRepositoryDownloadLink({
-          workspace: workspaceSlug,
-          repositorySlug,
-          ref: currentRef ?? initialRepository.default_branch,
-          path: selectedPath ?? currentPath,
-        });
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.repositoryService.getRepositoryDownloadLink(
+          {
+            workspace: workspaceSlug,
+            repositorySlug,
+            ref: currentRef ?? initialRepository.default_branch,
+            path: selectedPath ?? currentPath,
+          }
+        );
         if (typeof res.data === 'string') {
           irminAlert(
             'success',
@@ -401,6 +396,8 @@ export const RepositoryProvider = ({
       currentRef,
       currentPath,
       irminAlert,
+      getToken,
+      locale,
     ]
   );
 
@@ -467,7 +464,9 @@ export const RepositoryProvider = ({
   const handleDeleteObject = useCallback(
     async (objectPath: string) => {
       try {
-        const res = await deleteObject({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.objectService.deleteObject({
           workspace: workspaceSlug,
           repository: repositorySlug,
           ref: currentRef ?? initialRepository.default_branch,
@@ -489,6 +488,8 @@ export const RepositoryProvider = ({
       currentRef,
       fetchObject,
       irminAlert,
+      getToken,
+      locale,
     ]
   );
 
@@ -498,7 +499,9 @@ export const RepositoryProvider = ({
   const handleMoveObject = useCallback(
     async (currentObjectPath: string, newObjectPath: string) => {
       try {
-        const res = await moveObject({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.objectService.moveObject({
           workspace: workspaceSlug,
           repository: repositorySlug,
           ref: currentRef ?? initialRepository.default_branch,
@@ -521,6 +524,8 @@ export const RepositoryProvider = ({
       currentRef,
       fetchObject,
       irminAlert,
+      getToken,
+      locale,
     ]
   );
 
@@ -530,7 +535,9 @@ export const RepositoryProvider = ({
   const handleCopyObject = useCallback(
     async (currentObjectPath: string, newObjectPath: string) => {
       try {
-        const res = await copyObject({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.objectService.copyObject({
           workspace: workspaceSlug,
           repository: repositorySlug,
           ref: currentRef ?? initialRepository.default_branch,
@@ -553,6 +560,8 @@ export const RepositoryProvider = ({
       currentRef,
       fetchObject,
       irminAlert,
+      getToken,
+      locale,
     ]
   );
 
@@ -562,7 +571,9 @@ export const RepositoryProvider = ({
   const handleCreateGroup = useCallback(
     async (path: string, ref: string) => {
       try {
-        const res = await uploadObject({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.objectService.uploadObject({
           workspace: workspaceSlug,
           repository: repositorySlug,
           ref: ref ?? currentRef ?? initialRepository.default_branch,
@@ -584,6 +595,8 @@ export const RepositoryProvider = ({
       repositorySlug,
       fetchObject,
       irminAlert,
+      getToken,
+      locale,
     ]
   );
 
@@ -629,7 +642,9 @@ export const RepositoryProvider = ({
   const fetchObjectContent = useCallback(
     async (path: string) => {
       try {
-        const res = await getObjectContent({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.objectService.getObjectContent({
           workspace: workspaceSlug,
           repository: repositorySlug,
           path,
@@ -644,7 +659,7 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [workspaceSlug, repositorySlug, currentRef, irminAlert]
+    [workspaceSlug, repositorySlug, currentRef, irminAlert, getToken, locale]
   );
 
   /**
@@ -653,7 +668,9 @@ export const RepositoryProvider = ({
   const fetchObjectSchema = useCallback(
     async (path: string) => {
       try {
-        const res = await getObjectSchema({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.objectService.getObjectSchema({
           workspace: workspaceSlug,
           repository: repositorySlug,
           path,
@@ -668,7 +685,7 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [repositorySlug, currentRef, irminAlert, workspaceSlug]
+    [repositorySlug, currentRef, irminAlert, workspaceSlug, getToken, locale]
   );
 
   /**
@@ -677,7 +694,9 @@ export const RepositoryProvider = ({
   const fetchBranches = useCallback(async () => {
     setLoadingBranches(true);
     try {
-      const newBranches = await getBranches({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const newBranches = await irminCore.branchService.fetchBranches({
         workspace: workspaceSlug,
         repository: repositorySlug,
       });
@@ -691,7 +710,7 @@ export const RepositoryProvider = ({
     } finally {
       setLoadingBranches(false);
     }
-  }, [workspaceSlug, repositorySlug, irminAlert]);
+  }, [workspaceSlug, repositorySlug, irminAlert, getToken, locale]);
 
   /**
    * Fetch the tags for the current repository
@@ -699,8 +718,10 @@ export const RepositoryProvider = ({
   const fetchTags = useCallback(async () => {
     setLoadingTags(true);
     try {
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
       // Fetch and set the tags
-      const tags = await getTags({
+      const tags = await irminCore.tagService.fetchTags({
         workspace: workspaceSlug,
         repository: repositorySlug,
       });
@@ -711,7 +732,7 @@ export const RepositoryProvider = ({
     } finally {
       setLoadingTags(false);
     }
-  }, [workspaceSlug, repositorySlug, irminAlert]);
+  }, [workspaceSlug, repositorySlug, irminAlert, getToken, locale]);
 
   /**
    * Fetch the commits for a specific ref or the current ref
@@ -720,13 +741,15 @@ export const RepositoryProvider = ({
     async (ref?: string) => {
       setLoadingCommits(true);
       try {
-        const newCommits = await getCommits({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const newCommits = await irminCore.commitService.fetchCommits({
           workspace: workspaceSlug,
           repository: repositorySlug,
           ref: ref ?? currentRef,
         });
-        if (!ref) setCommits(newCommits);
-        return newCommits;
+        if (!ref) setCommits(newCommits.data ?? []);
+        return newCommits.data ?? [];
       } catch (error) {
         console.error('RepositoryContext fetchCommits error', error);
         irminAlert(
@@ -737,7 +760,7 @@ export const RepositoryProvider = ({
         setLoadingCommits(false);
       }
     },
-    [workspaceSlug, repositorySlug, currentRef, irminAlert]
+    [workspaceSlug, repositorySlug, currentRef, irminAlert, getToken, locale]
   );
 
   /**
@@ -830,7 +853,9 @@ export const RepositoryProvider = ({
     async (message: string): Promise<boolean> => {
       try {
         if (!currentRef) return false;
-        const res = await createCommit({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.commitService.createCommit({
           workspace: workspaceSlug,
           repository: repositorySlug,
           branch: currentRef,
@@ -848,7 +873,15 @@ export const RepositoryProvider = ({
       }
       return false;
     },
-    [workspaceSlug, repositorySlug, currentRef, fetchCommits, irminAlert]
+    [
+      workspaceSlug,
+      repositorySlug,
+      currentRef,
+      fetchCommits,
+      irminAlert,
+      getToken,
+      locale,
+    ]
   );
 
   /**
@@ -860,7 +893,9 @@ export const RepositoryProvider = ({
   const fetchObjectChangeHistory = useCallback(
     async (objectPath: string): Promise<Commit[]> => {
       try {
-        const res = await getObjectHistory({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.objectService.getObjectHistory({
           workspace: workspaceSlug,
           repository: repositorySlug,
           path: objectPath,
@@ -876,7 +911,7 @@ export const RepositoryProvider = ({
       }
       return [];
     },
-    [workspaceSlug, repositorySlug, currentRef, irminAlert]
+    [workspaceSlug, repositorySlug, currentRef, irminAlert, getToken, locale]
   );
 
   /**
@@ -887,7 +922,9 @@ export const RepositoryProvider = ({
   const revertChanges = useCallback(async (): Promise<boolean> => {
     try {
       if (!currentRef) return false;
-      const res = await revertUncommittedChanges({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.commitService.revertUncommittedChanges({
         workspace: workspaceSlug,
         repository: repositorySlug,
         branch: currentRef,
@@ -904,7 +941,7 @@ export const RepositoryProvider = ({
       );
     }
     return false;
-  }, [workspaceSlug, repositorySlug, currentRef, irminAlert]);
+  }, [workspaceSlug, repositorySlug, currentRef, irminAlert, getToken, locale]);
 
   /**
    * Hook to merge one ref into another
@@ -924,7 +961,9 @@ export const RepositoryProvider = ({
       squash: boolean
     ): Promise<boolean> => {
       try {
-        const res = await mergeRefs({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.diffService.mergeRefs({
           workspace: workspaceSlug,
           repository: repositorySlug,
           baseRef: base,
@@ -942,7 +981,7 @@ export const RepositoryProvider = ({
       }
       return false;
     },
-    [workspaceSlug, repositorySlug, irminAlert]
+    [workspaceSlug, repositorySlug, irminAlert, getToken, locale]
   );
 
   /**
@@ -953,8 +992,10 @@ export const RepositoryProvider = ({
   const handleDeleteBranch = useCallback(
     async (branch: string) => {
       try {
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
         // Delete the branch
-        const res = await deleteBranch({
+        const res = await irminCore.branchService.deleteBranch({
           workspace: workspaceSlug,
           repository: repositorySlug,
           branch,
@@ -969,7 +1010,7 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [workspaceSlug, repositorySlug, fetchBranches, irminAlert]
+    [workspaceSlug, repositorySlug, fetchBranches, irminAlert, getToken, locale]
   );
 
   /**
@@ -981,8 +1022,10 @@ export const RepositoryProvider = ({
   const handleCreateBranch = useCallback(
     async (name: string, from: string) => {
       try {
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
         // Create the branch
-        const res = await createBranch({
+        const res = await irminCore.branchService.createBranch({
           workspace: workspaceSlug,
           repository: repositorySlug,
           from,
@@ -998,7 +1041,7 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [workspaceSlug, repositorySlug, fetchBranches, irminAlert]
+    [workspaceSlug, repositorySlug, fetchBranches, irminAlert, getToken, locale]
   );
 
   /**
@@ -1009,11 +1052,13 @@ export const RepositoryProvider = ({
   const handleDeleteTag = useCallback(
     async (tag: string) => {
       try {
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
         // Delete the tag
-        const res = await deleteTag({
+        const res = await irminCore.tagService.deleteTag({
           workspace: workspaceSlug,
           repository: repositorySlug,
-          tagID: tag,
+          tag,
         });
         irminAlert('success', res.message ?? 'Tag deleted successfully');
         // Refetch the tags
@@ -1025,7 +1070,7 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [workspaceSlug, repositorySlug, fetchTags, irminAlert]
+    [workspaceSlug, repositorySlug, fetchTags, irminAlert, getToken, locale]
   );
 
   /**
@@ -1037,8 +1082,10 @@ export const RepositoryProvider = ({
   const handleCreateTag = useCallback(
     async (name: string, ref: string) => {
       try {
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
         // Create the tag
-        const res = await createTag({
+        const res = await irminCore.tagService.createTag({
           workspace: workspaceSlug,
           repository: repositorySlug,
           name,
@@ -1054,7 +1101,7 @@ export const RepositoryProvider = ({
         );
       }
     },
-    [workspaceSlug, repositorySlug, fetchTags, irminAlert]
+    [workspaceSlug, repositorySlug, fetchTags, irminAlert, getToken, locale]
   );
 
   const objectsFetchedFor = useRef<string | undefined>(undefined);

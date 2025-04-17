@@ -1,8 +1,14 @@
 import { useCallback, useRef, useState } from 'react';
 
-import { createWorkspace } from '@/lib/actions/workspaces';
+import IrminCore from '@/lib/core';
+
+import { useIAM } from '@/context/IAMContext';
+import { useLocale } from '@/context/LocaleContext';
 
 export const useCreateWorkspace = ({ reset }: { reset: () => void }) => {
+  const { getToken } = useIAM();
+  const { locale } = useLocale();
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -20,7 +26,12 @@ export const useCreateWorkspace = ({ reset }: { reset: () => void }) => {
         setErrorMessage(null);
         setSuccessMessage(null);
         // Create the workspace
-        const res = await createWorkspace({ name, description });
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.workspaceService.createWorkspace({
+          name,
+          description,
+        });
         // Show the result to the user
         setSuccessMessage(res?.message ?? 'Workspace created successfully');
         // Reset the form values
@@ -34,7 +45,7 @@ export const useCreateWorkspace = ({ reset }: { reset: () => void }) => {
         creatingWorkspace.current = false;
       }
     },
-    [reset]
+    [reset, getToken, locale]
   );
 
   return {

@@ -8,23 +8,17 @@ import {
   useState,
 } from 'react';
 
-import {
-  deleteInvite,
-  getWorkspaceInvites,
-  resendInvite,
-  sendInvite,
-  updateInvite,
-} from '@/lib/actions/invites';
-import { changeUserRole, deleteUser, getUsers } from '@/lib/actions/users';
+import IrminCore from '@/lib/core';
 
 import WorkspaceSendInviteModalContent from '@/components/workspace/WorkspaceSendInviteModalContent';
+
+import { useIAM } from '@/context/IAMContext';
+import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
 
 import { Invite } from '@/types/core/Invite';
 import { IrminRole, Role } from '@/types/core/IrminRole';
 import { User } from '@/types/core/User';
-
-import { useLocale } from './LocaleContext';
-import { usePopup } from './PopupContext';
 
 /**
  * Users context properties
@@ -61,7 +55,8 @@ export const UsersProvider = ({
   currentUsers: User[];
   currentInvites: Invite[];
 }) => {
-  const { dict } = useLocale();
+  const { getToken } = useIAM();
+  const { dict, locale } = useLocale();
   const { irminAlert, irminModal } = usePopup();
 
   const updatingUsers = useRef(false);
@@ -72,7 +67,11 @@ export const UsersProvider = ({
 
   const fetchUsers = useCallback(async () => {
     try {
-      const newUsers = await getUsers({ workspace: currentWorkspace });
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const newUsers = await irminCore.userService.fetchWorkspaceUsers({
+        workspace: currentWorkspace,
+      });
       setUsers(newUsers.data ?? []);
     } catch (error) {
       irminAlert(
@@ -80,11 +79,13 @@ export const UsersProvider = ({
         (error as Error)?.message ?? 'Failed to fetch the users'
       );
     }
-  }, [irminAlert, currentWorkspace]);
+  }, [irminAlert, currentWorkspace, getToken, locale]);
 
   const fetchInvites = useCallback(async () => {
     try {
-      const newInvites = await getWorkspaceInvites({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const newInvites = await irminCore.inviteService.listInvitesToWorkspace({
         workspace: currentWorkspace,
       });
       setInvites(newInvites.data ?? []);
@@ -94,14 +95,19 @@ export const UsersProvider = ({
         (error as Error)?.message ?? 'Failed to fetch the invites'
       );
     }
-  }, [irminAlert, currentWorkspace]);
+  }, [irminAlert, currentWorkspace, getToken, locale]);
 
   const handleDeleteUser = useCallback(
     async (userID: string) => {
       if (updatingUsers.current) return;
       try {
         updatingUsers.current = true;
-        const res = await deleteUser({ workspace: currentWorkspace, userID });
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.userService.removeUserFromWorkspace({
+          workspace: currentWorkspace,
+          user: userID,
+        });
         await fetchUsers();
         irminAlert('success', res.message ?? 'User deleted successfully');
       } catch (error) {
@@ -113,7 +119,7 @@ export const UsersProvider = ({
         updatingUsers.current = false;
       }
     },
-    [fetchUsers, currentWorkspace, irminAlert]
+    [fetchUsers, currentWorkspace, irminAlert, getToken, locale]
   );
 
   const handleDeleteInvite = useCallback(
@@ -121,7 +127,9 @@ export const UsersProvider = ({
       if (updatingInvites.current) return;
       try {
         updatingInvites.current = true;
-        const res = await deleteInvite({ inviteID });
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.inviteService.deleteInvite({ inviteID });
         await fetchInvites();
         irminAlert('success', res.message ?? 'Invite cancelled successfully');
       } catch (error) {
@@ -133,7 +141,7 @@ export const UsersProvider = ({
         updatingInvites.current = false;
       }
     },
-    [fetchInvites, irminAlert]
+    [fetchInvites, irminAlert, getToken, locale]
   );
 
   const handleChangeUserRole = useCallback(
@@ -141,9 +149,11 @@ export const UsersProvider = ({
       if (updatingUsers.current) return;
       try {
         updatingUsers.current = true;
-        const res = await changeUserRole({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.userService.changeUserRole({
           workspace: currentWorkspace,
-          userID,
+          user: userID,
           roles,
         });
         await fetchUsers();
@@ -157,7 +167,7 @@ export const UsersProvider = ({
         updatingUsers.current = false;
       }
     },
-    [fetchUsers, currentWorkspace, irminAlert]
+    [fetchUsers, currentWorkspace, irminAlert, getToken, locale]
   );
 
   const handleChangeInviteRole = useCallback(
@@ -165,7 +175,12 @@ export const UsersProvider = ({
       if (updatingInvites.current) return;
       try {
         updatingInvites.current = true;
-        const res = await updateInvite({ inviteID, role });
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.inviteService.updateInvite({
+          inviteID,
+          role,
+        });
         await fetchInvites();
         irminAlert(
           'success',
@@ -180,13 +195,15 @@ export const UsersProvider = ({
         updatingInvites.current = false;
       }
     },
-    [fetchInvites, irminAlert]
+    [fetchInvites, irminAlert, getToken, locale]
   );
 
   const handleResendInvite = useCallback(
     async (inviteID: string) => {
       try {
-        const res = await resendInvite({ inviteID });
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.inviteService.resendInvite({ inviteID });
         irminAlert('success', res.message ?? 'Invite resent successfully');
       } catch (error) {
         irminAlert(
@@ -195,7 +212,7 @@ export const UsersProvider = ({
         );
       }
     },
-    [irminAlert]
+    [irminAlert, getToken, locale]
   );
 
   const handleSendInvite = useCallback(async () => {
@@ -207,7 +224,9 @@ export const UsersProvider = ({
           if (updatingInvites.current) return;
           try {
             updatingInvites.current = true;
-            const res = await sendInvite({
+            const token = await getToken();
+            const irminCore = new IrminCore(locale, token);
+            const res = await irminCore.inviteService.sendInvite({
               workspace: currentWorkspace,
               email: data.email,
               role: data.role,
@@ -228,7 +247,16 @@ export const UsersProvider = ({
         }}
       />
     );
-  }, [dict, roles, currentWorkspace, fetchInvites, irminModal, irminAlert]);
+  }, [
+    dict,
+    roles,
+    currentWorkspace,
+    fetchInvites,
+    irminModal,
+    irminAlert,
+    getToken,
+    locale,
+  ]);
 
   return (
     <UsersContext.Provider

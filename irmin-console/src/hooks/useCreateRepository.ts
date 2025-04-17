@@ -1,7 +1,9 @@
 import { useCallback, useRef, useState } from 'react';
 
-import { createRepository } from '@/lib/actions/repositories';
+import IrminCore from '@/lib/core';
 
+import { useIAM } from '@/context/IAMContext';
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
@@ -12,6 +14,8 @@ export const useCreateRepository = ({
   reset: () => void;
   closeModal: () => void;
 }) => {
+  const { getToken } = useIAM();
+  const { locale } = useLocale();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspace();
   const [processing, setProcessing] = useState(false);
@@ -36,7 +40,9 @@ export const useCreateRepository = ({
         creatingRepository.current = true;
         setProcessing(true);
         // Create the repository
-        const res = await createRepository({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.repositoryService.createRepository({
           workspace: workspaceSlug,
           name: repository.name,
           description: repository.description ?? '',
@@ -67,7 +73,7 @@ export const useCreateRepository = ({
         creatingRepository.current = false;
       }
     },
-    [irminAlert, workspaceSlug, reset, closeModal]
+    [irminAlert, workspaceSlug, reset, closeModal, getToken, locale]
   );
 
   return {

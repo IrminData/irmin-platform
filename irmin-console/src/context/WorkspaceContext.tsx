@@ -11,23 +11,18 @@ import {
 
 import { useRouter } from 'next/navigation';
 
-import {
-  deleteWorkspace,
-  getWorkspace,
-  leaveWorkspace,
-  transferWorkspace,
-  updateWorkspace,
-} from '@/lib/actions/workspaces';
+import IrminCore from '@/lib/core';
 
 import WorkspaceDeletionConfirmationModal from '@/components/workspace/WorkspaceDeletionConfirmationModal';
+
+import { useConsoleSearchContext } from '@/context/ConsoleSearchContext';
+import { useIAM } from '@/context/IAMContext';
+import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
 
 import { Workspace } from '@/types/core/Workspace';
 import { ConsoleSearchItem } from '@/types/internal/ConsoleSearch';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
-
-import { useConsoleSearchContext } from './ConsoleSearchContext';
-import { useLocale } from './LocaleContext';
-import { usePopup } from './PopupContext';
 
 /**
  * Workspace context properties
@@ -60,8 +55,9 @@ export const WorkspaceProvider = ({
   initialWorkspace: Workspace | null;
   searchItems: ConsoleSearchItem[];
 }) => {
+  const { getToken } = useIAM();
   const router = useRouter();
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const { irminAlert, irminConfirm, irminModal } = usePopup();
   const { setSearchItems } = useConsoleSearchContext();
 
@@ -73,7 +69,11 @@ export const WorkspaceProvider = ({
 
   const fetchWorkspace = useCallback(async () => {
     try {
-      const newWorkspace = await getWorkspace({ workspaceSlug });
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const newWorkspace = await irminCore.workspaceService.fetchWorkspace({
+        workspaceSlug,
+      });
       if (!newWorkspace.data) return;
       setWorkspace(newWorkspace.data);
     } catch (error) {
@@ -82,7 +82,7 @@ export const WorkspaceProvider = ({
         (error as Error)?.message ?? 'Failed to fetch the workspace'
       );
     }
-  }, [workspaceSlug, irminAlert]);
+  }, [workspaceSlug, irminAlert, getToken, locale]);
 
   const handleDeleteWorkspace = useCallback(async () => {
     irminModal.show(
@@ -94,7 +94,11 @@ export const WorkspaceProvider = ({
           if (updating.current) return;
           try {
             updating.current = true;
-            const res = await deleteWorkspace({ workspaceSlug });
+            const token = await getToken();
+            const irminCore = new IrminCore(locale, token);
+            const res = await irminCore.workspaceService.deleteWorkspace({
+              workspace: workspaceSlug,
+            });
             irminAlert(
               'success',
               res.message ?? 'Workspace deleted successfully'
@@ -111,17 +115,21 @@ export const WorkspaceProvider = ({
         }}
       />
     );
-  }, [workspaceSlug, dict, router, irminAlert, irminModal]);
+  }, [workspaceSlug, dict, router, irminAlert, irminModal, getToken, locale]);
 
   const handleUpdateWorkspace = useCallback(
     async (data: ItemUpdateProps) => {
       if (updating.current) return;
       try {
         updating.current = true;
-        const res = await updateWorkspace({
-          workspaceSlug: workspaceSlug,
-          name: data.name,
-          description: data.description,
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.workspaceService.updateWorkspace({
+          workspace: workspaceSlug,
+          data: {
+            name: data.name,
+            description: data.description,
+          },
         });
         await fetchWorkspace();
         irminAlert('success', res.message ?? 'Workspace updated successfully');
@@ -134,7 +142,7 @@ export const WorkspaceProvider = ({
         updating.current = false;
       }
     },
-    [workspaceSlug, fetchWorkspace, irminAlert]
+    [workspaceSlug, fetchWorkspace, irminAlert, getToken, locale]
   );
 
   const handleTransferOwnershipWorkspace = useCallback(
@@ -147,8 +155,10 @@ export const WorkspaceProvider = ({
       if (updating.current || !confirmed) return;
       try {
         updating.current = true;
-        const res = await transferWorkspace({
-          workspaceSlug: workspace.slug,
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.workspaceService.transferWorkspace({
+          workspace: workspace.slug,
           newOwnerID: ownerID,
         });
         await fetchWorkspace();
@@ -165,7 +175,15 @@ export const WorkspaceProvider = ({
         updating.current = false;
       }
     },
-    [workspace, dict, fetchWorkspace, irminAlert, irminConfirm]
+    [
+      workspace,
+      dict,
+      fetchWorkspace,
+      irminAlert,
+      irminConfirm,
+      getToken,
+      locale,
+    ]
   );
 
   const handleLeaveWorkspace = useCallback(async () => {
@@ -177,7 +195,11 @@ export const WorkspaceProvider = ({
     if (updating.current || !confirmed) return;
     try {
       updating.current = true;
-      const res = await leaveWorkspace({ workspaceSlug: workspace.slug });
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.workspaceService.leaveWorkspace({
+        workspaceSlug: workspace.slug,
+      });
       router.push('/workspace');
       irminAlert('success', res.message ?? 'You have left the workspace');
     } catch (error) {
@@ -188,7 +210,7 @@ export const WorkspaceProvider = ({
     } finally {
       updating.current = false;
     }
-  }, [workspace, dict, irminAlert, irminConfirm, router]);
+  }, [workspace, dict, irminAlert, irminConfirm, router, getToken, locale]);
 
   // Update the search items in the context when the workspace changes
   useEffect(() => {

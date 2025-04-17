@@ -5,17 +5,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { MdPlayArrow } from 'react-icons/md';
 import { TbChevronRight, TbFile, TbPencil, TbTrash, TbX } from 'react-icons/tb';
 
-import {
-  createStoredQuery,
-  deleteStoredQuery,
-  updateStoredQuery,
-} from '@/lib/actions/query';
+import IrminCore from '@/lib/core';
 
 import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import QueryResults from '@/components/query/QueryResults';
 import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/button';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
@@ -39,7 +36,8 @@ export default function QueriesSection({
 }: {
   initialQueries: StoredQuery[];
 }) {
-  const { dict } = useLocale();
+  const { getToken } = useIAM();
+  const { dict, locale } = useLocale();
   const { irminModal, irminAlert, irminConfirm } = usePopup();
   const { workspaceSlug } = useWorkspace();
   const [queries, setQueries] = useState<StoredQuery[]>(initialQueries);
@@ -68,7 +66,9 @@ export default function QueriesSection({
         dict.query.newQuery,
         <CreateSavedQueryModal
           createQuery={async (queryName: string, queryDescription: string) => {
-            const res = await createStoredQuery({
+            const token = await getToken();
+            const irminCore = new IrminCore(locale, token);
+            const res = await irminCore.queryService.createStoredQuery({
               workspace: workspaceSlug,
               name: queryName,
               description: queryDescription,
@@ -91,7 +91,15 @@ export default function QueriesSection({
         () => irminModal.close()
       );
     },
-    [irminModal, dict, workspaceSlug, irminAlert, editorContent]
+    [
+      irminModal,
+      dict,
+      workspaceSlug,
+      irminAlert,
+      editorContent,
+      getToken,
+      locale,
+    ]
   );
 
   /**
@@ -101,7 +109,9 @@ export default function QueriesSection({
     () => async () => {
       try {
         if (!selectedQuery) throw new Error('No query selected');
-        const res = await updateStoredQuery({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.queryService.updateStoredQuery({
           workspace: workspaceSlug,
           queryID: selectedQuery.id,
           name: selectedQuery.name,
@@ -126,7 +136,7 @@ export default function QueriesSection({
         console.error(error);
       }
     },
-    [selectedQuery, workspaceSlug, editorContent, irminAlert]
+    [selectedQuery, workspaceSlug, editorContent, irminAlert, getToken, locale]
   );
 
   /**
@@ -154,7 +164,9 @@ export default function QueriesSection({
           currentDescription={selectedQuery.description}
           updateQuery={async (queryName: string, queryDescription: string) => {
             try {
-              const res = await updateStoredQuery({
+              const token = await getToken();
+              const irminCore = new IrminCore(locale, token);
+              const res = await irminCore.queryService.updateStoredQuery({
                 workspace: workspaceSlug,
                 queryID: selectedQuery.id,
                 name: queryName,
@@ -188,7 +200,16 @@ export default function QueriesSection({
         () => irminModal.close()
       );
     },
-    [irminModal, dict, workspaceSlug, irminAlert, selectedQuery, editorContent]
+    [
+      irminModal,
+      dict,
+      workspaceSlug,
+      irminAlert,
+      selectedQuery,
+      editorContent,
+      getToken,
+      locale,
+    ]
   );
 
   /**
@@ -203,7 +224,9 @@ export default function QueriesSection({
       );
       if (!confirmed) return;
       try {
-        const res = await deleteStoredQuery({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.queryService.deleteStoredQuery({
           workspace: workspaceSlug,
           queryID: selectedQuery.id,
         });
@@ -219,7 +242,15 @@ export default function QueriesSection({
         console.error(error);
       }
     },
-    [selectedQuery, dict, workspaceSlug, irminAlert, irminConfirm]
+    [
+      selectedQuery,
+      dict,
+      workspaceSlug,
+      irminAlert,
+      irminConfirm,
+      getToken,
+      locale,
+    ]
   );
 
   /**

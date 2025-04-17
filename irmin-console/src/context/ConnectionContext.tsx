@@ -8,18 +8,14 @@ import {
   useState,
 } from 'react';
 
-import {
-  deleteConnection,
-  getConnection,
-  transferConnection,
-  updateConnection,
-} from '@/lib/actions/connections';
+import IrminCore from '@/lib/core';
+
+import { useIAM } from '@/context/IAMContext';
+import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
 
 import { Connection } from '@/types/core/Connection';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
-
-import { useLocale } from './LocaleContext';
-import { usePopup } from './PopupContext';
 
 /**
  * Connection context properties
@@ -50,7 +46,8 @@ export const ConnectionProvider = ({
   connectionID: string;
   defaultConnection: Connection;
 }) => {
-  const { dict } = useLocale();
+  const { getToken } = useIAM();
+  const { dict, locale } = useLocale();
   const { irminAlert, irminConfirm } = usePopup();
 
   // Track if the connection is being updated
@@ -61,7 +58,9 @@ export const ConnectionProvider = ({
 
   const fetchConnection = useCallback(async () => {
     try {
-      const newConnection = await getConnection({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const newConnection = await irminCore.connectionService.fetchConnection({
         workspace: workspaceSlug,
         connectionID,
       });
@@ -73,7 +72,7 @@ export const ConnectionProvider = ({
         (error as Error)?.message ?? 'Failed to fetch the connection'
       );
     }
-  }, [connectionID, workspaceSlug, irminAlert]);
+  }, [connectionID, workspaceSlug, irminAlert, getToken, locale]);
 
   const handleDeleteConnection = useCallback(async () => {
     const confirmed = await irminConfirm(
@@ -83,7 +82,9 @@ export const ConnectionProvider = ({
     if (updating.current || !confirmed) return;
     try {
       updating.current = true;
-      const res = await deleteConnection({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.connectionService.deleteConnection({
         workspace: workspaceSlug,
         connectionID: connection.id,
       });
@@ -96,14 +97,24 @@ export const ConnectionProvider = ({
     } finally {
       updating.current = false;
     }
-  }, [connection, workspaceSlug, dict, irminAlert, irminConfirm]);
+  }, [
+    connection,
+    workspaceSlug,
+    dict,
+    irminAlert,
+    irminConfirm,
+    getToken,
+    locale,
+  ]);
 
   const handleUpdateConnection = useCallback(
     async (data: ItemUpdateProps) => {
       if (updating.current) return;
       try {
         updating.current = true;
-        const res = await updateConnection({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.connectionService.updateConnection({
           workspace: workspaceSlug,
           connectionID: connection.id,
           name: data.name,
@@ -121,7 +132,7 @@ export const ConnectionProvider = ({
         updating.current = false;
       }
     },
-    [connection, workspaceSlug, fetchConnection, irminAlert]
+    [connection, workspaceSlug, fetchConnection, irminAlert, getToken, locale]
   );
 
   const handleTransferOwnershipConnection = useCallback(
@@ -133,10 +144,12 @@ export const ConnectionProvider = ({
       if (updating.current || !confirmed) return;
       try {
         updating.current = true;
-        const res = await transferConnection({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.connectionService.transferConnection({
           workspace: workspaceSlug,
           connectionID: connection.id,
-          ownerID,
+          newOwner: ownerID,
         });
         await fetchConnection();
         irminAlert(
@@ -152,7 +165,16 @@ export const ConnectionProvider = ({
         updating.current = false;
       }
     },
-    [connection, dict, workspaceSlug, fetchConnection, irminAlert, irminConfirm]
+    [
+      connection,
+      dict,
+      workspaceSlug,
+      fetchConnection,
+      irminAlert,
+      irminConfirm,
+      locale,
+      getToken,
+    ]
   );
 
   return (

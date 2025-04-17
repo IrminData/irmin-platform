@@ -9,24 +9,16 @@ import {
   useState,
 } from 'react';
 
-import { triggerWorkflowRun } from '@/lib/actions/workflow-runs';
-import {
-  deleteWorkflow,
-  getWorkflow,
-  pauseWorkflow,
-  startWorkflow,
-  transferWorkflow,
-  updateWorkflow,
-  updateWorkflowSchedule,
-} from '@/lib/actions/workflows';
+import IrminCore from '@/lib/core';
+
+import { useIAM } from '@/context/IAMContext';
+import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 import { Workflow } from '@/types/core/Workflow';
 import { WorkflowRun } from '@/types/core/WorkflowRun';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
-
-import { useLocale } from './LocaleContext';
-import { usePopup } from './PopupContext';
-import { useWorkspace } from './WorkspaceContext';
 
 /**
  * Workflow context properties
@@ -64,7 +56,8 @@ export const WorkflowProvider = ({
   initialWorkflow: Workflow;
   runs: WorkflowRun[];
 }) => {
-  const { dict } = useLocale();
+  const { getToken } = useIAM();
+  const { dict, locale } = useLocale();
   const { irminAlert, irminConfirm } = usePopup();
   const { workspaceSlug } = useWorkspace();
 
@@ -77,7 +70,9 @@ export const WorkflowProvider = ({
 
   const fetchWorkflow = useCallback(async () => {
     try {
-      const newWorkflow = await getWorkflow({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const newWorkflow = await irminCore.workflowService.fetchWorkflow({
         workspace: workspaceSlug,
         workflowID,
       });
@@ -89,7 +84,7 @@ export const WorkflowProvider = ({
         (error as Error)?.message ?? 'Failed to fetch the workflow'
       );
     }
-  }, [workflowID, workspaceSlug, irminAlert]);
+  }, [workflowID, workspaceSlug, irminAlert, getToken, locale]);
 
   const handleDeleteWorkflow = useCallback(async () => {
     const confirmed = await irminConfirm(
@@ -99,7 +94,9 @@ export const WorkflowProvider = ({
     if (updating.current || !confirmed) return;
     try {
       updating.current = true;
-      const res = await deleteWorkflow({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.workflowService.deleteWorkflow({
         workspace: workspaceSlug,
         workflowID: workflow.id,
       });
@@ -112,14 +109,24 @@ export const WorkflowProvider = ({
     } finally {
       updating.current = false;
     }
-  }, [workflow, dict, workspaceSlug, irminAlert, irminConfirm]);
+  }, [
+    workflow,
+    dict,
+    workspaceSlug,
+    irminAlert,
+    irminConfirm,
+    getToken,
+    locale,
+  ]);
 
   const handleUpdateWorkflow = useCallback(
     async (data: ItemUpdateProps) => {
       if (updating.current) return;
       try {
         updating.current = true;
-        const res = await updateWorkflow({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.workflowService.updateWorkflow({
           workspace: workspaceSlug,
           workflowID,
           name: data.name,
@@ -127,7 +134,7 @@ export const WorkflowProvider = ({
           documentation: data.documentation,
         });
         if (data.schedule) {
-          await updateWorkflowSchedule({
+          await irminCore.workflowService.updateWorkflowSchedule({
             workspace: workspaceSlug,
             workflowID,
             schedule: data.schedule,
@@ -144,7 +151,7 @@ export const WorkflowProvider = ({
         updating.current = false;
       }
     },
-    [workflowID, workspaceSlug, fetchWorkflow, irminAlert]
+    [workflowID, workspaceSlug, fetchWorkflow, irminAlert, getToken, locale]
   );
 
   const handleTransferOwnershipWorkflow = useCallback(
@@ -156,7 +163,9 @@ export const WorkflowProvider = ({
       if (updating.current || !confirmed) return;
       try {
         updating.current = true;
-        const res = await transferWorkflow({
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.workflowService.transferWorkflow({
           workspace: workspaceSlug,
           workflowID,
           newOwnerID: ownerID,
@@ -183,6 +192,8 @@ export const WorkflowProvider = ({
       fetchWorkflow,
       irminAlert,
       irminConfirm,
+      getToken,
+      locale,
     ]
   );
 
@@ -190,7 +201,9 @@ export const WorkflowProvider = ({
     if (updating.current) return;
     try {
       updating.current = true;
-      const res = await pauseWorkflow({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.workflowService.pauseWorkflow({
         workspace: workspaceSlug,
         workflowID,
       });
@@ -204,13 +217,15 @@ export const WorkflowProvider = ({
     } finally {
       updating.current = false;
     }
-  }, [workflowID, workspaceSlug, fetchWorkflow, irminAlert]);
+  }, [workflowID, workspaceSlug, fetchWorkflow, irminAlert, getToken, locale]);
 
   const handleResumeWorkflow = useCallback(async () => {
     if (updating.current) return;
     try {
       updating.current = true;
-      const res = await startWorkflow({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.workflowService.startWorflow({
         workspace: workspaceSlug,
         workflowID,
       });
@@ -224,13 +239,15 @@ export const WorkflowProvider = ({
     } finally {
       updating.current = false;
     }
-  }, [workflowID, workspaceSlug, fetchWorkflow, irminAlert]);
+  }, [workflowID, workspaceSlug, fetchWorkflow, irminAlert, getToken, locale]);
 
   const handleTriggerWorkflowRun = useCallback(async () => {
     if (updating.current) return;
     try {
       updating.current = true;
-      const res = await triggerWorkflowRun({
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.workflowRunService.triggerWorkflowRun({
         workspace: workspaceSlug,
         workflowID,
       });
@@ -243,7 +260,7 @@ export const WorkflowProvider = ({
     } finally {
       updating.current = false;
     }
-  }, [workflowID, workspaceSlug, irminAlert]);
+  }, [workflowID, workspaceSlug, irminAlert, getToken, locale]);
 
   return (
     <WorkflowContext.Provider
