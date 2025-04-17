@@ -150,6 +150,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	branches.Get("/", controllers.BranchesIndex)
 	branches.Post("/", controllers.BranchesStore)
 	branch := branches.Group("/:branch", controllers.BranchMiddleware)
+	branch.Get("/changes", controllers.GetUncommittedChanges)
 	branch.Get("/", controllers.BranchesShow)
 	branch.Patch("/", controllers.BranchesUpdate)
 	branch.Delete("/", controllers.BranchesDestroy)

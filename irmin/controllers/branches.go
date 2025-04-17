@@ -185,3 +185,27 @@ func BranchesDestroy(c fiber.Ctx) error {
 		Message: dict.T("branch_deleted"),
 	})
 }
+
+func GetUncommittedChanges(c fiber.Ctx) error {
+	locale := c.Locals("locale").(string)
+	dict := c.Locals("dict").(locales.Dictionary)
+	workspace := c.Locals("workspace").(*db.Workspace)
+	repository := c.Locals("repository").(*db.Repository)
+	branch := c.Locals("branch").(*irminModels.Branch)
+
+	// Initialize Data Engine client
+	DataEngine := engine.NewClient(locale)
+
+	// Compare the refs
+	diff, err := DataEngine.GetUncommittedChanges(c.Context(), workspace.Slug, repository.Slug, branch.Name)
+	if err != nil {
+		log.Printf("Error getting uncommitted changes: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+		Data: diff,
+	})
+}

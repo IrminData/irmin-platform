@@ -88,48 +88,55 @@ func (c *Client) ExecuteQuery(userWorkspace, query string) *irminModels.QueryRes
 		errors = append(errors, fmt.Errorf("failed to execute query: %w", err))
 	}
 	finishedAt := time.Now()
-	// Close the rows after processing.
-	defer rows.Close()
 
-	// Retrieve column names.
-	columns, err := rows.Columns()
-	if err != nil {
-		errors = append(errors, fmt.Errorf("failed to retrieve column names: %w", err))
-	}
+	var columns []string
 
-	// Iterate through the rows.
-	for rows.Next() {
-		// Create a slice of any's to represent each column, and a second slice to hold pointers to each item.
-		values := make([]any, len(columns))
-		valuePtrs := make([]any, len(columns))
-		for i := range values {
-			valuePtrs[i] = &values[i]
+	// Make sure that the rows are not nil before processing.
+	// This is important to avoid nil pointer dereference errors.
+	if rows != nil {
+		// Close the rows after processing.
+		defer rows.Close()
+
+		// Retrieve column names.
+		columns, err := rows.Columns()
+		if err != nil {
+			errors = append(errors, fmt.Errorf("failed to retrieve column names: %w", err))
 		}
 
-		// Scan the row into the value pointers.
-		if err := rows.Scan(valuePtrs...); err != nil {
-			errors = append(errors, fmt.Errorf("failed to scan row: %w", err))
-			continue
-		}
-
-		// Create a map to store the column name to value mapping.
-		rowMap := make(map[string]any)
-		for i, colName := range columns {
-			var v any
-			v = values[i]
-			// Convert []byte to string for readability.
-			if b, ok := v.([]byte); ok {
-				v = string(b)
+		// Iterate through the rows.
+		for rows.Next() {
+			// Create a slice of any's to represent each column, and a second slice to hold pointers to each item.
+			values := make([]any, len(columns))
+			valuePtrs := make([]any, len(columns))
+			for i := range values {
+				valuePtrs[i] = &values[i]
 			}
-			rowMap[colName] = v
+
+			// Scan the row into the value pointers.
+			if err := rows.Scan(valuePtrs...); err != nil {
+				errors = append(errors, fmt.Errorf("failed to scan row: %w", err))
+				continue
+			}
+
+			// Create a map to store the column name to value mapping.
+			rowMap := make(map[string]any)
+			for i, colName := range columns {
+				var v any
+				v = values[i]
+				// Convert []byte to string for readability.
+				if b, ok := v.([]byte); ok {
+					v = string(b)
+				}
+				rowMap[colName] = v
+			}
+
+			data = append(data, rowMap)
 		}
 
-		data = append(data, rowMap)
-	}
-
-	// Check for any errors encountered during iteration.
-	if err := rows.Err(); err != nil {
-		errors = append(errors, fmt.Errorf("error encountered during row iteration: %w", err))
+		// Check for any errors encountered during iteration.
+		if err := rows.Err(); err != nil {
+			errors = append(errors, fmt.Errorf("error encountered during row iteration: %w", err))
+		}
 	}
 
 	// If there are any errors, log them.

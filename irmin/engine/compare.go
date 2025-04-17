@@ -92,6 +92,42 @@ func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef
 	return irminDiff, nil
 }
 
+func (c *Client) GetUncommittedChanges(ctx context.Context, workspace, repository, branch string) (*irminModels.Diff, error) {
+	// Construct repository name.
+	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+
+	diff, err := c.LakeFSClient.ListAllBranchDiffs(lakeFSRepositoryName, branch)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get diff items: %w", err)
+	}
+
+	// Construct Irmin diff object.
+	irminChangeItems := make([]irminModels.ChangeItem, len(diff))
+	for i, diffItem := range diff {
+		objectDetails := utils.ParseObjectDetailsFromPath(diffItem.Path)
+		irminChangeItems[i] = irminModels.ChangeItem{
+			Type: irminModels.ChangeType(diffItem.Type),
+			Size: int(diffItem.SizeBytes),
+			Object: irminModels.Object{
+				Name:        objectDetails.Name,
+				Path:        objectDetails.FullPath,
+				Type:        objectDetails.Type,
+				ContentType: objectDetails.ContentType,
+			},
+		}
+	}
+
+	irminDiff := &irminModels.Diff{
+		Repository: repository,
+		BaseRef:    branch,
+		CompareRef: branch,
+		Items:      irminChangeItems,
+		Commits:    nil,
+	}
+
+	return irminDiff, nil
+}
+
 func (c *Client) MergeRefs(workspace, repository, baseRef, compareRef, message, author, strategy string, squash, allowEmpty bool) (*irminModels.Commit, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
