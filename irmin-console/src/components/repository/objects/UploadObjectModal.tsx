@@ -58,7 +58,8 @@ export default function UploadObjectModal({
       repository: currentRepository,
       ref: currentRef,
       files: null,
-      path: `${currentPath}/${prefilledName ?? 'example.txt'}`,
+      name: prefilledName ?? 'example.txt',
+      path: `${currentPath}${prefilledName ?? 'example.txt'}`,
     },
   });
 
@@ -161,7 +162,10 @@ export default function UploadObjectModal({
                   field.onChange(files);
                   if (files && files[0]) {
                     // Auto-set the name field to the selected file's name
-                    setValue('name', files[0].name);
+                    if (!prefilledName) {
+                      setValue('name', files[0].name);
+                      setValue('path', `${currentPath}${files[0].name}`);
+                    }
                   }
                 }}
               />

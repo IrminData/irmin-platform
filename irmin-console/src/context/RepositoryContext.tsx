@@ -56,6 +56,7 @@ interface RepositoryContextProps {
   // Objects
   loadingDirectory: boolean;
   directory: Object | undefined;
+  fetchObject: (path?: string, ref?: string) => Promise<void>;
   deleteObject: (objectPath: string) => Promise<void>;
   moveObject: (oldPath: string, newPath: string) => Promise<void>;
   copyObject: (oldPath: string, newPath: string) => Promise<void>;
@@ -1166,6 +1167,7 @@ export const RepositoryProvider = ({
         // Objects
         loadingDirectory,
         directory,
+        fetchObject,
         deleteObject: handleDeleteObject,
         moveObject: handleMoveObject,
         copyObject: handleCopyObject,

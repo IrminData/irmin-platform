@@ -57,7 +57,7 @@ class ObjectService {
   }): Promise<IrminAPIResponse<RepoObject>> {
     try {
       let url = `/v1/workspaces/${workspace}/repositories/${repository}/objects?&path=${encodeURIComponent(path)}`;
-      if (ref) url += `ref=${encodeURIComponent(ref)}`;
+      if (ref) url += `&ref=${encodeURIComponent(ref)}`;
       const response = (await this.irminCore.fetchAPI(url, {
         method: 'GET',
       })) as IrminAPIResponse<RepoObject>;

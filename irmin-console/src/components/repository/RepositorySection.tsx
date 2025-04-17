@@ -11,6 +11,7 @@ import {
   TbDownload,
   TbFileDiff,
   TbFolderOpen,
+  TbRefresh,
   TbUpload,
 } from 'react-icons/tb';
 
@@ -18,7 +19,7 @@ import { Dictionary } from '@/lib/dict';
 
 import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import QueryResults from '@/components/query/QueryResults';
-import Button from '@/components/ui/button';
+import Button, { ButtonWithTooltip } from '@/components/ui/button';
 
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
@@ -57,6 +58,8 @@ export default function RepositorySection({
     currentRepository,
     uploadObject,
     createGroup,
+    loadingDirectory,
+    fetchObject,
   } = useRepository();
 
   const query = useQuery();
@@ -194,7 +197,14 @@ export default function RepositorySection({
                 {currentRef && ` @ ${currentRef}`}
               </div>
               <div className='flex items-center gap-2'>
-                {/** Button to navigate to uncommitted changes of the current branch */}
+                <ButtonWithTooltip
+                  variant='secondary'
+                  size='icon'
+                  icon={<TbRefresh />}
+                  tooltip={dict.common.refresh}
+                  disabled={loadingDirectory}
+                  onClick={() => fetchObject()}
+                />
                 {!immutable && (
                   <Button
                     variant='secondary'
