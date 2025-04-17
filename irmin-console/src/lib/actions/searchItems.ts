@@ -182,7 +182,7 @@ export async function generateSearchItems({
           title: dict.consoleNavigation.staticSearchItems.createWorkflow,
           description:
             dict.consoleNavigation.staticSearchItems.description.createWorkflow,
-          link: `/${locale}/workspace/${workspace}/workflows/create`,
+          link: `/${locale}/workspace/${workspace}/workflows?create`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
@@ -197,7 +197,7 @@ export async function generateSearchItems({
           description:
             dict.consoleNavigation.staticSearchItems.description
               .createConnection,
-          link: `/${locale}/workspace/${workspace}/connections/create`,
+          link: `/${locale}/workspace/${workspace}/connections?create`,
           type: ConsoleSearchItemType.Irmin,
         },
         {
@@ -212,7 +212,7 @@ export async function generateSearchItems({
           description:
             dict.consoleNavigation.staticSearchItems.description
               .createRepository,
-          link: `/${locale}/workspace/${workspace}/repositories/create`,
+          link: `/${locale}/workspace/${workspace}/repositories?create`,
           type: ConsoleSearchItemType.Irmin,
         }
       );

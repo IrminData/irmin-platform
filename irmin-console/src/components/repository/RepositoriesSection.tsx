@@ -1,8 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
@@ -33,7 +31,6 @@ export default function RepositoriesSection({
   repositories: Repository[];
   sideModalOpen?: boolean;
 }) {
-  const router = useRouter();
   const { dict } = useLocale();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
@@ -61,20 +58,13 @@ export default function RepositoriesSection({
     };
   }, [searchQuery, repositories]);
 
-  const closeModal = () => {
-    if (sideModalOpen) {
-      router.push('../repositories');
-    } else {
-      setIsOpen(false);
-    }
-  };
-  const openModal = () => {
-    if (!sideModalOpen) {
-      router.push('repositories/create');
-    } else {
-      setIsOpen(true);
-    }
-  };
+  const closeModal = useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
+  const openModal = useCallback(() => {
+    setIsOpen(true);
+  }, []);
 
   return (
     <div className='relative container mx-auto max-w-7xl px-4 py-8'>

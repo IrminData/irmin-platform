@@ -19,8 +19,11 @@ import { WorkspaceLayoutParams } from '../layout';
  */
 export default async function ConnectionsPage(props: {
   params: Promise<WorkspaceLayoutParams>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await props.params;
+  const searchParams = await props.searchParams;
+  const openSideModal = searchParams.create !== undefined;
   const currentWorkspace = params.workspace;
   const token = await getToken();
   const [connectors, connections] = await Promise.all([
@@ -31,7 +34,7 @@ export default async function ConnectionsPage(props: {
     <ConnectionsSection
       connections={connections.data ?? []}
       connectors={connectors.data ?? []}
-      sideModalOpen={false}
+      sideModalOpen={openSideModal}
     />
   );
 }

@@ -37,7 +37,7 @@ const WorkspaceHomeSection = ({ workspace }: { workspace: Workspace }) => {
           </div>
           <div className='flex w-full flex-wrap items-center justify-center gap-8'>
             <LinkCard
-              href={`${workspaceUrl}/connections/create`}
+              href={`${workspaceUrl}/connections?create`}
               title={dict.consoleHome.createNewConnection}
               description={dict.consoleHome.createNewConnectionDescription}
               icon={<GoWorkflow />}
@@ -49,7 +49,7 @@ const WorkspaceHomeSection = ({ workspace }: { workspace: Workspace }) => {
               icon={<TbPlayerPlay />}
             />
             <LinkCard
-              href={`${workspaceUrl}/workflows/create`}
+              href={`${workspaceUrl}/workflows?create`}
               title={dict.consoleHome.setupWorkflow}
               description={dict.consoleHome.setupWorkflowDescription}
               icon={<TbRun />}

@@ -23,8 +23,11 @@ import { WorkspaceLayoutParams } from '../../../layout';
  */
 export default async function ExportWorkflowsPage(props: {
   params: Promise<WorkspaceLayoutParams>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await props.params;
+  const searchParams = await props.searchParams;
+  const openSideModal = searchParams.create !== undefined;
   const token = await getToken();
   const [editorItems, workflows, connections, repositories] = await Promise.all(
     [
@@ -44,7 +47,7 @@ export default async function ExportWorkflowsPage(props: {
       workflows={(workflows.data as ExportWorkflow[]) ?? []}
       connections={connections.data ?? []}
       repositories={repositories.data ?? []}
-      sideModalOpen={false}
+      sideModalOpen={openSideModal}
     />
   );
 }

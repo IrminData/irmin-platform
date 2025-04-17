@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { useRouter } from 'next/navigation';
-
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
@@ -46,7 +44,6 @@ export default function ImportWorkflowsSection({
   workflows: ImportWorkflow[];
   sideModalOpen?: boolean;
 }) {
-  const router = useRouter();
   const { dict } = useLocale();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
@@ -74,21 +71,13 @@ export default function ImportWorkflowsSection({
   }, [searchQuery, workflows]);
 
   const closeModal = useCallback(() => {
-    if (sideModalOpen) {
-      router.push('../imports');
-    } else {
-      setIsOpen(false);
-    }
-  }, [sideModalOpen, router]);
+    setIsOpen(false);
+  }, []);
 
   const openModal = useCallback(() => {
-    if (!sideModalOpen) {
-      router.push('imports/create');
-    } else {
-      setIsOpen(true);
-      setCurrentStep(1);
-    }
-  }, [sideModalOpen, router]);
+    setCurrentStep(1);
+    setIsOpen(true);
+  }, []);
 
   return (
     <div className='relative container mx-auto max-w-7xl px-4 py-8'>

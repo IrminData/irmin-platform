@@ -18,11 +18,17 @@ import { WorkspaceLayoutParams } from '../../layout';
  */
 export default async function WorkflowsPage(props: {
   params: Promise<WorkspaceLayoutParams>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await props.params;
+  const searchParams = await props.searchParams;
+  const openSideModal = searchParams.create !== undefined;
   const token = await getToken();
   const workflows = await getWorkflows({ workspace: params.workspace, token });
   return (
-    <WorkflowsSection workflows={workflows.data ?? []} sideModalOpen={false} />
+    <WorkflowsSection
+      workflows={workflows.data ?? []}
+      sideModalOpen={openSideModal}
+    />
   );
 }

@@ -348,7 +348,7 @@ function PipelineStageEditor({
                     )}
                     {!readOnly && (
                       <Button
-                        href={`${workspaceUrl}/connections/create`}
+                        href={`${workspaceUrl}/connections?create`}
                         target='_blank'
                         variant='gray'
                         className='w-full'
@@ -448,7 +448,7 @@ function PipelineStageEditor({
                     )}
                     {!readOnly && (
                       <Button
-                        href={`${workspaceUrl}/repositories/create`}
+                        href={`${workspaceUrl}/repositories?create`}
                         target='_blank'
                         variant='gray'
                         className='w-full'

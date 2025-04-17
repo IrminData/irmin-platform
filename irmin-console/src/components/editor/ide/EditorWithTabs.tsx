@@ -112,7 +112,7 @@ const EditorWithTabs = () => {
               className='px-2 py-2 text-xs'
               aria-label='Save file as workflow'
               disabled={!currentEditor}
-              href={`${workspaceUrl}/workflows/actions/create?executable=${currentEditor?.path}`}
+              href={`${workspaceUrl}/workflows/actions?create?executable=${currentEditor?.path}`}
             >
               <TbRun className='mr-1 inline-block' />{' '}
               {dict.query.saveAsWorkflow}

@@ -30,16 +30,16 @@ export default function SelectWorkflowTypeModalContent() {
   const handleContinue = useCallback(() => {
     // Direct to the next step
     if (workflowableType === 'action') {
-      router.push('../workflows/actions/create');
+      router.push('../workflows/actions?create');
     }
     if (workflowableType === 'import') {
-      router.push('../workflows/imports/create');
+      router.push('../workflows/imports?create');
     }
     if (workflowableType === 'export') {
-      router.push('../workflows/exports/create');
+      router.push('../workflows/exports?create');
     }
     if (workflowableType === 'pipeline') {
-      router.push('../workflows/pipelines/create');
+      router.push('../workflows/pipelines?create');
     }
   }, [router, workflowableType]);
 
