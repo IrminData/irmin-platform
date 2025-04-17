@@ -88,6 +88,7 @@ interface RepositoryContextProps {
   // Diff
   loadingDiff: boolean;
   diff: Diff | null;
+  fetchUncommittedChanges: () => Promise<Diff | null>;
   fetchDiff: (base: string, compare: string) => Promise<Diff | null>;
   fetchDiffContent: (
     objectPath: string,
@@ -765,6 +766,54 @@ export const RepositoryProvider = ({
   );
 
   /**
+   * Fetch the uncommitted changes for the current branch
+   */
+  const fetchUncommittedChanges = useCallback(async () => {
+    try {
+      setLoadingDiff(true);
+      // make sure that the currentRef is a branch
+      let branchName = currentRepository.default_branch;
+      if (currentRef) {
+        for (let i = 0; i < branches.length; i++) {
+          const branch = branches[i];
+          if (branch.name === currentRef) {
+            branchName = currentRef;
+            break;
+          }
+        }
+      }
+      // get the uncommitted changes for the selected branch
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.branchService.getUncommittedChanges({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        branch: branchName,
+      });
+      setDiff(res.data ?? null);
+      return res.data ?? null;
+    } catch (error) {
+      console.error('RepositoryContext fetchUncommittedChanges error', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to fetch uncommitted changes'
+      );
+    } finally {
+      setLoadingDiff(false);
+    }
+    return null;
+  }, [
+    workspaceSlug,
+    repositorySlug,
+    currentRepository,
+    currentRef,
+    branches,
+    irminAlert,
+    getToken,
+    locale,
+  ]);
+
+  /**
    * Hook to fetch the diff between two refs (eg. branches, commits)
    *
    * @param base - The base ref to compare
@@ -1197,6 +1246,7 @@ export const RepositoryProvider = ({
         // Diff
         loadingDiff,
         diff,
+        fetchUncommittedChanges,
         fetchDiff,
         fetchDiffContent,
         mergeRefs: handleMergeRefs,

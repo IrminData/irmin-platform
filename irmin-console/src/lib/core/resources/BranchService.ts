@@ -1,6 +1,7 @@
 import IrminCore from '@/lib/core';
 
 import { Branch } from '@/types/core/Branch';
+import { Diff } from '@/types/core/Diff';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
@@ -19,6 +20,7 @@ class BranchService {
     this.createBranch = this.createBranch.bind(this);
     this.deleteBranch = this.deleteBranch.bind(this);
     this.updateBranch = this.updateBranch.bind(this);
+    this.getUncommittedChanges = this.getUncommittedChanges.bind(this);
   }
 
   /**
@@ -187,6 +189,40 @@ class BranchService {
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Failed to update branch');
+      throw error;
+    }
+  }
+
+  /**
+   * Get uncommitted changes in a branch
+   *
+   * @param props
+   * @param props.workspace - The workspace to get the changes from
+   * @param props.repository - The repository slug to get the changes from
+   * @param props.branch - The branch name to get the changes from
+   */
+  async getUncommittedChanges({
+    workspace,
+    repository,
+    branch,
+  }: {
+    workspace: string;
+    repository: string;
+    branch: string;
+  }): Promise<IrminAPIResponse<Diff>> {
+    try {
+      const response = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}/changes`,
+        {
+          method: 'GET',
+        }
+      );
+      return response as IrminAPIResponse<Diff>;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Failed to get uncommitted changes'
+      );
       throw error;
     }
   }

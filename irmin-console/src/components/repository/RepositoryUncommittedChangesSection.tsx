@@ -29,7 +29,7 @@ export default function RepositoryUncommittedChangesSection() {
     currentRef,
     diff,
     loadingDiff,
-    fetchDiff,
+    fetchUncommittedChanges,
     commitChanges,
     revertChanges,
     immutable,
@@ -42,16 +42,16 @@ export default function RepositoryUncommittedChangesSection() {
   const latestCommit = useMemo(() => commits?.[0], [commits]);
 
   /**
-   * Fetch the diff between the base and compare branches.
+   * Fetch the unocmmitted changes diff.
    */
   const handleFetchDiff = useCallback(async () => {
     try {
       if (!latestCommit || !currentRef) return;
-      await fetchDiff(latestCommit.hash, currentRef);
+      await fetchUncommittedChanges();
     } catch (error) {
-      console.error('Failed to fetch diff', error);
+      console.error('Failed to fetch the uncommitted changes diff', error);
     }
-  }, [latestCommit, currentRef, fetchDiff]);
+  }, [latestCommit, currentRef, fetchUncommittedChanges]);
 
   /**
    * Show the commit changes modal {@link CommitChangesModalContent}
