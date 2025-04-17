@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -54,16 +54,26 @@ export default function RepositoryLayoutWrapper({
     [refSearchParam, initialRepository]
   );
 
+  const fetchingCommitsRef = useRef(false);
   useEffect(() => {
     const fetchInitialDataWithRef = async () => {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      const newCommits = await irminCore.commitService.fetchCommits({
-        workspace: workspaceSlug,
-        repository: repositorySlug,
-        ref: initialRef,
-      });
-      setCommits(newCommits.data ?? []);
+      try {
+        if (fetchingCommitsRef.current) return;
+        fetchingCommitsRef.current = true;
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const newCommits = await irminCore.commitService.fetchCommits({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          ref: initialRef,
+        });
+        setCommits(newCommits.data ?? []);
+      } catch (error) {
+        console.error('Error fetching commits:', error);
+        setCommits([]);
+      } finally {
+        fetchingCommitsRef.current = false;
+      }
     };
     fetchInitialDataWithRef();
   }, [initialRef, workspaceSlug, repositorySlug, locale, getToken]);

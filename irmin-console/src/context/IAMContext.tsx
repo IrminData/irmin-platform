@@ -81,6 +81,9 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
   const expiryRef = useRef<number>(0);
   const initSessionRef = useRef<string | null>(null);
 
+  // hold any in-flight fetch promise
+  const tokenPromiseRef = useRef<Promise<string> | null>(null);
+
   /**
    * Clears all IAM state and cached token
    */
@@ -93,6 +96,7 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
 
   /**
    * Returns a valid token, only calling Clerk if the cached one is expired.
+   * Ensures concurrent calls share the same in-flight promise.
    *
    * @returns current JWT token
    */
@@ -100,27 +104,41 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
     const now = Date.now();
     const bufferMs = 5 * 1000; // 5s before expiry
 
-    // if we have a token and it's still valid, return it
+    // return cached if still valid
     if (tokenRef.current && expiryRef.current - bufferMs > now) {
       return tokenRef.current;
     }
 
-    // otherwise fetch a new one from the server action
-    const newToken =
-      (await getClerkToken({
-        template: 'irmin-core',
-      })) ?? '';
-    tokenRef.current = newToken;
-
-    // use Clerk's native exp claim (in seconds) if available
-    if (sessionClaims?.exp) {
-      expiryRef.current = sessionClaims.exp * 1000;
-    } else {
-      // fallback: set a short TTL
-      expiryRef.current = now + 60 * 1000;
+    // if a fetch is already underway, reuse it
+    if (tokenPromiseRef.current) {
+      return tokenPromiseRef.current;
     }
 
-    return newToken;
+    // otherwise start a new fetch
+    tokenPromiseRef.current = (async () => {
+      const newToken = await getClerkToken({ template: 'irmin-core' });
+      if (!newToken) {
+        console.warn('Failed to get token from Clerk');
+        return tokenRef.current || '';
+      }
+
+      tokenRef.current = newToken;
+
+      // use exp claim (in seconds) if available
+      if (sessionClaims?.exp) {
+        expiryRef.current = sessionClaims.exp * 1000;
+      } else {
+        // fallback TTL
+        expiryRef.current = now + 60 * 1000;
+      }
+
+      return newToken;
+    })().finally(() => {
+      // clear pending promise ref whether success or error
+      tokenPromiseRef.current = null;
+    });
+
+    return tokenPromiseRef.current;
   }, [sessionClaims, getClerkToken]);
 
   /**
