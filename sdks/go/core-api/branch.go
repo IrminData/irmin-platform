@@ -84,3 +84,16 @@ func (c *Client) UpdateBranch(workspace, repository, oldName, newName string, is
 
 	return apiResp, nil
 }
+
+// GetUncommittedChanges retrieves the list of uncommitted changes in a branch.
+func (c *Client) GetUncommittedChanges(workspace, repository, branch string) (*irminModels.Diff, *irminModels.IrminAPIResponse, error) {
+	var diff irminModels.Diff
+	apiResp, err := c.FetchAPI(RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches/%s/changes", workspace, repository, branch),
+	}, &diff)
+	if err != nil {
+		return nil, nil, fmt.Errorf("fetch uncommitted changes error: %w", err)
+	}
+	return &diff, apiResp, nil
+}
