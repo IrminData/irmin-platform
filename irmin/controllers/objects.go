@@ -228,7 +228,7 @@ func ObjectsContent(c fiber.Ctx) error {
 	}
 
 	// Write the file content as a download response
-	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, object.Name, content)
+	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, object.Name, object.ContentType, content)
 }
 
 func ObjectsHistory(c fiber.Ctx) error {
