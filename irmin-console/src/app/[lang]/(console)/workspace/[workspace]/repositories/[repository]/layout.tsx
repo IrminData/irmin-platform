@@ -2,9 +2,12 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { getBranches } from '@/lib/actions/branches';
-import { getRepository } from '@/lib/actions/repositories';
-import { getTags } from '@/lib/actions/tags';
+import {
+  getBranches,
+  getCommits,
+  getRepository,
+  getTags,
+} from '@/lib/actions/repositories';
 import { Locale } from '@/lib/dict';
 import { getToken } from '@/lib/getToken';
 
@@ -53,7 +56,7 @@ export default async function RepositoryLayoutWithContainer(props: {
   }
 
   const token = await getToken();
-  const [repository, branches, tags] = await Promise.all([
+  const [repository, branches, tags, commits] = await Promise.all([
     getRepository({
       workspace: params.workspace,
       repositorySlug: params.repository,
@@ -69,6 +72,11 @@ export default async function RepositoryLayoutWithContainer(props: {
       repository: params.repository,
       token,
     }).catch(() => ({ data: [] })),
+    getCommits({
+      workspace: params.workspace,
+      repository: params.repository,
+      token,
+    }).catch(() => ({ data: [] })),
   ]);
 
   if (!repository.data) {
@@ -78,10 +86,10 @@ export default async function RepositoryLayoutWithContainer(props: {
   return (
     <RepositoryLayoutWrapper
       repositorySlug={params.repository}
-      workspaceSlug={params.workspace}
       initialRepository={repository.data}
       initialBranches={branches.data ?? []}
       initialTags={tags.data ?? []}
+      initialCommits={commits.data ?? []}
     >
       <QueryProvider>{children}</QueryProvider>
     </RepositoryLayoutWrapper>

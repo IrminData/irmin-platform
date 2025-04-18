@@ -72,29 +72,43 @@ const DiffView = ({
       }
       if (fetchingDiffContent.current) return;
 
-      const item = diff.items[index];
-      if (!item.object) return;
+      try {
+        const item = diff.items[index];
+        if (!item.object) return;
 
-      fetchingDiffContent.current = true;
-      setOpenItem({
-        loading: true,
-        diffItem: index,
-        base: null,
-        compare: null,
-      });
+        fetchingDiffContent.current = true;
+        setOpenItem({
+          loading: true,
+          diffItem: index,
+          base: null,
+          compare: null,
+        });
 
-      const content = await fetchDiffContent(
-        item.object.path,
-        diff.base_ref,
-        diff.compare_ref
-      );
-      setOpenItem({
-        loading: false,
-        base: content?.base ?? null,
-        compare: content?.compare ?? null,
-        diffItem: index,
-      });
-      fetchingDiffContent.current = false;
+        const content = await fetchDiffContent(
+          item.object.path,
+          diff.base_ref,
+          diff.compare_ref
+        );
+
+        console.log(content);
+
+        setOpenItem({
+          loading: false,
+          base: content?.base ?? null,
+          compare: content?.compare ?? null,
+          diffItem: index,
+        });
+      } catch (error) {
+        console.error('Error fetching diff content:', error);
+        setOpenItem({
+          loading: false,
+          base: null,
+          compare: null,
+          diffItem: index,
+        });
+      } finally {
+        fetchingDiffContent.current = false;
+      }
     },
     [diff, fetchDiffContent, openItem]
   );

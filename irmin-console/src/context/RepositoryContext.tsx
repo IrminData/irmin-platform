@@ -56,15 +56,13 @@ interface RepositoryContextProps {
   // Objects
   loadingDirectory: boolean;
   directory: Object | undefined;
-  fetchObject: (path?: string, ref?: string) => Promise<void>;
+  fetchObject: (path?: string, ref?: string) => Promise<Object | undefined>;
   deleteObject: (objectPath: string) => Promise<void>;
   moveObject: (oldPath: string, newPath: string) => Promise<void>;
   copyObject: (oldPath: string, newPath: string) => Promise<void>;
   createGroup: (path: string, ref: string) => Promise<void>;
   uploadObject: (path: string, ref: string, files: FileList) => Promise<void>;
-  getObjectContent: (
-    path: string
-  ) => Promise<IrminAPIBinaryResponse | undefined>;
+  getObjectContent: (path: string) => Promise<IrminAPIBinaryResponse | null>;
   getObjectSchema: (objectPath: string) => Promise<ObjectSchema | undefined>;
   getObjectCommitHistory: (objectPath: string) => Promise<Commit[]>;
   // Branches
@@ -424,7 +422,7 @@ export const RepositoryProvider = ({
   const [diff, setDiff] = useState<Diff | null>(null);
 
   /**
-   * Fetch the current directory of objects in the repository at the current path and ref or the requested path and ref
+   * Fetch the current directory or any object at a specific path and ref
    */
   const fetchObject = useCallback(
     async (path?: string, ref?: string) => {
@@ -432,13 +430,14 @@ export const RepositoryProvider = ({
         setLoadingDirectory(true);
         const token = await getToken();
         const irminCore = new IrminCore(locale, token);
-        const currentDirectory = await irminCore.objectService.getObjectAtPath({
+        const foundObject = await irminCore.objectService.getObjectAtPath({
           workspace: workspaceSlug,
           repository: repositorySlug,
           path: path ?? currentPath,
           ref: ref ?? currentRef,
         });
-        setDirectory(currentDirectory.data);
+        if (!path) setDirectory(foundObject.data);
+        return foundObject.data;
       } catch (error) {
         console.error('RepositoryContext fetchObject error', error);
         irminAlert(
@@ -660,6 +659,7 @@ export const RepositoryProvider = ({
           (error as Error)?.message ?? 'Failed to fetch object content'
         );
       }
+      return null;
     },
     [workspaceSlug, repositorySlug, currentRef, irminAlert, getToken, locale]
   );
@@ -750,7 +750,7 @@ export const RepositoryProvider = ({
           repository: repositorySlug,
           ref: ref ?? currentRef,
         });
-        if (!ref) setCommits(newCommits.data ?? []);
+        if (!ref) setCommits(newCommits.data ?? []); // Only set commits if fetched for the current ref
         return newCommits.data ?? [];
       } catch (error) {
         console.error('RepositoryContext fetchCommits error', error);
@@ -857,8 +857,8 @@ export const RepositoryProvider = ({
       base: string,
       compare: string
     ): Promise<{
-      base: IrminAPIBinaryResponse;
-      compare: IrminAPIBinaryResponse;
+      base: IrminAPIBinaryResponse | null;
+      compare: IrminAPIBinaryResponse | null;
     } | null> => {
       try {
         const token = await getToken();
@@ -1157,14 +1157,15 @@ export const RepositoryProvider = ({
   const objectsFetchedFor = useRef<string | undefined>(undefined);
 
   /**
-   * Fetch the repository object at the active path and ref on mount and when the path or ref changes
+   * Fetch the repository directory object at the active path and ref on mount and when the path or ref changes
    */
   useEffect(() => {
     if (!currentPath || !currentRef) return;
     if (objectsFetchedFor.current === `${currentPath}@${currentRef}`) return;
     objectsFetchedFor.current = `${currentPath}@${currentRef}`;
     fetchObject();
-  }, [currentPath, currentRef, fetchObject]);
+    fetchCommits();
+  }, [currentPath, currentRef, fetchObject, fetchCommits]);
 
   /**
    * Update current ref if not set

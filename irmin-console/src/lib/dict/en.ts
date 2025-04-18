@@ -213,7 +213,6 @@ const en = {
       thereIsNothingToCompare: 'There is nothing to compare or merge',
       thereIsNothingToCompareSubtitle:
         'You need to use two different sources to get a valid comparison.',
-      unsupportedContentType: 'Unsupported content type',
       baseContent: 'Base content',
       comparedContent: 'Compared content',
       mergeStrategy: 'Merge strategy',
@@ -237,6 +236,8 @@ const en = {
       type: 'Type',
       contentType: 'Content-Type',
       view: 'View',
+      unsupportedContentType: 'Unsupported content type',
+      contentUnavailable: 'Object content unavailable',
       viewSchema: 'View schema',
       filterObjects: 'Filter objects',
       createFolder: 'Create folder',

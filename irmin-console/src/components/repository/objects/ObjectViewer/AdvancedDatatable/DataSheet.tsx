@@ -1,4 +1,4 @@
-import React, { ForwardedRef, forwardRef } from 'react';
+import { ForwardedRef, forwardRef, memo } from 'react';
 
 import { Column, DataSheetGrid, DataSheetGridRef } from 'react-datasheet-grid';
 
@@ -39,4 +39,4 @@ const DataSheet = forwardRef(
 
 DataSheet.displayName = 'DataSheet';
 
-export default DataSheet;
+export default memo(DataSheet);

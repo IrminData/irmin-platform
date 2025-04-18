@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic';
 
@@ -31,7 +31,7 @@ const DataSheet = dynamic(() => import('./DataSheet'), {
  * Uses the `react-datasheet-grid` library using the `DataSheet` component.
  * This component is used to display a more advanced datatable.
  */
-export default function AdvancedDatatable({ items }: { items: TableRow[] }) {
+function AdvancedDatatable({ items }: { items: TableRow[] }) {
   const { locale } = useLocale();
 
   const [renderItems, setRenderItems] = useState<TableRow[]>([]);
@@ -136,3 +136,5 @@ export default function AdvancedDatatable({ items }: { items: TableRow[] }) {
     </div>
   );
 }
+
+export default memo(AdvancedDatatable);

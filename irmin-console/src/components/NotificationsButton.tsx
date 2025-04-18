@@ -1,5 +1,7 @@
 'use client';
 
+import { memo } from 'react';
+
 import { useRouter } from 'next/navigation';
 
 import { Inbox } from '@novu/react';
@@ -45,4 +47,4 @@ const NotificationsButton = ({ profile }: { profile: User }) => {
   );
 };
 
-export default NotificationsButton;
+export default memo(NotificationsButton);

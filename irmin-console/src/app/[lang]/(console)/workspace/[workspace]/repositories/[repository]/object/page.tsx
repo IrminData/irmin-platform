@@ -1,11 +1,9 @@
 import { notFound } from 'next/navigation';
 
-import { getObject } from '@/lib/actions/objects';
+import { getObject } from '@/lib/actions/repositories';
 import { getToken } from '@/lib/getToken';
 
-import RepositoryObjectViewerSection from '@/components/repository/RepositoryObjectViewerSection';
-
-import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
+import RepositorySection from '@/components/repository/RepositorySection';
 
 import { RepositoryRouteParams } from '../layout';
 
@@ -17,22 +15,23 @@ export default async function RepositoryObjectPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await props.params;
-  const currentWorkspace = params.workspace;
   const searchParams = await props.searchParams;
 
-  if (
-    isInvalidRouteProp(searchParams.path) ||
-    isInvalidRouteProp(searchParams.ref)
-  ) {
-    notFound();
-  }
+  const ref =
+    typeof searchParams.ref === 'string' && searchParams.ref.length > 0
+      ? searchParams.ref
+      : undefined;
+  const path =
+    typeof searchParams.path === 'string' ? searchParams.path : undefined;
+
+  if (!path) return notFound();
 
   const token = await getToken();
   const object = await getObject({
-    workspace: currentWorkspace,
+    workspace: params.workspace,
     repository: params.repository,
-    path: searchParams.path as string,
-    ref: searchParams.ref as string,
+    path,
+    ref,
     token,
   });
 
@@ -41,9 +40,9 @@ export default async function RepositoryObjectPage(props: {
   }
 
   return (
-    <RepositoryObjectViewerSection
-      currentWorkspace={params.workspace}
-      selectedObject={object.data}
+    <RepositorySection
+      initialSelectedObject={object.data}
+      initialObjectContentViewerOpen={true}
     />
   );
 }

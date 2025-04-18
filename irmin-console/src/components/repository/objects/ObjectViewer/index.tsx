@@ -17,17 +17,32 @@ import TableViewer from './TableViewer';
  *
  * @param props - The props
  * @param props.object - The object being viewed
- * @param props.objectContent - The content of the object to show
+ * @param props.objectContent - The content of the object to show or null if not available
  */
 const ObjectViewer = ({
   object,
   objectContent,
 }: {
   object: Object;
-  objectContent: IrminAPIBinaryResponse;
+  objectContent: IrminAPIBinaryResponse | null;
 }) => {
   const { dict } = useLocale();
-  if (object.type === 'structured') {
+  if (!objectContent) {
+    // If the content is not available, show a message
+    return (
+      <div className='w-full pt-4 pb-12 text-center text-gray-600 dark:text-gray-400'>
+        <p className='text-sm lg:text-lg'>
+          {dict.repository.objects.contentUnavailable}
+        </p>
+      </div>
+    );
+  }
+  if (objectContent instanceof Blob) {
+    return <BlobViewer blob={objectContent} object={object} />;
+  } else if (
+    Array.isArray(objectContent) ||
+    typeof objectContent === 'object'
+  ) {
     const isSimpleArrayOfObjects = checkIfSimpleArrayOfObjects(
       objectContent as JSONValue
     );
@@ -35,7 +50,7 @@ const ObjectViewer = ({
       return (
         <div className='flex h-[calc(100vh-400px)] min-h-96 flex-col'>
           <TableViewer
-            title={''}
+            title={object.path}
             metadata={{}}
             data={objectContent as JSONValue}
           />
@@ -46,14 +61,12 @@ const ObjectViewer = ({
         <JSONViewer name={object.path} data={objectContent as JSONValue} />
       );
     }
-  } else if (object.type === 'binary') {
-    return <BlobViewer blob={objectContent as Blob} />;
   } else {
     // Group objects (e.g. directories are not supported in the Object Viewer)
     return (
       <div className='w-full pt-4 pb-12 text-center text-gray-600 dark:text-gray-400'>
         <p className='text-sm lg:text-lg'>
-          {dict.repository.compare.unsupportedContentType}
+          {dict.repository.objects.unsupportedContentType}
         </p>
       </div>
     );

@@ -156,18 +156,22 @@ class ObjectService {
     repository: string;
     path: string;
     ref?: string;
-  }): Promise<IrminAPIBinaryResponse> {
+  }): Promise<IrminAPIBinaryResponse | null> {
     try {
       const urlParams = new URLSearchParams();
       urlParams.append('path', path);
       if (ref) urlParams.append('ref', ref);
       const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/content?${urlParams.toString()}`;
-      const response = await this.irminCore.fetchBinary(url, { method: 'GET' });
+      const response = await this.irminCore.fetchBinary(
+        url,
+        { method: 'GET' },
+        [200]
+      );
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch object content error');
-      throw error;
     }
+    return null;
   }
 
   /**

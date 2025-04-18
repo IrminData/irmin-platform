@@ -216,7 +216,6 @@ const fi = {
       thereIsNothingToCompare: 'Ei mitään vertailtavaa tai yhdistettävää',
       thereIsNothingToCompareSubtitle:
         'Tarvitset kaksi eri lähdettä saadaksesi pätevän vertailun.',
-      unsupportedContentType: 'Sisältötyyppiä ei tueta',
       baseContent: 'Pohjasisältö',
       comparedContent: 'Vertailusisältö',
       mergeStrategy: 'Sulautusstrategia',
@@ -240,6 +239,8 @@ const fi = {
       type: 'Tyyppi',
       contentType: 'Sisältötyyppi',
       view: 'Näytä',
+      unsupportedContentType: 'Sisältötyyppiä ei tueta',
+      contentUnavailable: 'Objektin sisältö ei ole saatavilla',
       viewSchema: 'Näytä rakenne',
       filterObjects: 'Suodata objekteja',
       createFolder: 'Luo kansio',

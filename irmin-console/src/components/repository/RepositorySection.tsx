@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -15,41 +15,48 @@ import {
   TbUpload,
 } from 'react-icons/tb';
 
-import { Dictionary } from '@/lib/dict';
-
 import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import QueryResults from '@/components/query/QueryResults';
 import Button, { ButtonWithTooltip } from '@/components/ui/button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
+import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
 import { useRepository } from '@/context/RepositoryContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
+import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 import { Object } from '@/types/core/Object';
-import { Workspace } from '@/types/core/Workspace';
 
 import CreateGroupModal from './objects/CreateGroupModal';
 import ObjectDetails from './objects/ObjectDetails';
 import ObjectList from './objects/ObjectList';
+import ObjectViewer from './objects/ObjectViewer';
 import UploadObjectModal from './objects/UploadObjectModal';
 
 /**
  * Repository viewer section, provides UI for the Repository viewer Page.
  *
  * @param props - The component props
- * @param props.currentWorkspace - The current workspace
- * @param props.dict - The dictionary for the current locale
+ * @param props.initialSelectedObject - The initial selected object to display
+ * @param props.initialObjectContentViewerOpen - Whether the object content viewer should be open initially
+ * @returns The repository section component
  */
 export default function RepositorySection({
-  currentWorkspace,
-  dict,
+  initialSelectedObject,
+  initialObjectContentViewerOpen = false,
 }: {
-  currentWorkspace: Workspace;
-  dict: Dictionary;
+  initialSelectedObject?: Object;
+  initialObjectContentViewerOpen?: boolean;
 }) {
+  const { irminModal } = usePopup();
+  const { dict } = useLocale();
   const searchParams = useSearchParams();
+
+  const { workspace: currentWorkspace } = useWorkspace();
 
   const {
     immutable,
@@ -60,14 +67,45 @@ export default function RepositorySection({
     createGroup,
     loadingDirectory,
     fetchObject,
+    getObjectContent,
   } = useRepository();
 
   const query = useQuery();
   const [queryResultsOpen, setQueryResultsOpen] = useState(false);
 
-  const { irminModal } = usePopup();
+  const [selectedObject, setSelectedObject] = useState<Object | undefined>(
+    initialSelectedObject
+  );
+  const [objectContentViewerOpen, setObjectContentViewerOpen] = useState(
+    initialObjectContentViewerOpen
+  );
+  const [objectContent, setObjectContent] = useState<
+    IrminAPIBinaryResponse | null | undefined
+  >(undefined);
+  const objectContentFor = useRef('');
 
-  const [selectedObject, setSelectedObject] = useState<Object | undefined>();
+  /**
+   * Hook to fetch the content for the object being viewed
+   */
+  useEffect(() => {
+    if (!objectContentViewerOpen) return; // Only fetch content when the viewer is open
+    if (!selectedObject) return; // No selected object
+    if (objectContentFor.current === selectedObject.path) return; // Already fetched
+    objectContentFor.current = selectedObject.path;
+
+    // Empty the content before fetching
+    setObjectContent(undefined);
+
+    // Fetch the content for the selected object and update the state
+    getObjectContent(selectedObject.path)
+      .then((fetchedContent) => {
+        setObjectContent(fetchedContent);
+      })
+      .catch((error) => {
+        console.error('Failed to fetch object content', error);
+      });
+  }, [getObjectContent, selectedObject, objectContentViewerOpen]);
+
   const [queryField, setQueryField] = useState<string>('');
   const [queryChanged, setQueryChanged] = useState(false);
 
@@ -78,6 +116,7 @@ export default function RepositorySection({
   useEffect(() => {
     if (!selectedObject) return;
     if (queryChanged) return;
+    if (selectedObject.type != 'structured') return;
     setQueryField(
       `SELECT * FROM $["${currentRepository.slug};${selectedObject.path}${currentRef ? `@${currentRef}` : ''}"] LIMIT 10`
     );
@@ -250,6 +289,7 @@ export default function RepositorySection({
               <ObjectDetails
                 selectedObject={selectedObject}
                 closeDetails={() => setSelectedObject(undefined)}
+                viewObject={() => setObjectContentViewerOpen(true)}
               />
             </div>
           </>
@@ -275,6 +315,20 @@ export default function RepositorySection({
             loading={query.loading}
           />
         </div>
+      )}
+      {objectContentViewerOpen && !queryResultsOpen && selectedObject && (
+        <>
+          {objectContent ? (
+            <div className='bg-background w-full rounded border-t border-gray-200 dark:border-gray-800'>
+              <ObjectViewer
+                object={selectedObject}
+                objectContent={objectContent}
+              />
+            </div>
+          ) : (
+            <LoadingSkeleton className='h-96 w-full' />
+          )}
+        </>
       )}
     </>
   );

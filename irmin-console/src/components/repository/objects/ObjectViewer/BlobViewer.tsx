@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer';
 
 import '@cyntler/react-doc-viewer/dist/index.css';
 
 import { useLocale } from '@/context/LocaleContext';
+
+import { Object } from '@/types/core/Object';
 
 const allowedMimeTypes = [
   'image/bmp',
@@ -37,17 +39,15 @@ const allowedMimeTypes = [
  * @param props - The props
  * @param props.blob - The Blob object to preview
  */
-const BlobViewer = ({ blob }: { blob: Blob }) => {
+const BlobViewer = ({ blob, object }: { blob: Blob; object: Object }) => {
   const { dict } = useLocale();
   const [url, setUrl] = useState<string | null>(null);
-  const [mimeType, setMimeType] = useState<string>('');
 
   useEffect(() => {
     try {
       if (blob) {
         const url = URL.createObjectURL(blob);
         setUrl(url);
-        setMimeType(blob.type);
 
         // Cleanup the URL object
         return () => {
@@ -62,7 +62,7 @@ const BlobViewer = ({ blob }: { blob: Blob }) => {
   if (!url) return null;
 
   // Determine how to render the content based on the MIME type
-  if (allowedMimeTypes.includes(mimeType)) {
+  if (allowedMimeTypes.includes(object.content_type ?? '')) {
     return (
       <DocViewer
         documents={[{ uri: url }]}
@@ -73,12 +73,12 @@ const BlobViewer = ({ blob }: { blob: Blob }) => {
     return (
       <div className='w-full pt-4 pb-12 text-center text-gray-600 dark:text-gray-400'>
         <p className='text-sm lg:text-lg'>
-          {dict.repository.compare.unsupportedContentType}
+          {dict.repository.objects.unsupportedContentType}
         </p>
-        <p className='text-xs'>{mimeType}</p>
+        <p className='text-xs'>{object.content_type}</p>
       </div>
     );
   }
 };
 
-export default BlobViewer;
+export default memo(BlobViewer);

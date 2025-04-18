@@ -217,68 +217,51 @@ class IrminCore {
   };
 
   /**
-   * Fetch binary data from the Irmin API and check allowed status codes.
+   * Fetch binary data from the Irmin API, throwing on any non‑OK status
+   * unless explicitly allowed.
    *
-   * @param url - The API endpoint URL.
-   * @param options - Request options for the fetch call.
-   * @param allowedStatusCodes - An optional list of allowed status codes.
-   * @returns A promise that resolves with the binary API response.
+   * @param url – the API endpoint URL
+   * @param options – fetch options
+   * @param allowedStatusCodes – optional list of extra statuses to treat as OK
+   * @returns the response as a Blob, JSON, ArrayBuffer→Blob, or text
    */
   public fetchBinary = async (
     url: string,
     options: RequestInit,
     allowedStatusCodes?: number[]
   ): Promise<IrminAPIBinaryResponse> => {
-    // Call the Irmin API using the internal _fetch method
-    const response = await this._fetch(url, options);
+    // ensure we accept anything
+    const headers = {
+      ...options.headers,
+      Accept: '*/*',
+    };
 
-    // If allowedStatusCodes is provided, check the response status code
-    if (
-      allowedStatusCodes &&
-      allowedStatusCodes.length > 0 &&
-      !allowedStatusCodes.includes(response.status)
-    ) {
-      let errorMessage = `Unexpected status code: ${response.status} for ${
-        options.method ?? 'GET'
-      } ${url}`;
-      try {
-        // Use a clone of the response to avoid consuming the original stream
-        const errorData = await response.clone().json();
-        if (errorData && errorData.errors && Array.isArray(errorData.errors)) {
-          errorMessage = errorData.errors.join('\n');
-        }
-      } catch (e) {
-        // Ignore errors from parsing JSON
-        console.warn('Failed to parse error data:', e);
-      }
-      throw new Error(errorMessage);
+    // perform the request
+    const response = await this._fetch(url, { ...options, headers });
+
+    // validate allowed statuses
+    if (allowedStatusCodes && !allowedStatusCodes.includes(response.status)) {
+      throw new Error(
+        `Unexpected status code: ${response.status} for ${
+          options.method ?? 'GET'
+        } ${url}`
+      );
     }
 
-    // Check the Content-Type of the response to determine how to process it
-    const contentType = response.headers.get('Content-Type');
+    // inspect content type
+    const contentType = response.headers.get('content-type') || '';
 
-    // Try to parse the response as a Blob first
-    try {
-      return await response.blob();
-    } catch (error) {
-      console.warn('Failed to parse response as Blob:', error);
-    }
-    // Fallback: try parsing as JSON
-    try {
+    // parse based on media type
+    if (contentType.includes('application/json')) {
       return await response.json();
-    } catch (error) {
-      console.warn('Failed to parse response as text:', error);
     }
-    // Fallback: try parsing as ArrayBuffer and converting to Blob
-    try {
-      const arrayBuffer = await response.arrayBuffer();
-      // Convert the ArrayBuffer to Blob
-      return new Blob([arrayBuffer], { type: contentType ?? '' });
-    } catch (error) {
-      console.warn('Failed to parse response as ArrayBuffer:', error);
+
+    if (contentType.startsWith('text/')) {
+      return await response.text();
     }
-    // Fallback: return plain text
-    return await response.text();
+
+    // default to blob for binary data
+    return await response.blob();
   };
 }
 

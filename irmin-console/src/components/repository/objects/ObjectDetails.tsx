@@ -2,6 +2,8 @@
 
 import { useCallback } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { IoClose } from 'react-icons/io5';
 import {
   TbDownload,
@@ -34,6 +36,7 @@ import UploadObjectModal from './UploadObjectModal';
  * @param props.selectedObject - The selected object to display details for
  * @param props.selectedObjectSchema - (optional) The schema of the selected object
  * @param props.closeDetails - (optional) The function to close the details view. If not provided, the view will not show a close button
+ * @param props.viewObject - (optional) The function to view the object.
  * @param props.hideViewButton - (optional) Set this to true in order to hide the "view object" button. Used in the object viewer.
  * @param props.hideSchemaButton - (optional) Set this to true in order to hide the "view schema" button. Used in the schema viewer.
  */
@@ -41,15 +44,18 @@ export default function ObjectDetails({
   selectedObject,
   selectedObjectSchema,
   closeDetails,
+  viewObject,
   hideViewButton = false,
   hideSchemaButton = false,
 }: {
   selectedObject?: Object;
   selectedObjectSchema?: ObjectSchema;
   closeDetails?: () => void;
+  viewObject?: () => void;
   hideViewButton?: boolean;
   hideSchemaButton?: boolean;
 }) {
+  const router = useRouter();
   const {
     immutable,
     currentPath,
@@ -62,6 +68,14 @@ export default function ObjectDetails({
   const { irminModal, irminConfirm } = usePopup();
   const { dict } = useLocale();
   const { updateCurrentPath } = useRepository();
+
+  /** The base URL for the repository, eg. /en/workspace/workspace-slug/repositories/repository-slug */
+  const baseUrl = useBaseUrl({
+    pathname: '',
+    segment: 'repositories',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
   const handleUploadAndReplace = useCallback(() => {
     if (!selectedObject || immutable) return;
@@ -126,13 +140,15 @@ export default function ObjectDetails({
     deleteObject,
   ]);
 
-  /** The base URL for the repository, eg. /en/workspace/workspace-slug/repositories/repository-slug */
-  const baseUrl = useBaseUrl({
-    pathname: '',
-    segment: 'repositories',
-    includeSegment: true,
-    segmentsAfter: 1,
-  });
+  const handleView = useCallback(() => {
+    if (!selectedObject) return;
+    if (viewObject) viewObject();
+    else {
+      router.push(
+        `${baseUrl}/object?path=${selectedObject.path}&ref=${currentRef}`
+      );
+    }
+  }, [selectedObject, baseUrl, currentRef, viewObject, router]);
 
   if (!selectedObject) return <></>;
 
@@ -221,7 +237,7 @@ export default function ObjectDetails({
                   variant='accent'
                   className='w-full'
                   icon={<TbFile />}
-                  href={`${baseUrl}/object?path=${selectedObject.path}&ref=${currentRef}`}
+                  onClick={handleView}
                 >
                   {dict.repository.objects.view}
                 </Button>
@@ -229,9 +245,9 @@ export default function ObjectDetails({
               {!hideSchemaButton && (
                 <Button
                   size='sm'
-                  variant='default'
+                  variant='secondary'
                   className='w-full'
-                  href={`${baseUrl}/schema?path=${selectedObject.path}&ref=${currentRef}`}
+                  href={`${baseUrl}/object/schema?path=${selectedObject.path}&ref=${currentRef}`}
                   icon={<TbSchema />}
                 >
                   {dict.repository.objects.viewSchema}
