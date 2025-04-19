@@ -77,7 +77,7 @@ export interface WorkflowRunTrigger {
  */
 export interface WorkflowSchedule {
   /** List of triggers that can activate the workflow */
-  triggers: ScheduleTrigger[];
+  triggers?: ScheduleTrigger[] | null;
   /** Number of times the workflow can be retried if it fails */
   max_retries?: number;
   /** Maximum runtime of the workflow in seconds */

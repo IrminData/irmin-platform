@@ -2,6 +2,8 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
+import { getConnections } from '@/lib/actions/connections';
+import { getRepositories } from '@/lib/actions/repositories';
 import { getWorkflowRuns } from '@/lib/actions/workflow-runs';
 import { getWorkflow } from '@/lib/actions/workflows';
 import { Locale } from '@/lib/dict';
@@ -34,9 +36,22 @@ export async function generateMetadata(props: {
 }): Promise<Metadata> {
   const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  return {
-    title: `Workflow ${params.workflow} | ${formattedWorkspace} | IRMIN Console`,
-  };
+  const workflowID = params.workflow;
+  try {
+    const { data: workflow } = await getWorkflow({
+      workspace: params.workspace,
+      workflowID,
+    });
+    if (!workflow) throw new Error('Workflow not found');
+    return {
+      title: `${workflow.name} | Workflow | ${formattedWorkspace} | IRMIN Console`,
+    };
+  } catch (error) {
+    console.warn(error);
+    return {
+      title: `Workflow | ${formattedWorkspace} | IRMIN Console`,
+    };
+  }
 }
 
 /**
@@ -58,7 +73,7 @@ export default async function WorkflowLayout(
     return notFound();
 
   const token = await getToken();
-  const [runs, workflow] = await Promise.all([
+  const [runs, workflow, connections, repositories] = await Promise.all([
     getWorkflowRuns({
       workspace,
       workflowID,
@@ -69,12 +84,25 @@ export default async function WorkflowLayout(
       workflowID,
       token,
     }),
+    getConnections({
+      workspace,
+      token,
+    }),
+    getRepositories({
+      workspace,
+      token,
+    }),
   ]);
 
   if (!workflow.data) return notFound();
 
   return (
-    <WorkflowProvider runs={runs.data ?? []} initialWorkflow={workflow.data}>
+    <WorkflowProvider
+      runs={runs.data ?? []}
+      initialWorkflow={workflow.data}
+      connections={connections.data ?? []}
+      repositories={repositories.data ?? []}
+    >
       <WorkflowLayoutWrapper>{children}</WorkflowLayoutWrapper>
     </WorkflowProvider>
   );

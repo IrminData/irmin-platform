@@ -35,9 +35,22 @@ export async function generateMetadata(props: {
 }): Promise<Metadata> {
   const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
-  return {
-    title: `Repository ${params.repository} | ${formattedWorkspace} | IRMIN Console`,
-  };
+  const repositorySlug = params.repository;
+  try {
+    const { data: repository } = await getRepository({
+      workspace: params.workspace,
+      repositorySlug,
+    });
+    if (!repository) throw new Error('Repository not found');
+    return {
+      title: `${repository.name} | Repository | ${formattedWorkspace} | IRMIN Console`,
+    };
+  } catch (error) {
+    console.warn(error);
+    return {
+      title: `Repository | ${formattedWorkspace} | IRMIN Console`,
+    };
+  }
 }
 
 /**

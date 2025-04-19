@@ -1,21 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
-import IrminCore from '@/lib/core';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import RRuleGenerator from '@/components/ui/RRuleGenerator';
 
-import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
 
 import deepEqual from '@/utils/deepEqual';
 
@@ -52,56 +47,32 @@ interface WorkflowScheduleFormData {
  *
  * @param props - Component properties
  * @param props.initialData - Initial schedule data
+ * @param props.workflows - List of workflows
+ * @param props.repositories - List of repositories
  * @param props.updateSchedule - Callback to call in order to update the schedule
  * @param props.disableSaveButton - Disable the save button and auto-update schedule on change
  */
-export default function WorkflowScheduleForm({
+function WorkflowScheduleForm({
   initialData,
+  workflows,
+  repositories,
   updateSchedule,
   disableSaveButton,
 }: {
   initialData?: WorkflowSchedule;
+  workflows: Workflow[];
+  repositories: Repository[];
   updateSchedule: (schedule: WorkflowSchedule) => void;
   disableSaveButton?: boolean;
 }) {
-  const { getToken } = useIAM();
-  const { dict, locale } = useLocale();
-  const { workspaceSlug } = useWorkspace();
-
-  const [repositories, setRepositories] = useState<Repository[]>([]);
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        const token = await getToken();
-        const irminCore = new IrminCore(locale, token);
-        const [_repositories, _workflows] = await Promise.all([
-          irminCore.repositoryService.fetchRepositories({
-            workspace: workspaceSlug,
-          }),
-          irminCore.workflowService.fetchWorkflows({
-            workspace: workspaceSlug,
-          }),
-        ]);
-        setRepositories(_repositories.data ?? []);
-        setWorkflows(_workflows.data ?? []);
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, [workspaceSlug, getToken, locale]);
+  const { dict } = useLocale();
 
   // Initialize react-hook-form
   const { register, handleSubmit, control, watch, setValue } =
     useForm<WorkflowScheduleFormData>({
       defaultValues: {
-        triggers: initialData ? initialData.triggers : [],
+        triggers:
+          initialData && initialData.triggers ? initialData.triggers : [],
         max_retries: initialData ? initialData.max_retries : 3,
         max_runtime: initialData ? initialData.max_runtime : 15,
         min_interval: initialData ? initialData.min_interval : 120,
@@ -213,10 +184,6 @@ export default function WorkflowScheduleForm({
     },
     [setValue, triggerFields]
   );
-
-  if (loading) {
-    return <LoadingSkeleton className='h-12 w-full' />;
-  }
 
   return (
     <form
@@ -499,3 +466,5 @@ export default function WorkflowScheduleForm({
     </form>
   );
 }
+
+export default memo(WorkflowScheduleForm);

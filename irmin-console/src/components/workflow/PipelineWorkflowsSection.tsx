@@ -13,7 +13,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { Connection } from '@/types/core/Connection';
 import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
-import { PipelineWorkflow } from '@/types/core/Workflow';
+import { PipelineWorkflow, Workflow } from '@/types/core/Workflow';
 
 import CreateWorkflowModalContent from './CreateWorkflowModalContent';
 import PipelineWorkflowList from './PipelineWorkflowList';
@@ -28,7 +28,7 @@ import PipelineWorkflowList from './PipelineWorkflowList';
  * @param props0.editorItems - The list of editor items
  * @param props0.connections - List of connections
  * @param props0.repositories - List of repositories
- * @param props0.workflows - The list of Pipeline Workflows
+ * @param props0.workflows - List of workflows
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
 export default function PipelineWorkflowsSection({
@@ -41,7 +41,7 @@ export default function PipelineWorkflowsSection({
   editorItems: EditorItem[];
   connections: Connection[];
   repositories: Repository[];
-  workflows: PipelineWorkflow[];
+  workflows: Workflow[];
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
@@ -49,20 +49,24 @@ export default function PipelineWorkflowsSection({
   const [isOpen, setIsOpen] = useState(sideModalOpen);
   const [currentStep, setCurrentStep] = useState(1);
 
-  const [filteredItems, setFilteredItems] = useState(workflows);
+  const [filteredItems, setFilteredItems] = useState(
+    workflows.filter((w) => w.type === 'pipeline')
+  );
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
       setFilteredItems(
-        workflows.filter((item) =>
-          item.name
-            .trim()
-            .replace(/\s+/g, '')
-            .toLowerCase()
-            .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
-        )
+        workflows.filter(
+          (item) =>
+            item.type === 'pipeline' &&
+            item.name
+              .trim()
+              .replace(/\s+/g, '')
+              .toLowerCase()
+              .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
+        ) as PipelineWorkflow[]
       );
     }, 300);
     return () => {
@@ -108,6 +112,7 @@ export default function PipelineWorkflowsSection({
           editorItems={editorItems}
           connections={connections}
           repositories={repositories}
+          workflows={workflows}
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}

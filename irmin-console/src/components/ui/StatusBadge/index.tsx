@@ -12,6 +12,7 @@ const statusBadgeVariants = cva(
   {
     variants: {
       status: {
+        '': 'bg-gray-400',
         private: 'bg-irmin_teal-400',
         public: 'bg-irmin_teal',
         connected: 'bg-irmin_teal-600',

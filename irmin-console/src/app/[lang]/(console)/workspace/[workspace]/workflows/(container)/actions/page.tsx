@@ -1,7 +1,7 @@
 import { getConnections } from '@/lib/actions/connections';
 import { getEditorItems } from '@/lib/actions/editor-items';
 import { getRepositories } from '@/lib/actions/repositories';
-import { getWorkflowsOfType } from '@/lib/actions/workflows';
+import { getWorkflows } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
 
 import ActionWorkflowsSection from '@/components/workflow/ActionWorkflowsSection';
@@ -32,11 +32,7 @@ export default async function ActionWorkflowsPage(props: {
   const [editorItems, workflows, connections, repositories] = await Promise.all(
     [
       getEditorItems({ workspace: params.workspace, path: '', token }),
-      getWorkflowsOfType({
-        workspace: params.workspace,
-        workflowType: 'action',
-        token,
-      }),
+      getWorkflows({ workspace: params.workspace, token }),
       getConnections({ workspace: params.workspace, token }),
       getRepositories({ workspace: params.workspace, token }),
     ]

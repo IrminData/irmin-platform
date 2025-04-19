@@ -35,7 +35,7 @@ export default function createWorkflowScheduleFormData(
   const formData = new FormData();
 
   // Append each trigger from the schedule's `triggers` array as individual fields
-  schedule.triggers.forEach((trigger, index) => {
+  schedule.triggers?.forEach((trigger, index) => {
     formData.append(`trigger[${index}].type`, trigger.type);
     if (trigger.type === 'time') {
       // Append properties specific to TimeTrigger

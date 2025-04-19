@@ -40,7 +40,7 @@ const WorkflowPipelineSection = ({
           description: stage.description || '',
           write: stage.write || false,
           read: stage.read || false,
-          connection: stage.connection.id || '',
+          connection: stage.connection_id || '',
           connection_read_path: stage.connection_read_path || '',
           connection_write_path: stage.connection_write_path || '',
         } as PipelineStageInput;
@@ -51,7 +51,7 @@ const WorkflowPipelineSection = ({
           description: stage.description || '',
           write: stage.write || false,
           read: stage.read || false,
-          repository: stage.repository.slug || '',
+          repository: stage.repository || '',
           branch: stage.branch || '',
           path: stage.path || '',
         } as PipelineStageInput;

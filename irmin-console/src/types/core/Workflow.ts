@@ -1,5 +1,3 @@
-import { Connection } from '@/types/core/Connection';
-import { Repository } from '@/types/core/Repository';
 import { User } from '@/types/core/User';
 
 import { WorkflowSchedule } from './Schedule';
@@ -78,6 +76,7 @@ export type Workflow =
  * Workflow status options
  */
 export enum WorkflowStatus {
+  Empty = '',
   Paused = 'paused',
   Pending = 'pending',
   Initiating = 'initiating',
@@ -90,12 +89,12 @@ export enum WorkflowStatus {
  * Import object - workflowable for the Workflow
  */
 export interface Import {
-  /** Source connection */
-  connection: Connection;
+  /** Source connection sqid */
+  connection_id: string;
   /** Path within the connection's schema to fetch data from */
   connection_path: string;
-  /**  Destination repository in Irmin */
-  repository: Repository;
+  /**  Slug of the destination repository */
+  repository: string;
   /** Destination branch in the repository */
   branch: string;
   /** Path within the repository to store the imported data */
@@ -106,12 +105,12 @@ export interface Import {
  * Export object - workflowable for the Workflow
  */
 export interface Export {
-  /** Destination connection */
-  connection: Connection;
+  /** Destination connection sqid */
+  connection_id: string;
   /** Path within the connection's schema to export data to */
   connection_path: string;
-  /** Source repository in Irmin */
-  repository: Repository;
+  /** Slug of the repository to export data from */
+  repository: string;
   /** Source branch in the repository */
   branch: string;
   /** Path within the repository to export data from */
@@ -124,8 +123,8 @@ export interface Export {
 export interface Action {
   /** Path to the script to execute */
   executable: string;
-  /** Repository to store action results */
-  repository?: Repository;
+  /** Slug of the repository to store the results */
+  repository?: string;
   /** Branch in the repository for results */
   branch?: string;
   /** Path within the repository for results */
@@ -169,7 +168,7 @@ export interface PipelineStageAction {
 export interface PipelineStageConnection {
   type: 'connection';
   /** Connection to use */
-  connection: Connection;
+  connection_id: string;
   /** Path to write within the connection */
   connection_write_path: string;
   /** Path to read within the connection */
@@ -181,8 +180,8 @@ export interface PipelineStageConnection {
  */
 export interface PipelineStageRepository {
   type: 'repository';
-  /** Repository to use */
-  repository: Repository;
+  /** Slug of the repository to use */
+  repository: string;
   /** Branch in the repository */
   branch: string;
   /** Path within the repository */

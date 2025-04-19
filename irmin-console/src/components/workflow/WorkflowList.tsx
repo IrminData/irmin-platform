@@ -79,9 +79,14 @@ const WorkflowList = ({
               key={`status-${i}`}
               className='inline-flex flex-row items-center gap-2'
             >
-              <StatusBadge status={item.status} label={item.status} />
+              <StatusBadge
+                status={item.status}
+                label={item.status ?? dict.workflow.noStatus}
+              />
               <div className='flex flex-col'>
-                {item.schedule && item.schedule.triggers.length > 0 ? (
+                {item.schedule &&
+                item.schedule.triggers &&
+                item.schedule.triggers.length > 0 ? (
                   <span className='text-xs text-gray-400'>
                     {dict.workflow.scheduled}
                   </span>

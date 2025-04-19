@@ -19,13 +19,13 @@ const ConnectionSection = ({ workflows }: { workflows: Workflow[] }) => {
     () =>
       workflows.filter((item) => {
         if (item.type === 'import' || item.type === 'export') {
-          return item.workflowable.connection.id === connection.id;
+          return item.workflowable.connection_id === connection.id;
         }
         if (item.type === 'pipeline') {
           return item.workflowable.stages.some((stage) => {
             return (
               stage.type === 'connection' &&
-              stage.connection.id === connection.id
+              stage.connection_id === connection.id
             );
           });
         }

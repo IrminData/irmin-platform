@@ -16,6 +16,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
+import { Connection } from '@/types/core/Connection';
+import { Repository } from '@/types/core/Repository';
 import { Workflow } from '@/types/core/Workflow';
 import { WorkflowRun } from '@/types/core/WorkflowRun';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
@@ -26,6 +28,8 @@ import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 interface WorkflowContextProps {
   workflow: Workflow;
   runs: WorkflowRun[];
+  connections: Connection[];
+  repositories: Repository[];
   fetchWorkflow: () => Promise<void>;
   updateWorkflow: (data: ItemUpdateProps) => Promise<void>;
   transferWorkflow: (ownerID: string) => Promise<void>;
@@ -46,15 +50,21 @@ const WorkflowContext = createContext<WorkflowContextProps | undefined>(
  * @param props.children - The children components
  * @param props.initialWorkflow - The initial workflow to set
  * @param props.runs - The runs of the workflow
+ * @param props.connections - The connections of the workflow
+ * @param props.repositories - The repositories of the workflow
  */
 export const WorkflowProvider = ({
   children,
   initialWorkflow,
   runs,
+  connections,
+  repositories,
 }: {
   children: React.ReactNode;
   initialWorkflow: Workflow;
   runs: WorkflowRun[];
+  connections: Connection[];
+  repositories: Repository[];
 }) => {
   const { getToken } = useIAM();
   const { dict, locale } = useLocale();
@@ -267,6 +277,8 @@ export const WorkflowProvider = ({
       value={{
         workflow,
         runs,
+        connections,
+        repositories,
         fetchWorkflow,
         deleteWorkflow: handleDeleteWorkflow,
         updateWorkflow: handleUpdateWorkflow,

@@ -15,6 +15,8 @@ import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import useBaseUrl from '@/hooks/useBaseUrl';
+
 import { WorkflowableType } from '@/types/core/Workflow';
 
 /**
@@ -27,21 +29,29 @@ export default function SelectWorkflowTypeModalContent() {
   const [workflowableType, setWorkflowableType] =
     useState<WorkflowableType | null>(null);
 
+  // The base URL for the workspace, eg. /en/workspace/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'workspace',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
+
   const handleContinue = useCallback(() => {
     // Direct to the next step
     if (workflowableType === 'action') {
-      router.push('../workflows/actions?create');
+      router.push(`${workspaceUrl}/workflows/actions?create`);
     }
     if (workflowableType === 'import') {
-      router.push('../workflows/imports?create');
+      router.push(`${workspaceUrl}/workflows/imports?create`);
     }
     if (workflowableType === 'export') {
-      router.push('../workflows/exports?create');
+      router.push(`${workspaceUrl}/workflows/exports?create`);
     }
     if (workflowableType === 'pipeline') {
-      router.push('../workflows/pipelines?create');
+      router.push(`${workspaceUrl}/workflows/pipelines?create`);
     }
-  }, [router, workflowableType]);
+  }, [router, workflowableType, workspaceUrl]);
 
   const workflowTypeOptions: {
     type: WorkflowableType;
@@ -92,7 +102,7 @@ export default function SelectWorkflowTypeModalContent() {
       <div className='mt-auto border-t pt-4 dark:border-gray-800'>
         <Button
           className='mb-6 inline-block w-full'
-          variant='default'
+          variant='gradient'
           size='lg'
           onClick={handleContinue}
         >

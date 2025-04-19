@@ -208,7 +208,7 @@ export default function DocumentationSection({
                           </h3>
                           <StatusBadge
                             status={item.status}
-                            label={item.status}
+                            label={item.status ?? dict.workflow.noStatus}
                           />
                         </div>
                         <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
@@ -227,7 +227,9 @@ export default function DocumentationSection({
                         <p className='text-sm text-gray-600 dark:text-gray-400'>
                           {dict.workflow.schedule.workflowSchedule}:{' '}
                           <span className='text-gray-800 dark:text-gray-200'>
-                            {item.schedule && item.schedule.triggers.length > 0
+                            {item.schedule &&
+                            item.schedule.triggers &&
+                            item.schedule.triggers.length > 0
                               ? dict.workflow.scheduled
                               : dict.workflow.notScheduled}
                           </span>
@@ -262,7 +264,7 @@ export default function DocumentationSection({
                           </h3>
                           <StatusBadge
                             status={item.status}
-                            label={item.status}
+                            label={item.status ?? dict.workflow.noStatus}
                           />
                         </div>
                         <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
@@ -281,7 +283,9 @@ export default function DocumentationSection({
                         <p className='text-sm text-gray-600 dark:text-gray-400'>
                           {dict.workflow.schedule.workflowSchedule}:{' '}
                           <span className='text-gray-800 dark:text-gray-200'>
-                            {item.schedule && item.schedule.triggers.length > 0
+                            {item.schedule &&
+                            item.schedule.triggers &&
+                            item.schedule.triggers.length > 0
                               ? dict.workflow.scheduled
                               : dict.workflow.notScheduled}
                           </span>
@@ -316,7 +320,7 @@ export default function DocumentationSection({
                           </h3>
                           <StatusBadge
                             status={item.status}
-                            label={item.status}
+                            label={item.status ?? dict.workflow.noStatus}
                           />
                         </div>
                         <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
@@ -335,7 +339,9 @@ export default function DocumentationSection({
                         <p className='text-sm text-gray-600 dark:text-gray-400'>
                           {dict.workflow.schedule.workflowSchedule}:{' '}
                           <span className='text-gray-800 dark:text-gray-200'>
-                            {item.schedule && item.schedule.triggers.length > 0
+                            {item.schedule &&
+                            item.schedule.triggers &&
+                            item.schedule.triggers.length > 0
                               ? dict.workflow.scheduled
                               : dict.workflow.notScheduled}
                           </span>
@@ -371,7 +377,7 @@ export default function DocumentationSection({
                           </h3>
                           <StatusBadge
                             status={item.status}
-                            label={item.status}
+                            label={item.status ?? dict.workflow.noStatus}
                           />
                         </div>
                         <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
@@ -390,7 +396,9 @@ export default function DocumentationSection({
                         <p className='text-sm text-gray-600 dark:text-gray-400'>
                           {dict.workflow.schedule.workflowSchedule}:{' '}
                           <span className='text-gray-800 dark:text-gray-200'>
-                            {item.schedule && item.schedule.triggers.length > 0
+                            {item.schedule &&
+                            item.schedule.triggers &&
+                            item.schedule.triggers.length > 0
                               ? dict.workflow.scheduled
                               : dict.workflow.notScheduled}
                           </span>

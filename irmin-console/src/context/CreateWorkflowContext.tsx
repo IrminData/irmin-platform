@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -32,11 +33,30 @@ export const emptyWorkflowSetupData: WorkflowInput = {
   },
 };
 
-export const useWorkflowCreation = (
-  isOpen: boolean,
-  initialWorkflowData: WorkflowInput | undefined,
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>
-) => {
+/**
+ * Interface for the create workflow context value.
+ */
+interface CreateWorkflowContextValue {
+  workflowData: WorkflowInput;
+  setWorkflowData: React.Dispatch<React.SetStateAction<WorkflowInput>>;
+  processingCreation: boolean;
+  createWorkflow: () => Promise<boolean>;
+}
+
+// Create context with an undefined default value.
+const CreateWorkflowContext = createContext<
+  CreateWorkflowContextValue | undefined
+>(undefined);
+
+export const CreateWorkflowProvider: React.FC<{
+  initialWorkflowData: WorkflowInput | undefined;
+  children: React.ReactNode;
+}> = ({ initialWorkflowData, children }) => {
+  const { getToken } = useIAM();
+  const { locale } = useLocale();
+  const { irminAlert } = usePopup();
+  const { workspaceSlug } = useWorkspace();
+
   const [workflowData, setWorkflowData] = useState<WorkflowInput>({
     ...emptyWorkflowSetupData,
     ...(initialWorkflowData ?? {}),
@@ -50,7 +70,6 @@ export const useWorkflowCreation = (
   const executable = searchParams.get('executable');
 
   useEffect(() => {
-    setCurrentStep(1);
     const newWorkflowInputData: WorkflowInput = {
       ...emptyWorkflowSetupData,
       ...(initialWorkflowData ?? {}),
@@ -65,42 +84,22 @@ export const useWorkflowCreation = (
     }
     // Set the workflow data
     setWorkflowData(newWorkflowInputData);
-  }, [
-    isOpen,
-    initialWorkflowData,
-    executable,
-    setCurrentStep,
-    setWorkflowData,
-  ]);
+  }, [initialWorkflowData, executable]);
 
-  return {
-    workflowData,
-    setWorkflowData,
-  };
-};
-
-export const useConfigureWorkflow = (
-  workflowData: WorkflowInput,
-  closeModal: () => void
-) => {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
-  const { irminAlert } = usePopup();
-  const { workspaceSlug } = useWorkspace();
-  const [processing, setProcessing] = useState(false);
-
-  const initialWorkflowSchedule = useRef(workflowData.schedule);
+  const [processingCreation, setProcessingCreation] = useState(false);
   const creatingWorkflow = useRef(false);
 
   /**
    * Create the workflow with the provided data using the Irmin API
+   *
+   * @returns {Promise<boolean>} - Returns true if the workflow was created successfully, false otherwise
    */
-  const handleCreate = useCallback(async () => {
+  const handleCreateWorkflow = useCallback(async () => {
     // Prevent multiple requests
-    if (creatingWorkflow.current) return;
+    if (creatingWorkflow.current) return false;
     try {
       creatingWorkflow.current = true;
-      setProcessing(true);
+      setProcessingCreation(true);
       // Create the workflow
       const token = await getToken();
       const irminCore = new IrminCore(locale, token);
@@ -110,7 +109,7 @@ export const useConfigureWorkflow = (
       });
       // Show the result to the user
       irminAlert('success', res?.message ?? 'Workflow created successfully');
-      closeModal();
+      return true;
     } catch (error) {
       console.error('Failed to create workflow', error);
       irminAlert(
@@ -118,14 +117,35 @@ export const useConfigureWorkflow = (
         (error as Error)?.message ?? 'Failed to create the workflow'
       );
     } finally {
-      setProcessing(false);
+      setProcessingCreation(false);
       creatingWorkflow.current = false;
     }
-  }, [irminAlert, workspaceSlug, closeModal, workflowData, getToken, locale]);
+    return false;
+  }, [irminAlert, workspaceSlug, workflowData, getToken, locale]);
 
-  return {
-    processing,
-    initialWorkflowSchedule,
-    handleCreate,
-  };
+  return (
+    <CreateWorkflowContext.Provider
+      value={{
+        workflowData,
+        setWorkflowData,
+        processingCreation,
+        createWorkflow: handleCreateWorkflow,
+      }}
+    >
+      {children}
+    </CreateWorkflowContext.Provider>
+  );
+};
+
+/**
+ * Hook to access the create workflow context.
+ */
+export const useCreateWorkflow = (): CreateWorkflowContextValue => {
+  const context = useContext(CreateWorkflowContext);
+  if (!context) {
+    throw new Error(
+      'useCreateWorkflow must be used within a CreateWorkflowProvider'
+    );
+  }
+  return context;
 };

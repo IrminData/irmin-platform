@@ -35,6 +35,7 @@ export default function createWorkflowableFormData(
   input: WorkflowableInput
 ): FormData {
   const formData = new FormData();
+  formData.append('type', input.type);
 
   // determine the input type and serialise accordingly
   switch (input.type) {

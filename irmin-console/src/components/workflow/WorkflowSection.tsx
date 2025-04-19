@@ -28,7 +28,7 @@ import { GridRow } from '@/types/internal/ListProps';
 const WorkflowSection = () => {
   const { dict, locale } = useLocale();
 
-  const { workflow, runs } = useWorkflow();
+  const { workflow, runs, repositories, connections } = useWorkflow();
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -117,7 +117,10 @@ const WorkflowSection = () => {
             )}
           </div>,
           <div key={`run-${i}-status`} className='inline-flex flex-col gap-2'>
-            <StatusBadge status={run.status} label={run.status} />
+            <StatusBadge
+              status={run.status}
+              label={run.status ?? dict.workflow.noStatus}
+            />
           </div>,
         ],
         actions: [
@@ -140,7 +143,9 @@ const WorkflowSection = () => {
               {dict.workflow.schedule.workflowSchedule}
             </p>
             <p className='text-base'>
-              {workflow.schedule && workflow.schedule.triggers.length > 0
+              {workflow.schedule &&
+              workflow.schedule.triggers &&
+              workflow.schedule.triggers.length > 0
                 ? dict.workflow.scheduled
                 : dict.workflow.notScheduled}
             </p>
@@ -167,10 +172,12 @@ const WorkflowSection = () => {
               {workflow.workflowable.repository && (
                 <Link
                   className='transition-all duration-200 hover:underline'
-                  href={`${workspaceUrl}/repositories/${workflow.workflowable.repository.slug}?ref=${workflow.workflowable.branch}`}
+                  href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.branch}`}
                 >
                   <p className='text-base'>
-                    {workflow.workflowable.repository.name}
+                    {repositories.find(
+                      (repo) => repo.slug === workflow.workflowable.repository
+                    )?.name ?? '-'}
                   </p>
                 </Link>
               )}
@@ -199,10 +206,12 @@ const WorkflowSection = () => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`${workspaceUrl}/connections/${workflow.workflowable.connection.id}`}
+                href={`${workspaceUrl}/connections/${workflow.workflowable.connection_id}`}
               >
                 <p className='text-base'>
-                  {workflow.workflowable.connection.name}
+                  {connections.find(
+                    (conn) => conn.id === workflow.workflowable.connection_id
+                  )?.name ?? '-'}
                 </p>
               </Link>
             </div>
@@ -214,10 +223,12 @@ const WorkflowSection = () => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`${workspaceUrl}/repositories/${workflow.workflowable.repository.slug}?ref=${workflow.workflowable.branch}`}
+                href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.branch}`}
               >
                 <p className='text-base'>
-                  {workflow.workflowable.repository.name}
+                  {repositories.find(
+                    (repo) => repo.slug === workflow.workflowable.repository
+                  )?.name ?? '-'}
                 </p>
               </Link>
             </div>
@@ -245,10 +256,12 @@ const WorkflowSection = () => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`${workspaceUrl}/connections/${workflow.workflowable.connection.id}`}
+                href={`${workspaceUrl}/connections/${workflow.workflowable.connection_id}`}
               >
                 <p className='text-base'>
-                  {workflow.workflowable.connection.name}
+                  {connections.find(
+                    (conn) => conn.id === workflow.workflowable.connection_id
+                  )?.name ?? '-'}
                 </p>
               </Link>
             </div>
@@ -260,10 +273,12 @@ const WorkflowSection = () => {
               </p>
               <Link
                 className='transition-all duration-200 hover:underline'
-                href={`${workspaceUrl}/repositories/${workflow.workflowable.repository.slug}?ref=${workflow.workflowable.branch}`}
+                href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.branch}`}
               >
                 <p className='text-base'>
-                  {workflow.workflowable.repository.name}
+                  {repositories.find(
+                    (repo) => repo.slug === workflow.workflowable.repository
+                  )?.name ?? '-'}
                 </p>
               </Link>
             </div>

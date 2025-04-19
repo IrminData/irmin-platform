@@ -106,7 +106,7 @@ export default function CreateRepositoryModalContent({
           )}
         />
       </div>
-      <Button type='submit' size='lg' variant='gray' loading={processing}>
+      <Button type='submit' size='lg' variant='gradient' loading={processing}>
         {dict.repository.createNewRepository}
       </Button>
     </form>

@@ -1,15 +1,17 @@
 'use client';
 
+import { memo, useCallback, useRef } from 'react';
+
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 
+import { useCreateWorkflow } from '@/context/CreateWorkflowContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { useConfigureWorkflow } from '@/hooks/useCreateWorkflow';
-
-import { WorkflowInput } from '@/types/internal/WorkflowInput';
+import { Repository } from '@/types/core/Repository';
+import { Workflow } from '@/types/core/Workflow';
 
 /**
  * Configure general workflow properties,
@@ -17,26 +19,34 @@ import { WorkflowInput } from '@/types/internal/WorkflowInput';
  * and confirm the creation of the workflow
  *
  * @param props - Component properties
- * @param props.workflowData - Workflow setup data
- * @param props.setWorkflowData - Function to set the workflow setup data
+ * @param props.workflows - List of existing workflows
+ * @param props.repositories - List of repositories
  * @param props.setCurrentStep - Function to set the current step
  * @param props.closeModal - Function to close the modal
  */
-export default function ConfigureWorkflow({
-  workflowData,
-  setWorkflowData,
+function ConfigureWorkflow({
+  workflows,
+  repositories,
   setCurrentStep,
   closeModal,
 }: {
-  workflowData: WorkflowInput;
-  setWorkflowData: React.Dispatch<React.SetStateAction<WorkflowInput>>;
+  workflows: Workflow[];
+  repositories: Repository[];
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   closeModal: () => void;
 }) {
   const { dict } = useLocale();
+  const { workflowData, setWorkflowData, createWorkflow, processingCreation } =
+    useCreateWorkflow();
 
-  const { processing, initialWorkflowSchedule, handleCreate } =
-    useConfigureWorkflow(workflowData, closeModal);
+  const initialWorkflowSchedule = useRef(workflowData.schedule);
+
+  const handleCreate = useCallback(async () => {
+    const success = await createWorkflow();
+    if (success) {
+      closeModal();
+    }
+  }, [createWorkflow, closeModal]);
 
   return (
     <div className='flex w-full flex-col px-4 pb-6'>
@@ -46,6 +56,7 @@ export default function ConfigureWorkflow({
           <Input
             required
             type='text'
+            disabled={processingCreation}
             defaultValue={workflowData.name}
             onChange={(e) =>
               setWorkflowData({
@@ -63,6 +74,7 @@ export default function ConfigureWorkflow({
             longtext={{
               rows: 3,
             }}
+            disabled={processingCreation}
             defaultValue={workflowData.description}
             onChange={(e) =>
               setWorkflowData({
@@ -74,6 +86,8 @@ export default function ConfigureWorkflow({
         </div>
         <div className='border-foreground/20 rounded-md border px-2 py-4'>
           <WorkflowScheduleForm
+            workflows={workflows}
+            repositories={repositories}
             initialData={initialWorkflowSchedule.current}
             disableSaveButton={true}
             updateSchedule={(newSchedule) => {
@@ -89,9 +103,9 @@ export default function ConfigureWorkflow({
       <div className='mt-auto border-t pt-4 dark:border-gray-800'>
         <Button
           className='mb-6 inline-block w-full'
-          variant='default'
+          variant='gradient'
           size={'lg'}
-          disabled={processing}
+          loading={processingCreation}
           onClick={handleCreate}
         >
           {dict.workflow.create.confirmAndCreate}
@@ -100,7 +114,7 @@ export default function ConfigureWorkflow({
           className='mb-6 inline-block w-full'
           variant='link'
           size='sm'
-          disabled={processing}
+          disabled={processingCreation}
           onClick={() => setCurrentStep(1)}
         >
           {dict.workflow.create.goBack}
@@ -109,3 +123,5 @@ export default function ConfigureWorkflow({
     </div>
   );
 }
+
+export default memo(ConfigureWorkflow);

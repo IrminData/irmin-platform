@@ -13,7 +13,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { Connection } from '@/types/core/Connection';
 import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
-import { ExportWorkflow } from '@/types/core/Workflow';
+import { ExportWorkflow, Workflow } from '@/types/core/Workflow';
 
 import CreateWorkflowModalContent from './CreateWorkflowModalContent';
 import ExportWorkflowList from './ExportWorkflowList';
@@ -28,7 +28,7 @@ import ExportWorkflowList from './ExportWorkflowList';
  * @param props0.editorItems - The list of editor items
  * @param props0.connections - List of connections
  * @param props0.repositories - List of repositories
- * @param props0.workflows - The list of Export Workflows
+ * @param props0.workflows - List of workflows
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
 export default function ExportWorkflowsSection({
@@ -41,7 +41,7 @@ export default function ExportWorkflowsSection({
   editorItems: EditorItem[];
   connections: Connection[];
   repositories: Repository[];
-  workflows: ExportWorkflow[];
+  workflows: Workflow[];
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
@@ -49,20 +49,24 @@ export default function ExportWorkflowsSection({
   const [isOpen, setIsOpen] = useState(sideModalOpen);
   const [currentStep, setCurrentStep] = useState(1);
 
-  const [filteredItems, setFilteredItems] = useState(workflows);
+  const [filteredItems, setFilteredItems] = useState(
+    workflows.filter((w) => w.type === 'export')
+  );
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
       setFilteredItems(
-        workflows.filter((item) =>
-          item.name
-            .trim()
-            .replace(/\s+/g, '')
-            .toLowerCase()
-            .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
-        )
+        workflows.filter(
+          (item) =>
+            item.type === 'export' &&
+            item.name
+              .trim()
+              .replace(/\s+/g, '')
+              .toLowerCase()
+              .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
+        ) as ExportWorkflow[]
       );
     }, 300);
     return () => {
@@ -108,6 +112,7 @@ export default function ExportWorkflowsSection({
           editorItems={editorItems}
           connections={connections}
           repositories={repositories}
+          workflows={workflows}
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}
@@ -126,11 +131,10 @@ export default function ExportWorkflowsSection({
             // Workflowable properties
             workflowable: {
               type: 'export',
-              connection: connections.length > 0 ? connections[0].id : '',
+              connection: '',
               connection_path: '',
-              repository: repositories.length > 0 ? repositories[0].slug : '',
-              branch:
-                repositories.length > 0 ? repositories[0].default_branch : '',
+              repository: '',
+              branch: '',
               path: '',
             },
           }}

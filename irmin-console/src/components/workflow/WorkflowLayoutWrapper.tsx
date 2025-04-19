@@ -60,7 +60,7 @@ export default function WorkflowLayoutWrapper({
   const repositorySlug = useMemo(
     () =>
       workflow?.type === 'import' || workflow?.type === 'export'
-        ? workflow?.workflowable?.repository?.slug
+        ? workflow?.workflowable?.repository
         : null,
     [workflow]
   );
@@ -159,7 +159,10 @@ export default function WorkflowLayoutWrapper({
                 {workflow.name}
               </h1>
               {workflow ? (
-                <StatusBadge status={workflow.status} label={workflow.status} />
+                <StatusBadge
+                  status={workflow.status}
+                  label={workflow.status ?? dict.workflow.noStatus}
+                />
               ) : (
                 <></>
               )}

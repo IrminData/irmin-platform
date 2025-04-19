@@ -11,14 +11,22 @@ import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkflow } from '@/context/WorkflowContext';
 
+import { Repository } from '@/types/core/Repository';
 import { WorkflowSchedule } from '@/types/core/Schedule';
+import { Workflow } from '@/types/core/Workflow';
 
 /**
  * Workflow Schedule section component
  *
  * Handles workflow schedule viewing and updates.
  */
-const WorkflowScheduleSection = () => {
+const WorkflowScheduleSection = ({
+  workflows,
+  repositories,
+}: {
+  workflows: Workflow[];
+  repositories: Repository[];
+}) => {
   const { dict } = useLocale();
   const { workflow, updateWorkflow, resumeWorkflow, pauseWorkflow } =
     useWorkflow();
@@ -66,6 +74,8 @@ const WorkflowScheduleSection = () => {
       <WorkflowScheduleForm
         initialData={workflow.schedule}
         updateSchedule={handleUpdateWorkflowSchedule}
+        workflows={workflows}
+        repositories={repositories}
       />
     </ContentWrapper>
   );

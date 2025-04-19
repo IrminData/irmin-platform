@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import ReactSelect from 'react-select';
 
@@ -10,6 +10,7 @@ import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
+import { useCreateWorkflow } from '@/context/CreateWorkflowContext';
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
@@ -22,7 +23,6 @@ import {
   ExportWorkflowableInput,
   ImportWorkflowableInput,
   PipelineWorkflowableInput,
-  WorkflowInput,
 } from '@/types/internal/WorkflowInput';
 
 import PipelineStageEditor from '../PipelineStageEditor';
@@ -34,30 +34,21 @@ import PipelineStageEditor from '../PipelineStageEditor';
  * @param props.editorItems - List of editor items
  * @param props.connections - List of connections
  * @param props.repositories - List of repositories
- * @param props.workflowData - Workflow setup data
- * @param props.setWorkflowData - Function to set the workflow setup data
  * @param props.setCurrentStep - Function to set the current step
  */
 function ConfigureWorkflowable({
   editorItems,
   connections,
   repositories,
-  workflowData,
-  setWorkflowData,
   setCurrentStep,
 }: {
   editorItems: EditorItem[];
   connections: Connection[];
   repositories: Repository[];
-  workflowData: WorkflowInput;
-  setWorkflowData: React.Dispatch<React.SetStateAction<WorkflowInput>>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
+  const { workflowData, setWorkflowData } = useCreateWorkflow();
   const { dict } = useLocale();
-
-  const handleContinue = useCallback(() => {
-    setCurrentStep(2);
-  }, [setCurrentStep]);
 
   const workflowable = useMemo(() => workflowData.workflowable, [workflowData]);
 
@@ -93,18 +84,26 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.scriptResultDestinationRepository}</Label>
               <ReactSelect
-                value={workflowable.repository}
                 onChange={(newValue) => {
                   if (!newValue) return;
                   setWorkflowData({
                     ...workflowData,
                     workflowable: {
                       ...(workflowable as ActionWorkflowableInput),
-                      repository: newValue,
+                      repository: newValue.value,
+                      branch:
+                        repositories.find(
+                          (repo) => repo.slug === newValue.value
+                        )?.default_branch ??
+                        workflowable.branch ??
+                        '',
                     },
                   });
                 }}
-                options={repositories.map((repo) => repo.slug)}
+                options={repositories.map((repo) => ({
+                  value: repo.slug,
+                  label: repo.name,
+                }))}
                 className='react-select-container w-full'
                 classNamePrefix='react-select'
               />
@@ -170,21 +169,20 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.importSourceConnection}</Label>
               <ReactSelect
-                value={workflowable.connection}
                 onChange={(newValue) => {
                   if (!newValue) return;
                   setWorkflowData({
                     ...workflowData,
                     workflowable: {
                       ...(workflowable as ImportWorkflowableInput),
-                      connection: newValue,
+                      connection: newValue.value,
                     },
                   });
                 }}
-                getOptionLabel={(opt) =>
-                  connections.find((c) => c.id === opt)?.name ?? opt
-                }
-                options={connections.map((conn) => conn.id)}
+                options={connections.map((conn) => ({
+                  value: conn.id,
+                  label: conn.name,
+                }))}
                 className='react-select-container w-full'
                 classNamePrefix='react-select'
               />
@@ -210,20 +208,45 @@ function ConfigureWorkflowable({
               </Button>
             </div>
             <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.importSourceConnectionPath}</Label>
+              <Input
+                required
+                type='text'
+                defaultValue={workflowable.connection_path ?? '/'}
+                onChange={(e) =>
+                  setWorkflowData({
+                    ...workflowData,
+                    workflowable: {
+                      ...(workflowable as ImportWorkflowableInput),
+                      connection_path: e.target.value,
+                    },
+                  })
+                }
+              />
+            </div>
+            <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.importDestinationRepository}</Label>
               <ReactSelect
-                value={workflowable.repository}
                 onChange={(newValue) => {
                   if (!newValue) return;
                   setWorkflowData({
                     ...workflowData,
                     workflowable: {
                       ...(workflowable as ImportWorkflowableInput),
-                      repository: newValue,
+                      repository: newValue.value,
+                      branch:
+                        repositories.find(
+                          (repo) => repo.slug === newValue.value
+                        )?.default_branch ??
+                        workflowable.branch ??
+                        '',
                     },
                   });
                 }}
-                options={repositories.map((repo) => repo.slug)}
+                options={repositories.map((repo) => ({
+                  value: repo.slug,
+                  label: repo.name,
+                }))}
                 className='react-select-container w-full'
                 classNamePrefix='react-select'
               />
@@ -289,40 +312,84 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.exportDestinationConnection}</Label>
               <ReactSelect
-                value={workflowable.connection}
                 onChange={(newValue) => {
                   if (!newValue) return;
                   setWorkflowData({
                     ...workflowData,
                     workflowable: {
                       ...(workflowable as ExportWorkflowableInput),
-                      connection: newValue,
+                      connection: newValue.value,
                     },
                   });
                 }}
-                getOptionLabel={(opt) =>
-                  connections.find((c) => c.id === opt)?.name ?? opt
-                }
-                options={connections.map((conn) => conn.id)}
+                options={connections.map((conn) => ({
+                  value: conn.id,
+                  label: conn.name,
+                }))}
                 className='react-select-container w-full'
                 classNamePrefix='react-select'
+              />
+              {workflowable.connection && (
+                <Button
+                  href={`${workspaceUrl}/connections/${workflowable.connection}`}
+                  target='_blank'
+                  variant='secondary'
+                  className='w-full'
+                  size={'sm'}
+                >
+                  {dict.list.view}
+                </Button>
+              )}
+              <Button
+                href={`${workspaceUrl}/connections?create`}
+                target='_blank'
+                variant='gray'
+                className='w-full'
+                size={'sm'}
+              >
+                {dict.consoleNavigation.staticSearchItems.createConnection}
+              </Button>
+            </div>
+            <div className='flex flex-col gap-2'>
+              <Label>{dict.workflow.exportDestinationConnectionPath}</Label>
+              <Input
+                required
+                type='text'
+                defaultValue={workflowable.connection_path ?? '/'}
+                onChange={(e) =>
+                  setWorkflowData({
+                    ...workflowData,
+                    workflowable: {
+                      ...(workflowable as ExportWorkflowableInput),
+                      connection_path: e.target.value,
+                    },
+                  })
+                }
               />
             </div>
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.exportSourceRepository}</Label>
               <ReactSelect
-                value={workflowable.repository}
                 onChange={(newValue) => {
                   if (!newValue) return;
                   setWorkflowData({
                     ...workflowData,
                     workflowable: {
                       ...(workflowable as ExportWorkflowableInput),
-                      repository: newValue,
+                      repository: newValue.value,
+                      branch:
+                        repositories.find(
+                          (repo) => repo.slug === newValue.value
+                        )?.default_branch ??
+                        workflowable.branch ??
+                        '',
                     },
                   });
                 }}
-                options={repositories.map((repo) => repo.slug)}
+                options={repositories.map((repo) => ({
+                  value: repo.slug,
+                  label: repo.name,
+                }))}
                 className='react-select-container w-full'
                 classNamePrefix='react-select'
               />
@@ -423,9 +490,11 @@ function ConfigureWorkflowable({
       <div className='mt-auto border-t pt-4 dark:border-gray-800'>
         <Button
           className='mb-6 inline-block w-full'
-          variant='default'
+          variant='gradient'
           size={'lg'}
-          onClick={handleContinue}
+          onClick={() => {
+            setCurrentStep(2);
+          }}
         >
           {dict.workflow.create.confirmAndContinue}
         </Button>
@@ -434,4 +503,4 @@ function ConfigureWorkflowable({
   );
 }
 
-export default React.memo(ConfigureWorkflowable);
+export default memo(ConfigureWorkflowable);

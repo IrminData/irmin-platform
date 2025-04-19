@@ -3,7 +3,7 @@
 import { initCore } from '@/lib/initCore';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import type { Workflow, WorkflowableType } from '@/types/core/Workflow';
+import type { Workflow } from '@/types/core/Workflow';
 
 /**
  * Get all workflows in a workspace.
@@ -23,33 +23,6 @@ export async function getWorkflows({
   const irminCore = await initCore(token);
   const res: IrminAPIResponse<Workflow[]> =
     await irminCore.workflowService.fetchWorkflows({ workspace });
-  return res;
-}
-
-/**
- * Get workflows of a specific type in a workspace.
- *
- * @param props - The properties for the function.
- * @param props.workspace - The workspace slug.
- * @param props.workflowType - The workflow type.
- * @param props.token - Optional token for authentication.
- * @returns The list of workflows of the specified type.
- */
-export async function getWorkflowsOfType({
-  workspace,
-  workflowType,
-  token,
-}: {
-  workspace: string;
-  workflowType: WorkflowableType;
-  token?: string;
-}) {
-  const irminCore = await initCore(token);
-  const res: IrminAPIResponse<Workflow[]> =
-    await irminCore.workflowService.fetchWorkflowsOfType({
-      workspace,
-      workflowType,
-    });
   return res;
 }
 
