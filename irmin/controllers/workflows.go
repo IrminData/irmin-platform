@@ -162,12 +162,14 @@ func WorkflowsStore(c fiber.Ctx) error {
 	var actionWorkflowable *db.ActionWorkflowable
 	var pipelineWorkflowable *db.PipelineWorkflowable
 
+	// TOOD: This whole thing needs to be done in a transaction.
+
 	// Procceed based on the workflow type.
 	switch db.WorkflowableType(fields["type"]) {
 	case db.WorkflowableTypeImport:
 		// Create the import workflowable object.
 		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(c, []string{"connection", "connection_path", "repository", "branch", "path"}, nil)
+		workflowableFields, err := utils.ParseFormFields(c, []string{"connection", "repository", "branch"}, []string{"connection_path", "path"})
 		if err != nil {
 			log.Printf("Error parsing form fields: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
@@ -214,7 +216,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	case db.WorkflowableTypeExport:
 		// Create the export workflowable object.
 		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(c, []string{"connection", "connection_path", "repository", "branch", "path"}, nil)
+		workflowableFields, err := utils.ParseFormFields(c, []string{"connection", "repository", "branch"}, []string{"connection_path", "path"})
 		if err != nil {
 			log.Printf("Error parsing form fields: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{

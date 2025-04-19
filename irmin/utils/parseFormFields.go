@@ -50,49 +50,67 @@ func ParseFormFields(c fiber.Ctx, required, optional []string) (map[string]strin
 	return values, nil
 }
 
-// ParseArrayFormFields extracts array-like form fields from a Fiber context.
-// It groups fields with keys following the pattern prefix[index].key into a map
-// where the key is the array index and the value is another map of key-value pairs.
+// ParseArrayFormFields extracts array‑like form fields from a Fiber context.
+// It works for both multipart/form-data and application/x-www-form-urlencoded.
+// It groups keys like prefix[index].key into a map[index]map[key]value.
 //
 // Params:
-// - c: The Fiber context containing the form data.
-// - prefix: The prefix for the array field (e.g. "trigger").
+//   - c: the Fiber context containing the form data.
+//   - prefix: the prefix for the array field (e.g. "trigger").
 //
 // Returns:
-//   - A map where the key is the array index and the value is a map of field names to values.
-//   - An error if there is an issue parsing the form data.
+//   - A map where each key is the array index and each value is a map of field names to values.
+//   - An error if there’s an issue parsing the form data.
 func ParseArrayFormFields(c fiber.Ctx, prefix string) (map[int]map[string]string, error) {
-	// Compile a regex to match keys like prefix[0].type
+	// prepare the regex to match e.g. "trigger[0].type"
 	pattern := fmt.Sprintf(`^%s\[(\d+)\]\.(\w+)$`, regexp.QuoteMeta(prefix))
 	re, err := regexp.Compile(pattern)
 	if err != nil {
 		return nil, err
 	}
 
-	// Retrieve the full multipart form from the request.
-	form, err := c.MultipartForm()
-	if err != nil {
-		return nil, err
+	// container for all form values
+	var values map[string][]string
+
+	contentType := c.Get(fiber.HeaderContentType)
+	switch {
+	case strings.HasPrefix(contentType, fiber.MIMEApplicationForm):
+		// application/x-www-form-urlencoded
+		values = make(map[string][]string)
+		// use c.Request() to get Fasthttp request, then PostArgs()
+		args := c.Request().PostArgs()
+		args.VisitAll(func(key, val []byte) {
+			k := string(key)
+			values[k] = append(values[k], string(val))
+		})
+
+	case strings.HasPrefix(contentType, fiber.MIMEMultipartForm):
+		// multipart/form-data
+		form, err := c.MultipartForm()
+		if err != nil {
+			return nil, err
+		}
+		values = form.Value
+
+	default:
+		// unsupported content type
+		return nil, fmt.Errorf("unsupported content type %q", contentType)
 	}
 
-	// Create a map to store results.
+	// now apply the same grouping logic
 	results := make(map[int]map[string]string)
-
-	// Iterate over all form values.
-	for key, values := range form.Value {
-		matches := re.FindStringSubmatch(key)
-		if len(matches) == 3 {
-			// Convert the index from string to int.
+	for key, vals := range values {
+		if matches := re.FindStringSubmatch(key); len(matches) == 3 {
 			idx, err := strconv.Atoi(matches[1])
 			if err != nil {
-				continue // skip invalid indices
+				continue // skip bad indices
 			}
 			// If not already present, initialise the map for this index.
 			if _, ok := results[idx]; !ok {
 				results[idx] = make(map[string]string)
 			}
-			// Use the first value (assuming one value per field).
-			results[idx][matches[2]] = values[0]
+			// take the first value if multiple were sent
+			results[idx][matches[2]] = vals[0]
 		}
 	}
 
