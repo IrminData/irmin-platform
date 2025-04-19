@@ -46,6 +46,12 @@ func UploadObject(c fiber.Ctx) error {
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
+	if len(form.File) == 0 || len(form.File["file"]) == 0 {
+		log.Printf("No file found in form data")
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
 	file, err := form.File["file"][0].Open()
 	if err != nil {
 		log.Printf("Error opening file: %v", err)

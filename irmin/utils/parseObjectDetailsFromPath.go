@@ -103,8 +103,7 @@ func ParseObjectDetailsFromPath(inputPath string) ObjectDetails {
 		// Check if the extension is in the unstructuredContentTypes map.
 		foundContentType := false
 		contentType, foundContentType = unstructuredContentTypes[ext]
-		if foundContentType {
-		} else {
+		if !foundContentType {
 			contentType = "application/octet-stream"
 		}
 	}

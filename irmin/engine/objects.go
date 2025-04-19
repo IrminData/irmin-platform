@@ -13,59 +13,111 @@ import (
 
 // getObject fetches the object from a workspace repository at a specific ref and path
 // and returns it as an Irmin formatted object.
-func getObject(path, lakeFSRepositoryName, ref string, lakefsClient lakefs.Client) (*irminModels.Object, error) {
-	// Format the object path.
+func getObject(
+	path, lakeFSRepositoryName, ref string,
+	lakefsClient lakefs.Client,
+) (*irminModels.Object, error) {
+	// Trim leading and trailing slashes from the path.
 	path = strings.Trim(path, "/")
 
-	// Parse the object details from the path.
+	// Parse object details (name, full path, type, content type).
 	objectPathDetails := utils.ParseObjectDetailsFromPath(path)
 
-	// Get details about the object if it's not a group.
-	var objectMetadata *lakefs.ObjectMetadata
+	// Retrieve metadata for file objects; for groups, default metadata stays empty.
+	objectMetadata := &lakefs.ObjectMetadata{
+		Path:                  path,
+		PathType:              lakefs.PathTypeObject,
+		PhysicalAddress:       "",
+		PhysicalAddressExpiry: nil,
+		Checksum:              "",
+		SizeBytes:             0,
+		Mtime:                 0,
+		Metadata:              nil,
+		ContentType:           "",
+	}
 	var err error
 	if objectPathDetails.Type != irminModels.ObjectTypeGroup {
-		objectMetadata, err = lakefsClient.GetObjectMetadata(lakeFSRepositoryName, ref, path, true, false)
-	}
-	if err != nil {
-		return nil, err
+		objectMetadata, err = lakefsClient.GetObjectMetadata(
+			lakeFSRepositoryName, ref, path, true, false,
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// If the object is a group, list its children.
-	var children []lakefs.ObjectMetadata
+	// If it's a group, list all objects under the path (recursive), then identify immediate children and sub-groups.
+	var rawChildren []lakefs.ObjectMetadata
 	if objectPathDetails.Type == irminModels.ObjectTypeGroup {
-		children, err = lakefsClient.ListAllObjects(lakeFSRepositoryName, ref, path, "", "", true, false)
-	}
-	if err != nil {
-		return nil, err
+		rawChildren, err = lakefsClient.ListAllObjects(lakeFSRepositoryName, ref, path, "", "", true, false)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Convert LakeFS objects to Irmin objects.
+	// Map immediate files and directories under this path.
+	files := make(map[string]lakefs.ObjectMetadata)
+	dirs := make(map[string]struct{})
+	for _, child := range rawChildren {
+		// Determine path relative to current prefix
+		rel := child.Path
+		if path != "" {
+			rel = strings.TrimPrefix(child.Path, path+"/")
+		}
+		// Split into immediate component
+		parts := strings.SplitN(rel, "/", 2)
+		name := parts[0]
+		if len(parts) > 1 {
+			// It's part of a sub-directory
+			dirs[name] = struct{}{}
+		} else {
+			// Immediate file
+			files[name] = child
+		}
+	}
+
+	// Convert immediate children: recurse on directories first, then files.
 	var irminObjectChildren []irminModels.Object
-	for _, child := range children {
-		objectDetails := utils.ParseObjectDetailsFromPath(child.Path)
-		lastModified := time.Unix(int64(child.Mtime), 0).Format(time.RFC3339)
+	for dir := range dirs {
+		subPath := dir
+		if path != "" {
+			subPath = path + "/" + dir
+		}
+		// Recursively fetch directory as group
+		nestedObj, err := getObject(
+			subPath,
+			lakeFSRepositoryName,
+			ref,
+			lakefsClient,
+		)
+		if err != nil {
+			return nil, err
+		}
+		irminObjectChildren = append(irminObjectChildren, *nestedObj)
+	}
+	for name, meta := range files {
+		// Leaf object: convert metadata to Irmin object.
+		objectDetails := utils.ParseObjectDetailsFromPath(meta.Path)
+		lastModified := time.Unix(int64(meta.Mtime), 0).Format(time.RFC3339)
 		irminObjectChildren = append(irminObjectChildren, irminModels.Object{
-			Name:                  objectDetails.Name,
+			Name:                  name,
 			Path:                  objectDetails.FullPath,
 			Type:                  objectDetails.Type,
 			ContentType:           objectDetails.ContentType,
-			PhysicalAddress:       child.PhysicalAddress,
-			PhysicalAddressExpiry: child.PhysicalAddressExpiry,
-			SizeBytes:             child.SizeBytes,
+			PhysicalAddress:       meta.PhysicalAddress,
+			PhysicalAddressExpiry: meta.PhysicalAddressExpiry,
+			SizeBytes:             meta.SizeBytes,
 			LastModified:          lastModified,
-			Metadata:              child.Metadata,
+			Metadata:              meta.Metadata,
 		})
 	}
 
-	// Construct the resulting object
-	lastModified := ""
-	if objectMetadata == nil {
-		// It's a group, thus it has no metadata
-		objectMetadata = &lakefs.ObjectMetadata{}
-	} else {
-		// It's a file, thus it has metadata
+	// Determine last modified time for the current object if it's a file.
+	var lastModified string
+	if objectMetadata != nil && objectPathDetails.Type != irminModels.ObjectTypeGroup {
 		lastModified = time.Unix(int64(objectMetadata.Mtime), 0).Format(time.RFC3339)
 	}
+
+	// Construct and return the Irmin object with all nested children.
 	irminObject := irminModels.Object{
 		Name:                  objectPathDetails.Name,
 		Path:                  objectPathDetails.FullPath,
