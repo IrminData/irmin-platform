@@ -423,7 +423,7 @@ const en = {
     },
   },
   editor: {
-    writeYourJS: 'Write your JavaScript script here...',
+    writeYourJS: 'Write your JavaScript here...',
     writeYourGo: 'Write your Go script here...',
     writeYourSQL: 'Write your SQL query here...',
     writeYourPython: 'Write your Python script here...',

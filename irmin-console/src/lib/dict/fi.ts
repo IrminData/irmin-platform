@@ -426,8 +426,8 @@ const fi = {
     },
   },
   editor: {
-    writeYourJS: 'Kirjoita JavaScript-koodisi tähän...',
-    writeYourGo: 'Kirjoita Go-koodisi tähän...',
+    writeYourJS: 'Kirjoita JavaScriptisi tähän...',
+    writeYourGo: 'Kirjoita Go-skriptisi tähän...',
     writeYourSQL: 'Kirjoita SQL-kyselysi tähän...',
     writeYourPython: 'Kirjoita Python-koodisi tähän...',
     writeYourText: 'Kirjoita teksti tähän...',
