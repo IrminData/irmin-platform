@@ -6,11 +6,11 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 import { AiOutlinePlayCircle } from 'react-icons/ai';
+import { IoClose } from 'react-icons/io5';
 import {
   TbChevronUp,
   TbDownload,
   TbFileDiff,
-  TbFolderOpen,
   TbRefresh,
   TbUpload,
 } from 'react-icons/tb';
@@ -31,7 +31,6 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 import { Object } from '@/types/core/Object';
 
-import CreateGroupModal from './objects/CreateGroupModal';
 import ObjectDetails from './objects/ObjectDetails';
 import ObjectList from './objects/ObjectList';
 import ObjectViewer from './objects/ObjectViewer';
@@ -61,14 +60,14 @@ export default function RepositorySection({
   const {
     immutable,
     currentRef,
-    currentPath,
     currentRepository,
     uploadObject,
-    createGroup,
-    loadingDirectory,
+    loadingObjects,
     fetchObject,
     getObjectContent,
   } = useRepository();
+
+  const [currentDirectoryPath, setCurrentDirectoryPath] = useState<string>('');
 
   const query = useQuery();
   const [queryResultsOpen, setQueryResultsOpen] = useState(false);
@@ -126,39 +125,12 @@ export default function RepositorySection({
     irminModal.show(
       dict.repository.objects.uploadObject,
       <UploadObjectModal
-        currentPath={currentPath}
         currentRepository={currentRepository.slug}
         currentRef={currentRef ?? 'main'}
         uploadObject={uploadObject}
       />
     );
-  }, [
-    dict,
-    irminModal,
-    currentPath,
-    currentRepository,
-    currentRef,
-    uploadObject,
-  ]);
-
-  const handleCreateGroup = useCallback(() => {
-    irminModal.show(
-      dict.repository.objects.createFolder,
-      <CreateGroupModal
-        currentPath={currentPath}
-        currentRepository={currentRepository.slug}
-        currentRef={currentRef ?? 'main'}
-        createGroup={createGroup}
-      />
-    );
-  }, [
-    dict,
-    irminModal,
-    currentPath,
-    currentRepository,
-    currentRef,
-    createGroup,
-  ]);
+  }, [dict, irminModal, currentRepository, currentRef, uploadObject]);
 
   const runCurrentQuery = useCallback(() => {
     if (!queryField || queryField.length < 3) return;
@@ -241,7 +213,7 @@ export default function RepositorySection({
                   size='icon'
                   icon={<TbRefresh />}
                   tooltip={dict.common.refresh}
-                  disabled={loadingDirectory}
+                  disabled={loadingObjects}
                   onClick={() => fetchObject()}
                 />
                 {!immutable && (
@@ -258,20 +230,10 @@ export default function RepositorySection({
                   variant='secondary'
                   size='sm'
                   icon={<TbDownload />}
-                  href={`${workspaceUrl}/repositories/${currentRepository.slug}/download?ref=${currentRef}&path=${currentPath}`}
+                  href={`${workspaceUrl}/repositories/${currentRepository.slug}/download?ref=${currentRef}`}
                 >
                   {dict.common.actions.download}
                 </Button>
-                {!immutable && (
-                  <Button
-                    variant='secondary'
-                    size='sm'
-                    onClick={handleCreateGroup}
-                    icon={<TbFolderOpen />}
-                  >
-                    {dict.repository.objects.createFolder}
-                  </Button>
-                )}
                 {!immutable && (
                   <Button
                     variant='default'
@@ -285,11 +247,16 @@ export default function RepositorySection({
               </div>
             </div>
             <div className='flex w-full flex-col items-start gap-2 md:flex-row md:gap-2'>
-              <ObjectList selectObject={setSelectedObject} />
+              <ObjectList
+                selectObject={setSelectedObject}
+                currentPath={currentDirectoryPath}
+                setCurrentPath={setCurrentDirectoryPath}
+              />
               <ObjectDetails
                 selectedObject={selectedObject}
                 closeDetails={() => setSelectedObject(undefined)}
                 viewObject={() => setObjectContentViewerOpen(true)}
+                setCurrentPath={setCurrentDirectoryPath}
               />
             </div>
           </>
@@ -317,18 +284,39 @@ export default function RepositorySection({
         </div>
       )}
       {objectContentViewerOpen && !queryResultsOpen && selectedObject && (
-        <>
-          {objectContent ? (
-            <div className='bg-background w-full rounded border-t border-gray-200 dark:border-gray-800'>
-              <ObjectViewer
-                object={selectedObject}
-                objectContent={objectContent}
-              />
+        <div
+          id='object-content-modal'
+          className='animate-fadeIn bg-background/30 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[2px]'
+        >
+          <div className='w-full max-w-[90vw]'>
+            <div className='border-border bg-popover rounded-lg border shadow-lg'>
+              <div className='flex flex-row items-center justify-between border-b px-4 pt-4 pb-2 dark:border-b-gray-800'>
+                <h2 className='text-lg font-normal'>{selectedObject.path}</h2>
+                <ButtonWithTooltip
+                  size='icon'
+                  variant='ghost'
+                  className='ml-4 rounded-full'
+                  onClick={() => setObjectContentViewerOpen(false)}
+                  aria-label={dict.common.close}
+                  tooltip={dict.common.close}
+                  icon={<IoClose size={24} />}
+                />
+              </div>
+              <div className='relative max-h-[calc(100vh-200px)] overflow-scroll px-0 pt-0'>
+                {objectContent ? (
+                  <div className='bg-background w-full rounded'>
+                    <ObjectViewer
+                      object={selectedObject}
+                      objectContent={objectContent}
+                    />
+                  </div>
+                ) : (
+                  <LoadingSkeleton className='h-96 w-full' />
+                )}
+              </div>
             </div>
-          ) : (
-            <LoadingSkeleton className='h-96 w-full' />
-          )}
-        </>
+          </div>
+        </div>
       )}
     </>
   );

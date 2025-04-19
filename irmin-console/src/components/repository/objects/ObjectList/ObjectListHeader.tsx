@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 
 import { TbChevronLeft, TbHome } from 'react-icons/tb';
 
@@ -13,45 +13,47 @@ interface ObjectListHeaderProps {
   searchTerm: string;
   setSearchTerm: (searchTerm: string) => void;
   currentPath: string;
-  updateCurrentPath: (path: string) => void;
+  setCurrentPath: (path: string) => void;
 }
 
-export function ObjectListHeader({
+function ObjectListHeader({
   searchTerm,
   setSearchTerm,
   currentPath,
-  updateCurrentPath,
+  setCurrentPath,
 }: ObjectListHeaderProps) {
   const { dict } = useLocale();
-  const pathParts = currentPath.split('/').filter(Boolean);
+  const pathParts = useMemo(
+    () => currentPath.split('/').filter(Boolean),
+    [currentPath]
+  );
 
-  function navigateUp() {
+  const navigateUp = useCallback(() => {
     const parts = currentPath.split('/');
     parts.pop();
-    updateCurrentPath(parts.join('/'));
-  }
+    setCurrentPath(parts.join('/'));
+  }, [currentPath, setCurrentPath]);
 
-  function navigateToGroup(path: string) {
-    updateCurrentPath(path);
-  }
+  const navigateToGroup = useCallback(
+    (path: string) => {
+      setCurrentPath(path);
+    },
+    [setCurrentPath]
+  );
 
   return (
     <div
       className={`bg-background flex items-center justify-start gap-2 rounded-lg border-b border-gray-200 px-1 py-2 dark:border-gray-800`}
     >
-      {currentPath !== '/' && (
+      {currentPath !== '' && (
         <Button variant='ghost' onClick={navigateUp}>
           <TbChevronLeft className='mr-2 h-4 w-4' />
           {dict.common.back}
         </Button>
       )}
       <div className='flex items-center space-x-2 rounded-md font-mono text-xs'>
-        {currentPath !== '/' && (
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={() => navigateToGroup('/')}
-          >
+        {currentPath !== '' && (
+          <Button variant='ghost' size='sm' onClick={() => navigateToGroup('')}>
             <TbHome className='mr-2 h-4 w-4' />
             {dict.fileNavigator.root}
           </Button>
@@ -63,7 +65,7 @@ export function ObjectListHeader({
               variant='ghost'
               size='sm'
               onClick={() =>
-                navigateToGroup('/' + pathParts.slice(0, index + 1).join('/'))
+                navigateToGroup(pathParts.slice(0, index + 1).join('/'))
               }
               className='p-1'
             >
@@ -81,3 +83,5 @@ export function ObjectListHeader({
     </div>
   );
 }
+
+export default memo(ObjectListHeader);

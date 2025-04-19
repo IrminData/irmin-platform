@@ -34,6 +34,7 @@ import UploadObjectModal from './UploadObjectModal';
  *
  * @param props - The component props
  * @param props.selectedObject - The selected object to display details for
+ * @param props.setCurrentPath - (optional) The function to set the current path
  * @param props.selectedObjectSchema - (optional) The schema of the selected object
  * @param props.closeDetails - (optional) The function to close the details view. If not provided, the view will not show a close button
  * @param props.viewObject - (optional) The function to view the object.
@@ -41,6 +42,7 @@ import UploadObjectModal from './UploadObjectModal';
  * @param props.hideSchemaButton - (optional) Set this to true in order to hide the "view schema" button. Used in the schema viewer.
  */
 export default function ObjectDetails({
+  setCurrentPath,
   selectedObject,
   selectedObjectSchema,
   closeDetails,
@@ -48,6 +50,7 @@ export default function ObjectDetails({
   hideViewButton = false,
   hideSchemaButton = false,
 }: {
+  setCurrentPath?: (path: string) => void;
   selectedObject?: Object;
   selectedObjectSchema?: ObjectSchema;
   closeDetails?: () => void;
@@ -58,7 +61,6 @@ export default function ObjectDetails({
   const router = useRouter();
   const {
     immutable,
-    currentPath,
     currentRepository,
     currentRef,
     deleteObject,
@@ -67,7 +69,6 @@ export default function ObjectDetails({
   } = useRepository();
   const { irminModal, irminConfirm } = usePopup();
   const { dict } = useLocale();
-  const { updateCurrentPath } = useRepository();
 
   /** The base URL for the repository, eg. /en/workspace/workspace-slug/repositories/repository-slug */
   const baseUrl = useBaseUrl({
@@ -82,7 +83,6 @@ export default function ObjectDetails({
     irminModal.show(
       dict.repository.objects.uploadObject,
       <UploadObjectModal
-        currentPath={currentPath}
         currentRepository={currentRepository.slug}
         currentRef={currentRef ?? 'main'}
         uploadObject={uploadObject}
@@ -94,7 +94,6 @@ export default function ObjectDetails({
     immutable,
     selectedObject,
     irminModal,
-    currentPath,
     currentRepository,
     currentRef,
     uploadObject,
@@ -107,18 +106,9 @@ export default function ObjectDetails({
       <MoveRenameObjectModal
         moveObject={moveObject}
         selectedObject={selectedObject}
-        currentPath={currentPath}
       />
     );
-  }, [
-    dict,
-    immutable,
-    selectedObject,
-    currentPath,
-    currentRef,
-    moveObject,
-    irminModal,
-  ]);
+  }, [dict, immutable, selectedObject, currentRef, moveObject, irminModal]);
 
   const handleDelete = useCallback(async () => {
     if (!selectedObject || immutable) return;
@@ -219,13 +209,13 @@ export default function ObjectDetails({
         <hr className='border-gray-200 dark:border-gray-800' />
         <div className='flex w-full flex-col gap-1'>
           {/** Buttons for all possible actions for the object */}
-          {selectedObject.type === 'group' ? (
+          {selectedObject.type === 'group' && setCurrentPath ? (
             <Button
               size='sm'
               variant='accent'
               className='w-full'
               icon={<TbFolderOpen />}
-              onClick={() => updateCurrentPath(selectedObject.path)}
+              onClick={() => setCurrentPath(selectedObject.path)}
             >
               {dict.fileNavigator.open}
             </Button>

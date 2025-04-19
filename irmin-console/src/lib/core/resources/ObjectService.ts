@@ -248,12 +248,17 @@ class ObjectService {
       const params = new URLSearchParams();
       params.append('ref', ref);
       params.append('path', path);
-      params.append('new_path', newPath);
+
+      const formData = new FormData();
+      formData.append('new_path', newPath);
+
       const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/move?${params.toString()}`;
+
       const response = (await this.irminCore.fetchAPI(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData,
       })) as IrminAPIResponse<RepoObject>;
+
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Move object error');
@@ -289,12 +294,17 @@ class ObjectService {
       const params = new URLSearchParams();
       params.append('ref', ref);
       params.append('path', path);
-      params.append('new_path', newPath);
+
+      const formData = new FormData();
+      formData.append('new_path', newPath);
+
       const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/copy?${params.toString()}`;
+
       const response = (await this.irminCore.fetchAPI(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData,
       })) as IrminAPIResponse<RepoObject>;
+
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Copy object error');

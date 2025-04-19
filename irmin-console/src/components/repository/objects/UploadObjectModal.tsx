@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
@@ -22,22 +22,19 @@ interface UploadFormValues {
 /**
  * UI for the upload object modal.
  *
- * @param props - The component props
+ * @param props
  * @param props.uploadObject - The function to upload the object
- * @param props.currentPath - The current path in the repository
  * @param props.currentRepository - The current repository slug
  * @param props.currentRef - The current branch/ref
  * @param props.prefilledName - The name to prefill in the name field
  */
 export default function UploadObjectModal({
   uploadObject,
-  currentPath,
   currentRepository,
   currentRef,
   prefilledName,
 }: {
   uploadObject: (path: string, ref: string, files: FileList) => Promise<void>;
-  currentPath: string;
   currentRepository: string;
   currentRef: string;
   prefilledName?: string;
@@ -53,15 +50,35 @@ export default function UploadObjectModal({
     handleSubmit,
     setValue,
     formState: { errors },
+    watch,
   } = useForm<UploadFormValues>({
     defaultValues: {
       repository: currentRepository,
       ref: currentRef,
       files: null,
       name: prefilledName ?? 'example.txt',
-      path: `${currentPath}${prefilledName ?? 'example.txt'}`,
+      path: `/${prefilledName ?? 'example.txt'}`,
     },
   });
+
+  // Keep track of current field values
+  const nameValue = watch('name');
+  const pathValue = watch('path');
+
+  // Sync name ↔ path, based on which was edited last
+  const lastChanged = useRef<'name' | 'path' | null>(null);
+  useEffect(() => {
+    if (lastChanged.current === 'name') {
+      // user changed name, so update path
+      setValue('path', `/${nameValue}`);
+    } else if (lastChanged.current === 'path') {
+      // user changed path, so update name
+      const newName = pathValue.split('/').pop() ?? '';
+      setValue('name', newName);
+    }
+    // reset so we only do this once per edit
+    lastChanged.current = null;
+  }, [nameValue, pathValue, setValue]);
 
   // Handle upload object to the repository
   const handleUpload = useCallback(
@@ -78,7 +95,7 @@ export default function UploadObjectModal({
         // Upload the object
         await uploadObject(data.path, data.ref, data.files);
 
-        // Close the modal and show success message
+        // Close the modal
         irminModal.close();
       } catch (error) {
         console.error('Failed to upload new object:', error);
@@ -92,60 +109,6 @@ export default function UploadObjectModal({
 
   return (
     <form onSubmit={handleSubmit(handleUpload)} className='flex flex-col gap-4'>
-      <div className='flex flex-col gap-2'>
-        <Label>{dict.repository.objects.targetRepository}</Label>
-        <Controller
-          name='repository'
-          control={control}
-          rules={{ required: dict.common.fieldRequired }}
-          render={({ field }) => (
-            <>
-              <Input type='text' disabled={!!currentRepository} {...field} />
-              {errors.repository && (
-                <p className='mt-1 text-xs text-red-600'>
-                  {errors.repository.message}
-                </p>
-              )}
-            </>
-          )}
-        />
-      </div>
-      <div className='flex flex-col gap-2'>
-        <Label>{dict.repository.objects.targetBranch}</Label>
-        <Controller
-          name='ref'
-          control={control}
-          rules={{ required: dict.common.fieldRequired }}
-          render={({ field }) => (
-            <>
-              <Input type='text' disabled={!!currentRef} {...field} />
-              {errors.ref && (
-                <p className='mt-1 text-xs text-red-600'>
-                  {errors.ref.message}
-                </p>
-              )}
-            </>
-          )}
-        />
-      </div>
-      <div className='flex flex-col gap-2'>
-        <Label>{dict.repository.objects.objectName}</Label>
-        <Controller
-          name='name'
-          control={control}
-          rules={{ required: dict.common.fieldRequired }}
-          render={({ field }) => (
-            <>
-              <Input type='text' {...field} />
-              {errors.name && (
-                <p className='mt-1 text-xs text-red-600'>
-                  {errors.name.message}
-                </p>
-              )}
-            </>
-          )}
-        />
-      </div>
       <div className='flex flex-col gap-2'>
         <Label>{dict.repository.objects.fileToUpload}</Label>
         <Controller
@@ -164,7 +127,7 @@ export default function UploadObjectModal({
                     // Auto-set the name field to the selected file's name
                     if (!prefilledName) {
                       setValue('name', files[0].name);
-                      setValue('path', `${currentPath}${files[0].name}`);
+                      setValue('path', `/${files[0].name}`);
                     }
                   }
                 }}
@@ -179,12 +142,98 @@ export default function UploadObjectModal({
         />
       </div>
       <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.objects.objectName}</Label>
+        <Controller
+          name='name'
+          control={control}
+          rules={{ required: dict.common.fieldRequired }}
+          render={({ field }) => (
+            <>
+              <Input
+                type='text'
+                {...field}
+                disabled={loading}
+                onChange={(e) => {
+                  field.onChange(e);
+                  lastChanged.current = 'name';
+                }}
+              />
+              {errors.name && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.name.message}
+                </p>
+              )}
+            </>
+          )}
+        />
+      </div>
+      <div className='flex flex-col gap-2'>
         <Label>{dict.repository.objects.pathInRepository}</Label>
         <Controller
           name='path'
           control={control}
           render={({ field }) => (
-            <Input type='text' placeholder='/example/path' {...field} />
+            <>
+              <Input
+                type='text'
+                placeholder='/path/to/example.json'
+                disabled={loading}
+                {...field}
+                onChange={(e) => {
+                  field.onChange(e);
+                  lastChanged.current = 'path';
+                }}
+              />
+              {errors.path && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.path.message}
+                </p>
+              )}
+            </>
+          )}
+        />
+      </div>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.objects.targetRepository}</Label>
+        <Controller
+          name='repository'
+          control={control}
+          rules={{ required: dict.common.fieldRequired }}
+          render={({ field }) => (
+            <>
+              <Input
+                type='text'
+                disabled={!!currentRepository || loading}
+                {...field}
+              />
+              {errors.repository && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.repository.message}
+                </p>
+              )}
+            </>
+          )}
+        />
+      </div>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.objects.targetBranch}</Label>
+        <Controller
+          name='ref'
+          control={control}
+          rules={{ required: dict.common.fieldRequired }}
+          render={({ field }) => (
+            <>
+              <Input
+                type='text'
+                disabled={!!currentRef || loading}
+                {...field}
+              />
+              {errors.ref && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.ref.message}
+                </p>
+              )}
+            </>
           )}
         />
       </div>
@@ -196,7 +245,7 @@ export default function UploadObjectModal({
           loading={loading}
           type='submit'
         >
-          {loading ? dict.common.loading : dict.repository.objects.uploadObject}
+          {dict.repository.objects.uploadObject}
         </Button>
       </div>
     </form>

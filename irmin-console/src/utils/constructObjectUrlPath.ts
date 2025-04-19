@@ -12,6 +12,9 @@ export function constructObjectUrlPath(path: string, name: string): string {
   if (normalizedPath.endsWith(`/${name}`)) {
     normalizedPath = normalizedPath.slice(0, -name.length - 1);
   }
+  if (normalizedPath === name || !normalizedPath) {
+    normalizedPath = '';
+  }
 
-  return normalizedPath ? `${normalizedPath}/${name}` : name; // Handle root path case
+  return `${normalizedPath}/${name}`;
 }

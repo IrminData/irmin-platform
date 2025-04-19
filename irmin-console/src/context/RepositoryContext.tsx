@@ -45,8 +45,6 @@ interface RepositoryContextProps {
   viewRef: (ref: string) => void;
   defaultRef?: string;
   setDefaultRef: (ref: string) => void;
-  currentPath: string;
-  updateCurrentPath: (path: string) => void;
   // General repository hooks
   fetchRepository: () => Promise<void>;
   updateRepository: (data: ItemUpdateProps) => Promise<void>;
@@ -54,13 +52,12 @@ interface RepositoryContextProps {
   transferRepository: (ownerID: string) => Promise<void>;
   downloadRepository: (selectedPath?: string) => Promise<void>;
   // Objects
-  loadingDirectory: boolean;
-  directory: Object | undefined;
+  loadingObjects: boolean;
+  rootObject: Object | undefined;
   fetchObject: (path?: string, ref?: string) => Promise<Object | undefined>;
   deleteObject: (objectPath: string) => Promise<void>;
   moveObject: (oldPath: string, newPath: string) => Promise<void>;
   copyObject: (oldPath: string, newPath: string) => Promise<void>;
-  createGroup: (path: string, ref: string) => Promise<void>;
   uploadObject: (path: string, ref: string, files: FileList) => Promise<void>;
   getObjectContent: (path: string) => Promise<IrminAPIBinaryResponse | null>;
   getObjectSchema: (objectPath: string) => Promise<ObjectSchema | undefined>;
@@ -159,9 +156,6 @@ export const RepositoryProvider = ({
 
   // Active repository context ref (eg. branch, commit, tag)
   const [currentRef, setCurrentRef] = useState<string | undefined>(undefined);
-
-  // Active path in the repository, default to root
-  const [currentPath, setCurrentPath] = useState<string>('/');
 
   /**
    * Hook to update the current ref
@@ -367,7 +361,7 @@ export const RepositoryProvider = ({
             workspace: workspaceSlug,
             repositorySlug,
             ref: currentRef ?? initialRepository.default_branch,
-            path: selectedPath ?? currentPath,
+            path: selectedPath ?? '/',
           }
         );
         if (typeof res.data === 'string') {
@@ -394,7 +388,6 @@ export const RepositoryProvider = ({
       repositorySlug,
       initialRepository,
       currentRef,
-      currentPath,
       irminAlert,
       getToken,
       locale,
@@ -402,8 +395,8 @@ export const RepositoryProvider = ({
   );
 
   // Objects state
-  const [loadingDirectory, setLoadingDirectory] = useState(false);
-  const [directory, setDirectory] = useState<Object | undefined>(undefined);
+  const [loadingObjects, setLoadingObjects] = useState(false);
+  const [rootObject, setRootObject] = useState<Object | undefined>(undefined);
 
   // Branches state
   const [loadingBranches, setLoadingBranches] = useState<boolean>(false);
@@ -427,16 +420,16 @@ export const RepositoryProvider = ({
   const fetchObject = useCallback(
     async (path?: string, ref?: string) => {
       try {
-        setLoadingDirectory(true);
+        setLoadingObjects(true);
         const token = await getToken();
         const irminCore = new IrminCore(locale, token);
         const foundObject = await irminCore.objectService.getObjectAtPath({
           workspace: workspaceSlug,
           repository: repositorySlug,
-          path: path ?? currentPath,
+          path: path ?? '/',
           ref: ref ?? currentRef,
         });
-        if (!path) setDirectory(foundObject.data);
+        if (!path) setRootObject(foundObject.data);
         return foundObject.data;
       } catch (error) {
         console.error('RepositoryContext fetchObject error', error);
@@ -445,18 +438,10 @@ export const RepositoryProvider = ({
           (error as Error)?.message ?? 'Failed to fetch objects'
         );
       } finally {
-        setLoadingDirectory(false);
+        setLoadingObjects(false);
       }
     },
-    [
-      irminAlert,
-      repositorySlug,
-      workspaceSlug,
-      currentPath,
-      currentRef,
-      locale,
-      getToken,
-    ]
+    [irminAlert, repositorySlug, workspaceSlug, currentRef, locale, getToken]
   );
 
   /**
@@ -559,41 +544,6 @@ export const RepositoryProvider = ({
       repositorySlug,
       initialRepository,
       currentRef,
-      fetchObject,
-      irminAlert,
-      getToken,
-      locale,
-    ]
-  );
-
-  /**
-   * Create a group (e.g. directory) in the repository at path
-   */
-  const handleCreateGroup = useCallback(
-    async (path: string, ref: string) => {
-      try {
-        const token = await getToken();
-        const irminCore = new IrminCore(locale, token);
-        const res = await irminCore.objectService.uploadObject({
-          workspace: workspaceSlug,
-          repository: repositorySlug,
-          ref: ref ?? currentRef ?? initialRepository.default_branch,
-          path,
-        });
-        irminAlert('success', res.message ?? 'Group created successfully');
-        fetchObject();
-      } catch (error) {
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to create directory'
-        );
-      }
-    },
-    [
-      workspaceSlug,
-      currentRef,
-      initialRepository,
-      repositorySlug,
       fetchObject,
       irminAlert,
       getToken,
@@ -1160,12 +1110,12 @@ export const RepositoryProvider = ({
    * Fetch the repository directory object at the active path and ref on mount and when the path or ref changes
    */
   useEffect(() => {
-    if (!currentPath || !currentRef) return;
-    if (objectsFetchedFor.current === `${currentPath}@${currentRef}`) return;
-    objectsFetchedFor.current = `${currentPath}@${currentRef}`;
+    if (!repositorySlug || !currentRef) return;
+    if (objectsFetchedFor.current === `${repositorySlug}@${currentRef}`) return;
+    objectsFetchedFor.current = `${repositorySlug}@${currentRef}`;
     fetchObject();
     fetchCommits();
-  }, [currentPath, currentRef, fetchObject, fetchCommits]);
+  }, [repositorySlug, currentRef, fetchObject, fetchCommits]);
 
   /**
    * Update current ref if not set
@@ -1206,8 +1156,6 @@ export const RepositoryProvider = ({
         viewRef,
         defaultRef,
         setDefaultRef,
-        currentPath,
-        updateCurrentPath: setCurrentPath,
         // General repository hooks
         fetchRepository,
         updateRepository: handleUpdateRepository,
@@ -1215,13 +1163,12 @@ export const RepositoryProvider = ({
         transferRepository: handleTransferOwnershipRepository,
         downloadRepository: handleRpositoryDownload,
         // Objects
-        loadingDirectory,
-        directory,
+        loadingObjects,
+        rootObject,
         fetchObject,
         deleteObject: handleDeleteObject,
         moveObject: handleMoveObject,
         copyObject: handleCopyObject,
-        createGroup: handleCreateGroup,
         uploadObject: handleUploadObject,
         getObjectContent: fetchObjectContent,
         getObjectSchema: fetchObjectSchema,

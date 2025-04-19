@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import {
   Table,
@@ -11,7 +13,7 @@ import {
 /**
  * Skeleton for the repository object table
  */
-export function TableSkeleton() {
+function TableSkeleton() {
   return (
     <Table>
       <TableHeader>
@@ -45,3 +47,5 @@ export function TableSkeleton() {
     </Table>
   );
 }
+
+export default memo(TableSkeleton);

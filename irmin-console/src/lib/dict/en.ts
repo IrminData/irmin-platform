@@ -240,7 +240,6 @@ const en = {
       contentUnavailable: 'Object content unavailable',
       viewSchema: 'View schema',
       filterObjects: 'Filter objects',
-      createFolder: 'Create folder',
       uploadAndReplace: 'Upload and replace',
       moveOrRename: 'Move or rename',
       targetRepository: 'Target repository',

@@ -243,7 +243,6 @@ const fi = {
       contentUnavailable: 'Objektin sisältö ei ole saatavilla',
       viewSchema: 'Näytä rakenne',
       filterObjects: 'Suodata objekteja',
-      createFolder: 'Luo kansio',
       uploadAndReplace: 'Lataa ja korvaa',
       moveOrRename: 'Siirrä tai nimeä uudelleen',
       targetRepository: 'Kohde data-arkisto',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
@@ -25,16 +25,13 @@ interface MoveRenameFormValues {
  *
  * @param props - The component props
  * @param props.moveObject - The function to move the object
- * @param props.currentPath - The current path in the repository
  * @param props.selectedObject - The selected object being moved/renamed
  */
 export default function MoveRenameObjectModal({
   moveObject,
-  currentPath,
   selectedObject,
 }: {
   moveObject: (oldPath: string, newPath: string) => Promise<void>;
-  currentPath: string;
   selectedObject: Object;
 }) {
   const { dict } = useLocale();
@@ -47,12 +44,33 @@ export default function MoveRenameObjectModal({
     control,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<MoveRenameFormValues>({
     defaultValues: {
-      path: currentPath ?? '/',
+      path: selectedObject.path,
       name: selectedObject.name,
     },
   });
+
+  // Keep track of current field values
+  const nameValue = watch('name');
+  const pathValue = watch('path');
+
+  // Sync name ↔ path, based on which was edited last
+  const lastChanged = useRef<'name' | 'path' | null>(null);
+  useEffect(() => {
+    if (lastChanged.current === 'name') {
+      // user changed name, so update path
+      setValue('path', `/${nameValue}`);
+    } else if (lastChanged.current === 'path') {
+      // user changed path, so update name
+      const newName = pathValue.split('/').pop() ?? '';
+      setValue('name', newName);
+    }
+    // reset so we only do this once per edit
+    lastChanged.current = null;
+  }, [nameValue, pathValue, setValue]);
 
   // Handle move/rename operation
   const handleMoveRename = useCallback(
@@ -85,31 +103,6 @@ export default function MoveRenameObjectModal({
       className='flex flex-col gap-4'
     >
       <div className='flex flex-col gap-2'>
-        <Label>{dict.repository.objects.pathInRepository}</Label>
-        <Controller
-          name='path'
-          control={control}
-          rules={{ required: dict.common.fieldRequired }}
-          render={({ field }) => (
-            <>
-              <Input type='text' {...field} />
-              {errors.path && (
-                <p className='mt-1 text-xs text-red-600'>
-                  {errors.path.message}
-                </p>
-              )}
-            </>
-          )}
-        />
-        <p className='text-xs opacity-70'>
-          {dict.repository.objects.currentPath}:{' '}
-          {selectedObject.path.substring(
-            0,
-            selectedObject.path.lastIndexOf('/')
-          ) || '/'}
-        </p>
-      </div>
-      <div className='flex flex-col gap-2'>
         <Label>{dict.repository.objects.objectName}</Label>
         <Controller
           name='name'
@@ -117,7 +110,15 @@ export default function MoveRenameObjectModal({
           rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
             <>
-              <Input type='text' {...field} />
+              <Input
+                type='text'
+                {...field}
+                disabled={loading}
+                onChange={(e) => {
+                  field.onChange(e);
+                  lastChanged.current = 'name';
+                }}
+              />
               {errors.name && (
                 <p className='mt-1 text-xs text-red-600'>
                   {errors.name.message}
@@ -127,8 +128,36 @@ export default function MoveRenameObjectModal({
           )}
         />
         <p className='text-xs opacity-70'>
-          {dict.repository.objects.currentName}:{' '}
-          {selectedObject.name ?? 'example.txt'}
+          {dict.repository.objects.currentName}: {selectedObject.name}
+        </p>
+      </div>
+      <div className='flex flex-col gap-2'>
+        <Label>{dict.repository.objects.pathInRepository}</Label>
+        <Controller
+          name='path'
+          control={control}
+          rules={{ required: dict.common.fieldRequired }}
+          render={({ field }) => (
+            <>
+              <Input
+                type='text'
+                {...field}
+                disabled={loading}
+                onChange={(e) => {
+                  field.onChange(e);
+                  lastChanged.current = 'path';
+                }}
+              />
+              {errors.path && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.path.message}
+                </p>
+              )}
+            </>
+          )}
+        />
+        <p className='text-xs opacity-70'>
+          {dict.repository.objects.currentPath}: {selectedObject.path}
         </p>
       </div>
       {error && <div className='text-destructive py-2'>{error}</div>}
@@ -137,10 +166,10 @@ export default function MoveRenameObjectModal({
           variant='default'
           size='sm'
           className='w-full'
-          disabled={loading}
+          loading={loading}
           type='submit'
         >
-          {loading ? dict.common.loading : dict.repository.objects.moveOrRename}
+          {dict.repository.objects.moveOrRename}
         </Button>
       </div>
     </form>

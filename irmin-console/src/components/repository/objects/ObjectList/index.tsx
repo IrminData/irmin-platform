@@ -26,23 +26,49 @@ import { useRepository } from '@/context/RepositoryContext';
 
 import { Object } from '@/types/core/Object';
 
-import { ObjectListHeader } from './ObjectListHeader';
-import { TableSkeleton } from './TableSkeleton';
+import ObjectListHeader from './ObjectListHeader';
+import TableSkeleton from './TableSkeleton';
+
+/**
+ * Removes a trailing slash (except when the path is just "/").
+ *
+ * @param path – the path to normalise
+ * @returns the path without any trailing slash
+ */
+const normalizePath = (path: string): string =>
+  path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
+
+/**
+ * Flattens an object and its children into a single array of objects.
+ * @param obj - The object to flatten
+ * @returns An array of objects, including the original object and all its children
+ */
+const flattenObjects = (obj: Object): Object[] => {
+  const children = obj.children || [];
+  const flattenedChildren = children.flatMap(flattenObjects);
+  return [obj, ...flattenedChildren];
+};
 
 /**
  * Table of objects in the repository
  *
  * @param props - The component props
  * @param props.selectObject - The function to call when an object is selected
+ * @param props.currentPath - The current path in the repository
+ * @param props.setCurrentPath - The function to set the current path
  */
 export default function ObjectList({
   selectObject,
+  currentPath,
+  setCurrentPath,
 }: {
   selectObject: (object: Object) => void;
+  currentPath: string;
+  setCurrentPath: (path: string) => void;
 }) {
   const { locale, dict } = useLocale();
-  const { loadingDirectory, updateCurrentPath, currentPath, directory } =
-    useRepository();
+  const { loadingObjects, rootObject } = useRepository();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{
     key: 'name' | 'path' | 'type' | 'content_type' | 'last_modified';
@@ -50,12 +76,45 @@ export default function ObjectList({
   }>({ key: 'name', direction: 'ascending' });
 
   const filteredObjects = useMemo(() => {
-    return (
-      directory?.children?.filter((obj) =>
-        obj.name.toLowerCase().includes(searchTerm.toLowerCase())
-      ) ?? []
-    );
-  }, [directory, searchTerm]);
+    if (!rootObject) return [];
+
+    // strip any trailing slash off the folder we’re in
+    const normCurrent = normalizePath(currentPath);
+
+    // unify your search term
+    const lowerSearch = searchTerm.toLowerCase();
+
+    // helper to test name/path against search
+    const matchesSearch = (obj: Object) =>
+      obj.name.toLowerCase().includes(lowerSearch) ||
+      normalizePath(obj.path).toLowerCase().includes(lowerSearch);
+
+    // at root: just show the direct children of rootObject
+    if (normCurrent === '') {
+      return (rootObject.children ?? []).filter(matchesSearch);
+    }
+
+    // elsewhere: flatten and pull only immediate children
+    const flat = flattenObjects(rootObject);
+    const itemsInFolder = flat.filter((obj) => {
+      const normPath = normalizePath(obj.path);
+
+      // skip the folder itself
+      if (normPath === normCurrent) {
+        return false;
+      }
+
+      // figure out this object's parent folder
+      const idx = normPath.lastIndexOf('/');
+      const parent = idx > -1 ? normPath.slice(0, idx) : '';
+
+      // keep only if it lives directly under our current folder
+      return parent === normCurrent;
+    });
+
+    // finally apply search filtering
+    return itemsInFolder.filter(matchesSearch);
+  }, [rootObject, currentPath, searchTerm]);
 
   const sortedObjects = useMemo(() => {
     const sortableObjects = [...filteredObjects];
@@ -103,10 +162,10 @@ export default function ObjectList({
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         currentPath={currentPath}
-        updateCurrentPath={updateCurrentPath}
+        setCurrentPath={setCurrentPath}
       />
       <div className='bg-background max-h-[400px] w-full overflow-scroll'>
-        {loadingDirectory ? (
+        {loadingObjects ? (
           <TableSkeleton />
         ) : (
           <>
@@ -150,7 +209,7 @@ export default function ObjectList({
                           variant='link'
                           onClick={() => {
                             if (obj.type === 'group') {
-                              updateCurrentPath(obj.path);
+                              setCurrentPath(obj.path);
                             } else {
                               selectObject(obj);
                             }
@@ -182,7 +241,7 @@ export default function ObjectList({
               </TableBody>
             </Table>
 
-            {!directory?.children && (
+            {!rootObject?.children && (
               <div className='flex h-full min-h-96 w-full flex-col items-center justify-center gap-4'>
                 <LuSearchX className='h-12 w-12 text-gray-400' />
                 <div className='text-base text-gray-600 lg:text-lg dark:text-gray-300'>
