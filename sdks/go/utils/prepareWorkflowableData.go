@@ -9,6 +9,8 @@ import (
 func PrepareWorkflowableData(workflowable irminModels.Workflowable) (map[string]string, error) {
 	fields := make(map[string]string)
 
+	fields["type"] = string(workflowable.Type)
+
 	switch workflowable.Type {
 	case irminModels.WorkflowableTypeImport:
 		fields["connection_id"] = workflowable.ConnectionID
