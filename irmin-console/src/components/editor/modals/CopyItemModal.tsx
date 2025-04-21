@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
-import ReactSelect from 'react-select';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
@@ -18,21 +17,16 @@ import { usePopup } from '@/context/PopupContext';
 import {
   getCorrectNameWithExtension,
   getCorrectPath,
-  getNameWithoutExtension,
+  getLanguageFromFilename,
   itemCanBeCreated,
 } from '@/utils/editorItems';
 
-import {
-  EditorItem,
-  IrminFileLanguage,
-  irminFileLanguages,
-} from '@/types/core/EditorItems';
+import { EditorItem } from '@/types/core/EditorItems';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 type FormData = {
   name: string;
   path: string;
-  extension?: IrminFileLanguage;
 };
 
 /**
@@ -64,7 +58,7 @@ export default function CopyItemModal({
   const copyingRef = useRef(false);
 
   // Set default values for the copy modal
-  const defaultName = `${getNameWithoutExtension(item.current?.name || '')} copy`;
+  const defaultName = `${item.current?.name ?? ''}-copy.${item.current?.language ?? 'js'}`;
   const {
     control,
     handleSubmit,
@@ -75,13 +69,11 @@ export default function CopyItemModal({
     defaultValues: {
       name: defaultName,
       path: item.current?.path || '',
-      extension: item.current?.language,
     },
   });
 
   const name = watch('name');
   const path = watch('path');
-  const extension = watch('extension');
 
   /**
    * Update the path and name when the name or extension changes.
@@ -89,26 +81,16 @@ export default function CopyItemModal({
    */
   const updatePathAndName = useCallback(() => {
     if (!item.current) return;
-    const extensionValue = item.current.type === 'file' ? extension : undefined;
-    const nameWithExtension = getCorrectNameWithExtension(
-      name,
-      item.current.type,
-      extensionValue
-    );
-    const newPath = getCorrectPath(path, nameWithExtension);
+    const newPath = getCorrectPath(path, name);
 
-    // Update the name without extension and the path
-    setValue('name', getNameWithoutExtension(nameWithExtension), {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
+    // Update the path
     setValue('path', newPath, { shouldValidate: true, shouldDirty: true });
-  }, [name, path, extension, item, setValue]);
+  }, [name, path, item, setValue]);
 
-  // Update the path and name whenever name or extension changes
+  // Update the path and name whenever the name changes
   useEffect(() => {
     updatePathAndName();
-  }, [name, extension, updatePathAndName]);
+  }, [name, updatePathAndName]);
 
   /**
    * Copy the file or folder based on the values provided by the user.
@@ -124,23 +106,15 @@ export default function CopyItemModal({
         setError('');
         setLoading(true);
 
-        const extensionValue =
-          item.current.type === 'file' ? data.extension : undefined;
-        const nameWithExtension = getCorrectNameWithExtension(
-          data.name,
-          item.current.type,
-          extensionValue
-        );
         const newPath = data.path;
 
         // Ensure the new copy can be created
         const canCreate = itemCanBeCreated(
           newPath,
-          nameWithExtension,
+          data.name,
           item.current.type,
           editorItems,
-          dict,
-          extensionValue
+          dict
         );
         if (!canCreate.canCreate) {
           throw new Error(canCreate.reason);
@@ -150,7 +124,7 @@ export default function CopyItemModal({
         if (item.current.type === 'file') {
           const newFile: EditorItem = {
             ...item.current,
-            name: nameWithExtension,
+            name: data.name,
             path: newPath,
             type: 'file',
           };
@@ -161,7 +135,7 @@ export default function CopyItemModal({
         } else if (item.current.type === 'folder') {
           const newFolder: EditorItem = {
             ...item.current,
-            name: nameWithExtension,
+            name: data.name,
             path: newPath,
             type: 'folder',
           };
@@ -192,31 +166,6 @@ export default function CopyItemModal({
       className='flex flex-col gap-4 pb-6'
       id='copy-item-modal'
     >
-      {item.current.type === 'file' && (
-        <div>
-          <Controller
-            name='extension'
-            control={control}
-            render={({ field }) => (
-              <ReactSelect
-                {...field}
-                aria-label='Select the type of the file'
-                isDisabled={loading}
-                options={irminFileLanguages.map((lang) => lang.value)}
-                getOptionLabel={(lang) =>
-                  irminFileLanguages.find((l) => l.value === lang)?.label ??
-                  lang
-                }
-                className='react-select-container'
-                classNamePrefix='react-select'
-              />
-            )}
-          />
-          <p className='mt-1 pl-1 text-xs text-gray-400'>
-            {dict.fileNavigator.original}: {item.current.language ?? ''}
-          </p>
-        </div>
-      )}
       <div className='flex flex-col gap-2'>
         <Label>
           {item.current.type === 'file'
@@ -228,15 +177,16 @@ export default function CopyItemModal({
           control={control}
           rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
-            <Input {...field} type='text' disabled={loading} />
+            <>
+              <Input {...field} disabled={loading} />
+              {errors.name && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.name.message}
+                </p>
+              )}
+            </>
           )}
         />
-        {errors.name && (
-          <p className='mt-1 text-xs text-red-600'>{errors.name.message}</p>
-        )}
-        <p className='mt-1 pl-1 text-xs text-gray-400'>
-          {dict.fileNavigator.original}: {item.original?.name ?? ''}
-        </p>
       </div>
       <div className='flex flex-col gap-2'>
         <Label>
@@ -278,7 +228,7 @@ export default function CopyItemModal({
           itemName={getCorrectNameWithExtension(
             name,
             item.current.type,
-            extension
+            getLanguageFromFilename(name)
           )}
           originalItemPath={item.original?.path ?? null}
           currentSelected={path}

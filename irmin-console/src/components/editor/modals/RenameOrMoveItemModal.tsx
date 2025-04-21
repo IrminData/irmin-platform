@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
-import ReactSelect from 'react-select';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
@@ -18,21 +17,16 @@ import { usePopup } from '@/context/PopupContext';
 import {
   getCorrectNameWithExtension,
   getCorrectPath,
-  getNameWithoutExtension,
+  getLanguageFromFilename,
   itemCanBeCreated,
 } from '@/utils/editorItems';
 
-import {
-  EditorItem,
-  IrminFileLanguage,
-  irminFileLanguages,
-} from '@/types/core/EditorItems';
+import { EditorItem } from '@/types/core/EditorItems';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 type FormData = {
   name: string;
   path: string;
-  extension?: IrminFileLanguage;
 };
 
 /**
@@ -70,41 +64,29 @@ export default function RenameOrMoveItemModal({
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
-      name: getNameWithoutExtension(item.current?.name || ''),
+      name: item.current?.name || '',
       path: item.current?.path || '',
-      extension: item.current?.language,
     },
   });
 
   const name = watch('name');
   const path = watch('path');
-  const extension = watch('extension');
 
   /**
    * Update the path and name when the extension or name changes
    */
   const updatePathAndName = useCallback(() => {
     if (!item.current) return;
-    const extensionValue = item.current.type === 'file' ? extension : undefined;
-    const nameWithExtension = getCorrectNameWithExtension(
-      name,
-      item.current.type,
-      extensionValue
-    );
-    const newPath = getCorrectPath(path, nameWithExtension);
+    const newPath = getCorrectPath(path, name);
 
-    // Update the name without extension and path
-    setValue('name', getNameWithoutExtension(nameWithExtension), {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
+    // Update the path
     setValue('path', newPath, { shouldValidate: true, shouldDirty: true });
-  }, [name, path, extension, setValue, item]);
+  }, [name, path, setValue, item]);
 
   // Update path and name whenever name or extension changes
   useEffect(() => {
     updatePathAndName();
-  }, [name, extension, updatePathAndName]);
+  }, [name, updatePathAndName]);
 
   /**
    * Update the file/folder based on the values provided by the user
@@ -118,23 +100,15 @@ export default function RenameOrMoveItemModal({
         setError('');
         setLoading(true);
 
-        const extensionValue =
-          item.current.type === 'file' ? data.extension : undefined;
-        const nameWithExtension = getCorrectNameWithExtension(
-          data.name,
-          item.current.type,
-          extensionValue
-        );
         const newPath = data.path;
 
         // Ensure the item can be created
         const canCreate = itemCanBeCreated(
           newPath,
-          nameWithExtension,
+          data.name,
           item.current.type,
           editorItems,
-          dict,
-          extensionValue
+          dict
         );
         if (!canCreate.canCreate) {
           throw new Error(canCreate.reason);
@@ -144,7 +118,7 @@ export default function RenameOrMoveItemModal({
         if (item.current.type === 'file') {
           const newFile: EditorItem = {
             ...item.current,
-            name: nameWithExtension,
+            name: data.name,
             path: newPath,
             type: 'file',
           };
@@ -155,7 +129,7 @@ export default function RenameOrMoveItemModal({
         } else if (item.current.type === 'folder') {
           const newFolder: EditorItem = {
             ...item.current,
-            name: nameWithExtension,
+            name: data.name,
             path: newPath,
           };
           updateItem({
@@ -185,31 +159,6 @@ export default function RenameOrMoveItemModal({
       className='flex flex-col gap-4 pb-6'
       id='rename-or-move-item-modal'
     >
-      {item.current.type === 'file' && (
-        <div>
-          <Controller
-            name='extension'
-            control={control}
-            render={({ field }) => (
-              <ReactSelect
-                {...field}
-                aria-label='Select the type of the file'
-                isDisabled={loading}
-                options={irminFileLanguages.map((lang) => lang.value)}
-                getOptionLabel={(lang) =>
-                  irminFileLanguages.find((l) => l.value === lang)?.label ??
-                  lang
-                }
-                className='react-select-container'
-                classNamePrefix='react-select'
-              />
-            )}
-          />
-          <p className='mt-1 pl-1 text-xs text-gray-400'>
-            {dict.fileNavigator.original}: {item.current.language ?? ''}
-          </p>
-        </div>
-      )}
       <div className='flex flex-col gap-2'>
         <Label>
           {item.current.type === 'file'
@@ -271,7 +220,7 @@ export default function RenameOrMoveItemModal({
           itemName={getCorrectNameWithExtension(
             name,
             item.current.type,
-            extension
+            getLanguageFromFilename(name)
           )}
           originalItemPath={item.original?.path ?? null}
           currentSelected={path}

@@ -17,7 +17,6 @@ import { usePopup } from '@/context/PopupContext';
 import {
   getCorrectNameWithExtension,
   getCorrectPath,
-  getNameWithoutExtension,
   itemCanBeCreated,
 } from '@/utils/editorItems';
 
@@ -81,7 +80,7 @@ export default function AddNewFolderModal({
     const newPath = getCorrectPath(path, folderName);
 
     // Update the form values.
-    setValue('name', getNameWithoutExtension(folderName), {
+    setValue('name', folderName, {
       shouldValidate: true,
       shouldDirty: true,
     });

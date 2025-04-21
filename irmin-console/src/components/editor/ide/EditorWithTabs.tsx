@@ -55,7 +55,7 @@ const EditorWithTabs = () => {
   return (
     <>
       {openFileTabs.length > 0 && (
-        <div className='dark:border-irmin_black mb-0 flex items-center justify-between gap-1 border-b border-gray-200 pr-2 pb-0'>
+        <div className='mb-0 flex items-center justify-between gap-1 border-b border-gray-200 pr-2 pb-0 dark:border-gray-800'>
           <div className='scrollbar-hide flex h-full items-center overflow-x-auto'>
             {openFileTabs.map((tab, index) => (
               <div
@@ -73,7 +73,7 @@ const EditorWithTabs = () => {
                 </button>
                 <button
                   type='button'
-                  className={`border-none px-1 py-1`}
+                  className={`cursor-pointer border-none px-1 py-1 hover:opacity-70`}
                   onClick={() => closeTab(tab)}
                 >
                   <IoClose size={12} />
@@ -82,7 +82,7 @@ const EditorWithTabs = () => {
             ))}
             <button
               type='button'
-              className={`border-none px-1 py-1 hover:opacity-70`}
+              className={`cursor-pointer border-none px-1 py-1 hover:opacity-70`}
               onClick={() => openNewTab()}
               aria-label='Add new tab'
             >
@@ -90,22 +90,24 @@ const EditorWithTabs = () => {
             </button>
           </div>
           <div className='flex flex-row items-center justify-end gap-2 py-1'>
-            <select
-              aria-label='Select the type of the file'
-              disabled={!currentEditor}
-              value={currentEditor?.language ?? irminFileLanguages[0].value}
-              onChange={(event) => {
-                const newValue = event.target.value as IrminFileLanguage;
-                changeLanguage(newValue);
-              }}
-              className='py-1 pr-8 pl-2 text-xs'
-            >
-              {irminFileLanguages.map((fileType) => (
-                <option key={fileType.value} value={fileType.value}>
-                  {fileType.label}
-                </option>
-              ))}
-            </select>
+            {currentEditor && !currentEditor.created && (
+              <select
+                aria-label='Select the type of the file'
+                disabled={!currentEditor}
+                value={currentEditor?.language ?? irminFileLanguages[0].value}
+                onChange={(event) => {
+                  const newValue = event.target.value as IrminFileLanguage;
+                  changeLanguage(newValue);
+                }}
+                className='py-1 pr-8 pl-2 text-xs'
+              >
+                {irminFileLanguages.map((fileType) => (
+                  <option key={fileType.value} value={fileType.value}>
+                    {fileType.label}
+                  </option>
+                ))}
+              </select>
+            )}
             <Button
               size='sm'
               variant='secondary'
@@ -131,7 +133,7 @@ const EditorWithTabs = () => {
         </div>
       )}
       {openFileTabs.length > 0 && currentEditor && (
-        <div className='scrollbar-hide dark:border-irmin_black w-full overflow-x-scroll border-b border-gray-200 px-2 py-1'>
+        <div className='scrollbar-hide w-full overflow-x-scroll border-b border-gray-200 px-2 py-1 dark:border-gray-800'>
           <p className='text-xs opacity-60'>{currentEditor.path}</p>
         </div>
       )}

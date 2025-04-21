@@ -34,6 +34,8 @@ import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 interface EditorContextType {
   items: FileNavigatorItem[];
+  loading: boolean;
+  fetchEditorItems: () => Promise<void>;
   // Editor Tabs and Contents
   openFileTabs: string[];
   activeTab: number;
@@ -79,6 +81,8 @@ export const EditorProvider = ({
   const router = useRouter();
   const { irminModal, irminAlert, irminConfirm } = usePopup();
 
+  const [loading, setLoading] = useState(false);
+
   // State for editor items (flat array of EditorItem)
   const [currentEditorItems, setCurrentEditorItems] =
     useState<EditorItem[]>(editorItems);
@@ -101,7 +105,38 @@ export const EditorProvider = ({
   const [untitledCounter, setUntitledCounter] = useState(1);
 
   // Get the current editor based on active tab
-  const currentEditor = openTabs[activeTabIndex];
+  const currentEditor = useMemo(
+    () => openTabs[activeTabIndex],
+    [openTabs, activeTabIndex]
+  );
+
+  /**
+   * Function to refetch the editor items.
+   */
+  const fetchEditorItems = useCallback(async () => {
+    try {
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const editorItemsRes = await irminCore.editorItemService.listEditorItems({
+        workspace: workspaceSlug,
+        path: '',
+      });
+      if (!editorItemsRes.data) {
+        irminAlert(
+          'error',
+          editorItemsRes.message ?? 'Failed to fetch editor items.'
+        );
+        return;
+      }
+      setCurrentEditorItems(editorItemsRes.data ?? []);
+    } catch (error) {
+      console.error('Error fetching editor items', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to fetch editor items.'
+      );
+    }
+  }, [getToken, locale, workspaceSlug, irminAlert]);
 
   /**
    * Opens a new tab with an untitled file.
@@ -151,10 +186,20 @@ export const EditorProvider = ({
               workspace: workspaceSlug,
               path: filePath,
             });
+          if (!fileContentsRes.data) {
+            irminAlert(
+              'error',
+              fileContentsRes.message ?? 'Failed to load file content.'
+            );
+            return;
+          }
           fileContents = fileContentsRes.data ?? '';
         } catch (error) {
-          irminAlert('error', 'Could not load file content.');
-          console.error('Error loading file content', error);
+          console.error('Error fetching file content', error);
+          irminAlert(
+            'error',
+            (error as Error)?.message ?? 'Failed to load file content.'
+          );
         }
         const language =
           file.current?.type === 'file'
@@ -260,6 +305,7 @@ export const EditorProvider = ({
       if (fileItem.type !== 'file') return;
 
       try {
+        setLoading(true);
         // - Save new file using the server action
         const token = await getToken();
         const irminCore = new IrminCore(locale, token);
@@ -268,14 +314,21 @@ export const EditorProvider = ({
           path: fileItem.path,
           content: fileItem.content ?? '',
         });
+        // - Refetch the editor items
+        await fetchEditorItems();
+        // - Show success message
         irminAlert('success', res.message ?? 'File created successfully');
-        setCurrentEditorItems((prev) => [...prev, fileItem]);
       } catch (error) {
-        irminAlert('error', 'File creation failed.');
         console.error('File creation error', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'File creation failed.'
+        );
+      } finally {
+        setLoading(false);
       }
     },
-    [workspaceSlug, irminAlert, getToken, locale]
+    [workspaceSlug, irminAlert, getToken, locale, fetchEditorItems]
   );
 
   /**
@@ -285,6 +338,7 @@ export const EditorProvider = ({
     if (!currentEditor) return;
     if (currentEditor.created) {
       try {
+        setLoading(true);
         // - Save the file using the server action
         const token = await getToken();
         const irminCore = new IrminCore(locale, token);
@@ -293,18 +347,9 @@ export const EditorProvider = ({
           path: currentEditor.path,
           content: currentEditor.contents,
         });
-        // - Update the editor items state by mapping over the array
-        setCurrentEditorItems((prev) =>
-          prev.map((file) =>
-            file.path === currentEditor.path
-              ? {
-                  ...file,
-                  content: currentEditor.contents,
-                  last_modified: new Date().toISOString(),
-                }
-              : file
-          )
-        );
+        // - Refetch the editor items
+        await fetchEditorItems();
+        // - Update the open tabs state by mapping over the array
         setOpenTabs((prev) =>
           prev.map((tab) =>
             tab.id === currentEditor.id
@@ -312,10 +357,13 @@ export const EditorProvider = ({
               : tab
           )
         );
+        // - Show success message
         irminAlert('success', res.message ?? 'File saved successfully');
       } catch (error) {
-        irminAlert('error', 'File save failed.');
         console.error('File save error', error);
+        irminAlert('error', (error as Error)?.message ?? 'File saving failed.');
+      } finally {
+        setLoading(false);
       }
     } else {
       // - If file is new, show the SaveEditorAsFileModal for a "save as" workflow
@@ -324,7 +372,6 @@ export const EditorProvider = ({
         <SaveEditorAsFileModal
           defaultName={currentEditor.path.split('/').pop() ?? 'Untitled'}
           defaultPath={currentEditor.path}
-          defaultType={currentEditor.language}
           contents={currentEditor.contents}
           editorItems={currentEditorItems}
           createFile={createFile}
@@ -332,6 +379,7 @@ export const EditorProvider = ({
       );
     }
   }, [
+    fetchEditorItems,
     workspaceSlug,
     currentEditor,
     currentEditorItems,
@@ -344,7 +392,7 @@ export const EditorProvider = ({
   ]);
 
   /**
-   * Changes the language of the active tab.
+   * Changes the language of the active tab, as long as it's not yet a created file.
    *
    * @param language - New language for syntax highlighting.
    */
@@ -359,8 +407,8 @@ export const EditorProvider = ({
             const newPath = tab.path.replace(/\.\w+$/, `.${language}`);
             return { ...tab, language, path: newPath };
           }
-          // - Otherwise, just update the language
-          return { ...tab, language };
+          // - Otherwise, don't do anything
+          return tab;
         })
       );
     },
@@ -396,17 +444,25 @@ export const EditorProvider = ({
         createFolder={async (folderItem: EditorItem) => {
           if (folderItem.type !== 'folder') return;
           try {
+            setLoading(true);
             const token = await getToken();
             const irminCore = new IrminCore(locale, token);
             const res = await irminCore.editorItemService.createEditorFolder({
               workspace: workspaceSlug,
               path: folderItem.path,
             });
-            setCurrentEditorItems((prev) => [...prev, folderItem]);
+            // - Refetch the editor items
+            await fetchEditorItems();
+            // - Send a success message
             irminAlert('success', res.message ?? 'Folder created successfully');
           } catch (error) {
-            irminAlert('error', 'Folder creation failed.');
             console.error('Folder creation error', error);
+            irminAlert(
+              'error',
+              (error as Error)?.message ?? 'Folder creation failed.'
+            );
+          } finally {
+            setLoading(false);
           }
         }}
       />
@@ -419,6 +475,7 @@ export const EditorProvider = ({
     dict.fileNavigator.createFolder,
     irminAlert,
     irminModal,
+    fetchEditorItems,
   ]);
 
   /**
@@ -439,30 +496,28 @@ export const EditorProvider = ({
           updateItem={async (updatedItem) => {
             if (!updatedItem.original || !updatedItem.current) return;
             // - Move file if its path has changed
-            if (updatedItem.original.path !== updatedItem.current.path) {
-              try {
-                const token = await getToken();
-                const irminCore = new IrminCore(locale, token);
-                const res = await irminCore.editorItemService.moveEditorItem({
-                  workspace: workspaceSlug,
-                  path: updatedItem.original.path,
-                  destinationPath: updatedItem.current.path,
-                });
-                setCurrentEditorItems((prev) =>
-                  prev.map((f) =>
-                    f.path === updatedItem.original!.path
-                      ? updatedItem.current!
-                      : f
-                  )
-                );
-                irminAlert(
-                  'success',
-                  res.message ?? 'File updated successfully'
-                );
-              } catch (error) {
-                irminAlert('error', 'File update failed.');
-                console.error('File update error', error);
-              }
+            if (updatedItem.original.path == updatedItem.current.path) return;
+            try {
+              setLoading(true);
+              const token = await getToken();
+              const irminCore = new IrminCore(locale, token);
+              const res = await irminCore.editorItemService.moveEditorItem({
+                workspace: workspaceSlug,
+                path: updatedItem.original.path,
+                destinationPath: updatedItem.current.path,
+              });
+              // - Refetch the editor items
+              await fetchEditorItems();
+              // - Send a success message
+              irminAlert('success', res.message ?? 'File updated successfully');
+            } catch (error) {
+              console.error('File update error', error);
+              irminAlert(
+                'error',
+                (error as Error)?.message ?? 'File update failed.'
+              );
+            } finally {
+              setLoading(false);
             }
           }}
         />
@@ -476,6 +531,7 @@ export const EditorProvider = ({
       irminModal,
       getToken,
       locale,
+      fetchEditorItems,
     ]
   );
 
@@ -497,6 +553,7 @@ export const EditorProvider = ({
           copyItem={async (updatedItem) => {
             if (!updatedItem.original || !updatedItem.current) return;
             try {
+              setLoading(true);
               const token = await getToken();
               const irminCore = new IrminCore(locale, token);
               const res = await irminCore.editorItemService.copyEditorItem({
@@ -504,11 +561,18 @@ export const EditorProvider = ({
                 path: updatedItem.original.path,
                 destinationPath: updatedItem.current.path,
               });
-              setCurrentEditorItems((prev) => [...prev, updatedItem.current!]);
+              // - Refetch the editor items
+              await fetchEditorItems();
+              // - Send a success message
               irminAlert('success', res.message ?? 'Item copied successfully');
             } catch (error) {
-              irminAlert('error', 'Item copying failed.');
               console.error('Item copying error', error);
+              irminAlert(
+                'error',
+                (error as Error)?.message ?? 'Item copying failed.'
+              );
+            } finally {
+              setLoading(false);
             }
           }}
         />
@@ -522,6 +586,7 @@ export const EditorProvider = ({
       irminModal,
       getToken,
       locale,
+      fetchEditorItems,
     ]
   );
 
@@ -540,6 +605,7 @@ export const EditorProvider = ({
       ).then(async (confirmed) => {
         if (!confirmed) return;
         try {
+          setLoading(true);
           const editorItem = item.original ?? item.current;
           if (!editorItem) return;
           const token = await getToken();
@@ -548,17 +614,22 @@ export const EditorProvider = ({
             workspace: workspaceSlug,
             path: editorItem.path,
           });
-          // - Update state by filtering out the deleted item
-          setCurrentEditorItems((prev) =>
-            prev.filter((f) => f.path !== item.current!.path)
-          );
+          // - Close the tab if the item is a file
           if (editorItem.type === 'file') {
             closeTab(item.current!.path);
           }
+          // - Refetch the editor items
+          await fetchEditorItems();
+          // - Give a success message
           irminAlert('success', res.message ?? `Item deleted successfully`);
         } catch (error) {
-          irminAlert('error', 'Deletion failed.');
           console.error('Item deletion error', error);
+          irminAlert(
+            'error',
+            (error as Error)?.message ?? 'Item deletion failed.'
+          );
+        } finally {
+          setLoading(false);
         }
       });
     },
@@ -570,6 +641,7 @@ export const EditorProvider = ({
       getToken,
       locale,
       irminConfirm,
+      fetchEditorItems,
     ]
   );
 
@@ -618,6 +690,8 @@ export const EditorProvider = ({
     <EditorContext.Provider
       value={{
         items,
+        loading,
+        fetchEditorItems,
         // Editor Tabs and Contents
         openFileTabs: openTabs.map((tab) => tab.path),
         activeTab: activeTabIndex,

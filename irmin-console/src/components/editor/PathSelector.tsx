@@ -86,8 +86,13 @@ const PathSelector = ({
       }
       setSelectedPath(item.path);
       // Update the parent component with the new path
-      const newPath = item.path + (itemName ? `/${itemName}` : '');
-      onSelectPath(newPath);
+      if (!itemName) onSelectPath(item.path);
+      else {
+        const newPath = item.path.endsWith('/')
+          ? item.path + itemName
+          : item.path + '/' + itemName;
+        onSelectPath(newPath);
+      }
     },
     [itemName, onSelectPath, toggleFolder]
   );
@@ -148,7 +153,7 @@ const PathSelector = ({
       className='relative mb-2 max-h-48 overflow-y-scroll border-b pb-4 dark:border-b-gray-800'
     >
       <div className='my-1'>
-        <button
+        <div
           className={`flex items-center justify-normal rounded-md p-1 text-sm ${rootSelected ? 'bg-gray-200 dark:bg-gray-800' : ''}`}
           onClick={() => handleItemClick()}
         >
@@ -158,7 +163,7 @@ const PathSelector = ({
           <span className='ml-2 cursor-pointer hover:underline'>
             {dict.fileNavigator.rootDirectory}
           </span>
-        </button>
+        </div>
         {renderItems(editorItems)}
       </div>
     </div>

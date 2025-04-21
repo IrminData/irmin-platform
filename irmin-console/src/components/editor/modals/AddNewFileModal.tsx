@@ -18,7 +18,6 @@ import { usePopup } from '@/context/PopupContext';
 import {
   getCorrectNameWithExtension,
   getCorrectPath,
-  getNameWithoutExtension,
   itemCanBeCreated,
 } from '@/utils/editorItems';
 
@@ -29,7 +28,7 @@ import {
 } from '@/types/core/EditorItems';
 
 type FormData = {
-  extension: IrminFileLanguage;
+  extension: { value: IrminFileLanguage; label: string };
   name: string;
   path: string;
 };
@@ -71,9 +70,9 @@ export default function AddNewFileModal({
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
-      extension: irminFileLanguages[0].value,
-      name: '',
-      path: '',
+      extension: irminFileLanguages[0],
+      name: 'example',
+      path: '/example.js',
     },
   });
 
@@ -90,12 +89,12 @@ export default function AddNewFileModal({
     const nameWithExtension = getCorrectNameWithExtension(
       name,
       'file',
-      extensionValue
+      extensionValue.value
     );
     const newPath = getCorrectPath(path, nameWithExtension);
 
     // Update the form values: name without extension and the corrected path.
-    setValue('name', getNameWithoutExtension(nameWithExtension), {
+    setValue('name', nameWithExtension, {
       shouldValidate: true,
       shouldDirty: true,
     });
@@ -124,7 +123,7 @@ export default function AddNewFileModal({
         const nameWithExtension = getCorrectNameWithExtension(
           data.name,
           'file',
-          extensionValue
+          extensionValue.value
         );
         const newPath = data.path;
 
@@ -134,8 +133,7 @@ export default function AddNewFileModal({
           nameWithExtension,
           'file',
           editorItems,
-          dict,
-          extensionValue
+          dict
         );
         if (!canCreate.canCreate) {
           throw new Error(canCreate.reason);
@@ -146,7 +144,7 @@ export default function AddNewFileModal({
           type: 'file',
           name: nameWithExtension,
           path: newPath,
-          language: extensionValue,
+          language: extensionValue.value,
           content: '',
           last_modified: new Date().toISOString(),
         });
@@ -180,11 +178,7 @@ export default function AddNewFileModal({
               {...field}
               aria-label='Select the type of the file'
               isDisabled={loading}
-              options={irminFileLanguages.map((lang) => lang.value)}
-              getOptionLabel={(option) =>
-                irminFileLanguages.find((lang) => lang.value === option)
-                  ?.label || option
-              }
+              options={irminFileLanguages}
               className='react-select-container'
               classNamePrefix='react-select'
             />
@@ -198,12 +192,16 @@ export default function AddNewFileModal({
           control={control}
           rules={{ required: dict.common.fieldRequired }}
           render={({ field }) => (
-            <Input type='text' disabled={loading} {...field} />
+            <>
+              <Input {...field} disabled={loading} />
+              {errors.name && (
+                <p className='mt-1 text-xs text-red-600'>
+                  {errors.name.message}
+                </p>
+              )}
+            </>
           )}
         />
-        {errors.name && (
-          <p className='mt-1 text-xs text-red-600'>{errors.name.message}</p>
-        )}
       </div>
       <div className='flex flex-col gap-2'>
         <Label>{dict.fileNavigator.newFilePath}</Label>
@@ -239,7 +237,7 @@ export default function AddNewFileModal({
       {showPathSelector && (
         <PathSelector
           editorItems={editorItems ?? []}
-          itemName={getCorrectNameWithExtension(name, 'file', extension)}
+          itemName={getCorrectNameWithExtension(name, 'file', extension.value)}
           originalItemPath={null}
           currentSelected={path}
           onSelectPath={(selectedPath: string) => {

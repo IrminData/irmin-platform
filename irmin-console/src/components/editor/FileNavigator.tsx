@@ -33,6 +33,7 @@ import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 const FileNavigator = () => {
   const { dict } = useLocale();
   const {
+    loading,
     items,
     addNewFile,
     addNewFolder,
@@ -132,13 +133,21 @@ const FileNavigator = () => {
                   <FiChevronDown
                     className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
                     aria-label={`Close folder ${item.current.name} in the file navigator`}
-                    onClick={() => handleItemClick(item)}
+                    onClick={() => {
+                      if (!loading) {
+                        handleItemClick(item);
+                      }
+                    }}
                   />
                 ) : (
                   <FiChevronRight
                     className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
                     aria-label={`Open folder ${item.current.name} in the file navigator`}
-                    onClick={() => handleItemClick(item)}
+                    onClick={() => {
+                      if (!loading) {
+                        handleItemClick(item);
+                      }
+                    }}
                   />
                 )
               ) : null}
@@ -148,8 +157,16 @@ const FileNavigator = () => {
               <span
                 className='ml-2 cursor-pointer hover:underline'
                 aria-label={`Open ${item.current.name} ${item.current.type}`}
-                onClick={() => handleItemClick(item)}
-                onContextMenu={(e) => handleContextMenu(e, item)}
+                onClick={() => {
+                  if (!loading) {
+                    handleItemClick(item);
+                  }
+                }}
+                onContextMenu={(e) => {
+                  if (!loading) {
+                    handleContextMenu(e, item);
+                  }
+                }}
               >
                 {item.current.name}
               </span>
@@ -159,6 +176,7 @@ const FileNavigator = () => {
                 onClick={(e) => {
                   handleContextMenu(e, item);
                 }}
+                disabled={loading}
               >
                 <CiMenuKebab />
               </button>
@@ -177,11 +195,11 @@ const FileNavigator = () => {
           </div>
         );
       }),
-    [openFolders, handleItemClick, handleContextMenu]
+    [openFolders, handleItemClick, handleContextMenu, loading]
   );
 
   return (
-    <div id='file-navigator' className='relative'>
+    <div id='file-navigator' className={`${loading ? 'blur-xs' : ''} relative`}>
       <div className='mb-0 flex flex-row justify-stretch gap-0 border-b bg-gray-100 p-0 dark:border-gray-700 dark:bg-gray-800'>
         <Button
           className='w-[40%] rounded-none px-2 py-2 text-xs shadow-none hover:bg-gray-200 lg:w-1/2 lg:text-xs dark:hover:bg-gray-700'
@@ -190,6 +208,7 @@ const FileNavigator = () => {
           onClick={addNewFile}
           icon={<FiFileText size={12} />}
           aria-label='Create a new file'
+          disabled={loading}
         >
           {dict.fileNavigator.createFile}
         </Button>
@@ -200,6 +219,7 @@ const FileNavigator = () => {
           onClick={addNewFolder}
           icon={<FiFolder size={12} />}
           aria-label='Create a new folder'
+          disabled={loading}
         >
           {dict.fileNavigator.createFolder}
         </Button>
@@ -207,10 +227,10 @@ const FileNavigator = () => {
       <div className='max-h-60 overflow-auto border-t px-3 py-4 xl:max-h-96 dark:border-gray-700'>
         {renderItems(items)}
       </div>
-      {contextMenu && contextMenu.visible && (
+      {contextMenu && !loading && contextMenu.visible && (
         <ul
           id='file-navigator-context-menu'
-          className='bg-popover absolute right-2 left-2 rounded-lg border px-4 py-2'
+          className='bg-popover absolute right-2 left-2 rounded-lg border px-4 py-2 dark:border-gray-700'
           style={{ top: `${contextMenu.top}px` }}
         >
           <button
@@ -220,7 +240,7 @@ const FileNavigator = () => {
           >
             <FaTimes size={16} />
           </button>
-          <li className='border-border border-b p-1 pb-2 text-xs'>
+          <li className='border-b p-1 pb-2 text-xs dark:border-gray-800'>
             {contextMenu.item.current?.name ?? contextMenu.item.original?.name}
           </li>
           {contextMenu.item?.current?.type === 'file' && (

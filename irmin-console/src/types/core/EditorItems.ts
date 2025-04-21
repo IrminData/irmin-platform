@@ -8,6 +8,7 @@ export type IrminFileLanguage =
   | 'md'
   | 'txt'
   | 'json';
+
 export const irminFileLanguages: {
   label: string;
   value: IrminFileLanguage;

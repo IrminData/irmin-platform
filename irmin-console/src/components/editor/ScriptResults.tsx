@@ -117,27 +117,34 @@ const ScriptResults = ({
           )}
         </div>
       </div>
-      {activeTab === 'data' &&
-        result?.structured_results &&
-        Object.keys(result.structured_results).length > 0 && (
-          <>
-            {Object.entries(result.structured_results).map(([key, value]) => {
-              const title = key.split('/').pop() || key;
-              return (
-                <TableViewer
-                  key={key}
-                  title={title}
-                  data={value}
-                  metadata={{
-                    rowsReturned: value.length,
-                    timeTaken: result.duration,
-                  }}
-                  loading={showLoadingOnData}
-                />
-              );
-            })}
-          </>
-        )}
+      {activeTab === 'data' && (
+        <>
+          {result?.structured_results &&
+          Object.keys(result.structured_results).length > 0 ? (
+            <>
+              {Object.entries(result.structured_results).map(([key, value]) => {
+                const title = key.split('/').pop() || key;
+                return (
+                  <TableViewer
+                    key={key}
+                    title={title}
+                    data={value}
+                    metadata={{
+                      rowsReturned: value.length,
+                      timeTaken: result.duration,
+                    }}
+                    loading={showLoadingOnData}
+                  />
+                );
+              })}
+            </>
+          ) : (
+            <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
+              {dict.common.noResults}
+            </div>
+          )}
+        </>
+      )}
       {activeTab === 'logs' && (
         <>
           {logs && logs.length > 0 ? (

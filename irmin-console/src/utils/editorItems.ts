@@ -1,10 +1,6 @@
 import { Dictionary } from '@/lib/dict';
 
-import {
-  EditorItem,
-  IrminFileLanguage,
-  irminFileLanguages,
-} from '@/types/core/EditorItems';
+import { EditorItem, IrminFileLanguage } from '@/types/core/EditorItems';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
@@ -20,7 +16,8 @@ export const getCorrectNameWithExtension = (
   type: 'file' | 'folder',
   desiredExtension?: IrminFileLanguage
 ): string => {
-  const nameWithoutExtensions = getNameWithoutExtension(name);
+  // Get the name without the extension
+  const nameWithoutExtensions = name.replace(/\..*$/, '');
   // Replace all non-alphanumeric characters with underscores, except for dots
   const formattedName = nameWithoutExtensions
     .replace(/[^a-zA-Z0-9.]/g, '_')
@@ -28,19 +25,7 @@ export const getCorrectNameWithExtension = (
   // Skip if not a file
   if (type !== 'file') return formattedName;
   // Add extension to the name
-  return `${formattedName}.${desiredExtension ?? 'sql'}`;
-};
-
-/**
- * Get the name of the file without the extension
- *
- * @param name - The name of the file
- * @returns The name of the file without the extension
- */
-export const getNameWithoutExtension = (name: string): string => {
-  // Remove all existing extensions from the name, regex searching .sql, .js and (.*) and replacing with empty string
-  const nameWithoutExtensions = name.replace(/\.(sql|js)(.*)$/, '');
-  return nameWithoutExtensions;
+  return `${formattedName}.${desiredExtension ?? 'js'}`;
 };
 
 /**
@@ -78,7 +63,6 @@ export const flattenEditorItems = (editorItems: EditorItem[]) => {
  * @param type The type of the item being created (file or folder)
  * @param editorItems The editorItems object
  * @param dict The dictionary object
- * @param extension The extension of the file being created, if file (optional)
  * @returns Whether the item can be created and the reason if it cannot
  */
 export const itemCanBeCreated = function (
@@ -86,8 +70,7 @@ export const itemCanBeCreated = function (
   name: string,
   type: string,
   editorItems: EditorItem[] | null,
-  dict: Dictionary,
-  extension?: string
+  dict: Dictionary
 ): {
   canCreate: boolean;
   reason?: string;
@@ -101,15 +84,6 @@ export const itemCanBeCreated = function (
   // Make sure type of item created is correct
   if (type !== 'file' && type !== 'folder')
     return { canCreate: false, reason: dict.fileNavigator.errors.invalidType };
-  // Make sure extension is provided, if file
-  if (type === 'file' && !extension)
-    return { canCreate: false, reason: dict.fileNavigator.errors.noExtension };
-  // Make sure extension is valid, if file
-  if (type === 'file' && !irminFileLanguages.find((a) => a.value === extension))
-    return {
-      canCreate: false,
-      reason: dict.fileNavigator.errors.invalidExtension,
-    };
   // Make sure name is correct and not empty
   const nameWithoutExtensions = name.replace(/\..*$/, '');
   if (nameWithoutExtensions.length === 0)
@@ -120,7 +94,7 @@ export const itemCanBeCreated = function (
   const correctName = getCorrectNameWithExtension(
     name,
     type,
-    extension as IrminFileLanguage
+    getLanguageFromFilename(name)
   );
   if (correctName !== name)
     return { canCreate: false, reason: dict.fileNavigator.errors.invalidName };
@@ -201,7 +175,7 @@ const getParentPath = (path: string, name?: string): string => {
   // If the last element is the name or name is not provided, remove it
   if (!name || pathSegments[pathSegments.length - 1] === name)
     pathSegments.pop();
-  return '/' + pathSegments.join('/');
+  return pathSegments.join('/') + '/';
 };
 
 /**
@@ -222,6 +196,12 @@ export function getLanguageFromFilename(path: string): IrminFileLanguage {
       return 'py';
     case 'sql':
       return 'sql';
+    case 'json':
+      return 'json';
+    case 'md':
+      return 'md';
+    case 'txt':
+      return 'txt';
     // - Default to plaintext if no match is found
     default:
       return 'txt';

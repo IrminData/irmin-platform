@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
-import ReactSelect from 'react-select';
 
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 
@@ -18,20 +17,15 @@ import { usePopup } from '@/context/PopupContext';
 import {
   getCorrectNameWithExtension,
   getCorrectPath,
-  getNameWithoutExtension,
+  getLanguageFromFilename,
   itemCanBeCreated,
 } from '@/utils/editorItems';
 
-import {
-  EditorItem,
-  IrminFileLanguage,
-  irminFileLanguages,
-} from '@/types/core/EditorItems';
+import { EditorItem } from '@/types/core/EditorItems';
 
 type FormData = {
   name: string;
   path: string;
-  extension: IrminFileLanguage;
 };
 
 /**
@@ -41,7 +35,6 @@ type FormData = {
  * @param options - Options for saving the file.
  * @param options.defaultName The default file name.
  * @param options.defaultPath The default file path.
- * @param options.defaultType The default file type.
  * @param options.contents The contents of the new file.
  * @param options.editorItems The current editor items (workspace context).
  * @param options.createFile Function to create the new file.
@@ -50,14 +43,12 @@ type FormData = {
 export default function SaveEditorAsFileModal({
   defaultName,
   defaultPath,
-  defaultType,
   contents,
   editorItems,
   createFile,
 }: {
   defaultName: string;
   defaultPath: string;
-  defaultType: IrminFileLanguage;
   contents: string;
   editorItems: EditorItem[] | null;
   createFile: (file: EditorItem) => void;
@@ -82,42 +73,27 @@ export default function SaveEditorAsFileModal({
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
-      name: getNameWithoutExtension(defaultName),
+      name: defaultName,
       path: defaultPath,
-      extension:
-        irminFileLanguages.find((lang) => lang.value === defaultType)?.value ||
-        irminFileLanguages[0].value,
     },
   });
 
   const name = watch('name');
   const path = watch('path');
-  const extension = watch('extension');
 
   /**
    * Update the file name and path whenever the name or extension changes.
    * This ensures that the file name always contains the correct extension and the path is updated accordingly.
    */
   const updatePathAndName = useCallback(() => {
-    const nameWithExtension = getCorrectNameWithExtension(
-      name,
-      'file',
-      extension
-    );
-    const newPath = getCorrectPath(path, nameWithExtension);
-
-    // Update form values: remove any duplicate extension from the name and correct the path.
-    setValue('name', getNameWithoutExtension(nameWithExtension), {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
+    const newPath = getCorrectPath(path, name);
     setValue('path', newPath, { shouldValidate: true, shouldDirty: true });
-  }, [name, path, extension, setValue]);
+  }, [name, path, setValue]);
 
   // Recalculate file name and path when name or extension changes.
   useEffect(() => {
     updatePathAndName();
-  }, [name, extension, updatePathAndName]);
+  }, [name, updatePathAndName]);
 
   /**
    * Handles the submission of the "Save as File" modal.
@@ -132,22 +108,15 @@ export default function SaveEditorAsFileModal({
         setError('');
         setLoading(true);
 
-        const extensionValue = data.extension;
-        const nameWithExtension = getCorrectNameWithExtension(
-          data.name,
-          'file',
-          extensionValue
-        );
         const newPath = data.path;
 
         // Validate if the new file can be created.
         const canCreate = itemCanBeCreated(
           newPath,
-          nameWithExtension,
+          data.name,
           'file',
           editorItems,
-          dict,
-          extensionValue
+          dict
         );
         if (!canCreate.canCreate) {
           throw new Error(canCreate.reason);
@@ -156,9 +125,9 @@ export default function SaveEditorAsFileModal({
         // Call the createFile function to add the new file.
         createFile({
           type: 'file',
-          name: nameWithExtension,
+          name: data.name,
           path: newPath,
-          language: extensionValue,
+          language: getLanguageFromFilename(newPath),
           content: contents,
           last_modified: new Date().toISOString(),
         });
@@ -182,26 +151,6 @@ export default function SaveEditorAsFileModal({
       className='flex flex-col gap-4 pb-6'
       id='save-editor-as-file-modal'
     >
-      <div>
-        <Controller
-          name='extension'
-          control={control}
-          render={({ field }) => (
-            <ReactSelect
-              {...field}
-              aria-label='Select the file type'
-              isDisabled={loading}
-              options={irminFileLanguages.map((lang) => lang.value)}
-              getOptionLabel={(option) =>
-                irminFileLanguages.find((lang) => lang.value === option)
-                  ?.label ?? option
-              }
-              className='react-select-container'
-              classNamePrefix='react-select'
-            />
-          )}
-        />
-      </div>
       <div className='flex flex-col gap-2'>
         <Label>{dict.fileNavigator.newFileName}</Label>
         <Controller
@@ -246,7 +195,11 @@ export default function SaveEditorAsFileModal({
       {showPathSelector && (
         <PathSelector
           editorItems={editorItems ?? []}
-          itemName={getCorrectNameWithExtension(name, 'file', extension)}
+          itemName={getCorrectNameWithExtension(
+            name,
+            'file',
+            getLanguageFromFilename(name)
+          )}
           originalItemPath={null}
           currentSelected={path}
           onSelectPath={(selectedPath: string) => {
