@@ -131,7 +131,7 @@ const TableViewer = ({
         </div>
       </div>
       {/* Content */}
-      <div className='flex h-0 flex-1 flex-col overflow-hidden'>
+      <div className='flex h-0 flex-1 flex-col overflow-hidden overflow-y-scroll'>
         {loading ? (
           <LoadingSkeleton className='h-96' />
         ) : isSimpleArrayOfObjects ? (

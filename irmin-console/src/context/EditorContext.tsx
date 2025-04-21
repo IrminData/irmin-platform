@@ -665,7 +665,7 @@ export const EditorProvider = ({
         irminAlert('info', dict.editor.scriptExecutionStarted);
         const token = await getToken();
         const irminCore = new IrminCore(locale, token);
-        const res = await irminCore.editorItemService.createEditorFolder({
+        const res = await irminCore.editorItemService.runScript({
           workspace: workspaceSlug,
           path,
         });
