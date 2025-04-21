@@ -179,20 +179,24 @@ func (bucket *BucketClient) DownloadFolder(ctx context.Context, folderPrefix, lo
 
 		// Compute the relative path by removing the folder prefix from the object key
 		relPath := strings.TrimPrefix(*object.Key, folderPrefix)
+		// Skip folder placeholder objects or empty relative paths
+		if relPath == "" || strings.HasSuffix(*object.Key, "/") {
+			continue
+		}
+
 		// Construct the local file path
 		localPath := filepath.Join(localDir, relPath)
-
-		// Create local directory structure if it does not exist
+		// Determine the directory portion of the local path
 		dir := filepath.Dir(localPath)
 
-		// Check if the target directory exists but is not a directory
+		// If a file exists where a directory should be, remove it
 		if stat, err := os.Stat(dir); err == nil && !stat.IsDir() {
-			// Remove the file that conflicts with the directory path
 			if err := os.Remove(dir); err != nil {
 				return fmt.Errorf("error removing conflicting file at %s: %v", dir, err)
 			}
 		}
 
+		// Create local directory structure if it does not exist
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return fmt.Errorf("error creating directory %s: %v", dir, err)
 		}
