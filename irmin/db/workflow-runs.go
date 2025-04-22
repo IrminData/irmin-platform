@@ -55,13 +55,12 @@ func CreateWorkflowRun(run *WorkflowRun) (*WorkflowRun, error) {
 	return run, nil
 }
 
-func UpdateWorkflowRun(id uint, updates map[string]any) (*WorkflowRun, error) {
-	var run WorkflowRun
-	if err := DB.Model(&WorkflowRun{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+func UpdateWorkflowRun(run *WorkflowRun) (*WorkflowRun, error) {
+	if err := DB.Save(&run).Error; err != nil {
 		return nil, err
 	}
-	if err := DB.Preload("TriggeredBy").Preload("TriggeredByUser").Preload("Workflow").First(&run, id).Error; err != nil {
+	if err := DB.Preload("TriggeredBy").Preload("TriggeredByUser").Preload("Workflow").First(&run, run.ID).Error; err != nil {
 		return nil, err
 	}
-	return &run, nil
+	return run, nil
 }

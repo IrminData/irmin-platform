@@ -11,13 +11,18 @@ import (
 func ExecuteWorkflow(ctx context.Context, workflow db.Workflow, user *db.User, trigger *db.WorkflowTrigger) (*db.WorkflowRun, error) {
 	// Save the workflow run to the database.
 	startedAt := time.Now()
-	run, err := db.CreateWorkflowRun(&db.WorkflowRun{
-		Status:            db.WorkflowStatusRunning,
-		StartedAt:         &startedAt,
-		WorkflowID:        workflow.ID,
-		TriggeredByUserID: &user.ID,
-		TriggeredByID:     &trigger.ID,
-	})
+	run := &db.WorkflowRun{
+		Status:     db.WorkflowStatusPending,
+		StartedAt:  &startedAt,
+		WorkflowID: workflow.ID,
+	}
+	if user != nil {
+		run.TriggeredByUserID = &user.ID
+	}
+	if trigger != nil {
+		run.TriggeredByID = &trigger.ID
+	}
+	run, err := db.CreateWorkflowRun(run)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create workflow run: %w", err)
 	}
@@ -29,37 +34,65 @@ func ExecuteWorkflow(ctx context.Context, workflow db.Workflow, user *db.User, t
 	// Process further based on the workflow type.
 	switch workflow.Type {
 	case db.WorkflowableTypeAction:
-		// Execute the action workflowable.
-		executionLogs, err := ExecuteActionWorkflowable(ctx, &workflow, workflow.Action, run)
+		// Fetch the action workflowable from the database.
+		actionWorkflowable, err := db.GetActionWorkflowableByID(*workflow.ActionID)
 		if err != nil {
-			log.Printf("Failed to execute action workflowable: %v", err)
+			log.Printf("Failed to get action workflowable: %v", err)
 			hasError = true
+		} else {
+			// Execute the action workflowable.
+			executionLogs, err := ExecuteActionWorkflowable(ctx, &workflow, actionWorkflowable, run)
+			if err != nil {
+				log.Printf("Failed to execute action workflowable: %v", err)
+				hasError = true
+			}
+			logs = append(logs, executionLogs...)
 		}
-		logs = append(logs, executionLogs...)
 	case db.WorkflowableTypeExport:
-		// Execute the export workflowable.
-		executionLogs, err := ExecuteExportWorkflowable(ctx, &workflow, workflow.Export, run)
+		// Fetch the export workflowable from the database.
+		exportWorkflowable, err := db.GetExportWorkflowableByID(*workflow.ExportID)
 		if err != nil {
-			log.Printf("Failed to execute export workflowable: %v", err)
+			log.Printf("Failed to get export workflowable: %v", err)
 			hasError = true
+		} else {
+			// Execute the export workflowable.
+			executionLogs, err := ExecuteExportWorkflowable(ctx, &workflow, exportWorkflowable, run)
+			if err != nil {
+				log.Printf("Failed to execute export workflowable: %v", err)
+				hasError = true
+			}
+			logs = append(logs, executionLogs...)
 		}
-		logs = append(logs, executionLogs...)
 	case db.WorkflowableTypeImport:
-		// Execute the import workflowable.
-		executionLogs, err := ExecuteImportWorkflowable(ctx, &workflow, workflow.Import, run)
+		// Fetch the import workflowable from the database.
+		importWorkflowable, err := db.GetImportWorkflowableByID(*workflow.ImportID)
 		if err != nil {
-			log.Printf("Failed to execute import workflowable: %v", err)
+			log.Printf("Failed to get import workflowable: %v", err)
 			hasError = true
+		} else {
+			// Execute the import workflowable.
+			executionLogs, err := ExecuteImportWorkflowable(ctx, &workflow, importWorkflowable, run)
+			if err != nil {
+				log.Printf("Failed to execute import workflowable: %v", err)
+				hasError = true
+			}
+			logs = append(logs, executionLogs...)
 		}
-		logs = append(logs, executionLogs...)
 	case db.WorkflowableTypePipeline:
-		// Execute the pipeline workflowable.
-		executionLogs, err := ExecutePipelineWorkflowable(ctx, &workflow, workflow.Pipeline, run)
+		// Fetch the pipeline workflowable from the database.
+		pipelineWorkflowable, err := db.GetPipelineWorkflowableByID(*workflow.PipelineID)
 		if err != nil {
-			log.Printf("Failed to execute pipeline workflowable: %v", err)
+			log.Printf("Failed to get pipeline workflowable: %v", err)
 			hasError = true
+		} else {
+			// Execute the pipeline workflowable.
+			executionLogs, err := ExecutePipelineWorkflowable(ctx, &workflow, pipelineWorkflowable, run)
+			if err != nil {
+				log.Printf("Failed to execute pipeline workflowable: %v", err)
+				hasError = true
+			}
+			logs = append(logs, executionLogs...)
 		}
-		logs = append(logs, executionLogs...)
 	default:
 		logs = append(logs, fmt.Sprintf("Unknown workflow type: %s", workflow.Type))
 		hasError = true
@@ -67,15 +100,13 @@ func ExecuteWorkflow(ctx context.Context, workflow db.Workflow, user *db.User, t
 
 	// Update the workflow run once the previous process is finished.
 	finishedAt := time.Now()
-	nextStatus := db.WorkflowStatusComplete
+	run.Status = db.WorkflowStatusComplete
 	if hasError {
-		nextStatus = db.WorkflowStatusError
+		run.Status = db.WorkflowStatusError
 	}
-	run, err = db.UpdateWorkflowRun(run.ID, map[string]any{
-		"status":      nextStatus,
-		"finished_at": &finishedAt,
-		"logs":        logs,
-	})
+	run.FinishedAt = &finishedAt
+	run.Logs = logs
+	run, err = db.UpdateWorkflowRun(run)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update workflow run: %w", err)
 	}

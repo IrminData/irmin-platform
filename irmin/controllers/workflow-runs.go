@@ -8,6 +8,7 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
+	"time"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
@@ -188,9 +189,11 @@ func WorkflowRunsDestroy(c fiber.Ctx) error {
 
 	// Change the workflow run status to cancelled.
 	workflowRun.Status = db.WorkflowStatusCancelled
-	workflowRun, err = db.UpdateWorkflowRun(uint(workflowRunID), map[string]any{
-		"status": db.WorkflowStatusCancelled,
-	})
+	finishedAt := time.Now()
+	workflowRun.FinishedAt = &finishedAt
+	workflowRun.Logs = append(workflowRun.Logs, "Workflow run cancelled")
+	workflowRun.Status = db.WorkflowStatusCancelled
+	workflowRun, err = db.UpdateWorkflowRun(workflowRun)
 	if err != nil {
 		log.Printf("Error cancelling workflow run: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
