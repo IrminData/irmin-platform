@@ -23,7 +23,7 @@ type WorkflowRun struct {
 
 func GetWorkflowRunsByWorkflowID(workflowID uint) ([]WorkflowRun, error) {
 	var workflowRuns []WorkflowRun
-	result := DB.Preload("TriggeredBy").Preload("TriggeredByUser").Preload("Workflow").Where("workflow_id = ?", workflowID).Find(&workflowRuns)
+	result := DB.Preload("TriggeredBy").Preload("TriggeredByUser").Preload("Workflow").Where("workflow_id = ?", workflowID).Order("created_at desc").Find(&workflowRuns)
 	return workflowRuns, result.Error
 }
 

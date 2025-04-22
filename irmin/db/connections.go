@@ -32,7 +32,7 @@ func GetConnectionByID(id uint) (*Connection, error) {
 // GetConnectionsByWorkspaceID finds all connections in a workspace
 func GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, error) {
 	var connections []Connection
-	if err := DB.Preload("Owner").Preload("Connector").Where("workspace_id = ?", workspaceID).Find(&connections).Error; err != nil {
+	if err := DB.Preload("Owner").Preload("Connector").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&connections).Error; err != nil {
 		return nil, err
 	}
 	return connections, nil

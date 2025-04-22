@@ -33,7 +33,7 @@ func CheckIfRepositoryExists(slug string, workspaceID uint) bool {
 
 func GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, error) {
 	var repositories []Repository
-	err := DB.Where("workspace_id = ?", workspaceID).Preload("Owner").Find(&repositories).Error
+	err := DB.Where("workspace_id = ?", workspaceID).Preload("Owner").Order("created_at desc").Find(&repositories).Error
 	return repositories, err
 }
 

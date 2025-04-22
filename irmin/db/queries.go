@@ -25,7 +25,7 @@ func GetStoredQueryByID(id uint) (*StoredQuery, error) {
 
 func GetStoredQueriesByWorkspaceID(workspaceID uint) ([]StoredQuery, error) {
 	var queries []StoredQuery
-	if err := DB.Preload("Owner").Preload("Workspace").Where("workspace_id = ?", workspaceID).Find(&queries).Error; err != nil {
+	if err := DB.Preload("Owner").Preload("Workspace").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&queries).Error; err != nil {
 		return nil, err
 	}
 	return queries, nil

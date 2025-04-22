@@ -52,7 +52,7 @@ func GetUserByClerkID(clerkID string) (*User, error) {
 // GetWorkspaceUser retrieves a workspace user record from the database by the workspace and user IDs.
 func GetWorkspaceUser(workspaceID, userID uint) (*WorkspaceUser, error) {
 	var workspaceUser WorkspaceUser
-	if err := DB.Preload("User").Where("workspace_id = ? AND user_id = ?", workspaceID, userID).First(&workspaceUser).Error; err != nil {
+	if err := DB.Preload("User").Where("workspace_id = ? AND user_id = ?", workspaceID, userID).Order("created_at desc").First(&workspaceUser).Error; err != nil {
 		return nil, err
 	}
 	return &workspaceUser, nil
@@ -89,6 +89,7 @@ func GetUserWorkspaces(userID uint) ([]WorkspaceUser, error) {
 	// and preload associated Workspace.
 	if err := DB.Where("user_id = ?", userID).
 		Preload("Workspace").
+		Order("created_at desc").
 		Find(&workspaceUsers).Error; err != nil {
 		return nil, err
 	}
@@ -133,6 +134,7 @@ func GetUsersInWorkspace(workspaceID uint) ([]WorkspaceUser, error) {
 	// and preload associated User.
 	if err := DB.Where("workspace_id = ?", workspaceID).
 		Preload("User").
+		Order("created_at desc").
 		Find(&workspaceUsers).Error; err != nil {
 		return nil, err
 	}

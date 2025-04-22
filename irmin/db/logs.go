@@ -44,6 +44,7 @@ func GetLogEventsForWorkspace(workspaceID uint) ([]LogEvent, error) {
 		Preload("WorkflowRun").
 		Preload("Connection").
 		Where("workspace_id = ?", workspaceID).
+		Order("created_at desc").
 		Find(&events).Error; err != nil {
 		return nil, err
 	}
@@ -61,6 +62,7 @@ func GetLogEventsByWorkspaceAndAsset(workspaceID uint, assetType string, assetID
 		Preload("Workflow").
 		Preload("WorkflowRun").
 		Preload("Connection").
+		Order("created_at desc").
 		Where("workspace_id = ?", workspaceID)
 
 	// Append additional asset-specific filtering

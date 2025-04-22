@@ -24,7 +24,7 @@ type Invite struct {
 
 func GetInvitesByWorkspace(workspaceID uint) ([]Invite, error) {
 	var invites []Invite
-	result := DB.Preload("InvitedBy").Preload("Workspace").Where("workspace_id = ?", workspaceID).Find(&invites)
+	result := DB.Preload("InvitedBy").Preload("Workspace").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&invites)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -33,7 +33,7 @@ func GetInvitesByWorkspace(workspaceID uint) ([]Invite, error) {
 
 func GetInvitesByEmail(email string) ([]Invite, error) {
 	var invites []Invite
-	result := DB.Preload("InvitedBy").Preload("Workspace").Where("email = ?", email).Find(&invites)
+	result := DB.Preload("InvitedBy").Preload("Workspace").Where("email = ?", email).Order("created_at desc").Find(&invites)
 	if result.Error != nil {
 		return nil, result.Error
 	}

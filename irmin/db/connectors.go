@@ -40,7 +40,7 @@ type Connector struct {
 // GetAllConnectors retrieves all connectors from the database.
 func GetAllConnectors() ([]Connector, error) {
 	var connectors []Connector
-	if err := DB.Find(&connectors).Error; err != nil {
+	if err := DB.Order("created_at desc").Find(&connectors).Error; err != nil {
 		return nil, err
 	}
 	return connectors, nil

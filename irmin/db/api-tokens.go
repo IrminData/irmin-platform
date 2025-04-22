@@ -38,7 +38,7 @@ func GetAPITokenByToken(token string) (*APIToken, error) {
 // GetAPITokensByUserID retrieves all API tokens for a user.
 func GetAPITokensByUserID(userID uint) ([]APIToken, error) {
 	var tokens []APIToken
-	if err := DB.Where("user_id = ?", userID).Find(&tokens).Error; err != nil {
+	if err := DB.Where("user_id = ?", userID).Order("created_at desc").Find(&tokens).Error; err != nil {
 		return nil, err
 	}
 	return tokens, nil

@@ -119,14 +119,14 @@ type PipelineStage struct {
 // GetWorkflowsByWorkspaceID retrieves all workflows for a workspace
 func GetWorkflowsByWorkspaceID(workspaceID uint) ([]Workflow, error) {
 	var workflows []Workflow
-	result := DB.Preload("Owner").Where("workspace_id = ?", workspaceID).Find(&workflows)
+	result := DB.Preload("Owner").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&workflows)
 	return workflows, result.Error
 }
 
 // GetWorkflowsOfTypeByWorkspaceID retrieves all workflows of a specific type for a workspace
 func GetWorkflowsOfTypeByWorkspaceID(workspaceID uint, workflowType WorkflowableType) ([]Workflow, error) {
 	var workflows []Workflow
-	result := DB.Preload("Owner").Where("workspace_id = ? AND type = ?", workspaceID, workflowType).Find(&workflows)
+	result := DB.Preload("Owner").Where("workspace_id = ? AND type = ?", workspaceID, workflowType).Order("created_at desc").Find(&workflows)
 	return workflows, result.Error
 }
 
