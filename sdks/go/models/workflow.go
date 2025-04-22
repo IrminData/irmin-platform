@@ -12,6 +12,7 @@ const (
 type WorkflowStatus string
 
 const (
+	WorkflowStatusEmpty      WorkflowStatus = ""
 	WorkflowStatusPaused     WorkflowStatus = "paused"
 	WorkflowStatusPending    WorkflowStatus = "pending"
 	WorkflowStatusInitiating WorkflowStatus = "initiating"
