@@ -429,8 +429,8 @@ export const RepositoryProvider = ({
           path: path ?? '/',
           ref: ref ?? currentRef,
         });
-        if (!path) setRootObject(foundObject.data);
-        return foundObject.data;
+        if (!path) setRootObject(foundObject.data ?? undefined);
+        return foundObject.data ?? undefined;
       } catch (error) {
         console.error('RepositoryContext fetchObject error', error);
         irminAlert(
@@ -628,7 +628,7 @@ export const RepositoryProvider = ({
           path,
           ref: currentRef,
         });
-        return res.data;
+        return res.data ?? undefined;
       } catch (error) {
         console.error('RepositoryContext fetchObjectSchema error', error);
         irminAlert(

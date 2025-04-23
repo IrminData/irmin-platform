@@ -41,5 +41,5 @@ export default async function ConnectionSchemaPage(props: {
     token,
   });
 
-  return <ConnectionSchemaSection pullSchema={pullSchema.data} />;
+  return <ConnectionSchemaSection pullSchema={pullSchema.data ?? undefined} />;
 }

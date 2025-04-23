@@ -41,7 +41,7 @@ export type IrminAPIResponse<T = unknown> = {
   /** Errors from the API response */
   errors?: string[];
   /** Data from the API response */
-  data?: T;
+  data?: T | null;
 };
 
 /**

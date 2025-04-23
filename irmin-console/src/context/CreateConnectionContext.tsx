@@ -190,7 +190,7 @@ export const CreateConnectionProvider: React.FC<{
           });
         setConnectionData((prev) => ({
           ...prev,
-          connectionDetailsFields: res.data,
+          connectionDetailsFields: res.data ?? undefined,
         }));
       } catch (error) {
         console.error('Fetch connection details error:', error);
@@ -282,7 +282,7 @@ export const CreateConnectionProvider: React.FC<{
 
       setConnectionData((prev) => ({
         ...prev,
-        connectionSettingsFields: res.data,
+        connectionSettingsFields: res.data ?? undefined,
       }));
     } catch (error) {
       console.error('Fetch connection settings error:', error);
