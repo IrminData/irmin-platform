@@ -52,11 +52,10 @@ func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
 	schemaRestrictions := irminModels.GroupSchemaRestrictions{
 		OnlyStructured: func(b bool) *bool { return &b }(true),
 	}
-	schema := irminModels.ObjectSchemaGroup{
-		ObjectSchemaBase: irminModels.ObjectSchemaBase{
-			Name: *database,
-			Path: "/" + *database,
-		},
+	schema := irminModels.ObjectSchema{
+		Type:         irminModels.ObjectSchemaTypeGroup,
+		Name:         *database,
+		Path:         "/" + *database,
 		Restrictions: &schemaRestrictions,
 		Children:     []irminModels.ObjectSchema{},
 	}
@@ -81,16 +80,17 @@ func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Each table is represented as an array of row objects
-		tableSchema := irminModels.ObjectSchemaStructured{
-			ObjectSchemaBase: irminModels.ObjectSchemaBase{
-				Name: tbl + ".json",
-				Path: "/" + *database + "/" + tbl + ".json",
-			},
-			ContentType: func(s string) *string { return &s }("application/json"),
-			Schema: irminModels.JSONSchema{
-				Type:  "array",
-				Items: &rowSchema,
-			},
+		contentType := "application/json"
+		tableJsonSchema := irminModels.JSONSchema{
+			Type:  "array",
+			Items: &rowSchema,
+		}
+		tableSchema := irminModels.ObjectSchema{
+			Name:        tbl + ".json",
+			Path:        "/" + *database + "/" + tbl + ".json",
+			Type:        irminModels.ObjectSchemaTypeStructured,
+			ContentType: &contentType,
+			Schema:      &tableJsonSchema,
 		}
 
 		schema.Children = append(schema.Children, tableSchema)
