@@ -219,6 +219,16 @@ const WorkflowSection = () => {
           {workflow.type === 'import' && (
             <div className='flex flex-col gap-1'>
               <p className='text-sm opacity-60'>
+                {dict.workflow.importSourceConnectionPath}
+              </p>
+              <p className='text-base'>
+                {workflow.workflowable.connection_path ?? '/'}
+              </p>
+            </div>
+          )}
+          {workflow.type === 'import' && (
+            <div className='flex flex-col gap-1'>
+              <p className='text-sm opacity-60'>
                 {dict.workflow.importDestinationRepository}
               </p>
               <Link
@@ -246,7 +256,7 @@ const WorkflowSection = () => {
               <p className='text-sm opacity-60'>
                 {dict.workflow.importDestinationPath}
               </p>
-              <p className='text-base'>{workflow.workflowable.path}</p>
+              <p className='text-base'>{workflow.workflowable.path ?? '/'}</p>
             </div>
           )}
           {workflow.type === 'export' && (
@@ -264,6 +274,16 @@ const WorkflowSection = () => {
                   )?.name ?? '-'}
                 </p>
               </Link>
+            </div>
+          )}
+          {workflow.type === 'export' && (
+            <div className='flex flex-col gap-1'>
+              <p className='text-sm opacity-60'>
+                {dict.workflow.exportDestinationConnectionPath}
+              </p>
+              <p className='text-base'>
+                {workflow.workflowable.connection_path ?? '/'}
+              </p>
             </div>
           )}
           {workflow.type === 'export' && (

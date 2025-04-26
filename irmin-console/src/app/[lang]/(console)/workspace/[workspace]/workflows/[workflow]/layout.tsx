@@ -98,7 +98,7 @@ export default async function WorkflowLayout(
 
   return (
     <WorkflowProvider
-      runs={runs.data ?? []}
+      initialRuns={runs.data ?? []}
       initialWorkflow={workflow.data}
       connections={connections.data ?? []}
       repositories={repositories.data ?? []}

@@ -17,6 +17,9 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
+        hostname: 'localhost',
+      },
+      {
         protocol: 'https',
         hostname: '**.irmin.dev',
         port: '',

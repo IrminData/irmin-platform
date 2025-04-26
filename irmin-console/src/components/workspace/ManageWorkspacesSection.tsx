@@ -174,7 +174,7 @@ const ManageWorkspacesSection = ({
                 >
                   {workspaces.map((workspace, idx) => (
                     <div
-                      className='w-1/2 p-2 lg:w-full lg:max-w-60'
+                      className='w-full min-w-1/2 p-2 lg:max-w-60'
                       key={`select-workspace-card-${idx}`}
                     >
                       <WorkspaceCard

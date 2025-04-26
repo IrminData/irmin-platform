@@ -39,7 +39,7 @@ export default function WorkflowLayoutWrapper({
 }) {
   const pathname = usePathname();
   const { dict } = useLocale();
-  const { workflow, triggerWorkflowRun } = useWorkflow();
+  const { workflow, triggerWorkflowRun, runningWorkflow } = useWorkflow();
 
   // The base URL for the workflow, eg. /en/workspace/workspace-slug/workflows/workflow-id
   const baseUrl = useBaseUrl({
@@ -178,7 +178,7 @@ export default function WorkflowLayoutWrapper({
               variant='default'
               size='lg'
               icon={<TbPlayerPlay size={14} />}
-              loadingText={dict.workflow.triggeringRun}
+              loading={runningWorkflow}
             >
               {dict.workflow.triggerRun}
             </Button>

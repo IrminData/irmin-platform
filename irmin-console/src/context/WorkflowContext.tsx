@@ -36,6 +36,7 @@ interface WorkflowContextProps {
   deleteWorkflow: () => Promise<void>;
   pauseWorkflow: () => Promise<void>;
   resumeWorkflow: () => Promise<void>;
+  runningWorkflow: boolean;
   triggerWorkflowRun: () => Promise<void>;
 }
 
@@ -49,20 +50,20 @@ const WorkflowContext = createContext<WorkflowContextProps | undefined>(
  * @param props - The properties of the workflow provider
  * @param props.children - The children components
  * @param props.initialWorkflow - The initial workflow to set
- * @param props.runs - The runs of the workflow
+ * @param props.initialRuns - The runs of the workflow
  * @param props.connections - The connections of the workflow
  * @param props.repositories - The repositories of the workflow
  */
 export const WorkflowProvider = ({
   children,
   initialWorkflow,
-  runs,
+  initialRuns,
   connections,
   repositories,
 }: {
   children: React.ReactNode;
   initialWorkflow: Workflow;
-  runs: WorkflowRun[];
+  initialRuns: WorkflowRun[];
   connections: Connection[];
   repositories: Repository[];
 }) => {
@@ -76,6 +77,7 @@ export const WorkflowProvider = ({
 
   // Active Workflow for the context
   const [workflow, setWorkflow] = useState(initialWorkflow);
+  const [runs, setRuns] = useState(initialRuns);
   const workflowID = useMemo(() => workflow.id, [workflow.id]);
 
   const fetchWorkflow = useCallback(async () => {
@@ -95,6 +97,24 @@ export const WorkflowProvider = ({
       );
     }
   }, [workflowID, workspaceSlug, irminAlert, getToken, locale]);
+
+  const fetchWorkflowRuns = useCallback(async () => {
+    try {
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const newRuns = await irminCore.workflowRunService.fetchWorkflowRuns({
+        workspace: workspaceSlug,
+        workflowID,
+      });
+      if (!newRuns.data) return;
+      setRuns(newRuns.data);
+    } catch (error) {
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to fetch the workflow runs'
+      );
+    }
+  }, [workflowID, workspaceSlug, getToken, locale]);
 
   const handleDeleteWorkflow = useCallback(async () => {
     const confirmed = await irminConfirm(
@@ -251,9 +271,11 @@ export const WorkflowProvider = ({
     }
   }, [workflowID, workspaceSlug, fetchWorkflow, irminAlert, getToken, locale]);
 
+  const [runningWorkflow, setRunningWorkflow] = useState(false);
   const handleTriggerWorkflowRun = useCallback(async () => {
     if (updating.current) return;
     try {
+      setRunningWorkflow(true);
       updating.current = true;
       const token = await getToken();
       const irminCore = new IrminCore(locale, token);
@@ -261,6 +283,7 @@ export const WorkflowProvider = ({
         workspace: workspaceSlug,
         workflowID,
       });
+      await fetchWorkflowRuns();
       irminAlert('success', res.message ?? 'Workflow run triggered');
     } catch (error) {
       irminAlert(
@@ -268,9 +291,17 @@ export const WorkflowProvider = ({
         (error as Error)?.message ?? 'Failed to trigger the workflow run'
       );
     } finally {
+      setRunningWorkflow(false);
       updating.current = false;
     }
-  }, [workflowID, workspaceSlug, irminAlert, getToken, locale]);
+  }, [
+    workflowID,
+    workspaceSlug,
+    fetchWorkflowRuns,
+    irminAlert,
+    getToken,
+    locale,
+  ]);
 
   return (
     <WorkflowContext.Provider
@@ -285,6 +316,7 @@ export const WorkflowProvider = ({
         transferWorkflow: handleTransferOwnershipWorkflow,
         pauseWorkflow: handlePauseWorkflow,
         resumeWorkflow: handleResumeWorkflow,
+        runningWorkflow,
         triggerWorkflowRun: handleTriggerWorkflowRun,
       }}
     >
