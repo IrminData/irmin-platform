@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"irmin-api/db"
+	"irmin-api/engine"
 	"irmin-api/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
@@ -314,5 +315,41 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Message: dict.T("connection_updated"),
 		Data:    connectionResponse,
+	})
+}
+
+func ConnectionSchema(c fiber.Ctx) error {
+	locale := c.Locals("locale").(string)
+	dict := c.Locals("dict").(locales.Dictionary)
+	connection := c.Locals("connection").(*db.Connection)
+
+	// Get the operation method from query params
+	query, err := utils.ParseQueryParams(c, nil, []string{"operation_method"})
+	if err != nil {
+		log.Printf("Error parsing query params: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("invalid_request")},
+		})
+	}
+	operationMethod := query["operation_method"]
+	if operationMethod == "" {
+		operationMethod = "pull"
+	}
+
+	// Initialize Data Engine client
+	DataEngine := engine.NewClient(locale)
+
+	// Get the schema of the connection
+	schema, err := DataEngine.DataMovementSchema(c.Context(), connection, operationMethod)
+	if err != nil {
+		log.Printf("Error getting connection schema: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Return the response.
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+		Data: schema,
 	})
 }

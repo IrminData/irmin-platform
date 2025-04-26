@@ -133,7 +133,7 @@ func GetWorkflowsOfTypeByWorkspaceID(workspaceID uint, workflowType Workflowable
 // GetWorkflowByID retrieves a workflow by its ID
 func GetWorkflowByID(id uint) (*Workflow, error) {
 	var workflow Workflow
-	result := DB.Preload("Owner").Preload("Schedule").Preload("Schedule.Triggers").Preload("Schedule.Triggers.Repository").First(&workflow, id)
+	result := DB.Preload("Owner").Preload("Workspace").Preload("Schedule").Preload("Schedule.Triggers").Preload("Schedule.Triggers.Repository").First(&workflow, id)
 	return &workflow, result.Error
 }
 
@@ -213,7 +213,7 @@ func UpdateWorkflow(id uint, updates map[string]any) (*Workflow, error) {
 		return nil, err
 	}
 	// Retrieve the updated workflow record.
-	if err := DB.Preload("Owner").Preload("Schedule").Preload("Schedule.Triggers").Preload("Schedule.Triggers.Repository").First(&workflow, id).Error; err != nil {
+	if err := DB.Preload("Owner").Preload("Workspace").Preload("Schedule").Preload("Schedule.Triggers").Preload("Schedule.Triggers.Repository").First(&workflow, id).Error; err != nil {
 		return nil, err
 	}
 	return &workflow, nil

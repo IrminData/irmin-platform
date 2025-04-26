@@ -26,14 +26,22 @@ func ExecuteExportWorkflowable(ctx context.Context, workflow *db.Workflow, workf
 	DataEngine := engine.NewClient("en")
 
 	// Export data from the connector to the requested repository
-	err = DataEngine.DataExport(ctx, connection, workflow.Workspace.Slug, workflowable.Repository.Slug, workflowable.Branch, workflowable.Path)
-	if err != nil {
-		logs = append(logs, "Failed to export data from the connector")
-		return logs, err
+	paths, errors := DataEngine.DataExport(ctx, connection, workflowable.ConnectionPath, workflow.Workspace.Slug, workflowable.Repository.Slug, workflowable.Branch, workflowable.Path)
+	if len(errors) > 0 {
+		for _, err := range errors {
+			log.Printf("Error exporting data: %v", err)
+			logs = append(logs, fmt.Sprintf("Error exporting data: %v", err))
+		}
+	} else {
+		// Log the successful import
+		logs = append(logs, "Data exported successfully from the connector")
 	}
 
-	// Log the successful export
-	logs = append(logs, "Data exported successfully from the connector")
+	// Log the paths of the exported data
+	for _, path := range paths {
+		log.Printf("Exported data path: %s", path)
+		logs = append(logs, fmt.Sprintf("Exported data path: %s", path))
+	}
 
 	return logs, nil
 }

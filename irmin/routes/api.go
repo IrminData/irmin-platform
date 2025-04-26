@@ -88,6 +88,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	connection.Patch("/", controllers.ConnectionsUpdate)
 	connection.Delete("/", controllers.ConnectionsDestroy)
 	connection.Post("/transfer-ownership", controllers.TransferConnectionOwnership)
+	connection.Get("/schema", controllers.ConnectionSchema)
 
 	// Editor routes
 	editor := workspace.Group("/editor")
