@@ -114,7 +114,7 @@ export const WorkflowProvider = ({
         (error as Error)?.message ?? 'Failed to fetch the workflow runs'
       );
     }
-  }, [workflowID, workspaceSlug, getToken, locale]);
+  }, [workflowID, workspaceSlug, getToken, irminAlert, locale]);
 
   const handleDeleteWorkflow = useCallback(async () => {
     const confirmed = await irminConfirm(
