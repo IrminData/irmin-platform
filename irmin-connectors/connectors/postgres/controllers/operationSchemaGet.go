@@ -3,6 +3,7 @@ package postgresControllers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	postgresClient "irmin-connectors/connectors/postgres/client"
@@ -11,95 +12,97 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
+// OperationSchemaGet retrieves the database schema and returns
+// an Irmin-compatible ObjectSchema grouping each table as a JSON array.
+//
+// It expects an operation token in the form, and on success writes
+// a JSON response with Content-Type: application/json.
 func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
-	// Make sure the request is authorized by validating the operation token
-	tokenValid, _, operation := lib.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
-	if !tokenValid {
+	// validate token
+	valid, _, operation := lib.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
+	if !valid {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	// Prepare a context for database operations
 	ctx := context.Background()
 
-	// Initialise the Postgres client
-	dbClient, database, err := postgresClient.InitPostgresClient(ctx, operation)
-	if err != nil || database == nil || dbClient == nil {
-		http.Error(w, "Failed to initialize Postgres client: "+err.Error(), http.StatusInternalServerError)
+	// initialise Postgres client
+	client, dbName, err := postgresClient.InitPostgresClient(ctx, operation)
+	if err != nil || client == nil || dbName == nil {
+		http.Error(w, "Failed to initialise Postgres client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer dbClient.Close() // Close the client at the end of the function
+	defer client.Close()
 
-	// Get list of tables in the database
-	tables, err := dbClient.GetTables(ctx)
+	// list tables
+	tables, err := client.GetTables(ctx)
 	if err != nil {
 		http.Error(w, "Failed to fetch tables: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Fetch structure for each table
-	tableStructures := make(map[string][]postgresClient.ColumnInfo)
+	// build a child ObjectSchema for each table
+	children := make([]irminModels.ObjectSchema, 0, len(tables))
 	for _, tbl := range tables {
-		structure, err := dbClient.GetTableStructure(ctx, tbl)
+		cols, err := client.GetTableStructure(ctx, tbl)
 		if err != nil {
-			http.Error(w, "Failed to fetch structure for table '"+tbl+"': "+err.Error(), http.StatusInternalServerError)
+			http.Error(w,
+				fmt.Sprintf("Failed to fetch structure for table '%s': %v", tbl, err),
+				http.StatusInternalServerError,
+			)
 			return
 		}
-		tableStructures[tbl] = structure
-	}
 
-	// Build an Irmin-compatible schema object
-	schemaRestrictions := irminModels.GroupSchemaRestrictions{
-		OnlyStructured: func(b bool) *bool { return &b }(true),
-	}
-	schema := irminModels.ObjectSchema{
-		Type:         irminModels.ObjectSchemaTypeGroup,
-		Name:         *database,
-		Path:         "/" + *database,
-		Restrictions: &schemaRestrictions,
-		Children:     []irminModels.ObjectSchema{},
-	}
+		// map each column to a JSONSchema property
+		props := make(map[string]irminModels.JSONSchema, len(cols))
+		required := []string{}
+		for _, col := range cols {
+			props[col.ColumnName] = irminModels.JSONSchema{
+				Type: col.DataType, // ideally map PG types → JSON Schema types
+			}
+			if !col.IsNullable {
+				required = append(required, col.ColumnName)
+			}
+		}
 
-	// Convert each table structure to a JSONSchema and append to schema children
-	for tbl, structure := range tableStructures {
+		// row object schema
 		rowSchema := irminModels.JSONSchema{
 			Type:       "object",
-			Properties: map[string]irminModels.JSONSchema{},
-			Required:   []string{},
+			Properties: props,
+			Required:   required,
 		}
 
-		// Populate rowSchema properties
-		for _, column := range structure {
-			rowSchema.Properties[column.ColumnName] = irminModels.JSONSchema{
-				// In a real-world scenario, map the Postgres data type to a valid JSON Schema type (e.g. "string", "number")
-				Type: column.DataType,
-			}
-			if !column.IsNullable {
-				rowSchema.Required = append(rowSchema.Required, column.ColumnName)
-			}
-		}
-
-		// Each table is represented as an array of row objects
-		contentType := "application/json"
-		tableJsonSchema := irminModels.JSONSchema{
+		// table array schema
+		arraySchema := irminModels.JSONSchema{
 			Type:  "array",
 			Items: &rowSchema,
 		}
-		tableSchema := irminModels.ObjectSchema{
-			Name:        tbl + ".json",
-			Path:        "/" + *database + "/" + tbl + ".json",
-			Type:        irminModels.ObjectSchemaTypeStructured,
-			ContentType: &contentType,
-			Schema:      &tableJsonSchema,
-		}
 
-		schema.Children = append(schema.Children, tableSchema)
+		ct := "application/json"
+		children = append(children, irminModels.ObjectSchema{
+			Name:        tbl + ".json",
+			Path:        *dbName + "/" + tbl + ".json",
+			Type:        irminModels.ObjectSchemaTypeStructured,
+			ContentType: &ct,
+			Schema:      &arraySchema,
+		})
 	}
 
-	// Respond with the final Irmin-compatible schema
+	// assemble group schema
+	group := irminModels.ObjectSchema{
+		Type: irminModels.ObjectSchemaTypeGroup,
+		Name: *dbName,
+		Path: *dbName,
+		Restrictions: &irminModels.GroupSchemaRestrictions{
+			OnlyStructured: func(b bool) *bool { return &b }(true),
+		},
+		Children: children,
+	}
+
+	// write JSON response
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(schema); err != nil {
-		http.Error(w, "Failed to encode schema to JSON: "+err.Error(), http.StatusInternalServerError)
-		return
+	if err := json.NewEncoder(w).Encode(group); err != nil {
+		http.Error(w, "Failed to encode schema: "+err.Error(), http.StatusInternalServerError)
 	}
 }

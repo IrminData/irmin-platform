@@ -61,5 +61,6 @@ func DeleteOperation(id uint) error {
 	if err := DB.Delete(&Operation{}, id).Error; err != nil {
 		return fmt.Errorf("failed to delete operation: %w", err)
 	}
+	log.Printf("Deleted operation with ID: %d\n", id)
 	return nil
 }

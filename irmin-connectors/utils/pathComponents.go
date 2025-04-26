@@ -30,42 +30,60 @@ func ConstructPath(databaseName, tableName, rowIdentifier, columnName string) st
 		parts = append(parts, columnName)
 	}
 
-	// Join them with "/", then prepend a "/"
-	return "/" + strings.Join(parts, "/")
+	// Join them with "/"
+	return strings.Join(parts, "/")
 }
 
-// ExtractPathComponents takes a path like "/database1/users.json/0/name"
-// and returns each piece: (databaseName, tableName, rowIdentifier, columnName).
-func ExtractPathComponents(path string) (databaseName, tableName, rowIdentifier, columnName string) {
-	// Trim whitespace and any leading slash
-	path = strings.TrimSpace(path)
-	path = strings.TrimPrefix(path, "/")
+// ExtractPathComponents splits a path like:
+//
+//	"/database1/users.json/0/name"
+//
+// into its components:
+//
+//	databaseName, tableName, rowIdentifier, columnName
+//
+// It handles:
+//
+//   - a single segment (e.g. "users.json") → tableName="users"
+//   - two segments ("db/users.json") → databaseName="db", tableName="users"
+//   - three segments (.../0)      → adds rowIdentifier="0"
+//   - four+ segments (.../name/extra) → columnName="name" (extras ignored)
+//
+// Returns empty strings for any missing component.
+func ExtractPathComponents(pathStr string) (
+	databaseName,
+	tableName,
+	rowIdentifier,
+	columnName string,
+) {
+	// trim whitespace and any leading/trailing slashes
+	clean := strings.TrimSpace(pathStr)
+	clean = strings.Trim(clean, "/")
 
-	// Split into parts by slash
-	parts := strings.Split(path, "/")
-
-	// If no parts, nothing to do
-	if len(parts) == 0 {
+	if clean == "" {
 		return
 	}
 
-	// 1) The first part is (likely) the database name
-	databaseName = parts[0]
+	parts := strings.Split(clean, "/")
 
-	// 2) The second part, if present, should be the table name.
-	//    Since JSON-based APIs often store tables as "something.json",
-	//    we can remove ".json".
-	if len(parts) >= 2 {
+	switch len(parts) {
+	case 1:
+		// only table
+		tableName = strings.TrimSuffix(parts[0], ".json")
+	case 2:
+		// database + table
+		databaseName = parts[0]
 		tableName = strings.TrimSuffix(parts[1], ".json")
-	}
-
-	// 3) The third part, if present, might be the row identifier (e.g., 0, 42, or some ID)
-	if len(parts) >= 3 {
+	case 3:
+		// database + table + row
+		databaseName = parts[0]
+		tableName = strings.TrimSuffix(parts[1], ".json")
 		rowIdentifier = parts[2]
-	}
-
-	// 4) The fourth part, if present, might be the column name
-	if len(parts) >= 4 {
+	default:
+		// database + table + row + column (ignore extras)
+		databaseName = parts[0]
+		tableName = strings.TrimSuffix(parts[1], ".json")
+		rowIdentifier = parts[2]
 		columnName = parts[3]
 	}
 

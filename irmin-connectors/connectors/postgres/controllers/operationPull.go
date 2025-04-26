@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"time"
 
 	postgresClient "irmin-connectors/connectors/postgres/client"
@@ -13,260 +14,260 @@ import (
 	"irmin-connectors/utils"
 )
 
+// OperationPull fetches data from Postgres based on the request path.
+// It can return:
+// - all tables as a multipart/mixed response,
+// - a single table as a JSON attachment,
+// - a single row (by “id”) as a JSON attachment.
 func OperationPull(w http.ResponseWriter, r *http.Request) {
-	// Make sure the request is authorized by validating the operation token
-	tokenValid, _, operation := lib.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
-	if !tokenValid {
+	// validate operation token
+	valid, _, operation := lib.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
+	if !valid {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	// Prepare a context for database operations
+	// prepare context and initialise client
 	ctx := context.Background()
-
-	// Initialise the Postgres client
-	dbClient, database, err := postgresClient.InitPostgresClient(ctx, operation)
-	if err != nil || database == nil || dbClient == nil {
-		http.Error(w, "Failed to initialize Postgres client: "+err.Error(), http.StatusInternalServerError)
+	client, _, err := postgresClient.InitPostgresClient(ctx, operation)
+	if err != nil {
+		http.Error(w, "Failed to initialise Postgres client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer dbClient.Close() // Close the client at the end of the function
+	defer client.Close()
 
-	// Get the form values from the request
+	// parse “path” field from form
 	fields, err := utils.ParseFormFields(r, []string{"path"}, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	path := fields["path"]
 
-	// If path is empty or just "/", or matches the database name with no sub-path,
-	// we treat this as the root and return all tables in a multipart response.
-	if fields["path"] == "" || fields["path"] == "/" {
-		returnAllTablesAsMultipart(ctx, w, dbClient)
-		return
-	}
-
-	// If the path is not empty, get the details of the path
-	_, tableName, rowIdentifier, _ := utils.ExtractPathComponents(fields["path"])
-
-	if tableName != "" && rowIdentifier != "" {
-		// If both table name and row identifier are present, fetch a single row
-		fetchSingleRow(ctx, w, dbClient, tableName, rowIdentifier)
-		return
-	}
-	if tableName != "" {
-		// If only the table name is present, fetch the entire table
-		fetchSingleTable(ctx, w, dbClient, tableName)
-		return
+	// determine mode by path
+	switch {
+	case path == "" || path == "/":
+		// return every table
+		returnAllTablesMultipart(ctx, w, client)
+	case func() bool {
+		_, table, rowID, _ := utils.ExtractPathComponents(path)
+		return table != "" && rowID != ""
+	}():
+		_, table, rowID, _ := utils.ExtractPathComponents(path)
+		fetchRowByID(ctx, w, client, table, rowID)
+	case func() bool {
+		_, table, _, _ := utils.ExtractPathComponents(path)
+		return table != ""
+	}():
+		_, table, _, _ := utils.ExtractPathComponents(path)
+		fetchFullTable(ctx, w, client, table)
+	default:
+		// invalid path
+		http.Error(w, "Invalid path: "+path, http.StatusBadRequest)
 	}
 }
 
-func returnAllTablesAsMultipart(ctx context.Context, w http.ResponseWriter, dbClient *postgresClient.PostgresClient) {
-	// Use the provided client method to retrieve a list of tables in 'public'.
-	tables, err := dbClient.GetTables(ctx)
+// returnAllTablesMultipart writes every table in “public” as JSON parts
+// in a multipart/mixed response.
+func returnAllTablesMultipart(
+	ctx context.Context,
+	w http.ResponseWriter,
+	client *postgresClient.PostgresClient,
+) {
+	// list tables
+	tables, err := client.GetTables(ctx)
 	if err != nil {
 		http.Error(w, "Failed to fetch table list: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Create a boundary for our multipart
-	boundary := fmt.Sprintf("MULTIPARTBOUNDARY-%d", time.Now().UnixNano())
-
-	// Set headers for the multipart response
+	// prepare multipart writer
+	boundary := fmt.Sprintf("MULTIPART-%d", time.Now().UnixNano())
 	w.Header().Set("Content-Type", "multipart/mixed; boundary="+boundary)
 
-	multipartWriter := multipart.NewWriter(w)
-	// Make sure we use the same boundary (multipart.NewWriter generates a default otherwise)
-	multipartWriter.SetBoundary(boundary)
+	mw := multipart.NewWriter(w)
+	mw.SetBoundary(boundary)
+	defer mw.Close()
 
-	// Iterate over the tables and create a part for each
-	for _, tableName := range tables {
-		err := writeTableAsPart(ctx, multipartWriter, dbClient, tableName)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to process table %s: %v", tableName, err), http.StatusInternalServerError)
+	// write each table as JSON attachment
+	for _, tbl := range tables {
+		if err := writeTablePart(ctx, mw, client, tbl); err != nil {
+			http.Error(w, fmt.Sprintf("Failed to process table %s: %v", tbl, err), http.StatusInternalServerError)
 			return
 		}
 	}
-
-	// Close the writer to finalise the multipart message
-	if err := multipartWriter.Close(); err != nil {
-		http.Error(w, "Failed to close multipart writer: "+err.Error(), http.StatusInternalServerError)
-	}
 }
 
-func writeTableAsPart(ctx context.Context, mw *multipart.Writer, dbClient *postgresClient.PostgresClient, tableName string) error {
-	// Prepare a part header
-	header := make(map[string][]string)
-	header["Content-Type"] = []string{"application/octet-stream"}
-	header["Content-Disposition"] = []string{fmt.Sprintf(`attachment; filename="%s.json"`, tableName)}
+// writeTablePart queries a table and writes its rows as JSON to one part.
+func writeTablePart(
+	ctx context.Context,
+	mw *multipart.Writer,
+	client *postgresClient.PostgresClient,
+	table string,
+) error {
+	// prepare MIME headers
+	h := textproto.MIMEHeader{}
+	h.Set("Content-Type", "application/octet-stream")
+	h.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, table))
 
-	part, err := mw.CreatePart(header)
+	part, err := mw.CreatePart(h)
 	if err != nil {
-		return fmt.Errorf("CreatePart failed: %w", err)
+		return fmt.Errorf("create part for %s failed: %w", table, err)
 	}
 
-	// Query all rows from the specified table
-	query := fmt.Sprintf(`SELECT * FROM "%s"`, tableName)
-	rows, err := dbClient.Query(ctx, query)
+	// fetch rows
+	query := fmt.Sprintf(`SELECT * FROM "%s"`, table)
+	rows, err := client.Query(ctx, query)
 	if err != nil {
-		return fmt.Errorf("failed to query table '%s': %w", tableName, err)
+		return fmt.Errorf("query %s failed: %w", table, err)
 	}
 	defer rows.Close()
 
-	// Collect the rows into a struct
-	var results []map[string]any
-
-	// Get column names
-	fieldDescriptions := rows.FieldDescriptions()
-	columns := make([]string, len(fieldDescriptions))
-	for i, fd := range fieldDescriptions {
-		columns[i] = string(fd.Name)
+	// extract column names
+	descs := rows.FieldDescriptions()
+	cols := make([]string, len(descs))
+	for i, fd := range descs {
+		cols[i] = string(fd.Name)
 	}
 
-	// Iterate through the rows and build records
+	// build record slice
+	var recs []map[string]any
 	for rows.Next() {
 		values, err := rows.Values()
 		if err != nil {
-			return fmt.Errorf("failed to retrieve values from table '%s': %w", tableName, err)
+			return fmt.Errorf("scan values for %s failed: %w", table, err)
 		}
-
-		record := make(map[string]any)
-		for i, col := range columns {
-			record[col] = values[i]
+		row := make(map[string]any, len(cols))
+		for i, col := range cols {
+			row[col] = values[i]
 		}
-
-		results = append(results, record)
+		recs = append(recs, row)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate %s failed: %w", table, err)
 	}
 
-	if rows.Err() != nil {
-		return fmt.Errorf("failed to iterate through rows for table '%s': %w", tableName, rows.Err())
-	}
-
-	// Marshal rows into JSON
-	jsonData, err := json.MarshalIndent(results, "", "  ")
+	// marshal and write JSON
+	data, err := json.MarshalIndent(recs, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal data from table '%s': %w", tableName, err)
+		return fmt.Errorf("marshal %s failed: %w", table, err)
 	}
-
-	// Write the JSON data to the part
-	_, err = part.Write(jsonData)
-	if err != nil {
-		return fmt.Errorf("failed to write JSON data for table '%s': %w", tableName, err)
+	if _, err := part.Write(data); err != nil {
+		return fmt.Errorf("write JSON for %s failed: %w", table, err)
 	}
 
 	return nil
 }
 
-func fetchSingleTable(ctx context.Context, w http.ResponseWriter, dbClient *postgresClient.PostgresClient, tableName string) {
-	// Fetch the data from the database based on the table name
-	query := fmt.Sprintf(`SELECT * FROM "%s"`, tableName)
-	rows, err := dbClient.Query(ctx, query)
+// fetchFullTable queries an entire table and returns it as a JSON download.
+func fetchFullTable(
+	ctx context.Context,
+	w http.ResponseWriter,
+	client *postgresClient.PostgresClient,
+	table string,
+) {
+	query := fmt.Sprintf(`SELECT * FROM "%s"`, table)
+	rows, err := client.Query(ctx, query)
 	if err != nil {
-		http.Error(w, "Failed to fetch data: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to fetch table "+table+": "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	// Collect the rows into a struct
-	var results []map[string]any
-
-	// Get column names
-	fieldDescriptions := rows.FieldDescriptions()
-	columns := make([]string, len(fieldDescriptions))
-	for i, fd := range fieldDescriptions {
-		columns[i] = string(fd.Name)
+	// extract column names
+	descs := rows.FieldDescriptions()
+	cols := make([]string, len(descs))
+	for i, fd := range descs {
+		cols[i] = string(fd.Name)
 	}
 
-	// Iterate through the rows and build records
+	// build record slice
+	var recs []map[string]any
 	for rows.Next() {
 		values, err := rows.Values()
 		if err != nil {
 			http.Error(w, "Failed to retrieve values: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		record := make(map[string]any)
-		for i, col := range columns {
-			record[col] = values[i]
+		row := make(map[string]any, len(cols))
+		for i, col := range cols {
+			row[col] = values[i]
 		}
-
-		results = append(results, record)
+		recs = append(recs, row)
 	}
-
-	if rows.Err() != nil {
-		http.Error(w, "Failed to iterate through rows: "+rows.Err().Error(), http.StatusInternalServerError)
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Failed to iterate rows: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Marshal the data to JSON
-	jsonData, err := json.MarshalIndent(results, "", "  ")
+	// marshal JSON
+	data, err := json.MarshalIndent(recs, "", "  ")
 	if err != nil {
 		http.Error(w, "Failed to marshal data: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Write the JSON data as a single file download
+	// send as attachment
 	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, tableName))
-	_, _ = w.Write(jsonData)
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, table))
+	w.Write(data)
 }
 
-func fetchSingleRow(ctx context.Context, w http.ResponseWriter, dbClient *postgresClient.PostgresClient, tableName, rowID string) {
-	// Construct a query to select the entire row by "id".
-	query := fmt.Sprintf(`SELECT * FROM "%s" WHERE "id" = $1`, tableName)
-	rows, err := dbClient.Query(ctx, query, rowID)
+// fetchRowByID queries one row by “id” and returns it as a JSON download.
+func fetchRowByID(
+	ctx context.Context,
+	w http.ResponseWriter,
+	client *postgresClient.PostgresClient,
+	table, id string,
+) {
+	query := fmt.Sprintf(`SELECT * FROM "%s" WHERE "id" = $1`, table)
+	rows, err := client.Query(ctx, query, id)
 	if err != nil {
-		http.Error(w, "Failed to fetch data: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to fetch row: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	// Collect column names
-	fieldDescriptions := rows.FieldDescriptions()
-	columns := make([]string, len(fieldDescriptions))
-	for i, fd := range fieldDescriptions {
-		columns[i] = string(fd.Name)
+	// extract column names
+	descs := rows.FieldDescriptions()
+	cols := make([]string, len(descs))
+	for i, fd := range descs {
+		cols[i] = string(fd.Name)
 	}
 
-	// We only expect one row (or none). Build a map to hold the data.
-	var result map[string]any
-
-	if rows.Next() {
+	// build record slice (expecting at most one)
+	var recs []map[string]any
+	for rows.Next() {
 		values, err := rows.Values()
 		if err != nil {
 			http.Error(w, "Failed to retrieve values: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		record := make(map[string]any)
-		for i, col := range columns {
-			record[col] = values[i]
+		row := make(map[string]any, len(cols))
+		for i, col := range cols {
+			row[col] = values[i]
 		}
-		result = record
+		recs = append(recs, row)
 	}
-
-	// Check if any error occurred during iteration
-	if rows.Err() != nil {
-		http.Error(w, "Failed to iterate through rows: "+rows.Err().Error(), http.StatusInternalServerError)
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Failed to iterate rows: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	// If result is nil, it means no row was found
-	if result == nil {
+	if len(recs) == 0 {
 		http.Error(w, "No row found", http.StatusNotFound)
 		return
 	}
 
-	// Marshal the row into JSON
-	jsonData, err := json.MarshalIndent(result, "", "  ")
+	// marshal JSON
+	data, err := json.MarshalIndent(recs[0], "", "  ")
 	if err != nil {
 		http.Error(w, "Failed to marshal data: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Write the JSON data as a file download
-	fileName := fmt.Sprintf("%s_row_%s.json", tableName, rowID)
+	// send as attachment
+	filename := fmt.Sprintf(`%s_row_%s.json`, table, id)
 	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, fileName))
-	_, _ = w.Write(jsonData)
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	w.Write(data)
 }
