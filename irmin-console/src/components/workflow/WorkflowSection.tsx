@@ -30,6 +30,14 @@ const WorkflowSection = () => {
 
   const { workflow, runs, repositories, connections } = useWorkflow();
 
+  // The base URL for the workflow, eg. /en/workspace/workspace-slug/workflows/workflow-id
+  const baseUrl = useBaseUrl({
+    pathname: '',
+    segment: 'workflows',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
+
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
     pathname: '',
@@ -127,11 +135,11 @@ const WorkflowSection = () => {
           {
             label: dict.list.logs,
             primary: false,
-            href: `${workspaceUrl}/logs/workflow/${workflow.id}/run/${run.id}`,
+            href: `${baseUrl}/run/${run.id}`,
           },
         ],
       })),
-    [dict, locale, runs, workspaceUrl, workflow.id]
+    [dict, locale, runs, baseUrl]
   );
 
   return (
@@ -316,7 +324,7 @@ const WorkflowSection = () => {
               <p className='text-sm opacity-60'>
                 {dict.workflow.exportSourcePath}
               </p>
-              <p className='text-base'>{workflow.workflowable.path}</p>
+              <p className='text-base'>{workflow.workflowable.path ?? '/'}</p>
             </div>
           )}
           {workflow.type === 'pipeline' && (

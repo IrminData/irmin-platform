@@ -1,85 +1,40 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
 import { formatDistanceToNow, intervalToDuration } from 'date-fns';
 
-import { IoChevronBack } from 'react-icons/io5';
 import { TbClock, TbHourglassLow } from 'react-icons/tb';
 
-import { ButtonWithTooltip } from '@/components/ui/button';
 import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
 
-import { Workflow } from '@/types/core/Workflow';
 import { WorkflowRun } from '@/types/core/WorkflowRun';
 
-import LogFeed from './LogFeed';
+import LogFeed from '../logs/LogFeed';
 
 /**
  * Workflow Run Logs section - showing logs for a specific workflow run.
  *
  * @param props - The component properties
  * @param props.workflowRun - The workflow run to display logs for
- * @param props.workflow - The workflow the run belongs to
  */
 export default function WorkflowRunLogsSection({
   workflowRun,
-  workflow,
 }: {
   workflowRun: WorkflowRun;
-  workflow?: Workflow;
 }) {
-  const router = useRouter();
   const { dict, locale } = useLocale();
 
-  // The base URL for the workspace, eg. /en/workspace/workspace-slug
-  const workspaceUrl = useBaseUrl({
-    pathname: '',
-    segment: 'workspace',
-    includeSegment: true,
-    segmentsAfter: 1,
-  });
-
   return (
-    <div className='flex flex-col px-2 pt-12 md:px-4'>
-      <div className='container mx-auto mb-12 max-w-7xl'>
-        <div className='mb-12 flex items-center gap-8'>
-          <ButtonWithTooltip
-            size='icon'
-            variant='gray'
-            className='rounded-full'
-            icon={<IoChevronBack size={24} />}
-            onClick={() => router.back()}
-            tooltip={dict.common.back}
-            aria-label={dict.common.back}
-          />
-          <div>
-            <h2 className='font-display text-foreground/90 text-3xl font-bold sm:text-4xl lg:text-5xl'>
-              {dict.logs.workflowRunLogs}
-            </h2>
-            {workflow && (
-              <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
-                <Link
-                  className='hover:underline'
-                  href={`${workspaceUrl}/workflows/${workflowRun.workflow_id}`}
-                >
-                  {workflow.name}
-                </Link>
-                , {dict.workflow.run}
-                {': '}
-                {workflowRun.id}
-              </h3>
-            )}
-          </div>
-        </div>
+    <div className='flex flex-col gap-8 px-2 md:px-4'>
+      <div className='container mx-auto max-w-7xl'>
         <div className='bg-card text-card-foreground flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg p-4 text-sm lg:text-lg'>
+          <div className='flex flex-col gap-1'>
+            <p className='text-sm opacity-60'>{dict.workflow.run}</p>
+            <p className='text-base'>{workflowRun.id}</p>
+          </div>
           <div className='flex flex-col gap-1'>
             <p className='text-sm opacity-60'>{dict.workflow.startedAt}</p>
             <p className='text-base'>

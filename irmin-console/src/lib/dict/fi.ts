@@ -328,7 +328,7 @@ const fi = {
     import: 'Tuonti',
     action: 'Toiminto',
     export: 'Vienti',
-    run: 'ajo',
+    run: 'Ajo',
     noStatus: 'Ei statusta',
     startedAt: 'Aloitettu',
     finishedAt: 'Valmis',
@@ -572,9 +572,6 @@ const fi = {
   logs: {
     workspaceLogs: 'Työtilan lokit',
     workflowLogs: 'Prosessin lokit',
-    repositoryLogs: 'Data-arkiston lokit',
-    connectionLogs: 'Yhteyden lokit',
-    workflowRunLogs: 'Prosessin ajon lokit',
     noLogsFound: 'Ei lokeja löytynyt',
     system: 'Järjestelmä',
   },

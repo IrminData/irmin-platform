@@ -325,7 +325,7 @@ const en = {
     import: 'Import',
     action: 'Action',
     export: 'Export',
-    run: 'run',
+    run: 'Run',
     noStatus: 'No status',
     startedAt: 'Started at',
     finishedAt: 'Finished at',
@@ -567,9 +567,6 @@ const en = {
   logs: {
     workspaceLogs: 'Workspace logs',
     workflowLogs: 'Workflow logs',
-    repositoryLogs: 'Repository logs',
-    connectionLogs: 'Connection logs',
-    workflowRunLogs: 'Workflow run logs',
     noLogsFound: 'No logs found',
     system: 'System',
   },

@@ -1,6 +1,12 @@
 import { Metadata } from 'next';
 
+import { notFound } from 'next/navigation';
+
+import { getWorkflowRun } from '@/lib/actions/workflow-runs';
 import { Locale } from '@/lib/dict';
+import { getToken } from '@/lib/getToken';
+
+import WorkflowRunLogsSection from '@/components/workflow/WorkflowRunLogsSection';
 
 /**
  * URL parameters for the Workflow Run Logs layout
@@ -26,19 +32,24 @@ export async function generateMetadata(props: {
   const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
-    title: `Run ${params.run} logs | ${formattedWorkspace} | IRMIN Console`,
+    title: `Run logs | ${formattedWorkspace} | IRMIN Console`,
   };
 }
 
 /**
- * Layout for the Workflow Run Logs pages in the Console
- * @param children - The children to render
+ * Workflow Run page - showing logs for a specific workflow run.
  */
-export default function WorkflowRunLogsLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-  params: WorkflowRunLogsLayoutParams;
-}>) {
-  return children;
+export default async function WorkflowRunPage(props: {
+  params: Promise<WorkflowRunLogsLayoutParams>;
+}) {
+  const params = await props.params;
+  const token = await getToken();
+  const run = await getWorkflowRun({
+    workspace: params.workspace,
+    workflowID: params.workflow,
+    runID: params.run,
+    token,
+  });
+  if (!run.data) return notFound();
+  return <WorkflowRunLogsSection workflowRun={run.data} />;
 }
