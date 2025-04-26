@@ -4,279 +4,363 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"path"
+	"strings"
+
 	"irmin-api/db"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
-	"log"
-	"strings"
 
 	irminConnectorClient "github.com/IrminData/irmin-sdk-go/connector"
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// DataMovementSchema retrieves the schema for a specific operation method from the connector.
-func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connection, method string) (*irminModels.ObjectSchema, error) {
-	// Create connector client instance.
-	connectorClient := irminConnectorClient.NewClient(connection.Connector.APIBaseURL, connection.Connector.SystemToken, c.Locale)
+// initializeConnectorOperation sets up a connector operation and returns an operation client,
+// along with a cancel function to clean up when done.
+// It returns an error if initialization fails.
+func (c *Client) initializeConnectorOperation(connection *db.Connection) (*irminConnectorClient.Client, func(), error) {
+	// Create base connector client.
+	baseClient := irminConnectorClient.NewClient(
+		connection.Connector.APIBaseURL,
+		connection.Connector.SystemToken,
+		c.Locale,
+	)
 
-	// Initialize operation with the connector
-	op, err := connectorClient.InitOperation(connection.Details, connection.Settings)
+	// Initialize a new operation.
+	op, err := baseClient.InitOperation(connection.Details, connection.Settings)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize operation: %w", err)
+		return nil, nil, fmt.Errorf("failed to initialize operation: %w", err)
 	}
-	// Close the operation when done
-	defer connectorClient.CancelOperation(int(op.ID))
 
-	// Create connector operation client
-	connectorOpClient := irminConnectorClient.NewClient(connection.Connector.APIBaseURL, op.Token, "en")
+	// Define cancel function with error logging.
+	cancel := func() {
+		if cancelErr := baseClient.CancelOperation(int(op.ID)); cancelErr != nil {
+			fmt.Printf("failed to cancel operation %d: %v", op.ID, cancelErr)
+		}
+	}
 
-	// Retrieve the schema for the specified operation method.
-	schema, err := connectorOpClient.GetSchema(method)
+	// Create operation-specific client (always in English for schema retrieval/actions).
+	opClient := irminConnectorClient.NewClient(
+		connection.Connector.APIBaseURL,
+		op.Token,
+		"en",
+	)
+
+	return opClient, cancel, nil
+}
+
+// DataMovementSchema retrieves the schema for a specific method from the connector.
+//
+// Parameters:
+//
+//	ctx - context for request cancellation and deadlines.
+//	connection - database connection details for connector.
+//	method - the operation method to retrieve schema for (e.g. "pull").
+//
+// Returns:
+//
+//	ObjectSchema pointer for the requested method, or an error if retrieval fails.
+func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connection, method string) (*irminModels.ObjectSchema, error) {
+	opClient, cancel, err := c.initializeConnectorOperation(connection)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get schema: %w", err)
+		return nil, err
+	}
+	// Ensure operation is cancelled when done.
+	defer cancel()
+
+	// Retrieve method schema.
+	schema, err := opClient.GetSchema(method)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get schema for method %q: %w", method, err)
 	}
 
 	return schema, nil
 }
 
-// schemaToRelevantPaths takes a path and a schema, and returns a list of relevant paths based on the schema type.
-func schemaToRelevantPaths(path string, schema *irminModels.ObjectSchema) []string {
-	var pathsToPull []string
-	// Check if the path is a directory or a file.
+// schemaToRelevantPaths computes paths to pull based on the schema tree and a requested prefix.
+//
+// Parameters:
+//
+//	prefix - the target path prefix to filter file entries by.
+//	schema - the full object schema tree.
+//
+// Returns:
+//
+//	slice of matching paths (without leading slash).
+func schemaToRelevantPaths(prefix string, schema *irminModels.ObjectSchema) []string {
+	var paths []string
+
 	if schema.Type == irminModels.ObjectSchemaTypeGroup {
-		// If it's a directory, iterate through its children.
+		// Directory: traverse children.
 		for _, child := range schema.Children {
-			// Recursively call the function for each child.
-			pathsToPull = append(pathsToPull, schemaToRelevantPaths(path, &child)...)
+			childPaths := schemaToRelevantPaths(prefix, &child)
+			paths = append(paths, childPaths...)
 		}
 	} else {
-		// If it's a file, see if it matches the requested path.
-		if strings.HasPrefix(schema.Path, path) {
-			// If it matches, we need to pull it.
-			// Remove the leading path from the schema path.
-			schema.Path = strings.TrimPrefix(schema.Path, "/")
-			// Add it to the paths to pull.
-			pathsToPull = append(pathsToPull, schema.Path)
+		// File: include if its path matches the prefix.
+		if strings.HasPrefix(schema.Path, prefix) {
+			// Trim leading slash and prefix.
+			relative := strings.TrimPrefix(schema.Path, prefix)
+			relative = strings.TrimPrefix(relative, "/")
+			paths = append(paths, relative)
 		}
 	}
-	return pathsToPull
+
+	return paths
 }
 
-// DataImport imports data into a workspace repository from an external source using a connector.
-// It pulls files from the connector and uploads them to the specified branch and path in the lakeFS repository.
-// The function returns a list of file paths in the repository successfuly imported and any errors encountered during the process.
-func (c *Client) DataImport(ctx context.Context, connection *db.Connection, connectionPath, workspace, repository, branch, path string) ([]string, []error) {
-	var errors []error
-	var successfulRepositoryPaths []string
+// DataImport imports data from an external source into a lakeFS repository.
+//
+// Parameters:
+//
+//	ctx - context for request cancellation and deadlines.
+//	connection - database connection with connector info.
+//	connectionPath - path in external source to pull data from.
+//	workspace - lakeFS workspace name.
+//	repository - lakeFS repository name.
+//	branch - branch in repository to import to.
+//	pathPrefix - path in repository to upload files under.
+//
+// Returns:
+//
+//	slice of successfully imported paths, slice of errors encountered.
+func (c *Client) DataImport(
+	ctx context.Context,
+	connection *db.Connection,
+	connectionPath,
+	workspace,
+	repository,
+	branch,
+	pathPrefix string,
+) ([]string, []error) {
+	var (
+		errs    []error
+		success []string
+	)
 
-	// Create connector client instance.
-	connectorClient := irminConnectorClient.NewClient(connection.Connector.APIBaseURL, connection.Connector.SystemToken, c.Locale)
-
-	// Initialize operation with the connector
-	op, err := connectorClient.InitOperation(connection.Details, connection.Settings)
+	// Initialize connector operation.
+	opClient, cancel, err := c.initializeConnectorOperation(connection)
 	if err != nil {
-		errors = append(errors, fmt.Errorf("failed to initialize operation: %w", err))
-		return successfulRepositoryPaths, errors
+		errs = append(errs, err)
+		return success, errs
 	}
-	// Close the operation when done
-	defer connectorClient.CancelOperation(int(op.ID))
+	defer cancel()
 
-	// Create connector operation client
-	connectorOpClient := irminConnectorClient.NewClient(connection.Connector.APIBaseURL, op.Token, "en")
-
-	// Retrieve the schema for operation method "pull"
-	schema, err := connectorOpClient.GetSchema("pull")
+	// Get pull schema.
+	schema, err := opClient.GetSchema("pull")
 	if err != nil {
-		errors = append(errors, fmt.Errorf("failed to get schema: %w", err))
-		return successfulRepositoryPaths, errors
+		errs = append(errs, fmt.Errorf("failed to get pull schema: %w", err))
+		return success, errs
 	}
 
-	// Determine the paths to pull based on the schema and the requested connection path.
-	pathsToPull := schemaToRelevantPaths(connectionPath, schema)
-	if len(pathsToPull) == 0 {
-		errors = append(errors, fmt.Errorf("no relevant paths found for the specified connection path: %s", connectionPath))
-		return successfulRepositoryPaths, errors
+	// Determine files to pull.
+	paths := schemaToRelevantPaths(connectionPath, schema)
+	if len(paths) == 0 {
+		errs = append(errs, fmt.Errorf(
+			"no relevant paths found for connectionPath %q",
+			connectionPath,
+		))
+		return success, errs
 	}
 
-	// Loop through the paths to pull them one by one.
-	var fileFutures []utils.FutureResult[[]irminConnectorClient.PulledFile]
-	for _, pathToPull := range pathsToPull {
-		fileFutures = append(fileFutures, utils.AsyncWithContext(ctx, func() ([]irminConnectorClient.PulledFile, error) {
-			// Pull files from the connector for each path.
-			fmt.Printf("Pulling files from path: %s\n", pathToPull)
-			pathFiles, err := connectorOpClient.OperationPull(pathToPull)
-			if err != nil {
-				return nil, fmt.Errorf("failed to pull files: %w", err)
+	// Pull files concurrently.
+	filesCh := make(chan []irminConnectorClient.PulledFile, len(paths))
+	errCh := make(chan error, len(paths))
+
+	for _, rel := range paths {
+		rel := rel
+		go func() {
+			pulled, pullErr := opClient.OperationPull(rel)
+			if pullErr != nil {
+				errCh <- fmt.Errorf("pull failed for %q: %w", rel, pullErr)
+				return
 			}
-			return pathFiles, nil
-		}))
+			filesCh <- pulled
+		}()
 	}
 
-	// Await all file pulls.
-	var files []irminConnectorClient.PulledFile
-	for _, future := range fileFutures {
-		pathFiles, err := future.Await()
-		if err != nil {
-			errors = append(errors, fmt.Errorf("failed to pull files: %w", err))
-			continue
+	// Collect results.
+	var allFiles []irminConnectorClient.PulledFile
+	for i := 0; i < len(paths); i++ {
+		select {
+		case f := <-filesCh:
+			allFiles = append(allFiles, f...)
+		case e := <-errCh:
+			errs = append(errs, e)
 		}
-		files = append(files, pathFiles...)
+	}
+	close(filesCh)
+	close(errCh)
+
+	if len(allFiles) == 0 {
+		errs = append(errs, fmt.Errorf("no files pulled from connector"))
+		return success, errs
 	}
 
-	// Check if any files were pulled.
-	if len(files) == 0 {
-		errors = append(errors, fmt.Errorf("no files pulled from the connector"))
-		return successfulRepositoryPaths, errors
-	}
+	// Prepare upload to lakeFS.
+	repoName := utils.GetLakeFSRepositoryName(workspace, repository)
+	uploadCh := make(chan *lakefs.ObjectMetadata, len(allFiles))
+	upErrCh := make(chan error, len(allFiles))
 
-	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
-
-	// Upload each file concurrently.
-	var uploadFutures []utils.FutureResult[*lakefs.ObjectMetadata]
-	for _, file := range files {
-		uploadFutures = append(uploadFutures, utils.AsyncWithContext(ctx, func() (*lakefs.ObjectMetadata, error) {
-			// Create a new reader for the file content.
+	for _, file := range allFiles {
+		file := file
+		go func() {
 			reader := bytes.NewReader(file.Content)
-			// Construct the file path to upload to.
-			filePath := strings.Trim(path, "/")
-			filePath = strings.Trim(filePath, file.Filename)
-			if filePath == "" {
-				filePath = file.Filename
-			} else {
-				filePath = fmt.Sprintf("%s/%s", filePath, file.Filename)
+			// Build repository path.
+			uploadPath := strings.Trim(pathPrefix, "/")
+			uploadPath = path.Join(uploadPath, file.Filename)
+
+			meta, upErr := c.LakeFSClient.UploadObject(
+				repoName,
+				branch,
+				uploadPath,
+				reader,
+				false,
+			)
+			if upErr != nil {
+				upErrCh <- fmt.Errorf("upload failed for %q: %w", uploadPath, upErr)
+				return
 			}
-			// Upload the file to the lakeFS repository.
-			return c.LakeFSClient.UploadObject(lakeFSRepositoryName, branch, filePath, reader, false)
-		}))
+			uploadCh <- meta
+		}()
 	}
 
-	// Await all uploads.
-	for _, future := range uploadFutures {
-		result, err := future.Await()
-		if err != nil {
-			errors = append(errors, fmt.Errorf("failed to upload file: %w", err))
-			continue
+	// Collect upload results.
+	for i := 0; i < len(allFiles); i++ {
+		select {
+		case meta := <-uploadCh:
+			success = append(success, meta.Path)
+		case e := <-upErrCh:
+			errs = append(errs, e)
 		}
-		// Add the uploaded file path to the successful repository paths.
-		successfulRepositoryPaths = append(successfulRepositoryPaths, result.Path)
-		log.Printf("Upload result: %v", result)
 	}
 
-	return successfulRepositoryPaths, errors
+	return success, errs
 }
 
-// DataExport exports data from a workspace repository to an external source using a connector.
-// It retrieves files from the lakeFS repository and uploads them to the specified connection path in the connector.
-// The function returns a list of file paths in the connector successfully exported and any errors encountered during the process.
-func (c *Client) DataExport(ctx context.Context, connection *db.Connection, connectionPath, workspace, repository, branch, path string) ([]string, []error) {
-	var errors []error
-	var successfulConnectionPaths []string
+// DataExport exports data from a lakeFS repository to an external connector.
+//
+// Parameters:
+//
+//	ctx - context for request cancellation and deadlines.
+//	connection - database connection with connector info.
+//	connectionPath - target path in connector to upload data to.
+//	workspace - lakeFS workspace name.
+//	repository - lakeFS repository name.
+//	branch - branch in repository to export from.
+//	pathPrefix - path in repository to source files from.
+//
+// Returns:
+//
+//	slice of successfully exported connector paths, slice of errors encountered.
+func (c *Client) DataExport(
+	ctx context.Context,
+	connection *db.Connection,
+	connectionPath,
+	workspace,
+	repository,
+	branch,
+	pathPrefix string,
+) ([]string, []error) {
+	var (
+		errs    []error
+		success []string
+	)
 
-	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	repoName := utils.GetLakeFSRepositoryName(workspace, repository)
 
-	// Fetch the object metadata from the repository.
-	irminObject, err := getObject(path, lakeFSRepositoryName, branch, *c.LakeFSClient)
+	// Fetch object metadata (file or directory).
+	obj, err := getObject(pathPrefix, repoName, branch, *c.LakeFSClient)
 	if err != nil {
-		errors = append(errors, fmt.Errorf("failed to get object: %w", err))
-		return nil, errors
+		errs = append(errs, fmt.Errorf("failed to get object %q: %w", pathPrefix, err))
+		return nil, errs
 	}
 
-	// Files to upload to the connector, where the key is the file name and the value is the file content.
-	filesToUpload := make(map[string][]byte)
-
-	// Check if the object is a directory.
-	if irminObject.Type == irminModels.ObjectTypeGroup {
-		type ChildContentResult struct {
+	// Collect files for upload.
+	files := make(map[string][]byte)
+	if obj.Type == irminModels.ObjectTypeGroup {
+		// Directory: fetch child contents concurrently.
+		ch := make(chan struct {
 			name    string
 			content []byte
-		}
+		}, len(obj.Children))
+		errCh := make(chan error, len(obj.Children))
 
-		var fetchFutures []utils.FutureResult[*ChildContentResult]
-
-		// Iterate through the children of the directory.
-		// TODO: This currently only direct decendants, should be recursive.
-		for _, child := range irminObject.Children {
-			fetchFutures = append(fetchFutures, utils.AsyncWithContext(ctx, func() (*ChildContentResult, error) {
-				// Fetch the content of the child object.
-				content, err := c.LakeFSClient.GetFullObjectContent(lakeFSRepositoryName, branch, child.Path)
-				if err != nil {
-					return nil, fmt.Errorf("failed to get object content: %w", err)
+		for _, child := range obj.Children {
+			child := child
+			go func() {
+				data, getErr := c.LakeFSClient.GetFullObjectContent(
+					repoName,
+					branch,
+					child.Path,
+				)
+				if getErr != nil {
+					errCh <- fmt.Errorf("failed to fetch child %q: %w", child.Path, getErr)
+					return
 				}
-				return &ChildContentResult{
-					name:    child.Name,
-					content: content,
-				}, nil
-			}))
+				ch <- struct {
+					name    string
+					content []byte
+				}{name: child.Name, content: data}
+			}()
 		}
 
-		// Await all fetches
-		for _, future := range fetchFutures {
-			result, err := future.Await()
-			if err != nil {
-				errors = append(errors, err)
-				continue
+		for i := 0; i < len(obj.Children); i++ {
+			select {
+			case r := <-ch:
+				files[r.name] = r.content
+			case e := <-errCh:
+				errs = append(errs, e)
 			}
-			if result == nil {
-				continue
-			}
-			// Add the fetched content to the files to upload.
-			filesToUpload[result.name] = result.content
 		}
 	} else {
-		// Fetch the content of the object.
-		content, err := c.LakeFSClient.GetFullObjectContent(lakeFSRepositoryName, branch, irminObject.Path)
-		if err != nil {
-			errors = append(errors, fmt.Errorf("failed to get object content: %w", err))
-			return successfulConnectionPaths, errors
+		// Single file: fetch content.
+		data, getErr := c.LakeFSClient.GetFullObjectContent(repoName, branch, obj.Path)
+		if getErr != nil {
+			errs = append(errs, fmt.Errorf("failed to fetch object %q: %w", obj.Path, getErr))
+			return success, errs
 		}
-		filesToUpload[irminObject.Name] = content
+		files[obj.Name] = data
 	}
 
-	// Create connector client instance.
-	connectorClient := irminConnectorClient.NewClient(connection.Connector.APIBaseURL, connection.Connector.SystemToken, c.Locale)
-
-	// Initialize operation with the connector
-	op, err := connectorClient.InitOperation(connection.Details, connection.Settings)
-	if err != nil {
-		errors = append(errors, fmt.Errorf("failed to initialize operation: %w", err))
-		return nil, errors
+	// Initialize connector operation.
+	opClient, cancel, initErr := c.initializeConnectorOperation(connection)
+	if initErr != nil {
+		errs = append(errs, initErr)
+		return success, errs
 	}
+	defer cancel()
 
-	// Close the operation when done
-	defer connectorClient.CancelOperation(int(op.ID))
+	// Push files concurrently to connector.
+	pushCh := make(chan string, len(files))
+	pushErrCh := make(chan error, len(files))
 
-	// Create connector operation client
-	connectorOpClient := irminConnectorClient.NewClient(connection.Connector.APIBaseURL, op.Token, "en")
-
-	// Upload each file concurrently.
-	var pushFutures []utils.FutureResult[string]
-	for fileName, file := range filesToUpload {
-		pushFutures = append(pushFutures, utils.AsyncWithContext(ctx, func() (string, error) {
-			// Construct the file path for the connector.
-			filePath := strings.Trim(path, "/")
-			filePath = strings.Trim(filePath, fileName)
-			if filePath == "" {
-				filePath = fileName
-			} else {
-				filePath = fmt.Sprintf("%s/%s", filePath, fileName)
+	for fileName, data := range files {
+		fileName, data := fileName, data
+		go func() {
+			connPath := strings.Trim(pathPrefix, "/")
+			connPath = path.Join(connPath, fileName)
+			_, pushErr := opClient.OperationPush(
+				connPath,
+				irminConnectorClient.FormFile{Reader: bytes.NewBuffer(data)},
+			)
+			if pushErr != nil {
+				pushErrCh <- fmt.Errorf("push failed for %q: %w", connPath, pushErr)
+				return
 			}
-			// Upload the file to the connector.
-			_, err := connectorOpClient.OperationPush(filePath, irminConnectorClient.FormFile{
-				Reader: bytes.NewBuffer(file),
-			})
-			return filePath, err
-		}))
+			pushCh <- connPath
+		}()
 	}
 
-	// Await all uploads.
-	for _, future := range pushFutures {
-		_, err := future.Await()
-		if err != nil {
-			errors = append(errors, fmt.Errorf("failed to upload file: %w", err))
+	// Collect push results.
+	for i := 0; i < len(files); i++ {
+		select {
+		case p := <-pushCh:
+			success = append(success, p)
+		case e := <-pushErrCh:
+			errs = append(errs, e)
 		}
 	}
 
-	return successfulConnectionPaths, errors
+	return success, errs
 }

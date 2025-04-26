@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -96,6 +97,14 @@ func ExecuteWorkflow(ctx context.Context, workflow db.Workflow, user *db.User, t
 	default:
 		logs = append(logs, fmt.Sprintf("Unknown workflow type: %s", workflow.Type))
 		hasError = true
+	}
+
+	// Check if there were any errors during the workflow run from the logs.
+	for _, logEntry := range logs {
+		if logEntry != "" && strings.Contains(strings.ToLower(logEntry), "error") {
+			hasError = true
+			break
+		}
 	}
 
 	// Update the workflow run once the previous process is finished.
