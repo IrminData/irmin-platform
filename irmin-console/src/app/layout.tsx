@@ -11,6 +11,7 @@ import '@/styles/theme.css';
 import { IAMProvider } from '@/context/IAMContext';
 import { LocaleProvider } from '@/context/LocaleContext';
 import { PopupProvider } from '@/context/PopupContext';
+import { PostHogProvider } from '@/context/PostHogProvider';
 import { ThemeProvider } from '@/context/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
 /**
  * Root layout component of the application.
  *
- * Wraps the app with `ClerkProvider` and other global context providers.
+ * Wraps the app with varopis global context providers, like auth, locale, analytics, and theme providers.
  * Initializes the font variables for the app and includes global styles.
  */
 export default async function RootLayout(props: { children: React.ReactNode }) {
@@ -46,22 +47,24 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       <body
         className={`${inter.variable} ${bigShouldersDisplay.variable} scrollbar-hide`}
       >
-        <ClerkProvider dynamic>
-          <LocaleProvider>
-            <PopupProvider>
-              <IAMProvider>
-                <ThemeProvider
-                  attribute='class'
-                  defaultTheme='system'
-                  enableSystem
-                  disableTransitionOnChange
-                >
-                  {children}
-                </ThemeProvider>
-              </IAMProvider>
-            </PopupProvider>
-          </LocaleProvider>
-        </ClerkProvider>
+        <PostHogProvider>
+          <ClerkProvider dynamic>
+            <LocaleProvider>
+              <PopupProvider>
+                <IAMProvider>
+                  <ThemeProvider
+                    attribute='class'
+                    defaultTheme='system'
+                    enableSystem
+                    disableTransitionOnChange
+                  >
+                    {children}
+                  </ThemeProvider>
+                </IAMProvider>
+              </PopupProvider>
+            </LocaleProvider>
+          </ClerkProvider>
+        </PostHogProvider>
         <SpeedInsights />
       </body>
     </html>

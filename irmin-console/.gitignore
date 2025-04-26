@@ -69,3 +69,5 @@ package-lock.json
 
 # Million Lint
 .million
+
+.env.local
