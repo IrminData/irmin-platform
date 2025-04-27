@@ -10,6 +10,8 @@ import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
+
 import { Workflow } from '@/types/core/Workflow';
 
 import SelectWorkflowTypeModalContent from './SelectWorkflowTypeModalContent';
@@ -35,6 +37,7 @@ export default function WorkflowsSection({
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
+  const { setCreateParam } = useToggleCreateParam();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
 
@@ -63,11 +66,13 @@ export default function WorkflowsSection({
 
   const closeModal = useCallback(() => {
     setIsOpen(false);
-  }, []);
+    setCreateParam(false);
+  }, [setCreateParam]);
 
   const openModal = useCallback(() => {
     setIsOpen(true);
-  }, []);
+    setCreateParam(true);
+  }, [setCreateParam]);
 
   return (
     <div className='relative container mx-auto max-w-7xl px-4 py-8'>
