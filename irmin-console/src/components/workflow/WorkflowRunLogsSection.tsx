@@ -4,6 +4,7 @@ import { formatDistanceToNow, intervalToDuration } from 'date-fns';
 
 import { TbClock, TbHourglassLow } from 'react-icons/tb';
 
+import LogFeed from '@/components/logs/LogFeed';
 import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -11,8 +12,6 @@ import { useLocale } from '@/context/LocaleContext';
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
 
 import { WorkflowRun } from '@/types/core/WorkflowRun';
-
-import LogFeed from '../logs/LogFeed';
 
 /**
  * Workflow Run Logs section - showing logs for a specific workflow run.
