@@ -143,7 +143,9 @@ const TableViewer = ({
             <AdvancedDatatable items={filteredItems} />
           )
         ) : (
-          <JSONViewer data={data} />
+          <div className='pl-4'>
+            <JSONViewer data={data} />
+          </div>
         )}
       </div>
     </>

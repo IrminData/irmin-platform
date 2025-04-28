@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { AiOutlineSave } from 'react-icons/ai';
 import { MdPlayArrow } from 'react-icons/md';
@@ -11,6 +11,8 @@ import TableViewer from '@/components/repository/objects/ObjectViewer/TableViewe
 import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
+
+import { nsDurationToMs } from '@/utils/nsDurationToMs';
 
 import { ScriptResult } from '@/types/core/EditorItems';
 
@@ -40,11 +42,35 @@ const ScriptResults = ({
 
   const [activeTab, setActiveTab] = useState('data');
 
+  const [currentDataFile, setCurrentDataFile] = useState<string | null>(
+    Object.keys(result?.structured_results ?? {})[0] ?? null
+  );
+
   const [processingSave, setProcessingSave] = useState(false);
   const [processingRun, setProcessingRun] = useState(false);
 
-  const showLoadingOnData = loading || processingRun;
-  const logs = result?.logs ?? [];
+  useEffect(() => {
+    if (result?.structured_results) {
+      const keys = Object.keys(result.structured_results);
+      if (keys.length > 0) {
+        setCurrentDataFile(keys[0]);
+      }
+    }
+  }, [result]);
+
+  const currentDataFileContent = useMemo(() => {
+    if (currentDataFile && result?.structured_results) {
+      return result.structured_results[currentDataFile];
+    }
+    return null;
+  }, [currentDataFile, result]);
+
+  const showLoadingOnData = useMemo(
+    () => loading || processingRun,
+    [loading, processingRun]
+  );
+
+  const logs = useMemo(() => result?.logs ?? [], [result]);
 
   return (
     <div
@@ -80,7 +106,20 @@ const ScriptResults = ({
             {result?.has_errors ? `(${dict.query.errors})` : ''}
           </Button>
         </div>
-        <div className='mb-2 ml-auto flex gap-2 text-right'>
+        <div className='ml-auto flex gap-2 text-right'>
+          {result?.structured_results &&
+            Object.keys(result.structured_results).length > 0 && (
+              <select
+                onChange={(e) => setCurrentDataFile(e.target.value)}
+                className='py-1 pr-8 pl-2 text-xs'
+              >
+                {Object.keys(result.structured_results).map((file) => (
+                  <option key={file} value={file}>
+                    {file.split('/').pop()}
+                  </option>
+                ))}
+              </select>
+            )}
           {onSave && (
             <Button
               icon={<AiOutlineSave />}
@@ -119,25 +158,16 @@ const ScriptResults = ({
       </div>
       {activeTab === 'data' && (
         <>
-          {result?.structured_results &&
-          Object.keys(result.structured_results).length > 0 ? (
-            <>
-              {Object.entries(result.structured_results).map(([key, value]) => {
-                const title = key.split('/').pop() || key;
-                return (
-                  <TableViewer
-                    key={key}
-                    title={title}
-                    data={value}
-                    metadata={{
-                      rowsReturned: value.length,
-                      timeTaken: result.duration,
-                    }}
-                    loading={showLoadingOnData}
-                  />
-                );
-              })}
-            </>
+          {currentDataFileContent ? (
+            <TableViewer
+              title={currentDataFile?.split('/').pop() ?? currentDataFile ?? ''}
+              data={currentDataFileContent}
+              metadata={{
+                rowsReturned: currentDataFileContent.length,
+                timeTaken: nsDurationToMs(result?.duration ?? 0),
+              }}
+              loading={showLoadingOnData}
+            />
           ) : (
             <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
               {dict.common.noResults}

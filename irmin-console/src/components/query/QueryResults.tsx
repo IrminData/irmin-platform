@@ -12,6 +12,8 @@ import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { nsDurationToMs } from '@/utils/nsDurationToMs';
+
 import { QueryResult } from '@/types/core/StoredQuery';
 
 /**
@@ -129,7 +131,7 @@ const QueryResults = ({
           data={result.data}
           metadata={{
             rowsReturned: result.data.length,
-            timeTaken: result.duration,
+            timeTaken: nsDurationToMs(result.duration ?? 0),
           }}
           loading={showLoadingOnData}
         />
