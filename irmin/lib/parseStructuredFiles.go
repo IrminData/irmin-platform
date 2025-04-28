@@ -1,6 +1,8 @@
 package lib
 
 import (
+	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -12,21 +14,62 @@ import (
 func ParseStructuredFile(files map[string][]byte) (map[string][]map[string]any, error) {
 	// Create a map to hold the parsed results.
 	parsedResults := make(map[string][]map[string]any)
+
 	// Loop through the results and parse each result file.
 	for fileName, result := range files {
-		// Check if the result is a JSON file
+		// Handle JSON files.
 		if strings.HasSuffix(fileName, ".json") {
-			// Parse the JSON file
+			// Parse the JSON file.
 			var jsonData []map[string]any
-			err := json.Unmarshal(result, &jsonData)
-			if err != nil {
+			if err := json.Unmarshal(result, &jsonData); err != nil {
 				return nil, fmt.Errorf("failed to parse JSON file %s: %v", fileName, err)
 			}
-			// Store the parsed JSON data in the map
+			// Store the parsed JSON data in the map.
 			parsedResults[fileName] = jsonData
+			continue
 		}
-		// TODO: Implement CSV parsing
-		// TODO: Implement Parquet parsing
+
+		// Handle CSV files.
+		if strings.HasSuffix(fileName, ".csv") {
+			// Create a CSV reader reading from the byte slice.
+			reader := csv.NewReader(bytes.NewReader(result))
+
+			// Read all records from the CSV.
+			records, err := reader.ReadAll()
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse CSV file %s: %v", fileName, err)
+			}
+
+			// Skip empty CSV.
+			if len(records) < 1 {
+				parsedResults[fileName] = []map[string]any{}
+				continue
+			}
+
+			// First row is the header.
+			headers := records[0]
+
+			// Parse each subsequent row into a map.
+			var csvData []map[string]any
+			for _, row := range records[1:] {
+				rowMap := make(map[string]any)
+				for i, header := range headers {
+					if i < len(row) {
+						rowMap[header] = row[i]
+					} else {
+						rowMap[header] = ""
+					}
+				}
+				csvData = append(csvData, rowMap)
+			}
+
+			// Store the parsed CSV data in the map.
+			parsedResults[fileName] = csvData
+			continue
+		}
+
+		// TODO: Implement Parquet parsing.
 	}
+
 	return parsedResults, nil
 }

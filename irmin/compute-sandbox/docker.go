@@ -32,43 +32,37 @@ func runInDocker(executable, tmpDir, executableType, apiKey, apiURL string) (Exe
 	// Record the start time.
 	result.StartTime = time.Now()
 
-	// Launch the container in detached mode.
-	var runCmd *exec.Cmd
-	if executableType == "python" {
-		runCmd = exec.Command("docker", "run", "-d",
-			"-v", fmt.Sprintf("%s:/usr/src/app", tmpDir),
-			"-w", "/usr/src/app",
-			"python:latest", "python", executable,
-			"--api-key", apiKey,
-			"--api-url", apiURL)
-	} else if executableType == "go" {
-		runCmd = exec.Command("docker", "run", "-d",
-			"-v", fmt.Sprintf("%s:/usr/src/app", tmpDir),
-			"-w", "/usr/src/app",
-			"golang:latest", "go", "run", executable,
-			"--api-key", apiKey,
-			"--api-url", apiURL)
-	} else if executableType == "node" {
-		runCmd = exec.Command("docker", "run", "-d",
-			"-v", fmt.Sprintf("%s:/usr/src/app", tmpDir),
-			"-w", "/usr/src/app",
-			"node:latest", "node", executable,
-			"--api-key", apiKey,
-			"--api-url", apiURL)
-	} else {
+	// build the docker run command
+	args := []string{"run", "-d",
+		"-v", fmt.Sprintf("%s:/usr/src/app", tmpDir),
+		"-w", "/usr/src/app",
+	}
+	switch executableType {
+	case "python":
+		args = append(args, "python:latest", "python", executable, "--api-key", apiKey, "--api-url", apiURL)
+	case "go":
+		args = append(args, "golang:latest", "go", "run", executable, "--api-key", apiKey, "--api-url", apiURL)
+	case "node":
+		args = append(args, "node:latest", "node", executable, "--api-key", apiKey, "--api-url", apiURL)
+	default:
 		return result, fmt.Errorf("unsupported executable type: %s", executableType)
 	}
-	containerIDBytes, err := runCmd.Output()
-	if err != nil {
-		return result, err
-	}
-	containerID := strings.TrimSpace(string(containerIDBytes))
-	result.ContainerID = containerID
 
-	// Ensure the container is always removed.
-	defer func() {
-		exec.Command("docker", "rm", containerID).Run()
-	}()
+	// run the docker command and capture both stdout and stderr
+	cmd := exec.Command("docker", args...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		// include the raw Docker output to aid troubleshooting
+		return result, fmt.Errorf(
+			"docker run failed (exit code %d): %s",
+			cmd.ProcessState.ExitCode(),
+			string(output),
+		)
+	}
+
+	containerID := strings.TrimSpace(string(output))
+	result.ContainerID = containerID
+	defer exec.Command("docker", "rm", containerID).Run()
 
 	// Collect resource usage metrics while the container is running.
 	result.ResourceUsageMetrics = CollectMetricsFromContainer(containerID)
