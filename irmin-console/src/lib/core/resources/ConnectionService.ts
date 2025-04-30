@@ -2,6 +2,7 @@ import IrminCore from '@/lib/core';
 
 import { Connection } from '@/types/core/Connection';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import { ObjectSchema } from '@/types/core/ObjectSchema';
 import { DynamicFieldValues } from '@/types/internal/DynamicField';
 
 /**
@@ -26,6 +27,7 @@ class ConnectionService {
     this.updateConnection = this.updateConnection.bind(this);
     this.transferConnection = this.transferConnection.bind(this);
     this.deleteConnection = this.deleteConnection.bind(this);
+    this.fetchConnectionSchema = this.fetchConnectionSchema.bind(this);
   }
 
   /**
@@ -260,6 +262,36 @@ class ConnectionService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete connection error');
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch the schema of a connection for a specific operation method.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.connectionID - The connection's identifier.
+   * @param props.operation_method - The operation method (e.g., 'pull', 'push').
+   * @returns IrminAPIResponse containing the schema.
+   */
+  async fetchConnectionSchema({
+    workspace,
+    connectionID,
+    operation_method,
+  }: {
+    workspace: string;
+    connectionID: string;
+    operation_method: string;
+  }): Promise<IrminAPIResponse<ObjectSchema>> {
+    try {
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/connections/${connectionID}/schema?operation_method=${operation_method}`,
+        { method: 'GET' }
+      )) as IrminAPIResponse<ObjectSchema>;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch connection schema error');
       throw error;
     }
   }

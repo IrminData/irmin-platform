@@ -2,11 +2,9 @@ import IrminCore from '@/lib/core';
 
 import {
   Connector,
-  ConnectorCapability,
   ConnectorConfigurationValidationResult,
 } from '@/types/core/Connector';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { ObjectSchema } from '@/types/core/ObjectSchema';
 import {
   DynamicFields,
   DynamicFieldValues,
@@ -32,7 +30,6 @@ class ConnectorService {
       this.fetchConnectorConfigurationFields.bind(this);
     this.validateConnectorConfiguration =
       this.validateConnectorConfiguration.bind(this);
-    this.fetchConnectorSchema = this.fetchConnectorSchema.bind(this);
     this.registerNewConnector = this.registerNewConnector.bind(this);
     this.updateRegisteredConnector = this.updateRegisteredConnector.bind(this);
     this.deleteConnector = this.deleteConnector.bind(this);
@@ -174,53 +171,6 @@ class ConnectorService {
         (error as Error).message,
         'Validate connector configuration error'
       );
-      throw error;
-    }
-  }
-
-  /**
-   * Fetch object schema for a connector.
-   *
-   * @param props - The parameters.
-   * @param props.connectorId - The connector's identifier.
-   * @param props.operation - The operation for which to fetch the schema.
-   * @param props.details - Details field values.
-   * @param props.settings - Settings field values.
-   * @returns IrminAPIResponse containing ObjectSchema.
-   */
-  async fetchConnectorSchema({
-    connectorId,
-    operation,
-    details,
-    settings,
-  }: {
-    connectorId: string;
-    operation: ConnectorCapability;
-    details?: DynamicFieldValues;
-    settings?: DynamicFieldValues;
-  }): Promise<IrminAPIResponse<ObjectSchema>> {
-    try {
-      const formData = new FormData();
-      if (details) {
-        Object.keys(details).forEach((key) => {
-          formData.append(`details[${key}]`, details[key] as string);
-        });
-      }
-      if (settings) {
-        Object.keys(settings).forEach((key) => {
-          formData.append(`settings[${key}]`, settings[key] as string);
-        });
-      }
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/connectors/${connectorId}/schema/${operation}`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      )) as IrminAPIResponse<ObjectSchema>;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Fetch object schema error');
       throw error;
     }
   }

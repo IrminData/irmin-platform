@@ -31,7 +31,7 @@ const ConnectionSchemaSection = ({
   return (
     <div className='relative container mx-auto max-w-7xl px-4'>
       <div className='bg-background min-h-96 w-full overflow-y-scroll rounded'>
-        <SchemaViewer objectSchema={pullSchema} />
+        <SchemaViewer schema={pullSchema} />
       </div>
     </div>
   );

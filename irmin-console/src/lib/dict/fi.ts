@@ -251,6 +251,15 @@ const fi = {
       fileToUpload: 'Ladattava tiedosto',
       pathInRepository: 'Polku data-arkistossa',
       noFilesSelected: 'Valitse tiedostot ennen lataamista',
+      binary: 'Binary',
+      group: 'Group',
+      structured: 'Structured',
+      children: 'Lapset',
+      hideChildren: 'Hide children',
+      showChildren: 'Show children',
+      unknownType: 'Unknown type',
+      hideSchema: 'Hide schema',
+      showSchema: 'Show schema',
     },
     settings: {
       deletionNote:

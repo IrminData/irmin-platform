@@ -2,9 +2,6 @@
 
 import { initCore } from '@/lib/initCore';
 
-import { ConnectorCapability } from '@/types/core/Connector';
-import { DynamicFieldValues } from '@/types/internal/DynamicField';
-
 /**
  * Server action to get the list of all available connectors.
  *
@@ -40,39 +37,4 @@ export async function getConnector({
     connectorId,
   });
   return connector;
-}
-
-/**
- * Server action to fetch the connector schema for a specific operation.
- *
- * @param props - The properties for the function.
- * @param props.connectorId - The connector's identifier.
- * @param props.operation - The connector capability for which to fetch the schema.
- * @param props.details - Optional details field values.
- * @param props.settings - Optional settings field values.
- * @param props.token - Optional token for authentication.
- * @returns The object schema.
- */
-export async function getConnectorSchema({
-  connectorId,
-  operation,
-  details,
-  settings,
-  token,
-}: {
-  connectorId: string;
-  operation: ConnectorCapability;
-  details?: DynamicFieldValues;
-  settings?: DynamicFieldValues;
-  token?: string;
-}) {
-  const irminCore = await initCore(token);
-  // Get the connector schema using updated service parameters
-  const schema = await irminCore.connectorService.fetchConnectorSchema({
-    connectorId,
-    operation,
-    details,
-    settings,
-  });
-  return schema;
 }

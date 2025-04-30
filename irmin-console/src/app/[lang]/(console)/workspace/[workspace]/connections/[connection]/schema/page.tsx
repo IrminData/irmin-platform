@@ -1,14 +1,11 @@
 import { notFound } from 'next/navigation';
 
-import { getConnection } from '@/lib/actions/connections';
-import { getConnectorSchema } from '@/lib/actions/connectors';
+import { getConnectionSchema } from '@/lib/actions/connections';
 import { getToken } from '@/lib/getToken';
 
 import ConnectionSchemaSection from '@/components/connection/ConnectionSchemaSection';
 
 import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
-
-import { DynamicFieldValues } from '@/types/internal/DynamicField';
 
 import { SingleConnectionLayoutParams } from '../layout';
 
@@ -25,21 +22,17 @@ export default async function ConnectionSchemaPage(props: {
   if (isInvalidRouteProp(connectionID)) return notFound();
 
   const token = await getToken();
-  const connection = await getConnection({
+
+  const pullSchema = await getConnectionSchema({
     workspace: currentWorkspace,
     connectionID,
+    operation_method: 'pull',
     token,
   });
 
-  if (!connection.data) return notFound();
+  if (!pullSchema.data) {
+    notFound();
+  }
 
-  const pullSchema = await getConnectorSchema({
-    connectorId: connection.data.connector.id,
-    operation: 'pull',
-    details: connection.data.details as DynamicFieldValues,
-    settings: connection.data.settings as DynamicFieldValues,
-    token,
-  });
-
-  return <ConnectionSchemaSection pullSchema={pullSchema.data ?? undefined} />;
+  return <ConnectionSchemaSection pullSchema={pullSchema.data} />;
 }

@@ -248,6 +248,15 @@ const en = {
       fileToUpload: 'File to upload',
       pathInRepository: 'Path in the repository',
       noFilesSelected: 'Select files to upload before submitting',
+      binary: 'Binary',
+      group: 'Group',
+      structured: 'Structured',
+      children: 'Children',
+      hideChildren: 'Hide children',
+      showChildren: 'Show children',
+      unknownType: 'Unknown type',
+      hideSchema: 'Hide schema',
+      showSchema: 'Show schema',
     },
     settings: {
       deletionNote:
