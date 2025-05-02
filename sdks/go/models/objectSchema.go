@@ -1,19 +1,11 @@
 package irminModels
 
-type ObjectSchemaType string
-
-const (
-	ObjectSchemaTypeStructured ObjectSchemaType = "structured"
-	ObjectSchemaTypeBinary     ObjectSchemaType = "binary"
-	ObjectSchemaTypeGroup      ObjectSchemaType = "group"
-)
-
 type ObjectSchema struct {
-	Name         string           `json:"name"`
-	Path         string           `json:"path"`
-	Type         ObjectSchemaType `json:"type"`
-	LastModified *string          `json:"last_modified,omitempty"`
-	Description  *string          `json:"description,omitempty"`
+	Name         string     `json:"name"`
+	Path         string     `json:"path"`
+	Type         ObjectType `json:"type"`
+	LastModified *string    `json:"last_modified,omitempty"`
+	Description  *string    `json:"description,omitempty"`
 	// Structured schema
 	Schema *JSONSchema `json:"schema,omitempty"`
 	// Structured or Binary schema
