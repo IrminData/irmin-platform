@@ -1,23 +1,31 @@
 package db
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	"gorm.io/gorm"
+)
 
 type CustomFieldValues map[string]string
 
 type Connection struct {
 	gorm.Model
 
-	Name          string            `json:"name,omitempty"`
-	Description   string            `json:"description,omitempty"`
-	Documentation string            `json:"documentation,omitempty"`
-	Details       CustomFieldValues `json:"details,omitempty" gorm:"type:jsonb;serializer:json"`
-	Settings      CustomFieldValues `json:"settings,omitempty" gorm:"type:jsonb;serializer:json"`
-	OwnerID       uint              `json:"owner_id,omitempty"`
-	Owner         User              `json:"owner,omitempty" gorm:"foreignKey:OwnerID"`
-	WorkspaceID   uint              `json:"workspace_id,omitempty"`
-	Workspace     Workspace         `json:"workspace,omitempty" gorm:"foreignKey:WorkspaceID"`
-	ConnectorID   uint              `json:"connector_id,omitempty"`
-	Connector     Connector         `json:"connector,omitempty" gorm:"foreignKey:ConnectorID"`
+	Name                    string                    `json:"name,omitempty"`
+	Description             string                    `json:"description,omitempty"`
+	Documentation           string                    `json:"documentation,omitempty"`
+	Details                 CustomFieldValues         `json:"details,omitempty" gorm:"type:jsonb;serializer:json"`
+	Settings                CustomFieldValues         `json:"settings,omitempty" gorm:"type:jsonb;serializer:json"`
+	CachedSchema            *irminModels.ObjectSchema `json:"cached_schema,omitempty" gorm:"type:jsonb;serializer:json"`
+	CachedSchemaCreatedAt   *time.Time                `json:"cached_schema_created_at,omitempty"`
+	CachedSchemaForOpMethod *string                   `json:"cached_schema_for_op_method,omitempty"`
+	OwnerID                 uint                      `json:"owner_id,omitempty"`
+	Owner                   User                      `json:"owner,omitempty" gorm:"foreignKey:OwnerID"`
+	WorkspaceID             uint                      `json:"workspace_id,omitempty"`
+	Workspace               Workspace                 `json:"workspace,omitempty" gorm:"foreignKey:WorkspaceID"`
+	ConnectorID             uint                      `json:"connector_id,omitempty"`
+	Connector               Connector                 `json:"connector,omitempty" gorm:"foreignKey:ConnectorID"`
 }
 
 // GetConnectionByID finds a connection by its ID
@@ -47,17 +55,14 @@ func CreateConnection(connection *Connection) (*Connection, error) {
 }
 
 // UpdateConnection updates an existing connection record in the database.
-func UpdateConnection(id uint, updates map[string]any) (*Connection, error) {
-	var connection Connection
-	// Update only the provided fields for the user with the specified ID.
-	if err := DB.Model(&Connection{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+func UpdateConnection(connection *Connection) (*Connection, error) {
+	if err := DB.Save(&connection).Error; err != nil {
 		return nil, err
 	}
-	// Retrieve the updated connection record.
-	if err := DB.Preload("Owner").Preload("Connector").First(&connection, id).Error; err != nil {
+	if err := DB.Preload("Owner").Preload("Connector").First(&connection, connection.ID).Error; err != nil {
 		return nil, err
 	}
-	return &connection, nil
+	return connection, nil
 }
 
 // DeleteConnection deletes a connection from the database

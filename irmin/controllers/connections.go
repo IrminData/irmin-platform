@@ -8,6 +8,7 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
+	"time"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
@@ -161,17 +162,15 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 	details := utils.ParseObjectFormFields(c, "details")
 	settings := utils.ParseObjectFormFields(c, "settings")
 
-	// Prepare the fields to update
-	updates := map[string]any{
-		"name":          fields["name"],
-		"description":   fields["description"],
-		"documentation": fields["documentation"],
-	}
+	// Update the fields of the connection
+	connection.Name = fields["name"]
+	connection.Description = fields["description"]
+	connection.Documentation = fields["documentation"]
 	if len(details) > 0 {
-		updates["details"] = details
+		connection.Details = details
 	}
 	if len(settings) > 0 {
-		updates["settings"] = settings
+		connection.Settings = settings
 	}
 	if fields["connector"] != "" {
 		// Parse the connector ID
@@ -182,11 +181,11 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
-		updates["connector_id"] = connectorID
+		connection.ConnectorID = uint(connectorID)
 	}
 
 	// Update the connection
-	updatedConnection, err := db.UpdateConnection(connection.ID, updates)
+	updatedConnection, err := db.UpdateConnection(connection)
 	if err != nil {
 		log.Printf("Error updating connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
@@ -284,9 +283,8 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	}
 
 	// Update the connection
-	updatedConnection, err := db.UpdateConnection(connection.ID, map[string]any{
-		"owner_id": newOwnerID,
-	})
+	connection.OwnerID = uint(newOwnerID)
+	updatedConnection, err := db.UpdateConnection(connection)
 	if err != nil {
 		log.Printf("Error updating connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
@@ -336,6 +334,21 @@ func ConnectionSchema(c fiber.Ctx) error {
 		operationMethod = "pull"
 	}
 
+	// Check if the connection has a cached schema
+	if connection.CachedSchemaForOpMethod != nil && connection.CachedSchema != nil && connection.CachedSchemaCreatedAt != nil {
+		// Check that the cached schema is for a relevant operation method
+		if *connection.CachedSchemaForOpMethod == operationMethod {
+			// Check that the cached schema is not older than 12 hours
+			schemaCacheMaxAge := 12 * time.Hour
+			if time.Since(*connection.CachedSchemaCreatedAt) < schemaCacheMaxAge {
+				// Return the cached schema
+				return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+					Data: connection.CachedSchema,
+				})
+			}
+		}
+	}
+
 	// Initialize Data Engine client
 	DataEngine := engine.NewClient(locale)
 
@@ -347,6 +360,18 @@ func ConnectionSchema(c fiber.Ctx) error {
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
+
+	// Update the connection with the new schema in a goroutine
+	go func() {
+		connection.CachedSchema = schema
+		now := time.Now()
+		connection.CachedSchemaCreatedAt = &now
+		connection.CachedSchemaForOpMethod = &operationMethod
+		_, err := db.UpdateConnection(connection)
+		if err != nil {
+			log.Printf("Error updating connection with new schema: %v", err)
+		}
+	}()
 
 	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
