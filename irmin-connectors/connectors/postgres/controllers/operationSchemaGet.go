@@ -83,7 +83,7 @@ func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
 		children = append(children, irminModels.ObjectSchema{
 			Name:        tbl + ".json",
 			Path:        *dbName + "/" + tbl + ".json",
-			Type:        irminModels.ObjectSchemaTypeStructured,
+			Type:        irminModels.ObjectTypeStructured,
 			ContentType: &ct,
 			Schema:      &arraySchema,
 		})
@@ -91,7 +91,7 @@ func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
 
 	// assemble group schema
 	group := irminModels.ObjectSchema{
-		Type: irminModels.ObjectSchemaTypeGroup,
+		Type: irminModels.ObjectTypeGroup,
 		Name: *dbName,
 		Path: *dbName,
 		Restrictions: &irminModels.GroupSchemaRestrictions{
