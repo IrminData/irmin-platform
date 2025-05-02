@@ -10,13 +10,8 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// ExecuteQuery executes a query in the specified workspace and returns the results.
-func (c *Client) ExecuteQuery(userWorkspace, query string) *irminModels.QueryResult {
-	// Collect errors and logs encountered during query execution.
-	var errors []error
-	var logs []string
-	// Parse the query provided by the user.
-	parsedQuery, err := utils.ParseIrminQuery(query, func(pl *utils.ParsedQueryPlaceholder) (string, error) {
+func parseIrminQuery(c *Client, userWorkspace string, query string) (utils.ParsedIrminQuery, error) {
+	return utils.ParseIrminQuery(query, func(pl *utils.ParsedQueryPlaceholder) (string, error) {
 		workspace := pl.Workspace
 		repository := pl.Repository
 		object := strings.Trim(pl.Object, "/")
@@ -67,6 +62,15 @@ func (c *Client) ExecuteQuery(userWorkspace, query string) *irminModels.QueryRes
 
 		return objectSelector, nil
 	})
+}
+
+// ExecuteQuery executes a query in the specified workspace and returns the results.
+func (c *Client) ExecuteQuery(userWorkspace, query string) *irminModels.QueryResult {
+	// Collect errors and logs encountered during query execution.
+	var errors []error
+	var logs []string
+	// Parse the query provided by the user.
+	parsedQuery, err := parseIrminQuery(c, userWorkspace, query)
 	if err != nil {
 		errors = append(errors, fmt.Errorf("failed to parse query: %w", err))
 	}

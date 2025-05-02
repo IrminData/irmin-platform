@@ -90,7 +90,7 @@ func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connecti
 func schemaToRelevantPaths(prefix string, schema *irminModels.ObjectSchema) []string {
 	var paths []string
 
-	if schema.Type == irminModels.ObjectSchemaTypeGroup {
+	if schema.Type == irminModels.ObjectTypeGroup {
 		// Directory: traverse children.
 		for _, child := range schema.Children {
 			childPaths := schemaToRelevantPaths(prefix, &child)

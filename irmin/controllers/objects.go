@@ -263,6 +263,26 @@ func ObjectsHistory(c fiber.Ctx) error {
 }
 
 func ObjectsSchema(c fiber.Ctx) error {
-	// TODO: Implement schema retrieval
-	return c.SendString("ObjectsSchema")
+	locale := c.Locals("locale").(string)
+	dict := c.Locals("dict").(locales.Dictionary)
+	repository := c.Locals("repository").(*db.Repository)
+	workspace := c.Locals("workspace").(*db.Workspace)
+	object_ref := c.Locals("object_ref").(string)
+	object_path := c.Locals("object_path").(string)
+
+	// Initialize Data Engine client
+	DataEngine := engine.NewClient(locale)
+
+	// Get the schema of the object in the repository at ref
+	schema, err := DataEngine.GenerateObjectSchema(workspace.Slug, repository.Slug, object_path, object_ref)
+	if err != nil {
+		log.Printf("Error retrieving object schema from Data Engine: %v", err)
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+		Data: schema,
+	})
 }
