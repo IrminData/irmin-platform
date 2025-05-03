@@ -5,7 +5,13 @@ import { useMemo } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 import { GoGitBranch, GoGitCommit, GoGitCompare } from 'react-icons/go';
-import { TbDatabase, TbFileText, TbSettings, TbTags } from 'react-icons/tb';
+import {
+  TbDatabase,
+  TbFileText,
+  TbSchema,
+  TbSettings,
+  TbTags,
+} from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -58,6 +64,12 @@ export default function RepositoryHeader() {
         link: `${baseUrl}?${searchParams.toString()}`,
         active: pathname === `${baseUrl}`,
         icon: <TbDatabase size={14} />,
+      },
+      {
+        name: dict.repository.schema.schema,
+        link: `${baseUrl}/schema?${searchParams.toString()}`,
+        active: pathname === `${baseUrl}/schema`,
+        icon: <TbSchema size={14} />,
       },
       {
         name: dict.repository.commit.commits,

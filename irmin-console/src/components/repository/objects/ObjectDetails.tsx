@@ -237,7 +237,7 @@ export default function ObjectDetails({
                   size='sm'
                   variant='secondary'
                   className='w-full'
-                  href={`${baseUrl}/object/schema?path=${selectedObject.path}&ref=${currentRef}`}
+                  href={`${baseUrl}/schema?path=${selectedObject.path}&ref=${currentRef}`}
                   icon={<TbSchema />}
                 >
                   {dict.repository.objects.viewSchema}

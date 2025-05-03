@@ -26,8 +26,8 @@ class ObjectService {
     // Bind methods
     this.getObjectAtPath = this.getObjectAtPath.bind(this);
     this.getObjectHistory = this.getObjectHistory.bind(this);
-    this.getObjectSchema = this.getObjectSchema.bind(this);
     this.getObjectContent = this.getObjectContent.bind(this);
+    this.getObjectSchema = this.getObjectSchema.bind(this);
     this.uploadObject = this.uploadObject.bind(this);
     this.moveObject = this.moveObject.bind(this);
     this.copyObject = this.copyObject.bind(this);
@@ -103,43 +103,9 @@ class ObjectService {
   }
 
   /**
-   * Get the schema of an object.
-   *
-   * @param props - The object schema properties.
-   * @param props.workspace - The workspace slug.
-   * @param props.repository - The repository slug.
-   * @param props.path - The path of the object.
-   * @param props.ref - The ref (branch, tag or commit hash).
-   * @returns IrminAPIResponse containing the object schema.
-   */
-  async getObjectSchema({
-    workspace,
-    repository,
-    path,
-    ref,
-  }: {
-    workspace: string;
-    repository: string;
-    path: string;
-    ref?: string;
-  }): Promise<IrminAPIResponse<ObjectSchema>> {
-    try {
-      let url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/schema?path=${encodeURIComponent(path)}`;
-      if (ref) url += `&ref=${encodeURIComponent(ref)}`;
-      const response = (await this.irminCore.fetchAPI(url, {
-        method: 'GET',
-      })) as IrminAPIResponse<ObjectSchema>;
-      return response;
-    } catch (error) {
-      console.error((error as Error).message, 'Fetch object schema error');
-      throw error;
-    }
-  }
-
-  /**
    * Get the content of an object.
    *
-   * @param props - The object content properties.
+   * @param props
    * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.path - The path of the object.
@@ -172,6 +138,42 @@ class ObjectService {
       console.error((error as Error).message, 'Fetch object content error');
     }
     return null;
+  }
+
+  /**
+   * Get the schema of an object.
+   *
+   * @param props
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug.
+   * @param props.path - The path of the object.
+   * @param props.ref - The ref (branch, tag or commit hash).
+   * @returns The schema of the object.
+   */
+  async getObjectSchema({
+    workspace,
+    repository,
+    path,
+    ref,
+  }: {
+    workspace: string;
+    repository: string;
+    path: string;
+    ref?: string;
+  }): Promise<IrminAPIResponse<ObjectSchema>> {
+    try {
+      const urlParams = new URLSearchParams();
+      urlParams.append('path', path);
+      if (ref) urlParams.append('ref', ref);
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/schema?${urlParams.toString()}`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'GET',
+      })) as IrminAPIResponse<ObjectSchema>;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch object content error');
+      throw error;
+    }
   }
 
   /**

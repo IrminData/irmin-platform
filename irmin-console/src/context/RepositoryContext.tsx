@@ -60,8 +60,8 @@ interface RepositoryContextProps {
   copyObject: (oldPath: string, newPath: string) => Promise<void>;
   uploadObject: (path: string, ref: string, files: FileList) => Promise<void>;
   getObjectContent: (path: string) => Promise<IrminAPIBinaryResponse | null>;
-  getObjectSchema: (objectPath: string) => Promise<ObjectSchema | undefined>;
   getObjectCommitHistory: (objectPath: string) => Promise<Commit[]>;
+  getObjectSchema: (path: string) => Promise<ObjectSchema | null>;
   // Branches
   loadingBranches: boolean;
   branches: Branch[] | null;
@@ -628,16 +628,17 @@ export const RepositoryProvider = ({
           path,
           ref: currentRef,
         });
-        return res.data ?? undefined;
+        return res.data ?? null;
       } catch (error) {
-        console.error('RepositoryContext fetchObjectSchema error', error);
+        console.error('RepositoryContext fetchObjectContent error', error);
         irminAlert(
           'error',
-          (error as Error)?.message ?? 'Failed to fetch object schema'
+          (error as Error)?.message ?? 'Failed to fetch object content'
         );
       }
+      return null;
     },
-    [repositorySlug, currentRef, irminAlert, workspaceSlug, getToken, locale]
+    [workspaceSlug, repositorySlug, currentRef, irminAlert, getToken, locale]
   );
 
   /**
