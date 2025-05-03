@@ -334,18 +334,16 @@ func ConnectionSchema(c fiber.Ctx) error {
 		operationMethod = "pull"
 	}
 
-	// Check if the connection has a cached schema
-	if connection.CachedSchemaForOpMethod != nil && connection.CachedSchema != nil && connection.CachedSchemaCreatedAt != nil {
-		// Check that the cached schema is for a relevant operation method
-		if *connection.CachedSchemaForOpMethod == operationMethod {
-			// Check that the cached schema is not older than 12 hours
-			schemaCacheMaxAge := 12 * time.Hour
-			if time.Since(*connection.CachedSchemaCreatedAt) < schemaCacheMaxAge {
-				// Return the cached schema
-				return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
-					Data: connection.CachedSchema,
-				})
-			}
+	// Find a relevant connection schema cache
+	schemaCache, _ := db.FindConnectionSchemaCache(connection.ID, operationMethod)
+	if schemaCache != nil {
+		// Check if the schema cache is not older than 12 hours
+		schemaCacheMaxAge := 12 * time.Hour
+		if time.Since(schemaCache.UpdatedAt) < schemaCacheMaxAge {
+			// Return the cached schema
+			return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+				Data: schemaCache.Schema,
+			})
 		}
 	}
 
@@ -363,13 +361,19 @@ func ConnectionSchema(c fiber.Ctx) error {
 
 	// Update the connection with the new schema in a goroutine
 	go func() {
-		connection.CachedSchema = schema
-		now := time.Now()
-		connection.CachedSchemaCreatedAt = &now
-		connection.CachedSchemaForOpMethod = &operationMethod
-		_, err := db.UpdateConnection(connection)
+		var err error
+		if schemaCache != nil {
+			schemaCache.Schema = schema
+			err = db.SaveConnectionSchemaCache(schemaCache)
+		} else {
+			err = db.SaveConnectionSchemaCache(&db.ConnectionSchemaCache{
+				Schema:       schema,
+				OpMethod:     &operationMethod,
+				ConnectionID: connection.ID,
+			})
+		}
 		if err != nil {
-			log.Printf("Error updating connection with new schema: %v", err)
+			log.Printf("Error saving connection schema cache: %v", err)
 		}
 	}()
 

@@ -52,11 +52,17 @@ func Migrate() error {
 	if err := DB.AutoMigrate(&Connection{}); err != nil {
 		return fmt.Errorf("failed to migrate Connection: %w", err)
 	}
+	if err := DB.AutoMigrate(&ConnectionSchemaCache{}); err != nil {
+		return fmt.Errorf("failed to migrate ConnectionSchemaCache: %w", err)
+	}
 	if err := DB.AutoMigrate(&Invite{}); err != nil {
 		return fmt.Errorf("failed to migrate Invite: %w", err)
 	}
 	if err := DB.AutoMigrate(&Repository{}); err != nil {
 		return fmt.Errorf("failed to migrate Repository: %w", err)
+	}
+	if err := DB.AutoMigrate(&RepositorySchemaCache{}); err != nil {
+		return fmt.Errorf("failed to migrate RepositorySchemaCache: %w", err)
 	}
 	if err := DB.AutoMigrate(&ImportWorkflowable{}); err != nil {
 		return fmt.Errorf("failed to migrate ImportWorkflowable: %w", err)
