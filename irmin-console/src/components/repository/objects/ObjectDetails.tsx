@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -66,6 +66,7 @@ export default function ObjectDetails({
     deleteObject,
     moveObject,
     uploadObject,
+    downloadObjectAsZip,
   } = useRepository();
   const { irminModal, irminConfirm } = usePopup();
   const { dict } = useLocale();
@@ -139,6 +140,19 @@ export default function ObjectDetails({
       );
     }
   }, [selectedObject, baseUrl, currentRef, viewObject, router]);
+
+  const [downloading, setDownloading] = useState(false);
+  const handleDownload = useCallback(async () => {
+    if (!selectedObject) return;
+    setDownloading(true);
+    try {
+      await downloadObjectAsZip(selectedObject.path);
+    } catch (error) {
+      console.error('Error downloading object:', error);
+    } finally {
+      setDownloading(false);
+    }
+  }, [selectedObject, downloadObjectAsZip]);
 
   if (!selectedObject) return <></>;
 
@@ -259,8 +273,9 @@ export default function ObjectDetails({
             size='sm'
             variant='secondary'
             className='w-full'
-            href={`${baseUrl}/object/download?path=${selectedObject.path}&ref=${currentRef}`}
             icon={<TbDownload />}
+            onClick={handleDownload}
+            loading={downloading}
           >
             {dict.common.actions.download}
           </Button>

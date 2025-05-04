@@ -25,7 +25,6 @@ class RepositoryService {
     this.updateRepository = this.updateRepository.bind(this);
     this.transferRepository = this.transferRepository.bind(this);
     this.deleteRepository = this.deleteRepository.bind(this);
-    this.getRepositoryDownloadLink = this.getRepositoryDownloadLink.bind(this);
   }
 
   /**
@@ -271,48 +270,6 @@ class RepositoryService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Delete Repository error');
-      throw error;
-    }
-  }
-
-  /**
-   * Get a download link for a repository.
-   *
-   * @param props - The parameters.
-   * @param props.workspace - The workspace slug.
-   * @param props.repositorySlug - The repository slug.
-   * @param props.ref - The ref to download.
-   * @param props.path - The path to download.
-   * @returns IrminAPIResponse containing an object with download_url.
-   */
-  async getRepositoryDownloadLink({
-    workspace,
-    repositorySlug,
-    ref,
-    path,
-  }: {
-    workspace: string;
-    repositorySlug: string;
-    ref: string;
-    path: string;
-  }): Promise<IrminAPIResponse<string>> {
-    try {
-      const formData = new FormData();
-      formData.append('ref', ref);
-      formData.append('path', path);
-      const response = await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/repositories/${repositorySlug}/download`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
-      return response as IrminAPIResponse<string>;
-    } catch (error) {
-      console.error(
-        (error as Error).message,
-        'Get Repository download link error'
-      );
       throw error;
     }
   }

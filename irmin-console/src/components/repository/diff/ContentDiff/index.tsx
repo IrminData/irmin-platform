@@ -1,17 +1,14 @@
 'use client';
 
-import { useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 
 import ObjectViewer from '@/components/repository/objects/ObjectViewer';
 import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import {
-  convertToText,
-  downloadContent,
-  getContentType,
-} from '@/utils/content';
+import { convertToText, getContentType } from '@/utils/content';
+import { downloadFile } from '@/utils/downloadFile';
 
 import { ChangeItem } from '@/types/core/Diff';
 import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
@@ -37,15 +34,24 @@ const ContentDiff = ({
 }) => {
   const { dict } = useLocale();
 
-  const baseText = convertToText(baseContent);
-  const compareText = convertToText(compareContent);
+  const baseText = useMemo(() => convertToText(baseContent), [baseContent]);
+  const compareText = useMemo(
+    () => convertToText(compareContent),
+    [compareContent]
+  );
 
-  const baseContentType = getContentType(baseContent);
-  const compareContentType = getContentType(compareContent);
+  const baseContentType = useMemo(
+    () => getContentType(baseContent),
+    [baseContent]
+  );
+  const compareContentType = useMemo(
+    () => getContentType(compareContent),
+    [compareContent]
+  );
 
   const handleDownload = useCallback(
     (content: Blob | string, contentType: string) => {
-      downloadContent(content, contentType, item.object.name);
+      downloadFile(content, item.object.name, contentType);
     },
     [item]
   );
@@ -140,4 +146,4 @@ const ContentDiff = ({
   );
 };
 
-export default ContentDiff;
+export default memo(ContentDiff);

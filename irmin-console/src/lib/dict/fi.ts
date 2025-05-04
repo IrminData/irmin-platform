@@ -49,6 +49,7 @@ const fi = {
     message: 'Viesti',
     messagePlaceholder: 'Kirjoita viestisi tähän...',
     pleaseWait: 'Odota hetki...',
+    downloadSuccess: 'Lataus onnistui',
     actions: {
       send: 'Lähetä',
       subscribe: 'Tilaa',

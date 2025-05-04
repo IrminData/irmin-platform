@@ -48,6 +48,7 @@ const en = {
     message: 'Message',
     messagePlaceholder: 'Write your message here...',
     pleaseWait: 'Please wait...',
+    downloadSuccess: 'Download successful',
     actions: {
       send: 'Send',
       subscribe: 'Subscribe',

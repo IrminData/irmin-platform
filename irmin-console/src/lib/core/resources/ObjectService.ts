@@ -27,6 +27,7 @@ class ObjectService {
     this.getObjectAtPath = this.getObjectAtPath.bind(this);
     this.getObjectHistory = this.getObjectHistory.bind(this);
     this.getObjectContent = this.getObjectContent.bind(this);
+    this.downloadObjectZip = this.downloadObjectZip.bind(this);
     this.getObjectSchema = this.getObjectSchema.bind(this);
     this.uploadObject = this.uploadObject.bind(this);
     this.moveObject = this.moveObject.bind(this);
@@ -136,6 +137,44 @@ class ObjectService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch object content error');
+    }
+    return null;
+  }
+
+  /**
+   * Download an object as a zip file.
+   *
+   * @param props
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug.
+   * @param props.path - The path of the object.
+   * @param props.ref - The ref (branch, tag or commit hash).
+   * @returns IrminAPIBinaryResponse containing the object zip file.
+   */
+  async downloadObjectZip({
+    workspace,
+    repository,
+    path,
+    ref,
+  }: {
+    workspace: string;
+    repository: string;
+    path: string;
+    ref?: string;
+  }): Promise<IrminAPIBinaryResponse | null> {
+    try {
+      const urlParams = new URLSearchParams();
+      urlParams.append('path', path);
+      if (ref) urlParams.append('ref', ref);
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/download?${urlParams.toString()}`;
+      const response = await this.irminCore.fetchBinary(
+        url,
+        { method: 'GET' },
+        [200]
+      );
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch object zip error');
     }
     return null;
   }

@@ -17,6 +17,7 @@ import IrminCore from '@/lib/core';
 import { usePopup } from '@/context/PopupContext';
 
 import { constructBaseUrl } from '@/utils/constructBaseUrl';
+import { downloadFile } from '@/utils/downloadFile';
 import { createQueryString } from '@/utils/queryParams';
 
 import { Branch } from '@/types/core/Branch';
@@ -50,7 +51,6 @@ interface RepositoryContextProps {
   updateRepository: (data: ItemUpdateProps) => Promise<void>;
   deleteRepository: () => Promise<void>;
   transferRepository: (ownerID: string) => Promise<void>;
-  downloadRepository: (selectedPath?: string) => Promise<void>;
   // Objects
   loadingObjects: boolean;
   rootObject: Object | undefined;
@@ -60,6 +60,7 @@ interface RepositoryContextProps {
   copyObject: (oldPath: string, newPath: string) => Promise<void>;
   uploadObject: (path: string, ref: string, files: FileList) => Promise<void>;
   getObjectContent: (path: string) => Promise<IrminAPIBinaryResponse | null>;
+  downloadObjectAsZip: (path: string, ref?: string) => Promise<void>;
   getObjectCommitHistory: (objectPath: string) => Promise<Commit[]>;
   getObjectSchema: (path: string) => Promise<ObjectSchema | null>;
   // Branches
@@ -350,50 +351,6 @@ export const RepositoryProvider = ({
     ]
   );
 
-  // Download the current repository
-  const handleRpositoryDownload = useCallback(
-    async (selectedPath?: string) => {
-      try {
-        const token = await getToken();
-        const irminCore = new IrminCore(locale, token);
-        const res = await irminCore.repositoryService.getRepositoryDownloadLink(
-          {
-            workspace: workspaceSlug,
-            repositorySlug,
-            ref: currentRef ?? initialRepository.default_branch,
-            path: selectedPath ?? '/',
-          }
-        );
-        if (typeof res.data === 'string') {
-          irminAlert(
-            'success',
-            res.message ?? 'Repository downloaded successfully'
-          );
-          window.open(res.data, '_blank');
-        } else {
-          irminAlert(
-            'info',
-            res.message ?? 'Download link was not provided by the server'
-          );
-        }
-      } catch (error) {
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Error downloading the repository'
-        );
-      }
-    },
-    [
-      workspaceSlug,
-      repositorySlug,
-      initialRepository,
-      currentRef,
-      irminAlert,
-      getToken,
-      locale,
-    ]
-  );
-
   // Objects state
   const [loadingObjects, setLoadingObjects] = useState(false);
   const [rootObject, setRootObject] = useState<Object | undefined>(undefined);
@@ -612,6 +569,48 @@ export const RepositoryProvider = ({
       return null;
     },
     [workspaceSlug, repositorySlug, currentRef, irminAlert, getToken, locale]
+  );
+
+  /**
+   * Download the object at path as a zip file
+   */
+  const downloadObjectAsZip = useCallback(
+    async (path: string, ref?: string) => {
+      try {
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.objectService.downloadObjectZip({
+          workspace: workspaceSlug,
+          repository: repositorySlug,
+          path,
+          ref: ref ?? currentRef,
+        });
+        if (typeof res == 'string' || res instanceof Blob) {
+          // Construct the name of the file
+          const objectName = path.split('/').pop() ?? 'root';
+          const zipName = `${workspaceSlug}-${repositorySlug}-${ref ?? currentRef}-${objectName}.zip`;
+          // Download the file
+          downloadFile(res, zipName, 'application/zip');
+          // Alert the user
+          irminAlert('success', dict.common.downloadSuccess);
+        }
+      } catch (error) {
+        console.error('RepositoryContext downloadObjectAsZip error', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to download object as zip'
+        );
+      }
+    },
+    [
+      workspaceSlug,
+      repositorySlug,
+      currentRef,
+      irminAlert,
+      getToken,
+      dict,
+      locale,
+    ]
   );
 
   /**
@@ -1162,7 +1161,6 @@ export const RepositoryProvider = ({
         updateRepository: handleUpdateRepository,
         deleteRepository: handleDeleteRepository,
         transferRepository: handleTransferOwnershipRepository,
-        downloadRepository: handleRpositoryDownload,
         // Objects
         loadingObjects,
         rootObject,
@@ -1172,6 +1170,7 @@ export const RepositoryProvider = ({
         copyObject: handleCopyObject,
         uploadObject: handleUploadObject,
         getObjectContent: fetchObjectContent,
+        downloadObjectAsZip,
         getObjectSchema: fetchObjectSchema,
         getObjectCommitHistory: fetchObjectChangeHistory,
         // Branches

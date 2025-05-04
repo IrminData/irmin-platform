@@ -65,6 +65,7 @@ export default function RepositorySection({
     loadingObjects,
     fetchObject,
     getObjectContent,
+    downloadObjectAsZip,
   } = useRepository();
 
   const [currentDirectoryPath, setCurrentDirectoryPath] = useState<string>('');
@@ -163,6 +164,18 @@ export default function RepositorySection({
     [query.loading]
   );
 
+  const [downloading, setDownloading] = useState(false);
+  const handleDownload = useCallback(async () => {
+    setDownloading(true);
+    try {
+      await downloadObjectAsZip(currentDirectoryPath);
+    } catch (error) {
+      console.error('Error downloading repository:', error);
+    } finally {
+      setDownloading(false);
+    }
+  }, [currentDirectoryPath, downloadObjectAsZip]);
+
   return (
     <>
       <div className='relative container mx-auto mb-4 flex max-w-7xl flex-col px-2 md:px-4'>
@@ -230,7 +243,8 @@ export default function RepositorySection({
                   variant='secondary'
                   size='sm'
                   icon={<TbDownload />}
-                  href={`${workspaceUrl}/repositories/${currentRepository.slug}/download?ref=${currentRef}`}
+                  onClick={handleDownload}
+                  loading={downloading}
                 >
                   {dict.common.actions.download}
                 </Button>
