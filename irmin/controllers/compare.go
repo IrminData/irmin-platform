@@ -33,10 +33,10 @@ func CompareRefs(c fiber.Ctx) error {
 	compareRef := params["compare_ref"]
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Compare the refs
-	diff, err := DataEngine.CompareRefs(c.Context(), workspace.Slug, repository.Slug, baseRef, compareRef)
+	diff, err := dataEngine.CompareRefs(c.Context(), workspace.Slug, repository.Slug, baseRef, compareRef)
 	if err != nil {
 		log.Printf("Error comparing refs: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
@@ -81,10 +81,10 @@ func MergeRefs(c fiber.Ctx) error {
 	allowEmpty := fields["allow_empty"] == "true"
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Merge the refs
-	mergeCommit, err := DataEngine.MergeRefs(workspace.Slug, repository.Slug, baseRef, compareRef, description, user.Email, strategy, squash, allowEmpty)
+	mergeCommit, err := dataEngine.MergeRefs(workspace.Slug, repository.Slug, baseRef, compareRef, description, user.Email, strategy, squash, allowEmpty)
 
 	if err != nil {
 		log.Printf("Error merging refs: %v", err)

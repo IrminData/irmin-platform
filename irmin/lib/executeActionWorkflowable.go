@@ -31,7 +31,7 @@ func ExecuteActionWorkflowable(ctx context.Context, workflow *db.Workflow, workf
 	// Check if the results need to be saved
 	if workflowable.Repository != nil {
 		// Initialize Data Engine client
-		DataEngine := engine.NewClient("en")
+		dataEngine := engine.NewClient("en")
 
 		// Loop thorugh the results and save them to the repository
 		for fileName, fileContent := range computeResult.ResultFiles {
@@ -40,7 +40,7 @@ func ExecuteActionWorkflowable(ctx context.Context, workflow *db.Workflow, workf
 			// Construct the path to save the file
 			uploadObjectToPath := strings.Trim(*workflowable.Path, "/") + "/" + fileName
 			// Upload the object to the path in the repository at ref
-			_, err := DataEngine.UploadObject(workflow.Workspace.Slug, workflowable.Repository.Slug, uploadObjectToPath, *workflowable.Branch, file)
+			_, err := dataEngine.UploadObject(workflow.Workspace.Slug, workflowable.Repository.Slug, uploadObjectToPath, *workflowable.Branch, file)
 			if err != nil {
 				log.Printf("Error uploading object to Data Engine: %v", err)
 				logs = append(logs, fmt.Sprintf("Error saving result object ('%s') to %s@%s/%s.", fileName, workflowable.Repository.Slug, *workflowable.Branch, uploadObjectToPath))

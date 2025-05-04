@@ -18,7 +18,7 @@ func ExecutePipelineWorkflowable(ctx context.Context, workflow *db.Workflow, wor
 	var logs []string
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient("en")
+	dataEngine := engine.NewClient("en")
 
 	// Store the results of the previously executed stage
 	// This is a byte array map where the key is the result file name and the value is the file content
@@ -134,7 +134,7 @@ func ExecutePipelineWorkflowable(ctx context.Context, workflow *db.Workflow, wor
 					// Construct the path to save the file
 					uploadObjectToPath := strings.Trim(*stage.RepositoryPath, "/") + "/" + fileName
 					// Upload the object to the path in the repository at ref
-					_, err := DataEngine.UploadObject(workflow.Workspace.Slug, stage.Repository.Slug, uploadObjectToPath, *stage.RepositoryBranch, file)
+					_, err := dataEngine.UploadObject(workflow.Workspace.Slug, stage.Repository.Slug, uploadObjectToPath, *stage.RepositoryBranch, file)
 					if err != nil {
 						log.Printf("Error uploading object to Data Engine: %v", err)
 						logs = append(logs, fmt.Sprintf("Error saving result object ('%s') to %s@%s/%s.", fileName, stage.Repository.Slug, *stage.RepositoryBranch, uploadObjectToPath))
@@ -147,7 +147,7 @@ func ExecutePipelineWorkflowable(ctx context.Context, workflow *db.Workflow, wor
 			if stage.Read {
 				// Read the files from the repository and set them to the previous stage results
 
-				irminObject, err := DataEngine.GetPath(workflow.Workspace.Slug, stage.Repository.Slug, *stage.RepositoryPath, *stage.RepositoryBranch)
+				irminObject, err := dataEngine.GetPath(workflow.Workspace.Slug, stage.Repository.Slug, *stage.RepositoryPath, *stage.RepositoryBranch)
 				if err != nil {
 					log.Printf("Error getting object from Data Engine: %v", err)
 					logs = append(logs, fmt.Sprintf("Error getting object from Data Engine: %v", err))
@@ -158,7 +158,7 @@ func ExecutePipelineWorkflowable(ctx context.Context, workflow *db.Workflow, wor
 				if irminObject.Type == irminModels.ObjectTypeGroup {
 					// Read the content of every child object
 					for _, child := range irminObject.Children {
-						child, content, err := DataEngine.GetObjectContent(workflow.Workspace.Slug, stage.Repository.Slug, child.Path, *stage.RepositoryBranch)
+						content, err := dataEngine.GetObjectContent(workflow.Workspace.Slug, stage.Repository.Slug, child.Path, *stage.RepositoryBranch)
 						if err != nil {
 							log.Printf("Error getting object from Data Engine: %v", err)
 							logs = append(logs, fmt.Sprintf("Error getting object from Data Engine: %v", err))
@@ -170,7 +170,7 @@ func ExecutePipelineWorkflowable(ctx context.Context, workflow *db.Workflow, wor
 					}
 				} else {
 					// Read the content of the object
-					irminObject, content, err := DataEngine.GetObjectContent(workflow.Workspace.Slug, stage.Repository.Slug, *stage.RepositoryPath, *stage.RepositoryBranch)
+					content, err := dataEngine.GetObjectContent(workflow.Workspace.Slug, stage.Repository.Slug, *stage.RepositoryPath, *stage.RepositoryBranch)
 					if err != nil {
 						log.Printf("Error getting object from Data Engine: %v", err)
 						logs = append(logs, fmt.Sprintf("Error getting object from Data Engine: %v", err))

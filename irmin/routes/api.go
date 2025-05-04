@@ -129,7 +129,6 @@ func RegisterAPIRoutes(app *fiber.App) {
 	repository.Patch("/", controllers.RepositoriesUpdate)
 	repository.Delete("/", controllers.RepositoriesDestroy)
 	repository.Post("/transfer-ownership", controllers.TransferRepositoryOwnership)
-	repository.Get("/download", controllers.DownloadRepository)
 
 	// Merge and compare routes
 	repository.Get("/compare", controllers.CompareRefs)
@@ -143,6 +142,7 @@ func RegisterAPIRoutes(app *fiber.App) {
 	objects.Post("/move", controllers.MoveObject)
 	objects.Post("/copy", controllers.CopyObject)
 	objects.Get("/content", controllers.ObjectsContent)
+	objects.Get("/download", controllers.ObjectsDownload)
 	objects.Get("/history", controllers.ObjectsHistory)
 	objects.Get("/schema", controllers.ObjectsSchema)
 

@@ -36,8 +36,8 @@ func UploadObject(c fiber.Ctx) error {
 	user := c.Locals("user").(*db.User)
 	repository := c.Locals("repository").(*db.Repository)
 	workspace := c.Locals("workspace").(*db.Workspace)
+	object := c.Locals("object").(*irminModels.Object)
 	object_ref := c.Locals("object_ref").(string)
-	object_path := c.Locals("object_path").(string)
 
 	// Parse the file from the form data
 	form, err := c.MultipartForm()
@@ -63,10 +63,10 @@ func UploadObject(c fiber.Ctx) error {
 	defer file.Close()
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Upload the object to the path in the repository at ref
-	newObject, err := DataEngine.UploadObject(workspace.Slug, repository.Slug, object_path, object_ref, file)
+	newObject, err := dataEngine.UploadObject(workspace.Slug, repository.Slug, object.Path, object_ref, file)
 	if err != nil {
 		log.Printf("Error uploading object to Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
@@ -95,8 +95,8 @@ func MoveObject(c fiber.Ctx) error {
 	user := c.Locals("user").(*db.User)
 	repository := c.Locals("repository").(*db.Repository)
 	workspace := c.Locals("workspace").(*db.Workspace)
+	object := c.Locals("object").(*irminModels.Object)
 	object_ref := c.Locals("object_ref").(string)
-	object_path := c.Locals("object_path").(string)
 
 	// Parse the new path from the form data
 	fields, err := utils.ParseFormFields(c, []string{"new_path"}, nil)
@@ -108,10 +108,10 @@ func MoveObject(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Move the object to the new path in the repository at ref
-	newObject, err := DataEngine.MoveObject(workspace.Slug, repository.Slug, object_path, object_ref, fields["new_path"])
+	newObject, err := dataEngine.MoveObject(workspace.Slug, repository.Slug, object.Path, object_ref, fields["new_path"])
 	if err != nil {
 		log.Printf("Error moving object in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
@@ -122,7 +122,7 @@ func MoveObject(c fiber.Ctx) error {
 	// Log the event
 	lib.CreateAuditLogEventAsync(&db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
-		Description:  fmt.Sprintf("Object %s moved to %s on branch %s", object_path, newObject.Path, object_ref),
+		Description:  fmt.Sprintf("Object %s moved to %s on branch %s", object.Path, newObject.Path, object_ref),
 		UserID:       &user.ID,
 		WorkspaceID:  &workspace.ID,
 		RepositoryID: &repository.ID,
@@ -140,8 +140,8 @@ func CopyObject(c fiber.Ctx) error {
 	user := c.Locals("user").(*db.User)
 	repository := c.Locals("repository").(*db.Repository)
 	workspace := c.Locals("workspace").(*db.Workspace)
+	object := c.Locals("object").(*irminModels.Object)
 	object_ref := c.Locals("object_ref").(string)
-	object_path := c.Locals("object_path").(string)
 
 	// Parse the new path from the form data
 	fields, err := utils.ParseFormFields(c, []string{"new_path"}, nil)
@@ -153,10 +153,10 @@ func CopyObject(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Move the object to the new path in the repository at ref
-	newObject, err := DataEngine.CopyObject(workspace.Slug, repository.Slug, object_path, object_ref, fields["new_path"])
+	newObject, err := dataEngine.CopyObject(workspace.Slug, repository.Slug, object.Path, object_ref, fields["new_path"])
 	if err != nil {
 		log.Printf("Error copying object in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
@@ -167,7 +167,7 @@ func CopyObject(c fiber.Ctx) error {
 	// Log the event
 	lib.CreateAuditLogEventAsync(&db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
-		Description:  fmt.Sprintf("Object %s copied to %s on branch %s", object_path, newObject.Path, object_ref),
+		Description:  fmt.Sprintf("Object %s copied to %s on branch %s", object.Path, newObject.Path, object_ref),
 		UserID:       &user.ID,
 		WorkspaceID:  &workspace.ID,
 		RepositoryID: &repository.ID,
@@ -185,14 +185,14 @@ func ObjectsDestroy(c fiber.Ctx) error {
 	user := c.Locals("user").(*db.User)
 	repository := c.Locals("repository").(*db.Repository)
 	workspace := c.Locals("workspace").(*db.Workspace)
+	object := c.Locals("object").(*irminModels.Object)
 	object_ref := c.Locals("object_ref").(string)
-	object_path := c.Locals("object_path").(string)
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Delete the object from the repository at ref
-	err := DataEngine.DeleteObject(workspace.Slug, repository.Slug, object_path, object_ref)
+	err := dataEngine.DeleteObject(workspace.Slug, repository.Slug, object.Path, object_ref)
 	if err != nil {
 		log.Printf("Error deleting object from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -203,7 +203,7 @@ func ObjectsDestroy(c fiber.Ctx) error {
 	// Log the event
 	lib.CreateAuditLogEventAsync(&db.LogEvent{
 		Type:         db.LogEventTypeDelete,
-		Description:  fmt.Sprintf("Object %s deleted from branch %s", object_path, object_ref),
+		Description:  fmt.Sprintf("Object %s deleted from branch %s", object.Path, object_ref),
 		UserID:       &user.ID,
 		WorkspaceID:  &workspace.ID,
 		RepositoryID: &repository.ID,
@@ -219,14 +219,14 @@ func ObjectsContent(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	repository := c.Locals("repository").(*db.Repository)
 	workspace := c.Locals("workspace").(*db.Workspace)
+	object := c.Locals("object").(*irminModels.Object)
 	object_ref := c.Locals("object_ref").(string)
-	object_path := c.Locals("object_path").(string)
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Get the content of the object in the repository at ref
-	object, content, err := DataEngine.GetObjectContent(workspace.Slug, repository.Slug, object_path, object_ref)
+	content, err := dataEngine.GetObjectContent(workspace.Slug, repository.Slug, object.Path, object_ref)
 	if err != nil {
 		log.Printf("Error retrieving object content from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -238,19 +238,104 @@ func ObjectsContent(c fiber.Ctx) error {
 	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, object.Name, object.ContentType, content)
 }
 
+// ObjectsDownload handles downloading either a single object or all descendants of a group, zipping them, and sending as a download.
+func ObjectsDownload(c fiber.Ctx) error {
+	locale := c.Locals("locale").(string)
+	dict := c.Locals("dict").(locales.Dictionary)
+	repository := c.Locals("repository").(*db.Repository)
+	workspace := c.Locals("workspace").(*db.Workspace)
+	object := c.Locals("object").(*irminModels.Object)
+	object_ref := c.Locals("object_ref").(string)
+
+	// Initialise Data Engine client
+	dataEngine := engine.NewClient(locale)
+
+	// Initialise a map to store the files we fetch
+	files := make(map[string][]byte)
+
+	// Declare processGroup so it’s in scope for recursion
+	var processGroup func(group *irminModels.Object) error
+
+	// Assign the recursive closure
+	processGroup = func(group *irminModels.Object) error {
+		if group == nil {
+			return fmt.Errorf("group object is nil")
+		}
+		if group.Type != irminModels.ObjectTypeGroup {
+			return fmt.Errorf("object %q is not a group", group.Name)
+		}
+
+		for i := range group.Children {
+			child := &group.Children[i]
+			if child.Type == irminModels.ObjectTypeGroup {
+				// recurse into nested groups
+				if err := processGroup(child); err != nil {
+					return err
+				}
+			} else {
+				// fetch each non-group object’s content
+				content, err := dataEngine.GetObjectContent(workspace.Slug, repository.Slug, child.Path, object_ref)
+				if err != nil {
+					log.Printf("Error retrieving object content: %v", err)
+					return err
+				}
+				files[child.Path] = content
+			}
+		}
+		return nil
+	}
+
+	if object.Type != irminModels.ObjectTypeGroup {
+		// single object: just fetch its content
+		content, err := dataEngine.GetObjectContent(workspace.Slug, repository.Slug, object.Path, object_ref)
+		if err != nil {
+			log.Printf("Error retrieving object content: %v", err)
+			return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+				Errors: []string{dict.T("error_occurred")},
+			})
+		}
+		files[object.Path] = content
+	} else {
+		// group object: recurse into all descendants
+		if err := processGroup(object); err != nil {
+			log.Printf("Error processing group object: %v", err)
+			return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+				Errors: []string{dict.T("error_occurred")},
+			})
+		}
+	}
+
+	// create a zip from our map of files
+	zipContent, err := utils.ZipFiles(files)
+	if err != nil {
+		log.Printf("Error creating zip file: %v", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// send it down as a downloadable file
+	timestamp := time.Now().UnixMilli()
+	zipName := fmt.Sprintf(
+		"%s-%s-%s-%s-%d.zip",
+		workspace.Slug, repository.Slug, object.Name, object_ref, timestamp,
+	)
+	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, zipName, "application/zip", zipContent)
+}
+
 func ObjectsHistory(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	repository := c.Locals("repository").(*db.Repository)
 	workspace := c.Locals("workspace").(*db.Workspace)
+	object := c.Locals("object").(*irminModels.Object)
 	object_ref := c.Locals("object_ref").(string)
-	object_path := c.Locals("object_path").(string)
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Get the commit history of the object in the repository at ref
-	commits, err := DataEngine.GetObjectChanges(workspace.Slug, repository.Slug, object_path, object_ref)
+	commits, err := dataEngine.GetObjectChanges(workspace.Slug, repository.Slug, object.Path, object_ref)
 	if err != nil {
 		log.Printf("Error retrieving object history from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -268,14 +353,14 @@ func ObjectsSchema(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	repository := c.Locals("repository").(*db.Repository)
 	workspace := c.Locals("workspace").(*db.Workspace)
+	object := c.Locals("object").(*irminModels.Object)
 	object_ref := c.Locals("object_ref").(string)
-	object_path := c.Locals("object_path").(string)
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Find a relevant repository object schema cache
-	schemaCache, _ := db.FindRepositorySchemaCache(repository.ID, object_path, object_ref)
+	schemaCache, _ := db.FindRepositorySchemaCache(repository.ID, object.Path, object_ref)
 	if schemaCache != nil {
 		// Check if the schema cache is not older than 30 minutes
 		schemaCacheMaxAge := 30 * time.Minute
@@ -288,7 +373,7 @@ func ObjectsSchema(c fiber.Ctx) error {
 	}
 
 	// Get the schema of the object in the repository at ref
-	schema, err := DataEngine.GenerateObjectSchema(workspace.Slug, repository.Slug, object_path, object_ref)
+	schema, err := dataEngine.GenerateObjectSchema(workspace.Slug, repository.Slug, object.Path, object_ref)
 	if err != nil {
 		log.Printf("Error retrieving object schema from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -303,7 +388,7 @@ func ObjectsSchema(c fiber.Ctx) error {
 			db.SaveRepositorySchemaCache(schemaCache)
 		} else {
 			db.SaveRepositorySchemaCache(&db.RepositorySchemaCache{
-				Path:         object_path,
+				Path:         object.Path,
 				Ref:          object_ref,
 				Schema:       schema,
 				RepositoryID: repository.ID,

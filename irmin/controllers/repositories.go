@@ -129,10 +129,10 @@ func RepositoriesStore(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Create the repository in the Data Engine
-	dataEngineRepository, err := DataEngine.CreateRepository(workspace.Slug, repositorySlug, defaultBranch, isImmutable, &gcDefaultRetentionDays, &gcDefaultBranchRetentionDays)
+	dataEngineRepository, err := dataEngine.CreateRepository(workspace.Slug, repositorySlug, defaultBranch, isImmutable, &gcDefaultRetentionDays, &gcDefaultBranchRetentionDays)
 	if err != nil {
 		log.Printf("Error creating repository in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
@@ -201,10 +201,10 @@ func RepositoriesDestroy(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Delete the repository from the Data Engine
-	if err := DataEngine.DeleteRepository(c.Context(), workspace.Slug, repository.Slug, false); err != nil {
+	if err := dataEngine.DeleteRepository(c.Context(), workspace.Slug, repository.Slug, false); err != nil {
 		log.Printf("Error deleting repository in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
@@ -266,7 +266,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Determine the garbage collection default retention days
 	gcDefaultRetentionDays := dataEngineRepository.GarbageCollectionRules.DefaultRetentionDays
@@ -299,7 +299,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the repository in the Data Engine
-	dataEngineRepository, err = DataEngine.UpdateRepository(workspace.Slug, repository.Slug, &gcDefaultRetentionDays, &gcDefaultBranchRetentionDays)
+	dataEngineRepository, err = dataEngine.UpdateRepository(workspace.Slug, repository.Slug, &gcDefaultRetentionDays, &gcDefaultBranchRetentionDays)
 	if err != nil {
 		log.Printf("Error updating repository in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
@@ -406,9 +406,4 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 		Message: dict.T("repository_ownership_transferred"),
 		Data:    *repositoryResponse,
 	})
-}
-
-func DownloadRepository(c fiber.Ctx) error {
-	// TODO: Implement download repository
-	return c.SendString("Download repository")
 }

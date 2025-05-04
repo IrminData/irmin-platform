@@ -348,10 +348,10 @@ func ConnectionSchema(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Get the schema of the connection
-	schema, err := DataEngine.DataMovementSchema(c.Context(), connection, operationMethod)
+	schema, err := dataEngine.DataMovementSchema(c.Context(), connection, operationMethod)
 	if err != nil {
 		log.Printf("Error getting connection schema: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{

@@ -483,10 +483,10 @@ func RepositoryMiddleware(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Get the repository from the data engine.
-	dataEngineRepository, err := DataEngine.GetRepository(c.Context(), workspace.Slug, repositorySlug)
+	dataEngineRepository, err := dataEngine.GetRepository(c.Context(), workspace.Slug, repositorySlug)
 	if err != nil {
 		log.Printf("Error retrieving repository from Data Engine: %v", err)
 		dataEngineRepository = &engine.Repository{}
@@ -515,10 +515,10 @@ func BranchMiddleware(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Get the branch from the data engine.
-	dataEngineBranch, err := DataEngine.GetBranch(c.Context(), workspace.Slug, repository.Slug, branchName)
+	dataEngineBranch, err := dataEngine.GetBranch(c.Context(), workspace.Slug, repository.Slug, branchName)
 	if err != nil {
 		log.Printf("Error retrieving branch from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -548,10 +548,10 @@ func TagMiddleware(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Get the tag from the data engine.
-	dataEngineTag, err := DataEngine.GetTag(workspace.Slug, repository.Slug, tagName)
+	dataEngineTag, err := dataEngine.GetTag(workspace.Slug, repository.Slug, tagName)
 	if err != nil {
 		log.Printf("Error retrieving tag from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -589,15 +589,14 @@ func ObjectMiddleware(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Get the object from the data engine.
-	repositoryObject, _ := DataEngine.GetPath(workspace.Slug, repository.Slug, path, ref)
+	repositoryObject, _ := dataEngine.GetPath(workspace.Slug, repository.Slug, path, ref)
 
 	// Set the object in the context for subsequent handlers.
 	c.Locals("object", repositoryObject)
 	c.Locals("object_ref", ref)
-	c.Locals("object_path", path)
 
 	return c.Next()
 }

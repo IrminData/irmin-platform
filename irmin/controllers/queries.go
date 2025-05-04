@@ -298,7 +298,7 @@ func ExecuteSQL(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Log the event
 	db.CreateLogEvent(&db.LogEvent{
@@ -309,7 +309,7 @@ func ExecuteSQL(c fiber.Ctx) error {
 	})
 
 	// Execute the SQL
-	result := DataEngine.ExecuteQuery(workspace.Slug, fields["sql"])
+	result := dataEngine.ExecuteQuery(workspace.Slug, fields["sql"])
 	// Check for errors
 	if result.HasErrors {
 		log.Printf("Error executing SQL query: %v", result.Logs)
@@ -345,7 +345,7 @@ func ExecuteQuery(c fiber.Ctx) error {
 	query := c.Locals("stored_query").(*db.StoredQuery)
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Log the event
 	db.CreateLogEvent(&db.LogEvent{
@@ -356,7 +356,7 @@ func ExecuteQuery(c fiber.Ctx) error {
 	})
 
 	// Execute the SQL
-	result := DataEngine.ExecuteQuery(workspace.Slug, query.SQL)
+	result := dataEngine.ExecuteQuery(workspace.Slug, query.SQL)
 
 	// Check for errors
 	if result.HasErrors {

@@ -156,7 +156,7 @@ func (c *Client) GetPath(workspace, repository, path, ref string) (*irminModels.
 	return irminObject, nil
 }
 
-func (c *Client) GetObjectContent(workspace, repository, path, ref string) (*irminModels.Object, []byte, error) {
+func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]byte, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -164,24 +164,18 @@ func (c *Client) GetObjectContent(workspace, repository, path, ref string) (*irm
 	if ref == "" {
 		repository, err := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to get repository: %w", err)
+			return nil, fmt.Errorf("failed to get repository: %w", err)
 		}
 		ref = repository.DefaultBranch
 	}
 
-	// Fetch the object metadata from the repository.
-	irminObject, err := getObject(path, lakeFSRepositoryName, ref, *c.LakeFSClient)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get object: %w", err)
-	}
-
 	// Fetch the content of the object.
-	content, err := c.LakeFSClient.GetFullObjectContent(lakeFSRepositoryName, ref, irminObject.Path)
+	content, err := c.LakeFSClient.GetFullObjectContent(lakeFSRepositoryName, ref, path)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get object content: %w", err)
+		return nil, fmt.Errorf("failed to get object content: %w", err)
 	}
 
-	return irminObject, content, nil
+	return content, nil
 }
 
 func (c *Client) UploadObject(workspace, repository, path, ref string, file io.Reader) (*irminModels.Object, error) {

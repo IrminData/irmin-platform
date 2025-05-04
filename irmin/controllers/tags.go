@@ -21,10 +21,10 @@ func TagsIndex(c fiber.Ctx) error {
 	repository := c.Locals("repository").(*db.Repository)
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Get the tag from the data engine.
-	tags, err := DataEngine.ListTags(workspace.Slug, repository.Slug)
+	tags, err := dataEngine.ListTags(workspace.Slug, repository.Slug)
 	if err != nil {
 		log.Printf("Error retrieving tags from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -54,10 +54,10 @@ func TagsStore(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Create the tag in the data engine.
-	tag, err := DataEngine.CreateTag(workspace.Slug, repository.Slug, fields["name"], fields["ref"])
+	tag, err := dataEngine.CreateTag(workspace.Slug, repository.Slug, fields["name"], fields["ref"])
 	if err != nil {
 		log.Printf("Error creating tag in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -97,10 +97,10 @@ func TagsDestroy(c fiber.Ctx) error {
 	tag := c.Locals("tag").(*irminModels.Tag)
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Delete the tag from the data engine.
-	if err := DataEngine.DeleteTag(workspace.Slug, repository.Slug, tag.Name); err != nil {
+	if err := dataEngine.DeleteTag(workspace.Slug, repository.Slug, tag.Name); err != nil {
 		log.Printf("Error deleting tag in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},

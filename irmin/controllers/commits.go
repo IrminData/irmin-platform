@@ -29,10 +29,10 @@ func CommitsIndex(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Get the commits from the data engine.
-	commits, err := DataEngine.ListCommits(workspace.Slug, repository.Slug, params["ref"])
+	commits, err := dataEngine.ListCommits(workspace.Slug, repository.Slug, params["ref"])
 	if err != nil {
 		log.Printf("Error retrieving commits from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -63,10 +63,10 @@ func CommitsStore(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Commit the changes in the data engine.
-	commit, err := DataEngine.CommitChanges(workspace.Slug, repository.Slug, fields["branch"], fields["message"], user.Email, true)
+	commit, err := dataEngine.CommitChanges(workspace.Slug, repository.Slug, fields["branch"], fields["message"], user.Email, true)
 	if err != nil {
 		log.Printf("Error committing changes in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -106,10 +106,10 @@ func CommitsShow(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Get the commit from the data engine.
-	commit, err := DataEngine.GetCommit(workspace.Slug, repository.Slug, hash)
+	commit, err := dataEngine.GetCommit(workspace.Slug, repository.Slug, hash)
 	if err != nil {
 		log.Printf("Error retrieving commit from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -140,10 +140,10 @@ func RevertUncommittedChanges(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Revert the uncommitted changes in the data engine.
-	err = DataEngine.RevertUncommitedChanges(workspace.Slug, repository.Slug, fields["branch"], fields["path"], fields["path_type"])
+	err = dataEngine.RevertUncommitedChanges(workspace.Slug, repository.Slug, fields["branch"], fields["path"], fields["path_type"])
 	if err != nil {
 		log.Printf("Error reverting uncommitted changes in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{

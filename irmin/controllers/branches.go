@@ -20,10 +20,10 @@ func BranchesIndex(c fiber.Ctx) error {
 	repository := c.Locals("repository").(*db.Repository)
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Get the branch from the data engine.
-	branches, err := DataEngine.ListBranches(c.Context(), workspace.Slug, repository.Slug)
+	branches, err := dataEngine.ListBranches(c.Context(), workspace.Slug, repository.Slug)
 	if err != nil {
 		log.Printf("Error retrieving branches from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -59,10 +59,10 @@ func BranchesStore(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Create the branch in the data engine.
-	branch, err := DataEngine.CreateBranch(workspace.Slug, repository.Slug, fields["name"], fields["from"], isImmutable)
+	branch, err := dataEngine.CreateBranch(workspace.Slug, repository.Slug, fields["name"], fields["from"], isImmutable)
 	if err != nil {
 		log.Printf("Error creating branch in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -124,10 +124,10 @@ func BranchesUpdate(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Update the branch in the data engine.
-	branch, err = DataEngine.UpdateBranch(c.Context(), workspace.Slug, repository.Slug, branch.Name, newBranchName, isImmutable)
+	branch, err = dataEngine.UpdateBranch(c.Context(), workspace.Slug, repository.Slug, branch.Name, newBranchName, isImmutable)
 	if err != nil {
 		log.Printf("Error updating branch in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -160,10 +160,10 @@ func BranchesDestroy(c fiber.Ctx) error {
 	branch := c.Locals("branch").(*irminModels.Branch)
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Delete the branch in the data engine.
-	err := DataEngine.DeleteBranch(workspace.Slug, repository.Slug, branch.Name)
+	err := dataEngine.DeleteBranch(workspace.Slug, repository.Slug, branch.Name)
 	if err != nil {
 		log.Printf("Error deleting branch in Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -194,10 +194,10 @@ func GetUncommittedChanges(c fiber.Ctx) error {
 	branch := c.Locals("branch").(*irminModels.Branch)
 
 	// Initialize Data Engine client
-	DataEngine := engine.NewClient(locale)
+	dataEngine := engine.NewClient(locale)
 
 	// Compare the refs
-	diff, err := DataEngine.GetUncommittedChanges(c.Context(), workspace.Slug, repository.Slug, branch.Name)
+	diff, err := dataEngine.GetUncommittedChanges(c.Context(), workspace.Slug, repository.Slug, branch.Name)
 	if err != nil {
 		log.Printf("Error getting uncommitted changes: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{

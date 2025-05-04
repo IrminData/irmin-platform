@@ -23,10 +23,10 @@ func ExecuteImportWorkflowable(ctx context.Context, workflow *db.Workflow, workf
 	}
 
 	// Initialise the Data Engine
-	DataEngine := engine.NewClient("en")
+	dataEngine := engine.NewClient("en")
 
 	// Import data from the connector to the requested repository
-	paths, errors := DataEngine.DataImport(ctx, connection, workflowable.ConnectionPath, workflow.Workspace.Slug, workflowable.Repository.Slug, workflowable.Branch, workflowable.Path)
+	paths, errors := dataEngine.DataImport(ctx, connection, workflowable.ConnectionPath, workflow.Workspace.Slug, workflowable.Repository.Slug, workflowable.Branch, workflowable.Path)
 	if len(errors) > 0 {
 		for _, err := range errors {
 			log.Printf("Error importing data: %v", err)
