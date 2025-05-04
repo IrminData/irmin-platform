@@ -106,20 +106,3 @@ func (c *Client) DeleteRepository(workspace, slug string) (*irminModels.IrminAPI
 
 	return apiResp, nil
 }
-
-func (c *Client) GetRepositoryDownloadLink(slug, ref, path string) (*string, *irminModels.IrminAPIResponse, error) {
-	var response string
-	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/repositories/%s/download", slug),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"ref":  ref,
-			"path": path,
-		},
-	}, &response)
-	if err != nil {
-		return nil, nil, fmt.Errorf("get repository download link error: %w", err)
-	}
-	return &response, apiResp, nil
-}

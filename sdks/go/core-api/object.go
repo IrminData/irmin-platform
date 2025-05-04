@@ -81,6 +81,18 @@ func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]by
 	return apiResp, nil
 }
 
+// DownloadObject creates a zip file of the object at the given path and ref and returns the binary data.
+func (c *Client) DownloadObject(workspace, repository, path, ref string) ([]byte, error) {
+	apiResp, err := c.FetchBinary(RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects/download?ref=%s&path=%s", workspace, repository, ref, path),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("fetch object download zip error: %w", err)
+	}
+	return apiResp, nil
+}
+
 func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*irminModels.Object, *irminModels.IrminAPIResponse, error) {
 	var object irminModels.Object
 	apiResp, err := c.FetchAPI(RequestOptions{
