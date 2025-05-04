@@ -364,9 +364,9 @@ func ConnectionSchema(c fiber.Ctx) error {
 		var err error
 		if schemaCache != nil {
 			schemaCache.Schema = schema
-			err = db.SaveConnectionSchemaCache(schemaCache)
+			schemaCache, err = db.SaveConnectionSchemaCache(schemaCache)
 		} else {
-			err = db.SaveConnectionSchemaCache(&db.ConnectionSchemaCache{
+			schemaCache, err = db.SaveConnectionSchemaCache(&db.ConnectionSchemaCache{
 				Schema:       schema,
 				OpMethod:     &operationMethod,
 				ConnectionID: connection.ID,
