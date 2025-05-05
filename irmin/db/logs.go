@@ -1,6 +1,10 @@
 package db
 
-import "gorm.io/gorm"
+import (
+	"fmt"
+
+	"gorm.io/gorm"
+)
 
 type LogEventType string
 
@@ -35,33 +39,51 @@ type LogEvent struct {
 	Connection    *Connection  `json:"connection" gorm:"foreignKey:ConnectionID"`
 }
 
-// GetLogEventsForWorkspace returns log events for the given workspace sorted by creation time,
-// along with the total count of matching events for pagination.
+// GetLogEventsForWorkspace returns log events for the given workspace, optionally
+// filtering by description, sorted by creation time, along with the total count
+// of matching events for pagination.
 //
 // workspaceID: identifier of the workspace to fetch events for
+// searchTerm: substring to search for in the description; if empty, ignored
 // limit: maximum number of events to return
 // offset: number of events to skip
 // returns: slice of LogEvent, total count of matching events, and error if any
-func GetLogEventsForWorkspace(workspaceID uint, limit, offset int) ([]LogEvent, int64, error) {
-	// Slice to hold the result log events
+func GetLogEventsForWorkspace(workspaceID uint, searchTerm string, limit, offset int) ([]LogEvent, int64, error) {
 	var events []LogEvent
-
-	// Count total number of matching events
 	var total int64
-	if err := DB.Model(&LogEvent{}).
-		Where("workspace_id = ?", workspaceID).
-		Count(&total).Error; err != nil {
+
+	// base model for counting
+	countQuery := DB.Model(&LogEvent{}).
+		Where("workspace_id = ?", workspaceID)
+
+	// apply description filter if present
+	if searchTerm != "" {
+		pattern := fmt.Sprintf("%%%s%%", searchTerm)
+		countQuery = countQuery.Where("description LIKE ?", pattern)
+	}
+
+	// count total number of matching events
+	if err := countQuery.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Build the query with preloaded associations and pagination
-	if err := DB.Preload("User").
+	// base fetch query with associations
+	query := DB.Preload("User").
 		Preload("Workspace").
 		Preload("Repository").
 		Preload("Workflow").
 		Preload("WorkflowRun").
 		Preload("Connection").
-		Where("workspace_id = ?", workspaceID).
+		Where("workspace_id = ?", workspaceID)
+
+	// apply description filter if present
+	if searchTerm != "" {
+		pattern := fmt.Sprintf("%%%s%%", searchTerm)
+		query = query.Where("description LIKE ?", pattern)
+	}
+
+	// execute fetch with ordering and pagination
+	if err := query.
 		Order("created_at desc").
 		Limit(limit).
 		Offset(offset).
@@ -72,24 +94,26 @@ func GetLogEventsForWorkspace(workspaceID uint, limit, offset int) ([]LogEvent, 
 	return events, total, nil
 }
 
-// GetLogEventsByWorkspaceAndAsset fetches log events for a specific asset within a workspace,
-// alongside the total count for pagination.
+// GetLogEventsByWorkspaceAndAsset fetches log events for a specific asset within
+// a workspace, optionally filtering by description, alongside the total count for
+// pagination.
 //
 // workspaceID: identifier of the workspace
 // assetType: one of "repository", "workflow", "user", "connection"
 // assetID: identifier of the asset to filter by
+// searchTerm: substring to match in the description; if empty, ignored
 // limit: maximum number of events to return
 // offset: number of events to skip
 // returns: slice of LogEvent, total count of matching events, and error if any
-func GetLogEventsByWorkspaceAndAsset(workspaceID uint, assetType string, assetID uint, limit, offset int) ([]LogEvent, int64, error) {
-	// Slice to hold the result log events
+func GetLogEventsByWorkspaceAndAsset(workspaceID uint, assetType string, assetID uint, searchTerm string, limit, offset int) ([]LogEvent, int64, error) {
 	var events []LogEvent
+	var total int64
 
-	// Build base query for counting total events
+	// base for counting with workspace filter
 	countQuery := DB.Model(&LogEvent{}).
 		Where("workspace_id = ?", workspaceID)
 
-	// Append asset-specific filters for counting
+	// asset-specific filter for counting
 	switch assetType {
 	case "repository":
 		countQuery = countQuery.Where("repository_id = ?", assetID)
@@ -101,13 +125,18 @@ func GetLogEventsByWorkspaceAndAsset(workspaceID uint, assetType string, assetID
 		countQuery = countQuery.Where("connection_id = ?", assetID)
 	}
 
-	// Count total number of matching events
-	var total int64
+	// description filter for counting
+	if searchTerm != "" {
+		pattern := fmt.Sprintf("%%%s%%", searchTerm)
+		countQuery = countQuery.Where("description LIKE ?", pattern)
+	}
+
+	// count total matching events
 	if err := countQuery.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Build the query with preloaded associations and pagination
+	// base fetch query with preloads
 	query := DB.Preload("User").
 		Preload("Workspace").
 		Preload("Repository").
@@ -116,7 +145,7 @@ func GetLogEventsByWorkspaceAndAsset(workspaceID uint, assetType string, assetID
 		Preload("Connection").
 		Where("workspace_id = ?", workspaceID)
 
-	// Append asset-specific filters for fetching
+	// asset-specific filter for fetching
 	switch assetType {
 	case "repository":
 		query = query.Where("repository_id = ?", assetID)
@@ -128,8 +157,15 @@ func GetLogEventsByWorkspaceAndAsset(workspaceID uint, assetType string, assetID
 		query = query.Where("connection_id = ?", assetID)
 	}
 
-	// Execute the query with ordering and pagination
-	if err := query.Order("created_at desc").
+	// description filter for fetching
+	if searchTerm != "" {
+		pattern := fmt.Sprintf("%%%s%%", searchTerm)
+		query = query.Where("description LIKE ?", pattern)
+	}
+
+	// execute fetch with ordering and pagination
+	if err := query.
+		Order("created_at desc").
 		Limit(limit).
 		Offset(offset).
 		Find(&events).Error; err != nil {

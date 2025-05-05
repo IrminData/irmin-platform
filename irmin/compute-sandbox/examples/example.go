@@ -33,7 +33,7 @@ func main() {
 	}
 
 	// Fetch a list of log events for the first workspace.
-	logEvents, _, err := client.FetchLogEvents(workspaces[0].Slug)
+	logEvents, _, err := client.FetchLogEvents(workspaces[0].Slug, "", 1, 20)
 	if err != nil {
 		log.Fatalf("Error fetching log events: %v", err)
 	}
