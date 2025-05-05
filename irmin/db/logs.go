@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -58,8 +59,8 @@ func GetLogEventsForWorkspace(workspaceID uint, searchTerm string, limit, offset
 
 	// apply description filter if present
 	if searchTerm != "" {
-		pattern := fmt.Sprintf("%%%s%%", searchTerm)
-		countQuery = countQuery.Where("description LIKE ?", pattern)
+		pattern := fmt.Sprintf("%%%s%%", strings.ToLower(searchTerm))
+		countQuery = countQuery.Where("LOWER(description) LIKE ?", pattern)
 	}
 
 	// count total number of matching events
@@ -78,8 +79,8 @@ func GetLogEventsForWorkspace(workspaceID uint, searchTerm string, limit, offset
 
 	// apply description filter if present
 	if searchTerm != "" {
-		pattern := fmt.Sprintf("%%%s%%", searchTerm)
-		query = query.Where("description LIKE ?", pattern)
+		pattern := fmt.Sprintf("%%%s%%", strings.ToLower(searchTerm))
+		query = query.Where("LOWER(description) LIKE ?", pattern)
 	}
 
 	// execute fetch with ordering and pagination
@@ -125,10 +126,10 @@ func GetLogEventsByWorkspaceAndAsset(workspaceID uint, assetType string, assetID
 		countQuery = countQuery.Where("connection_id = ?", assetID)
 	}
 
-	// description filter for counting
+	// apply description filter if present
 	if searchTerm != "" {
-		pattern := fmt.Sprintf("%%%s%%", searchTerm)
-		countQuery = countQuery.Where("description LIKE ?", pattern)
+		pattern := fmt.Sprintf("%%%s%%", strings.ToLower(searchTerm))
+		countQuery = countQuery.Where("LOWER(description) LIKE ?", pattern)
 	}
 
 	// count total matching events
@@ -157,10 +158,10 @@ func GetLogEventsByWorkspaceAndAsset(workspaceID uint, assetType string, assetID
 		query = query.Where("connection_id = ?", assetID)
 	}
 
-	// description filter for fetching
+	// apply description filter if present
 	if searchTerm != "" {
-		pattern := fmt.Sprintf("%%%s%%", searchTerm)
-		query = query.Where("description LIKE ?", pattern)
+		pattern := fmt.Sprintf("%%%s%%", strings.ToLower(searchTerm))
+		query = query.Where("LOWER(description) LIKE ?", pattern)
 	}
 
 	// execute fetch with ordering and pagination
