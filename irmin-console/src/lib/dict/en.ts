@@ -585,6 +585,7 @@ const en = {
     workflowLogs: 'Workflow audit logs',
     noLogsFound: 'No logs found',
     system: 'System',
+    foundLogEvents: 'Found log events',
   },
   tokens: {
     apiTokens: 'API tokens',

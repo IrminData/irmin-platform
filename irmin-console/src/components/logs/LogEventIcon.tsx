@@ -13,21 +13,21 @@ import { LogEventType } from '@/types/core/Log';
 const LogEventIcon = ({ type }: { type: LogEventType }) => {
   switch (type) {
     case 'CREATE':
-      return <FaPlus className='text-green-500' />;
+      return <FaPlus className='text-green-500' size={22} />;
     case 'UPDATE':
-      return <FaEdit className='text-blue-500' />;
+      return <FaEdit className='text-blue-500' size={22} />;
     case 'DELETE':
-      return <AiOutlineDelete className='text-red-500' />;
+      return <AiOutlineDelete className='text-red-500' size={22} />;
     case 'LOGIN':
-      return <FaUserCheck className='text-green-500' />;
+      return <FaUserCheck className='text-green-500' size={22} />;
     case 'LOGOUT':
-      return <FaUserTimes className='text-gray-500' />;
+      return <FaUserTimes className='text-gray-500' size={22} />;
     case 'WARNING':
-      return <AiOutlineWarning className='text-yellow-500' />;
+      return <AiOutlineWarning className='text-yellow-500' size={22} />;
     case 'ERROR':
-      return <AiOutlineDelete className='text-red-500' />;
+      return <AiOutlineDelete className='text-red-500' size={22} />;
     case 'INFO':
-      return <AiOutlineInfoCircle className='text-blue-500' />;
+      return <AiOutlineInfoCircle className='text-blue-500' size={22} />;
     default:
       return <></>;
   }

@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -53,16 +51,19 @@ export default function LogsSection({
 }) {
   const router = useRouter();
   const { dict } = useLocale();
-  const { logEvents, goToPage, currentPage, totalPages, loading } =
-    useLogEvents({
-      perPage: 50,
-      logsForType,
-      logsFor,
-    });
-
-  const [filteredItems, setFilteredItems] = useState(logEvents);
-  const [filteringItems, setFilteringItems] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    logEvents,
+    goToPage,
+    totalItems,
+    currentPage,
+    totalPages,
+    loading,
+    setSearchQuery,
+  } = useLogEvents({
+    perPage: 50,
+    logsForType,
+    logsFor,
+  });
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -71,30 +72,6 @@ export default function LogsSection({
     includeSegment: true,
     segmentsAfter: 1,
   });
-
-  // Filter items based on search query
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (logEvents) {
-        const newItems = logEvents.filter((item) =>
-          item.description
-            .trim()
-            .replace(/\s+/g, '')
-            .toLowerCase()
-            .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
-        );
-        setFilteredItems(newItems);
-        if (newItems.length === logEvents.length) {
-          setFilteringItems(false);
-        } else {
-          setFilteringItems(true);
-        }
-      }
-    }, 300);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchQuery, logEvents]);
 
   return (
     <div className='relative container mx-auto max-w-7xl'>
@@ -154,18 +131,16 @@ export default function LogsSection({
           <TbSearch />
           <input
             type='text'
-            value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className='w-full bg-transparent p-2 focus:outline-hidden'
             placeholder={dict.list.searchPlaceholder}
+            disabled={loading}
           />
         </div>
-        <LogEventFeed
-          events={filteringItems ? filteredItems : logEvents}
-          systemLabel={dict.logs.system}
-          subject={workflow ?? repository ?? connection}
-          loading={loading}
-        />
+        <p className='text-foreground/80 text-xs lg:text-sm'>
+          {dict.logs.foundLogEvents}: {totalItems}
+        </p>
+        <LogEventFeed events={logEvents} loading={loading} />
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}

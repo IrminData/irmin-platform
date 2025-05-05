@@ -590,6 +590,7 @@ const fi = {
     workflowLogs: 'Prosessin aufit lokit',
     noLogsFound: 'Ei lokeja löytynyt',
     system: 'Järjestelmä',
+    foundLogEvents: 'Lokitapahtumia löytyi',
   },
   tokens: {
     apiTokens: 'API avaimet',

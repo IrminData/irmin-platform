@@ -1,11 +1,12 @@
 import { memo } from 'react';
 
+import { ButtonWithTooltip } from '@/components/ui/button';
+
 import { useLocale } from '@/context/LocaleContext';
 
-import { Connection } from '@/types/core/Connection';
+import useBaseUrl from '@/hooks/useBaseUrl';
+
 import { LogEvent } from '@/types/core/Log';
-import { Repository } from '@/types/core/Repository';
-import { Workflow } from '@/types/core/Workflow';
 
 import LogEventIcon from './LogEventIcon';
 
@@ -14,22 +15,24 @@ import LogEventIcon from './LogEventIcon';
  *
  * @param props - The props for the LogEventFeed component
  * @param props.events - List of events to display
- * @param props.subject - Optional. The object associated with the events
- * @param props.systemLabel - Label to use for system events
  * @param props.loading - Optional. Whether the events are still loading
  */
 const LogEventFeed = ({
   events,
-  subject,
-  systemLabel = 'System',
   loading = false,
 }: {
   events: LogEvent[];
-  subject?: Repository | Workflow | Connection;
-  systemLabel?: string;
   loading?: boolean;
 }) => {
   const { dict, locale } = useLocale();
+
+  // The base URL for the workspace, eg. /en/workspace/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'workspace',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
   if (loading) {
     return (
@@ -70,29 +73,62 @@ const LogEventFeed = ({
       {events.map((event) => (
         <div
           key={event.id}
-          className='bg-card/80 flex items-center gap-4 rounded-lg p-2'
+          className='bg-card/80 flex flex-col gap-4 rounded-lg px-2 py-4 md:flex-row md:items-center md:p-2'
         >
           {/* Event icon */}
           <LogEventIcon type={event.type} />
           {/* Event description and the associated object */}
-          <div className='flex flex-col'>
-            <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-              {event.description}
-            </span>
-            {subject && (
-              <span className='text-xs text-gray-500 dark:text-gray-400'>
-                {subject.name}
-              </span>
+          <p className='text-base text-gray-900 dark:text-gray-100'>
+            {event.description}
+          </p>
+          <div className='flex flex-row items-center gap-2 md:ml-auto'>
+            {/* Event object links */}
+            {event.repository && (
+              <ButtonWithTooltip
+                variant='default'
+                href={`${workspaceUrl}/repositories/${event.repository.slug}`}
+                tooltip={event.repository.name}
+              >
+                {dict.repository.repository}
+              </ButtonWithTooltip>
             )}
-          </div>
-          {/* Event timestamp and user */}
-          <div className='ml-auto flex w-36 flex-col'>
-            <span className='text-xs text-gray-500 dark:text-gray-400'>
-              {new Date(event.created_at).toLocaleString(locale)}
-            </span>
-            <span className='text-xs text-gray-500 dark:text-gray-400'>
-              {event.user ? event.user.email : systemLabel}
-            </span>
+            {event.workflow_run && event.workflow ? (
+              <ButtonWithTooltip
+                variant='default'
+                href={`${workspaceUrl}/workflows/${event.workflow.id}/run/${event.workflow_run.id}`}
+                tooltip={event.workflow.name}
+              >
+                {dict.workflow.workflow} {dict.workflow.run}
+              </ButtonWithTooltip>
+            ) : (
+              event.workflow && (
+                <ButtonWithTooltip
+                  variant='default'
+                  href={`${workspaceUrl}/workflows/${event.workflow.id}`}
+                  tooltip={event.workflow.name}
+                >
+                  {dict.workflow.workflow}
+                </ButtonWithTooltip>
+              )
+            )}
+            {event.connection && (
+              <ButtonWithTooltip
+                variant='default'
+                href={`${workspaceUrl}/connections/${event.connection.id}`}
+                tooltip={event.connection.name}
+              >
+                {dict.connections.connection}
+              </ButtonWithTooltip>
+            )}
+            {/* Event timestamp and user */}
+            <div className='flex w-36 flex-col'>
+              <span className='text-xs text-gray-500 dark:text-gray-400'>
+                {new Date(event.created_at).toLocaleString(locale)}
+              </span>
+              <span className='text-xs text-gray-500 dark:text-gray-400'>
+                {event.user ? event.user.email : dict.logs.system}
+              </span>
+            </div>
           </div>
         </div>
       ))}

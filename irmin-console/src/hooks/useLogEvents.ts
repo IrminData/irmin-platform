@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import IrminCore from '@/lib/core';
 import { getToken } from '@/lib/getToken';
@@ -39,6 +39,8 @@ interface UseLogEventsResult {
   logEvents: LogEvent[];
   /** whether data is being loaded */
   loading: boolean;
+  /** total number of log events found */
+  totalItems: number;
   /** current page index */
   currentPage: number;
   /** total number of pages */
@@ -47,6 +49,8 @@ interface UseLogEventsResult {
   refresh: () => void;
   /** navigate to a given page */
   goToPage: (page: number) => void;
+  /** set search query */
+  setSearchQuery: (query: string) => void;
 }
 
 /**
@@ -65,94 +69,138 @@ export const useLogEvents = (
   const { irminAlert } = usePopup();
 
   const [logEvents, setLogEvents] = useState<LogEvent[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [totalItems, setTotalItems] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   /**
    * Fetch log events for the current page and options
    */
-  const fetchLogs = useCallback(async () => {
-    setLoading(true);
-    try {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      let res;
+  const fetchLogs = useCallback(
+    async (search?: string) => {
+      setLoading(true);
+      try {
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        let res;
 
-      switch (logsForType) {
-        case 'workspace':
-          res = await irminCore.logService.fetchLogEvents({
-            workspace: logsFor || workspaceSlug,
-            perPage,
-            page: currentPage,
-          });
-          break;
+        switch (logsForType) {
+          case 'workspace':
+            res = await irminCore.logService.fetchLogEvents({
+              workspace: logsFor || workspaceSlug,
+              search,
+              perPage,
+              page: currentPage,
+            });
+            break;
 
-        case 'workflow':
-          res = await irminCore.logService.fetchWorkflowLogEvents({
-            workspace: workspaceSlug,
-            workflow_id: logsFor,
-            perPage,
-            page: currentPage,
-          });
-          break;
+          case 'workflow':
+            res = await irminCore.logService.fetchWorkflowLogEvents({
+              workspace: workspaceSlug,
+              workflow_id: logsFor,
+              search,
+              perPage,
+              page: currentPage,
+            });
+            break;
 
-        case 'repository':
-          res = await irminCore.logService.fetchRepositoryLogEvents({
-            workspace: workspaceSlug,
-            repository_id: logsFor,
-            perPage,
-            page: currentPage,
-          });
-          break;
+          case 'repository':
+            res = await irminCore.logService.fetchRepositoryLogEvents({
+              workspace: workspaceSlug,
+              repository: logsFor,
+              search,
+              perPage,
+              page: currentPage,
+            });
+            break;
 
-        case 'connection':
-          res = await irminCore.logService.fetchConnectionLogEvents({
-            workspace: workspaceSlug,
-            connection_id: logsFor,
-            perPage,
-            page: currentPage,
-          });
-          break;
+          case 'connection':
+            res = await irminCore.logService.fetchConnectionLogEvents({
+              workspace: workspaceSlug,
+              connection_id: logsFor,
+              perPage,
+              page: currentPage,
+            });
+            break;
 
-        case 'user':
-          res = await irminCore.logService.fetchUserLogEvents({
-            workspace: workspaceSlug,
-            user_id: logsFor,
-            perPage,
-            page: currentPage,
-          });
-          break;
+          case 'user':
+            res = await irminCore.logService.fetchUserLogEvents({
+              workspace: workspaceSlug,
+              user_id: logsFor,
+              perPage,
+              page: currentPage,
+            });
+            break;
 
-        default:
-          throw new Error(`Unknown logsForType: ${logsForType}`);
+          default:
+            throw new Error(`Unknown logsForType: ${logsForType}`);
+        }
+
+        setTotalPages(res.pagination?.total_pages ?? 1);
+        setTotalItems(res.pagination?.total ?? 0);
+        setLogEvents(res.data ?? []);
+      } catch (error) {
+        console.error('Failed to fetch log events:', error);
+        irminAlert(
+          'error',
+          (error as Error)?.message || 'Failed to fetch log events'
+        );
+      } finally {
+        setLoading(false);
       }
+    },
+    [
+      locale,
+      workspaceSlug,
+      logsForType,
+      logsFor,
+      perPage,
+      currentPage,
+      irminAlert,
+    ]
+  );
 
-      setTotalPages(res.pagination?.total_pages ?? 1);
-      setLogEvents(res.data ?? []);
-    } catch (error) {
-      console.error('Failed to fetch log events:', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message || 'Failed to fetch log events'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    locale,
-    workspaceSlug,
-    logsForType,
-    logsFor,
-    perPage,
-    currentPage,
-    irminAlert,
-  ]);
-
-  // Refetch when options or page change
+  // Filter items based on search query
+  const searchedForQueryRef = useRef<string>('');
   useEffect(() => {
+    // set up debounce
+    const handler = setTimeout(() => {
+      const q = searchQuery.trim();
+      // if query is empty, but we have a previous one, reset page and fetch
+      if (q.length === 0 && searchedForQueryRef.current.length > 0) {
+        searchedForQueryRef.current = '';
+        setCurrentPage(1);
+        fetchLogs();
+        return;
+      }
+      // ignore short queries and record them so we don’t loop
+      if (q.length < 3) {
+        searchedForQueryRef.current = q;
+        return;
+      }
+      // if we’ve already fetched this exact query, bail out
+      if (searchedForQueryRef.current === q) return;
+      // new query: mark it, reset page and fire fetch
+      searchedForQueryRef.current = q;
+      setCurrentPage(1);
+      fetchLogs(q);
+    }, 400);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery, fetchLogs]);
+
+  // Fetch logs on mount
+  const initialFetchDoneForRef = useRef('');
+  useEffect(() => {
+    const optionsStr = JSON.stringify(options);
+    if (initialFetchDoneForRef.current === optionsStr) return;
+    initialFetchDoneForRef.current = optionsStr;
     fetchLogs();
-  }, [fetchLogs]);
+  }, [fetchLogs, options]);
 
   /**
    * Go to a specific page
@@ -166,16 +214,19 @@ export const useLogEvents = (
         return;
       }
       setCurrentPage(page);
+      fetchLogs();
     },
-    [totalPages]
+    [totalPages, fetchLogs]
   );
 
   return {
     logEvents,
     loading,
+    totalItems,
     currentPage,
     totalPages,
     refresh: fetchLogs,
     goToPage,
+    setSearchQuery,
   };
 };
