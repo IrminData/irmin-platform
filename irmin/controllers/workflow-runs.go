@@ -8,6 +8,8 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
+	"math"
+	"strconv"
 	"time"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
@@ -62,8 +64,37 @@ func WorkflowRunsIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workflow := c.Locals("workflow").(*db.Workflow)
 
+	// Get the query parameters from the request.
+	params, err := utils.ParseQueryParams(c, nil, []string{
+		"page",
+		"per_page",
+	})
+	if err != nil {
+		log.Printf("Error parsing query parameters: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Determine the pagination parameters
+	per_page := 100
+	page := 1
+	if params["per_page"] != "" {
+		parsedPerPage, err := strconv.Atoi(params["per_page"])
+		if err == nil {
+			per_page = parsedPerPage
+		}
+	}
+	if params["page"] != "" {
+		parsedPage, err := strconv.Atoi(params["page"])
+		if err == nil {
+			page = parsedPage
+		}
+	}
+	offset := (page - 1) * per_page
+
 	// Get the workflow runs for the workflow.
-	runs, err := db.GetWorkflowRunsByWorkflowID(workflow.ID)
+	runs, count, err := db.GetWorkflowRunsByWorkflowID(workflow.ID, per_page, offset)
 	if err != nil {
 		log.Printf("error getting workflow runs: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
@@ -85,7 +116,22 @@ func WorkflowRunsIndex(c fiber.Ctx) error {
 	}
 
 	// Return the formatted workflow runs.
+	totalPages := int(math.Ceil(float64(count) / float64(per_page)))
+	hasMore := page < totalPages
+	var nextPage *string
+	if hasMore {
+		nextPageStr := strconv.Itoa(page + 1)
+		nextPage = &nextPageStr
+	}
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+		Pagination: &irminModels.IrminAPIPaginationMetadata{
+			Total:      int(count),
+			TotalPages: totalPages,
+			Page:       &page,
+			PerPage:    per_page,
+			HasMore:    hasMore,
+			Next:       nextPage,
+		},
 		Data: response,
 	})
 }

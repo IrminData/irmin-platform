@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
+	"irmin-api/lakefs"
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
+	"math"
+	"strconv"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
@@ -20,7 +23,7 @@ func CommitsIndex(c fiber.Ctx) error {
 	repository := c.Locals("repository").(*db.Repository)
 
 	// Parse the request query
-	params, err := utils.ParseQueryParams(c, nil, []string{"ref"})
+	params, err := utils.ParseQueryParams(c, nil, []string{"ref", "per_page", "after"})
 	if err != nil {
 		log.Printf("Error parsing query params: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
@@ -28,11 +31,29 @@ func CommitsIndex(c fiber.Ctx) error {
 		})
 	}
 
+	// Parse pagination parameters
+	after := params["after"]
+	per_page := 100
+	hasPagination := false
+	if params["per_page"] != "" {
+		parsedPerPage, err := strconv.Atoi(params["per_page"])
+		if err == nil {
+			per_page = parsedPerPage
+			hasPagination = true
+		}
+	}
+
 	// Initialize Data Engine client
 	dataEngine := engine.NewClient(locale)
 
 	// Get the commits from the data engine.
-	commits, err := dataEngine.ListCommits(workspace.Slug, repository.Slug, params["ref"])
+	var commits []irminModels.Commit
+	var lakefsPagination *lakefs.Pagination
+	if hasPagination {
+		commits, lakefsPagination, err = dataEngine.ListCommits(workspace.Slug, repository.Slug, params["ref"], &after, &per_page)
+	} else {
+		commits, lakefsPagination, err = dataEngine.ListCommits(workspace.Slug, repository.Slug, params["ref"], nil, nil)
+	}
 	if err != nil {
 		log.Printf("Error retrieving commits from Data Engine: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
@@ -41,9 +62,23 @@ func CommitsIndex(c fiber.Ctx) error {
 	}
 
 	// Return the commits
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
-		Data: commits,
-	})
+	if lakefsPagination != nil {
+		totalPages := int(math.Ceil(float64(lakefsPagination.Results) / float64(per_page)))
+		return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+			Pagination: &irminModels.IrminAPIPaginationMetadata{
+				Total:      lakefsPagination.Results,
+				PerPage:    per_page,
+				TotalPages: totalPages,
+				HasMore:    lakefsPagination.HasMore,
+				Next:       &lakefsPagination.NextOffset,
+			},
+			Data: commits,
+		})
+	} else {
+		return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+			Data: commits,
+		})
+	}
 }
 
 func CommitsStore(c fiber.Ctx) error {

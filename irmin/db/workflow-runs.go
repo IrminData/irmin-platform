@@ -21,10 +21,28 @@ type WorkflowRun struct {
 	WorkflowID        uint             `json:"workflow_id"`
 }
 
-func GetWorkflowRunsByWorkflowID(workflowID uint) ([]WorkflowRun, error) {
+// GetWorkflowRunsByWorkspaceID returns workflow runs for the given workspace ID,
+// sorted by creation time, along with the total count of matching runs for pagination.
+func GetWorkflowRunsByWorkflowID(workflowID uint, limit, offset int) ([]WorkflowRun, int64, error) {
+	// Count total number of matching events
+	var total int64
+	if err := DB.Model(&LogEvent{}).
+		Where("workflow_id = ?", workflowID).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Find log events based on the provided parameters
 	var workflowRuns []WorkflowRun
-	result := DB.Preload("TriggeredBy").Preload("TriggeredByUser").Preload("Workflow").Where("workflow_id = ?", workflowID).Order("created_at desc").Find(&workflowRuns)
-	return workflowRuns, result.Error
+	result := DB.Preload("TriggeredBy").
+		Preload("TriggeredByUser").
+		Preload("Workflow").
+		Where("workflow_id = ?", workflowID).
+		Order("created_at desc").
+		Limit(limit).
+		Offset(offset).
+		Find(&workflowRuns)
+	return workflowRuns, total, result.Error
 }
 
 func GetLatestWorkflowRunByWorkflowID(workflowID uint) (*WorkflowRun, error) {

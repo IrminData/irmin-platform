@@ -9,7 +9,7 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) ListCommits(workspace, repository, ref string) ([]irminModels.Commit, error) {
+func (c *Client) ListCommits(workspace, repository, ref string, after *string, limit *int) ([]irminModels.Commit, *lakefs.Pagination, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -17,15 +17,27 @@ func (c *Client) ListCommits(workspace, repository, ref string) ([]irminModels.C
 	if ref == "" {
 		repository, err := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get repository: %w", err)
+			return nil, nil, fmt.Errorf("failed to get repository: %w", err)
 		}
 		ref = repository.DefaultBranch
 	}
 
 	// Fetch commits
-	lakefsCommits, err := c.LakeFSClient.ListAllCommits(lakeFSRepositoryName, ref, "", "", "", nil, nil)
+	var lakefsCommits []lakefs.Commit
+	var pagination *lakefs.Pagination
+	var err error
+	if after != nil && limit != nil {
+		lakefsCommitList, err := c.LakeFSClient.ListCommits(lakeFSRepositoryName, ref, *after, "", "", *limit, nil, nil)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to list commits: %w", err)
+		}
+		lakefsCommits = lakefsCommitList.Results
+		pagination = &lakefsCommitList.Pagination
+	} else {
+		lakefsCommits, err = c.LakeFSClient.ListAllCommits(lakeFSRepositoryName, ref, "", "", "", nil, nil)
+	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to list commits: %w", err)
+		return nil, nil, fmt.Errorf("failed to list commits: %w", err)
 	}
 
 	// Convert LakeFS commits to Irmin commits.
@@ -48,7 +60,7 @@ func (c *Client) ListCommits(workspace, repository, ref string) ([]irminModels.C
 		}
 	}
 
-	return irminCommits, nil
+	return irminCommits, pagination, nil
 }
 
 func (c *Client) GetCommit(workspace, repository, hash string) (*irminModels.Commit, error) {
