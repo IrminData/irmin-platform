@@ -1,5 +1,3 @@
-import { getLogs } from '@/lib/actions/logs';
-import { getToken } from '@/lib/getToken';
 import { initDict } from '@/lib/initDict';
 
 import LogsSection from '@/components/logs/LogsSection';
@@ -7,19 +5,19 @@ import LogsSection from '@/components/logs/LogsSection';
 import { WorkspaceLayoutParams } from '../layout';
 
 /**
- * Logs page - showing all log events for the workspace.
+ * Workspace Audit Logs page
  */
 export default async function LogsPage(props: {
   params: Promise<WorkspaceLayoutParams>;
 }) {
   const params = await props.params;
   const currentWorkspace = params.workspace;
-  const token = await getToken();
-  const [logs, { dict }] = await Promise.all([
-    getLogs({ workspace: currentWorkspace, token }),
-    initDict(),
-  ]);
+  const { dict } = await initDict();
   return (
-    <LogsSection logEvents={logs.data ?? []} title={dict.logs.workspaceLogs} />
+    <LogsSection
+      logsForType='workspace'
+      logsFor={currentWorkspace}
+      title={dict.logs.workspaceLogs}
+    />
   );
 }

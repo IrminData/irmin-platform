@@ -3,7 +3,8 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { FaFolderTree } from 'react-icons/fa6';
-import { FiChevronDown, FiChevronRight, FiFolder } from 'react-icons/fi';
+import { FiFolder } from 'react-icons/fi';
+import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -112,12 +113,12 @@ const PathSelector = ({
               onClick={() => handleItemClick(item)}
             >
               {openFolders[item.name] ? (
-                <FiChevronDown
+                <TbChevronDown
                   className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
                   aria-label={`Close folder ${item.name} in the file navigator`}
                 />
               ) : (
-                <FiChevronRight
+                <TbChevronRight
                   className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
                   aria-label={`Open folder ${item.name} in the file navigator`}
                 />

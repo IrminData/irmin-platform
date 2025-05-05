@@ -2,7 +2,7 @@
 
 import { type JSX, useCallback, useRef, useState } from 'react';
 
-import { GoChevronDown, GoChevronUp } from 'react-icons/go';
+import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -189,9 +189,9 @@ const DiffView = ({
                   onClick={() => toggleItem(index)}
                   icon={
                     openItem?.diffItem === index ? (
-                      <GoChevronUp size={16} />
+                      <TbChevronUp size={16} />
                     ) : (
-                      <GoChevronDown size={16} />
+                      <TbChevronDown size={16} />
                     )
                   }
                 >

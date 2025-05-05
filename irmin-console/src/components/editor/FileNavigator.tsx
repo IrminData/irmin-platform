@@ -4,12 +4,8 @@ import React, { useCallback, useState } from 'react';
 
 import { CiMenuKebab } from 'react-icons/ci';
 import { FaTimes } from 'react-icons/fa';
-import {
-  FiChevronDown,
-  FiChevronRight,
-  FiFileText,
-  FiFolder,
-} from 'react-icons/fi';
+import { FiFileText, FiFolder } from 'react-icons/fi';
+import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
 
@@ -130,7 +126,7 @@ const FileNavigator = () => {
             >
               {item.current.type === 'folder' ? (
                 openFolders[item.current.name] ? (
-                  <FiChevronDown
+                  <TbChevronDown
                     className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
                     aria-label={`Close folder ${item.current.name} in the file navigator`}
                     onClick={() => {
@@ -140,7 +136,7 @@ const FileNavigator = () => {
                     }}
                   />
                 ) : (
-                  <FiChevronRight
+                  <TbChevronRight
                     className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
                     aria-label={`Open folder ${item.current.name} in the file navigator`}
                     onClick={() => {

@@ -50,6 +50,9 @@ const fi = {
     messagePlaceholder: 'Kirjoita viestisi tähän...',
     pleaseWait: 'Odota hetki...',
     downloadSuccess: 'Lataus onnistui',
+    next: 'Seuraava',
+    previous: 'Edellinen',
+    loadMore: 'Lataa lisää',
     actions: {
       send: 'Lähetä',
       subscribe: 'Tilaa',
@@ -580,8 +583,11 @@ const fi = {
       'Voit tällä hetkellä hallita laskutusta vain ottamalla yhteyttä tiimiimme.',
   },
   logs: {
-    workspaceLogs: 'Työtilan lokit',
-    workflowLogs: 'Prosessin lokit',
+    workspaceLogs: 'Työtilan audit lokit',
+    connectionLogs: 'Yhteyden audit lokit',
+    repositoryLogs: 'Data-arkiston audit lokit',
+    userAuditLogs: 'Käyttäjän audit lokit',
+    workflowLogs: 'Prosessin aufit lokit',
     noLogsFound: 'Ei lokeja löytynyt',
     system: 'Järjestelmä',
   },

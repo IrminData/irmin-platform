@@ -31,18 +31,24 @@ class WorkflowRunService {
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
    * @param props.workflowID - The workflow identifier.
+   * @param props.perPage - (Optional) Number of items per page.
+   * @param props.page - (Optional) Page number.
    * @returns IrminAPIResponse containing an array of WorkflowRun.
    */
   async fetchWorkflowRuns({
     workspace,
     workflowID,
+    perPage = 100,
+    page = 1,
   }: {
     workspace: string;
     workflowID: string;
+    perPage?: number;
+    page?: number;
   }): Promise<IrminAPIResponse<WorkflowRun[]>> {
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/workflows/${workflowID}/runs`,
+        `/v1/workspaces/${workspace}/workflows/${workflowID}/runs?per_page=${perPage}&page=${page}`,
         { method: 'GET' }
       )) as IrminAPIResponse<WorkflowRun[]>;
       return response;

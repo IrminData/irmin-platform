@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation';
 
 import { getConnections } from '@/lib/actions/connections';
 import { getRepositories } from '@/lib/actions/repositories';
-import { getWorkflowRuns } from '@/lib/actions/workflow-runs';
 import { getWorkflow } from '@/lib/actions/workflows';
 import { Locale } from '@/lib/dict';
 import { getToken } from '@/lib/getToken';
@@ -73,12 +72,7 @@ export default async function WorkflowLayout(
     return notFound();
 
   const token = await getToken();
-  const [runs, workflow, connections, repositories] = await Promise.all([
-    getWorkflowRuns({
-      workspace,
-      workflowID,
-      token,
-    }),
+  const [workflow, connections, repositories] = await Promise.all([
     getWorkflow({
       workspace,
       workflowID,
@@ -98,7 +92,6 @@ export default async function WorkflowLayout(
 
   return (
     <WorkflowProvider
-      initialRuns={runs.data ?? []}
       initialWorkflow={workflow.data}
       connections={connections.data ?? []}
       repositories={repositories.data ?? []}

@@ -16,10 +16,11 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
+import useWorkflowRuns from '@/hooks/useWorkflowRuns';
+
 import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
 import { Workflow } from '@/types/core/Workflow';
-import { WorkflowRun } from '@/types/core/WorkflowRun';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 /**
@@ -27,7 +28,6 @@ import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
  */
 interface WorkflowContextProps {
   workflow: Workflow;
-  runs: WorkflowRun[];
   connections: Connection[];
   repositories: Repository[];
   fetchWorkflow: () => Promise<void>;
@@ -38,6 +38,7 @@ interface WorkflowContextProps {
   resumeWorkflow: () => Promise<void>;
   runningWorkflow: boolean;
   triggerWorkflowRun: () => Promise<void>;
+  workflowRuns: ReturnType<typeof useWorkflowRuns>;
 }
 
 const WorkflowContext = createContext<WorkflowContextProps | undefined>(
@@ -50,20 +51,17 @@ const WorkflowContext = createContext<WorkflowContextProps | undefined>(
  * @param props - The properties of the workflow provider
  * @param props.children - The children components
  * @param props.initialWorkflow - The initial workflow to set
- * @param props.initialRuns - The runs of the workflow
  * @param props.connections - The connections of the workflow
  * @param props.repositories - The repositories of the workflow
  */
 export const WorkflowProvider = ({
   children,
   initialWorkflow,
-  initialRuns,
   connections,
   repositories,
 }: {
   children: React.ReactNode;
   initialWorkflow: Workflow;
-  initialRuns: WorkflowRun[];
   connections: Connection[];
   repositories: Repository[];
 }) => {
@@ -72,12 +70,14 @@ export const WorkflowProvider = ({
   const { irminAlert, irminConfirm } = usePopup();
   const { workspaceSlug } = useWorkspace();
 
+  // Workflow runs for the workflow
+  const workflowRuns = useWorkflowRuns(initialWorkflow.id);
+
   // Track if the workflow is being updated
   const updating = useRef(false);
 
   // Active Workflow for the context
   const [workflow, setWorkflow] = useState(initialWorkflow);
-  const [runs, setRuns] = useState(initialRuns);
   const workflowID = useMemo(() => workflow.id, [workflow.id]);
 
   const fetchWorkflow = useCallback(async () => {
@@ -97,24 +97,6 @@ export const WorkflowProvider = ({
       );
     }
   }, [workflowID, workspaceSlug, irminAlert, getToken, locale]);
-
-  const fetchWorkflowRuns = useCallback(async () => {
-    try {
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      const newRuns = await irminCore.workflowRunService.fetchWorkflowRuns({
-        workspace: workspaceSlug,
-        workflowID,
-      });
-      if (!newRuns.data) return;
-      setRuns(newRuns.data);
-    } catch (error) {
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to fetch the workflow runs'
-      );
-    }
-  }, [workflowID, workspaceSlug, getToken, irminAlert, locale]);
 
   const handleDeleteWorkflow = useCallback(async () => {
     const confirmed = await irminConfirm(
@@ -283,7 +265,7 @@ export const WorkflowProvider = ({
         workspace: workspaceSlug,
         workflowID,
       });
-      await fetchWorkflowRuns();
+      workflowRuns.resetAndFetch();
       irminAlert('success', res.message ?? 'Workflow run triggered');
     } catch (error) {
       irminAlert(
@@ -294,20 +276,12 @@ export const WorkflowProvider = ({
       setRunningWorkflow(false);
       updating.current = false;
     }
-  }, [
-    workflowID,
-    workspaceSlug,
-    fetchWorkflowRuns,
-    irminAlert,
-    getToken,
-    locale,
-  ]);
+  }, [workflowID, workspaceSlug, workflowRuns, irminAlert, getToken, locale]);
 
   return (
     <WorkflowContext.Provider
       value={{
         workflow,
-        runs,
         connections,
         repositories,
         fetchWorkflow,
@@ -318,6 +292,7 @@ export const WorkflowProvider = ({
         resumeWorkflow: handleResumeWorkflow,
         runningWorkflow,
         triggerWorkflowRun: handleTriggerWorkflowRun,
+        workflowRuns,
       }}
     >
       {children}

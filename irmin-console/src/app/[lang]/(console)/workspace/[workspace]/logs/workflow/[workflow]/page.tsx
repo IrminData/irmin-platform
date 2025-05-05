@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 
-import { getWorkflowLogs } from '@/lib/actions/logs';
 import { getWorkflow } from '@/lib/actions/workflows';
 import { getToken } from '@/lib/getToken';
 import { initDict } from '@/lib/initDict';
@@ -10,7 +9,7 @@ import LogsSection from '@/components/logs/LogsSection';
 import { WorkflowLogsLayoutParams } from './layout';
 
 /**
- * Workflow Logs page - showing all log events for the workflow.
+ * Workflow Audit Logs page
  */
 export default async function WorkflowLogsPage(props: {
   params: Promise<WorkflowLogsLayoutParams>;
@@ -20,12 +19,7 @@ export default async function WorkflowLogsPage(props: {
   const workflowID = params.workflow;
 
   const token = await getToken();
-  const [logs, workflow, { dict }] = await Promise.all([
-    getWorkflowLogs({
-      workspace: currentWorkspace,
-      workflow_id: workflowID,
-      token,
-    }),
+  const [workflow, { dict }] = await Promise.all([
     getWorkflow({
       workspace: currentWorkspace,
       workflowID,
@@ -38,7 +32,8 @@ export default async function WorkflowLogsPage(props: {
   return (
     <LogsSection
       workflow={workflow.data}
-      logEvents={logs.data ?? []}
+      logsForType='workflow'
+      logsFor={workflowID}
       title={dict.logs.workflowLogs}
     />
   );

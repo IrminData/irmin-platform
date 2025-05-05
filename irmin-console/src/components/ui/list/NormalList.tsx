@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 
-import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5';
+import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -157,9 +157,9 @@ const NormalList: React.FC<ListProps> = ({
                                   }
                                 >
                                   {openDetails.includes(rowIndex) ? (
-                                    <IoChevronUpOutline className='h-5 w-5' />
+                                    <TbChevronUp className='h-5 w-5' />
                                   ) : (
-                                    <IoChevronDownOutline className='h-5 w-5' />
+                                    <TbChevronDown className='h-5 w-5' />
                                   )}
                                 </Button>
                               )}

@@ -24,7 +24,6 @@ class LogService {
     this.fetchConnectionLogEvents = this.fetchConnectionLogEvents.bind(this);
     this.fetchRepositoryLogEvents = this.fetchRepositoryLogEvents.bind(this);
     this.fetchWorkflowLogEvents = this.fetchWorkflowLogEvents.bind(this);
-    this.fetchWorkflowRunLogEvents = this.fetchWorkflowRunLogEvents.bind(this);
   }
 
   /**
@@ -32,16 +31,22 @@ class LogService {
    *
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
+   * @param props.perPage - (Optional) Number of items per page.
+   * @param props.page - (Optional) Page number.
    * @returns IrminAPIResponse containing an array of LogEvent.
    */
   async fetchLogEvents({
     workspace,
+    perPage = 100,
+    page = 1,
   }: {
     workspace: string;
+    perPage?: number;
+    page?: number;
   }): Promise<IrminAPIResponse<LogEvent[]>> {
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/logs`,
+        `/v1/workspaces/${workspace}/logs?per_page=${perPage}&page=${page}&page=${page}&per_page=${perPage}`,
         { method: 'GET' }
       )) as IrminAPIResponse<LogEvent[]>;
       return response;
@@ -58,17 +63,23 @@ class LogService {
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
    * @param props.user_id - The user ID.
+   * @param props.perPage - (Optional) Number of items per page.
+   * @param props.page - (Optional) Page number.
    */
   async fetchUserLogEvents({
     workspace,
     user_id,
+    perPage = 100,
+    page = 1,
   }: {
     workspace: string;
     user_id: string;
+    perPage?: number;
+    page?: number;
   }): Promise<IrminAPIResponse<LogEvent[]>> {
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/logs?user_id=${user_id}`,
+        `/v1/workspaces/${workspace}/logs?user_id=${user_id}&page=${page}&per_page=${perPage}`,
         { method: 'GET' }
       )) as IrminAPIResponse<LogEvent[]>;
       return response;
@@ -85,17 +96,23 @@ class LogService {
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
    * @param props.connection_id - The connection ID.
+   * @param props.perPage - (Optional) Number of items per page.
+   * @param props.page - (Optional) Page number.
    */
   async fetchConnectionLogEvents({
     workspace,
     connection_id,
+    perPage = 100,
+    page = 1,
   }: {
     workspace: string;
     connection_id: string;
+    perPage?: number;
+    page?: number;
   }): Promise<IrminAPIResponse<LogEvent[]>> {
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/logs?connection_id=${connection_id}`,
+        `/v1/workspaces/${workspace}/logs?connection_id=${connection_id}&page=${page}&per_page=${perPage}`,
         { method: 'GET' }
       )) as IrminAPIResponse<LogEvent[]>;
       return response;
@@ -109,51 +126,28 @@ class LogService {
   }
 
   /**
-   * Fetch log events for a specific workflow run.
-   *
-   * @param props - The parameters.
-   * @param props.workspace - The workspace slug.
-   * @param props.workflow_run_id - The workflow run ID.
-   */
-  async fetchWorkflowRunLogEvents({
-    workspace,
-    workflow_run_id,
-  }: {
-    workspace: string;
-    workflow_run_id: string;
-  }): Promise<IrminAPIResponse<LogEvent[]>> {
-    try {
-      const response = (await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/logs?workflow_run_id=${workflow_run_id}`,
-        { method: 'GET' }
-      )) as IrminAPIResponse<LogEvent[]>;
-      return response;
-    } catch (error) {
-      console.error(
-        (error as Error).message,
-        'Fetch Workflow Run Log Events error'
-      );
-      throw error;
-    }
-  }
-
-  /**
    * Fetch log events for a specific repository.
    *
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
    * @param props.repository_id - The repository ID.
+   * @param props.perPage - (Optional) Number of items per page.
+   * @param props.page - (Optional) Page number.
    */
   async fetchRepositoryLogEvents({
     workspace,
     repository_id,
+    perPage = 100,
+    page = 1,
   }: {
     workspace: string;
     repository_id: string;
+    perPage?: number;
+    page?: number;
   }): Promise<IrminAPIResponse<LogEvent[]>> {
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/logs?repository_id=${repository_id}`,
+        `/v1/workspaces/${workspace}/logs?repository_id=${repository_id}&page=${page}&per_page=${perPage}`,
         { method: 'GET' }
       )) as IrminAPIResponse<LogEvent[]>;
       return response;
@@ -172,17 +166,23 @@ class LogService {
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
    * @param props.workflow_id - The workflow ID.
+   * @param props.perPage - (Optional) Number of items per page.
+   * @param props.page - (Optional) Page number.
    */
   async fetchWorkflowLogEvents({
     workspace,
     workflow_id,
+    perPage = 100,
+    page = 1,
   }: {
     workspace: string;
     workflow_id: string;
+    perPage?: number;
+    page?: number;
   }): Promise<IrminAPIResponse<LogEvent[]>> {
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/logs?workflow_id=${workflow_id}`,
+        `/v1/workspaces/${workspace}/logs?workflow_id=${workflow_id}&page=${page}&per_page=${perPage}`,
         { method: 'GET' }
       )) as IrminAPIResponse<LogEvent[]>;
       return response;

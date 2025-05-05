@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
+import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
 import { QueryProvider } from '@/context/QueryContext';
 
@@ -39,9 +39,9 @@ export default function EditorLayoutWrapper({
           aria-label='Toggle editor sidebar'
         >
           {sidebarOpen ? (
-            <IoChevronBack size={24} />
+            <TbChevronLeft size={24} />
           ) : (
-            <IoChevronForward size={24} />
+            <TbChevronRight size={24} />
           )}
         </button>
         <div

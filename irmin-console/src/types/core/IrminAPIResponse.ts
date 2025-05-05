@@ -4,22 +4,18 @@ import { JSONValue } from '@/types/internal/GenericJSON';
  * Interface for the pagination metadata from Irmin Core API
  */
 export interface IrminAPIPaginationMetadata {
-  /** Total number of items */
+  /** Total number of items available */
   total: number;
+  /** Current page number */
+  page?: number;
   /** Number of items per page */
   per_page: number;
-  /** Current page number */
-  current_page: number;
-  /** Last page number */
-  last_page: number;
-  /** URL of the first page */
-  first_page_url: string;
-  /** URL of the last page */
-  last_page_url: string;
-  /** URL of the next page */
-  next_page_url: string | null;
-  /** URL of the previous page */
-  prev_page_url: string | null;
+  /** Total number of pages */
+  total_pages: number;
+  /** Whether there are more items available */
+  has_more: boolean;
+  /** The next identifier (page number or token) */
+  next?: string;
 }
 
 /**
@@ -34,8 +30,10 @@ export type IrminAPIResponseMetadata = {
  * Type for the response from Irmin Core API
  */
 export type IrminAPIResponse<T = unknown> = {
+  /** Pagination metadata */
+  pagination?: IrminAPIPaginationMetadata;
   /** Metadata from the API response */
-  metadata?: IrminAPIResponseMetadata & IrminAPIPaginationMetadata;
+  metadata?: IrminAPIResponseMetadata;
   /** Message from the API response */
   message?: string;
   /** Errors from the API response */

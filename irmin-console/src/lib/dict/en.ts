@@ -49,6 +49,9 @@ const en = {
     messagePlaceholder: 'Write your message here...',
     pleaseWait: 'Please wait...',
     downloadSuccess: 'Download successful',
+    next: 'Next',
+    previous: 'Previous',
+    loadMore: 'Load more',
     actions: {
       send: 'Send',
       subscribe: 'Subscribe',
@@ -575,8 +578,11 @@ const en = {
       'You can currently only manage billing by contacting our team.',
   },
   logs: {
-    workspaceLogs: 'Workspace logs',
-    workflowLogs: 'Workflow logs',
+    workspaceLogs: 'Workspace audit logs',
+    connectionLogs: 'Connection audit logs',
+    repositoryLogs: 'Repository audit logs',
+    userAuditLogs: 'User audit logs',
+    workflowLogs: 'Workflow audit logs',
     noLogsFound: 'No logs found',
     system: 'System',
   },

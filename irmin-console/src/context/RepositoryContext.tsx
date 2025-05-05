@@ -77,8 +77,10 @@ interface RepositoryContextProps {
   createTag: (name: string, ref: string) => Promise<void>;
   // Commits
   loadingCommits: boolean;
+  hasMoreCommits: boolean;
   commits: Commit[] | null;
   fetchCommits: (ref?: string) => Promise<Commit[] | undefined>;
+  loadMoreCommits: () => Promise<void>;
   commitChanges: (message: string) => Promise<boolean>;
   revertChanges: () => Promise<boolean>;
   // Diff
@@ -364,6 +366,8 @@ export const RepositoryProvider = ({
   const [tags, setTags] = useState<Tag[]>(initialTags);
 
   // Commits state
+  const [hasMoreCommits, setHasMoreCommits] = useState<boolean>(false);
+  const [nextCommitsPage, setNextCommitsPage] = useState<string | null>(null);
   const [loadingCommits, setLoadingCommits] = useState<boolean>(false);
   const [commits, setCommits] = useState<Commit[]>(initialCommits);
 
@@ -699,8 +703,15 @@ export const RepositoryProvider = ({
           workspace: workspaceSlug,
           repository: repositorySlug,
           ref: ref ?? currentRef,
+          perPage: 20,
+          after: '',
         });
-        if (!ref) setCommits(newCommits.data ?? []); // Only set commits if fetched for the current ref
+        if (!ref) {
+          // Only set commits if fetched for the current ref
+          setNextCommitsPage(newCommits.pagination?.next ?? null);
+          setHasMoreCommits(newCommits.pagination?.has_more ?? false);
+          setCommits(newCommits.data ?? []);
+        }
         return newCommits.data ?? [];
       } catch (error) {
         console.error('RepositoryContext fetchCommits error', error);
@@ -714,6 +725,47 @@ export const RepositoryProvider = ({
     },
     [workspaceSlug, repositorySlug, currentRef, irminAlert, getToken, locale]
   );
+
+  /**
+   * Fetch more commits for the current ref
+   */
+  const loadedCommtitsForPages = useRef<string[]>(['']);
+  const loadMoreCommits = useCallback(async () => {
+    if (!nextCommitsPage) return;
+    if (loadedCommtitsForPages.current.includes(nextCommitsPage)) return;
+    loadedCommtitsForPages.current.push(nextCommitsPage);
+    setLoadingCommits(true);
+    try {
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const newCommits = await irminCore.commitService.fetchCommits({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        ref: currentRef,
+        perPage: 20,
+        after: nextCommitsPage,
+      });
+      setNextCommitsPage(newCommits.pagination?.next ?? null);
+      setHasMoreCommits(newCommits.pagination?.has_more ?? false);
+      setCommits((prev) => [...prev, ...(newCommits.data ?? [])]);
+    } catch (error) {
+      console.error('RepositoryContext loadMoreCommits error', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to fetch more commits'
+      );
+    } finally {
+      setLoadingCommits(false);
+    }
+  }, [
+    workspaceSlug,
+    repositorySlug,
+    currentRef,
+    nextCommitsPage,
+    irminAlert,
+    getToken,
+    locale,
+  ]);
 
   /**
    * Fetch the uncommitted changes for the current branch
@@ -1186,9 +1238,11 @@ export const RepositoryProvider = ({
         deleteTag: handleDeleteTag,
         createTag: handleCreateTag,
         // Commits
+        hasMoreCommits,
         loadingCommits,
         commits,
         fetchCommits,
+        loadMoreCommits,
         commitChanges,
         revertChanges,
         // Diff

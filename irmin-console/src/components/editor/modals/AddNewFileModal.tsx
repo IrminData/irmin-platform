@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
-import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
+import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 
 import PathSelector from '@/components/editor/PathSelector';
 import Button from '@/components/ui/button';
@@ -221,9 +221,9 @@ export default function AddNewFileModal({
                 disabled={loading}
                 icon={
                   showPathSelector ? (
-                    <IoChevronUp className='inline-block' size={22} />
+                    <TbChevronUp className='inline-block' size={22} />
                   ) : (
-                    <IoChevronDown className='inline-block' size={22} />
+                    <TbChevronDown className='inline-block' size={22} />
                   )
                 }
               />

@@ -32,20 +32,28 @@ class CommitService {
    * @param props.workspace - The workspace slug.
    * @param props.repository - The repository slug.
    * @param props.ref - (Optional) The branch or tag reference.
+   * @param props.perPage - (Optional) Number of items per page.
+   * @param props.after - (Optional) The current page pagination token.
    * @returns IrminAPIResponse containing an array of Commit.
    */
   async fetchCommits({
     workspace,
     repository,
     ref,
+    perPage = 100,
+    after,
   }: {
     workspace: string;
     repository: string;
     ref?: string;
+    perPage?: number;
+    after?: string;
   }): Promise<IrminAPIResponse<Commit[]>> {
     try {
       const urlParams = new URLSearchParams();
       if (ref) urlParams.append('ref', ref);
+      if (perPage) urlParams.append('per_page', perPage.toString());
+      if (after) urlParams.append('after', after);
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/commits?${urlParams.toString()}`,
         { method: 'GET' }

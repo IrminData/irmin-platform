@@ -80,6 +80,8 @@ export async function getTags({
  * @param props.workspace - The workspace slug.
  * @param props.repository - The repository slug.
  * @param props.branch - The branch name to get commits on (optional).
+ * @param props.perPage - The number of commits to fetch per page (optional).
+ * @param props.after - The pagination token for the current page (optional).
  * @param props.token - Optional user token.
  * @returns The list of branches.
  */
@@ -87,20 +89,26 @@ export async function getCommits({
   workspace,
   repository,
   branch,
+  perPage,
+  after,
   token,
 }: {
   workspace: string;
   repository: string;
   branch?: string;
+  perPage?: number;
+  after?: string;
   token?: string;
 }) {
   const irminCore = await initCore(token);
-  const commits = await irminCore.commitService.fetchCommits({
+  const res = await irminCore.commitService.fetchCommits({
     workspace,
     repository,
     ref: branch,
+    perPage,
+    after,
   });
-  return commits;
+  return res;
 }
 
 /**

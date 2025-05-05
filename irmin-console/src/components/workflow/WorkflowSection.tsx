@@ -10,6 +10,7 @@ import { formatDistanceToNow, intervalToDuration } from 'date-fns';
 import { TbClock, TbHourglassLow } from 'react-icons/tb';
 
 import NormalList from '@/components/ui/list/NormalList';
+import PaginationControls from '@/components/ui/PaginationControls';
 import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -28,7 +29,7 @@ import { GridRow } from '@/types/internal/ListProps';
 const WorkflowSection = () => {
   const { dict, locale } = useLocale();
 
-  const { workflow, runs, repositories, connections } = useWorkflow();
+  const { workflow, repositories, connections, workflowRuns } = useWorkflow();
 
   // The base URL for the workflow, eg. /en/workspace/workspace-slug/workflows/workflow-id
   const baseUrl = useBaseUrl({
@@ -48,7 +49,7 @@ const WorkflowSection = () => {
 
   const runRows: GridRow[] = useMemo(
     () =>
-      runs.map((run, i) => ({
+      workflowRuns.runs.map((run, i) => ({
         columns: [
           <Tooltip.Root key={`run-${i}`}>
             <Tooltip.Trigger>
@@ -139,7 +140,7 @@ const WorkflowSection = () => {
           },
         ],
       })),
-    [dict, locale, runs, baseUrl]
+    [dict, locale, workflowRuns, baseUrl]
   );
 
   return (
@@ -344,10 +345,18 @@ const WorkflowSection = () => {
               dict.list.status,
               dict.list.actions,
             ]}
+            loading={workflowRuns.loading}
             hideHeaders={false}
             rows={runRows}
           />
         </Tooltip.TooltipProvider>
+        <PaginationControls
+          currentPage={workflowRuns.currentPage}
+          totalPages={workflowRuns.totalPages}
+          onPageChange={workflowRuns.goToPage}
+          previousLabel={dict.common.previous}
+          nextLabel={dict.common.next}
+        />
       </div>
     </div>
   );

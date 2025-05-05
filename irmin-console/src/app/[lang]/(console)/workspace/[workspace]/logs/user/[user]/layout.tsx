@@ -3,36 +3,36 @@ import { Metadata } from 'next';
 import { Locale } from '@/lib/dict';
 
 /**
- * URL parameters for the Workflow Logs layout
+ * URL parameters for the User Logs layout
  *
  * @param lang - The language of the user
  * @param workspace - The slug of the current workspace
- * @param workflow - The ID of the workflow to show logs for
+ * @param user - The ID of the workspace user to show audit logs for
  */
-export type WorkflowLogsLayoutParams = {
+export type UserLogsLayoutParams = {
   lang: Locale;
   workspace: string;
-  workflow: string;
+  user: string;
 };
 
 /**
- * SEO metadata for the Workflow Logs layout
+ * SEO metadata for the User Logs layout
  */
 export async function generateMetadata(props: {
-  params: Promise<WorkflowLogsLayoutParams>;
+  params: Promise<UserLogsLayoutParams>;
 }): Promise<Metadata> {
   const params = await props.params;
   const formattedWorkspace = params.workspace.replace(/-/g, ' ');
   return {
-    title: `Workflow logs | ${formattedWorkspace} | IRMIN Console`,
+    title: `User logs | ${formattedWorkspace} | IRMIN Console`,
   };
 }
 
 /**
- * Layout for the Workflow Logs pages in the Console
+ * Layout for the User Logs pages in the Console
  */
-export default async function WorkflowLogsLayout(props: {
-  params: Promise<WorkflowLogsLayoutParams>;
+export default async function UserLogsLayout(props: {
+  params: Promise<UserLogsLayoutParams>;
   children: React.ReactNode;
 }) {
   return props.children;

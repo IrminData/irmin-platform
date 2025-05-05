@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 
-import { IoChevronBack } from 'react-icons/io5';
+import { TbChevronLeft } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
@@ -27,7 +27,7 @@ const ConnectorSection = ({ connector }: { connector: Connector }) => {
           size='icon'
           variant='gray'
           className='rounded-full'
-          icon={<IoChevronBack size={24} />}
+          icon={<TbChevronLeft size={24} />}
           onClick={() => router.back()}
         />
         <ContentWrapper>

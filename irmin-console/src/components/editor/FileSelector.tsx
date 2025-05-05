@@ -3,12 +3,8 @@
 import { useCallback, useState } from 'react';
 
 import { FaFolderTree } from 'react-icons/fa6';
-import {
-  FiChevronDown,
-  FiChevronRight,
-  FiFile,
-  FiFolder,
-} from 'react-icons/fi';
+import { FiFile, FiFolder } from 'react-icons/fi';
+import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 
 import { ButtonWithTooltip } from '@/components/ui/button';
 
@@ -102,12 +98,12 @@ const FileSelector = ({
                 onClick={() => handleItemClick(item)}
               >
                 {openFolders[item.name] ? (
-                  <FiChevronDown
+                  <TbChevronDown
                     className='inline-block'
                     aria-label={`Close folder ${item.name} in the file navigator`}
                   />
                 ) : (
-                  <FiChevronRight
+                  <TbChevronRight
                     className='inline-block'
                     aria-label={`Open folder ${item.name} in the file navigator`}
                   />

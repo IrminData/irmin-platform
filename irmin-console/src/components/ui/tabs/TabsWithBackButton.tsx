@@ -1,4 +1,4 @@
-import { IoChevronBack } from 'react-icons/io5';
+import { TbChevronLeft } from 'react-icons/tb';
 
 import Button, { ButtonWithTooltip } from '@/components/ui/button';
 
@@ -24,7 +24,7 @@ const TabsWithBackButton = ({
         size='lg'
         variant='gray'
         className='aspect-square overflow-hidden rounded-full'
-        icon={<IoChevronBack size={24} />}
+        icon={<TbChevronLeft size={24} />}
         href={backHref}
         tooltip={backTooltip}
         aria-label={backTooltip}
