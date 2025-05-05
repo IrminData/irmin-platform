@@ -7,11 +7,11 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) ListWorkflowRuns(workspace, workflowID string) ([]irminModels.WorkflowRun, *irminModels.IrminAPIResponse, error) {
+func (c *Client) ListWorkflowRuns(workspace, workflowID string, page, perPage int) ([]irminModels.WorkflowRun, *irminModels.IrminAPIResponse, error) {
 	var runs []irminModels.WorkflowRun
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s/runs", workspace, workflowID),
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s/runs?page=%d&per_page=%d", workspace, workflowID, page, perPage),
 	}, &runs)
 	if err != nil {
 		return nil, nil, fmt.Errorf("list workflow runs error: %w", err)

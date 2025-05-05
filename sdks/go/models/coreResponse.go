@@ -2,21 +2,26 @@ package irminModels
 
 // IrminAPIPaginationMetadata represents the pagination metadata from the Irmin Core API
 type IrminAPIPaginationMetadata struct {
-	Total        int    `json:"total"`
-	PerPage      int    `json:"per_page"`
-	CurrentPage  int    `json:"current_page"`
-	LastPage     int    `json:"last_page"`
-	FirstPageURL string `json:"first_page_url"`
-	LastPageURL  string `json:"last_page_url"`
-	NextPageURL  string `json:"next_page_url"`
-	PrevPageURL  string `json:"prev_page_url"`
+	// Total is the total number of items available
+	Total int `json:"total"`
+	// Current page number
+	Page *int `json:"page,omitempty"`
+	// Number of items per page
+	PerPage int `json:"per_page"`
+	// Total number of pages available
+	TotalPages int `json:"total_pages"`
+	// HasMore indicates if there are more items available
+	HasMore bool `json:"has_more"`
+	// Next is the next page number or token, if applicable
+	Next *string `json:"next,omitempty"`
 }
 
 // IrminAPIResponse is a “raw” response type where the `Data` is `json.RawMessage`.
 // This lets us unmarshal it a second time into the type we actually want.
 type IrminAPIResponse struct {
-	Metadata map[string]string `json:"metadata,omitempty"`
-	Message  string            `json:"message,omitempty"`
-	Errors   []string          `json:"errors,omitempty"`
-	Data     any               `json:"data,omitempty"`
+	Pagination *IrminAPIPaginationMetadata `json:"pagination,omitempty"`
+	Metadata   map[string]string           `json:"metadata,omitempty"`
+	Message    string                      `json:"message,omitempty"`
+	Errors     []string                    `json:"errors,omitempty"`
+	Data       any                         `json:"data,omitempty"`
 }

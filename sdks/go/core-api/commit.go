@@ -7,9 +7,9 @@ import (
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) ListCommits(workspace, repository, ref string) ([]irminModels.Commit, *irminModels.IrminAPIResponse, error) {
+func (c *Client) ListCommits(workspace, repository, ref, after string, perPage int) ([]irminModels.Commit, *irminModels.IrminAPIResponse, error) {
 	var commits []irminModels.Commit
-	endpoint := fmt.Sprintf("/v1/workspaces/%s/repositories/%s/commits", workspace, repository)
+	endpoint := fmt.Sprintf("/v1/workspaces/%s/repositories/%s/commits?per_page=%d&after=%s", workspace, repository, perPage, after)
 	if ref != "" {
 		endpoint += fmt.Sprintf("?ref=%s", ref)
 	}
