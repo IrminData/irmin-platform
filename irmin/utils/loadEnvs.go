@@ -176,7 +176,7 @@ func LoadEnv() (*CoreAPIEnv, error) {
 	if err != nil {
 		return nil, err
 	}
-	s3Bucket, err := getEnv("S3_BUCKET", true, "")
+	s3Bucket, err := getEnv("S3_BUCKET", false, "")
 	if err != nil {
 		return nil, err
 	}
