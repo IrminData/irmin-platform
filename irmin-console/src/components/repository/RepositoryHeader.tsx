@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 
 import { GoGitBranch, GoGitCommit, GoGitCompare } from 'react-icons/go';
 import {
+  TbBook,
   TbDatabase,
   TbFileText,
   TbSchema,
@@ -102,6 +103,12 @@ export default function RepositoryHeader() {
         icon: <TbFileText size={14} />,
       },
       {
+        name: dict.common.logs,
+        link: `${workspaceUrl}/logs/repository/${currentRepository?.slug}`,
+        active: false,
+        icon: <TbBook size={14} />,
+      },
+      {
         name: dict.consoleNavigation.settings,
         link: `${baseUrl}/settings?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/settings`,
@@ -109,7 +116,15 @@ export default function RepositoryHeader() {
         hidden: immutable,
       },
     ],
-    [pathname, searchParams, baseUrl, dict, immutable]
+    [
+      pathname,
+      searchParams,
+      baseUrl,
+      dict,
+      immutable,
+      currentRepository,
+      workspaceUrl,
+    ]
   );
 
   return (

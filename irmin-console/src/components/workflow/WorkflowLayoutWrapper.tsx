@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 
 import { RiFlowChart } from 'react-icons/ri';
 import {
+  TbBook,
   TbClockCog,
   TbDatabase,
   TbFileText,
@@ -108,6 +109,12 @@ export default function WorkflowLayoutWrapper({
         active: false,
         icon: <TbDatabase size={14} />,
         hidden: !repositorySlug,
+      },
+      {
+        name: dict.common.logs,
+        link: `${workspaceUrl}/logs/workflow/${workflow?.id}`,
+        active: false,
+        icon: <TbBook size={14} />,
       },
       {
         name: dict.consoleNavigation.settings,

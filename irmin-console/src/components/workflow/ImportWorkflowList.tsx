@@ -49,7 +49,7 @@ const ImportWorkflowList = ({
             href: `${workspaceUrl}/workflows/${item.id}/settings`,
           },
           {
-            label: dict.list.logs,
+            label: dict.common.logs,
             primary: false,
             href: `${workspaceUrl}/logs/workflow/${item.id}`,
           },

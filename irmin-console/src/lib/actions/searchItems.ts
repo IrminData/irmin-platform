@@ -113,7 +113,7 @@ export async function generateSearchItems({
       // Add workspace-dependent static Irmin items
       newItems.push(
         {
-          title: dict.consoleNavigation.staticSearchItems.logs,
+          title: dict.logs.workspaceLogs,
           description:
             dict.consoleNavigation.staticSearchItems.description.logs,
           link: `/${locale}/workspace/${workspace}/logs`,

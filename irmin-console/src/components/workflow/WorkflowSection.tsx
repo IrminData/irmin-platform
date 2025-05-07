@@ -134,7 +134,7 @@ const WorkflowSection = () => {
         ],
         actions: [
           {
-            label: dict.list.logs,
+            label: dict.common.logs,
             primary: false,
             href: `${baseUrl}/run/${run.id}`,
           },

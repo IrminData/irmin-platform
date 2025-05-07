@@ -49,6 +49,11 @@ const ConnectionList = ({
             primary: false,
             href: `${workspaceUrl}/connections/${item.id}/settings`,
           },
+          {
+            label: dict.common.logs,
+            primary: false,
+            href: `${workspaceUrl}/logs/connection/${item.id}`,
+          },
         ];
 
         return {

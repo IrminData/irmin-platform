@@ -3,6 +3,7 @@
 import ReactSelect from 'react-select';
 
 import { IoExit, IoKey } from 'react-icons/io5';
+import { TbBook } from 'react-icons/tb';
 
 import { ButtonWithTooltip } from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
@@ -30,7 +31,7 @@ import { IrminRole } from '@/types/core/IrminRole';
  * @returns {JSX.Element} The workspace users section component.
  */
 const WorkspaceUsersSection = () => {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const { users, roles, changeUserRole, deleteUser } = useUsers();
   const { workspace, transferWorkspace } = useWorkspace();
 
@@ -120,25 +121,34 @@ const WorkspaceUsersSection = () => {
                 )}
               </TableCell>
               <TableCell className='px-4 py-2 text-right'>
-                {workspace?.owner?.id !== user.id && (
-                  <div className='flex w-full flex-row justify-end gap-2 align-middle'>
-                    <ButtonWithTooltip
-                      size='icon'
-                      variant='secondary'
-                      onClick={() => transferWorkspace(user.id)}
-                      icon={<IoKey size={14} />}
-                      tooltip={dict.users.transferOwnership}
-                    />
-                    <ButtonWithTooltip
-                      size='icon'
-                      variant='secondary'
-                      aria-label='Remove user from workspace'
-                      onClick={() => deleteUser(user.id)}
-                      icon={<IoExit size={14} />}
-                      tooltip={dict.users.removeFromWorkspace}
-                    />
-                  </div>
-                )}
+                <div className='flex w-full flex-row justify-end gap-2 align-middle'>
+                  <ButtonWithTooltip
+                    size='icon'
+                    variant='secondary'
+                    icon={<TbBook size={14} />}
+                    href={`/${locale}/workspace/${workspace?.slug}/logs/user/${user.id}`}
+                    tooltip={dict.common.logs}
+                  />
+                  {workspace?.owner?.id !== user.id && (
+                    <div className='contents'>
+                      <ButtonWithTooltip
+                        size='icon'
+                        variant='secondary'
+                        onClick={() => transferWorkspace(user.id)}
+                        icon={<IoKey size={14} />}
+                        tooltip={dict.users.transferOwnership}
+                      />
+                      <ButtonWithTooltip
+                        size='icon'
+                        variant='secondary'
+                        aria-label='Remove user from workspace'
+                        onClick={() => deleteUser(user.id)}
+                        icon={<IoExit size={14} />}
+                        tooltip={dict.users.removeFromWorkspace}
+                      />
+                    </div>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           ))}

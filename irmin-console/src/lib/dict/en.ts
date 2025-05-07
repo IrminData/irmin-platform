@@ -52,6 +52,7 @@ const en = {
     next: 'Next',
     previous: 'Previous',
     loadMore: 'Load more',
+    logs: 'Logs',
     actions: {
       send: 'Send',
       subscribe: 'Subscribe',
@@ -75,7 +76,6 @@ const en = {
       documentation: 'Irmin Documentation',
       termsAndPrivacy: 'Terms of Use & Privacy Policy',
       createWorkspace: 'Create new workspace',
-      logs: 'Workspace Logs',
       workspaceDocumentation: 'Workspace Documentation',
       myProfile: 'My Profile',
       manageWorkspaces: 'Manage Workspaces',
@@ -117,7 +117,6 @@ const en = {
     usefulLinks: 'Useful links',
     editor: 'Editor',
     queries: 'Queries',
-    logs: 'Logs',
     workspaceSettings: 'Workspace',
     workspaces: 'Workspaces',
     goToWebsite: 'Go to website',
@@ -364,7 +363,6 @@ const en = {
     duration: 'Duration',
     tabs: {
       data: 'Data',
-      logs: 'Logs',
       schedule: 'Schedule',
     },
     settings: {
@@ -454,7 +452,6 @@ const en = {
     queryExecutionStarted: 'Query execution started',
     results: 'Results',
     errors: 'Errors',
-    logs: 'Logs',
     noErrors: 'No errors',
     queryResults: 'Query results',
     createQuery: 'Create query',
@@ -471,7 +468,6 @@ const en = {
     runs: 'Runs',
     actions: 'Actions',
     view: 'View',
-    logs: 'Logs',
     delete: 'Delete',
     edit: 'Edit',
     owner: 'Owner',

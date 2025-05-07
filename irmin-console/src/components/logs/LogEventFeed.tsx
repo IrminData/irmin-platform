@@ -85,7 +85,7 @@ const LogEventFeed = ({
             {/* Event object links */}
             {event.repository && (
               <ButtonWithTooltip
-                variant='default'
+                variant='ghost'
                 href={`${workspaceUrl}/repositories/${event.repository.slug}`}
                 tooltip={event.repository.name}
               >
@@ -94,7 +94,7 @@ const LogEventFeed = ({
             )}
             {event.workflow_run && event.workflow ? (
               <ButtonWithTooltip
-                variant='default'
+                variant='ghost'
                 href={`${workspaceUrl}/workflows/${event.workflow.id}/run/${event.workflow_run.id}`}
                 tooltip={event.workflow.name}
               >
@@ -103,7 +103,7 @@ const LogEventFeed = ({
             ) : (
               event.workflow && (
                 <ButtonWithTooltip
-                  variant='default'
+                  variant='ghost'
                   href={`${workspaceUrl}/workflows/${event.workflow.id}`}
                   tooltip={event.workflow.name}
                 >
@@ -113,7 +113,7 @@ const LogEventFeed = ({
             )}
             {event.connection && (
               <ButtonWithTooltip
-                variant='default'
+                variant='ghost'
                 href={`${workspaceUrl}/connections/${event.connection.id}`}
                 tooltip={event.connection.name}
               >

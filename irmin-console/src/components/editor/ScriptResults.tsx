@@ -102,7 +102,7 @@ const ScriptResults = ({
             onClick={() => setActiveTab('logs')}
             icon={result?.has_errors ? <TbExclamationCircle /> : <TbLogs />}
           >
-            {dict.query.logs}{' '}
+            {dict.common.logs}{' '}
             {result?.has_errors ? `(${dict.query.errors})` : ''}
           </Button>
         </div>

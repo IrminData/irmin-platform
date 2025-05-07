@@ -53,6 +53,7 @@ const fi = {
     next: 'Seuraava',
     previous: 'Edellinen',
     loadMore: 'Lataa lisää',
+    logs: 'Lokit',
     actions: {
       send: 'Lähetä',
       subscribe: 'Tilaa',
@@ -76,7 +77,6 @@ const fi = {
       documentation: 'Irmin Dokumentaatio',
       termsAndPrivacy: 'Käyttöehdot & Tietosuojakäytäntö',
       createWorkspace: 'Luo uusi työtila',
-      logs: 'Työtilan Lokit',
       workspaceDocumentation: 'Työtilan Dokumentaatio',
       myProfile: 'Oma Profiili',
       manageWorkspaces: 'Hallitse Työtiloja',
@@ -118,7 +118,6 @@ const fi = {
     usefulLinks: 'Hyödylliset linkit',
     editor: 'Editori',
     queries: 'Kyselyt',
-    logs: 'Lokit',
     workspaceSettings: 'Työtila',
     workspaces: 'Työtilat',
     goToWebsite: 'Siirry verkkosivustolle',
@@ -367,7 +366,6 @@ const fi = {
     duration: 'Kesto',
     tabs: {
       data: 'Data',
-      logs: 'Lokit',
       schedule: 'Aikataulu',
     },
     settings: {
@@ -457,7 +455,6 @@ const fi = {
     queryExecutionStarted: 'Kyselyn suoritus aloitettu',
     results: 'Tulokset',
     errors: 'Virheet',
-    logs: 'Lokit',
     noErrors: 'Ei virheitä',
     queryResults: 'Kyselyn tulokset',
     createQuery: 'Luo kysely',
@@ -474,7 +471,6 @@ const fi = {
     runs: 'Ajot',
     actions: 'Toiminnot',
     view: 'Katso',
-    logs: 'Lokit',
     delete: 'Poista',
     edit: 'Muokkaa',
     owner: 'Omistaja',

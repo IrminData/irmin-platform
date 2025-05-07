@@ -95,7 +95,7 @@ const useConsoleNavigationLinks = (): {
           icon: <TbSql />,
         },
         {
-          title: dict.consoleNavigation.logs,
+          title: dict.common.logs,
           href: `${workspaceUrl}/logs`,
           icon: <TbLogs />,
         },

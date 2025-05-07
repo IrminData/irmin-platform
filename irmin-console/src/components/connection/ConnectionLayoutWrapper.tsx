@@ -5,7 +5,13 @@ import { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 
 import { GoWorkflow } from 'react-icons/go';
-import { TbFileText, TbPlug, TbSchema, TbSettings } from 'react-icons/tb';
+import {
+  TbBook,
+  TbFileText,
+  TbPlug,
+  TbSchema,
+  TbSettings,
+} from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -75,6 +81,12 @@ export default function ConnectionLayoutWrapper({
         hidden: false,
       },
       {
+        name: dict.common.logs,
+        link: `${workspaceUrl}/logs/connection/${connection?.id}`,
+        active: false,
+        icon: <TbBook size={14} />,
+      },
+      {
         name: dict.consoleNavigation.settings,
         link: `${baseUrl}/settings`,
         active: pathname === `${baseUrl}/settings`,
@@ -82,7 +94,7 @@ export default function ConnectionLayoutWrapper({
         hidden: false,
       },
     ],
-    [pathname, dict, baseUrl]
+    [pathname, dict, baseUrl, workspaceUrl, connection]
   );
 
   if (!connection)

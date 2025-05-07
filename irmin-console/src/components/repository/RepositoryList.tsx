@@ -44,6 +44,11 @@ const RepositoryList = ({
             primary: true,
             href: `${workspaceUrl}/repositories/${item.slug}`,
           },
+          {
+            label: dict.common.logs,
+            primary: false,
+            href: `${workspaceUrl}/logs/repository/${item.slug}`,
+          },
         ];
 
         return {
