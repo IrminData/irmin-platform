@@ -1,27 +1,36 @@
 package lib
 
 import (
-	"fmt"
 	"irmin-connectors/db"
+	"log/slog"
 	"net/http"
 	"strings"
 )
 
-// ValidateConnectorSystemToken validates the provided token against the system token of the connector registration instance
-func ValidateConnectorSystemToken(connectorName string, w http.ResponseWriter, r *http.Request) bool {
+// ValidateConnectorSystemToken validates the provided token against the system token of the connector registration instance.
+func ValidateConnectorSystemToken(
+	d *db.Database,
+	logger *slog.Logger,
+	connectorName string,
+	w http.ResponseWriter,
+	r *http.Request,
+) bool {
 	// Get authentication bearer token from the request headers
 	token := r.Header.Get("Authorization")
 	token = strings.TrimPrefix(token, "Bearer ")
 
 	// Fetch matching registerations by connector name
-	registrations, err := db.GetConnectorRegistrationByConnectorName(connectorName)
+	registrations, err := d.GetConnectorRegistrationByConnectorName(connectorName)
 	if err != nil {
-		fmt.Printf("Error fetching connectors from the database: %v\n", err)
+		logger.Error("Error fetching connectors from the database",
+			"error", err,
+			"connector_name", connectorName)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return false
 	}
 	if len(registrations) == 0 {
-		fmt.Printf("No connector registration found with the name %s\n", connectorName)
+		logger.Warn("No connector registration found",
+			"connector_name", connectorName)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return false
 	}
@@ -34,7 +43,8 @@ func ValidateConnectorSystemToken(connectorName string, w http.ResponseWriter, r
 		}
 	}
 	if !validToken {
-		fmt.Println("Invalid token provided")
+		logger.Warn("Invalid token provided",
+			"connector_name", connectorName)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return false
 	}

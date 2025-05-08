@@ -1,4 +1,4 @@
-package postgresControllers
+package postgrescontrollers
 
 import (
 	"context"
@@ -9,7 +9,8 @@ import (
 	"net/textproto"
 	"time"
 
-	postgresClient "irmin-connectors/connectors/postgres/client"
+	postgresclient "irmin-connectors/connectors/postgres/client"
+	"irmin-connectors/connectors/postgres/config"
 	"irmin-connectors/lib"
 	"irmin-connectors/utils"
 )
@@ -18,25 +19,26 @@ import (
 // It can return:
 // - all tables as a multipart/mixed response,
 // - a single table as a JSON attachment,
-// - a single row (by “id”) as a JSON attachment.
-func OperationPull(w http.ResponseWriter, r *http.Request) {
-	// validate operation token
-	valid, _, operation := lib.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
-	if !valid {
+// - a single row (by "id") as a JSON attachment.
+func (c *Controller) OperationPull(w http.ResponseWriter, r *http.Request) {
+	// Make sure the request is authorized by validating the operation token
+	info := config.GetConnectorInfo()
+	tokenValid, _, operation := lib.ValidateOperationToken(c.DB, c.Logger, info.Name, w, r)
+	if !tokenValid {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	// prepare context and initialise client
 	ctx := context.Background()
-	client, _, err := postgresClient.InitPostgresClient(ctx, operation)
+	client, _, err := postgresclient.InitPostgresClient(ctx, c.Logger, operation)
 	if err != nil {
 		http.Error(w, "Failed to initialise Postgres client: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer client.Close()
 
-	// parse “path” field from form
+	// parse "path" field from form
 	fields, err := utils.ParseFormFields(r, []string{"path"}, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -67,12 +69,12 @@ func OperationPull(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// returnAllTablesMultipart writes every table in “public” as JSON parts
+// returnAllTablesMultipart writes every table in "public" as JSON parts
 // in a multipart/mixed response.
 func returnAllTablesMultipart(
 	ctx context.Context,
 	w http.ResponseWriter,
-	client *postgresClient.PostgresClient,
+	client *postgresclient.PostgresClient,
 ) {
 	// list tables
 	tables, err := client.GetTables(ctx)
@@ -86,12 +88,15 @@ func returnAllTablesMultipart(
 	w.Header().Set("Content-Type", "multipart/mixed; boundary="+boundary)
 
 	mw := multipart.NewWriter(w)
-	mw.SetBoundary(boundary)
+	if boundaryErr := mw.SetBoundary(boundary); boundaryErr != nil {
+		http.Error(w, "Failed to set multipart boundary: "+boundaryErr.Error(), http.StatusInternalServerError)
+		return
+	}
 	defer mw.Close()
 
 	// write each table as JSON attachment
 	for _, tbl := range tables {
-		if err := writeTablePart(ctx, mw, client, tbl); err != nil {
+		if err = writeTablePart(ctx, mw, client, tbl); err != nil {
 			http.Error(w, fmt.Sprintf("Failed to process table %s: %v", tbl, err), http.StatusInternalServerError)
 			return
 		}
@@ -102,7 +107,7 @@ func returnAllTablesMultipart(
 func writeTablePart(
 	ctx context.Context,
 	mw *multipart.Writer,
-	client *postgresClient.PostgresClient,
+	client *postgresclient.PostgresClient,
 	table string,
 ) error {
 	// prepare MIME headers
@@ -127,13 +132,14 @@ func writeTablePart(
 	descs := rows.FieldDescriptions()
 	cols := make([]string, len(descs))
 	for i, fd := range descs {
-		cols[i] = string(fd.Name)
+		cols[i] = fd.Name
 	}
 
 	// build record slice
 	var recs []map[string]any
 	for rows.Next() {
-		values, err := rows.Values()
+		var values []any
+		values, err = rows.Values()
 		if err != nil {
 			return fmt.Errorf("scan values for %s failed: %w", table, err)
 		}
@@ -143,7 +149,7 @@ func writeTablePart(
 		}
 		recs = append(recs, row)
 	}
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return fmt.Errorf("iterate %s failed: %w", table, err)
 	}
 
@@ -152,7 +158,7 @@ func writeTablePart(
 	if err != nil {
 		return fmt.Errorf("marshal %s failed: %w", table, err)
 	}
-	if _, err := part.Write(data); err != nil {
+	if _, err = part.Write(data); err != nil {
 		return fmt.Errorf("write JSON for %s failed: %w", table, err)
 	}
 
@@ -163,7 +169,7 @@ func writeTablePart(
 func fetchFullTable(
 	ctx context.Context,
 	w http.ResponseWriter,
-	client *postgresClient.PostgresClient,
+	client *postgresclient.PostgresClient,
 	table string,
 ) {
 	query := fmt.Sprintf(`SELECT * FROM "%s"`, table)
@@ -178,13 +184,14 @@ func fetchFullTable(
 	descs := rows.FieldDescriptions()
 	cols := make([]string, len(descs))
 	for i, fd := range descs {
-		cols[i] = string(fd.Name)
+		cols[i] = fd.Name
 	}
 
 	// build record slice
 	var recs []map[string]any
 	for rows.Next() {
-		values, err := rows.Values()
+		var values []any
+		values, err = rows.Values()
 		if err != nil {
 			http.Error(w, "Failed to retrieve values: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -195,7 +202,7 @@ func fetchFullTable(
 		}
 		recs = append(recs, row)
 	}
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		http.Error(w, "Failed to iterate rows: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -210,14 +217,17 @@ func fetchFullTable(
 	// send as attachment
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, table))
-	w.Write(data)
+	if _, writeErr := w.Write(data); writeErr != nil {
+		http.Error(w, "Failed to write response: "+writeErr.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
-// fetchRowByID queries one row by “id” and returns it as a JSON download.
+// fetchRowByID queries one row by "id" and returns it as a JSON download.
 func fetchRowByID(
 	ctx context.Context,
 	w http.ResponseWriter,
-	client *postgresClient.PostgresClient,
+	client *postgresclient.PostgresClient,
 	table, id string,
 ) {
 	query := fmt.Sprintf(`SELECT * FROM "%s" WHERE "id" = $1`, table)
@@ -232,13 +242,14 @@ func fetchRowByID(
 	descs := rows.FieldDescriptions()
 	cols := make([]string, len(descs))
 	for i, fd := range descs {
-		cols[i] = string(fd.Name)
+		cols[i] = fd.Name
 	}
 
 	// build record slice (expecting at most one)
 	var recs []map[string]any
 	for rows.Next() {
-		values, err := rows.Values()
+		var values []any
+		values, err = rows.Values()
 		if err != nil {
 			http.Error(w, "Failed to retrieve values: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -249,7 +260,7 @@ func fetchRowByID(
 		}
 		recs = append(recs, row)
 	}
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		http.Error(w, "Failed to iterate rows: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -269,5 +280,8 @@ func fetchRowByID(
 	filename := fmt.Sprintf(`%s_row_%s.json`, table, id)
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
-	w.Write(data)
+	if _, writeErr := w.Write(data); writeErr != nil {
+		http.Error(w, "Failed to write response: "+writeErr.Error(), http.StatusInternalServerError)
+		return
+	}
 }

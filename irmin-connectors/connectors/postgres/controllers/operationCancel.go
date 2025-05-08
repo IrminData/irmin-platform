@@ -1,15 +1,18 @@
-package postgresControllers
+package postgrescontrollers
 
 import (
-	"irmin-connectors/db"
+	"irmin-connectors/connectors/postgres/config"
 	"irmin-connectors/lib"
 	"irmin-connectors/utils"
 	"net/http"
+	"strconv"
 )
 
-func OperationCancel(w http.ResponseWriter, r *http.Request) {
+// OperationCancel handles the cancellation of an operation.
+func (c *Controller) OperationCancel(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the system token
-	if !lib.ValidateConnectorSystemToken(defaultConnectorInfo.Name, w, r) {
+	info := config.GetConnectorInfo()
+	if !lib.ValidateConnectorSystemToken(c.DB, c.Logger, info.Name, w, r) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -22,12 +25,16 @@ func OperationCancel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find the operation
-	operationID, err := utils.StringToInt(fields["operation_id"])
+	operationID, err := strconv.Atoi(fields["operation_id"])
 	if err != nil {
 		http.Error(w, "Invalid operation ID", http.StatusBadRequest)
 		return
 	}
-	operation, err := db.GetOperationByID(uint(operationID))
+	if operationID < 0 {
+		http.Error(w, "Invalid operation ID", http.StatusBadRequest)
+		return
+	}
+	operation, err := c.DB.GetOperationByID(uint(operationID))
 	if err != nil {
 		http.Error(w, "Failed to find operation", http.StatusInternalServerError)
 		return
@@ -38,7 +45,7 @@ func OperationCancel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Make sure the operation is for the correct connector
-	connectorRegistration, err := db.GetConnectorRegistrationByID(operation.ConnectorRegistrationID)
+	connectorRegistration, err := c.DB.GetConnectorRegistrationByID(operation.ConnectorRegistrationID)
 	if err != nil {
 		http.Error(w, "Failed to find connector registration", http.StatusInternalServerError)
 		return
@@ -47,25 +54,22 @@ func OperationCancel(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Connector registration not found", http.StatusNotFound)
 		return
 	}
-	if connectorRegistration.ConnectorName != defaultConnectorInfo.Name {
+	if connectorRegistration.ConnectorName != info.Name {
 		http.Error(w, "Operation not found", http.StatusNotFound)
 		return
 	}
 
 	// Delete subscriptions associated with the operation
-	if err := db.DeleteSubscriptionsByOperationID(operation.ID); err != nil {
+	if err = c.DB.DeleteSubscriptionsByOperationID(operation.ID); err != nil {
 		http.Error(w, "Failed to delete subscriptions", http.StatusInternalServerError)
 		return
 	}
 
 	// Cancel the operation
-	if err := db.DeleteOperation(operation.ID); err != nil {
+	if err = c.DB.DeleteOperation(operation.ID); err != nil {
 		http.Error(w, "Failed to cancel operation", http.StatusInternalServerError)
 		return
 	}
 
-	// Send success response
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message": "Operation canceled"}`))
 }

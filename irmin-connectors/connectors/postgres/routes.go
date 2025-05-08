@@ -1,29 +1,34 @@
-package postgresConnector
+package postgresconnector
 
 import (
-	postgresControllers "irmin-connectors/connectors/postgres/controllers"
+	postgrescontrollers "irmin-connectors/connectors/postgres/controllers"
+	"irmin-connectors/db"
 
 	"github.com/gorilla/mux"
 )
 
-// SetupRoutes sets up the routes for the PostgreSQL connector
-func SetupRoutes(r *mux.Router) *mux.Router {
+// SetupRoutes sets up the routes for the PostgreSQL connector.
+func SetupRoutes(r *mux.Router, d *db.Database) *mux.Router {
 	s := r.PathPrefix("/postgres").Subrouter()
 
+	// Create a new controller instance with the database dependency
+	controller := postgrescontrollers.NewControllers(d)
+
 	// Connector API routes
-	s.HandleFunc("/info", postgresControllers.Info).Methods("GET")
-	s.HandleFunc("/configuration/{key}/fields", postgresControllers.ConfigFields).Methods("POST")
-	s.HandleFunc("/configuration/validate", postgresControllers.ConfigValidate).Methods("POST")
-	s.HandleFunc("/operation/schema/{operation}", postgresControllers.OperationSchemaGet).Methods("POST")
-	s.HandleFunc("/operation/init", postgresControllers.OperationInit).Methods("POST")
-	s.HandleFunc("/operation/push", postgresControllers.OperationPush).Methods("POST")
-	s.HandleFunc("/operation/patch", postgresControllers.OperationPatch).Methods("POST")
-	s.HandleFunc("/operation/pull", postgresControllers.OperationPull).Methods("POST")
-	s.HandleFunc("/operation/subscribe", postgresControllers.SubscribeToChanges).Methods("POST")
-	s.HandleFunc("/operation/cancel", postgresControllers.OperationCancel).Methods("POST")
+	s.HandleFunc("/info", controller.Info).Methods("GET")
+	s.HandleFunc("/configuration/{key}/fields", controller.ConfigFields).Methods("POST")
+	s.HandleFunc("/configuration/validate", controller.ConfigValidate).Methods("POST")
+	s.HandleFunc("/operation/schema/{operation}", controller.OperationSchemaGet).Methods("POST")
+	s.HandleFunc("/operation/init", controller.OperationInit).Methods("POST")
+	s.HandleFunc("/operation/push", controller.OperationPush).Methods("POST")
+	s.HandleFunc("/operation/patch", controller.OperationPatch).Methods("POST")
+	s.HandleFunc("/operation/pull", controller.OperationPull).Methods("POST")
+	s.HandleFunc("/operation/subscribe", controller.SubscribeToChanges).Methods("POST")
+	s.HandleFunc("/operation/cancel", controller.OperationCancel).Methods("POST")
+	s.HandleFunc("/operation/status", controller.OperationStatus).Methods("POST")
 
 	// Public information about the connector
-	s.HandleFunc("/details", postgresControllers.DetailsPage).Methods("GET")
+	s.HandleFunc("/details", controller.DetailsPage).Methods("GET")
 
 	return r
 }

@@ -20,13 +20,12 @@ import (
 func ParseFormFields(r *http.Request, required, optional []string) (map[string]string, error) {
 	// Parse the form data.
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/") {
-		// Using a reasonable memory limit (e.g. 10MB).
-		if err := r.ParseMultipartForm(10 << 20); err != nil {
-			return nil, fmt.Errorf("unable to parse multipart form data: %v", err)
+		if err := r.ParseMultipartForm(DefaultMultipartFormMemory); err != nil {
+			return nil, fmt.Errorf("unable to parse multipart form data: %w", err)
 		}
 	} else {
 		if err := r.ParseForm(); err != nil {
-			return nil, fmt.Errorf("unable to parse form data: %v", err)
+			return nil, fmt.Errorf("unable to parse form data: %w", err)
 		}
 	}
 

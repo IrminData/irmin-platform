@@ -4,9 +4,16 @@ import (
 	"strings"
 )
 
+const (
+	// Path segment counts.
+	tableOnlySegments     = 1
+	databaseTableSegments = 2
+	rowSegments           = 3
+)
+
 // ConstructPath takes a database name, table name, row identifier, and column name
 // and returns a path matching the format used by ExtractPathComponents.
-// Example: "/myDatabase/myTable.json/42/name"
+// Example: "/myDatabase/myTable.json/42/name".
 func ConstructPath(databaseName, tableName, rowIdentifier, columnName string) string {
 	var parts []string
 
@@ -50,42 +57,29 @@ func ConstructPath(databaseName, tableName, rowIdentifier, columnName string) st
 //   - four+ segments (.../name/extra) → columnName="name" (extras ignored)
 //
 // Returns empty strings for any missing component.
-func ExtractPathComponents(pathStr string) (
-	databaseName,
-	tableName,
-	rowIdentifier,
-	columnName string,
-) {
+func ExtractPathComponents(pathStr string) (string, string, string, string) {
 	// trim whitespace and any leading/trailing slashes
 	clean := strings.TrimSpace(pathStr)
 	clean = strings.Trim(clean, "/")
 
 	if clean == "" {
-		return
+		return "", "", "", ""
 	}
 
 	parts := strings.Split(clean, "/")
 
 	switch len(parts) {
-	case 1:
+	case tableOnlySegments:
 		// only table
-		tableName = strings.TrimSuffix(parts[0], ".json")
-	case 2:
+		return "", strings.TrimSuffix(parts[0], ".json"), "", ""
+	case databaseTableSegments:
 		// database + table
-		databaseName = parts[0]
-		tableName = strings.TrimSuffix(parts[1], ".json")
-	case 3:
+		return parts[0], strings.TrimSuffix(parts[1], ".json"), "", ""
+	case rowSegments:
 		// database + table + row
-		databaseName = parts[0]
-		tableName = strings.TrimSuffix(parts[1], ".json")
-		rowIdentifier = parts[2]
+		return parts[0], strings.TrimSuffix(parts[1], ".json"), parts[2], ""
 	default:
 		// database + table + row + column (ignore extras)
-		databaseName = parts[0]
-		tableName = strings.TrimSuffix(parts[1], ".json")
-		rowIdentifier = parts[2]
-		columnName = parts[3]
+		return parts[0], strings.TrimSuffix(parts[1], ".json"), parts[2], parts[3]
 	}
-
-	return
 }

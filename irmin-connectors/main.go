@@ -2,94 +2,127 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"irmin-connectors/connectors"
 	"irmin-connectors/db"
 	"irmin-connectors/utils"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 )
 
-func main() {
-	// Load environment variables
+const (
+	readTimeout       = 5 * time.Second
+	writeTimeout      = 10 * time.Second
+	idleTimeout       = 120 * time.Second
+	readHeaderTimeout = 5 * time.Second
+)
+
+// App holds all the application dependencies.
+type App struct {
+	DB     *db.Database
+	Env    *utils.ConnectorsEnv
+	Logger *slog.Logger
+}
+
+// NewApp creates a new application instance with all dependencies.
+func NewApp() (*App, error) {
 	env, err := utils.LoadEnv()
 	if err != nil {
-		log.Fatalf("Failed to load environment variables: %v", err)
+		return nil, fmt.Errorf("failed to load environment variables: %w", err)
 	}
 
-	// Initialise the database
-	err = db.InitialiseDB()
+	database, err := db.InitialiseDB(true) // true to run migrations
 	if err != nil {
-		log.Fatalf("Cannot initialise DB: %v", err)
+		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	// Setup routes for all connectors
-	r := mux.NewRouter()
+	return &App{
+		DB:     database,
+		Env:    env,
+		Logger: slog.Default(),
+	}, nil
+}
 
-	// Serve static files from the public directory.
-	r.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
-
-	// Setup routes for all connectors.
-	r = connectors.SetupConnectorRoutes(r)
-
-	// Manually create a net.Listener
-	listener, err := net.Listen("tcp", ":"+env.Port)
+func setupServer(r *mux.Router, port string) (*http.Server, net.Listener, error) {
+	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatalf("Failed to bind to port %s: %v", env.Port, err)
+		return nil, nil, err
 	}
 
-	// Create an HTTP server, but don’t block yet
 	server := &http.Server{
-		Handler: r,
+		Handler:           r,
+		ReadTimeout:       readTimeout,
+		WriteTimeout:      writeTimeout,
+		IdleTimeout:       idleTimeout,
+		ReadHeaderTimeout: readHeaderTimeout,
 	}
 
-	// Serve in a goroutine so main can continue
+	return server, listener, nil
+}
+
+func (app *App) initializeConnectors() error {
+	if err := connectors.RegisterAllConnectors(app.DB, app.Logger, app.Env.APIBaseURL, app.Env.APIToken, app.Env.URL); err != nil {
+		return err
+	}
+
+	registrations, err := app.DB.GetAllConnectorRegistrations()
+	if err != nil {
+		return err
+	}
+
+	subscriptions, err := app.DB.GetAllSubscriptions()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	for _, subscription := range subscriptions {
+		for _, reg := range registrations {
+			if reg.ID == subscription.ConnectorRegistrationID {
+				if listenerErr := connectors.StartConnectorSubscriptionListener(ctx, reg.ConnectorName, subscription, app.DB, app.Logger); listenerErr != nil {
+					log.Printf(
+						"error starting subscription listener for subscription %d: %v",
+						subscription.ID,
+						listenerErr,
+					)
+				}
+				break
+			}
+		}
+	}
+	return nil
+}
+
+func main() {
+	app, err := NewApp()
+	if err != nil {
+		log.Fatalf("Failed to initialize application: %v", err)
+	}
+
+	r := mux.NewRouter()
+	r.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
+	r = connectors.SetupConnectorRoutes(r, app.DB)
+
+	server, listener, err := setupServer(r, app.Env.Port)
+	if err != nil {
+		log.Fatalf("Failed to setup server: %v", err)
+	}
+
 	go func() {
-		log.Printf("Server starting on port %s...", env.Port)
+		log.Printf("Server starting on port %s...", app.Env.Port)
 		if serveErr := server.Serve(listener); serveErr != nil && serveErr != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", serveErr)
 		}
 	}()
 
-	// Register all connectors
-	err = connectors.RegisterAllConnectors(env.APIBaseURL, env.APIToken, env.URL)
-	if err != nil {
-		log.Fatalf("Error registering connectors: %v", err)
+	if initConnErr := app.initializeConnectors(); initConnErr != nil {
+		log.Fatalf("Error initializing connectors: %v", initConnErr)
 	}
 
-	// Start the subscription listeners
-	ctx := context.Background() // Create a new context for the subscription listeners
-	// Get all connector registrations
-	registrations, err := db.GetAllConnectorRegistrations()
-	if err != nil {
-		log.Fatalf("Error getting connector registrations: %v", err)
-	}
-
-	// Get all existing subscriptions
-	subscriptions, err := db.GetAllSubscriptions()
-	if err != nil {
-		log.Fatalf("Error getting subscriptions: %v", err)
-	}
-
-	// Loop through all subscriptions and start listeners
-	for _, subscription := range subscriptions {
-		// Find the registration for the subscription
-		var registration db.ConnectorRegistration
-		for _, reg := range registrations {
-			if reg.ID == subscription.ConnectorRegistrationID {
-				registration = reg
-				break
-			}
-		}
-		// Start the listener using the correct controller's controller
-		err = connectors.StartConnectorSubsriptionListener(registration.ConnectorName, subscription, ctx)
-		if err != nil {
-			log.Printf("error starting subscription listener for subscription %d: %v", subscription.ID, err)
-		}
-	}
-
-	// Block the main goroutine (so the program doesn’t exit immediately)
 	select {}
 }

@@ -1,4 +1,4 @@
-package postgresControllers
+package postgrescontrollers
 
 import (
 	"context"
@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	postgresClient "irmin-connectors/connectors/postgres/client"
+	postgresclient "irmin-connectors/connectors/postgres/client"
+	"irmin-connectors/connectors/postgres/config"
 	"irmin-connectors/lib"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // OperationSchemaGet retrieves the database schema and returns
@@ -17,9 +18,10 @@ import (
 //
 // It expects an operation token in the form, and on success writes
 // a JSON response with Content-Type: application/json.
-func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
-	// validate token
-	valid, _, operation := lib.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
+func (c *Controller) OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
+	// Make sure the request is authorized by validating the operation token
+	info := config.GetConnectorInfo()
+	valid, _, operation := lib.ValidateOperationToken(c.DB, c.Logger, info.Name, w, r)
 	if !valid {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -28,7 +30,7 @@ func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	// initialise Postgres client
-	client, dbName, err := postgresClient.InitPostgresClient(ctx, operation)
+	client, dbName, err := postgresclient.InitPostgresClient(ctx, c.Logger, operation)
 	if err != nil || client == nil || dbName == nil {
 		http.Error(w, "Failed to initialise Postgres client: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -43,9 +45,10 @@ func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// build a child ObjectSchema for each table
-	children := make([]irminModels.ObjectSchema, 0, len(tables))
+	children := make([]irminmodels.ObjectSchema, 0, len(tables))
 	for _, tbl := range tables {
-		cols, err := client.GetTableStructure(ctx, tbl)
+		var cols []postgresclient.ColumnInfo
+		cols, err = client.GetTableStructure(ctx, tbl)
 		if err != nil {
 			http.Error(w,
 				fmt.Sprintf("Failed to fetch structure for table '%s': %v", tbl, err),
@@ -55,10 +58,10 @@ func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// map each column to a JSONSchema property
-		props := make(map[string]irminModels.JSONSchema, len(cols))
+		props := make(map[string]irminmodels.JSONSchema, len(cols))
 		required := []string{}
 		for _, col := range cols {
-			props[col.ColumnName] = irminModels.JSONSchema{
+			props[col.ColumnName] = irminmodels.JSONSchema{
 				Type: col.DataType, // ideally map PG types → JSON Schema types
 			}
 			if !col.IsNullable {
@@ -67,34 +70,34 @@ func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// row object schema
-		rowSchema := irminModels.JSONSchema{
+		rowSchema := irminmodels.JSONSchema{
 			Type:       "object",
 			Properties: props,
 			Required:   required,
 		}
 
 		// table array schema
-		arraySchema := irminModels.JSONSchema{
+		arraySchema := irminmodels.JSONSchema{
 			Type:  "array",
 			Items: &rowSchema,
 		}
 
 		ct := "application/json"
-		children = append(children, irminModels.ObjectSchema{
+		children = append(children, irminmodels.ObjectSchema{
 			Name:        tbl + ".json",
 			Path:        *dbName + "/" + tbl + ".json",
-			Type:        irminModels.ObjectTypeStructured,
+			Type:        irminmodels.ObjectTypeStructured,
 			ContentType: &ct,
 			Schema:      &arraySchema,
 		})
 	}
 
 	// assemble group schema
-	group := irminModels.ObjectSchema{
-		Type: irminModels.ObjectTypeGroup,
+	group := irminmodels.ObjectSchema{
+		Type: irminmodels.ObjectTypeGroup,
 		Name: *dbName,
 		Path: *dbName,
-		Restrictions: &irminModels.GroupSchemaRestrictions{
+		Restrictions: &irminmodels.GroupSchemaRestrictions{
 			OnlyStructured: func(b bool) *bool { return &b }(true),
 		},
 		Children: children,
@@ -102,7 +105,7 @@ func OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
 
 	// write JSON response
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(group); err != nil {
+	if err = json.NewEncoder(w).Encode(group); err != nil {
 		http.Error(w, "Failed to encode schema: "+err.Error(), http.StatusInternalServerError)
 	}
 }

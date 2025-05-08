@@ -1,11 +1,11 @@
-package postgresControllers
+package postgrescontrollers
 
 import (
 	"net/http"
 )
 
 // DetailsPage serves static HTML content with additional information about the PostgreSQL connector.
-func DetailsPage(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) DetailsPage(w http.ResponseWriter, _ *http.Request) {
 	htmlContent := `
 		<html>
 			<head>
@@ -35,5 +35,8 @@ func DetailsPage(w http.ResponseWriter, r *http.Request) {
 		</html>
 	`
 	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(htmlContent))
+	if _, err := w.Write([]byte(htmlContent)); err != nil {
+		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		return
+	}
 }

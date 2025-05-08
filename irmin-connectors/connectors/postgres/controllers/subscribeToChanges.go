@@ -1,25 +1,27 @@
-package postgresControllers
+package postgrescontrollers
 
 import (
 	"context"
 	"encoding/json"
-	postgresClient "irmin-connectors/connectors/postgres/client"
+	postgresclient "irmin-connectors/connectors/postgres/client"
+	"irmin-connectors/connectors/postgres/config"
 	"irmin-connectors/db"
 	"irmin-connectors/lib"
 	"irmin-connectors/utils"
 	"net/http"
 )
 
-func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the operation token
-	tokenValid, registration, operation := lib.ValidateOperationToken(defaultConnectorInfo.Name, w, r)
+	info := config.GetConnectorInfo()
+	tokenValid, registration, operation := lib.ValidateOperationToken(c.DB, c.Logger, info.Name, w, r)
 	if !tokenValid {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	// Parse the form data (including file uploads)
-	if err := r.ParseMultipartForm(32 << 20); err != nil {
+	if err := r.ParseMultipartForm(utils.DefaultMultipartFormMemory); err != nil {
 		http.Error(w, "Invalid form data: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -28,7 +30,7 @@ func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	// Initialise the Postgres client
-	dbClient, database, err := postgresClient.InitPostgresClient(ctx, operation)
+	dbClient, database, err := postgresclient.InitPostgresClient(ctx, c.Logger, operation)
 	if err != nil || database == nil || dbClient == nil {
 		http.Error(w, "Failed to initialise Postgres client: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -43,10 +45,10 @@ func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create a new subscription record in the database
-	subscription, err := db.CreateSubscription(&db.Subscription{
+	subscription, err := c.DB.CreateSubscription(&db.Subscription{
 		ConnectorRegistrationID: registration.ID,
 		OperationID:             operation.ID,
-		WebhookUrl:              fields["webhook_url"],
+		WebhookURL:              fields["webhook_url"],
 		WebhookAccessToken:      fields["webhook_access_token"],
 	})
 	if err != nil {
@@ -55,7 +57,7 @@ func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Start the listener for the new subscription
-	err = postgresClient.SetupNotifications(dbClient)
+	err = postgresclient.SetupNotifications(dbClient)
 	if err != nil {
 		http.Error(w, "Failed to setup notifications: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -71,5 +73,8 @@ func SubscribeToChanges(w http.ResponseWriter, r *http.Request) {
 	// Send success response
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(subscriptionJSON)
+	if _, writeErr := w.Write(subscriptionJSON); writeErr != nil {
+		http.Error(w, "Failed to write response: "+writeErr.Error(), http.StatusInternalServerError)
+		return
+	}
 }

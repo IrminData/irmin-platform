@@ -1,46 +1,34 @@
-package postgresControllers
+package postgrescontrollers
 
 import (
 	"encoding/json"
+	"irmin-connectors/connectors/postgres/config"
 	"irmin-connectors/lib"
-	"irmin-connectors/models"
 	"net/http"
 	"os"
 )
 
-var defaultConnectorInfo = models.ConnectorDetails{
-	Name:             "PostgreSQL",
-	Description:      "Import and export data from PostgreSQL databases.",
-	Version:          "0.1.0",
-	StructureVersion: "1.0.0",
-	Author:           "Tim Borovkov / Irmin",
-	APIBaseURL:       "/postgres",
-	LogoURL:          "/public/postgres.png",
-	Capabilities:     []string{"pull", "push", "event"},
-	Locales:          []string{"en"},
-	PrimaryCategory:  "database",
-	Categories:       []string{"database"},
-	AuthorEmail:      "hello@irmin.co",
-	ReadMoreURL:      "/postgres/details",
-}
-
-func Info(w http.ResponseWriter, r *http.Request) {
+// Info handles the /info endpoint for the PostgreSQL connector.
+func (c *Controller) Info(w http.ResponseWriter, r *http.Request) {
 	// Retrieve the base URL from the environment
-	baseUrl := os.Getenv("URL")
+	baseURL := os.Getenv("URL")
 
-	// Update the default connector info with the base URL
-	info := defaultConnectorInfo
-	info.LogoURL = baseUrl + info.LogoURL
-	info.APIBaseURL = baseUrl + info.APIBaseURL
-	info.ReadMoreURL = baseUrl + info.ReadMoreURL
+	// Get the connector info from config
+	info := config.GetConnectorInfo()
+	info.LogoURL = baseURL + info.LogoURL
+	info.APIBaseURL = baseURL + info.APIBaseURL
+	info.ReadMoreURL = baseURL + info.ReadMoreURL
 
 	// Make sure the request is authorized by validating the system token
-	if !lib.ValidateConnectorSystemToken(info.Name, w, r) {
+	if !lib.ValidateConnectorSystemToken(c.DB, c.Logger, info.Name, w, r) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	// Send the default connector details
+	// Send the connector details
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(info)
+	if err := json.NewEncoder(w).Encode(info); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
 }

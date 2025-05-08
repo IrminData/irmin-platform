@@ -1,58 +1,77 @@
 package lib
 
 import (
-	"fmt"
 	"irmin-connectors/db"
+	"log/slog"
 )
 
 // UpdateConnectorInDB updates the connector registration in the database.
-func UpdateConnectorInDB(irminId, token, connectorName string) error {
+func UpdateConnectorInDB(
+	d *db.Database,
+	logger *slog.Logger,
+	irminID, token, connectorName string,
+) error {
 	// Remove current connector registrations from the database
-	regs, err := db.GetConnectorRegistrationByConnectorName(connectorName)
+	regs, err := d.GetConnectorRegistrationByConnectorName(connectorName)
 	if err != nil {
-		fmt.Printf("Error fetching connector registration: %v\n", err)
+		logger.Error("Error fetching connector registration",
+			"error", err,
+			"connector_name", connectorName)
 		return err
 	}
 	for _, reg := range regs {
 		// Remove existing connector operations from the database
-		ops, err := db.GetOperationsByConnectorRegistrationID(reg.ID)
+		var ops []db.Operation
+		ops, err = d.GetOperationsByConnectorRegistrationID(reg.ID)
 		if err != nil {
-			fmt.Printf("Error fetching connector operations: %v\n", err)
+			logger.Error("Error fetching connector operations",
+				"error", err,
+				"registration_id", reg.ID)
 			return err
 		}
 		for _, op := range ops {
 			// Remove subscriptions associated with the operation
-			err = db.DeleteSubscriptionsByOperationID(op.ID)
+			err = d.DeleteSubscriptionsByOperationID(op.ID)
 			if err != nil {
-				fmt.Printf("Error deleting subscriptions: %v\n", err)
+				logger.Error("Error deleting subscriptions",
+					"error", err,
+					"operation_id", op.ID)
 				return err
 			}
-			err = db.DeleteOperation(op.ID)
+			err = d.DeleteOperation(op.ID)
 			if err != nil {
-				fmt.Printf("Error deleting operation: %v\n", err)
+				logger.Error("Error deleting operation",
+					"error", err,
+					"operation_id", op.ID)
 				return err
 			}
 		}
-		err = db.DeleteConnectorRegistration(reg.ID)
+		err = d.DeleteConnectorRegistration(reg.ID)
 		if err != nil {
-			fmt.Printf("Error deleting connector registration: %v\n",
-				err)
+			logger.Error("Error deleting connector registration",
+				"error", err,
+				"registration_id", reg.ID)
 			return err
 		}
 	}
 
 	// Create a new connector registration
-	registration, err := db.CreateConnectorRegistration(&db.ConnectorRegistration{
-		IrminID:       irminId,
+	registration, err := d.CreateConnectorRegistration(&db.ConnectorRegistration{
+		IrminID:       irminID,
 		ConnectorName: connectorName,
 		SystemToken:   token,
 	})
 	if err != nil {
-		fmt.Printf("Error creating connector registration: %v\n", err)
+		logger.Error("Error creating connector registration",
+			"error", err,
+			"connector_name", connectorName,
+			"irmin_id", irminID)
 		return err
 	}
 
-	fmt.Printf("Connector registered: %s, token: %s, registration ID: %d\n", connectorName, token, registration.ID)
+	logger.Info("Connector registered successfully",
+		"connector_name", connectorName,
+		"registration_id", registration.ID)
 
 	return nil
 }

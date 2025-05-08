@@ -1,4 +1,4 @@
-package postgresModels
+package postgresmodels
 
 type ConnectionDetails struct {
 	Host      string `json:"host"`

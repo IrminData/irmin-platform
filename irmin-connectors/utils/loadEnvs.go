@@ -26,8 +26,8 @@ func getEnv(key string, required bool, defaultVal string) (string, error) {
 		}
 		// Set default if applicable.
 		if defaultVal != "" {
-			os.Setenv(key, defaultVal)
-			return defaultVal, nil
+			err := os.Setenv(key, defaultVal)
+			return defaultVal, err
 		}
 	}
 	return val, nil
@@ -39,14 +39,17 @@ func LoadRootEnv() error {
 	if err != nil {
 		return fmt.Errorf("failed to find project root: %w", err)
 	}
-	// Change working directory to rootDir
-	if err := os.Chdir(rootDir); err != nil {
-		return fmt.Errorf("failed to change working directory: %w", err)
+	// Change to the root directory
+	err = os.Chdir(rootDir)
+	if err != nil {
+		return fmt.Errorf("failed to change to root directory: %w", err)
 	}
-	// Explicitly load the .env file from the project root
+
+	// Load the .env file
 	envPath := filepath.Join(rootDir, ".env")
-	if err := godotenv.Load(envPath); err != nil {
-		return fmt.Errorf("failed to load .env file from %s: %w", envPath, err)
+	err = godotenv.Load(envPath)
+	if err != nil {
+		return fmt.Errorf("failed to load .env file: %w", err)
 	}
 	return nil
 }

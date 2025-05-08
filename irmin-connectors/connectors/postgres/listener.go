@@ -1,120 +1,197 @@
-package postgresConnector
+package postgresconnector
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	postgresClient "irmin-connectors/connectors/postgres/client"
-	postgresModels "irmin-connectors/connectors/postgres/models"
+	postgresclient "irmin-connectors/connectors/postgres/client"
 	"irmin-connectors/db"
 	"irmin-connectors/utils"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func StartListener(subscription db.Subscription, ctx context.Context) error {
-	// Get the operation associated with the subscription
-	operation, err := db.GetOperationByID(subscription.OperationID)
-	if err != nil {
-		return fmt.Errorf("failed to get operation: %v", err)
+// validateOperationDetails checks if all required fields are present in the operation details.
+func validateOperationDetails(details map[string]string) error {
+	requiredFields := []string{"host", "port", "user", "password", "default_db"}
+	for _, field := range requiredFields {
+		if _, exists := details[field]; !exists {
+			return fmt.Errorf("missing required field in operation details: %s", field)
+		}
+	}
+	return nil
+}
+
+// validateOperationSettings checks if all required fields are present in the operation settings.
+func validateOperationSettings(settings map[string]string) error {
+	if _, exists := settings["database"]; !exists {
+		return errors.New("missing required field in operation settings: database")
+	}
+	return nil
+}
+
+// handleNotification processes a single notification and sends it to the webhook.
+func handleNotification(
+	ctx context.Context,
+	logger *slog.Logger,
+	payload string,
+	settings map[string]string,
+	subscription db.Subscription,
+) {
+	// Parse the payload into a map
+	var evt map[string]any
+	if err := json.Unmarshal([]byte(payload), &evt); err != nil {
+		logger.ErrorContext(ctx, "failed to unmarshal event",
+			"error", err)
+		return
 	}
 
-	// Get the connection details and settings from the subscription
-	var details postgresModels.ConnectionDetails
-	var settings postgresModels.ConnectionSettings
-	if err := json.Unmarshal(operation.Details, &details); err != nil {
-		return fmt.Errorf("failed to unmarshal connection details: %v", err)
+	// Get the row identifier as a string
+	idStr := fmt.Sprintf("%v", evt["id"])
+
+	// Safely get table name with type assertion
+	tableName, ok := evt["table"].(string)
+	if !ok {
+		logger.ErrorContext(ctx, "invalid table name type in event",
+			"table", evt["table"])
+		return
 	}
-	if err := json.Unmarshal(operation.Settings, &settings); err != nil {
-		return fmt.Errorf("failed to unmarshal connection settings: %v", err)
+
+	// Construct the path for the event
+	path := utils.ConstructPath(settings["database"], tableName, idStr, "")
+
+	// Safely get operation with type assertion
+	operation, ok := evt["operation"].(string)
+	if !ok {
+		logger.ErrorContext(ctx, "invalid operation type in event",
+			"operation", evt["operation"])
+		return
+	}
+
+	// Create the payload for the webhook
+	data := irminmodels.ConnectorEvent{
+		Type:      strings.ToLower(operation),
+		Path:      path,
+		Timestamp: time.Now().UnixMilli(),
+	}
+
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		logger.ErrorContext(ctx, "failed to marshal event data",
+			"error", err)
+		return
+	}
+
+	// Forward the event to the webhook specified in the subscription
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		subscription.WebhookURL,
+		bytes.NewReader(dataBytes),
+	)
+	if err != nil {
+		logger.ErrorContext(ctx, "failed to create request",
+			"error", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", subscription.WebhookAccessToken)
+
+	// Send the notification
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		logger.ErrorContext(ctx, "failed to send notification",
+			"error", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		logger.ErrorContext(ctx, "webhook request failed with status",
+			"status", resp.StatusCode)
+	}
+}
+
+func StartListener(ctx context.Context, logger *slog.Logger, subscription db.Subscription, d *db.Database) error {
+	// Get the operation associated with the subscription
+	operation, err := d.GetOperationByID(subscription.OperationID)
+	if err != nil {
+		return fmt.Errorf("failed to get operation by ID %d: %w", subscription.OperationID, err)
+	}
+
+	// Extract operation connection details and settings
+	var details map[string]string
+	if err = json.Unmarshal(operation.Details, &details); err != nil {
+		return fmt.Errorf("failed to unmarshal operation details: %w", err)
+	}
+
+	var settings map[string]string
+	if err = json.Unmarshal(operation.Settings, &settings); err != nil {
+		return fmt.Errorf("failed to unmarshal operation settings: %w", err)
+	}
+
+	// Validate required fields
+	if err = validateOperationDetails(details); err != nil {
+		return err
+	}
+	if err = validateOperationSettings(settings); err != nil {
+		return err
 	}
 
 	// Convert port from string to int
-	port, err := strconv.Atoi(details.Port)
+	port, err := strconv.Atoi(details["port"])
 	if err != nil {
-		return fmt.Errorf("failed to convert port to integer: %v", err)
+		return fmt.Errorf("invalid port number '%s': %w", details["port"], err)
 	}
 
 	// Establish a connection to the PostgreSQL server
-	pgClient, err := postgresClient.NewPostgresClient(details.Host, port, details.User, details.Password, details.DefaultDB, details.SSLMode == "true")
+	pgClient, err := postgresclient.NewPostgresClient(
+		details["host"],
+		port,
+		details["user"],
+		details["password"],
+		details["default_db"],
+		details["ssl_mode"] == "true",
+	)
 	if err != nil {
-		return fmt.Errorf("failed to create Postgres client: %v", err)
+		return fmt.Errorf("failed to create Postgres client: %w", err)
 	}
-	defer pgClient.Close() // Close the client at the end of the function
+	defer pgClient.Close()
 
 	// Connect to the specified database
-	dbClient, err := pgClient.WithDatabase(settings.Database)
+	dbClient, err := pgClient.WithDatabase(settings["database"])
 	if err != nil {
-		pgClient.Close() // Close the initial client before returning
-		return fmt.Errorf("failed to connect to database: %v", err)
+		return fmt.Errorf("failed to connect to database '%s': %w", settings["database"], err)
 	}
-	defer dbClient.Close() // Close the database client at the end of the function
+	defer dbClient.Close()
 
-	// Setup the notification triggers for the database
-	if err := postgresClient.SetupNotifications(dbClient); err != nil {
-		return fmt.Errorf("failed to setup notifications: %v", err)
+	// Set up notification triggers
+	if err = postgresclient.SetupNotifications(dbClient); err != nil {
+		return fmt.Errorf("failed to set up notifications: %w", err)
 	}
+
+	// Create a channel to handle context cancellation
+	done := make(chan error, 1)
 
 	// Start the notification listener
-	err = dbClient.StartNotificationListener(ctx, "data_change", func(payload string) {
-		// Parse the JSON
-		var evt struct {
-			Operation string `json:"operation"`
-			Table     string `json:"table"`
-			ID        any    `json:"id"`
-		}
-		if err := json.Unmarshal([]byte(payload), &evt); err != nil {
-			fmt.Println("Invalid payload:", err)
-			return
-		}
-
-		// Log the event
-		log.Printf("Received event: %s on table %s with ID %v", evt.Operation, evt.Table, evt.ID)
-
-		// Get the row identifier as a string
-		idStr := fmt.Sprintf("%v", evt.ID)
-
-		// Construct the path for the event
-		path := utils.ConstructPath(settings.Database, evt.Table, idStr, "")
-
-		// Get the current time
-		now := time.Now()
-
-		// Convert to milliseconds since Unix epoch
-		timestampMillis := now.UnixMilli()
-
-		// Create the payload for the webhook
-		data := irminModels.ConnectorEvent{
-			// Type of the event (e.g. "create", "update", "delete")
-			Type: strings.ToLower(evt.Operation),
-			// Irmin path of the event (e.g. /maindb/users.json/1/name)
-			Path: path,
-			// Timestamp of the event in milliseconds since the Unix epoch
-			Timestamp: timestampMillis,
-		}
-		dataBytes, _ := json.Marshal(data)
-
-		// Forward the event to the webhook specified in the subscription
-		req, _ := http.NewRequest(http.MethodPost, subscription.WebhookUrl, bytes.NewReader(dataBytes))
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Authorization", subscription.WebhookAccessToken)
-
-		// Make the request. Consider timeouts, retries, error handling.
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			fmt.Printf("Error posting to %s: %v\n", subscription.WebhookUrl, err)
-		}
-		resp.Body.Close()
-	})
-	if err != nil {
-		log.Fatalf("Could not start listener: %v", err)
+	if err = dbClient.StartNotificationListener(ctx, logger, "data_change", func(payload string) {
+		handleNotification(ctx, logger, payload, settings, subscription)
+	}); err != nil {
+		return fmt.Errorf("failed to start notification listener: %w", err)
 	}
 
-	return nil
+	// Wait for context cancellation
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err = <-done:
+		return err
+	}
 }

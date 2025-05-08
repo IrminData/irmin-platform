@@ -1,7 +1,8 @@
-package postgresControllers
+package postgrescontrollers
 
 import (
 	"encoding/json"
+	"irmin-connectors/connectors/postgres/config"
 	"irmin-connectors/db"
 	"irmin-connectors/lib"
 	"irmin-connectors/utils"
@@ -10,29 +11,36 @@ import (
 	"gorm.io/datatypes"
 )
 
-func OperationInit(w http.ResponseWriter, r *http.Request) {
+// OperationInit handles the initialization of a new operation.
+func (c *Controller) OperationInit(w http.ResponseWriter, r *http.Request) {
 	// Make sure the request is authorized by validating the system token
-	if !lib.ValidateConnectorSystemToken(defaultConnectorInfo.Name, w, r) {
+	info := config.GetConnectorInfo()
+	if !lib.ValidateConnectorSystemToken(c.DB, c.Logger, info.Name, w, r) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	// Get connection settings and details from the request
-	fields, err := utils.ParseFormFields(r, nil, []string{"details[host]", "details[port]", "details[user]", "details[password]", "details[default_db]", "details[ssl_mode]", "settings[database]"})
+	// Get the form values from the request
+	fields, err := utils.ParseFormFields(
+		r,
+		nil,
+		[]string{
+			"details[host]",
+			"details[port]",
+			"details[user]",
+			"details[password]",
+			"details[default_db]",
+			"details[ssl_mode]",
+			"settings[database]",
+		},
+	)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Create a new operation token
-	operationToken, err := utils.GenerateToken(32)
-	if err != nil {
-		http.Error(w, "Failed to generate operation token", http.StatusInternalServerError)
-		return
-	}
-
 	// Find relevant connector registration
-	connectorRegistrations, err := db.GetConnectorRegistrationByConnectorName(defaultConnectorInfo.Name)
+	connectorRegistrations, err := c.DB.GetConnectorRegistrationByConnectorName(info.Name)
 	if err != nil {
 		http.Error(w, "Failed to find connector registration", http.StatusInternalServerError)
 		return
@@ -42,6 +50,13 @@ func OperationInit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	connectorRegistration := connectorRegistrations[0]
+
+	// Create a new operation token
+	operationToken, err := utils.GenerateToken(utils.DefaultTokenLength)
+	if err != nil {
+		http.Error(w, "Failed to generate operation token", http.StatusInternalServerError)
+		return
+	}
 
 	// Construct the details JSON
 	details, err := json.Marshal(map[string]string{
@@ -66,23 +81,25 @@ func OperationInit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create a new operation in the database
-	newOperation, err := db.CreateOperation(&db.Operation{
+	// Create a new operation
+	operation := &db.Operation{
 		Details:                 datatypes.JSON(details),
 		Settings:                datatypes.JSON(settings),
 		Token:                   operationToken,
 		ConnectorRegistrationID: connectorRegistration.ID,
-	})
+	}
+
+	// Save the operation to the database
+	operation, err = c.DB.CreateOperation(operation)
 	if err != nil {
 		http.Error(w, "Failed to create operation", http.StatusInternalServerError)
 		return
 	}
-	if newOperation == nil {
-		http.Error(w, "Failed to create operation", http.StatusInternalServerError)
+
+	// Send the response
+	w.Header().Set("Content-Type", "application/json")
+	if err = json.NewEncoder(w).Encode(operation); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 		return
 	}
-
-	// Send the operation token
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(newOperation)
 }

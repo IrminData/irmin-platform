@@ -1,8 +1,10 @@
-package postgresClient
+package postgresclient
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -17,8 +19,8 @@ type PostgresClient struct {
 	port     int
 	user     string
 	password string
-	ssl_mode bool
-	db_name  string // May be empty if no specific database is chosen
+	sslMode  bool
+	dbName   string // May be empty if no specific database is chosen
 }
 
 // NewPostgresClient connects to Postgres without specifying a database.
@@ -26,7 +28,7 @@ type PostgresClient struct {
 // "locking" into a specific dbName.
 func NewPostgresClient(host string, port int, user, password, defaultDB string, sslMode bool) (*PostgresClient, error) {
 	if host == "" || port == 0 || user == "" {
-		return nil, fmt.Errorf("missing required connection details: host, port, user")
+		return nil, errors.New("missing required connection details: host, port, user")
 	}
 	// Build the DSN without a database.
 	var dsn string
@@ -65,8 +67,8 @@ func NewPostgresClient(host string, port int, user, password, defaultDB string, 
 		port:     port,
 		user:     user,
 		password: password,
-		db_name:  defaultDB,
-		ssl_mode: sslMode,
+		dbName:   defaultDB,
+		sslMode:  sslMode,
 	}, nil
 }
 
@@ -74,7 +76,7 @@ func NewPostgresClient(host string, port int, user, password, defaultDB string, 
 // This is handy once you decide which database you want to use (e.g. after listing them).
 func (pc *PostgresClient) WithDatabase(dbName string) (*PostgresClient, error) {
 	var dsn string
-	if pc.ssl_mode {
+	if pc.sslMode {
 		dsn = fmt.Sprintf(
 			"host=%s port=%d user=%s password=%s dbname=%s sslmode=require",
 			pc.host, pc.port, pc.user, pc.password, dbName,
@@ -107,8 +109,8 @@ func (pc *PostgresClient) WithDatabase(dbName string) (*PostgresClient, error) {
 		port:     pc.port,
 		user:     pc.user,
 		password: pc.password,
-		ssl_mode: pc.ssl_mode,
-		db_name:  dbName,
+		sslMode:  pc.sslMode,
+		dbName:   dbName,
 	}, nil
 }
 
@@ -148,7 +150,7 @@ func (pc *PostgresClient) GetAvailableDatabases(ctx context.Context) ([]string, 
 	var dbs []string
 	for rows.Next() {
 		var dbName string
-		if err := rows.Scan(&dbName); err != nil {
+		if err = rows.Scan(&dbName); err != nil {
 			return nil, fmt.Errorf("scan error: %w", err)
 		}
 		dbs = append(dbs, dbName)
@@ -163,8 +165,8 @@ func (pc *PostgresClient) GetAvailableDatabases(ctx context.Context) ([]string, 
 // Query performs a generic query returning rows.
 // Remember to close the returned pgx.Rows when you're done with them.
 func (pc *PostgresClient) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
-	if pc.db_name == "" {
-		return nil, fmt.Errorf("cannot Query without a specific database - create a client with db first")
+	if pc.dbName == "" {
+		return nil, errors.New("cannot Query without a specific database - create a client with db first")
 	}
 	return pc.pool.Query(ctx, sql, args...)
 }
@@ -172,8 +174,8 @@ func (pc *PostgresClient) Query(ctx context.Context, sql string, args ...any) (p
 // Exec performs a statement (INSERT/UPDATE/DELETE/DDL) that doesn't return rows.
 func (pc *PostgresClient) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
 	cmdTag, err := pc.pool.Exec(ctx, sql, args...)
-	if pc.db_name == "" {
-		return cmdTag, fmt.Errorf("cannot Exec without a specific database - create a client with db first")
+	if pc.dbName == "" {
+		return cmdTag, errors.New("cannot Exec without a specific database - create a client with db first")
 	}
 	if err != nil {
 		return cmdTag, fmt.Errorf("Exec error: %w", err)
@@ -184,8 +186,8 @@ func (pc *PostgresClient) Exec(ctx context.Context, sql string, args ...any) (pg
 // GetTables lists all table names in the 'public' schema of the current database.
 // Must be invoked on a client that has a dbName selected (via WithDatabase).
 func (pc *PostgresClient) GetTables(ctx context.Context) ([]string, error) {
-	if pc.db_name == "" {
-		return nil, fmt.Errorf("no database specified. Use .WithDatabase() first")
+	if pc.dbName == "" {
+		return nil, errors.New("no database specified. Use .WithDatabase() first")
 	}
 
 	query := `
@@ -203,7 +205,7 @@ func (pc *PostgresClient) GetTables(ctx context.Context) ([]string, error) {
 	var tables []string
 	for rows.Next() {
 		var tableName string
-		if err := rows.Scan(&tableName); err != nil {
+		if err = rows.Scan(&tableName); err != nil {
 			return nil, err
 		}
 		tables = append(tables, tableName)
@@ -223,8 +225,8 @@ type ColumnInfo struct {
 
 // GetTableStructure returns a slice of ColumnInfo for the specified table.
 func (pc *PostgresClient) GetTableStructure(ctx context.Context, tableName string) ([]ColumnInfo, error) {
-	if pc.db_name == "" {
-		return nil, fmt.Errorf("no database specified. Use .WithDatabase() first")
+	if pc.dbName == "" {
+		return nil, errors.New("no database specified. Use .WithDatabase() first")
 	}
 
 	query := `
@@ -243,7 +245,7 @@ func (pc *PostgresClient) GetTableStructure(ctx context.Context, tableName strin
 	for rows.Next() {
 		var col ColumnInfo
 		var isNullableStr string
-		if err := rows.Scan(&col.ColumnName, &col.DataType, &isNullableStr); err != nil {
+		if err = rows.Scan(&col.ColumnName, &col.DataType, &isNullableStr); err != nil {
 			return nil, err
 		}
 		col.IsNullable = (isNullableStr == "YES")
@@ -259,8 +261,8 @@ func (pc *PostgresClient) GetTableStructure(ctx context.Context, tableName strin
 // GetTablesAndStructures returns a map of tableName -> slice of ColumnInfo
 // for all tables in the 'public' schema.
 func (pc *PostgresClient) GetTablesAndStructures(ctx context.Context) (map[string][]ColumnInfo, error) {
-	if pc.db_name == "" {
-		return nil, fmt.Errorf("no database specified. Use .WithDatabase() first")
+	if pc.dbName == "" {
+		return nil, errors.New("no database specified. Use .WithDatabase() first")
 	}
 
 	tables, err := pc.GetTables(ctx)
@@ -270,7 +272,8 @@ func (pc *PostgresClient) GetTablesAndStructures(ctx context.Context) (map[strin
 
 	result := make(map[string][]ColumnInfo)
 	for _, t := range tables {
-		cols, err := pc.GetTableStructure(ctx, t)
+		var cols []ColumnInfo
+		cols, err = pc.GetTableStructure(ctx, t)
 		if err != nil {
 			return nil, err
 		}
@@ -291,8 +294,8 @@ type Tx struct {
 // BeginTransaction acquires a connection from the pool and begins a database transaction.
 // Remember to call either .Commit() or .Rollback() on the returned Tx to release the connection.
 func (pc *PostgresClient) BeginTransaction(ctx context.Context) (*Tx, error) {
-	if pc.db_name == "" {
-		return nil, fmt.Errorf("cannot begin a transaction without specifying a database - use .WithDatabase() first")
+	if pc.dbName == "" {
+		return nil, errors.New("cannot begin a transaction without specifying a database - use .WithDatabase() first")
 	}
 
 	conn, err := pc.pool.Acquire(ctx)
@@ -349,6 +352,7 @@ func (t *Tx) Rollback(ctx context.Context) error {
 // then loops on WaitForNotification and calls onNotify(payload) when a notification arrives.
 func (pc *PostgresClient) StartNotificationListener(
 	ctx context.Context,
+	logger *slog.Logger,
 	channelName string,
 	onNotify func(payload string),
 ) error {
@@ -374,10 +378,13 @@ func (pc *PostgresClient) StartNotificationListener(
 	// Background goroutine to handle notifications
 	go func() {
 		for {
-			n, err := conn.Conn().WaitForNotification(ctx)
+			var n *pgconn.Notification
+			n, err = conn.Conn().WaitForNotification(ctx)
 			if err != nil {
 				// Usually context cancellation or network error
-				fmt.Printf("Listener on channel %q stopped: %v\n", channelName, err)
+				logger.Error("Listener on channel %q stopped",
+					"channel", channelName,
+					"error", err)
 				return
 			}
 
