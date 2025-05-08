@@ -4,10 +4,48 @@ updates:
     directory: '/'
     schedule:
       interval: 'monthly'
+      time: "09:00"
+      timezone: "UTC"
     open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "github-actions"
+      include: "scope"
+    reviewers:
+      - "timborovkov"
+    groups:
+      all:
+        patterns:
+          - "*"
+    versioning-strategy: auto
+    allow:
+      - dependency-type: "all"
+    rebase-strategy: "auto"
+    target-branch: "main"
 
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
       interval: 'weekly'
+      time: "09:00"
+      timezone: "UTC"
     open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "npm"
+      include: "scope"
+    reviewers:
+      - "timborovkov"
+    groups:
+      all:
+        patterns:
+          - "*"
+    versioning-strategy: auto
+    allow:
+      - dependency-type: "all"
+    rebase-strategy: "auto"
+    target-branch: "main"

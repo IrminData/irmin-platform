@@ -32,6 +32,7 @@ const fi = {
     lastModified: 'Viimeksi muokattu',
     size: 'Koko',
     close: 'Sulje',
+    open: 'Avaa',
     timestamp: 'Aikaleima',
     areYouSureYouWantToDelete:
       'Oletko varma, että haluat poistaa tämän kohteen?',

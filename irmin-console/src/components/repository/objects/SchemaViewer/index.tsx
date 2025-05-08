@@ -18,20 +18,25 @@ import { StructuredItemViewer } from './StructuredItemViewer';
 function ObjectSchemaViewer({
   schema,
   depth = 0,
+  isExpanded = false,
 }: {
   /** The schema object plus metadata */
   schema: ObjectSchema;
   /** nesting depth */
   depth?: number;
+  /** Whether to start expanded */
+  isExpanded?: boolean;
 }) {
   const { dict } = useLocale();
   switch (schema.type) {
     case 'structured':
-      return <StructuredItemViewer item={schema} />;
+      return <StructuredItemViewer item={schema} isExpanded={isExpanded} />;
     case 'binary':
       return <BinaryItemViewer item={schema} />;
     case 'group':
-      return <GroupItemViewer item={schema} depth={depth} />;
+      return (
+        <GroupItemViewer item={schema} depth={depth} isExpanded={isExpanded} />
+      );
     default:
       return (
         <div className='text-red-500'>

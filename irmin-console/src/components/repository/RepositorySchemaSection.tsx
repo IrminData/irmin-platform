@@ -68,7 +68,7 @@ export default function RepositorySchemaSection({
 
   return (
     <div className='relative container mx-auto mb-4 flex max-w-7xl flex-col px-2 md:px-4'>
-      <SchemaViewer schema={schema} />
+      <SchemaViewer schema={schema} isExpanded={true} />
     </div>
   );
 }

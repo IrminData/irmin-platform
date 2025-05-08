@@ -281,7 +281,7 @@ export default function RepositorySection({
               size='sm'
               className='w-full text-pretty capitalize'
               onClick={() => setQueryResultsOpen(false)}
-              icon={<TbChevronUp className='text-xl' />}
+              icon={<TbChevronUp size={22} />}
             >
               {dict.common.close} {dict.query.queryResults}
             </Button>

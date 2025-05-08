@@ -3,20 +3,32 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { MdPlayArrow } from 'react-icons/md';
-import { TbChevronRight, TbFile, TbPencil, TbTrash, TbX } from 'react-icons/tb';
+import {
+  TbChevronDown,
+  TbChevronRight,
+  TbChevronUp,
+  TbFile,
+  TbPencil,
+  TbTrash,
+  TbX,
+} from 'react-icons/tb';
 
 import IrminCore from '@/lib/core';
 
 import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import QueryResults from '@/components/query/QueryResults';
+import SchemaViewer from '@/components/repository/objects/SchemaViewer';
 import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
+
+import { useWorkspaceSchema } from '@/hooks/useWorkspaceSchema';
 
 import { StoredQuery } from '@/types/core/StoredQuery';
 
@@ -40,12 +52,15 @@ export default function QueriesSection({
   const { dict, locale } = useLocale();
   const { irminModal, irminAlert, irminConfirm } = usePopup();
   const { workspaceSlug } = useWorkspace();
+  const workspaceSchema = useWorkspaceSchema();
   const [queries, setQueries] = useState<StoredQuery[]>(initialQueries);
   const query = useQuery();
 
   const [selectedQuery, setSelectedQuery] = useState<StoredQuery | null>(null);
   const [editorContent, setEditorContent] = useState<string>('');
   const [edited, setEdited] = useState<boolean>(false);
+
+  const [queryResultsOpen, setQueryResultsOpen] = useState(false);
 
   const queryContentId = useRef<string>(null);
   useEffect(() => {
@@ -54,6 +69,7 @@ export default function QueriesSection({
     queryContentId.current = selectedQuery.id;
     setEditorContent(selectedQuery.sql);
     setEdited(false);
+    query.cleanup();
   }, [selectedQuery, query]);
 
   /**
@@ -145,7 +161,8 @@ export default function QueriesSection({
    */
   const handleRunQuery = useMemo(
     () => async () => {
-      query.executeSql(editorContent);
+      setQueryResultsOpen(true);
+      await query.executeSql(editorContent);
     },
     [query, editorContent]
   );
@@ -270,8 +287,12 @@ export default function QueriesSection({
     <div className='bg-background flex h-full w-full flex-col'>
       <div className='flex h-full flex-col lg:flex-row lg:overflow-y-scroll'>
         <div className='border-border order-3 flex min-h-80 w-full flex-col overflow-y-scroll border-t lg:order-1 lg:w-80 lg:border-0 lg:border-r'>
-          <div className='p-4'>
-            <Button className='w-full' onClick={handleCreateQuery}>
+          <div className='p-2'>
+            <Button
+              className='w-full'
+              variant={'default'}
+              onClick={handleCreateQuery}
+            >
               {dict.query.newQuery}
             </Button>
           </div>
@@ -301,7 +322,7 @@ export default function QueriesSection({
           />
         </div>
         {selectedQuery && (
-          <div className='border-border relative order-2 flex w-full flex-col gap-2 border-t p-4 lg:order-3 lg:w-80 lg:overflow-y-scroll lg:border-0 lg:border-l'>
+          <div className='border-border relative order-2 flex w-full flex-col gap-2 border-t p-2 lg:order-3 lg:w-80 lg:overflow-y-scroll lg:border-0 lg:border-l'>
             <Button
               size={'icon'}
               variant={'ghost'}
@@ -355,14 +376,48 @@ export default function QueriesSection({
           </div>
         )}
       </div>
-      <div className='h-full'>
-        <QueryResults
-          title={`${dict.query.results} ${selectedQuery ? `(${selectedQuery.name})` : ''}`}
-          result={query.result}
-          onRun={handleRunQuery}
-          loading={query.loading}
-        />
-      </div>
+      {!queryResultsOpen ? (
+        <div className='contents'>
+          <div className='h-full max-h-[calc(100vh-400px)] overflow-y-scroll border-t border-gray-200 p-4 dark:border-gray-800'>
+            {workspaceSchema.loading && (
+              <LoadingSkeleton className='h-full w-full' />
+            )}
+            {!workspaceSchema.loading && workspaceSchema.schema && (
+              <SchemaViewer schema={workspaceSchema.schema} isExpanded={true} />
+            )}
+          </div>
+
+          <Button
+            variant='gray'
+            size='sm'
+            className='w-full py-4 text-pretty capitalize'
+            onClick={() => setQueryResultsOpen(true)}
+            icon={<TbChevronDown size={22} />}
+          >
+            {dict.common.open} {dict.query.queryResults}
+          </Button>
+        </div>
+      ) : (
+        <div className='contents'>
+          <Button
+            variant='gray'
+            size='sm'
+            className='w-full py-4 text-pretty capitalize'
+            onClick={() => setQueryResultsOpen(false)}
+            icon={<TbChevronUp size={22} />}
+          >
+            {dict.common.close} {dict.query.queryResults}
+          </Button>
+          <div className='flex h-[calc(100vh-400px)] min-h-96'>
+            <QueryResults
+              title={`${dict.query.results} ${selectedQuery ? `(${selectedQuery.name})` : ''}`}
+              result={query.result}
+              onRun={handleRunQuery}
+              loading={query.loading}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

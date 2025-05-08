@@ -32,6 +32,7 @@ const en = {
     lastModified: 'Last modified',
     size: 'Size',
     close: 'Close',
+    open: 'Open',
     timestamp: 'Timestamp',
     areYouSureYouWantToDelete: 'Are you sure you want to delete this item?',
     areYouSureYouWantToTransferOwnership:

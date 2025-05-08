@@ -1,6 +1,7 @@
 import IrminCore from '@/lib/core';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import { ObjectSchema } from '@/types/core/ObjectSchema';
 import { Workspace } from '@/types/core/Workspace';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
@@ -27,6 +28,7 @@ class WorkspaceService {
     this.transferWorkspace = this.transferWorkspace.bind(this);
     this.deleteWorkspace = this.deleteWorkspace.bind(this);
     this.leaveWorkspace = this.leaveWorkspace.bind(this);
+    this.getWorkspaceSchema = this.getWorkspaceSchema.bind(this);
   }
 
   /**
@@ -208,6 +210,30 @@ class WorkspaceService {
       return res;
     } catch (error) {
       console.error((error as Error).message, 'Leave workspace error');
+      throw error;
+    }
+  }
+
+  /**
+   * Get the schema of a workspace.
+   *
+   * @param props - The parameters.
+   * @param props.workspaceSlug - The workspace slug.
+   * @returns IrminAPIResponse containing the schema.
+   */
+  async getWorkspaceSchema({
+    workspaceSlug,
+  }: {
+    workspaceSlug: string;
+  }): Promise<IrminAPIResponse<ObjectSchema>> {
+    try {
+      const res = await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspaceSlug}/schema`,
+        { method: 'GET' }
+      );
+      return res as IrminAPIResponse<ObjectSchema>;
+    } catch (error) {
+      console.error((error as Error).message, 'Get workspace schema error');
       throw error;
     }
   }

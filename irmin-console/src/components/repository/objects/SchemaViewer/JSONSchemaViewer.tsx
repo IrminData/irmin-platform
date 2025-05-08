@@ -59,7 +59,7 @@ export function JSONSchemaViewer({
 
             {/* render nested object */}
             {prop.type === 'object' && prop.properties && (
-              <JSONSchemaViewer schema={prop} />
+              <JSONSchemaViewer schema={prop} isExpanded={false} />
             )}
 
             {/* render array items */}
@@ -68,7 +68,7 @@ export function JSONSchemaViewer({
                 <span className='text-sm text-gray-500 dark:text-gray-400'>
                   Items:
                 </span>
-                <JSONSchemaViewer schema={prop.items} />
+                <JSONSchemaViewer schema={prop.items} isExpanded={false} />
               </div>
             )}
 
@@ -133,7 +133,7 @@ export function JSONSchemaViewer({
               <span className='text-sm text-gray-500 dark:text-gray-400'>
                 Items:
               </span>
-              <JSONSchemaViewer schema={schema.items} />
+              <JSONSchemaViewer schema={schema.items} isExpanded={false} />
             </div>
           )}
         </>

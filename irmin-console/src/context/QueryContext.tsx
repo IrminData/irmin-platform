@@ -25,6 +25,7 @@ interface QueryContextProps {
   loading: boolean;
   result: QueryResult | null;
   executeSql: (content: string) => Promise<void>;
+  cleanup: () => void;
 }
 
 const QueryContext = createContext<QueryContextProps | undefined>(undefined);
@@ -83,12 +84,22 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
     [irminAlert, dict, workspaceSlug, getToken, locale]
   );
 
+  /**
+   * Cleanup function to reset the query state
+   */
+  const cleanup = useCallback(() => {
+    setLoading(false);
+    setQueryResult(null);
+    executing.current = false;
+  }, []);
+
   return (
     <QueryContext.Provider
       value={{
         loading,
         result: queryResult,
         executeSql: handleExecuteSql,
+        cleanup,
       }}
     >
       {children}

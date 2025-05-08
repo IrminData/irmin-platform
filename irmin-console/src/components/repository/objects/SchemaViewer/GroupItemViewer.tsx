@@ -18,14 +18,17 @@ import ObjectSchemaViewer from './';
 export function GroupItemViewer({
   item,
   depth = 0,
+  isExpanded = false,
 }: {
   /** The group item plus metadata */
   item: ObjectSchema;
   /** nesting depth */
   depth?: number;
+  /** Whether to start expanded */
+  isExpanded?: boolean;
 }) {
   const { dict, locale } = useLocale();
-  const [expanded, setExpanded] = useState(depth < 1);
+  const [expanded, setExpanded] = useState(isExpanded && depth < 1);
 
   if (item.type !== 'group') return <></>;
 
@@ -74,7 +77,12 @@ export function GroupItemViewer({
           {expanded && (
             <div className='mt-3 space-y-3 pl-2'>
               {item.children.map((child, i) => (
-                <ObjectSchemaViewer key={i} schema={child} depth={depth + 1} />
+                <ObjectSchemaViewer
+                  key={i}
+                  schema={child}
+                  depth={depth + 1}
+                  isExpanded={isExpanded}
+                />
               ))}
             </div>
           )}

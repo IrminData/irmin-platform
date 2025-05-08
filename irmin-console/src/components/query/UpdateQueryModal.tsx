@@ -58,9 +58,7 @@ export default function UpdateQueryModal({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className={`transition-filter flex flex-col gap-4 pb-8 duration-200 ${
-        isSubmitting ? 'pointer-events-none blur-xs' : ''
-      }`}
+      className={`transition-filter flex flex-col gap-4 pb-8 duration-200`}
     >
       <div className='flex flex-col gap-2'>
         <Label>{dict.common.name}</Label>
@@ -111,9 +109,9 @@ export default function UpdateQueryModal({
         size='sm'
         className='w-full'
         type='submit'
-        disabled={isSubmitting}
+        loading={isSubmitting}
       >
-        {isSubmitting ? dict.common.loading : dict.common.save}
+        {dict.common.save}
       </Button>
     </form>
   );

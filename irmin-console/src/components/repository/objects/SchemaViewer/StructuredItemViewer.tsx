@@ -17,9 +17,15 @@ import { JSONSchemaViewer } from './JSONSchemaViewer';
 /**
  * Component to visualise a structured schema object
  */
-export function StructuredItemViewer({ item }: { item: ObjectSchema }) {
+export function StructuredItemViewer({
+  item,
+  isExpanded = false,
+}: {
+  item: ObjectSchema;
+  isExpanded?: boolean;
+}) {
   const { dict, locale } = useLocale();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(isExpanded);
 
   if (item.type !== 'structured') return <></>;
 
@@ -69,7 +75,7 @@ export function StructuredItemViewer({ item }: { item: ObjectSchema }) {
           </Button>
           {expanded && (
             <div className='mt-2 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-600 dark:bg-gray-700'>
-              <JSONSchemaViewer schema={item.schema} isExpanded />
+              <JSONSchemaViewer schema={item.schema} isExpanded={false} />
             </div>
           )}
         </div>
