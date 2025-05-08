@@ -1,15 +1,15 @@
-package irminCore
+package irmincore
 
 import (
 	"fmt"
 	"net/http"
 	"strings"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) ListUsers(workspace string) ([]irminModels.User, *irminModels.IrminAPIResponse, error) {
-	var users []irminModels.User
+func (c *Client) ListUsers(workspace string) ([]irminmodels.User, *irminmodels.IrminAPIResponse, error) {
+	var users []irminmodels.User
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/users", workspace),
@@ -20,8 +20,8 @@ func (c *Client) ListUsers(workspace string) ([]irminModels.User, *irminModels.I
 	return users, apiResp, nil
 }
 
-func (c *Client) GetUser(workspace, userID string) (*irminModels.User, *irminModels.IrminAPIResponse, error) {
-	var user irminModels.User
+func (c *Client) GetUser(workspace, userID string) (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
+	var user irminmodels.User
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/users/%s", workspace, userID),
@@ -32,9 +32,12 @@ func (c *Client) GetUser(workspace, userID string) (*irminModels.User, *irminMod
 	return &user, apiResp, nil
 }
 
-func (c *Client) UpdateUserRoles(workspace, userID string, roles []string) (*irminModels.User, *irminModels.IrminAPIResponse, error) {
+func (c *Client) UpdateUserRoles(
+	workspace, userID string,
+	roles []string,
+) (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
 	updatedRoles := strings.Join(roles, ",")
-	var user irminModels.User
+	var user irminmodels.User
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/users/%s", workspace, userID),
@@ -49,7 +52,7 @@ func (c *Client) UpdateUserRoles(workspace, userID string, roles []string) (*irm
 	return &user, apiResp, nil
 }
 
-func (c *Client) RemoveUser(workspace, userID string) (*irminModels.IrminAPIResponse, error) {
+func (c *Client) RemoveUser(workspace, userID string) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/users/%s", workspace, userID),

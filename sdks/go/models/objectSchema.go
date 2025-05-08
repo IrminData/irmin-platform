@@ -1,4 +1,4 @@
-package irminModels
+package irminmodels
 
 type ObjectSchema struct {
 	Name         string     `json:"name"`

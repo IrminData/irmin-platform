@@ -1,4 +1,4 @@
-package irminModels
+package irminmodels
 
 // ConnectorEvent represents a webhook event sent by a connector when a change in the data occurs.
 type ConnectorEvent struct {

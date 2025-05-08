@@ -1,8 +1,8 @@
-package irminUtils
+package irminutils
 
 import (
+	"errors"
 	"flag"
-	"fmt"
 )
 
 // GetAPIFromFlags retrieves the API key and the base URL from command line flags.
@@ -14,11 +14,11 @@ func GetAPIFromFlags() (string, string, error) {
 
 	// Validate the API key
 	if *apiKey == "" {
-		return *apiURL, *apiKey, fmt.Errorf("API key is required")
+		return *apiURL, *apiKey, errors.New("API key is required")
 	}
 	// Validate the API URL
 	if *apiURL == "" {
-		return *apiURL, *apiKey, fmt.Errorf("API URL is required")
+		return *apiURL, *apiKey, errors.New("API URL is required")
 	}
 
 	return *apiURL, *apiKey, nil

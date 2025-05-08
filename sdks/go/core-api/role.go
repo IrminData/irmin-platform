@@ -1,14 +1,14 @@
-package irminCore
+package irmincore
 
 import (
 	"fmt"
 	"net/http"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) ListRoles() ([]irminModels.IrminRole, *irminModels.IrminAPIResponse, error) {
-	var roles []irminModels.IrminRole
+func (c *Client) ListRoles() ([]irminmodels.IrminRole, *irminmodels.IrminAPIResponse, error) {
+	var roles []irminmodels.IrminRole
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: "/v1/roles",

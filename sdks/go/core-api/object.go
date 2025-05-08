@@ -1,18 +1,26 @@
-package irminCore
+package irmincore
 
 import (
 	"bytes"
 	"fmt"
 	"net/http"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) GetObjectAtPath(workspace, repository, path, ref string) (*irminModels.Object, *irminModels.IrminAPIResponse, error) {
-	var objects irminModels.Object
+func (c *Client) GetObjectAtPath(
+	workspace, repository, path, ref string,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
+	var objects irminmodels.Object
 	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s", workspace, repository, ref, path),
+		Method: http.MethodGet,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
 	}, &objects)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch objects error: %w", err)
@@ -20,11 +28,19 @@ func (c *Client) GetObjectAtPath(workspace, repository, path, ref string) (*irmi
 	return &objects, apiResp, nil
 }
 
-func (c *Client) GetObjectHistory(workspace, repository, path, ref string) ([]irminModels.Commit, *irminModels.IrminAPIResponse, error) {
-	var commits []irminModels.Commit
+func (c *Client) GetObjectHistory(
+	workspace, repository, path, ref string,
+) ([]irminmodels.Commit, *irminmodels.IrminAPIResponse, error) {
+	var commits []irminmodels.Commit
 	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects/history?ref=%s&path=%s", workspace, repository, ref, path),
+		Method: http.MethodGet,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/history?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
 	}, &commits)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch object history error: %w", err)
@@ -32,11 +48,19 @@ func (c *Client) GetObjectHistory(workspace, repository, path, ref string) ([]ir
 	return commits, apiResp, nil
 }
 
-func (c *Client) GetObjectSchema(workspace, repository, path, ref string) (*irminModels.ObjectSchema, *irminModels.IrminAPIResponse, error) {
-	var schema irminModels.ObjectSchema
+func (c *Client) GetObjectSchema(
+	workspace, repository, path, ref string,
+) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error) {
+	var schema irminmodels.ObjectSchema
 	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects/schema?ref=%s&path=%s", workspace, repository, ref, path),
+		Method: http.MethodGet,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/schema?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
 	}, &schema)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch object schema error: %w", err)
@@ -44,7 +68,10 @@ func (c *Client) GetObjectSchema(workspace, repository, path, ref string) (*irmi
 	return &schema, apiResp, nil
 }
 
-func (c *Client) UploadObject(workspace, repository, ref, path, name string, files map[string][]byte) (*irminModels.Object, *irminModels.IrminAPIResponse, error) {
+func (c *Client) UploadObject(
+	workspace, repository, ref, path string,
+	files map[string][]byte,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
 	var formFiles []FormFile
 	for fileName, fileContent := range files {
 		// Use bytes.NewReader for in-memory file data
@@ -56,10 +83,16 @@ func (c *Client) UploadObject(workspace, repository, ref, path, name string, fil
 		})
 	}
 
-	var object irminModels.Object
+	var object irminmodels.Object
 	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s", workspace, repository, ref, path),
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
 		Files:       formFiles,
 		ContentType: "multipart/form-data",
 	}, &object)
@@ -72,8 +105,14 @@ func (c *Client) UploadObject(workspace, repository, ref, path, name string, fil
 
 func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]byte, error) {
 	apiResp, err := c.FetchBinary(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects/content?ref=%s&path=%s", workspace, repository, ref, path),
+		Method: http.MethodGet,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/content?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("fetch content error: %w", err)
@@ -84,8 +123,14 @@ func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]by
 // DownloadObject creates a zip file of the object at the given path and ref and returns the binary data.
 func (c *Client) DownloadObject(workspace, repository, path, ref string) ([]byte, error) {
 	apiResp, err := c.FetchBinary(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects/download?ref=%s&path=%s", workspace, repository, ref, path),
+		Method: http.MethodGet,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/download?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("fetch object download zip error: %w", err)
@@ -93,11 +138,19 @@ func (c *Client) DownloadObject(workspace, repository, path, ref string) ([]byte
 	return apiResp, nil
 }
 
-func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*irminModels.Object, *irminModels.IrminAPIResponse, error) {
-	var object irminModels.Object
+func (c *Client) MoveObject(
+	workspace, repository, path, ref, newPath string,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
+	var object irminmodels.Object
 	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects/move?ref=%s&path=%s", workspace, repository, ref, path),
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/move?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
 		ContentType: "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"new_path": newPath,
@@ -109,11 +162,19 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 	return &object, apiResp, nil
 }
 
-func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*irminModels.Object, *irminModels.IrminAPIResponse, error) {
-	var object irminModels.Object
+func (c *Client) CopyObject(
+	workspace, repository, path, ref, newPath string,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
+	var object irminmodels.Object
 	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects/copy?ref=%s&path=%s", workspace, repository, ref, path),
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/copy?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
 		ContentType: "application/x-www-form-urlencoded",
 		FormFields: map[string]string{
 			"new_path": newPath,
@@ -125,10 +186,16 @@ func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*
 	return &object, apiResp, nil
 }
 
-func (c *Client) DeleteObject(workspace, repository, ref, path string) (*irminModels.IrminAPIResponse, error) {
+func (c *Client) DeleteObject(workspace, repository, ref, path string) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodDelete,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s", workspace, repository, ref, path),
+		Method: http.MethodDelete,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete object error: %w", err)

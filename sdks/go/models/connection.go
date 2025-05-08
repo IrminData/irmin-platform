@@ -1,4 +1,4 @@
-package irminModels
+package irminmodels
 
 type CustomFieldValues map[string]string
 

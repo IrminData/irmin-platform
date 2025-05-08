@@ -1,10 +1,10 @@
-package irminConnectorClient
+package irminconnectorclient
 
 import (
 	"fmt"
 	"net/http"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // GetConfigFields fetches the configuration fields for a given configuration type.
@@ -19,7 +19,11 @@ import (
 // Returns:
 // - A list of DynamicField objects representing the configuration fields if the request is successful.
 // - An error if the request fails.
-func (c *Client) GetConfigFields(configType string, details map[string]string, settings map[string]string) (map[string]irminModels.DynamicField, error) {
+func (c *Client) GetConfigFields(
+	configType string,
+	details map[string]string,
+	settings map[string]string,
+) (map[string]irminmodels.DynamicField, error) {
 	// Build the endpoint URL using the provided configuration type.
 	endpoint := fmt.Sprintf("/configuration/%s/fields", configType)
 
@@ -35,7 +39,7 @@ func (c *Client) GetConfigFields(configType string, details map[string]string, s
 	}
 
 	// Define a variable to hold the resulting configuration fields.
-	var fields map[string]irminModels.DynamicField
+	var fields map[string]irminmodels.DynamicField
 
 	// Send the POST request using FetchAPI with URL-encoded form fields.
 	if err := c.FetchAPI(RequestOptions{
@@ -61,9 +65,11 @@ func (c *Client) GetConfigFields(configType string, details map[string]string, s
 //
 // Returns:
 // - A validation result from the connector if the request is successful.
-// - An error if there is a problem with the request
-func (c *Client) ValidateConfigFields(details map[string]string, settings map[string]string) (*irminModels.ConnectorConfigurationValidationResult, error) {
-
+// - An error if there is a problem with the request.
+func (c *Client) ValidateConfigFields(
+	details map[string]string,
+	settings map[string]string,
+) (*irminmodels.ConnectorConfigurationValidationResult, error) {
 	// Prepare form fields by formatting keys with the appropriate prefixes.
 	formFields := make(map[string]string)
 	// Add details with keys in the format details[KEY].
@@ -76,7 +82,7 @@ func (c *Client) ValidateConfigFields(details map[string]string, settings map[st
 	}
 
 	// Define a variable to hold the validation result.
-	var result irminModels.ConnectorConfigurationValidationResult
+	var result irminmodels.ConnectorConfigurationValidationResult
 
 	// Send the POST request using FetchAPI with URL-encoded form fields.
 	err := c.FetchAPI(RequestOptions{

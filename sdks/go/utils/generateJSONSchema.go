@@ -1,4 +1,4 @@
-package irminUtils
+package irminutils
 
 import (
 	"encoding/json"
@@ -25,7 +25,8 @@ func JSONSchemaFromStruct(input any) ([]byte, map[string]any, error) {
 
 	// Unmarshal the JSON into a map[string]any.
 	var schemaMap map[string]any
-	if err := json.Unmarshal(schemaJSON, &schemaMap); err != nil {
+	err = json.Unmarshal(schemaJSON, &schemaMap)
+	if err != nil {
 		return nil, nil, err
 	}
 

@@ -1,0 +1,29 @@
+version: 2
+updates:
+  # Enable version updates for Go modules
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "go"
+      include: "scope"
+    reviewers:
+      - "timborovkov"
+    groups:
+      all:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "*"
+        versions: ["*-beta*", "*-rc*", "*-alpha*"]
+    versioning-strategy: auto
+    allow:
+      - dependency-type: "all"
+    rebase-strategy: "auto"
+    target-branch: "development" 

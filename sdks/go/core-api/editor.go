@@ -1,14 +1,16 @@
-package irminCore
+package irmincore
 
 import (
 	"fmt"
 	"net/http"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) ListEditorItems(workspace, path string) ([]irminModels.EditorItem, *irminModels.IrminAPIResponse, error) {
-	var editorItems []irminModels.EditorItem
+func (c *Client) ListEditorItems(
+	workspace, path string,
+) ([]irminmodels.EditorItem, *irminmodels.IrminAPIResponse, error) {
+	var editorItems []irminmodels.EditorItem
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/editor?path=%s", workspace, path),
@@ -19,7 +21,7 @@ func (c *Client) ListEditorItems(workspace, path string) ([]irminModels.EditorIt
 	return editorItems, apiResp, nil
 }
 
-func (c *Client) GetEditorItemContent(workspace, path string) (*string, *irminModels.IrminAPIResponse, error) {
+func (c *Client) GetEditorItemContent(workspace, path string) (*string, *irminmodels.IrminAPIResponse, error) {
 	var editorItemContent string
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
@@ -31,7 +33,7 @@ func (c *Client) GetEditorItemContent(workspace, path string) (*string, *irminMo
 	return &editorItemContent, apiResp, nil
 }
 
-func (c *Client) MoveEditorItem(workspace, path, destinationPath string) (*irminModels.IrminAPIResponse, error) {
+func (c *Client) MoveEditorItem(workspace, path, destinationPath string) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor/move?path=%s", workspace, path),
@@ -46,7 +48,7 @@ func (c *Client) MoveEditorItem(workspace, path, destinationPath string) (*irmin
 	return apiResp, nil
 }
 
-func (c *Client) CopyEditorItem(workspace, path, destinationPath string) (*irminModels.IrminAPIResponse, error) {
+func (c *Client) CopyEditorItem(workspace, path, destinationPath string) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor/copy?path=%s", workspace, path),
@@ -61,7 +63,7 @@ func (c *Client) CopyEditorItem(workspace, path, destinationPath string) (*irmin
 	return apiResp, nil
 }
 
-func (c *Client) DeleteEditorItem(workspace, path string) (*irminModels.IrminAPIResponse, error) {
+func (c *Client) DeleteEditorItem(workspace, path string) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/editor?path=%s", workspace, path),
@@ -72,7 +74,7 @@ func (c *Client) DeleteEditorItem(workspace, path string) (*irminModels.IrminAPI
 	return apiResp, nil
 }
 
-func (c *Client) SaveEditorItem(workspace, path, content string) (*irminModels.IrminAPIResponse, error) {
+func (c *Client) SaveEditorItem(workspace, path, content string) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor?path=%s", workspace, path),
@@ -88,7 +90,7 @@ func (c *Client) SaveEditorItem(workspace, path, content string) (*irminModels.I
 	return apiResp, nil
 }
 
-func (c *Client) CreateEditorFolder(workspace, path string) (*irminModels.IrminAPIResponse, error) {
+func (c *Client) CreateEditorFolder(workspace, path string) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor?path=%s", workspace, path),
@@ -103,8 +105,8 @@ func (c *Client) CreateEditorFolder(workspace, path string) (*irminModels.IrminA
 	return apiResp, nil
 }
 
-func (c *Client) RunScript(workspace, path string) (*irminModels.ScriptResult, *irminModels.IrminAPIResponse, error) {
-	var scriptResult irminModels.ScriptResult
+func (c *Client) RunScript(workspace, path string) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error) {
+	var scriptResult irminmodels.ScriptResult
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor/run?path=%s", workspace, path),

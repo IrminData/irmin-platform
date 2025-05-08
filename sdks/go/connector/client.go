@@ -1,8 +1,10 @@
-package irminConnectorClient
+package irminconnectorclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -14,6 +16,10 @@ import (
 	"slices"
 	"strings"
 	"time"
+)
+
+const (
+	defaultTimeout = 120 * time.Second
 )
 
 // Client represents the Connector API client.
@@ -38,7 +44,7 @@ func NewClient(baseURL, token, locale string) *Client {
 		Token:   token,
 		Locale:  locale,
 		HTTPClient: &http.Client{
-			Timeout: 120 * time.Second, // Default timeout of 120 seconds.
+			Timeout: defaultTimeout,
 		},
 	}
 }
@@ -71,10 +77,115 @@ type PulledFile struct {
 	Content []byte
 }
 
-// prepareBodyAndHeaders builds the request body (if applicable) and merges any custom headers.
-// It returns the body reader, a header map, and an error (if any).
+// prepareJSONBody prepares a JSON request body and sets appropriate headers.
+func prepareJSONBody(body any, headers map[string]string) (io.Reader, error) {
+	if body == nil {
+		return bytes.NewReader(nil), nil
+	}
+	jsonData, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal JSON body: %w", err)
+	}
+	headers["Content-Type"] = "application/json"
+	return bytes.NewReader(jsonData), nil
+}
+
+// prepareMultipartBody prepares a multipart/form-data request body and sets appropriate headers.
+func prepareMultipartBody(
+	formFields map[string]string,
+	files []FormFile,
+	headers map[string]string,
+) (io.Reader, error) {
+	var b bytes.Buffer
+	writer := multipart.NewWriter(&b)
+
+	// Write form fields
+	for key, val := range formFields {
+		if err := writer.WriteField(key, val); err != nil {
+			return nil, fmt.Errorf("failed to write form field %q: %w", key, err)
+		}
+	}
+
+	// Write files
+	for _, file := range files {
+		if err := writeFormFile(writer, file); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := writer.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close multipart writer: %w", err)
+	}
+
+	headers["Content-Type"] = writer.FormDataContentType()
+	return &b, nil
+}
+
+// writeFormFile writes a single file to the multipart writer.
+func writeFormFile(writer *multipart.Writer, file FormFile) error {
+	fileName := file.FileName
+	if fileName == "" {
+		fileName = filepath.Base(file.FilePath)
+	}
+
+	var r io.Reader
+	switch {
+	case file.Reader != nil:
+		r = file.Reader
+	case file.FilePath != "":
+		f, err := os.Open(file.FilePath)
+		if err != nil {
+			return fmt.Errorf("failed to open file %q: %w", file.FilePath, err)
+		}
+		r = f
+	default:
+		return nil
+	}
+
+	part, err := writer.CreateFormFile(file.FieldName, fileName)
+	if err != nil {
+		return fmt.Errorf("failed to create form file for field %q: %w", file.FieldName, err)
+	}
+	if _, err = io.Copy(part, r); err != nil {
+		return fmt.Errorf("failed to copy file data: %w", err)
+	}
+	return nil
+}
+
+// prepareURLEncodedBody prepares an application/x-www-form-urlencoded request body and sets appropriate headers.
+func prepareURLEncodedBody(formFields map[string]string, headers map[string]string) io.Reader {
+	var buf bytes.Buffer
+	firstField := true
+	for key, val := range formFields {
+		if !firstField {
+			buf.WriteByte('&')
+		}
+		encodedKey := url.QueryEscape(key)
+		encodedVal := url.QueryEscape(val)
+		buf.WriteString(fmt.Sprintf("%s=%s", encodedKey, encodedVal))
+		firstField = false
+	}
+	headers["Content-Type"] = "application/x-www-form-urlencoded"
+	return bytes.NewReader(buf.Bytes())
+}
+
+// prepareRawBody prepares a raw request body for other content types.
+func prepareRawBody(body any, contentType string) (io.Reader, error) {
+	if body == nil {
+		return bytes.NewReader(nil), nil
+	}
+	switch data := body.(type) {
+	case []byte:
+		return bytes.NewReader(data), nil
+	case string:
+		return bytes.NewReader([]byte(data)), nil
+	default:
+		return nil, fmt.Errorf("unsupported body type for content type %q", contentType)
+	}
+}
+
 func (c *Client) prepareBodyAndHeaders(opts RequestOptions) (io.Reader, map[string]string, error) {
-	// Initialise header map and copy extra headers if provided.
+	// Initialize header map and copy extra headers if provided
 	headers := make(map[string]string)
 	if opts.Headers != nil {
 		for k, v := range opts.Headers {
@@ -83,101 +194,21 @@ func (c *Client) prepareBodyAndHeaders(opts RequestOptions) (io.Reader, map[stri
 	}
 
 	var bodyReader io.Reader
+	var err error
 
 	switch opts.ContentType {
 	case "application/json":
-		// Encode Body as JSON if provided.
-		if opts.Body != nil {
-			jsonData, err := json.Marshal(opts.Body)
-			if err != nil {
-				return nil, nil, fmt.Errorf("failed to marshal JSON body: %w", err)
-			}
-			bodyReader = bytes.NewReader(jsonData)
-			headers["Content-Type"] = "application/json"
-		}
-
+		bodyReader, err = prepareJSONBody(opts.Body, headers)
 	case "multipart/form-data":
-		// Build a multipart form.
-		var b bytes.Buffer
-		writer := multipart.NewWriter(&b)
-
-		// Write form fields.
-		for key, val := range opts.FormFields {
-			if err := writer.WriteField(key, val); err != nil {
-				return nil, nil, fmt.Errorf("failed to write form field %q: %w", key, err)
-			}
-		}
-
-		// Write files.
-		for _, file := range opts.Files {
-			var fileName string
-			if file.FileName != "" {
-				fileName = file.FileName
-			} else {
-				fileName = filepath.Base(file.FilePath)
-			}
-
-			var r io.Reader
-			if file.Reader != nil {
-				// Use the provided reader.
-				r = file.Reader
-			} else if file.FilePath != "" {
-				// Otherwise open the file from disk.
-				f, err := os.Open(file.FilePath)
-				if err != nil {
-					return nil, nil, fmt.Errorf("failed to open file %q: %w", file.FilePath, err)
-				}
-				// Note: Not deferring f.Close() here since the file is read immediately.
-				r = f
-			} else {
-				continue
-			}
-
-			part, err := writer.CreateFormFile(file.FieldName, fileName)
-			if err != nil {
-				return nil, nil, fmt.Errorf("failed to create form file for field %q: %w", file.FieldName, err)
-			}
-			if _, err = io.Copy(part, r); err != nil {
-				return nil, nil, fmt.Errorf("failed to copy file data: %w", err)
-			}
-		}
-
-		if err := writer.Close(); err != nil {
-			return nil, nil, fmt.Errorf("failed to close multipart writer: %w", err)
-		}
-
-		bodyReader = &b
-		headers["Content-Type"] = writer.FormDataContentType()
-
+		bodyReader, err = prepareMultipartBody(opts.FormFields, opts.Files, headers)
 	case "application/x-www-form-urlencoded":
-		// Encode form fields as URL-encoded data.
-		var buf bytes.Buffer
-		firstField := true
-		for key, val := range opts.FormFields {
-			if !firstField {
-				buf.WriteByte('&')
-			}
-			// URL-encode the key and value.
-			encodedKey := url.QueryEscape(key)
-			encodedVal := url.QueryEscape(val)
-			buf.WriteString(fmt.Sprintf("%s=%s", encodedKey, encodedVal))
-			firstField = false
-		}
-		bodyReader = bytes.NewReader(buf.Bytes())
-		headers["Content-Type"] = "application/x-www-form-urlencoded"
-
+		bodyReader = prepareURLEncodedBody(opts.FormFields, headers)
 	default:
-		// For any other content type, let the user provide raw bytes or a string.
-		if opts.Body != nil {
-			switch data := opts.Body.(type) {
-			case []byte:
-				bodyReader = bytes.NewReader(data)
-			case string:
-				bodyReader = bytes.NewReader([]byte(data))
-			default:
-				return nil, nil, fmt.Errorf("unsupported body type for content type %q", opts.ContentType)
-			}
-		}
+		bodyReader, err = prepareRawBody(opts.Body, opts.ContentType)
+	}
+
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return bodyReader, headers, nil
@@ -191,27 +222,33 @@ func (c *Client) doRequest(req *http.Request, allowedStatus []int) (*http.Respon
 		return nil, fmt.Errorf("request to %s failed: %w", req.URL, err)
 	}
 
-	// Check if the response status code is allowed.
-	if len(allowedStatus) == 0 {
-		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			bodyBytes, _ := io.ReadAll(resp.Body)
-			resp.Body.Close()
-			return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, bodyBytes)
-		}
-	} else {
-		if !slices.Contains(allowedStatus, resp.StatusCode) {
-			bodyBytes, _ := io.ReadAll(resp.Body)
-			resp.Body.Close()
-			return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, bodyBytes)
-		}
+	// Read response body for error reporting
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	closeErr := resp.Body.Close()
+	if closeErr != nil {
+		return nil, fmt.Errorf("failed to close response body: %w", closeErr)
 	}
 
+	// Check if the response status code is allowed
+	isAllowed := len(allowedStatus) == 0 && (resp.StatusCode >= 200 && resp.StatusCode < 300) ||
+		len(allowedStatus) > 0 && slices.Contains(allowedStatus, resp.StatusCode)
+
+	if !isAllowed {
+		return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, bodyBytes)
+	}
+
+	// Recreate the response body since we consumed it for error reporting
+	resp.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 	return resp, nil
 }
 
 // Request sends requests to the REST API of the connector and returns the raw response data.
 // It utilises prepareBodyAndHeaders and doRequest to reduce code duplication.
 func (c *Client) Request(opts RequestOptions) ([]byte, error) {
+	// Create a context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+
 	// Construct the full URL.
 	url := fmt.Sprintf("%s%s", c.BaseURL, opts.Endpoint)
 
@@ -222,7 +259,7 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 	}
 
 	// Build the HTTP request.
-	req, err := http.NewRequest(opts.Method, url, bodyReader)
+	req, err := http.NewRequestWithContext(ctx, opts.Method, url, bodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -263,7 +300,8 @@ func (c *Client) FetchAPI(opts RequestOptions, out any) error {
 
 	// If a destination was provided and the body is non-empty, unmarshal the JSON.
 	if out != nil && len(body) > 0 {
-		if err := json.Unmarshal(body, out); err != nil {
+		err = json.Unmarshal(body, out)
+		if err != nil {
 			return fmt.Errorf("failed to unmarshal Data field: %w", err)
 		}
 	}
@@ -274,6 +312,10 @@ func (c *Client) FetchAPI(opts RequestOptions, out any) error {
 // FetchStreamFiles sends a request based on the provided RequestOptions and returns a slice of PulledFile.
 // If the response is multipart, each part is parsed as a separate file. Otherwise, the response is treated as a single file.
 func (c *Client) FetchStreamFiles(opts RequestOptions) ([]PulledFile, error) {
+	// Create a context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+
 	// Construct full URL.
 	url := fmt.Sprintf("%s%s", c.BaseURL, opts.Endpoint)
 
@@ -284,7 +326,7 @@ func (c *Client) FetchStreamFiles(opts RequestOptions) ([]PulledFile, error) {
 	}
 
 	// Build the HTTP request.
-	req, err := http.NewRequest(opts.Method, url, bodyReader)
+	req, err := http.NewRequestWithContext(ctx, opts.Method, url, bodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -313,55 +355,37 @@ func (c *Client) FetchStreamFiles(opts RequestOptions) ([]PulledFile, error) {
 		return nil, fmt.Errorf("failed to parse Content-Type: %w", err)
 	}
 
-	var files []PulledFile
 	if strings.HasPrefix(mediaType, "multipart/") {
-		// Process as a multipart response.
-		boundary, ok := params["boundary"]
-		if !ok {
-			return nil, fmt.Errorf("missing boundary in multipart response")
-		}
-		mr := multipart.NewReader(resp.Body, boundary)
-		for {
-			part, err := mr.NextPart()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				return nil, fmt.Errorf("error reading multipart: %w", err)
-			}
+		return c.handleMultipartResponse(resp, params)
+	}
+	return c.handleSingleFileResponse(resp)
+}
 
-			// Extract filename from part header.
-			var filename string
-			if disp := part.Header.Get("Content-Disposition"); disp != "" {
-				_, dispParams, err := mime.ParseMediaType(disp)
-				if err == nil {
-					filename = dispParams["filename"]
-				}
-			}
+// handleMultipartResponse processes a multipart response and returns a slice of PulledFile.
+func (c *Client) handleMultipartResponse(resp *http.Response, params map[string]string) ([]PulledFile, error) {
+	boundary, ok := params["boundary"]
+	if !ok {
+		return nil, errors.New("missing boundary in multipart response")
+	}
 
-			content, err := io.ReadAll(part)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read multipart part: %w", err)
-			}
+	mr := multipart.NewReader(resp.Body, boundary)
+	var files []PulledFile
 
-			files = append(files, PulledFile{
-				Filename: filename,
-				Content:  content,
-			})
+	for {
+		part, err := mr.NextPart()
+		if errors.Is(err, io.EOF) {
+			break
 		}
-	} else {
-		// Process as a single file.
-		var filename string
-		if disp := resp.Header.Get("Content-Disposition"); disp != "" {
-			_, dispParams, err := mime.ParseMediaType(disp)
-			if err == nil {
-				filename = dispParams["filename"]
-			}
-		}
-		content, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read response body: %w", err)
+			return nil, fmt.Errorf("error reading multipart: %w", err)
 		}
+
+		filename := extractFilenameFromPart(part)
+		content, err := io.ReadAll(part)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read multipart part: %w", err)
+		}
+
 		files = append(files, PulledFile{
 			Filename: filename,
 			Content:  content,
@@ -369,4 +393,40 @@ func (c *Client) FetchStreamFiles(opts RequestOptions) ([]PulledFile, error) {
 	}
 
 	return files, nil
+}
+
+// handleSingleFileResponse processes a single file response and returns a slice of PulledFile.
+func (c *Client) handleSingleFileResponse(resp *http.Response) ([]PulledFile, error) {
+	filename := extractFilenameFromResponse(resp)
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	return []PulledFile{{
+		Filename: filename,
+		Content:  content,
+	}}, nil
+}
+
+// extractFilenameFromPart extracts the filename from a multipart part's Content-Disposition header.
+func extractFilenameFromPart(part *multipart.Part) string {
+	if disp := part.Header.Get("Content-Disposition"); disp != "" {
+		_, dispParams, err := mime.ParseMediaType(disp)
+		if err == nil {
+			return dispParams["filename"]
+		}
+	}
+	return ""
+}
+
+// extractFilenameFromResponse extracts the filename from a response's Content-Disposition header.
+func extractFilenameFromResponse(resp *http.Response) string {
+	if disp := resp.Header.Get("Content-Disposition"); disp != "" {
+		_, dispParams, err := mime.ParseMediaType(disp)
+		if err == nil {
+			return dispParams["filename"]
+		}
+	}
+	return ""
 }

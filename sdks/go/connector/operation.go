@@ -1,4 +1,4 @@
-package irminConnectorClient
+package irminconnectorclient
 
 import (
 	"fmt"
@@ -62,15 +62,14 @@ func (c *Client) InitOperation(details map[string]string, settings map[string]st
 // Note: System token is required for this operation.
 //
 // Parameters:
-// - operation_id: The ID of the operation to cancel.
+// - operationID: The ID of the operation to cancel.
 //
 // Returns:
 // - An error if the operation cannot be cancelled.
-func (c *Client) CancelOperation(operation_id int) error {
-
+func (c *Client) CancelOperation(operationID int) error {
 	// Prepare form fields by formatting keys with the appropriate prefixes.
 	formFields := map[string]string{
-		"operation_id": strconv.FormatInt(int64(operation_id), 10),
+		"operation_id": strconv.FormatInt(int64(operationID), 10),
 	}
 
 	// Send the POST request using FetchAPI with URL-encoded form fields.

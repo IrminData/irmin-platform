@@ -1,4 +1,4 @@
-package irminConnectorClient
+package irminconnectorclient
 
 import (
 	"net/http"
@@ -9,7 +9,7 @@ type Subscription struct {
 	CreatedAt               string  `json:"CreatedAt"`
 	UpdatedAt               string  `json:"UpdatedAt"`
 	DeletedAt               *string `json:"DeletedAt,omitempty"`
-	WebhookUrl              string  `json:"webhookUrl"`
+	WebhookURL              string  `json:"webhookUrl"`
 	WebhookAccessToken      string  `json:"webhookAccessToken"`
 	ConnectorRegistrationID int     `json:"connectorRegistrationID"`
 	OperationID             int     `json:"operationID"`
@@ -20,20 +20,20 @@ type Subscription struct {
 // Note: Operation token is required for this operation.
 //
 // Parameters:
-// - webhook_url: The URL of the webhook to send the changes to.
-// - webhook_access_token: The token to authenticate the webhook request with.
+// - webhook: The URL of the webhook to send the changes to.
+// - webhookAccessToken: The token to authenticate the webhook request with.
 //
 // Returns:
 // - The schema for the specified operation method if the request is successful.
 // - An error if the request fails.
-func (c *Client) SubscribeToChanges(webhook, webhook_access_token string) (*Subscription, error) {
+func (c *Client) SubscribeToChanges(webhook, webhookAccessToken string) (*Subscription, error) {
 	var subscription Subscription
 	if err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: "/operation/subscribe",
 		FormFields: map[string]string{
 			"webhook":              webhook,
-			"webhook_access_token": webhook_access_token,
+			"webhook_access_token": webhookAccessToken,
 		},
 	}, &subscription); err != nil {
 		return nil, err

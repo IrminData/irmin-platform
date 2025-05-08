@@ -1,4 +1,4 @@
-package irminModels
+package irminmodels
 
 // Branch represents a repository branch.
 type Branch struct {

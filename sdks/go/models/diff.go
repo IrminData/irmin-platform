@@ -1,4 +1,4 @@
-package irminModels
+package irminmodels
 
 // ChangeType represents the type of change in a diff.
 type ChangeType string

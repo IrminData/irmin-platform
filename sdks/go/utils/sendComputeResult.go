@@ -1,4 +1,4 @@
-package irminUtils
+package irminutils
 
 import (
 	"fmt"
@@ -15,14 +15,14 @@ func SendComputeResult(data []byte, fileName string) error {
 	}
 
 	// Write the data to the file
-	err := os.WriteFile(fileName, data, 0644)
+	err := os.WriteFile(fileName, data, 0600)
 
 	if err != nil {
-		return fmt.Errorf("failed to write result file: %v", err)
+		return fmt.Errorf("failed to write result file: %w", err)
 	}
 
 	// Log that we've written the result file so it can be parsed from logs if needed
-	fmt.Printf("<RESULT_FILE_WRITTEN>%s</RESULT_FILE_WRITTEN>", fileName)
+	fmt.Fprintf(os.Stdout, "<RESULT_FILE_WRITTEN>%s</RESULT_FILE_WRITTEN>", fileName)
 
 	return nil
 }

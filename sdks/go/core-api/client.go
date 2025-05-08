@@ -1,7 +1,8 @@
-package irminCore
+package irmincore
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,7 +13,11 @@ import (
 	"slices"
 	"time"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+)
+
+const (
+	defaultTimeout = 10 * time.Second
 )
 
 // Client represents the Irmin API client.
@@ -37,7 +42,7 @@ func NewClient(baseURL, token, locale string) *Client {
 		Token:   token,
 		Locale:  locale,
 		HTTPClient: &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: defaultTimeout,
 		},
 	}
 }
@@ -62,114 +67,149 @@ type FormFile struct {
 	FileName  string    // Optional override for the actual filename
 }
 
+// prepareJSONBody prepares the request body for JSON content type.
+func (c *Client) prepareJSONBody(opts RequestOptions) (io.Reader, map[string]string, error) {
+	if opts.Body == nil {
+		return nil, nil, nil
+	}
+
+	jsonData, err := json.Marshal(opts.Body)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to marshal JSON body: %w", err)
+	}
+
+	headers := map[string]string{"Content-Type": "application/json"}
+	return bytes.NewReader(jsonData), headers, nil
+}
+
+// prepareMultipartBody prepares the request body for multipart/form-data content type.
+func (c *Client) prepareMultipartBody(opts RequestOptions) (io.Reader, map[string]string, error) {
+	var b bytes.Buffer
+	writer := multipart.NewWriter(&b)
+
+	// Write form fields
+	for key, val := range opts.FormFields {
+		if err := writer.WriteField(key, val); err != nil {
+			return nil, nil, fmt.Errorf("failed to write form field %q: %w", key, err)
+		}
+	}
+
+	// Write files
+	for _, file := range opts.Files {
+		if err := c.writeFormFile(writer, file); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	if err := writer.Close(); err != nil {
+		return nil, nil, fmt.Errorf("failed to close multipart writer: %w", err)
+	}
+
+	headers := map[string]string{"Content-Type": writer.FormDataContentType()}
+	return &b, headers, nil
+}
+
+// writeFormFile writes a single file to the multipart form.
+func (c *Client) writeFormFile(writer *multipart.Writer, file FormFile) error {
+	fileName := file.FileName
+	if fileName == "" {
+		fileName = filepath.Base(file.FilePath)
+	}
+
+	var r io.Reader
+	switch {
+	case file.Reader != nil:
+		r = file.Reader
+	case file.FilePath != "":
+		f, err := os.Open(file.FilePath)
+		if err != nil {
+			return fmt.Errorf("failed to open file %q: %w", file.FilePath, err)
+		}
+		defer f.Close()
+		r = f
+	default:
+		return nil
+	}
+
+	part, err := writer.CreateFormFile(file.FieldName, fileName)
+	if err != nil {
+		return fmt.Errorf("failed to create form file for field %q: %w", file.FieldName, err)
+	}
+
+	if _, err = io.Copy(part, r); err != nil {
+		return fmt.Errorf("failed to copy file data: %w", err)
+	}
+
+	return nil
+}
+
+// prepareFormURLEncodedBody prepares the request body for application/x-www-form-urlencoded content type.
+func (c *Client) prepareFormURLEncodedBody(opts RequestOptions) (io.Reader, map[string]string, error) {
+	var buf bytes.Buffer
+	firstField := true
+	for key, val := range opts.FormFields {
+		if !firstField {
+			buf.WriteByte('&')
+		}
+		buf.WriteString(fmt.Sprintf("%s=%s", key, val))
+		firstField = false
+	}
+
+	headers := map[string]string{"Content-Type": "application/x-www-form-urlencoded"}
+	return bytes.NewReader(buf.Bytes()), headers, nil
+}
+
+// prepareDefaultBody prepares the request body for other content types.
+func (c *Client) prepareDefaultBody(opts RequestOptions) (io.Reader, map[string]string, error) {
+	if opts.Body == nil {
+		return nil, nil, nil
+	}
+
+	switch data := opts.Body.(type) {
+	case []byte:
+		return bytes.NewReader(data), nil, nil
+	case string:
+		return bytes.NewReader([]byte(data)), nil, nil
+	default:
+		return nil, nil, fmt.Errorf("unsupported body type for content type %q", opts.ContentType)
+	}
+}
+
+// prepareRequestBody prepares the request body based on content type.
+func (c *Client) prepareRequestBody(opts RequestOptions) (io.Reader, map[string]string, error) {
+	switch opts.ContentType {
+	case "application/json":
+		return c.prepareJSONBody(opts)
+	case "multipart/form-data":
+		return c.prepareMultipartBody(opts)
+	case "application/x-www-form-urlencoded":
+		return c.prepareFormURLEncodedBody(opts)
+	default:
+		return c.prepareDefaultBody(opts)
+	}
+}
+
 // Request is the main method that sends requests to the Irmin API and returns raw response data.
 func (c *Client) Request(opts RequestOptions) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+
 	url := fmt.Sprintf("%s%s", c.BaseURL, opts.Endpoint)
 
-	var bodyReader io.Reader
-	headers := make(map[string]string)
+	bodyReader, headers, err := c.prepareRequestBody(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add any extra headers from options
 	if opts.Headers != nil {
 		for k, v := range opts.Headers {
 			headers[k] = v
 		}
 	}
 
-	switch opts.ContentType {
-	case "application/json":
-		// Encode Body as JSON
-		if opts.Body != nil {
-			jsonData, err := json.Marshal(opts.Body)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal JSON body: %w", err)
-			}
-			bodyReader = bytes.NewReader(jsonData)
-			headers["Content-Type"] = "application/json"
-		}
-
-	case "multipart/form-data":
-		// Build a multipart form
-		var b bytes.Buffer
-		writer := multipart.NewWriter(&b)
-
-		// Write form fields
-		for key, val := range opts.FormFields {
-			if err := writer.WriteField(key, val); err != nil {
-				return nil, fmt.Errorf("failed to write form field %q: %w", key, err)
-			}
-		}
-
-		// Write files
-		for _, file := range opts.Files {
-			var fileName string
-			if file.FileName != "" {
-				fileName = file.FileName
-			} else {
-				fileName = filepath.Base(file.FilePath)
-			}
-
-			var r io.Reader
-			if file.Reader != nil {
-				// If a reader is provided, use it
-				r = file.Reader
-			} else if file.FilePath != "" {
-				// Otherwise open the file from disk
-				f, err := os.Open(file.FilePath)
-				if err != nil {
-					return nil, fmt.Errorf("failed to open file %q: %w", file.FilePath, err)
-				}
-				defer f.Close()
-				r = f
-			} else {
-				continue
-			}
-
-			part, err := writer.CreateFormFile(file.FieldName, fileName)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create form file for field %q: %w", file.FieldName, err)
-			}
-			if _, err = io.Copy(part, r); err != nil {
-				return nil, fmt.Errorf("failed to copy file data: %w", err)
-			}
-		}
-
-		if err := writer.Close(); err != nil {
-			return nil, fmt.Errorf("failed to close multipart writer: %w", err)
-		}
-
-		bodyReader = &b
-		headers["Content-Type"] = writer.FormDataContentType()
-
-	case "application/x-www-form-urlencoded":
-		// Encode form fields as URL-encoded data
-		var buf bytes.Buffer
-		firstField := true
-		for key, val := range opts.FormFields {
-			if !firstField {
-				buf.WriteByte('&')
-			}
-			buf.WriteString(fmt.Sprintf("%s=%s", key, val))
-			firstField = false
-		}
-		bodyReader = bytes.NewReader(buf.Bytes())
-		headers["Content-Type"] = "application/x-www-form-urlencoded"
-
-	default:
-		// If the content type is something else (or unspecified),
-		// let the user provide raw bytes or a string
-		if opts.Body != nil {
-			switch data := opts.Body.(type) {
-			case []byte:
-				bodyReader = bytes.NewReader(data)
-			case string:
-				bodyReader = bytes.NewReader([]byte(data))
-			default:
-				return nil, fmt.Errorf("unsupported body type for content type %q", opts.ContentType)
-			}
-		}
-	}
-
 	// Build the HTTP request
-	req, err := http.NewRequest(opts.Method, url, bodyReader)
+	req, err := http.NewRequestWithContext(ctx, opts.Method, url, bodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -191,30 +231,26 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	// Read the response body, regardless of status code
+	// Read the response body
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	// If no allowed status codes provided, consider all 2xx codes sucessful
+	// Check response status
 	if len(opts.AllowedStatus) == 0 {
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, responseBody)
 		}
-	} else {
-		// Check if the response status code is allowed.
-		allowed := slices.Contains(opts.AllowedStatus, resp.StatusCode)
-		if !allowed {
-			return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, responseBody)
-		}
+	} else if !slices.Contains(opts.AllowedStatus, resp.StatusCode) {
+		return nil, fmt.Errorf("API request failed with status %d. Body: %s", resp.StatusCode, responseBody)
 	}
 
 	return responseBody, nil
 }
 
 // FetchAPI sends a request and attempts to parse the response into IrminAPIResponse[T].
-func (c *Client) FetchAPI(opts RequestOptions, out any) (*irminModels.IrminAPIResponse, error) {
+func (c *Client) FetchAPI(opts RequestOptions, out any) (*irminmodels.IrminAPIResponse, error) {
 	// 1) Make the HTTP request using your existing `Request` method.
 	body, err := c.Request(opts)
 	if err != nil {
@@ -222,8 +258,9 @@ func (c *Client) FetchAPI(opts RequestOptions, out any) (*irminModels.IrminAPIRe
 	}
 
 	// 2) Unmarshal the main response.
-	var apiResp irminModels.IrminAPIResponse
-	if err := json.Unmarshal(body, &apiResp); err != nil {
+	var apiResp irminmodels.IrminAPIResponse
+	err = json.Unmarshal(body, &apiResp)
+	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response JSON: %w", err)
 	}
 
@@ -235,12 +272,14 @@ func (c *Client) FetchAPI(opts RequestOptions, out any) (*irminModels.IrminAPIRe
 	// 4) If the caller passed a destination for `Data`, unmarshal it.
 	if out != nil && apiResp.Data != nil {
 		// Create byte map from the Data field
-		dataBytes, err := json.Marshal(apiResp.Data)
+		var dataBytes []byte
+		dataBytes, err = json.Marshal(apiResp.Data)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal Data field: %w", err)
 		}
 		// Unmarshal the byte map into the provided destination
-		if err := json.Unmarshal(dataBytes, out); err != nil {
+		err = json.Unmarshal(dataBytes, out)
+		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal Data field: %w", err)
 		}
 	}

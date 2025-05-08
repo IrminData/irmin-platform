@@ -1,15 +1,15 @@
-package irminCore
+package irmincore
 
 import (
 	"fmt"
 	"net/http"
 	"strconv"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) ListTokens() ([]irminModels.APIToken, *irminModels.IrminAPIResponse, error) {
-	var tokens []irminModels.APIToken
+func (c *Client) ListTokens() ([]irminmodels.APIToken, *irminmodels.IrminAPIResponse, error) {
+	var tokens []irminmodels.APIToken
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: "/v1/credentials",
@@ -20,8 +20,8 @@ func (c *Client) ListTokens() ([]irminModels.APIToken, *irminModels.IrminAPIResp
 	return tokens, apiResp, nil
 }
 
-func (c *Client) CreateToken(name string, expiry int) (*irminModels.APIToken, *irminModels.IrminAPIResponse, error) {
-	var token irminModels.APIToken
+func (c *Client) CreateToken(name string, expiry int) (*irminmodels.APIToken, *irminmodels.IrminAPIResponse, error) {
+	var token irminmodels.APIToken
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/credentials",
@@ -37,7 +37,7 @@ func (c *Client) CreateToken(name string, expiry int) (*irminModels.APIToken, *i
 	return &token, apiResp, nil
 }
 
-func (c *Client) DeleteToken(tokenID string) (*irminModels.IrminAPIResponse, error) {
+func (c *Client) DeleteToken(tokenID string) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodDelete,
 		Endpoint:    fmt.Sprintf("/v1/credentials/%s", tokenID),

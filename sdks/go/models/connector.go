@@ -1,4 +1,4 @@
-package irminModels
+package irminmodels
 
 // Connector represents general information about a connector.
 type Connector struct {

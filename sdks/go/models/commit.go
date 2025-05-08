@@ -1,4 +1,4 @@
-package irminModels
+package irminmodels
 
 // Commit represents a repository commit.
 type Commit struct {

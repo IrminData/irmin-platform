@@ -1,15 +1,17 @@
-package irminCore
+package irmincore
 
 import (
 	"fmt"
 	"net/http"
 	"strconv"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) ListBranches(workspace, repository string) ([]irminModels.Branch, *irminModels.IrminAPIResponse, error) {
-	var branches []irminModels.Branch
+func (c *Client) ListBranches(
+	workspace, repository string,
+) ([]irminmodels.Branch, *irminmodels.IrminAPIResponse, error) {
+	var branches []irminmodels.Branch
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches", workspace, repository),
@@ -20,8 +22,10 @@ func (c *Client) ListBranches(workspace, repository string) ([]irminModels.Branc
 	return branches, apiResp, nil
 }
 
-func (c *Client) GetBranch(workspace, repository, branchName string) (*irminModels.Branch, *irminModels.IrminAPIResponse, error) {
-	var branch irminModels.Branch
+func (c *Client) GetBranch(
+	workspace, repository, branchName string,
+) (*irminmodels.Branch, *irminmodels.IrminAPIResponse, error) {
+	var branch irminmodels.Branch
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches/%s", workspace, repository, branchName),
@@ -33,8 +37,11 @@ func (c *Client) GetBranch(workspace, repository, branchName string) (*irminMode
 }
 
 // CreateBranch creates a new branch in the repository.
-func (c *Client) CreateBranch(workspace, repository, name, from string, isImmutable bool) (*irminModels.Branch, *irminModels.IrminAPIResponse, error) {
-	var branch irminModels.Branch
+func (c *Client) CreateBranch(
+	workspace, repository, name, from string,
+	isImmutable bool,
+) (*irminmodels.Branch, *irminmodels.IrminAPIResponse, error) {
+	var branch irminmodels.Branch
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches", workspace, repository),
@@ -53,7 +60,7 @@ func (c *Client) CreateBranch(workspace, repository, name, from string, isImmuta
 }
 
 // DeleteBranch deletes a branch in the repository.
-func (c *Client) DeleteBranch(workspace, repository, branch string) (*irminModels.IrminAPIResponse, error) {
+func (c *Client) DeleteBranch(workspace, repository, branch string) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodDelete,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches/%s", workspace, repository, branch),
@@ -67,7 +74,10 @@ func (c *Client) DeleteBranch(workspace, repository, branch string) (*irminModel
 }
 
 // UpdateBranch updates a branch name in the repository.
-func (c *Client) UpdateBranch(workspace, repository, oldName, newName string, isImmutable bool) (*irminModels.IrminAPIResponse, error) {
+func (c *Client) UpdateBranch(
+	workspace, repository, oldName, newName string,
+	isImmutable bool,
+) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches/%s", workspace, repository, oldName),
@@ -79,15 +89,17 @@ func (c *Client) UpdateBranch(workspace, repository, oldName, newName string, is
 	}, nil)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to update branch, status code: %d", err)
+		return nil, fmt.Errorf("failed to update branch, status code: %w", err)
 	}
 
 	return apiResp, nil
 }
 
 // GetUncommittedChanges retrieves the list of uncommitted changes in a branch.
-func (c *Client) GetUncommittedChanges(workspace, repository, branch string) (*irminModels.Diff, *irminModels.IrminAPIResponse, error) {
-	var diff irminModels.Diff
+func (c *Client) GetUncommittedChanges(
+	workspace, repository, branch string,
+) (*irminmodels.Diff, *irminmodels.IrminAPIResponse, error) {
+	var diff irminmodels.Diff
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches/%s/changes", workspace, repository, branch),

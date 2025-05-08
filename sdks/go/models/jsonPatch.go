@@ -1,4 +1,4 @@
-package irminModels
+package irminmodels
 
 // PatchOperation represents a single operation in a JSON Patch array.
 type PatchOperation struct {

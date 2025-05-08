@@ -1,15 +1,15 @@
-package irminUtils
+package irminutils
 
 import (
 	"fmt"
 	"strconv"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // PrepareWorkflowScheduleData prepares a map of fields for a workflow schedule.
-// Returns an array of fields to be used in a form submission
-func PrepareWorkflowScheduleData(schedule irminModels.Schedule) (map[string]string, error) {
+// Returns an array of fields to be used in a form submission.
+func PrepareWorkflowScheduleData(schedule irminmodels.Schedule) (map[string]string, error) {
 	fields := make(map[string]string)
 
 	for index, trigger := range schedule.Triggers {
@@ -17,18 +17,18 @@ func PrepareWorkflowScheduleData(schedule irminModels.Schedule) (map[string]stri
 
 		// Type assertion to access concrete fields
 		switch trigger.Type {
-		case irminModels.TimeTriggerType:
+		case irminmodels.TimeTriggerType:
 			// Write time trigger fields
 			fields[fieldPrefix+"type"] = "time"
 			fields[fieldPrefix+"rrule"] = *trigger.RRule
 			fields[fieldPrefix+"cron"] = *trigger.Cron
-		case irminModels.RepositoryTriggerType:
+		case irminmodels.RepositoryTriggerType:
 			// Write repository trigger fields
 			fields[fieldPrefix+"type"] = "repository-event"
 			fields[fieldPrefix+"event"] = string(*trigger.RepositoryEvent)
 			fields[fieldPrefix+"repository"] = *trigger.Repository
 			fields[fieldPrefix+"branch"] = *trigger.RepositoryRef
-		case irminModels.WorkflowRunTriggerType:
+		case irminmodels.WorkflowRunTriggerType:
 			// Write workflow run trigger fields
 			fields[fieldPrefix+"type"] = "workflow-run-event"
 			fields[fieldPrefix+"event"] = string(*trigger.WorkflowRunEvent)

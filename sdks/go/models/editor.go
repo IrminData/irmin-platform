@@ -1,4 +1,4 @@
-package irminModels
+package irminmodels
 
 import "time"
 

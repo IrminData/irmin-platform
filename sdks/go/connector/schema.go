@@ -1,10 +1,10 @@
-package irminConnectorClient
+package irminconnectorclient
 
 import (
 	"fmt"
 	"net/http"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // GetSchema retrieves the schema for a specific operation method.
@@ -17,8 +17,8 @@ import (
 // Returns:
 // - The schema for the specified operation method if the request is successful.
 // - An error if the request fails.
-func (c *Client) GetSchema(method string) (*irminModels.ObjectSchema, error) {
-	var schema irminModels.ObjectSchema
+func (c *Client) GetSchema(method string) (*irminmodels.ObjectSchema, error) {
+	var schema irminmodels.ObjectSchema
 	if err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: fmt.Sprintf("/operation/schema/%s", method),

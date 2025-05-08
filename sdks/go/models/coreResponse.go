@@ -1,6 +1,6 @@
-package irminModels
+package irminmodels
 
-// IrminAPIPaginationMetadata represents the pagination metadata from the Irmin Core API
+// IrminAPIPaginationMetadata represents the pagination metadata from the Irmin Core API.
 type IrminAPIPaginationMetadata struct {
 	// Total is the total number of items available
 	Total int `json:"total"`

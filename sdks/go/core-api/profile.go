@@ -1,15 +1,15 @@
-package irminCore
+package irmincore
 
 import (
 	"fmt"
 	"net/http"
 	"os"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) GetProfile() (*irminModels.User, *irminModels.IrminAPIResponse, error) {
-	var profile irminModels.User
+func (c *Client) GetProfile() (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
+	var profile irminmodels.User
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: "/v1/profile",
@@ -20,7 +20,10 @@ func (c *Client) GetProfile() (*irminModels.User, *irminModels.IrminAPIResponse,
 	return &profile, apiResp, nil
 }
 
-func (c *Client) UpdateProfile(firstName, lastName, email, phone, company string, profilePicture *os.File) (*irminModels.User, *irminModels.IrminAPIResponse, error) {
+func (c *Client) UpdateProfile(
+	firstName, lastName, email, phone, company string,
+	profilePicture *os.File,
+) (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
 	var files []FormFile
 	if profilePicture != nil {
 		files = append(files, FormFile{
@@ -30,7 +33,7 @@ func (c *Client) UpdateProfile(firstName, lastName, email, phone, company string
 		})
 	}
 
-	var updatedProfile irminModels.User
+	var updatedProfile irminmodels.User
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    "/v1/profile",

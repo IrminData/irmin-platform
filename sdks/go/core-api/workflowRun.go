@@ -1,17 +1,26 @@
-package irminCore
+package irmincore
 
 import (
 	"fmt"
 	"net/http"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) ListWorkflowRuns(workspace, workflowID string, page, perPage int) ([]irminModels.WorkflowRun, *irminModels.IrminAPIResponse, error) {
-	var runs []irminModels.WorkflowRun
+func (c *Client) ListWorkflowRuns(
+	workspace, workflowID string,
+	page, perPage int,
+) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error) {
+	var runs []irminmodels.WorkflowRun
 	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s/runs?page=%d&per_page=%d", workspace, workflowID, page, perPage),
+		Method: http.MethodGet,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/workflows/%s/runs?page=%d&per_page=%d",
+			workspace,
+			workflowID,
+			page,
+			perPage,
+		),
 	}, &runs)
 	if err != nil {
 		return nil, nil, fmt.Errorf("list workflow runs error: %w", err)
@@ -19,8 +28,10 @@ func (c *Client) ListWorkflowRuns(workspace, workflowID string, page, perPage in
 	return runs, apiResp, nil
 }
 
-func (c *Client) GetWorkflowRun(workspace, workflowID, runID string) (*irminModels.WorkflowRun, *irminModels.IrminAPIResponse, error) {
-	var run irminModels.WorkflowRun
+func (c *Client) GetWorkflowRun(
+	workspace, workflowID, runID string,
+) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error) {
+	var run irminmodels.WorkflowRun
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s/runs/%s", workspace, workflowID, runID),
@@ -31,8 +42,10 @@ func (c *Client) GetWorkflowRun(workspace, workflowID, runID string) (*irminMode
 	return &run, apiResp, nil
 }
 
-func (c *Client) CancelWorkflowRun(workspace, workflowID, runID string) (*irminModels.WorkflowRun, *irminModels.IrminAPIResponse, error) {
-	var run irminModels.WorkflowRun
+func (c *Client) CancelWorkflowRun(
+	workspace, workflowID, runID string,
+) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error) {
+	var run irminmodels.WorkflowRun
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s/runs/%s", workspace, workflowID, runID),
@@ -43,8 +56,10 @@ func (c *Client) CancelWorkflowRun(workspace, workflowID, runID string) (*irminM
 	return &run, apiResp, nil
 }
 
-func (c *Client) TriggerWorkflowRun(workspace, workflowID string) (*irminModels.WorkflowRun, *irminModels.IrminAPIResponse, error) {
-	var run irminModels.WorkflowRun
+func (c *Client) TriggerWorkflowRun(
+	workspace, workflowID string,
+) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error) {
+	var run irminmodels.WorkflowRun
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s/runs", workspace, workflowID),
