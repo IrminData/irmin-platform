@@ -5,14 +5,14 @@ import (
 )
 
 type Subscription struct {
-	ID                      int     `json:"ID"`
+	ID                      uint    `json:"ID"`
 	CreatedAt               string  `json:"CreatedAt"`
 	UpdatedAt               string  `json:"UpdatedAt"`
 	DeletedAt               *string `json:"DeletedAt,omitempty"`
 	WebhookURL              string  `json:"webhookUrl"`
 	WebhookAccessToken      string  `json:"webhookAccessToken"`
-	ConnectorRegistrationID int     `json:"connectorRegistrationID"`
-	OperationID             int     `json:"operationID"`
+	ConnectorRegistrationID uint    `json:"connectorRegistrationID"`
+	OperationID             uint    `json:"operationID"`
 }
 
 // SubscribeToChanges subscribes to changes in the data and sends the changes to the specified webhook.
