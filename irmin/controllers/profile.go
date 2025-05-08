@@ -6,7 +6,7 @@ import (
 	"irmin-api/utils"
 	"log"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/clerk/clerk-sdk-go/v2/emailaddress"
 	"github.com/clerk/clerk-sdk-go/v2/phonenumber"
@@ -22,13 +22,13 @@ func ProfileShow(c fiber.Ctx) error {
 	sqid, err := utils.EncodeSqids("users", uint64(user.ID))
 	if err != nil {
 		log.Printf("Error creating user SQID: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Create the user response
-	response := irminModels.User{
+	response := irminmodels.User{
 		ID:             sqid,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
@@ -39,7 +39,7 @@ func ProfileShow(c fiber.Ctx) error {
 	}
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: response,
 	})
 }
@@ -55,7 +55,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	env, err := utils.LoadEnv()
 	if err != nil {
 		log.Printf("Error loading environment variables: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -67,7 +67,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"first_name", "last_name", "email", "phone"}, []string{"company"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -82,7 +82,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating user: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -94,7 +94,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	clerkUser, err := user.Get(ctx, irminUser.ClerkID)
 	if err != nil {
 		log.Printf("Error getting user details from Clerk: %v", err)
-		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
@@ -117,7 +117,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 		})
 		if err != nil {
 			log.Printf("Error creating email address: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -142,7 +142,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 		})
 		if err != nil {
 			log.Printf("Error creating phone number: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -158,7 +158,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating user: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -168,7 +168,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 		newProfilePictureSrc, err := newProfilePicture.Open()
 		if err != nil {
 			log.Printf("Error opening profile picture: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -177,7 +177,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 		})
 		if err != nil {
 			log.Printf("Error updating profile picture: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -187,13 +187,13 @@ func ProfileUpdate(c fiber.Ctx) error {
 	sqid, err := utils.EncodeSqids("users", uint64(updatedUser.ID))
 	if err != nil {
 		log.Printf("Error creating user SQID: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Structure the user response
-	userResponse := irminModels.User{
+	userResponse := irminmodels.User{
 		ID:             sqid,
 		FirstName:      updatedUser.FirstName,
 		LastName:       updatedUser.LastName,
@@ -204,7 +204,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	}
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("profile_updated"),
 		Data:    userResponse,
 	})

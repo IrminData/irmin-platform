@@ -72,7 +72,14 @@ func (c *Client) GetBranch(repositoryID, branchID string) (*Branch, error) {
 
 // ListBranches retrieves a single page of branches for a given repository.
 func (c *Client) ListBranches(repositoryID, prefix, after string, amount int, show_hidden bool) (*BranchList, error) {
-	endpoint := fmt.Sprintf("/repositories/%s/branches?prefix=%s&after=%s&amount=%d&show_hidden=%t", repositoryID, prefix, after, amount, show_hidden)
+	endpoint := fmt.Sprintf(
+		"/repositories/%s/branches?prefix=%s&after=%s&amount=%d&show_hidden=%t",
+		repositoryID,
+		prefix,
+		after,
+		amount,
+		show_hidden,
+	)
 	var listResp BranchList
 	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &listResp); err != nil {
 		return nil, err
@@ -134,7 +141,13 @@ func (c *Client) ResetBranch(repositoryID, branchID string, reqData BranchResetR
 
 // HardResetBranch will relocate branch to refer to ref. Branch must not contain uncommitted data.
 func (c *Client) HardResetBranch(repositoryID, branchID, ref string, force bool) error {
-	endpoint := fmt.Sprintf("/repositories/%s/branches/%s/hard_reset?ref=%s&force=%t", repositoryID, branchID, ref, force)
+	endpoint := fmt.Sprintf(
+		"/repositories/%s/branches/%s/hard_reset?ref=%s&force=%t",
+		repositoryID,
+		branchID,
+		ref,
+		force,
+	)
 	return c.doRequest("PUT", endpoint, nil, []int{http.StatusOK, http.StatusNoContent}, nil)
 }
 
@@ -155,9 +168,20 @@ func (c *Client) BranchCherryPick(repositoryID, branchID string, reqData CherryP
 }
 
 // GetBranchDiffs returns the differences between a branch and the base.
-func (c *Client) GetBranchDiffs(repositoryID, branchID, after, prefix, delimiter string, amount int) (*DiffList, error) {
+func (c *Client) GetBranchDiffs(
+	repositoryID, branchID, after, prefix, delimiter string,
+	amount int,
+) (*DiffList, error) {
 	var diffs DiffList
-	endpoint := fmt.Sprintf("/repositories/%s/branches/%s/diff?after=%s&prefix=%s&delimiter=%s&amount=%d", repositoryID, branchID, after, prefix, delimiter, amount)
+	endpoint := fmt.Sprintf(
+		"/repositories/%s/branches/%s/diff?after=%s&prefix=%s&delimiter=%s&amount=%d",
+		repositoryID,
+		branchID,
+		after,
+		prefix,
+		delimiter,
+		amount,
+	)
 	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &diffs); err != nil {
 		return nil, err
 	}

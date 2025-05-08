@@ -9,7 +9,12 @@ import (
 	"time"
 )
 
-func ExecuteWorkflow(ctx context.Context, workflow db.Workflow, user *db.User, trigger *db.WorkflowTrigger) (*db.WorkflowRun, error) {
+func ExecuteWorkflow(
+	ctx context.Context,
+	workflow db.Workflow,
+	user *db.User,
+	trigger *db.WorkflowTrigger,
+) (*db.WorkflowRun, error) {
 	// Save the workflow run to the database.
 	startedAt := time.Now()
 	run := &db.WorkflowRun{

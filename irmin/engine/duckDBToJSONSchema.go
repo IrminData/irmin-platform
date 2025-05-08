@@ -3,7 +3,7 @@ package engine
 import (
 	"strings"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // buildJSONSchema converts a flat slice of SchemaField into a JSONSchema
@@ -11,10 +11,10 @@ import (
 //
 //   - fields: the result of getDuckDBSchema(...)
 //     ↪︎ returns: a JSONSchema with Type="object", Properties and Required
-func buildJSONSchema(fields []SchemaField) irminModels.JSONSchema {
-	js := irminModels.JSONSchema{
+func buildJSONSchema(fields []SchemaField) irminmodels.JSONSchema {
+	js := irminmodels.JSONSchema{
 		Type:       "object",
-		Properties: map[string]irminModels.JSONSchema{},
+		Properties: map[string]irminmodels.JSONSchema{},
 		Required:   []string{},
 	}
 
@@ -30,10 +30,10 @@ func buildJSONSchema(fields []SchemaField) irminModels.JSONSchema {
 
 // schemaForField builds a JSONSchema for a single SchemaField, handling
 // recursion into nested STRUCTs and arrays, and carrying through Required.
-func schemaForField(f SchemaField) irminModels.JSONSchema {
+func schemaForField(f SchemaField) irminmodels.JSONSchema {
 	// 1) ARRAY types
 	if strings.HasPrefix(f.Type, "ARRAY<") {
-		var items irminModels.JSONSchema
+		var items irminmodels.JSONSchema
 		// for array of structs, recurse into children
 		if len(f.Children) > 0 {
 			items = schemaForField(SchemaField{
@@ -46,7 +46,7 @@ func schemaForField(f SchemaField) irminModels.JSONSchema {
 			primType := strings.TrimSuffix(f.Type, "[]")
 			items = primitiveSchema(primType)
 		}
-		schema := irminModels.JSONSchema{
+		schema := irminmodels.JSONSchema{
 			Type:  "array",
 			Items: &items,
 		}
@@ -58,7 +58,7 @@ func schemaForField(f SchemaField) irminModels.JSONSchema {
 
 	// 2) STRUCT → object
 	if f.Type == "STRUCT" {
-		props := make(map[string]irminModels.JSONSchema, len(f.Children))
+		props := make(map[string]irminmodels.JSONSchema, len(f.Children))
 		req := []string{}
 		for _, child := range f.Children {
 			props[child.Name] = schemaForField(child)
@@ -66,7 +66,7 @@ func schemaForField(f SchemaField) irminModels.JSONSchema {
 				req = append(req, child.Name)
 			}
 		}
-		schema := irminModels.JSONSchema{
+		schema := irminmodels.JSONSchema{
 			Type:       "object",
 			Properties: props,
 		}
@@ -89,28 +89,28 @@ func schemaForField(f SchemaField) irminModels.JSONSchema {
 func ptrInt(v int) *int { return &v }
 
 // primitiveSchema maps a DuckDB type into a JSONSchema for a primitive.
-func primitiveSchema(duckType string) irminModels.JSONSchema {
+func primitiveSchema(duckType string) irminmodels.JSONSchema {
 	switch dt := strings.ToUpper(duckType); dt {
 	case "VARCHAR", "TEXT":
-		return irminModels.JSONSchema{Type: "string"}
+		return irminmodels.JSONSchema{Type: "string"}
 	case "BOOLEAN":
-		return irminModels.JSONSchema{Type: "boolean"}
+		return irminmodels.JSONSchema{Type: "boolean"}
 	case "TINYINT", "SMALLINT", "INTEGER", "BIGINT":
-		return irminModels.JSONSchema{Type: "integer"}
+		return irminmodels.JSONSchema{Type: "integer"}
 	case "FLOAT", "DOUBLE", "REAL", "DECIMAL":
-		return irminModels.JSONSchema{Type: "number"}
+		return irminmodels.JSONSchema{Type: "number"}
 	case "TIMESTAMP", "TIMESTAMP_LTZ", "TIMESTAMP_NTZ", "DATETIME":
 		format := "date-time"
-		return irminModels.JSONSchema{Type: "string", Format: &format}
+		return irminmodels.JSONSchema{Type: "string", Format: &format}
 	case "DATE":
 		format := "date"
-		return irminModels.JSONSchema{Type: "string", Format: &format}
+		return irminmodels.JSONSchema{Type: "string", Format: &format}
 	case "JSON":
-		return irminModels.JSONSchema{
+		return irminmodels.JSONSchema{
 			Type:                 "object",
 			AdditionalProperties: true,
 		}
 	default:
-		return irminModels.JSONSchema{Type: "string"}
+		return irminmodels.JSONSchema{Type: "string"}
 	}
 }

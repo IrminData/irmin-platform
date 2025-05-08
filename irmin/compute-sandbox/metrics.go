@@ -189,14 +189,14 @@ func parseDockerStats(statsOutput, shortID string) (ResourceUsage, error) {
 	cpuStr := strings.TrimSuffix(fields[2], "%")
 	cpu, err := strconv.ParseFloat(cpuStr, 64)
 	if err != nil {
-		return ru, fmt.Errorf("failed to parse CPU percent: %v", err)
+		return ru, fmt.Errorf("failed to parse CPU percent: %w", err)
 	}
 	ru.CPUPercent = cpu
 
 	// Parse memory usage (fields[3]) into bytes.
 	memUsage, err := utils.ParseBytes(fields[3])
 	if err != nil {
-		return ru, fmt.Errorf("failed to parse memory usage: %v", err)
+		return ru, fmt.Errorf("failed to parse memory usage: %w", err)
 	}
 	ru.MemUsageBytes = memUsage
 
@@ -204,33 +204,33 @@ func parseDockerStats(statsOutput, shortID string) (ResourceUsage, error) {
 	memPercentStr := strings.TrimSuffix(fields[6], "%")
 	memPercent, err := strconv.ParseFloat(memPercentStr, 64)
 	if err != nil {
-		return ru, fmt.Errorf("failed to parse memory percent: %v", err)
+		return ru, fmt.Errorf("failed to parse memory percent: %w", err)
 	}
 	ru.MemPercent = memPercent
 
 	// Parse network I/O: fields[7] (input) and fields[9] (output).
 	netInput, err := utils.ParseBytes(fields[7])
 	if err != nil {
-		return ru, fmt.Errorf("failed to parse net input: %v", err)
+		return ru, fmt.Errorf("failed to parse net input: %w", err)
 	}
 	ru.NetInputBytes = netInput
 
 	netOutput, err := utils.ParseBytes(fields[9])
 	if err != nil {
-		return ru, fmt.Errorf("failed to parse net output: %v", err)
+		return ru, fmt.Errorf("failed to parse net output: %w", err)
 	}
 	ru.NetOutputBytes = netOutput
 
 	// Parse block I/O: fields[10] (input) and fields[12] (output).
 	blockInput, err := utils.ParseBytes(fields[10])
 	if err != nil {
-		return ru, fmt.Errorf("failed to parse block input: %v", err)
+		return ru, fmt.Errorf("failed to parse block input: %w", err)
 	}
 	ru.BlockInputBytes = blockInput
 
 	blockOutput, err := utils.ParseBytes(fields[12])
 	if err != nil {
-		return ru, fmt.Errorf("failed to parse block output: %v", err)
+		return ru, fmt.Errorf("failed to parse block output: %w", err)
 	}
 	ru.BlockOutputBytes = blockOutput
 

@@ -12,12 +12,12 @@ type WorkflowRun struct {
 	StartedAt         *time.Time       `json:"started_at,omitempty"`
 	FinishedAt        *time.Time       `json:"finished_at,omitempty"`
 	Status            WorkflowStatus   `json:"status"`
-	Logs              []string         `json:"logs,omitempty" gorm:"type:jsonb;serializer:json"`
-	TriggeredBy       *WorkflowTrigger `json:"triggered_by" gorm:"foreignKey:TriggeredByID"`
+	Logs              []string         `json:"logs,omitempty"        gorm:"type:jsonb;serializer:json"`
+	TriggeredBy       *WorkflowTrigger `json:"triggered_by"          gorm:"foreignKey:TriggeredByID"`
 	TriggeredByID     *uint            `json:"triggered_by_id"`
-	TriggeredByUser   *User            `json:"triggered_by_user" gorm:"foreignKey:TriggeredByUserID"`
+	TriggeredByUser   *User            `json:"triggered_by_user"     gorm:"foreignKey:TriggeredByUserID"`
 	TriggeredByUserID *uint            `json:"triggered_by_user_id"`
-	Workflow          Workflow         `json:"workflow" gorm:"foreignKey:WorkflowID"`
+	Workflow          Workflow         `json:"workflow"              gorm:"foreignKey:WorkflowID"`
 	WorkflowID        uint             `json:"workflow_id"`
 }
 

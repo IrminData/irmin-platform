@@ -8,11 +8,11 @@ type Workspace struct {
 	gorm.Model
 
 	Name        string          `json:"name"`
-	Slug        string          `json:"slug" gorm:"uniqueIndex"`
+	Slug        string          `json:"slug"        gorm:"uniqueIndex"`
 	Description string          `json:"description"`
-	Owner       User            `json:"owner" gorm:"foreignKey:OwnerID"`
+	Owner       User            `json:"owner"       gorm:"foreignKey:OwnerID"`
 	OwnerID     uint            `json:"owner_id"`
-	Users       []WorkspaceUser `json:"users" gorm:"foreignKey:WorkspaceID"`
+	Users       []WorkspaceUser `json:"users"       gorm:"foreignKey:WorkspaceID"`
 }
 
 // GetWorkspaceBySlug retrieves a workspace by its slug.

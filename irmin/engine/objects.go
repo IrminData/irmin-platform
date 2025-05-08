@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // getObject fetches the object from a workspace repository at a specific ref and path
@@ -16,7 +16,7 @@ import (
 func getObject(
 	path, lakeFSRepositoryName, ref string,
 	lakefsClient lakefs.Client,
-) (*irminModels.Object, error) {
+) (*irminmodels.Object, error) {
 	// Trim leading and trailing slashes from the path.
 	path = strings.Trim(path, "/")
 
@@ -36,7 +36,7 @@ func getObject(
 		ContentType:           "",
 	}
 	var err error
-	if objectPathDetails.Type != irminModels.ObjectTypeGroup {
+	if objectPathDetails.Type != irminmodels.ObjectTypeGroup {
 		objectMetadata, err = lakefsClient.GetObjectMetadata(
 			lakeFSRepositoryName, ref, path, true, false,
 		)
@@ -47,7 +47,7 @@ func getObject(
 
 	// If it's a group, list all objects under the path (recursive), then identify immediate children and sub-groups.
 	var rawChildren []lakefs.ObjectMetadata
-	if objectPathDetails.Type == irminModels.ObjectTypeGroup {
+	if objectPathDetails.Type == irminmodels.ObjectTypeGroup {
 		rawChildren, err = lakefsClient.ListAllObjects(lakeFSRepositoryName, ref, path, "", "", true, false)
 		if err != nil {
 			return nil, err
@@ -76,7 +76,7 @@ func getObject(
 	}
 
 	// Convert immediate children: recurse on directories first, then files.
-	var irminObjectChildren []irminModels.Object
+	var irminObjectChildren []irminmodels.Object
 	for dir := range dirs {
 		subPath := dir
 		if path != "" {
@@ -97,8 +97,8 @@ func getObject(
 	for name, meta := range files {
 		// Leaf object: convert metadata to Irmin object.
 		objectDetails := utils.ParseObjectDetailsFromPath(meta.Path)
-		lastModified := time.Unix(int64(meta.Mtime), 0).Format(time.RFC3339)
-		irminObjectChildren = append(irminObjectChildren, irminModels.Object{
+		lastModified := time.Unix(meta.Mtime, 0).Format(time.RFC3339)
+		irminObjectChildren = append(irminObjectChildren, irminmodels.Object{
 			Name:                  name,
 			Path:                  objectDetails.FullPath,
 			Type:                  objectDetails.Type,
@@ -113,12 +113,12 @@ func getObject(
 
 	// Determine last modified time for the current object if it's a file.
 	var lastModified string
-	if objectMetadata != nil && objectPathDetails.Type != irminModels.ObjectTypeGroup {
-		lastModified = time.Unix(int64(objectMetadata.Mtime), 0).Format(time.RFC3339)
+	if objectMetadata != nil && objectPathDetails.Type != irminmodels.ObjectTypeGroup {
+		lastModified = time.Unix(objectMetadata.Mtime, 0).Format(time.RFC3339)
 	}
 
 	// Construct and return the Irmin object with all nested children.
-	irminObject := irminModels.Object{
+	irminObject := irminmodels.Object{
 		Name:                  objectPathDetails.Name,
 		Path:                  objectPathDetails.FullPath,
 		Type:                  objectPathDetails.Type,
@@ -134,7 +134,7 @@ func getObject(
 	return &irminObject, nil
 }
 
-func (c *Client) GetPath(workspace, repository, path, ref string) (*irminModels.Object, error) {
+func (c *Client) GetPath(workspace, repository, path, ref string) (*irminmodels.Object, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -178,7 +178,7 @@ func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]by
 	return content, nil
 }
 
-func (c *Client) UploadObject(workspace, repository, path, ref string, file io.Reader) (*irminModels.Object, error) {
+func (c *Client) UploadObject(workspace, repository, path, ref string, file io.Reader) (*irminmodels.Object, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -204,8 +204,8 @@ func (c *Client) UploadObject(workspace, repository, path, ref string, file io.R
 	objectPathDetails := utils.ParseObjectDetailsFromPath(path)
 
 	// Construct the resulting object
-	lastModified := time.Unix(int64(objectMetadata.Mtime), 0).Format(time.RFC3339)
-	irminObject := irminModels.Object{
+	lastModified := time.Unix(objectMetadata.Mtime, 0).Format(time.RFC3339)
+	irminObject := irminmodels.Object{
 		Name:                  objectPathDetails.Name,
 		Path:                  objectPathDetails.FullPath,
 		Type:                  objectPathDetails.Type,
@@ -245,7 +245,7 @@ func (c *Client) DeleteObject(workspace, repository, path, ref string) error {
 	return nil
 }
 
-func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*irminModels.Object, error) {
+func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*irminmodels.Object, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -281,8 +281,8 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 	objectPathDetails := utils.ParseObjectDetailsFromPath(newPath)
 
 	// Construct the resulting object
-	lastModified := time.Unix(int64(objectMetadata.Mtime), 0).Format(time.RFC3339)
-	irminObject := irminModels.Object{
+	lastModified := time.Unix(objectMetadata.Mtime, 0).Format(time.RFC3339)
+	irminObject := irminmodels.Object{
 		Name:                  objectPathDetails.Name,
 		Path:                  objectPathDetails.FullPath,
 		Type:                  objectPathDetails.Type,
@@ -297,7 +297,7 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 	return &irminObject, nil
 }
 
-func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*irminModels.Object, error) {
+func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*irminmodels.Object, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -327,8 +327,8 @@ func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*
 	objectPathDetails := utils.ParseObjectDetailsFromPath(newPath)
 
 	// Construct the resulting object
-	lastModified := time.Unix(int64(objectMetadata.Mtime), 0).Format(time.RFC3339)
-	irminObject := irminModels.Object{
+	lastModified := time.Unix(objectMetadata.Mtime, 0).Format(time.RFC3339)
+	irminObject := irminmodels.Object{
 		Name:                  objectPathDetails.Name,
 		Path:                  objectPathDetails.FullPath,
 		Type:                  objectPathDetails.Type,
@@ -343,7 +343,7 @@ func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*
 	return &irminObject, nil
 }
 
-func (c *Client) GetObjectChanges(workspace, repository, path, ref string) ([]irminModels.Commit, error) {
+func (c *Client) GetObjectChanges(workspace, repository, path, ref string) ([]irminmodels.Commit, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -362,7 +362,7 @@ func (c *Client) GetObjectChanges(workspace, repository, path, ref string) ([]ir
 	// Fetch commits
 	var lakefsCommits []lakefs.Commit
 	var err error
-	if objectPathDetails.Type == irminModels.ObjectTypeGroup {
+	if objectPathDetails.Type == irminmodels.ObjectTypeGroup {
 		// If object is a group - treat it as a prefix when fetching the commit list
 		lakefsCommits, err = c.LakeFSClient.ListAllCommits(lakeFSRepositoryName, ref, "", "", "", nil, []string{
 			objectPathDetails.FullPath,
@@ -378,7 +378,7 @@ func (c *Client) GetObjectChanges(workspace, repository, path, ref string) ([]ir
 	}
 
 	// Convert LakeFS commits to Irmin commits.
-	irminCommits := make([]irminModels.Commit, len(lakefsCommits))
+	irminCommits := make([]irminmodels.Commit, len(lakefsCommits))
 	for i, lakeFSCommit := range lakefsCommits {
 		previousHash := ""
 		if len(lakeFSCommit.Parents) > 0 {
@@ -388,7 +388,7 @@ func (c *Client) GetObjectChanges(workspace, repository, path, ref string) ([]ir
 		if authorValue, ok := lakeFSCommit.Metadata["author"]; ok && authorValue != "" {
 			author = authorValue
 		}
-		irminCommits[i] = irminModels.Commit{
+		irminCommits[i] = irminmodels.Commit{
 			Hash:         lakeFSCommit.ID,
 			Message:      lakeFSCommit.Message,
 			Timestamp:    time.Unix(int64(lakeFSCommit.CreationDate), 0).Format(time.RFC3339),

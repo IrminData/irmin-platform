@@ -9,7 +9,7 @@ import (
 	"irmin-api/utils"
 	"log"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -23,7 +23,7 @@ func CompareRefs(c fiber.Ctx) error {
 	params, err := utils.ParseQueryParams(c, []string{"base_ref", "compare_ref"}, nil)
 	if err != nil {
 		log.Printf("Error parsing query parameters: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -39,12 +39,12 @@ func CompareRefs(c fiber.Ctx) error {
 	diff, err := dataEngine.CompareRefs(c.Context(), workspace.Slug, repository.Slug, baseRef, compareRef)
 	if err != nil {
 		log.Printf("Error comparing refs: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: diff,
 	})
 }
@@ -57,10 +57,14 @@ func MergeRefs(c fiber.Ctx) error {
 	repository := c.Locals("repository").(*db.Repository)
 
 	// Parse the form fields
-	fields, err := utils.ParseFormFields(c, []string{"base_ref", "compare_ref"}, []string{"description", "strategy", "squash", "allow_empty"})
+	fields, err := utils.ParseFormFields(
+		c,
+		[]string{"base_ref", "compare_ref"},
+		[]string{"description", "strategy", "squash", "allow_empty"},
+	)
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -84,11 +88,21 @@ func MergeRefs(c fiber.Ctx) error {
 	dataEngine := engine.NewClient(locale)
 
 	// Merge the refs
-	mergeCommit, err := dataEngine.MergeRefs(workspace.Slug, repository.Slug, baseRef, compareRef, description, user.Email, strategy, squash, allowEmpty)
+	mergeCommit, err := dataEngine.MergeRefs(
+		workspace.Slug,
+		repository.Slug,
+		baseRef,
+		compareRef,
+		description,
+		user.Email,
+		strategy,
+		squash,
+		allowEmpty,
+	)
 
 	if err != nil {
 		log.Printf("Error merging refs: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -102,7 +116,7 @@ func MergeRefs(c fiber.Ctx) error {
 		RepositoryID: &repository.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("merge_commit_created"),
 		Data:    mergeCommit,
 	})

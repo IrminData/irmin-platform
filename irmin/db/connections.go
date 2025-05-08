@@ -1,7 +1,7 @@
 package db
 
 import (
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"gorm.io/gorm"
 )
 
@@ -10,10 +10,10 @@ type CustomFieldValues map[string]string
 type ConnectionSchemaCache struct {
 	gorm.Model
 
-	Schema       *irminModels.ObjectSchema `json:"schema,omitempty" gorm:"type:jsonb;serializer:json"`
+	Schema       *irminmodels.ObjectSchema `json:"schema,omitempty"        gorm:"type:jsonb;serializer:json"`
 	OpMethod     *string                   `json:"op_method,omitempty"`
 	ConnectionID uint                      `json:"connection_id,omitempty"`
-	Connection   Connection                `json:"connection,omitempty" gorm:"foreignKey:ConnectionID"`
+	Connection   Connection                `json:"connection,omitempty"    gorm:"foreignKey:ConnectionID"`
 }
 
 type Connection struct {
@@ -22,18 +22,18 @@ type Connection struct {
 	Name          string                  `json:"name,omitempty"`
 	Description   string                  `json:"description,omitempty"`
 	Documentation string                  `json:"documentation,omitempty"`
-	Details       CustomFieldValues       `json:"details,omitempty" gorm:"type:jsonb;serializer:json"`
-	Settings      CustomFieldValues       `json:"settings,omitempty" gorm:"type:jsonb;serializer:json"`
+	Details       CustomFieldValues       `json:"details,omitempty"       gorm:"type:jsonb;serializer:json"`
+	Settings      CustomFieldValues       `json:"settings,omitempty"      gorm:"type:jsonb;serializer:json"`
 	OwnerID       uint                    `json:"owner_id,omitempty"`
-	Owner         User                    `json:"owner,omitempty" gorm:"foreignKey:OwnerID"`
+	Owner         User                    `json:"owner,omitempty"         gorm:"foreignKey:OwnerID"`
 	WorkspaceID   uint                    `json:"workspace_id,omitempty"`
-	Workspace     Workspace               `json:"workspace,omitempty" gorm:"foreignKey:WorkspaceID"`
+	Workspace     Workspace               `json:"workspace,omitempty"     gorm:"foreignKey:WorkspaceID"`
 	ConnectorID   uint                    `json:"connector_id,omitempty"`
-	Connector     Connector               `json:"connector,omitempty" gorm:"foreignKey:ConnectorID"`
-	SchemaCache   []ConnectionSchemaCache `json:"schema_cache,omitempty" gorm:"foreignKey:ConnectionID"`
+	Connector     Connector               `json:"connector,omitempty"     gorm:"foreignKey:ConnectorID"`
+	SchemaCache   []ConnectionSchemaCache `json:"schema_cache,omitempty"  gorm:"foreignKey:ConnectionID"`
 }
 
-// GetConnectionByID finds a connection by its ID
+// GetConnectionByID finds a connection by its ID.
 func GetConnectionByID(id uint) (*Connection, error) {
 	var connection Connection
 	if err := DB.Preload("Owner").Preload("Connector").First(&connection, id).Error; err != nil {
@@ -42,7 +42,7 @@ func GetConnectionByID(id uint) (*Connection, error) {
 	return &connection, nil
 }
 
-// GetConnectionsByWorkspaceID finds all connections in a workspace
+// GetConnectionsByWorkspaceID finds all connections in a workspace.
 func GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, error) {
 	var connections []Connection
 	if err := DB.Preload("Owner").Preload("Connector").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&connections).Error; err != nil {
@@ -51,7 +51,7 @@ func GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, error) {
 	return connections, nil
 }
 
-// CreateConnection creates a new connection
+// CreateConnection creates a new connection.
 func CreateConnection(connection *Connection) (*Connection, error) {
 	if err := DB.Create(connection).Error; err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func UpdateConnection(connection *Connection) (*Connection, error) {
 	return connection, nil
 }
 
-// DeleteConnection deletes a connection from the database
+// DeleteConnection deletes a connection from the database.
 func DeleteConnection(id uint) error {
 	if err := DB.Delete(&Connection{}, id).Error; err != nil {
 		return err
@@ -78,7 +78,7 @@ func DeleteConnection(id uint) error {
 	return nil
 }
 
-// FindConnectionSchemaCache finds a connection schema cache by connection ID and op method
+// FindConnectionSchemaCache finds a connection schema cache by connection ID and op method.
 func FindConnectionSchemaCache(connectionID uint, opMethod string) (*ConnectionSchemaCache, error) {
 	var schemaCache ConnectionSchemaCache
 	if err := DB.Where("connection_id = ? AND op_method = ?", connectionID, opMethod).First(&schemaCache).Error; err != nil {
@@ -87,7 +87,7 @@ func FindConnectionSchemaCache(connectionID uint, opMethod string) (*ConnectionS
 	return &schemaCache, nil
 }
 
-// SaveConnectionSchemaCache updates or creates a connection schema cache
+// SaveConnectionSchemaCache updates or creates a connection schema cache.
 func SaveConnectionSchemaCache(schemaCache *ConnectionSchemaCache) (*ConnectionSchemaCache, error) {
 	if err := DB.Save(schemaCache).Error; err != nil {
 		return nil, err

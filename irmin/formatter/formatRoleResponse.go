@@ -4,26 +4,26 @@ import (
 	"fmt"
 	"irmin-api/db"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatRoleResponse(role db.UserWorkspaceRole) (*irminModels.Role, error) {
-	var roleResponse irminModels.Role
+func FormatRoleResponse(role db.UserWorkspaceRole) (*irminmodels.Role, error) {
+	var roleResponse irminmodels.Role
 	switch role {
 	case "admin":
-		roleResponse = irminModels.Role{
+		roleResponse = irminmodels.Role{
 			Description: "Can perform all actions on the workspace",
 			Label:       "Admin",
 			Name:        "admin",
 		}
 	case "editor":
-		roleResponse = irminModels.Role{
+		roleResponse = irminmodels.Role{
 			Description: "Can perform all actions except managing access",
 			Label:       "Editor",
 			Name:        "editor",
 		}
 	case "viewer":
-		roleResponse = irminModels.Role{
+		roleResponse = irminmodels.Role{
 			Description: "Can view all data but cannot make changes",
 			Label:       "Viewer",
 			Name:        "viewer",

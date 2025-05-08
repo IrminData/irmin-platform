@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"fmt"
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -20,7 +20,7 @@ func FindProjectRoot() (string, error) {
 	// Otherwise, use runtime.Caller to locate the source file and search upward.
 	_, currentFile, _, ok := runtime.Caller(0)
 	if !ok {
-		return "", fmt.Errorf("failed to get caller info")
+		return "", errors.New("failed to get caller info")
 	}
 	dir := filepath.Dir(currentFile)
 	for {
@@ -33,5 +33,5 @@ func FindProjectRoot() (string, error) {
 		}
 		dir = parent
 	}
-	return "", fmt.Errorf("project root not found")
+	return "", errors.New("project root not found")
 }

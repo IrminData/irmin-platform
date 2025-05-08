@@ -113,7 +113,11 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
-	sqidAlphabet, err := getEnv("SQID_ALPHABET", false, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+	sqidAlphabet, err := getEnv(
+		"SQID_ALPHABET",
+		false,
+		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
+	)
 	if err != nil {
 		return nil, err
 	}

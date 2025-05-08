@@ -3,13 +3,13 @@ package controllers
 import (
 	"irmin-api/utils"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
 func RolesIndex(c fiber.Ctx) error {
 	// Define the roles.
-	rolesResponse := []irminModels.Role{
+	rolesResponse := []irminmodels.Role{
 		{
 			Description: "Can perform all actions on the workspace",
 			Label:       "Admin",
@@ -27,7 +27,7 @@ func RolesIndex(c fiber.Ctx) error {
 		},
 	}
 	// Return the roles.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: rolesResponse,
 	})
 }

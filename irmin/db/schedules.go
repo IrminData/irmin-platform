@@ -38,7 +38,7 @@ type WorkflowTrigger struct {
 	gorm.Model
 
 	Type       WorkflowTriggerType `json:"type"`
-	Schedule   *Schedule           `json:"schedule,omitempty" gorm:"foreignKey:ScheduleID"`
+	Schedule   *Schedule           `json:"schedule,omitempty"    gorm:"foreignKey:ScheduleID"`
 	ScheduleID *uint               `json:"schedule_id,omitempty"`
 
 	// Time trigger
@@ -47,13 +47,13 @@ type WorkflowTrigger struct {
 
 	// Repository event trigger
 	RepositoryEvent *RepositoryEvent `json:"repository_event,omitempty"`
-	Repository      *Repository      `json:"repository,omitempty" gorm:"foreignKey:RepositoryID"`
+	Repository      *Repository      `json:"repository,omitempty"       gorm:"foreignKey:RepositoryID"`
 	RepositoryID    *uint            `json:"repository_id,omitempty"`
 	RepositoryRef   *string          `json:"repository_ref,omitempty"`
 
 	// Workflow run event trigger
 	WorkflowRunEvent *WorkflowRunEvent `json:"workflow_run_event,omitempty"`
-	Workflow         *Workflow         `json:"workflow,omitempty" gorm:"foreignKey:WorkflowID"`
+	Workflow         *Workflow         `json:"workflow,omitempty"           gorm:"foreignKey:WorkflowID"`
 	WorkflowID       *uint             `json:"workflow_id,omitempty"`
 }
 

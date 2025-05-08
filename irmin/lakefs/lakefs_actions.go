@@ -50,7 +50,14 @@ type RunHookList struct {
 
 // ListActionRuns retrieves a single page of action runs.
 func (c *Client) ListActionRuns(repositoryID, after, branch, commit string, amount int) (*ActionRunList, error) {
-	endpoint := fmt.Sprintf("/repositories/%s/actions/runs?after=%s&branch=%s&commit=%s&amount=%d", repositoryID, after, branch, commit, amount)
+	endpoint := fmt.Sprintf(
+		"/repositories/%s/actions/runs?after=%s&branch=%s&commit=%s&amount=%d",
+		repositoryID,
+		after,
+		branch,
+		commit,
+		amount,
+	)
 	var listResp ActionRunList
 	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &listResp); err != nil {
 		return nil, err
@@ -88,7 +95,13 @@ func (c *Client) GetActionRun(repositoryID, runID string) (*ActionRun, error) {
 
 // ListRunHooks retrieves a single page of hooks for a specific action run.
 func (c *Client) ListRunHooks(repositoryID, runID, after string, amount int) (*RunHookList, error) {
-	endpoint := fmt.Sprintf("/repositories/%s/actions/runs/%s/hooks?after=%s&amount=%d", repositoryID, runID, after, amount)
+	endpoint := fmt.Sprintf(
+		"/repositories/%s/actions/runs/%s/hooks?after=%s&amount=%d",
+		repositoryID,
+		runID,
+		after,
+		amount,
+	)
 	var listResp RunHookList
 	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &listResp); err != nil {
 		return nil, err

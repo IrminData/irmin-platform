@@ -1,13 +1,14 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 	"irmin-api/duckdb"
 	"irmin-api/utils"
 	"strings"
 	"time"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 func parseIrminQuery(c *Client, userWorkspace string, query string) (utils.ParsedIrminQuery, error) {
@@ -29,18 +30,18 @@ func parseIrminQuery(c *Client, userWorkspace string, query string) (utils.Parse
 		if ref == "" {
 			repository, err := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
 			if err != nil {
-				return "", fmt.Errorf("failed to get repository: %v", err)
+				return "", fmt.Errorf("failed to get repository: %w", err)
 			}
 			ref = repository.DefaultBranch
 		}
 
 		// Parse the object details from the path.
 		objectPathDetails := utils.ParseObjectDetailsFromPath(object)
-		if objectPathDetails.Type == irminModels.ObjectTypeBinary {
-			return "", fmt.Errorf("binary objects can't be queried")
+		if objectPathDetails.Type == irminmodels.ObjectTypeBinary {
+			return "", errors.New("binary objects can't be queried")
 		}
-		if objectPathDetails.Type == irminModels.ObjectTypeGroup {
-			return "", fmt.Errorf("group objects can't be queried")
+		if objectPathDetails.Type == irminmodels.ObjectTypeGroup {
+			return "", errors.New("group objects can't be queried")
 		}
 		// Construct object storage path.
 		objectAddress := fmt.Sprintf("s3://%s/%s/%s", lakeFSRepositoryName, ref, objectPathDetails.FullPath)
@@ -65,7 +66,7 @@ func parseIrminQuery(c *Client, userWorkspace string, query string) (utils.Parse
 }
 
 // ExecuteQuery executes a query in the specified workspace and returns the results.
-func (c *Client) ExecuteQuery(userWorkspace, query string) *irminModels.QueryResult {
+func (c *Client) ExecuteQuery(userWorkspace, query string) *irminmodels.QueryResult {
 	// Collect errors and logs encountered during query execution.
 	var errors []error
 	var logs []string
@@ -151,7 +152,7 @@ func (c *Client) ExecuteQuery(userWorkspace, query string) *irminModels.QueryRes
 	}
 
 	// Create a QueryResult object to hold the results.
-	queryResult := &irminModels.QueryResult{
+	queryResult := &irminmodels.QueryResult{
 		Columns:    columns,
 		Data:       data,
 		HasErrors:  len(errors) > 0,

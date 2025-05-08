@@ -9,7 +9,7 @@ import (
 	"irmin-api/utils"
 	"log"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -22,7 +22,7 @@ func WorkflowsIndex(c fiber.Ctx) error {
 	query, err := utils.ParseQueryParams(c, nil, []string{"type"})
 	if err != nil {
 		log.Printf("Error parsing query params: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -33,7 +33,7 @@ func WorkflowsIndex(c fiber.Ctx) error {
 		workflows, err = db.GetWorkflowsOfTypeByWorkspaceID(workspace.ID, db.WorkflowableType(query["type"]))
 		if err != nil {
 			log.Printf("Error retrieving workflows: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -42,19 +42,19 @@ func WorkflowsIndex(c fiber.Ctx) error {
 		workflows, err = db.GetWorkflowsByWorkspaceID(workspace.ID)
 		if err != nil {
 			log.Printf("Error retrieving workflows: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	}
 
 	// Structure the response.
-	var workflowsResponse []irminModels.Workflow
+	var workflowsResponse []irminmodels.Workflow
 	for _, workflow := range workflows {
 		workflowResponse, err := formatter.FormatWorkflowResponse(workflow)
 		if err != nil {
 			log.Printf("Error getting workflow response: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -62,7 +62,7 @@ func WorkflowsIndex(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: workflowsResponse,
 	})
 }
@@ -76,13 +76,13 @@ func WorkflowsShow(c fiber.Ctx) error {
 	workflowResponse, err := formatter.FormatWorkflowResponse(*workflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: workflowResponse,
 	})
 }
@@ -98,7 +98,7 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"name", "description", "documentation"}, nil)
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -111,7 +111,7 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -120,7 +120,7 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -135,7 +135,7 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("workflow_updated"),
 		Data:    workflowResponse,
 	})
@@ -151,7 +151,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"type", "name"}, []string{"description", "documentation"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -169,10 +169,14 @@ func WorkflowsStore(c fiber.Ctx) error {
 	case db.WorkflowableTypeImport:
 		// Create the import workflowable object.
 		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(c, []string{"connection", "repository", "branch"}, []string{"connection_path", "path"})
+		workflowableFields, err := utils.ParseFormFields(
+			c,
+			[]string{"connection", "repository", "branch"},
+			[]string{"connection_path", "path"},
+		)
 		if err != nil {
 			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -180,7 +184,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		repository, err := db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
 		if err != nil {
 			log.Printf("Error retrieving repository: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -188,14 +192,14 @@ func WorkflowsStore(c fiber.Ctx) error {
 		connectionID, err := utils.DecodeSqids("connections", workflowableFields["connection"])
 		if err != nil {
 			log.Printf("Error decoding connection sqid: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		connection, err := db.GetConnectionByID(uint(connectionID))
 		if err != nil {
 			log.Printf("Error retrieving connection: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -209,17 +213,21 @@ func WorkflowsStore(c fiber.Ctx) error {
 		})
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	case db.WorkflowableTypeExport:
 		// Create the export workflowable object.
 		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(c, []string{"connection", "repository", "branch"}, []string{"connection_path", "path"})
+		workflowableFields, err := utils.ParseFormFields(
+			c,
+			[]string{"connection", "repository", "branch"},
+			[]string{"connection_path", "path"},
+		)
 		if err != nil {
 			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -227,7 +235,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		repository, err := db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
 		if err != nil {
 			log.Printf("Error retrieving repository: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -235,14 +243,14 @@ func WorkflowsStore(c fiber.Ctx) error {
 		connectionID, err := utils.DecodeSqids("connections", workflowableFields["connection"])
 		if err != nil {
 			log.Printf("Error decoding connection sqid: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		connection, err := db.GetConnectionByID(uint(connectionID))
 		if err != nil {
 			log.Printf("Error retrieving connection: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -256,17 +264,21 @@ func WorkflowsStore(c fiber.Ctx) error {
 		})
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	case db.WorkflowableTypeAction:
 		// Create the action workflowable object.
 		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(c, []string{"executable"}, []string{"repository", "branch", "path"})
+		workflowableFields, err := utils.ParseFormFields(
+			c,
+			[]string{"executable"},
+			[]string{"repository", "branch", "path"},
+		)
 		if err != nil {
 			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -276,7 +288,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 			repository, err = db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
 			if err != nil {
 				log.Printf("Error retrieving repository: %v", err)
-				return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+				return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 					Errors: []string{dict.T("invalid_request")},
 				})
 			}
@@ -302,7 +314,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		actionWorkflowable, err = db.CreateActionWorkflowable(&workflowable)
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -312,7 +324,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		workflowableFields, err := utils.ParseFormFields(c, nil, []string{"live"})
 		if err != nil {
 			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -320,7 +332,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		requestStages, err := utils.ParseArrayFormFields(c, "stage")
 		if err != nil {
 			log.Printf("Error parsing array form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -384,13 +396,13 @@ func WorkflowsStore(c fiber.Ctx) error {
 		})
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	default:
 		log.Printf("Invalid workflow type: %s", fields["type"])
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -399,7 +411,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	schedule, err := lib.ParseScheduleFromRequest(c, *workspace)
 	if err != nil {
 		log.Printf("Error creating schedule object: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -408,7 +420,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	schedule, err = db.CreateSchedule(schedule)
 	if err != nil {
 		log.Printf("Error creating schedule: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -462,7 +474,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	}
 	if err != nil {
 		log.Printf("Error creating workflow: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -471,7 +483,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	workflow, err = db.GetWorkflowByID(workflow.ID)
 	if err != nil {
 		log.Printf("Error retrieving workflow: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -480,7 +492,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	workflowResponse, err := formatter.FormatWorkflowResponse(*workflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -495,7 +507,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: dict.T("workflow_created"),
 		Data:    workflowResponse,
 	})
@@ -515,14 +527,18 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	var pipelineWorkflowable *db.PipelineWorkflowable
 
 	// Procceed based on the workflow type.
-	switch db.WorkflowableType(workflow.Type) {
+	switch workflow.Type {
 	case db.WorkflowableTypeImport:
 		// Create the import workflowable object.
 		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(c, []string{"connection", "connection_path", "repository", "branch", "path"}, nil)
+		workflowableFields, err := utils.ParseFormFields(
+			c,
+			[]string{"connection", "connection_path", "repository", "branch", "path"},
+			nil,
+		)
 		if err != nil {
 			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -530,7 +546,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		repository, err := db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
 		if err != nil {
 			log.Printf("Error retrieving repository: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -538,14 +554,14 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		connectionID, err := utils.DecodeSqids("connections", workflowableFields["connection"])
 		if err != nil {
 			log.Printf("Error decoding connection sqid: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		connection, err := db.GetConnectionByID(uint(connectionID))
 		if err != nil {
 			log.Printf("Error retrieving connection: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -559,17 +575,21 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		})
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	case db.WorkflowableTypeExport:
 		// Create the export workflowable object.
 		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(c, []string{"connection", "connection_path", "repository", "branch", "path"}, nil)
+		workflowableFields, err := utils.ParseFormFields(
+			c,
+			[]string{"connection", "connection_path", "repository", "branch", "path"},
+			nil,
+		)
 		if err != nil {
 			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -577,7 +597,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		repository, err := db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
 		if err != nil {
 			log.Printf("Error retrieving repository: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -585,14 +605,14 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		connectionID, err := utils.DecodeSqids("connections", workflowableFields["connection"])
 		if err != nil {
 			log.Printf("Error decoding connection sqid: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		connection, err := db.GetConnectionByID(uint(connectionID))
 		if err != nil {
 			log.Printf("Error retrieving connection: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -606,17 +626,21 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		})
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	case db.WorkflowableTypeAction:
 		// Create the action workflowable object.
 		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(c, []string{"executable"}, []string{"repository", "branch", "path"})
+		workflowableFields, err := utils.ParseFormFields(
+			c,
+			[]string{"executable"},
+			[]string{"repository", "branch", "path"},
+		)
 		if err != nil {
 			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -626,7 +650,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 			repository, err = db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
 			if err != nil {
 				log.Printf("Error retrieving repository: %v", err)
-				return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+				return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 					Errors: []string{dict.T("invalid_request")},
 				})
 			}
@@ -652,7 +676,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		actionWorkflowable, err = db.CreateActionWorkflowable(&workflowable)
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -662,7 +686,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		workflowableFields, err := utils.ParseFormFields(c, nil, []string{"live"})
 		if err != nil {
 			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -670,7 +694,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		requestStages, err := utils.ParseArrayFormFields(c, "stage")
 		if err != nil {
 			log.Printf("Error parsing array form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -734,13 +758,13 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		})
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	default:
 		log.Printf("Invalid workflow type: %s", workflow.Type)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -785,7 +809,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	}
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -794,7 +818,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -809,7 +833,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("workflow_updated"),
 		Data:    workflowResponse,
 	})
@@ -826,7 +850,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	schedule, err := lib.ParseScheduleFromRequest(c, *workspace)
 	if err != nil {
 		log.Printf("Error creating schedule object: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -835,7 +859,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	schedule, err = db.CreateSchedule(schedule)
 	if err != nil {
 		log.Printf("Error creating schedule: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -851,7 +875,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -860,7 +884,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -875,7 +899,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("schedule_updated"),
 		Data:    workflowResponse,
 	})
@@ -915,7 +939,7 @@ func WorkflowsDestroy(c fiber.Ctx) error {
 	err := db.DeleteWorkflow(workflow.ID)
 	if err != nil {
 		log.Printf("Error deleting workflow: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -930,7 +954,7 @@ func WorkflowsDestroy(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("workflow_deleted"),
 	})
 }
@@ -946,7 +970,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -955,7 +979,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	newOwnerID, err := utils.DecodeSqids("users", fields["new_owner_id"])
 	if err != nil {
 		log.Printf("Error decoding new owner sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -964,12 +988,12 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
 	if err != nil {
 		log.Printf("Error checking if user is in workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("new_owner_invalid")},
 		})
 	}
 	if !inWorkspace {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("new_owner_invalid")},
 		})
 	}
@@ -980,7 +1004,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -989,7 +1013,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -1004,7 +1028,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("workflow_ownership_transferred"),
 		Data:    workflowResponse,
 	})
@@ -1023,7 +1047,7 @@ func PauseWorkflow(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error pausing workflow: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -1032,7 +1056,7 @@ func PauseWorkflow(c fiber.Ctx) error {
 	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -1046,7 +1070,7 @@ func PauseWorkflow(c fiber.Ctx) error {
 		WorkflowID:  &workflow.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("workflow_stopped"),
 		Data:    workflowResponse,
 	})
@@ -1061,7 +1085,7 @@ func StartWorkflow(c fiber.Ctx) error {
 
 	// Check if the workflow is already running.
 	if !workflow.Paused {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("workflow_already_running")},
 		})
 	}
@@ -1072,7 +1096,7 @@ func StartWorkflow(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error starting workflow: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -1083,7 +1107,7 @@ func StartWorkflow(c fiber.Ctx) error {
 	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -1097,7 +1121,7 @@ func StartWorkflow(c fiber.Ctx) error {
 		WorkflowID:  &workflow.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("workflow_started"),
 		Data:    workflowResponse,
 	})

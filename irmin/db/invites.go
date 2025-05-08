@@ -16,15 +16,19 @@ type Invite struct {
 	DeclinedAt  sql.NullTime      `json:"declined_at"`
 	ExpiresAt   time.Time         `json:"expires_at"`
 	Role        UserWorkspaceRole `json:"role"`
-	InvitedBy   User              `json:"invited_by" gorm:"foreignKey:InvitedByID"`
+	InvitedBy   User              `json:"invited_by"    gorm:"foreignKey:InvitedByID"`
 	InvitedByID uint              `json:"invited_by_id"`
-	Workspace   Workspace         `json:"workspace" gorm:"foreignKey:WorkspaceID"`
+	Workspace   Workspace         `json:"workspace"     gorm:"foreignKey:WorkspaceID"`
 	WorkspaceID uint              `json:"workspace_id"`
 }
 
 func GetInvitesByWorkspace(workspaceID uint) ([]Invite, error) {
 	var invites []Invite
-	result := DB.Preload("InvitedBy").Preload("Workspace").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&invites)
+	result := DB.Preload("InvitedBy").
+		Preload("Workspace").
+		Where("workspace_id = ?", workspaceID).
+		Order("created_at desc").
+		Find(&invites)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -33,7 +37,11 @@ func GetInvitesByWorkspace(workspaceID uint) ([]Invite, error) {
 
 func GetInvitesByEmail(email string) ([]Invite, error) {
 	var invites []Invite
-	result := DB.Preload("InvitedBy").Preload("Workspace").Where("email = ?", email).Order("created_at desc").Find(&invites)
+	result := DB.Preload("InvitedBy").
+		Preload("Workspace").
+		Where("email = ?", email).
+		Order("created_at desc").
+		Find(&invites)
 	if result.Error != nil {
 		return nil, result.Error
 	}

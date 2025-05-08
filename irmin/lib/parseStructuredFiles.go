@@ -22,7 +22,7 @@ func ParseStructuredFile(files map[string][]byte) (map[string][]map[string]any, 
 			// Parse the JSON file.
 			var jsonData []map[string]any
 			if err := json.Unmarshal(result, &jsonData); err != nil {
-				return nil, fmt.Errorf("failed to parse JSON file %s: %v", fileName, err)
+				return nil, fmt.Errorf("failed to parse JSON file %s: %w", fileName, err)
 			}
 			// Store the parsed JSON data in the map.
 			parsedResults[fileName] = jsonData
@@ -37,7 +37,7 @@ func ParseStructuredFile(files map[string][]byte) (map[string][]map[string]any, 
 			// Read all records from the CSV.
 			records, err := reader.ReadAll()
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse CSV file %s: %v", fileName, err)
+				return nil, fmt.Errorf("failed to parse CSV file %s: %w", fileName, err)
 			}
 
 			// Skip empty CSV.

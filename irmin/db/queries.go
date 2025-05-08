@@ -9,9 +9,9 @@ type StoredQuery struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	SQL         string    `json:"sql"`
-	Owner       User      `json:"owner" gorm:"foreignKey:OwnerID"`
+	Owner       User      `json:"owner"        gorm:"foreignKey:OwnerID"`
 	OwnerID     uint      `json:"owner_id"`
-	Workspace   Workspace `json:"workspace" gorm:"foreignKey:WorkspaceID"`
+	Workspace   Workspace `json:"workspace"    gorm:"foreignKey:WorkspaceID"`
 	WorkspaceID uint      `json:"workspace_id"`
 }
 

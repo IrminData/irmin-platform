@@ -15,11 +15,11 @@ type CommitList struct {
 type MergeStrategy string
 
 const (
-	// In case no selection is made, the merge process will fail in case of a conflict
+	// In case no selection is made, the merge process will fail in case of a conflict.
 	MergeStrategyNone MergeStrategy = ""
-	// Favor changes from the destination ref
+	// Favor changes from the destination ref.
 	MergeStrategyDestWins MergeStrategy = "dest-wins"
-	// Favor changes from the source ref
+	// Favor changes from the source ref.
 	MergeStrategySourceWins MergeStrategy = "source-wins"
 )
 
@@ -103,9 +103,21 @@ func (c *Client) FindMergeBase(repositoryID, sourceRef, destinationBranch string
 }
 
 // ListRefDiffs returns the differences between two refs in a repository.
-func (c *Client) ListRefDiffs(repositoryID, leftRef, rightRef, after, prefix, delimiter string, amount int) (*DiffList, error) {
+func (c *Client) ListRefDiffs(
+	repositoryID, leftRef, rightRef, after, prefix, delimiter string,
+	amount int,
+) (*DiffList, error) {
 	var diffs DiffList
-	endpoint := fmt.Sprintf("/repositories/%s/refs/%s/diff/%s?after=%s&prefix=%s&delimiter=%s&amount=%d", repositoryID, leftRef, rightRef, after, prefix, delimiter, amount)
+	endpoint := fmt.Sprintf(
+		"/repositories/%s/refs/%s/diff/%s?after=%s&prefix=%s&delimiter=%s&amount=%d",
+		repositoryID,
+		leftRef,
+		rightRef,
+		after,
+		prefix,
+		delimiter,
+		amount,
+	)
 	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &diffs); err != nil {
 		return nil, err
 	}

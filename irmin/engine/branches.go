@@ -6,7 +6,7 @@ import (
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // removeProtectionRule returns a new slice of branch protection rules without the rule for the given branch.
@@ -20,7 +20,7 @@ func removeProtectionRule(rules []lakefs.BranchProtectionRule, branch string) []
 	return newRules
 }
 
-func (c *Client) ListBranches(ctx context.Context, workspace, repository string) ([]irminModels.Branch, error) {
+func (c *Client) ListBranches(ctx context.Context, workspace, repository string) ([]irminmodels.Branch, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -60,9 +60,9 @@ func (c *Client) ListBranches(ctx context.Context, workspace, repository string)
 	}
 
 	// Convert LakeFS branches to Irmin branches.
-	irminBranches := make([]irminModels.Branch, len(lakeFSBranches))
+	irminBranches := make([]irminmodels.Branch, len(lakeFSBranches))
 	for i, lakeFSBranch := range lakeFSBranches {
-		irminBranches[i] = irminModels.Branch{
+		irminBranches[i] = irminmodels.Branch{
 			Name:        lakeFSBranch.ID,
 			Default:     lakeFSRepository.DefaultBranch == lakeFSBranch.ID,
 			IsImmutable: ruleMap[lakeFSBranch.ID],
@@ -72,7 +72,7 @@ func (c *Client) ListBranches(ctx context.Context, workspace, repository string)
 	return irminBranches, nil
 }
 
-func (c *Client) GetBranch(ctx context.Context, workspace, repository, branch string) (*irminModels.Branch, error) {
+func (c *Client) GetBranch(ctx context.Context, workspace, repository, branch string) (*irminmodels.Branch, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -111,7 +111,7 @@ func (c *Client) GetBranch(ctx context.Context, workspace, repository, branch st
 	}
 
 	// Convert LakeFS branch to Irmin branch.
-	irminBranch := irminModels.Branch{
+	irminBranch := irminmodels.Branch{
 		Name:        lakeFSBranch.ID,
 		Default:     lakeFSRepository.DefaultBranch == lakeFSBranch.ID,
 		IsImmutable: ruleMap[lakeFSBranch.ID],
@@ -120,7 +120,10 @@ func (c *Client) GetBranch(ctx context.Context, workspace, repository, branch st
 	return &irminBranch, nil
 }
 
-func (c *Client) CreateBranch(workspace, repository, name, from string, is_immutable bool) (*irminModels.Branch, error) {
+func (c *Client) CreateBranch(
+	workspace, repository, name, from string,
+	is_immutable bool,
+) (*irminmodels.Branch, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -179,7 +182,7 @@ func (c *Client) CreateBranch(workspace, repository, name, from string, is_immut
 	}
 
 	// Convert to Irmin branch.
-	newBranch := &irminModels.Branch{
+	newBranch := &irminmodels.Branch{
 		Name:        branch.ID,
 		Default:     false,
 		IsImmutable: is_immutable,
@@ -188,7 +191,11 @@ func (c *Client) CreateBranch(workspace, repository, name, from string, is_immut
 	return newBranch, nil
 }
 
-func (c *Client) UpdateBranch(ctx context.Context, workspace, repository, currentName, name string, is_immutable bool) (*irminModels.Branch, error) {
+func (c *Client) UpdateBranch(
+	ctx context.Context,
+	workspace, repository, currentName, name string,
+	is_immutable bool,
+) (*irminmodels.Branch, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -257,7 +264,7 @@ func (c *Client) UpdateBranch(ctx context.Context, workspace, repository, curren
 		}
 
 		// Prepare and send response with the new branch details.
-		irminBranch := &irminModels.Branch{
+		irminBranch := &irminmodels.Branch{
 			Name:        branch.ID,
 			Default:     repo.DefaultBranch == branch.ID,
 			IsImmutable: is_immutable,
@@ -290,7 +297,7 @@ func (c *Client) UpdateBranch(ctx context.Context, workspace, repository, curren
 	}
 
 	// Return updated branch info.
-	irminBranch := &irminModels.Branch{
+	irminBranch := &irminmodels.Branch{
 		Name:        currentName,
 		Default:     repo.DefaultBranch == currentName,
 		IsImmutable: is_immutable,

@@ -28,7 +28,10 @@ type CommitCreateRequest struct {
 }
 
 // CreateCommit creates a new commit in a repository.
-func (c *Client) CreateCommit(repositoryID, branchID, sourceMetarange string, reqData CommitCreateRequest) (*Commit, error) {
+func (c *Client) CreateCommit(
+	repositoryID, branchID, sourceMetarange string,
+	reqData CommitCreateRequest,
+) (*Commit, error) {
 	var commit Commit
 	endpoint := fmt.Sprintf("/repositories/%s/branches/%s/commits", repositoryID, branchID)
 	if sourceMetarange != "" {
@@ -51,9 +54,21 @@ func (c *Client) GetCommit(repositoryID, commitID string) (*Commit, error) {
 }
 
 // ListCommits retrieves a single page of commits for a given ref.
-func (c *Client) ListCommits(repositoryID, ref, after, since, stop_at string, amount int, objects, prefixes []string) (*CommitList, error) {
+func (c *Client) ListCommits(
+	repositoryID, ref, after, since, stop_at string,
+	amount int,
+	objects, prefixes []string,
+) (*CommitList, error) {
 	var commits CommitList
-	endpoint := fmt.Sprintf("/repositories/%s/refs/%s/commits?after=%s&since=%s&stop_at=%s&amount=%d", repositoryID, ref, after, since, stop_at, amount)
+	endpoint := fmt.Sprintf(
+		"/repositories/%s/refs/%s/commits?after=%s&since=%s&stop_at=%s&amount=%d",
+		repositoryID,
+		ref,
+		after,
+		since,
+		stop_at,
+		amount,
+	)
 	if len(objects) > 0 {
 		for _, obj := range objects {
 			endpoint += "&objects=" + obj
@@ -71,7 +86,10 @@ func (c *Client) ListCommits(repositoryID, ref, after, since, stop_at string, am
 }
 
 // ListAllCommits handles pagination automatically and returns all commits for a ref.
-func (c *Client) ListAllCommits(repositoryID, ref, after, since, stop_at string, objects, prefixes []string) ([]Commit, error) {
+func (c *Client) ListAllCommits(
+	repositoryID, ref, after, since, stop_at string,
+	objects, prefixes []string,
+) ([]Commit, error) {
 	var allCommits []Commit
 	for {
 		commits, err := c.ListCommits(repositoryID, ref, after, since, stop_at, 100, objects, prefixes)

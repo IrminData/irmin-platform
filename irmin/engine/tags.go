@@ -5,10 +5,10 @@ import (
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) ListTags(workspace, repository string) ([]irminModels.Tag, error) {
+func (c *Client) ListTags(workspace, repository string) ([]irminmodels.Tag, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -19,9 +19,9 @@ func (c *Client) ListTags(workspace, repository string) ([]irminModels.Tag, erro
 	}
 
 	// Convert LakeFS tags to Irmin tags.
-	irminTags := make([]irminModels.Tag, len(lakefsTags))
+	irminTags := make([]irminmodels.Tag, len(lakefsTags))
 	for i, lakefsTag := range lakefsTags {
-		irminTags[i] = irminModels.Tag{
+		irminTags[i] = irminmodels.Tag{
 			Name: lakefsTag.ID,
 			Ref:  lakefsTag.CommitID,
 		}
@@ -30,7 +30,7 @@ func (c *Client) ListTags(workspace, repository string) ([]irminModels.Tag, erro
 	return irminTags, nil
 }
 
-func (c *Client) GetTag(workspace, repository, tag string) (*irminModels.Tag, error) {
+func (c *Client) GetTag(workspace, repository, tag string) (*irminmodels.Tag, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -41,7 +41,7 @@ func (c *Client) GetTag(workspace, repository, tag string) (*irminModels.Tag, er
 	}
 
 	// Convert LakeFS tag to Irmin tag.
-	irminTag := irminModels.Tag{
+	irminTag := irminmodels.Tag{
 		Name: lakefsTag.ID,
 		Ref:  lakefsTag.CommitID,
 	}
@@ -49,7 +49,7 @@ func (c *Client) GetTag(workspace, repository, tag string) (*irminModels.Tag, er
 	return &irminTag, nil
 }
 
-func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminModels.Tag, error) {
+func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminmodels.Tag, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -65,7 +65,7 @@ func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminModel
 	}
 
 	// Convert LakeFS tag to Irmin tag.
-	irminTag := irminModels.Tag{
+	irminTag := irminmodels.Tag{
 		Name: lakefsTag.ID,
 		Ref:  lakefsTag.CommitID,
 	}

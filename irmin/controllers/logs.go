@@ -9,7 +9,7 @@ import (
 	"math"
 	"strconv"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -28,7 +28,7 @@ func LogsIndex(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error parsing query parameters: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -57,14 +57,21 @@ func LogsIndex(c fiber.Ctx) error {
 		connectionId, err := utils.DecodeSqids("connections", params["connection_id"])
 		if err != nil {
 			log.Printf("Error decoding connection ID: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
-		logEvents, count, err = db.GetLogEventsByWorkspaceAndAsset(workspace.ID, "connection", uint(connectionId), params["search"], per_page, offset)
+		logEvents, count, err = db.GetLogEventsByWorkspaceAndAsset(
+			workspace.ID,
+			"connection",
+			uint(connectionId),
+			params["search"],
+			per_page,
+			offset,
+		)
 		if err != nil {
 			log.Printf("Error fetching log events for connection ID: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -72,14 +79,14 @@ func LogsIndex(c fiber.Ctx) error {
 		repository, err := db.GetRepositoryBySlugAndWorkspaceID(params["repository"], workspace.ID)
 		if err != nil {
 			log.Printf("Error fetching repository by slug: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		logEvents, count, err = db.GetLogEventsByWorkspaceAndAsset(workspace.ID, "repository", repository.ID, params["search"], per_page, offset)
 		if err != nil {
 			log.Printf("Error fetching log events for repository ID: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -87,14 +94,14 @@ func LogsIndex(c fiber.Ctx) error {
 		workflowId, err := utils.DecodeSqids("workflows", params["workflow_id"])
 		if err != nil {
 			log.Printf("Error decoding workflow ID: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		logEvents, count, err = db.GetLogEventsByWorkspaceAndAsset(workspace.ID, "workflow", uint(workflowId), params["search"], per_page, offset)
 		if err != nil {
 			log.Printf("Error fetching log events for workflow ID: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -102,14 +109,14 @@ func LogsIndex(c fiber.Ctx) error {
 		userId, err := utils.DecodeSqids("users", params["user_id"])
 		if err != nil {
 			log.Printf("Error decoding user ID: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 		logEvents, count, err = db.GetLogEventsByWorkspaceAndAsset(workspace.ID, "user", uint(userId), params["search"], per_page, offset)
 		if err != nil {
 			log.Printf("Error fetching log events for user ID: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -118,18 +125,18 @@ func LogsIndex(c fiber.Ctx) error {
 		logEvents, count, err = db.GetLogEventsForWorkspace(workspace.ID, params["search"], per_page, offset)
 		if err != nil {
 			log.Printf("Error fetching log events for workspace ID: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
 	}
 
 	// Format the log events for the response
-	var response []irminModels.LogEvent
+	var response []irminmodels.LogEvent
 	for _, event := range logEvents {
 		formattedEvent, err := formatter.FormatLogEventResponse(event)
 		if err != nil {
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -144,8 +151,8 @@ func LogsIndex(c fiber.Ctx) error {
 		nextPageStr := strconv.Itoa(page + 1)
 		nextPage = &nextPageStr
 	}
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
-		Pagination: &irminModels.IrminAPIPaginationMetadata{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Pagination: &irminmodels.IrminAPIPaginationMetadata{
 			Total:      int(count),
 			TotalPages: totalPages,
 			Page:       &page,

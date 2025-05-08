@@ -23,7 +23,10 @@ type FilePayload struct {
 //
 // The function returns a *bytes.Buffer containing the multipart payload, the Content-Type (which includes
 // the boundary), and an error if something goes wrong.
-func CreateMultipartPayload(fileFields map[string]FilePayload, textFields map[string]string) (*bytes.Buffer, string, error) {
+func CreateMultipartPayload(
+	fileFields map[string]FilePayload,
+	textFields map[string]string,
+) (*bytes.Buffer, string, error) {
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
 

@@ -5,13 +5,13 @@ import (
 	"irmin-api/db"
 	"irmin-api/utils"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatWorkspaceResponse(workspace db.Workspace) (*irminModels.Workspace, error) {
+func FormatWorkspaceResponse(workspace db.Workspace) (*irminmodels.Workspace, error) {
 	sqid, _ := utils.EncodeSqids("workspaces", uint64(workspace.ID))
 	ownerSqid, _ := utils.EncodeSqids("users", uint64(workspace.Owner.ID))
-	var workspaceUsers []irminModels.User
+	var workspaceUsers []irminmodels.User
 	for _, userWorkspace := range workspace.Users {
 		userResponse, err := FormatWorkspaceUserResponse(userWorkspace)
 		if err != nil {
@@ -19,13 +19,13 @@ func FormatWorkspaceResponse(workspace db.Workspace) (*irminModels.Workspace, er
 		}
 		workspaceUsers = append(workspaceUsers, *userResponse)
 	}
-	workspaceResponse := irminModels.Workspace{
+	workspaceResponse := irminmodels.Workspace{
 		ID:          sqid,
 		Name:        workspace.Name,
 		Slug:        workspace.Slug,
 		Description: workspace.Description,
 		Users:       workspaceUsers,
-		Owner: irminModels.User{
+		Owner: irminmodels.User{
 			ID:             ownerSqid,
 			FirstName:      workspace.Owner.FirstName,
 			LastName:       workspace.Owner.LastName,

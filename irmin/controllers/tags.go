@@ -9,7 +9,7 @@ import (
 	"irmin-api/utils"
 	"log"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -27,12 +27,12 @@ func TagsIndex(c fiber.Ctx) error {
 	tags, err := dataEngine.ListTags(workspace.Slug, repository.Slug)
 	if err != nil {
 		log.Printf("Error retrieving tags from Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: tags,
 	})
 }
@@ -48,7 +48,7 @@ func TagsStore(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"name", "ref"}, nil)
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -60,7 +60,7 @@ func TagsStore(c fiber.Ctx) error {
 	tag, err := dataEngine.CreateTag(workspace.Slug, repository.Slug, fields["name"], fields["ref"])
 	if err != nil {
 		log.Printf("Error creating tag in Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -75,15 +75,15 @@ func TagsStore(c fiber.Ctx) error {
 	})
 
 	// Return the created tag
-	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Data: tag,
 	})
 }
 
 func TagsShow(c fiber.Ctx) error {
-	tag := c.Locals("tag").(*irminModels.Tag)
+	tag := c.Locals("tag").(*irminmodels.Tag)
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: tag,
 	})
 }
@@ -94,7 +94,7 @@ func TagsDestroy(c fiber.Ctx) error {
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	repository := c.Locals("repository").(*db.Repository)
-	tag := c.Locals("tag").(*irminModels.Tag)
+	tag := c.Locals("tag").(*irminmodels.Tag)
 
 	// Initialize Data Engine client
 	dataEngine := engine.NewClient(locale)
@@ -102,7 +102,7 @@ func TagsDestroy(c fiber.Ctx) error {
 	// Delete the tag from the data engine.
 	if err := dataEngine.DeleteTag(workspace.Slug, repository.Slug, tag.Name); err != nil {
 		log.Printf("Error deleting tag in Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -117,7 +117,7 @@ func TagsDestroy(c fiber.Ctx) error {
 	})
 
 	// Return a success message
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("tag_deleted"),
 	})
 }

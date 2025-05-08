@@ -5,11 +5,15 @@ import (
 	"irmin-api/utils"
 	"slices"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func generateGroupObjectSchema(c *Client, workspace, repository, ref string, object irminModels.Object) (*irminModels.ObjectSchema, error) {
-	schema := &irminModels.ObjectSchema{
+func generateGroupObjectSchema(
+	c *Client,
+	workspace, repository, ref string,
+	object irminmodels.Object,
+) (*irminmodels.ObjectSchema, error) {
+	schema := &irminmodels.ObjectSchema{
 		Name: object.Name,
 		Path: object.Path,
 		Type: object.Type,
@@ -34,30 +38,30 @@ func generateGroupObjectSchema(c *Client, workspace, repository, ref string, obj
 			}
 		}
 		// Generate the schema for the child object based on its type.
-		var childSchema *irminModels.ObjectSchema
+		var childSchema *irminmodels.ObjectSchema
 		var err error
 		switch child.Type {
-		case irminModels.ObjectTypeGroup:
+		case irminmodels.ObjectTypeGroup:
 			// Update the restrictions based on the child type.
 			noGroups = false
 			onlyStructured = false
 			onlyBinary = false
 			// Generate the schema for the child group object.
 			childSchema, err = generateGroupObjectSchema(c, workspace, repository, ref, child)
-		case irminModels.ObjectTypeStructured:
+		case irminmodels.ObjectTypeStructured:
 			// Update the restrictions based on the child type.
 			noStructured = false
 			onlyGroups = false
 			onlyBinary = false
 			// Generate the schema for the child structured object.
 			childSchema, err = generateStructuredObjectSchema(c, workspace, repository, ref, child)
-		case irminModels.ObjectTypeBinary:
+		case irminmodels.ObjectTypeBinary:
 			// Update the restrictions based on the child type.
 			noBinary = false
 			onlyGroups = false
 			onlyBinary = false
 			// Generate the schema for the child binary object.
-			childSchema, err = generateBinaryObjectSchema(child)
+			childSchema = generateBinaryObjectSchema(child)
 		default:
 			return nil, fmt.Errorf("unsupported object type: %s", child.Type)
 		}
@@ -69,7 +73,7 @@ func generateGroupObjectSchema(c *Client, workspace, repository, ref string, obj
 	}
 
 	// Set the restrictions of the group schema based on the collected information.
-	schema.Restrictions = &irminModels.GroupSchemaRestrictions{
+	schema.Restrictions = &irminmodels.GroupSchemaRestrictions{
 		NoStructured:        &noStructured,
 		NoBinary:            &noBinary,
 		NoGroups:            &noGroups,
@@ -82,9 +86,13 @@ func generateGroupObjectSchema(c *Client, workspace, repository, ref string, obj
 	return schema, nil
 }
 
-func generateStructuredObjectSchema(c *Client, workspace, repository, ref string, object irminModels.Object) (*irminModels.ObjectSchema, error) {
+func generateStructuredObjectSchema(
+	c *Client,
+	workspace, repository, ref string,
+	object irminmodels.Object,
+) (*irminmodels.ObjectSchema, error) {
 	size := int(object.SizeBytes)
-	schema := &irminModels.ObjectSchema{
+	schema := &irminmodels.ObjectSchema{
 		Name:        object.Name,
 		Path:        object.Path,
 		Type:        object.Type,
@@ -105,9 +113,9 @@ func generateStructuredObjectSchema(c *Client, workspace, repository, ref string
 	return schema, nil
 }
 
-func generateBinaryObjectSchema(object irminModels.Object) (*irminModels.ObjectSchema, error) {
+func generateBinaryObjectSchema(object irminmodels.Object) *irminmodels.ObjectSchema {
 	size := int(object.SizeBytes)
-	schema := &irminModels.ObjectSchema{
+	schema := &irminmodels.ObjectSchema{
 		Name:        object.Name,
 		Path:        object.Path,
 		Type:        object.Type,
@@ -115,10 +123,10 @@ func generateBinaryObjectSchema(object irminModels.Object) (*irminModels.ObjectS
 		ContentType: &object.ContentType,
 	}
 
-	return schema, nil
+	return schema
 }
 
-func (c *Client) GenerateObjectSchema(workspace, repository, path, ref string) (*irminModels.ObjectSchema, error) {
+func (c *Client) GenerateObjectSchema(workspace, repository, path, ref string) (*irminmodels.ObjectSchema, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -138,14 +146,14 @@ func (c *Client) GenerateObjectSchema(workspace, repository, path, ref string) (
 	}
 
 	// Generate the object schema based on the object type.
-	var schema *irminModels.ObjectSchema
+	var schema *irminmodels.ObjectSchema
 	switch irminObject.Type {
-	case irminModels.ObjectTypeGroup:
+	case irminmodels.ObjectTypeGroup:
 		schema, err = generateGroupObjectSchema(c, workspace, repository, ref, *irminObject)
-	case irminModels.ObjectTypeStructured:
+	case irminmodels.ObjectTypeStructured:
 		schema, err = generateStructuredObjectSchema(c, workspace, repository, ref, *irminObject)
-	case irminModels.ObjectTypeBinary:
-		schema, err = generateBinaryObjectSchema(*irminObject)
+	case irminmodels.ObjectTypeBinary:
+		schema = generateBinaryObjectSchema(*irminObject)
 	default:
 		return nil, fmt.Errorf("unsupported object type: %s", irminObject.Type)
 	}

@@ -5,10 +5,10 @@ import (
 	"irmin-api/db"
 	"irmin-api/utils"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatWorkflowRunResponse(workflowRun *db.WorkflowRun) (*irminModels.WorkflowRun, error) {
+func FormatWorkflowRunResponse(workflowRun *db.WorkflowRun) (*irminmodels.WorkflowRun, error) {
 	// Get the sqid of the workflow run
 	workflowRunSqid, err := utils.EncodeSqids("workflow-runs", uint64(workflowRun.ID))
 	if err != nil {
@@ -16,7 +16,7 @@ func FormatWorkflowRunResponse(workflowRun *db.WorkflowRun) (*irminModels.Workfl
 	}
 
 	// Format the workflow trigger response
-	var triggeredByResponse *irminModels.ScheduleTrigger
+	var triggeredByResponse *irminmodels.ScheduleTrigger
 	if workflowRun.TriggeredBy != nil {
 		var repositorySlug *string
 		if workflowRun.TriggeredBy.Repository != nil {
@@ -30,16 +30,16 @@ func FormatWorkflowRunResponse(workflowRun *db.WorkflowRun) (*irminModels.Workfl
 			}
 			workflowSqid = &sqid
 		}
-		var repositoryEvent irminModels.RepositoryEvent
+		var repositoryEvent irminmodels.RepositoryEvent
 		if workflowRun.TriggeredBy.RepositoryEvent != nil {
-			repositoryEvent = irminModels.RepositoryEvent(*workflowRun.TriggeredBy.RepositoryEvent)
+			repositoryEvent = irminmodels.RepositoryEvent(*workflowRun.TriggeredBy.RepositoryEvent)
 		}
-		var workflowRunEvent irminModels.WorkflowRunEvent
+		var workflowRunEvent irminmodels.WorkflowRunEvent
 		if workflowRun.TriggeredBy.WorkflowRunEvent != nil {
-			workflowRunEvent = irminModels.WorkflowRunEvent(*workflowRun.TriggeredBy.WorkflowRunEvent)
+			workflowRunEvent = irminmodels.WorkflowRunEvent(*workflowRun.TriggeredBy.WorkflowRunEvent)
 		}
-		triggeredByResponse = &irminModels.ScheduleTrigger{
-			Type:             irminModels.WorkflowTriggerType(workflowRun.TriggeredBy.Type),
+		triggeredByResponse = &irminmodels.ScheduleTrigger{
+			Type:             irminmodels.WorkflowTriggerType(workflowRun.TriggeredBy.Type),
 			RRule:            workflowRun.TriggeredBy.RRule,
 			Cron:             workflowRun.TriggeredBy.Cron,
 			RepositoryEvent:  &repositoryEvent,
@@ -51,13 +51,13 @@ func FormatWorkflowRunResponse(workflowRun *db.WorkflowRun) (*irminModels.Workfl
 	}
 
 	// Format the user response
-	var triggeredByUserResponse *irminModels.User
+	var triggeredByUserResponse *irminmodels.User
 	if workflowRun.TriggeredByUser != nil {
 		userSqid, err := utils.EncodeSqids("users", uint64(workflowRun.TriggeredByUser.ID))
 		if err != nil {
 			return nil, fmt.Errorf("error encoding user sqid: %w", err)
 		}
-		triggeredByUserResponse = &irminModels.User{
+		triggeredByUserResponse = &irminmodels.User{
 			ID:             userSqid,
 			FirstName:      workflowRun.TriggeredByUser.FirstName,
 			LastName:       workflowRun.TriggeredByUser.LastName,
@@ -75,13 +75,13 @@ func FormatWorkflowRunResponse(workflowRun *db.WorkflowRun) (*irminModels.Workfl
 	}
 
 	// Return the formatted workflow run response
-	return &irminModels.WorkflowRun{
+	return &irminmodels.WorkflowRun{
 		ID:              workflowRunSqid,
 		CreatedAt:       workflowRun.CreatedAt,
 		UpdatedAt:       workflowRun.UpdatedAt,
 		StartedAt:       workflowRun.StartedAt,
 		FinishedAt:      workflowRun.FinishedAt,
-		Status:          irminModels.WorkflowStatus(workflowRun.Status),
+		Status:          irminmodels.WorkflowStatus(workflowRun.Status),
 		Logs:            workflowRun.Logs,
 		TriggeredBy:     triggeredByResponse,
 		TriggeredByUser: triggeredByUserResponse,

@@ -5,23 +5,23 @@ import (
 	"irmin-api/db"
 	"irmin-api/utils"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // FormatWorkspaceUserResponse creates a user response object from a workspace user object.
-func FormatWorkspaceUserResponse(workspaceUser db.WorkspaceUser) (*irminModels.User, error) {
+func FormatWorkspaceUserResponse(workspaceUser db.WorkspaceUser) (*irminmodels.User, error) {
 	// Construct the user sqid
 	userSqid, err := utils.EncodeSqids("users", uint64(workspaceUser.UserID))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding user sqid: %w", err)
 	}
 	// Construct the roles
-	var roles []irminModels.IrminRole
+	var roles []irminmodels.IrminRole
 	for _, role := range workspaceUser.Roles {
-		roles = append(roles, irminModels.IrminRole(role))
+		roles = append(roles, irminmodels.IrminRole(role))
 	}
 	// Construct the user object
-	userResponse := irminModels.User{
+	userResponse := irminmodels.User{
 		ID:             userSqid,
 		FirstName:      workspaceUser.User.FirstName,
 		LastName:       workspaceUser.User.LastName,
@@ -35,14 +35,14 @@ func FormatWorkspaceUserResponse(workspaceUser db.WorkspaceUser) (*irminModels.U
 }
 
 // FormatUserResponse creates a role response object from a workspace role object.
-func FormatUserResponse(user db.User) (*irminModels.User, error) {
+func FormatUserResponse(user db.User) (*irminmodels.User, error) {
 	// Construct the user sqid
 	userSqid, err := utils.EncodeSqids("users", uint64(user.ID))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding user sqid: %w", err)
 	}
 	// Construct the user object
-	userResponse := irminModels.User{
+	userResponse := irminmodels.User{
 		ID:             userSqid,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,

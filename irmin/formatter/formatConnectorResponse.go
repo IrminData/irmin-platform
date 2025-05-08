@@ -5,23 +5,23 @@ import (
 	"irmin-api/db"
 	"irmin-api/utils"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatConnectorResponse(connector db.Connector) (*irminModels.Connector, error) {
+func FormatConnectorResponse(connector db.Connector) (*irminmodels.Connector, error) {
 	connectorSqid, err := utils.EncodeSqids("connectors", uint64(connector.ID))
 	if err != nil {
-		return nil, fmt.Errorf("error encoding connector sqid: %v", err)
+		return nil, fmt.Errorf("error encoding connector sqid: %w", err)
 	}
-	var capabilities []irminModels.ConnectorCapability
+	var capabilities []irminmodels.ConnectorCapability
 	for _, capability := range connector.Capabilities {
-		capabilities = append(capabilities, irminModels.ConnectorCapability(capability))
+		capabilities = append(capabilities, irminmodels.ConnectorCapability(capability))
 	}
-	var categories []irminModels.ConnectorCategory
+	var categories []irminmodels.ConnectorCategory
 	for _, category := range connector.Categories {
-		categories = append(categories, irminModels.ConnectorCategory(category))
+		categories = append(categories, irminmodels.ConnectorCategory(category))
 	}
-	connectorResponse := irminModels.Connector{
+	connectorResponse := irminmodels.Connector{
 		ID:              connectorSqid,
 		Name:            connector.Name,
 		Description:     connector.Description,
@@ -31,7 +31,7 @@ func FormatConnectorResponse(connector db.Connector) (*irminModels.Connector, er
 		Capabilities:    capabilities,
 		Locales:         connector.Locales,
 		Categories:      categories,
-		PrimaryCategory: irminModels.ConnectorCategory(connector.PrimaryCategory),
+		PrimaryCategory: irminmodels.ConnectorCategory(connector.PrimaryCategory),
 		AuthorEmail:     connector.AuthorEmail,
 		ReadMoreURL:     connector.ReadMoreURL,
 	}

@@ -4,19 +4,19 @@ import (
 	"encoding/json"
 	"log"
 
-	irminCore "github.com/IrminData/irmin-sdk-go/core-api"
-	irminUtils "github.com/IrminData/irmin-sdk-go/utils"
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
 
 func main() {
 	// Parse command line flags for API key and URL.
-	apiURL, apiKey, err := irminUtils.GetAPIFromFlags()
+	apiURL, apiKey, err := irminutils.GetAPIFromFlags()
 	if err != nil {
 		log.Fatalf("Error getting API flags: %v", err)
 	}
 
 	// Initialise the Irmin client.
-	client := irminCore.NewClient(apiURL, apiKey, "en")
+	client := irmincore.NewClient(apiURL, apiKey, "en")
 
 	// List available workspaces.
 	workspaces, _, err := client.ListWorkspaces()
@@ -45,7 +45,7 @@ func main() {
 	}
 
 	// Return the log events as a script result.
-	err = irminUtils.SendComputeResult(logEventsJSON, "logEvents.json")
+	err = irminutils.SendComputeResult(logEventsJSON, "logEvents.json")
 	if err != nil {
 		log.Fatalf("Error sending compute result: %v", err)
 	}

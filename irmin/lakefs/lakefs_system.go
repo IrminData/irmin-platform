@@ -2,7 +2,7 @@ package lakefs
 
 import "net/http"
 
-// VersionConfig represents the version of the LakeFS server
+// VersionConfig represents the version of the LakeFS server.
 type VersionConfig struct {
 	Version            string `json:"version"`
 	LatestVersion      string `json:"latest_version"`
@@ -10,7 +10,7 @@ type VersionConfig struct {
 	UpgradeURL         string `json:"upgrade_url"`
 }
 
-// StorageConfig represents the storage configuration of the LakeFS server
+// StorageConfig represents the storage configuration of the LakeFS server.
 type StorageConfig struct {
 	BlockstoreType           string            `json:"blockstore_type"`
 	BlockstoreNamespace      string            `json:"blockstore_namespace"`
@@ -26,19 +26,19 @@ type StorageConfig struct {
 	BlockstoreExtras         map[string]string `json:"blockstore_extras"` // Additional blockstore-specific configuration
 }
 
-// Config represents the full configuration of the LakeFS server
+// Config represents the full configuration of the LakeFS server.
 type Config struct {
 	VersionConfig     VersionConfig   `json:"version_config"`
 	StorageConfig     StorageConfig   `json:"storage_config"`
 	StorageConfigList []StorageConfig `json:"storage_config_list"`
 }
 
-// Healthcheck performs a healthcheck on the LakeFS server to make sure that the API server is up and running
+// Healthcheck performs a healthcheck on the LakeFS server to make sure that the API server is up and running.
 func (c *Client) Healthcheck() error {
 	return c.doRequest("GET", "/healthcheck", nil, []int{http.StatusNoContent, http.StatusOK}, nil)
 }
 
-// GetConfig retrieves the configuration of the connected LakeFS server
+// GetConfig retrieves the configuration of the connected LakeFS server.
 func (c *Client) GetConfig() (*Config, error) {
 	var config Config
 	if err := c.doRequest("GET", "/config", nil, []int{http.StatusOK}, &config); err != nil {

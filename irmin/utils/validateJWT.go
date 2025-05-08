@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -31,7 +32,7 @@ func ValidateJWT(tokenString string, signingKey []byte, signingAlg string) (*jwt
 
 	// Validate the token.
 	if !token.Valid {
-		return nil, fmt.Errorf("invalid token")
+		return nil, errors.New("invalid token")
 	}
 
 	return token, nil

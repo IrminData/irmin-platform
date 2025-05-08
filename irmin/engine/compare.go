@@ -7,10 +7,13 @@ import (
 	"irmin-api/utils"
 	"time"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef, compareRef string) (*irminModels.Diff, error) {
+func (c *Client) CompareRefs(
+	ctx context.Context,
+	workspace, repository, baseRef, compareRef string,
+) (*irminmodels.Diff, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -35,7 +38,15 @@ func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef
 	}
 
 	// Get the commits in the compare_ref after the merge base.
-	newCommits, err := c.LakeFSClient.ListAllCommits(lakeFSRepositoryName, compareRef, "", "", mergeBase.BaseCommitID, nil, nil)
+	newCommits, err := c.LakeFSClient.ListAllCommits(
+		lakeFSRepositoryName,
+		compareRef,
+		"",
+		"",
+		mergeBase.BaseCommitID,
+		nil,
+		nil,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get commits in compare_ref: %w", err)
 	}
@@ -49,13 +60,13 @@ func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef
 	}
 
 	// Construct Irmin diff object.
-	irminChangeItems := make([]irminModels.ChangeItem, len(diff))
+	irminChangeItems := make([]irminmodels.ChangeItem, len(diff))
 	for i, diffItem := range diff {
 		objectDetails := utils.ParseObjectDetailsFromPath(diffItem.Path)
-		irminChangeItems[i] = irminModels.ChangeItem{
-			Type: irminModels.ChangeType(diffItem.Type),
+		irminChangeItems[i] = irminmodels.ChangeItem{
+			Type: irminmodels.ChangeType(diffItem.Type),
 			Size: int(diffItem.SizeBytes),
-			Object: irminModels.Object{
+			Object: irminmodels.Object{
 				Name:        objectDetails.Name,
 				Path:        objectDetails.FullPath,
 				Type:        objectDetails.Type,
@@ -63,7 +74,7 @@ func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef
 			},
 		}
 	}
-	irminCommits := make([]irminModels.Commit, len(newCommits))
+	irminCommits := make([]irminmodels.Commit, len(newCommits))
 	for i, lakeFSCommit := range newCommits {
 		previousHash := ""
 		if len(lakeFSCommit.Parents) > 0 {
@@ -73,7 +84,7 @@ func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef
 		if authorValue, ok := lakeFSCommit.Metadata["author"]; ok && authorValue != "" {
 			author = authorValue
 		}
-		irminCommits[i] = irminModels.Commit{
+		irminCommits[i] = irminmodels.Commit{
 			Hash:         lakeFSCommit.ID,
 			Message:      lakeFSCommit.Message,
 			Timestamp:    time.Unix(int64(lakeFSCommit.CreationDate), 0).Format(time.RFC3339),
@@ -81,7 +92,7 @@ func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef
 			PreviousHash: &previousHash,
 		}
 	}
-	irminDiff := &irminModels.Diff{
+	irminDiff := &irminmodels.Diff{
 		Repository: repository,
 		BaseRef:    baseRef,
 		CompareRef: compareRef,
@@ -92,7 +103,10 @@ func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef
 	return irminDiff, nil
 }
 
-func (c *Client) GetUncommittedChanges(ctx context.Context, workspace, repository, branch string) (*irminModels.Diff, error) {
+func (c *Client) GetUncommittedChanges(
+	ctx context.Context,
+	workspace, repository, branch string,
+) (*irminmodels.Diff, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -102,13 +116,13 @@ func (c *Client) GetUncommittedChanges(ctx context.Context, workspace, repositor
 	}
 
 	// Construct Irmin diff object.
-	irminChangeItems := make([]irminModels.ChangeItem, len(diff))
+	irminChangeItems := make([]irminmodels.ChangeItem, len(diff))
 	for i, diffItem := range diff {
 		objectDetails := utils.ParseObjectDetailsFromPath(diffItem.Path)
-		irminChangeItems[i] = irminModels.ChangeItem{
-			Type: irminModels.ChangeType(diffItem.Type),
+		irminChangeItems[i] = irminmodels.ChangeItem{
+			Type: irminmodels.ChangeType(diffItem.Type),
 			Size: int(diffItem.SizeBytes),
-			Object: irminModels.Object{
+			Object: irminmodels.Object{
 				Name:        objectDetails.Name,
 				Path:        objectDetails.FullPath,
 				Type:        objectDetails.Type,
@@ -117,7 +131,7 @@ func (c *Client) GetUncommittedChanges(ctx context.Context, workspace, repositor
 		}
 	}
 
-	irminDiff := &irminModels.Diff{
+	irminDiff := &irminmodels.Diff{
 		Repository: repository,
 		BaseRef:    branch,
 		CompareRef: branch,
@@ -128,7 +142,10 @@ func (c *Client) GetUncommittedChanges(ctx context.Context, workspace, repositor
 	return irminDiff, nil
 }
 
-func (c *Client) MergeRefs(workspace, repository, baseRef, compareRef, message, author, strategy string, squash, allowEmpty bool) (*irminModels.Commit, error) {
+func (c *Client) MergeRefs(
+	workspace, repository, baseRef, compareRef, message, author, strategy string,
+	squash, allowEmpty bool,
+) (*irminmodels.Commit, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -165,7 +182,7 @@ func (c *Client) MergeRefs(workspace, repository, baseRef, compareRef, message, 
 	if authorValue, ok := lakeFSCommit.Metadata["author"]; ok && authorValue != "" {
 		author = authorValue
 	}
-	irminCommit := irminModels.Commit{
+	irminCommit := irminmodels.Commit{
 		Hash:         lakeFSCommit.ID,
 		Message:      lakeFSCommit.Message,
 		Timestamp:    time.Unix(int64(lakeFSCommit.CreationDate), 0).Format(time.RFC3339),

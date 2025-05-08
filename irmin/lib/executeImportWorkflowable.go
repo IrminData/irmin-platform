@@ -11,7 +11,12 @@ import (
 // ExecuteImportWorkflowable executes the import workflow for a given workflowable.
 // It retrieves the connector information and uses the Data Engine to import data from the connector to the requested repository.
 // It returns a slice of logs and an error if any occurred during the process.
-func ExecuteImportWorkflowable(ctx context.Context, workflow *db.Workflow, workflowable *db.ImportWorkflowable, run *db.WorkflowRun) ([]string, error) {
+func ExecuteImportWorkflowable(
+	ctx context.Context,
+	workflow *db.Workflow,
+	workflowable *db.ImportWorkflowable,
+	run *db.WorkflowRun,
+) ([]string, error) {
 	var logs []string
 
 	// Fetch the connection and it's connector information
@@ -26,7 +31,15 @@ func ExecuteImportWorkflowable(ctx context.Context, workflow *db.Workflow, workf
 	dataEngine := engine.NewClient("en")
 
 	// Import data from the connector to the requested repository
-	paths, errors := dataEngine.DataImport(ctx, connection, workflowable.ConnectionPath, workflow.Workspace.Slug, workflowable.Repository.Slug, workflowable.Branch, workflowable.Path)
+	paths, errors := dataEngine.DataImport(
+		ctx,
+		connection,
+		workflowable.ConnectionPath,
+		workflow.Workspace.Slug,
+		workflowable.Repository.Slug,
+		workflowable.Branch,
+		workflowable.Path,
+	)
 	if len(errors) > 0 {
 		for _, err := range errors {
 			log.Printf("Error importing data: %v", err)

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -68,7 +69,7 @@ func ParseIrminQuery(query string, replaceFn ReplaceFn) (ParsedIrminQuery, error
 	matches := rex.FindAllStringSubmatchIndex(query, -1)
 
 	if len(matches) == 0 {
-		return ParsedIrminQuery{}, fmt.Errorf("no valid query placeholders found")
+		return ParsedIrminQuery{}, errors.New("no valid query placeholders found")
 	}
 
 	var placeholders []*ParsedQueryPlaceholder
@@ -101,7 +102,10 @@ func ParseIrminQuery(query string, replaceFn ReplaceFn) (ParsedIrminQuery, error
 			repo = parts[1]
 			subParts := strings.Split(parts[2], "@")
 			if len(subParts) > 2 {
-				return ParsedIrminQuery{}, fmt.Errorf("invalid query format in placeholder: %s; too many '@' symbols", content)
+				return ParsedIrminQuery{}, fmt.Errorf(
+					"invalid query format in placeholder: %s; too many '@' symbols",
+					content,
+				)
 			}
 			object = subParts[0]
 			if len(subParts) == 2 {
@@ -135,7 +139,11 @@ func ParseIrminQuery(query string, replaceFn ReplaceFn) (ParsedIrminQuery, error
 		// Compute the replacement using the provided function.
 		replacement, err := replaceFn(parsed)
 		if err != nil {
-			return ParsedIrminQuery{}, fmt.Errorf("failed to compute replacement for placeholder '%s': %w", content, err)
+			return ParsedIrminQuery{}, fmt.Errorf(
+				"failed to compute replacement for placeholder '%s': %w",
+				content,
+				err,
+			)
 		}
 		parsed.Replacer = replacement
 

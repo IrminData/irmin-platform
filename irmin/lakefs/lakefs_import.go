@@ -41,7 +41,7 @@ type ImportLocation struct {
 	Destination string `json:"destination"`
 }
 
-// ImportCreateRequest represents the request payload to create an import operation
+// ImportCreateRequest represents the request payload to create an import operation.
 type ImportCreateRequest struct {
 	Paths  []ImportLocation    `json:"paths"`
 	Commit CommitCreateRequest `json:"commit"`
@@ -66,7 +66,10 @@ func (c *Client) GetImportStatus(repositoryID, branchID, importID string) (*Impo
 }
 
 // CreateImport imports objects from a source location in the object store to a LakeFS repository branch.
-func (c *Client) CreateImport(repositoryID, branchID string, reqData ImportCreateRequest) (*ImportCreateResponse, error) {
+func (c *Client) CreateImport(
+	repositoryID, branchID string,
+	reqData ImportCreateRequest,
+) (*ImportCreateResponse, error) {
 	endpoint := fmt.Sprintf("/repositories/%s/branches/%s/import", repositoryID, branchID)
 
 	var importResp ImportCreateResponse

@@ -1,18 +1,22 @@
 package formatter
 
 import (
+	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/utils"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatRepositoryResponse(repository *db.Repository, dataEngineRepository *engine.Repository) (*irminModels.Repository, error) {
+func FormatRepositoryResponse(
+	repository *db.Repository,
+	dataEngineRepository *engine.Repository,
+) (*irminmodels.Repository, error) {
 	// Check if the repository is a nil pointer
 	if repository == nil {
-		return nil, fmt.Errorf("repository is nil")
+		return nil, errors.New("repository is nil")
 	}
 
 	// Get the sqid of the repository
@@ -28,30 +32,28 @@ func FormatRepositoryResponse(repository *db.Repository, dataEngineRepository *e
 	}
 
 	// Determine if the repository is immutable
-	isImmutable := false
-	if repository.IsImmutable {
-		isImmutable = true
-	}
+	isImmutable := repository.IsImmutable
+
 	if dataEngineRepository != nil && dataEngineRepository.IsImmutable {
 		isImmutable = true
 	}
 
 	// Determine the garbage collection rules
-	var gcRules *irminModels.GarbageCollectionRules
+	var gcRules *irminmodels.GarbageCollectionRules
 	if dataEngineRepository != nil && dataEngineRepository.GarbageCollectionRules != nil {
-		gcRules = &irminModels.GarbageCollectionRules{
+		gcRules = &irminmodels.GarbageCollectionRules{
 			DefaultRetentionDays: dataEngineRepository.GarbageCollectionRules.DefaultRetentionDays,
 			Branches:             dataEngineRepository.GarbageCollectionRules.Branches,
 		}
 	} else {
-		gcRules = &irminModels.GarbageCollectionRules{
+		gcRules = &irminmodels.GarbageCollectionRules{
 			DefaultRetentionDays: 0,
 			Branches:             nil,
 		}
 	}
 
 	// Create the repository response
-	repositoryResponse := &irminModels.Repository{
+	repositoryResponse := &irminmodels.Repository{
 		ID:                     repositorySqid,
 		Name:                   repository.Name,
 		Slug:                   repository.Slug,

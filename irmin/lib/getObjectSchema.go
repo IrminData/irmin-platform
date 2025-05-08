@@ -10,17 +10,23 @@ import (
 	"irmin-api/db"
 	"irmin-api/engine"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// objectSchemaCacheUpdateMutex is used to prevent concurrent updates to the same object schema cache entry
+// objectSchemaCacheUpdateMutex is used to prevent concurrent updates to the same object schema cache entry.
 var objectSchemaCacheUpdateMutex sync.Map
 
 // GetObjectSchema returns the schema for an object.
 // It first checks if the schema is cached, and if so, returns the cached schema.
 // Otherwise, it fetches the schema from the Data Engine and caches it.
 // The cache is updated in a goroutine to avoid blocking the main thread.
-func GetObjectSchema(c context.Context, workspace *db.Workspace, repository *db.Repository, object *irminModels.Object, ref, locale string) (*irminModels.ObjectSchema, error) {
+func GetObjectSchema(
+	c context.Context,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *irminmodels.Object,
+	ref, locale string,
+) (*irminmodels.ObjectSchema, error) {
 	// Initialize Data Engine client
 	dataEngine := engine.NewClient(locale)
 

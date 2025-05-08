@@ -6,10 +6,10 @@ import (
 	"irmin-api/utils"
 	"time"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatInviteResponse(invite *db.Invite) (*irminModels.Invite, error) {
+func FormatInviteResponse(invite *db.Invite) (*irminmodels.Invite, error) {
 	// Get the sqid of the invite
 	inviteSqid, err := utils.EncodeSqids("invites", uint64(invite.ID))
 	if err != nil {
@@ -37,14 +37,14 @@ func FormatInviteResponse(invite *db.Invite) (*irminModels.Invite, error) {
 	if invite.DeclinedAt.Valid {
 		declinedAt = invite.DeclinedAt.Time
 	}
-	inviteResponse := irminModels.Invite{
+	inviteResponse := irminmodels.Invite{
 		ID:         inviteSqid,
 		Email:      invite.Email,
-		Role:       irminModels.IrminRole(invite.Role),
+		Role:       irminmodels.IrminRole(invite.Role),
 		AcceptedAt: &acceptedAt,
 		DeclinedAt: &declinedAt,
 		ExpiresAt:  invite.ExpiresAt,
-		InvitedBy: irminModels.User{
+		InvitedBy: irminmodels.User{
 			ID:             invitedBySqid,
 			FirstName:      invite.InvitedBy.FirstName,
 			LastName:       invite.InvitedBy.LastName,
@@ -53,7 +53,7 @@ func FormatInviteResponse(invite *db.Invite) (*irminModels.Invite, error) {
 			Company:        invite.InvitedBy.Company,
 			ProfilePicture: invite.InvitedBy.ProfilePicture,
 		},
-		Workspace: irminModels.Workspace{
+		Workspace: irminmodels.Workspace{
 			ID:          workspaceSqid,
 			Name:        invite.Workspace.Name,
 			Slug:        invite.Workspace.Slug,

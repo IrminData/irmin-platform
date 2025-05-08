@@ -8,7 +8,7 @@ import (
 	"irmin-api/utils"
 	"log"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -30,7 +30,7 @@ func WorkspaceSchemaIndex(c fiber.Ctx) error {
 	connections, err := connectionsFuture.Await()
 	if err != nil {
 		log.Printf("Error fetching connections: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -38,33 +38,33 @@ func WorkspaceSchemaIndex(c fiber.Ctx) error {
 	repositories, err := repositoriesFuture.Await()
 	if err != nil {
 		log.Printf("Error fetching repositories: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Fetch connection schemas concurrently
-	connectionSchemaFutures := make([]utils.FutureResult[*irminModels.ObjectSchema], len(connections))
+	connectionSchemaFutures := make([]utils.FutureResult[*irminmodels.ObjectSchema], len(connections))
 	for i, connection := range connections {
 		conn := connection // Create a new variable to avoid closure issues
-		connectionSchemaFutures[i] = utils.AsyncWithContext(c.Context(), func() (*irminModels.ObjectSchema, error) {
+		connectionSchemaFutures[i] = utils.AsyncWithContext(c.Context(), func() (*irminmodels.ObjectSchema, error) {
 			return lib.GetConnectionSchema(c.Context(), &conn, "read", locale)
 		})
 	}
 
 	// Fetch root group schemas concurrently
-	rootGroupSchemaFutures := make([]utils.FutureResult[*irminModels.ObjectSchema], len(repositories))
+	rootGroupSchemaFutures := make([]utils.FutureResult[*irminmodels.ObjectSchema], len(repositories))
 	for i, repository := range repositories {
 		repo := repository // Create a new variable to avoid closure issues
-		rootGroupSchemaFutures[i] = utils.AsyncWithContext(c.Context(), func() (*irminModels.ObjectSchema, error) {
+		rootGroupSchemaFutures[i] = utils.AsyncWithContext(c.Context(), func() (*irminmodels.ObjectSchema, error) {
 			return lib.GetObjectSchema(
 				c.Context(),
 				workspace,
 				&repo,
-				&irminModels.Object{
+				&irminmodels.Object{
 					Path: "",
 					Name: "",
-					Type: irminModels.ObjectTypeGroup,
+					Type: irminmodels.ObjectTypeGroup,
 				},
 				repo.DefaultBranch,
 				locale,
@@ -73,12 +73,12 @@ func WorkspaceSchemaIndex(c fiber.Ctx) error {
 	}
 
 	// Collect all connection schemas
-	connectionSchemas := make([]irminModels.ObjectSchema, len(connections))
+	connectionSchemas := make([]irminmodels.ObjectSchema, len(connections))
 	for i, future := range connectionSchemaFutures {
 		schema, err := future.Await()
 		if err != nil {
 			log.Printf("Error fetching connection schema: %v", err)
-			return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -88,12 +88,12 @@ func WorkspaceSchemaIndex(c fiber.Ctx) error {
 	}
 
 	// Collect all root group schemas
-	rootGroupSchemas := make([]irminModels.ObjectSchema, len(repositories))
+	rootGroupSchemas := make([]irminmodels.ObjectSchema, len(repositories))
 	for i, future := range rootGroupSchemaFutures {
 		schema, err := future.Await()
 		if err != nil {
 			log.Printf("Error fetching root group schema: %v", err)
-			return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -102,22 +102,22 @@ func WorkspaceSchemaIndex(c fiber.Ctx) error {
 		rootGroupSchemas[i] = *schema
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
-		Data: irminModels.ObjectSchema{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: irminmodels.ObjectSchema{
 			Name: workspace.Slug,
 			Path: workspace.Slug,
-			Type: irminModels.ObjectTypeGroup,
-			Children: []irminModels.ObjectSchema{
+			Type: irminmodels.ObjectTypeGroup,
+			Children: []irminmodels.ObjectSchema{
 				{
 					Name:     "connections",
 					Path:     fmt.Sprintf("%s/connections", workspace.Slug),
-					Type:     irminModels.ObjectTypeGroup,
+					Type:     irminmodels.ObjectTypeGroup,
 					Children: connectionSchemas,
 				},
 				{
 					Name:     "repositories",
 					Path:     fmt.Sprintf("%s/repositories", workspace.Slug),
-					Type:     irminModels.ObjectTypeGroup,
+					Type:     irminmodels.ObjectTypeGroup,
 					Children: rootGroupSchemas,
 				},
 			},

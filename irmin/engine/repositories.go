@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"irmin-api/bucket"
 	"irmin-api/lakefs"
@@ -9,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // Repository represents a returned by the data engine.
@@ -29,7 +30,7 @@ type Repository struct {
 	// Timestamp of the creation of the Repository
 	CreatedAt string `json:"created_at"`
 	// Garbage collection rules for the Repository
-	GarbageCollectionRules *irminModels.GarbageCollectionRules `json:"garbage_collection_rules,omitempty"`
+	GarbageCollectionRules *irminmodels.GarbageCollectionRules `json:"garbage_collection_rules,omitempty"`
 }
 
 func (c *Client) ListRepositories(workspace string) ([]Repository, error) {
@@ -61,7 +62,6 @@ func (c *Client) ListRepositories(workspace string) ([]Repository, error) {
 }
 
 func (c *Client) GetRepository(ctx context.Context, workspace, repository string) (*Repository, error) {
-
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -97,12 +97,12 @@ func (c *Client) GetRepository(ctx context.Context, workspace, repository string
 		IsImmutable:      lakefsRepository.ReadOnly,
 		DefaultBranch:    lakefsRepository.DefaultBranch,
 		CreatedAt:        time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
-		GarbageCollectionRules: &irminModels.GarbageCollectionRules{
+		GarbageCollectionRules: &irminmodels.GarbageCollectionRules{
 			DefaultRetentionDays: lakefsGarbageCollectionRules.DefaultRetentionDays,
-			Branches: func() []irminModels.BranchGarbageCollectionRules {
-				var branches []irminModels.BranchGarbageCollectionRules
+			Branches: func() []irminmodels.BranchGarbageCollectionRules {
+				var branches []irminmodels.BranchGarbageCollectionRules
 				for _, branch := range lakefsGarbageCollectionRules.Branches {
-					branches = append(branches, irminModels.BranchGarbageCollectionRules{
+					branches = append(branches, irminmodels.BranchGarbageCollectionRules{
 						BranchID:      branch.BranchID,
 						RetentionDays: branch.RetentionDays,
 					})
@@ -115,7 +115,11 @@ func (c *Client) GetRepository(ctx context.Context, workspace, repository string
 	return &irminRepository, nil
 }
 
-func (c *Client) CreateRepository(workspace, name, defaultBranch string, isImmutable bool, gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int) (*Repository, error) {
+func (c *Client) CreateRepository(
+	workspace, name, defaultBranch string,
+	isImmutable bool,
+	gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int,
+) (*Repository, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, name)
 
@@ -171,12 +175,12 @@ func (c *Client) CreateRepository(workspace, name, defaultBranch string, isImmut
 		IsImmutable:      lakefsRepository.ReadOnly,
 		DefaultBranch:    lakefsRepository.DefaultBranch,
 		CreatedAt:        time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
-		GarbageCollectionRules: &irminModels.GarbageCollectionRules{
+		GarbageCollectionRules: &irminmodels.GarbageCollectionRules{
 			DefaultRetentionDays: garbageCollectionRules.DefaultRetentionDays,
-			Branches: func() []irminModels.BranchGarbageCollectionRules {
-				var branches []irminModels.BranchGarbageCollectionRules
+			Branches: func() []irminmodels.BranchGarbageCollectionRules {
+				var branches []irminmodels.BranchGarbageCollectionRules
 				for _, branch := range garbageCollectionRules.Branches {
-					branches = append(branches, irminModels.BranchGarbageCollectionRules{
+					branches = append(branches, irminmodels.BranchGarbageCollectionRules{
 						BranchID:      branch.BranchID,
 						RetentionDays: branch.RetentionDays,
 					})
@@ -189,7 +193,10 @@ func (c *Client) CreateRepository(workspace, name, defaultBranch string, isImmut
 	return &irminRepository, nil
 }
 
-func (c *Client) UpdateRepository(workspace, repository string, gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int) (*Repository, error) {
+func (c *Client) UpdateRepository(
+	workspace, repository string,
+	gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int,
+) (*Repository, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -238,12 +245,12 @@ func (c *Client) UpdateRepository(workspace, repository string, gcDefaultRetenti
 		IsImmutable:      lakefsRepository.ReadOnly,
 		DefaultBranch:    lakefsRepository.DefaultBranch,
 		CreatedAt:        time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
-		GarbageCollectionRules: &irminModels.GarbageCollectionRules{
+		GarbageCollectionRules: &irminmodels.GarbageCollectionRules{
 			DefaultRetentionDays: garbageCollectionRules.DefaultRetentionDays,
-			Branches: func() []irminModels.BranchGarbageCollectionRules {
-				var branches []irminModels.BranchGarbageCollectionRules
+			Branches: func() []irminmodels.BranchGarbageCollectionRules {
+				var branches []irminmodels.BranchGarbageCollectionRules
 				for _, branch := range garbageCollectionRules.Branches {
-					branches = append(branches, irminModels.BranchGarbageCollectionRules{
+					branches = append(branches, irminmodels.BranchGarbageCollectionRules{
 						BranchID:      branch.BranchID,
 						RetentionDays: branch.RetentionDays,
 					})
@@ -266,7 +273,7 @@ func (c *Client) DeleteRepository(ctx context.Context, workspace, repository str
 		return fmt.Errorf("failed to get repository details: %w", err)
 	}
 	if lakefsRepository == nil {
-		return fmt.Errorf("repository not found")
+		return errors.New("repository not found")
 	}
 
 	// Delete repository.

@@ -21,19 +21,19 @@ func NewQueryClient() (*QueryClient, error) {
 	// Load environment variables.
 	env, err := utils.LoadEnv()
 	if err != nil {
-		return nil, fmt.Errorf("failed to load environment variables: %v", err)
+		return nil, fmt.Errorf("failed to load environment variables: %w", err)
 	}
 
 	// Open a connection to DuckDB (empty string uses an in-memory database).
 	db, err := sql.Open("duckdb", "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to open DuckDB connection: %v", err)
+		return nil, fmt.Errorf("failed to open DuckDB connection: %w", err)
 	}
 
 	// Install and load HTTPFS extension.
 	_, err = db.Exec("INSTALL httpfs; LOAD httpfs;")
 	if err != nil {
-		return nil, fmt.Errorf("failed to install and load httpfs extension: %v", err)
+		return nil, fmt.Errorf("failed to install and load httpfs extension: %w", err)
 	}
 
 	// Configure S3 / LakeFS connection secret.
@@ -53,7 +53,7 @@ func NewQueryClient() (*QueryClient, error) {
 	)
 	_, err = db.Exec(createCredentialsQuery)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create S3 / LakeFS credentials: %v", err)
+		return nil, fmt.Errorf("failed to create S3 / LakeFS credentials: %w", err)
 	}
 	// Return the client.
 	return &QueryClient{

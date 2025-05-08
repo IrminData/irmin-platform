@@ -78,7 +78,13 @@ type UnderlyingStorageProperties struct {
 func (c *Client) GetObjectContent(repositoryID, ref, objectPath string) (*ObjectContentResponse, error) {
 	// Build the endpoint with query parameter.
 	endpoint := fmt.Sprintf("/repositories/%s/refs/%s/objects?path=%s", repositoryID, ref, url.QueryEscape(objectPath))
-	resp, err := c.doStreamRequest("GET", endpoint, nil, []int{http.StatusOK, http.StatusPartialContent, http.StatusFound}, "application/octet-stream")
+	resp, err := c.doStreamRequest(
+		"GET",
+		endpoint,
+		nil,
+		[]int{http.StatusOK, http.StatusPartialContent, http.StatusFound},
+		"application/octet-stream",
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -95,9 +101,11 @@ func (c *Client) GetObjectContent(repositoryID, ref, objectPath string) (*Object
 }
 
 // GetObjectContentWithRange is similar to GetObjectContent but allows specifying a Range header.
-func (c *Client) GetObjectContentWithRange(repositoryID, ref, path, rangeHeader string) (*ObjectContentResponse, error) {
+func (c *Client) GetObjectContentWithRange(
+	repositoryID, ref, path, rangeHeader string,
+) (*ObjectContentResponse, error) {
 	endpoint := fmt.Sprintf("/repositories/%s/refs/%s/objects?path=%s", repositoryID, ref, url.QueryEscape(path))
-	req, err := http.NewRequest("GET", c.baseURL+endpoint, nil)
+	req, err := http.NewRequest(http.MethodGet, c.baseURL+endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -119,7 +127,8 @@ func (c *Client) GetObjectContentWithRange(repositoryID, ref, path, rangeHeader 
 		return nil, fmt.Errorf("failed to execute request: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent && resp.StatusCode != http.StatusFound {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent &&
+		resp.StatusCode != http.StatusFound {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(bodyBytes))
@@ -154,7 +163,12 @@ func (c *Client) GetFullObjectContent(repositoryID, ref, objectPath string) ([]b
 		defer redirectResp.Body.Close()
 		if redirectResp.StatusCode != http.StatusOK && redirectResp.StatusCode != http.StatusPartialContent {
 			bodyBytes, _ := io.ReadAll(redirectResp.Body)
-			return nil, fmt.Errorf("failed to download object from redirect URL %s, status: %d, message: %s", redirectURL, redirectResp.StatusCode, string(bodyBytes))
+			return nil, fmt.Errorf(
+				"failed to download object from redirect URL %s, status: %d, message: %s",
+				redirectURL,
+				redirectResp.StatusCode,
+				string(bodyBytes),
+			)
 		}
 		return io.ReadAll(redirectResp.Body)
 	}
@@ -203,7 +217,12 @@ func (c *Client) GetFullObjectContent(repositoryID, ref, objectPath string) ([]b
 			defer redirectResp.Body.Close()
 			if redirectResp.StatusCode != http.StatusOK && redirectResp.StatusCode != http.StatusPartialContent {
 				bodyBytes, _ := io.ReadAll(redirectResp.Body)
-				return nil, fmt.Errorf("failed to download partial object from redirect URL %s, status: %d, message: %s", redirectURL, redirectResp.StatusCode, string(bodyBytes))
+				return nil, fmt.Errorf(
+					"failed to download partial object from redirect URL %s, status: %d, message: %s",
+					redirectURL,
+					redirectResp.StatusCode,
+					string(bodyBytes),
+				)
 			}
 			partData, err := io.ReadAll(redirectResp.Body)
 			if err != nil {
@@ -254,7 +273,11 @@ func (c *Client) CheckObjectExists(repositoryID, ref, objectPath string) error {
 }
 
 // UploadObject uploads an object to the specified repository branch.
-func (c *Client) UploadObject(repositoryID, branch, objectPath string, content io.Reader, force bool) (*ObjectMetadata, error) {
+func (c *Client) UploadObject(
+	repositoryID, branch, objectPath string,
+	content io.Reader,
+	force bool,
+) (*ObjectMetadata, error) {
 	// Build the endpoint URL with query parameters.
 	endpoint := fmt.Sprintf("/repositories/%s/branches/%s/objects", repositoryID, branch)
 	q := url.Values{}
@@ -300,8 +323,16 @@ func (c *Client) DeleteObjects(repositoryID, branch string, objectPaths PathList
 }
 
 // CopyObject copies an object from one path to another in the specified repository branch.
-func (c *Client) CopyObject(repositoryID, branch, destinationPath string, reqData ObjectCopyRequest) (*ObjectMetadata, error) {
-	endpoint := fmt.Sprintf("/repositories/%s/branches/%s/objects/copy?dest_path=%s", repositoryID, branch, destinationPath)
+func (c *Client) CopyObject(
+	repositoryID, branch, destinationPath string,
+	reqData ObjectCopyRequest,
+) (*ObjectMetadata, error) {
+	endpoint := fmt.Sprintf(
+		"/repositories/%s/branches/%s/objects/copy?dest_path=%s",
+		repositoryID,
+		branch,
+		destinationPath,
+	)
 	var metadata ObjectMetadata
 	if err := c.doRequest("POST", endpoint, reqData, []int{http.StatusCreated}, &metadata); err != nil {
 		return nil, err
@@ -310,7 +341,10 @@ func (c *Client) CopyObject(repositoryID, branch, destinationPath string, reqDat
 }
 
 // GetObjectMetadata fetches the metadata of an object from the specified repository and ref.
-func (c *Client) GetObjectMetadata(repositoryID, ref, objectPath string, userMetadata, presign bool) (*ObjectMetadata, error) {
+func (c *Client) GetObjectMetadata(
+	repositoryID, ref, objectPath string,
+	userMetadata, presign bool,
+) (*ObjectMetadata, error) {
 	endpoint := fmt.Sprintf("/repositories/%s/refs/%s/objects/stat", repositoryID, ref)
 	q := url.Values{}
 	q.Set("path", objectPath)
@@ -327,13 +361,25 @@ func (c *Client) GetObjectMetadata(repositoryID, ref, objectPath string, userMet
 
 // RewriteObjectMetadata updates all the user metadata of an object in the specified repository branch.
 func (c *Client) RewriteObjectMetadata(repositoryID, branch, objectPath string, reqData UpdateMetadataRequest) error {
-	endpoint := fmt.Sprintf("/repositories/%s/branches/%s/objects/stat/user_metadata?path=%s", repositoryID, branch, url.QueryEscape(objectPath))
+	endpoint := fmt.Sprintf(
+		"/repositories/%s/branches/%s/objects/stat/user_metadata?path=%s",
+		repositoryID,
+		branch,
+		url.QueryEscape(objectPath),
+	)
 	return c.doRequest("PUT", endpoint, reqData, []int{http.StatusOK, http.StatusCreated}, nil)
 }
 
 // GetObjectUnderlyingStorageProperties fetches the underlying storage properties of an object.
-func (c *Client) GetObjectUnderlyingStorageProperties(repositoryID, ref, objectPath string) (*UnderlyingStorageProperties, error) {
-	endpoint := fmt.Sprintf("/repositories/%s/refs/%s/objects/underlyingProperties?path=%s", repositoryID, ref, url.QueryEscape(objectPath))
+func (c *Client) GetObjectUnderlyingStorageProperties(
+	repositoryID, ref, objectPath string,
+) (*UnderlyingStorageProperties, error) {
+	endpoint := fmt.Sprintf(
+		"/repositories/%s/refs/%s/objects/underlyingProperties?path=%s",
+		repositoryID,
+		ref,
+		url.QueryEscape(objectPath),
+	)
 	var storageProperties UnderlyingStorageProperties
 	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &storageProperties); err != nil {
 		return nil, err
@@ -342,7 +388,11 @@ func (c *Client) GetObjectUnderlyingStorageProperties(repositoryID, ref, objectP
 }
 
 // ListObjects retrieves a list of object from the specified repository, ref and prefix. Similar to `ls` command.
-func (c *Client) ListObjects(repositoryID, ref, prefix, after, delimiter string, user_metadata, presign bool, amount int) (*ObjectList, error) {
+func (c *Client) ListObjects(
+	repositoryID, ref, prefix, after, delimiter string,
+	user_metadata, presign bool,
+	amount int,
+) (*ObjectList, error) {
 	endpoint := fmt.Sprintf("/repositories/%s/refs/%s/objects/ls", repositoryID, ref)
 	q := url.Values{}
 	if prefix != "" {
@@ -369,7 +419,10 @@ func (c *Client) ListObjects(repositoryID, ref, prefix, after, delimiter string,
 }
 
 // ListAllObjects retrieves all objects from the specified repository and prefix.
-func (c *Client) ListAllObjects(repositoryID, ref, prefix, after, delimiter string, user_metadata, presign bool) ([]ObjectMetadata, error) {
+func (c *Client) ListAllObjects(
+	repositoryID, ref, prefix, after, delimiter string,
+	user_metadata, presign bool,
+) ([]ObjectMetadata, error) {
 	var allObjects []ObjectMetadata
 	for {
 		objects, err := c.ListObjects(repositoryID, ref, prefix, after, delimiter, user_metadata, presign, 100)

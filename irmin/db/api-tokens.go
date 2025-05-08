@@ -13,7 +13,7 @@ type APIToken struct {
 	Hidden    bool      `json:"hidden"`
 	Token     string    `json:"token,omitempty" gorm:"uniqueIndex"`
 	ExpiresAt time.Time `json:"expiry"`
-	User      User      `json:"user" gorm:"foreignKey:UserID"`
+	User      User      `json:"user"            gorm:"foreignKey:UserID"`
 	UserID    uint      `json:"user_id"`
 }
 

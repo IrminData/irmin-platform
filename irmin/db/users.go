@@ -1,6 +1,10 @@
 package db
 
-import "gorm.io/gorm"
+import (
+	"errors"
+
+	"gorm.io/gorm"
+)
 
 type UserWorkspaceRole string
 
@@ -12,26 +16,26 @@ const (
 
 type User struct {
 	gorm.Model
-	ClerkID        string          `json:"clerk_id" gorm:"uniqueIndex"`
+	ClerkID        string          `json:"clerk_id"        gorm:"uniqueIndex"`
 	FirstName      string          `json:"first_name"`
 	LastName       string          `json:"last_name"`
-	Email          string          `json:"email" gorm:"index"`
+	Email          string          `json:"email"           gorm:"index"`
 	Phone          string          `json:"phone"`
 	Company        string          `json:"company"`
 	ProfilePicture string          `json:"profile_picture"`
-	Workspaces     []WorkspaceUser `json:"workspaces" gorm:"foreignKey:UserID"`
+	Workspaces     []WorkspaceUser `json:"workspaces"      gorm:"foreignKey:UserID"`
 }
 
 type WorkspaceUser struct {
 	gorm.Model
 	UserID      uint                `json:"user_id"`
-	User        User                `json:"user" gorm:"foreignKey:UserID"`
+	User        User                `json:"user"         gorm:"foreignKey:UserID"`
 	WorkspaceID uint                `json:"workspace_id"`
-	Workspace   Workspace           `json:"workspace" gorm:"foreignKey:WorkspaceID"`
-	Roles       []UserWorkspaceRole `json:"roles" gorm:"type:jsonb;serializer:json"`
+	Workspace   Workspace           `json:"workspace"    gorm:"foreignKey:WorkspaceID"`
+	Roles       []UserWorkspaceRole `json:"roles"        gorm:"type:jsonb;serializer:json"`
 }
 
-// GetUser retrieves a user from the database by their ID
+// GetUser retrieves a user from the database by their ID.
 func GetUser(id uint) (*User, error) {
 	var user User
 	if err := DB.Preload("Workspaces").First(&user, id).Error; err != nil {
@@ -101,7 +105,7 @@ func IsUserInWorkspace(userID, workspaceID uint) (bool, error) {
 	// Query the WorkspaceUser table for a record that matches the provided user and workspace IDs.
 	var workspaceUser WorkspaceUser
 	if err := DB.Where("user_id = ? AND workspace_id = ?", userID, workspaceID).First(&workspaceUser).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// Return false if the record is not found.
 			return false, nil
 		}
@@ -116,7 +120,7 @@ func IsUserInWorkspaceByEmail(email string, workspaceID uint) (bool, error) {
 	// Query the User table for a record that matches the provided email.
 	var user User
 	if err := DB.Where("email = ?", email).First(&user).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// Return false if the user is not found.
 			return false, nil
 		}

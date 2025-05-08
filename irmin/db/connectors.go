@@ -24,13 +24,13 @@ type Connector struct {
 	// URL to the connector's logo image
 	LogoURL string `json:"logo_url"`
 	// List of capabilities supported by the connector e.g. pull, push, webhook_pull, webhook_patch
-	Capabilities []string `json:"capabilities" gorm:"type:jsonb;serializer:json"`
+	Capabilities []string `json:"capabilities"               gorm:"type:jsonb;serializer:json"`
 	// List of locales supported by the connector
-	Locales []string `json:"locales" gorm:"type:jsonb;serializer:json"`
+	Locales []string `json:"locales"                    gorm:"type:jsonb;serializer:json"`
 	// (optional) Primary category of the connector
 	PrimaryCategory string `json:"primary_category,omitempty" gorm:"type:varchar(255)"`
 	// (optional) List of categories the connector belongs to
-	Categories []string `json:"categories,omitempty" gorm:"type:jsonb;serializer:json"`
+	Categories []string `json:"categories,omitempty"       gorm:"type:jsonb;serializer:json"`
 	// (optional) Email address of the author
 	AuthorEmail string `json:"author_email,omitempty"`
 	// (optional) URL to read more about the connector, such as documentation

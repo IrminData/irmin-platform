@@ -11,7 +11,7 @@ import (
 
 	"irmin-api/db"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -24,19 +24,19 @@ func WorkspacesIndex(c fiber.Ctx) error {
 	userWorkspaces, err := db.GetUserWorkspaces(user.ID)
 	if err != nil {
 		log.Printf("Error retrieving workspaces: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Map workspaces to workspace response.
-	var workspacesResponse []irminModels.Workspace
+	var workspacesResponse []irminmodels.Workspace
 	for _, userWorkspace := range userWorkspaces {
 		workspace := userWorkspace.Workspace
 		workspaceResponse, err := formatter.FormatWorkspaceResponse(workspace)
 		if err != nil {
 			log.Printf("Error formatting workspace response: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{"error_occurred"},
 			})
 		}
@@ -44,7 +44,7 @@ func WorkspacesIndex(c fiber.Ctx) error {
 	}
 
 	// Return the workspaces.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: workspacesResponse,
 	})
 }
@@ -58,7 +58,7 @@ func WorkspacesStore(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"name"}, []string{"description"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -72,7 +72,7 @@ func WorkspacesStore(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error creating workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -81,7 +81,7 @@ func WorkspacesStore(c fiber.Ctx) error {
 	_, err = db.AddUserToWorkspace(user.ID, newWorkspace.ID, []db.UserWorkspaceRole{db.RoleAdmin})
 	if err != nil {
 		log.Printf("Error adding user to workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -90,7 +90,7 @@ func WorkspacesStore(c fiber.Ctx) error {
 	bucket, err := bucket.CreateBucketClient()
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -99,7 +99,7 @@ func WorkspacesStore(c fiber.Ctx) error {
 	err = bucket.WritePath(c.Context(), key, "")
 	if err != nil {
 		log.Printf("Error creating workspace editor items folder object: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -108,7 +108,7 @@ func WorkspacesStore(c fiber.Ctx) error {
 	workspaceResponse, err := formatter.FormatWorkspaceResponse(*newWorkspace)
 	if err != nil {
 		log.Printf("Error formatting workspace response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{"error_occurred"},
 		})
 	}
@@ -122,7 +122,7 @@ func WorkspacesStore(c fiber.Ctx) error {
 	})
 
 	// Return the new workspace.
-	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: dict.T("workspace_created"),
 		Data:    workspaceResponse,
 	})
@@ -136,13 +136,13 @@ func WorkspacesShow(c fiber.Ctx) error {
 	workspaceResponse, err := formatter.FormatWorkspaceResponse(*workspace)
 	if err != nil {
 		log.Printf("Error formatting workspace response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{"error_occurred"},
 		})
 	}
 
 	// Return the workspace.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: workspaceResponse,
 	})
 }
@@ -157,7 +157,7 @@ func WorkspacesUpdate(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"name", "description"}, nil)
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -169,7 +169,7 @@ func WorkspacesUpdate(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -178,7 +178,7 @@ func WorkspacesUpdate(c fiber.Ctx) error {
 	workspaceResponse, err := formatter.FormatWorkspaceResponse(*updatedWorkspace)
 	if err != nil {
 		log.Printf("Error formatting workspace response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{"error_occurred"},
 		})
 	}
@@ -192,7 +192,7 @@ func WorkspacesUpdate(c fiber.Ctx) error {
 	})
 
 	// Return the updated workspace.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("workspace_updated"),
 		Data:    workspaceResponse,
 	})
@@ -207,7 +207,7 @@ func WorkspacesDestroy(c fiber.Ctx) error {
 	// Check if the workspace owner is deleting the workspace.
 	if workspace.OwnerID != user.ID {
 		log.Printf("User is not the owner of the workspace")
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
@@ -216,7 +216,7 @@ func WorkspacesDestroy(c fiber.Ctx) error {
 	err := db.DeleteWorkspace(workspace.ID)
 	if err != nil {
 		log.Printf("Error deleting workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -225,7 +225,7 @@ func WorkspacesDestroy(c fiber.Ctx) error {
 	bucket, err := bucket.CreateBucketClient()
 	if err != nil {
 		log.Printf("failed to create bucket client: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -236,7 +236,7 @@ func WorkspacesDestroy(c fiber.Ctx) error {
 	err = bucket.DeletePath(c.Context(), key)
 	if err != nil {
 		log.Printf("Error deleting workspace editor items folder: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -252,7 +252,7 @@ func WorkspacesDestroy(c fiber.Ctx) error {
 	})
 
 	// Return a success message.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("workspace_deleted"),
 	})
 }
@@ -266,7 +266,7 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 	// Check if the workspace owner is deleting the workspace.
 	if workspace.OwnerID != user.ID {
 		log.Printf("User is not the owner of the workspace")
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
@@ -275,7 +275,7 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -284,7 +284,7 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 	newOwnerID, err := utils.DecodeSqids("users", fields["new_owner_id"])
 	if err != nil {
 		log.Printf("Error decoding SQID: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -293,12 +293,12 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
 	if err != nil {
 		log.Printf("Error checking if user is in workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("new_owner_invalid")},
 		})
 	}
 	if !inWorkspace {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("new_owner_invalid")},
 		})
 	}
@@ -309,7 +309,7 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error updating workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -318,21 +318,25 @@ func TransferWorkspaceOwnership(c fiber.Ctx) error {
 	workspaceResponse, err := formatter.FormatWorkspaceResponse(*updatedWorkspace)
 	if err != nil {
 		log.Printf("Error formatting workspace response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{"error_occurred"},
 		})
 	}
 
 	// Log the event
 	lib.CreateAuditLogEventAsync(&db.LogEvent{
-		Type:        db.LogEventTypeUpdate,
-		Description: fmt.Sprintf("Workspace %s ownership transferred to %s", workspace.Slug, updatedWorkspace.Owner.Email),
+		Type: db.LogEventTypeUpdate,
+		Description: fmt.Sprintf(
+			"Workspace %s ownership transferred to %s",
+			workspace.Slug,
+			updatedWorkspace.Owner.Email,
+		),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
 
 	// Return the updated workspace.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("workspace_ownership_transferred"),
 		Data:    workspaceResponse,
 	})
@@ -347,7 +351,7 @@ func LeaveWorkspace(c fiber.Ctx) error {
 	// Make sure that the user is not the last user in the workspace.
 	if len(workspace.Users) == 1 {
 		log.Printf("User is the last user in the workspace")
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("workspace_cannot_leave_last")},
 		})
 	}
@@ -355,7 +359,7 @@ func LeaveWorkspace(c fiber.Ctx) error {
 	// Make sure the user is not the owner of the workspace.
 	if workspace.OwnerID == user.ID {
 		log.Printf("User is the owner of the workspace")
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("workspace_cannot_leave_last")},
 		})
 	}
@@ -364,7 +368,7 @@ func LeaveWorkspace(c fiber.Ctx) error {
 	err := db.RemoveUserFromWorkspace(user.ID, workspace.ID)
 	if err != nil {
 		log.Printf("Error leaving workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -378,7 +382,7 @@ func LeaveWorkspace(c fiber.Ctx) error {
 	})
 
 	// Return a success message.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("workspace_left"),
 	})
 }

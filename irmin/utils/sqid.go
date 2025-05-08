@@ -1,13 +1,13 @@
 package utils
 
 import (
-	"fmt"
+	"errors"
 	"hash/fnv"
 
 	"github.com/sqids/sqids-go"
 )
 
-// DB is a global handle to the database connection.
+// Sqids is a global handle to the SQID generator.
 var Sqids *sqids.Sqids
 
 // NewSQIDGenerator creates and returns a new SQID generator with custom options.
@@ -70,10 +70,10 @@ func DecodeSqids(contentType string, sqid string) (uint64, error) {
 	// Decode the SQID and verify the type code.
 	ids := Sqids.Decode(sqid)
 	if len(ids) < 2 {
-		return 0, fmt.Errorf("invalid SQID")
+		return 0, errors.New("invalid SQID")
 	}
 	if ids[0] != expectedTypeCode {
-		return 0, fmt.Errorf("SQID content type mismatch")
+		return 0, errors.New("SQID content type mismatch")
 	}
 	return ids[1], nil
 }

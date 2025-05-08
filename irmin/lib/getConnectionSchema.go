@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 var connectionSchemaCacheUpdateMutex sync.Map
@@ -18,7 +18,11 @@ var connectionSchemaCacheUpdateMutex sync.Map
 // It first checks if the schema is cached, and if so, returns the cached schema.
 // Otherwise, it fetches the schema from the Data Engine and caches it.
 // The cache is updated in a goroutine to avoid blocking the main thread.
-func GetConnectionSchema(c context.Context, connection *db.Connection, operationMethod, locale string) (*irminModels.ObjectSchema, error) {
+func GetConnectionSchema(
+	c context.Context,
+	connection *db.Connection,
+	operationMethod, locale string,
+) (*irminmodels.ObjectSchema, error) {
 	// Find a relevant connection schema cache
 	schemaCache, err := db.FindConnectionSchemaCache(connection.ID, operationMethod)
 	if err != nil {

@@ -66,7 +66,14 @@ func (c *Client) GetPullRequest(repositoryID, pullRequestID string) (*PullReques
 
 // ListPullRequests retrieves a single page of pull requests.
 func (c *Client) ListPullRequests(repositoryID, prefix, after, status string, amount int) (*PullRequestList, error) {
-	endpoint := fmt.Sprintf("/repositories/%s/pulls?prefix=%s&after=%s&status=%s&amount=%d", repositoryID, prefix, after, status, amount)
+	endpoint := fmt.Sprintf(
+		"/repositories/%s/pulls?prefix=%s&after=%s&status=%s&amount=%d",
+		repositoryID,
+		prefix,
+		after,
+		status,
+		amount,
+	)
 	var prs PullRequestList
 	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &prs); err != nil {
 		return nil, err
@@ -93,7 +100,10 @@ func (c *Client) ListAllPullRequests(repositoryID, prefix, status string) ([]Pul
 }
 
 // CreatePullRequest creates a new pull request.
-func (c *Client) CreatePullRequest(repositoryID string, reqData PullRequestCreateRequest) (*PullRequestCreateResponse, error) {
+func (c *Client) CreatePullRequest(
+	repositoryID string,
+	reqData PullRequestCreateRequest,
+) (*PullRequestCreateResponse, error) {
 	var prResp PullRequestCreateResponse
 	endpoint := fmt.Sprintf("/repositories/%s/pulls", repositoryID)
 	if err := c.doRequest("POST", endpoint, reqData, []int{http.StatusCreated}, &prResp); err != nil {

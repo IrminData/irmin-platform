@@ -33,28 +33,28 @@ type Workflow struct {
 	Documentation string                `json:"documentation"`
 	Paused        bool                  `json:"paused"`
 	Type          WorkflowableType      `json:"type"`
-	Workspace     Workspace             `json:"workspace" gorm:"foreignKey:WorkspaceID"`
+	Workspace     Workspace             `json:"workspace"             gorm:"foreignKey:WorkspaceID"`
 	WorkspaceID   uint                  `json:"workspace_id"`
-	Owner         User                  `json:"owner" gorm:"foreignKey:OwnerID"`
+	Owner         User                  `json:"owner"                 gorm:"foreignKey:OwnerID"`
 	OwnerID       uint                  `json:"owner_id"`
-	Schedule      *Schedule             `json:"schedule,omitempty" gorm:"foreignKey:ScheduleID"`
+	Schedule      *Schedule             `json:"schedule,omitempty"    gorm:"foreignKey:ScheduleID"`
 	ScheduleID    *uint                 `json:"schedule_id,omitempty"`
-	Import        *ImportWorkflowable   `json:"import,omitempty" gorm:"foreignKey:ImportID"`
+	Import        *ImportWorkflowable   `json:"import,omitempty"      gorm:"foreignKey:ImportID"`
 	ImportID      *uint                 `json:"import_id,omitempty"`
-	Export        *ExportWorkflowable   `json:"export,omitempty" gorm:"foreignKey:ExportID"`
+	Export        *ExportWorkflowable   `json:"export,omitempty"      gorm:"foreignKey:ExportID"`
 	ExportID      *uint                 `json:"export_id,omitempty"`
-	Action        *ActionWorkflowable   `json:"action,omitempty" gorm:"foreignKey:ActionID"`
+	Action        *ActionWorkflowable   `json:"action,omitempty"      gorm:"foreignKey:ActionID"`
 	ActionID      *uint                 `json:"action_id,omitempty"`
-	Pipeline      *PipelineWorkflowable `json:"pipeline,omitempty" gorm:"foreignKey:PipelineID"`
+	Pipeline      *PipelineWorkflowable `json:"pipeline,omitempty"    gorm:"foreignKey:PipelineID"`
 	PipelineID    *uint                 `json:"pipeline_id,omitempty"`
 }
 
 type ImportWorkflowable struct {
 	gorm.Model
-	Connection     Connection `json:"connection" gorm:"foreignKey:ConnectionID"`
+	Connection     Connection `json:"connection"      gorm:"foreignKey:ConnectionID"`
 	ConnectionID   uint       `json:"connection_id"`
 	ConnectionPath string     `json:"connection_path"`
-	Repository     Repository `json:"repository" gorm:"foreignKey:RepositoryID"`
+	Repository     Repository `json:"repository"      gorm:"foreignKey:RepositoryID"`
 	RepositoryID   uint       `json:"repository_id"`
 	Branch         string     `json:"branch"`
 	Path           string     `json:"path"`
@@ -62,10 +62,10 @@ type ImportWorkflowable struct {
 
 type ExportWorkflowable struct {
 	gorm.Model
-	Connection     Connection `json:"connection" gorm:"foreignKey:ConnectionID"`
+	Connection     Connection `json:"connection"      gorm:"foreignKey:ConnectionID"`
 	ConnectionID   uint       `json:"connection_id"`
 	ConnectionPath string     `json:"connection_path"`
-	Repository     Repository `json:"repository" gorm:"foreignKey:RepositoryID"`
+	Repository     Repository `json:"repository"      gorm:"foreignKey:RepositoryID"`
 	RepositoryID   uint       `json:"repository_id"`
 	Branch         string     `json:"branch"`
 	Path           string     `json:"path"`
@@ -74,7 +74,7 @@ type ExportWorkflowable struct {
 type ActionWorkflowable struct {
 	gorm.Model
 	Executable   string      `json:"executable"`
-	Repository   *Repository `json:"repository,omitempty" gorm:"foreignKey:RepositoryID"`
+	Repository   *Repository `json:"repository,omitempty"    gorm:"foreignKey:RepositoryID"`
 	RepositoryID *uint       `json:"repository_id,omitempty"`
 	Branch       *string     `json:"branch,omitempty"`
 	Path         *string     `json:"path,omitempty"`
@@ -99,69 +99,81 @@ type PipelineStage struct {
 	Description string                `json:"description"`
 	Write       bool                  `json:"write"`
 	Read        bool                  `json:"read"`
-	Pipeline    *PipelineWorkflowable `json:"pipeline" gorm:"foreignKey:PipelineID"`
+	Pipeline    *PipelineWorkflowable `json:"pipeline"                        gorm:"foreignKey:PipelineID"`
 	PipelineID  *uint                 `json:"pipeline_id"`
 	Type        PipelineStageType     `json:"type"`
 	// Action
 	Executable *string `json:"executable,omitempty"`
 	// Connection
-	Connection          *Connection `json:"connection,omitempty" gorm:"foreignKey:ConnectionID"`
+	Connection          *Connection `json:"connection,omitempty"            gorm:"foreignKey:ConnectionID"`
 	ConnectionID        *uint       `json:"connection_id,omitempty"`
 	ConnectionWritePath *string     `json:"connection_write_path,omitempty"`
 	ConnectionReadPath  *string     `json:"connection_read_path,omitempty"`
 	// Repository
-	Repository       *Repository `json:"repository" gorm:"foreignKey:RepositoryID"`
+	Repository       *Repository `json:"repository"                      gorm:"foreignKey:RepositoryID"`
 	RepositoryID     *uint       `json:"repository_id,omitempty"`
 	RepositoryBranch *string     `json:"branch,omitempty"`
 	RepositoryPath   *string     `json:"path,omitempty"`
 }
 
-// GetWorkflowsByWorkspaceID retrieves all workflows for a workspace
+// GetWorkflowsByWorkspaceID retrieves all workflows for a workspace.
 func GetWorkflowsByWorkspaceID(workspaceID uint) ([]Workflow, error) {
 	var workflows []Workflow
 	result := DB.Preload("Owner").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&workflows)
 	return workflows, result.Error
 }
 
-// GetWorkflowsOfTypeByWorkspaceID retrieves all workflows of a specific type for a workspace
+// GetWorkflowsOfTypeByWorkspaceID retrieves all workflows of a specific type for a workspace.
 func GetWorkflowsOfTypeByWorkspaceID(workspaceID uint, workflowType WorkflowableType) ([]Workflow, error) {
 	var workflows []Workflow
-	result := DB.Preload("Owner").Where("workspace_id = ? AND type = ?", workspaceID, workflowType).Order("created_at desc").Find(&workflows)
+	result := DB.Preload("Owner").
+		Where("workspace_id = ? AND type = ?", workspaceID, workflowType).
+		Order("created_at desc").
+		Find(&workflows)
 	return workflows, result.Error
 }
 
-// GetWorkflowByID retrieves a workflow by its ID
+// GetWorkflowByID retrieves a workflow by its ID.
 func GetWorkflowByID(id uint) (*Workflow, error) {
 	var workflow Workflow
-	result := DB.Preload("Owner").Preload("Workspace").Preload("Schedule").Preload("Schedule.Triggers").Preload("Schedule.Triggers.Repository").First(&workflow, id)
+	result := DB.Preload("Owner").
+		Preload("Workspace").
+		Preload("Schedule").
+		Preload("Schedule.Triggers").
+		Preload("Schedule.Triggers.Repository").
+		First(&workflow, id)
 	return &workflow, result.Error
 }
 
-// GetImportWorkflowableByID retrieves an import workflowable by its ID
+// GetImportWorkflowableByID retrieves an import workflowable by its ID.
 func GetImportWorkflowableByID(id uint) (*ImportWorkflowable, error) {
 	var importWorkflow ImportWorkflowable
 	result := DB.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&importWorkflow, id)
 	return &importWorkflow, result.Error
 }
 
-// GetExportWorkflowableByID retrieves an export workflowable by its ID
+// GetExportWorkflowableByID retrieves an export workflowable by its ID.
 func GetExportWorkflowableByID(id uint) (*ExportWorkflowable, error) {
 	var exportWorkflow ExportWorkflowable
 	result := DB.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&exportWorkflow, id)
 	return &exportWorkflow, result.Error
 }
 
-// GetActionWorkflowableByID retrieves an action workflowable by its ID
+// GetActionWorkflowableByID retrieves an action workflowable by its ID.
 func GetActionWorkflowableByID(id uint) (*ActionWorkflowable, error) {
 	var actionWorkflow ActionWorkflowable
 	result := DB.Preload("Repository").First(&actionWorkflow, id)
 	return &actionWorkflow, result.Error
 }
 
-// GetPipelineWorkflowableByID retrieves a pipeline workflowable by its ID
+// GetPipelineWorkflowableByID retrieves a pipeline workflowable by its ID.
 func GetPipelineWorkflowableByID(id uint) (*PipelineWorkflowable, error) {
 	var pipeline PipelineWorkflowable
-	result := DB.Preload("Stages").Preload("Stages.Connection").Preload("Stages.Connection.Connector").Preload("Stages.Repository").First(&pipeline, id)
+	result := DB.Preload("Stages").
+		Preload("Stages.Connection").
+		Preload("Stages.Connection.Connector").
+		Preload("Stages.Repository").
+		First(&pipeline, id)
 	return &pipeline, result.Error
 }
 
@@ -291,7 +303,16 @@ func UpdatePipelineStage(id uint, updates map[string]any) (*PipelineStage, error
 
 // DeleteWorkflow deletes a workflow and the related records.
 func DeleteWorkflow(id uint) error {
-	return DB.Select("Schedule").Select("Schedule.Triggers").Select("Import").Select("Export").Select("Action").Select("Pipeline").Select("Pipeline.Stages").Where("id = ?", id).Delete(&Workflow{}).Error
+	return DB.Select("Schedule").
+		Select("Schedule.Triggers").
+		Select("Import").
+		Select("Export").
+		Select("Action").
+		Select("Pipeline").
+		Select("Pipeline.Stages").
+		Where("id = ?", id).
+		Delete(&Workflow{}).
+		Error
 }
 
 // DeleteActionWorkflowable deletes an action workflowable record.

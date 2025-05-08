@@ -1,7 +1,7 @@
 package db
 
 import (
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"gorm.io/gorm"
 )
 
@@ -10,23 +10,23 @@ type RepositorySchemaCache struct {
 
 	Path         string                    `json:"path,omitempty"`
 	Ref          string                    `json:"ref,omitempty"`
-	Schema       *irminModels.ObjectSchema `json:"schema,omitempty" gorm:"type:jsonb;serializer:json"`
+	Schema       *irminmodels.ObjectSchema `json:"schema,omitempty"        gorm:"type:jsonb;serializer:json"`
 	RepositoryID uint                      `json:"repository_id,omitempty"`
-	Repository   Repository                `json:"repository,omitempty" gorm:"foreignKey:RepositoryID"`
+	Repository   Repository                `json:"repository,omitempty"    gorm:"foreignKey:RepositoryID"`
 }
 
 type Repository struct {
 	gorm.Model
 
 	Name          string                  `json:"name"`
-	Slug          string                  `json:"slug" gorm:"uniqueIndex"`
+	Slug          string                  `json:"slug"                   gorm:"uniqueIndex"`
 	Description   string                  `json:"description"`
 	Documentation string                  `json:"documentation"`
 	IsImmutable   bool                    `json:"is_immutable"`
 	DefaultBranch string                  `json:"default_branch"`
-	Workspace     Workspace               `json:"workspace" gorm:"foreignKey:WorkspaceID"`
+	Workspace     Workspace               `json:"workspace"              gorm:"foreignKey:WorkspaceID"`
 	WorkspaceID   uint                    `json:"workspace_id"`
-	Owner         User                    `json:"owner" gorm:"foreignKey:OwnerID"`
+	Owner         User                    `json:"owner"                  gorm:"foreignKey:OwnerID"`
 	OwnerID       uint                    `json:"owner_id"`
 	SchemaCache   []RepositorySchemaCache `json:"schema_cache,omitempty" gorm:"foreignKey:RepositoryID"`
 }
@@ -77,7 +77,7 @@ func DeleteRepository(id uint) error {
 	return nil
 }
 
-// FindRepositorySchemaCache finds a repository schema cache by repository ID, path, and ref
+// FindRepositorySchemaCache finds a repository schema cache by repository ID, path, and ref.
 func FindRepositorySchemaCache(repositoryID uint, path, ref string) (*RepositorySchemaCache, error) {
 	var schemaCache RepositorySchemaCache
 	if err := DB.Where("repository_id = ? AND path = ? AND ref = ?", repositoryID, path, ref).First(&schemaCache).Error; err != nil {
@@ -86,7 +86,7 @@ func FindRepositorySchemaCache(repositoryID uint, path, ref string) (*Repository
 	return &schemaCache, nil
 }
 
-// SaveRepositorySchemaCache updates or creates a repository schema cache
+// SaveRepositorySchemaCache updates or creates a repository schema cache.
 func SaveRepositorySchemaCache(schemaCache *RepositorySchemaCache) (*RepositorySchemaCache, error) {
 	if err := DB.Save(schemaCache).Error; err != nil {
 		return nil, err

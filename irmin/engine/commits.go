@@ -6,10 +6,14 @@ import (
 	"irmin-api/utils"
 	"time"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) ListCommits(workspace, repository, ref string, after *string, limit *int) ([]irminModels.Commit, *lakefs.Pagination, error) {
+func (c *Client) ListCommits(
+	workspace, repository, ref string,
+	after *string,
+	limit *int,
+) ([]irminmodels.Commit, *lakefs.Pagination, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -41,7 +45,7 @@ func (c *Client) ListCommits(workspace, repository, ref string, after *string, l
 	}
 
 	// Convert LakeFS commits to Irmin commits.
-	irminCommits := make([]irminModels.Commit, len(lakefsCommits))
+	irminCommits := make([]irminmodels.Commit, len(lakefsCommits))
 	for i, lakeFSCommit := range lakefsCommits {
 		previousHash := ""
 		if len(lakeFSCommit.Parents) > 0 {
@@ -51,7 +55,7 @@ func (c *Client) ListCommits(workspace, repository, ref string, after *string, l
 		if authorValue, ok := lakeFSCommit.Metadata["author"]; ok && authorValue != "" {
 			author = authorValue
 		}
-		irminCommits[i] = irminModels.Commit{
+		irminCommits[i] = irminmodels.Commit{
 			Hash:         lakeFSCommit.ID,
 			Message:      lakeFSCommit.Message,
 			Timestamp:    time.Unix(int64(lakeFSCommit.CreationDate), 0).Format(time.RFC3339),
@@ -63,7 +67,7 @@ func (c *Client) ListCommits(workspace, repository, ref string, after *string, l
 	return irminCommits, pagination, nil
 }
 
-func (c *Client) GetCommit(workspace, repository, hash string) (*irminModels.Commit, error) {
+func (c *Client) GetCommit(workspace, repository, hash string) (*irminmodels.Commit, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -82,7 +86,7 @@ func (c *Client) GetCommit(workspace, repository, hash string) (*irminModels.Com
 	if authorValue, ok := lakeFSCommit.Metadata["author"]; ok && authorValue != "" {
 		author = authorValue
 	}
-	irminCommit := irminModels.Commit{
+	irminCommit := irminmodels.Commit{
 		Hash:         lakeFSCommit.ID,
 		Message:      lakeFSCommit.Message,
 		Timestamp:    time.Unix(int64(lakeFSCommit.CreationDate), 0).Format(time.RFC3339),
@@ -93,7 +97,10 @@ func (c *Client) GetCommit(workspace, repository, hash string) (*irminModels.Com
 	return &irminCommit, nil
 }
 
-func (c *Client) CommitChanges(workspace, repository, branch, message, author string, allow_empty bool) (*irminModels.Commit, error) {
+func (c *Client) CommitChanges(
+	workspace, repository, branch, message, author string,
+	allow_empty bool,
+) (*irminmodels.Commit, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -119,7 +126,7 @@ func (c *Client) CommitChanges(workspace, repository, branch, message, author st
 	if authorValue, ok := lakeFSCommit.Metadata["author"]; ok && authorValue != "" {
 		author = authorValue
 	}
-	irminCommit := irminModels.Commit{
+	irminCommit := irminmodels.Commit{
 		Hash:         lakeFSCommit.ID,
 		Message:      lakeFSCommit.Message,
 		Timestamp:    time.Unix(int64(lakeFSCommit.CreationDate), 0).Format(time.RFC3339),

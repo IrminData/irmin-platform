@@ -12,7 +12,7 @@ import (
 	"math"
 	"strconv"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -26,7 +26,7 @@ func CommitsIndex(c fiber.Ctx) error {
 	params, err := utils.ParseQueryParams(c, nil, []string{"ref", "per_page", "after"})
 	if err != nil {
 		log.Printf("Error parsing query params: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -47,16 +47,22 @@ func CommitsIndex(c fiber.Ctx) error {
 	dataEngine := engine.NewClient(locale)
 
 	// Get the commits from the data engine.
-	var commits []irminModels.Commit
+	var commits []irminmodels.Commit
 	var lakefsPagination *lakefs.Pagination
 	if hasPagination {
-		commits, lakefsPagination, err = dataEngine.ListCommits(workspace.Slug, repository.Slug, params["ref"], &after, &per_page)
+		commits, lakefsPagination, err = dataEngine.ListCommits(
+			workspace.Slug,
+			repository.Slug,
+			params["ref"],
+			&after,
+			&per_page,
+		)
 	} else {
 		commits, lakefsPagination, err = dataEngine.ListCommits(workspace.Slug, repository.Slug, params["ref"], nil, nil)
 	}
 	if err != nil {
 		log.Printf("Error retrieving commits from Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -64,8 +70,8 @@ func CommitsIndex(c fiber.Ctx) error {
 	// Return the commits
 	if lakefsPagination != nil {
 		totalPages := int(math.Ceil(float64(lakefsPagination.Results) / float64(per_page)))
-		return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
-			Pagination: &irminModels.IrminAPIPaginationMetadata{
+		return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+			Pagination: &irminmodels.IrminAPIPaginationMetadata{
 				Total:      lakefsPagination.Results,
 				PerPage:    per_page,
 				TotalPages: totalPages,
@@ -75,7 +81,7 @@ func CommitsIndex(c fiber.Ctx) error {
 			Data: commits,
 		})
 	} else {
-		return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 			Data: commits,
 		})
 	}
@@ -92,7 +98,7 @@ func CommitsStore(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"branch", "message"}, nil)
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -101,10 +107,17 @@ func CommitsStore(c fiber.Ctx) error {
 	dataEngine := engine.NewClient(locale)
 
 	// Commit the changes in the data engine.
-	commit, err := dataEngine.CommitChanges(workspace.Slug, repository.Slug, fields["branch"], fields["message"], user.Email, true)
+	commit, err := dataEngine.CommitChanges(
+		workspace.Slug,
+		repository.Slug,
+		fields["branch"],
+		fields["message"],
+		user.Email,
+		true,
+	)
 	if err != nil {
 		log.Printf("Error committing changes in Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -119,7 +132,7 @@ func CommitsStore(c fiber.Ctx) error {
 	})
 
 	// Return the created commit
-	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: dict.T("commit_created"),
 		Data:    commit,
 	})
@@ -135,7 +148,7 @@ func CommitsShow(c fiber.Ctx) error {
 	hash := c.Params("hash")
 	if hash == "" {
 		log.Printf("Error parsing commit hash from path")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -147,13 +160,13 @@ func CommitsShow(c fiber.Ctx) error {
 	commit, err := dataEngine.GetCommit(workspace.Slug, repository.Slug, hash)
 	if err != nil {
 		log.Printf("Error retrieving commit from Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the commit
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: commit,
 	})
 }
@@ -169,7 +182,7 @@ func RevertUncommittedChanges(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"branch"}, []string{"path", "path_type"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -178,10 +191,16 @@ func RevertUncommittedChanges(c fiber.Ctx) error {
 	dataEngine := engine.NewClient(locale)
 
 	// Revert the uncommitted changes in the data engine.
-	err = dataEngine.RevertUncommitedChanges(workspace.Slug, repository.Slug, fields["branch"], fields["path"], fields["path_type"])
+	err = dataEngine.RevertUncommitedChanges(
+		workspace.Slug,
+		repository.Slug,
+		fields["branch"],
+		fields["path"],
+		fields["path_type"],
+	)
 	if err != nil {
 		log.Printf("Error reverting uncommitted changes in Data Engine: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -196,7 +215,7 @@ func RevertUncommittedChanges(c fiber.Ctx) error {
 	})
 
 	// Return the created commit
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("changes_reverted_to_previous_commit"),
 	})
 }

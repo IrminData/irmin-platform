@@ -3,6 +3,7 @@ package engine
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -11,16 +12,16 @@ import (
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 
-	irminConnectorClient "github.com/IrminData/irmin-sdk-go/connector"
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminconnectorclient "github.com/IrminData/irmin-sdk-go/connector"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // initializeConnectorOperation sets up a connector operation and returns an operation client,
 // along with a cancel function to clean up when done.
 // It returns an error if initialization fails.
-func (c *Client) initializeConnectorOperation(connection *db.Connection) (*irminConnectorClient.Client, func(), error) {
+func (c *Client) initializeConnectorOperation(connection *db.Connection) (*irminconnectorclient.Client, func(), error) {
 	// Create base connector client.
-	baseClient := irminConnectorClient.NewClient(
+	baseClient := irminconnectorclient.NewClient(
 		connection.Connector.APIBaseURL,
 		connection.Connector.SystemToken,
 		c.Locale,
@@ -40,7 +41,7 @@ func (c *Client) initializeConnectorOperation(connection *db.Connection) (*irmin
 	}
 
 	// Create operation-specific client (always in English for schema retrieval/actions).
-	opClient := irminConnectorClient.NewClient(
+	opClient := irminconnectorclient.NewClient(
 		connection.Connector.APIBaseURL,
 		op.Token,
 		"en",
@@ -60,7 +61,11 @@ func (c *Client) initializeConnectorOperation(connection *db.Connection) (*irmin
 // Returns:
 //
 //	ObjectSchema pointer for the requested method, or an error if retrieval fails.
-func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connection, method string) (*irminModels.ObjectSchema, error) {
+func (c *Client) DataMovementSchema(
+	ctx context.Context,
+	connection *db.Connection,
+	method string,
+) (*irminmodels.ObjectSchema, error) {
 	opClient, cancel, err := c.initializeConnectorOperation(connection)
 	if err != nil {
 		return nil, err
@@ -87,10 +92,10 @@ func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connecti
 // Returns:
 //
 //	slice of matching paths (without leading slash).
-func schemaToRelevantPaths(prefix string, schema *irminModels.ObjectSchema) []string {
+func schemaToRelevantPaths(prefix string, schema *irminmodels.ObjectSchema) []string {
 	var paths []string
 
-	if schema.Type == irminModels.ObjectTypeGroup {
+	if schema.Type == irminmodels.ObjectTypeGroup {
 		// Directory: traverse children.
 		for _, child := range schema.Children {
 			childPaths := schemaToRelevantPaths(prefix, &child)
@@ -164,11 +169,10 @@ func (c *Client) DataImport(
 	}
 
 	// Pull files concurrently.
-	filesCh := make(chan []irminConnectorClient.PulledFile, len(paths))
+	filesCh := make(chan []irminconnectorclient.PulledFile, len(paths))
 	errCh := make(chan error, len(paths))
 
 	for _, rel := range paths {
-		rel := rel
 		go func() {
 			pulled, pullErr := opClient.OperationPull(rel)
 			if pullErr != nil {
@@ -180,8 +184,8 @@ func (c *Client) DataImport(
 	}
 
 	// Collect results.
-	var allFiles []irminConnectorClient.PulledFile
-	for i := 0; i < len(paths); i++ {
+	var allFiles []irminconnectorclient.PulledFile
+	for range paths {
 		select {
 		case f := <-filesCh:
 			allFiles = append(allFiles, f...)
@@ -193,7 +197,7 @@ func (c *Client) DataImport(
 	close(errCh)
 
 	if len(allFiles) == 0 {
-		errs = append(errs, fmt.Errorf("no files pulled from connector"))
+		errs = append(errs, errors.New("no files pulled from connector"))
 		return success, errs
 	}
 
@@ -203,7 +207,6 @@ func (c *Client) DataImport(
 	upErrCh := make(chan error, len(allFiles))
 
 	for _, file := range allFiles {
-		file := file
 		go func() {
 			reader := bytes.NewReader(file.Content)
 			// Build repository path.
@@ -226,7 +229,7 @@ func (c *Client) DataImport(
 	}
 
 	// Collect upload results.
-	for i := 0; i < len(allFiles); i++ {
+	for range allFiles {
 		select {
 		case meta := <-uploadCh:
 			success = append(success, meta.Path)
@@ -278,7 +281,7 @@ func (c *Client) DataExport(
 
 	// Collect files for upload.
 	files := make(map[string][]byte)
-	if obj.Type == irminModels.ObjectTypeGroup {
+	if obj.Type == irminmodels.ObjectTypeGroup {
 		// Directory: fetch child contents concurrently.
 		ch := make(chan struct {
 			name    string
@@ -287,7 +290,6 @@ func (c *Client) DataExport(
 		errCh := make(chan error, len(obj.Children))
 
 		for _, child := range obj.Children {
-			child := child
 			go func() {
 				data, getErr := c.LakeFSClient.GetFullObjectContent(
 					repoName,
@@ -305,7 +307,7 @@ func (c *Client) DataExport(
 			}()
 		}
 
-		for i := 0; i < len(obj.Children); i++ {
+		for range len(obj.Children) {
 			select {
 			case r := <-ch:
 				files[r.name] = r.content
@@ -342,7 +344,7 @@ func (c *Client) DataExport(
 			connPath = path.Join(connPath, fileName)
 			_, pushErr := opClient.OperationPush(
 				connPath,
-				irminConnectorClient.FormFile{Reader: bytes.NewBuffer(data)},
+				irminconnectorclient.FormFile{Reader: bytes.NewBuffer(data)},
 			)
 			if pushErr != nil {
 				pushErrCh <- fmt.Errorf("push failed for %q: %w", connPath, pushErr)
@@ -353,7 +355,7 @@ func (c *Client) DataExport(
 	}
 
 	// Collect push results.
-	for i := 0; i < len(files); i++ {
+	for range len(files) {
 		select {
 		case p := <-pushCh:
 			success = append(success, p)

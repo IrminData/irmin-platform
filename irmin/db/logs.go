@@ -26,18 +26,18 @@ type LogEvent struct {
 	Type        LogEventType `json:"type"`
 	Description string       `json:"description"`
 
-	User          *User        `json:"user" gorm:"foreignKey:UserID"`
+	User          *User        `json:"user"            gorm:"foreignKey:UserID"`
 	UserID        *uint        `json:"user_id"`
-	Workspace     *Workspace   `json:"workspace" gorm:"foreignKey:WorkspaceID"`
+	Workspace     *Workspace   `json:"workspace"       gorm:"foreignKey:WorkspaceID"`
 	WorkspaceID   *uint        `json:"workspace_id"`
-	Repository    *Repository  `json:"repository" gorm:"foreignKey:RepositoryID"`
+	Repository    *Repository  `json:"repository"      gorm:"foreignKey:RepositoryID"`
 	RepositoryID  *uint        `json:"repository_id"`
-	Workflow      *Workflow    `json:"workflow" gorm:"foreignKey:WorkflowID"`
+	Workflow      *Workflow    `json:"workflow"        gorm:"foreignKey:WorkflowID"`
 	WorkflowID    *uint        `json:"workflow_id"`
-	WorkflowRun   *WorkflowRun `json:"workflow_run" gorm:"foreignKey:WorkflowRunID"`
+	WorkflowRun   *WorkflowRun `json:"workflow_run"    gorm:"foreignKey:WorkflowRunID"`
 	WorkflowRunID *uint        `json:"workflow_run_id"`
 	ConnectionID  *uint        `json:"connection_id"`
-	Connection    *Connection  `json:"connection" gorm:"foreignKey:ConnectionID"`
+	Connection    *Connection  `json:"connection"      gorm:"foreignKey:ConnectionID"`
 }
 
 // GetLogEventsForWorkspace returns log events for the given workspace, optionally
@@ -106,7 +106,13 @@ func GetLogEventsForWorkspace(workspaceID uint, searchTerm string, limit, offset
 // limit: maximum number of events to return
 // offset: number of events to skip
 // returns: slice of LogEvent, total count of matching events, and error if any
-func GetLogEventsByWorkspaceAndAsset(workspaceID uint, assetType string, assetID uint, searchTerm string, limit, offset int) ([]LogEvent, int64, error) {
+func GetLogEventsByWorkspaceAndAsset(
+	workspaceID uint,
+	assetType string,
+	assetID uint,
+	searchTerm string,
+	limit, offset int,
+) ([]LogEvent, int64, error) {
 	var events []LogEvent
 	var total int64
 

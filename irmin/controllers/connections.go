@@ -9,7 +9,7 @@ import (
 	"irmin-api/utils"
 	"log"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -21,19 +21,19 @@ func ConnectionsIndex(c fiber.Ctx) error {
 	connections, err := db.GetConnectionsByWorkspaceID(workspace.ID)
 	if err != nil {
 		log.Printf("Error fetching connections: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Structure the response.
-	var connectionsResponse []irminModels.Connection
+	var connectionsResponse []irminmodels.Connection
 	for _, connection := range connections {
 		// Format the connection response
 		connectionResponse, err := formatter.FormatConnectionResponse(connection)
 		if err != nil {
 			log.Printf("Error fetching connection: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
@@ -41,7 +41,7 @@ func ConnectionsIndex(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: connectionsResponse,
 	})
 }
@@ -55,7 +55,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"name", "connector"}, []string{"description", "documentation"})
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -68,7 +68,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	connectorID, err := utils.DecodeSqids("connectors", fields["connector"])
 	if err != nil {
 		log.Printf("Error decoding connector sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -86,7 +86,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error creating connection: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -95,7 +95,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	connection, err = db.GetConnectionByID(connection.ID)
 	if err != nil {
 		log.Printf("Error fetching connection: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -104,7 +104,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	connectionResponse, err := formatter.FormatConnectionResponse(*connection)
 	if err != nil {
 		log.Printf("Error fetching connection: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -118,7 +118,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: dict.T("connection_created"),
 		Data:    connectionResponse,
 	})
@@ -132,13 +132,13 @@ func ConnectionsShow(c fiber.Ctx) error {
 	connectionResponse, err := formatter.FormatConnectionResponse(*connection)
 	if err != nil {
 		log.Printf("Error formatting connection response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: connectionResponse,
 	})
 }
@@ -152,7 +152,7 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"name", "description", "documentation", "connector"}, nil)
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -176,7 +176,7 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 		connectorID, err := utils.DecodeSqids("connectors", fields["connector"])
 		if err != nil {
 			log.Printf("Error decoding connector sqid: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
@@ -187,7 +187,7 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 	updatedConnection, err := db.UpdateConnection(connection)
 	if err != nil {
 		log.Printf("Error updating connection: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -196,7 +196,7 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 	connectionResponse, err := formatter.FormatConnectionResponse(*updatedConnection)
 	if err != nil {
 		log.Printf("Error formatting connection response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -210,7 +210,7 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("connection_updated"),
 		Data:    connectionResponse,
 	})
@@ -224,7 +224,7 @@ func ConnectionsDestroy(c fiber.Ctx) error {
 	// Delete the connection
 	if err := db.DeleteConnection(connection.ID); err != nil {
 		log.Printf("Error deleting connection: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -238,7 +238,7 @@ func ConnectionsDestroy(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("connection_deleted"),
 	})
 }
@@ -253,7 +253,7 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -262,7 +262,7 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	newOwnerID, err := utils.DecodeSqids("users", fields["new_owner_id"])
 	if err != nil {
 		log.Printf("Error decoding connector sqid: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -271,12 +271,12 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
 	if err != nil {
 		log.Printf("Error checking if user is in workspace: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("new_owner_invalid")},
 		})
 	}
 	if !inWorkspace {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("new_owner_invalid")},
 		})
 	}
@@ -286,7 +286,7 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	updatedConnection, err := db.UpdateConnection(connection)
 	if err != nil {
 		log.Printf("Error updating connection: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -295,21 +295,25 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	connectionResponse, err := formatter.FormatConnectionResponse(*updatedConnection)
 	if err != nil {
 		log.Printf("Error formatting connection response: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Log the event
 	db.CreateLogEvent(&db.LogEvent{
-		Type:        db.LogEventTypeUpdate,
-		Description: fmt.Sprintf("Connection %s ownership transferred to %s", updatedConnection.Name, updatedConnection.Owner.Email),
+		Type: db.LogEventTypeUpdate,
+		Description: fmt.Sprintf(
+			"Connection %s ownership transferred to %s",
+			updatedConnection.Name,
+			updatedConnection.Owner.Email,
+		),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("connection_updated"),
 		Data:    connectionResponse,
 	})
@@ -324,7 +328,7 @@ func ConnectionSchema(c fiber.Ctx) error {
 	query, err := utils.ParseQueryParams(c, nil, []string{"operation_method"})
 	if err != nil {
 		log.Printf("Error parsing query params: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -337,13 +341,13 @@ func ConnectionSchema(c fiber.Ctx) error {
 	schema, err := lib.GetConnectionSchema(c.Context(), connection, operationMethod, locale)
 	if err != nil {
 		log.Printf("Error getting connection schema: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: schema,
 	})
 }

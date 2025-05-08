@@ -57,7 +57,7 @@ func (bucket *BucketClient) ListObjects(ctx context.Context, keyPrefix string) (
 		Prefix: &keyPrefix,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error listing objects: %v", err)
+		return nil, fmt.Errorf("error listing objects: %w", err)
 	}
 
 	return objects.Contents, nil
@@ -70,7 +70,7 @@ func (bucket *BucketClient) WritePath(ctx context.Context, key string, content s
 		Body:   strings.NewReader(content),
 	})
 	if err != nil {
-		return fmt.Errorf("error writing object to bucket: %v", err)
+		return fmt.Errorf("error writing object to bucket: %w", err)
 	}
 
 	return nil
@@ -80,7 +80,7 @@ func (bucket *BucketClient) DeletePath(ctx context.Context, keyPrefix string) er
 	// List all objects under the given prefix
 	objects, err := bucket.ListObjects(ctx, keyPrefix)
 	if err != nil {
-		return fmt.Errorf("error listing objects for deletion: %v", err)
+		return fmt.Errorf("error listing objects for deletion: %w", err)
 	}
 
 	// Delete each object found under the workspace prefix
@@ -90,7 +90,7 @@ func (bucket *BucketClient) DeletePath(ctx context.Context, keyPrefix string) er
 			Key:    item.Key,
 		})
 		if err != nil {
-			return fmt.Errorf("error deleting object %s: %v", *item.Key, err)
+			return fmt.Errorf("error deleting object %s: %w", *item.Key, err)
 		}
 	}
 
@@ -104,14 +104,14 @@ func (bucket *BucketClient) ReadPath(ctx context.Context, key string) (*string, 
 		Key:    &key,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the object from the bucket: %v", err)
+		return nil, fmt.Errorf("failed to get the object from the bucket: %w", err)
 	}
 	defer obj.Body.Close()
 
 	// Read the object's content
 	contentBytes, err := io.ReadAll(obj.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read the object's content: %v", err)
+		return nil, fmt.Errorf("failed to read the object's content: %w", err)
 	}
 
 	content := string(contentBytes)
@@ -122,7 +122,7 @@ func (bucket *BucketClient) DuplicatePath(ctx context.Context, sourceKey, destKe
 	// List objects under the source prefix
 	objects, err := bucket.ListObjects(ctx, sourceKey)
 	if err != nil {
-		return fmt.Errorf("error listing objects for copying: %v", err)
+		return fmt.Errorf("error listing objects for copying: %w", err)
 	}
 
 	// For each object, copy to the destination and then delete the original
@@ -139,7 +139,7 @@ func (bucket *BucketClient) DuplicatePath(ctx context.Context, sourceKey, destKe
 			Key:        &destKey,
 		})
 		if err != nil {
-			return fmt.Errorf("error copying object %s: %v", *item.Key, err)
+			return fmt.Errorf("error copying object %s: %w", *item.Key, err)
 		}
 
 		// Delete the original object if requested
@@ -149,7 +149,7 @@ func (bucket *BucketClient) DuplicatePath(ctx context.Context, sourceKey, destKe
 				Key:    item.Key,
 			})
 			if err != nil {
-				return fmt.Errorf("error deleting object %s: %v", *item.Key, err)
+				return fmt.Errorf("error deleting object %s: %w", *item.Key, err)
 			}
 		}
 	}
@@ -167,7 +167,7 @@ func (bucket *BucketClient) DownloadFolder(ctx context.Context, folderPrefix, lo
 	// List all objects under the given folder prefix
 	objects, err := bucket.ListObjects(ctx, folderPrefix)
 	if err != nil {
-		return fmt.Errorf("error listing objects for download: %v", err)
+		return fmt.Errorf("error listing objects for download: %w", err)
 	}
 
 	// Loop through each object and download its content
@@ -192,13 +192,13 @@ func (bucket *BucketClient) DownloadFolder(ctx context.Context, folderPrefix, lo
 		// If a file exists where a directory should be, remove it
 		if stat, err := os.Stat(dir); err == nil && !stat.IsDir() {
 			if err := os.Remove(dir); err != nil {
-				return fmt.Errorf("error removing conflicting file at %s: %v", dir, err)
+				return fmt.Errorf("error removing conflicting file at %s: %w", dir, err)
 			}
 		}
 
 		// Create local directory structure if it does not exist
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			return fmt.Errorf("error creating directory %s: %v", dir, err)
+			return fmt.Errorf("error creating directory %s: %w", dir, err)
 		}
 
 		// Retrieve the object from S3
@@ -207,14 +207,14 @@ func (bucket *BucketClient) DownloadFolder(ctx context.Context, folderPrefix, lo
 			Key:    object.Key,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to get object %s: %v", *object.Key, err)
+			return fmt.Errorf("failed to get object %s: %w", *object.Key, err)
 		}
 
 		// Open the local file for writing
 		file, err := os.Create(localPath)
 		if err != nil {
 			obj.Body.Close() // ensure the S3 object body is closed before returning
-			return fmt.Errorf("failed to create local file %s: %v", localPath, err)
+			return fmt.Errorf("failed to create local file %s: %w", localPath, err)
 		}
 
 		// Copy the object's content to the local file
@@ -224,7 +224,7 @@ func (bucket *BucketClient) DownloadFolder(ctx context.Context, folderPrefix, lo
 		obj.Body.Close()
 
 		if err != nil {
-			return fmt.Errorf("error writing to local file %s: %v", localPath, err)
+			return fmt.Errorf("error writing to local file %s: %w", localPath, err)
 		}
 	}
 

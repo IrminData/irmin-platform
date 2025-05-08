@@ -21,12 +21,18 @@ func installGoSDK(destDir string, projectName string) error {
 	cmd.Dir = destDir // Set the working directory to the destination directory.
 	cmd.Run()
 	// Prepare the SDK installation command.
-	cmd = exec.Command("go", "get", "github.com/IrminData/irmin-sdk-go", "github.com/IrminData/irmin-sdk-go/core-api", "github.com/IrminData/irmin-sdk-go/utils")
+	cmd = exec.Command(
+		"go",
+		"get",
+		"github.com/IrminData/irmin-sdk-go",
+		"github.com/IrminData/irmin-sdk-go/core-api",
+		"github.com/IrminData/irmin-sdk-go/utils",
+	)
 	cmd.Dir = destDir // Set the working directory to the destination directory.
 	// Run the command and capture combined output.
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to get go sdk: %v, output: %s", err, output)
+		return fmt.Errorf("failed to get go sdk: %w, output: %s", err, output)
 	}
 	log.Printf("Go SDK installed successfully in %s\n", destDir)
 	return nil
@@ -50,7 +56,11 @@ func installGoSDK(destDir string, projectName string) error {
 //		}
 //		fmt.Printf("Execution result:\n%s\n", resultJson)
 //	}
-func ExecuteEditorItem(ctx context.Context, responsibleUser db.User, executablePath, workspaceSlug string) (ExecutionResult, error) {
+func ExecuteEditorItem(
+	ctx context.Context,
+	responsibleUser db.User,
+	executablePath, workspaceSlug string,
+) (ExecutionResult, error) {
 	var result ExecutionResult
 
 	// Get the API URL from the environment variable.

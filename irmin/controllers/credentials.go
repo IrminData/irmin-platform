@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -22,13 +22,13 @@ func CredentialsIndex(c fiber.Ctx) error {
 	tokens, err := db.GetAPITokensByUserID(user.ID)
 	if err != nil {
 		log.Printf("Error retrieving API tokens: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Map tokens to API token response, omitting the Token field.
-	var listResponse []irminModels.APIToken
+	var listResponse []irminmodels.APIToken
 	for _, token := range tokens {
 		if token.Hidden {
 			continue
@@ -36,7 +36,7 @@ func CredentialsIndex(c fiber.Ctx) error {
 		// Convert the token ID to a SQID.
 		sqid, _ := utils.EncodeSqids("api_tokens", uint64(token.ID))
 		// Create the API token response object.
-		listResponse = append(listResponse, irminModels.APIToken{
+		listResponse = append(listResponse, irminmodels.APIToken{
 			ID:        sqid,
 			CreatedAt: token.CreatedAt,
 			UpdatedAt: token.UpdatedAt,
@@ -46,7 +46,7 @@ func CredentialsIndex(c fiber.Ctx) error {
 	}
 
 	// Return the API tokens.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: listResponse,
 	})
 }
@@ -60,7 +60,7 @@ func CredentialsStore(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(c, []string{"name", "expiry"}, nil)
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
 		})
 	}
@@ -69,7 +69,7 @@ func CredentialsStore(c fiber.Ctx) error {
 	token, err := utils.GenerateRandomString()
 	if err != nil {
 		log.Printf("Error generating random string: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -78,7 +78,7 @@ func CredentialsStore(c fiber.Ctx) error {
 	expiryMs, err := strconv.Atoi(fields["expiry"])
 	if err != nil {
 		log.Printf("Error parsing expiry field: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -96,14 +96,14 @@ func CredentialsStore(c fiber.Ctx) error {
 	})
 	if err != nil {
 		log.Printf("Error creating API token: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Conver the API token to an API token response.
 	sqid, _ := utils.EncodeSqids("api_tokens", uint64(apiToken.ID))
-	apiTokenResponse := irminModels.APIToken{
+	apiTokenResponse := irminmodels.APIToken{
 		ID:        sqid,
 		CreatedAt: apiToken.CreatedAt,
 		UpdatedAt: apiToken.UpdatedAt,
@@ -120,7 +120,7 @@ func CredentialsStore(c fiber.Ctx) error {
 	})
 
 	// Return the API token.
-	return utils.WriteResponse(c, fiber.StatusCreated, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: dict.T("api_token_created"),
 		Data:    apiTokenResponse,
 	})
@@ -135,7 +135,7 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	tokenSqid := c.Params("credential")
 	if tokenSqid == "" {
 		log.Printf("No token provided")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -144,7 +144,7 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	id, err := utils.DecodeSqids("api_tokens", tokenSqid)
 	if err != nil {
 		log.Printf("Error decoding SQID: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -153,19 +153,19 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	apiToken, err := db.GetAPIToken(uint(id))
 	if err != nil {
 		log.Printf("Error retrieving API token: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 	if apiToken.UserID != user.ID {
 		log.Printf("API token does not belong to user")
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
 	if apiToken.Hidden {
 		log.Printf("API token is hidden")
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("access_denied")},
 		})
 	}
@@ -173,7 +173,7 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	// Delete the API token.
 	if err := db.DeleteAPIToken(uint(id)); err != nil {
 		log.Printf("Error deleting API token: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
@@ -186,7 +186,7 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	})
 
 	// Return a success message.
-	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: dict.T("api_token_deleted"),
 	})
 }

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// Helper function to parse result file names from logs
+// Helper function to parse result file names from logs.
 func parseResultFiles(logs string) []string {
 	var resultFiles []string
 
@@ -59,7 +59,7 @@ func readResultFileFromContainer(containerID, filePath string) ([]byte, error) {
 	// Create a temporary file to copy the container file into.
 	tmpFile, err := os.CreateTemp("", "docker-file-*")
 	if err != nil {
-		return nil, fmt.Errorf("failed to create temporary file: %v", err)
+		return nil, fmt.Errorf("failed to create temporary file: %w", err)
 	}
 	// Ensure the temporary file is removed afterwards.
 	defer os.Remove(tmpFile.Name())
@@ -72,13 +72,13 @@ func readResultFileFromContainer(containerID, filePath string) ([]byte, error) {
 	// Execute the docker cp command to copy the file from the container to the temporary file.
 	cpCmd := exec.Command("docker", "cp", source, tmpFile.Name())
 	if err := cpCmd.Run(); err != nil {
-		return nil, fmt.Errorf("failed to copy file from container: %v", err)
+		return nil, fmt.Errorf("failed to copy file from container: %w", err)
 	}
 
 	// Read the content of the temporary file.
 	data, err := os.ReadFile(tmpFile.Name())
 	if err != nil {
-		return nil, fmt.Errorf("failed to read temporary file: %v", err)
+		return nil, fmt.Errorf("failed to read temporary file: %w", err)
 	}
 
 	return data, nil

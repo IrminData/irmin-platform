@@ -4,16 +4,16 @@ import (
 	"irmin-api/db"
 	"irmin-api/utils"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatLogEventResponse(logEvent db.LogEvent) (*irminModels.LogEvent, error) {
+func FormatLogEventResponse(logEvent db.LogEvent) (*irminmodels.LogEvent, error) {
 	eventSqid, err := utils.EncodeSqids("logs", uint64(logEvent.ID))
 	if err != nil {
 		return nil, err
 	}
 
-	var user *irminModels.User
+	var user *irminmodels.User
 	if logEvent.User != nil {
 		user, err = FormatUserResponse(*logEvent.User)
 		if err != nil {
@@ -21,7 +21,7 @@ func FormatLogEventResponse(logEvent db.LogEvent) (*irminModels.LogEvent, error)
 		}
 	}
 
-	var workspace *irminModels.Workspace
+	var workspace *irminmodels.Workspace
 	if logEvent.Workspace != nil {
 		workspace, err = FormatWorkspaceResponse(*logEvent.Workspace)
 		if err != nil {
@@ -29,7 +29,7 @@ func FormatLogEventResponse(logEvent db.LogEvent) (*irminModels.LogEvent, error)
 		}
 	}
 
-	var connection *irminModels.Connection
+	var connection *irminmodels.Connection
 	if logEvent.Connection != nil {
 		connection, err = FormatConnectionResponse(*logEvent.Connection)
 		if err != nil {
@@ -37,7 +37,7 @@ func FormatLogEventResponse(logEvent db.LogEvent) (*irminModels.LogEvent, error)
 		}
 	}
 
-	var workflowRun *irminModels.WorkflowRun
+	var workflowRun *irminmodels.WorkflowRun
 	if logEvent.WorkflowRun != nil {
 		workflowRun, err = FormatWorkflowRunResponse(logEvent.WorkflowRun)
 		if err != nil {
@@ -45,7 +45,7 @@ func FormatLogEventResponse(logEvent db.LogEvent) (*irminModels.LogEvent, error)
 		}
 	}
 
-	var workflow *irminModels.Workflow
+	var workflow *irminmodels.Workflow
 	if logEvent.Workflow != nil {
 		workflow, err = FormatWorkflowResponse(*logEvent.Workflow)
 		if err != nil {
@@ -53,7 +53,7 @@ func FormatLogEventResponse(logEvent db.LogEvent) (*irminModels.LogEvent, error)
 		}
 	}
 
-	var repository *irminModels.Repository
+	var repository *irminmodels.Repository
 	if logEvent.Repository != nil {
 		repository, err = FormatRepositoryResponse(logEvent.Repository, nil)
 		if err != nil {
@@ -61,8 +61,8 @@ func FormatLogEventResponse(logEvent db.LogEvent) (*irminModels.LogEvent, error)
 		}
 	}
 
-	eventType := irminModels.LogEventType(logEvent.Type)
-	event := &irminModels.LogEvent{
+	eventType := irminmodels.LogEventType(logEvent.Type)
+	event := &irminmodels.LogEvent{
 		ID:          eventSqid,
 		Type:        eventType,
 		Description: logEvent.Description,

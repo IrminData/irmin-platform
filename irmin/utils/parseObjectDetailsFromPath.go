@@ -4,7 +4,7 @@ import (
 	"path"
 	"strings"
 
-	irminModels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // structuredContentTypes maps structured file extensions to their MIME content types.
@@ -55,7 +55,7 @@ var unstructuredContentTypes = map[string]string{
 type ObjectDetails struct {
 	Name        string                 // The object name.
 	FullPath    string                 // The cleaned full path.
-	Type        irminModels.ObjectType // The object's type.
+	Type        irminmodels.ObjectType // The object's type.
 	ContentType string                 // The MIME type of the object.
 }
 
@@ -71,7 +71,7 @@ func ParseObjectDetailsFromPath(inputPath string) ObjectDetails {
 		return ObjectDetails{
 			Name:        "",
 			FullPath:    "",
-			Type:        irminModels.ObjectTypeGroup,
+			Type:        irminmodels.ObjectTypeGroup,
 			ContentType: "",
 		}
 	}
@@ -87,21 +87,21 @@ func ParseObjectDetailsFromPath(inputPath string) ObjectDetails {
 	contentType, isStructured := structuredContentTypes[ext]
 
 	// Default the object type to binary.
-	objectType := irminModels.ObjectTypeBinary
+	objectType := irminmodels.ObjectTypeBinary
 
 	// If the extension is found in contentTypes, mark as structured.
 	if isStructured {
-		objectType = irminModels.ObjectTypeStructured
+		objectType = irminmodels.ObjectTypeStructured
 	} else if !strings.Contains(name, ".") {
 		// If there's no dot, assume it's a group.
-		objectType = irminModels.ObjectTypeGroup
+		objectType = irminmodels.ObjectTypeGroup
 		contentType = ""
 		cleanPath = cleanPath + "/" // Add a trailing slash since groups are bucket object prefixes.
 	} else {
 		// This is an unstructured file type.
-		objectType = irminModels.ObjectTypeBinary
+		objectType = irminmodels.ObjectTypeBinary
 		// Check if the extension is in the unstructuredContentTypes map.
-		foundContentType := false
+		var foundContentType bool
 		contentType, foundContentType = unstructuredContentTypes[ext]
 		if !foundContentType {
 			contentType = "application/octet-stream"
