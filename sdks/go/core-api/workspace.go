@@ -108,3 +108,15 @@ func (c *Client) LeaveWorkspace(slug string) (*irminmodels.IrminAPIResponse, err
 	}
 	return apiResp, nil
 }
+
+func (c *Client) GetWorkspaceSchema(slug string) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error) {
+	var workspaceSchema irminmodels.ObjectSchema
+	apiResp, err := c.FetchAPI(RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/schema", slug),
+	}, &workspaceSchema)
+	if err != nil {
+		return nil, nil, fmt.Errorf("get workspace schema error: %w", err)
+	}
+	return &workspaceSchema, apiResp, nil
+}
