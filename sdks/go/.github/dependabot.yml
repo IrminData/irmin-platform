@@ -19,9 +19,6 @@ updates:
       all:
         patterns:
           - "*"
-    ignore:
-      - dependency-name: "*"
-        versions: ["*-beta*", "*-rc*", "*-alpha*"]
     versioning-strategy: auto
     allow:
       - dependency-type: "all"

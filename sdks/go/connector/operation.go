@@ -18,6 +18,14 @@ type Operation struct {
 	ConnectorRegistrationID uint              `json:"connectorRegistrationID"`
 }
 
+// OperationStatus represents the response for an operation status check.
+type OperationStatus struct {
+	OperationID   uint              `json:"operation_id"`
+	Details       map[string]string `json:"details"`
+	Settings      map[string]string `json:"settings"`
+	Subscriptions []Subscription    `json:"subscriptions"`
+}
+
 // InitOperation creates a new operation with the connector.
 // The operation is used to store the configuration details and settings for a specific operation.
 //
@@ -84,4 +92,33 @@ func (c *Client) CancelOperation(operationID int) error {
 
 	// Return nil if the operation was successfully cancelled.
 	return nil
+}
+
+// GetOperationStatus retrieves the status of an operation with the connector.
+//
+// Note: System token is required for this operation.
+//
+// Parameters:
+// - operationID: The ID of the operation to get the status of.
+//
+// Returns:
+// - The status of the operation if the request is successful.
+// - An error if the operation cannot be retrieved.
+func (c *Client) GetOperationStatus(operationID int) (*OperationStatus, error) {
+	formFields := map[string]string{
+		"operation_id": strconv.FormatInt(int64(operationID), 10),
+	}
+
+	var operationStatus OperationStatus
+
+	if err := c.FetchAPI(RequestOptions{
+		Method:      http.MethodPost,
+		Endpoint:    "/operation/status",
+		FormFields:  formFields,
+		ContentType: "application/x-www-form-urlencoded",
+	}, &operationStatus); err != nil {
+		return nil, err
+	}
+
+	return &operationStatus, nil
 }
