@@ -19,7 +19,6 @@ updates:
       all:
         patterns:
           - "*"
-    versioning-strategy: auto
     allow:
       - dependency-type: "all"
     rebase-strategy: "auto"
@@ -40,11 +39,6 @@ updates:
       include: "scope"
     reviewers:
       - "timborovkov"
-    groups:
-      all:
-        patterns:
-          - "*"
-    versioning-strategy: auto
     allow:
       - dependency-type: "all"
     rebase-strategy: "auto"
