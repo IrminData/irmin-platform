@@ -92,8 +92,5 @@ func SaveConnectionSchemaCache(schemaCache *ConnectionSchemaCache) (*ConnectionS
 	if err := DB.Save(schemaCache).Error; err != nil {
 		return nil, err
 	}
-	if err := DB.First(&schemaCache, schemaCache.ID).Error; err != nil {
-		return nil, err
-	}
 	return schemaCache, nil
 }

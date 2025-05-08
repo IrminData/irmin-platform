@@ -356,45 +356,14 @@ func ObjectsSchema(c fiber.Ctx) error {
 	object := c.Locals("object").(*irminModels.Object)
 	object_ref := c.Locals("object_ref").(string)
 
-	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
-
-	// Find a relevant repository object schema cache
-	schemaCache, _ := db.FindRepositorySchemaCache(repository.ID, object.Path, object_ref)
-	if schemaCache != nil {
-		// Check if the schema cache is not older than 30 minutes
-		schemaCacheMaxAge := 30 * time.Minute
-		if time.Since(schemaCache.UpdatedAt) < schemaCacheMaxAge {
-			// Return the cached schema
-			return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
-				Data: schemaCache.Schema,
-			})
-		}
-	}
-
 	// Get the schema of the object in the repository at ref
-	schema, err := dataEngine.GenerateObjectSchema(workspace.Slug, repository.Slug, object.Path, object_ref)
+	schema, err := lib.GetObjectSchema(c.Context(), workspace, repository, object, object_ref, locale)
 	if err != nil {
-		log.Printf("Error retrieving object schema from Data Engine: %v", err)
+		log.Printf("Error retrieving object schema: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
-
-	// Update the connection with the new schema in a goroutine
-	go func() {
-		if schemaCache != nil {
-			schemaCache.Schema = schema
-			db.SaveRepositorySchemaCache(schemaCache)
-		} else {
-			db.SaveRepositorySchemaCache(&db.RepositorySchemaCache{
-				Path:         object.Path,
-				Ref:          object_ref,
-				Schema:       schema,
-				RepositoryID: repository.ID,
-			})
-		}
-	}()
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
 		Data: schema,

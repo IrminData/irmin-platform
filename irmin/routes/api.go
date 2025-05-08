@@ -47,6 +47,9 @@ func RegisterAPIRoutes(app *fiber.App) {
 	// Log routes
 	workspace.Get("/logs", controllers.LogsIndex)
 
+	// Schema routes
+	workspace.Get("/schema", controllers.WorkspaceSchemaIndex)
+
 	// Query routes
 	workspace.Post("/sql", controllers.ExecuteSQL)
 	queries := workspace.Group("/queries")

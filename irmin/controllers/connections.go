@@ -3,12 +3,11 @@ package controllers
 import (
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/engine"
 	"irmin-api/formatter"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
-	"time"
 
 	irminModels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
@@ -334,48 +333,14 @@ func ConnectionSchema(c fiber.Ctx) error {
 		operationMethod = "pull"
 	}
 
-	// Find a relevant connection schema cache
-	schemaCache, _ := db.FindConnectionSchemaCache(connection.ID, operationMethod)
-	if schemaCache != nil {
-		// Check if the schema cache is not older than 12 hours
-		schemaCacheMaxAge := 12 * time.Hour
-		if time.Since(schemaCache.UpdatedAt) < schemaCacheMaxAge {
-			// Return the cached schema
-			return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
-				Data: schemaCache.Schema,
-			})
-		}
-	}
-
-	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
-
 	// Get the schema of the connection
-	schema, err := dataEngine.DataMovementSchema(c.Context(), connection, operationMethod)
+	schema, err := lib.GetConnectionSchema(c.Context(), connection, operationMethod, locale)
 	if err != nil {
 		log.Printf("Error getting connection schema: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminModels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
-
-	// Update the connection with the new schema in a goroutine
-	go func() {
-		var err error
-		if schemaCache != nil {
-			schemaCache.Schema = schema
-			schemaCache, err = db.SaveConnectionSchemaCache(schemaCache)
-		} else {
-			schemaCache, err = db.SaveConnectionSchemaCache(&db.ConnectionSchemaCache{
-				Schema:       schema,
-				OpMethod:     &operationMethod,
-				ConnectionID: connection.ID,
-			})
-		}
-		if err != nil {
-			log.Printf("Error saving connection schema cache: %v", err)
-		}
-	}()
 
 	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusOK, irminModels.IrminAPIResponse{
