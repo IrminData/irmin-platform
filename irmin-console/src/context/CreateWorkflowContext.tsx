@@ -30,6 +30,7 @@ export const emptyWorkflowSetupData: WorkflowInput = {
   workflowable: {
     type: 'action',
     executable: '',
+    input: [],
   },
 };
 

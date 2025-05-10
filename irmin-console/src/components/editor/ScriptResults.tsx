@@ -4,17 +4,25 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { AiOutlineSave } from 'react-icons/ai';
 import { MdPlayArrow } from 'react-icons/md';
-import { TbExclamationCircle, TbLogs, TbTable } from 'react-icons/tb';
+import {
+  TbExclamationCircle,
+  TbLogs,
+  TbStepInto,
+  TbTable,
+} from 'react-icons/tb';
 
 import LogFeed from '@/components/logs/LogFeed';
 import TableViewer from '@/components/repository/objects/ObjectViewer/TableViewer';
 import Button from '@/components/ui/button';
+import ActionInputEditor from '@/components/workflow/ActionInputEditor';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import { nsDurationToMs } from '@/utils/nsDurationToMs';
 
 import { ScriptResult } from '@/types/core/EditorItems';
+import { Repository } from '@/types/core/Repository';
+import { ActionInputData } from '@/types/core/Workflow';
 
 /**
  * Script Results component
@@ -26,17 +34,26 @@ import { ScriptResult } from '@/types/core/EditorItems';
  * @param props.loading - Whether to show a loading skeleton
  * @param props.onSave - Function to save the data
  * @param props.onRun - Function to run the data
+ * @param props.repositories - The repositories to pass to the action input editor
+ * @param props.inputFiles - The input files to display
+ * @param props.setInputFiles - Function to set the input files
  */
 const ScriptResults = ({
   result,
   loading,
   onSave,
   onRun,
+  repositories = [],
+  inputFiles = [],
+  setInputFiles,
 }: {
   result: ScriptResult | null;
   loading?: boolean;
   onSave?: () => Promise<void>;
   onRun?: () => Promise<void>;
+  repositories?: Repository[];
+  inputFiles?: ActionInputData[];
+  setInputFiles?: (files: ActionInputData[]) => void;
 }) => {
   const { dict } = useLocale();
 
@@ -106,6 +123,21 @@ const ScriptResults = ({
             {result?.has_errors ? `(${dict.query.errors})` : ''}
           </Button>
         </div>
+        {setInputFiles && (
+          <div
+            className={`border-accent ${activeTab === 'inputs' ? 'border-b-2' : ''}`}
+          >
+            <Button
+              size='sm'
+              variant={'ghost'}
+              className={`rounded-b-none`}
+              onClick={() => setActiveTab('inputs')}
+              icon={<TbStepInto />}
+            >
+              {dict.workflow.scriptInputData}
+            </Button>
+          </div>
+        )}
         <div className='ml-auto flex gap-2 text-right'>
           {result?.structured_results &&
             Object.keys(result.structured_results).length > 0 && (
@@ -185,6 +217,16 @@ const ScriptResults = ({
             </div>
           )}
         </>
+      )}
+      {activeTab === 'inputs' && setInputFiles && (
+        <div className='w-full overflow-y-auto px-4 py-12'>
+          <ActionInputEditor
+            repositories={repositories}
+            initialData={inputFiles}
+            onChange={setInputFiles}
+            disableSaveButton={true}
+          />
+        </div>
       )}
     </div>
   );

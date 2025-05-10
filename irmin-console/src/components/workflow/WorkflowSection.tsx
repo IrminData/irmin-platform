@@ -173,26 +173,25 @@ const WorkflowSection = () => {
               </Link>
             </div>
           )}
-          {workflow.type === 'action' && (
+          {workflow.type === 'action' && workflow.workflowable.repository && (
             <div className='flex flex-col gap-1'>
               <p className='text-sm opacity-60'>
                 {dict.workflow.scriptResultDestinationRepository}
               </p>
-              {workflow.workflowable.repository && (
-                <Link
-                  className='transition-all duration-200 hover:underline'
-                  href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.branch}`}
-                >
-                  <p className='text-base'>
-                    {repositories.find(
-                      (repo) => repo.slug === workflow.workflowable.repository
-                    )?.name ?? '-'}
-                  </p>
-                </Link>
-              )}
+              <Link
+                className='transition-all duration-200 hover:underline'
+                target='_blank'
+                href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.branch}`}
+              >
+                <p className='text-base'>
+                  {repositories.find(
+                    (repo) => repo.slug === workflow.workflowable.repository
+                  )?.name ?? '-'}
+                </p>
+              </Link>
             </div>
           )}
-          {workflow.type === 'action' && (
+          {workflow.type === 'action' && workflow.workflowable.repository && (
             <div className='flex flex-col gap-1'>
               <p className='text-sm opacity-60'>
                 {dict.workflow.scriptResultDestinationBranch}
@@ -200,7 +199,7 @@ const WorkflowSection = () => {
               <p className='text-base'>{workflow.workflowable.branch ?? '-'}</p>
             </div>
           )}
-          {workflow.type === 'action' && (
+          {workflow.type === 'action' && workflow.workflowable.repository && (
             <div className='flex flex-col gap-1'>
               <p className='text-sm opacity-60'>
                 {dict.workflow.scriptResultDestinationPath}
@@ -208,6 +207,27 @@ const WorkflowSection = () => {
               <p className='text-base'>{workflow.workflowable.path ?? '/'}</p>
             </div>
           )}
+          {workflow.type === 'action' &&
+            workflow.workflowable.input &&
+            workflow.workflowable.input.length > 0 && (
+              <div className='flex flex-col gap-1'>
+                <p className='text-sm opacity-60'>
+                  {dict.workflow.scriptInputData}
+                </p>
+                {workflow.workflowable.input?.map((input, id) => (
+                  <Link
+                    key={id}
+                    className='transition-all duration-200 hover:underline'
+                    target='_blank'
+                    href={`${workspaceUrl}/repositories/${input.repository}/object?path=${input.path}&ref=${input.ref}`}
+                  >
+                    <p className='text-base'>
+                      {`${input.repository}/${input.path}@${input.ref}`}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            )}
           {workflow.type === 'import' && (
             <div className='flex flex-col gap-1'>
               <p className='text-sm opacity-60'>

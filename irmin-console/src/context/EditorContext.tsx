@@ -29,6 +29,7 @@ import {
   IrminFileLanguage,
   ScriptResult,
 } from '@/types/core/EditorItems';
+import { ActionInputData } from '@/types/core/Workflow';
 import { FileContents } from '@/types/internal/FileContents';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
@@ -62,6 +63,9 @@ interface EditorContextType {
   scriptExecutionInProgress: boolean;
   scriptExecutionResult: ScriptResult | null;
   executeScript: (path: string) => void;
+  // Script Input Files
+  scriptInputFiles: ActionInputData[];
+  setScriptInputFiles: (files: ActionInputData[]) => void;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -81,6 +85,7 @@ export const EditorProvider = ({
   const router = useRouter();
   const { irminModal, irminAlert, irminConfirm } = usePopup();
 
+  // State for loading
   const [loading, setLoading] = useState(false);
 
   // State for editor items (flat array of EditorItem)
@@ -91,6 +96,11 @@ export const EditorProvider = ({
   useEffect(() => {
     setCurrentEditorItems(editorItems);
   }, [editorItems]);
+
+  // State for script input files
+  const [scriptInputFiles, setScriptInputFiles] = useState<ActionInputData[]>(
+    []
+  );
 
   // Transform items for the file navigator
   const items = useMemo(
@@ -668,6 +678,7 @@ export const EditorProvider = ({
         const res = await irminCore.editorItemService.runScript({
           workspace: workspaceSlug,
           path,
+          inputs: scriptInputFiles,
         });
         if (res.message) {
           irminAlert('info', res.message);
@@ -683,7 +694,7 @@ export const EditorProvider = ({
       setScriptExecutionInProgress(false);
       scriptExecuting.current = false;
     },
-    [dict, workspaceSlug, irminAlert, getToken, locale]
+    [dict, workspaceSlug, irminAlert, getToken, locale, scriptInputFiles]
   );
 
   return (
@@ -718,6 +729,9 @@ export const EditorProvider = ({
         scriptExecutionInProgress,
         scriptExecutionResult,
         executeScript,
+        // Script Input Files
+        scriptInputFiles,
+        setScriptInputFiles,
       }}
     >
       {children}

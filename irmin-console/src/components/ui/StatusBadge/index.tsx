@@ -17,7 +17,7 @@ const statusBadgeVariants = cva(
         public: 'bg-irmin_teal',
         connected: 'bg-irmin_teal-600',
         error: 'bg-destructive',
-        complete: 'bg-irmin_green text-black',
+        complete: 'bg-accent/80 text-accent-foreground',
         running: 'bg-irmin_blue-500',
         paused: 'bg-gray-400',
         pending: 'bg-gray-400',

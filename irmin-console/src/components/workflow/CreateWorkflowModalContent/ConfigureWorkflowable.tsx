@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 
 import ReactSelect from 'react-select';
 
@@ -9,6 +9,8 @@ import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import ActionInputEditor from '@/components/workflow/ActionInputEditor';
+import PipelineStageEditor from '@/components/workflow/PipelineStageEditor';
 
 import { useCreateWorkflow } from '@/context/CreateWorkflowContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -18,14 +20,13 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 import { Connection } from '@/types/core/Connection';
 import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
+import { ActionInputData } from '@/types/core/Workflow';
 import {
   ActionWorkflowableInput,
   ExportWorkflowableInput,
   ImportWorkflowableInput,
   PipelineWorkflowableInput,
 } from '@/types/internal/WorkflowInput';
-
-import PipelineStageEditor from '../PipelineStageEditor';
 
 /**
  * Configure workflow type specific properties
@@ -50,7 +51,24 @@ function ConfigureWorkflowable({
   const { workflowData, setWorkflowData } = useCreateWorkflow();
   const { dict } = useLocale();
 
-  const workflowable = useMemo(() => workflowData.workflowable, [workflowData]);
+  const workflowable = workflowData.workflowable;
+
+  const handleInputFilesChange = useCallback(
+    (inputFiles: ActionInputData[]) => {
+      setWorkflowData((prev) => ({
+        ...prev,
+        workflowable: {
+          ...(prev.workflowable as ActionWorkflowableInput),
+          input: inputFiles,
+        },
+      }));
+    },
+    [setWorkflowData]
+  );
+
+  const handleNextStep = useCallback(() => {
+    setCurrentStep(2);
+  }, [setCurrentStep]);
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -113,7 +131,6 @@ function ConfigureWorkflowable({
                   target='_blank'
                   variant='secondary'
                   className='w-full'
-                  size={'sm'}
                 >
                   {dict.list.view}
                 </Button>
@@ -123,7 +140,6 @@ function ConfigureWorkflowable({
                 target='_blank'
                 variant='gray'
                 className='w-full'
-                size={'sm'}
               >
                 {dict.consoleNavigation.staticSearchItems.createRepository}
               </Button>
@@ -160,6 +176,14 @@ function ConfigureWorkflowable({
                     },
                   })
                 }
+              />
+            </div>
+            <div className='flex flex-col gap-2'>
+              <ActionInputEditor
+                repositories={repositories}
+                initialData={workflowable.input}
+                onChange={handleInputFilesChange}
+                disableSaveButton={true}
               />
             </div>
           </>
@@ -492,9 +516,7 @@ function ConfigureWorkflowable({
           className='mb-6 inline-block w-full'
           variant='gradient'
           size={'lg'}
-          onClick={() => {
-            setCurrentStep(2);
-          }}
+          onClick={handleNextStep}
         >
           {dict.workflow.create.confirmAndContinue}
         </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { memo } from 'react';
 
 import { CreateWorkflowProvider } from '@/context/CreateWorkflowContext';
 
@@ -27,31 +27,32 @@ import ConfigureWorkflowable from './ConfigureWorkflowable';
  * @param props.setCurrentStep - Function to set the current step
  * @param props.initialWorkflowData - (optional) Initial workflow data
  */
-const CreateWorkflowModalContent = ({
-  editorItems,
-  repositories,
-  connections,
-  workflows,
-  isOpen,
-  closeModal,
-  currentStep,
-  setCurrentStep,
-  initialWorkflowData,
-}: {
-  editorItems: EditorItem[];
-  repositories: Repository[];
-  connections: Connection[];
-  workflows: Workflow[];
-  isOpen: boolean;
-  closeModal: () => void;
-  currentStep: number;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-  initialWorkflowData?: WorkflowInput;
-}) => {
-  if (!isOpen) return <></>;
-  return (
-    <CreateWorkflowProvider initialWorkflowData={initialWorkflowData}>
-      <>
+const CreateWorkflowModalContent = memo(
+  ({
+    editorItems,
+    repositories,
+    connections,
+    workflows,
+    isOpen,
+    closeModal,
+    currentStep,
+    setCurrentStep,
+    initialWorkflowData,
+  }: {
+    editorItems: EditorItem[];
+    repositories: Repository[];
+    connections: Connection[];
+    workflows: Workflow[];
+    isOpen: boolean;
+    closeModal: () => void;
+    currentStep: number;
+    setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
+    initialWorkflowData?: WorkflowInput;
+  }) => {
+    if (!isOpen) return null;
+
+    return (
+      <CreateWorkflowProvider initialWorkflowData={initialWorkflowData}>
         {currentStep === 1 && (
           <ConfigureWorkflowable
             editorItems={editorItems}
@@ -68,9 +69,11 @@ const CreateWorkflowModalContent = ({
             repositories={repositories}
           />
         )}
-      </>
-    </CreateWorkflowProvider>
-  );
-};
+      </CreateWorkflowProvider>
+    );
+  }
+);
+
+CreateWorkflowModalContent.displayName = 'CreateWorkflowModalContent';
 
 export default CreateWorkflowModalContent;

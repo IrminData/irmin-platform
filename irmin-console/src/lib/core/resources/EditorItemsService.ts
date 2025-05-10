@@ -2,6 +2,7 @@ import IrminCore from '@/lib/core';
 
 import { EditorItem, ScriptResult } from '@/types/core/EditorItems';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import { ActionInputData } from '@/types/core/Workflow';
 
 /**
  * EditorItems service
@@ -270,21 +271,32 @@ class EditorItemsService {
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
    * @param props.path - The path of the editor item.
+   * @param props.inputs - The input data for the script.
    * @returns IrminAPIResponse containing an array of result rows.
    */
   async runScript({
     workspace,
     path,
+    inputs = [],
   }: {
     workspace: string;
     path: string;
+    inputs?: ActionInputData[];
   }): Promise<IrminAPIResponse<ScriptResult>> {
     try {
+      const body = new URLSearchParams();
+      for (let i = 0; i < inputs.length; i++) {
+        const input = inputs[i];
+        body.append(`input[${i}].repository`, input.repository);
+        body.append(`input[${i}].ref`, input.ref);
+        body.append(`input[${i}].path`, input.path);
+      }
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/editor/run?path=${path}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString(),
         }
       );
       return response as IrminAPIResponse<ScriptResult>;

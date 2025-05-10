@@ -89,6 +89,7 @@ export enum WorkflowStatus {
  * Import object - workflowable for the Workflow
  */
 export interface Import {
+  type: 'import';
   /** Source connection sqid */
   connection_id: string;
   /** Path within the connection's schema to fetch data from */
@@ -105,6 +106,7 @@ export interface Import {
  * Export object - workflowable for the Workflow
  */
 export interface Export {
+  type: 'export';
   /** Destination connection sqid */
   connection_id: string;
   /** Path within the connection's schema to export data to */
@@ -118,11 +120,26 @@ export interface Export {
 }
 
 /**
+ * Action input data object
+ */
+export interface ActionInputData {
+  /** Slug of the repository */
+  repository: string;
+  /** Ref in the repository */
+  ref: string;
+  /** Path within the repository */
+  path: string;
+}
+
+/**
  * Action object - workflowable for the Workflow
  */
 export interface Action {
+  type: 'action';
   /** Path to the script to execute */
   executable: string;
+  /** Input data repositories, refs and paths */
+  input?: ActionInputData[];
   /** Slug of the repository to store the results */
   repository?: string;
   /** Branch in the repository for results */
@@ -135,6 +152,7 @@ export interface Action {
  * Pipeline Workflow configuration
  */
 export interface Pipeline {
+  type: 'pipeline';
   /** Whether the pipeline runs continuously or follows a Workflow Schedule */
   live: boolean;
   /** Chain of thins, in order, to pass the data through */

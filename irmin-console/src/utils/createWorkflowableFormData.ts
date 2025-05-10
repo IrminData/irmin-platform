@@ -98,6 +98,13 @@ export default function createWorkflowableFormData(
       if (actionInput.path) {
         formData.append('path', actionInput.path);
       }
+      if (actionInput.input) {
+        actionInput.input.forEach((input, index) => {
+          formData.append(`input[${index}].repository`, input.repository);
+          formData.append(`input[${index}].ref`, input.ref);
+          formData.append(`input[${index}].path`, input.path);
+        });
+      }
       break;
     }
     case 'export': {
