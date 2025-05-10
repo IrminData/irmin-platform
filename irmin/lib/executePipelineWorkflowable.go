@@ -41,12 +41,15 @@ func ExecutePipelineWorkflowable(
 				computeInputFiles = previousStageResults
 			}
 
+			// Trim leading slashes from the executable
+			executable := strings.TrimLeft(*stage.Executable, "/")
+
 			// Run the executable file in the compute sandbox
 			computeResult, err := sandbox.ExecuteEditorItem(
 				ctx,
 				computeInputFiles,
 				workflow.Owner,
-				*stage.Executable,
+				executable,
 				workflow.Workspace.Slug,
 			)
 			if err != nil {

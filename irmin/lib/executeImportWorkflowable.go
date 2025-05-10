@@ -6,6 +6,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/engine"
 	"log"
+	"strings"
 )
 
 // ExecuteImportWorkflowable executes the import workflow for a given workflowable.
@@ -30,15 +31,19 @@ func ExecuteImportWorkflowable(
 	// Initialise the Data Engine
 	dataEngine := engine.NewClient("en")
 
+	// Trim leading slashes from the connection path and the path
+	connectionPath := strings.TrimLeft(workflowable.ConnectionPath, "/")
+	path := strings.TrimLeft(workflowable.Path, "/")
+
 	// Import data from the connector to the requested repository
 	paths, errors := dataEngine.DataImport(
 		ctx,
 		connection,
-		workflowable.ConnectionPath,
+		connectionPath,
 		workflow.Workspace.Slug,
 		workflowable.Repository.Slug,
 		workflowable.Branch,
-		workflowable.Path,
+		path,
 	)
 	if len(errors) > 0 {
 		for _, err := range errors {

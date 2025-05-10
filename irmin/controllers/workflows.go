@@ -8,6 +8,7 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
+	"strings"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
@@ -202,13 +203,18 @@ func WorkflowsStore(c fiber.Ctx) error {
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
+
+		// Trim only leading slash from the path and the connection path.
+		path := strings.TrimLeft(workflowableFields["path"], "/")
+		connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
+
 		// Create the workflowable in the database.
 		importWorkflowable, err = db.CreateImportWorkflowable(&db.ImportWorkflowable{
 			ConnectionID:   connection.ID,
-			ConnectionPath: workflowableFields["connection_path"],
+			ConnectionPath: connectionPath,
 			RepositoryID:   repository.ID,
 			Branch:         workflowableFields["branch"],
-			Path:           workflowableFields["path"],
+			Path:           path,
 		})
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
@@ -253,13 +259,18 @@ func WorkflowsStore(c fiber.Ctx) error {
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
+
+		// Trim only leading slash from the path and the connection path.
+		path := strings.TrimLeft(workflowableFields["path"], "/")
+		connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
+
 		// Create the workflowable in the database.
 		exportWorkflowable, err = db.CreateExportWorkflowable(&db.ExportWorkflowable{
 			ConnectionID:   connection.ID,
-			ConnectionPath: workflowableFields["connection_path"],
+			ConnectionPath: connectionPath,
 			RepositoryID:   repository.ID,
 			Branch:         workflowableFields["branch"],
-			Path:           workflowableFields["path"],
+			Path:           path,
 		})
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
@@ -316,10 +327,14 @@ func WorkflowsStore(c fiber.Ctx) error {
 				})
 			}
 
+			// Trim leading and trailing slashes from the path.
+			path := strings.Trim(inputObjects[i]["path"], "/")
+
+			// Append the input data to the input data array.
 			inputData = append(inputData, db.ActionWorkflowableInput{
 				RepositoryID: repository.ID,
 				Ref:          inputObjects[i]["ref"],
-				Path:         inputObjects[i]["path"],
+				Path:         path,
 			})
 		}
 
@@ -334,12 +349,16 @@ func WorkflowsStore(c fiber.Ctx) error {
 				})
 			}
 		}
+
 		// Create the workflowable object.
 		var workflowable db.ActionWorkflowable
 		if repository != nil {
 			repositoryID := repository.ID
 			branch := workflowableFields["branch"]
-			path := workflowableFields["path"]
+
+			// Trim leading and trailing slashes from the path, then add a trailing slash.
+			path := strings.Trim(workflowableFields["path"], "/") + "/"
+
 			workflowable = db.ActionWorkflowable{
 				Executable:   workflowableFields["executable"],
 				RepositoryID: &repositoryID,
@@ -389,7 +408,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 			switch stage["type"] {
 			case "action":
 				newStage.Type = db.PipelineStageTypeAction
-				executable := stage["executable"]
+				executable := strings.Trim(stage["executable"], "/")
 				newStage.Executable = &executable
 			case "connection":
 				newStage.Type = db.PipelineStageTypeConnection
@@ -403,8 +422,8 @@ func WorkflowsStore(c fiber.Ctx) error {
 					log.Printf("Error retrieving connection: %v", err)
 					continue
 				}
-				writePath := stage["connection_write_path"]
-				readPath := stage["connection_read_path"]
+				writePath := strings.TrimLeft(stage["connection_write_path"], "/")
+				readPath := strings.TrimLeft(stage["connection_read_path"], "/")
 				newStage.ConnectionID = &connection.ID
 				newStage.ConnectionWritePath = &writePath
 				newStage.ConnectionReadPath = &readPath
@@ -417,7 +436,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 					continue
 				}
 				branch := stage["branch"]
-				path := stage["path"]
+				path := strings.TrimLeft(stage["path"], "/")
 				newStage.RepositoryID = &repository.ID
 				newStage.RepositoryBranch = &branch
 				newStage.RepositoryPath = &path
@@ -607,13 +626,18 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
+
+		// Trim only leading slash from the path and the connection path.
+		path := strings.TrimLeft(workflowableFields["path"], "/")
+		connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
+
 		// Create the workflowable in the database.
 		importWorkflowable, err = db.CreateImportWorkflowable(&db.ImportWorkflowable{
 			ConnectionID:   connection.ID,
-			ConnectionPath: workflowableFields["connection_path"],
+			ConnectionPath: connectionPath,
 			RepositoryID:   repository.ID,
 			Branch:         workflowableFields["branch"],
-			Path:           workflowableFields["path"],
+			Path:           path,
 		})
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
@@ -658,13 +682,17 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
+		// Trim only leading slash from the path and the connection path.
+		path := strings.TrimLeft(workflowableFields["path"], "/")
+		connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
+
 		// Create the workflowable in the database.
 		exportWorkflowable, err = db.CreateExportWorkflowable(&db.ExportWorkflowable{
 			ConnectionID:   connection.ID,
-			ConnectionPath: workflowableFields["connection_path"],
+			ConnectionPath: connectionPath,
 			RepositoryID:   repository.ID,
 			Branch:         workflowableFields["branch"],
-			Path:           workflowableFields["path"],
+			Path:           path,
 		})
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
@@ -721,10 +749,14 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 				})
 			}
 
+			// Trim leading and trailing slashes from the path.
+			path := strings.Trim(inputObjects[i]["path"], "/")
+
+			// Append the input data to the input data array.
 			inputData = append(inputData, db.ActionWorkflowableInput{
 				RepositoryID: repository.ID,
 				Ref:          inputObjects[i]["ref"],
-				Path:         inputObjects[i]["path"],
+				Path:         path,
 			})
 		}
 
@@ -744,7 +776,10 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		if repository != nil {
 			repositoryID := repository.ID
 			branch := workflowableFields["branch"]
-			path := workflowableFields["path"]
+
+			// Trim leading and trailing slashes from the path, then add a trailing slash.
+			path := strings.Trim(workflowableFields["path"], "/") + "/"
+
 			workflowable = db.ActionWorkflowable{
 				Executable:   workflowableFields["executable"],
 				RepositoryID: &repositoryID,
@@ -794,7 +829,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 			switch stage["type"] {
 			case "action":
 				newStage.Type = db.PipelineStageTypeAction
-				executable := stage["executable"]
+				executable := strings.Trim(stage["executable"], "/")
 				newStage.Executable = &executable
 			case "connection":
 				newStage.Type = db.PipelineStageTypeConnection
@@ -808,8 +843,8 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 					log.Printf("Error retrieving connection: %v", err)
 					continue
 				}
-				writePath := stage["connection_write_path"]
-				readPath := stage["connection_read_path"]
+				writePath := strings.TrimLeft(stage["connection_write_path"], "/")
+				readPath := strings.TrimLeft(stage["connection_read_path"], "/")
 				newStage.ConnectionID = &connection.ID
 				newStage.ConnectionWritePath = &writePath
 				newStage.ConnectionReadPath = &readPath
@@ -822,7 +857,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 					continue
 				}
 				branch := stage["branch"]
-				path := stage["path"]
+				path := strings.TrimLeft(stage["path"], "/")
 				newStage.RepositoryID = &repository.ID
 				newStage.RepositoryBranch = &branch
 				newStage.RepositoryPath = &path

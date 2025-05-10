@@ -30,11 +30,13 @@ func ExecuteActionWorkflowable(
 
 	// Iterate over the inputs and add them to the input files map
 	for _, input := range workflowable.Inputs {
+		// Trim slashes from the path
+		inputPath := strings.TrimLeft(input.Path, "/")
 		// Get the object content from the data engine
 		content, err := dataEngine.GetObjectContent(
 			workflow.Workspace.Slug,
 			input.Repository.Slug,
-			input.Path,
+			inputPath,
 			input.Ref,
 		)
 		if err != nil {
@@ -42,7 +44,7 @@ func ExecuteActionWorkflowable(
 			logs = append(logs, fmt.Sprintf("Error getting input object content: %v", err))
 			continue
 		}
-		inputFiles[input.Path] = content
+		inputFiles[inputPath] = content
 	}
 
 	// Run the executable file in the compute sandbox
