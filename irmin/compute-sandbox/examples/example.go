@@ -15,6 +15,26 @@ func main() {
 		log.Fatalf("Error getting API flags: %v", err)
 	}
 
+	// Get the input files.
+	inputFiles, err := irminutils.ListInputFiles()
+	if err != nil {
+		log.Fatalf("Error listing input files: %v", err)
+	}
+
+	// Collect the contents of the input files.
+	inputFileContents := make(map[string][]byte)
+	for _, inputFile := range inputFiles {
+		// Print the input file.
+		println(inputFile)
+
+		// Get the content of the input file.
+		content, err := irminutils.GetInputFile(inputFile)
+		if err != nil {
+			log.Fatalf("Error getting input file content: %v", err)
+		}
+		inputFileContents[inputFile] = content
+	}
+
 	// Initialise the Irmin client.
 	client := irmincore.NewClient(apiURL, apiKey, "en")
 
@@ -48,6 +68,14 @@ func main() {
 	err = irminutils.SendComputeResult(logEventsJSON, "logEvents.json")
 	if err != nil {
 		log.Fatalf("Error sending compute result: %v", err)
+	}
+
+	// Return the input file contents as a script result.
+	for inputFile, content := range inputFileContents {
+		err = irminutils.SendComputeResult(content, inputFile)
+		if err != nil {
+			log.Fatalf("Error sending compute result: %v", err)
+		}
 	}
 
 	// Print that everything is done.

@@ -8,6 +8,7 @@ import (
 	"irmin-api/bucket"
 	sandbox "irmin-api/compute-sandbox"
 	"irmin-api/db"
+	"irmin-api/engine"
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
@@ -493,6 +494,7 @@ func EditorItemContent(c fiber.Ctx) error {
 }
 
 func EditorItemExecute(c fiber.Ctx) error {
+	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -512,6 +514,53 @@ func EditorItemExecute(c fiber.Ctx) error {
 		})
 	}
 
+	// Get the optional input data repositories and paths from form fields
+	inputObjects, err := utils.ParseArrayFormFields(c, "input")
+	if err != nil {
+		log.Printf("Error parsing form fields: %v", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{dict.T("error_occurred")},
+		})
+	}
+
+	// Initialize a map to store the input objects
+	inputFiles := make(map[string][]byte)
+
+	// Check if we have input data repositories and paths
+	if len(inputObjects) > 0 {
+		// Initialize Data Engine client
+		dataEngine := engine.NewClient(locale)
+
+		// Create a slice to store all async operations
+		var futures []utils.FutureResult[[]byte]
+
+		// Launch concurrent fetches for each input object
+		for _, input := range inputObjects {
+			repository := input["repository"]
+			path := input["path"]
+			ref := input["ref"]
+
+			// Create an async operation for fetching the object
+			future := utils.Async(func() ([]byte, error) {
+				return dataEngine.GetObjectContent(workspace.Slug, repository, path, ref)
+			})
+			futures = append(futures, future)
+		}
+
+		// Wait for all results and handle errors
+		for i, future := range futures {
+			content, err := future.Await()
+			if err != nil {
+				log.Printf("Error getting object: %v", err)
+				return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+					Errors: []string{dict.T("error_occurred")},
+				})
+			}
+			// Add the object to the input objects map using the original path
+			inputFiles[inputObjects[i]["path"]] = content
+		}
+	}
+
 	// Log the event
 	lib.CreateAuditLogEventAsync(&db.LogEvent{
 		Type:        db.LogEventTypeCreate,
@@ -522,7 +571,7 @@ func EditorItemExecute(c fiber.Ctx) error {
 
 	// Execute the file in the compute sandbox
 	ctx := c.Context()
-	computeResult, err := sandbox.ExecuteEditorItem(ctx, *user, path, workspace.Slug)
+	computeResult, err := sandbox.ExecuteEditorItem(ctx, inputFiles, *user, path, workspace.Slug)
 	if err != nil {
 		log.Printf("Error executing editor item in the compute sandbox: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

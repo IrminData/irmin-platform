@@ -25,6 +25,7 @@ func ExecuteActionWorkflowable(
 	// Run the executable file in the compute sandbox
 	computeResult, err := sandbox.ExecuteEditorItem(
 		ctx,
+		nil,
 		workflow.Owner,
 		workflowable.Executable,
 		workflow.Workspace.Slug,

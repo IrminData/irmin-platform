@@ -41,23 +41,9 @@ func installGoSDK(destDir string, projectName string) error {
 // ExecuteEditorItem executes the provided executable code in a sandbox environment.
 // It downloads the workspace files from the S3 bucket to a temporary directory,
 // executes the code using Docker, and returns the execution result.
-// Example usage:
-//
-//	func main() {
-//		ctx := context.Background()
-//		result, err := sandbox.ExecuteEditorItem(ctx, "hello-world.js", "tims-office")
-//		if err != nil {
-//			fmt.Printf("Error: %v\n", err)
-//		}
-//		resultJson, err := json.MarshalIndent(result, "", "  ")
-//		if err != nil {
-//			fmt.Printf("Error marshalling result to JSON: %v\n", err)
-//			return
-//		}
-//		fmt.Printf("Execution result:\n%s\n", resultJson)
-//	}
 func ExecuteEditorItem(
 	ctx context.Context,
+	inputFiles map[string][]byte, // key is the file path, value is the file content
 	responsibleUser db.User,
 	executablePath, workspaceSlug string,
 ) (ExecutionResult, error) {
@@ -92,6 +78,31 @@ func ExecuteEditorItem(
 		return result, err
 	}
 	log.Printf("Temporary directory created: %s\n", workspaceTempDir)
+
+	// Create _input directory for input files
+	inputDir := filepath.Join(workspaceTempDir, "_input")
+	err = os.MkdirAll(inputDir, 0755)
+	if err != nil {
+		return result, fmt.Errorf("failed to create _input directory: %w", err)
+	}
+
+	// Write input files to the _input directory
+	for filePath, content := range inputFiles {
+		fullPath := filepath.Join(inputDir, filePath)
+
+		// Create parent directories if they don't exist
+		err := os.MkdirAll(filepath.Dir(fullPath), 0755)
+		if err != nil {
+			return result, fmt.Errorf("failed to create directory for input file %s: %w", filePath, err)
+		}
+
+		// Write the file content
+		err = os.WriteFile(fullPath, content, 0644)
+		if err != nil {
+			return result, fmt.Errorf("failed to write input file %s: %w", filePath, err)
+		}
+		log.Printf("Input file written: _input/%s\n", filePath)
+	}
 
 	// Download the workspace files into the writable directory.
 	err = bucket.DownloadFolder(ctx, fmt.Sprintf("editor/%s/", workspaceSlug), workspaceTempDir)

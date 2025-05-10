@@ -40,6 +40,7 @@ func ExecutePipelineWorkflowable(
 			// Run the executable file in the compute sandbox
 			computeResult, err := sandbox.ExecuteEditorItem(
 				ctx,
+				nil,
 				workflow.Owner,
 				*stage.Executable,
 				workflow.Workspace.Slug,
