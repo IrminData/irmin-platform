@@ -537,7 +537,7 @@ func EditorItemExecute(c fiber.Ctx) error {
 		// Launch concurrent fetches for each input object
 		for _, input := range inputObjects {
 			repository := input["repository"]
-			path := input["path"]
+			path := strings.Trim(input["path"], "/")
 			ref := input["ref"]
 
 			// Create an async operation for fetching the object
