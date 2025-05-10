@@ -60,7 +60,8 @@ func (c *Client) CreateWorkflow(
 		"description":   description,
 		"documentation": documentation,
 	}
-	// Add schedule data
+
+	// Add schedule data if provided
 	scheduleFields, err := irminutils.PrepareWorkflowScheduleData(schedule)
 	if err != nil {
 		return nil, nil, fmt.Errorf("prepare schedule data error: %w", err)

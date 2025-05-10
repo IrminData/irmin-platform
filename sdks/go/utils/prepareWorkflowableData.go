@@ -30,6 +30,11 @@ func PrepareWorkflowableData(workflowable irminmodels.Workflowable) (map[string]
 		fields["repository"] = workflowable.Repository
 		fields["branch"] = workflowable.Branch
 		fields["path"] = workflowable.Path
+		for i, input := range workflowable.Input {
+			fields[fmt.Sprintf("input[%d].repository", i)] = input.Repository
+			fields[fmt.Sprintf("input[%d].ref", i)] = input.Ref
+			fields[fmt.Sprintf("input[%d].path", i)] = input.Path
+		}
 	case irminmodels.WorkflowableTypePipeline:
 		fields["live"] = strconv.FormatBool(workflowable.Live)
 		for i, stage := range workflowable.Stages {
