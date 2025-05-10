@@ -114,9 +114,9 @@ func (c *Client) RunScript(
 
 	// Add the input data to the form fields
 	for i, input := range inputs {
-		formFields[fmt.Sprintf("input[%d][repository]", i)] = input.Repository
-		formFields[fmt.Sprintf("input[%d][ref]", i)] = input.Ref
-		formFields[fmt.Sprintf("input[%d][path]", i)] = input.Path
+		formFields[fmt.Sprintf("input[%d].repository", i)] = input.Repository
+		formFields[fmt.Sprintf("input[%d].ref", i)] = input.Ref
+		formFields[fmt.Sprintf("input[%d].path", i)] = input.Path
 	}
 
 	var scriptResult irminmodels.ScriptResult
